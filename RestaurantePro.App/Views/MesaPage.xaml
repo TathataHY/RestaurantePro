@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:RestaurantePro.App.ViewModels"
+             x:Class="RestaurantePro.App.Views.MesaPage">
+
+    <ContentPage.BindingContext>
+        <vm:MesaViewModel />
+    </ContentPage.BindingContext>
+
+    <StackLayout Padding="20">
+        <ListView x:Name="MesaListView" ItemsSource="{Binding Mesas}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ViewCell>
+                        <SwipeView>
+                            <SwipeView.RightItems>
+                                <SwipeItems>
+                                    <SwipeItem Text="Editar" Command="{Binding BindingContext.EditMesaCommand, Source={x:Reference MesaListView}}" CommandParameter="{Binding .}" />
+                                    <SwipeItem Text="Eliminar" Command="{Binding BindingContext.DeleteMesaCommand, Source={x:Reference MesaListView}}" CommandParameter="{Binding .}" />
+                                </SwipeItems>
+                            </SwipeView.RightItems>
+                            <Grid Padding="10" ColumnDefinitions="*,Auto">
+                                <Label Text="{Binding Numero}" FontSize="Medium" VerticalOptions="Center" Grid.Column="0" />
+                                <Label Text="{Binding Estado}" FontSize="Small" TextColor="Gray" VerticalOptions="Center" HorizontalOptions="End" Grid.Column="1" />
+                            </Grid>
+                        </SwipeView>
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+        <Button Text="Agregar Mesa" Command="{Binding AddMesaCommand}" />
+    </StackLayout>
+</ContentPage>

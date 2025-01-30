@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:RestaurantePro.App.ViewModels"
+             x:Class="RestaurantePro.App.Views.AddDetallePage">
+
+    <ContentPage.BindingContext>
+        <vm:AddDetalleViewModel />
+    </ContentPage.BindingContext>
+
+    <StackLayout Padding="20">
+        <Label Text="Agregar Detalle de Comanda" FontSize="Large" />
+        <Picker Title="Plato" ItemsSource="{Binding Platos}" SelectedItem="{Binding Plato}" ItemDisplayBinding="{Binding Nombre}" />
+        <Label Text="Cantidad" />
+        <StackLayout Orientation="Horizontal">
+            <Stepper Minimum="1" Maximum="{Binding Plato.Stock}" Increment="1" Value="{Binding Cantidad}" IsEnabled="{Binding IsCantidadEnabled}" />
+            <Label Text="{Binding Cantidad}" VerticalOptions="Center" Margin="10,0,0,0" />
+        </StackLayout>
+        <Label Text="Precio Total" />
+        <Entry Text="{Binding PrecioUnitario, StringFormat='{}{0:C}'}" IsReadOnly="True" />
+        <Label Text="Observaciones" />
+        <Entry Placeholder="Observaciones" Text="{Binding Observaciones}" />
+        <Button Text="Agregar Detalle" Command="{Binding AddDetalleCommand}" />
+    </StackLayout>
+</ContentPage>

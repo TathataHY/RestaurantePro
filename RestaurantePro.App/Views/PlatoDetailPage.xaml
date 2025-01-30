@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:RestaurantePro.App.ViewModels"
+             x:Class="RestaurantePro.App.Views.PlatoDetailPage">
+
+    <ContentPage.BindingContext>
+        <vm:PlatoDetailViewModel />
+    </ContentPage.BindingContext>
+
+    <StackLayout Padding="20">
+        <Label Text="Nombre" />
+        <Entry Text="{Binding Nombre}" />
+
+        <Label Text="Descripción" />
+        <Editor Text="{Binding Descripcion}" />
+
+        <Label Text="Precio" />
+        <Entry Text="{Binding Precio}" Keyboard="Numeric" />
+
+        <Label Text="Disponible" />
+        <Switch IsToggled="{Binding Disponible}" />
+
+        <Label Text="Categoría" />
+        <Picker ItemsSource="{Binding Categorias}" SelectedItem="{Binding Categoria}" />
+
+        <Button Text="Guardar" Command="{Binding SaveCommand}" />
+    </StackLayout>
+</ContentPage>
