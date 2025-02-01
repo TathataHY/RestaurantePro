@@ -5,6 +5,7 @@ using Microsoft.Maui.Storage;
 using System.Linq;
 using RestaurantePro.App.Models;
 using System.Windows.Input;
+using RestaurantePro.App.Helpers;
 
 namespace RestaurantePro.App
 {
@@ -36,10 +37,10 @@ namespace RestaurantePro.App
             BindingContext = this;
 
             // Ajustar la visibilidad de los elementos según el rol del usuario
-            AdjustVisibility();
+            ApplyRoleBasedAccess();
         }
 
-        private async void AdjustVisibility()
+        private async void ApplyRoleBasedAccess()
         {
             var user = await _authorizationService.GetCurrentUserAsync();
             if (user == null)
@@ -94,6 +95,24 @@ namespace RestaurantePro.App
                 if (platosItem != null)
                 {
                     this.Items.Remove(platosItem);
+                }
+            }
+
+            if (user.Rol != RolUsuario.Administrador && user.Rol != RolUsuario.Mesero)
+            {
+                var cocinaItem = this.Items.FirstOrDefault(item => item.Title == "Cocina");
+                if (cocinaItem != null)
+                {
+                    this.Items.Remove(cocinaItem);
+                }
+            }
+
+            if (user.Rol != RolUsuario.Administrador && user.Rol != RolUsuario.Cocinero)
+            {
+                var meseroItem = this.Items.FirstOrDefault(item => item.Title == "Mesero");
+                if (meseroItem != null)
+                {
+                    this.Items.Remove(meseroItem);
                 }
             }
         }

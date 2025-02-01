@@ -18,9 +18,21 @@
         </Tab>
         <Tab Title="Comandas">
             <Tab.Icon>
-                <FontImageSource FontFamily="MaterialIcons" Glyph="{x:Static helpers:MaterialIcons.Clipboard}" />
+                <FontImageSource FontFamily="MaterialIcons" Glyph="{x:Static helpers:MaterialIcons.List}" />
             </Tab.Icon>
             <ShellContent ContentTemplate="{DataTemplate views:ComandaPage}" />
+        </Tab>
+        <Tab Title="Cocina">
+            <Tab.Icon>
+                <FontImageSource FontFamily="MaterialIcons" Glyph="{x:Static helpers:MaterialIcons.Kitchen}" />
+            </Tab.Icon>
+            <ShellContent ContentTemplate="{DataTemplate views:CocinaPage}" />
+        </Tab>
+        <Tab Title="Mesero">
+            <Tab.Icon>
+                <FontImageSource FontFamily="MaterialIcons" Glyph="{x:Static helpers:MaterialIcons.Person}" />
+            </Tab.Icon>
+            <ShellContent ContentTemplate="{DataTemplate views:MeseroPage}" />
         </Tab>
     </FlyoutItem>
 

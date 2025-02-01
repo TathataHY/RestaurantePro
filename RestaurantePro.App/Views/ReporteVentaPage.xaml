@@ -15,7 +15,7 @@
                     <ViewCell>
                         <Grid Padding="10" ColumnDefinitions="*,Auto,Auto">
                             <Label Text="{Binding Fecha, StringFormat='{}{0:dd/MM/yyyy}'}" FontSize="Medium" VerticalOptions="Center" Grid.Column="0" />
-                            <Label Text="{Binding TotalVentas, StringFormat='{}{0:C}'}" FontSize="Small" TextColor="Gray" VerticalOptions="Center" HorizontalOptions="End" Grid.Column="1" />
+                            <Label Text="{Binding TotalVentas, StringFormat='{}{0:C}'}" FontSize="Small" TextColor="Gray" VerticalOptions="Center" HorizontalOptions="End" Margin="0,0,20,0" Grid.Column="1" />
                             <Label Text="{Binding TotalPlatosVendidos}" FontSize="Small" TextColor="Gray" VerticalOptions="Center" HorizontalOptions="End" Grid.Column="2" />
                         </Grid>
                     </ViewCell>

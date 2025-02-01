@@ -11,5 +11,8 @@ namespace RestaurantePro.App.Helpers
         public const string Inventory = "\ue8b0";
         public const string Logout = "\ue879";
         public const string Menu = "\ue88a";
+        public const string Kitchen = "\uea61"; // Icono para Cocina
+        public const string Person = "\ue7fd"; // Icono para Mesero
+        public const string List = "\ue896"; // Icono para Lista
     }
 }

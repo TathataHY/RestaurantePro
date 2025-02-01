@@ -31,9 +31,12 @@ namespace RestaurantePro.App.ViewModels
         {
             var comandas = await _databaseService.GetComandasAsync();
             Comandas.Clear();
-            foreach (var comanda in comandas)
+             foreach (var comanda in comandas)
             {
-                Comandas.Add(comanda);
+                if (comanda.Estado == EstadoComanda.Pendiente)
+                {
+                    Comandas.Add(comanda);
+                }
             }
         }
 

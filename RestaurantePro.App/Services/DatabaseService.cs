@@ -268,8 +268,13 @@ namespace RestaurantePro.App.Services
         public async Task<List<ReporteVenta>> GetReporteVentasAsync(DateTime startDate, DateTime endDate)
         {
             var comandas = await _database.Table<Comanda>()
-                .Where(c => c.FechaHora >= startDate && c.FechaHora <= endDate)
+                .Where(c => c.FechaHora >= startDate && c.FechaHora <= endDate && c.Estado == EstadoComanda.Cancelada)
                 .ToListAsync();
+
+            foreach (var comanda in comandas)
+            {
+                comanda.Detalles = await GetComandaDetallesAsync(comanda.Id);
+            }
 
             var reporteVentas = comandas
                 .GroupBy(c => c.FechaHora.Date)

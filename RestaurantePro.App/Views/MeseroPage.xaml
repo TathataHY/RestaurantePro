@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:RestaurantePro.App.ViewModels"
+             x:Class="RestaurantePro.App.Views.MeseroPage">
+
+    <ContentPage.BindingContext>
+        <vm:MeseroViewModel />
+    </ContentPage.BindingContext>
+
+    <StackLayout Padding="20">
+        <Label Text="Comandas Listas" FontSize="Large" HorizontalOptions="Center" />
+        <ListView x:Name="ComandasListView" ItemsSource="{Binding Comandas}">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <ViewCell>
+                        <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                            <Label Text="{Binding FechaHora, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" FontSize="Medium" VerticalOptions="Center" Grid.Column="0" />
+                            <Label Text="{Binding Estado}" FontSize="Small" TextColor="Gray" VerticalOptions="Center" HorizontalOptions="End" Margin="0,0,20,0" Grid.Column="1" />
+                            <Label Text="{Binding MesaId, Converter={StaticResource MesaIdToNumeroConverter}}" FontSize="Small" TextColor="Gray" VerticalOptions="Center" HorizontalOptions="End" Grid.Column="2" />
+                            <Button Text="Marcar como Pagada" Command="{Binding BindingContext.UpdateEstadoCommand, Source={x:Reference ComandasListView}}" CommandParameter="{Binding .}" Grid.Column="3" />
+                        </Grid>
+                    </ViewCell>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </StackLayout>
+</ContentPage>
