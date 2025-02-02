@@ -45,19 +45,19 @@ namespace RestaurantePro.App.ViewModels
                 Estado = Estado
             };
 
-            await _databaseService.SaveComandaAsync(comanda);
+            await _apiService.SaveComandaAsync(comanda);
 
             // Actualizar el estado de la mesa
             if (_originalMesa != null && _originalMesa.Id != Mesa.Id)
             {
                 _originalMesa.Estado = EstadoMesa.Disponible;
-                await _databaseService.SaveMesaAsync(_originalMesa);
+                await _apiService.SaveMesaAsync(_originalMesa);
             }
 
             if (Mesa != null)
             {
                 Mesa.Estado = EstadoMesa.Ocupada;
-                await _databaseService.SaveMesaAsync(Mesa);
+                await _apiService.SaveMesaAsync(Mesa);
             }
 
             await Shell.Current.GoToAsync("..");
@@ -65,28 +65,21 @@ namespace RestaurantePro.App.ViewModels
 
         public async Task LoadComanda(int comandaId)
         {
-            var comanda = await _databaseService.GetComandaByIdAsync(comandaId);
+            var comanda = await _apiService.GetComandaByIdAsync(comandaId);
             if (comanda != null)
             {
                 ComandaId = comanda.Id;
                 FechaHora = comanda.FechaHora;
+                Mesa = await _apiService.GetMesaByIdAsync(comanda.MesaId);
                 Estado = comanda.Estado;
-
-                // Agregar la mesa original si no está en la lista de mesas disponibles
-                _originalMesa = await _databaseService.GetMesaByIdAsync(comanda.MesaId);
-                if (_originalMesa != null && !Mesas.Any(m => m.Id == _originalMesa.Id))
-                {
-                    Mesas.Add(_originalMesa);
-                }
-
-                Mesa = Mesas.FirstOrDefault(m => m.Id == comanda.MesaId);
+                _originalMesa = Mesa;
             }
         }
 
         [RelayCommand]
         private async Task LoadMesas()
         {
-            var mesas = await _databaseService.GetMesasDisponiblesAsync();
+            var mesas = await _apiService.GetMesasDisponiblesAsync();
             Mesas.Clear();
             foreach (var mesa in mesas)
             {

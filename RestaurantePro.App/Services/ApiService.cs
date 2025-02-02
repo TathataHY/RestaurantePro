@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using RestaurantePro.App.Models;
@@ -8,7 +9,8 @@ namespace RestaurantePro.App.Services;
 public class ApiService
 {
     private readonly HttpClient _httpClient;
-    private const string BaseUrl = "https://localhost:7209/api";
+    //private const string BaseUrl = "https://localhost:7209/api";
+    private const string BaseUrl = "https://192.168.18.107:45455/api";
     private string _authToken;
 
     public ApiService()
@@ -152,6 +154,46 @@ public class ApiService
         await PutAsync($"/comanda/{comandaId}/estado", new { Estado = estado });
     }
 
+    public async Task DeleteComandaAsync(int id)
+    {
+        await DeleteAsync($"/comanda/{id}");
+    }
+
+    public async Task<List<Plato>> GetPlatosDisponiblesAsync()
+    {
+        return await GetAsync<List<Plato>>("/plato/disponibles");
+    }
+
+    public async Task<Plato> SavePlatoAsync(Plato plato)
+    {
+        if (plato.Id != 0)
+        {
+            await PutAsync($"/plato/{plato.Id}", plato);
+            return plato;
+        }
+        return await PostAsync<Plato>("/plato", plato);
+    }
+
+    public async Task DeletePlatoAsync(int id)
+    {
+        await DeleteAsync($"/plato/{id}");
+    }
+
+    public async Task<List<ComandaDetalle>> GetComandaDetallesAsync(int comandaId)
+    {
+        return await GetAsync<List<ComandaDetalle>>($"/comanda/{comandaId}/detalles");
+    }
+
+    public async Task<ComandaDetalle> SaveComandaDetalleAsync(ComandaDetalle detalle)
+    {
+        if (detalle.Id != 0)
+        {
+            await PutAsync($"/comanda/detalle/{detalle.Id}", detalle);
+            return detalle;
+        }
+        return await PostAsync<ComandaDetalle>($"/comanda/{detalle.ComandaId}/detalle", detalle);
+    }
+
     // Método genérico PUT
     private async Task PutAsync<T>(string endpoint, T data)
     {
@@ -166,6 +208,34 @@ public class ApiService
     {
         var response = await _httpClient.DeleteAsync(endpoint);
         response.EnsureSuccessStatusCode();
+    }
+
+    public async Task<List<Venta>> GetVentasAsync(DateTime fechaInicio, DateTime fechaFin)
+    {
+        var response = await _httpClient.GetAsync($"api/ventas?fechaInicio={fechaInicio:yyyy-MM-dd}&fechaFin={fechaFin:yyyy-MM-dd}");
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<List<Venta>>();
+    }
+
+    public async Task<Plato> AddPlatoAsync(Plato plato)
+    {
+        var response = await _httpClient.PostAsJsonAsync("api/platos", plato);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<Plato>();
+    }
+
+    public async Task<Plato> UpdatePlatoAsync(Plato plato)
+    {
+        var response = await _httpClient.PutAsJsonAsync($"api/platos/{plato.Id}", plato);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<Plato>();
+    }
+
+    public async Task<Plato> GetPlatoByIdAsync(int id)
+    {
+        var response = await _httpClient.GetAsync($"api/platos/{id}");
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<Plato>();
     }
 }
 

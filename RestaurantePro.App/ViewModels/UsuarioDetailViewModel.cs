@@ -30,10 +30,6 @@ namespace RestaurantePro.App.ViewModels
 
         public ObservableCollection<RolUsuario> Roles { get; } = new ObservableCollection<RolUsuario>(Enum.GetValues(typeof(RolUsuario)).Cast<RolUsuario>());
 
-        public UsuarioDetailViewModel()
-        {
-        }
-
         [RelayCommand]
         private async Task Save()
         {
@@ -47,13 +43,13 @@ namespace RestaurantePro.App.ViewModels
                 Activo = Activo
             };
 
-            await _databaseService.SaveUsuarioAsync(usuario);
+            await _apiService.SaveUsuarioAsync(usuario);
             await Shell.Current.GoToAsync("..");
         }
 
         public async void LoadUsuario(int usuarioId)
         {
-            var usuario = await _databaseService.GetUsuarioByIdAsync(usuarioId);
+            var usuario = await _apiService.GetUsuarioByIdAsync(usuarioId);
             if (usuario != null)
             {
                 UsuarioId = usuario.Id;

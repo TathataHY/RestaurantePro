@@ -29,9 +29,9 @@ namespace RestaurantePro.App.ViewModels
         [RelayCommand]
         private async Task LoadComandas()
         {
-            var comandas = await _databaseService.GetComandasAsync();
+            var comandas = await _apiService.GetComandasAsync();
             Comandas.Clear();
-             foreach (var comanda in comandas)
+            foreach (var comanda in comandas)
             {
                 if (comanda.Estado == EstadoComanda.Pendiente)
                 {
@@ -81,7 +81,7 @@ namespace RestaurantePro.App.ViewModels
                 bool confirm = await Application.Current.MainPage.DisplayAlert("Confirmar", "¿Estás seguro de que deseas eliminar esta comanda?", "Sí", "No");
                 if (confirm)
                 {
-                    await _databaseService.DeleteComandaAsync(comanda);
+                    await _apiService.DeleteComandaAsync(comanda.Id);
                     Comandas.Remove(comanda);
                 }
             }

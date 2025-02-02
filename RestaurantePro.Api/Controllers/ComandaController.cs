@@ -1,8 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RestaurantePro.Api.Data;
-using RestaurantePro.Api.Models;
 using Microsoft.AspNetCore.Authorization;
+using RestaurantePro.Core.Commands;
+using RestaurantePro.Core.Queries;
+using RestaurantePro.Core.DTOs;
+using RestaurantePro.Core.Handlers;
+using MediatR;
+using RestaurantePro.Core.DTOs.Comanda;
+using RestaurantePro.Core.Interfaces;
+using AutoMapper;
+using RestaurantePro.Core.Exceptions;
+using RestaurantePro.Core.Entities;
+using RestaurantePro.Infrastructure.Data;
 
 namespace RestaurantePro.Api.Controllers;
 
@@ -11,11 +20,17 @@ namespace RestaurantePro.Api.Controllers;
 [ApiController]
 public class ComandaController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly RestauranteContext _context;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+    private readonly IMediator _mediator;
 
-    public ComandaController(AppDbContext context)
+    public ComandaController(RestauranteContext context, IUnitOfWork unitOfWork, IMapper mapper, IMediator mediator)
     {
         _context = context;
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+        _mediator = mediator;
     }
 
     // GET: api/Comanda
@@ -50,47 +65,38 @@ public class ComandaController : ControllerBase
     // POST: api/Comanda
     [Authorize(Roles = "Administrador,Mesero")]
     [HttpPost]
-    public async Task<ActionResult<Comanda>> PostComanda(Comanda comanda)
+    public async Task<ActionResult<ComandaDto>> CreateComanda(CreateComandaCommand command)
     {
-        _context.Comandas.Add(comanda);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetComanda), new { id = comanda.Id }, comanda);
+        var result = await _mediator.Send(command);
+        return CreatedAtAction(nameof(GetComanda), new { id = result.Id }, result);
     }
 
-    // PUT: api/Comanda/{id}/estado
+    // PUT: api/Comanda/{id}
     [Authorize(Roles = "Administrador,Cocinero")]
-    [HttpPut("{id}/estado")]
-    public async Task<IActionResult> UpdateEstado(int id, [FromBody] EstadoComandaRequest estado)
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateComanda(int id, UpdateComandaCommand command, CancellationToken cancellationToken)
     {
-        var comanda = await _context.Comandas.FindAsync(id);
-        if (comanda == null)
+        if (id != command.Id)
         {
-            return NotFound();
+            return BadRequest();
         }
 
-        comanda.Estado = estado.Estado;
-        await _context.SaveChangesAsync();
-
-        return NoContent();
-    }
-
-    public class EstadoComandaRequest
-    {
-        public EstadoComanda Estado { get; set; }
+        try 
+        {
+            var result = await _mediator.Send(command, cancellationToken);
+            return Ok(result);
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteComanda(int id)
     {
-        var comanda = await _context.Comandas.FindAsync(id);
-        if (comanda == null)
-        {
-            return NotFound();
-        }
-
-        _context.Comandas.Remove(comanda);
-        await _context.SaveChangesAsync();
-
+        var handler = new DeleteComandaCommandHandler(_unitOfWork);
+        await handler.Handle(new DeleteComandaCommand { Id = id });
         return NoContent();
     }
 

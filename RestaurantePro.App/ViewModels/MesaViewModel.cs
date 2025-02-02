@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using RestaurantePro.App.Models;
 using RestaurantePro.App.Services;
 using RestaurantePro.App.Views;
+using Microsoft.Maui.Controls;
 
 namespace RestaurantePro.App.ViewModels
 {
@@ -24,7 +25,7 @@ namespace RestaurantePro.App.ViewModels
         [RelayCommand]
         private async Task LoadMesas()
         {
-            var mesas = await _databaseService.GetMesasAsync();
+            var mesas = await _apiService.GetMesasAsync();
             Mesas.Clear();
             foreach (var mesa in mesas)
             {
@@ -73,7 +74,7 @@ namespace RestaurantePro.App.ViewModels
                 bool confirm = await Application.Current.MainPage.DisplayAlert("Confirmar", "¿Estás seguro de que deseas eliminar esta mesa?", "Sí", "No");
                 if (confirm)
                 {
-                    await _databaseService.DeleteMesaAsync(mesa);
+                    await _apiService.DeleteMesaAsync(mesa.Id);
                     Mesas.Remove(mesa);
                 }
             }

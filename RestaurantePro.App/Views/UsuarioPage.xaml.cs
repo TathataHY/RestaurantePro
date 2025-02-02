@@ -1,6 +1,7 @@
 using RestaurantePro.App.Models;
 using RestaurantePro.App.Services;
 using RestaurantePro.App.ViewModels;
+using Microsoft.Maui.Controls;
 
 namespace RestaurantePro.App.Views
 {
@@ -29,7 +30,7 @@ namespace RestaurantePro.App.Views
 
             if (_viewModel != null)
             {
-                _viewModel.LoadUsuariosCommand.Execute(null);
+                await _viewModel.LoadUsuariosCommand.ExecuteAsync(null);
             }
         } 
     }

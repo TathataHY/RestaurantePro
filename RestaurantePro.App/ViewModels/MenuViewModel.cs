@@ -24,11 +24,14 @@ namespace RestaurantePro.App.ViewModels
         [RelayCommand]
         private async Task LoadPlatos()
         {
-            var platos = await _databaseService.GetPlatosDisponiblesAsync();
+            var platos = await _apiService.GetPlatosAsync();
             Platos.Clear();
             foreach (var plato in platos)
             {
-                Platos.Add(plato);
+                if (plato.Disponible)
+                {
+                    Platos.Add(plato);
+                }
             }
         }
 
@@ -48,7 +51,7 @@ namespace RestaurantePro.App.ViewModels
                 if (!string.IsNullOrEmpty(result) && int.TryParse(result, out int newStock))
                 {
                     plato.Stock = newStock;
-                    await _databaseService.SavePlatoAsync(plato);
+                    await _apiService.SavePlatoAsync(plato);
                     await LoadPlatos();
                 }
                 else if (!string.IsNullOrEmpty(result))

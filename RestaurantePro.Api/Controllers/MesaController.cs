@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RestaurantePro.Api.Data;
-using RestaurantePro.Api.Models;
 using Microsoft.AspNetCore.Authorization;
+using RestaurantePro.Core.Entities;
+using RestaurantePro.Core.Enums;
+using RestaurantePro.Infrastructure.Data;
 
 namespace RestaurantePro.Api.Controllers;
 
@@ -11,9 +12,9 @@ namespace RestaurantePro.Api.Controllers;
 [ApiController]
 public class MesaController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly RestauranteContext _context;
 
-    public MesaController(AppDbContext context)
+    public MesaController(RestauranteContext context)
     {
         _context = context;
     }

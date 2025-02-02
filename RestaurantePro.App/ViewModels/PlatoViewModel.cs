@@ -25,7 +25,7 @@ namespace RestaurantePro.App.ViewModels
         [RelayCommand]
         private async Task LoadPlatos()
         {
-            var platos = await _databaseService.GetPlatosAsync();
+            var platos = await _apiService.GetPlatosAsync();
             Platos.Clear();
             foreach (var plato in platos)
             {
@@ -74,7 +74,7 @@ namespace RestaurantePro.App.ViewModels
                 bool confirm = await Application.Current.MainPage.DisplayAlert("Confirmar", "¿Estás seguro de que deseas eliminar este plato?", "Sí", "No");
                 if (confirm)
                 {
-                    await _databaseService.DeletePlatoAsync(plato);
+                    await _apiService.DeletePlatoAsync(plato.Id);
                     Platos.Remove(plato);
                 }
             }

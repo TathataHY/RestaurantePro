@@ -14,6 +14,7 @@ namespace RestaurantePro.App.Models
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
         public string Numero { get; set; }
+        public int Capacidad { get; set; }
         public EstadoMesa Estado { get; set; } // Disponible, Ocupada, Reservada
     }
 }

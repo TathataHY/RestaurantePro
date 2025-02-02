@@ -22,17 +22,24 @@ namespace RestaurantePro.App.ViewModels
         [RelayCommand]
         private async Task Login()
         {
-            var usuario = await _databaseService.GetUsuarioAsync(NombreUsuario, Contraseña);
-            if (usuario != null)
+            try
             {
-                // Guardar el estado de autenticación
-                Preferences.Set("IsLoggedIn", true);
-                Preferences.Set("UserId", usuario.Id);
+                var (usuario, token) = await _apiService.LoginAsync(NombreUsuario, Contraseña);
+                if (usuario != null)
+                {
+                    // Guardar el estado de autenticación y el token
+                    Preferences.Set("IsLoggedIn", true);
+                    Preferences.Set("UserId", usuario.Id);
+                    Preferences.Set("AuthToken", token);
 
-                // Establecer AppShell como la MainPage
-                Application.Current.MainPage = new AppShell();
+                    // Establecer el token en el ApiService
+                    _apiService.SetAuthToken(token);
+
+                    // Establecer AppShell como la MainPage
+                    Application.Current.MainPage = new AppShell();
+                }
             }
-            else
+            catch
             {
                 // Mostrar mensaje de error
                 await Application.Current.MainPage.DisplayAlert("Error", "Nombre de usuario o contraseña incorrectos", "OK");

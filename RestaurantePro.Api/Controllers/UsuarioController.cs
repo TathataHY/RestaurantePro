@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RestaurantePro.Api.Data;
-using RestaurantePro.Api.Models;
-using RestaurantePro.Api.Services;
 using Microsoft.AspNetCore.Authorization;
+using RestaurantePro.Core.Identity;
+using RestaurantePro.Core.Enums;
+using RestaurantePro.Infrastructure.Services;
 
 namespace RestaurantePro.Api.Controllers;
 
@@ -11,26 +12,31 @@ namespace RestaurantePro.Api.Controllers;
 [ApiController]
 public class UsuarioController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly TokenService _tokenService;
 
-    public UsuarioController(AppDbContext context, TokenService tokenService)
+    public UsuarioController(
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        TokenService tokenService)
     {
-        _context = context;
+        _userManager = userManager;
+        _signInManager = signInManager;
         _tokenService = tokenService;
     }
 
     [Authorize(Roles = "Administrador")]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Usuario>>> GetUsuarios()
+    public async Task<ActionResult<IEnumerable<ApplicationUser>>> GetUsuarios()
     {
-        return await _context.Usuarios.ToListAsync();
+        return await _userManager.Users.ToListAsync();
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Usuario>> GetUsuario(int id)
+    public async Task<ActionResult<ApplicationUser>> GetUsuario(string id)
     {
-        var usuario = await _context.Usuarios.FindAsync(id);
+        var usuario = await _userManager.FindByIdAsync(id);
 
         if (usuario == null)
         {
@@ -43,60 +49,64 @@ public class UsuarioController : ControllerBase
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
-        var usuario = await _context.Usuarios
-            .FirstOrDefaultAsync(u => u.NombreUsuario == request.NombreUsuario && 
-                                    u.Contraseña == request.Contraseña);
-
-        if (usuario == null)
+        var user = await _userManager.FindByNameAsync(request.NombreUsuario);
+        if (user == null || !user.IsActive)
         {
-            return NotFound("Usuario o contraseña incorrectos");
+            return Unauthorized("Usuario no encontrado o inactivo");
         }
 
-        if (!usuario.Activo)
+        var result = await _signInManager.CheckPasswordSignInAsync(user, request.Contraseña, false);
+        if (!result.Succeeded)
         {
-            return BadRequest("Usuario inactivo");
+            return Unauthorized("Contraseña incorrecta");
         }
 
-        var token = _tokenService.GenerateToken(usuario);
+        var token = _tokenService.GenerateToken(user);
 
         return new LoginResponse
         {
             Token = token,
-            Usuario = usuario
+            Usuario = new UserResponse
+            {
+                Id = user.Id,
+                Nombre = user.Nombre,
+                Apellido = user.Apellido,
+                NombreUsuario = user.UserName,
+                Rol = user.Rol,
+                IsActive = user.IsActive
+            }
         };
     }
 
     [Authorize(Roles = "Administrador")]
     [HttpPost]
-    public async Task<ActionResult<Usuario>> PostUsuario(Usuario usuario)
+    public async Task<ActionResult<ApplicationUser>> PostUsuario(ApplicationUser usuario)
     {
-        var existingUser = await _context.Usuarios
-            .FirstOrDefaultAsync(u => u.NombreUsuario == usuario.NombreUsuario);
+        var existingUser = await _userManager.FindByNameAsync(usuario.UserName);
 
         if (existingUser != null)
         {
             return BadRequest("El nombre de usuario ya está en uso");
         }
 
-        _context.Usuarios.Add(usuario);
-        await _context.SaveChangesAsync();
+        await _userManager.CreateAsync(usuario, "Admin123!");
 
         return CreatedAtAction(nameof(GetUsuario), new { id = usuario.Id }, usuario);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutUsuario(int id, Usuario usuario)
+    public async Task<IActionResult> PutUsuario(string id, ApplicationUser usuario)
     {
         if (id != usuario.Id)
         {
             return BadRequest();
         }
 
-        _context.Entry(usuario).State = EntityState.Modified;
+        await _userManager.UpdateAsync(usuario);
 
         try
         {
-            await _context.SaveChangesAsync();
+            await _userManager.UpdateAsync(usuario);
         }
         catch (DbUpdateConcurrencyException)
         {
@@ -111,9 +121,9 @@ public class UsuarioController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUsuario(int id)
+    public async Task<IActionResult> DeleteUsuario(string id)
     {
-        var usuario = await _context.Usuarios.FindAsync(id);
+        var usuario = await _userManager.FindByIdAsync(id);
         if (usuario == null)
         {
             return NotFound();
@@ -122,8 +132,7 @@ public class UsuarioController : ControllerBase
         // Verificar si el usuario es el último administrador
         if (usuario.Rol == RolUsuario.Administrador)
         {
-            var adminCount = await _context.Usuarios
-                .CountAsync(u => u.Rol == RolUsuario.Administrador && u.Id != id);
+            var adminCount = await _userManager.Users.CountAsync(u => u.Rol == RolUsuario.Administrador && u.Id != id);
 
             if (adminCount == 0)
             {
@@ -131,8 +140,7 @@ public class UsuarioController : ControllerBase
             }
         }
 
-        _context.Usuarios.Remove(usuario);
-        await _context.SaveChangesAsync();
+        await _userManager.DeleteAsync(usuario);
 
         return NoContent();
     }
@@ -141,59 +149,57 @@ public class UsuarioController : ControllerBase
     public async Task<IActionResult> InitializeDefaultUsers()
     {
         // Crear usuario administrador por defecto
-        var adminExists = await _context.Usuarios.AnyAsync(u => u.NombreUsuario == "admin");
-        if (!adminExists)
+        if (await _userManager.FindByNameAsync("admin") == null)
         {
-            var defaultAdmin = new Usuario
+            var defaultAdmin = new ApplicationUser
             {
+                UserName = "admin",
                 Nombre = "Administrador",
-                NombreUsuario = "admin",
-                Contraseña = "admin123",
+                Apellido = "Sistema",
+                Email = "admin@restaurante.com",
                 Rol = RolUsuario.Administrador,
-                Activo = true
+                IsActive = true
             };
-            _context.Usuarios.Add(defaultAdmin);
+            await _userManager.CreateAsync(defaultAdmin, "Admin123!");
         }
 
         // Crear usuario mesero por defecto
-        var meseroExists = await _context.Usuarios.AnyAsync(u => u.NombreUsuario == "mesero");
-        if (!meseroExists)
+        if (await _userManager.FindByNameAsync("mesero") == null)
         {
-            var defaultMesero = new Usuario
+            var defaultMesero = new ApplicationUser
             {
+                UserName = "mesero",
                 Nombre = "Mesero",
-                NombreUsuario = "mesero",
-                Contraseña = "mesero123",
+                Apellido = "Sistema",
+                Email = "mesero@restaurante.com",
                 Rol = RolUsuario.Mesero,
-                Activo = true
+                IsActive = true
             };
-            _context.Usuarios.Add(defaultMesero);
+            await _userManager.CreateAsync(defaultMesero, "Mesero123!");
         }
 
         // Crear usuario cocinero por defecto
-        var cocineroExists = await _context.Usuarios.AnyAsync(u => u.NombreUsuario == "cocinero");
-        if (!cocineroExists)
+        if (await _userManager.FindByNameAsync("cocinero") == null)
         {
-            var defaultCocinero = new Usuario
+            var defaultCocinero = new ApplicationUser
             {
+                UserName = "cocinero",
                 Nombre = "Cocinero",
-                NombreUsuario = "cocinero",
-                Contraseña = "cocinero123",
+                Apellido = "Sistema",
+                Email = "cocinero@restaurante.com",
                 Rol = RolUsuario.Cocinero,
-                Activo = true
+                IsActive = true
             };
-            _context.Usuarios.Add(defaultCocinero);
+            await _userManager.CreateAsync(defaultCocinero, "Cocinero123!");
         }
 
-        await _context.SaveChangesAsync();
         return Ok("Usuarios por defecto creados exitosamente");
     }
 
     [HttpGet("authorized")]
     public async Task<ActionResult<bool>> IsUserAuthorized([FromQuery] string nombreUsuario, [FromQuery] RolUsuario[] roles)
     {
-        var usuario = await _context.Usuarios
-            .FirstOrDefaultAsync(u => u.NombreUsuario == nombreUsuario && u.Activo);
+        var usuario = await _userManager.FindByNameAsync(nombreUsuario);
 
         if (usuario == null)
         {
@@ -203,9 +209,9 @@ public class UsuarioController : ControllerBase
         return roles.Contains(usuario.Rol);
     }
 
-    private bool UsuarioExists(int id)
+    private bool UsuarioExists(string id)
     {
-        return _context.Usuarios.Any(e => e.Id == id);
+        return _userManager.Users.Any(e => e.Id == id);
     }
 }
 
@@ -218,5 +224,15 @@ public class LoginRequest
 public class LoginResponse
 {
     public string Token { get; set; }
-    public Usuario Usuario { get; set; }
+    public UserResponse Usuario { get; set; }
+}
+
+public class UserResponse
+{
+    public string Id { get; set; }
+    public string Nombre { get; set; }
+    public string Apellido { get; set; }
+    public string NombreUsuario { get; set; }
+    public RolUsuario Rol { get; set; }
+    public bool IsActive { get; set; }
 } 

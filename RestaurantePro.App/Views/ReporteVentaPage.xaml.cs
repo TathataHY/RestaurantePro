@@ -14,7 +14,7 @@ namespace RestaurantePro.App.Views
             base.OnAppearing();
             if (BindingContext is ReporteVentaViewModel viewModel)
             {
-                viewModel.LoadReporteVentasCommand.Execute(null);
+                viewModel.GenerarReporteCommand.Execute(null);
             }
         }
     }

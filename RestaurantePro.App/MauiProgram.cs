@@ -25,8 +25,8 @@ namespace RestaurantePro.App
                     fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
                 });
 
-            // Registrar DatabaseService como un singleton
-            builder.Services.AddSingleton<DatabaseService>();
+            // Registrar ApiService como singleton
+            builder.Services.AddSingleton<ApiService>();
             builder.Services.AddSingleton<AuthorizationService>();
 
             // Registrar los ViewModels
@@ -35,6 +35,7 @@ namespace RestaurantePro.App
             builder.Services.AddTransient<UsuarioViewModel>();
             builder.Services.AddTransient<ComandaViewModel>();
             builder.Services.AddTransient<ComandaDetailViewModel>();
+            builder.Services.AddTransient<ComandaDetallesViewModel>();
             builder.Services.AddTransient<AddDetalleViewModel>();
             builder.Services.AddTransient<PlatoViewModel>();
             builder.Services.AddTransient<PlatoDetailViewModel>();
@@ -43,19 +44,22 @@ namespace RestaurantePro.App
             builder.Services.AddTransient<MenuViewModel>();
             builder.Services.AddTransient<ReporteVentaViewModel>();
             builder.Services.AddTransient<UsuarioDetailViewModel>();
+            builder.Services.AddTransient<CocinaViewModel>();
+            builder.Services.AddTransient<MeseroViewModel>();
 
             // Registrar las vistas
             builder.Services.AddTransient<LoginPage>();
             builder.Services.AddTransient<UsuarioPage>();
             builder.Services.AddTransient<ComandaPage>();
+            builder.Services.AddTransient<ComandaDetallesPage>();
             builder.Services.AddTransient<AddDetallePage>();
-            builder.Services.AddTransient<PlatoPage>();
             builder.Services.AddTransient<PlatoDetailPage>();
-            builder.Services.AddTransient<MesaPage>();
+            builder.Services.AddTransient<UsuarioDetailPage>();
             builder.Services.AddTransient<MesaDetailPage>();
             builder.Services.AddTransient<MenuPage>();
             builder.Services.AddTransient<ReporteVentaPage>();
-            builder.Services.AddTransient<UsuarioDetailPage>();
+            builder.Services.AddTransient<CocinaPage>();
+            builder.Services.AddTransient<MeseroPage>();
 
             // Configurar logging
 #if DEBUG

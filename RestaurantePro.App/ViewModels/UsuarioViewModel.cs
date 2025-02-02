@@ -26,7 +26,7 @@ namespace RestaurantePro.App.ViewModels
         [RelayCommand]
         private async Task LoadUsuarios()
         {
-            var usuarios = await _databaseService.GetUsuariosAsync();
+            var usuarios = await _apiService.GetUsuariosAsync();
             Usuarios.Clear();
             foreach (var usuario in usuarios)
             {
@@ -75,7 +75,7 @@ namespace RestaurantePro.App.ViewModels
                 bool confirm = await Application.Current.MainPage.DisplayAlert("Confirmar", "¿Estás seguro de que deseas eliminar este usuario?", "Sí", "No");
                 if (confirm)
                 {
-                    await _databaseService.DeleteUsuarioAsync(usuario);
+                    await _apiService.DeleteUsuarioAsync(usuario.Id);
                     Usuarios.Remove(usuario);
                 }
             }

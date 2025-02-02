@@ -18,7 +18,7 @@ namespace RestaurantePro.App.ViewModels
         [RelayCommand]
         private async Task LoadComandas()
         {
-            var comandas = await _databaseService.GetComandasAsync();
+            var comandas = await _apiService.GetComandasAsync();
             Comandas.Clear();
             foreach (var comanda in comandas)
             {
@@ -43,8 +43,8 @@ namespace RestaurantePro.App.ViewModels
                     comanda.Estado = EstadoComanda.Lista;
                 }
 
-                await _databaseService.SaveComandaAsync(comanda);
-                await LoadComandas();
+                await _apiService.SaveComandaAsync(comanda);
+                await LoadComandasCommand.ExecuteAsync(null);
             }
         }
     }

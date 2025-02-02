@@ -21,14 +21,10 @@ namespace RestaurantePro.App.ViewModels
 
         public ObservableCollection<ComandaDetalle> Detalles { get; } = new ObservableCollection<ComandaDetalle>();
 
-        public ComandaDetallesViewModel()
-        {
-        }
-
         [RelayCommand]
         private async Task LoadDetalles()
         {
-            var detalles = await _databaseService.GetComandaDetallesAsync(ComandaId);
+            var detalles = await _apiService.GetComandaDetallesAsync(ComandaId);
             Detalles.Clear();
             foreach (var detalle in detalles)
             {

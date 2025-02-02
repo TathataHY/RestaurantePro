@@ -49,11 +49,11 @@ namespace RestaurantePro.App.ViewModels
                 Observaciones = Observaciones
             };
 
-            await _databaseService.SaveComandaDetalleAsync(nuevoDetalle);
+            await _apiService.SaveComandaDetalleAsync(nuevoDetalle);
 
             // Restar el stock del plato
             Plato.Stock -= Cantidad;
-            await _databaseService.SavePlatoAsync(Plato);
+            await _apiService.SavePlatoAsync(Plato);
 
             var snackbar = Snackbar.Make("Detalle de comanda agregado", duration: TimeSpan.FromSeconds(3));
             await snackbar.Show();
@@ -64,7 +64,7 @@ namespace RestaurantePro.App.ViewModels
         [RelayCommand]
         private async Task LoadPlatos()
         {
-            var platos = await _databaseService.GetPlatosDisponiblesAsync();
+            var platos = await _apiService.GetPlatosDisponiblesAsync();
             Platos.Clear();
             foreach (var plato in platos)
             {

@@ -1,34 +1,45 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RestaurantePro.App.Models;
 using RestaurantePro.App.Services;
+using Microsoft.Maui.Controls;
 
 namespace RestaurantePro.App.ViewModels
 {
     public partial class ReporteVentaViewModel : BaseViewModel
     {
         [ObservableProperty]
-        private ObservableCollection<ReporteVenta> _reporteVentas;
+        private DateTime _fechaInicio = DateTime.Today;
+
+        [ObservableProperty]
+        private DateTime _fechaFin = DateTime.Today;
+
+        [ObservableProperty]
+        private decimal _totalVentas;
+
+        public ObservableCollection<Venta> Ventas { get; } = new ObservableCollection<Venta>();
 
         public ReporteVentaViewModel()
         {
-            ReporteVentas = new ObservableCollection<ReporteVenta>();
         }
 
         [RelayCommand]
-        private async Task LoadReporteVentas()
+        private async Task GenerarReporte()
         {
-            var startDate = DateTime.Now.AddDays(-30); // Últimos 30 días
-            var endDate = DateTime.Now;
+            Ventas.Clear();
+            var ventas = await _apiService.GetVentasAsync(FechaInicio, FechaFin);
+            decimal total = 0;
 
-            var reporteVentas = await _databaseService.GetReporteVentasAsync(startDate, endDate);
-            ReporteVentas.Clear();
-            foreach (var reporte in reporteVentas)
+            foreach (var venta in ventas)
             {
-                ReporteVentas.Add(reporte);
+                Ventas.Add(venta);
+                total += venta.Monto;
             }
+
+            TotalVentas = total;
         }
     }
 }

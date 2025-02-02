@@ -5,11 +5,11 @@ namespace RestaurantePro.App.Services
 {
     public class AuthorizationService
     {
-        private readonly DatabaseService _databaseService;
+        private readonly ApiService _apiService;
 
-        public AuthorizationService(DatabaseService databaseService)
+        public AuthorizationService(ApiService apiService)
         {
-            _databaseService = databaseService;
+            _apiService = apiService;
         }
 
         public async Task<Usuario> GetCurrentUserAsync()
@@ -18,7 +18,7 @@ namespace RestaurantePro.App.Services
             if (userId == 0)
                 return null;
 
-            return await _databaseService.GetUsuarioByIdAsync(userId);
+            return await _apiService.GetUsuarioByIdAsync(userId);
         }
 
         public async Task<bool> IsUserInRoleAsync(RolUsuario role)

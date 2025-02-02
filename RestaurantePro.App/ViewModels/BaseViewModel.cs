@@ -5,13 +5,20 @@ namespace RestaurantePro.App.ViewModels
 {
     public partial class BaseViewModel : ObservableObject
     {
-        protected readonly DatabaseService _databaseService;
+        protected readonly ApiService _apiService;
         protected readonly AuthorizationService _authorizationService;
 
         public BaseViewModel()
         {
-            _databaseService = ServiceLocator.GetService<DatabaseService>();
+            _apiService = ServiceLocator.GetService<ApiService>();
             _authorizationService = ServiceLocator.GetService<AuthorizationService>();
         }
+
+
+        [ObservableProperty]
+        private bool _isBusy;
+
+        [ObservableProperty]
+        private string _title;
     }
 }

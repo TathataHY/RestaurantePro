@@ -49,21 +49,32 @@ namespace RestaurantePro.App.ViewModels
                 Categoria = Categoria
             };
 
-            await _databaseService.SavePlatoAsync(plato);
+            if (PlatoId == 0)
+            {
+                await _apiService.AddPlatoAsync(plato);
+            }
+            else
+            {
+                await _apiService.UpdatePlatoAsync(plato);
+            }
+
             await Shell.Current.GoToAsync("..");
         }
 
         public async void LoadPlato(int platoId)
         {
-            var plato = await _databaseService.GetPlatoByIdAsync(platoId);
-            if (plato != null)
+            if (platoId != 0)
             {
-                PlatoId = plato.Id;
-                Nombre = plato.Nombre;
-                Descripcion = plato.Descripcion;
-                Precio = plato.Precio;
-                Disponible = plato.Disponible;
-                Categoria = plato.Categoria;
+                var plato = await _apiService.GetPlatoByIdAsync(platoId);
+                if (plato != null)
+                {
+                    PlatoId = plato.Id;
+                    Nombre = plato.Nombre;
+                    Descripcion = plato.Descripcion;
+                    Precio = plato.Precio;
+                    Disponible = plato.Disponible;
+                    Categoria = plato.Categoria;
+                }
             }
         }
     }

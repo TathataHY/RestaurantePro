@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RestaurantePro.App.Models;
 using RestaurantePro.App.Services;
+using Microsoft.Maui.Controls;
 
 namespace RestaurantePro.App.ViewModels
 {
@@ -18,7 +19,7 @@ namespace RestaurantePro.App.ViewModels
         [RelayCommand]
         private async Task LoadComandas()
         {
-            var comandas = await _databaseService.GetComandasAsync();
+            var comandas = await _apiService.GetComandasAsync();
             Comandas.Clear();
             foreach (var comanda in comandas)
             {
@@ -35,21 +36,21 @@ namespace RestaurantePro.App.ViewModels
             if (comanda != null)
             {
                 // Calcular el total de la comanda
-                comanda.Detalles = await _databaseService.GetComandaDetallesAsync(comanda.Id);
+                comanda.Detalles = await _apiService.GetComandaDetallesAsync(comanda.Id);
                 comanda.Total = comanda.Detalles.Sum(d => d.Subtotal);
 
                 comanda.Estado = EstadoComanda.Cancelada;
-                await _databaseService.SaveComandaAsync(comanda);
+                await _apiService.SaveComandaAsync(comanda);
 
                 // Actualizar el estado de la mesa a disponible
-                var mesa = await _databaseService.GetMesaByIdAsync(comanda.MesaId);
+                var mesa = await _apiService.GetMesaByIdAsync(comanda.MesaId);
                 if (mesa != null)
                 {
                     mesa.Estado = EstadoMesa.Disponible;
-                    await _databaseService.SaveMesaAsync(mesa);
+                    await _apiService.SaveMesaAsync(mesa);
                 }
 
-                await LoadComandas();
+                await LoadComandasCommand.ExecuteAsync(null);
             }
         }
     }
