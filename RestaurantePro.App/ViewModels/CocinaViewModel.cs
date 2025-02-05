@@ -4,15 +4,49 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using RestaurantePro.App.Models;
 using RestaurantePro.App.Services;
+using Microsoft.Maui.Controls;
 
 namespace RestaurantePro.App.ViewModels
 {
     public partial class CocinaViewModel : BaseViewModel
     {
-        public ObservableCollection<Comanda> Comandas { get; } = new ObservableCollection<Comanda>();
+        public ObservableCollection<ComandaDto> ComandasPendientes { get; } = new ObservableCollection<ComandaDto>();
 
         public CocinaViewModel()
         {
+            ComandasPendientes = new ObservableCollection<ComandaDto>();
+
+            MessagingCenter.Subscribe<SignalRService, ComandaDto>(this, "ComandaCreated", async (sender, comanda) =>
+            {
+                await LoadComandasPendientes();
+            });
+
+            MessagingCenter.Subscribe<SignalRService, (int, EstadoComanda)>(this, "ComandaStatusChanged", 
+                async (sender, tuple) =>
+            {
+                var (comandaId, newStatus) = tuple;
+                await LoadComandasPendientes();
+            });
+        }
+
+        public async Task InitializeAsync()
+        {
+            await _signalRService.StartAsync();
+            await _signalRService.JoinGroupAsync("Cocinero");
+            await LoadComandasPendientes();
+        }
+
+        private async Task LoadComandasPendientes()
+        {
+            var comandas = await _apiService.GetComandasPendientesAsync();
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                ComandasPendientes.Clear();
+                foreach (var comanda in comandas)
+                {
+                    ComandasPendientes.Add(comanda);
+                }
+            });
         }
 
         [RelayCommand]

@@ -7,13 +7,19 @@ using RestaurantePro.Core.Entities;
 using RestaurantePro.Core.Interfaces;
 using RestaurantePro.Core.Interfaces.Repositories;
 using RestaurantePro.Infrastructure.Data;
+using Microsoft.Extensions.Logging;
 
 namespace RestaurantePro.Infrastructure.Repositories
 {
     public class PlatoRepository : BaseRepository<Plato>, IPlatoRepository
     {
-        public PlatoRepository(RestauranteContext context) : base(context)
+        private readonly RestauranteContext _context;
+        private readonly ILogger<PlatoRepository> _logger;
+
+        public PlatoRepository(RestauranteContext context, ILogger<PlatoRepository> logger) : base(context)
         {
+            _context = context;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<Plato>> GetDisponiblesAsync()

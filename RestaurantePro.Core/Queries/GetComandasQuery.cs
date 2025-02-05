@@ -9,7 +9,6 @@ namespace RestaurantePro.Core.Queries
         public EstadoComanda? Estado { get; set; }
     }
 
-
     public class GetComandasQueryHandler
     {
         private readonly IUnitOfWork _unitOfWork;

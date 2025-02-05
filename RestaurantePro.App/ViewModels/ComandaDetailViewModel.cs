@@ -86,5 +86,28 @@ namespace RestaurantePro.App.ViewModels
                 Mesas.Add(mesa);
             }
         }
+
+        [RelayCommand]
+        private async Task UpdateEstado(EstadoComanda newStatus)
+        {
+            if (ComandaId == 0) return;
+
+            try
+            {
+                IsBusy = true;
+                var command = new UpdateComandaStatusCommand
+                {
+                    ComandaId = ComandaId,
+                    NewStatus = newStatus
+                };
+
+                await _apiService.UpdateComandaStatusAsync(command);
+                await Shell.Current.GoToAsync("..");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
     }
 }

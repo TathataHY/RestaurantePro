@@ -10,6 +10,11 @@ using AutoMapper;
 using RestaurantePro.Core.DTOs.Comanda;
 using RestaurantePro.Core.Interfaces;
 using RestaurantePro.Core.Enums;
+using MediatR;
+using RestaurantePro.Core.Events;
+using RestaurantePro.Core.DTOs.Plato;
+using RestaurantePro.Core.Validators;
+using System.Linq;
 
 namespace RestaurantePro.Core.Services
 {
@@ -17,11 +22,21 @@ namespace RestaurantePro.Core.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly INotificationService _notificationService;
+        private readonly ComandaStateManager _stateManager;
+        private readonly IMediator _mediator;
+        private readonly IUserContext _userContext;
+        private readonly ComandaValidator _validator;
 
-        public ComandaService(IUnitOfWork unitOfWork, IMapper mapper)
+        public ComandaService(IUnitOfWork unitOfWork, IMapper mapper, INotificationService notificationService, ComandaStateManager stateManager, IMediator mediator, IUserContext userContext, ComandaValidator validator)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _notificationService = notificationService;
+            _stateManager = stateManager;
+            _mediator = mediator;
+            _userContext = userContext;
+            _validator = validator;
         }
 
         public async Task<ComandaDto> GetByIdAsync(int id)
@@ -42,6 +57,12 @@ namespace RestaurantePro.Core.Services
             comanda.Estado = EstadoComanda.Pendiente;
             comanda.FechaHora = DateTime.UtcNow;
 
+            var validationResult = await _validator.ValidateAsync(comanda);
+            if (!validationResult.IsValid)
+            {
+                throw new ValidationException(validationResult.Errors.First().ErrorMessage);
+            }
+
             var mesa = await _unitOfWork.Mesas.GetByIdAsync(comandaDto.MesaId);
             if (mesa == null)
                 throw new NotFoundException($"Mesa con ID {comandaDto.MesaId} no encontrada");
@@ -52,7 +73,10 @@ namespace RestaurantePro.Core.Services
             await _unitOfWork.Comandas.AddAsync(comanda);
             await _unitOfWork.CompleteAsync();
 
-            return _mapper.Map<ComandaDto>(comanda);
+            var comandaCreatedDto = _mapper.Map<ComandaDto>(comanda);
+            await _notificationService.NotifyComandaCreatedAsync(comandaCreatedDto);
+            
+            return comandaCreatedDto;
         }
 
         public async Task<IEnumerable<ComandaDto>> GetPendientesAsync()
@@ -90,15 +114,49 @@ namespace RestaurantePro.Core.Services
         {
             var comanda = await _unitOfWork.Comandas.GetComandaWithDetallesAsync(comandaId);
             if (comanda == null)
-                throw new NotFoundException($"Comanda con ID {comandaId} no encontrada");
+                throw new NotFoundException($"Comanda {comandaId} no encontrada");
 
             var detalle = _mapper.Map<ComandaDetalle>(detalleDto);
             comanda.Detalles.Add(detalle);
 
-            await _unitOfWork.Comandas.UpdateAsync(comanda);
-            await _unitOfWork.CompleteAsync();
+            await _mediator.Publish(new ComandaDetalleAgregadoEvent(
+                comandaId,
+                _mapper.Map<ComandaDetalleDto>(detalle)));
 
+            await _unitOfWork.CompleteAsync();
             return _mapper.Map<ComandaDto>(comanda);
+        }
+
+        public async Task<ComandaDto> UpdateEstadoAsync(int id, EstadoComanda nuevoEstado)
+        {
+            var comanda = await _unitOfWork.Comandas.GetByIdAsync(id);
+            if (comanda == null)
+                throw new NotFoundException($"Comanda {id} no encontrada");
+
+            var estadoAnterior = comanda.Estado;
+            comanda.Estado = nuevoEstado;
+
+            await _mediator.Publish(new ComandaEstadoCambiadoEvent(
+                id,
+                estadoAnterior,
+                nuevoEstado,
+                _userContext.CurrentUser));
+
+            await _unitOfWork.CompleteAsync();
+            return _mapper.Map<ComandaDto>(comanda);
+        }
+
+        private async Task HandleStateEffects(Comanda comanda, EstadoComanda estadoAnterior, EstadoComanda nuevoEstado)
+        {
+            if (nuevoEstado == EstadoComanda.Cancelada)
+            {
+                var mesa = await _unitOfWork.Mesas.GetByIdAsync(comanda.MesaId);
+                if (mesa != null)
+                {
+                    mesa.Estado = EstadoMesa.Disponible;
+                    await _unitOfWork.Mesas.UpdateAsync(mesa);
+                }
+            }
         }
     }
 } 

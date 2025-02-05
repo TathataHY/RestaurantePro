@@ -12,6 +12,8 @@ using AutoMapper;
 using RestaurantePro.Core.Exceptions;
 using RestaurantePro.Core.Entities;
 using RestaurantePro.Infrastructure.Data;
+using RestaurantePro.Core.Services;
+using Microsoft.Extensions.Logging;
 
 namespace RestaurantePro.Api.Controllers;
 
@@ -24,13 +26,17 @@ public class ComandaController : ControllerBase
     private readonly IUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     private readonly IMediator _mediator;
+    private readonly ComandaStateService _stateService;
+    private readonly ILogger<ComandaController> _logger;
 
-    public ComandaController(RestauranteContext context, IUnitOfWork unitOfWork, IMapper mapper, IMediator mediator)
+    public ComandaController(RestauranteContext context, IUnitOfWork unitOfWork, IMapper mapper, IMediator mediator, ComandaStateService stateService, ILogger<ComandaController> logger)
     {
         _context = context;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         _mediator = mediator;
+        _stateService = stateService;
+        _logger = logger;
     }
 
     // GET: api/Comanda
@@ -68,7 +74,15 @@ public class ComandaController : ControllerBase
     public async Task<ActionResult<ComandaDto>> CreateComanda(CreateComandaCommand command)
     {
         var result = await _mediator.Send(command);
-        return CreatedAtAction(nameof(GetComanda), new { id = result.Id }, result);
+        
+        if (!result.IsSuccess)
+            return BadRequest(result.Error);
+
+        return CreatedAtAction(
+            nameof(GetComanda), 
+            new { id = result.Value.Id }, 
+            result.Value
+        );
     }
 
     // PUT: api/Comanda/{id}
@@ -98,6 +112,19 @@ public class ComandaController : ControllerBase
         var handler = new DeleteComandaCommandHandler(_unitOfWork);
         await handler.Handle(new DeleteComandaCommand { Id = id });
         return NoContent();
+    }
+
+    [HttpPut("{id}/estado")]
+    public async Task<IActionResult> UpdateEstado(int id, [FromBody] UpdateComandaStatusCommand command)
+    {
+        if (id != command.ComandaId)
+            return BadRequest("El ID de la ruta no coincide con el ID del comando");
+
+        var result = await _mediator.Send(command);
+        if (!result.IsSuccess)
+            return BadRequest(result.Error);
+
+        return Ok(result.Value);
     }
 
     private bool ComandaExists(int id)

@@ -1,28 +1,27 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:vm="clr-namespace:RestaurantePro.App.ViewModels"
-             x:Class="RestaurantePro.App.Views.MeseroPage">
+             x:Class="RestaurantePro.App.Views.MeseroPage"
+             Title="Mesero">
 
-    <ContentPage.BindingContext>
-        <vm:MeseroViewModel />
-    </ContentPage.BindingContext>
-
-    <StackLayout Padding="20">
-        <Label Text="Comandas Listas" FontSize="Large" HorizontalOptions="Center" />
-        <ListView x:Name="ComandasListView" ItemsSource="{Binding Comandas}">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <ViewCell>
-                        <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-                            <Label Text="{Binding FechaHora, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" FontSize="Medium" VerticalOptions="Center" Grid.Column="0" />
-                            <Label Text="{Binding Estado}" FontSize="Small" TextColor="Gray" VerticalOptions="Center" HorizontalOptions="End" Margin="0,0,20,0" Grid.Column="1" />
-                            <Label Text="{Binding MesaId, Converter={StaticResource MesaIdToNumeroConverter}}" FontSize="Small" TextColor="Gray" VerticalOptions="Center" HorizontalOptions="End" Grid.Column="2" />
-                            <Button Text="Marcar como Pagada" Command="{Binding BindingContext.UpdateEstadoCommand, Source={x:Reference ComandasListView}}" CommandParameter="{Binding .}" Grid.Column="3" />
-                        </Grid>
-                    </ViewCell>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
-    </StackLayout>
+    <CollectionView ItemsSource="{Binding Comandas}"
+                    EmptyView="No hay comandas listas para entregar">
+        <CollectionView.ItemTemplate>
+            <DataTemplate>
+                <Frame Margin="10" Padding="10">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                        <Label Grid.Row="0" Text="{Binding Id, StringFormat='Comanda #{0}'}" FontSize="Large"/>
+                        <Label Grid.Row="1" Text="{Binding FechaHora, StringFormat='Fecha: {0:g}'}" />
+                        <Label Grid.Row="2" Text="{Binding Mesa.Numero, StringFormat='Mesa: {0}'}" />
+                        <Button Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
+                                Text="Entregar"
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type local:MeseroViewModel}}, Path=UpdateEstadoCommand}"
+                                CommandParameter="{Binding}"
+                                BackgroundColor="Green"
+                                TextColor="White"/>
+                    </Grid>
+                </Frame>
+            </DataTemplate>
+        </CollectionView.ItemTemplate>
+    </CollectionView>
 </ContentPage>

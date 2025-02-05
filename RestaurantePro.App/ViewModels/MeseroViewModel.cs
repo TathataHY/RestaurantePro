@@ -14,6 +14,20 @@ namespace RestaurantePro.App.ViewModels
 
         public MeseroViewModel()
         {
+            MessagingCenter.Subscribe<SignalRService, (int, EstadoComanda)>(this, "ComandaStatusChanged", 
+                async (sender, tuple) =>
+            {
+                var (comandaId, newStatus) = tuple;
+                if (newStatus == EstadoComanda.Lista)
+                {
+                    await LoadComandasCommand.ExecuteAsync(null);
+                }
+            });
+        }
+
+        public async Task InitializeAsync()
+        {
+            await LoadComandasCommand.ExecuteAsync(null);
         }
 
         [RelayCommand]

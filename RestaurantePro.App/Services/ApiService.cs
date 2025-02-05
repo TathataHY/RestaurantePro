@@ -149,9 +149,9 @@ public class ApiService
         return await PostAsync<Comanda>("/comanda", comanda);
     }
 
-    public async Task UpdateComandaEstadoAsync(int comandaId, EstadoComanda estado)
+    public async Task<ComandaDto> UpdateComandaEstadoAsync(UpdateComandaStatusCommand command)
     {
-        await PutAsync($"/comanda/{comandaId}/estado", new { Estado = estado });
+        return await PutAsync<ComandaDto>($"/comanda/{command.ComandaId}/estado", command);
     }
 
     public async Task DeleteComandaAsync(int id)

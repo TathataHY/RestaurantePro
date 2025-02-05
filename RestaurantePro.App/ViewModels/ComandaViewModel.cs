@@ -12,18 +12,29 @@ namespace RestaurantePro.App.ViewModels
     public partial class ComandaViewModel : BaseViewModel
     {
         [ObservableProperty]
-        private ObservableCollection<Comanda> _comandas;
+        private ObservableCollection<Comanda> _comandas = new();
 
         [ObservableProperty]
-        private ObservableCollection<ComandaDetalle> _comandaDetalles;
+        private ObservableCollection<ComandaDetalle> _comandaDetalles = new();
 
         [ObservableProperty]
         private Comanda _selectedComanda;
 
         public ComandaViewModel()
         {
-            Comandas = new ObservableCollection<Comanda>();
-            ComandaDetalles = new ObservableCollection<ComandaDetalle>();
+            Title = "Comandas";
+            
+            MessagingCenter.Subscribe<SignalRService, ComandaDto>(this, "ComandaCreated", async (sender, comanda) =>
+            {
+                await LoadComandasCommand.ExecuteAsync(null);
+                await _notificationService.NotifyAsync($"Nueva comanda creada: #{comanda.Id}");
+            });
+        }
+
+        public override async Task InitializeAsync()
+        {
+            await _signalRService.StartAsync();
+            await LoadComandasCommand.ExecuteAsync(null);
         }
 
         [RelayCommand]

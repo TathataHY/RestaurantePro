@@ -7,6 +7,7 @@ using RestaurantePro.App.Services;
 using RestaurantePro.App.ViewModels;
 using CommunityToolkit.Maui;
 using RestaurantePro.App.Views;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace RestaurantePro.App
 {
@@ -25,9 +26,13 @@ namespace RestaurantePro.App
                     fonts.AddFont("MaterialIcons-Regular.ttf", "MaterialIcons");
                 });
 
-            // Registrar ApiService como singleton
+            // Registrar servicios como singleton
             builder.Services.AddSingleton<ApiService>();
             builder.Services.AddSingleton<AuthorizationService>();
+            builder.Services.AddSingleton<SignalRService>();
+            builder.Services.AddSingleton<INotificationService, NotificationService>();
+            builder.Services.AddSingleton<IAuthorizationService, AuthorizationService>();
+            builder.Services.AddSingleton<PushNotificationService>();
 
             // Registrar los ViewModels
             builder.Services.AddTransient<BaseViewModel>();
@@ -65,6 +70,17 @@ namespace RestaurantePro.App
 #if DEBUG
             builder.Logging.AddDebug();
 #endif
+
+            // Agregar después de los servicios existentes
+            builder.Services.AddSingleton<HubConnection>(_ =>
+            {
+                var hubConnection = new HubConnectionBuilder()
+                    .WithUrl("http://your-api-url/comandaHub")
+                    .WithAutomaticReconnect()
+                    .Build();
+
+                return hubConnection;
+            });
 
             var app = builder.Build();
 

@@ -22,4 +22,15 @@ namespace RestaurantePro.Core.Specifications
             AddInclude(x => x.Detalles);
         }
     }
+
+    public class ComandaConDetallesSpecification : BaseSpecification<Comanda>
+    {
+        public ComandaConDetallesSpecification(int comandaId) 
+            : base(x => x.Id == comandaId)
+        {
+            AddInclude(x => x.Detalles);
+            AddInclude(x => x.Mesa);
+            AddInclude(x => x.Mesero);
+        }
+    }
 }

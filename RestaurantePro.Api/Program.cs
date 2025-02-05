@@ -22,6 +22,13 @@ using RestaurantePro.Infrastructure.Services;
 using RestaurantePro.Core.Settings;
 using Microsoft.AspNetCore.Identity;
 using RestaurantePro.Core.Identity;
+using Microsoft.AspNetCore.SignalR;
+using Hangfire;
+using Hangfire.Dashboard;
+using RestaurantePro.Core.Models;
+using RestaurantePro.Api.Filters;
+using RestaurantePro.Core.Interfaces.Hubs;
+using RestaurantePro.Infrastructure.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,13 +81,18 @@ builder.Services.AddScoped<GetPendientesComandasQueryHandler>();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 // Registrar MediatR y sus comportamientos
-builder.Services.AddMediatR(typeof(CreateComandaCommand).Assembly);
+builder.Services.AddMediatR(cfg => {
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+});
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 // Registrar Validators
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssembly(typeof(CreateComandaCommand).Assembly);
+
+// Registrar validadores
+builder.Services.AddValidatorsFromAssembly(typeof(ComandaValidator).Assembly);
 
 // Registrar Unit of Work y Repositorios
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -89,7 +101,7 @@ builder.Services.AddScoped<IMesaRepository, MesaRepository>();
 
 // Registrar Servicios
 builder.Services.AddScoped<IComandaService, ComandaService>();
-builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationService, SignalRNotificationService>();
 
 // Registrar Handlers
 builder.Services.AddScoped<CreateComandaCommandHandler>();
@@ -117,6 +129,68 @@ builder.Services.AddScoped<IComandaRepository, ComandaRepository>();
 builder.Services.AddScoped<IMesaRepository, MesaRepository>();
 builder.Services.AddScoped<IPlatoRepository, PlatoRepository>();
 
+// Después de las líneas existentes
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+
+// Registrar comportamiento de validación
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+// Registrar comportamientos adicionales
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
+
+// Configurar caché distribuida
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis");
+    options.InstanceName = "RestaurantePro_";
+});
+
+// Agregar después de las líneas existentes
+builder.Services.AddSignalR();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("SignalRPolicy", builder =>
+    {
+        builder.AllowAnyHeader()
+               .AllowAnyMethod()
+               .AllowCredentials()
+               .WithOrigins("http://localhost:5173"); // Ajusta según tu frontend
+    });
+});
+
+// Después de las líneas existentes
+builder.Services.AddSignalR();
+builder.Services.AddScoped<SignalRService>();
+builder.Services.AddScoped<IComandaHub, ComandaHub>();
+
+// Configurar SignalR con autenticación
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+    options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+});
+
+// Después de las líneas existentes
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHangfireServer();
+
+// Después de la línea 103, agregar:
+builder.Services.AddScoped<ComandaStateManager>();
+
+// Agregar HttpContextAccessor
+builder.Services.AddHttpContextAccessor();
+
+// Registrar UserContext
+builder.Services.AddScoped<IUserContext, UserContext>();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -136,6 +210,14 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+app.UseCors("SignalRPolicy");
+app.MapHub<ComandaHub>("/comandaHub");
+
 app.MapControllers();
+
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new HangfireAuthorizationFilter() }
+});
 
 app.Run();

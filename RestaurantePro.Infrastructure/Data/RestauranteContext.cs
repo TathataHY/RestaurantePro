@@ -3,11 +3,15 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Core.Identity;
 using RestaurantePro.Core.Entities;
 using System.Reflection;
+using RestaurantePro.Core.Interfaces.Data;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace RestaurantePro.Infrastructure.Data
 {
-    public class RestauranteContext : IdentityDbContext<ApplicationUser>
+    public class RestauranteContext : IdentityDbContext<ApplicationUser>, IRestauranteContext
     {
+        private IDbContextTransaction _currentTransaction;
+
         public RestauranteContext(DbContextOptions<RestauranteContext> options)
             : base(options)
         {
@@ -34,6 +38,49 @@ namespace RestaurantePro.Infrastructure.Data
                 .HasMaxLength(100);
 
             builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        }
+
+        public async Task BeginTransactionAsync()
+        {
+            if (_currentTransaction != null)
+            {
+                return;
+            }
+
+            _currentTransaction = await Database.BeginTransactionAsync();
+        }
+
+        public async Task CommitTransactionAsync()
+        {
+            try
+            {
+                await SaveChangesAsync();
+                await _currentTransaction?.CommitAsync();
+            }
+            finally
+            {
+                if (_currentTransaction != null)
+                {
+                    await _currentTransaction.DisposeAsync();
+                    _currentTransaction = null;
+                }
+            }
+        }
+
+        public async Task RollbackTransactionAsync()
+        {
+            try
+            {
+                await _currentTransaction?.RollbackAsync();
+            }
+            finally
+            {
+                if (_currentTransaction != null)
+                {
+                    await _currentTransaction.DisposeAsync();
+                    _currentTransaction = null;
+                }
+            }
         }
     }
 }

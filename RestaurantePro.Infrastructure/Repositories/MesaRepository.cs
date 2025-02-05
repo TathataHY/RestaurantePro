@@ -7,13 +7,19 @@ using RestaurantePro.Core.Enums;
 using RestaurantePro.Core.Interfaces;
 using RestaurantePro.Core.Interfaces.Repositories;
 using RestaurantePro.Infrastructure.Data;
+using Microsoft.Extensions.Logging;
 
 namespace RestaurantePro.Infrastructure.Repositories
 {
     public class MesaRepository : BaseRepository<Mesa>, IMesaRepository
     {
-        public MesaRepository(RestauranteContext context) : base(context)
+        private readonly RestauranteContext _context;
+        private readonly ILogger<MesaRepository> _logger;
+
+        public MesaRepository(RestauranteContext context, ILogger<MesaRepository> logger) : base(context)
         {
+            _context = context;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<Mesa>> GetDisponiblesAsync()
