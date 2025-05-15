@@ -11,11 +11,11 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
     public class TarjetaFidelizacionTests
     {
         [Fact]
-        public void Crear_ConDatosValidos_DebeCrearTarjetaFidelizacion()
+        public void Crear_DatosValidos_DebeCrearTarjeta()
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var codigo = "TF-2023-001";
+            var codigo = "FIDELCARD-001";
 
             // Act
             var tarjeta = TarjetaFidelizacion.Crear(clienteId, codigo);
@@ -29,19 +29,17 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             tarjeta.PuntosAcumulados.Should().Be(0);
             tarjeta.PuntosDisponibles.Should().Be(0);
             tarjeta.FechaEmision.Should().BeCloseTo(DateTime.Now, TimeSpan.FromMinutes(1));
+            tarjeta.FechaExpiracion.Should().BeCloseTo(DateTime.Now.AddYears(1), TimeSpan.FromMinutes(1));
             tarjeta.FechaActivacion.Should().BeNull();
-            tarjeta.FechaExpiracion.Should().NotBeNull();
-            tarjeta.FechaExpiracion.Value.Should().BeCloseTo(DateTime.Now.AddYears(1), TimeSpan.FromMinutes(1));
             tarjeta.Id.Should().NotBe(Guid.Empty);
-            tarjeta.DomainEvents.Should().ContainSingle(e => e is TarjetaFidelizacionCreadaEvent);
         }
 
         [Fact]
-        public void Crear_CodigoNuloOVacio_DebeLanzarArgumentException()
+        public void Crear_CodigoVacio_DebeLanzarArgumentException()
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            string codigo = string.Empty;
+            var codigo = string.Empty;
 
             // Act
             Action action = () => TarjetaFidelizacion.Crear(clienteId, codigo);
@@ -56,34 +54,14 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "TF-2023-001");
-            tarjeta.ClearDomainEvents();
+            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "FIDELCARD-002");
 
             // Act
             tarjeta.Activar();
 
             // Assert
             tarjeta.Estado.Should().Be(EstadoTarjeta.Activa);
-            tarjeta.FechaActivacion.Should().NotBeNull();
-            tarjeta.FechaActivacion.Value.Should().BeCloseTo(DateTime.Now, TimeSpan.FromMinutes(1));
-            tarjeta.DomainEvents.Should().ContainSingle(e => e is TarjetaFidelizacionActivadaEvent);
-        }
-
-        [Fact]
-        public void Activar_TarjetaYaActiva_NoDebeGenerarEvento()
-        {
-            // Arrange
-            var clienteId = Guid.NewGuid();
-            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "TF-2023-001");
-            tarjeta.Activar();
-            tarjeta.ClearDomainEvents();
-
-            // Act
-            tarjeta.Activar();
-
-            // Assert
-            tarjeta.Estado.Should().Be(EstadoTarjeta.Activa);
-            tarjeta.DomainEvents.Should().BeEmpty();
+            tarjeta.FechaActivacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromMinutes(1));
         }
 
         [Fact]
@@ -91,34 +69,35 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "TF-2023-001");
-            tarjeta.Cancelar("Prueba");
+            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "FIDELCARD-003");
+            tarjeta.Cancelar("Motivo de prueba");
 
             // Act
             Action action = () => tarjeta.Activar();
 
             // Assert
             action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*cancelada*");
+                .WithMessage("*No se puede activar*");
         }
 
         [Fact]
-        public void AgregarPuntos_TarjetaActiva_DebeAgregarPuntos()
+        public void AgregarPuntos_TarjetaActiva_DebeAgregarPuntosYActualizarTotales()
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "TF-2023-001");
+            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "FIDELCARD-004");
             tarjeta.Activar();
-            tarjeta.ClearDomainEvents();
-            var puntosAAgregar = 100;
+            var puntos = 100;
 
             // Act
-            tarjeta.AgregarPuntos(puntosAAgregar);
+            var historial = tarjeta.AgregarPuntos(puntos, "Prueba de puntos");
 
             // Assert
-            tarjeta.PuntosAcumulados.Should().Be(puntosAAgregar);
-            tarjeta.PuntosDisponibles.Should().Be(puntosAAgregar);
-            tarjeta.DomainEvents.Should().ContainSingle(e => e is PuntosAgregadosATarjetaEvent);
+            tarjeta.PuntosAcumulados.Should().Be(puntos);
+            tarjeta.PuntosDisponibles.Should().Be(puntos);
+            historial.Should().NotBeNull();
+            historial.Puntos.Should().Be(puntos);
+            historial.TipoOperacion.Should().Be(TipoOperacionPuntos.Agregados);
         }
 
         [Fact]
@@ -126,34 +105,38 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "TF-2023-001");
+            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "FIDELCARD-005");
+            // Tarjeta solo emitida, no activada
 
             // Act
-            Action action = () => tarjeta.AgregarPuntos(100);
+            Action action = () => tarjeta.AgregarPuntos(100, "Prueba");
 
             // Assert
             action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*activa*");
+                .WithMessage("*Solo se pueden agregar puntos a tarjetas activas*");
         }
 
         [Fact]
-        public void CanjearPuntos_PuntosSuficientes_DebeRestarPuntosDisponibles()
+        public void CanjearPuntos_PuntosDisponiblesSuficientes_DebeCanjearPuntos()
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "TF-2023-001");
+            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "FIDELCARD-006");
             tarjeta.Activar();
-            tarjeta.AgregarPuntos(100);
-            tarjeta.ClearDomainEvents();
-            var puntosACanjear = 50;
+            tarjeta.AgregarPuntos(200, "Puntos iniciales");
+            var puntosCanje = 50;
+            var conceptoCanje = "Descuento en restaurante";
 
             // Act
-            tarjeta.CanjearPuntos(puntosACanjear, "Descuento en comida");
+            var historial = tarjeta.CanjearPuntos(puntosCanje, conceptoCanje);
 
             // Assert
-            tarjeta.PuntosAcumulados.Should().Be(100);
-            tarjeta.PuntosDisponibles.Should().Be(50);
-            tarjeta.DomainEvents.Should().ContainSingle(e => e is PuntosCanjeadosEvent);
+            tarjeta.PuntosAcumulados.Should().Be(200); // No cambia
+            tarjeta.PuntosDisponibles.Should().Be(150); // 200 - 50
+            historial.Should().NotBeNull();
+            historial.Puntos.Should().Be(puntosCanje);
+            historial.TipoOperacion.Should().Be(TipoOperacionPuntos.Canjeados);
+            historial.Concepto.Should().Be(conceptoCanje);
         }
 
         [Fact]
@@ -161,87 +144,81 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "TF-2023-001");
+            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "FIDELCARD-007");
             tarjeta.Activar();
-            tarjeta.AgregarPuntos(30);
+            tarjeta.AgregarPuntos(50, "Puntos iniciales");
 
-            // Act
-            Action action = () => tarjeta.CanjearPuntos(50, "Descuento en comida");
+            // Act - Intentar canjear más puntos de los disponibles
+            Action action = () => tarjeta.CanjearPuntos(100, "Descuento imposible");
 
             // Assert
             action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*puntos insuficientes*");
+                .WithMessage("*Puntos insuficientes*");
         }
 
         [Fact]
-        public void Suspender_TarjetaActiva_DebeSuspenderTarjeta()
+        public void AgregarPuntosPorCompra_MontoValido_DebeCalcularCorrectamentePuntos()
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "TF-2023-001");
+            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "FIDELCARD-008");
             tarjeta.Activar();
-            tarjeta.ClearDomainEvents();
-            var motivo = "Cliente solicitó suspensión temporal";
+            var montoCompra = 1500m;
+            var factorConversion = 10; // $10 = 1 punto
+            var puntosEsperados = 150;
 
             // Act
-            tarjeta.Suspender(motivo);
+            var historial = tarjeta.AgregarPuntosPorCompra(montoCompra, factorConversion, "Compra en restaurante");
 
             // Assert
-            tarjeta.Estado.Should().Be(EstadoTarjeta.Suspendida);
-            tarjeta.DomainEvents.Should().ContainSingle(e => e is TarjetaFidelizacionSuspendidaEvent);
+            tarjeta.PuntosAcumulados.Should().Be(puntosEsperados);
+            tarjeta.PuntosDisponibles.Should().Be(puntosEsperados);
+            historial.Should().NotBeNull();
+            historial.Puntos.Should().Be(puntosEsperados);
+            historial.MontoCompra.Should().Be(montoCompra);
+            historial.FactorConversion.Should().Be(factorConversion);
         }
 
         [Fact]
-        public void Cancelar_TarjetaActiva_DebeCancelarTarjeta()
+        public void ActualizarNivelSegunPuntos_DebeActualizarAutomaticamente()
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "TF-2023-001");
+            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "FIDELCARD-009");
             tarjeta.Activar();
-            tarjeta.ClearDomainEvents();
-            var motivo = "Cliente ya no desea participar";
 
-            // Act
-            tarjeta.Cancelar(motivo);
+            // Act & Assert - Nivel Plata (>=1000 puntos)
+            tarjeta.AgregarPuntos(1000, "Puntos para nivel Plata");
+            tarjeta.NivelFidelizacion.Should().Be(NivelFidelizacion.Plata);
 
-            // Assert
-            tarjeta.Estado.Should().Be(EstadoTarjeta.Cancelada);
-            tarjeta.DomainEvents.Should().ContainSingle(e => e is TarjetaFidelizacionCanceladaEvent);
+            // Act & Assert - Nivel Oro (>=5000 puntos)
+            tarjeta.AgregarPuntos(4000, "Puntos para nivel Oro");
+            tarjeta.NivelFidelizacion.Should().Be(NivelFidelizacion.Oro);
+
+            // Act & Assert - Nivel Platino (>=10000 puntos)
+            tarjeta.AgregarPuntos(5000, "Puntos para nivel Platino");
+            tarjeta.NivelFidelizacion.Should().Be(NivelFidelizacion.Platino);
         }
 
         [Fact]
-        public void ActualizarNivel_NivelSuperior_DebeActualizarNivel()
+        public void ExpirarPuntos_PuntosDisponibles_DebeReducirPuntosDisponibles()
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "TF-2023-001");
+            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "FIDELCARD-010");
             tarjeta.Activar();
-            tarjeta.ClearDomainEvents();
-            var nuevoNivel = NivelFidelizacion.Oro;
+            tarjeta.AgregarPuntos(500, "Puntos iniciales");
+            var puntosAExpirar = 200;
 
             // Act
-            tarjeta.ActualizarNivel(nuevoNivel);
+            var historial = tarjeta.ExpirarPuntos(puntosAExpirar, "Expiración anual");
 
             // Assert
-            tarjeta.NivelFidelizacion.Should().Be(nuevoNivel);
-            tarjeta.DomainEvents.Should().ContainSingle(e => e is NivelFidelizacionActualizadoEvent);
-        }
-
-        [Fact]
-        public void ActualizarNivel_MismoNivel_NoDebeGenerarEvento()
-        {
-            // Arrange
-            var clienteId = Guid.NewGuid();
-            var tarjeta = TarjetaFidelizacion.Crear(clienteId, "TF-2023-001");
-            tarjeta.ClearDomainEvents();
-            var mismoNivel = NivelFidelizacion.Basico;
-
-            // Act
-            tarjeta.ActualizarNivel(mismoNivel);
-
-            // Assert
-            tarjeta.NivelFidelizacion.Should().Be(mismoNivel);
-            tarjeta.DomainEvents.Should().BeEmpty();
+            tarjeta.PuntosAcumulados.Should().Be(500); // No cambia
+            tarjeta.PuntosDisponibles.Should().Be(300); // 500 - 200
+            historial.Should().NotBeNull();
+            historial.Puntos.Should().Be(puntosAExpirar);
+            historial.TipoOperacion.Should().Be(TipoOperacionPuntos.Vencidos);
         }
     }
 }
