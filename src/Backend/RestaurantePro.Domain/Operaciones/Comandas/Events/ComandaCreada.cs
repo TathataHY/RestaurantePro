@@ -1,5 +1,5 @@
 using System;
-using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Domain.Core.Base.Interfaces;
 
 namespace RestaurantePro.Domain.Operaciones.Comandas.Events
 {

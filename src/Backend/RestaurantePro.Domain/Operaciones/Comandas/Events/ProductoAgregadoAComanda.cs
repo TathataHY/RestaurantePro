@@ -1,5 +1,5 @@
 using System;
-using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Domain.Core.Base.Interfaces;
 
 namespace RestaurantePro.Domain.Operaciones.Comandas.Events
 {
@@ -19,7 +19,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events
         public Guid ProductoId { get; }
         
         /// <summary>
-        /// Cantidad del producto agregado
+        /// Cantidad del producto agregada
         /// </summary>
         public int Cantidad { get; }
         

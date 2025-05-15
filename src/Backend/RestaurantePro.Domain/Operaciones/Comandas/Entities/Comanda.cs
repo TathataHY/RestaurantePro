@@ -1,14 +1,14 @@
-using RestaurantePro.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Domain.Core.Base.Interfaces;
 using RestaurantePro.Domain.Operaciones.Comandas.Entities;
 using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using RestaurantePro.Domain.Operaciones.Comandas.Events;
 using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
 
-namespace RestaurantePro.Domain.Entities
+namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
 {
     /// <summary>
     /// Aggregate Root que representa una comanda en el restaurante
@@ -23,19 +23,9 @@ namespace RestaurantePro.Domain.Entities
         public Guid MesaId { get; private set; }
 
         /// <summary>
-        /// Mesa asociada a la comanda
-        /// </summary>
-        public virtual Mesa Mesa { get; set; }
-
-        /// <summary>
         /// ID del usuario (mesero) que creó la comanda
         /// </summary>
         public Guid MeseroId { get; private set; }
-
-        /// <summary>
-        /// Usuario (mesero) que creó la comanda
-        /// </summary>
-        public virtual Usuario Usuario { get; set; }
 
         /// <summary>
         /// ID del cliente asociado a la comanda
@@ -45,12 +35,12 @@ namespace RestaurantePro.Domain.Entities
         /// <summary>
         /// Fecha de creación de la comanda
         /// </summary>
-        public DateTime FechaCreacion { get; private set; }
+        public new DateTime FechaCreacion { get; private set; }
 
         /// <summary>
         /// Fecha de actualización de la comanda
         /// </summary>
-        public DateTime? FechaActualizacion { get; private set; }
+        public new DateTime? FechaActualizacion { get; private set; }
 
         /// <summary>
         /// Estado actual de la comanda

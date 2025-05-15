@@ -1,6 +1,6 @@
 using System;
 
-namespace RestaurantePro.Domain.Core.Base
+namespace RestaurantePro.Domain.Core.Base.Interfaces
 {
     /// <summary>
     /// Interfaz base para todos los eventos de dominio

@@ -1,15 +1,15 @@
 using System;
-using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Domain.Core.Base.Interfaces;
 
 namespace RestaurantePro.Domain.Operaciones.Comandas.Events
 {
     /// <summary>
-    /// Evento emitido cuando una comanda es cancelada
+    /// Evento emitido cuando se cancela una comanda
     /// </summary>
     public class ComandaCancelada : IDomainEvent
     {
         /// <summary>
-        /// ID de la comanda
+        /// ID de la comanda cancelada
         /// </summary>
         public Guid ComandaId { get; }
         

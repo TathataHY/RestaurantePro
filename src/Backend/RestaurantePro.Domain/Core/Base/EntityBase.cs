@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using RestaurantePro.Domain.Core.Base.Interfaces;
 
 namespace RestaurantePro.Domain.Core.Base
 {
@@ -34,6 +35,14 @@ namespace RestaurantePro.Domain.Core.Base
         /// Eventos de dominio pendientes de publicación
         /// </summary>
         public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents?.AsReadOnly();
+
+        /// <summary>
+        /// Constructor base que asigna un nuevo ID a la entidad
+        /// </summary>
+        protected EntityBase()
+        {
+            Id = Guid.NewGuid();
+        }
 
         /// <summary>
         /// Agrega un nuevo evento de dominio

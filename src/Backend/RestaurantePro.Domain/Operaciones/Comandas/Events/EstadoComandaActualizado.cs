@@ -1,11 +1,11 @@
 using System;
-using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Domain.Core.Base.Interfaces;
 using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 
 namespace RestaurantePro.Domain.Operaciones.Comandas.Events
 {
     /// <summary>
-    /// Evento emitido cuando cambia el estado de una comanda
+    /// Evento emitido cuando se actualiza el estado de una comanda
     /// </summary>
     public class EstadoComandaActualizado : IDomainEvent
     {

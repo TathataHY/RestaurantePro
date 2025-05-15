@@ -5,6 +5,10 @@ global using Moq;
 
 // Domain namespace imports
 global using RestaurantePro.Domain.Core.Base;
+global using RestaurantePro.Domain.Core.Base.Interfaces;
+global using RestaurantePro.Domain.Core.Productos.Entities;
+global using RestaurantePro.Domain.Core.Productos.ValueObjects;
+global using RestaurantePro.Domain.Core.Productos.Events;
 global using RestaurantePro.Domain.Operaciones.Comandas.Entities;
 global using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
 global using RestaurantePro.Domain.Operaciones.Comandas.Enums;

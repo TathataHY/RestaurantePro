@@ -1,22 +1,22 @@
 using System;
-using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Domain.Core.Base.Interfaces;
 
 namespace RestaurantePro.Domain.Operaciones.Comandas.Events
 {
     /// <summary>
-    /// Evento emitido cuando una comanda se finaliza (pagada)
+    /// Evento emitido cuando se finaliza una comanda
     /// </summary>
     public class ComandaFinalizada : IDomainEvent
     {
         /// <summary>
-        /// ID de la comanda
+        /// ID de la comanda finalizada
         /// </summary>
         public Guid ComandaId { get; }
         
         /// <summary>
-        /// Total final pagado
+        /// Total de la comanda (incluyendo impuestos)
         /// </summary>
-        public decimal TotalPagado { get; }
+        public decimal Total { get; }
         
         /// <summary>
         /// Fecha en que ocurrió el evento
@@ -26,10 +26,10 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events
         /// <summary>
         /// Constructor
         /// </summary>
-        public ComandaFinalizada(Guid comandaId, decimal totalPagado)
+        public ComandaFinalizada(Guid comandaId, decimal total)
         {
             ComandaId = comandaId;
-            TotalPagado = totalPagado;
+            Total = total;
             OccurredOn = DateTime.Now;
         }
     }
