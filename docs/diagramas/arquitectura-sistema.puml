@@ -1,0 +1,119 @@
+@startuml Arquitectura de Sistema
+
+skinparam componentStyle rectangle
+skinparam backgroundColor white
+skinparam handwritten false
+
+title Arquitectura del Sistema - RestaurantePro
+
+!define RECTANGLE class
+
+package "Clientes" {
+    RECTANGLE "App Móvil\n(.NET MAUI)" as AppMovil {
+        [UI Móvil] as UIM
+        [ViewModels\n(MVVM)] as VM
+        [Servicios\nMóviles] as SM
+        [SQLite\nLocal] as SQ
+    }
+    
+    RECTANGLE "Aplicación Web\n(Blazor WebAssembly)" as WebApp {
+        [UI Web] as UIW
+        [Componentes\nBlazor] as CB
+        [Servicios Web] as SW
+    }
+}
+
+package "Backend" {
+    RECTANGLE "API\n(ASP.NET Core 8)" as API {
+        [Controllers] as CON
+        [CQRS] as CQ
+        [Middleware] as MW
+        [SignalR Hubs] as HUB
+    }
+    
+    RECTANGLE "Capas de Aplicación" as APP {
+        package "Domain" {
+            [Entidades] as ENT
+            [Eventos de Dominio] as DOME
+            [Interfaces] as INT
+            [Excepciones] as EXC
+        }
+        
+        package "Application" {
+            [Commands] as COM
+            [Queries] as QUE
+            [Validadores] as VAL
+            [Mappings] as MAP
+            [DTOs] as DTO
+        }
+        
+        package "Infrastructure" {
+            [Repositories] as REP
+            [Services] as SER
+            [Database Context] as DBC
+            [Email Service] as EMAIL
+            [File Storage] as FILE
+            [External Integrations] as EXT
+        }
+    }
+}
+
+database "Bases de Datos" as DB {
+    [SQL Server] as SQL
+    [Redis Cache] as REDIS
+}
+
+cloud "Servicios Externos" as EXT_SERV {
+    [Servicios de Pago] as PAY
+    [Notificaciones Push] as PUSH
+    [Almacenamiento\nBlob] as BLOB
+}
+
+' Conexiones Clientes -> Backend
+UIM --> VM
+VM --> SM
+SM --> SQ
+SM --> API : "HTTP/JSON"
+
+UIW --> CB
+CB --> SW
+SW --> API : "HTTP/JSON"
+
+' Conexiones en Backend API
+API --> CQ
+CON --> CQ
+MW --> CON
+HUB --> SM : "WebSockets/SignalR"
+HUB --> SW : "WebSockets/SignalR"
+
+' Conexiones en Capas de Aplicación
+CQ --> COM
+CQ --> QUE
+COM --> VAL
+QUE --> VAL
+COM --> MAP
+QUE --> MAP
+MAP <--> DTO
+COM --> INT
+QUE --> INT
+VAL --> ENT
+ENT --> DOME
+ENT --> EXC
+
+' Conexiones a Infrastructure
+INT --> REP
+INT --> SER
+REP --> DBC
+SER --> DBC
+DBC --> SQL : "Entity Framework Core"
+SER --> REDIS : "Distributed Cache"
+API --> REDIS : "Distributed Cache"
+
+' Conexiones a servicios externos
+SER --> EXT
+EXT --> PAY : "API Integrations"
+EXT --> PUSH : "Firebase/Apple"
+FILE --> BLOB : "Azure/AWS/GCP"
+EMAIL --> EXT_SERV : "SMTP"
+
+@enduml 

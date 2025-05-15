@@ -1,0 +1,128 @@
+@startuml Flujo de Generación de Reportes
+
+skinparam actorStyle awesome
+skinparam backgroundColor white
+skinparam handwritten false
+
+actor "Gerente/Propietario" as gerente
+participant "Portal Web" as web
+participant "API" as api
+database "Base de Datos" as db
+participant "Servicio de Reportes" as reporteSrv
+collections "Resultados Analíticos" as analitica
+
+title Flujo de Generación de Reportes - RestaurantePro
+
+== Inicio de Sesión ==
+gerente -> web : Ingresar credenciales
+web -> api : POST /api/auth/login
+api -> db : Verificar credenciales
+db --> api : Credenciales válidas
+api --> web : Devolver token JWT
+web -> web : Almacenar token
+
+== Dashboard Principal ==
+gerente -> web : Acceder al dashboard
+web -> api : GET /api/dashboard/resumen
+api -> db : Consultar datos generales
+db --> api : Datos resumidos
+api --> web : Devolver datos
+web -> web : Mostrar KPIs principales\n(Ventas diarias, semanales, mensuales)
+
+web -> api : GET /api/dashboard/tendencias
+api -> db : Consultar datos históricos
+db --> api : Tendencias de ventas
+api --> web : Devolver tendencias
+web -> web : Mostrar gráficos de tendencias
+
+== Selección de Reporte ==
+gerente -> web : Navegar a sección de reportes
+web -> api : GET /api/reportes/tipos
+api --> web : Devolver tipos de reportes
+web -> web : Mostrar opciones de reportes
+
+gerente -> web : Seleccionar tipo de reporte
+web -> web : Mostrar formulario de\nparámetros de reporte
+
+== Configuración de Parámetros ==
+gerente -> web : Seleccionar rango de fechas
+gerente -> web : Configurar filtros adicionales
+note right: Categorías, meseros, horarios, etc.
+gerente -> web : Seleccionar formato de salida
+note right: PDF, Excel, CSV
+
+gerente -> web : Generar reporte
+
+== Generación de Reporte ==
+web -> api : POST /api/reportes/generar
+note right: {tipo, fechaInicio, fechaFin, filtros, formato}
+api -> reporteSrv : Solicitar generación
+reporteSrv -> db : Consultar datos según parámetros
+
+alt Reporte de Ventas
+    db -> analitica : Consultar transacciones
+    analitica -> db : Datos procesados
+else Reporte de Productos
+    db -> analitica : Consultar productos vendidos
+    analitica -> db : Datos procesados
+else Reporte de Meseros
+    db -> analitica : Consultar desempeño de meseros
+    analitica -> db : Datos procesados
+end
+
+db --> reporteSrv : Devolver datos
+reporteSrv -> reporteSrv : Aplicar cálculos y\nformatear datos
+
+alt Formato PDF
+    reporteSrv -> reporteSrv : Generar documento PDF
+else Formato Excel
+    reporteSrv -> reporteSrv : Generar hoja de cálculo
+else Formato CSV
+    reporteSrv -> reporteSrv : Generar archivo CSV
+end
+
+reporteSrv --> api : Devolver URL del reporte
+api --> web : URL de descarga
+web -> web : Mostrar enlace de descarga
+
+== Descarga de Reporte ==
+gerente -> web : Hacer clic en enlace de descarga
+web -> api : GET /api/reportes/descargar/{id}
+api -> reporteSrv : Solicitar archivo
+reporteSrv --> api : Enviar archivo
+api --> web : Stream del archivo
+web --> gerente : Abrir/guardar archivo
+
+== Exportación y Compartir ==
+gerente -> web : Seleccionar "Compartir Reporte"
+
+alt Compartir por Email
+    gerente -> web : Ingresar destinatarios
+    web -> api : POST /api/reportes/{id}/compartir/email
+    api -> reporteSrv : Enviar email con reporte
+    reporteSrv --> api : Confirmación
+    api --> web : Email enviado
+else Programar Envío Periódico
+    gerente -> web : Configurar frecuencia
+    web -> api : POST /api/reportes/programar
+    api -> db : Guardar programación
+    db --> api : Confirmación
+    api --> web : Reporte programado
+end
+
+== Visualización de Reportes Guardados ==
+gerente -> web : Acceder a "Mis Reportes"
+web -> api : GET /api/reportes/historial
+api -> db : Consultar historial
+db --> api : Reportes generados
+api --> web : Devolver lista
+web -> web : Mostrar reportes generados\npreviamente
+
+gerente -> web : Seleccionar reporte anterior
+web -> api : GET /api/reportes/{id}
+api -> reporteSrv : Recuperar reporte
+reporteSrv --> api : Devolver reporte
+api --> web : Datos del reporte
+web -> web : Mostrar reporte
+
+@enduml 

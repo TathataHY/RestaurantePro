@@ -1,0 +1,94 @@
+@startuml Flujo de Preparación en Cocina
+
+skinparam actorStyle awesome
+skinparam backgroundColor white
+skinparam handwritten false
+
+actor "Cocinero" as cocinero
+participant "Aplicación Cocina" as appCocina
+participant "API" as api
+database "Base de Datos" as db
+participant "SignalR Hub" as hub
+actor "Mesero" as mesero
+
+title Flujo de Preparación en Cocina - RestaurantePro
+
+== Inicio de Sesión ==
+cocinero -> appCocina : Ingresar credenciales
+appCocina -> api : POST /api/auth/login
+api -> db : Verificar credenciales
+db --> api : Credenciales válidas
+api --> appCocina : Devolver token JWT
+appCocina -> appCocina : Almacenar token
+
+== Visualización de Comandas Pendientes ==
+cocinero -> appCocina : Abrir pantalla de comandas
+appCocina -> api : GET /api/comandas?estado=Pendiente
+api -> db : Consultar comandas pendientes
+db --> api : Lista de comandas pendientes
+api --> appCocina : Devolver comandas pendientes
+appCocina -> appCocina : Mostrar lista ordenada\npor tiempo de llegada
+
+== Recepción de Nuevas Comandas ==
+hub -> appCocina : Notificar nueva comanda
+appCocina -> appCocina : Mostrar notificación
+appCocina -> appCocina : Agregar a lista de pendientes\ncon animación
+
+== Selección de Comanda para Preparar ==
+cocinero -> appCocina : Seleccionar comanda
+appCocina -> api : GET /api/comandas/{id}/detalles
+api -> db : Consultar detalles de comanda
+db --> api : Detalles de comanda
+api --> appCocina : Devolver detalles
+appCocina -> appCocina : Mostrar detalles con notas\ny cantidades
+
+== Inicio de Preparación ==
+cocinero -> appCocina : Iniciar preparación
+appCocina -> api : PUT /api/comandas/{id}/estado
+note right: Estado: "En Preparación"
+api -> db : Actualizar estado de comanda
+db --> api : Confirmación
+api -> hub : Notificar cambio de estado
+hub -> mesero : Notificar comanda en preparación
+api --> appCocina : Estado actualizado
+
+== Preparación de Elementos ==
+loop Para cada elemento del pedido
+    cocinero -> appCocina : Marcar elemento como "En Preparación"
+    appCocina -> api : PUT /api/comandas/detalles/{id}/estado
+    note right: Estado: "En Preparación"
+    api -> db : Actualizar estado de detalle
+    db --> api : Confirmación
+    api --> appCocina : Estado actualizado
+    
+    cocinero -> appCocina : Marcar elemento como "Listo"
+    appCocina -> api : PUT /api/comandas/detalles/{id}/estado
+    note right: Estado: "Listo"
+    api -> db : Actualizar estado de detalle
+    db --> api : Confirmación
+    api --> appCocina : Estado actualizado
+end
+
+== Finalización de Comanda ==
+cocinero -> appCocina : Finalizar comanda completa
+appCocina -> api : PUT /api/comandas/{id}/estado
+note right: Estado: "Lista"
+api -> db : Actualizar estado de comanda
+db --> api : Confirmación
+api -> hub : Notificar comanda lista
+hub -> mesero : Notificar comanda lista para servir
+api --> appCocina : Confirmación de actualización
+appCocina -> appCocina : Mover comanda a lista de "Listos"
+
+== Comanda Entregada ==
+mesero -> appCocina : Confirmar recepción
+appCocina -> api : PUT /api/comandas/{id}/estado
+note right: Estado: "Entregada"
+api -> db : Actualizar estado de comanda
+db --> api : Confirmación
+api -> hub : Notificar comanda entregada
+hub -> cocinero : Actualizar estado a entregada
+api --> appCocina : Confirmación
+appCocina -> appCocina : Remover comanda de lista
+
+@enduml 

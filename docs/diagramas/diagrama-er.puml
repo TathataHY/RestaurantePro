@@ -1,0 +1,236 @@
+@startuml Diagrama Entidad-Relación RestaurantePro
+
+!theme plain
+skinparam linetype ortho
+skinparam dpi 300
+skinparam packageStyle rectangle
+
+' Definición de entidades (tablas)
+entity "Usuarios" as usuarios {
+  *id : INT <<PK>>
+  --
+  nombre : VARCHAR(100)
+  apellido : VARCHAR(100)
+  email : VARCHAR(150) <<UQ>>
+  password_hash : VARCHAR(255)
+  salt : VARCHAR(50)
+  rol : VARCHAR(20)
+  ultimo_acceso : DATETIME
+  *fecha_creacion : DATETIME
+  fecha_actualizacion : DATETIME
+  esta_eliminado : BOOLEAN
+}
+
+entity "Mesas" as mesas {
+  *id : INT <<PK>>
+  --
+  numero : INT <<UQ>>
+  capacidad : INT
+  ubicacion : VARCHAR(50)
+  estado : VARCHAR(20)
+  *fecha_creacion : DATETIME
+  fecha_actualizacion : DATETIME
+  esta_eliminado : BOOLEAN
+}
+
+entity "Categorias" as categorias {
+  *id : INT <<PK>>
+  --
+  nombre : VARCHAR(50) <<UQ>>
+  descripcion : VARCHAR(255)
+  imagen_url : VARCHAR(255)
+  orden : INT
+  *fecha_creacion : DATETIME
+  fecha_actualizacion : DATETIME
+  esta_eliminado : BOOLEAN
+}
+
+entity "Productos" as productos {
+  *id : INT <<PK>>
+  --
+  *categoria_id : INT <<FK>>
+  nombre : VARCHAR(100) <<UQ>>
+  descripcion : VARCHAR(255)
+  precio : DECIMAL(10,2)
+  imagen_url : VARCHAR(255)
+  tiempo_preparacion : INT
+  unidad_medida : VARCHAR(20)
+  es_personalizable : BOOLEAN
+  esta_disponible : BOOLEAN
+  *fecha_creacion : DATETIME
+  fecha_actualizacion : DATETIME
+  esta_eliminado : BOOLEAN
+}
+
+entity "Ingredientes" as ingredientes {
+  *id : INT <<PK>>
+  --
+  nombre : VARCHAR(100) <<UQ>>
+  descripcion : VARCHAR(255)
+  unidad_medida : VARCHAR(20)
+  costo : DECIMAL(10,2)
+  stock_actual : DECIMAL(10,2)
+  stock_minimo : DECIMAL(10,2)
+  *fecha_creacion : DATETIME
+  fecha_actualizacion : DATETIME
+  esta_eliminado : BOOLEAN
+}
+
+entity "Productos_Ingredientes" as productos_ingredientes {
+  *id : INT <<PK>>
+  --
+  *producto_id : INT <<FK>>
+  *ingrediente_id : INT <<FK>>
+  cantidad : DECIMAL(10,2)
+  es_opcional : BOOLEAN
+  *fecha_creacion : DATETIME
+  fecha_actualizacion : DATETIME
+  esta_eliminado : BOOLEAN
+}
+
+entity "Comandas" as comandas {
+  *id : INT <<PK>>
+  --
+  *mesa_id : INT <<FK>>
+  *usuario_id : INT <<FK>>
+  numero_comanda : VARCHAR(50) <<UQ>>
+  estado : VARCHAR(20)
+  notas : TEXT
+  subtotal : DECIMAL(10,2)
+  impuestos : DECIMAL(10,2)
+  total : DECIMAL(10,2)
+  *fecha_creacion : DATETIME
+  fecha_actualizacion : DATETIME
+  fecha_completado : DATETIME
+  esta_eliminado : BOOLEAN
+}
+
+entity "Comandas_Detalle" as comandas_detalle {
+  *id : INT <<PK>>
+  --
+  *comanda_id : INT <<FK>>
+  *producto_id : INT <<FK>>
+  cantidad : INT
+  precio_unitario : DECIMAL(10,2)
+  subtotal : DECIMAL(10,2)
+  estado : VARCHAR(20)
+  notas_especiales : TEXT
+  *fecha_creacion : DATETIME
+  fecha_actualizacion : DATETIME
+  fecha_completado : DATETIME
+  esta_eliminado : BOOLEAN
+}
+
+entity "Comandas_Detalle_Personalizacion" as comandas_detalle_personalizacion {
+  *id : INT <<PK>>
+  --
+  *comanda_detalle_id : INT <<FK>>
+  *ingrediente_id : INT <<FK>>
+  accion : VARCHAR(20)
+  cantidad : DECIMAL(10,2)
+  *fecha_creacion : DATETIME
+  esta_eliminado : BOOLEAN
+}
+
+entity "Pagos" as pagos {
+  *id : INT <<PK>>
+  --
+  *comanda_id : INT <<FK>>
+  *usuario_id : INT <<FK>>
+  metodo_pago : VARCHAR(50)
+  referencia : VARCHAR(100)
+  monto : DECIMAL(10,2)
+  estado : VARCHAR(20)
+  notas : TEXT
+  *fecha_creacion : DATETIME
+  fecha_actualizacion : DATETIME
+  esta_eliminado : BOOLEAN
+}
+
+entity "Inventario_Movimientos" as inventario_movimientos {
+  *id : INT <<PK>>
+  --
+  *ingrediente_id : INT <<FK>>
+  *usuario_id : INT <<FK>>
+  tipo_movimiento : VARCHAR(20)
+  cantidad : DECIMAL(10,2)
+  motivo : VARCHAR(255)
+  referencia : VARCHAR(100)
+  *fecha_creacion : DATETIME
+  esta_eliminado : BOOLEAN
+}
+
+entity "Reservaciones" as reservaciones {
+  *id : INT <<PK>>
+  --
+  *mesa_id : INT <<FK>>
+  nombre_cliente : VARCHAR(100)
+  telefono : VARCHAR(20)
+  email : VARCHAR(150)
+  fecha_reservacion : DATETIME
+  duracion_estimada : INT
+  numero_personas : INT
+  estado : VARCHAR(20)
+  notas : TEXT
+  *fecha_creacion : DATETIME
+  fecha_actualizacion : DATETIME
+  esta_eliminado : BOOLEAN
+}
+
+' Relaciones
+usuarios ||..o{ comandas
+usuarios ||..o{ pagos
+usuarios ||..o{ inventario_movimientos
+
+mesas ||..o{ comandas
+mesas ||..o{ reservaciones
+
+categorias ||..o{ productos
+
+productos ||..o{ comandas_detalle
+productos }o..||{ productos_ingredientes
+
+ingredientes }o..||{ productos_ingredientes
+ingredientes ||..o{ inventario_movimientos
+ingredientes ||..o{ comandas_detalle_personalizacion
+
+comandas ||..o{ comandas_detalle
+comandas ||..o{ pagos
+
+comandas_detalle ||..o{ comandas_detalle_personalizacion
+
+' Notas explicativas
+note bottom of usuarios
+  Esta tabla almacena la información de todos los usuarios del sistema,
+  incluyendo meseros, cocineros, administradores y gerentes.
+  El campo "rol" define los permisos del usuario.
+end note
+
+note bottom of mesas
+  Representa las mesas físicas del restaurante.
+  El estado puede ser: Libre, Ocupada, Reservada, En Mantenimiento.
+end note
+
+note bottom of productos_ingredientes
+  Tabla de unión (muchos a muchos) entre productos e ingredientes.
+  Define la "receta" de cada producto.
+end note
+
+note bottom of comandas
+  Representa las órdenes o pedidos de los clientes.
+  Una comanda pertenece a una mesa y es creada por un usuario (mesero).
+  Estados posibles: Pendiente, En Preparación, Lista, Entregada, Pagada, Cancelada.
+end note
+
+note bottom of comandas_detalle_personalizacion
+  Almacena las personalizaciones de cada elemento de una comanda.
+  El campo "accion" puede ser: Agregar, Quitar, Sustituir.
+end note
+
+note bottom of pagos
+  Registra los pagos realizados para cada comanda.
+  Una comanda puede tener múltiples pagos (pago dividido).
+  Métodos de pago: Efectivo, Tarjeta Crédito, Tarjeta Débito, Transferencia, etc.
+end note
+
+@enduml 

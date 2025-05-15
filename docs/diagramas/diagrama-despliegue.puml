@@ -1,0 +1,148 @@
+@startuml Diagrama de Despliegue - RestaurantePro
+
+!theme plain
+skinparam linetype ortho
+skinparam dpi 300
+skinparam componentStyle uml2
+skinparam nodeBackgroundColor WhiteSmoke
+skinparam nodeStyle Rectangle
+
+title Diagrama de Despliegue - RestaurantePro
+
+' Definición de nodos y componentes
+node "Dispositivo Mesero" as mobile_waiter {
+  component "App Móvil\n(.NET MAUI)" as mobile_app_waiter {
+    component "SQLite Local" as sqlite_waiter
+  }
+  node "Hardware" as hardware_waiter {
+    component "Impresora Bluetooth" as printer
+    component "Escáner QR/Códigos" as scanner
+  }
+}
+
+node "Dispositivo Cocina" as mobile_kitchen {
+  component "App Móvil\n(.NET MAUI)" as mobile_app_kitchen {
+    component "SQLite Local" as sqlite_kitchen
+  }
+  node "Pantalla Resistente\nal Calor" as kitchen_display
+}
+
+node "Estación de Trabajo\nAdmin/Gerente" as admin_station {
+  component "Navegador Web" as web_browser {
+    component "Portal Web\n(Blazor WebAssembly)" as web_portal
+  }
+}
+
+node "Infraestructura en La Nube" as cloud {
+  node "Servidor Web" as web_server {
+    component "API Backend\n(ASP.NET Core 8)" as api_backend
+    component "Identity Server" as identity_server
+    component "SignalR Hub" as signalr_hub
+  }
+  
+  node "Servidor de Base de Datos" as db_server {
+    database "SQL Server" as sql_server {
+      component "Tablas" as tables
+      component "Procedimientos\nAlmacenados" as stored_procs
+      component "Funciones" as functions
+    }
+    
+    database "Redis Cache" as redis {
+      component "Datos en Memoria" as redis_data
+      component "Cola de Mensajes" as redis_queue
+    }
+  }
+  
+  node "Servicios Externos" as external_services {
+    component "Servicio de Email" as email_service
+    component "Servicio SMS" as sms_service
+    component "Pasarela de Pagos" as payment_gateway
+    component "Servicio de\nNotificaciones Push" as push_service
+    component "Almacenamiento\nde Archivos" as blob_storage
+  }
+  
+  node "Servidor de CI/CD" as cicd_server {
+    component "Azure DevOps" as devops
+    component "GitHub Actions" as github_actions
+  }
+  
+  node "Monitoreo" as monitoring {
+    component "Application Insights" as app_insights
+    component "Log Analytics" as log_analytics
+    component "Alertas" as alerts
+  }
+}
+
+' Conexiones entre componentes
+mobile_app_waiter --> api_backend : "HTTPS/REST\nJSON"
+mobile_app_waiter --> signalr_hub : "WebSocket\nTiempo Real"
+mobile_app_kitchen --> api_backend : "HTTPS/REST\nJSON"
+mobile_app_kitchen --> signalr_hub : "WebSocket\nTiempo Real"
+web_portal --> api_backend : "HTTPS/REST\nJSON"
+web_portal --> signalr_hub : "WebSocket\nTiempo Real"
+
+api_backend --> sql_server : "Entity Framework Core"
+api_backend --> redis : "StackExchange.Redis"
+api_backend --> identity_server : "OpenID Connect"
+api_backend --> external_services : "API/SDK"
+
+mobile_app_waiter --> sqlite_waiter : "SQLite.NET"
+mobile_app_kitchen --> sqlite_kitchen : "SQLite.NET"
+mobile_app_waiter --> hardware_waiter : "Bluetooth/USB"
+
+' Monitoreo
+api_backend --> app_insights : "Telemetría"
+sql_server --> log_analytics : "Logs SQL"
+
+' Notas explicativas
+note right of mobile_app_waiter
+  Aplicación para meseros con soporte
+  offline para toma de comandas y
+  cobros cuando no hay conectividad
+end note
+
+note right of mobile_app_kitchen
+  Aplicación optimizada para cocina
+  con visualización clara de comandas
+  pendientes y notificaciones
+end note
+
+note right of web_portal
+  Portal administrativo para gerentes
+  y propietarios con dashboard,
+  reportes y configuración
+end note
+
+note bottom of api_backend
+  API RESTful implementando patrones
+  CQRS y Mediator, con autenticación
+  mediante JWT y autorización basada
+  en roles y políticas
+end note
+
+note bottom of sql_server
+  Almacenamiento principal de datos
+  con alta disponibilidad y backups
+  automáticos programados
+end note
+
+note bottom of redis
+  Cache distribuida para mejorar
+  rendimiento y gestionar mensajes
+  en tiempo real entre componentes
+end note
+
+note bottom of external_services
+  Integración con servicios externos
+  para envío de notificaciones,
+  procesamiento de pagos y
+  almacenamiento de archivos
+end note
+
+note bottom of monitoring
+  Sistema de monitoreo para detectar
+  problemas de rendimiento, errores
+  y comportamientos anómalos
+end note
+
+@enduml 

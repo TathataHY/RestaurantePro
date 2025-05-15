@@ -1,0 +1,89 @@
+@startuml Flujo de Toma de Comandas
+
+skinparam actorStyle awesome
+skinparam backgroundColor white
+skinparam handwritten false
+
+actor "Mesero" as mesero
+participant "App Móvil" as app
+participant "API" as api
+database "Base de Datos" as db
+participant "SignalR Hub" as hub
+actor "Cocinero" as cocinero
+
+title Flujo de Toma de Comandas - RestaurantePro
+
+== Inicio de Sesión ==
+mesero -> app : Ingresar credenciales
+app -> api : POST /api/auth/login
+api -> db : Verificar credenciales
+db --> api : Credenciales válidas
+api --> app : Devolver token JWT
+app -> app : Almacenar token en local storage
+
+== Visualización de Mesas ==
+mesero -> app : Abrir pantalla de mesas
+app -> api : GET /api/mesas
+api -> db : Consultar mesas
+db --> api : Lista de mesas y estados
+api --> app : Devolver lista de mesas
+app -> app : Mostrar mesas con estados\n(Libre, Ocupada, Reservada)
+
+== Selección de Mesa ==
+mesero -> app : Seleccionar mesa
+alt Mesa Libre
+    app -> app : Cambiar estado a "Ocupada"
+    app -> api : PUT /api/mesas/{id}/estado
+    api -> db : Actualizar estado de mesa
+    db --> api : Confirmación
+    api --> app : Estado actualizado
+else Mesa ya Ocupada
+    app -> api : GET /api/comandas?mesaId={id}
+    api -> db : Consultar comandas activas
+    db --> api : Comandas existentes
+    api --> app : Devolver comandas activas
+end
+
+== Creación de Nueva Comanda ==
+mesero -> app : Crear nueva comanda
+app -> app : Mostrar formulario de comanda
+mesero -> app : Seleccionar categoría de productos
+app -> api : GET /api/categorias
+api -> db : Consultar categorías
+db --> api : Lista de categorías
+api --> app : Devolver categorías
+
+loop Para cada categoría seleccionada
+    mesero -> app : Seleccionar categoría
+    app -> api : GET /api/productos?categoriaId={id}
+    api -> db : Consultar productos por categoría
+    db --> api : Lista de productos
+    api --> app : Devolver productos
+    mesero -> app : Seleccionar producto
+    mesero -> app : Indicar cantidad
+    mesero -> app : Agregar notas especiales (opcional)
+    app -> app : Agregar a lista temporal
+end
+
+mesero -> app : Finalizar comanda
+app -> app : Calcular subtotal
+app -> app : Mostrar resumen para confirmación
+mesero -> app : Confirmar comanda
+
+app -> api : POST /api/comandas
+api -> db : Crear nueva comanda
+db --> api : Comanda creada (ID)
+
+loop Para cada detalle de comanda
+    api -> db : Insertar detalle comanda
+end
+
+api --> app : Confirmación de creación
+app --> mesero : Mostrar confirmación
+
+== Notificación a Cocina ==
+api -> hub : Enviar notificación
+hub -> cocinero : Notificar nueva comanda
+cocinero -> cocinero : Recibir notificación
+
+@enduml 

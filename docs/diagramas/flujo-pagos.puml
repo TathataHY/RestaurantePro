@@ -1,0 +1,117 @@
+@startuml Flujo de Pagos
+
+skinparam actorStyle awesome
+skinparam backgroundColor white
+skinparam handwritten false
+
+actor "Mesero" as mesero
+actor "Cliente" as cliente
+participant "App Móvil" as app
+participant "API" as api
+database "Base de Datos" as db
+participant "Sistema de Pagos" as pagos
+
+title Flujo de Pagos - RestaurantePro
+
+== Solicitud de Cuenta ==
+cliente -> mesero : Solicitar cuenta
+mesero -> app : Buscar mesa del cliente
+app -> api : GET /api/mesas/{id}
+api -> db : Consultar mesa
+db --> api : Información de mesa
+api --> app : Devolver información
+
+mesero -> app : Seleccionar "Generar Cuenta"
+app -> api : GET /api/comandas?mesaId={id}&estado=Entregada
+api -> db : Consultar comandas activas
+db --> api : Comandas entregadas
+api --> app : Devolver comandas
+app -> app : Mostrar resumen de\ncomandas para la mesa
+
+== Generación de Cuenta ==
+mesero -> app : Confirmar generación
+app -> app : Calcular subtotales, impuestos\ny total
+
+alt Dividir Cuenta
+    mesero -> app : Seleccionar "Dividir Cuenta"
+    app -> app : Mostrar opciones de división
+    
+    alt División por Porcentaje
+        mesero -> app : Indicar porcentajes
+        app -> app : Calcular montos según porcentajes
+    else División por Elementos
+        mesero -> app : Asignar elementos a cada pagador
+        app -> app : Calcular totales por pagador
+    else División Equitativa
+        mesero -> app : Indicar número de partes
+        app -> app : Dividir monto total equitativamente
+    end
+end
+
+app -> api : GET /api/impresion/cuenta?comandaId={id}
+api -> api : Generar vista previa de cuenta
+api --> app : Devolver vista previa
+app -> app : Mostrar cuenta al mesero
+
+== Procesamiento de Pago ==
+mesero -> cliente : Presentar cuenta
+cliente -> mesero : Seleccionar método de pago
+
+alt Pago en Efectivo
+    cliente -> mesero : Entregar efectivo
+    mesero -> app : Seleccionar "Pago en Efectivo"
+    app -> app : Ingresar monto recibido
+    app -> app : Calcular cambio
+    app -> api : POST /api/pagos
+    note right: {comandaId, monto, metodoPago: "Efectivo"}
+    api -> db : Registrar pago
+    db --> api : Confirmación
+    api --> app : Pago registrado
+    app -> app : Mostrar cambio a devolver
+    
+else Pago con Tarjeta
+    mesero -> app : Seleccionar "Pago con Tarjeta"
+    app -> app : Ingresar últimos 4 dígitos
+    app -> api : POST /api/pagos
+    note right: {comandaId, monto, metodoPago: "Tarjeta", referencia: "****1234"}
+    api -> db : Registrar pago
+    db --> api : Confirmación
+    api --> app : Pago registrado
+    
+else Pago Mixto
+    mesero -> app : Seleccionar "Pago Mixto"
+    loop Para cada forma de pago
+        mesero -> app : Seleccionar método
+        mesero -> app : Ingresar monto parcial
+        app -> api : POST /api/pagos
+        note right: {comandaId, monto: montoParcial, metodoPago}
+        api -> db : Registrar pago parcial
+        db --> api : Confirmación
+        api --> app : Pago registrado
+    end
+end
+
+== Finalización ==
+app -> api : PUT /api/comandas/{id}/estado
+note right: Estado: "Pagada"
+api -> db : Actualizar estado de comanda
+db --> api : Confirmación
+api --> app : Estado actualizado
+
+alt Impresión de Recibo
+    mesero -> app : Seleccionar "Imprimir Recibo"
+    app -> api : GET /api/impresion/recibo?pagoId={id}
+    api -> api : Generar recibo
+    api --> app : Devolver recibo
+    app -> app : Enviar a impresora
+    note right: Utilizando impresora Bluetooth o WiFi
+end
+
+mesero -> app : Finalizar proceso
+app -> api : PUT /api/mesas/{id}/estado
+note right: Estado: "Libre"
+api -> db : Actualizar estado de mesa
+db --> api : Confirmación
+api --> app : Mesa actualizada
+
+@enduml 

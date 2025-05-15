@@ -1,0 +1,191 @@
+@startuml Diagrama de Clases
+
+skinparam classAttributeIconSize 0
+skinparam backgroundColor white
+skinparam handwritten false
+skinparam class {
+    BackgroundColor white
+    ArrowColor black
+    BorderColor black
+}
+
+title Diagrama de Clases - RestaurantePro
+
+package "Entidades" {
+    abstract class BaseEntity {
+        + Id: int
+        + CreatedAt: DateTime
+        + UpdatedAt: DateTime?
+        + IsDeleted: bool
+    }
+    
+    class Usuario {
+        + Nombre: string
+        + Apellido: string
+        + Email: string
+        + UserName: string
+        + PasswordHash: string
+        + Rol: string
+        + Activo: bool
+        + FechaRegistro: DateTime
+        + UltimoAcceso: DateTime?
+    }
+    
+    class Mesa {
+        + Numero: string
+        + Capacidad: int
+        + Estado: EstadoMesa
+        + Ubicacion: string
+        + Activa: bool
+    }
+    
+    class Categoria {
+        + Nombre: string
+        + Descripcion: string
+        + Orden: int
+        + Activa: bool
+    }
+    
+    class Producto {
+        + Nombre: string
+        + Descripcion: string
+        + Precio: decimal
+        + ImagenUrl: string
+        + Disponible: bool
+        + TiempoPreparacion: int?
+        + CategoriaId: int
+    }
+    
+    class Comanda {
+        + FechaHora: DateTime
+        + MesaId: int
+        + MeseroId: Guid
+        + Estado: EstadoComanda
+        + Subtotal: decimal
+        + Impuestos: decimal
+        + Total: decimal
+        + Observaciones: string
+    }
+    
+    class ComandaDetalle {
+        + ComandaId: int
+        + ProductoId: int
+        + Cantidad: int
+        + PrecioUnitario: decimal
+        + Subtotal: decimal
+        + Estado: EstadoComandaDetalle
+        + Observaciones: string
+        + TiempoPreparacion: DateTime?
+    }
+    
+    class Pago {
+        + ComandaId: int
+        + MetodoPago: string
+        + Monto: decimal
+        + FechaHora: DateTime
+        + Referencia: string
+        + UsuarioId: Guid
+    }
+    
+    class Ingrediente {
+        + Nombre: string
+        + Unidad: string
+        + StockActual: decimal
+        + StockMinimo: decimal
+        + PrecioCompra: decimal
+        + Activo: bool
+    }
+    
+    class ProductoIngrediente {
+        + ProductoId: int
+        + IngredienteId: int
+        + Cantidad: decimal
+    }
+    
+    class InventarioMovimiento {
+        + IngredienteId: int
+        + TipoMovimiento: string
+        + Cantidad: decimal
+        + FechaHora: DateTime
+        + Referencia: string
+        + UsuarioId: Guid
+    }
+    
+    class Reservacion {
+        + MesaId: int
+        + ClienteNombre: string
+        + ClienteTelefono: string
+        + ClienteEmail: string
+        + FechaHoraInicio: DateTime
+        + FechaHoraFin: DateTime
+        + NumeroPersonas: int
+        + Estado: EstadoReservacion
+        + Observaciones: string
+    }
+}
+
+package "Enumeraciones" {
+    enum EstadoMesa {
+        Libre
+        Ocupada
+        Reservada
+        Mantenimiento
+    }
+    
+    enum EstadoComanda {
+        Pendiente
+        EnPreparacion
+        Lista
+        Entregada
+        Pagada
+        Cancelada
+    }
+    
+    enum EstadoComandaDetalle {
+        Pendiente
+        EnPreparacion
+        Listo
+        Entregado
+        Cancelado
+    }
+    
+    enum EstadoReservacion {
+        Pendiente
+        Confirmada
+        Completada
+        Cancelada
+    }
+}
+
+' Herencia
+BaseEntity <|-- Usuario
+BaseEntity <|-- Mesa
+BaseEntity <|-- Categoria
+BaseEntity <|-- Producto
+BaseEntity <|-- Comanda
+BaseEntity <|-- ComandaDetalle
+BaseEntity <|-- Pago
+BaseEntity <|-- Ingrediente
+BaseEntity <|-- InventarioMovimiento
+BaseEntity <|-- Reservacion
+
+' Relaciones
+Mesa "1" -- "0..*" Comanda : tiene >
+Mesa "1" -- "0..*" Reservacion : tiene >
+Usuario "1" -- "0..*" Comanda : atiende >
+Comanda "1" -- "0..*" ComandaDetalle : contiene >
+Comanda "1" -- "0..*" Pago : tiene >
+Producto "1" -- "0..*" ComandaDetalle : referencia >
+Categoria "1" -- "0..*" Producto : clasifica >
+Producto "0..*" -- "0..*" Ingrediente : RequiereIngredientes
+(Producto, Ingrediente) .. ProductoIngrediente
+Ingrediente "1" -- "0..*" InventarioMovimiento : registra >
+Usuario "1" -- "0..*" InventarioMovimiento : realiza >
+
+' Enumeraciones
+Mesa .. EstadoMesa
+Comanda .. EstadoComanda
+ComandaDetalle .. EstadoComandaDetalle
+Reservacion .. EstadoReservacion
+
+@enduml 
