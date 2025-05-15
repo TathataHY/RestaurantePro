@@ -8,82 +8,55 @@ using RestaurantePro.Domain.Entities;
 using RestaurantePro.Infrastructure;
 using RestaurantePro.Infrastructure.Persistence;
 using System.Text;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using RestaurantePro.Api.Middleware;
+using RestaurantePro.Application.Config.DependencyInjection;
+using RestaurantePro.Infrastructure.DependencyInjection;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
-builder.Services.AddControllers();
-
-// Configurar Identity
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => 
+namespace RestaurantePro.Api
 {
-    // Configuración de contraseña
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequiredLength = 6;
-
-    // Configuración de usuario
-    options.User.RequireUniqueEmail = true;
-
-    // Configuración de bloqueo
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-    options.Lockout.MaxFailedAccessAttempts = 5;
-    options.Lockout.AllowedForNewUsers = true;
-})
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
-
-// Configurar autenticación JWT
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-    .AddJwtBearer(options =>
+    public class Program
     {
-        options.TokenValidationParameters = new TokenValidationParameters
+        public static void Main(string[] args)
         {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                builder.Configuration["JwtSettings:SecretKey"])),
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["JwtSettings:Audience"],
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
+            var builder = WebApplication.CreateBuilder(args);
 
-// Configurar autorización
-builder.Services.AddAuthorization(options =>
-{
-    options.AddRestauranteProPolicies();
-});
-
-// Registrar dependencias de las capas de aplicación e infraestructura
-builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
-
-var app = builder.Build();
-
-// Middleware para manejo de errores
-app.UseMiddleware<ErrorHandlerMiddleware>();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
+            // Agregar servicios al contenedor
+            builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+            
+            // Configuración específica para la API
+            builder.Services.AddApiServices();
+            
+            // Agregar capas inferiores
+            builder.Services.AddApplicationServices();
+            builder.Services.AddInfrastructureServices(builder.Configuration);
+            
+            var app = builder.Build();
+            
+            // Configurar el pipeline de solicitudes HTTP
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+            
+            // Middleware global para manejo de excepciones
+            app.UseMiddleware<ExceptionMiddleware>();
+            
+            app.UseHttpsRedirection();
+            
+            // Habilitar CORS
+            app.UseCors("AllowAll");
+            
+            app.UseAuthentication();
+            app.UseAuthorization();
+            
+            app.MapControllers();
+            
+            app.Run();
+        }
+    }
 }
-
-app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
-
-app.Run();
