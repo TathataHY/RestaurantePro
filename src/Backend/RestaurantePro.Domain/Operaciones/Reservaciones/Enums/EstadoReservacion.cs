@@ -1,38 +1,33 @@
-namespace RestaurantePro.Domain.Enums
+namespace RestaurantePro.Domain.Operaciones.Reservaciones.Enums
 {
     /// <summary>
-    /// Estados posibles de una reservación
+    /// Representa los estados posibles de una reservación en el restaurante
     /// </summary>
     public enum EstadoReservacion
     {
         /// <summary>
-        /// Reservación pendiente de confirmación
+        /// La reservación ha sido registrada pero está pendiente de confirmación
         /// </summary>
-        Pendiente = 0,
-
+        Pendiente = 1,
+        
         /// <summary>
-        /// Reservación confirmada
+        /// La reservación ha sido confirmada
         /// </summary>
-        Confirmada = 1,
-
+        Confirmada = 2,
+        
         /// <summary>
-        /// Cliente llegó y ocupó la mesa
+        /// La reservación ha sido cancelada
         /// </summary>
-        Ocupada = 2,
-
+        Cancelada = 3,
+        
         /// <summary>
-        /// Reservación completada (cliente se fue)
+        /// La reservación se ha completado (los clientes asistieron y fueron atendidos)
         /// </summary>
-        Completada = 3,
-
+        Completada = 4,
+        
         /// <summary>
-        /// Cliente no se presentó
+        /// Los clientes no se presentaron a la reservación
         /// </summary>
-        NoShow = 4,
-
-        /// <summary>
-        /// Reservación cancelada por el cliente o el restaurante
-        /// </summary>
-        Cancelada = 5
+        NoShow = 5
     }
 } 
