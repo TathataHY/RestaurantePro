@@ -144,7 +144,9 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// Agrega puntos a la tarjeta
         /// </summary>
         /// <param name="puntos">Cantidad de puntos a agregar</param>
-        public void AgregarPuntos(int puntos)
+        /// <param name="concepto">Concepto o razón de los puntos</param>
+        /// <returns>Registro del historial creado</returns>
+        public HistorialPuntos AgregarPuntos(int puntos, string concepto = "Puntos por compra")
         {
             if (Estado != EstadoTarjeta.Activa)
                 throw new InvalidOperationException("Solo se pueden agregar puntos a tarjetas activas");
@@ -160,6 +162,46 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             
             // Automáticamente actualizamos el nivel según los puntos acumulados
             ActualizarNivelSegunPuntos();
+            
+            // Registramos en el historial
+            return HistorialPuntos.CrearRegistroAgregados(Id, puntos, concepto);
+        }
+
+        /// <summary>
+        /// Agrega puntos a la tarjeta basados en el monto de compra
+        /// </summary>
+        /// <param name="montoCompra">Monto de la compra</param>
+        /// <param name="factorConversion">Factor de conversión (monto por punto)</param>
+        /// <param name="concepto">Concepto de la compra</param>
+        /// <returns>Registro del historial creado</returns>
+        public HistorialPuntos AgregarPuntosPorCompra(decimal montoCompra, int factorConversion, string concepto)
+        {
+            if (Estado != EstadoTarjeta.Activa)
+                throw new InvalidOperationException("Solo se pueden agregar puntos a tarjetas activas");
+
+            if (montoCompra <= 0)
+                throw new ArgumentException("El monto de la compra debe ser mayor a cero", nameof(montoCompra));
+
+            if (factorConversion <= 0)
+                throw new ArgumentException("El factor de conversión debe ser mayor a cero", nameof(factorConversion));
+
+            // Calculamos puntos en base al monto y factor
+            int puntos = (int)(montoCompra / factorConversion);
+            
+            if (puntos <= 0)
+                puntos = 1; // Mínimo un punto por compra
+
+            PuntosAcumulados += puntos;
+            PuntosDisponibles += puntos;
+            MarkAsModified();
+
+            AddDomainEvent(new PuntosAgregadosATarjetaEvent(Id, puntos, PuntosAcumulados));
+            
+            // Automáticamente actualizamos el nivel según los puntos acumulados
+            ActualizarNivelSegunPuntos();
+            
+            // Registramos en el historial
+            return HistorialPuntos.CrearRegistroPorCompra(Id, montoCompra, factorConversion, concepto);
         }
 
         /// <summary>
@@ -167,7 +209,8 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// </summary>
         /// <param name="puntos">Cantidad de puntos a canjear</param>
         /// <param name="concepto">Concepto o razón del canje</param>
-        public void CanjearPuntos(int puntos, string concepto)
+        /// <returns>Registro del historial creado</returns>
+        public HistorialPuntos CanjearPuntos(int puntos, string concepto)
         {
             if (Estado != EstadoTarjeta.Activa)
                 throw new InvalidOperationException("Solo se pueden canjear puntos de tarjetas activas");
@@ -185,6 +228,33 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             MarkAsModified();
 
             AddDomainEvent(new PuntosCanjeadosEvent(Id, puntos, concepto, PuntosDisponibles));
+            
+            // Registramos en el historial
+            return HistorialPuntos.CrearRegistroCanjeados(Id, puntos, concepto);
+        }
+
+        /// <summary>
+        /// Registra expiración de puntos
+        /// </summary>
+        /// <param name="puntos">Cantidad de puntos a expirar</param>
+        /// <param name="concepto">Motivo de la expiración</param>
+        /// <returns>Registro del historial creado</returns>
+        public HistorialPuntos ExpirarPuntos(int puntos, string concepto = "Expiración por tiempo")
+        {
+            if (Estado != EstadoTarjeta.Activa)
+                throw new InvalidOperationException("Solo se pueden expirar puntos de tarjetas activas");
+
+            if (puntos <= 0)
+                throw new ArgumentException("La cantidad de puntos debe ser mayor a cero", nameof(puntos));
+
+            if (PuntosDisponibles < puntos)
+                throw new InvalidOperationException($"Puntos insuficientes. Disponibles: {PuntosDisponibles}, Solicitados: {puntos}");
+
+            PuntosDisponibles -= puntos;
+            MarkAsModified();
+            
+            // Registramos en el historial
+            return HistorialPuntos.CrearRegistroVencidos(Id, puntos, concepto);
         }
 
         /// <summary>
