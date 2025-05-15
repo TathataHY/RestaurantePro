@@ -1,91 +1,165 @@
 # RestaurantePro
 
-RestaurantePro es una aplicación de gestión de restaurantes desarrollada con .NET MAUI. La aplicación permite a los usuarios gestionar comandas, mesas, platos y usuarios, así como generar reportes de ventas.
+Sistema de gestión completo para restaurantes, desarrollado con tecnologías modernas .NET.
 
-## Características
+## Visión General
 
-- **Gestión de Comandas**: Crear, editar y eliminar comandas. Ver detalles de las comandas y agregar detalles a las mismas.
-- **Gestión de Mesas**: Crear, editar y eliminar mesas.
-- **Gestión de Platos**: Crear, editar y eliminar platos.
-- **Gestión de Usuarios**: Crear, editar y eliminar usuarios.
-- **Reportes de Ventas**: Generar reportes de ventas.
+RestaurantePro es un conjunto de aplicaciones diseñadas para la gestión integral de un restaurante:
+
+- **Aplicación Móvil:** Para la gestión de comandas, mesas y pedidos
+- **Portal Web:** Para análisis, reportes y administración
 
 ## Tecnologías Utilizadas
 
-- .NET MAUI
-- CommunityToolkit.Maui
-- CommunityToolkit.Mvvm
-- SQLite
+- **App Móvil:** .NET MAUI
+- **Web Analítica:** Blazor WebAssembly
+- **Backend API:** ASP.NET Core 8
+- **Base de datos:** SQL Server / PostgreSQL
+- **ORM:** Entity Framework Core 8
+- **Comunicación en tiempo real:** SignalR
+- **Arquitectura:** Clean Architecture con CQRS y MediatR
 
 ## Estructura del Proyecto
 
-- **Models**: Contiene las clases de modelo de datos.
-- **Services**: Contiene los servicios para acceder a la base de datos y manejar la lógica de negocio.
-- **ViewModels**: Contiene los ViewModels para la lógica de presentación.
-- **Views**: Contiene las vistas (páginas XAML) de la aplicación.
+```
+RestaurantePro/
+├── src/                       # Código fuente
+│   ├── RestaurantePro.Api/    # Backend API
+│   │   └── Controllers/       # Controladores REST
+│   ├── RestaurantePro.Application/ # Lógica de aplicación
+│   │   ├── Common/            # Componentes comunes
+│   │   │   ├── Interfaces/    # Interfaces de servicios
+│   │   │   ├── Mappings/      # Configuraciones de AutoMapper
+│   │   │   └── Models/        # Modelos comunes
+│   │   └── Features/          # Funcionalidades del sistema
+│   │       ├── Categorias/    # Gestión de categorías
+│   │       ├── Clientes/      # Gestión de clientes y fidelización
+│   │       ├── Comandas/      # Gestión de comandas
+│   │       ├── Inventario/    # Sistema de inventario
+│   │       │   ├── Commands/  # Comandos (escritura)
+│   │       │   ├── Queries/   # Consultas (lectura)
+│   │       │   └── Dtos/      # Objetos de transferencia de datos
+│   │       ├── Mesas/         # Gestión de mesas
+│   │       ├── OrdenesCompra/ # Gestión de órdenes de compra
+│   │       ├── Pagos/         # Gestión de pagos
+│   │       ├── Productos/     # Gestión de productos/platillos
+│   │       ├── Promociones/   # Gestión de promociones
+│   │       ├── Reportes/      # Generación de reportes
+│   │       ├── Reservaciones/ # Sistema de reservaciones
+│   │       └── Usuarios/      # Gestión de usuarios
+│   ├── RestaurantePro.Mobile/ # App móvil (.NET MAUI)
+│   ├── RestaurantePro.Web/    # Portal web (Blazor)
+│   ├── RestaurantePro.Domain/ # Entidades y lógica de dominio
+│   │   ├── Entities/         # Entidades de dominio
+│   │   ├── Enums/            # Enumeraciones
+│   │   ├── Events/           # Eventos de dominio
+│   │   └── Exceptions/       # Excepciones de dominio 
+│   └── RestaurantePro.Infrastructure/ # Persistencia y servicios
+│       ├── Identity/          # Autenticación y autorización
+│       ├── Persistence/       # Configuración de DbContext
+│       └── Services/          # Implementación de servicios
+├── tests/                     # Pruebas
+├── tools/                     # Scripts y herramientas
+└── docs/                      # Documentación
+    ├── analisis-diseno/       # Análisis y diseño
+    ├── arquitectura/          # Arquitectura del sistema
+    ├── requisitos/            # Requisitos y casos de uso
+    ├── diagramas/             # Diagramas del sistema
+    ├── prototipos/            # Diseños de UI
+    └── manuales/              # Guías y manuales
+```
 
-## Instalación
+## Módulos Implementados
 
-1. Clona el repositorio:
-    ```bash
-    git clone https://github.com/tu-usuario/RestaurantePro.git
-    ```
+### Sistema de Gestión de Inventario
+- **Características:**
+  - Gestión de ingredientes y productos
+  - Registro de movimientos de inventario (entradas, salidas, mermas)
+  - Ajustes de inventario con trazabilidad
+  - Reportes de estado de inventario y alertas de stock mínimo
+  - Cálculo automático de costos promedios ponderados
 
-2. Navega al directorio del proyecto:
-    ```bash
-    cd RestaurantePro
-    ```
+### Sistema de Proveedores
+- **Características:**
+  - Catálogo de proveedores
+  - Categorización de proveedores
+  - Vinculación de ingredientes con proveedores y precios
+  - Historial de pedidos por proveedor
 
-3. Restaura los paquetes NuGet:
-    ```bash
-    dotnet restore
-    ```
+### Sistema de Órdenes de Compra
+- **Características:**
+  - Creación de órdenes de compra a proveedores
+  - Seguimiento del estado de órdenes (pendiente, parcial, completada)
+  - Recepción parcial o total de órdenes
+  - Actualización automática del inventario al recibir productos
+  - Registro de inconformidades en la recepción
 
-4. Compila el proyecto:
-    ```bash
-    dotnet build
-    ```
+### Sistema de Clientes y Fidelización
+- **Características:**
+  - Registro y gestión de clientes
+  - Programa de lealtad con tarjetas de puntos
+  - Acumulación de puntos por consumo
+  - Canje de puntos por promociones o descuentos
+  - Historial de transacciones por cliente
 
-5. Ejecuta la aplicación:
-    ```bash
-    dotnet run
-    ```
+### Sistema de Reservaciones
+- **Características:**
+  - Gestión de reservaciones de mesas
+  - Diferentes estados de reservación (pendiente, confirmada, completada, etc.)
+  - Asignación de mesas según capacidad y disponibilidad
+  - Historial de reservaciones por cliente
 
-## Uso
+## API Endpoints
 
-### Gestión de Comandas
+El sistema expone los siguientes endpoints principales:
 
-- **Crear Comanda**: Haz clic en el botón "Agregar Comanda" en la página principal.
-- **Editar Comanda**: Desliza una comanda hacia la izquierda y selecciona "Editar".
-- **Eliminar Comanda**: Desliza una comanda hacia la izquierda y selecciona "Eliminar".
-- **Ver Detalles de Comanda**: Haz clic en una comanda para ver sus detalles y agregar más detalles.
+### Inventario
+- `GET /api/inventario` - Lista de inventario con filtros
+- `GET /api/inventario/{id}` - Detalle de un ítem de inventario
+- `PUT /api/inventario/{id}/actualizar` - Actualizar un ítem de inventario
+- `POST /api/inventario/ajustar` - Realizar ajuste de inventario
+- `POST /api/inventario/movimiento` - Registrar movimiento (entrada/salida)
+- `GET /api/inventario/movimientos` - Historial de movimientos
+- `GET /api/inventario/alertas` - Ítems con stock bajo
 
-### Gestión de Mesas
+### Proveedores
+- `GET /api/proveedores` - Lista de proveedores
+- `GET /api/proveedores/{id}` - Detalle de un proveedor
+- `POST /api/proveedores` - Crear nuevo proveedor
+- `PUT /api/proveedores/{id}` - Actualizar proveedor
+- `DELETE /api/proveedores/{id}` - Eliminar proveedor
+- `GET /api/proveedores/{id}/ingredientes` - Ingredientes de un proveedor
 
-- **Crear Mesa**: Navega a la página de mesas y haz clic en "Agregar Mesa".
-- **Editar Mesa**: Desliza una mesa hacia la izquierda y selecciona "Editar".
-- **Eliminar Mesa**: Desliza una mesa hacia la izquierda y selecciona "Eliminar".
+### Órdenes de Compra
+- `GET /api/ordenescompra` - Lista de órdenes de compra
+- `GET /api/ordenescompra/{id}` - Detalle de una orden
+- `POST /api/ordenescompra` - Crear nueva orden
+- `PUT /api/ordenescompra/{id}` - Actualizar orden
+- `DELETE /api/ordenescompra/{id}` - Eliminar orden
+- `POST /api/ordenescompra/{id}/recibir` - Registrar recepción de productos
+- `GET /api/ordenescompra/pendientes` - Órdenes pendientes
+- `GET /api/ordenescompra/proveedor/{proveedorId}` - Órdenes por proveedor
 
-### Gestión de Platos
+## Próximos Desarrollos
 
-- **Crear Plato**: Navega a la página de platos y haz clic en "Agregar Plato".
-- **Editar Plato**: Desliza un plato hacia la izquierda y selecciona "Editar".
-- **Eliminar Plato**: Desliza un plato hacia la izquierda y selecciona "Eliminar".
+- Sistema de comandas con asignación automática a cocina
+- Integración con periféricos (impresoras térmicas, PDV)
+- Aplicación móvil para seguimiento de pedidos
+- Dashboard en tiempo real de operaciones
+- Sistema de notificaciones
 
-### Gestión de Usuarios
+## Instalación y Configuración
 
-- **Crear Usuario**: Navega a la página de usuarios y haz clic en "Agregar Usuario".
-- **Editar Usuario**: Desliza un usuario hacia la izquierda y selecciona "Editar".
-- **Eliminar Usuario**: Desliza un usuario hacia la izquierda y selecciona "Eliminar".
+*Instrucciones detalladas estarán disponibles cuando el proyecto avance en desarrollo.*
 
-### Reportes de Ventas
+## Equipo de Desarrollo
 
-- **Generar Reporte**: Navega a la página de reportes y selecciona el rango de fechas para generar el reporte de ventas.
-
-## Contribuciones
-
-Las contribuciones son bienvenidas. Por favor, abre un issue o un pull request para discutir cualquier cambio que desees realizar.
+*En desarrollo*
 
 ## Licencia
 
-Este proyecto está licenciado bajo la Licencia MIT. Consulta el archivo LICENSE para obtener más detalles.
+Este proyecto está bajo licencia privada.
+
+## Contacto
+
+*En desarrollo* 
