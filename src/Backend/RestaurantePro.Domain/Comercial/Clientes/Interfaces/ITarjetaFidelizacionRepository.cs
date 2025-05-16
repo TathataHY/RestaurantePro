@@ -30,6 +30,14 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         Task<IEnumerable<TarjetaFidelizacion>> ObtenerPorClienteIdAsync(Guid clienteId, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Obtiene la tarjeta activa de un cliente (si existe)
+        /// </summary>
+        /// <param name="clienteId">ID del cliente</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tarjeta activa del cliente o null si no existe</returns>
+        Task<TarjetaFidelizacion> ObtenerTarjetaActivaPorClienteIdAsync(Guid clienteId, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Obtiene las tarjetas filtradas por estado
         /// </summary>
         /// <param name="estado">Estado de las tarjetas a obtener</param>

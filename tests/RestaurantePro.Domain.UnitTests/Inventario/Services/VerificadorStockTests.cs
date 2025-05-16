@@ -6,6 +6,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         private readonly Mock<IOrdenCompraRepository> _ordenCompraRepositoryMock;
         private readonly Mock<IProveedorRepository> _proveedorRepositoryMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
+        private IVerificadorStock _verificadorService;
         
         public VerificadorStockTests()
         {
@@ -14,6 +15,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             _proveedorRepositoryMock = new Mock<IProveedorRepository>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
             _dateTimeServiceMock.Setup(s => s.Now).Returns(new DateTime(2023, 1, 1));
+            
+            // Inicializar el servicio usando la interfaz
+            _verificadorService = new VerificadorStock(
+                _ingredienteRepositoryMock.Object,
+                _ordenCompraRepositoryMock.Object,
+                _proveedorRepositoryMock.Object,
+                _dateTimeServiceMock.Object);
         }
 
         [Fact]
@@ -23,15 +31,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var ingredientes = new List<Ingrediente>();
             _ingredienteRepositoryMock.Setup(r => r.ObtenerConStockBajoAsync())
                 .ReturnsAsync(ingredientes);
-            
-            var verificador = new VerificadorStock(
-                _ingredienteRepositoryMock.Object,
-                _ordenCompraRepositoryMock.Object,
-                _proveedorRepositoryMock.Object,
-                _dateTimeServiceMock.Object);
 
             // Act
-            var result = await verificador.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
 
             // Assert
             result.OrdenesGeneradas.Should().BeEmpty();
@@ -50,15 +52,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 
             _proveedorRepositoryMock.Setup(r => r.ObtenerPorIdAsync(proveedor.Id, default))
                 .ReturnsAsync(proveedor);
-                
-            var verificador = new VerificadorStock(
-                _ingredienteRepositoryMock.Object,
-                _ordenCompraRepositoryMock.Object,
-                _proveedorRepositoryMock.Object,
-                _dateTimeServiceMock.Object);
 
             // Act
-            var result = await verificador.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
 
             // Assert
             result.OrdenesGeneradas.Should().HaveCount(1);
@@ -82,15 +78,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 
             _proveedorRepositoryMock.Setup(r => r.ObtenerPorIdAsync(proveedor.Id, default))
                 .ReturnsAsync(proveedor);
-                
-            var verificador = new VerificadorStock(
-                _ingredienteRepositoryMock.Object,
-                _ordenCompraRepositoryMock.Object,
-                _proveedorRepositoryMock.Object,
-                _dateTimeServiceMock.Object);
 
             // Act
-            var result = await verificador.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
 
             // Assert
             result.OrdenesGeneradas.Should().HaveCount(1);
@@ -115,15 +105,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(proveedor1);
             _proveedorRepositoryMock.Setup(r => r.ObtenerPorIdAsync(proveedor2.Id, default))
                 .ReturnsAsync(proveedor2);
-                
-            var verificador = new VerificadorStock(
-                _ingredienteRepositoryMock.Object,
-                _ordenCompraRepositoryMock.Object,
-                _proveedorRepositoryMock.Object,
-                _dateTimeServiceMock.Object);
 
             // Act
-            var result = await verificador.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
 
             // Assert
             result.OrdenesGeneradas.Should().HaveCount(2);
@@ -143,15 +127,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 
             _proveedorRepositoryMock.Setup(r => r.ObtenerPorIdAsync(proveedor.Id, default))
                 .ReturnsAsync(proveedor);
-                
-            var verificador = new VerificadorStock(
-                _ingredienteRepositoryMock.Object,
-                _ordenCompraRepositoryMock.Object,
-                _proveedorRepositoryMock.Object,
-                _dateTimeServiceMock.Object);
 
             // Act
-            var result = await verificador.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
 
             // Assert
             result.OrdenesGeneradas.Should().BeEmpty();
@@ -180,15 +158,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 
             _ordenCompraRepositoryMock.Setup(r => r.ObtenerPendientesPorProveedorAsync(proveedor.Id, default))
                 .ReturnsAsync(ordenesExistentes);
-                
-            var verificador = new VerificadorStock(
-                _ingredienteRepositoryMock.Object,
-                _ordenCompraRepositoryMock.Object,
-                _proveedorRepositoryMock.Object,
-                _dateTimeServiceMock.Object);
 
             // Act
-            var result = await verificador.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
 
             // Assert
             result.OrdenesGeneradas.Should().BeEmpty();

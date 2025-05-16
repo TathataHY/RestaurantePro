@@ -24,7 +24,7 @@ namespace RestaurantePro.Domain.Inventario.Services
     /// <summary>
     /// Servicio de dominio que verifica el stock de ingredientes y genera órdenes de compra automáticas
     /// </summary>
-    public class VerificadorStock
+    public class VerificadorStock : IVerificadorStock
     {
         private readonly IIngredienteRepository _ingredienteRepository;
         private readonly IOrdenCompraRepository _ordenCompraRepository;
