@@ -1,4 +1,3 @@
-using RestaurantePro.Domain.Core.Base.Interfaces;
 
 namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events
 {

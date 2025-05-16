@@ -1,10 +1,3 @@
-using System;
-using FluentAssertions;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-using RestaurantePro.Domain.Comercial.Clientes.Events;
-using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-using Xunit;
 
 namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
 {

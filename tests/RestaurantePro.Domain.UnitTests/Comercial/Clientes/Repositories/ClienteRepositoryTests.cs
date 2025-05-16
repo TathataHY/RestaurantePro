@@ -1,14 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using FluentAssertions;
-using Moq;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-using Xunit;
 
 namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
 {

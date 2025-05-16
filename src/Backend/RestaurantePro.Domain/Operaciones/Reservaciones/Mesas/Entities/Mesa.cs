@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Domain.Core.Base.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Events;
 

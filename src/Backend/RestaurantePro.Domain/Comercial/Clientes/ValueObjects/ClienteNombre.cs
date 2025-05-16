@@ -1,4 +1,3 @@
-using System;
 
 namespace RestaurantePro.Domain.Comercial.Clientes.ValueObjects
 {

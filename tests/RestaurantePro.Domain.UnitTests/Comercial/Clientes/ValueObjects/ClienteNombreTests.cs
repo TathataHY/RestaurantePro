@@ -1,7 +1,3 @@
-using System;
-using FluentAssertions;
-using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-using Xunit;
 
 namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.ValueObjects
 {

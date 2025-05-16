@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 
 namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects

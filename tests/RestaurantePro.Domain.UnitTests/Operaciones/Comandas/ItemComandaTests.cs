@@ -1,7 +1,3 @@
-using System;
-using FluentAssertions;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using Xunit;
 
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas
 {

@@ -1,7 +1,3 @@
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Domain.Core.Base.Interfaces;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Events;
 
 namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
 {

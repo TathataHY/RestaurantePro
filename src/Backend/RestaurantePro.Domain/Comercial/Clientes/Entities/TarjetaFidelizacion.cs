@@ -1,7 +1,3 @@
-using System;
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-using RestaurantePro.Domain.Comercial.Clientes.Events;
 
 namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 {

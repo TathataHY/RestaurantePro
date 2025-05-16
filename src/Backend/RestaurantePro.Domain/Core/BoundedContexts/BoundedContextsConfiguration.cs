@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 
 namespace RestaurantePro.Domain.Core.BoundedContexts
 {

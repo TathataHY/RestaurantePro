@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using RestaurantePro.Domain.Core.Base.Interfaces;
 
 namespace RestaurantePro.Domain.Core.Base
 {

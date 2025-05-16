@@ -1,8 +1,3 @@
-using System;
-using FluentAssertions;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-using Xunit;
 
 namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
 {

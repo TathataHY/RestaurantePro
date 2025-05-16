@@ -1,4 +1,3 @@
-using RestaurantePro.Domain.Core.Base;
 
 namespace RestaurantePro.Domain.UnitTests.Core.Base
 {

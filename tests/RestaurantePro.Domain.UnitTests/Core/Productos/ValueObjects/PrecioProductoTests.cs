@@ -1,4 +1,3 @@
-using RestaurantePro.Domain.Core.Productos.ValueObjects;
 
 namespace RestaurantePro.Domain.UnitTests.Core.Productos.ValueObjects
 {

@@ -1,5 +1,3 @@
-using System;
-using RestaurantePro.Domain.Core.Base;
 
 namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
 {

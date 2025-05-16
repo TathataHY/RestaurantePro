@@ -1,12 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Domain.Core.Base.Interfaces;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-using RestaurantePro.Domain.Operaciones.Comandas.Events;
-using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
 
 namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
 {

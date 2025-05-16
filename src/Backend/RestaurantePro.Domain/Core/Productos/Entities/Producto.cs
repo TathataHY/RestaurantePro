@@ -1,7 +1,3 @@
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Domain.Core.Base.Interfaces;
-using RestaurantePro.Domain.Core.Productos.Events;
-using RestaurantePro.Domain.Core.Productos.ValueObjects;
 
 namespace RestaurantePro.Domain.Core.Productos.Entities
 {

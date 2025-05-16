@@ -1,6 +1,3 @@
-using System;
-using RestaurantePro.Domain.Core.Base.Interfaces;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 
 namespace RestaurantePro.Domain.Operaciones.Comandas.Events
 {

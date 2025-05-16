@@ -1,5 +1,3 @@
-using System;
-using RestaurantePro.Domain.Core.Base.Interfaces;
 
 namespace RestaurantePro.Domain.Comercial.Clientes.Events
 {
