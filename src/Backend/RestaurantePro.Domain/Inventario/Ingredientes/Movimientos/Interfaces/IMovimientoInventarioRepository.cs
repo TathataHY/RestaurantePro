@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Interfaces
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces
 {
     /// <summary>
     /// Repositorio para la gestión de movimientos de inventario

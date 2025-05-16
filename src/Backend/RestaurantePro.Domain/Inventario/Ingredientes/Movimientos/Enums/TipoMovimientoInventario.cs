@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Enums
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums
 {
     /// <summary>
     /// Tipos de movimientos de inventario

@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Events
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
 {
     /// <summary>
     /// Evento que se lanza cuando se actualiza el stock de un ingrediente

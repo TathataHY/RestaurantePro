@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Entities
+namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
 {
     /// <summary>
     /// Entidad que representa una orden de compra a un proveedor

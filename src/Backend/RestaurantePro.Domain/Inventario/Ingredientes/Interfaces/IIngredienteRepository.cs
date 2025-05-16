@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Interfaces
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
 {
     /// <summary>
     /// Interfaz para el repositorio de ingredientes

@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Events.MovimientoInventario
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Events
 {
     /// <summary>
     /// Evento de dominio que se lanza cuando se aplica un movimiento de inventario al stock

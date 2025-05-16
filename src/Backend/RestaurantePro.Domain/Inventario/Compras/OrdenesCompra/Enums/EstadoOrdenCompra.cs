@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Enums
+namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums
 {
     /// <summary>
     /// Estados posibles de una orden de compra

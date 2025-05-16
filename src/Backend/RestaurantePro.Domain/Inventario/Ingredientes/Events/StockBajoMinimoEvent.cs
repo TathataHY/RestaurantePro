@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Events
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
 {
     /// <summary>
     /// Evento que se lanza cuando el stock de un ingrediente está por debajo del mínimo

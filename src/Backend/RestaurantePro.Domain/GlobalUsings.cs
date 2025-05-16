@@ -54,10 +54,23 @@ global using RestaurantePro.Domain.Comercial.Clientes.Events.Cliente;
 global using RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion;
 global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 
-// Domain Inventario
-global using RestaurantePro.Domain.Inventario.Entities;
-// global using RestaurantePro.Domain.Inventario.ValueObjects;
-global using RestaurantePro.Domain.Inventario.Enums;
-global using RestaurantePro.Domain.Inventario.Events;
-global using RestaurantePro.Domain.Inventario.Events.MovimientoInventario;
-global using RestaurantePro.Domain.Inventario.Interfaces;
+// Domain Inventario - Ingredientes
+global using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Events;
+
+// Domain Inventario - Ingredientes - Movimientos
+global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Events;
+
+// Domain Inventario - Compras - OrdenesCompra
+global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
+global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums;
+global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
+global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events;
+
+// Domain Proveedores
+global using RestaurantePro.Domain.Proveedores.Entidades;

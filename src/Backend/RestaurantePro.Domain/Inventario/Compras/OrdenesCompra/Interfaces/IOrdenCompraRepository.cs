@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Interfaces
+namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces
 {
     /// <summary>
     /// Repositorio para gestionar las órdenes de compra

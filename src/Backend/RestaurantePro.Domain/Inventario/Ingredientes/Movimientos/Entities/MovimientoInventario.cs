@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Entities
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities
 {
     /// <summary>
     /// Entidad que representa un movimiento en el inventario de ingredientes

@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Enums
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Enums
 {
     /// <summary>
     /// Unidades de medida para ingredientes
