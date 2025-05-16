@@ -10,22 +10,22 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events
         /// ID de la comanda
         /// </summary>
         public Guid ComandaId { get; }
-        
+
         /// <summary>
         /// ID del producto agregado
         /// </summary>
         public Guid ProductoId { get; }
-        
+
         /// <summary>
         /// Cantidad del producto agregada
         /// </summary>
         public int Cantidad { get; }
-        
+
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
         public DateTime OccurredOn { get; }
-        
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -37,4 +37,4 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events
             OccurredOn = DateTime.Now;
         }
     }
-} 
+}

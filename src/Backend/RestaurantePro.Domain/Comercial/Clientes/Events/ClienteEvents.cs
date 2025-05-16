@@ -147,4 +147,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events
             Telefono = telefono;
         }
     }
-} 
+}

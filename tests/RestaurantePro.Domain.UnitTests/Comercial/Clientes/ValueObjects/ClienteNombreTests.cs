@@ -106,4 +106,4 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.ValueObjects
             (nombre1 != nombre2).Should().BeTrue();
         }
     }
-} 
+}

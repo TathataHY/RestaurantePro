@@ -42,4 +42,4 @@ global using RestaurantePro.Domain.Comercial.Clientes.Entities;
 global using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
 global using RestaurantePro.Domain.Comercial.Clientes.Enums;
 global using RestaurantePro.Domain.Comercial.Clientes.Events;
-global using RestaurantePro.Domain.Comercial.Clientes.Interfaces; 
+global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;

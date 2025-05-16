@@ -23,7 +23,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas
             comanda.Observaciones.Should().Be(observaciones);
             comanda.Estado.Should().Be(EstadoComanda.Creada);
             comanda.Items.Should().BeEmpty();
-            
+
             // Verificamos que se generó el evento de dominio
             comanda.DomainEvents.Should().ContainSingle(e => e is ComandaCreada);
             var evento = comanda.DomainEvents.OfType<ComandaCreada>().First();
@@ -72,7 +72,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas
         {
             // Arrange
             var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
-            
+
             // Cambiamos el estado a uno no activo (simulando una comanda finalizada)
             comanda.GetType()
                 .GetProperty("Estado")
@@ -81,7 +81,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas
             // Act & Assert
             Action action = () => comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
             action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*no se pueden realizar cambios*", 
+                .WithMessage("*no se pueden realizar cambios*",
                     because: "No se deben permitir cambios en comandas no activas");
         }
 
@@ -90,7 +90,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas
         {
             // Arrange
             var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
-            
+
             // Cambiamos manualmente el estado para probar la transición
             // (normalmente pasaría por todos los estados intermedios)
             comanda.GetType()
@@ -100,8 +100,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas
             // Act & Assert
             Action action = () => comanda.ActualizarEstado(EstadoComanda.Finalizada);
             action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*No se puede finalizar*", 
+                .WithMessage("*No se puede finalizar*",
                     because: "No se deben permitir finalizar comandas sin productos");
         }
     }
-} 
+}

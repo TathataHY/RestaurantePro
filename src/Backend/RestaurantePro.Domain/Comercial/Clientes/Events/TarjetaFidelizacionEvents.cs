@@ -237,4 +237,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events
             NuevoNivel = nuevoNivel;
         }
     }
-} 
+}

@@ -10,22 +10,22 @@ namespace RestaurantePro.Domain.Core.Productos.Events
         /// Fecha y hora en que ocurrió el evento
         /// </summary>
         public DateTime OccurredOn { get; }
-        
+
         /// <summary>
         /// Identificador único del producto creado
         /// </summary>
         public Guid ProductoId { get; }
-        
+
         /// <summary>
         /// Nombre del producto creado
         /// </summary>
         public string Nombre { get; }
-        
+
         /// <summary>
         /// Precio del producto creado
         /// </summary>
         public decimal Precio { get; }
-        
+
         /// <summary>
         /// Constructor que inicializa un nuevo evento de producto creado
         /// </summary>
@@ -37,4 +37,4 @@ namespace RestaurantePro.Domain.Core.Productos.Events
             Precio = precio;
         }
     }
-} 
+}

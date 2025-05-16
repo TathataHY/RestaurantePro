@@ -16,28 +16,28 @@ namespace RestaurantePro.Domain.Core.BoundedContexts
             "Email",
             "PhoneNumber",
             "Address",
-            
+
             // Interfaces
             "IRepository",
             "IUnitOfWork",
             "ISpecification",
             "IEmailService",
             "INotificationService",
-            
+
             // Excepciones
             "DomainException",
             "ValidationException",
             "AuthorizationException",
-            
+
             // Entidades base
             "BaseEntity",
             "AuditableEntity"
         };
-        
+
         /// <summary>
         /// Describe cómo un bounded context traduce conceptos de otro bounded context
         /// </summary>
-        public static readonly Dictionary<string, Dictionary<string, string>> TranslationMappings = 
+        public static readonly Dictionary<string, Dictionary<string, string>> TranslationMappings =
             new Dictionary<string, Dictionary<string, string>>
         {
             // Cómo Inventario traduce conceptos de Catálogo
@@ -46,7 +46,7 @@ namespace RestaurantePro.Domain.Core.BoundedContexts
                 ["Producto"] = "ItemInventario",
                 ["Ingrediente"] = "ComponenteInventario"
             },
-            
+
             // Cómo Clientes traduce conceptos de Operaciones
             ["Clientes-Operaciones"] = new Dictionary<string, string>
             {
@@ -54,11 +54,11 @@ namespace RestaurantePro.Domain.Core.BoundedContexts
                 ["ComandaDetalle"] = "ItemCompra"
             }
         };
-        
+
         /// <summary>
         /// Define los límites explícitos entre contextos - qué operaciones cruzan fronteras
         /// </summary>
-        public static readonly Dictionary<string, List<string>> ContextBoundaries = 
+        public static readonly Dictionary<string, List<string>> ContextBoundaries =
             new Dictionary<string, List<string>>
         {
             // Integraciones permitidas entre Operaciones y Catálogo
@@ -68,7 +68,7 @@ namespace RestaurantePro.Domain.Core.BoundedContexts
                 "VerificarDisponibilidadProducto",
                 "ObtenerPrecioProducto"
             },
-            
+
             // Integraciones permitidas entre Operaciones e Inventario
             ["Operaciones-Inventario"] = new List<string>
             {
@@ -76,7 +76,7 @@ namespace RestaurantePro.Domain.Core.BoundedContexts
                 "ConfirmarConsumoInventario",
                 "LiberarReservaInventario"
             },
-            
+
             // Integraciones permitidas entre Operaciones y Pagos
             ["Operaciones-Pagos"] = new List<string>
             {

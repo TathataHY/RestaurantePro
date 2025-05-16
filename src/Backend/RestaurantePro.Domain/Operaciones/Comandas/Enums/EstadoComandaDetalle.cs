@@ -30,4 +30,4 @@ namespace RestaurantePro.Domain.Enums
         /// </summary>
         NoDisponible = 4
     }
-} 
+}

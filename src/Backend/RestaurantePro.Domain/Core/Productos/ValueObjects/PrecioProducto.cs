@@ -34,4 +34,4 @@ namespace RestaurantePro.Domain.Core.Productos.ValueObjects
             yield return Valor;
         }
     }
-} 
+}

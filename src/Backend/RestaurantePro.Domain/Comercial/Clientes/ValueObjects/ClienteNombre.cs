@@ -66,7 +66,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.ValueObjects
             if (obj is not ClienteNombre other)
                 return false;
 
-            return Nombre == other.Nombre && 
+            return Nombre == other.Nombre &&
                    Apellido == other.Apellido;
         }
 
@@ -91,4 +91,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.ValueObjects
             return !(left == right);
         }
     }
-} 
+}

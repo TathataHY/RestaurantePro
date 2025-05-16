@@ -10,37 +10,37 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events
         /// Identificador de la reservación creada
         /// </summary>
         public Guid ReservacionId { get; }
-        
+
         /// <summary>
         /// Identificador del cliente que realizó la reservación
         /// </summary>
         public Guid ClienteId { get; }
-        
+
         /// <summary>
         /// Identificador de la mesa reservada
         /// </summary>
         public Guid MesaId { get; }
-        
+
         /// <summary>
         /// Fecha de la reservación
         /// </summary>
         public DateTime Fecha { get; }
-        
+
         /// <summary>
         /// Hora de la reservación
         /// </summary>
         public TimeSpan Hora { get; }
-        
+
         /// <summary>
         /// Cantidad de personas
         /// </summary>
         public int CantidadPersonas { get; }
-        
+
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
         public DateTime OccurredOn { get; }
-        
+
         /// <summary>
         /// Constructor para crear una nueva instancia del evento
         /// </summary>
@@ -55,4 +55,4 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events
             OccurredOn = DateTime.Now;
         }
     }
-} 
+}

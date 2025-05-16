@@ -10,22 +10,22 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         /// Nombre del producto
         /// </summary>
         public string Nombre { get; private set; }
-        
+
         /// <summary>
         /// Descripción del producto
         /// </summary>
         public string Descripcion { get; private set; }
-        
+
         /// <summary>
         /// Precio del producto
         /// </summary>
         public PrecioProducto Precio { get; private set; }
-        
+
         /// <summary>
         /// Identificador de la categoría a la que pertenece el producto
         /// </summary>
         public Guid CategoriaId { get; private set; }
-        
+
         /// <summary>
         /// Indica si el producto está activo
         /// </summary>
@@ -41,7 +41,7 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
             Precio = precio;
             CategoriaId = categoriaId;
             EstaActivo = true;
-            
+
             AddDomainEvent(new ProductoCreado(Id, Nombre, Precio.Valor));
         }
 
@@ -62,7 +62,7 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
             Descripcion = descripcion;
             Precio = precio;
             MarkAsModified();
-            
+
             AddDomainEvent(new ProductoActualizado(Id, Nombre, Descripcion, Precio.Valor));
         }
 
@@ -72,10 +72,10 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         public void Desactivar()
         {
             if (!EstaActivo) return;
-            
+
             EstaActivo = false;
             MarkAsModified();
-            
+
             AddDomainEvent(new ProductoDesactivado(Id));
         }
 
@@ -85,11 +85,11 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         public void Activar()
         {
             if (EstaActivo) return;
-            
+
             EstaActivo = true;
             MarkAsModified();
-            
+
             AddDomainEvent(new ProductoActivado(Id));
         }
     }
-} 
+}

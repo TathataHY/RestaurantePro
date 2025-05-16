@@ -28,7 +28,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones
             reservacion.CantidadPersonas.Should().Be(cantidadPersonas);
             reservacion.Observaciones.Should().Be(observaciones);
             reservacion.Estado.Should().Be(EstadoReservacion.Pendiente);
-            
+
             // Verificamos que se generó el evento de dominio
             reservacion.DomainEvents.Should().ContainSingle(e => e is ReservacionCreada);
             var evento = reservacion.DomainEvents.OfType<ReservacionCreada>().First();
@@ -48,19 +48,19 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones
                 new TimeSpan(20, 0, 0),
                 4,
                 "Observación");
-            
+
             // Act
             reservacion.Confirmar();
 
             // Assert
             reservacion.Estado.Should().Be(EstadoReservacion.Confirmada);
-            
+
             // Verificar evento de dominio
             reservacion.DomainEvents.Should().Contain(e => e is ReservacionConfirmada);
             var evento = reservacion.DomainEvents.OfType<ReservacionConfirmada>().Last();
             evento.ReservacionId.Should().Be(reservacion.Id);
         }
-        
+
         [Fact]
         public void CancelarReservacion_CuandoEstaConfirmada_DebeCambiarEstadoACancelada()
         {
@@ -74,21 +74,21 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones
                 "Observación");
             reservacion.Confirmar();
             var motivo = "El cliente no puede asistir";
-            
+
             // Act
             reservacion.Cancelar(motivo);
 
             // Assert
             reservacion.Estado.Should().Be(EstadoReservacion.Cancelada);
             reservacion.MotivoCancelacion.Should().Be(motivo);
-            
+
             // Verificar evento de dominio
             reservacion.DomainEvents.Should().Contain(e => e is ReservacionCancelada);
             var evento = reservacion.DomainEvents.OfType<ReservacionCancelada>().Last();
             evento.ReservacionId.Should().Be(reservacion.Id);
             evento.Motivo.Should().Be(motivo);
         }
-        
+
         [Fact]
         public void CompletarReservacion_CuandoEstaConfirmada_DebeCambiarEstadoACompletada()
         {
@@ -101,19 +101,19 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones
                 4,
                 "Observación");
             reservacion.Confirmar();
-            
+
             // Act
             reservacion.Completar();
 
             // Assert
             reservacion.Estado.Should().Be(EstadoReservacion.Completada);
-            
+
             // Verificar evento de dominio
             reservacion.DomainEvents.Should().Contain(e => e is ReservacionCompletada);
             var evento = reservacion.DomainEvents.OfType<ReservacionCompletada>().Last();
             evento.ReservacionId.Should().Be(reservacion.Id);
         }
-        
+
         [Fact]
         public void CancelarReservacion_ConReservacionYaCompletada_DebeLanzarExcepcion()
         {
@@ -127,13 +127,13 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones
                 "Observación");
             reservacion.Confirmar();
             reservacion.Completar();
-            
+
             // Act & Assert
             Action action = () => reservacion.Cancelar("Motivo");
             action.Should().Throw<InvalidOperationException>()
                 .WithMessage("*no puede cancelarse*");
         }
-        
+
         [Fact]
         public void CrearReservacion_ConFechaEnPasado_DebeLanzarExcepcion()
         {
@@ -143,13 +143,13 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones
             var fechaPasada = DateTime.Now.AddDays(-1); // Fecha en el pasado
             var hora = new TimeSpan(20, 0, 0);
             var cantidadPersonas = 4;
-            
+
             // Act & Assert
             Action action = () => Reservacion.Crear(clienteId, mesaId, fechaPasada, hora, cantidadPersonas, "Obs");
             action.Should().Throw<ArgumentException>()
                 .WithMessage("*fecha de reservación debe ser futura*");
         }
-        
+
         [Fact]
         public void CrearReservacion_ConCantidadPersonasInvalida_DebeLanzarExcepcion()
         {
@@ -159,11 +159,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones
             var fecha = DateTime.Now.AddDays(1);
             var hora = new TimeSpan(20, 0, 0);
             var cantidadPersonasInvalida = 0; // Cantidad inválida
-            
+
             // Act & Assert
             Action action = () => Reservacion.Crear(clienteId, mesaId, fecha, hora, cantidadPersonasInvalida, "Obs");
             action.Should().Throw<ArgumentException>()
                 .WithMessage("*cantidad de personas debe ser mayor que cero*");
         }
     }
-} 
+}

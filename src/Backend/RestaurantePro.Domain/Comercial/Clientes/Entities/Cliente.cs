@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 {
     /// <summary>
@@ -67,7 +66,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             PuntosAcumulados += puntos;
             MarkAsModified();
 
-                        AddDomainEvent(new PuntosAgregadosEvent(Id, puntos, PuntosAcumulados));
+            AddDomainEvent(new PuntosAgregadosEvent(Id, puntos, PuntosAcumulados));
         }
 
         /// <summary>
@@ -113,4 +112,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             AddDomainEvent(new InformacionContactoActualizadaEvent(Id, Email, Telefono));
         }
     }
-} 
+}

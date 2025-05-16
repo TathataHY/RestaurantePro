@@ -10,17 +10,17 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events
         /// Identificador de la reservación
         /// </summary>
         public Guid ReservacionId { get; }
-        
+
         /// <summary>
         /// Motivo de la cancelación
         /// </summary>
         public string Motivo { get; }
-        
+
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
         public DateTime OccurredOn { get; }
-        
+
         /// <summary>
         /// Constructor para crear una nueva instancia del evento
         /// </summary>
@@ -31,4 +31,4 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events
             OccurredOn = DateTime.Now;
         }
     }
-} 
+}

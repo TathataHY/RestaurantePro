@@ -10,23 +10,23 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
         /// Inicia una nueva transacción
         /// </summary>
         Task BeginTransactionAsync(CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Confirma la transacción actual
         /// </summary>
         Task CommitTransactionAsync(CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Deshace la transacción actual
         /// </summary>
         Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Guarda todos los cambios en la base de datos
         /// </summary>
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
-    
+
     /// <summary>
     /// Interfaz genérica para repositorios de entidades
     /// </summary>
@@ -40,7 +40,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
         Task DeleteAsync(T entity);
         Task<int> CountAsync(ISpecification<T> spec);
     }
-    
+
     /// <summary>
     /// Interfaz para especificaciones genéricas
     /// </summary>
@@ -48,7 +48,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
     {
         bool IsSatisfiedBy(T entity);
     }
-    
+
     /// <summary>
     /// Interfaz para el servicio de correo
     /// </summary>
@@ -56,7 +56,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
     {
         Task SendEmailAsync(string to, string subject, string body, bool isHtml = false);
     }
-    
+
     /// <summary>
     /// Interfaz para el servicio de notificaciones
     /// </summary>

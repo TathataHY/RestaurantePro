@@ -161,4 +161,4 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             cliente.DomainEvents.Should().BeEmpty();
         }
     }
-} 
+}

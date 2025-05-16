@@ -50,7 +50,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
         {
             // Arrange & Act
             var entity = new TestEntity();
-            
+
             // Assert
             entity.FechaCreacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(1));
         }
@@ -60,7 +60,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
         {
             // Arrange & Act
             var entity = new TestEntity();
-            
+
             // Assert
             entity.EstaEliminado.Should().BeFalse();
         }
@@ -70,10 +70,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
         {
             // Arrange
             var entity = new TestEntity();
-            
+
             // Act
             entity.MarkAsDeleted();
-            
+
             // Assert
             entity.EstaEliminado.Should().BeTrue();
         }
@@ -83,10 +83,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
         {
             // Arrange
             var entity = new TestEntity();
-            
+
             // Act
             entity.MarkAsDeleted();
-            
+
             // Assert
             entity.FechaActualizacion.Should().NotBeNull();
             entity.FechaActualizacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(1));
@@ -98,10 +98,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             // Arrange
             var entity = new TestEntity();
             var domainEvent = new TestDomainEvent();
-            
+
             // Act
             entity.AddTestDomainEvent(domainEvent);
-            
+
             // Assert
             entity.DomainEvents.Should().ContainSingle();
             entity.DomainEvents.First().Should().BeSameAs(domainEvent);
@@ -114,10 +114,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             var entity = new TestEntity();
             entity.AddTestDomainEvent(new TestDomainEvent());
             entity.AddTestDomainEvent(new TestDomainEvent());
-            
+
             // Act
             entity.ClearDomainEvents();
-            
+
             // Assert
             entity.DomainEvents.Should().BeEmpty();
         }
@@ -127,7 +127,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
         {
             // Arrange
             var entity = new TestEntity();
-            
+
             // Act & Assert
             entity.Equals(entity).Should().BeTrue();
         }
@@ -138,7 +138,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             // Arrange
             var entity = new TestEntity();
             var otherObject = new object();
-            
+
             // Act & Assert
             entity.Equals(otherObject).Should().BeFalse();
         }
@@ -150,7 +150,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             var id = Guid.NewGuid();
             var entity1 = new TestEntity(id);
             var entity2 = new TestEntity(id);
-            
+
             // Act & Assert
             entity1.Equals(entity2).Should().BeTrue();
         }
@@ -161,7 +161,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             // Arrange
             var entity1 = new TestEntity(Guid.NewGuid());
             var entity2 = new TestEntity(Guid.NewGuid());
-            
+
             // Act & Assert
             entity1.Equals(entity2).Should().BeFalse();
         }
@@ -173,7 +173,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             var id = Guid.NewGuid();
             var entity1 = new TestEntity(id);
             var entity2 = new TestEntity(id);
-            
+
             // Act & Assert
             (entity1 == entity2).Should().BeTrue();
         }
@@ -184,9 +184,9 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             // Arrange
             var entity1 = new TestEntity(Guid.NewGuid());
             var entity2 = new TestEntity(Guid.NewGuid());
-            
+
             // Act & Assert
             (entity1 != entity2).Should().BeTrue();
         }
     }
-} 
+}

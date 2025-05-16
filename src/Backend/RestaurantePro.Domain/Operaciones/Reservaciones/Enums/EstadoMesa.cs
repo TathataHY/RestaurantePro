@@ -19,10 +19,10 @@ namespace RestaurantePro.Domain.Enums
         /// Mesa reservada para uso futuro
         /// </summary>
         Reservada = 2,
-        
+
         /// <summary>
         /// Mesa en mantenimiento o no disponible
         /// </summary>
         Mantenimiento = 3
     }
-} 
+}

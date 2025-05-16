@@ -51,7 +51,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Total de puntos del tipo de operación en el periodo</returns>
         Task<int> ObtenerTotalPuntosPorTipoAsync(Guid tarjetaId, TipoOperacionPuntos tipoOperacion, DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Agrega un nuevo registro de historial
         /// </summary>
@@ -67,4 +67,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <returns>Tarea asíncrona</returns>
         Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
     }
-} 
+}

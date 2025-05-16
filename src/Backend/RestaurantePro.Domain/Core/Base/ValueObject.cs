@@ -47,4 +47,4 @@ namespace RestaurantePro.Domain.Core.Base
             return !(left == right);
         }
     }
-} 
+}

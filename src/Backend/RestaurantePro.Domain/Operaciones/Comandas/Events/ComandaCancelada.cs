@@ -10,17 +10,17 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events
         /// ID de la comanda cancelada
         /// </summary>
         public Guid ComandaId { get; }
-        
+
         /// <summary>
         /// Motivo de la cancelación
         /// </summary>
         public string Motivo { get; }
-        
+
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
         public DateTime OccurredOn { get; }
-        
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -31,4 +31,4 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events
             OccurredOn = DateTime.Now;
         }
     }
-} 
+}

@@ -83,4 +83,4 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             dinero.Equals(other).Should().BeFalse();
         }
     }
-} 
+}

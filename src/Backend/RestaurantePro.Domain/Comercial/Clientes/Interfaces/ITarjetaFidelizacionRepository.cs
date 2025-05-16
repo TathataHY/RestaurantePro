@@ -77,4 +77,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <returns>Código único para la tarjeta</returns>
         Task<string> GenerarCodigoUnicoAsync(string prefijo = "TF", CancellationToken cancellationToken = default);
     }
-} 
+}

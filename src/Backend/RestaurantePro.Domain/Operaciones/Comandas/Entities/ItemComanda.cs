@@ -10,35 +10,35 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// ID de la comanda a la que pertenece este ítem
         /// </summary>
         public Guid ComandaId { get; private set; }
-        
+
         /// <summary>
         /// ID del producto
         /// </summary>
         public Guid ProductoId { get; private set; }
-        
+
         /// <summary>
         /// Cantidad solicitada del producto
         /// </summary>
         public int Cantidad { get; private set; }
-        
+
         /// <summary>
         /// Precio unitario del producto al momento de crear la comanda
         /// </summary>
         public decimal PrecioUnitario { get; private set; }
-        
+
         /// <summary>
         /// Subtotal (cantidad * precio unitario)
         /// </summary>
         public decimal Subtotal { get; private set; }
-        
+
         /// <summary>
         /// Observaciones específicas para este ítem (e.g., "sin cebolla")
         /// </summary>
         public string Observaciones { get; private set; }
-        
+
         // Constructor privado para EF Core
         private ItemComanda() { }
-        
+
         /// <summary>
         /// Constructor principal
         /// </summary>
@@ -46,10 +46,10 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         {
             if (cantidad <= 0)
                 throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(cantidad));
-                
+
             if (precioUnitario < 0)
                 throw new ArgumentException("El precio unitario no puede ser negativo", nameof(precioUnitario));
-            
+
             Id = Guid.NewGuid();
             ComandaId = comandaId;
             ProductoId = productoId;
@@ -58,7 +58,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             Subtotal = cantidad * precioUnitario;
             Observaciones = observaciones;
         }
-        
+
         /// <summary>
         /// Actualiza la cantidad del producto en la comanda
         /// </summary>
@@ -66,11 +66,11 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         {
             if (nuevaCantidad <= 0)
                 throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(nuevaCantidad));
-            
+
             Cantidad = nuevaCantidad;
             RecalcularSubtotal();
         }
-        
+
         /// <summary>
         /// Actualiza el precio unitario
         /// </summary>
@@ -78,11 +78,11 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         {
             if (nuevoPrecioUnitario < 0)
                 throw new ArgumentException("El precio unitario no puede ser negativo", nameof(nuevoPrecioUnitario));
-            
+
             PrecioUnitario = nuevoPrecioUnitario;
             RecalcularSubtotal();
         }
-        
+
         /// <summary>
         /// Actualiza las observaciones del ítem
         /// </summary>
@@ -90,7 +90,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         {
             Observaciones = nuevasObservaciones;
         }
-        
+
         /// <summary>
         /// Recalcula el subtotal basado en cantidad y precio unitario
         /// </summary>
@@ -99,4 +99,4 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             Subtotal = Cantidad * PrecioUnitario;
         }
     }
-} 
+}

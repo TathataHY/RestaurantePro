@@ -158,4 +158,4 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas
             itemComanda.Observaciones.Should().BeNull();
         }
     }
-} 
+}

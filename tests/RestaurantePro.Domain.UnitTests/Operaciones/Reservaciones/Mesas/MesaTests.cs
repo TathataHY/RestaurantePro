@@ -24,7 +24,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas
             mesa.Capacidad.Should().Be(capacidad);
             mesa.Ubicacion.Should().Be(ubicacion);
             mesa.Estado.Should().Be(EstadoMesa.Disponible);
-            
+
             // Verificamos que se generó el evento de dominio
             mesa.DomainEvents.Should().ContainSingle(e => e is MesaCreada);
             var evento = mesa.DomainEvents.OfType<MesaCreada>().First();
@@ -38,69 +38,69 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas
         {
             // Arrange
             var mesa = Mesa.Crear(1, 4, "Interior");
-            
+
             // Act
             mesa.MarcarComoOcupada();
 
             // Assert
             mesa.Estado.Should().Be(EstadoMesa.Ocupada);
-            
+
             // Verificar evento de dominio
             mesa.DomainEvents.Should().Contain(e => e is MesaOcupada);
             var evento = mesa.DomainEvents.OfType<MesaOcupada>().Last();
             evento.MesaId.Should().Be(mesa.Id);
         }
-        
+
         [Fact]
         public void MarcarComoReservada_CuandoMesaEstaDisponible_DebeCambiarEstadoAReservada()
         {
             // Arrange
             var mesa = Mesa.Crear(1, 4, "Interior");
-            
+
             // Act
             mesa.MarcarComoReservada();
 
             // Assert
             mesa.Estado.Should().Be(EstadoMesa.Reservada);
-            
+
             // Verificar evento de dominio
             mesa.DomainEvents.Should().Contain(e => e is MesaReservada);
             var evento = mesa.DomainEvents.OfType<MesaReservada>().Last();
             evento.MesaId.Should().Be(mesa.Id);
         }
-        
+
         [Fact]
         public void MarcarComoDisponible_CuandoMesaEstaOcupada_DebeCambiarEstadoADisponible()
         {
             // Arrange
             var mesa = Mesa.Crear(1, 4, "Interior");
             mesa.MarcarComoOcupada();
-            
+
             // Act
             mesa.MarcarComoDisponible();
 
             // Assert
             mesa.Estado.Should().Be(EstadoMesa.Disponible);
-            
+
             // Verificar evento de dominio
             mesa.DomainEvents.Should().Contain(e => e is MesaDisponible);
             var evento = mesa.DomainEvents.OfType<MesaDisponible>().Last();
             evento.MesaId.Should().Be(mesa.Id);
         }
-        
+
         [Fact]
         public void MarcarComoOcupada_CuandoMesaNoEstaDisponible_DebeLanzarExcepcion()
         {
             // Arrange
             var mesa = Mesa.Crear(1, 4, "Interior");
             mesa.MarcarComoReservada(); // Primero la marcamos como reservada
-            
+
             // Act & Assert
             Action action = () => mesa.MarcarComoOcupada(); // Intentamos marcarla como ocupada estando reservada
             action.Should().Throw<InvalidOperationException>()
                 .WithMessage("*no puede marcarse como ocupada*");
         }
-        
+
         [Fact]
         public void CrearMesa_ConNumeroNegativo_DebeLanzarExcepcion()
         {
@@ -114,7 +114,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas
             action.Should().Throw<ArgumentException>()
                 .WithMessage("*número de mesa no puede ser negativo*");
         }
-        
+
         [Fact]
         public void CrearMesa_ConCapacidadCero_DebeLanzarExcepcion()
         {
@@ -129,4 +129,4 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas
                 .WithMessage("*capacidad debe ser mayor que cero*");
         }
     }
-} 
+}

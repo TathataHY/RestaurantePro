@@ -7,7 +7,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
     public class Comanda : EntityBase, IAggregateRoot
     {
         private readonly List<ItemComanda> _items = new List<ItemComanda>();
-        
+
         /// <summary>
         /// ID de la mesa asociada a la comanda
         /// </summary>
@@ -57,7 +57,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// Constructor privado para EF Core
         /// </summary>
         private Comanda() { }
-        
+
         /// <summary>
         /// Constructor para crear una nueva comanda
         /// </summary>
@@ -74,28 +74,28 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 Observaciones = observaciones,
                 Total = TotalComanda.Crear(0, 0)
             };
-            
+
             comanda.AddDomainEvent(new ComandaCreada(comanda.Id, mesaId, meseroId));
-            
+
             return comanda;
         }
-        
+
         /// <summary>
         /// Método para agregar un producto a la comanda
         /// </summary>
         public void AgregarProducto(Guid productoId, int cantidad, decimal precioUnitario, string observaciones = null)
         {
             ValidarComandaActiva();
-            
+
             var item = new ItemComanda(Id, productoId, cantidad, precioUnitario, observaciones);
             _items.Add(item);
-            
+
             RecalcularTotal();
             ActualizarFecha();
-            
+
             AddDomainEvent(new ProductoAgregadoAComanda(Id, productoId, cantidad));
         }
-        
+
         /// <summary>
         /// Método para actualizar el estado de la comanda
         /// </summary>
@@ -106,43 +106,43 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             {
                 throw new InvalidOperationException($"No se puede cambiar el estado de {Estado} a {nuevoEstado}");
             }
-            
+
             // Validar que una comanda no pueda finalizarse sin productos
             if (nuevoEstado == EstadoComanda.Finalizada && !Items.Any())
             {
                 throw new InvalidOperationException("No se puede finalizar una comanda sin productos");
             }
-            
+
             var estadoAnterior = Estado;
             Estado = nuevoEstado;
             ActualizarFecha();
-            
+
             AddDomainEvent(new EstadoComandaActualizado(Id, estadoAnterior, nuevoEstado));
-            
+
             // Si la comanda se finaliza, agregar evento específico
             if (nuevoEstado == EstadoComanda.Finalizada)
             {
                 AddDomainEvent(new ComandaFinalizada(Id, Total.Total));
             }
         }
-        
+
         /// <summary>
         /// Método para cancelar la comanda
         /// </summary>
         public void Cancelar(string motivo)
         {
             ValidarComandaActiva();
-            
+
             Estado = EstadoComanda.Cancelada;
-            Observaciones = string.IsNullOrEmpty(Observaciones) 
-                ? $"Cancelada: {motivo}" 
+            Observaciones = string.IsNullOrEmpty(Observaciones)
+                ? $"Cancelada: {motivo}"
                 : $"{Observaciones} | Cancelada: {motivo}";
-            
+
             ActualizarFecha();
-            
+
             AddDomainEvent(new ComandaCancelada(Id, motivo));
         }
-        
+
         /// <summary>
         /// Métodos privados para validaciones y lógica interna
         /// </summary>
@@ -153,7 +153,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 throw new InvalidOperationException($"No se pueden realizar cambios en una comanda con estado {Estado}");
             }
         }
-        
+
         private bool EsTransicionEstadoValida(EstadoComanda nuevoEstado)
         {
             return (Estado, nuevoEstado) switch
@@ -165,18 +165,18 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 _ => false
             };
         }
-        
+
         private void RecalcularTotal()
         {
             decimal subtotal = _items.Sum(i => i.Subtotal);
             decimal impuesto = subtotal * 0.16m; // IVA del 16%
-            
+
             Total = TotalComanda.Crear(subtotal, impuesto);
         }
-        
+
         private void ActualizarFecha()
         {
             FechaActualizacion = DateTime.Now;
         }
     }
-} 
+}

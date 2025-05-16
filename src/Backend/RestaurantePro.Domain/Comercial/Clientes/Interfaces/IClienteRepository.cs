@@ -60,4 +60,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <returns>Tarea asíncrona</returns>
         Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
     }
-} 
+}

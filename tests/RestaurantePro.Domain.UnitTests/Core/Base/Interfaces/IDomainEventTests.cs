@@ -18,12 +18,12 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base.Interfaces
         {
             // Arrange
             var occurredOn = DateTime.UtcNow;
-            
+
             // Act
             var domainEvent = new TestDomainEvent(occurredOn);
-            
+
             // Assert
             domainEvent.OccurredOn.Should().Be(occurredOn);
         }
     }
-} 
+}

@@ -10,12 +10,12 @@ namespace RestaurantePro.Domain.Core.Productos.Events
         /// Fecha y hora en que ocurrió el evento
         /// </summary>
         public DateTime OccurredOn { get; }
-        
+
         /// <summary>
         /// Identificador único del producto activado
         /// </summary>
         public Guid ProductoId { get; }
-        
+
         /// <summary>
         /// Constructor que inicializa un nuevo evento de producto activado
         /// </summary>
@@ -25,4 +25,4 @@ namespace RestaurantePro.Domain.Core.Productos.Events
             ProductoId = productoId;
         }
     }
-} 
+}

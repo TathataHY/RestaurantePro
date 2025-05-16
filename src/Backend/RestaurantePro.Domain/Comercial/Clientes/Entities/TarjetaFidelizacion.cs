@@ -155,10 +155,10 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             MarkAsModified();
 
             AddDomainEvent(new PuntosAgregadosATarjetaEvent(Id, puntos, PuntosAcumulados));
-            
+
             // Automáticamente actualizamos el nivel según los puntos acumulados
             ActualizarNivelSegunPuntos();
-            
+
             // Registramos en el historial
             return HistorialPuntos.CrearRegistroAgregados(Id, puntos, concepto);
         }
@@ -183,7 +183,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 
             // Calculamos puntos en base al monto y factor
             int puntos = (int)(montoCompra / factorConversion);
-            
+
             if (puntos <= 0)
                 puntos = 1; // Mínimo un punto por compra
 
@@ -192,10 +192,10 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             MarkAsModified();
 
             AddDomainEvent(new PuntosAgregadosATarjetaEvent(Id, puntos, PuntosAcumulados));
-            
+
             // Automáticamente actualizamos el nivel según los puntos acumulados
             ActualizarNivelSegunPuntos();
-            
+
             // Registramos en el historial
             return HistorialPuntos.CrearRegistroPorCompra(Id, montoCompra, factorConversion, concepto);
         }
@@ -224,7 +224,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             MarkAsModified();
 
             AddDomainEvent(new PuntosCanjeadosEvent(Id, puntos, concepto, PuntosDisponibles));
-            
+
             // Registramos en el historial
             return HistorialPuntos.CrearRegistroCanjeados(Id, puntos, concepto);
         }
@@ -248,7 +248,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 
             PuntosDisponibles -= puntos;
             MarkAsModified();
-            
+
             // Registramos en el historial
             return HistorialPuntos.CrearRegistroVencidos(Id, puntos, concepto);
         }
@@ -287,4 +287,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
                 ActualizarNivel(nuevoNivel);
         }
     }
-} 
+}

@@ -20,4 +20,4 @@ namespace RestaurantePro.Domain.Enums
         /// </summary>
         Sustituir = 2
     }
-} 
+}

@@ -10,12 +10,12 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Events
         /// Identificador de la mesa
         /// </summary>
         public Guid MesaId { get; }
-        
+
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
         public DateTime OccurredOn { get; }
-        
+
         /// <summary>
         /// Constructor para crear una nueva instancia del evento
         /// </summary>
@@ -25,4 +25,4 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Events
             OccurredOn = DateTime.Now;
         }
     }
-} 
+}
