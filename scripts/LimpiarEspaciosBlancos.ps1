@@ -1,1 +1,0 @@
-Get-ChildItem -Recurse -Filter '*.cs' | ForEach-Object { $content = Get-Content $_.FullName; if ($content.Length -gt 0 -and $content[0] -eq '') { $content[1..($content.Length-1)] | Set-Content $_.FullName } }
