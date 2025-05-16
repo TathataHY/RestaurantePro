@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.Core.Productos.Entities
 {
     /// <summary>

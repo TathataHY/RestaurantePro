@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.Core.BoundedContexts.ContextMap
 {
     /// <summary>

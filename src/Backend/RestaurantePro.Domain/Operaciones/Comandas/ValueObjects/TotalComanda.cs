@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.Operaciones.Comandas.ValueObjects
 {
     /// <summary>

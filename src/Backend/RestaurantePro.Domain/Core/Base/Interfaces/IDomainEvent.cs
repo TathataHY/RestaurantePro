@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.Core.Base.Interfaces
 {
     /// <summary>

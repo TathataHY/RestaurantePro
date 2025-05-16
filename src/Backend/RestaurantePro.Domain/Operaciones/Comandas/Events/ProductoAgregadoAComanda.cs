@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.Operaciones.Comandas.Events
 {
     /// <summary>

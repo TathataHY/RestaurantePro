@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
 {
     /// <summary>
