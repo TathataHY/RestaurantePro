@@ -19,16 +19,18 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
         Task<List<Ingrediente>> ObtenerActivosAsync();
         
         /// <summary>
-        /// Obtiene los ingredientes con stock por debajo del mu00ednimo
+        /// Obtiene los ingredientes que tienen stock por debajo de su mínimo
         /// </summary>
+        /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de ingredientes con stock bajo</returns>
-        Task<List<Ingrediente>> ObtenerConStockBajoAsync();
+        Task<List<Ingrediente>> ObtenerConStockBajoAsync(CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Obtiene ingredientes por unidad de medida
+        /// Busca ingredientes por unidad de medida
         /// </summary>
-        /// <param name="unidadMedida">Unidad de medida a filtrar</param>
-        /// <returns>Lista de ingredientes con la unidad de medida especificada</returns>
-        Task<List<Ingrediente>> ObtenerPorUnidadMedidaAsync(UnidadMedida unidadMedida);
+        /// <param name="unidadMedida">Unidad de medida a buscar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de ingredientes que coinciden con la unidad de medida</returns>
+        Task<IEnumerable<Ingrediente>> BuscarPorUnidadMedidaAsync(RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidadMedida, CancellationToken cancellationToken = default);
     }
 }

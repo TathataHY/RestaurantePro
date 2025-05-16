@@ -13,7 +13,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// <summary>
         /// Unidad de medida del ingrediente
         /// </summary>
-        public UnidadMedida UnidadMedida { get; private set; }
+        public RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida UnidadMedida { get; private set; }
 
         /// <summary>
         /// Stock mínimo recomendado del ingrediente
@@ -40,18 +40,26 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// </summary>
         public IReadOnlyCollection<MovimientoInventario> Movimientos => _movimientos.AsReadOnly();
 
+        /// <summary>
+        /// Proveedor principal para este ingrediente
+        /// </summary>
+        public Guid? ProveedorPrincipalId { get; private set; }
+
         // Constructor privado para EF Core
         private Ingrediente() { }
 
         /// <summary>
-        /// Crea una nueva instancia de ingrediente
+        /// Factory Method para crear un nuevo ingrediente
         /// </summary>
         /// <param name="nombre">Nombre del ingrediente</param>
+        /// <param name="codigo">Código del ingrediente</param>
+        /// <param name="descripcion">Descripción del ingrediente</param>
         /// <param name="unidadMedida">Unidad de medida del ingrediente</param>
         /// <param name="stockMinimo">Stock mínimo recomendado</param>
+        /// <param name="stockActual">Stock actual del ingrediente</param>
         /// <returns>Una nueva instancia de Ingrediente</returns>
         /// <exception cref="ArgumentException">Si los datos no son válidos</exception>
-        public static Ingrediente Crear(string nombre, UnidadMedida unidadMedida, decimal stockMinimo)
+        public static Ingrediente Crear(string nombre, string codigo, string descripcion, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidadMedida, decimal stockMinimo, decimal stockActual)
         {
             if (string.IsNullOrWhiteSpace(nombre))
                 throw new ArgumentException("El nombre no puede estar vacío", nameof(nombre));
@@ -64,7 +72,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
                 Nombre = nombre,
                 UnidadMedida = unidadMedida,
                 StockMinimo = stockMinimo,
-                Stock = 0,
+                Stock = stockActual,
                 EstaActivo = true
             };
 
@@ -182,6 +190,18 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             MarkAsModified();
 
             AddDomainEvent(new IngredienteActivadoEvent(Id, Nombre));
+        }
+
+        /// <summary>
+        /// Asocia un proveedor principal a este ingrediente
+        /// </summary>
+        /// <param name="proveedorId">ID del proveedor a asociar</param>
+        public void AsociarProveedorPrincipal(Guid proveedorId)
+        {
+            ProveedorPrincipalId = proveedorId;
+            MarkAsModified();
+            
+            AddDomainEvent(new ProveedorPrincipalAsociadoEvent(Id, Nombre, proveedorId));
         }
     }
 }

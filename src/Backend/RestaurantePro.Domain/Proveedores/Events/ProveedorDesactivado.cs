@@ -1,23 +1,32 @@
 namespace RestaurantePro.Domain.Proveedores.Events
 {
     /// <summary>
-    /// Evento de dominio que se dispara cuando se desactiva un proveedor
+    /// Evento que se dispara cuando se desactiva un proveedor
     /// </summary>
-    public class ProveedorDesactivado : DomainEvent
+    public class ProveedorDesactivado : IDomainEvent
     {
+        /// <summary>
+        /// Momento en que ocurrió el evento
+        /// </summary>
+        public DateTime OccurredOn { get; } = DateTime.Now;
+
         /// <summary>
         /// ID del proveedor desactivado
         /// </summary>
         public Guid ProveedorId { get; }
 
         /// <summary>
-        /// Constructor del evento
+        /// Nombre del proveedor
         /// </summary>
-        /// <param name="proveedorId">ID del proveedor</param>
-        public ProveedorDesactivado(Guid proveedorId) 
-            : base(DateTimeOffset.Now)
+        public string Nombre { get; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public ProveedorDesactivado(Guid proveedorId, string nombre)
         {
             ProveedorId = proveedorId;
+            Nombre = nombre;
         }
     }
 } 

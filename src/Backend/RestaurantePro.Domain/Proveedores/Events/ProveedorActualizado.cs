@@ -1,44 +1,50 @@
 namespace RestaurantePro.Domain.Proveedores.Events
 {
     /// <summary>
-    /// Evento de dominio que se dispara cuando se actualiza la información de un proveedor
+    /// Evento que se dispara cuando se actualiza un proveedor
     /// </summary>
-    public class ProveedorActualizado : DomainEvent
+    public class ProveedorActualizado : IDomainEvent
     {
+        /// <summary>
+        /// Momento en que ocurrió el evento
+        /// </summary>
+        public DateTime OccurredOn { get; } = DateTime.Now;
+
         /// <summary>
         /// ID del proveedor actualizado
         /// </summary>
         public Guid ProveedorId { get; }
 
         /// <summary>
-        /// Nombre actualizado
+        /// Nombre actualizado del proveedor
         /// </summary>
         public string Nombre { get; }
 
         /// <summary>
-        /// Teléfono actualizado
+        /// Email actualizado del proveedor
         /// </summary>
-        public PhoneNumber Telefono { get; }
+        public string Email { get; }
 
         /// <summary>
-        /// Email actualizado
+        /// Teléfono actualizado del proveedor
         /// </summary>
-        public Email Email { get; }
+        public string Telefono { get; }
 
         /// <summary>
-        /// Constructor del evento
+        /// Dirección actualizada del proveedor
         /// </summary>
-        /// <param name="proveedorId">ID del proveedor</param>
-        /// <param name="nombre">Nombre actualizado</param>
-        /// <param name="telefono">Teléfono actualizado</param>
-        /// <param name="email">Email actualizado</param>
-        public ProveedorActualizado(Guid proveedorId, string nombre, PhoneNumber telefono, Email email) 
-            : base(DateTimeOffset.Now)
+        public string Direccion { get; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public ProveedorActualizado(Guid proveedorId, string nombre, string email, string telefono, string direccion)
         {
             ProveedorId = proveedorId;
             Nombre = nombre;
-            Telefono = telefono;
             Email = email;
+            Telefono = telefono;
+            Direccion = direccion;
         }
     }
 } 

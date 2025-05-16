@@ -77,32 +77,21 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         /// Crea una nueva orden de compra
         /// </summary>
         /// <param name="proveedorId">ID del proveedor</param>
-        /// <param name="fechaEmision">Fecha de emisión</param>
-        /// <param name="fechaEntregaEstimada">Fecha estimada de entrega</param>
-        /// <param name="observaciones">Observaciones generales</param>
-        /// <returns>Nueva orden de compra</returns>
-        /// <exception cref="ArgumentException">Si los datos no son válidos</exception>
-        public static OrdenCompra Crear(Guid proveedorId, DateTime fechaEmision, DateTime fechaEntregaEstimada, string observaciones = null)
+        /// <param name="observaciones">Observaciones de la orden</param>
+        /// <param name="fechaEmision">Fecha de emisión de la orden</param>
+        /// <returns>Nueva instancia de orden de compra</returns>
+        public static OrdenCompra Crear(Guid proveedorId, string observaciones, DateTime fechaEmision)
         {
-            if (fechaEntregaEstimada < fechaEmision)
-                throw new ArgumentException("La fecha de entrega estimada no puede ser anterior a la fecha de emisión", nameof(fechaEntregaEstimada));
-                
             var ordenCompra = new OrdenCompra
             {
                 ProveedorId = proveedorId,
                 FechaEmision = fechaEmision,
-                FechaEntregaEstimada = fechaEntregaEstimada,
-                Observaciones = observaciones ?? string.Empty,
                 Estado = EstadoOrdenCompra.Pendiente,
-                Total = 0
+                Observaciones = observaciones ?? "Orden de compra automática"
             };
-            
-            ordenCompra.AddDomainEvent(new OrdenCompraCreada(
-                ordenCompra.Id, 
-                proveedorId, 
-                fechaEmision, 
-                fechaEntregaEstimada));
-            
+
+            ordenCompra.AddDomainEvent(new OrdenCompraCreadaEvent(ordenCompra.Id, proveedorId, fechaEmision));
+
             return ordenCompra;
         }
         
@@ -110,30 +99,31 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         /// Agrega un item a la orden de compra
         /// </summary>
         /// <param name="ingredienteId">ID del ingrediente</param>
-        /// <param name="cantidad">Cantidad</param>
-        /// <param name="precioUnitario">Precio unitario</param>
+        /// <param name="nombre">Nombre del ingrediente</param>
+        /// <param name="cantidad">Cantidad solicitada</param>
+        /// <param name="unidadMedida">Unidad de medida</param>
         /// <returns>El item agregado</returns>
-        /// <exception cref="InvalidOperationException">Si la orden no está en estado Pendiente</exception>
-        public ItemOrdenCompra AgregarItem(Guid ingredienteId, decimal cantidad, decimal precioUnitario)
+        public ItemOrdenCompra AgregarItem(Guid ingredienteId, string nombre, decimal cantidad, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidadMedida)
         {
             if (Estado != EstadoOrdenCompra.Pendiente)
                 throw new InvalidOperationException("No se pueden agregar items a una orden que no está en estado pendiente");
-                
-            var item = ItemOrdenCompra.Crear(Id, ingredienteId, cantidad, precioUnitario);
-            _items.Add(item);
-            
-            // Recalcular el total
-            RecalcularTotal();
-            
-            AddDomainEvent(new ItemOrdenCompraAgregado(
-                Id,
-                item.Id,
-                ingredienteId,
-                cantidad,
-                precioUnitario,
-                item.Subtotal));
-                
-            return item;
+
+            // Verificar si ya existe un item para este ingrediente
+            var itemExistente = Items.FirstOrDefault(i => i.IngredienteId == ingredienteId);
+            if (itemExistente != null)
+            {
+                // Actualizar la cantidad del item existente
+                itemExistente.AumentarCantidad(cantidad);
+                return itemExistente;
+            }
+
+            // Crear un nuevo item
+            var nuevoItem = ItemOrdenCompra.Crear(Id, ingredienteId, nombre, cantidad, unidadMedida);
+            _items.Add(nuevoItem);
+
+            AddDomainEvent(new ItemOrdenCompraAgregadoEvent(Id, ingredienteId, nombre, cantidad));
+
+            return nuevoItem;
         }
         
         /// <summary>

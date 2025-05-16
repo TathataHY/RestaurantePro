@@ -3,8 +3,13 @@ namespace RestaurantePro.Domain.Proveedores.Events
     /// <summary>
     /// Evento que se dispara cuando se activa un proveedor
     /// </summary>
-    public class ProveedorActivadoEvent : DomainEvent
+    public class ProveedorActivadoEvent : IDomainEvent
     {
+        /// <summary>
+        /// Momento en que ocurrió el evento
+        /// </summary>
+        public DateTime OccurredOn { get; } = DateTime.Now;
+
         /// <summary>
         /// ID del proveedor activado
         /// </summary>

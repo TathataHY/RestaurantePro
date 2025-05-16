@@ -88,6 +88,11 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         public IReadOnlyList<DateTime> HistorialOrdenes => _historialOrdenes.AsReadOnly();
 
         /// <summary>
+        /// Indica si el proveedor está activo
+        /// </summary>
+        public bool EstaActivo => Activo;
+
+        /// <summary>
         /// Constructor protegido para EF Core
         /// </summary>
         protected Proveedor() { }

@@ -16,9 +16,19 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         public Guid IngredienteId { get; private set; }
         
         /// <summary>
+        /// Nombre del ingrediente solicitado
+        /// </summary>
+        public string NombreIngrediente { get; private set; }
+        
+        /// <summary>
         /// Cantidad solicitada
         /// </summary>
         public decimal Cantidad { get; private set; }
+        
+        /// <summary>
+        /// Unidad de medida del ingrediente solicitado
+        /// </summary>
+        public RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida UnidadMedida { get; private set; }
         
         /// <summary>
         /// Precio unitario acordado
@@ -30,33 +40,42 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         /// </summary>
         public decimal Subtotal { get; private set; }
         
+        /// <summary>
+        /// Cantidad recibida
+        /// </summary>
+        public decimal CantidadRecibida { get; private set; }
+        
         // Constructor privado para EF Core
         private ItemOrdenCompra() { }
         
         /// <summary>
-        /// Crea un nuevo ítem de orden de compra
+        /// Crea un nuevo item de orden de compra
         /// </summary>
         /// <param name="ordenCompraId">ID de la orden de compra</param>
         /// <param name="ingredienteId">ID del ingrediente</param>
+        /// <param name="nombreIngrediente">Nombre del ingrediente</param>
         /// <param name="cantidad">Cantidad solicitada</param>
-        /// <param name="precioUnitario">Precio unitario</param>
-        /// <returns>Nuevo ítem de orden de compra</returns>
+        /// <param name="unidadMedida">Unidad de medida</param>
+        /// <returns>Nuevo item de orden de compra</returns>
         /// <exception cref="ArgumentException">Si los datos no son válidos</exception>
-        internal static ItemOrdenCompra Crear(Guid ordenCompraId, Guid ingredienteId, decimal cantidad, decimal precioUnitario)
+        public static ItemOrdenCompra Crear(
+            Guid ordenCompraId, 
+            Guid ingredienteId, 
+            string nombreIngrediente,
+            decimal cantidad, 
+            RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidadMedida)
         {
             if (cantidad <= 0)
                 throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(cantidad));
-                
-            if (precioUnitario < 0)
-                throw new ArgumentException("El precio unitario no puede ser negativo", nameof(precioUnitario));
                 
             var item = new ItemOrdenCompra
             {
                 OrdenCompraId = ordenCompraId,
                 IngredienteId = ingredienteId,
+                NombreIngrediente = nombreIngrediente,
                 Cantidad = cantidad,
-                PrecioUnitario = precioUnitario,
-                Subtotal = cantidad * precioUnitario
+                UnidadMedida = unidadMedida,
+                CantidadRecibida = 0
             };
             
             return item;
@@ -79,6 +98,19 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
             Cantidad = nuevaCantidad;
             PrecioUnitario = nuevoPrecioUnitario;
             Subtotal = nuevaCantidad * nuevoPrecioUnitario;
+            MarkAsModified();
+        }
+
+        /// <summary>
+        /// Aumenta la cantidad solicitada del item
+        /// </summary>
+        /// <param name="cantidad">Cantidad a aumentar</param>
+        public void AumentarCantidad(decimal cantidad)
+        {
+            if (cantidad <= 0)
+                throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(cantidad));
+
+            Cantidad += cantidad;
             MarkAsModified();
         }
     }

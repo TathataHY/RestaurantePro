@@ -1,10 +1,15 @@
 namespace RestaurantePro.Domain.Proveedores.Events
 {
     /// <summary>
-    /// Evento de dominio que se dispara cuando se crea un nuevo proveedor
+    /// Evento que se dispara cuando se crea un nuevo proveedor
     /// </summary>
-    public class ProveedorCreado : DomainEvent
+    public class ProveedorCreado : IDomainEvent
     {
+        /// <summary>
+        /// Momento en que ocurrió el evento
+        /// </summary>
+        public DateTime OccurredOn { get; } = DateTime.Now;
+
         /// <summary>
         /// ID del proveedor creado
         /// </summary>
@@ -16,29 +21,24 @@ namespace RestaurantePro.Domain.Proveedores.Events
         public string Nombre { get; }
 
         /// <summary>
-        /// RFC del proveedor
-        /// </summary>
-        public string RFC { get; }
-
-        /// <summary>
         /// Email del proveedor
         /// </summary>
         public string Email { get; }
 
         /// <summary>
-        /// Constructor del evento
+        /// Teléfono del proveedor
         /// </summary>
-        /// <param name="proveedorId">ID del proveedor</param>
-        /// <param name="nombre">Nombre del proveedor</param>
-        /// <param name="rfc">RFC del proveedor</param>
-        /// <param name="email">Email del proveedor</param>
-        public ProveedorCreado(Guid proveedorId, string nombre, string rfc, Email email) 
-            : base(DateTimeOffset.Now)
+        public string Telefono { get; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public ProveedorCreado(Guid proveedorId, string nombre, string email, string telefono)
         {
             ProveedorId = proveedorId;
             Nombre = nombre;
-            RFC = rfc;
             Email = email;
+            Telefono = telefono;
         }
     }
 } 

@@ -1,17 +1,22 @@
 namespace RestaurantePro.Domain.Proveedores.Events
 {
     /// <summary>
-    /// Evento de dominio que se dispara cuando se agrega un contacto a un proveedor
+    /// Evento que se dispara cuando se agrega un contacto a un proveedor
     /// </summary>
-    public class ContactoProveedorAgregado : DomainEvent
+    public class ContactoProveedorAgregado : IDomainEvent
     {
+        /// <summary>
+        /// Momento en que ocurrió el evento
+        /// </summary>
+        public DateTime OccurredOn { get; } = DateTime.Now;
+
         /// <summary>
         /// ID del proveedor
         /// </summary>
         public Guid ProveedorId { get; }
 
         /// <summary>
-        /// ID del contacto agregado
+        /// ID del contacto
         /// </summary>
         public Guid ContactoId { get; }
 
@@ -26,19 +31,26 @@ namespace RestaurantePro.Domain.Proveedores.Events
         public string Cargo { get; }
 
         /// <summary>
-        /// Constructor del evento
+        /// Email del contacto
         /// </summary>
-        /// <param name="proveedorId">ID del proveedor</param>
-        /// <param name="contactoId">ID del contacto</param>
-        /// <param name="nombre">Nombre del contacto</param>
-        /// <param name="cargo">Cargo del contacto</param>
-        public ContactoProveedorAgregado(Guid proveedorId, Guid contactoId, string nombre, string cargo) 
-            : base(DateTimeOffset.Now)
+        public string Email { get; }
+
+        /// <summary>
+        /// Teléfono del contacto
+        /// </summary>
+        public string Telefono { get; }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public ContactoProveedorAgregado(Guid proveedorId, Guid contactoId, string nombre, string cargo, string email, string telefono)
         {
             ProveedorId = proveedorId;
             ContactoId = contactoId;
             Nombre = nombre;
             Cargo = cargo;
+            Email = email;
+            Telefono = telefono;
         }
     }
 } 
