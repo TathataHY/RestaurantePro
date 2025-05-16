@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.UnitTests.Core.Base
 {
     public class EntityBaseTests

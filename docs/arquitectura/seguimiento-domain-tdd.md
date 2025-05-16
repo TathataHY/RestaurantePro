@@ -16,7 +16,7 @@ RestaurantePro.Domain/
 ├── Core/                 # Componentes base y compartidos
 ├── Comercial/            # Gestión de clientes y fidelización
 ├── Operaciones/          # Comandas y reservaciones
-└── [Pendiente] Inventario/  # Gestión de inventario y compras
+└── Inventario/           # Gestión de inventario y compras
 ```
 
 ## Estado de Implementación
@@ -48,13 +48,13 @@ RestaurantePro.Domain/
 | Reservacion | ✅ Completo | ✅ Completas | Reservación de mesas |
 | Mesa | ✅ Completo | ✅ Completas | Gestión de mesas |
 
-### Inventario (Pendiente)
+### Inventario
 
 | Componente | Estado | Pruebas | Notas |
 |------------|--------|---------|-------|
-| Ingrediente | ⏳ Pendiente | ⏳ Pendiente | Materias primas |
-| MovimientoInventario | ⏳ Pendiente | ⏳ Pendiente | Registro de movimientos |
-| OrdenCompra | ⏳ Pendiente | ⏳ Pendiente | Órdenes a proveedores |
+| Ingrediente | ✅ Completo | ✅ Completas | Materias primas |
+| MovimientoInventario | ✅ Completo | ✅ Completas | Registro de movimientos |
+| OrdenCompra | 🔄 En progreso | 🔄 En progreso | Órdenes a proveedores |
 | Proveedor | ⏳ Pendiente | ⏳ Pendiente | Gestión de proveedores |
 
 ## Relaciones entre Contextos
@@ -68,17 +68,19 @@ RestaurantePro.Domain/
 - Comanda contiene Productos
 - Reservacion asigna Mesas
 
-### [Pendiente] Operaciones ↔ Inventario
+### Operaciones ↔ Inventario
 - Comanda reduce stock de Ingredientes
 - ItemComanda verifica disponibilidad de Ingredientes
 
 ## Próximos pasos (TDD)
 
-1. **Implementar módulo de Inventario**:
-   - Crear pruebas para Ingrediente
-   - Implementar entidad Ingrediente
-   - Crear pruebas para MovimientoInventario
-   - Implementar entidad MovimientoInventario
+1. **Completar módulo de Inventario**:
+   - ✅ Crear pruebas para Ingrediente e implementar la entidad
+   - ✅ Crear pruebas para MovimientoInventario e implementar la entidad
+   - 🔄 Crear pruebas para OrdenCompra
+   - 🔄 Implementar entidad OrdenCompra
+   - ⏳ Crear pruebas para Proveedor
+   - ⏳ Implementar entidad Proveedor
 
 2. **Implementar servicios de dominio**:
    - Servicio para verificar disponibilidad de ingredientes
@@ -92,7 +94,8 @@ RestaurantePro.Domain/
 
 | Fecha | Componente | Test → Implementación → Refactor |
 |-------|------------|----------------------------------|
-| [Pendiente] | - | - |
+| 2023-10-15 | Ingrediente | Pruebas → Implementación → Refactor |
+| 2023-10-20 | MovimientoInventario | Pruebas → Implementación → Refactor |
 
 ## Decisiones de Diseño
 
