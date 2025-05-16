@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Operaciones.Comandas.Events
+namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
 {
     /// <summary>
     /// Evento emitido cuando se actualiza el estado de una comanda

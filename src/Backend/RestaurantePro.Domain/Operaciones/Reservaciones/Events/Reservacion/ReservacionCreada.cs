@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events
+namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion
 {
     /// <summary>
     /// Evento de dominio que se dispara cuando se crea una nueva reservación
