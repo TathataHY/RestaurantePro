@@ -1,5 +1,5 @@
 
-namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas
+namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
 {
     public class ItemComandaTests
     {

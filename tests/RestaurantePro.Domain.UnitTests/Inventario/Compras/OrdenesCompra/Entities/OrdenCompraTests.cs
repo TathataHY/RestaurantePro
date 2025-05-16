@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
+namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entities
 {
     public class OrdenCompraTests
     {
@@ -12,7 +12,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
             var observaciones = "Observaciones de prueba";
             
             // Act
-            var ordenCompra = Domain.Inventario.Entities.OrdenCompra.Crear(
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 proveedorId, 
                 fechaEmision, 
                 fechaEntregaEstimada,
@@ -24,7 +24,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
             ordenCompra.FechaEmision.Should().Be(fechaEmision);
             ordenCompra.FechaEntregaEstimada.Should().Be(fechaEntregaEstimada);
             ordenCompra.Observaciones.Should().Be(observaciones);
-            ordenCompra.Estado.Should().Be(EstadoOrdenCompra.Pendiente);
+            ordenCompra.Estado.Should().Be(Domain.Inventario.Compras.OrdenesCompra.Enums.EstadoOrdenCompra.Pendiente);
             ordenCompra.Items.Should().BeEmpty();
             ordenCompra.Total.Should().Be(0);
             
@@ -44,7 +44,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
             var fechaEntregaInvalida = fechaEmision.AddDays(-1); // Fecha anterior a emisión
             
             // Act & Assert
-            var action = () => Domain.Inventario.Entities.OrdenCompra.Crear(
+            var action = () => Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 proveedorId, 
                 fechaEmision, 
                 fechaEntregaInvalida,
@@ -58,7 +58,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
         public void AgregarItem_ConCantidadYPrecioValidos_DebeAgregarYCalcularTotal()
         {
             // Arrange
-            var ordenCompra = Domain.Inventario.Entities.OrdenCompra.Crear(
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 DateTime.Now,
                 DateTime.Now.AddDays(3),
@@ -91,7 +91,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
         public void AgregarItem_ConCantidadNegativa_DebeLanzarExcepcion()
         {
             // Arrange
-            var ordenCompra = Domain.Inventario.Entities.OrdenCompra.Crear(
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 DateTime.Now,
                 DateTime.Now.AddDays(3),
@@ -111,7 +111,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
         public void AgregarItem_ConPrecioNegativo_DebeLanzarExcepcion()
         {
             // Arrange
-            var ordenCompra = Domain.Inventario.Entities.OrdenCompra.Crear(
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 DateTime.Now,
                 DateTime.Now.AddDays(3),
@@ -131,7 +131,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
         public void EliminarItem_ItemExistente_DebeEliminarYRecalcularTotal()
         {
             // Arrange
-            var ordenCompra = Domain.Inventario.Entities.OrdenCompra.Crear(
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 DateTime.Now,
                 DateTime.Now.AddDays(3),
@@ -157,7 +157,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
         public void EnviarOrdenCompra_CuandoEstaPendiente_DebeCambiarEstadoAEnviada()
         {
             // Arrange
-            var ordenCompra = Domain.Inventario.Entities.OrdenCompra.Crear(
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 DateTime.Now,
                 DateTime.Now.AddDays(3),
@@ -169,7 +169,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
             ordenCompra.Enviar();
             
             // Assert
-            ordenCompra.Estado.Should().Be(EstadoOrdenCompra.Enviada);
+            ordenCompra.Estado.Should().Be(Domain.Inventario.Compras.OrdenesCompra.Enums.EstadoOrdenCompra.Enviada);
             ordenCompra.FechaEnvio.Should().NotBeNull();
             ordenCompra.FechaEnvio.Value.Date.Should().Be(DateTime.Now.Date);
             
@@ -181,7 +181,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
         public void EnviarOrdenCompra_SinItems_DebeLanzarExcepcion()
         {
             // Arrange
-            var ordenCompra = Domain.Inventario.Entities.OrdenCompra.Crear(
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 DateTime.Now,
                 DateTime.Now.AddDays(3),
@@ -197,7 +197,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
         public void RecibirOrdenCompra_CuandoEstaEnviada_DebeCambiarEstadoARecibida()
         {
             // Arrange
-            var ordenCompra = Domain.Inventario.Entities.OrdenCompra.Crear(
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 DateTime.Now,
                 DateTime.Now.AddDays(3),
@@ -213,7 +213,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
             ordenCompra.Recibir(fechaRecepcion, observacionesRecepcion);
             
             // Assert
-            ordenCompra.Estado.Should().Be(EstadoOrdenCompra.Recibida);
+            ordenCompra.Estado.Should().Be(Domain.Inventario.Compras.OrdenesCompra.Enums.EstadoOrdenCompra.Recibida);
             ordenCompra.FechaRecepcion.Should().Be(fechaRecepcion);
             ordenCompra.ObservacionesRecepcion.Should().Be(observacionesRecepcion);
             
@@ -225,7 +225,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
         public void CancelarOrdenCompra_CuandoEstaPendiente_DebeCambiarEstadoACancelada()
         {
             // Arrange
-            var ordenCompra = Domain.Inventario.Entities.OrdenCompra.Crear(
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 DateTime.Now,
                 DateTime.Now.AddDays(3),
@@ -237,7 +237,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
             ordenCompra.Cancelar(motivoCancelacion);
             
             // Assert
-            ordenCompra.Estado.Should().Be(EstadoOrdenCompra.Cancelada);
+            ordenCompra.Estado.Should().Be(Domain.Inventario.Compras.OrdenesCompra.Enums.EstadoOrdenCompra.Cancelada);
             ordenCompra.FechaCancelacion.Should().NotBeNull();
             ordenCompra.FechaCancelacion.Value.Date.Should().Be(DateTime.Now.Date);
             ordenCompra.MotivoCancelacion.Should().Be(motivoCancelacion);
@@ -250,7 +250,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
         public void CancelarOrdenCompra_CuandoEstaRecibida_DebeLanzarExcepcion()
         {
             // Arrange
-            var ordenCompra = Domain.Inventario.Entities.OrdenCompra.Crear(
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 DateTime.Now,
                 DateTime.Now.AddDays(3),

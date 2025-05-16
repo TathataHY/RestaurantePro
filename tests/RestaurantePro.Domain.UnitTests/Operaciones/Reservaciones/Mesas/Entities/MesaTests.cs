@@ -2,7 +2,7 @@ using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Events;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 
-namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas
+namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Entities
 {
     public class MesaTests
     {

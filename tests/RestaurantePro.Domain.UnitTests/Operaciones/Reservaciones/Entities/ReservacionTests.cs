@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones
+namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Entities
 {
     public class ReservacionTests
     {

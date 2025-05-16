@@ -1,22 +1,22 @@
-namespace RestaurantePro.Domain.UnitTests.Inventario.Repositories
+namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repositories
 {
-    public class OrdenCompraRepositoryTests
+    public class Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompraRepositoryTests
     {
-        private readonly Mock<IOrdenCompraRepository> _mockRepository;
-        private readonly List<OrdenCompra> _ordenesCompra;
+        private readonly Mock<Domain.Inventario.Compras.OrdenesCompra.Interfaces.IDomain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompraRepository> _mockRepository;
+        private readonly List<Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra> _ordenesCompra;
 
-        public OrdenCompraRepositoryTests()
+        public Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompraRepositoryTests()
         {
-            _mockRepository = new Mock<IOrdenCompraRepository>();
+            _mockRepository = new Mock<Domain.Inventario.Compras.OrdenesCompra.Interfaces.IDomain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompraRepository>();
 
             // Crear datos de prueba
             var fechaHoy = DateTime.Now;
             
-            _ordenesCompra = new List<OrdenCompra>
+            _ordenesCompra = new List<Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra>
             {
-                OrdenCompra.Crear(Guid.NewGuid(), fechaHoy, fechaHoy.AddDays(5), "Orden 1"),
-                OrdenCompra.Crear(Guid.NewGuid(), fechaHoy, fechaHoy.AddDays(7), "Orden 2"),
-                OrdenCompra.Crear(Guid.NewGuid(), fechaHoy, fechaHoy.AddDays(3), "Orden 3")
+                Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(Guid.NewGuid(), fechaHoy, fechaHoy.AddDays(5), "Orden 1"),
+                Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(Guid.NewGuid(), fechaHoy, fechaHoy.AddDays(7), "Orden 2"),
+                Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(Guid.NewGuid(), fechaHoy, fechaHoy.AddDays(3), "Orden 3")
             };
             
             // Agregar algunos items a las órdenes
@@ -31,7 +31,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Repositories
         }
 
         [Fact]
-        public async Task ObtenerPorIdAsync_IdExistente_DebeRetornarOrdenCompra()
+        public async Task ObtenerPorIdAsync_IdExistente_DebeRetornarDomain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra()
         {
             // Arrange
             var ordenId = _ordenesCompra[0].Id;
@@ -69,18 +69,18 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Repositories
         public async Task ObtenerPorEstadoAsync_EstadoEnviada_DebeRetornarOrdenesEnviadas()
         {
             // Arrange
-            var ordenesEnviadas = _ordenesCompra.Where(o => o.Estado == EstadoOrdenCompra.Enviada).ToList();
+            var ordenesEnviadas = _ordenesCompra.Where(o => o.Estado == EstadoDomain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Enviada).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(EstadoOrdenCompra.Enviada, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(EstadoDomain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Enviada, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ordenesEnviadas);
 
             // Act
-            var resultado = await _mockRepository.Object.ObtenerPorEstadoAsync(EstadoOrdenCompra.Enviada);
+            var resultado = await _mockRepository.Object.ObtenerPorEstadoAsync(EstadoDomain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Enviada);
 
             // Assert
             resultado.Should().NotBeNull();
             resultado.Should().HaveCount(1); // Solo hay 1 orden enviada (la primera)
-            resultado.All(o => o.Estado == EstadoOrdenCompra.Enviada).Should().BeTrue();
+            resultado.All(o => o.Estado == EstadoDomain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Enviada).Should().BeTrue();
         }
 
         [Fact]
@@ -106,7 +106,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Repositories
         public async Task AgregarAsync_OrdenValida_DebeAgregarCorrectamente()
         {
             // Arrange
-            var nuevaOrden = OrdenCompra.Crear(
+            var nuevaOrden = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 DateTime.Now,
                 DateTime.Now.AddDays(4),

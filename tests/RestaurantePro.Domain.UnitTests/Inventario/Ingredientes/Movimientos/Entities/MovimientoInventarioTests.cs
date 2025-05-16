@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
+namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Movimientos.Entities
 {
     public class MovimientoInventarioTests
     {
@@ -10,7 +10,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
             var cantidad = 10.5m;
             var fecha = DateTime.Now;
             var motivo = "Compra de ingredientes";
-            var tipoMovimiento = TipoMovimientoInventario.Ingreso;
+            var tipoMovimiento = Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Ingreso;
             
             // Act
             var movimiento = MovimientoInventario.CrearIngreso(ingredienteId, cantidad, motivo, fecha);
@@ -33,7 +33,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
             var cantidad = 5.25m;
             var fecha = DateTime.Now;
             var motivo = "Consumo en cocina";
-            var tipoMovimiento = TipoMovimientoInventario.Egreso;
+            var tipoMovimiento = Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Egreso;
             
             // Act
             var movimiento = MovimientoInventario.CrearEgreso(ingredienteId, cantidad, motivo, fecha);
