@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones
 {
     public class ReservacionTests

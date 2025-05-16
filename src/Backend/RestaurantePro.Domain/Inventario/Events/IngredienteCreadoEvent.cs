@@ -1,9 +1,7 @@
-using RestaurantePro.Domain.Core.Base.Interfaces;
-
 namespace RestaurantePro.Domain.Inventario.Events
 {
     /// <summary>
-    /// Evento de dominio que se lanza cuando se crea un nuevo ingrediente
+    /// Evento que se lanza cuando se crea un nuevo ingrediente
     /// </summary>
     public class IngredienteCreadoEvent : IDomainEvent
     {
@@ -18,7 +16,7 @@ namespace RestaurantePro.Domain.Inventario.Events
         public Guid IngredienteId { get; }
         
         /// <summary>
-        /// Nombre del ingrediente creado
+        /// Nombre del ingrediente
         /// </summary>
         public string Nombre { get; }
         

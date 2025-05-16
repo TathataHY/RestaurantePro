@@ -1,32 +1,32 @@
 namespace RestaurantePro.Domain.Inventario.Enums
 {
     /// <summary>
-    /// Unidades de medida para ingredientes y productos
+    /// Unidades de medida para ingredientes
     /// </summary>
     public enum UnidadMedida
     {
         /// <summary>
-        /// Unidad individual (ej. huevos, limones)
+        /// Unidad individual (pieza, unidad)
         /// </summary>
         Unidad = 0,
         
         /// <summary>
-        /// Kilogramos
+        /// Kilogramo
         /// </summary>
         Kilogramo = 1,
         
         /// <summary>
-        /// Gramos
+        /// Gramo
         /// </summary>
         Gramo = 2,
         
         /// <summary>
-        /// Litros
+        /// Litro
         /// </summary>
         Litro = 3,
         
         /// <summary>
-        /// Mililitros
+        /// Mililitro
         /// </summary>
         Mililitro = 4,
         

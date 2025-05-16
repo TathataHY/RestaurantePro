@@ -1,7 +1,3 @@
-// IngredienteTests
-
-using RestaurantePro.Domain.Inventario.Enums;
-
 namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
 {
     public class IngredienteTests

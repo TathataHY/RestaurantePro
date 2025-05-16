@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-
 namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces
 {
     /// <summary>

@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Inventario.Entities;
-
 namespace RestaurantePro.Domain.Inventario.Interfaces
 {
     /// <summary>

@@ -1,6 +1,3 @@
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Events;
-
 namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
 {
     /// <summary>

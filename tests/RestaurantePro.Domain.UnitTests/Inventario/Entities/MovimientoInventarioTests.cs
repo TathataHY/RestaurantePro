@@ -1,6 +1,3 @@
-using RestaurantePro.Domain.Inventario.Enums;
-using RestaurantePro.Domain.Inventario.Entities;
-
 namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
 {
     public class MovimientoInventarioTests
@@ -137,7 +134,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
             
             // Act & Assert
             var action = () => movimiento.Aplicar(stockActual);
-            action.Should().Throw<InvalidOperationException>().WithMessage("*stock insuficiente*");
+            action.Should().Throw<InvalidOperationException>().WithMessage("No hay stock suficiente para completar el movimiento");
         }
         
         [Fact]
@@ -154,7 +151,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
             
             // Act & Assert
             var action = () => movimiento.Aplicar(15.0m);
-            action.Should().Throw<InvalidOperationException>().WithMessage("*ya aplicado*");
+            action.Should().Throw<InvalidOperationException>().WithMessage("El movimiento ya fue aplicado");
         }
     }
 }

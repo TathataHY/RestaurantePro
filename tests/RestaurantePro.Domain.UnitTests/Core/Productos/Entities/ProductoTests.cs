@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.UnitTests.Core.Productos.Entities
 {
     public class ProductoTests

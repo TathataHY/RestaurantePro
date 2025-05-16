@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-
 namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
 {
     public class ClienteRepositoryTests

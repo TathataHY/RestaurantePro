@@ -1,9 +1,7 @@
-using RestaurantePro.Domain.Core.Base.Interfaces;
-
-namespace RestaurantePro.Domain.Inventario.Events
+    namespace RestaurantePro.Domain.Inventario.Events
 {
     /// <summary>
-    /// Evento de dominio que se lanza cuando se desactiva un ingrediente
+    /// Evento que se lanza cuando se desactiva un ingrediente
     /// </summary>
     public class IngredienteDesactivadoEvent : IDomainEvent
     {
@@ -18,7 +16,7 @@ namespace RestaurantePro.Domain.Inventario.Events
         public Guid IngredienteId { get; }
         
         /// <summary>
-        /// Nombre del ingrediente desactivado
+        /// Nombre del ingrediente
         /// </summary>
         public string Nombre { get; }
         

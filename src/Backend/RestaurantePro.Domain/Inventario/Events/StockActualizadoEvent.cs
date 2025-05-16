@@ -1,9 +1,7 @@
-using RestaurantePro.Domain.Core.Base.Interfaces;
-
 namespace RestaurantePro.Domain.Inventario.Events
 {
     /// <summary>
-    /// Evento de dominio que se lanza cuando se actualiza el stock de un ingrediente
+    /// Evento que se lanza cuando se actualiza el stock de un ingrediente
     /// </summary>
     public class StockActualizadoEvent : IDomainEvent
     {
@@ -20,19 +18,19 @@ namespace RestaurantePro.Domain.Inventario.Events
         /// <summary>
         /// Nombre del ingrediente
         /// </summary>
-        public string IngredienteNombre { get; }
+        public string Nombre { get; }
         
         /// <summary>
-        /// Nuevo stock del ingrediente
+        /// Cantidad actual de stock
         /// </summary>
-        public decimal NuevoStock { get; }
+        public decimal Stock { get; }
         
-        public StockActualizadoEvent(Guid ingredienteId, string ingredienteNombre, decimal nuevoStock)
+        public StockActualizadoEvent(Guid ingredienteId, string nombre, decimal stock)
         {
             OccurredOn = DateTime.UtcNow;
             IngredienteId = ingredienteId;
-            IngredienteNombre = ingredienteNombre;
-            NuevoStock = nuevoStock;
+            Nombre = nombre;
+            Stock = stock;
         }
     }
 } 

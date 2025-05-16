@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
 {
     public class ClienteTests
