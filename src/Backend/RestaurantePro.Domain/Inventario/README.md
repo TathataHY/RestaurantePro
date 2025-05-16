@@ -1,67 +1,30 @@
-# Módulo Inventario - Domain
+# Módulo de Inventario
 
-Este módulo contiene los elementos del dominio relacionados con la gestión de inventario, ingredientes, compras y proveedores, siguiendo los principios de Domain-Driven Design (DDD).
+## Descripción
+Este módulo gestiona todo lo relacionado con el control de existencias e insumos del restaurante,
+desde el registro y seguimiento de ingredientes hasta la gestión de compras y movimientos de stock.
+Permite mantener un control preciso de las materias primas disponibles para la operación del negocio.
 
-## Estructura del Módulo Inventario
+## Submódulos
+- **Ingredientes**: Gestión de materias primas y sus niveles de stock.
+  - **Movimientos**: Control de entradas y salidas de ingredientes.
+- **Compras**: Gestión de procesos de adquisición.
+  - **OrdenesCompra**: Ciclo de vida de pedidos a proveedores.
 
-```
-Inventario/
-├── Entities/              # Entidades del dominio (Ingrediente, MovimientoInventario, etc.)
-├── ValueObjects/          # Value Objects específicos (Cantidad, etc.)
-├── Events/                # Eventos de dominio relacionados con inventario
-├── Interfaces/            # Interfaces de repositorios y servicios
-├── Enums/                 # Enumeraciones específicas
-└── Services/              # Servicios de dominio para inventario
-```
+## Contexto en DDD
+Este módulo representa el Bounded Context de "Inventario" según el Context Map del sistema,
+con integraciones hacia los contextos de Catálogo y Proveedores.
 
-## Subcontextos
+## Valor de Negocio
+- Control preciso de costos de insumos
+- Prevención de pérdidas por mermas o caducidades
+- Optimización de procesos de compra
+- Garantía de disponibilidad de insumos para la operación
+- Trazabilidad completa de movimientos de inventario
 
-### Ingredientes
-
-Maneja la definición de ingredientes, sus propiedades, unidades de medida y stock:
-
-- Creación y mantenimiento de ingredientes
-- Control de stock mínimo y actual
-- Asociación con productos/recetas
-
-**Estado actual**: ✅ Implementado
-
-### Movimientos de Inventario
-
-Registra todos los cambios en el inventario:
-
-- Entradas de stock (compras, ajustes)
-- Salidas de stock (uso en comandas, mermas)
-- Auditoría de cambios en el tiempo
-
-**Estado actual**: ✅ Implementado
-
-La entidad `MovimientoInventario` permite:
-- Crear movimientos de ingreso y egreso con motivo
-- Aplicar los movimientos al stock de ingredientes
-- Validar reglas de negocio (no permitir stock negativo)
-- Mantener un historial de cambios de stock
-
-### Proveedores y Compras
-
-Gestiona los proveedores y el proceso de compra:
-
-- Registro de proveedores
-- Órdenes de compra
-- Recepción de productos
-
-**Estado actual**: ⏳ Pendiente
-
-## Principios implementados
-
-1. **Agregados**: Entidades principales como `Ingrediente` y `OrdenCompra` como raíces de agregado
-2. **Value Objects**: Conceptos inmutables como `Cantidad` con su unidad de medida
-3. **Invariantes de dominio**: Reglas de negocio como "no permitir stock negativo"
-4. **Eventos de dominio**: Notificaciones sobre cambios en el inventario
-5. **Servicios de dominio**: Lógica que involucra múltiples agregados
-
-## Relación con otros módulos
-
-- Se integra con **Operaciones/Comandas** para descontar ingredientes al crear comandas
-- Se relaciona con **Core/Productos** para asociar ingredientes a productos/recetas
-- Puede integrarse con módulos futuros como **Finanzas** para costos y valoración de inventario
+## Reglas de Negocio Principales
+1. Todo movimiento de inventario debe registrarse con motivo y responsable
+2. El stock nunca puede ser negativo
+3. Se deben generar alertas cuando los niveles caen bajo mínimos
+4. Las órdenes de compra siguen un flujo de estados predefinido
+5. Toda recepción de mercancía debe estar asociada a una orden de compra

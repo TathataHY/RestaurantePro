@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Events
+namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
 {
     /// <summary>
     /// Evento que se dispara cuando se elimina un item de una orden de compra
