@@ -7,6 +7,7 @@ global using System.Collections.Generic;
 global using System.Linq;
 global using System.Threading;
 global using System.Threading.Tasks;
+global using System.Text.RegularExpressions;
 
 // Domain core imports - Base
 global using RestaurantePro.Domain.Core.Base;
@@ -17,6 +18,7 @@ global using RestaurantePro.Domain.Core.Base.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel;
 global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+global using RestaurantePro.Domain.Core.SharedKernel.Services;
 
 // Domain core imports - Productos
 global using RestaurantePro.Domain.Core.Productos.Entities;
@@ -73,4 +75,6 @@ global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events;
 global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
 
 // Domain Proveedores
-global using RestaurantePro.Domain.Proveedores.Entidades;
+global using RestaurantePro.Domain.Proveedores.Entities;
+global using RestaurantePro.Domain.Proveedores.Interfaces;
+global using RestaurantePro.Domain.Proveedores.Events;

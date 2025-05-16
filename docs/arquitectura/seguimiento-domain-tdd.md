@@ -16,7 +16,8 @@ RestaurantePro.Domain/
 ├── Core/                 # Componentes base y compartidos
 ├── Comercial/            # Gestión de clientes y fidelización
 ├── Operaciones/          # Comandas y reservaciones
-└── Inventario/           # Gestión de inventario y compras
+├── Inventario/           # Gestión de inventario y compras
+└── Proveedores/          # Gestión de proveedores
 ```
 
 ## Estado de Implementación
@@ -54,8 +55,14 @@ RestaurantePro.Domain/
 |------------|--------|---------|-------|
 | Ingrediente | ✅ Completo | ✅ Completas | Materias primas |
 | MovimientoInventario | ✅ Completo | ✅ Completas | Registro de movimientos |
-| OrdenCompra | 🔄 En progreso | 🔄 En progreso | Órdenes a proveedores |
-| Proveedor | ⏳ Pendiente | ⏳ Pendiente | Gestión de proveedores |
+| OrdenCompra | ✅ Completo | ✅ Completas | Órdenes a proveedores |
+
+### Proveedores
+
+| Componente | Estado | Pruebas | Notas |
+|------------|--------|---------|-------|
+| Proveedor | ✅ Completo | ✅ Completas | Gestión de proveedores |
+| ContactoProveedor | ✅ Completo | ✅ Completas | Contactos de proveedores |
 
 ## Relaciones entre Contextos
 
@@ -72,23 +79,26 @@ RestaurantePro.Domain/
 - Comanda reduce stock de Ingredientes
 - ItemComanda verifica disponibilidad de Ingredientes
 
+### Inventario ↔ Proveedores
+- OrdenCompra se genera para un Proveedor específico
+- Proveedor suministra Ingredientes
+
 ## Próximos pasos (TDD)
 
-1. **Completar módulo de Inventario**:
-   - ✅ Crear pruebas para Ingrediente e implementar la entidad
-   - ✅ Crear pruebas para MovimientoInventario e implementar la entidad
-   - 🔄 Crear pruebas para OrdenCompra
-   - 🔄 Implementar entidad OrdenCompra
-   - ⏳ Crear pruebas para Proveedor
-   - ⏳ Implementar entidad Proveedor
+1. **Completar integración entre contextos**:
+   - Implementar servicios de dominio para la integración entre contextos
+   - Crear eventos de integración entre Inventario y Proveedores
+   - Implementar políticas de manejo de eventos entre contextos
 
 2. **Implementar servicios de dominio**:
    - Servicio para verificar disponibilidad de ingredientes
    - Servicio para aplicar descuentos de fidelización
+   - Servicio para gestión de órdenes de compra automáticas
 
 3. **Completar validaciones**:
    - Reglas de negocio para límites de reservas
    - Validaciones para creación de comandas
+   - Validaciones para gestión de proveedores
 
 ## Registro de ciclos TDD completados
 
@@ -96,6 +106,8 @@ RestaurantePro.Domain/
 |-------|------------|----------------------------------|
 | 2023-10-15 | Ingrediente | Pruebas → Implementación → Refactor |
 | 2023-10-20 | MovimientoInventario | Pruebas → Implementación → Refactor |
+| 2023-10-25 | OrdenCompra | Pruebas → Implementación → Refactor |
+| 2023-11-05 | Proveedor | Pruebas → Implementación → Refactor |
 
 ## Decisiones de Diseño
 
@@ -104,3 +116,4 @@ RestaurantePro.Domain/
 - Los cambios de estado se realizan mediante métodos específicos
 - Cada cambio de estado genera eventos de dominio
 - Se priorizan objetos inmutables para valores
+- Se separan interfaces de repositorio por contexto
