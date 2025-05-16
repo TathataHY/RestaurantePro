@@ -1,29 +1,77 @@
-# Módulo Clientes
+# Módulo Clientes - Domain
 
-Este módulo implementa patrones tácticos de Domain-Driven Design (DDD) para gestionar toda la lógica relacionada con clientes y fidelización.
+Este módulo contiene las entidades, value objects, eventos y definiciones del dominio para el contexto de Clientes y fidelización, siguiendo los principios de Domain-Driven Design (DDD).
 
-## Estructura de Directorios
+## Estructura del Módulo
 
-- **Entities/**: Entidades tradicionales (Cliente, TarjetaFidelizacion, etc.)
-- **ValueObjects/**: Objetos de valor inmutables (ClienteNombre)
-- **Events/**: Eventos de dominio para operaciones con clientes
-- **Enums/**: Enumeraciones relacionadas con clientes
-- **Interfaces/**: Contratos de repositorios y servicios
+```
+Clientes/
+├── Entities/                 # Entidades del dominio
+│   ├── Cliente.cs            # Aggregate Root - Cliente
+│   ├── TarjetaFidelizacion.cs # Entidad de tarjeta de fidelización
+│   └── HistorialPuntos.cs    # Entidad para registro de operaciones de puntos
+│
+├── ValueObjects/             # Value Objects del dominio
+│   ├── ClienteNombre.cs      # VO para nombre completo del cliente
+│   ├── DatosContacto.cs      # VO para datos de contacto
+│   └── Direccion.cs          # VO para dirección postal
+│
+├── Events/                   # Eventos de dominio
+│   ├── ClienteCreado.cs
+│   ├── ClienteActualizado.cs
+│   ├── ClienteActivado.cs
+│   ├── ClienteDesactivado.cs
+│   ├── PuntosAgregados.cs
+│   └── PuntosProcesados.cs
+│
+├── Interfaces/               # Interfaces del dominio
+│   ├── IClienteRepository.cs # Repositorio de clientes
+│   └── IHistorialPuntosRepository.cs # Repositorio de historial de puntos
+│
+└── Enums/                    # Enumeraciones
+    ├── TipoCliente.cs        # Tipos de cliente
+    ├── EstadoCliente.cs      # Estados posibles del cliente
+    ├── NivelFidelizacion.cs  # Niveles de fidelización
+    └── TipoOperacionPuntos.cs # Tipos de operaciones con puntos
+```
 
-## Patrones DDD Implementados
+## Contexto de Clientes
 
-### Value Objects
-Objetos inmutables que encapsulan características con validaciones propias.
-Ejemplo: `ClienteNombre` encapsula nombre y apellido con sus validaciones.
+Este contexto maneja todo lo relacionado con los clientes del restaurante y su programa de fidelización:
 
-### Entidades y Agregados
-Las entidades y agregados mantienen la consistencia del dominio.
-Ejemplo: `Cliente` con sus operaciones y entidades relacionadas.
+- Registro y gestión de clientes
+- Programa de fidelización con puntos y niveles
+- Historial de transacciones y puntos
+- Datos de contacto y preferencias
+- Segmentación de clientes
 
-### Eventos de Dominio
-Notifican cambios importantes en el estado del dominio.
-Ejemplos: `ClienteCreadoEvent`, `PuntosAgregadosEvent`
+## Principios implementados
 
-### Especificaciones (Futuro)
-Reglas de negocio encapsuladas como objetos independientes.
-Ejemplo: `ClientePreferencialSpecification` determinará si un cliente es preferencial. 
+1. **Aggregate Root**: `Cliente` como raíz de agregado
+2. **Entidades**: Clientes y tarjetas de fidelización con identidad propia
+3. **Value Objects**: Objetos inmutables como `ClienteNombre` o `DatosContacto`
+4. **Eventos de dominio**: Comunicación de cambios importantes como registro de clientes
+5. **Reglas de negocio**: Encapsuladas dentro de los agregados y entidades
+
+## Reglas de Negocio Principales
+
+- Los clientes deben tener datos de contacto válidos
+- Los puntos tienen fechas de vencimiento configurables
+- Existen diferentes niveles de fidelización basados en puntos acumulados
+- Las operaciones con puntos deben registrarse con su tipo y justificación
+- Los clientes pueden estar en diferentes estados (activo, inactivo, bloqueado)
+
+## Operaciones Clave
+
+- Registrar un nuevo cliente
+- Actualizar datos de cliente
+- Agregar puntos por consumo
+- Canjear puntos por beneficios
+- Calcular nivel de fidelización
+- Gestionar vencimiento de puntos
+
+## Relación con otros módulos
+
+- Se integra con **Operaciones/Comandas** para asignar clientes a comandas
+- Se integra con **Operaciones/Reservaciones** para gestionar reservas de clientes
+- Puede proporcionar datos a un futuro módulo de **Marketing** para campañas 
