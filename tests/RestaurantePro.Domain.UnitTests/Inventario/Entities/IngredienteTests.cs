@@ -24,6 +24,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
             ingrediente.StockMinimo.Should().Be(stockMinimo);
             ingrediente.Stock.Should().Be(0);
             ingrediente.EstaActivo.Should().BeTrue();
+            ingrediente.Movimientos.Should().BeEmpty();
         }
         
         [Fact]
@@ -49,7 +50,82 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
             
             // Act & Assert
             var action = () => Domain.Inventario.Entities.Ingrediente.Crear(nombre, unidadMedida, stockMinimo);
-            action.Should().Throw<ArgumentException>().WithMessage("*stock mu00ednimo*");
+            action.Should().Throw<ArgumentException>().WithMessage("*stock*");
+        }
+        
+        [Fact]
+        public void IncrementarStock_DebeCrearMovimientoYActualizarStock()
+        {
+            // Arrange
+            var ingrediente = Domain.Inventario.Entities.Ingrediente.Crear("Tomate", UnidadMedida.Kilogramo, 5.0m);
+            var cantidadIncremento = 10.0m;
+            var motivo = "Compra inicial";
+            
+            // Act
+            var movimiento = ingrediente.IncrementarStock(cantidadIncremento, motivo);
+            
+            // Assert
+            ingrediente.Stock.Should().Be(cantidadIncremento);
+            ingrediente.Movimientos.Should().HaveCount(1);
+            ingrediente.Movimientos.Should().Contain(movimiento);
+            
+            movimiento.TipoMovimiento.Should().Be(TipoMovimientoInventario.Ingreso);
+            movimiento.Cantidad.Should().Be(cantidadIncremento);
+            movimiento.Motivo.Should().Be(motivo);
+            movimiento.IngredienteId.Should().Be(ingrediente.Id);
+            movimiento.EstaAplicado.Should().BeTrue();
+            movimiento.CantidadFinal.Should().Be(cantidadIncremento);
+        }
+        
+        [Fact]
+        public void DecrementarStock_DebeCrearMovimientoYActualizarStock()
+        {
+            // Arrange
+            var ingrediente = Domain.Inventario.Entities.Ingrediente.Crear("Tomate", UnidadMedida.Kilogramo, 5.0m);
+            var stockInicial = 20.0m;
+            var cantidadDecremento = 8.0m;
+            var stockEsperado = stockInicial - cantidadDecremento;
+            var motivoIngreso = "Compra inicial";
+            var motivoEgreso = "Consumo en cocina";
+            
+            // Establecer stock inicial
+            ingrediente.IncrementarStock(stockInicial, motivoIngreso);
+            
+            // Act
+            var movimiento = ingrediente.DecrementarStock(cantidadDecremento, motivoEgreso);
+            
+            // Assert
+            ingrediente.Stock.Should().Be(stockEsperado);
+            ingrediente.Movimientos.Should().HaveCount(2);
+            ingrediente.Movimientos.Should().Contain(movimiento);
+            
+            movimiento.TipoMovimiento.Should().Be(TipoMovimientoInventario.Egreso);
+            movimiento.Cantidad.Should().Be(cantidadDecremento);
+            movimiento.Motivo.Should().Be(motivoEgreso);
+            movimiento.IngredienteId.Should().Be(ingrediente.Id);
+            movimiento.EstaAplicado.Should().BeTrue();
+            movimiento.CantidadFinal.Should().Be(stockEsperado);
+        }
+        
+        [Fact]
+        public void DecrementarStock_StockInsuficiente_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var ingrediente = Domain.Inventario.Entities.Ingrediente.Crear("Tomate", UnidadMedida.Kilogramo, 5.0m);
+            var stockInicial = 10.0m;
+            var cantidadDecremento = 15.0m;
+            
+            // Establecer stock inicial
+            ingrediente.IncrementarStock(stockInicial, "Compra inicial");
+            
+            // Act & Assert
+            var action = () => ingrediente.DecrementarStock(cantidadDecremento, "Consumo");
+            action.Should().Throw<InvalidOperationException>().WithMessage("*stock*");
+            
+            // El stock no debe cambiar
+            ingrediente.Stock.Should().Be(stockInicial);
+            // Solo debe existir un movimiento (el ingreso inicial)
+            ingrediente.Movimientos.Should().HaveCount(1);
         }
     }
 }

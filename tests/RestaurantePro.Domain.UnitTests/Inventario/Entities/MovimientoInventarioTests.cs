@@ -1,0 +1,160 @@
+using RestaurantePro.Domain.Inventario.Enums;
+using RestaurantePro.Domain.Inventario.Entities;
+
+namespace RestaurantePro.Domain.UnitTests.Inventario.Entities
+{
+    public class MovimientoInventarioTests
+    {
+        [Fact]
+        public void CrearMovimientoIngreso_ConDatosValidos_DebeCrearCorrectamente()
+        {
+            // Arrange
+            var ingredienteId = Guid.NewGuid();
+            var cantidad = 10.5m;
+            var fecha = DateTime.Now;
+            var motivo = "Compra de ingredientes";
+            var tipoMovimiento = TipoMovimientoInventario.Ingreso;
+            
+            // Act
+            var movimiento = MovimientoInventario.CrearIngreso(ingredienteId, cantidad, motivo, fecha);
+            
+            // Assert
+            movimiento.Should().NotBeNull();
+            movimiento.IngredienteId.Should().Be(ingredienteId);
+            movimiento.Cantidad.Should().Be(cantidad);
+            movimiento.Fecha.Should().BeCloseTo(fecha, TimeSpan.FromSeconds(1));
+            movimiento.Motivo.Should().Be(motivo);
+            movimiento.TipoMovimiento.Should().Be(tipoMovimiento);
+            movimiento.CantidadFinal.Should().BeNull(); // No se ha aplicado todavía
+        }
+        
+        [Fact]
+        public void CrearMovimientoEgreso_ConDatosValidos_DebeCrearCorrectamente()
+        {
+            // Arrange
+            var ingredienteId = Guid.NewGuid();
+            var cantidad = 5.25m;
+            var fecha = DateTime.Now;
+            var motivo = "Consumo en cocina";
+            var tipoMovimiento = TipoMovimientoInventario.Egreso;
+            
+            // Act
+            var movimiento = MovimientoInventario.CrearEgreso(ingredienteId, cantidad, motivo, fecha);
+            
+            // Assert
+            movimiento.Should().NotBeNull();
+            movimiento.IngredienteId.Should().Be(ingredienteId);
+            movimiento.Cantidad.Should().Be(cantidad);
+            movimiento.Fecha.Should().BeCloseTo(fecha, TimeSpan.FromSeconds(1));
+            movimiento.Motivo.Should().Be(motivo);
+            movimiento.TipoMovimiento.Should().Be(tipoMovimiento);
+            movimiento.CantidadFinal.Should().BeNull(); // No se ha aplicado todavía
+        }
+        
+        [Fact]
+        public void CrearMovimientoIngreso_ConCantidadNegativa_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var ingredienteId = Guid.NewGuid();
+            var cantidad = -5.0m;
+            var motivo = "Compra de ingredientes";
+            
+            // Act & Assert
+            var action = () => MovimientoInventario.CrearIngreso(ingredienteId, cantidad, motivo);
+            action.Should().Throw<ArgumentException>().WithMessage("*cantidad*");
+        }
+        
+        [Fact]
+        public void CrearMovimientoEgreso_ConCantidadNegativa_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var ingredienteId = Guid.NewGuid();
+            var cantidad = -2.0m;
+            var motivo = "Consumo en cocina";
+            
+            // Act & Assert
+            var action = () => MovimientoInventario.CrearEgreso(ingredienteId, cantidad, motivo);
+            action.Should().Throw<ArgumentException>().WithMessage("*cantidad*");
+        }
+        
+        [Fact]
+        public void CrearMovimiento_ConMotivoVacio_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var ingredienteId = Guid.NewGuid();
+            var cantidad = 10.0m;
+            var motivo = "";
+            
+            // Act & Assert
+            var action = () => MovimientoInventario.CrearIngreso(ingredienteId, cantidad, motivo);
+            action.Should().Throw<ArgumentException>().WithMessage("*motivo*");
+        }
+        
+        [Fact]
+        public void AplicarMovimientoIngreso_ActualizaCantidadFinal()
+        {
+            // Arrange
+            var ingredienteId = Guid.NewGuid();
+            var cantidad = 10.0m;
+            var stockActual = 5.0m;
+            var cantidadFinalEsperada = 15.0m;
+            var movimiento = MovimientoInventario.CrearIngreso(ingredienteId, cantidad, "Compra");
+            
+            // Act
+            movimiento.Aplicar(stockActual);
+            
+            // Assert
+            movimiento.CantidadFinal.Should().Be(cantidadFinalEsperada);
+            movimiento.EstaAplicado.Should().BeTrue();
+        }
+        
+        [Fact]
+        public void AplicarMovimientoEgreso_ActualizaCantidadFinal()
+        {
+            // Arrange
+            var ingredienteId = Guid.NewGuid();
+            var cantidad = 3.0m;
+            var stockActual = 10.0m;
+            var cantidadFinalEsperada = 7.0m;
+            var movimiento = MovimientoInventario.CrearEgreso(ingredienteId, cantidad, "Consumo");
+            
+            // Act
+            movimiento.Aplicar(stockActual);
+            
+            // Assert
+            movimiento.CantidadFinal.Should().Be(cantidadFinalEsperada);
+            movimiento.EstaAplicado.Should().BeTrue();
+        }
+        
+        [Fact]
+        public void AplicarMovimientoEgreso_CuandoStockInsuficiente_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var ingredienteId = Guid.NewGuid();
+            var cantidad = 10.0m;
+            var stockActual = 5.0m;
+            var movimiento = MovimientoInventario.CrearEgreso(ingredienteId, cantidad, "Consumo");
+            
+            // Act & Assert
+            var action = () => movimiento.Aplicar(stockActual);
+            action.Should().Throw<InvalidOperationException>().WithMessage("*stock insuficiente*");
+        }
+        
+        [Fact]
+        public void AplicarMovimiento_CuandoYaFueAplicado_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var ingredienteId = Guid.NewGuid();
+            var cantidad = 5.0m;
+            var stockActual = 10.0m;
+            var movimiento = MovimientoInventario.CrearIngreso(ingredienteId, cantidad, "Compra");
+            
+            // Aplicar por primera vez
+            movimiento.Aplicar(stockActual);
+            
+            // Act & Assert
+            var action = () => movimiento.Aplicar(15.0m);
+            action.Should().Throw<InvalidOperationException>().WithMessage("*ya aplicado*");
+        }
+    }
+}
