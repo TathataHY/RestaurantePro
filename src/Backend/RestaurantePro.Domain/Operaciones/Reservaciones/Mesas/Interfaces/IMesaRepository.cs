@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces
     /// <summary>
     /// Interfaz para el repositorio de mesas
     /// </summary>
-    public interface IMesaRepository
+    public interface IMesaRepository : IRepository<Mesa>
     {
         /// <summary>
         /// Obtiene todas las mesas
@@ -49,5 +49,10 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces
         /// Obtiene la lista de mesas disponibles
         /// </summary>
         Task<IEnumerable<Mesa>> ObtenerMesasDisponiblesAsync();
+        
+        /// <summary>
+        /// Guarda los cambios en la base de datos
+        /// </summary>
+        Task GuardarCambiosAsync();
     }
 }

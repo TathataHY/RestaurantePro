@@ -1,7 +1,7 @@
 namespace RestaurantePro.Domain.Proveedores.Interfaces
 {
     /// <summary>
-    /// Repositorio para la gestión de proveedores
+    /// Interfaz para el repositorio de proveedores
     /// </summary>
     public interface IProveedorRepository : IRepository<Proveedor>
     {
@@ -9,53 +9,58 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces
         /// Obtiene un proveedor por su ID
         /// </summary>
         /// <param name="id">ID del proveedor</param>
-        /// <returns>El proveedor si existe, null en caso contrario</returns>
-        Task<Proveedor> ObtenerPorIdAsync(Guid id);
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Proveedor encontrado o null si no existe</returns>
+        Task<Proveedor> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene un proveedor por su nombre
+        /// </summary>
+        /// <param name="nombre">Nombre del proveedor</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Proveedor encontrado o null si no existe</returns>
+        Task<Proveedor> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene todos los proveedores
         /// </summary>
-        /// <param name="soloActivos">Indica si sólo se deben retornar los proveedores activos</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores</returns>
-        Task<IEnumerable<Proveedor>> ObtenerTodosAsync(bool soloActivos = true);
+        Task<IEnumerable<Proveedor>> ObtenerTodosAsync(CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Obtiene proveedores por nombre
+        /// Obtiene proveedores activos
         /// </summary>
-        /// <param name="nombre">Nombre o parte del nombre a buscar</param>
-        /// <param name="soloActivos">Indica si sólo se deben retornar los proveedores activos</param>
-        /// <returns>Lista de proveedores que coinciden con el criterio</returns>
-        Task<IEnumerable<Proveedor>> BuscarPorNombreAsync(string nombre, bool soloActivos = true);
-        
-        /// <summary>
-        /// Verifica si existe un proveedor con el RFC especificado
-        /// </summary>
-        /// <param name="rfc">RFC a verificar</param>
-        /// <param name="excluyendoId">ID de proveedor a excluir de la búsqueda (para actualizaciones)</param>
-        /// <returns>True si existe un proveedor con ese RFC, False en caso contrario</returns>
-        Task<bool> ExisteRFCAsync(string rfc, Guid? excluyendoId = null);
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de proveedores activos</returns>
+        Task<IEnumerable<Proveedor>> ObtenerActivosAsync(CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Agrega un nuevo proveedor
         /// </summary>
         /// <param name="proveedor">Proveedor a agregar</param>
-        Task AgregarAsync(Entities.Proveedor proveedor);
+        /// <param name="cancellationToken">Token de cancelación</param>
+        Task AgregarAsync(Proveedor proveedor, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Actualiza un proveedor existente
         /// </summary>
-        /// <param name="proveedor">Proveedor con los cambios aplicados</param>
-        Task ActualizarAsync(Entities.Proveedor proveedor);
+        /// <param name="proveedor">Proveedor a actualizar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        Task ActualizarAsync(Proveedor proveedor, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Elimina un proveedor (normalmente una eliminación lógica cambiando su estado a inactivo)
+        /// Elimina un proveedor
         /// </summary>
         /// <param name="id">ID del proveedor a eliminar</param>
-        Task EliminarAsync(Guid id);
+        /// <param name="cancellationToken">Token de cancelación</param>
+        Task EliminarAsync(Guid id, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Guarda los cambios en la base de datos
         /// </summary>
-        Task GuardarCambiosAsync();
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Número de entidades afectadas</returns>
+        Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
     }
 } 

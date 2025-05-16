@@ -1,7 +1,7 @@
 namespace RestaurantePro.Domain.Proveedores.Entities
 {
     /// <summary>
-    /// Entidad que representa un proveedor de productos o servicios
+    /// Entidad que representa un proveedor en el sistema
     /// </summary>
     public class Proveedor : EntityBase
     {
@@ -11,19 +11,19 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         public string Nombre { get; private set; }
         
         /// <summary>
-        /// RFC (Registro Federal de Contribuyentes) del proveedor
+        /// Nombre del contacto principal
         /// </summary>
-        public string RFC { get; private set; }
+        public string NombreContacto { get; private set; }
         
         /// <summary>
-        /// Teléfono principal del proveedor
+        /// Email del proveedor
         /// </summary>
-        public PhoneNumber Telefono { get; private set; }
+        public string Email { get; private set; }
         
         /// <summary>
-        /// Email de contacto del proveedor
+        /// Teléfono del proveedor
         /// </summary>
-        public Email Email { get; private set; }
+        public string Telefono { get; private set; }
         
         /// <summary>
         /// Dirección del proveedor
@@ -31,9 +31,34 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         public string Direccion { get; private set; }
         
         /// <summary>
-        /// Observaciones generales sobre el proveedor
+        /// Ciudad del proveedor
         /// </summary>
-        public string Observaciones { get; private set; }
+        public string Ciudad { get; private set; }
+        
+        /// <summary>
+        /// Código postal del proveedor
+        /// </summary>
+        public string CodigoPostal { get; private set; }
+        
+        /// <summary>
+        /// País del proveedor
+        /// </summary>
+        public string Pais { get; private set; }
+        
+        /// <summary>
+        /// RFC del proveedor
+        /// </summary>
+        public string RFC { get; private set; }
+        
+        /// <summary>
+        /// Información bancaria del proveedor
+        /// </summary>
+        public string InformacionBancaria { get; private set; }
+        
+        /// <summary>
+        /// Días de crédito otorgados por el proveedor
+        /// </summary>
+        public int DiasCredito { get; private set; }
         
         /// <summary>
         /// Indica si el proveedor está activo
@@ -41,113 +66,156 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         public bool Activo { get; private set; }
         
         /// <summary>
-        /// Lista de contactos del proveedor
+        /// Fecha de registro del proveedor
         /// </summary>
-        private readonly List<ContactoProveedor> _contactos = new List<ContactoProveedor>();
+        public DateTime FechaRegistro { get; private set; }
         
         /// <summary>
-        /// Acceso de solo lectura a los contactos del proveedor
+        /// Fecha de la última orden realizada a este proveedor
         /// </summary>
-        public IReadOnlyCollection<ContactoProveedor> Contactos => _contactos.AsReadOnly();
-        
-        // Constructor privado para EF Core
-        private Proveedor() { }
+        public DateTime? UltimaOrden { get; private set; }
         
         /// <summary>
-        /// Crea un nuevo proveedor
+        /// Observaciones sobre el proveedor
         /// </summary>
-        /// <param name="nombre">Nombre del proveedor</param>
-        /// <param name="rfc">RFC del proveedor</param>
-        /// <param name="telefono">Teléfono del proveedor</param>
-        /// <param name="email">Email del proveedor</param>
-        /// <param name="direccion">Dirección del proveedor</param>
-        /// <param name="observaciones">Observaciones adicionales</param>
-        /// <returns>Nuevo proveedor</returns>
-        /// <exception cref="ArgumentException">Si los datos no son válidos</exception>
-        public static Proveedor Crear(
+        public string Observaciones { get; private set; }
+        
+        private readonly List<DateTime> _historialOrdenes = new();
+        
+        /// <summary>
+        /// Historial de fechas de órdenes realizadas a este proveedor
+        /// </summary>
+        public IReadOnlyList<DateTime> HistorialOrdenes => _historialOrdenes.AsReadOnly();
+
+        /// <summary>
+        /// Constructor protegido para EF Core
+        /// </summary>
+        protected Proveedor() { }
+        
+        /// <summary>
+        /// Constructor para crear un nuevo proveedor
+        /// </summary>
+        private Proveedor(
             string nombre,
-            string rfc,
-            string telefono,
+            string nombreContacto,
             string email,
+            string telefono,
             string direccion,
-            string observaciones = null)
+            string ciudad,
+            string codigoPostal,
+            string pais,
+            string rfc,
+            string informacionBancaria,
+            int diasCredito)
         {
-            // Validaciones
-            if (string.IsNullOrWhiteSpace(nombre))
-                throw new ArgumentException("El nombre del proveedor no puede estar vacío", nameof(nombre));
-                
-            if (string.IsNullOrWhiteSpace(rfc))
-                throw new ArgumentException("El RFC del proveedor no puede estar vacío", nameof(rfc));
-                
-            if (rfc.Length < 12)
-                throw new ArgumentException("El RFC debe tener al menos 12 caracteres", nameof(rfc));
-                
-            if (string.IsNullOrWhiteSpace(direccion))
-                throw new ArgumentException("La dirección del proveedor no puede estar vacía", nameof(direccion));
-                
-            var emailVO = Email.Create(email);
-            var telefonoVO = telefono != null ? PhoneNumber.Create(telefono) : null;
+            Nombre = nombre;
+            NombreContacto = nombreContacto;
+            Email = email;
+            Telefono = telefono;
+            Direccion = direccion;
+            Ciudad = ciudad;
+            CodigoPostal = codigoPostal;
+            Pais = pais;
+            RFC = rfc;
+            InformacionBancaria = informacionBancaria;
+            DiasCredito = diasCredito;
+            Activo = true;
+            FechaRegistro = DateTime.Now;
             
-            var proveedor = new Proveedor
-            {
-                Nombre = nombre,
-                RFC = rfc,
-                Telefono = telefonoVO,
-                Email = emailVO,
-                Direccion = direccion,
-                Observaciones = observaciones ?? string.Empty,
-                Activo = true // Por defecto, el proveedor se crea activo
-            };
-            
-            // Agregar evento de creación
-            proveedor.AddDomainEvent(new Events.ProveedorCreado(
-                proveedor.Id, 
-                nombre, 
-                rfc, 
-                emailVO));
-                
-            return proveedor;
+            AddDomainEvent(new ProveedorRegistradoEvent(Id, nombre));
         }
         
         /// <summary>
-        /// Actualiza la información general del proveedor
+        /// Factory method para crear un nuevo proveedor
         /// </summary>
-        /// <param name="nombre">Nuevo nombre</param>
-        /// <param name="telefono">Nuevo teléfono</param>
-        /// <param name="email">Nuevo email</param>
-        /// <param name="direccion">Nueva dirección</param>
-        /// <param name="observaciones">Nuevas observaciones</param>
-        /// <exception cref="ArgumentException">Si los datos no son válidos</exception>
-        public void ActualizarInformacion(
+        public static Proveedor Crear(
             string nombre,
-            string telefono,
+            string nombreContacto,
             string email,
+            string telefono,
             string direccion,
-            string observaciones = null)
+            string ciudad,
+            string codigoPostal,
+            string pais,
+            string rfc,
+            string informacionBancaria,
+            int diasCredito)
         {
             // Validaciones
             if (string.IsNullOrWhiteSpace(nombre))
-                throw new ArgumentException("El nombre del proveedor no puede estar vacío", nameof(nombre));
+                throw new ArgumentException("El nombre del proveedor es obligatorio", nameof(nombre));
                 
-            if (string.IsNullOrWhiteSpace(direccion))
-                throw new ArgumentException("La dirección del proveedor no puede estar vacía", nameof(direccion));
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentException("El email del proveedor es obligatorio", nameof(email));
                 
-            var emailVO = Email.Create(email);
-            var telefonoVO = telefono != null ? PhoneNumber.Create(telefono) : null;
+            if (diasCredito < 0)
+                throw new ArgumentException("Los días de crédito no pueden ser negativos", nameof(diasCredito));
+                
+            return new Proveedor(
+                nombre, 
+                nombreContacto, 
+                email, 
+                telefono, 
+                direccion, 
+                ciudad, 
+                codigoPostal, 
+                pais, 
+                rfc, 
+                informacionBancaria, 
+                diasCredito);
+        }
+        
+        /// <summary>
+        /// Actualiza la información del proveedor
+        /// </summary>
+        public void ActualizarInformacion(
+            string nombre,
+            string nombreContacto,
+            string email,
+            string telefono,
+            string direccion,
+            string ciudad,
+            string codigoPostal,
+            string pais,
+            string rfc,
+            string informacionBancaria,
+            int diasCredito)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ArgumentException("El nombre del proveedor es obligatorio", nameof(nombre));
+                
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentException("El email del proveedor es obligatorio", nameof(email));
+                
+            if (diasCredito < 0)
+                throw new ArgumentException("Los días de crédito no pueden ser negativos", nameof(diasCredito));
                 
             Nombre = nombre;
-            Telefono = telefonoVO;
-            Email = emailVO;
+            NombreContacto = nombreContacto;
+            Email = email;
+            Telefono = telefono;
             Direccion = direccion;
-            Observaciones = observaciones ?? string.Empty;
-            MarkAsModified();
+            Ciudad = ciudad;
+            CodigoPostal = codigoPostal;
+            Pais = pais;
+            RFC = rfc;
+            InformacionBancaria = informacionBancaria;
+            DiasCredito = diasCredito;
             
-            // Agregar evento de actualización
-            AddDomainEvent(new Events.ProveedorActualizado(
-                Id, 
-                nombre, 
-                telefonoVO, 
-                emailVO));
+            MarkAsModified();
+            AddDomainEvent(new ProveedorActualizadoEvent(Id, nombre));
+        }
+        
+        /// <summary>
+        /// Agrega observaciones al proveedor
+        /// </summary>
+        public void AgregarObservaciones(string observaciones)
+        {
+            if (string.IsNullOrWhiteSpace(observaciones))
+                throw new ArgumentException("Las observaciones no pueden estar vacías", nameof(observaciones));
+                
+            Observaciones = observaciones;
+            MarkAsModified();
         }
         
         /// <summary>
@@ -156,13 +224,11 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         public void Activar()
         {
             if (Activo)
-                return; // Ya está activo, no hacemos nada
+                return;
                 
             Activo = true;
             MarkAsModified();
-            
-            // Agregar evento de activación
-            AddDomainEvent(new Events.ProveedorActivado(Id));
+            AddDomainEvent(new ProveedorActivadoEvent(Id, Nombre));
         }
         
         /// <summary>
@@ -171,62 +237,24 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         public void Desactivar()
         {
             if (!Activo)
-                return; // Ya está inactivo, no hacemos nada
+                return;
                 
             Activo = false;
             MarkAsModified();
-            
-            // Agregar evento de desactivación
-            AddDomainEvent(new Events.ProveedorDesactivado(Id));
+            AddDomainEvent(new ProveedorDesactivadoEvent(Id, Nombre));
         }
         
         /// <summary>
-        /// Agrega un nuevo contacto al proveedor
+        /// Registra una nueva orden con este proveedor
         /// </summary>
-        /// <param name="nombre">Nombre del contacto</param>
-        /// <param name="cargo">Cargo del contacto</param>
-        /// <param name="telefono">Teléfono del contacto</param>
-        /// <param name="email">Email del contacto</param>
-        /// <returns>El contacto agregado</returns>
-        /// <exception cref="ArgumentException">Si los datos no son válidos</exception>
-        public ContactoProveedor AgregarContacto(
-            string nombre,
-            string cargo,
-            string telefono,
-            string email)
+        public void RegistrarOrden(DateTime fechaOrden)
         {
-            var contacto = ContactoProveedor.Crear(Id, nombre, cargo, telefono, email);
-            _contactos.Add(contacto);
-            MarkAsModified();
-            
-            // Agregar evento de contacto agregado
-            AddDomainEvent(new Events.ContactoProveedorAgregado(
-                Id, 
-                contacto.Id, 
-                nombre, 
-                cargo));
+            if (fechaOrden > DateTime.Now)
+                throw new ArgumentException("La fecha de la orden no puede ser futura", nameof(fechaOrden));
                 
-            return contacto;
-        }
-        
-        /// <summary>
-        /// Elimina un contacto del proveedor
-        /// </summary>
-        /// <param name="contactoId">ID del contacto a eliminar</param>
-        /// <exception cref="ArgumentException">Si el contacto no existe</exception>
-        public void EliminarContacto(Guid contactoId)
-        {
-            var contacto = _contactos.FirstOrDefault(c => c.Id == contactoId);
-            if (contacto == null)
-                throw new ArgumentException($"No existe un contacto con el ID {contactoId} en este proveedor", nameof(contactoId));
-                
-            _contactos.Remove(contacto);
+            _historialOrdenes.Add(fechaOrden);
+            UltimaOrden = fechaOrden;
             MarkAsModified();
-            
-            // Agregar evento de contacto eliminado
-            AddDomainEvent(new Events.ContactoProveedorEliminado(
-                Id, 
-                contactoId));
         }
     }
 } 

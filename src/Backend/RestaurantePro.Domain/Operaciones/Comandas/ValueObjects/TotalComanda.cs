@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.ValueObjects
     /// <summary>
     /// Value Object que representa el total de una comanda
     /// </summary>
-    public class TotalComanda
+    public class TotalComanda : ValueObject
     {
         /// <summary>
         /// Subtotal (sin impuestos)
@@ -42,37 +42,14 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.ValueObjects
             return new TotalComanda(subtotal, impuestos);
         }
 
-        // Sobreescribimos Equals y GetHashCode para implementar valor semántico
-        public override bool Equals(object obj)
+        /// <summary>
+        /// Implementación requerida por la clase base ValueObject
+        /// </summary>
+        protected override IEnumerable<object> GetEqualityComponents()
         {
-            if (obj is not TotalComanda other)
-                return false;
-
-            return Subtotal == other.Subtotal &&
-                   Impuestos == other.Impuestos &&
-                   Total == other.Total;
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Subtotal, Impuestos, Total);
-        }
-
-        // Sobrecarga de operadores de igualdad
-        public static bool operator ==(TotalComanda left, TotalComanda right)
-        {
-            if (left is null && right is null)
-                return true;
-
-            if (left is null || right is null)
-                return false;
-
-            return left.Equals(right);
-        }
-
-        public static bool operator !=(TotalComanda left, TotalComanda right)
-        {
-            return !(left == right);
+            yield return Subtotal;
+            yield return Impuestos;
+            yield return Total;
         }
 
         public override string ToString()

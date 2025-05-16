@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.ValueObjects
     /// <summary>
     /// Value Object que representa el nombre de un cliente
     /// </summary>
-    public class ClienteNombre
+    public class ClienteNombre : ValueObject
     {
         /// <summary>
         /// Nombre(s) del cliente
@@ -60,34 +60,18 @@ namespace RestaurantePro.Domain.Comercial.Clientes.ValueObjects
                 throw new ArgumentException("El apellido del cliente no puede exceder los 50 caracteres", nameof(apellido));
         }
 
-        public override bool Equals(object obj)
+        /// <summary>
+        /// Implementación requerida por la clase base ValueObject
+        /// </summary>
+        protected override IEnumerable<object> GetEqualityComponents()
         {
-            if (obj is not ClienteNombre other)
-                return false;
-
-            return Nombre == other.Nombre &&
-                   Apellido == other.Apellido;
+            yield return Nombre;
+            yield return Apellido;
         }
 
-        public override int GetHashCode()
+        public override string ToString()
         {
-            return HashCode.Combine(Nombre, Apellido);
-        }
-
-        public static bool operator ==(ClienteNombre left, ClienteNombre right)
-        {
-            if (ReferenceEquals(left, null) && ReferenceEquals(right, null))
-                return true;
-
-            if (ReferenceEquals(left, null) || ReferenceEquals(right, null))
-                return false;
-
-            return left.Equals(right);
-        }
-
-        public static bool operator !=(ClienteNombre left, ClienteNombre right)
-        {
-            return !(left == right);
+            return NombreCompleto;
         }
     }
 }

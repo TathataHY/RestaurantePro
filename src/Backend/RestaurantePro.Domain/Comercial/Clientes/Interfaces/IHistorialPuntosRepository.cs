@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
     /// <summary>
     /// Repositorio para la gestión del historial de puntos
     /// </summary>
-    public interface IHistorialPuntosRepository
+    public interface IHistorialPuntosRepository : IRepository<HistorialPuntos>
     {
         /// <summary>
         /// Obtiene un registro de historial por su ID
@@ -65,5 +65,21 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarea asíncrona</returns>
         Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Actualiza un registro de historial
+        /// </summary>
+        /// <param name="historial">Registro a actualizar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tarea asíncrona</returns>
+        Task ActualizarAsync(HistorialPuntos historial, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Elimina un registro de historial
+        /// </summary>
+        /// <param name="id">ID del registro a eliminar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tarea asíncrona</returns>
+        Task EliminarAsync(Guid id, CancellationToken cancellationToken = default);
     }
 }

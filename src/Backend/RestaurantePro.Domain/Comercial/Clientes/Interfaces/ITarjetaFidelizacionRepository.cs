@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
     /// <summary>
     /// Repositorio para la gestión de tarjetas de fidelización
     /// </summary>
-    public interface ITarjetaFidelizacionRepository
+    public interface ITarjetaFidelizacionRepository : IRepository<TarjetaFidelizacion>
     {
         /// <summary>
         /// Obtiene una tarjeta de fidelización por su ID
@@ -75,5 +75,13 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Código único para la tarjeta</returns>
         Task<string> GenerarCodigoUnicoAsync(string prefijo = "TF", CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Elimina una tarjeta de fidelización
+        /// </summary>
+        /// <param name="id">ID de la tarjeta a eliminar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tarea asíncrona</returns>
+        Task EliminarAsync(Guid id, CancellationToken cancellationToken = default);
     }
 }

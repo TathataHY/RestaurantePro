@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Interfaces
     /// <summary>
     /// Interfaz para el repositorio de comandas
     /// </summary>
-    public interface IComandaRepository
+    public interface IComandaRepository : IRepository<Comanda>
     {
         /// <summary>
         /// Obtiene una comanda por su ID
@@ -49,5 +49,10 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Interfaces
         /// Elimina una comanda (solo para propósitos administrativos)
         /// </summary>
         Task EliminarAsync(Guid id);
+        
+        /// <summary>
+        /// Guarda los cambios en la base de datos
+        /// </summary>
+        Task GuardarCambiosAsync();
     }
 }

@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
     /// <summary>
     /// Repositorio para la gestión de clientes
     /// </summary>
-    public interface IClienteRepository
+    public interface IClienteRepository : IRepository<Cliente>
     {
         /// <summary>
         /// Obtiene un cliente por su ID
@@ -58,5 +58,13 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarea asíncrona</returns>
         Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Elimina un cliente (normalmente una eliminación lógica)
+        /// </summary>
+        /// <param name="id">ID del cliente a eliminar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tarea asíncrona</returns>
+        Task EliminarAsync(Guid id, CancellationToken cancellationToken = default);
     }
 }

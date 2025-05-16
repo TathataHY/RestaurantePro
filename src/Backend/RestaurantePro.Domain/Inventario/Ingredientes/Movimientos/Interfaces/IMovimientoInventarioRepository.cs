@@ -1,9 +1,9 @@
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces
 {
     /// <summary>
-    /// Repositorio para la gestión de movimientos de inventario
+    /// Interfaz para el repositorio de movimientos de inventario
     /// </summary>
-    public interface IMovimientoInventarioRepository
+    public interface IMovimientoInventarioRepository : IRepository<MovimientoInventario>
     {
         /// <summary>
         /// Obtiene un movimiento por su ID
@@ -52,5 +52,20 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces
         /// <param name="movimiento">Movimiento a actualizar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         Task ActualizarAsync(MovimientoInventario movimiento, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Calcula el stock actual de un ingrediente basado en sus movimientos
+        /// </summary>
+        Task<decimal> CalcularStockActualAsync(Guid ingredienteId);
+
+        /// <summary>
+        /// Agrega un nuevo movimiento
+        /// </summary>
+        Task AgregarAsync(MovimientoInventario movimiento);
+        
+        /// <summary>
+        /// Guarda los cambios en la base de datos
+        /// </summary>
+        Task GuardarCambiosAsync();
     }
 } 

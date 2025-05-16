@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces
     /// <summary>
     /// Repositorio para gestionar las órdenes de compra
     /// </summary>
-    public interface IOrdenCompraRepository
+    public interface IOrdenCompraRepository : IRepository<OrdenCompra>
     {
         /// <summary>
         /// Obtiene una orden de compra por su identificador

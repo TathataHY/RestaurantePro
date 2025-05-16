@@ -5,6 +5,7 @@ global using System.Linq;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using System.Text.RegularExpressions;
+global using System.Globalization;
 
 // Domain core imports - Base
 global using RestaurantePro.Domain.Core.Base;

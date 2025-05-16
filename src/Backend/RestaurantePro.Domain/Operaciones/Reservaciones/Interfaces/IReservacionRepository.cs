@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces
     /// <summary>
     /// Interfaz para el repositorio de reservaciones
     /// </summary>
-    public interface IReservacionRepository
+    public interface IReservacionRepository : IRepository<Reservacion>
     {
         /// <summary>
         /// Obtiene todas las reservaciones
@@ -54,5 +54,10 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces
         /// Verifica si existe una reservación para una mesa en un rango de tiempo específico
         /// </summary>
         Task<bool> ExisteReservacionEnRangoHorarioAsync(Guid mesaId, DateTime fecha, TimeSpan horaInicio, TimeSpan horaFin);
+        
+        /// <summary>
+        /// Guarda los cambios en la base de datos
+        /// </summary>
+        Task GuardarCambiosAsync();
     }
 }

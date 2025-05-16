@@ -11,7 +11,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         public decimal Amount { get; }
         
         /// <summary>
-        /// Código ISO de la moneda (MXN, USD, EUR, etc.)
+        /// Código ISO de la moneda (CLP, USD, EUR, etc.)
         /// </summary>
         public string Currency { get; }
         
@@ -40,9 +40,9 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         /// Crea un nuevo valor monetario
         /// </summary>
         /// <param name="amount">Cantidad</param>
-        /// <param name="currency">Código de moneda (por defecto MXN)</param>
+        /// <param name="currency">Código de moneda (por defecto CLP)</param>
         /// <returns>Objeto Money validado</returns>
-        public static Money Create(decimal amount, string currency = "MXN")
+        public static Money Create(decimal amount, string currency = "CLP")
         {
             if (string.IsNullOrWhiteSpace(currency))
                 throw new ArgumentException("La moneda no puede estar vacía", nameof(currency));
@@ -56,9 +56,9 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         /// <summary>
         /// Crea un nuevo valor monetario de cero
         /// </summary>
-        /// <param name="currency">Código de moneda (por defecto MXN)</param>
+        /// <param name="currency">Código de moneda (por defecto CLP)</param>
         /// <returns>Objeto Money con valor cero</returns>
-        public static Money Zero(string currency = "MXN")
+        public static Money Zero(string currency = "CLP")
         {
             return Create(0, currency);
         }
