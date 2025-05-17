@@ -161,7 +161,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 
             var cliente = Cliente.Crear(
                 nombreCliente, 
-                $"cliente{Guid.NewGuid():N8}@test.com", 
+                $"cliente{Guid.NewGuid().ToString().Substring(0, 8)}@test.com", 
                 "123456789");
                 
             // Simular historial de visitas

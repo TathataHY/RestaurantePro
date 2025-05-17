@@ -58,13 +58,20 @@ namespace RestaurantePro.Domain.Comercial.Services
         /// <returns>Tarea asíncrona</returns>
         public async Task AcumularPuntosAsync(Guid clienteId, Guid comandaId, decimal montoTotal)
         {
+            // Verificamos primero si el cliente existe
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
+            if (cliente == null)
+            {
+                throw new InvalidOperationException($"No existe un cliente con el ID {clienteId}");
+            }
+            
             // Obtener tarjeta activa del cliente
             var tarjeta = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(clienteId);
             
             // Si no tiene tarjeta activa, no acumula puntos
             if (tarjeta == null)
             {
-                return;
+                throw new InvalidOperationException("El cliente no tiene una tarjeta activa para acumular puntos");
             }
             
             // Calcular puntos a acumular (10% del monto)

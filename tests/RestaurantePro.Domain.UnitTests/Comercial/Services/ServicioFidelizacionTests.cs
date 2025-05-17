@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 {
     public class ServicioFidelizacionTests
@@ -151,6 +153,15 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var comandaId = Guid.NewGuid();
             var puntosPrevios = 500;
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Plata, puntosPrevios);
+            
+            // Configurar el mock del cliente
+            var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var propiedadId = cliente.GetType().GetProperty("Id", BindingFlags.Instance | BindingFlags.NonPublic);
+            propiedadId?.SetValue(cliente, clienteId);
+            
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult<Cliente?>(cliente));
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult<TarjetaFidelizacion?>(tarjeta));
