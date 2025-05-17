@@ -226,5 +226,19 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
             Total = _items.Sum(i => i.Subtotal);
             MarkAsModified();
         }
+        
+        /// <summary>
+        /// Establece la fecha estimada de entrega
+        /// </summary>
+        /// <param name="fechaEntrega">Fecha de entrega estimada</param>
+        /// <exception cref="ArgumentException">Si la fecha es anterior a la fecha de emisión</exception>
+        public void EstablecerFechaEntrega(DateTime fechaEntrega)
+        {
+            if (fechaEntrega < FechaEmision)
+                throw new ArgumentException("La fecha de entrega no puede ser anterior a la fecha de emisión", nameof(fechaEntrega));
+                
+            FechaEntregaEstimada = fechaEntrega;
+            MarkAsModified();
+        }
     }
 } 

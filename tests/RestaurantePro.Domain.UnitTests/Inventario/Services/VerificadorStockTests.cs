@@ -72,7 +72,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(new List<Ingrediente> { ingrediente });
                 
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.IsAny<Guid>(), _cancellationToken))
+                .Setup(r => r.ObtenerPorIdAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
                 .ReturnsAsync(proveedor);
 
             // Act
@@ -98,7 +98,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(new List<Ingrediente> { ingrediente1, ingrediente2 });
                 
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.IsAny<Guid>(), _cancellationToken))
+                .Setup(r => r.ObtenerPorIdAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
                 .ReturnsAsync(proveedor);
 
             // Act
@@ -124,11 +124,11 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 
             // Configuraciones simples para cada proveedor
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(proveedor1.Id, _cancellationToken))
+                .Setup(r => r.ObtenerPorIdAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
                 .ReturnsAsync(proveedor1);
                 
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(proveedor2.Id, _cancellationToken))
+                .Setup(r => r.ObtenerPorIdAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
                 .ReturnsAsync(proveedor2);
 
             // Act
@@ -150,7 +150,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(new List<Ingrediente> { ingrediente });
                 
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.IsAny<Guid>(), _cancellationToken))
+                .Setup(r => r.ObtenerPorIdAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
                 .ReturnsAsync(proveedor);
 
             // Act
@@ -178,11 +178,11 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(new List<Ingrediente> { ingrediente });
                 
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.IsAny<Guid>(), _cancellationToken))
+                .Setup(r => r.ObtenerPorIdAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
                 .ReturnsAsync(proveedor);
                 
             _ordenCompraRepositoryMock
-                .Setup(r => r.ObtenerPendientesPorProveedorAsync(It.IsAny<Guid>(), _cancellationToken))
+                .Setup(r => r.ObtenerPendientesPorProveedorAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
                 .ReturnsAsync(ordenesExistentes);
 
             // Act
@@ -223,7 +223,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 "Ingrediente" + Guid.NewGuid().ToString().Substring(0, 8),
                 "ING-" + Guid.NewGuid().ToString().Substring(0, 5),
                 "Descripción ingrediente",
-                UnidadMedida.Kilogramo, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo, 
                 10.0m,
                 0.0m);
                 

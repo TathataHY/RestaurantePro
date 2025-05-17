@@ -82,18 +82,19 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         {
             // Arrange
             var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
-
-            // Cambiamos el estado a uno no activo (simulando una comanda finalizada)
-            PropertyInfo propEstado = comanda.GetType().GetProperty("Estado", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            if (propEstado != null)
-            {
-                propEstado.SetValue(comanda, EstadoComanda.Finalizada);
-            }
+            
+            // Hacemos que la comanda pase por los estados intermedios hasta llegar a Finalizada
+            // Primero agregamos un producto para que pueda finalizarse
+            comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
+            
+            // Luego usamos reflection para modificar el estado directamente
+            var fieldInfo = typeof(Comanda).GetProperty("Estado");
+            fieldInfo?.SetValue(comanda, EstadoComanda.Finalizada);
 
             // Act & Assert
             Action action = () => comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
             action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*no se pueden realizar cambios*",
+                .WithMessage("*No se pueden realizar cambios*",
                     because: "No se deben permitir cambios en comandas no activas");
         }
 
@@ -114,7 +115,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             // Act & Assert
             Action action = () => comanda.ActualizarEstado(EstadoComanda.Finalizada);
             action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*No se puede finalizar*",
+                .WithMessage("*No se puede cambiar el estado de Creada a Finalizada*",
                     because: "No se deben permitir finalizar comandas sin productos");
         }
     }

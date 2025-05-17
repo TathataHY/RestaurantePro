@@ -318,8 +318,8 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             contacto.ProveedorId.Should().Be(proveedor.Id);
             contacto.Nombre.Should().Be(nombreContacto);
             contacto.Cargo.Should().Be(cargoContacto);
-            contacto.Telefono.Should().Be(telefonoContacto);
-            contacto.Email.Should().Be(emailContacto);
+            contacto.Telefono.ToString().Should().Be(telefonoContacto);
+            contacto.Email.ToString().Should().Be(emailContacto);
             
             // Verificar que se generó el evento de dominio
             proveedor.DomainEvents.Should().Contain(e => e is ContactoProveedorAgregado);

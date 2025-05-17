@@ -160,8 +160,16 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentException("El email del proveedor es obligatorio", nameof(email));
                 
+            // Validar formato de email
+            if (!email.Contains("@") || !email.Contains("."))
+                throw new ArgumentException("El formato del email no es válido", nameof(email));
+                
             if (diasCredito < 0)
                 throw new ArgumentException("Los días de crédito no pueden ser negativos", nameof(diasCredito));
+                
+            // Validar formato de RFC
+            if (!string.IsNullOrWhiteSpace(rfc) && rfc.Length < 10)
+                throw new ArgumentException("El formato del RFC no es válido", nameof(rfc));
                 
             return new Proveedor(
                 nombre, 
@@ -199,8 +207,16 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentException("El email del proveedor es obligatorio", nameof(email));
                 
+            // Validar formato de email
+            if (!email.Contains("@") || !email.Contains("."))
+                throw new ArgumentException("El formato del email no es válido", nameof(email));
+                
             if (diasCredito < 0)
                 throw new ArgumentException("Los días de crédito no pueden ser negativos", nameof(diasCredito));
+                
+            // Validar formato de RFC
+            if (!string.IsNullOrWhiteSpace(rfc) && rfc.Length < 10)
+                throw new ArgumentException("El formato del RFC no es válido", nameof(rfc));
                 
             Nombre = nombre;
             NombreContacto = nombreContacto;

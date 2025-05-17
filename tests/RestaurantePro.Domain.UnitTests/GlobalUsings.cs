@@ -87,3 +87,30 @@ global using RestaurantePro.Domain.Proveedores.Interfaces;
 global using RestaurantePro.Domain.Proveedores.Events;
 global using RestaurantePro.Domain.Proveedores.Events.Proveedor;
 global using RestaurantePro.Domain.Proveedores.Events.ContactoProveedor;
+
+// Agregar extensiones para manejar argumentos opcionales en árboles de expresión
+namespace Moq
+{
+    public static class Extensions
+    {
+        public static T AnyGuid<T>() where T : struct
+        {
+            return It.Is<T>(v => true);
+        }
+        
+        public static string AnyString()
+        {
+            return It.Is<string>(v => true);
+        }
+        
+        public static decimal AnyDecimal()
+        {
+            return It.Is<decimal>(v => true);
+        }
+        
+        public static CancellationToken AnyCancellationToken()
+        {
+            return It.Is<CancellationToken>(v => true);
+        }
+    }
+}

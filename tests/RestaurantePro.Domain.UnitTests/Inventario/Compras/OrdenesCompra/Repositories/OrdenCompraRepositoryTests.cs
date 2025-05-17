@@ -20,10 +20,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
             };
             
             // Agregar algunos items a las órdenes
-            _ordenesCompra[0].AgregarItem(Guid.NewGuid(), "Ingrediente 1", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.);
-            _ordenesCompra[0].AgregarItem(Guid.NewGuid(), "Ingrediente 2", 3.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.);
+            _ordenesCompra[0].AgregarItem(Guid.NewGuid(), "Ingrediente 1", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            _ordenesCompra[0].AgregarItem(Guid.NewGuid(), "Ingrediente 2", 3.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             
-            _ordenesCompra[1].AgregarItem(Guid.NewGuid(), "Ingrediente 3", 5.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.);
+            _ordenesCompra[1].AgregarItem(Guid.NewGuid(), "Ingrediente 3", 5.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             
             // Cambiar estados de algunas órdenes
             _ordenesCompra[0].Enviar(); // Enviada
@@ -108,8 +108,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
             // Arrange
             var ingredienteId = Guid.NewGuid();
             
-            // Añadimos un item con el ingrediente específico a la primera orden
-            _ordenesCompra[0].AgregarItem(ingredienteId, "Ingrediente Específico", 5.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.);
+            // Añadimos un item con el ingrediente específico a la segunda orden (que está en estado pendiente)
+            _ordenesCompra[1].AgregarItem(ingredienteId, "Ingrediente Específico", 5.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             
             var ordenesConIngrediente = _ordenesCompra
                 .Where(o => o.Items.Any(i => i.IngredienteId == ingredienteId))
@@ -210,7 +210,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
         {
             // Arrange
             var orden = _ordenesCompra[1]; // Orden pendiente
-            orden.AgregarItem(Guid.NewGuid(), "Nuevo Ingrediente", 2.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.); // Agregamos un item
+            orden.AgregarItem(Guid.NewGuid(), "Nuevo Ingrediente", 2.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo); // Agregamos un item
 
             _mockRepository.Setup(repo => repo.ActualizarAsync(orden, CancellationToken.None))
                 .Returns(Task.CompletedTask);

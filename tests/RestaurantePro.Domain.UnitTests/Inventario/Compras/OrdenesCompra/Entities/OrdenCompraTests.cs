@@ -44,12 +44,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             var fechaEmision = DateTime.Now;
             var fechaEntregaInvalida = fechaEmision.AddDays(-1); // Fecha anterior a emisión
             
-            // Act & Assert
-            var action = () => Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+            // Act
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 proveedorId, 
                 "Observaciones",
                 fechaEmision);
                 
+            // Assert
+            Action action = () => ordenCompra.EstablecerFechaEntrega(fechaEntregaInvalida);
             action.Should().Throw<ArgumentException>()
                 .WithMessage("*fecha de entrega*");
         }

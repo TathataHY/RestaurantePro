@@ -66,14 +66,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
                 .Setup(v => v.VerificarYGenerarOrdenesCompraAsync())
                 .ReturnsAsync(resultadoVerificacion);
                 
-            // Configuración simple sin árboles de expresión complejos
+            // Configuración usando los métodos de extensión personalizados
             var notificacionId = Guid.NewGuid();
             _servicioNotificacionesMock
                 .Setup(s => s.NotificarStockBajo(
-                    It.IsAny<Guid>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<decimal>(), 
-                    It.IsAny<decimal>()))
+                    Extensions.AnyGuid<Guid>(), 
+                    Extensions.AnyString(), 
+                    Extensions.AnyDecimal(), 
+                    Extensions.AnyDecimal()))
                 .ReturnsAsync(notificacionId);
             
             // Act
@@ -83,13 +83,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             resultado.Notificaciones.Should().HaveCount(2);
             resultado.OrdenesCompraGeneradas.Should().HaveCount(1);
             
-            // Verificación simple usando It.IsAny<T>
+            // Verificación usando los métodos de extensión personalizados
             _servicioNotificacionesMock.Verify(
                 s => s.NotificarStockBajo(
-                    It.IsAny<Guid>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<decimal>(), 
-                    It.IsAny<decimal>()), 
+                    Extensions.AnyGuid<Guid>(), 
+                    Extensions.AnyString(), 
+                    Extensions.AnyDecimal(), 
+                    Extensions.AnyDecimal()), 
                 Times.Exactly(2));
                 
             _verificadorStockMock.Verify(
@@ -114,13 +114,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             resultado.Notificaciones.Should().BeEmpty();
             resultado.OrdenesCompraGeneradas.Should().BeEmpty();
             
-            // Verificación simple usando It.IsAny<T>
+            // Verificación usando los métodos de extensión personalizados
             _servicioNotificacionesMock.Verify(
                 s => s.NotificarStockBajo(
-                    It.IsAny<Guid>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<decimal>(), 
-                    It.IsAny<decimal>()), 
+                    Extensions.AnyGuid<Guid>(), 
+                    Extensions.AnyString(), 
+                    Extensions.AnyDecimal(), 
+                    Extensions.AnyDecimal()), 
                 Times.Never());
                 
             _verificadorStockMock.Verify(
@@ -148,14 +148,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
                 .Setup(v => v.VerificarYGenerarOrdenesCompraAsync())
                 .ReturnsAsync(resultadoVerificacion);
                 
-            // Configuración simple sin árboles de expresión complejos
+            // Configuración usando los métodos de extensión personalizados
             var notificacionId = Guid.NewGuid();
             _servicioNotificacionesMock
                 .Setup(s => s.NotificarStockBajo(
-                    It.IsAny<Guid>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<decimal>(), 
-                    It.IsAny<decimal>()))
+                    Extensions.AnyGuid<Guid>(), 
+                    Extensions.AnyString(), 
+                    Extensions.AnyDecimal(), 
+                    Extensions.AnyDecimal()))
                 .ReturnsAsync(notificacionId);
             
             // Act
@@ -165,13 +165,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             resultado.Notificaciones.Should().HaveCount(2);
             resultado.OrdenesCompraGeneradas.Should().BeEmpty();
             
-            // Verificación simple usando It.IsAny<T>
+            // Verificación usando los métodos de extensión personalizados
             _servicioNotificacionesMock.Verify(
                 s => s.NotificarStockBajo(
-                    It.IsAny<Guid>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<decimal>(), 
-                    It.IsAny<decimal>()), 
+                    Extensions.AnyGuid<Guid>(), 
+                    Extensions.AnyString(), 
+                    Extensions.AnyDecimal(), 
+                    Extensions.AnyDecimal()), 
                 Times.Exactly(2));
                 
             _verificadorStockMock.Verify(
@@ -185,7 +185,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
                 nombre,
                 "ING-" + Guid.NewGuid().ToString().Substring(0, 5),
                 $"Descripción de {nombre}",
-                UnidadMedida.Kilogramo,
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
                 stockMinimo,
                 stockActual);
                 
