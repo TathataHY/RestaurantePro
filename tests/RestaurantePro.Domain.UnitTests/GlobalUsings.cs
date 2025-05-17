@@ -18,6 +18,12 @@ global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;
 // global using RestaurantePro.Domain.Core.Base.Exceptions;
 
+// Domain Base - Events
+global using RestaurantePro.Domain.Core.Base.Events;
+global using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+global using RestaurantePro.Domain.Core.Base.Events.Handlers;
+global using RestaurantePro.Domain.Core.Base.Services;
+
 // Domain core imports - SharedKernel
 global using RestaurantePro.Domain.Core.SharedKernel;
 global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
@@ -102,3 +108,9 @@ global using RestaurantePro.Domain.Proveedores.Interfaces;
 global using RestaurantePro.Domain.Proveedores.Events;
 global using RestaurantePro.Domain.Proveedores.Events.Proveedor;
 global using RestaurantePro.Domain.Proveedores.Events.ContactoProveedor;
+
+// Event Handlers
+global using RestaurantePro.Domain.Comercial.EventHandlers;
+global using RestaurantePro.Domain.Inventario.EventHandlers;
+global using RestaurantePro.Domain.Operaciones.EventHandlers;
+// global using RestaurantePro.Domain.Proveedores.EventHandlers;

@@ -113,6 +113,54 @@ namespace RestaurantePro.Domain.Inventario.Services
             return true;
         }
         
+        /// <inheritdoc />
+        public async Task EnviarNotificacionAsync(Guid destinatarioId, string titulo, string mensaje, CancellationToken cancellationToken = default)
+        {
+            var notificacion = Notificacion.Crear(
+                titulo,
+                mensaje,
+                TipoNotificacion.Personalizada,
+                destinatarioId,
+                null);
+                
+            await _notificacionRepository.AddAsync(notificacion, cancellationToken);
+        }
+        
+        /// <inheritdoc />
+        public async Task EnviarNotificacionMasivaAsync(IEnumerable<Guid> destinatariosIds, string titulo, string mensaje, CancellationToken cancellationToken = default)
+        {
+            var notificaciones = new List<Notificacion>();
+            
+            foreach (var destinatarioId in destinatariosIds)
+            {
+                var notificacion = Notificacion.Crear(
+                    titulo,
+                    mensaje,
+                    TipoNotificacion.Personalizada,
+                    destinatarioId,
+                    null);
+                    
+                notificaciones.Add(notificacion);
+            }
+            
+            foreach (var notificacion in notificaciones)
+            {
+                await _notificacionRepository.AddAsync(notificacion, cancellationToken);
+            }
+        }
+        
+        /// <inheritdoc />
+        public async Task MarcarComoLeidaAsync(Guid notificacionId, CancellationToken cancellationToken = default)
+        {
+            var notificacion = await _notificacionRepository.ObtenerPorIdAsync(notificacionId, cancellationToken);
+            
+            if (notificacion != null)
+            {
+                notificacion.MarcarComoLeida();
+                await _notificacionRepository.UpdateAsync(notificacion, cancellationToken);
+            }
+        }
+        
         // Método privado para obtener los IDs de los administradores
         private async Task<List<Guid>> ObtenerAdministradoresAsync()
         {

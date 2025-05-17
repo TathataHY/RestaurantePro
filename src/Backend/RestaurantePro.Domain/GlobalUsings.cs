@@ -13,6 +13,12 @@ global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;
 // global using RestaurantePro.Domain.Core.Base.Exceptions;
 
+// Domain Base - Events
+global using RestaurantePro.Domain.Core.Base.Events;
+global using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+global using RestaurantePro.Domain.Core.Base.Events.Handlers;
+global using RestaurantePro.Domain.Core.Base.Services;
+
 // Domain core imports - SharedKernel
 global using RestaurantePro.Domain.Core.SharedKernel;
 global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
@@ -25,6 +31,7 @@ global using RestaurantePro.Domain.Core.BoundedContexts;
 // Domain core imports - Productos
 global using RestaurantePro.Domain.Core.Productos.Entities;
 global using RestaurantePro.Domain.Core.Productos.ValueObjects;
+global using RestaurantePro.Domain.Core.Productos.Interfaces;
 // global using RestaurantePro.Domain.Core.Productos.Enums;
 global using RestaurantePro.Domain.Core.Productos.Events;
 global using RestaurantePro.Domain.Core.Productos.Events.Producto;
@@ -101,5 +108,11 @@ global using RestaurantePro.Domain.Proveedores.Events;
 global using RestaurantePro.Domain.Proveedores.Events.Proveedor;
 global using RestaurantePro.Domain.Proveedores.Events.ContactoProveedor;
 
-// Domain events
-global using DomainEvent = RestaurantePro.Domain.Core.Base.DomainEvent;
+// Event Handlers
+global using RestaurantePro.Domain.Comercial.EventHandlers;
+global using RestaurantePro.Domain.Inventario.EventHandlers;
+global using RestaurantePro.Domain.Operaciones.EventHandlers;
+// global using RestaurantePro.Domain.Proveedores.EventHandlers;
+
+// Define DomainEvent como un alias para facilitar su uso
+global using DomainEvent = RestaurantePro.Domain.Core.Base.Events.DomainEvent;

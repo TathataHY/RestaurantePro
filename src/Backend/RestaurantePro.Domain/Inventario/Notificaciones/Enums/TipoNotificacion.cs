@@ -33,6 +33,11 @@ namespace RestaurantePro.Domain.Inventario.Notificaciones.Enums
         /// <summary>
         /// Notificación sobre orden de compra generada
         /// </summary>
-        OrdenCompraGenerada = 6
+        OrdenCompraGenerada = 6,
+        
+        /// <summary>
+        /// Notificación personalizada
+        /// </summary>
+        Personalizada = 7
     }
 } 

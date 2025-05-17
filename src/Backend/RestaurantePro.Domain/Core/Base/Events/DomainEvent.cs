@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Core.Base
+namespace RestaurantePro.Domain.Core.Base.Events
 {
     /// <summary>
     /// Clase base abstracta para todos los eventos de dominio

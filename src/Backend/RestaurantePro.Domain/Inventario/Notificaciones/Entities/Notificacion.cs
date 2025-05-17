@@ -37,8 +37,9 @@ namespace RestaurantePro.Domain.Inventario.Notificaciones.Entities
         
         /// <summary>
         /// ID de la entidad relacionada con la notificación (ej. ID de ingrediente para notificación de stock bajo)
+        /// Puede ser nulo para notificaciones personalizadas generales
         /// </summary>
-        public Guid EntidadRelacionadaId { get; private set; }
+        public Guid? EntidadRelacionadaId { get; private set; }
         
         /// <summary>
         /// Indica si la notificación ha sido leída
@@ -56,7 +57,7 @@ namespace RestaurantePro.Domain.Inventario.Notificaciones.Entities
             string mensaje,
             TipoNotificacion tipo,
             Guid destinatarioId,
-            Guid entidadRelacionadaId)
+            Guid? entidadRelacionadaId = null)
         {
             if (string.IsNullOrWhiteSpace(titulo))
                 throw new ArgumentException("El título no puede estar vacío", nameof(titulo));

@@ -9,6 +9,11 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         /// Identificador de la tarjeta
         /// </summary>
         public Guid TarjetaId { get; }
+        
+        /// <summary>
+        /// Identificador del cliente
+        /// </summary>
+        public Guid ClienteId { get; }
 
         /// <summary>
         /// Nivel de fidelización anterior
@@ -20,10 +25,13 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         /// </summary>
         public NivelFidelizacion NuevoNivel { get; }
 
-        
-        public NivelFidelizacionActualizado(Guid tarjetaId, NivelFidelizacion nivelAnterior, NivelFidelizacion nuevoNivel)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public NivelFidelizacionActualizado(Guid tarjetaId, Guid clienteId, NivelFidelizacion nivelAnterior, NivelFidelizacion nuevoNivel)
         {
             TarjetaId = tarjetaId;
+            ClienteId = clienteId;
             NivelAnterior = nivelAnterior;
             NuevoNivel = nuevoNivel;
         }

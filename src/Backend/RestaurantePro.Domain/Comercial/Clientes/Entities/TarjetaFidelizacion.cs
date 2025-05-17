@@ -265,7 +265,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             NivelFidelizacion = nuevoNivel;
             MarkAsModified();
 
-            AddDomainEvent(new NivelFidelizacionActualizado(Id, nivelAnterior, nuevoNivel));
+            AddDomainEvent(new NivelFidelizacionActualizado(Id, ClienteId, nivelAnterior, nuevoNivel));
         }
 
         /// <summary>
