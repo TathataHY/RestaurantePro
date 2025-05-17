@@ -26,6 +26,39 @@ namespace RestaurantePro.Domain.Comercial.Services
         }
 
         /// <summary>
+        /// Crea una nueva tarjeta de fidelización y la asocia al cliente
+        /// </summary>
+        /// <param name="clienteId">ID del cliente</param>
+        /// <returns>La tarjeta creada</returns>
+        public async Task<TarjetaFidelizacion> CrearTarjetaFidelizacionAsync(Guid clienteId)
+        {
+            // Verificar que el cliente existe
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
+            if (cliente == null)
+                throw new InvalidOperationException($"No existe un cliente con el ID {clienteId}");
+
+            // Verificar si ya tiene una tarjeta activa
+            var tarjetaExistente = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(clienteId);
+            if (tarjetaExistente != null)
+                throw new InvalidOperationException($"El cliente ya tiene una tarjeta activa con código {tarjetaExistente.Codigo}");
+
+            // Generar código único para la tarjeta
+            string codigo = GenerarCodigoTarjeta(clienteId);
+
+            // Crear nueva tarjeta
+            var tarjeta = TarjetaFidelizacion.Crear(clienteId, codigo);
+            
+            // Persistir la tarjeta
+            await _tarjetaRepository.AgregarAsync(tarjeta);
+
+            // Asociar la tarjeta al cliente
+            cliente.AsociarTarjetaFidelizacion(tarjeta.Id);
+            await _clienteRepository.ActualizarAsync(cliente);
+
+            return tarjeta;
+        }
+
+        /// <summary>
         /// Calcula el descuento aplicable para un cliente según su nivel de fidelización
         /// </summary>
         /// <param name="clienteId">Identificador del cliente</param>
@@ -33,14 +66,25 @@ namespace RestaurantePro.Domain.Comercial.Services
         /// <returns>Información del descuento aplicable</returns>
         public async Task<ResultadoDescuento> CalcularDescuentoAsync(Guid clienteId, decimal montoTotal)
         {
+            // Obtener el cliente primero
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
+            if (cliente == null)
+                return new ResultadoDescuento(0, 0);
+
+            // Verificar si el cliente está activo
+            if (!cliente.EstaActivo)
+                return new ResultadoDescuento(0, 0);
+
+            // Verificar si el cliente tiene una tarjeta asociada
+            if (!cliente.TarjetaFidelizacionPrincipalId.HasValue)
+                return new ResultadoDescuento(0, 0);
+                
             // Obtener tarjeta activa del cliente
             var tarjeta = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(clienteId);
             
-            // Si no tiene tarjeta activa, no hay descuento
-            if (tarjeta == null)
-            {
+            // Si no existe o no está activa, no hay descuento
+            if (tarjeta == null || tarjeta.Estado != EstadoTarjeta.Activa)
                 return new ResultadoDescuento(0, 0);
-            }
             
             // Calcular descuento según el nivel
             int porcentajeDescuento = ObtenerPorcentajeDescuentoPorNivel(tarjeta.NivelFidelizacion);
@@ -61,35 +105,42 @@ namespace RestaurantePro.Domain.Comercial.Services
             // Verificamos primero si el cliente existe
             var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
             if (cliente == null)
-            {
                 throw new InvalidOperationException($"No existe un cliente con el ID {clienteId}");
-            }
             
-            // Obtener tarjeta activa del cliente
-            var tarjeta = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(clienteId);
+            // Verificar si el cliente está activo
+            if (!cliente.EstaActivo)
+                throw new InvalidOperationException("No se pueden acumular puntos para un cliente inactivo");
+
+            // Verificar si el cliente tiene una tarjeta asociada
+            if (!cliente.TarjetaFidelizacionPrincipalId.HasValue)
+                throw new InvalidOperationException("El cliente no tiene una tarjeta de fidelización asociada");
+                
+            // Obtener tarjeta por ID
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value);
             
-            // Si no tiene tarjeta activa, no acumula puntos
+            // Si no existe o no está activa, no puede acumular puntos
             if (tarjeta == null)
-            {
-                throw new InvalidOperationException("El cliente no tiene una tarjeta activa para acumular puntos");
-            }
+                throw new InvalidOperationException("No se encontró la tarjeta asociada al cliente");
+                
+            if (tarjeta.Estado != EstadoTarjeta.Activa)
+                throw new InvalidOperationException($"La tarjeta no está activa, estado actual: {tarjeta.Estado}");
             
-            // Calcular puntos a acumular (10% del monto)
-            int puntos = CalcularPuntosAcumular(montoTotal);
+            // Factor de conversión basado en el nivel
+            int factorConversion = ObtenerFactorConversionPorNivel(tarjeta.NivelFidelizacion);
             
-            // Agregar puntos a la tarjeta
-            tarjeta.AgregarPuntos(puntos);
-            await _tarjetaRepository.ActualizarAsync(tarjeta);
-            
-            // Registrar en el historial usando el método de fábrica
-            var historial = HistorialPuntos.CrearRegistroPorCompra(
-                tarjeta.Id,
+            // Acumular puntos directamente en la tarjeta (la tarjeta maneja su historial interno)
+            var historial = tarjeta.AgregarPuntosPorCompra(
                 montoTotal,
-                CalcularFactorConversion(),
+                factorConversion,
                 $"Acumulación por comanda {comandaId}"
             );
             
-            await _historialPuntosRepository.AgregarAsync(historial);
+            // Actualizar la tarjeta en el repositorio
+            await _tarjetaRepository.ActualizarAsync(tarjeta);
+            
+            // Actualizar el cliente con los puntos acumulados
+            cliente.AgregarPuntos(historial.Puntos);
+            await _clienteRepository.ActualizarAsync(cliente);
         }
 
         /// <summary>
@@ -101,33 +152,34 @@ namespace RestaurantePro.Domain.Comercial.Services
         /// <returns>Tarea asíncrona</returns>
         public async Task CanjearPuntosAsync(Guid clienteId, int puntos, string concepto)
         {
-            // Obtener tarjeta activa del cliente
-            var tarjeta = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(clienteId);
+            // Verificamos primero si el cliente existe
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
+            if (cliente == null)
+                throw new InvalidOperationException($"No existe un cliente con el ID {clienteId}");
             
-            // Si no tiene tarjeta activa, no puede canjear
+            // Verificar si el cliente está activo
+            if (!cliente.EstaActivo)
+                throw new InvalidOperationException("No se pueden canjear puntos para un cliente inactivo");
+
+            // Verificar si el cliente tiene una tarjeta asociada
+            if (!cliente.TarjetaFidelizacionPrincipalId.HasValue)
+                throw new InvalidOperationException("El cliente no tiene una tarjeta de fidelización asociada");
+                
+            // Obtener tarjeta por ID
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value);
+            
+            // Si no existe o no está activa, no puede canjear puntos
             if (tarjeta == null)
-            {
-                throw new InvalidOperationException("El cliente no tiene una tarjeta activa para canjear puntos");
-            }
+                throw new InvalidOperationException("No se encontró la tarjeta asociada al cliente");
+                
+            if (tarjeta.Estado != EstadoTarjeta.Activa)
+                throw new InvalidOperationException($"La tarjeta no está activa, estado actual: {tarjeta.Estado}");
             
-            // Verificar si tiene suficientes puntos
-            if (tarjeta.PuntosAcumulados < puntos)
-            {
-                throw new InvalidOperationException($"Puntos insuficientes. Disponibles: {tarjeta.PuntosAcumulados}, Solicitados: {puntos}");
-            }
-            
-            // Canjear puntos
+            // Canjear puntos directamente en la tarjeta (la tarjeta maneja su historial interno)
             tarjeta.CanjearPuntos(puntos, concepto);
+            
+            // Actualizar la tarjeta en el repositorio
             await _tarjetaRepository.ActualizarAsync(tarjeta);
-            
-            // Registrar en el historial usando el método de fábrica
-            var historial = HistorialPuntos.CrearRegistroCanjeados(
-                tarjeta.Id,
-                puntos,
-                concepto
-            );
-            
-            await _historialPuntosRepository.AgregarAsync(historial);
         }
 
         /// <summary>
@@ -149,21 +201,35 @@ namespace RestaurantePro.Domain.Comercial.Services
         }
 
         /// <summary>
-        /// Calcula los puntos a acumular basado en el monto
+        /// Obtiene el factor de conversión según el nivel de fidelización
         /// </summary>
-        private int CalcularPuntosAcumular(decimal monto)
+        private int ObtenerFactorConversionPorNivel(NivelFidelizacion nivel)
         {
-            // 10% del monto para convertir a puntos
-            return (int)(monto * 0.1m);
+            // Cuanto menor es el factor, más puntos se obtienen
+            switch (nivel)
+            {
+                case NivelFidelizacion.Plata:
+                    return 8; // 100 pesos = 12.5 puntos
+                case NivelFidelizacion.Oro:
+                    return 5; // 100 pesos = 20 puntos
+                case NivelFidelizacion.Platino:
+                    return 3; // 100 pesos = 33.3 puntos
+                default:
+                    return 10; // 100 pesos = 10 puntos
+            }
         }
 
         /// <summary>
-        /// Calcula el factor de conversión para los puntos
+        /// Genera un código único para la tarjeta de fidelización
         /// </summary>
-        private int CalcularFactorConversion()
+        private string GenerarCodigoTarjeta(Guid clienteId)
         {
-            // Asumimos 10 unidades monetarias = 1 punto
-            return 10;
+            // Formato: TF-XXXX-YYYY donde XXXX son dígitos aleatorios y YYYY es un hash del clienteId
+            Random random = new Random();
+            string randomPart = random.Next(1000, 9999).ToString();
+            string hashPart = Math.Abs(clienteId.GetHashCode() % 10000).ToString().PadLeft(4, '0');
+            
+            return $"TF-{randomPart}-{hashPart}";
         }
     }
 

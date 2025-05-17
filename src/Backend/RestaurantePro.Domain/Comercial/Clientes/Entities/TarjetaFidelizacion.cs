@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
     /// <summary>
     /// Entidad que representa una tarjeta de fidelización para clientes
     /// </summary>
-    public class TarjetaFidelizacion : EntityBase
+    public class TarjetaFidelizacion : EntityBase, IAggregateRoot
     {
         /// <summary>
         /// Código único de la tarjeta (visible para el cliente)
@@ -49,6 +49,16 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// Puntos disponibles para canjear
         /// </summary>
         public int PuntosDisponibles { get; private set; }
+
+        /// <summary>
+        /// Historial de operaciones con puntos de esta tarjeta
+        /// </summary>
+        private readonly List<HistorialPuntos> _historialPuntos = new();
+
+        /// <summary>
+        /// Acceso de solo lectura al historial de puntos
+        /// </summary>
+        public IReadOnlyCollection<HistorialPuntos> HistorialPuntos => _historialPuntos.AsReadOnly();
 
         // Constructor privado para EF Core
         private TarjetaFidelizacion() { }
@@ -159,7 +169,10 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             ActualizarNivelSegunPuntos();
 
             // Registramos en el historial
-            return HistorialPuntos.CrearRegistroAgregados(Id, puntos, concepto);
+            var historial = Comercial.Clientes.Entities.HistorialPuntos.CrearRegistroAgregados(Id, puntos, concepto);
+            _historialPuntos.Add(historial);
+            
+            return historial;
         }
 
         /// <summary>
@@ -196,7 +209,10 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             ActualizarNivelSegunPuntos();
 
             // Registramos en el historial
-            return HistorialPuntos.CrearRegistroPorCompra(Id, montoCompra, factorConversion, concepto);
+            var historial = Comercial.Clientes.Entities.HistorialPuntos.CrearRegistroPorCompra(Id, montoCompra, factorConversion, concepto);
+            _historialPuntos.Add(historial);
+            
+            return historial;
         }
 
         /// <summary>
@@ -225,7 +241,10 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             AddDomainEvent(new PuntosCanjeados(Id, puntos, concepto, PuntosDisponibles));
 
             // Registramos en el historial
-            return HistorialPuntos.CrearRegistroCanjeados(Id, puntos, concepto);
+            var historial = Comercial.Clientes.Entities.HistorialPuntos.CrearRegistroCanjeados(Id, puntos, concepto);
+            _historialPuntos.Add(historial);
+            
+            return historial;
         }
 
         /// <summary>
@@ -249,7 +268,10 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             MarkAsModified();
 
             // Registramos en el historial
-            return HistorialPuntos.CrearRegistroVencidos(Id, puntos, concepto);
+            var historial = Comercial.Clientes.Entities.HistorialPuntos.CrearRegistroVencidos(Id, puntos, concepto);
+            _historialPuntos.Add(historial);
+            
+            return historial;
         }
 
         /// <summary>

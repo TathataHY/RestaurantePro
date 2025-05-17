@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
     /// <summary>
     /// Entidad que representa una orden de compra a un proveedor
     /// </summary>
-    public class OrdenCompra : EntityBase
+    public class OrdenCompra : EntityBase, IAggregateRoot
     {
         /// <summary>
         /// ID del proveedor al que se realiza la orden

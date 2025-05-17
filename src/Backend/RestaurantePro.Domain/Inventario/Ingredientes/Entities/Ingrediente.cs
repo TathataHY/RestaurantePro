@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
     /// <summary>
     /// Entidad que representa un ingrediente en el inventario
     /// </summary>
-    public class Ingrediente : EntityBase
+    public class Ingrediente : EntityBase, IAggregateRoot
     {
         /// <summary>
         /// Nombre del ingrediente

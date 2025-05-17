@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
     /// <summary>
     /// Entidad que representa a un cliente del restaurante
     /// </summary>
-    public class Cliente : EntityBase
+    public class Cliente : EntityBase, IAggregateRoot
     {
         /// <summary>
         /// Nombre completo del cliente
@@ -34,6 +34,11 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// Cantidad de visitas registradas del cliente
         /// </summary>
         public int CantidadVisitas { get; private set; }
+
+        /// <summary>
+        /// ID de la tarjeta de fidelización principal del cliente
+        /// </summary>
+        public Guid? TarjetaFidelizacionPrincipalId { get; private set; }
 
         // Constructor privado para EF Core
         private Cliente() { }
@@ -126,6 +131,21 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             MarkAsModified();
 
             AddDomainEvent(new VisitaRegistrada(Id, CantidadVisitas));
+        }
+
+        /// <summary>
+        /// Asocia una tarjeta de fidelización al cliente
+        /// </summary>
+        /// <param name="tarjetaId">ID de la tarjeta a asociar</param>
+        public void AsociarTarjetaFidelizacion(Guid tarjetaId)
+        {
+            if (!EstaActivo)
+                throw new InvalidOperationException("No se puede asociar una tarjeta a un cliente inactivo");
+
+            TarjetaFidelizacionPrincipalId = tarjetaId;
+            MarkAsModified();
+
+            AddDomainEvent(new TarjetaFidelizacionAsociada(Id, tarjetaId));
         }
     }
 }

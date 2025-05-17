@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Proveedores.Entities
     /// <summary>
     /// Entidad que representa un proveedor en el sistema
     /// </summary>
-    public class Proveedor : EntityBase
+    public class Proveedor : EntityBase, IAggregateRoot
     {
         /// <summary>
         /// Nombre del proveedor
