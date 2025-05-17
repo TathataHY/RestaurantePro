@@ -3,13 +3,9 @@
     /// <summary>
     /// Evento que se lanza cuando se desactiva un ingrediente
     /// </summary>
-    public class IngredienteDesactivado : IDomainEvent
+    public class IngredienteDesactivado : DomainEvent
     {
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; }
-        
+                
         /// <summary>
         /// Id del ingrediente desactivado
         /// </summary>
@@ -22,9 +18,9 @@
         
         public IngredienteDesactivado(Guid ingredienteId, string nombre)
         {
-            OccurredOn = DateTime.UtcNow;
-            IngredienteId = ingredienteId;
+                        IngredienteId = ingredienteId;
             Nombre = nombre;
         }
     }
 } 
+

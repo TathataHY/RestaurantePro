@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
     /// <summary>
     /// Evento emitido cuando se cancela una comanda
     /// </summary>
-    public class ComandaCancelada : IDomainEvent
+    public class ComandaCancelada : DomainEvent
     {
         /// <summary>
         /// ID de la comanda cancelada
@@ -18,8 +18,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
-        public DateTime OccurredOn { get; }
-
+        
         /// <summary>
         /// Constructor
         /// </summary>
@@ -27,7 +26,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         {
             ComandaId = comandaId;
             Motivo = motivo;
-            OccurredOn = DateTime.Now;
-        }
+                    }
     }
 }
+
+

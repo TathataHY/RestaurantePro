@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
     /// <summary>
     /// Evento de dominio que se dispara cuando se actualiza el nivel de fidelización
     /// </summary>
-    public class NivelFidelizacionActualizado : IDomainEvent
+    public class NivelFidelizacionActualizado : DomainEvent
     {
         /// <summary>
         /// Identificador de la tarjeta
@@ -20,11 +20,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         /// </summary>
         public NivelFidelizacion NuevoNivel { get; }
 
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; } = DateTime.Now;
-
+        
         public NivelFidelizacionActualizado(Guid tarjetaId, NivelFidelizacion nivelAnterior, NivelFidelizacion nuevoNivel)
         {
             TarjetaId = tarjetaId;
@@ -33,3 +29,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         }
     }
 } 
+

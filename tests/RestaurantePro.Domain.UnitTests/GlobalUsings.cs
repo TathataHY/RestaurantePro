@@ -57,6 +57,9 @@ global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 global using RestaurantePro.Domain.Comercial.Clientes.Events.Cliente;
 global using RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion;
 
+// Domain Comercial - Services
+global using RestaurantePro.Domain.Comercial.Services;
+
 // Domain Inventario - Ingredientes
 global using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
 global using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
@@ -75,7 +78,12 @@ global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums;
 global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events;
 global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
 
+// Domain Inventario - Services
+global using RestaurantePro.Domain.Inventario.Services;
+
 // Domain Proveedores
 global using RestaurantePro.Domain.Proveedores.Entities;
 global using RestaurantePro.Domain.Proveedores.Interfaces;
 global using RestaurantePro.Domain.Proveedores.Events;
+global using RestaurantePro.Domain.Proveedores.Events.Proveedor;
+global using RestaurantePro.Domain.Proveedores.Events.ContactoProveedor;

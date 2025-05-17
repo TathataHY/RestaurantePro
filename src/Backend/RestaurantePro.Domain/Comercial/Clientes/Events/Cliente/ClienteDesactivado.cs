@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
     /// <summary>
     /// Evento de dominio que se dispara cuando se desactiva un cliente
     /// </summary>
-    public class ClienteDesactivado : IDomainEvent
+    public class ClienteDesactivado : DomainEvent
     {
         /// <summary>
         /// Identificador del cliente
@@ -15,11 +15,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
         /// </summary>
         public string NombreCompleto { get; }
 
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; } = DateTime.Now;
-
+        
         public ClienteDesactivado(Guid clienteId, string nombreCompleto)
         {
             ClienteId = clienteId;
@@ -27,3 +23,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
         }
     }
 } 
+

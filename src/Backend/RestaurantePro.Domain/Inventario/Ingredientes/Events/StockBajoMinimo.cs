@@ -3,13 +3,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
     /// <summary>
     /// Evento que se lanza cuando el stock de un ingrediente está por debajo del mínimo
     /// </summary>
-    public class StockBajoMinimo : IDomainEvent
+    public class StockBajoMinimo : DomainEvent
     {
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; }
-        
+                
         /// <summary>
         /// Id del ingrediente
         /// </summary>
@@ -32,11 +28,11 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
         
         public StockBajoMinimo(Guid ingredienteId, string nombre, decimal stockActual, decimal stockMinimo)
         {
-            OccurredOn = DateTime.UtcNow;
-            IngredienteId = ingredienteId;
+                        IngredienteId = ingredienteId;
             Nombre = nombre;
             StockActual = stockActual;
             StockMinimo = stockMinimo;
         }
     }
 } 
+

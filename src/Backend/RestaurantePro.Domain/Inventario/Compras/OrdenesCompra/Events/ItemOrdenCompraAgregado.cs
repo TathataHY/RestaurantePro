@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
     /// <summary>
     /// Evento que se dispara cuando se agrega un item a una orden de compra
     /// </summary>
-    public class ItemOrdenCompraAgregado : Core.Base.Interfaces.IDomainEvent
+    public class ItemOrdenCompraAgregado : DomainEvent
     {
         /// <summary>
         /// ID de la orden de compra
@@ -35,11 +35,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
         /// </summary>
         public decimal Subtotal { get; }
         
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; } = DateTime.Now;
-        
+                
         /// <summary>
         /// Constructor simplificado para uso inicial
         /// </summary>
@@ -74,3 +70,4 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
         }
     }
 } 
+

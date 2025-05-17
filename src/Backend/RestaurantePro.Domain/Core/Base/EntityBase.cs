@@ -5,7 +5,7 @@ namespace RestaurantePro.Domain.Core.Base
     /// </summary>
     public abstract class EntityBase
     {
-        private List<IDomainEvent> _domainEvents;
+        private List<DomainEvent> _domainEvents;
 
         /// <summary>
         /// Identificador único de la entidad
@@ -30,7 +30,7 @@ namespace RestaurantePro.Domain.Core.Base
         /// <summary>
         /// Eventos de dominio pendientes de publicación
         /// </summary>
-        public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents?.AsReadOnly();
+        public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents?.AsReadOnly();
 
         /// <summary>
         /// Constructor base que asigna un nuevo ID a la entidad
@@ -43,9 +43,9 @@ namespace RestaurantePro.Domain.Core.Base
         /// <summary>
         /// Agrega un nuevo evento de dominio
         /// </summary>
-        protected void AddDomainEvent(IDomainEvent domainEvent)
+        protected void AddDomainEvent(DomainEvent domainEvent)
         {
-            _domainEvents ??= new List<IDomainEvent>();
+            _domainEvents ??= new List<DomainEvent>();
             _domainEvents.Add(domainEvent);
         }
 

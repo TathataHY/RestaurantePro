@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
     /// <summary>
     /// Evento emitido cuando se crea una nueva comanda
     /// </summary>
-    public class ComandaCreada : IDomainEvent
+    public class ComandaCreada : DomainEvent
     {
         /// <summary>
         /// ID de la comanda creada
@@ -23,8 +23,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
-        public DateTime OccurredOn { get; }
-
+        
         /// <summary>
         /// Constructor
         /// </summary>
@@ -33,7 +32,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
             ComandaId = comandaId;
             MesaId = mesaId;
             MeseroId = meseroId;
-            OccurredOn = DateTime.Now;
-        }
+                    }
     }
 }
+
+

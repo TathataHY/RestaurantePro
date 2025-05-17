@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
     /// <summary>
     /// Evento emitido cuando se finaliza una comanda
     /// </summary>
-    public class ComandaFinalizada : IDomainEvent
+    public class ComandaFinalizada : DomainEvent
     {
         /// <summary>
         /// ID de la comanda finalizada
@@ -18,8 +18,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
-        public DateTime OccurredOn { get; }
-
+        
         /// <summary>
         /// Constructor
         /// </summary>
@@ -27,7 +26,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         {
             ComandaId = comandaId;
             Total = total;
-            OccurredOn = DateTime.Now;
-        }
+                    }
     }
 }
+
+

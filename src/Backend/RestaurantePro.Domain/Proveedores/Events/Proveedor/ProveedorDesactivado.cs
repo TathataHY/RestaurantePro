@@ -3,13 +3,12 @@ namespace RestaurantePro.Domain.Proveedores.Events.Proveedor
     /// <summary>
     /// Evento que se dispara cuando se desactiva un proveedor
     /// </summary>
-    public class ProveedorDesactivado : IDomainEvent
+    public class ProveedorDesactivado : DomainEvent
     {
         /// <summary>
         /// Momento en que ocurrió el evento
         /// </summary>
-        public DateTime OccurredOn { get; } = DateTime.Now;
-
+        
         /// <summary>
         /// ID del proveedor desactivado
         /// </summary>
@@ -30,4 +29,6 @@ namespace RestaurantePro.Domain.Proveedores.Events.Proveedor
         }
     }
 } 
+
+
 

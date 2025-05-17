@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
     /// <summary>
     /// Evento de dominio que se dispara cuando se agregan puntos a una tarjeta
     /// </summary>
-    public class PuntosAgregadosATarjeta : IDomainEvent
+    public class PuntosAgregadosATarjeta : DomainEvent
     {
         /// <summary>
         /// Identificador de la tarjeta
@@ -20,11 +20,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         /// </summary>
         public int PuntosTotales { get; }
 
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; } = DateTime.Now;
-
+        
         public PuntosAgregadosATarjeta(Guid tarjetaId, int puntosAgregados, int puntosTotales)
         {
             TarjetaId = tarjetaId;
@@ -33,3 +29,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         }
     }
 } 
+

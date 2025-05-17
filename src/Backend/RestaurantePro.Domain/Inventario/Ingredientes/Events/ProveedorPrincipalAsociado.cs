@@ -3,13 +3,12 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
     /// <summary>
     /// Evento que se dispara cuando se asocia un proveedor principal a un ingrediente
     /// </summary>
-    public class ProveedorPrincipalAsociado : IDomainEvent
+    public class ProveedorPrincipalAsociado : DomainEvent
     {
         /// <summary>
         /// Momento en que ocurrió el evento
         /// </summary>
-        public DateTime OccurredOn { get; } = DateTime.Now;
-        
+                
         /// <summary>
         /// ID del ingrediente
         /// </summary>
@@ -39,3 +38,5 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
         }
     }
 } 
+
+

@@ -6,6 +6,14 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
     public interface IIngredienteRepository : IRepository<Ingrediente>
     {
         /// <summary>
+        /// Obtiene un ingrediente por su ID
+        /// </summary>
+        /// <param name="id">ID del ingrediente a buscar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>El ingrediente si existe, null en caso contrario</returns>
+        Task<Ingrediente> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+        
+        /// <summary>
         /// Obtiene un ingrediente por su nombre
         /// </summary>
         /// <param name="nombre">Nombre del ingrediente a buscar</param>

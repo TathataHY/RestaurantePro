@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
     /// <summary>
     /// Evento de dominio que se dispara cuando se canjean puntos de una tarjeta
     /// </summary>
-    public class PuntosCanjeados : IDomainEvent
+    public class PuntosCanjeados : DomainEvent
     {
         /// <summary>
         /// Identificador de la tarjeta
@@ -25,11 +25,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         /// </summary>
         public int PuntosDisponibles { get; }
 
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; } = DateTime.Now;
-
+        
         public PuntosCanjeados(Guid tarjetaId, int puntosCanjeados, string concepto, int puntosDisponibles)
         {
             TarjetaId = tarjetaId;
@@ -39,3 +35,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         }
     }
 } 
+

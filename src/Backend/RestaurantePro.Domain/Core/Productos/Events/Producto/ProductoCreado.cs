@@ -3,13 +3,8 @@ namespace RestaurantePro.Domain.Core.Productos.Events.Producto
     /// <summary>
     /// Evento de dominio que representa que se ha creado un nuevo producto
     /// </summary>
-    public class ProductoCreado : IDomainEvent
+    public class ProductoCreado : DomainEvent
     {
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; }
-
         /// <summary>
         /// Identificador único del producto creado
         /// </summary>
@@ -30,7 +25,6 @@ namespace RestaurantePro.Domain.Core.Productos.Events.Producto
         /// </summary>
         public ProductoCreado(Guid productoId, string nombre, decimal precio)
         {
-            OccurredOn = DateTime.UtcNow;
             ProductoId = productoId;
             Nombre = nombre;
             Precio = precio;

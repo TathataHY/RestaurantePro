@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
     /// <summary>
     /// Evento que se dispara cuando se crea una nueva orden de compra
     /// </summary>
-    public class OrdenCompraCreada : Core.Base.Interfaces.IDomainEvent
+    public class OrdenCompraCreada : DomainEvent
     {
         /// <summary>
         /// ID de la orden de compra
@@ -24,11 +24,6 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
         /// Fecha estimada de entrega (opcional)
         /// </summary>
         public DateTime? FechaEntregaEstimada { get; }
-        
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; } = DateTime.Now;
         
         /// <summary>
         /// Constructor del evento

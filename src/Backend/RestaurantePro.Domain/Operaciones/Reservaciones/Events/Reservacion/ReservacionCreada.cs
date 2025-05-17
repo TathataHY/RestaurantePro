@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion
     /// <summary>
     /// Evento de dominio que se dispara cuando se crea una nueva reservación
     /// </summary>
-    public class ReservacionCreada : IDomainEvent
+    public class ReservacionCreada : DomainEvent
     {
         /// <summary>
         /// Identificador de la reservación creada
@@ -38,8 +38,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
-        public DateTime OccurredOn { get; }
-
+        
         /// <summary>
         /// Constructor para crear una nueva instancia del evento
         /// </summary>
@@ -51,7 +50,8 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion
             Fecha = fecha;
             Hora = hora;
             CantidadPersonas = cantidadPersonas;
-            OccurredOn = DateTime.Now;
-        }
+                    }
     }
 }
+
+

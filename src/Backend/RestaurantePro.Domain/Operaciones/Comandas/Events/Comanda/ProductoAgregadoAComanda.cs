@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
     /// <summary>
     /// Evento emitido cuando se agrega un producto a una comanda
     /// </summary>
-    public class ProductoAgregadoAComanda : IDomainEvent
+    public class ProductoAgregadoAComanda : DomainEvent
     {
         /// <summary>
         /// ID de la comanda
@@ -23,8 +23,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
-        public DateTime OccurredOn { get; }
-
+        
         /// <summary>
         /// Constructor
         /// </summary>
@@ -33,7 +32,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
             ComandaId = comandaId;
             ProductoId = productoId;
             Cantidad = cantidad;
-            OccurredOn = DateTime.Now;
-        }
+                    }
     }
 }
+
+

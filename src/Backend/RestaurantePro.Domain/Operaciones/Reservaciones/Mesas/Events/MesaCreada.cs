@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Events
     /// <summary>
     /// Evento de dominio que se dispara cuando se crea una nueva mesa
     /// </summary>
-    public class MesaCreada : IDomainEvent
+    public class MesaCreada : DomainEvent
     {
         /// <summary>
         /// Identificador de la mesa creada
@@ -28,8 +28,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Events
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
-        public DateTime OccurredOn { get; }
-
+        
         /// <summary>
         /// Constructor para crear una nueva instancia del evento
         /// </summary>
@@ -39,7 +38,8 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Events
             Numero = numero;
             Capacidad = capacidad;
             Ubicacion = ubicacion;
-            OccurredOn = DateTime.Now;
-        }
+                    }
     }
 }
+
+

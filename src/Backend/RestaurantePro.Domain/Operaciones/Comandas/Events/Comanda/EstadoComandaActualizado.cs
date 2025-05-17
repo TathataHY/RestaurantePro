@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
     /// <summary>
     /// Evento emitido cuando se actualiza el estado de una comanda
     /// </summary>
-    public class EstadoComandaActualizado : IDomainEvent
+    public class EstadoComandaActualizado : DomainEvent
     {
         /// <summary>
         /// ID de la comanda
@@ -23,8 +23,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
-        public DateTime OccurredOn { get; }
-
+        
         /// <summary>
         /// Constructor
         /// </summary>
@@ -33,7 +32,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
             ComandaId = comandaId;
             EstadoAnterior = estadoAnterior;
             NuevoEstado = nuevoEstado;
-            OccurredOn = DateTime.Now;
-        }
+                    }
     }
 }
+
+

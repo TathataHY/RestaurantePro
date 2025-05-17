@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion
     /// <summary>
     /// Evento de dominio que se dispara cuando una reservación es cancelada
     /// </summary>
-    public class ReservacionCancelada : IDomainEvent
+    public class ReservacionCancelada : DomainEvent
     {
         /// <summary>
         /// Identificador de la reservación
@@ -18,8 +18,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion
         /// <summary>
         /// Fecha en que ocurrió el evento
         /// </summary>
-        public DateTime OccurredOn { get; }
-
+        
         /// <summary>
         /// Constructor para crear una nueva instancia del evento
         /// </summary>
@@ -27,7 +26,8 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion
         {
             ReservacionId = reservacionId;
             Motivo = motivo;
-            OccurredOn = DateTime.Now;
-        }
+                    }
     }
 }
+
+

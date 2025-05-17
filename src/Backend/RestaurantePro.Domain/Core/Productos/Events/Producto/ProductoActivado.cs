@@ -3,13 +3,9 @@ namespace RestaurantePro.Domain.Core.Productos.Events.Producto
     /// <summary>
     /// Evento de dominio que representa que se ha activado un producto
     /// </summary>
-    public class ProductoActivado : IDomainEvent
+    public class ProductoActivado : DomainEvent
     {
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; }
-
+        
         /// <summary>
         /// Identificador único del producto activado
         /// </summary>
@@ -20,8 +16,8 @@ namespace RestaurantePro.Domain.Core.Productos.Events.Producto
         /// </summary>
         public ProductoActivado(Guid productoId)
         {
-            OccurredOn = DateTime.UtcNow;
-            ProductoId = productoId;
+                        ProductoId = productoId;
         }
     }
 }
+

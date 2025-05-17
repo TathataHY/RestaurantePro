@@ -1,13 +1,14 @@
-// Common .NET imports
+// .NET Base
 global using System;
 global using System.Collections.Generic;
 global using System.Linq;
-global using System.Threading;
 global using System.Threading.Tasks;
 global using System.Text.RegularExpressions;
 global using System.Globalization;
+global using System.Text;
+global using System.Threading;
 
-// Domain core imports - Base
+// Domain Base
 global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;
 // global using RestaurantePro.Domain.Core.Base.Exceptions;
@@ -87,3 +88,6 @@ global using RestaurantePro.Domain.Proveedores.Interfaces;
 global using RestaurantePro.Domain.Proveedores.Events;
 global using RestaurantePro.Domain.Proveedores.Events.Proveedor;
 global using RestaurantePro.Domain.Proveedores.Events.ContactoProveedor;
+
+// Domain events
+global using DomainEvent = RestaurantePro.Domain.Core.Base.DomainEvent;

@@ -1,28 +1,25 @@
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
 {
     /// <summary>
-    /// Evento que se lanza cuando se crea un nuevo ingrediente
+    /// Evento de dominio que se dispara cuando se crea un ingrediente
     /// </summary>
-    public class IngredienteCreado : IDomainEvent
+    public class IngredienteCreado : DomainEvent
     {
         /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; }
-        
-        /// <summary>
-        /// Id del ingrediente creado
+        /// ID del ingrediente creado
         /// </summary>
         public Guid IngredienteId { get; }
-        
+
         /// <summary>
         /// Nombre del ingrediente
         /// </summary>
         public string Nombre { get; }
-        
+
+        /// <summary>
+        /// Constructor del evento IngredienteCreado
+        /// </summary>
         public IngredienteCreado(Guid ingredienteId, string nombre)
         {
-            OccurredOn = DateTime.UtcNow;
             IngredienteId = ingredienteId;
             Nombre = nombre;
         }

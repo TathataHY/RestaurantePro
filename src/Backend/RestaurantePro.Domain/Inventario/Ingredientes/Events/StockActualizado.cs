@@ -3,13 +3,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
     /// <summary>
     /// Evento que se lanza cuando se actualiza el stock de un ingrediente
     /// </summary>
-    public class StockActualizado : IDomainEvent
+    public class StockActualizado : DomainEvent
     {
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; }
-        
+                
         /// <summary>
         /// Id del ingrediente
         /// </summary>
@@ -27,10 +23,10 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
         
         public StockActualizado(Guid ingredienteId, string nombre, decimal stock)
         {
-            OccurredOn = DateTime.UtcNow;
-            IngredienteId = ingredienteId;
+                        IngredienteId = ingredienteId;
             Nombre = nombre;
             Stock = stock;
         }
     }
 } 
+

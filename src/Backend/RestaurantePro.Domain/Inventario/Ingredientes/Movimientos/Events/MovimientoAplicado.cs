@@ -3,13 +3,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Events
     /// <summary>
     /// Evento de dominio que se lanza cuando se aplica un movimiento de inventario al stock
     /// </summary>
-    public class MovimientoAplicado : IDomainEvent
+    public class MovimientoAplicado : DomainEvent
     {
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; }
-        
+                
         /// <summary>
         /// Id del movimiento de inventario aplicado
         /// </summary>
@@ -44,8 +40,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Events
             Enums.TipoMovimientoInventario tipoMovimiento, decimal cantidad, 
             decimal stockAnterior, decimal stockNuevo)
         {
-            OccurredOn = DateTime.UtcNow;
-            MovimientoId = movimientoId;
+                        MovimientoId = movimientoId;
             IngredienteId = ingredienteId;
             TipoMovimiento = tipoMovimiento;
             Cantidad = cantidad;
@@ -54,3 +49,4 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Events
         }
     }
 } 
+

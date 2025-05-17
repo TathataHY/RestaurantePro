@@ -3,13 +3,12 @@ namespace RestaurantePro.Domain.Proveedores.Events.ContactoProveedor
     /// <summary>
     /// Evento que se dispara cuando se elimina un contacto de un proveedor
     /// </summary>
-    public class ContactoProveedorEliminado : IDomainEvent
+    public class ContactoProveedorEliminado : DomainEvent
     {
         /// <summary>
         /// Momento en que ocurrió el evento
         /// </summary>
-        public DateTime OccurredOn { get; } = DateTime.Now;
-
+        
         /// <summary>
         /// ID del proveedor
         /// </summary>
@@ -36,4 +35,6 @@ namespace RestaurantePro.Domain.Proveedores.Events.ContactoProveedor
         }
     }
 } 
+
+
 

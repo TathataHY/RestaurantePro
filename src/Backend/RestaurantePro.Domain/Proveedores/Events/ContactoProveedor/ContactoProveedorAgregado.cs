@@ -3,13 +3,12 @@ namespace RestaurantePro.Domain.Proveedores.Events.ContactoProveedor
     /// <summary>
     /// Evento que se dispara cuando se agrega un contacto a un proveedor
     /// </summary>
-    public class ContactoProveedorAgregado : IDomainEvent
+    public class ContactoProveedorAgregado : DomainEvent
     {
         /// <summary>
         /// Momento en que ocurrió el evento
         /// </summary>
-        public DateTime OccurredOn { get; } = DateTime.Now;
-
+        
         /// <summary>
         /// ID del proveedor
         /// </summary>
@@ -54,4 +53,6 @@ namespace RestaurantePro.Domain.Proveedores.Events.ContactoProveedor
         }
     }
 } 
+
+
 

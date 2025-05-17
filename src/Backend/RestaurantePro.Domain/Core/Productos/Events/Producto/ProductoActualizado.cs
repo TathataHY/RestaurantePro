@@ -3,13 +3,9 @@ namespace RestaurantePro.Domain.Core.Productos.Events.Producto
     /// <summary>
     /// Evento de dominio que representa que se ha actualizado un producto
     /// </summary>
-    public class ProductoActualizado : IDomainEvent
+    public class ProductoActualizado : DomainEvent
     {
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; }
-
+        
         /// <summary>
         /// Identificador único del producto actualizado
         /// </summary>
@@ -35,11 +31,11 @@ namespace RestaurantePro.Domain.Core.Productos.Events.Producto
         /// </summary>
         public ProductoActualizado(Guid productoId, string nombre, string descripcion, decimal precio)
         {
-            OccurredOn = DateTime.UtcNow;
-            ProductoId = productoId;
+                        ProductoId = productoId;
             Nombre = nombre;
             Descripcion = descripcion;
             Precio = precio;
         }
     }
 }
+

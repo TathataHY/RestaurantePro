@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
     /// <summary>
     /// Evento que se dispara cuando una orden de compra es cancelada
     /// </summary>
-    public class OrdenCompraCancelada : Core.Base.Interfaces.IDomainEvent
+    public class OrdenCompraCancelada : DomainEvent
     {
         /// <summary>
         /// ID de la orden de compra
@@ -20,11 +20,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
         /// </summary>
         public string MotivoCancelacion { get; }
         
-        /// <summary>
-        /// Fecha y hora en que ocurrió el evento
-        /// </summary>
-        public DateTime OccurredOn { get; } = DateTime.Now;
-        
+                
         /// <summary>
         /// Constructor del evento
         /// </summary>
@@ -39,3 +35,4 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
         }
     }
 } 
+
