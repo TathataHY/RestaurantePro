@@ -1,33 +1,6 @@
 namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
 {
     /// <summary>
-    /// Enumeración de unidades de medida comunes
-    /// </summary>
-    public enum UnidadMedida
-    {
-        // Unidades de peso
-        Gramo,
-        Kilogramo,
-        Libra,
-        Onza,
-        
-        // Unidades de volumen
-        Mililitro,
-        Litro,
-        Galon,
-        
-        // Unidades de longitud
-        Milimetro,
-        Centimetro,
-        Metro,
-        
-        // Unidades discretas
-        Unidad,
-        Docena,
-        Porcion
-    }
-    
-    /// <summary>
     /// Objeto de valor que representa una cantidad medible con su unidad de medida
     /// </summary>
     public class CantidadMedible : ValueObject
@@ -40,7 +13,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         /// <summary>
         /// Unidad de medida
         /// </summary>
-        public UnidadMedida Unidad { get; }
+        public RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida Unidad { get; }
         
         /// <summary>
         /// Indica si la cantidad es cero
@@ -57,7 +30,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         /// </summary>
         public bool EsNegativa => Valor < 0;
 
-        private CantidadMedible(decimal valor, UnidadMedida unidad)
+        private CantidadMedible(decimal valor, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidad)
         {
             Valor = valor;
             Unidad = unidad;
@@ -70,7 +43,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         /// <param name="unidad">Unidad de medida</param>
         /// <returns>Objeto CantidadMedible validado</returns>
         /// <exception cref="ArgumentException">Si el valor no es válido</exception>
-        public static CantidadMedible Create(decimal valor, UnidadMedida unidad)
+        public static CantidadMedible Create(decimal valor, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidad)
         {
             // Redondear a 3 decimales para evitar problemas de precisión
             valor = Math.Round(valor, 3);
@@ -87,7 +60,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         /// </summary>
         /// <param name="unidad">Unidad de medida</param>
         /// <returns>Objeto CantidadMedible con valor cero</returns>
-        public static CantidadMedible Zero(UnidadMedida unidad)
+        public static CantidadMedible Zero(RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidad)
         {
             return new CantidadMedible(0, unidad);
         }
@@ -97,11 +70,10 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         /// </summary>
         /// <param name="unidad">Unidad a verificar</param>
         /// <returns>True si la unidad es discreta</returns>
-        private static bool EsUnidadDiscreta(UnidadMedida unidad)
+        private static bool EsUnidadDiscreta(RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidad)
         {
-            return unidad == UnidadMedida.Unidad || 
-                   unidad == UnidadMedida.Docena ||
-                   unidad == UnidadMedida.Porcion;
+            return unidad == RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Unidad || 
+                   unidad == RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Paquete;
         }
         
         /// <summary>
@@ -205,23 +177,19 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         /// </summary>
         /// <param name="unidad">Unidad de medida</param>
         /// <returns>Abreviatura de la unidad</returns>
-        private static string ObtenerAbreviatura(UnidadMedida unidad)
+        private static string ObtenerAbreviatura(RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidad)
         {
             return unidad switch
             {
-                UnidadMedida.Gramo => "g",
-                UnidadMedida.Kilogramo => "kg",
-                UnidadMedida.Libra => "lb",
-                UnidadMedida.Onza => "oz",
-                UnidadMedida.Mililitro => "ml",
-                UnidadMedida.Litro => "l",
-                UnidadMedida.Galon => "gal",
-                UnidadMedida.Milimetro => "mm",
-                UnidadMedida.Centimetro => "cm",
-                UnidadMedida.Metro => "m",
-                UnidadMedida.Unidad => "un",
-                UnidadMedida.Docena => "doc",
-                UnidadMedida.Porcion => "porc",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Gramo => "g",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo => "kg",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Litro => "l",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Mililitro => "ml",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Unidad => "un",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Paquete => "paq",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Cucharada => "cda",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Cucharadita => "cdta",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Taza => "tz",
                 _ => unidad.ToString()
             };
         }
