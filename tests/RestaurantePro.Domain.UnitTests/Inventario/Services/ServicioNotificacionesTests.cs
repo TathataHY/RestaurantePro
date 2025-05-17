@@ -1,3 +1,11 @@
+using Moq;
+using Xunit;
+using RestaurantePro.Domain.Inventario.Services;
+using RestaurantePro.Domain.Inventario.Notificaciones.Interfaces;
+using RestaurantePro.Domain.Inventario.Notificaciones.Entities;
+using RestaurantePro.Domain.Inventario.Notificaciones.Enums;
+using RestaurantePro.Domain.Proveedores.Interfaces;
+
 namespace RestaurantePro.Domain.UnitTests.Inventario.Services
 {
     public class ServicioNotificacionesTests
@@ -5,6 +13,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         private readonly Mock<INotificacionRepository> _notificacionRepositoryMock;
         private readonly Mock<IProveedorRepository> _proveedorRepositoryMock;
         private readonly ServicioNotificaciones _servicio;
+        private readonly CancellationToken _cancellationToken = CancellationToken.None;
 
         public ServicioNotificacionesTests()
         {
@@ -26,7 +35,12 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             decimal stockActual = 2;
             decimal stockMinimo = 5;
             
-            var notificacionCreada = new Notificacion();
+            var notificacionCreada = Notificacion.Crear(
+                "Test", 
+                "Mensaje de prueba", 
+                TipoNotificacion.StockBajo,
+                Guid.NewGuid(),
+                ingredienteId);
             
             _notificacionRepositoryMock
                 .Setup(r => r.AddAsync(It.IsAny<Notificacion>()))
@@ -55,7 +69,12 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var proveedorId = Guid.NewGuid();
             var nombreProveedor = "Proveedor Test";
             
-            var notificacionCreada = new Notificacion();
+            var notificacionCreada = Notificacion.Crear(
+                "Test", 
+                "Mensaje de prueba", 
+                TipoNotificacion.OrdenCompraGenerada,
+                Guid.NewGuid(),
+                ordenCompraId);
             
             _notificacionRepositoryMock
                 .Setup(r => r.AddAsync(It.IsAny<Notificacion>()))
@@ -81,10 +100,17 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         {
             // Arrange
             var destinatarioId = Guid.NewGuid();
-            var notificacionesMock = new List<Notificacion> { new Notificacion() };
+            var notificacionesMock = new List<Notificacion> { 
+                Notificacion.Crear(
+                    "Test", 
+                    "Mensaje de prueba", 
+                    TipoNotificacion.Informativa,
+                    destinatarioId,
+                    Guid.NewGuid())
+            };
             
             _notificacionRepositoryMock
-                .Setup(r => r.ObtenerPendientesPorDestinatarioAsync(destinatarioId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPendientesPorDestinatarioAsync(destinatarioId, _cancellationToken))
                 .ReturnsAsync(notificacionesMock);
                 
             // Act
@@ -94,7 +120,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             Assert.Equal(notificacionesMock, resultado);
             
             _notificacionRepositoryMock.Verify(
-                r => r.ObtenerPendientesPorDestinatarioAsync(destinatarioId, It.IsAny<CancellationToken>()), 
+                r => r.ObtenerPendientesPorDestinatarioAsync(destinatarioId, _cancellationToken), 
                 Times.Once);
         }
         
@@ -111,7 +137,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 Guid.NewGuid());
             
             _notificacionRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(notificacionId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(notificacionId, _cancellationToken))
                 .ReturnsAsync(notificacion);
                 
             // Act
@@ -132,7 +158,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var notificacionId = Guid.NewGuid();
             
             _notificacionRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(notificacionId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(notificacionId, _cancellationToken))
                 .ReturnsAsync((Notificacion)null);
                 
             // Act

@@ -30,6 +30,11 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// </summary>
         public int PuntosAcumulados { get; private set; }
 
+        /// <summary>
+        /// Cantidad de visitas registradas del cliente
+        /// </summary>
+        public int CantidadVisitas { get; private set; }
+
         // Constructor privado para EF Core
         private Cliente() { }
 
@@ -110,6 +115,17 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             MarkAsModified();
 
             AddDomainEvent(new InformacionContactoActualizada(Id, Email, Telefono));
+        }
+
+        /// <summary>
+        /// Registra una nueva visita del cliente
+        /// </summary>
+        public void RegistrarVisita()
+        {
+            CantidadVisitas++;
+            MarkAsModified();
+
+            AddDomainEvent(new VisitaRegistrada(Id, CantidadVisitas));
         }
     }
 }

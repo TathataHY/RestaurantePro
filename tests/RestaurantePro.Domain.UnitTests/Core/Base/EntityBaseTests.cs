@@ -13,7 +13,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
                 Id = id;
             }
 
-            public void AddTestDomainEvent(IDomainEvent domainEvent)
+            public void AddTestDomainEvent(DomainEvent domainEvent)
             {
                 AddDomainEvent(domainEvent);
             }
@@ -24,14 +24,9 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             }
         }
 
-        private class TestDomainEvent : IDomainEvent
+        private class TestDomainEvent : DomainEvent
         {
-            public DateTime OccurredOn { get; }
-
-            public TestDomainEvent()
-            {
-                OccurredOn = DateTime.UtcNow;
-            }
+            // No necesitamos definir OccurredOn ya que se hereda de DomainEvent
         }
 
         [Fact]

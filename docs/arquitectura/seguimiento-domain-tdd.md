@@ -41,6 +41,7 @@ RestaurantePro.Domain/
 | TarjetaFidelizacion | ✅ Completo | ✅ Completas | Programa de fidelización |
 | HistorialPuntos | ✅ Completo | ✅ Completas | Registro de puntos de fidelización |
 | ServicioFidelizacion | ✅ Completo | ✅ Completas | Servicios de fidelización y descuentos |
+| ClientesFrecuentesPolicy | ✅ Completo | ✅ Completas | Política para clientes frecuentes |
 
 ### Operaciones
 
@@ -58,6 +59,10 @@ RestaurantePro.Domain/
 | Ingrediente | ✅ Completo | ✅ Completas | Materias primas |
 | MovimientoInventario | ✅ Completo | ✅ Completas | Registro de movimientos |
 | OrdenCompra | ✅ Completo | ✅ Completas | Órdenes a proveedores |
+| VerificadorStock | ✅ Completo | ✅ Completas | Verificación y generación de órdenes |
+| GeneradorOrdenesCompra | ✅ Completo | ✅ Completas | Generación de órdenes automáticas |
+| ServicioNotificaciones | ✅ Completo | ✅ Completas | Notificaciones de sistema |
+| StockBajoPolicy | ✅ Completo | ✅ Completas | Política para stock bajo |
 
 ### Proveedores
 
@@ -104,12 +109,12 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 ## Próximos pasos (TDD)
 
 1. **Servicios de integración entre contextos**:
-   - Implementar `ServicioGeneracionOrdenesCompra`: Servicio que analiza niveles de inventario y genera órdenes de compra automáticas
-   - Implementar `ServicioNotificaciones`: Para manejar notificaciones entre contextos (ej. notificar stock bajo a administradores)
+   - ✅ Implementar `ServicioGeneracionOrdenesCompra`: Servicio que analiza niveles de inventario y genera órdenes de compra automáticas
+   - ✅ Implementar `ServicioNotificaciones`: Para manejar notificaciones entre contextos (ej. notificar stock bajo a administradores)
    
 2. **Políticas de dominio**:
-   - Implementar política `StockBajoPolicy`: Para manejar automáticamente acciones cuando el stock está por debajo del mínimo
-   - Implementar política `ClientesFrecuentesPolicy`: Para analizar patrones de consumo y ofrecer beneficios
+   - ✅ Implementar política `StockBajoPolicy`: Para manejar automáticamente acciones cuando el stock está por debajo del mínimo
+   - ✅ Implementar política `ClientesFrecuentesPolicy`: Para analizar patrones de consumo y ofrecer beneficios
 
 3. **Mejoras en eventos de dominio**:
    - Implementar un sistema de suscripción a eventos entre contextos delimitados
@@ -131,6 +136,11 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2023-11-10 | IDateTimeService | Pruebas → Implementación → Refactor |
 | 2023-11-12 | ServicioFidelizacion | Pruebas → Implementación → Refactor |
 | 2023-11-20 | Estandarización de Eventos | Refactorización → Pruebas → Validación |
+| 2023-12-05 | VerificadorStock | Pruebas → Implementación → Refactor |
+| 2023-12-10 | ServicioNotificaciones | Pruebas → Implementación → Refactor |
+| 2023-12-15 | GeneradorOrdenesCompra | Pruebas → Implementación → Refactor |
+| 2023-12-20 | StockBajoPolicy | Pruebas → Implementación → Refactor |
+| 2023-12-25 | ClientesFrecuentesPolicy | Pruebas → Implementación → Refactor |
 
 ## Decisiones de Diseño
 
@@ -143,6 +153,7 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 - Los servicios de dominio implementan lógica que involucra múltiples agregados
 - Interfaces y clases de implementación se separan en archivos diferentes
 - Los eventos de dominio se nombran sin sufijo "Event" y en tiempo pasado
+- Las políticas de dominio encapsulan reglas de negocio complejas que implican múltiples entidades y servicios
 
 ## Plan de integración con otras capas
 

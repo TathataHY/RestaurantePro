@@ -24,7 +24,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         private readonly Mock<IOrdenCompraRepository> _ordenCompraRepositoryMock;
         private readonly Mock<IProveedorRepository> _proveedorRepositoryMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
-        private IVerificadorStock _verificadorService;
+        private readonly IVerificadorStock _verificadorService;
+        private readonly CancellationToken _cancellationToken = CancellationToken.None;
         
         public VerificadorStockTests()
         {
@@ -51,11 +52,11 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(ingredientes);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(CancellationToken.None);
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             result.OrdenesGeneradas.Should().BeEmpty();
-            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.IsAny<OrdenCompra>()), Times.Never);
+            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.Is<OrdenCompra>(o => true)), Times.Never);
         }
 
         [Fact]
@@ -69,11 +70,11 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(new List<Ingrediente> { ingrediente });
                 
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor.Id), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor.Id), _cancellationToken))
                 .ReturnsAsync(proveedor);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(CancellationToken.None);
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             result.OrdenesGeneradas.Should().HaveCount(1);
@@ -81,7 +82,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             result.OrdenesGeneradas.First().Items.Should().HaveCount(1);
             result.OrdenesGeneradas.First().Items.First().IngredienteId.Should().Be(ingrediente.Id);
             
-            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.IsAny<OrdenCompra>()));
+            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.Is<OrdenCompra>(o => true)));
         }
 
         [Fact]
@@ -96,17 +97,17 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(new List<Ingrediente> { ingrediente1, ingrediente2 });
                 
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor.Id), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor.Id), _cancellationToken))
                 .ReturnsAsync(proveedor);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(CancellationToken.None);
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             result.OrdenesGeneradas.Should().HaveCount(1);
             result.OrdenesGeneradas.First().Items.Should().HaveCount(2);
             
-            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.IsAny<OrdenCompra>()));
+            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.Is<OrdenCompra>(o => true)));
         }
 
         [Fact]
@@ -123,21 +124,21 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 
             // Setup para el primer proveedor
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor1.Id), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor1.Id), _cancellationToken))
                 .ReturnsAsync(proveedor1);
                 
             // Setup para el segundo proveedor
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor2.Id), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor2.Id), _cancellationToken))
                 .ReturnsAsync(proveedor2);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(CancellationToken.None);
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             result.OrdenesGeneradas.Should().HaveCount(2);
             
-            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.IsAny<OrdenCompra>()));
+            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.Is<OrdenCompra>(o => true)));
         }
 
         [Fact]
@@ -151,17 +152,17 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(new List<Ingrediente> { ingrediente });
                 
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor.Id), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor.Id), _cancellationToken))
                 .ReturnsAsync(proveedor);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(CancellationToken.None);
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             result.OrdenesGeneradas.Should().BeEmpty();
             result.Errores.Should().HaveCount(1);
             
-            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.IsAny<OrdenCompra>()), Times.Never);
+            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.Is<OrdenCompra>(o => true)), Times.Never);
         }
 
         [Fact]
@@ -180,22 +181,22 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(new List<Ingrediente> { ingrediente });
                 
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor.Id), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor.Id), _cancellationToken))
                 .ReturnsAsync(proveedor);
                 
             _ordenCompraRepositoryMock
-                .Setup(r => r.ObtenerPendientesPorProveedorAsync(It.Is<Guid>(id => id == proveedor.Id), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPendientesPorProveedorAsync(It.Is<Guid>(id => id == proveedor.Id), _cancellationToken))
                 .ReturnsAsync(ordenesExistentes);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(CancellationToken.None);
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             result.OrdenesGeneradas.Should().BeEmpty();
             result.OrdenesActualizadas.Should().HaveCount(1);
             
-            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.IsAny<OrdenCompra>()), Times.Never);
-            _ordenCompraRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<OrdenCompra>()));
+            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.Is<OrdenCompra>(o => true)), Times.Never);
+            _ordenCompraRepositoryMock.Verify(r => r.UpdateAsync(It.Is<OrdenCompra>(o => true)));
         }
 
         // Métodos auxiliares para crear objetos de prueba
