@@ -1,5 +1,16 @@
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Repositories
 {
+    using Xunit;
+    using Moq;
+    using FluentAssertions;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
+    using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
+    using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
+
     public class MesaRepositoryTests
     {
         private readonly Mock<IMesaRepository> _mockRepository;
@@ -57,7 +68,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Reposi
             // Assert
             resultado.Should().NotBeNull();
             resultado.Should().BeSameAs(mesaEsperada);
-            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(mesaId), Times.Once);
+            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(mesaId), Times.Once());
         }
 
         [Fact]
@@ -147,7 +158,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Reposi
             await _mockRepository.Object.AgregarAsync(nuevaMesa);
 
             // Assert
-            _mockRepository.Verify(repo => repo.AgregarAsync(nuevaMesa), Times.Once);
+            _mockRepository.Verify(repo => repo.AgregarAsync(nuevaMesa), Times.Once());
         }
 
         [Fact]
@@ -164,7 +175,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Reposi
             await _mockRepository.Object.ActualizarAsync(mesa);
 
             // Assert
-            _mockRepository.Verify(repo => repo.ActualizarAsync(mesa), Times.Once);
+            _mockRepository.Verify(repo => repo.ActualizarAsync(mesa), Times.Once());
             mesa.Estado.Should().Be(EstadoMesa.Ocupada);
         }
 
@@ -181,7 +192,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Reposi
             await _mockRepository.Object.EliminarAsync(mesaId);
 
             // Assert
-            _mockRepository.Verify(repo => repo.EliminarAsync(mesaId), Times.Once);
+            _mockRepository.Verify(repo => repo.EliminarAsync(mesaId), Times.Once());
         }
     }
 }
+
+
+
+

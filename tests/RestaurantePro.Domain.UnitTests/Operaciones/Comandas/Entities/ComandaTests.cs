@@ -1,5 +1,14 @@
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
 {
+    using Xunit;
+    using FluentAssertions;
+    using System;
+    using System.Linq;
+    using System.Reflection;
+    using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+    using RestaurantePro.Domain.Operaciones.Comandas.Enums;
+    using RestaurantePro.Domain.Operaciones.Comandas.Events;
+
     public class ComandaTests
     {
         [Fact]
@@ -55,6 +64,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             item.Observaciones.Should().Be(observaciones);
 
             // Verificar el total
+            comanda.Total.Should().NotBeNull();
             comanda.Total.Subtotal.Should().Be(cantidad * precioUnitario);
             comanda.Total.Impuestos.Should().Be(cantidad * precioUnitario * 0.16m);
             comanda.Total.Total.Should().Be(cantidad * precioUnitario * 1.16m);
@@ -74,9 +84,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
 
             // Cambiamos el estado a uno no activo (simulando una comanda finalizada)
-            comanda.GetType()
-                .GetProperty("Estado")
-                .SetValue(comanda, EstadoComanda.Finalizada);
+            PropertyInfo propEstado = comanda.GetType().GetProperty("Estado", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            if (propEstado != null)
+            {
+                propEstado.SetValue(comanda, EstadoComanda.Finalizada);
+            }
 
             // Act & Assert
             Action action = () => comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
@@ -93,9 +105,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
 
             // Cambiamos manualmente el estado para probar la transición
             // (normalmente pasaría por todos los estados intermedios)
-            comanda.GetType()
-                .GetProperty("Estado")
-                .SetValue(comanda, EstadoComanda.Entregada);
+            PropertyInfo propEstado = comanda.GetType().GetProperty("Estado", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            if (propEstado != null)
+            {
+                propEstado.SetValue(comanda, EstadoComanda.Entregada);
+            }
 
             // Act & Assert
             Action action = () => comanda.ActualizarEstado(EstadoComanda.Finalizada);
@@ -105,3 +119,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         }
     }
 }
+
+
+
+

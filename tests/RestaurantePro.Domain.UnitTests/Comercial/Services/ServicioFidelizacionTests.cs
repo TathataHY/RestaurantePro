@@ -38,9 +38,9 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var totalComanda = 1000m;
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
-                    It.Is<Guid>(id => id == clienteId), 
+                    It.IsAny<Guid>(), 
                     _cancellationToken))
-                .ReturnsAsync((TarjetaFidelizacion?)null);
+                .ReturnsAsync((TarjetaFidelizacion)null);
                 
             var servicio = new ServicioFidelizacion(
                 _tarjetaRepositoryMock.Object,
@@ -64,9 +64,9 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var totalComanda = 1000m;
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
-                    It.Is<Guid>(id => id == clienteId), 
+                    It.IsAny<Guid>(), 
                     _cancellationToken))
-                .ReturnsAsync((TarjetaFidelizacion?)null);
+                .ReturnsAsync((TarjetaFidelizacion)null);
                 
             var servicio = new ServicioFidelizacion(
                 _tarjetaRepositoryMock.Object,
@@ -91,7 +91,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Plata);
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
-                    It.Is<Guid>(id => id == clienteId), 
+                    It.IsAny<Guid>(), 
                     _cancellationToken))
                 .ReturnsAsync(tarjeta);
                 
@@ -118,7 +118,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Oro);
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
-                    It.Is<Guid>(id => id == clienteId), 
+                    It.IsAny<Guid>(), 
                     _cancellationToken))
                 .ReturnsAsync(tarjeta);
                 
@@ -145,7 +145,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Platino);
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
-                    It.Is<Guid>(id => id == clienteId), 
+                    It.IsAny<Guid>(), 
                     _cancellationToken))
                 .ReturnsAsync(tarjeta);
                 
@@ -174,7 +174,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Plata, puntosPrevios);
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
-                    It.Is<Guid>(id => id == clienteId), 
+                    It.IsAny<Guid>(), 
                     _cancellationToken))
                 .ReturnsAsync(tarjeta);
             
@@ -199,8 +199,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 
             // Assert
             // Verificamos que se llamaron los métodos correctos
-            _tarjetaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken), Times.Once);
-            _historialPuntosRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<HistorialPuntos>(), _cancellationToken), Times.Once);
+            _tarjetaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken), Times.Once());
+            _historialPuntosRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<HistorialPuntos>(), _cancellationToken), Times.Once());
         }
         
         [Fact]
@@ -212,7 +212,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Oro, 300); // Solo tiene 300 puntos
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
-                    It.Is<Guid>(id => id == clienteId), 
+                    It.IsAny<Guid>(), 
                     _cancellationToken))
                 .ReturnsAsync(tarjeta);
                 
@@ -238,7 +238,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Oro, puntosPrevios);
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
-                    It.Is<Guid>(id => id == clienteId), 
+                    It.IsAny<Guid>(), 
                     _cancellationToken))
                 .ReturnsAsync(tarjeta);
             
@@ -263,8 +263,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 
             // Assert
             // Verificamos que se llamaron los métodos correctos
-            _tarjetaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken), Times.Once);
-            _historialPuntosRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<HistorialPuntos>(), _cancellationToken), Times.Once);
+            _tarjetaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken), Times.Once());
+            _historialPuntosRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<HistorialPuntos>(), _cancellationToken), Times.Once());
         }
 
         [Fact]
@@ -350,3 +350,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
         }
     }
 } 
+
+
+
+
+

@@ -107,3 +107,4 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.ValueObjects
         }
     }
 }
+

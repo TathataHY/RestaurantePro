@@ -32,7 +32,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             var historialEsperado = HistorialPuntos.CrearRegistroAgregados(_tarjetaId, 100, "Prueba");
 
             // Configurar mock
-            _mockRepository.Setup(repo => repo.ObtenerPorIdAsync(id, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorIdAsync(id, CancellationToken.None))
                 .ReturnsAsync(historialEsperado);
 
             // Act
@@ -41,14 +41,14 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             // Assert
             resultado.Should().NotBeNull();
             resultado.Should().BeSameAs(historialEsperado);
-            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(id, It.IsAny<CancellationToken>()), Times.Once);
+            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(id, CancellationToken.None), Times.Once);
         }
 
         [Fact]
         public async Task ObtenerPorTarjetaIdAsync_TarjetaValida_DebeRetornarTodosLosRegistros()
         {
             // Arrange
-            _mockRepository.Setup(repo => repo.ObtenerPorTarjetaIdAsync(_tarjetaId, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorTarjetaIdAsync(_tarjetaId, CancellationToken.None))
                 .ReturnsAsync(_historialItems);
 
             // Act
@@ -67,7 +67,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             var tipoOperacion = TipoOperacionPuntos.Agregados;
             var registrosAgregados = _historialItems.Where(h => h.TipoOperacion == tipoOperacion).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorTipoOperacionAsync(_tarjetaId, tipoOperacion, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorTipoOperacionAsync(_tarjetaId, tipoOperacion, CancellationToken.None))
                 .ReturnsAsync(registrosAgregados);
 
             // Act
@@ -87,7 +87,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             var fechaFin = DateTime.Now.AddDays(1);
 
             _mockRepository.Setup(repo => repo.ObtenerPorRangoFechasAsync(
-                _tarjetaId, fechaInicio, fechaFin, It.IsAny<CancellationToken>()))
+                _tarjetaId, fechaInicio, fechaFin, CancellationToken.None))
                 .ReturnsAsync(_historialItems);
 
             // Act
@@ -106,7 +106,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             var puntosEsperados = 30; // solo tenemos un registro de 30 puntos canjeados
 
             _mockRepository.Setup(repo => repo.ObtenerTotalPuntosPorTipoAsync(
-                _tarjetaId, tipoOperacion, It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+                _tarjetaId, tipoOperacion, It.IsAny<DateTime>(), It.IsAny<DateTime>(), CancellationToken.None))
                 .ReturnsAsync(puntosEsperados);
 
             // Act
@@ -123,10 +123,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             // Arrange
             var nuevoHistorial = HistorialPuntos.CrearRegistroAgregados(_tarjetaId, 200, "Nuevo registro");
 
-            _mockRepository.Setup(repo => repo.AgregarAsync(nuevoHistorial, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.AgregarAsync(nuevoHistorial, CancellationToken.None))
                 .Returns(Task.CompletedTask);
 
-            _mockRepository.Setup(repo => repo.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.GuardarCambiosAsync(CancellationToken.None))
                 .ReturnsAsync(1);
 
             // Act
@@ -134,9 +134,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             var resultadoGuardado = await _mockRepository.Object.GuardarCambiosAsync();
 
             // Assert
-            _mockRepository.Verify(repo => repo.AgregarAsync(nuevoHistorial, It.IsAny<CancellationToken>()), Times.Once);
-            _mockRepository.Verify(repo => repo.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _mockRepository.Verify(repo => repo.AgregarAsync(nuevoHistorial, CancellationToken.None), Times.Once);
+            _mockRepository.Verify(repo => repo.GuardarCambiosAsync(CancellationToken.None), Times.Once);
             resultadoGuardado.Should().Be(1);
         }
     }
 }
+

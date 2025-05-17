@@ -85,7 +85,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
         {
             // Arrange
             _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(_cancellationToken))
-                .ReturnsAsync(new List<Cliente>());
+                .ReturnsAsync(new List<Cliente?>());
                 
             // Act
             var resultado = await _policy.EjecutarPolicy(_cancellationToken);
@@ -95,7 +95,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             
             _tarjetaRepositoryMock.Verify(
                 r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken),
-                Times.Never);
+                Times.Never());
         }
         
         [Fact]
@@ -115,8 +115,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(It.IsAny<Guid>(), _cancellationToken))
                 .ReturnsAsync((TarjetaFidelizacion)null);
                 
-            _tarjetaRepositoryMock.Setup(r => r.AddAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((TarjetaFidelizacion tarjeta, CancellationToken ct) => tarjeta);
+            _tarjetaRepositoryMock.Setup(r => r.AddAsync(It.IsAny<TarjetaFidelizacion>()))
+                .ReturnsAsync((TarjetaFidelizacion tarjeta) => tarjeta);
                 
             // Act
             var resultado = await _policy.EjecutarPolicy(_cancellationToken);
@@ -126,7 +126,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             resultado.TarjetasCreadas.Should().HaveCount(2);
             
             _tarjetaRepositoryMock.Verify(
-                r => r.AddAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()),
+                r => r.AddAsync(It.IsAny<TarjetaFidelizacion>()),
                 Times.Exactly(2));
         }
         
@@ -158,7 +158,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             
             _tarjetaRepositoryMock.Verify(
                 r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken),
-                Times.Once);
+                Times.Once());
         }
         
         // Métodos auxiliares para crear objetos de prueba
@@ -188,3 +188,6 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
         }
     }
 } 
+
+
+

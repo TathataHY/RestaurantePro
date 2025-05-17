@@ -13,7 +13,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
             var nombre = "Tomate";
             var codigo = "TOM-001";
             var descripcion = "Tomate fresco";
-            var unidadMedida = UnidadMedida.Kilogramo;
+            var unidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.;
             var stockMinimo = 5.0m;
             var stockActual = 0.0m;
             
@@ -23,7 +23,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
             // Assert
             ingrediente.Should().NotBeNull();
             ingrediente.Nombre.Should().Be(nombre);
-            ingrediente.UnidadMedida.Should().Be(unidadMedida);
+            ingrediente.UnidadMedida.().Be(unidadMedida);
             ingrediente.StockMinimo.Should().Be(stockMinimo);
             ingrediente.Stock.Should().Be(stockActual);
             ingrediente.EstaActivo.Should().BeTrue();
@@ -37,7 +37,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
             var nombre = "";
             var codigo = "TOM-001";
             var descripcion = "Tomate fresco";
-            var unidadMedida = UnidadMedida.Kilogramo;
+            var unidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.;
             var stockMinimo = 5.0m;
             var stockActual = 0.0m;
             
@@ -53,7 +53,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
             var nombre = "Tomate";
             var codigo = "TOM-001";
             var descripcion = "Tomate fresco";
-            var unidadMedida = UnidadMedida.Kilogramo;
+            var unidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.;
             var stockMinimo = -1.0m;
             var stockActual = 0.0m;
             
@@ -66,7 +66,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
         public void IncrementarStock_DebeCrearMovimientoYActualizarStock()
         {
             // Arrange
-            var ingrediente = Ingrediente.Crear("Tomate", "TOM-001", "Tomate fresco", UnidadMedida.Kilogramo, 5.0m, 0.0m);
+            var ingrediente = Ingrediente.Crear("Tomate", "TOM-001", "Tomate fresco", RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida., 5.0m, 0.0m);
             var cantidadIncremento = 10.0m;
             var motivo = "Compra inicial";
             
@@ -90,7 +90,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
         public void DecrementarStock_DebeCrearMovimientoYActualizarStock()
         {
             // Arrange
-            var ingrediente = Ingrediente.Crear("Tomate", "TOM-001", "Tomate fresco", UnidadMedida.Kilogramo, 5.0m, 0.0m);
+            var ingrediente = Ingrediente.Crear("Tomate", "TOM-001", "Tomate fresco", RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida., 5.0m, 0.0m);
             var stockInicial = 20.0m;
             var cantidadDecremento = 8.0m;
             var stockEsperado = stockInicial - cantidadDecremento;
@@ -120,7 +120,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
         public void DecrementarStock_StockInsuficiente_DebeLanzarExcepcion()
         {
             // Arrange
-            var ingrediente = Ingrediente.Crear("Tomate", "TOM-001", "Tomate fresco", UnidadMedida.Kilogramo, 5.0m, 0.0m);
+            var ingrediente = Ingrediente.Crear("Tomate", "TOM-001", "Tomate fresco", RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida., 5.0m, 0.0m);
             var stockInicial = 10.0m;
             var cantidadDecremento = 15.0m;
             
@@ -138,3 +138,5 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
         }
     }
 }
+
+

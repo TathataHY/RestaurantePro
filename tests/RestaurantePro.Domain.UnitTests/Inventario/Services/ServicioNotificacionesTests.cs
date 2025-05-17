@@ -1,5 +1,9 @@
 using Moq;
 using Xunit;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using RestaurantePro.Domain.Inventario.Services;
 using RestaurantePro.Domain.Inventario.Notificaciones.Interfaces;
 using RestaurantePro.Domain.Inventario.Notificaciones.Entities;
@@ -100,7 +104,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         {
             // Arrange
             var destinatarioId = Guid.NewGuid();
-            var notificacionesMock = new List<Notificacion> { 
+            var notificacionesMock = new List<Notificacion?> { 
                 Notificacion.Crear(
                     "Test", 
                     "Mensaje de prueba", 
@@ -173,3 +177,5 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         }
     }
 } 
+
+

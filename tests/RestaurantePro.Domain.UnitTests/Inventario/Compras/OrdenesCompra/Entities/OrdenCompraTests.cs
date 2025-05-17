@@ -66,7 +66,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             var ingredienteId = Guid.NewGuid();
             var nombreIngrediente = "Tomate";
             var cantidad = 10.0m;
-            var unidadMedida = UnidadMedida.Kilogramo;
+            var unidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo;
             
             // Act
             var item = ordenCompra.AgregarItem(ingredienteId, nombreIngrediente, cantidad, unidadMedida);
@@ -97,7 +97,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             var cantidadInvalida = -5.0m;
             
             // Act & Assert
-            var action = () => ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadInvalida, UnidadMedida.Kilogramo);
+            var action = () => ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadInvalida, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             action.Should().Throw<ArgumentException>()
                 .WithMessage("*cantidad*");
         }
@@ -111,8 +111,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 "Observaciones",
                 DateTime.Now);
                 
-            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
-            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 20.0m, UnidadMedida.Kilogramo);
+            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 20.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             
             // Act
             ordenCompra.EliminarItem(item1.Id);
@@ -135,7 +135,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 "Observaciones",
                 DateTime.Now);
                 
-            ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             
             // Act
             ordenCompra.Enviar();
@@ -176,7 +176,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 "Observaciones",
                 DateTime.Now);
                 
-            ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             ordenCompra.Enviar();
             
             var fechaRecepcion = DateTime.Now.AddDays(2);
@@ -230,7 +230,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 "Observaciones",
                 DateTime.Now);
                 
-            ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             ordenCompra.Enviar();
             ordenCompra.Recibir(DateTime.Now.AddDays(1));
             
@@ -255,8 +255,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             var cantidadEsperada = cantidadInicial + cantidadAdicional;
             
             // Act
-            var item1 = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadInicial, UnidadMedida.Kilogramo);
-            var item2 = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadAdicional, UnidadMedida.Kilogramo);
+            var item1 = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadInicial, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            var item2 = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadAdicional, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             
             // Assert
             ordenCompra.Items.Should().HaveCount(1);
@@ -274,9 +274,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 DateTime.Now);
                 
             // Act
-            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
-            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 5.0m, UnidadMedida.Kilogramo);
-            var item3 = ordenCompra.AgregarItem(Guid.NewGuid(), "Ajo", 2.0m, UnidadMedida.Kilogramo);
+            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 5.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            var item3 = ordenCompra.AgregarItem(Guid.NewGuid(), "Ajo", 2.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             
             ordenCompra.EliminarItem(item2.Id);
             
@@ -299,7 +299,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             var ingredienteId = Guid.NewGuid();
             var nombreIngrediente = "Tomate";
             var cantidadInicial = 10.0m;
-            var unidadMedida = UnidadMedida.Kilogramo;
+            var unidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo;
             
             var item = ordenCompra.AgregarItem(ingredienteId, nombreIngrediente, cantidadInicial, unidadMedida);
             
@@ -325,7 +325,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 "Observaciones",
                 DateTime.Now);
                 
-            var item = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            var item = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             var cantidadInvalida = -5.0m;
             
             // Act & Assert
@@ -343,7 +343,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 "Observaciones",
                 DateTime.Now);
                 
-            var item = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            var item = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             var precioInvalido = -5.0m;
             
             // Act & Assert
@@ -362,7 +362,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 DateTime.Now);
                 
             var ingredienteId = Guid.NewGuid();
-            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             ordenCompra.Enviar();
             ordenCompra.Recibir(DateTime.Now.AddDays(1));
             
@@ -385,7 +385,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 DateTime.Now);
                 
             var ingredienteId = Guid.NewGuid();
-            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             ordenCompra.Enviar();
             ordenCompra.Recibir(DateTime.Now.AddDays(1));
             
@@ -408,7 +408,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 
             var ingredienteId = Guid.NewGuid();
             var cantidadSolicitada = 10.0m;
-            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadSolicitada, UnidadMedida.Kilogramo);
+            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadSolicitada, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             ordenCompra.Enviar();
             ordenCompra.Recibir(DateTime.Now.AddDays(1));
             
@@ -430,7 +430,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 DateTime.Now);
                 
             var ingredienteId = Guid.NewGuid();
-            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             // No marcamos la orden como recibida
             
             // Act & Assert
@@ -450,7 +450,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 
             var ingredienteId = Guid.NewGuid();
             var cantidadSolicitada = 10.0m;
-            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadSolicitada, UnidadMedida.Kilogramo);
+            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadSolicitada, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             ordenCompra.Enviar();
             ordenCompra.Recibir(DateTime.Now.AddDays(1));
             
@@ -473,7 +473,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             var ingredienteId = Guid.NewGuid();
             var cantidadSolicitada = 10.0m;
             var cantidadRecibida = 8.0m; // Recepción parcial
-            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadSolicitada, UnidadMedida.Kilogramo);
+            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadSolicitada, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             ordenCompra.Enviar();
             ordenCompra.Recibir(DateTime.Now.AddDays(1));
             
@@ -493,8 +493,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 "Observaciones",
                 DateTime.Now);
                 
-            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
-            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 5.0m, UnidadMedida.Kilogramo);
+            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 5.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             
             ordenCompra.Enviar();
             ordenCompra.Recibir(DateTime.Now.AddDays(1));
@@ -516,8 +516,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 "Observaciones",
                 DateTime.Now);
                 
-            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
-            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 5.0m, UnidadMedida.Kilogramo);
+            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 5.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             
             ordenCompra.Enviar();
             ordenCompra.Recibir(DateTime.Now.AddDays(1));
@@ -539,8 +539,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 "Observaciones",
                 DateTime.Now);
                 
-            ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
-            ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 5.0m, UnidadMedida.Kilogramo);
+            ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 5.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             
             ordenCompra.Enviar();
             // No marcamos la orden como recibida
@@ -550,3 +550,4 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
         }
     }
 } 
+

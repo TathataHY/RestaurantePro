@@ -30,8 +30,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         public async Task GenerarOrdenesCompraAutomaticas_SinIngredientesConStockBajo_RetornaListaVacia()
         {
             // Arrange
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerConStockBajoAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<Ingrediente>());
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerConStockBajoAsync(CancellationToken.None))
+                .ReturnsAsync(new List<Ingrediente?>());
                 
             // Act
             var resultado = await _generador.GenerarOrdenesCompraAutomaticas();

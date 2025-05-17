@@ -161,3 +161,4 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         }
     }
 }
+

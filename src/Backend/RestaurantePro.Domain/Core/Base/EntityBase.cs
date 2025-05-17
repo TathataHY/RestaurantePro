@@ -5,7 +5,7 @@ namespace RestaurantePro.Domain.Core.Base
     /// </summary>
     public abstract class EntityBase
     {
-        private List<DomainEvent> _domainEvents;
+        private List<DomainEvent> _domainEvents = new List<DomainEvent>();
 
         /// <summary>
         /// Identificador único de la entidad
@@ -30,7 +30,7 @@ namespace RestaurantePro.Domain.Core.Base
         /// <summary>
         /// Eventos de dominio pendientes de publicación
         /// </summary>
-        public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents?.AsReadOnly();
+        public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
         /// <summary>
         /// Constructor base que asigna un nuevo ID a la entidad
@@ -45,7 +45,6 @@ namespace RestaurantePro.Domain.Core.Base
         /// </summary>
         protected void AddDomainEvent(DomainEvent domainEvent)
         {
-            _domainEvents ??= new List<DomainEvent>();
             _domainEvents.Add(domainEvent);
         }
 
@@ -54,7 +53,7 @@ namespace RestaurantePro.Domain.Core.Base
         /// </summary>
         public void ClearDomainEvents()
         {
-            _domainEvents?.Clear();
+            _domainEvents.Clear();
         }
 
         /// <summary>
@@ -77,7 +76,7 @@ namespace RestaurantePro.Domain.Core.Base
         /// <summary>
         /// Compara dos entidades por su identidad, no por sus propiedades
         /// </summary>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj is not EntityBase other)
                 return false;
@@ -105,7 +104,7 @@ namespace RestaurantePro.Domain.Core.Base
         /// <summary>
         /// Compara dos entidades por su identidad
         /// </summary>
-        public static bool operator ==(EntityBase left, EntityBase right)
+        public static bool operator ==(EntityBase? left, EntityBase? right)
         {
             if (left is null && right is null)
                 return true;
@@ -119,7 +118,7 @@ namespace RestaurantePro.Domain.Core.Base
         /// <summary>
         /// Compara dos entidades por su identidad
         /// </summary>
-        public static bool operator !=(EntityBase left, EntityBase right)
+        public static bool operator !=(EntityBase? left, EntityBase? right)
         {
             return !(left == right);
         }

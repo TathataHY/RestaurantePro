@@ -28,7 +28,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             var clienteId = _clientes[0].Id;
             var clienteEsperado = _clientes[0];
 
-            _mockRepository.Setup(repo => repo.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorIdAsync(clienteId, CancellationToken.None))
                 .ReturnsAsync(clienteEsperado);
 
             // Act
@@ -37,7 +37,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             // Assert
             resultado.Should().NotBeNull();
             resultado.Should().BeSameAs(clienteEsperado);
-            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()), Times.Once);
+            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(clienteId, CancellationToken.None), Times.Once);
         }
 
         [Fact]
@@ -47,7 +47,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             var email = "maria.lopez@example.com";
             var clienteEsperado = _clientes[1];
 
-            _mockRepository.Setup(repo => repo.ObtenerPorEmailAsync(email, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorEmailAsync(email, CancellationToken.None))
                 .ReturnsAsync(clienteEsperado);
 
             // Act
@@ -63,7 +63,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
         public async Task ObtenerTodosAsync_DebeRetornarTodosLosClientes()
         {
             // Arrange
-            _mockRepository.Setup(repo => repo.ObtenerTodosAsync(It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerTodosAsync(CancellationToken.None))
                 .ReturnsAsync(_clientes);
 
             // Act
@@ -81,7 +81,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             // Arrange
             var clientesActivos = _clientes.Where(c => c.EstaActivo).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(true, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(true, CancellationToken.None))
                 .ReturnsAsync(clientesActivos);
 
             // Act
@@ -99,7 +99,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             // Arrange
             var clientesInactivos = _clientes.Where(c => !c.EstaActivo).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(false, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(false, CancellationToken.None))
                 .ReturnsAsync(clientesInactivos);
 
             // Act
@@ -120,10 +120,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
                 "pedro.gomez@example.com",
                 "645678901");
 
-            _mockRepository.Setup(repo => repo.AgregarAsync(nuevoCliente, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.AgregarAsync(nuevoCliente, CancellationToken.None))
                 .Returns(Task.CompletedTask);
 
-            _mockRepository.Setup(repo => repo.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.GuardarCambiosAsync(CancellationToken.None))
                 .ReturnsAsync(1);
 
             // Act
@@ -131,8 +131,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             var resultadoGuardado = await _mockRepository.Object.GuardarCambiosAsync();
 
             // Assert
-            _mockRepository.Verify(repo => repo.AgregarAsync(nuevoCliente, It.IsAny<CancellationToken>()), Times.Once);
-            _mockRepository.Verify(repo => repo.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _mockRepository.Verify(repo => repo.AgregarAsync(nuevoCliente, CancellationToken.None), Times.Once);
+            _mockRepository.Verify(repo => repo.GuardarCambiosAsync(CancellationToken.None), Times.Once);
             resultadoGuardado.Should().Be(1);
         }
 
@@ -143,10 +143,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             var cliente = _clientes[0];
             cliente.ActualizarInformacionContacto("juan.nuevo@example.com", "687654321");
 
-            _mockRepository.Setup(repo => repo.ActualizarAsync(cliente, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ActualizarAsync(cliente, CancellationToken.None))
                 .Returns(Task.CompletedTask);
 
-            _mockRepository.Setup(repo => repo.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.GuardarCambiosAsync(CancellationToken.None))
                 .ReturnsAsync(1);
 
             // Act
@@ -154,9 +154,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             var resultadoGuardado = await _mockRepository.Object.GuardarCambiosAsync();
 
             // Assert
-            _mockRepository.Verify(repo => repo.ActualizarAsync(cliente, It.IsAny<CancellationToken>()), Times.Once);
-            _mockRepository.Verify(repo => repo.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _mockRepository.Verify(repo => repo.ActualizarAsync(cliente, CancellationToken.None), Times.Once);
+            _mockRepository.Verify(repo => repo.GuardarCambiosAsync(CancellationToken.None), Times.Once);
             resultadoGuardado.Should().Be(1);
         }
     }
 }
+

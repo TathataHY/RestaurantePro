@@ -155,3 +155,4 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Movimientos.En
         }
     }
 }
+

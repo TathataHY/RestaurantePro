@@ -20,10 +20,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
             };
             
             // Agregar algunos items a las órdenes
-            _ordenesCompra[0].AgregarItem(Guid.NewGuid(), "Ingrediente 1", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
-            _ordenesCompra[0].AgregarItem(Guid.NewGuid(), "Ingrediente 2", 3.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            _ordenesCompra[0].AgregarItem(Guid.NewGuid(), "Ingrediente 1", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.);
+            _ordenesCompra[0].AgregarItem(Guid.NewGuid(), "Ingrediente 2", 3.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.);
             
-            _ordenesCompra[1].AgregarItem(Guid.NewGuid(), "Ingrediente 3", 5.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            _ordenesCompra[1].AgregarItem(Guid.NewGuid(), "Ingrediente 3", 5.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.);
             
             // Cambiar estados de algunas órdenes
             _ordenesCompra[0].Enviar(); // Enviada
@@ -37,7 +37,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
             var ordenId = _ordenesCompra[0].Id;
             var ordenEsperada = _ordenesCompra[0];
 
-            _mockRepository.Setup(repo => repo.ObtenerPorIdAsync(ordenId, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorIdAsync(ordenId, CancellationToken.None))
                 .ReturnsAsync(ordenEsperada);
 
             // Act
@@ -46,14 +46,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
             // Assert
             resultado.Should().NotBeNull();
             resultado.Should().BeSameAs(ordenEsperada);
-            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(ordenId, It.IsAny<CancellationToken>()), Times.Once);
+            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(ordenId, CancellationToken.None), Times.Once);
         }
 
         [Fact]
         public async Task ObtenerTodasAsync_DebeRetornarTodasLasOrdenes()
         {
             // Arrange
-            _mockRepository.Setup(repo => repo.ObtenerTodasAsync(It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerTodasAsync(CancellationToken.None))
                 .ReturnsAsync(_ordenesCompra);
 
             // Act
@@ -71,7 +71,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
             // Arrange
             var ordenesEnviadas = _ordenesCompra.Where(o => o.Estado == EstadoOrdenCompra.Enviada).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(EstadoOrdenCompra.Enviada, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(EstadoOrdenCompra.Enviada, CancellationToken.None))
                 .ReturnsAsync(ordenesEnviadas);
 
             // Act
@@ -90,7 +90,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
             var proveedorId = _ordenesCompra[1].ProveedorId;
             var ordenesDelProveedor = _ordenesCompra.Where(o => o.ProveedorId == proveedorId).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorProveedorAsync(proveedorId, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorProveedorAsync(proveedorId, CancellationToken.None))
                 .ReturnsAsync(ordenesDelProveedor);
 
             // Act
@@ -109,13 +109,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
             var ingredienteId = Guid.NewGuid();
             
             // Añadimos un item con el ingrediente específico a la primera orden
-            _ordenesCompra[0].AgregarItem(ingredienteId, "Ingrediente Específico", 5.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            _ordenesCompra[0].AgregarItem(ingredienteId, "Ingrediente Específico", 5.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.);
             
             var ordenesConIngrediente = _ordenesCompra
                 .Where(o => o.Items.Any(i => i.IngredienteId == ingredienteId))
                 .ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorIngredienteAsync(ingredienteId, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorIngredienteAsync(ingredienteId, CancellationToken.None))
                 .ReturnsAsync(ordenesConIngrediente);
 
             // Act
@@ -141,7 +141,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
                 .Where(o => o.FechaCreacion >= fechaInicio && o.FechaCreacion <= fechaFin)
                 .ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin, CancellationToken.None))
                 .ReturnsAsync(ordenesDentroDelRango);
 
             // Act
@@ -167,7 +167,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
                 .Where(o => o.ProveedorId == proveedorId && o.Estado == EstadoOrdenCompra.Pendiente)
                 .ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPendientesPorProveedorAsync(proveedorId, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerPendientesPorProveedorAsync(proveedorId, CancellationToken.None))
                 .ReturnsAsync(ordenesPendientesDelProveedor);
 
             // Act
@@ -189,10 +189,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
                 "Nueva orden",
                 DateTime.Now);
 
-            _mockRepository.Setup(repo => repo.AgregarAsync(nuevaOrden, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.AgregarAsync(nuevaOrden, CancellationToken.None))
                 .Returns(Task.CompletedTask);
 
-            _mockRepository.Setup(repo => repo.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.GuardarCambiosAsync(CancellationToken.None))
                 .ReturnsAsync(1);
 
             // Act
@@ -200,8 +200,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
             var resultadoGuardado = await _mockRepository.Object.GuardarCambiosAsync();
 
             // Assert
-            _mockRepository.Verify(repo => repo.AgregarAsync(nuevaOrden, It.IsAny<CancellationToken>()), Times.Once);
-            _mockRepository.Verify(repo => repo.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _mockRepository.Verify(repo => repo.AgregarAsync(nuevaOrden, CancellationToken.None), Times.Once);
+            _mockRepository.Verify(repo => repo.GuardarCambiosAsync(CancellationToken.None), Times.Once);
             resultadoGuardado.Should().Be(1);
         }
 
@@ -210,12 +210,12 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
         {
             // Arrange
             var orden = _ordenesCompra[1]; // Orden pendiente
-            orden.AgregarItem(Guid.NewGuid(), "Nuevo Ingrediente", 2.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo); // Agregamos un item
+            orden.AgregarItem(Guid.NewGuid(), "Nuevo Ingrediente", 2.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.); // Agregamos un item
 
-            _mockRepository.Setup(repo => repo.ActualizarAsync(orden, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ActualizarAsync(orden, CancellationToken.None))
                 .Returns(Task.CompletedTask);
 
-            _mockRepository.Setup(repo => repo.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.GuardarCambiosAsync(CancellationToken.None))
                 .ReturnsAsync(1);
 
             // Act
@@ -223,9 +223,11 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
             var resultadoGuardado = await _mockRepository.Object.GuardarCambiosAsync();
 
             // Assert
-            _mockRepository.Verify(repo => repo.ActualizarAsync(orden, It.IsAny<CancellationToken>()), Times.Once);
-            _mockRepository.Verify(repo => repo.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _mockRepository.Verify(repo => repo.ActualizarAsync(orden, CancellationToken.None), Times.Once);
+            _mockRepository.Verify(repo => repo.GuardarCambiosAsync(CancellationToken.None), Times.Once);
             resultadoGuardado.Should().Be(1);
         }
     }
 }
+
+

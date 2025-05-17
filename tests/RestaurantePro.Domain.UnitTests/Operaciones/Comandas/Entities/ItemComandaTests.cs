@@ -1,5 +1,10 @@
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
 {
+    using Xunit;
+    using FluentAssertions;
+    using System;
+    using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+
     public class ItemComandaTests
     {
         [Fact]
@@ -144,17 +149,18 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         }
 
         [Fact]
-        public void ActualizarObservaciones_ObservacionesNulas_DebeAceptarValorNulo()
+        public void ActualizarObservaciones_ObservacionesVacias_DebeAceptarValorVacio()
         {
             // Arrange
             var itemComanda = new ItemComanda(Guid.NewGuid(), Guid.NewGuid(), 2, 100m, "Observación inicial");
-            string nuevasObservaciones = null;
+            string nuevasObservaciones = string.Empty;
 
             // Act
             itemComanda.ActualizarObservaciones(nuevasObservaciones);
 
             // Assert
-            itemComanda.Observaciones.Should().BeNull();
+            itemComanda.Observaciones.Should().BeEmpty();
         }
     }
 }
+

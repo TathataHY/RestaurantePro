@@ -1,5 +1,10 @@
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.ValueObjects
 {
+    using Xunit;
+    using FluentAssertions;
+    using System;
+    using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
+
     public class TotalComandaTests
     {
         [Fact]
@@ -107,9 +112,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.ValueObjects
             string resultado = totalComanda.ToString();
 
             // Assert
-            resultado.Should().Contain(subtotal.ToString("C"));
-            resultado.Should().Contain(impuestos.ToString("C"));
-            resultado.Should().Contain("119".ToString("C"));
+            resultado.Should().Contain(subtotal.ToString("C", null));
+            resultado.Should().Contain(impuestos.ToString("C", null));
+            resultado.Should().Contain(119m.ToString("C", null));
         }
     }
 } 
