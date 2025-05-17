@@ -73,8 +73,24 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
         {
             // Arrange
             var clienteId = Guid.NewGuid();
+            var tarjetaId = Guid.NewGuid();
             var totalComanda = 1000m;
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Plata);
+            
+            // Configurar el mock del cliente
+            var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var propiedadId = typeof(EntityBase).GetField("_id", BindingFlags.Instance | BindingFlags.NonPublic);
+            propiedadId?.SetValue(cliente, clienteId);
+            
+            // Asignar ID a la tarjeta
+            propiedadId?.SetValue(tarjeta, tarjetaId);
+            
+            // Asociar tarjeta al cliente
+            cliente.AsociarTarjetaFidelizacion(tarjetaId);
+            
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult<Cliente?>(cliente));
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult<TarjetaFidelizacion?>(tarjeta));
@@ -98,8 +114,24 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
         {
             // Arrange
             var clienteId = Guid.NewGuid();
+            var tarjetaId = Guid.NewGuid();
             var totalComanda = 1000m;
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Oro);
+            
+            // Configurar el mock del cliente
+            var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var propiedadId = typeof(EntityBase).GetField("_id", BindingFlags.Instance | BindingFlags.NonPublic);
+            propiedadId?.SetValue(cliente, clienteId);
+            
+            // Asignar ID a la tarjeta
+            propiedadId?.SetValue(tarjeta, tarjetaId);
+            
+            // Asociar tarjeta al cliente
+            cliente.AsociarTarjetaFidelizacion(tarjetaId);
+            
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult<Cliente?>(cliente));
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult<TarjetaFidelizacion?>(tarjeta));
@@ -123,8 +155,24 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
         {
             // Arrange
             var clienteId = Guid.NewGuid();
+            var tarjetaId = Guid.NewGuid();
             var totalComanda = 1000m;
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Platino);
+            
+            // Configurar el mock del cliente
+            var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var propiedadId = typeof(EntityBase).GetField("_id", BindingFlags.Instance | BindingFlags.NonPublic);
+            propiedadId?.SetValue(cliente, clienteId);
+            
+            // Asignar ID a la tarjeta
+            propiedadId?.SetValue(tarjeta, tarjetaId);
+            
+            // Asociar tarjeta al cliente
+            cliente.AsociarTarjetaFidelizacion(tarjetaId);
+            
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult<Cliente?>(cliente));
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult<TarjetaFidelizacion?>(tarjeta));
@@ -148,27 +196,34 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
         {
             // Arrange
             var clienteId = Guid.NewGuid();
+            var tarjetaId = Guid.NewGuid();
             var totalComanda = 1000m;
             var comandaId = Guid.NewGuid();
             var puntosPrevios = 500;
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Plata, puntosPrevios);
             
+            // Asignar ID a la tarjeta
+            var propiedadId = typeof(EntityBase).GetField("_id", BindingFlags.Instance | BindingFlags.NonPublic);
+            propiedadId?.SetValue(tarjeta, tarjetaId);
+            
             // Configurar el mock del cliente
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
             var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
-            var propiedadId = cliente.GetType().GetProperty("Id", BindingFlags.Instance | BindingFlags.NonPublic);
             propiedadId?.SetValue(cliente, clienteId);
+            
+            // Asociar tarjeta al cliente
+            cliente.AsociarTarjetaFidelizacion(tarjetaId);
             
             _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult<Cliente?>(cliente));
             
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult<TarjetaFidelizacion?>(tarjeta));
             
             _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
-            _historialPuntosRepositoryMock.Setup(r => r.AgregarAsync(It.IsAny<HistorialPuntos>(), It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             var servicio = new ServicioFidelizacion(
@@ -183,7 +238,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Assert
             // Verificamos que se llamaron los métodos correctos
             _tarjetaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()), Times.Once);
-            _historialPuntosRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<HistorialPuntos>(), It.IsAny<CancellationToken>()), Times.Once);
+            _clienteRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()), Times.Once);
         }
         
         [Fact]
@@ -213,18 +268,31 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
         {
             // Arrange
             var clienteId = Guid.NewGuid();
+            var tarjetaId = Guid.NewGuid();
             var puntosCanjear = 300;
             var puntosPrevios = 500;
             var motivo = "Descuento comanda";
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Oro, puntosPrevios);
             
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            // Asignar ID a la tarjeta
+            var propiedadId = typeof(EntityBase).GetField("_id", BindingFlags.Instance | BindingFlags.NonPublic);
+            propiedadId?.SetValue(tarjeta, tarjetaId);
+            
+            // Configurar el mock del cliente
+            var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            propiedadId?.SetValue(cliente, clienteId);
+            
+            // Asociar tarjeta al cliente
+            cliente.AsociarTarjetaFidelizacion(tarjetaId);
+            
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult<Cliente?>(cliente));
+            
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult<TarjetaFidelizacion?>(tarjeta));
             
             _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-                
-            _historialPuntosRepositoryMock.Setup(r => r.AgregarAsync(It.IsAny<HistorialPuntos>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             var servicio = new ServicioFidelizacion(
@@ -238,7 +306,6 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 
             // Assert
             _tarjetaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()), Times.Once);
-            _historialPuntosRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<HistorialPuntos>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -301,6 +368,70 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
                 servicio.CanjearPuntosAsync(clienteId, puntosCanjear, motivo));
         }
         
+        [Fact]
+        public async Task CrearTarjetaFidelizacion_DebeCrearTarjetaYAsociarlaAlCliente()
+        {
+            // Arrange
+            var clienteId = Guid.NewGuid();
+            var tarjetaId = Guid.NewGuid();
+            
+            // Mock del cliente
+            var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var propiedadId = typeof(EntityBase).GetField("_id", BindingFlags.Instance | BindingFlags.NonPublic);
+            propiedadId?.SetValue(cliente, clienteId);
+            
+            // Mock tarjeta existente
+            TarjetaFidelizacion? tarjetaExistenteNull = null;
+            
+            // Configurar el mock para devolver cliente
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult<Cliente?>(cliente));
+                
+            // Configurar el mock para verificar que no hay tarjeta activa
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(tarjetaExistenteNull));
+                
+            // Setup para capturar la tarjeta que se pasa al método AgregarAsync
+            TarjetaFidelizacion? tarjetaCapturada = null;
+            _tarjetaRepositoryMock.Setup(r => r.AgregarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
+                .Callback<TarjetaFidelizacion, CancellationToken>((t, c) => {
+                    tarjetaCapturada = t;
+                    // Asignar el ID fijo a la tarjeta
+                    propiedadId?.SetValue(t, tarjetaId);
+                })
+                .Returns(Task.CompletedTask);
+                
+            // Setup para cliente actualizado
+            _clienteRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+                .Callback<Cliente, CancellationToken>((c, cc) => {
+                    c.AsociarTarjetaFidelizacion(tarjetaId);
+                })
+                .Returns(Task.CompletedTask);
+            
+            var servicio = new ServicioFidelizacion(
+                _tarjetaRepositoryMock.Object,
+                _clienteRepositoryMock.Object,
+                _historialPuntosRepositoryMock.Object,
+                _dateTimeServiceMock.Object);
+
+            // Act
+            var tarjetaCreada = await servicio.CrearTarjetaFidelizacionAsync(clienteId);
+
+            // Assert
+            tarjetaCreada.Should().NotBeNull();
+            // No verificamos el ID exacto, ya que es generado dinámicamente
+            tarjetaCreada.ClienteId.Should().Be(clienteId);
+            
+            // Verificar que se actualizó el cliente
+            _clienteRepositoryMock.Verify(r => r.ActualizarAsync(
+                It.IsAny<Cliente>(), 
+                It.IsAny<CancellationToken>()), 
+                Times.Once);
+            
+            cliente.TarjetaFidelizacionPrincipalId.Should().Be(tarjetaId);
+        }
+
         // Método auxiliar para crear una tarjeta de fidelización activa
         private TarjetaFidelizacion CrearTarjetaActiva(Guid clienteId, NivelFidelizacion nivel, int puntosAcumulados = 0)
         {

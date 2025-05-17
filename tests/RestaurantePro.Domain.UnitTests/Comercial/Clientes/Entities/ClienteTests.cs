@@ -159,6 +159,42 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             cliente.Telefono.Should().Be(telefono);
             cliente.DomainEvents.Should().BeEmpty();
         }
+
+        [Fact]
+        public void AsociarTarjetaFidelizacion_ClienteActivo_DebeAsociarTarjeta()
+        {
+            // Arrange
+            var nombre = ClienteNombre.Crear("Juan", "Pérez");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var tarjetaId = Guid.NewGuid();
+
+            // Act
+            cliente.AsociarTarjetaFidelizacion(tarjetaId);
+
+            // Assert
+            cliente.TarjetaFidelizacionPrincipalId.Should().Be(tarjetaId);
+            cliente.DomainEvents.Should().ContainSingle(e => e is TarjetaFidelizacionAsociada);
+            var evento = cliente.DomainEvents.OfType<TarjetaFidelizacionAsociada>().First();
+            evento.ClienteId.Should().Be(cliente.Id);
+            evento.TarjetaFidelizacionId.Should().Be(tarjetaId);
+        }
+
+        [Fact]
+        public void AsociarTarjetaFidelizacion_ClienteInactivo_DebeLanzarException()
+        {
+            // Arrange
+            var nombre = ClienteNombre.Crear("Juan", "Pérez");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            cliente.Desactivar();
+            var tarjetaId = Guid.NewGuid();
+
+            // Act
+            Action action = () => cliente.AsociarTarjetaFidelizacion(tarjetaId);
+
+            // Assert
+            action.Should().Throw<InvalidOperationException>()
+                .WithMessage("*inactivo*");
+        }
     }
 }
 
