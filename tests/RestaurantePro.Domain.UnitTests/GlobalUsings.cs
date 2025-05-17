@@ -2,6 +2,8 @@
 global using Xunit;
 global using FluentAssertions;
 global using Moq;
+global using Moq.Language;
+global using Moq.Language.Flow;
 global using System;
 global using System.Collections.Generic;
 global using System.Linq;
@@ -100,78 +102,3 @@ global using RestaurantePro.Domain.Proveedores.Interfaces;
 global using RestaurantePro.Domain.Proveedores.Events;
 global using RestaurantePro.Domain.Proveedores.Events.Proveedor;
 global using RestaurantePro.Domain.Proveedores.Events.ContactoProveedor;
-
-// Agregar extensiones para manejar argumentos opcionales en árboles de expresión
-namespace Moq
-{
-    public static class Extensions
-    {
-        // Métodos para tipos básicos
-        public static T AnyGuid<T>() where T : struct
-        {
-            return It.Is<T>(v => true);
-        }
-        
-        public static string AnyString()
-        {
-            return It.Is<string>(v => true);
-        }
-        
-        public static decimal AnyDecimal()
-        {
-            return It.Is<decimal>(v => true);
-        }
-        
-        public static int AnyInt()
-        {
-            return It.Is<int>(v => true);
-        }
-        
-        public static DateTime AnyDateTime()
-        {
-            return It.Is<DateTime>(v => true);
-        }
-        
-        public static bool AnyBool()
-        {
-            return It.Is<bool>(v => true);
-        }
-        
-        public static double AnyDouble()
-        {
-            return It.Is<double>(v => true);
-        }
-        
-        public static CancellationToken AnyCancellationToken()
-        {
-            return It.Is<CancellationToken>(v => true);
-        }
-        
-        // Métodos específicos para Guid
-        public static Guid AnyProveedorId()
-        {
-            return It.Is<Guid>(v => true);
-        }
-        
-        public static Guid AnyIngredienteId()
-        {
-            return It.Is<Guid>(v => true);
-        }
-        
-        public static Guid AnyOrdenCompraId()
-        {
-            return It.Is<Guid>(v => true);
-        }
-        
-        public static Guid AnyClienteId()
-        {
-            return It.Is<Guid>(v => true);
-        }
-        
-        // Métodos específicos para tipos comunes en nuestro dominio
-        public static RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida AnyUnidadMedida()
-        {
-            return It.Is<RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida>(v => true);
-        }
-    }
-}

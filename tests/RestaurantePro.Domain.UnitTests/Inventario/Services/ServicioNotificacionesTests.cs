@@ -92,7 +92,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         {
             // Arrange
             var destinatarioId = Guid.NewGuid();
-            var notificacionesMock = new List<Notificacion?> { 
+            var notificaciones = new List<Notificacion> { 
                 Notificacion.Crear(
                     "Test", 
                     "Mensaje de prueba", 
@@ -103,13 +103,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             
             _notificacionRepositoryMock
                 .Setup(r => r.ObtenerPendientesPorDestinatarioAsync(destinatarioId, _cancellationToken))
-                .ReturnsAsync(notificacionesMock);
+                .ReturnsAsync(notificaciones);
                 
             // Act
             var resultado = await _servicio.ObtenerNotificacionesPendientes(destinatarioId);
             
             // Assert
-            Assert.Equal(notificacionesMock, resultado);
+            Assert.Equal(notificaciones, resultado);
             
             _notificacionRepositoryMock.Verify(
                 r => r.ObtenerPendientesPorDestinatarioAsync(destinatarioId, _cancellationToken), 
@@ -129,7 +129,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 Guid.NewGuid());
             
             _notificacionRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(notificacionId, _cancellationToken))
+                .Setup(r => r.ObtenerPorIdAsync(notificacionId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(notificacion);
                 
             // Act
@@ -149,9 +149,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             // Arrange
             var notificacionId = Guid.NewGuid();
             
+            Notificacion? notificacionNull = null;
             _notificacionRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(notificacionId, _cancellationToken))
-                .ReturnsAsync((Notificacion)null);
+                .Setup(r => r.ObtenerPorIdAsync(notificacionId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(notificacionNull);
                 
             // Act
             var resultado = await _servicio.MarcarNotificacionComoLeida(notificacionId);

@@ -36,21 +36,20 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 CrearClienteConVisitas("Cliente 3", 40, NivelFidelizacion.Oro)
             };
             
-            _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(_cancellationToken))
-                .ReturnsAsync(clientes);
+            IEnumerable<Cliente> clientesEnumerable = clientes;
+            _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(clientesEnumerable));
                 
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(It.Is<Guid>(g => true), It.Is<CancellationToken>(t => true)))
-                .ReturnsAsync((Guid clienteId, CancellationToken ct) => {
-                    var cliente = clientes.FirstOrDefault(c => c.Id == clienteId);
-                    if (cliente == null) return null;
-                    
-                    var tarjeta = TarjetaFidelizacion.Crear(clienteId, $"TF-{Guid.NewGuid().ToString().Substring(0, 8)}");
-                    tarjeta.Activar();
-                    
-                    return tarjeta;
-                });
+            // Setup para cada llamada específica a ObtenerTarjetaActivaPorClienteIdAsync con los IDs de cada cliente
+            foreach (var cliente in clientes)
+            {
+                var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, $"TF-{Guid.NewGuid():N}");
+                tarjeta.Activar();
+                _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, It.IsAny<CancellationToken>()))
+                    .Returns(Task.FromResult<TarjetaFidelizacion?>(tarjeta));
+            }
                 
-            _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken))
+            _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             // Act
@@ -61,7 +60,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             
             // Verificar que se llamó al método para actualizar nivel para cada cliente
             _tarjetaRepositoryMock.Verify(
-                r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken),
+                r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()),
                 Times.Exactly(3));
         }
         
@@ -69,8 +68,9 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
         public async Task EjecutarPolicy_SinClientesActivos_NoDebeActualizarNada()
         {
             // Arrange
-            _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(_cancellationToken))
-                .ReturnsAsync(new List<Cliente?>());
+            IEnumerable<Cliente> clientesVacios = new List<Cliente>();
+            _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(clientesVacios));
                 
             // Act
             var resultado = await _policy.EjecutarPolicy(_cancellationToken);
@@ -79,8 +79,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             resultado.ClientesActualizados.Should().BeEmpty();
             
             _tarjetaRepositoryMock.Verify(
-                r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken),
-                Times.Never());
+                r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()),
+                Times.Never);
         }
         
         [Fact]
@@ -93,15 +93,20 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 CrearClienteConVisitas("Cliente 2", 30, NivelFidelizacion.Basico)
             };
             
-            _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(_cancellationToken))
-                .ReturnsAsync(clientes);
+            IEnumerable<Cliente> clientesEnumerable = clientes;
+            _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(clientesEnumerable));
                 
-            // Simular que no tienen tarjeta
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(It.Is<Guid>(g => true), It.Is<CancellationToken>(t => true)))
-                .ReturnsAsync((TarjetaFidelizacion)null);
-                
-            _tarjetaRepositoryMock.Setup(r => r.AddAsync(It.Is<TarjetaFidelizacion>(t => true)))
-                .ReturnsAsync((TarjetaFidelizacion tarjeta) => tarjeta);
+            // Simular que no tienen tarjeta - usamos variable explícitamente nula
+            TarjetaFidelizacion? tarjetaNull = null;
+            foreach (var cliente in clientes)
+            {
+                _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, It.IsAny<CancellationToken>()))
+                    .Returns(Task.FromResult(tarjetaNull));
+            }
+            
+            _tarjetaRepositoryMock.Setup(r => r.AgregarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
                 
             // Act
             var resultado = await _policy.EjecutarPolicy(_cancellationToken);
@@ -111,7 +116,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             resultado.TarjetasCreadas.Should().HaveCount(2);
             
             _tarjetaRepositoryMock.Verify(
-                r => r.AddAsync(It.Is<TarjetaFidelizacion>(t => true)),
+                r => r.AgregarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()),
                 Times.Exactly(2));
         }
         
@@ -121,18 +126,16 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             // Arrange
             var cliente = CrearClienteConVisitas("Cliente Test", 25, NivelFidelizacion.Basico);
             
-            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(cliente.Id, _cancellationToken))
-                .ReturnsAsync(cliente);
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(cliente.Id, It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult<Cliente?>(cliente));
                 
-            var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, $"TF-{Guid.NewGuid().ToString().Substring(0, 8)}");
+            var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, $"TF-{Guid.NewGuid():N}");
             tarjeta.Activar();
             
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
-                    It.Is<Guid>(g => g == cliente.Id), 
-                    It.Is<CancellationToken>(t => true)))
-                .ReturnsAsync(tarjeta);
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult<TarjetaFidelizacion?>(tarjeta));
                 
-            _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken))
+            _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             // Act
@@ -144,8 +147,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             resultado.TarjetasCreadas.Should().BeEmpty();
             
             _tarjetaRepositoryMock.Verify(
-                r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken),
-                Times.Once());
+                r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()),
+                Times.Once);
         }
         
         // Métodos auxiliares para crear objetos de prueba
@@ -158,18 +161,14 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 
             var cliente = Cliente.Crear(
                 nombreCliente, 
-                $"cliente{Guid.NewGuid().ToString().Substring(0, 5)}@test.com", 
+                $"cliente{Guid.NewGuid():N8}@test.com", 
                 "123456789");
                 
             // Simular historial de visitas
             var propiedadVisitas = cliente.GetType().GetProperty("CantidadVisitas", 
-                System.Reflection.BindingFlags.Instance | 
-                System.Reflection.BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.NonPublic);
                 
-            if (propiedadVisitas != null)
-            {
-                propiedadVisitas.SetValue(cliente, cantidadVisitas);
-            }
+            propiedadVisitas?.SetValue(cliente, cantidadVisitas);
             
             return cliente;
         }
