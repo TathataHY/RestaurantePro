@@ -69,21 +69,20 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
                 // Aplicar descuentos en todas las comandas abiertas
                 foreach (var comanda in comandasAbiertas)
                 {
-                    if (comanda.TieneDescuentoFidelizacion)
+                    if (comanda.TieneDescuentoFidelizacion())
                     {
                         continue; // Ya tiene descuento aplicado
                     }
 
                     // Calcular descuento según nivel
                     decimal porcentajeDescuento = evento.NuevoNivel == NivelFidelizacion.Platino ? 0.15m : 0.10m;
-                    decimal montoDescuento = comanda.Total * porcentajeDescuento;
 
                     // Aplicar descuento
-                    comanda.AplicarDescuentoFidelizacion(montoDescuento, $"Descuento por nivel {evento.NuevoNivel}");
+                    comanda.AplicarDescuentoFidelizacion(porcentajeDescuento);
                     await _comandaRepository.ActualizarAsync(comanda, cancellationToken);
 
                     comandasActualizadas++;
-                    descuentoAplicado += montoDescuento;
+                    descuentoAplicado += comanda.DescuentoFidelizacion ?? 0;
                 }
 
                 // Registrar éxito

@@ -19,10 +19,6 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         /// ID del mesero que creó la comanda
         /// </summary>
         public Guid MeseroId { get; }
-
-        /// <summary>
-        /// Fecha en que ocurrió el evento
-        /// </summary>
         
         /// <summary>
         /// Constructor
@@ -32,7 +28,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
             ComandaId = comandaId;
             MesaId = mesaId;
             MeseroId = meseroId;
-                    }
+        }
     }
 }
 

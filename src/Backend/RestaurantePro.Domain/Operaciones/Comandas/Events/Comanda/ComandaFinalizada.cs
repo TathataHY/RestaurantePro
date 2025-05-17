@@ -14,10 +14,6 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         /// Total de la comanda (incluyendo impuestos)
         /// </summary>
         public decimal Total { get; }
-
-        /// <summary>
-        /// Fecha en que ocurrió el evento
-        /// </summary>
         
         /// <summary>
         /// Constructor
@@ -26,7 +22,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         {
             ComandaId = comandaId;
             Total = total;
-                    }
+        }
     }
 }
 

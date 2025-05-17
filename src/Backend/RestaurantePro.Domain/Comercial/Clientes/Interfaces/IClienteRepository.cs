@@ -73,5 +73,13 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de clientes activos con información de visitas</returns>
         Task<IEnumerable<Cliente>> ObtenerClientesActivosConVisitasAsync(CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene clientes por sus IDs
+        /// </summary>
+        /// <param name="ids">Lista de IDs de clientes a obtener</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de clientes que coinciden con los IDs proporcionados</returns>
+        Task<IEnumerable<Cliente>> ObtenerClientesPorIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     }
 }

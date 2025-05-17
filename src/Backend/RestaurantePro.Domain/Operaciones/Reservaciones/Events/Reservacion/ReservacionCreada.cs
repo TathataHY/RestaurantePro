@@ -34,10 +34,6 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion
         /// Cantidad de personas
         /// </summary>
         public int CantidadPersonas { get; }
-
-        /// <summary>
-        /// Fecha en que ocurrió el evento
-        /// </summary>
         
         /// <summary>
         /// Constructor para crear una nueva instancia del evento
@@ -50,7 +46,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion
             Fecha = fecha;
             Hora = hora;
             CantidadPersonas = cantidadPersonas;
-                    }
+        }
     }
 }
 

@@ -54,6 +54,14 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         Task<IEnumerable<TarjetaFidelizacion>> ObtenerPorNivelAsync(NivelFidelizacion nivel, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Obtiene las tarjetas filtradas por varios niveles de fidelización
+        /// </summary>
+        /// <param name="niveles">Niveles de fidelización de las tarjetas a obtener</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de tarjetas que cumplen con los filtros</returns>
+        Task<IEnumerable<TarjetaFidelizacion>> ObtenerTarjetasPorNivelesAsync(IEnumerable<NivelFidelizacion> niveles, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Agrega una nueva tarjeta de fidelización
         /// </summary>
         /// <param name="tarjeta">Tarjeta a agregar</param>

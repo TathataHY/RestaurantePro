@@ -8,17 +8,17 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         /// <summary>
         /// Nombre del producto
         /// </summary>
-        public string Nombre { get; private set; }
+        public string? Nombre { get; private set; }
 
         /// <summary>
         /// Descripción del producto
         /// </summary>
-        public string Descripcion { get; private set; }
+        public string? Descripcion { get; private set; }
 
         /// <summary>
         /// Precio del producto
         /// </summary>
-        public PrecioProducto Precio { get; private set; }
+        public PrecioProducto? Precio { get; private set; }
 
         /// <summary>
         /// Identificador de la categoría a la que pertenece el producto
@@ -41,7 +41,7 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
             CategoriaId = categoriaId;
             EstaActivo = true;
 
-            AddDomainEvent(new ProductoCreado(Id, Nombre, Precio.Valor));
+            AddDomainEvent(new ProductoCreado(Id, Nombre!, Precio.Valor));
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
             Precio = precio;
             MarkAsModified();
 
-            AddDomainEvent(new ProductoActualizado(Id, Nombre, Descripcion, Precio.Valor));
+            AddDomainEvent(new ProductoActualizado(Id, Nombre!, Descripcion!, Precio!.Valor));
         }
 
         /// <summary>

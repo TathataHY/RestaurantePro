@@ -116,6 +116,3 @@ global using RestaurantePro.Domain.Comercial.EventHandlers;
 global using RestaurantePro.Domain.Inventario.EventHandlers;
 global using RestaurantePro.Domain.Operaciones.EventHandlers;
 // global using RestaurantePro.Domain.Proveedores.EventHandlers;
-
-// Define DomainEvent como un alias para facilitar su uso
-global using DomainEvent = RestaurantePro.Domain.Core.Base.Events.DomainEvent;

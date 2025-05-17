@@ -19,10 +19,6 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         /// Nuevo estado de la comanda
         /// </summary>
         public EstadoComanda NuevoEstado { get; }
-
-        /// <summary>
-        /// Fecha en que ocurrió el evento
-        /// </summary>
         
         /// <summary>
         /// Constructor
@@ -32,7 +28,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
             ComandaId = comandaId;
             EstadoAnterior = estadoAnterior;
             NuevoEstado = nuevoEstado;
-                    }
+        }
     }
 }
 

@@ -14,10 +14,6 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         /// Motivo de la cancelación
         /// </summary>
         public string Motivo { get; }
-
-        /// <summary>
-        /// Fecha en que ocurrió el evento
-        /// </summary>
         
         /// <summary>
         /// Constructor
@@ -26,7 +22,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda
         {
             ComandaId = comandaId;
             Motivo = motivo;
-                    }
+        }
     }
 }
 

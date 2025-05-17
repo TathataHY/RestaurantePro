@@ -40,5 +40,21 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de ingredientes que coinciden con la unidad de medida</returns>
         Task<IEnumerable<Ingrediente>> BuscarPorUnidadMedidaAsync(RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidadMedida, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene ingredientes utilizados en un producto
+        /// </summary>
+        /// <param name="productoId">ID del producto</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de ingredientes utilizados en el producto</returns>
+        Task<IEnumerable<Ingrediente>> ObtenerIngredientesPorProductoAsync(Guid productoId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Actualiza un ingrediente existente
+        /// </summary>
+        /// <param name="ingrediente">Ingrediente a actualizar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tarea asíncrona</returns>
+        Task ActualizarAsync(Ingrediente ingrediente, CancellationToken cancellationToken = default);
     }
 }

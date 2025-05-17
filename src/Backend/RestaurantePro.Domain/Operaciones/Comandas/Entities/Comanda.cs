@@ -40,12 +40,17 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// <summary>
         /// Observaciones adicionales para la comanda
         /// </summary>
-        public string Observaciones { get; private set; }
+        public string? Observaciones { get; private set; }
 
         /// <summary>
         /// Total de la comanda
         /// </summary>
-        public TotalComanda Total { get; private set; }
+        public TotalComanda? Total { get; private set; }
+
+        /// <summary>
+        /// Descuento por fidelización aplicado a la comanda
+        /// </summary>
+        public decimal? DescuentoFidelizacion { get; private set; }
 
         /// <summary>
         /// Detalles de los productos incluidos en la comanda
@@ -60,7 +65,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// <summary>
         /// Constructor para crear una nueva comanda
         /// </summary>
-        public static Comanda Crear(Guid mesaId, Guid meseroId, Guid? clienteId = null, string observaciones = null)
+        public static Comanda Crear(Guid mesaId, Guid meseroId, Guid? clienteId = null, string? observaciones = null)
         {
             var comanda = new Comanda
             {
@@ -70,7 +75,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 ClienteId = clienteId,
                 FechaCreacion = DateTime.Now,
                 Estado = EstadoComanda.Creada,
-                Observaciones = observaciones,
+                Observaciones = observaciones ?? string.Empty,
                 Total = TotalComanda.Crear(0, 0)
             };
 
@@ -82,11 +87,11 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// <summary>
         /// Método para agregar un producto a la comanda
         /// </summary>
-        public void AgregarProducto(Guid productoId, int cantidad, decimal precioUnitario, string observaciones = null)
+        public void AgregarProducto(Guid productoId, int cantidad, decimal precioUnitario, string? observaciones = null)
         {
             ValidarComandaActiva();
 
-            var item = new ItemComanda(Id, productoId, cantidad, precioUnitario, observaciones);
+            var item = new ItemComanda(Id, productoId, cantidad, precioUnitario, observaciones ?? string.Empty);
             _items.Add(item);
 
             RecalcularTotal();
@@ -121,7 +126,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             // Si la comanda se finaliza, agregar evento específico
             if (nuevoEstado == EstadoComanda.Finalizada)
             {
-                AddDomainEvent(new ComandaFinalizada(Id, Total.Total));
+                AddDomainEvent(new ComandaFinalizada(Id, Total!.Total));
             }
         }
 
@@ -140,6 +145,38 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             ActualizarFecha();
 
             AddDomainEvent(new ComandaCancelada(Id, motivo));
+        }
+
+        /// <summary>
+        /// Verifica si la comanda tiene un descuento por fidelización aplicado
+        /// </summary>
+        /// <returns>True si tiene descuento aplicado, false en caso contrario</returns>
+        public bool TieneDescuentoFidelizacion()
+        {
+            return DescuentoFidelizacion.HasValue && DescuentoFidelizacion > 0;
+        }
+
+        /// <summary>
+        /// Aplica un descuento de fidelización a la comanda
+        /// </summary>
+        /// <param name="porcentajeDescuento">Porcentaje de descuento a aplicar (entre 0 y 1)</param>
+        public void AplicarDescuentoFidelizacion(decimal porcentajeDescuento)
+        {
+            if (porcentajeDescuento < 0 || porcentajeDescuento > 1)
+                throw new ArgumentException("El porcentaje de descuento debe estar entre 0 y 1", nameof(porcentajeDescuento));
+
+            // Solo se puede aplicar a comandas activas
+            ValidarComandaActiva();
+
+            // Calculamos el descuento sobre el subtotal
+            DescuentoFidelizacion = Math.Round(Total!.Subtotal * porcentajeDescuento, 2);
+
+            // Recalculamos el total con el descuento
+            RecalcularTotal();
+            ActualizarFecha();
+
+            // Agregamos un evento de descuento aplicado (si se necesita implementar)
+            // AddDomainEvent(new DescuentoFidelizacionAplicado(Id, DescuentoFidelizacion.Value, porcentajeDescuento));
         }
 
         /// <summary>
@@ -168,9 +205,17 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         private void RecalcularTotal()
         {
             decimal subtotal = _items.Sum(i => i.Subtotal);
-            decimal impuesto = subtotal * 0.16m; // IVA del 16%
+            
+            // Aplicar descuento si existe
+            decimal subtotalConDescuento = subtotal;
+            if (DescuentoFidelizacion.HasValue && DescuentoFidelizacion > 0)
+            {
+                subtotalConDescuento = subtotal - DescuentoFidelizacion.Value;
+            }
+            
+            decimal impuesto = subtotalConDescuento * 0.16m; // IVA del 16%
 
-            Total = TotalComanda.Crear(subtotal, impuesto);
+            Total = TotalComanda.Crear(subtotal, impuesto, DescuentoFidelizacion);
         }
 
         private void ActualizarFecha()
