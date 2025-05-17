@@ -1,5 +1,16 @@
 namespace RestaurantePro.Domain.UnitTests.Core.Base
 {
+    // Evento de dominio de prueba - lo movemos fuera de la clase de tests para hacerlo público
+    public class TestDomainEvent : DomainEvent
+    {
+        public Guid EntityId { get; }
+
+        public TestDomainEvent(Guid entityId)
+        {
+            EntityId = entityId;
+        }
+    }
+
     public class DomainEventDispatcherTests
     {
         private readonly Mock<IServiceProvider> _serviceProviderMock;
@@ -27,8 +38,9 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
                 handler2.Object
             };
 
+            // Configuración correcta para evitar el uso de métodos de extensión
             _serviceProviderMock
-                .Setup(s => s.GetServices(typeof(IDomainEventHandler<TestDomainEvent>)))
+                .Setup(s => s.GetService(typeof(IEnumerable<IDomainEventHandler<TestDomainEvent>>)))
                 .Returns(handlers);
 
             // Act
@@ -47,7 +59,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             
             // Simular que no hay handlers registrados
             _serviceProviderMock
-                .Setup(s => s.GetServices(typeof(IDomainEventHandler<TestDomainEvent>)))
+                .Setup(s => s.GetService(typeof(IEnumerable<IDomainEventHandler<TestDomainEvent>>)))
                 .Returns(Enumerable.Empty<IDomainEventHandler<TestDomainEvent>>());
 
             // Act
@@ -83,7 +95,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             };
 
             _serviceProviderMock
-                .Setup(s => s.GetServices(typeof(IDomainEventHandler<TestDomainEvent>)))
+                .Setup(s => s.GetService(typeof(IEnumerable<IDomainEventHandler<TestDomainEvent>>)))
                 .Returns(handlers);
 
             // Act
@@ -113,7 +125,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             var handlers = new List<IDomainEventHandler<TestDomainEvent>> { handler.Object };
 
             _serviceProviderMock
-                .Setup(s => s.GetServices(typeof(IDomainEventHandler<TestDomainEvent>)))
+                .Setup(s => s.GetService(typeof(IEnumerable<IDomainEventHandler<TestDomainEvent>>)))
                 .Returns(handlers);
 
             // Act
@@ -122,17 +134,6 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             // Assert
             handler.Verify(h => h.Handle(evento1, It.IsAny<CancellationToken>()), Times.Once);
             handler.Verify(h => h.Handle(evento2, It.IsAny<CancellationToken>()), Times.Once);
-        }
-
-        // Evento de dominio de prueba
-        private class TestDomainEvent : DomainEvent
-        {
-            public Guid EntityId { get; }
-
-            public TestDomainEvent(Guid entityId)
-            {
-                EntityId = entityId;
-            }
         }
     }
 } 

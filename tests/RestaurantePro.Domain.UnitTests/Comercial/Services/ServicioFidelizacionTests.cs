@@ -1,5 +1,4 @@
-using System.Reflection;
-
+#nullable disable
 namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 {
     public class ServicioFidelizacionTests
@@ -326,7 +325,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             return tarjeta;
         }
     }
-} 
+}
+#nullable restore 
 
 
 

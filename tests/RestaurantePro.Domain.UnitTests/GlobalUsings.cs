@@ -1,3 +1,4 @@
+#nullable disable
 // Test Frameworks and tools
 global using Xunit;
 global using FluentAssertions;
@@ -33,9 +34,13 @@ global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Services;
 
+// Domain core imports - BoundedContexts
+global using RestaurantePro.Domain.Core.BoundedContexts;
+
 // Domain core imports - Productos
 global using RestaurantePro.Domain.Core.Productos.Entities;
 global using RestaurantePro.Domain.Core.Productos.ValueObjects;
+global using RestaurantePro.Domain.Core.Productos.Interfaces;
 // global using RestaurantePro.Domain.Core.Productos.Enums;
 global using RestaurantePro.Domain.Core.Productos.Events;
 global using RestaurantePro.Domain.Core.Productos.Events.Producto;
