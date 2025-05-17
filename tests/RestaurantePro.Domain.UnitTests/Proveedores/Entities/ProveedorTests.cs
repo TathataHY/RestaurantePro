@@ -1,6 +1,3 @@
-using RestaurantePro.Domain.Proveedores.Events.Proveedor;
-using RestaurantePro.Domain.Proveedores.Events.ContactoProveedor;
-
 namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
 {
     public class ProveedorTests

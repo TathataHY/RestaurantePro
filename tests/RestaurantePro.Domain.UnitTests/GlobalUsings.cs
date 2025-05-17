@@ -93,6 +93,7 @@ namespace Moq
 {
     public static class Extensions
     {
+        // Métodos para tipos básicos
         public static T AnyGuid<T>() where T : struct
         {
             return It.Is<T>(v => true);
@@ -108,9 +109,56 @@ namespace Moq
             return It.Is<decimal>(v => true);
         }
         
+        public static int AnyInt()
+        {
+            return It.Is<int>(v => true);
+        }
+        
+        public static DateTime AnyDateTime()
+        {
+            return It.Is<DateTime>(v => true);
+        }
+        
+        public static bool AnyBool()
+        {
+            return It.Is<bool>(v => true);
+        }
+        
+        public static double AnyDouble()
+        {
+            return It.Is<double>(v => true);
+        }
+        
         public static CancellationToken AnyCancellationToken()
         {
             return It.Is<CancellationToken>(v => true);
+        }
+        
+        // Métodos específicos para Guid
+        public static Guid AnyProveedorId()
+        {
+            return It.Is<Guid>(v => true);
+        }
+        
+        public static Guid AnyIngredienteId()
+        {
+            return It.Is<Guid>(v => true);
+        }
+        
+        public static Guid AnyOrdenCompraId()
+        {
+            return It.Is<Guid>(v => true);
+        }
+        
+        public static Guid AnyClienteId()
+        {
+            return It.Is<Guid>(v => true);
+        }
+        
+        // Métodos específicos para tipos comunes en nuestro dominio
+        public static RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida AnyUnidadMedida()
+        {
+            return It.Is<RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida>(v => true);
         }
     }
 }

@@ -1,18 +1,3 @@
-using Moq;
-using Xunit;
-using FluentAssertions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using RestaurantePro.Domain.Comercial.Policies;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-using RestaurantePro.Domain.Comercial.Services;
-using RestaurantePro.Domain.Core.SharedKernel.Services;
-
 namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
 {
     public class ClientesFrecuentesPolicyTests

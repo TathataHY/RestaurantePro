@@ -1,18 +1,3 @@
-using Moq;
-using Xunit;
-using FluentAssertions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using RestaurantePro.Domain.Inventario.Policies;
-using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
-using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
-using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
-using RestaurantePro.Domain.Inventario.Services;
-using RestaurantePro.Domain.Core.SharedKernel.Services;
-
 namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
 {
     public class StockBajoPolicyTests
@@ -22,7 +7,6 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
         private readonly Mock<IVerificadorStock> _verificadorStockMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
         private readonly StockBajoPolicy _policy;
-        private readonly CancellationToken _cancellationToken = CancellationToken.None;
         
         public StockBajoPolicyTests()
         {
@@ -50,10 +34,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
                 CrearIngrediente("Cebolla", 8, 3)
             };
             
-            _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync())
-                .ReturnsAsync(ingredientes);
+            // Configuración de repository sin usar It.IsAny
+            ConfigurarObtenerConStockBajo(ingredientes);
                 
+            // Configuración del resultado del verificador
             var resultadoVerificacion = new ResultadoVerificacionStock();
             var proveedor = Guid.NewGuid();
             var orden = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
@@ -62,19 +46,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
                 DateTime.Now);
             resultadoVerificacion.OrdenesGeneradas.Add(orden);
             
-            _verificadorStockMock
-                .Setup(v => v.VerificarYGenerarOrdenesCompraAsync())
-                .ReturnsAsync(resultadoVerificacion);
-                
-            // Configuración usando los métodos de extensión personalizados
-            var notificacionId = Guid.NewGuid();
-            _servicioNotificacionesMock
-                .Setup(s => s.NotificarStockBajo(
-                    Extensions.AnyGuid<Guid>(), 
-                    Extensions.AnyString(), 
-                    Extensions.AnyDecimal(), 
-                    Extensions.AnyDecimal()))
-                .ReturnsAsync(notificacionId);
+            // Configuración de mock sin usar It.IsAny
+            ConfigurarVerificadorStock(resultadoVerificacion);
+            ConfigurarNotificacionStockBajo(Guid.NewGuid());
             
             // Act
             var resultado = await _policy.EjecutarPolicy();
@@ -83,29 +57,16 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             resultado.Notificaciones.Should().HaveCount(2);
             resultado.OrdenesCompraGeneradas.Should().HaveCount(1);
             
-            // Verificación usando los métodos de extensión personalizados
-            _servicioNotificacionesMock.Verify(
-                s => s.NotificarStockBajo(
-                    Extensions.AnyGuid<Guid>(), 
-                    Extensions.AnyString(), 
-                    Extensions.AnyDecimal(), 
-                    Extensions.AnyDecimal()), 
-                Times.Exactly(2));
-                
-            _verificadorStockMock.Verify(
-                v => v.VerificarYGenerarOrdenesCompraAsync(),
-                Times.Once());
+            // Verificación usando métodos sin problemas de árboles de expresión
+            VerificarNotificacionesEnviadas(2);
+            VerificarVerificadorInvocado(1);
         }
         
         [Fact]
         public async Task EjecutarPolicy_SinIngredientesBajoStock_NoDebeNotificarNiGenerarOrdenes()
         {
             // Arrange
-            var ingredientes = new List<Ingrediente>();
-            
-            _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync())
-                .ReturnsAsync(ingredientes);
+            ConfigurarObtenerConStockBajo(new List<Ingrediente>());
             
             // Act
             var resultado = await _policy.EjecutarPolicy();
@@ -114,18 +75,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             resultado.Notificaciones.Should().BeEmpty();
             resultado.OrdenesCompraGeneradas.Should().BeEmpty();
             
-            // Verificación usando los métodos de extensión personalizados
-            _servicioNotificacionesMock.Verify(
-                s => s.NotificarStockBajo(
-                    Extensions.AnyGuid<Guid>(), 
-                    Extensions.AnyString(), 
-                    Extensions.AnyDecimal(), 
-                    Extensions.AnyDecimal()), 
-                Times.Never());
-                
-            _verificadorStockMock.Verify(
-                v => v.VerificarYGenerarOrdenesCompraAsync(),
-                Times.Never());
+            VerificarNotificacionesEnviadas(0);
+            VerificarVerificadorInvocado(0);
         }
         
         [Fact]
@@ -138,25 +89,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
                 CrearIngrediente("Cebolla", 8, 3)
             };
             
-            _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync())
-                .ReturnsAsync(ingredientes);
-                
-            var resultadoVerificacion = new ResultadoVerificacionStock();
-            
-            _verificadorStockMock
-                .Setup(v => v.VerificarYGenerarOrdenesCompraAsync())
-                .ReturnsAsync(resultadoVerificacion);
-                
-            // Configuración usando los métodos de extensión personalizados
-            var notificacionId = Guid.NewGuid();
-            _servicioNotificacionesMock
-                .Setup(s => s.NotificarStockBajo(
-                    Extensions.AnyGuid<Guid>(), 
-                    Extensions.AnyString(), 
-                    Extensions.AnyDecimal(), 
-                    Extensions.AnyDecimal()))
-                .ReturnsAsync(notificacionId);
+            ConfigurarObtenerConStockBajo(ingredientes);
+            ConfigurarVerificadorStock(new ResultadoVerificacionStock());
+            ConfigurarNotificacionStockBajo(Guid.NewGuid());
             
             // Act
             var resultado = await _policy.EjecutarPolicy();
@@ -165,18 +100,53 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             resultado.Notificaciones.Should().HaveCount(2);
             resultado.OrdenesCompraGeneradas.Should().BeEmpty();
             
-            // Verificación usando los métodos de extensión personalizados
+            VerificarNotificacionesEnviadas(2);
+            VerificarVerificadorInvocado(1);
+        }
+        
+        // Métodos auxiliares para configurar mocks evitando problemas de árboles de expresión
+        private void ConfigurarObtenerConStockBajo(List<Ingrediente> ingredientes)
+        {
+            _ingredienteRepositoryMock
+                .Setup(r => r.ObtenerConStockBajoAsync())
+                .ReturnsAsync(ingredientes);
+        }
+        
+        private void ConfigurarVerificadorStock(ResultadoVerificacionStock resultado)
+        {
+            _verificadorStockMock
+                .Setup(v => v.VerificarYGenerarOrdenesCompraAsync())
+                .ReturnsAsync(resultado);
+        }
+        
+        private void ConfigurarNotificacionStockBajo(Guid notificacionId)
+        {
+            // Usamos genéricamente para cualquier parámetro para evitar árboles de expresión
+            _servicioNotificacionesMock
+                .Setup(s => s.NotificarStockBajo(
+                    It.Is<Guid>(g => true), 
+                    It.Is<string>(s => true), 
+                    It.Is<decimal>(d => true), 
+                    It.Is<decimal>(d => true)))
+                .ReturnsAsync(notificacionId);
+        }
+        
+        private void VerificarNotificacionesEnviadas(int veces)
+        {
             _servicioNotificacionesMock.Verify(
                 s => s.NotificarStockBajo(
-                    Extensions.AnyGuid<Guid>(), 
-                    Extensions.AnyString(), 
-                    Extensions.AnyDecimal(), 
-                    Extensions.AnyDecimal()), 
-                Times.Exactly(2));
-                
+                    It.Is<Guid>(g => true), 
+                    It.Is<string>(s => true), 
+                    It.Is<decimal>(d => true), 
+                    It.Is<decimal>(d => true)), 
+                Times.Exactly(veces));
+        }
+        
+        private void VerificarVerificadorInvocado(int veces)
+        {
             _verificadorStockMock.Verify(
                 v => v.VerificarYGenerarOrdenesCompraAsync(),
-                Times.Once());
+                Times.Exactly(veces));
         }
         
         private Ingrediente CrearIngrediente(string nombre, decimal stockMinimo, decimal stockActual)

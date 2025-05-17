@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
 {
     /// <summary>

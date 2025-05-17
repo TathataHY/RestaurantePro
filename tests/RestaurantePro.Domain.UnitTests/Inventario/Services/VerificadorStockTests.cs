@@ -1,23 +1,5 @@
 namespace RestaurantePro.Domain.UnitTests.Inventario.Services
 {
-    using RestaurantePro.Domain.Inventario.Services;
-    using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
-    using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
-    using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
-    using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
-    using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
-    using RestaurantePro.Domain.Proveedores.Entities;
-    using RestaurantePro.Domain.Proveedores.Interfaces;
-    using RestaurantePro.Domain.Core.SharedKernel.Services;
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using FluentAssertions;
-    using Moq;
-    using Xunit;
-
     public class VerificadorStockTests
     {
         private readonly Mock<IIngredienteRepository> _ingredienteRepositoryMock;
@@ -25,17 +7,16 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         private readonly Mock<IProveedorRepository> _proveedorRepositoryMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
         private readonly IVerificadorStock _verificadorService;
-        private readonly CancellationToken _cancellationToken = CancellationToken.None;
-        
+
         public VerificadorStockTests()
         {
             _ingredienteRepositoryMock = new Mock<IIngredienteRepository>();
             _ordenCompraRepositoryMock = new Mock<IOrdenCompraRepository>();
             _proveedorRepositoryMock = new Mock<IProveedorRepository>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
-            
+
             _dateTimeServiceMock.Setup(s => s.Now).Returns(new DateTime(2023, 1, 1));
-            
+
             _verificadorService = new VerificadorStock(
                 _ingredienteRepositoryMock.Object,
                 _ordenCompraRepositoryMock.Object,
@@ -48,7 +29,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         {
             // Arrange
             var ingredientes = new List<Ingrediente>();
-            
+
             _ingredienteRepositoryMock
                 .Setup(r => r.ObtenerConStockBajoAsync())
                 .ReturnsAsync(ingredientes);
@@ -66,14 +47,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             // Arrange
             var proveedor = CrearProveedor();
             var ingrediente = CrearIngrediente(proveedor.Id);
-            
+
             _ingredienteRepositoryMock
                 .Setup(r => r.ObtenerConStockBajoAsync())
                 .ReturnsAsync(new List<Ingrediente> { ingrediente });
-                
-            _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
-                .ReturnsAsync(proveedor);
+
+            // Usamos IsMatcher en lugar de It.IsAny para evitar problemas de árboles de expresión
+            SetupProveedorPorId(proveedor);
 
             // Act
             var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
@@ -92,14 +72,12 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var proveedor = CrearProveedor();
             var ingrediente1 = CrearIngrediente(proveedor.Id);
             var ingrediente2 = CrearIngrediente(proveedor.Id);
-            
+
             _ingredienteRepositoryMock
                 .Setup(r => r.ObtenerConStockBajoAsync())
                 .ReturnsAsync(new List<Ingrediente> { ingrediente1, ingrediente2 });
-                
-            _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
-                .ReturnsAsync(proveedor);
+
+            SetupProveedorPorId(proveedor);
 
             // Act
             var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
@@ -117,19 +95,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var proveedor2 = CrearProveedor();
             var ingrediente1 = CrearIngrediente(proveedor1.Id);
             var ingrediente2 = CrearIngrediente(proveedor2.Id);
-            
+
             _ingredienteRepositoryMock
                 .Setup(r => r.ObtenerConStockBajoAsync())
                 .ReturnsAsync(new List<Ingrediente> { ingrediente1, ingrediente2 });
-                
-            // Configuraciones simples para cada proveedor
-            _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
-                .ReturnsAsync(proveedor1);
-                
-            _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
-                .ReturnsAsync(proveedor2);
+
+            // Configurar para devolver el proveedor correcto según el ID
+            SetupProveedorPorIdEspecifico(proveedor1.Id, proveedor1);
+            SetupProveedorPorIdEspecifico(proveedor2.Id, proveedor2);
 
             // Act
             var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
@@ -144,14 +117,12 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             // Arrange
             var proveedor = CrearProveedor(activo: false);
             var ingrediente = CrearIngrediente(proveedor.Id);
-            
+
             _ingredienteRepositoryMock
                 .Setup(r => r.ObtenerConStockBajoAsync())
                 .ReturnsAsync(new List<Ingrediente> { ingrediente });
-                
-            _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
-                .ReturnsAsync(proveedor);
+
+            SetupProveedorPorId(proveedor);
 
             // Act
             var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
@@ -168,22 +139,18 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var proveedor = CrearProveedor();
             var ingrediente = CrearIngrediente(proveedor.Id);
             var fecha = new DateTime(2023, 1, 1);
-            
-            var ordenesExistentes = new List<OrdenCompra> { 
+
+            var ordenesExistentes = new List<OrdenCompra> {
                 OrdenCompra.Crear(proveedor.Id, "Orden automática", fecha)
             };
-            
+
             _ingredienteRepositoryMock
                 .Setup(r => r.ObtenerConStockBajoAsync())
                 .ReturnsAsync(new List<Ingrediente> { ingrediente });
-                
-            _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
-                .ReturnsAsync(proveedor);
-                
-            _ordenCompraRepositoryMock
-                .Setup(r => r.ObtenerPendientesPorProveedorAsync(Extensions.AnyGuid<Guid>(), Extensions.AnyCancellationToken()))
-                .ReturnsAsync(ordenesExistentes);
+
+            SetupProveedorPorId(proveedor);
+
+            SetupOrdenesPendientesPorProveedor(proveedor.Id, ordenesExistentes);
 
             // Act
             var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
@@ -193,27 +160,50 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             result.OrdenesActualizadas.Should().HaveCount(1);
         }
 
+        // Métodos auxiliares para configurar mocks sin problemas de árboles de expresión
+        private void SetupProveedorPorId(Proveedor proveedor)
+        {
+            // En vez de usar It.IsAny<> que causa problemas con árboles de expresión
+            _proveedorRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(g => true), It.Is<CancellationToken>(t => true)))
+                .ReturnsAsync(proveedor);
+        }
+
+        private void SetupProveedorPorIdEspecifico(Guid proveedorId, Proveedor proveedor)
+        {
+            _proveedorRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(g => g == proveedorId), It.Is<CancellationToken>(t => true)))
+                .ReturnsAsync(proveedor);
+        }
+
+        private void SetupOrdenesPendientesPorProveedor(Guid proveedorId, List<OrdenCompra> ordenes)
+        {
+            _ordenCompraRepositoryMock
+                .Setup(r => r.ObtenerPendientesPorProveedorAsync(It.Is<Guid>(g => g == proveedorId), It.Is<CancellationToken>(t => true)))
+                .ReturnsAsync(ordenes);
+        }
+
         // Métodos auxiliares para crear objetos de prueba
         private Proveedor CrearProveedor(bool activo = true)
         {
             Proveedor proveedor = Proveedor.Crear(
-                "Proveedor Test", 
-                "Contacto Test", 
+                "Proveedor Test",
+                "Contacto Test",
                 "contacto@test.com",
-                "123456789", 
-                "Dirección Test", 
-                "Ciudad Test", 
-                "12345", 
+                "123456789",
+                "Dirección Test",
+                "Ciudad Test",
+                "12345",
                 "País Test",
-                "RFC123456", 
-                "Cuenta: 123456789", 
+                "RFC123456",
+                "Cuenta: 123456789",
                 30);
-                
+
             if (!activo)
             {
                 proveedor.Desactivar();
             }
-            
+
             return proveedor;
         }
 
@@ -223,13 +213,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 "Ingrediente" + Guid.NewGuid().ToString().Substring(0, 8),
                 "ING-" + Guid.NewGuid().ToString().Substring(0, 5),
                 "Descripción ingrediente",
-                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
                 10.0m,
                 0.0m);
-                
+
             // Simulamos que este ingrediente está asociado al proveedor
             ingrediente.AsociarProveedorPrincipal(proveedorId);
-            
+
             return ingrediente;
         }
     }

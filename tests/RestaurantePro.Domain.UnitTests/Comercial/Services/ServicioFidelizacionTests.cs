@@ -1,18 +1,5 @@
 namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 {
-    using RestaurantePro.Domain.Comercial.Services;
-    using RestaurantePro.Domain.Comercial.Clientes.Entities;
-    using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-    using RestaurantePro.Domain.Comercial.Clientes.Enums;
-    using RestaurantePro.Domain.Core.SharedKernel.Services;
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Moq;
-    using Xunit;
-    using FluentAssertions;
-
     public class ServicioFidelizacionTests
     {
         private readonly Mock<ITarjetaFidelizacionRepository> _tarjetaRepositoryMock;
@@ -175,17 +162,17 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
                     It.IsAny<Guid>(), 
-                    _cancellationToken))
+                    It.IsAny<CancellationToken>()))
                 .ReturnsAsync(tarjeta);
             
             _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(
                     It.IsAny<TarjetaFidelizacion>(), 
-                    _cancellationToken))
+                    It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             _historialPuntosRepositoryMock.Setup(r => r.AgregarAsync(
                     It.IsAny<HistorialPuntos>(), 
-                    _cancellationToken))
+                    It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             var servicio = new ServicioFidelizacion(
@@ -199,8 +186,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 
             // Assert
             // Verificamos que se llamaron los métodos correctos
-            _tarjetaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken), Times.Once());
-            _historialPuntosRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<HistorialPuntos>(), _cancellationToken), Times.Once());
+            _tarjetaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()), Times.Once());
+            _historialPuntosRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<HistorialPuntos>(), It.IsAny<CancellationToken>()), Times.Once());
         }
         
         [Fact]
@@ -213,7 +200,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
                     It.IsAny<Guid>(), 
-                    _cancellationToken))
+                    It.IsAny<CancellationToken>()))
                 .ReturnsAsync(tarjeta);
                 
             var servicio = new ServicioFidelizacion(
@@ -239,17 +226,17 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
                     It.IsAny<Guid>(), 
-                    _cancellationToken))
+                    It.IsAny<CancellationToken>()))
                 .ReturnsAsync(tarjeta);
             
             _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(
                     It.IsAny<TarjetaFidelizacion>(), 
-                    _cancellationToken))
+                    It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             _historialPuntosRepositoryMock.Setup(r => r.AgregarAsync(
                     It.IsAny<HistorialPuntos>(), 
-                    _cancellationToken))
+                    It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             var servicio = new ServicioFidelizacion(
@@ -262,9 +249,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             await servicio.CanjearPuntosAsync(clienteId, puntosCanjear, motivo);
 
             // Assert
-            // Verificamos que se llamaron los métodos correctos
-            _tarjetaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken), Times.Once());
-            _historialPuntosRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<HistorialPuntos>(), _cancellationToken), Times.Once());
+            _tarjetaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()), Times.Once());
+            _historialPuntosRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<HistorialPuntos>(), It.IsAny<CancellationToken>()), Times.Once());
         }
 
         [Fact]
