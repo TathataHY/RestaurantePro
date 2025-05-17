@@ -39,8 +39,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(_cancellationToken))
                 .ReturnsAsync(clientes);
                 
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(It.IsAny<Guid>(), _cancellationToken))
-                .ReturnsAsync((Guid clienteId) => {
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(It.Is<Guid>(g => true), It.Is<CancellationToken>(t => true)))
+                .ReturnsAsync((Guid clienteId, CancellationToken ct) => {
                     var cliente = clientes.FirstOrDefault(c => c.Id == clienteId);
                     if (cliente == null) return null;
                     
@@ -97,10 +97,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 .ReturnsAsync(clientes);
                 
             // Simular que no tienen tarjeta
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(It.IsAny<Guid>(), _cancellationToken))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(It.Is<Guid>(g => true), It.Is<CancellationToken>(t => true)))
                 .ReturnsAsync((TarjetaFidelizacion)null);
                 
-            _tarjetaRepositoryMock.Setup(r => r.AddAsync(It.IsAny<TarjetaFidelizacion>()))
+            _tarjetaRepositoryMock.Setup(r => r.AddAsync(It.Is<TarjetaFidelizacion>(t => true)))
                 .ReturnsAsync((TarjetaFidelizacion tarjeta) => tarjeta);
                 
             // Act
@@ -111,7 +111,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             resultado.TarjetasCreadas.Should().HaveCount(2);
             
             _tarjetaRepositoryMock.Verify(
-                r => r.AddAsync(It.IsAny<TarjetaFidelizacion>()),
+                r => r.AddAsync(It.Is<TarjetaFidelizacion>(t => true)),
                 Times.Exactly(2));
         }
         
@@ -127,7 +127,9 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, $"TF-{Guid.NewGuid().ToString().Substring(0, 8)}");
             tarjeta.Activar();
             
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, _cancellationToken))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(
+                    It.Is<Guid>(g => g == cliente.Id), 
+                    It.Is<CancellationToken>(t => true)))
                 .ReturnsAsync(tarjeta);
                 
             _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), _cancellationToken))

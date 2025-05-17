@@ -7,6 +7,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         private readonly Mock<IProveedorRepository> _proveedorRepositoryMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
         private readonly IVerificadorStock _verificadorService;
+        private readonly CancellationToken _cancellationToken = CancellationToken.None;
 
         public VerificadorStockTests()
         {
@@ -30,12 +31,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             // Arrange
             var ingredientes = new List<Ingrediente>();
 
-            _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync())
-                .ReturnsAsync(ingredientes);
+            SetupObtenerIngredientesConStockBajo(ingredientes);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             result.OrdenesGeneradas.Should().BeEmpty();
@@ -48,15 +47,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var proveedor = CrearProveedor();
             var ingrediente = CrearIngrediente(proveedor.Id);
 
-            _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync())
-                .ReturnsAsync(new List<Ingrediente> { ingrediente });
+            SetupObtenerIngredientesConStockBajo(new List<Ingrediente> { ingrediente });
 
             // Usamos IsMatcher en lugar de It.IsAny para evitar problemas de árboles de expresión
             SetupProveedorPorId(proveedor);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             result.OrdenesGeneradas.Should().HaveCount(1);
@@ -73,14 +70,12 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var ingrediente1 = CrearIngrediente(proveedor.Id);
             var ingrediente2 = CrearIngrediente(proveedor.Id);
 
-            _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync())
-                .ReturnsAsync(new List<Ingrediente> { ingrediente1, ingrediente2 });
+            SetupObtenerIngredientesConStockBajo(new List<Ingrediente> { ingrediente1, ingrediente2 });
 
             SetupProveedorPorId(proveedor);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             result.OrdenesGeneradas.Should().HaveCount(1);
@@ -96,16 +91,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var ingrediente1 = CrearIngrediente(proveedor1.Id);
             var ingrediente2 = CrearIngrediente(proveedor2.Id);
 
-            _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync())
-                .ReturnsAsync(new List<Ingrediente> { ingrediente1, ingrediente2 });
+            SetupObtenerIngredientesConStockBajo(new List<Ingrediente> { ingrediente1, ingrediente2 });
 
             // Configurar para devolver el proveedor correcto según el ID
             SetupProveedorPorIdEspecifico(proveedor1.Id, proveedor1);
             SetupProveedorPorIdEspecifico(proveedor2.Id, proveedor2);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             result.OrdenesGeneradas.Should().HaveCount(2);
@@ -118,14 +111,12 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var proveedor = CrearProveedor(activo: false);
             var ingrediente = CrearIngrediente(proveedor.Id);
 
-            _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync())
-                .ReturnsAsync(new List<Ingrediente> { ingrediente });
+            SetupObtenerIngredientesConStockBajo(new List<Ingrediente> { ingrediente });
 
             SetupProveedorPorId(proveedor);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             result.OrdenesGeneradas.Should().BeEmpty();
@@ -144,16 +135,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 OrdenCompra.Crear(proveedor.Id, "Orden automática", fecha)
             };
 
-            _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync())
-                .ReturnsAsync(new List<Ingrediente> { ingrediente });
+            SetupObtenerIngredientesConStockBajo(new List<Ingrediente> { ingrediente });
 
             SetupProveedorPorId(proveedor);
 
             SetupOrdenesPendientesPorProveedor(proveedor.Id, ordenesExistentes);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             result.OrdenesGeneradas.Should().BeEmpty();
@@ -183,9 +172,18 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(ordenes);
         }
 
+        // Método auxiliar para evitar problemas de árboles de expresión
+        private void SetupObtenerIngredientesConStockBajo(List<Ingrediente> ingredientes)
+        {
+            _ingredienteRepositoryMock
+                .Setup(r => r.ObtenerConStockBajoAsync(It.Is<CancellationToken>(t => true)))
+                .ReturnsAsync(ingredientes ?? new List<Ingrediente>());
+        }
+
         // Métodos auxiliares para crear objetos de prueba
         private Proveedor CrearProveedor(bool activo = true)
         {
+            // Crear con un mock para que se pueda usar en las pruebas
             Proveedor proveedor = Proveedor.Crear(
                 "Proveedor Test",
                 "Contacto Test",
@@ -195,7 +193,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 "Ciudad Test",
                 "12345",
                 "País Test",
-                "RFC123456",
+                "RFC12345678901", // RFC con más de 10 caracteres
                 "Cuenta: 123456789",
                 30);
 

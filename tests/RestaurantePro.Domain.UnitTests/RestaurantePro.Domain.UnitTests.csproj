@@ -8,19 +8,12 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
-  <!-- Desactivar temporalmente archivos con problemas de árboles de expresión -->
+    <!-- No necesitamos incluir explícitamente estos archivos,       ya que el SDK de .NET incluye "Compile" elementos por defecto -->
+
+  <!-- Excluir temporalmente archivos problemáticos -->
   <ItemGroup>
-    <Compile Remove="Inventario\Services\VerificadorStockTests.cs" />
-    <Compile Remove="Inventario\Policies\StockBajoPolicyTests.cs" />
     <Compile Remove="Comercial\Services\ServicioFidelizacionTests.cs" />
-    <Compile Remove="Inventario\Services\ServicioNotificacionesTests.cs" />
-    <Compile Remove="Inventario\Services\GeneradorOrdenesCompraTests.cs" />
     <Compile Remove="Comercial\Policies\ClientesFrecuentesPolicyTests.cs" />
-    <None Include="Inventario\Services\VerificadorStockTests.cs" />
-    <None Include="Inventario\Policies\StockBajoPolicyTests.cs" />
-    <None Include="Comercial\Services\ServicioFidelizacionTests.cs" />
-    <None Include="Inventario\Services\ServicioNotificacionesTests.cs" />
-    <None Include="Inventario\Services\GeneradorOrdenesCompraTests.cs" />
     <None Include="Comercial\Policies\ClientesFrecuentesPolicyTests.cs" />
   </ItemGroup>
 

@@ -55,54 +55,70 @@ namespace RestaurantePro.Domain.Inventario.Services
             var resultado = new ResultadoVerificacionStock();
             
             // Obtener ingredientes con stock bajo
-            var ingredientesBajoStock = await _ingredienteRepository.ObtenerConStockBajoAsync();
+            var ingredientesBajoStock = await _ingredienteRepository.ObtenerConStockBajoAsync(cancellationToken);
             
-            if (!ingredientesBajoStock.Any())
+            if (ingredientesBajoStock == null || !ingredientesBajoStock.Any())
             {
                 return resultado; // No hay ingredientes con stock bajo
             }
             
             // Agrupar ingredientes por proveedor
-            var ingredientesPorProveedor = ingredientesBajoStock
-                .Where(i => i.ProveedorPrincipalId.HasValue)
+            var ingredientesConProveedor = ingredientesBajoStock
+                .Where(i => i != null && i.ProveedorPrincipalId.HasValue)
+                .ToList();
+                
+            if (ingredientesConProveedor == null || !ingredientesConProveedor.Any())
+            {
+                return resultado;
+            }
+                
+            var ingredientesPorProveedor = ingredientesConProveedor
                 .GroupBy(i => i.ProveedorPrincipalId.Value)
                 .ToDictionary(g => g.Key, g => g.ToList());
                 
             // Procesar cada grupo de ingredientes por proveedor
-            foreach (var kvp in ingredientesPorProveedor)
+            if (ingredientesPorProveedor != null && ingredientesPorProveedor.Count > 0)
             {
-                var proveedorId = kvp.Key;
-                var ingredientes = kvp.Value;
-                
-                // Obtener el proveedor
-                var proveedor = await _proveedorRepository.ObtenerPorIdAsync(proveedorId, cancellationToken);
-                
-                if (proveedor == null)
+                foreach (var kvp in ingredientesPorProveedor)
                 {
-                    resultado.Errores.Add($"No se encontró el proveedor con ID {proveedorId}");
-                    continue;
-                }
-                
-                // Verificar si el proveedor está activo
-                if (!proveedor.EstaActivo)
-                {
-                    resultado.Errores.Add($"El proveedor {proveedor.Nombre} (ID: {proveedorId}) no está activo");
-                    continue;
-                }
-                
-                // Verificar si ya existe una orden pendiente para este proveedor
-                var ordenesPendientes = await _ordenCompraRepository.ObtenerPendientesPorProveedorAsync(proveedorId, cancellationToken);
-                
-                if (ordenesPendientes.Any())
-                {
-                    // Actualizar orden existente en lugar de crear una nueva
-                    var ordenExistente = ordenesPendientes.First();
-                    ActualizarOrdenExistente(ordenExistente, ingredientes, resultado);
-                }
-                else
-                {
-                    // Crear nueva orden de compra
-                    CrearNuevaOrden(proveedor, ingredientes, resultado);
+                    var proveedorId = kvp.Key;
+                    var ingredientes = kvp.Value ?? new List<Ingrediente>();
+                    
+                    if (ingredientes.Count == 0)
+                    {
+                        continue;
+                    }
+                    
+                    // Obtener el proveedor
+                    var proveedor = await _proveedorRepository.ObtenerPorIdAsync(proveedorId, cancellationToken);
+                    
+                    if (proveedor == null)
+                    {
+                        resultado.Errores.Add($"No se encontró el proveedor con ID {proveedorId}");
+                        continue;
+                    }
+                    
+                    // Verificar si el proveedor está activo
+                    if (!proveedor.EstaActivo)
+                    {
+                        resultado.Errores.Add($"El proveedor {proveedor.Nombre} (ID: {proveedorId}) no está activo");
+                        continue;
+                    }
+                    
+                    // Verificar si ya existe una orden pendiente para este proveedor
+                    var ordenesPendientes = await _ordenCompraRepository.ObtenerPendientesPorProveedorAsync(proveedorId, cancellationToken);
+                    
+                    if (ordenesPendientes != null && ordenesPendientes.Any())
+                    {
+                        // Actualizar orden existente en lugar de crear una nueva
+                        var ordenExistente = ordenesPendientes.First();
+                        ActualizarOrdenExistente(ordenExistente, ingredientes, resultado);
+                    }
+                    else
+                    {
+                        // Crear nueva orden de compra
+                        CrearNuevaOrden(proveedor, ingredientes, resultado);
+                    }
                 }
             }
             
@@ -125,10 +141,16 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// </summary>
         private void ActualizarOrdenExistente(OrdenCompra orden, List<Ingrediente> ingredientes, ResultadoVerificacionStock resultado)
         {
+            if (orden == null || ingredientes == null || resultado == null)
+                return;
+                
             var ingredientesAgregados = false;
             
             foreach (var ingrediente in ingredientes)
             {
+                if (ingrediente == null)
+                    continue;
+                    
                 // Verificar si el ingrediente ya está en la orden
                 if (orden.Items.Any(i => i.IngredienteId == ingrediente.Id))
                 {
@@ -154,6 +176,9 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// </summary>
         private void CrearNuevaOrden(Proveedor proveedor, List<Ingrediente> ingredientes, ResultadoVerificacionStock resultado)
         {
+            if (proveedor == null || ingredientes == null || resultado == null)
+                return;
+                
             // Crear nueva orden
             var nuevaOrden = OrdenCompra.Crear(
                 proveedor.Id,
@@ -163,6 +188,9 @@ namespace RestaurantePro.Domain.Inventario.Services
             // Agregar los ingredientes a la orden
             foreach (var ingrediente in ingredientes)
             {
+                if (ingrediente == null)
+                    continue;
+                    
                 // Calcular la cantidad a pedir
                 var cantidadAPedir = CalcularCantidadAPedir(ingrediente);
                 
