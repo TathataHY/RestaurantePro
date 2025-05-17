@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
     /// <summary>
     /// Evento de dominio que se dispara cuando se agregan puntos a un cliente
     /// </summary>
-    public class PuntosAgregadosEvent : IDomainEvent
+    public class PuntosAgregados : IDomainEvent
     {
         /// <summary>
         /// Identificador del cliente
@@ -13,7 +13,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
         /// <summary>
         /// Cantidad de puntos agregados
         /// </summary>
-        public int PuntosAgregados { get; }
+        public int Cantidad { get; }
 
         /// <summary>
         /// Total de puntos acumulados
@@ -25,10 +25,10 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
         /// </summary>
         public DateTime OccurredOn { get; } = DateTime.Now;
 
-        public PuntosAgregadosEvent(Guid clienteId, int puntosAgregados, int puntosTotales)
+        public PuntosAgregados(Guid clienteId, int puntosAgregados, int puntosTotales)
         {
             ClienteId = clienteId;
-            PuntosAgregados = puntosAgregados;
+            Cantidad = puntosAgregados;
             PuntosTotales = puntosTotales;
         }
     }

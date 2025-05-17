@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Proveedores.Events
+namespace RestaurantePro.Domain.Proveedores.Events.Proveedor
 {
     /// <summary>
     /// Evento que se dispara cuando se actualiza un proveedor
@@ -36,6 +36,18 @@ namespace RestaurantePro.Domain.Proveedores.Events
         public string Direccion { get; }
 
         /// <summary>
+        /// Constructor simplificado
+        /// </summary>
+        public ProveedorActualizado(Guid proveedorId, string nombre)
+        {
+            ProveedorId = proveedorId;
+            Nombre = nombre;
+            Email = string.Empty;
+            Telefono = string.Empty;
+            Direccion = string.Empty;
+        }
+
+        /// <summary>
         /// Constructor
         /// </summary>
         public ProveedorActualizado(Guid proveedorId, string nombre, string email, string telefono, string direccion)
@@ -48,3 +60,4 @@ namespace RestaurantePro.Domain.Proveedores.Events
         }
     }
 } 
+

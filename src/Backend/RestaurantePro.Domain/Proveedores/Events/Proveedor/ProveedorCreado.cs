@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Proveedores.Events
+namespace RestaurantePro.Domain.Proveedores.Events.Proveedor
 {
     /// <summary>
     /// Evento que se dispara cuando se crea un nuevo proveedor
@@ -42,3 +42,4 @@ namespace RestaurantePro.Domain.Proveedores.Events
         }
     }
 } 
+

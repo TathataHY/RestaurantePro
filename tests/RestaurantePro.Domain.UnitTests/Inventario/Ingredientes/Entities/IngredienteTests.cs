@@ -1,5 +1,9 @@
 namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
 {
+    using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
+    using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
+    using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
+
     public class IngredienteTests
     {
         [Fact]
@@ -7,18 +11,21 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
         {
             // Arrange
             var nombre = "Tomate";
-            var Domain.Inventario.Ingredientes.Enums.UnidadMedida = Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo;
+            var codigo = "TOM-001";
+            var descripcion = "Tomate fresco";
+            var unidadMedida = UnidadMedida.Kilogramo;
             var stockMinimo = 5.0m;
+            var stockActual = 0.0m;
             
             // Act
-            var ingrediente = Domain.Inventario.Ingredientes.Entities.Ingrediente.Crear(nombre, Domain.Inventario.Ingredientes.Enums.UnidadMedida, stockMinimo);
+            var ingrediente = Ingrediente.Crear(nombre, codigo, descripcion, unidadMedida, stockMinimo, stockActual);
             
             // Assert
             ingrediente.Should().NotBeNull();
             ingrediente.Nombre.Should().Be(nombre);
-            ingrediente.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Should().Be(Domain.Inventario.Ingredientes.Enums.UnidadMedida);
+            ingrediente.UnidadMedida.Should().Be(unidadMedida);
             ingrediente.StockMinimo.Should().Be(stockMinimo);
-            ingrediente.Stock.Should().Be(0);
+            ingrediente.Stock.Should().Be(stockActual);
             ingrediente.EstaActivo.Should().BeTrue();
             ingrediente.Movimientos.Should().BeEmpty();
         }
@@ -28,11 +35,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
         {
             // Arrange
             var nombre = "";
-            var Domain.Inventario.Ingredientes.Enums.UnidadMedida = Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo;
+            var codigo = "TOM-001";
+            var descripcion = "Tomate fresco";
+            var unidadMedida = UnidadMedida.Kilogramo;
             var stockMinimo = 5.0m;
+            var stockActual = 0.0m;
             
             // Act & Assert
-            var action = () => Domain.Inventario.Ingredientes.Entities.Ingrediente.Crear(nombre, Domain.Inventario.Ingredientes.Enums.UnidadMedida, stockMinimo);
+            var action = () => Ingrediente.Crear(nombre, codigo, descripcion, unidadMedida, stockMinimo, stockActual);
             action.Should().Throw<ArgumentException>().WithMessage("*nombre*");
         }
         
@@ -41,11 +51,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
         {
             // Arrange
             var nombre = "Tomate";
-            var Domain.Inventario.Ingredientes.Enums.UnidadMedida = Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo;
+            var codigo = "TOM-001";
+            var descripcion = "Tomate fresco";
+            var unidadMedida = UnidadMedida.Kilogramo;
             var stockMinimo = -1.0m;
+            var stockActual = 0.0m;
             
             // Act & Assert
-            var action = () => Domain.Inventario.Ingredientes.Entities.Ingrediente.Crear(nombre, Domain.Inventario.Ingredientes.Enums.UnidadMedida, stockMinimo);
+            var action = () => Ingrediente.Crear(nombre, codigo, descripcion, unidadMedida, stockMinimo, stockActual);
             action.Should().Throw<ArgumentException>().WithMessage("*stock*");
         }
         
@@ -53,7 +66,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
         public void IncrementarStock_DebeCrearMovimientoYActualizarStock()
         {
             // Arrange
-            var ingrediente = Domain.Inventario.Ingredientes.Entities.Ingrediente.Crear("Tomate", Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo, 5.0m);
+            var ingrediente = Ingrediente.Crear("Tomate", "TOM-001", "Tomate fresco", UnidadMedida.Kilogramo, 5.0m, 0.0m);
             var cantidadIncremento = 10.0m;
             var motivo = "Compra inicial";
             
@@ -65,7 +78,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
             ingrediente.Movimientos.Should().HaveCount(1);
             ingrediente.Movimientos.Should().Contain(movimiento);
             
-            movimiento.TipoMovimiento.Should().Be(Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Ingreso);
+            movimiento.TipoMovimiento.Should().Be(TipoMovimientoInventario.Ingreso);
             movimiento.Cantidad.Should().Be(cantidadIncremento);
             movimiento.Motivo.Should().Be(motivo);
             movimiento.IngredienteId.Should().Be(ingrediente.Id);
@@ -77,7 +90,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
         public void DecrementarStock_DebeCrearMovimientoYActualizarStock()
         {
             // Arrange
-            var ingrediente = Domain.Inventario.Ingredientes.Entities.Ingrediente.Crear("Tomate", Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo, 5.0m);
+            var ingrediente = Ingrediente.Crear("Tomate", "TOM-001", "Tomate fresco", UnidadMedida.Kilogramo, 5.0m, 0.0m);
             var stockInicial = 20.0m;
             var cantidadDecremento = 8.0m;
             var stockEsperado = stockInicial - cantidadDecremento;
@@ -95,7 +108,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
             ingrediente.Movimientos.Should().HaveCount(2);
             ingrediente.Movimientos.Should().Contain(movimiento);
             
-            movimiento.TipoMovimiento.Should().Be(Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Egreso);
+            movimiento.TipoMovimiento.Should().Be(TipoMovimientoInventario.Egreso);
             movimiento.Cantidad.Should().Be(cantidadDecremento);
             movimiento.Motivo.Should().Be(motivoEgreso);
             movimiento.IngredienteId.Should().Be(ingrediente.Id);
@@ -107,7 +120,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
         public void DecrementarStock_StockInsuficiente_DebeLanzarExcepcion()
         {
             // Arrange
-            var ingrediente = Domain.Inventario.Ingredientes.Entities.Ingrediente.Crear("Tomate", Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo, 5.0m);
+            var ingrediente = Ingrediente.Crear("Tomate", "TOM-001", "Tomate fresco", UnidadMedida.Kilogramo, 5.0m, 0.0m);
             var stockInicial = 10.0m;
             var cantidadDecremento = 15.0m;
             

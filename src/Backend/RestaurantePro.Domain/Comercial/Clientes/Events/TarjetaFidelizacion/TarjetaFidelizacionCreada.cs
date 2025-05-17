@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
     /// <summary>
     /// Evento de dominio que se dispara cuando se crea una tarjeta de fidelización
     /// </summary>
-    public class TarjetaFidelizacionCreadaEvent : IDomainEvent
+    public class TarjetaFidelizacionCreada : IDomainEvent
     {
         /// <summary>
         /// Identificador de la tarjeta creada
@@ -25,7 +25,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         /// </summary>
         public DateTime OccurredOn { get; } = DateTime.Now;
 
-        public TarjetaFidelizacionCreadaEvent(Guid tarjetaId, Guid clienteId, string codigo)
+        public TarjetaFidelizacionCreada(Guid tarjetaId, Guid clienteId, string codigo)
         {
             TarjetaId = tarjetaId;
             ClienteId = clienteId;

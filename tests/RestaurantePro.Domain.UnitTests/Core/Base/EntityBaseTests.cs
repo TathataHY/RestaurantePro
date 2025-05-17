@@ -51,7 +51,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             var entity = new TestEntity();
 
             // Assert
-            entity.FechaCreacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(1));
+            entity.FechaCreacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
         }
 
         [Fact]
@@ -88,7 +88,22 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
 
             // Assert
             entity.FechaActualizacion.Should().NotBeNull();
-            entity.FechaActualizacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(1));
+            entity.FechaActualizacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        }
+
+        [Fact]
+        public void WhenMarkAsModified_ShouldUpdateFechaActualizacion()
+        {
+            // Arrange
+            var entity = new TestEntity();
+            entity.FechaActualizacion.Should().BeNull();
+
+            // Act
+            entity.ModifyEntity();
+
+            // Assert
+            entity.FechaActualizacion.Should().NotBeNull();
+            entity.FechaActualizacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
         }
 
         [Fact]

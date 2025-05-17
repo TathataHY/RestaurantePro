@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
     /// <summary>
     /// Evento de dominio que se dispara cuando se cancela una tarjeta
     /// </summary>
-    public class TarjetaFidelizacionCanceladaEvent : IDomainEvent
+    public class TarjetaFidelizacionCancelada : IDomainEvent
     {
         /// <summary>
         /// Identificador de la tarjeta
@@ -25,7 +25,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         /// </summary>
         public DateTime OccurredOn { get; } = DateTime.Now;
 
-        public TarjetaFidelizacionCanceladaEvent(Guid tarjetaId, Guid clienteId, string motivo)
+        public TarjetaFidelizacionCancelada(Guid tarjetaId, Guid clienteId, string motivo)
         {
             TarjetaId = tarjetaId;
             ClienteId = clienteId;

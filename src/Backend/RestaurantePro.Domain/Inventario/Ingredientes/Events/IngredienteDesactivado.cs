@@ -3,7 +3,7 @@
     /// <summary>
     /// Evento que se lanza cuando se desactiva un ingrediente
     /// </summary>
-    public class IngredienteDesactivadoEvent : IDomainEvent
+    public class IngredienteDesactivado : IDomainEvent
     {
         /// <summary>
         /// Fecha y hora en que ocurrió el evento
@@ -20,7 +20,7 @@
         /// </summary>
         public string Nombre { get; }
         
-        public IngredienteDesactivadoEvent(Guid ingredienteId, string nombre)
+        public IngredienteDesactivado(Guid ingredienteId, string nombre)
         {
             OccurredOn = DateTime.UtcNow;
             IngredienteId = ingredienteId;

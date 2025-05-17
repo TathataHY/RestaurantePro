@@ -1,28 +1,28 @@
 namespace RestaurantePro.Domain.Comercial.Clientes.Enums
 {
     /// <summary>
-    /// Tipo de operación realizada con puntos de fidelización
+    /// Tipos de operaciones que pueden realizarse con los puntos
     /// </summary>
     public enum TipoOperacionPuntos
     {
         /// <summary>
-        /// Puntos agregados a la tarjeta (compras, bonificaciones, etc.)
+        /// Puntos agregados a la tarjeta
         /// </summary>
-        Agregados = 0,
-
+        Agregados = 1,
+        
         /// <summary>
-        /// Puntos canjeados por beneficios
+        /// Puntos canjeados por el cliente
         /// </summary>
-        Canjeados = 1,
-
+        Canjeados = 2,
+        
         /// <summary>
-        /// Puntos vencidos por tiempo o políticas
+        /// Puntos vencidos por tiempo
         /// </summary>
-        Vencidos = 2,
-
+        Vencidos = 3,
+        
         /// <summary>
-        /// Puntos ajustados manualmente (corrección, compensación, etc.)
+        /// Ajuste manual de puntos
         /// </summary>
-        Ajuste = 3
+        Ajuste = 4
     }
 }

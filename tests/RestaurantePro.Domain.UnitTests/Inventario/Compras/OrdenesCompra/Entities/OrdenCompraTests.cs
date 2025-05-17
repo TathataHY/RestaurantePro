@@ -1,5 +1,9 @@
 namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entities
 {
+    using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
+    using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums;
+    using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events;
+
     public class OrdenCompraTests
     {
         [Fact]
@@ -8,21 +12,18 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Arrange
             var proveedorId = Guid.NewGuid();
             var fechaEmision = DateTime.Now;
-            var fechaEntregaEstimada = DateTime.Now.AddDays(3);
             var observaciones = "Observaciones de prueba";
             
             // Act
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 proveedorId, 
-                fechaEmision, 
-                fechaEntregaEstimada,
-                observaciones);
+                observaciones,
+                fechaEmision);
             
             // Assert
             ordenCompra.Should().NotBeNull();
             ordenCompra.ProveedorId.Should().Be(proveedorId);
             ordenCompra.FechaEmision.Should().Be(fechaEmision);
-            ordenCompra.FechaEntregaEstimada.Should().Be(fechaEntregaEstimada);
             ordenCompra.Observaciones.Should().Be(observaciones);
             ordenCompra.Estado.Should().Be(Domain.Inventario.Compras.OrdenesCompra.Enums.EstadoOrdenCompra.Pendiente);
             ordenCompra.Items.Should().BeEmpty();
@@ -46,9 +47,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Act & Assert
             var action = () => Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 proveedorId, 
-                fechaEmision, 
-                fechaEntregaInvalida,
-                "Observaciones");
+                "Observaciones",
+                fechaEmision);
                 
             action.Should().Throw<ArgumentException>()
                 .WithMessage("*fecha de entrega*");
@@ -60,31 +60,28 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Arrange
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
-                DateTime.Now,
-                DateTime.Now.AddDays(3),
-                "Observaciones");
+                "Observaciones",
+                DateTime.Now);
                 
             var ingredienteId = Guid.NewGuid();
+            var nombreIngrediente = "Tomate";
             var cantidad = 10.0m;
-            var precioUnitario = 5.5m;
-            var totalEsperado = cantidad * precioUnitario;
+            var unidadMedida = UnidadMedida.Kilogramo;
             
             // Act
-            var item = ordenCompra.AgregarItem(ingredienteId, cantidad, precioUnitario);
+            var item = ordenCompra.AgregarItem(ingredienteId, nombreIngrediente, cantidad, unidadMedida);
             
             // Assert
             ordenCompra.Items.Should().HaveCount(1);
             ordenCompra.Items.Should().Contain(item);
-            ordenCompra.Total.Should().Be(totalEsperado);
             
             item.OrdenCompraId.Should().Be(ordenCompra.Id);
             item.IngredienteId.Should().Be(ingredienteId);
             item.Cantidad.Should().Be(cantidad);
-            item.PrecioUnitario.Should().Be(precioUnitario);
-            item.Subtotal.Should().Be(totalEsperado);
+            item.NombreIngrediente.Should().Be(nombreIngrediente);
             
             // Verificar que se generó el evento de dominio
-            ordenCompra.DomainEvents.Should().Contain(e => e is ItemOrdenCompraAgregado);
+            ordenCompra.DomainEvents.Should().ContainSingle(e => e is ItemOrdenCompraAgregado);
         }
         
         [Fact]
@@ -93,38 +90,16 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Arrange
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
-                DateTime.Now,
-                DateTime.Now.AddDays(3),
-                "Observaciones");
+                "Observaciones",
+                DateTime.Now);
                 
             var ingredienteId = Guid.NewGuid();
             var cantidadInvalida = -5.0m;
-            var precioUnitario = 10.0m;
             
             // Act & Assert
-            var action = () => ordenCompra.AgregarItem(ingredienteId, cantidadInvalida, precioUnitario);
+            var action = () => ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadInvalida, UnidadMedida.Kilogramo);
             action.Should().Throw<ArgumentException>()
                 .WithMessage("*cantidad*");
-        }
-        
-        [Fact]
-        public void AgregarItem_ConPrecioNegativo_DebeLanzarExcepcion()
-        {
-            // Arrange
-            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
-                Guid.NewGuid(),
-                DateTime.Now,
-                DateTime.Now.AddDays(3),
-                "Observaciones");
-                
-            var ingredienteId = Guid.NewGuid();
-            var cantidad = 5.0m;
-            var precioInvalido = -10.0m;
-            
-            // Act & Assert
-            var action = () => ordenCompra.AgregarItem(ingredienteId, cantidad, precioInvalido);
-            action.Should().Throw<ArgumentException>()
-                .WithMessage("*precio*");
         }
         
         [Fact]
@@ -133,12 +108,11 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Arrange
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
-                DateTime.Now,
-                DateTime.Now.AddDays(3),
-                "Observaciones");
+                "Observaciones",
+                DateTime.Now);
                 
-            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), 10.0m, 5.0m); // Subtotal: 50
-            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), 20.0m, 2.0m); // Subtotal: 40
+            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 20.0m, UnidadMedida.Kilogramo);
             
             // Act
             ordenCompra.EliminarItem(item1.Id);
@@ -147,7 +121,6 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             ordenCompra.Items.Should().HaveCount(1);
             ordenCompra.Items.Should().NotContain(item1);
             ordenCompra.Items.Should().Contain(item2);
-            ordenCompra.Total.Should().Be(40.0m);
             
             // Verificar que se generó el evento de dominio
             ordenCompra.DomainEvents.Should().Contain(e => e is ItemOrdenCompraEliminado);
@@ -159,11 +132,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Arrange
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
-                DateTime.Now,
-                DateTime.Now.AddDays(3),
-                "Observaciones");
+                "Observaciones",
+                DateTime.Now);
                 
-            ordenCompra.AgregarItem(Guid.NewGuid(), 10.0m, 5.0m);
+            ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
             
             // Act
             ordenCompra.Enviar();
@@ -171,7 +143,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Assert
             ordenCompra.Estado.Should().Be(Domain.Inventario.Compras.OrdenesCompra.Enums.EstadoOrdenCompra.Enviada);
             ordenCompra.FechaEnvio.Should().NotBeNull();
-            ordenCompra.FechaEnvio.Value.Date.Should().Be(DateTime.Now.Date);
+            if (ordenCompra.FechaEnvio.HasValue)
+            {
+                ordenCompra.FechaEnvio.Value.Date.Should().Be(DateTime.Now.Date);
+            }
             
             // Verificar que se generó el evento de dominio
             ordenCompra.DomainEvents.Should().Contain(e => e is OrdenCompraEnviada);
@@ -183,9 +158,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Arrange
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
-                DateTime.Now,
-                DateTime.Now.AddDays(3),
-                "Observaciones");
+                "Observaciones",
+                DateTime.Now);
                 
             // Act & Assert
             var action = () => ordenCompra.Enviar();
@@ -199,11 +173,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Arrange
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
-                DateTime.Now,
-                DateTime.Now.AddDays(3),
-                "Observaciones");
+                "Observaciones",
+                DateTime.Now);
                 
-            ordenCompra.AgregarItem(Guid.NewGuid(), 10.0m, 5.0m);
+            ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
             ordenCompra.Enviar();
             
             var fechaRecepcion = DateTime.Now.AddDays(2);
@@ -227,9 +200,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Arrange
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
-                DateTime.Now,
-                DateTime.Now.AddDays(3),
-                "Observaciones");
+                "Observaciones",
+                DateTime.Now);
                 
             var motivoCancelacion = "Proveedor no disponible";
             
@@ -239,7 +211,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Assert
             ordenCompra.Estado.Should().Be(Domain.Inventario.Compras.OrdenesCompra.Enums.EstadoOrdenCompra.Cancelada);
             ordenCompra.FechaCancelacion.Should().NotBeNull();
-            ordenCompra.FechaCancelacion.Value.Date.Should().Be(DateTime.Now.Date);
+            if (ordenCompra.FechaCancelacion.HasValue)
+            {
+                ordenCompra.FechaCancelacion.Value.Date.Should().Be(DateTime.Now.Date);
+            }
             ordenCompra.MotivoCancelacion.Should().Be(motivoCancelacion);
             
             // Verificar que se generó el evento de dominio
@@ -252,18 +227,326 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Arrange
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
-                DateTime.Now,
-                DateTime.Now.AddDays(3),
-                "Observaciones");
+                "Observaciones",
+                DateTime.Now);
                 
-            ordenCompra.AgregarItem(Guid.NewGuid(), 10.0m, 5.0m);
+            ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
             ordenCompra.Enviar();
-            ordenCompra.Recibir(DateTime.Now.AddDays(2), "Recibido correctamente");
+            ordenCompra.Recibir(DateTime.Now.AddDays(1));
             
             // Act & Assert
             var action = () => ordenCompra.Cancelar("Motivo");
             action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*no puede cancelarse*");
+                .WithMessage("*estado*");
+        }
+        
+        [Fact]
+        public void AgregarItemDuplicado_DebeAumentarCantidadNoCrearNuevoItem()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            var ingredienteId = Guid.NewGuid();
+            var cantidadInicial = 5.0m;
+            var cantidadAdicional = 3.0m;
+            var cantidadEsperada = cantidadInicial + cantidadAdicional;
+            
+            // Act
+            var item1 = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadInicial, UnidadMedida.Kilogramo);
+            var item2 = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadAdicional, UnidadMedida.Kilogramo);
+            
+            // Assert
+            ordenCompra.Items.Should().HaveCount(1);
+            item1.Should().BeSameAs(item2); // Debe ser el mismo objeto
+            item1.Cantidad.Should().Be(cantidadEsperada);
+        }
+        
+        [Fact]
+        public void AgregarYEliminarItems_DebeCalcularTotalCorrectamente()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            // Act
+            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 5.0m, UnidadMedida.Kilogramo);
+            var item3 = ordenCompra.AgregarItem(Guid.NewGuid(), "Ajo", 2.0m, UnidadMedida.Kilogramo);
+            
+            ordenCompra.EliminarItem(item2.Id);
+            
+            // Assert
+            ordenCompra.Items.Should().HaveCount(2);
+            ordenCompra.Items.Should().Contain(item1);
+            ordenCompra.Items.Should().Contain(item3);
+            ordenCompra.Items.Should().NotContain(item2);
+        }
+        
+        [Fact]
+        public void ActualizarItemOrdenCompra_DebeActualizarCantidadYPrecio()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            var ingredienteId = Guid.NewGuid();
+            var nombreIngrediente = "Tomate";
+            var cantidadInicial = 10.0m;
+            var unidadMedida = UnidadMedida.Kilogramo;
+            
+            var item = ordenCompra.AgregarItem(ingredienteId, nombreIngrediente, cantidadInicial, unidadMedida);
+            
+            var nuevaCantidad = 15.0m;
+            var nuevoPrecioUnitario = 7.5m;
+            var nuevoSubtotalEsperado = nuevaCantidad * nuevoPrecioUnitario;
+            
+            // Act
+            item.Actualizar(nuevaCantidad, nuevoPrecioUnitario);
+            
+            // Assert
+            item.Cantidad.Should().Be(nuevaCantidad);
+            item.PrecioUnitario.Should().Be(nuevoPrecioUnitario);
+            item.Subtotal.Should().Be(nuevoSubtotalEsperado);
+        }
+        
+        [Fact]
+        public void ActualizarItemOrdenCompra_ConCantidadInvalida_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            var item = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            var cantidadInvalida = -5.0m;
+            
+            // Act & Assert
+            var action = () => item.Actualizar(cantidadInvalida, 10.0m);
+            action.Should().Throw<ArgumentException>()
+                .WithMessage("*cantidad*");
+        }
+        
+        [Fact]
+        public void ActualizarItemOrdenCompra_ConPrecioInvalido_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            var item = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            var precioInvalido = -5.0m;
+            
+            // Act & Assert
+            var action = () => item.Actualizar(10.0m, precioInvalido);
+            action.Should().Throw<ArgumentException>()
+                .WithMessage("*precio*");
+        }
+        
+        [Fact]
+        public void RegistrarRecepcionItem_CantidadValida_DebeActualizarCantidadRecibida()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            var ingredienteId = Guid.NewGuid();
+            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            ordenCompra.Enviar();
+            ordenCompra.Recibir(DateTime.Now.AddDays(1));
+            
+            var cantidadRecibida = 8.5m;
+            
+            // Act
+            item.RegistrarRecepcion(cantidadRecibida, ordenCompra.Estado);
+            
+            // Assert
+            item.CantidadRecibida.Should().Be(cantidadRecibida);
+        }
+        
+        [Fact]
+        public void RegistrarRecepcionItem_CantidadNegativa_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            var ingredienteId = Guid.NewGuid();
+            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            ordenCompra.Enviar();
+            ordenCompra.Recibir(DateTime.Now.AddDays(1));
+            
+            var cantidadInvalida = -5.0m;
+            
+            // Act & Assert
+            var action = () => item.RegistrarRecepcion(cantidadInvalida, ordenCompra.Estado);
+            action.Should().Throw<ArgumentException>()
+                .WithMessage("*cantidad*");
+        }
+        
+        [Fact]
+        public void RegistrarRecepcionItem_CantidadMayorALaSolicitada_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            var ingredienteId = Guid.NewGuid();
+            var cantidadSolicitada = 10.0m;
+            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadSolicitada, UnidadMedida.Kilogramo);
+            ordenCompra.Enviar();
+            ordenCompra.Recibir(DateTime.Now.AddDays(1));
+            
+            var cantidadInvalida = cantidadSolicitada + 1.0m;
+            
+            // Act & Assert
+            var action = () => item.RegistrarRecepcion(cantidadInvalida, ordenCompra.Estado);
+            action.Should().Throw<ArgumentException>()
+                .WithMessage("*mayor*solicitada*");
+        }
+        
+        [Fact]
+        public void RegistrarRecepcionItem_OrdenNoRecibida_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            var ingredienteId = Guid.NewGuid();
+            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            // No marcamos la orden como recibida
+            
+            // Act & Assert
+            var action = () => item.RegistrarRecepcion(5.0m, ordenCompra.Estado);
+            action.Should().Throw<InvalidOperationException>()
+                .WithMessage("*recibida*");
+        }
+        
+        [Fact]
+        public void RegistrarRecepcionCompleta_DebeIndicarItemCompleto()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            var ingredienteId = Guid.NewGuid();
+            var cantidadSolicitada = 10.0m;
+            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadSolicitada, UnidadMedida.Kilogramo);
+            ordenCompra.Enviar();
+            ordenCompra.Recibir(DateTime.Now.AddDays(1));
+            
+            // Act
+            item.RegistrarRecepcion(cantidadSolicitada, ordenCompra.Estado); // Recepción completa
+            
+            // Assert
+            item.EstaCompletoEnRecepcion.Should().BeTrue();
+        }
+        
+        [Fact]
+        public void RegistrarRecepcionParcial_NoDebeIndicarItemCompleto()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            var ingredienteId = Guid.NewGuid();
+            var cantidadSolicitada = 10.0m;
+            var cantidadRecibida = 8.0m; // Recepción parcial
+            var item = ordenCompra.AgregarItem(ingredienteId, "Tomate", cantidadSolicitada, UnidadMedida.Kilogramo);
+            ordenCompra.Enviar();
+            ordenCompra.Recibir(DateTime.Now.AddDays(1));
+            
+            // Act
+            item.RegistrarRecepcion(cantidadRecibida, ordenCompra.Estado);
+            
+            // Assert
+            item.EstaCompletoEnRecepcion.Should().BeFalse();
+        }
+        
+        [Fact]
+        public void TodosLosItemsRecibidos_CuandoTodosLosItemsEstanCompletos_DebeRetornarTrue()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 5.0m, UnidadMedida.Kilogramo);
+            
+            ordenCompra.Enviar();
+            ordenCompra.Recibir(DateTime.Now.AddDays(1));
+            
+            // Act
+            item1.RegistrarRecepcion(10.0m, ordenCompra.Estado); // Recepción completa
+            item2.RegistrarRecepcion(5.0m, ordenCompra.Estado); // Recepción completa
+            
+            // Assert
+            ordenCompra.TodosLosItemsRecibidos.Should().BeTrue();
+        }
+        
+        [Fact]
+        public void TodosLosItemsRecibidos_CuandoAlgunosItemsNoEstanCompletos_DebeRetornarFalse()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            var item1 = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            var item2 = ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 5.0m, UnidadMedida.Kilogramo);
+            
+            ordenCompra.Enviar();
+            ordenCompra.Recibir(DateTime.Now.AddDays(1));
+            
+            // Act
+            item1.RegistrarRecepcion(10.0m, ordenCompra.Estado); // Recepción completa
+            item2.RegistrarRecepcion(3.0m, ordenCompra.Estado); // Recepción parcial
+            
+            // Assert
+            ordenCompra.TodosLosItemsRecibidos.Should().BeFalse();
+        }
+        
+        [Fact]
+        public void TodosLosItemsRecibidos_OrdenNoRecibida_DebeRetornarFalse()
+        {
+            // Arrange
+            var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
+                Guid.NewGuid(),
+                "Observaciones",
+                DateTime.Now);
+                
+            ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, UnidadMedida.Kilogramo);
+            ordenCompra.AgregarItem(Guid.NewGuid(), "Cebolla", 5.0m, UnidadMedida.Kilogramo);
+            
+            ordenCompra.Enviar();
+            // No marcamos la orden como recibida
+            
+            // Assert
+            ordenCompra.TodosLosItemsRecibidos.Should().BeFalse();
         }
     }
 } 

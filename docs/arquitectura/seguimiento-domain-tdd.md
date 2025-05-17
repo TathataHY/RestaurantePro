@@ -30,6 +30,7 @@ RestaurantePro.Domain/
 | ValueObject | ✅ Completo | ✅ Completas | Base para objetos de valor |
 | DomainEvent | ✅ Completo | ✅ Completas | Eventos de dominio |
 | Productos | ✅ Completo | ✅ Completas | Catálogo de productos |
+| IDateTimeService | ✅ Completo | ✅ Completas | Servicio de fecha/hora |
 
 ### Comercial
 
@@ -39,6 +40,7 @@ RestaurantePro.Domain/
 | ClienteNombre | ✅ Completo | ✅ Completas | Value Object para nombres |
 | TarjetaFidelizacion | ✅ Completo | ✅ Completas | Programa de fidelización |
 | HistorialPuntos | ✅ Completo | ✅ Completas | Registro de puntos de fidelización |
+| ServicioFidelizacion | ✅ Completo | ✅ Completas | Servicios de fidelización y descuentos |
 
 ### Operaciones
 
@@ -70,6 +72,7 @@ RestaurantePro.Domain/
 - Cliente puede hacer Reservaciones
 - Cliente acumula puntos por Comandas
 - TarjetaFidelizacion aplicable a Comandas
+- ServicioFidelizacion calcula descuentos para Comandas
 
 ### Operaciones ↔ Core
 - Comanda contiene Productos
@@ -90,10 +93,9 @@ RestaurantePro.Domain/
    - Crear eventos de integración entre Inventario y Proveedores
    - Implementar políticas de manejo de eventos entre contextos
 
-2. **Implementar servicios de dominio**:
-   - Servicio para verificar disponibilidad de ingredientes
-   - Servicio para aplicar descuentos de fidelización
+2. **Implementar servicios de dominio adicionales**:
    - Servicio para gestión de órdenes de compra automáticas
+   - Servicio para gestión de reportes y análisis de datos
 
 3. **Completar validaciones**:
    - Reglas de negocio para límites de reservas
@@ -108,6 +110,8 @@ RestaurantePro.Domain/
 | 2023-10-20 | MovimientoInventario | Pruebas → Implementación → Refactor |
 | 2023-10-25 | OrdenCompra | Pruebas → Implementación → Refactor |
 | 2023-11-05 | Proveedor | Pruebas → Implementación → Refactor |
+| 2023-11-10 | IDateTimeService | Pruebas → Implementación → Refactor |
+| 2023-11-12 | ServicioFidelizacion | Pruebas → Implementación → Refactor |
 
 ## Decisiones de Diseño
 
@@ -117,3 +121,5 @@ RestaurantePro.Domain/
 - Cada cambio de estado genera eventos de dominio
 - Se priorizan objetos inmutables para valores
 - Se separan interfaces de repositorio por contexto
+- Los servicios de dominio implementan lógica que involucra múltiples agregados
+- Interfaces y clases de implementación se separan en archivos diferentes

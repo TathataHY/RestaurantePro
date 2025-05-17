@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.UnitTests.Core.Base
 {
     public class ValueObjectTests
@@ -7,15 +6,15 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
         private class Dinero : ValueObject
         {
             public decimal Monto { get; private set; }
-            public string Moneda { get; private set; }
+            public string? Moneda { get; private set; }
 
-            public Dinero(decimal monto, string moneda)
+            public Dinero(decimal monto, string? moneda)
             {
                 Monto = monto;
                 Moneda = moneda;
             }
 
-            protected override IEnumerable<object> GetEqualityComponents()
+            protected override IEnumerable<object?> GetEqualityComponents()
             {
                 yield return Monto;
                 yield return Moneda;
@@ -81,6 +80,33 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
 
             // Act & Assert
             dinero.Equals(other).Should().BeFalse();
+        }
+
+        [Fact]
+        public void ValueObject_WithNullProperty_ShouldHandleCorrectly()
+        {
+            // Arrange
+            var dinero1 = new Dinero(100, null);
+            var dinero2 = new Dinero(100, null);
+            var dinero3 = new Dinero(100, "EUR");
+
+            // Act & Assert
+            dinero1.Should().Be(dinero2); // Ambos con propiedades nulas deben ser iguales
+            dinero1.Should().NotBe(dinero3); // Uno nulo y otro no, deben ser diferentes
+            dinero1.GetHashCode().Should().Be(dinero2.GetHashCode()); // Los hash codes deben ser iguales
+        }
+
+        [Fact]
+        public void ValueObject_EqualityOperator_WithNull_ShouldReturnFalse()
+        {
+            // Arrange
+            var dinero = new Dinero(100, "EUR");
+            ValueObject? nullValueObject = null;
+
+            // Act & Assert
+            (dinero == nullValueObject).Should().BeFalse();
+            (nullValueObject == dinero).Should().BeFalse();
+            (dinero != nullValueObject).Should().BeTrue();
         }
     }
 }

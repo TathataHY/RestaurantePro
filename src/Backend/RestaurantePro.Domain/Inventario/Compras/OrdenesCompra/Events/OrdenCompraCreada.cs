@@ -21,9 +21,9 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
         public DateTime FechaEmision { get; }
         
         /// <summary>
-        /// Fecha estimada de entrega
+        /// Fecha estimada de entrega (opcional)
         /// </summary>
-        public DateTime FechaEntregaEstimada { get; }
+        public DateTime? FechaEntregaEstimada { get; }
         
         /// <summary>
         /// Fecha y hora en que ocurrió el evento
@@ -36,8 +36,8 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
         /// <param name="ordenCompraId">ID de la orden de compra</param>
         /// <param name="proveedorId">ID del proveedor</param>
         /// <param name="fechaEmision">Fecha de emisión</param>
-        /// <param name="fechaEntregaEstimada">Fecha estimada de entrega</param>
-        public OrdenCompraCreada(Guid ordenCompraId, Guid proveedorId, DateTime fechaEmision, DateTime fechaEntregaEstimada)
+        /// <param name="fechaEntregaEstimada">Fecha estimada de entrega (opcional)</param>
+        public OrdenCompraCreada(Guid ordenCompraId, Guid proveedorId, DateTime fechaEmision, DateTime? fechaEntregaEstimada = null)
         {
             OrdenCompraId = ordenCompraId;
             ProveedorId = proveedorId;

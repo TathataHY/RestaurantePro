@@ -1,9 +1,9 @@
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Events
 {
     /// <summary>
-    /// Evento de dominio que se lanza cuando se aplica un movimiento de inventario al stock
+    /// Evento de dominio que se lanza cuando se registra un nuevo movimiento de inventario
     /// </summary>
-    public class MovimientoAplicadoEvent : IDomainEvent
+    public class MovimientoRegistrado : IDomainEvent
     {
         /// <summary>
         /// Fecha y hora en que ocurrió el evento
@@ -11,7 +11,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Events
         public DateTime OccurredOn { get; }
         
         /// <summary>
-        /// Id del movimiento de inventario aplicado
+        /// Id del movimiento de inventario registrado
         /// </summary>
         public Guid MovimientoId { get; }
         
@@ -26,31 +26,24 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Events
         public Enums.TipoMovimientoInventario TipoMovimiento { get; }
         
         /// <summary>
-        /// Cantidad movida
+        /// Cantidad del movimiento
         /// </summary>
         public decimal Cantidad { get; }
         
         /// <summary>
-        /// Stock antes del movimiento
+        /// Motivo del movimiento
         /// </summary>
-        public decimal StockAnterior { get; }
+        public string Motivo { get; }
         
-        /// <summary>
-        /// Stock después del movimiento
-        /// </summary>
-        public decimal StockNuevo { get; }
-        
-        public MovimientoAplicadoEvent(Guid movimientoId, Guid ingredienteId, 
-            Enums.TipoMovimientoInventario tipoMovimiento, decimal cantidad, 
-            decimal stockAnterior, decimal stockNuevo)
+        public MovimientoRegistrado(Guid movimientoId, Guid ingredienteId, 
+            Enums.TipoMovimientoInventario tipoMovimiento, decimal cantidad, string motivo)
         {
             OccurredOn = DateTime.UtcNow;
             MovimientoId = movimientoId;
             IngredienteId = ingredienteId;
             TipoMovimiento = tipoMovimiento;
             Cantidad = cantidad;
-            StockAnterior = stockAnterior;
-            StockNuevo = stockNuevo;
+            Motivo = motivo;
         }
     }
 } 

@@ -1,9 +1,9 @@
-namespace RestaurantePro.Domain.Proveedores.Events
+namespace RestaurantePro.Domain.Proveedores.Events.Proveedor
 {
     /// <summary>
     /// Evento que se dispara cuando se desactiva un proveedor
     /// </summary>
-    public class ProveedorDesactivadoEvent : IDomainEvent
+    public class ProveedorDesactivado : IDomainEvent
     {
         /// <summary>
         /// Momento en que ocurrió el evento
@@ -14,21 +14,20 @@ namespace RestaurantePro.Domain.Proveedores.Events
         /// ID del proveedor desactivado
         /// </summary>
         public Guid ProveedorId { get; }
-        
+
         /// <summary>
-        /// Nombre del proveedor desactivado
+        /// Nombre del proveedor
         /// </summary>
         public string Nombre { get; }
-        
+
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="proveedorId">ID del proveedor</param>
-        /// <param name="nombre">Nombre del proveedor</param>
-        public ProveedorDesactivadoEvent(Guid proveedorId, string nombre)
+        public ProveedorDesactivado(Guid proveedorId, string nombre)
         {
             ProveedorId = proveedorId;
             Nombre = nombre;
         }
     }
 } 
+

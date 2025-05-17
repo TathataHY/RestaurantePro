@@ -76,7 +76,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
                 PuntosDisponibles = 0
             };
 
-            tarjeta.AddDomainEvent(new TarjetaFidelizacionCreadaEvent(tarjeta.Id, clienteId, codigo));
+            tarjeta.AddDomainEvent(new TarjetaFidelizacionCreada(tarjeta.Id, clienteId, codigo));
 
             return tarjeta;
         }
@@ -96,7 +96,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             FechaActivacion = DateTime.Now;
             MarkAsModified();
 
-            AddDomainEvent(new TarjetaFidelizacionActivadaEvent(Id, ClienteId, FechaActivacion.Value));
+            AddDomainEvent(new TarjetaFidelizacionActivada(Id, ClienteId, FechaActivacion.Value));
         }
 
         /// <summary>
@@ -114,7 +114,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             Estado = EstadoTarjeta.Suspendida;
             MarkAsModified();
 
-            AddDomainEvent(new TarjetaFidelizacionSuspendidaEvent(Id, ClienteId, motivo));
+            AddDomainEvent(new TarjetaFidelizacionSuspendida(Id, ClienteId, motivo));
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             Estado = EstadoTarjeta.Cancelada;
             MarkAsModified();
 
-            AddDomainEvent(new TarjetaFidelizacionCanceladaEvent(Id, ClienteId, motivo));
+            AddDomainEvent(new TarjetaFidelizacionCancelada(Id, ClienteId, motivo));
         }
 
         /// <summary>
@@ -153,7 +153,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             PuntosDisponibles += puntos;
             MarkAsModified();
 
-            AddDomainEvent(new PuntosAgregadosATarjetaEvent(Id, puntos, PuntosAcumulados));
+            AddDomainEvent(new PuntosAgregadosATarjeta(Id, puntos, PuntosAcumulados));
 
             // Automáticamente actualizamos el nivel según los puntos acumulados
             ActualizarNivelSegunPuntos();
@@ -190,7 +190,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             PuntosDisponibles += puntos;
             MarkAsModified();
 
-            AddDomainEvent(new PuntosAgregadosATarjetaEvent(Id, puntos, PuntosAcumulados));
+            AddDomainEvent(new PuntosAgregadosATarjeta(Id, puntos, PuntosAcumulados));
 
             // Automáticamente actualizamos el nivel según los puntos acumulados
             ActualizarNivelSegunPuntos();
@@ -222,7 +222,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             PuntosDisponibles -= puntos;
             MarkAsModified();
 
-            AddDomainEvent(new PuntosCanjeadosEvent(Id, puntos, concepto, PuntosDisponibles));
+            AddDomainEvent(new PuntosCanjeados(Id, puntos, concepto, PuntosDisponibles));
 
             // Registramos en el historial
             return HistorialPuntos.CrearRegistroCanjeados(Id, puntos, concepto);
@@ -265,7 +265,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             NivelFidelizacion = nuevoNivel;
             MarkAsModified();
 
-            AddDomainEvent(new NivelFidelizacionActualizadoEvent(Id, nivelAnterior, nuevoNivel));
+            AddDomainEvent(new NivelFidelizacionActualizado(Id, nivelAnterior, nuevoNivel));
         }
 
         /// <summary>

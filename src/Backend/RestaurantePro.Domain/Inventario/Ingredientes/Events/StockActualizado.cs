@@ -1,9 +1,9 @@
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
 {
     /// <summary>
-    /// Evento que se lanza cuando el stock de un ingrediente está por debajo del mínimo
+    /// Evento que se lanza cuando se actualiza el stock de un ingrediente
     /// </summary>
-    public class StockBajoMinimoEvent : IDomainEvent
+    public class StockActualizado : IDomainEvent
     {
         /// <summary>
         /// Fecha y hora en que ocurrió el evento
@@ -21,22 +21,16 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
         public string Nombre { get; }
         
         /// <summary>
-        /// Stock actual
+        /// Cantidad actual de stock
         /// </summary>
-        public decimal StockActual { get; }
+        public decimal Stock { get; }
         
-        /// <summary>
-        /// Stock mínimo configurado
-        /// </summary>
-        public decimal StockMinimo { get; }
-        
-        public StockBajoMinimoEvent(Guid ingredienteId, string nombre, decimal stockActual, decimal stockMinimo)
+        public StockActualizado(Guid ingredienteId, string nombre, decimal stock)
         {
             OccurredOn = DateTime.UtcNow;
             IngredienteId = ingredienteId;
             Nombre = nombre;
-            StockActual = stockActual;
-            StockMinimo = stockMinimo;
+            Stock = stock;
         }
     }
 } 

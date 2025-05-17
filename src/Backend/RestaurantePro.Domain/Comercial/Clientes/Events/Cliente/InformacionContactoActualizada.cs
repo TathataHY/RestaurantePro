@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
     /// <summary>
     /// Evento de dominio que se dispara cuando se actualiza la información de contacto
     /// </summary>
-    public class InformacionContactoActualizadaEvent : IDomainEvent
+    public class InformacionContactoActualizada : IDomainEvent
     {
         /// <summary>
         /// Identificador del cliente
@@ -25,7 +25,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
         /// </summary>
         public DateTime OccurredOn { get; } = DateTime.Now;
 
-        public InformacionContactoActualizadaEvent(Guid clienteId, string email, string telefono)
+        public InformacionContactoActualizada(Guid clienteId, string email, string telefono)
         {
             ClienteId = clienteId;
             Email = email;

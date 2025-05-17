@@ -1,9 +1,9 @@
-namespace RestaurantePro.Domain.Proveedores.Events
+namespace RestaurantePro.Domain.Proveedores.Events.Proveedor
 {
     /// <summary>
-    /// Evento que se dispara cuando se elimina un contacto de un proveedor
+    /// Evento que se dispara cuando se activa un proveedor
     /// </summary>
-    public class ContactoProveedorEliminado : IDomainEvent
+    public class ProveedorActivado : IDomainEvent
     {
         /// <summary>
         /// Momento en que ocurrió el evento
@@ -11,28 +11,23 @@ namespace RestaurantePro.Domain.Proveedores.Events
         public DateTime OccurredOn { get; } = DateTime.Now;
 
         /// <summary>
-        /// ID del proveedor
+        /// ID del proveedor activado
         /// </summary>
         public Guid ProveedorId { get; }
 
         /// <summary>
-        /// ID del contacto
-        /// </summary>
-        public Guid ContactoId { get; }
-
-        /// <summary>
-        /// Nombre del contacto
+        /// Nombre del proveedor
         /// </summary>
         public string Nombre { get; }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public ContactoProveedorEliminado(Guid proveedorId, Guid contactoId, string nombre)
+        public ProveedorActivado(Guid proveedorId, string nombre)
         {
             ProveedorId = proveedorId;
-            ContactoId = contactoId;
             Nombre = nombre;
         }
     }
 } 
+

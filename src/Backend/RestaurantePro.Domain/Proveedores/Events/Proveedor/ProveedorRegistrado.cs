@@ -1,9 +1,9 @@
-namespace RestaurantePro.Domain.Proveedores.Events
+namespace RestaurantePro.Domain.Proveedores.Events.Proveedor
 {
     /// <summary>
-    /// Evento que se dispara cuando se actualiza un proveedor
+    /// Evento que se dispara cuando se registra un nuevo proveedor
     /// </summary>
-    public class ProveedorActualizadoEvent : IDomainEvent
+    public class ProveedorRegistrado : IDomainEvent
     {
         /// <summary>
         /// Momento en que ocurrió el evento
@@ -11,12 +11,12 @@ namespace RestaurantePro.Domain.Proveedores.Events
         public DateTime OccurredOn { get; } = DateTime.Now;
 
         /// <summary>
-        /// ID del proveedor actualizado
+        /// ID del proveedor registrado
         /// </summary>
         public Guid ProveedorId { get; }
         
         /// <summary>
-        /// Nombre del proveedor actualizado
+        /// Nombre del proveedor registrado
         /// </summary>
         public string Nombre { get; }
         
@@ -25,10 +25,11 @@ namespace RestaurantePro.Domain.Proveedores.Events
         /// </summary>
         /// <param name="proveedorId">ID del proveedor</param>
         /// <param name="nombre">Nombre del proveedor</param>
-        public ProveedorActualizadoEvent(Guid proveedorId, string nombre)
+        public ProveedorRegistrado(Guid proveedorId, string nombre)
         {
             ProveedorId = proveedorId;
             Nombre = nombre;
         }
     }
-} 
+}
+

@@ -9,9 +9,9 @@ namespace RestaurantePro.Domain.Core.Base
         /// Método que debe ser implementado por cada clase derivada para proveer
         /// las propiedades que definen la igualdad del objeto de valor
         /// </summary>
-        protected abstract IEnumerable<object> GetEqualityComponents();
+        protected abstract IEnumerable<object?> GetEqualityComponents();
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if (obj == null || obj.GetType() != GetType())
             {
@@ -30,7 +30,7 @@ namespace RestaurantePro.Domain.Core.Base
                 .Aggregate((x, y) => x ^ y);
         }
 
-        public static bool operator ==(ValueObject left, ValueObject right)
+        public static bool operator ==(ValueObject? left, ValueObject? right)
         {
             if (left is null && right is null)
                 return true;
@@ -41,7 +41,7 @@ namespace RestaurantePro.Domain.Core.Base
             return left.Equals(right);
         }
 
-        public static bool operator !=(ValueObject left, ValueObject right)
+        public static bool operator !=(ValueObject? left, ValueObject? right)
         {
             return !(left == right);
         }

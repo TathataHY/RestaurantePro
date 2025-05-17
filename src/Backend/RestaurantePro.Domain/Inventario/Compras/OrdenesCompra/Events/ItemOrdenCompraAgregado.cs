@@ -41,6 +41,19 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
         public DateTime OccurredOn { get; } = DateTime.Now;
         
         /// <summary>
+        /// Constructor simplificado para uso inicial
+        /// </summary>
+        public ItemOrdenCompraAgregado(Guid ordenCompraId, Guid ingredienteId, string nombre, decimal cantidad)
+        {
+            OrdenCompraId = ordenCompraId;
+            ItemId = Guid.NewGuid();
+            IngredienteId = ingredienteId;
+            Cantidad = cantidad;
+            PrecioUnitario = 0;
+            Subtotal = 0;
+        }
+        
+        /// <summary>
         /// Constructor del evento
         /// </summary>
         /// <param name="ordenCompraId">ID de la orden de compra</param>

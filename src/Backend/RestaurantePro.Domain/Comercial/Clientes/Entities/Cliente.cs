@@ -47,7 +47,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
                 PuntosAcumulados = 0
             };
 
-            cliente.AddDomainEvent(new ClienteCreadoEvent(cliente.Id, nombre.NombreCompleto));
+            cliente.AddDomainEvent(new ClienteCreado(cliente.Id, nombre.NombreCompleto));
 
             return cliente;
         }
@@ -66,7 +66,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             PuntosAcumulados += puntos;
             MarkAsModified();
 
-            AddDomainEvent(new PuntosAgregadosEvent(Id, puntos, PuntosAcumulados));
+            AddDomainEvent(new PuntosAgregados(Id, puntos, PuntosAcumulados));
         }
 
         /// <summary>
@@ -80,7 +80,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             EstaActivo = false;
             MarkAsModified();
 
-            AddDomainEvent(new ClienteDesactivadoEvent(Id, Nombre.NombreCompleto));
+            AddDomainEvent(new ClienteDesactivado(Id, Nombre.NombreCompleto));
         }
 
         /// <summary>
@@ -94,7 +94,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             EstaActivo = true;
             MarkAsModified();
 
-            AddDomainEvent(new ClienteReactivadoEvent(Id, Nombre.NombreCompleto));
+            AddDomainEvent(new ClienteReactivado(Id, Nombre.NombreCompleto));
         }
 
         /// <summary>
@@ -109,7 +109,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             Telefono = telefono;
             MarkAsModified();
 
-            AddDomainEvent(new InformacionContactoActualizadaEvent(Id, Email, Telefono));
+            AddDomainEvent(new InformacionContactoActualizada(Id, Email, Telefono));
         }
     }
 }

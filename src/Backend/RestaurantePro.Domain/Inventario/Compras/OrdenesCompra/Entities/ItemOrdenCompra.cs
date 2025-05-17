@@ -45,6 +45,11 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         /// </summary>
         public decimal CantidadRecibida { get; private set; }
         
+        /// <summary>
+        /// Indica si la recepción está completa (CantidadRecibida = Cantidad)
+        /// </summary>
+        public bool EstaCompletoEnRecepcion => CantidadRecibida == Cantidad;
+        
         // Constructor privado para EF Core
         private ItemOrdenCompra() { }
         
@@ -112,6 +117,41 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
 
             Cantidad += cantidad;
             MarkAsModified();
+        }
+        
+        /// <summary>
+        /// Registra la cantidad recibida del item
+        /// </summary>
+        /// <param name="cantidadRecibida">Cantidad recibida</param>
+        /// <param name="estadoOrden">Estado actual de la orden</param>
+        /// <exception cref="ArgumentException">Si la cantidad no es válida</exception>
+        /// <exception cref="InvalidOperationException">Si la orden no está recibida</exception>
+        public void RegistrarRecepcion(decimal cantidadRecibida, EstadoOrdenCompra estadoOrden)
+        {
+            if (estadoOrden != EstadoOrdenCompra.Recibida)
+                throw new InvalidOperationException("No se puede registrar la recepción porque la orden aún no ha sido recibida");
+                
+            if (cantidadRecibida < 0)
+                throw new ArgumentException("La cantidad recibida no puede ser negativa", nameof(cantidadRecibida));
+                
+            if (cantidadRecibida > Cantidad)
+                throw new ArgumentException("La cantidad recibida no puede ser mayor que la solicitada", nameof(cantidadRecibida));
+                
+            CantidadRecibida = cantidadRecibida;
+            MarkAsModified();
+            
+            // Aquí podríamos emitir un evento de dominio si se completa la recepción
+            if (EstaCompletoEnRecepcion)
+            {
+                // AddDomainEvent(new ItemOrdenCompraCompletadoEvent(Id, OrdenCompraId, IngredienteId));
+            }
+        }
+        
+        private OrdenCompra ObtenerOrden()
+        {
+            // En un entorno real, esto se haría a través de un repositorio
+            // Para los tests, vamos a simular que podemos acceder a la orden
+            throw new NotImplementedException("Esta función debe ser implementada en un entorno real con acceso a la BD");
         }
     }
 } 

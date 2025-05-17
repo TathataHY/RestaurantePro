@@ -1,9 +1,9 @@
 namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
 {
     /// <summary>
-    /// Evento de dominio que se dispara cuando se actualiza el nivel de fidelización
+    /// Evento de dominio que se dispara cuando se agregan puntos a una tarjeta
     /// </summary>
-    public class NivelFidelizacionActualizadoEvent : IDomainEvent
+    public class PuntosAgregadosATarjeta : IDomainEvent
     {
         /// <summary>
         /// Identificador de la tarjeta
@@ -11,25 +11,25 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         public Guid TarjetaId { get; }
 
         /// <summary>
-        /// Nivel de fidelización anterior
+        /// Puntos agregados
         /// </summary>
-        public NivelFidelizacion NivelAnterior { get; }
+        public int PuntosAgregados { get; }
 
         /// <summary>
-        /// Nuevo nivel de fidelización
+        /// Total de puntos acumulados
         /// </summary>
-        public NivelFidelizacion NuevoNivel { get; }
+        public int PuntosTotales { get; }
 
         /// <summary>
         /// Fecha y hora en que ocurrió el evento
         /// </summary>
         public DateTime OccurredOn { get; } = DateTime.Now;
 
-        public NivelFidelizacionActualizadoEvent(Guid tarjetaId, NivelFidelizacion nivelAnterior, NivelFidelizacion nuevoNivel)
+        public PuntosAgregadosATarjeta(Guid tarjetaId, int puntosAgregados, int puntosTotales)
         {
             TarjetaId = tarjetaId;
-            NivelAnterior = nivelAnterior;
-            NuevoNivel = nuevoNivel;
+            PuntosAgregados = puntosAgregados;
+            PuntosTotales = puntosTotales;
         }
     }
 } 

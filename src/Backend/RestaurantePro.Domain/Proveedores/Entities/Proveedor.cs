@@ -86,6 +86,13 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         /// Historial de fechas de órdenes realizadas a este proveedor
         /// </summary>
         public IReadOnlyList<DateTime> HistorialOrdenes => _historialOrdenes.AsReadOnly();
+        
+        private readonly List<ContactoProveedor> _contactos = new();
+        
+        /// <summary>
+        /// Lista de contactos del proveedor
+        /// </summary>
+        public IReadOnlyCollection<ContactoProveedor> Contactos => _contactos.AsReadOnly();
 
         /// <summary>
         /// Indica si el proveedor está activo
@@ -127,7 +134,7 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             Activo = true;
             FechaRegistro = DateTime.Now;
             
-            AddDomainEvent(new ProveedorRegistradoEvent(Id, nombre));
+            AddDomainEvent(new ProveedorRegistrado(Id, nombre));
         }
         
         /// <summary>
@@ -208,7 +215,7 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             DiasCredito = diasCredito;
             
             MarkAsModified();
-            AddDomainEvent(new ProveedorActualizadoEvent(Id, nombre));
+            AddDomainEvent(new ProveedorActualizado(Id, nombre));
         }
         
         /// <summary>
@@ -233,7 +240,7 @@ namespace RestaurantePro.Domain.Proveedores.Entities
                 
             Activo = true;
             MarkAsModified();
-            AddDomainEvent(new ProveedorActivadoEvent(Id, Nombre));
+            AddDomainEvent(new ProveedorActivado(Id, Nombre));
         }
         
         /// <summary>
@@ -246,7 +253,49 @@ namespace RestaurantePro.Domain.Proveedores.Entities
                 
             Activo = false;
             MarkAsModified();
-            AddDomainEvent(new ProveedorDesactivadoEvent(Id, Nombre));
+            AddDomainEvent(new ProveedorDesactivado(Id, Nombre));
+        }
+        
+        /// <summary>
+        /// Agrega un nuevo contacto al proveedor
+        /// </summary>
+        /// <param name="nombre">Nombre del contacto</param>
+        /// <param name="cargo">Cargo del contacto</param>
+        /// <param name="telefono">Teléfono del contacto</param>
+        /// <param name="email">Email del contacto</param>
+        /// <returns>El contacto agregado</returns>
+        public ContactoProveedor AgregarContacto(string nombre, string cargo, string telefono, string email)
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ArgumentException("El nombre del contacto es obligatorio", nameof(nombre));
+                
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentException("El email del contacto es obligatorio", nameof(email));
+                
+            var contacto = ContactoProveedor.Crear(Id, nombre, cargo, telefono, email);
+            _contactos.Add(contacto);
+            
+            MarkAsModified();
+            AddDomainEvent(new ContactoProveedorAgregado(Id, contacto.Id, nombre, cargo, telefono, email));
+            
+            return contacto;
+        }
+        
+        /// <summary>
+        /// Elimina un contacto del proveedor
+        /// </summary>
+        /// <param name="contactoId">ID del contacto a eliminar</param>
+        public void EliminarContacto(Guid contactoId)
+        {
+            var contacto = _contactos.FirstOrDefault(c => c.Id == contactoId);
+            
+            if (contacto == null)
+                throw new ArgumentException($"No existe un contacto con el ID {contactoId} para este proveedor", nameof(contactoId));
+                
+            _contactos.Remove(contacto);
+            MarkAsModified();
+            
+            AddDomainEvent(new ContactoProveedorEliminado(Id, contactoId, contacto.Nombre));
         }
         
         /// <summary>

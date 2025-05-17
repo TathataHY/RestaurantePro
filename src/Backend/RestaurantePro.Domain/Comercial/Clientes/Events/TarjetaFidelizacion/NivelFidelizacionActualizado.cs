@@ -1,9 +1,9 @@
 namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
 {
     /// <summary>
-    /// Evento de dominio que se dispara cuando se suspende una tarjeta
+    /// Evento de dominio que se dispara cuando se actualiza el nivel de fidelización
     /// </summary>
-    public class TarjetaFidelizacionSuspendidaEvent : IDomainEvent
+    public class NivelFidelizacionActualizado : IDomainEvent
     {
         /// <summary>
         /// Identificador de la tarjeta
@@ -11,25 +11,25 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         public Guid TarjetaId { get; }
 
         /// <summary>
-        /// Identificador del cliente
+        /// Nivel de fidelización anterior
         /// </summary>
-        public Guid ClienteId { get; }
+        public NivelFidelizacion NivelAnterior { get; }
 
         /// <summary>
-        /// Motivo de la suspensión
+        /// Nuevo nivel de fidelización
         /// </summary>
-        public string Motivo { get; }
+        public NivelFidelizacion NuevoNivel { get; }
 
         /// <summary>
         /// Fecha y hora en que ocurrió el evento
         /// </summary>
         public DateTime OccurredOn { get; } = DateTime.Now;
 
-        public TarjetaFidelizacionSuspendidaEvent(Guid tarjetaId, Guid clienteId, string motivo)
+        public NivelFidelizacionActualizado(Guid tarjetaId, NivelFidelizacion nivelAnterior, NivelFidelizacion nuevoNivel)
         {
             TarjetaId = tarjetaId;
-            ClienteId = clienteId;
-            Motivo = motivo;
+            NivelAnterior = nivelAnterior;
+            NuevoNivel = nuevoNivel;
         }
     }
 } 

@@ -70,6 +70,12 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         /// </summary>
         public IReadOnlyCollection<ItemOrdenCompra> Items => _items.AsReadOnly();
         
+        /// <summary>
+        /// Indica si todos los items de la orden han sido recibidos completamente
+        /// </summary>
+        public bool TodosLosItemsRecibidos => Estado == EstadoOrdenCompra.Recibida && 
+                                             (_items.Count == 0 || _items.All(i => i.EstaCompletoEnRecepcion));
+        
         // Constructor privado para EF Core
         private OrdenCompra() { }
         
@@ -90,7 +96,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
                 Observaciones = observaciones ?? "Orden de compra automática"
             };
 
-            ordenCompra.AddDomainEvent(new OrdenCompraCreadaEvent(ordenCompra.Id, proveedorId, fechaEmision));
+            ordenCompra.AddDomainEvent(new OrdenCompraCreada(ordenCompra.Id, proveedorId, fechaEmision));
 
             return ordenCompra;
         }
@@ -121,7 +127,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
             var nuevoItem = ItemOrdenCompra.Crear(Id, ingredienteId, nombre, cantidad, unidadMedida);
             _items.Add(nuevoItem);
 
-            AddDomainEvent(new ItemOrdenCompraAgregadoEvent(Id, ingredienteId, nombre, cantidad));
+            AddDomainEvent(new ItemOrdenCompraAgregado(Id, ingredienteId, nombre, cantidad));
 
             return nuevoItem;
         }

@@ -76,7 +76,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
                 EstaActivo = true
             };
 
-            ingrediente.AddDomainEvent(new IngredienteCreadoEvent(ingrediente.Id, nombre));
+            ingrediente.AddDomainEvent(new IngredienteCreado(ingrediente.Id, nombre));
 
             return ingrediente;
         }
@@ -103,7 +103,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             _movimientos.Add(movimiento);
 
             // Emitir evento de stock actualizado
-            AddDomainEvent(new StockActualizadoEvent(Id, Nombre, Stock));
+            AddDomainEvent(new StockActualizado(Id, Nombre, Stock));
 
             return movimiento;
         }
@@ -136,11 +136,11 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             // Verificar si estamos por debajo del stock mínimo
             if (Stock < StockMinimo)
             {
-                AddDomainEvent(new StockBajoMinimoEvent(Id, Nombre, Stock, StockMinimo));
+                AddDomainEvent(new StockBajoMinimo(Id, Nombre, Stock, StockMinimo));
             }
 
             // Emitir evento de stock actualizado
-            AddDomainEvent(new StockActualizadoEvent(Id, Nombre, Stock));
+            AddDomainEvent(new StockActualizado(Id, Nombre, Stock));
 
             return movimiento;
         }
@@ -160,7 +160,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
 
             if (Stock < StockMinimo)
             {
-                AddDomainEvent(new StockBajoMinimoEvent(Id, Nombre, Stock, StockMinimo));
+                AddDomainEvent(new StockBajoMinimo(Id, Nombre, Stock, StockMinimo));
             }
         }
 
@@ -175,7 +175,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             EstaActivo = false;
             MarkAsModified();
 
-            AddDomainEvent(new IngredienteDesactivadoEvent(Id, Nombre));
+            AddDomainEvent(new IngredienteDesactivado(Id, Nombre));
         }
 
         /// <summary>
@@ -189,7 +189,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             EstaActivo = true;
             MarkAsModified();
 
-            AddDomainEvent(new IngredienteActivadoEvent(Id, Nombre));
+            AddDomainEvent(new IngredienteActivado(Id, Nombre));
         }
 
         /// <summary>
@@ -201,7 +201,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             ProveedorPrincipalId = proveedorId;
             MarkAsModified();
             
-            AddDomainEvent(new ProveedorPrincipalAsociadoEvent(Id, Nombre, proveedorId));
+            AddDomainEvent(new ProveedorPrincipalAsociado(Id, Nombre, proveedorId));
         }
     }
 }

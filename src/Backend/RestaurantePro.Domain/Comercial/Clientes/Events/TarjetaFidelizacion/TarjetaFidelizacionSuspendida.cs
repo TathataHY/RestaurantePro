@@ -1,9 +1,9 @@
 namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
 {
     /// <summary>
-    /// Evento de dominio que se dispara cuando se activa una tarjeta
+    /// Evento de dominio que se dispara cuando se suspende una tarjeta
     /// </summary>
-    public class TarjetaFidelizacionActivadaEvent : IDomainEvent
+    public class TarjetaFidelizacionSuspendida : IDomainEvent
     {
         /// <summary>
         /// Identificador de la tarjeta
@@ -16,20 +16,20 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
         public Guid ClienteId { get; }
 
         /// <summary>
-        /// Fecha de activación
+        /// Motivo de la suspensión
         /// </summary>
-        public DateTime FechaActivacion { get; }
+        public string Motivo { get; }
 
         /// <summary>
         /// Fecha y hora en que ocurrió el evento
         /// </summary>
         public DateTime OccurredOn { get; } = DateTime.Now;
 
-        public TarjetaFidelizacionActivadaEvent(Guid tarjetaId, Guid clienteId, DateTime fechaActivacion)
+        public TarjetaFidelizacionSuspendida(Guid tarjetaId, Guid clienteId, string motivo)
         {
             TarjetaId = tarjetaId;
             ClienteId = clienteId;
-            FechaActivacion = fechaActivacion;
+            Motivo = motivo;
         }
     }
 } 

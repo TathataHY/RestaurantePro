@@ -1,3 +1,6 @@
+using RestaurantePro.Domain.Proveedores.Events.Proveedor;
+using RestaurantePro.Domain.Proveedores.Events.ContactoProveedor;
+
 namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
 {
     public class ProveedorTests
@@ -7,20 +10,31 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
         {
             // Arrange
             var nombre = "Distribuidora XYZ";
+            var nombreContacto = "Juan Pérez";
             var rfc = "XYZ123456ABC";
             var telefono = "555-123-4567";
             var email = "contacto@xyz.com";
-            var direccion = "Calle Principal 123, Ciudad";
+            var direccion = "Calle Principal 123";
+            var ciudad = "Ciudad de México";
+            var codigoPostal = "12345";
+            var pais = "México";
+            var informacionBancaria = "Cuenta 12345-67890";
+            var diasCredito = 30;
             var observaciones = "Proveedor principal de lácteos";
 
             // Act
             var proveedor = Domain.Proveedores.Entities.Proveedor.Crear(
                 nombre,
-                rfc,
-                telefono,
+                nombreContacto,
                 email,
+                telefono,
                 direccion,
-                observaciones);
+                ciudad,
+                codigoPostal,
+                pais,
+                rfc,
+                informacionBancaria,
+                diasCredito);
 
             // Assert
             proveedor.Should().NotBeNull();
@@ -30,12 +44,14 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             proveedor.Telefono.Should().Be(telefono);
             proveedor.Email.Should().Be(email);
             proveedor.Direccion.Should().Be(direccion);
-            proveedor.Observaciones.Should().Be(observaciones);
+            proveedor.Ciudad.Should().Be(ciudad);
+            proveedor.CodigoPostal.Should().Be(codigoPostal);
+            proveedor.Pais.Should().Be(pais);
             proveedor.Activo.Should().BeTrue();
             
             // Verificamos que se generó el evento de dominio
-            proveedor.DomainEvents.Should().ContainSingle(e => e is ProveedorCreado);
-            var evento = proveedor.DomainEvents.OfType<ProveedorCreado>().First();
+            proveedor.DomainEvents.Should().ContainSingle(e => e is ProveedorRegistrado);
+            var evento = proveedor.DomainEvents.OfType<ProveedorRegistrado>().First();
             evento.ProveedorId.Should().Be(proveedor.Id);
             evento.Nombre.Should().Be(nombre);
         }
@@ -45,18 +61,30 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
         {
             // Arrange
             var nombreVacio = string.Empty;
+            var nombreContacto = "Juan Pérez";
             var rfc = "XYZ123456ABC";
             var telefono = "555-123-4567";
             var email = "contacto@xyz.com";
-            var direccion = "Calle Principal 123, Ciudad";
+            var direccion = "Calle Principal 123";
+            var ciudad = "Ciudad de México";
+            var codigoPostal = "12345";
+            var pais = "México";
+            var informacionBancaria = "Cuenta 12345-67890";
+            var diasCredito = 30;
 
             // Act & Assert
             Action action = () => Domain.Proveedores.Entities.Proveedor.Crear(
                 nombreVacio, 
-                rfc, 
-                telefono, 
+                nombreContacto,
                 email, 
-                direccion);
+                telefono, 
+                direccion,
+                ciudad,
+                codigoPostal,
+                pais,
+                rfc,
+                informacionBancaria,
+                diasCredito);
                 
             action.Should().Throw<ArgumentException>()
                 .WithMessage("*nombre*")
@@ -68,18 +96,30 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
         {
             // Arrange
             var nombre = "Distribuidora XYZ";
+            var nombreContacto = "Juan Pérez";
             var rfcInvalido = "123"; // RFC demasiado corto
             var telefono = "555-123-4567";
             var email = "contacto@xyz.com";
-            var direccion = "Calle Principal 123, Ciudad";
+            var direccion = "Calle Principal 123";
+            var ciudad = "Ciudad de México";
+            var codigoPostal = "12345";
+            var pais = "México";
+            var informacionBancaria = "Cuenta 12345-67890";
+            var diasCredito = 30;
 
             // Act & Assert
             Action action = () => Domain.Proveedores.Entities.Proveedor.Crear(
                 nombre,
-                rfcInvalido,
-                telefono,
+                nombreContacto,
                 email,
-                direccion);
+                telefono,
+                direccion,
+                ciudad,
+                codigoPostal,
+                pais,
+                rfcInvalido,
+                informacionBancaria,
+                diasCredito);
                 
             action.Should().Throw<ArgumentException>()
                 .WithMessage("*RFC*")
@@ -91,18 +131,30 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
         {
             // Arrange
             var nombre = "Distribuidora XYZ";
+            var nombreContacto = "Juan Pérez";
             var rfc = "XYZ123456ABC";
             var telefono = "555-123-4567";
             var emailInvalido = "esto-no-es-un-email";
-            var direccion = "Calle Principal 123, Ciudad";
+            var direccion = "Calle Principal 123";
+            var ciudad = "Ciudad de México";
+            var codigoPostal = "12345";
+            var pais = "México";
+            var informacionBancaria = "Cuenta 12345-67890";
+            var diasCredito = 30;
 
             // Act & Assert
             Action action = () => Domain.Proveedores.Entities.Proveedor.Crear(
                 nombre,
-                rfc,
-                telefono,
+                nombreContacto,
                 emailInvalido,
-                direccion);
+                telefono,
+                direccion,
+                ciudad,
+                codigoPostal,
+                pais,
+                rfc,
+                informacionBancaria,
+                diasCredito);
                 
             action.Should().Throw<ArgumentException>()
                 .WithMessage("*email*")
@@ -115,31 +167,56 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             // Arrange
             var proveedor = Domain.Proveedores.Entities.Proveedor.Crear(
                 "Nombre Original",
-                "XYZ123456ABC",
-                "555-123-4567",
+                "Contacto Original",
                 "original@xyz.com",
-                "Dirección Original");
+                "555-123-4567",
+                "Dirección Original",
+                "Ciudad Original",
+                "12345",
+                "País Original",
+                "XYZ123456ABC",
+                "Cuenta Original",
+                30);
                 
             var nuevoNombre = "Nombre Actualizado";
+            var nuevoNombreContacto = "Contacto Actualizado";
             var nuevoTelefono = "555-987-6543";
             var nuevoEmail = "actualizado@xyz.com";
             var nuevaDireccion = "Nueva Dirección 456";
+            var nuevaCiudad = "Nueva Ciudad";
+            var nuevoCodigoPostal = "54321";
+            var nuevoPais = "Nuevo País";
+            var nuevoRfc = "ABC987654XYZ";
+            var nuevaInformacionBancaria = "Nueva Cuenta";
+            var nuevosDiasCredito = 45;
             var nuevasObservaciones = "Observaciones actualizadas";
             
             // Act
             proveedor.ActualizarInformacion(
                 nuevoNombre,
-                nuevoTelefono,
+                nuevoNombreContacto,
                 nuevoEmail,
+                nuevoTelefono,
                 nuevaDireccion,
-                nuevasObservaciones);
+                nuevaCiudad,
+                nuevoCodigoPostal,
+                nuevoPais,
+                nuevoRfc,
+                nuevaInformacionBancaria,
+                nuevosDiasCredito);
             
             // Assert
             proveedor.Nombre.Should().Be(nuevoNombre);
+            proveedor.NombreContacto.Should().Be(nuevoNombreContacto);
             proveedor.Telefono.Should().Be(nuevoTelefono);
             proveedor.Email.Should().Be(nuevoEmail);
             proveedor.Direccion.Should().Be(nuevaDireccion);
-            proveedor.Observaciones.Should().Be(nuevasObservaciones);
+            proveedor.Ciudad.Should().Be(nuevaCiudad);
+            proveedor.CodigoPostal.Should().Be(nuevoCodigoPostal);
+            proveedor.Pais.Should().Be(nuevoPais);
+            proveedor.RFC.Should().Be(nuevoRfc);
+            proveedor.InformacionBancaria.Should().Be(nuevaInformacionBancaria);
+            proveedor.DiasCredito.Should().Be(nuevosDiasCredito);
             
             // Verificar que se generó el evento de dominio
             proveedor.DomainEvents.Should().Contain(e => e is ProveedorActualizado);
@@ -151,10 +228,16 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             // Arrange
             var proveedor = Domain.Proveedores.Entities.Proveedor.Crear(
                 "Distribuidora XYZ",
-                "XYZ123456ABC",
-                "555-123-4567",
+                "Juan Pérez",
                 "contacto@xyz.com",
-                "Calle Principal 123, Ciudad");
+                "555-123-4567",
+                "Calle Principal 123",
+                "Ciudad de México",
+                "12345",
+                "México",
+                "XYZ123456ABC",
+                "Cuenta 12345-67890",
+                30);
                 
             // Act
             proveedor.Desactivar();
@@ -174,10 +257,16 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             // Arrange
             var proveedor = Domain.Proveedores.Entities.Proveedor.Crear(
                 "Distribuidora XYZ",
-                "XYZ123456ABC",
-                "555-123-4567",
+                "Juan Pérez",
                 "contacto@xyz.com",
-                "Calle Principal 123, Ciudad");
+                "555-123-4567",
+                "Calle Principal 123",
+                "Ciudad de México",
+                "12345",
+                "México",
+                "XYZ123456ABC",
+                "Cuenta 12345-67890",
+                30);
                 
             proveedor.Desactivar(); // Lo desactivamos primero
             
@@ -199,10 +288,16 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             // Arrange
             var proveedor = Domain.Proveedores.Entities.Proveedor.Crear(
                 "Distribuidora XYZ",
-                "XYZ123456ABC",
-                "555-123-4567",
+                "Juan Pérez",
                 "contacto@xyz.com",
-                "Calle Principal 123, Ciudad");
+                "555-123-4567",
+                "Calle Principal 123",
+                "Ciudad de México",
+                "12345",
+                "México",
+                "XYZ123456ABC",
+                "Cuenta 12345-67890",
+                30);
                 
             var nombreContacto = "Juan Pérez";
             var cargoContacto = "Gerente de Ventas";
@@ -236,10 +331,16 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             // Arrange
             var proveedor = Domain.Proveedores.Entities.Proveedor.Crear(
                 "Distribuidora XYZ",
-                "XYZ123456ABC",
-                "555-123-4567",
+                "Juan Pérez",
                 "contacto@xyz.com",
-                "Calle Principal 123, Ciudad");
+                "555-123-4567",
+                "Calle Principal 123",
+                "Ciudad de México",
+                "12345",
+                "México",
+                "XYZ123456ABC",
+                "Cuenta 12345-67890",
+                30);
                 
             var contacto = proveedor.AgregarContacto(
                 "Juan Pérez",
@@ -263,10 +364,16 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             // Arrange
             var proveedor = Domain.Proveedores.Entities.Proveedor.Crear(
                 "Distribuidora XYZ",
-                "XYZ123456ABC",
-                "555-123-4567",
+                "Juan Pérez",
                 "contacto@xyz.com",
-                "Calle Principal 123, Ciudad");
+                "555-123-4567",
+                "Calle Principal 123",
+                "Ciudad de México",
+                "12345",
+                "México",
+                "XYZ123456ABC",
+                "Cuenta 12345-67890",
+                30);
                 
             var contactoIdInexistente = Guid.NewGuid();
             

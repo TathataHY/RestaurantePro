@@ -90,7 +90,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities
                 EstaAplicado = false
             };
             
-            movimiento.AddDomainEvent(new MovimientoRegistradoEvent(
+            movimiento.AddDomainEvent(new MovimientoRegistrado(
                 movimiento.Id, 
                 ingredienteId, 
                 tipoMovimiento, 
@@ -130,7 +130,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities
             EstaAplicado = true;
             MarkAsModified();
             
-            AddDomainEvent(new MovimientoAplicadoEvent(
+            AddDomainEvent(new MovimientoAplicado(
                 Id,
                 IngredienteId,
                 TipoMovimiento,

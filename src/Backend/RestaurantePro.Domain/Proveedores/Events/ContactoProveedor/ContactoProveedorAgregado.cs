@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Proveedores.Events
+namespace RestaurantePro.Domain.Proveedores.Events.ContactoProveedor
 {
     /// <summary>
     /// Evento que se dispara cuando se agrega un contacto a un proveedor
@@ -54,3 +54,4 @@ namespace RestaurantePro.Domain.Proveedores.Events
         }
     }
 } 
+

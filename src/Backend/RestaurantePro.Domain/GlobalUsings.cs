@@ -85,3 +85,5 @@ global using RestaurantePro.Domain.Inventario.Services;
 global using RestaurantePro.Domain.Proveedores.Entities;
 global using RestaurantePro.Domain.Proveedores.Interfaces;
 global using RestaurantePro.Domain.Proveedores.Events;
+global using RestaurantePro.Domain.Proveedores.Events.Proveedor;
+global using RestaurantePro.Domain.Proveedores.Events.ContactoProveedor;
