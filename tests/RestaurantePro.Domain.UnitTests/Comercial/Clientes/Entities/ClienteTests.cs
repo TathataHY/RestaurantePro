@@ -21,7 +21,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             cliente.EstaActivo.Should().BeTrue();
             cliente.PuntosAcumulados.Should().Be(0);
             cliente.Id.Should().NotBe(Guid.Empty);
-            cliente.DomainEvents.Should().ContainSingle(e => e is ClienteCreadoEvent);
+            cliente.DomainEvents.Should().ContainSingle(e => e is ClienteCreado);
         }
 
         [Fact]
@@ -37,9 +37,9 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
 
             // Assert
             cliente.PuntosAcumulados.Should().Be(puntosAAgregar);
-            cliente.DomainEvents.Should().ContainSingle(e => e is PuntosAgregadosEvent);
-            var evento = cliente.DomainEvents.OfType<PuntosAgregadosEvent>().First();
-            evento.PuntosAgregados.Should().Be(puntosAAgregar);
+            cliente.DomainEvents.Should().ContainSingle(e => e is PuntosAgregados);
+            var evento = cliente.DomainEvents.OfType<PuntosAgregados>().First();
+            evento.Cantidad.Should().Be(puntosAAgregar);
             evento.PuntosTotales.Should().Be(puntosAAgregar);
         }
 
@@ -86,7 +86,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
 
             // Assert
             cliente.EstaActivo.Should().BeFalse();
-            cliente.DomainEvents.Should().ContainSingle(e => e is ClienteDesactivadoEvent);
+            cliente.DomainEvents.Should().ContainSingle(e => e is ClienteDesactivado);
         }
 
         [Fact]
@@ -120,7 +120,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
 
             // Assert
             cliente.EstaActivo.Should().BeTrue();
-            cliente.DomainEvents.Should().ContainSingle(e => e is ClienteReactivadoEvent);
+            cliente.DomainEvents.Should().ContainSingle(e => e is ClienteReactivado);
         }
 
         [Fact]
@@ -138,7 +138,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             // Assert
             cliente.Email.Should().Be(nuevoEmail);
             cliente.Telefono.Should().Be(nuevoTelefono);
-            cliente.DomainEvents.Should().ContainSingle(e => e is InformacionContactoActualizadaEvent);
+            cliente.DomainEvents.Should().ContainSingle(e => e is InformacionContactoActualizada);
         }
 
         [Fact]
