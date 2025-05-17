@@ -1,10 +1,5 @@
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
 {
-    using Xunit;
-    using FluentAssertions;
-    using System;
-    using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-
     public class ItemComandaTests
     {
         [Fact]

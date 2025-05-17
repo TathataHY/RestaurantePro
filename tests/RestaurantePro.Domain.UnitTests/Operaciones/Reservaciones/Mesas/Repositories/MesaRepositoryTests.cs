@@ -1,16 +1,5 @@
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Repositories
 {
-    using Xunit;
-    using Moq;
-    using FluentAssertions;
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-    using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
-    using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-
     public class MesaRepositoryTests
     {
         private readonly Mock<IMesaRepository> _mockRepository;

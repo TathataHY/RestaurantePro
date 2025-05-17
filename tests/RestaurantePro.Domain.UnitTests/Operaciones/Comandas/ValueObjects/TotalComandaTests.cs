@@ -1,10 +1,5 @@
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.ValueObjects
 {
-    using Xunit;
-    using FluentAssertions;
-    using System;
-    using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
-
     public class TotalComandaTests
     {
         [Fact]

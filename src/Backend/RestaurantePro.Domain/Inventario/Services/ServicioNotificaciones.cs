@@ -1,10 +1,5 @@
 namespace RestaurantePro.Domain.Inventario.Services
 {
-    using RestaurantePro.Domain.Inventario.Notificaciones.Entities;
-    using RestaurantePro.Domain.Inventario.Notificaciones.Enums;
-    using RestaurantePro.Domain.Inventario.Notificaciones.Interfaces;
-    using RestaurantePro.Domain.Proveedores.Interfaces;
-
     /// <summary>
     /// Implementación del servicio de notificaciones del sistema
     /// </summary>

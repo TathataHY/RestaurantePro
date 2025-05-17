@@ -1,6 +1,5 @@
 namespace RestaurantePro.Domain.Inventario.Notificaciones.Events
 {
-    using RestaurantePro.Domain.Core.Base;
 
     /// <summary>
     /// Evento de dominio emitido cuando una notificación es marcada como leída

@@ -1,9 +1,5 @@
 namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
 {
-    using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
-    using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
-    using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
-
     public class IngredienteTests
     {
         [Fact]

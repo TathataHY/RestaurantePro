@@ -1,15 +1,5 @@
 namespace RestaurantePro.Domain.Comercial.Policies
 {
-    using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-    using RestaurantePro.Domain.Comercial.Clientes.Entities;
-    using RestaurantePro.Domain.Comercial.Clientes.Enums;
-    using RestaurantePro.Domain.Comercial.Services;
-    using RestaurantePro.Domain.Core.SharedKernel.Services;
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Threading;
-    using System.Threading.Tasks;
 
     /// <summary>
     /// Implementación de la política de clientes frecuentes que analiza los patrones

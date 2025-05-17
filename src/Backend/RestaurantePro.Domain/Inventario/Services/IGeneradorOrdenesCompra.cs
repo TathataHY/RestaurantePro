@@ -1,8 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Services
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
+namespace RestaurantePro.Domain.Inventario.Services{
 
     /// <summary>
     /// Interfaz para el generador de órdenes de compra automáticas

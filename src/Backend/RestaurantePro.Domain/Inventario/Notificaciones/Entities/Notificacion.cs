@@ -1,9 +1,5 @@
 namespace RestaurantePro.Domain.Inventario.Notificaciones.Entities
 {
-    using RestaurantePro.Domain.Core.Base;
-    using RestaurantePro.Domain.Inventario.Notificaciones.Enums;
-    using RestaurantePro.Domain.Inventario.Notificaciones.Events;
-
     /// <summary>
     /// Entidad que representa una notificación en el sistema
     /// </summary>

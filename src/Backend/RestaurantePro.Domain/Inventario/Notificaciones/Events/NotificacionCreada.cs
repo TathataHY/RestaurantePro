@@ -1,8 +1,5 @@
 namespace RestaurantePro.Domain.Inventario.Notificaciones.Events
 {
-    using RestaurantePro.Domain.Core.Base;
-    using RestaurantePro.Domain.Inventario.Notificaciones.Enums;
-    using System;
 
     /// <summary>
     /// Evento de dominio emitido cuando se crea una nueva notificación
