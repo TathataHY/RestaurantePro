@@ -66,6 +66,21 @@ RestaurantePro.Domain/
 | Proveedor | ✅ Completo | ✅ Completas | Gestión de proveedores |
 | ContactoProveedor | ✅ Completo | ✅ Completas | Contactos de proveedores |
 
+## Estandarización de Eventos de Dominio
+
+Se ha completado la estandarización de eventos de dominio siguiendo estas reglas:
+
+1. Los nombres de eventos de dominio no llevan el sufijo "Event"
+2. Las propiedades de eventos no deben tener el mismo nombre que la clase
+3. Cada evento refleja una acción específica en pasado (ej. ClienteCreado, PuntosAgregados)
+
+| Contexto | Eventos Estandarizados | Estado |
+|----------|------------------------|--------|
+| Comercial | ClienteCreado, ClienteDesactivado, PuntosAgregados, etc. | ✅ Completo |
+| Inventario | IngredienteCreado, StockActualizado, MovimientoRegistrado, etc. | ✅ Completo |
+| Operaciones | ComandaCreada, ReservacionConfirmada, etc. | ✅ Completo |
+| Proveedores | ProveedorRegistrado, ContactoProveedorAgregado, etc. | ✅ Completo |
+
 ## Relaciones entre Contextos
 
 ### Comercial ↔ Operaciones
@@ -88,19 +103,22 @@ RestaurantePro.Domain/
 
 ## Próximos pasos (TDD)
 
-1. **Completar integración entre contextos**:
-   - Implementar servicios de dominio para la integración entre contextos
-   - Crear eventos de integración entre Inventario y Proveedores
-   - Implementar políticas de manejo de eventos entre contextos
+1. **Servicios de integración entre contextos**:
+   - Implementar `ServicioGeneracionOrdenesCompra`: Servicio que analiza niveles de inventario y genera órdenes de compra automáticas
+   - Implementar `ServicioNotificaciones`: Para manejar notificaciones entre contextos (ej. notificar stock bajo a administradores)
+   
+2. **Políticas de dominio**:
+   - Implementar política `StockBajoPolicy`: Para manejar automáticamente acciones cuando el stock está por debajo del mínimo
+   - Implementar política `ClientesFrecuentesPolicy`: Para analizar patrones de consumo y ofrecer beneficios
 
-2. **Implementar servicios de dominio adicionales**:
-   - Servicio para gestión de órdenes de compra automáticas
-   - Servicio para gestión de reportes y análisis de datos
+3. **Mejoras en eventos de dominio**:
+   - Implementar un sistema de suscripción a eventos entre contextos delimitados
+   - Mejorar el sistema de registro de eventos para facilitar la auditoría
 
-3. **Completar validaciones**:
-   - Reglas de negocio para límites de reservas
-   - Validaciones para creación de comandas
-   - Validaciones para gestión de proveedores
+4. **Capa de Aplicación**:
+   - Definir DTOs para la comunicación con capas externas
+   - Implementar validaciones a nivel de aplicación
+   - Crear servicios de aplicación para orquestar casos de uso
 
 ## Registro de ciclos TDD completados
 
@@ -112,6 +130,7 @@ RestaurantePro.Domain/
 | 2023-11-05 | Proveedor | Pruebas → Implementación → Refactor |
 | 2023-11-10 | IDateTimeService | Pruebas → Implementación → Refactor |
 | 2023-11-12 | ServicioFidelizacion | Pruebas → Implementación → Refactor |
+| 2023-11-20 | Estandarización de Eventos | Refactorización → Pruebas → Validación |
 
 ## Decisiones de Diseño
 
@@ -123,3 +142,21 @@ RestaurantePro.Domain/
 - Se separan interfaces de repositorio por contexto
 - Los servicios de dominio implementan lógica que involucra múltiples agregados
 - Interfaces y clases de implementación se separan en archivos diferentes
+- Los eventos de dominio se nombran sin sufijo "Event" y en tiempo pasado
+
+## Plan de integración con otras capas
+
+1. **Capa de Infraestructura**:
+   - Implementar repositorios con Entity Framework Core
+   - Configurar inyección de dependencias
+   - Implementar servicios de persistencia de eventos de dominio
+
+2. **Capa de Aplicación**:
+   - Desarrollar servicios de aplicación que orquesten los casos de uso
+   - Implementar DTOs y mapeos desde/hacia entidades de dominio
+   - Agregar validaciones a nivel de aplicación
+
+3. **Capa de Presentación/API**:
+   - Desarrollar controladores API para exponer funcionalidades
+   - Implementar autenticación y autorización
+   - Configurar middleware para manejo de errores y logging
