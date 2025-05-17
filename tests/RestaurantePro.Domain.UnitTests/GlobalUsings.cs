@@ -13,6 +13,9 @@ global using System.Threading.Tasks;
 global using System.Text.RegularExpressions;
 global using System.Globalization;
 
+// Microsoft Extensions
+global using Microsoft.Extensions.DependencyInjection;
+
 // Domain core imports - Base
 global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;

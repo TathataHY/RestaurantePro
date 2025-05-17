@@ -9,11 +9,11 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// Envía una notificación de stock bajo para un ingrediente
         /// </summary>
         /// <param name="ingredienteId">ID del ingrediente</param>
-        /// <param name="nombreIngrediente">Nombre del ingrediente</param>
+        /// <param name="nombre">Nombre del ingrediente</param>
         /// <param name="stockActual">Stock actual</param>
         /// <param name="stockMinimo">Stock mínimo</param>
         /// <returns>Identificador de la notificación enviada</returns>
-        Task<Guid> NotificarStockBajo(Guid ingredienteId, string nombreIngrediente, decimal stockActual, decimal stockMinimo);
+        Task<Guid> NotificarStockBajo(Guid ingredienteId, string nombre, decimal stockActual, decimal stockMinimo);
         
         /// <summary>
         /// Envía una notificación de orden de compra generada

@@ -8,6 +8,9 @@ global using System.Globalization;
 global using System.Text;
 global using System.Threading;
 
+// Microsoft Extensions
+global using Microsoft.Extensions.DependencyInjection;
+
 // Domain Base
 global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;

@@ -20,7 +20,7 @@ namespace RestaurantePro.Domain.Inventario.Services
         }
         
         /// <inheritdoc />
-        public async Task<Guid> NotificarStockBajo(Guid ingredienteId, string nombreIngrediente, decimal stockActual, decimal stockMinimo)
+        public async Task<Guid> NotificarStockBajo(Guid ingredienteId, string nombre, decimal stockActual, decimal stockMinimo)
         {
             // Obtener los destinatarios (administradores del sistema)
             var administradores = await ObtenerAdministradoresAsync();
@@ -33,8 +33,8 @@ namespace RestaurantePro.Domain.Inventario.Services
             // Para cada administrador, crear una notificación
             foreach (var adminId in administradores)
             {
-                var titulo = $"Stock bajo: {nombreIngrediente}";
-                var mensaje = $"El ingrediente {nombreIngrediente} tiene un stock actual de {stockActual} unidades, por debajo del mínimo recomendado ({stockMinimo} unidades).";
+                var titulo = $"Stock bajo: {nombre}";
+                var mensaje = $"El ingrediente {nombre} tiene un stock actual de {stockActual} unidades, por debajo del mínimo recomendado ({stockMinimo} unidades).";
                 
                 var notificacion = Notificacion.Crear(
                     titulo,
