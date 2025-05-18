@@ -104,6 +104,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
             PrecioUnitario = nuevoPrecioUnitario;
             Subtotal = nuevaCantidad * nuevoPrecioUnitario;
             MarkAsModified();
+            ValidarInvariantes();
         }
 
         /// <summary>
@@ -116,7 +117,9 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
                 throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(cantidad));
 
             Cantidad += cantidad;
+            Subtotal = Cantidad * PrecioUnitario;
             MarkAsModified();
+            ValidarInvariantes();
         }
         
         /// <summary>
@@ -139,14 +142,45 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
                 
             CantidadRecibida = cantidadRecibida;
             MarkAsModified();
+            ValidarInvariantes();
             
-            // Aquí podríamos emitir un evento de dominio si se completa la recepción
+            // Emitir evento de dominio si se completa la recepción
             if (EstaCompletoEnRecepcion)
             {
-                // AddDomainEvent(new ItemOrdenCompraCompletadoEvent(Id, OrdenCompraId, IngredienteId));
+                AddDomainEvent(new ItemOrdenCompraCompletado(Id, OrdenCompraId, IngredienteId, CantidadRecibida));
             }
         }
         
+        /// <summary>
+        /// Valida todas las invariantes del ítem.
+        /// Se llama después de cada operación que modifica el estado para asegurar la consistencia.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Si alguna invariante se viola</exception>
+        private void ValidarInvariantes()
+        {
+            if (OrdenCompraId == Guid.Empty)
+                throw new InvalidOperationException("El item debe pertenecer a una orden de compra");
+                
+            if (IngredienteId == Guid.Empty)
+                throw new InvalidOperationException("El item debe estar asociado a un ingrediente");
+                
+            if (Cantidad <= 0)
+                throw new InvalidOperationException($"La cantidad debe ser mayor que cero. Valor actual: {Cantidad}");
+                
+            if (PrecioUnitario < 0)
+                throw new InvalidOperationException($"El precio unitario no puede ser negativo. Valor actual: {PrecioUnitario}");
+                
+            decimal subtotalCalculado = Cantidad * PrecioUnitario;
+            if (Math.Abs(Subtotal - subtotalCalculado) > 0.01m)
+                throw new InvalidOperationException($"Inconsistencia en el subtotal. Calculado: {subtotalCalculado}, Actual: {Subtotal}");
+            
+            if (CantidadRecibida < 0)
+                throw new InvalidOperationException($"La cantidad recibida no puede ser negativa. Valor actual: {CantidadRecibida}");
+                
+            if (CantidadRecibida > Cantidad)
+                throw new InvalidOperationException($"La cantidad recibida no puede ser mayor que la solicitada. Recibida: {CantidadRecibida}, Solicitada: {Cantidad}");
+        }
+
         private OrdenCompra ObtenerOrden()
         {
             // En un entorno real, esto se haría a través de un repositorio

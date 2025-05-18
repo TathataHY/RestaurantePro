@@ -142,12 +142,19 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
             {
                 // Actualizar la cantidad del item existente
                 itemExistente.AumentarCantidad(cantidad);
+                
+                // Recalcular el total (que indirectamente llamará a ValidarInvariantes)
+                RecalcularTotal();
+                
                 return itemExistente;
             }
 
             // Crear un nuevo item
             var nuevoItem = ItemOrdenCompra.Crear(Id, ingredienteId, nombre, cantidad, unidadMedida);
             _items.Add(nuevoItem);
+            
+            // Recalcular el total (que indirectamente llamará a ValidarInvariantes)
+            RecalcularTotal();
 
             AddDomainEvent(new ItemOrdenCompraAgregado(Id, ingredienteId, nombre, cantidad));
 
@@ -197,6 +204,9 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
             FechaEnvio = DateTime.Now;
             MarkAsModified();
             
+            // Validar invariantes antes de emitir eventos
+            ValidarInvariantes();
+            
             AddDomainEvent(new OrdenCompraEnviada(Id, FechaEnvio.Value, Total));
         }
         
@@ -215,6 +225,9 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
             FechaRecepcion = fechaRecepcion;
             ObservacionesRecepcion = observaciones ?? string.Empty;
             MarkAsModified();
+            
+            // Validar invariantes antes de emitir eventos
+            ValidarInvariantes();
             
             AddDomainEvent(new OrdenCompraRecibida(Id, fechaRecepcion, ObservacionesRecepcion));
         }
@@ -237,6 +250,9 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
             MotivoCancelacion = motivo;
             MarkAsModified();
             
+            // Validar invariantes antes de emitir eventos
+            ValidarInvariantes();
+            
             AddDomainEvent(new OrdenCompraCancelada(Id, FechaCancelacion.Value, motivo));
         }
         
@@ -247,6 +263,49 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         {
             Total = _items.Sum(i => i.Subtotal);
             MarkAsModified();
+            ValidarInvariantes();
+        }
+        
+        /// <summary>
+        /// Valida todas las invariantes del agregado OrdenCompra.
+        /// Se llama después de cada operación que modifica el estado para asegurar la consistencia.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Si alguna invariante se viola</exception>
+        private void ValidarInvariantes()
+        {
+            // Validar que el proveedor esté asignado
+            if (ProveedorId == Guid.Empty)
+                throw new InvalidOperationException("La orden debe tener un proveedor asignado");
+            
+            // Validar que el estado sea válido
+            if (!Enum.IsDefined(typeof(EstadoOrdenCompra), Estado))
+                throw new InvalidOperationException($"Estado de orden no válido: {Estado}");
+            
+            // Validar que el total sea consistente con los items
+            decimal totalCalculado = _items.Sum(i => i.Subtotal);
+            if (Math.Abs(Total - totalCalculado) > 0.01m)
+                throw new InvalidOperationException($"Inconsistencia en el total de la orden. Calculado: {totalCalculado}, Actual: {Total}");
+            
+            // Validar coherencia de fechas
+            if (FechaEntregaEstimada < FechaEmision)
+                throw new InvalidOperationException("La fecha de entrega estimada no puede ser anterior a la fecha de emisión");
+            
+            if (FechaEnvio.HasValue && FechaEnvio < FechaEmision)
+                throw new InvalidOperationException("La fecha de envío no puede ser anterior a la fecha de emisión");
+            
+            if (FechaRecepcion.HasValue && !FechaEnvio.HasValue)
+                throw new InvalidOperationException("No se puede registrar recepción sin haber enviado la orden");
+            
+            if (FechaRecepcion.HasValue && FechaRecepcion < FechaEnvio)
+                throw new InvalidOperationException("La fecha de recepción no puede ser anterior a la fecha de envío");
+                
+            // Validar coherencia de la cancelación
+            if (Estado == EstadoOrdenCompra.Cancelada && string.IsNullOrWhiteSpace(MotivoCancelacion))
+                throw new InvalidOperationException("Una orden cancelada debe tener un motivo de cancelación");
+                
+            // Validar que una orden enviada tenga items
+            if ((Estado == EstadoOrdenCompra.Enviada || Estado == EstadoOrdenCompra.Recibida) && !_items.Any())
+                throw new InvalidOperationException("La orden debe tener al menos un item");
         }
         
         /// <summary>
