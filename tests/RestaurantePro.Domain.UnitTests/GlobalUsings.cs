@@ -6,6 +6,7 @@ global using Moq;
 global using Moq.Language;
 global using Moq.Language.Flow;
 global using System;
+global using System.Diagnostics;
 global using System.Collections.Generic;
 global using System.Linq;
 global using System.Reflection;

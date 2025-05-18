@@ -31,6 +31,14 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces
         Task<IEnumerable<Reservacion>> ObtenerPorClienteAsync(Guid clienteId);
 
         /// <summary>
+        /// Obtiene las reservaciones pendientes y confirmadas de un cliente específico
+        /// </summary>
+        /// <param name="clienteId">ID del cliente</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de reservaciones pendientes y confirmadas del cliente</returns>
+        Task<IEnumerable<Reservacion>> ObtenerReservacionesPendientesPorClienteIdAsync(Guid clienteId, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Obtiene reservaciones por estado
         /// </summary>
         Task<IEnumerable<Reservacion>> ObtenerPorEstadoAsync(EstadoReservacion estado);

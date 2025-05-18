@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
 {
     public class ComandaCreada_VerificarDisponibilidadHandlerTests
