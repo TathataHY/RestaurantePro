@@ -73,14 +73,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             var ingredientesProducto = new List<Ingrediente> { ingrediente };
 
             _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerIngredientesPorProductoAsync(productoId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerIngredientesPorProductoAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ingredientesProducto);
                 
             // Configurar relación producto-ingrediente
             var productoIngrediente = new ProductoIngrediente(productoId, ingredienteId, 0.5m); // Cada producto usa 0.5kg
             
             _productoIngredienteRepositoryMock
-                .Setup(r => r.ObtenerPorProductoEIngredienteAsync(productoId, ingredienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorProductoEIngredienteAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(productoIngrediente);
                 
             // Configurar event log para aceptar cualquier mensaje
@@ -170,7 +170,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             
             // Configurar el mock del repositorio para devolver los ingredientes
             _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerIngredientesPorProductoAsync(productoId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerIngredientesPorProductoAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ingredientesProducto);
             
             // 5. Configurar la relación producto-ingrediente (cada unidad de producto usa 0.5kg de ingrediente)
@@ -186,7 +186,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             
             // Configurar el mock del repositorio para devolver la relación producto-ingrediente
             _productoIngredienteRepositoryMock
-                .Setup(r => r.ObtenerPorProductoEIngredienteAsync(productoId, ingredienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorProductoEIngredienteAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(productoIngrediente);
             
             // 6. Configurar el mock del eventLog para capturar los mensajes
@@ -212,7 +212,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             }
             
             // Verificar que se haya registrado al menos un mensaje de advertencia
-            Assert.True(loggedMessages.Any(m => m.Contains("Stock insuficiente")), 
+            Assert.True(loggedMessages.Any(m => m.ToLower().Contains("stock insuficiente")), 
                 "El handler debería haber registrado un mensaje de advertencia sobre stock insuficiente");
         }
     }

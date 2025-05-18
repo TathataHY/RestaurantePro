@@ -81,16 +81,20 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                     Console.WriteLine(logMessage);
                     
                     // Obtener los ingredientes necesarios para el producto
+                    Console.WriteLine($"Buscando ingredientes para el producto {producto.Id}...");
                     var ingredientes = await _ingredienteRepository.ObtenerIngredientesPorProductoAsync(producto.Id, cancellationToken);
+                    
+                    Console.WriteLine($"Resultado de ObtenerIngredientesPorProductoAsync: {(ingredientes == null ? "NULL" : ingredientes.Count().ToString())} ingredientes");
                     
                     if (ingredientes == null || !ingredientes.Any())
                     {
                         logMessage = $"No se encontraron ingredientes para el producto {producto.Nombre}";
                         Console.WriteLine(logMessage);
+                        await _eventLog.LogEvent(evento, logMessage, cancellationToken);
                         continue;
                     }
                     
-                    logMessage = $"Se encontraron {ingredientes.Count} ingredientes para el producto {producto.Nombre}";
+                    logMessage = $"Se encontraron {ingredientes.Count()} ingredientes para el producto {producto.Nombre}";
                     Console.WriteLine(logMessage);
                     
                     // Verificar el stock disponible para cada ingrediente
@@ -107,6 +111,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                         {
                             logMessage = $"No se encontró la relación producto-ingrediente para {producto.Id} e {ingrediente.Id}";
                             Console.WriteLine(logMessage);
+                            await _eventLog.LogEvent(evento, logMessage, cancellationToken);
                             continue;
                         }
                         
@@ -136,7 +141,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 // Si hay ingredientes con stock insuficiente, registrar una advertencia
                 if (ingredientesInsuficientes.Any())
                 {
-                    var mensaje = $"Advertencia: Stock insuficiente para comanda {evento.ComandaId}:\n";
+                    var mensaje = $"Advertencia: stock insuficiente para comanda {evento.ComandaId}:\n";
                     foreach (var item in ingredientesInsuficientes)
                     {
                         mensaje += $"- {item.Nombre}: Stock actual {item.StockActual}, Necesario {item.StockNecesario}\n";
