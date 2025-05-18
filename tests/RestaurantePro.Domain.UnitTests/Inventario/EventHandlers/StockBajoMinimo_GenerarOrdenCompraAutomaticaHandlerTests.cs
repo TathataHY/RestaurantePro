@@ -38,10 +38,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
         public async Task Handle_ConIngredienteYProveedorValidos_DebeGenerarOrdenCompra()
         {
             // Arrange
-            var evento = new Ingredientes.Events.StockBajoMinimo(_ingredienteId, "Tomate", 5m, 10m);
+            var evento = new RestaurantePro.Domain.Inventario.Ingredientes.Events.StockBajoMinimo(_ingredienteId, "Tomate", 5m, 10m);
             
             // Crear ingrediente usando reflexión para simular uno existente
-            var ingrediente = Ingrediente.Crear("Tomate", "TOM001", "Tomate rojo", Ingredientes.Enums.UnidadMedida.Kilogramo, 10m, 5m);
+            var ingrediente = Ingrediente.Crear("Tomate", "TOM001", "Tomate rojo", RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo, 10m, 5m);
             typeof(EntityBase).GetProperty("Id").SetValue(ingrediente, _ingredienteId);
             
             // Configurar proveedor principal
@@ -115,10 +115,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
         public async Task Handle_SinProveedorPrincipal_NoDebeGenerarOrden()
         {
             // Arrange
-            var evento = new Ingredientes.Events.StockBajoMinimo(_ingredienteId, "Tomate", 5m, 10m);
+            var evento = new RestaurantePro.Domain.Inventario.Ingredientes.Events.StockBajoMinimo(_ingredienteId, "Tomate", 5m, 10m);
             
             // Crear ingrediente usando método de fábrica
-            var ingrediente = Ingrediente.Crear("Tomate", "TOM001", "Tomate rojo", Ingredientes.Enums.UnidadMedida.Kilogramo, 10m, 5m);
+            var ingrediente = Ingrediente.Crear("Tomate", "TOM001", "Tomate rojo", RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo, 10m, 5m);
             typeof(EntityBase).GetProperty("Id").SetValue(ingrediente, _ingredienteId);
             
             // ProveedorPrincipalId es null por defecto
@@ -150,10 +150,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
         public async Task Handle_ConOrdenPendienteExistente_NoDebeGenerarNuevaOrden()
         {
             // Arrange
-            var evento = new Ingredientes.Events.StockBajoMinimo(_ingredienteId, "Tomate", 5m, 10m);
+            var evento = new RestaurantePro.Domain.Inventario.Ingredientes.Events.StockBajoMinimo(_ingredienteId, "Tomate", 5m, 10m);
             
             // Crear ingrediente usando método de fábrica
-            var ingrediente = Ingrediente.Crear("Tomate", "TOM001", "Tomate rojo", Ingredientes.Enums.UnidadMedida.Kilogramo, 10m, 5m);
+            var ingrediente = Ingrediente.Crear("Tomate", "TOM001", "Tomate rojo", RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo, 10m, 5m);
             typeof(EntityBase).GetProperty("Id").SetValue(ingrediente, _ingredienteId);
             
             // Configurar proveedor principal
@@ -179,7 +179,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             
             // Crear una orden pendiente que ya incluye el ingrediente
             var ordenExistente = OrdenCompra.Crear(_proveedorId, "Orden existente", _fechaActual);
-            ordenExistente.AgregarItem(_ingredienteId, "Tomate", 5, Ingredientes.Enums.UnidadMedida.Kilogramo);
+            ordenExistente.AgregarItem(_ingredienteId, "Tomate", 5, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
             
             // Configurar mocks
             _ingredienteRepositoryMock
