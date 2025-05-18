@@ -45,6 +45,7 @@ global using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
 global using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 global using RestaurantePro.Domain.Operaciones.Comandas.Events;
 global using RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda;
+global using RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda;
 global using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 
 // Domain Operaciones - Reservaciones
