@@ -1,7 +1,24 @@
 namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
 {
     /// <summary>
-    /// Entidad que representa una orden de compra a un proveedor
+    /// Agregado raíz que representa una orden de compra a un proveedor.
+    /// 
+    /// Invariantes:
+    /// - Una orden de compra debe tener al menos un item para poder ser enviada
+    /// - El total de la orden debe reflejar siempre la suma de los items
+    /// - Una orden cancelada no puede cambiar a ningún otro estado
+    /// - Solo una orden en estado pendiente puede modificar sus items
+    /// - La orden debe tener un proveedor válido asignado
+    /// 
+    /// Ciclo de vida:
+    /// - Creación → Pendiente → Enviada → Recibida → [Finalizada]
+    ///                      ↘ Cancelada
+    /// 
+    /// Reglas de negocio:
+    /// - Cuando una orden cambia de estado, se emite el evento correspondiente
+    /// - Las órdenes automáticas se generan a partir de eventos de stock bajo
+    /// - Los items de orden son entidades internas al agregado
+    /// - Solo se puede cancelar una orden pendiente o enviada
     /// </summary>
     public class OrdenCompra : EntityBase, IAggregateRoot
     {
@@ -61,7 +78,8 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         public decimal Total { get; private set; }
         
         /// <summary>
-        /// Items de la orden de compra
+        /// Items de la orden de compra.
+        /// Colección interna del agregado.
         /// </summary>
         private readonly List<ItemOrdenCompra> _items = new List<ItemOrdenCompra>();
         
@@ -80,7 +98,8 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         private OrdenCompra() { }
         
         /// <summary>
-        /// Crea una nueva orden de compra
+        /// Crea una nueva orden de compra.
+        /// Factory method que garantiza la creación de órdenes en estado válido.
         /// </summary>
         /// <param name="proveedorId">ID del proveedor</param>
         /// <param name="observaciones">Observaciones de la orden</param>
@@ -102,13 +121,16 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         }
         
         /// <summary>
-        /// Agrega un item a la orden de compra
+        /// Agrega un item a la orden de compra.
+        /// Si ya existe un item para el mismo ingrediente, aumenta su cantidad.
+        /// Solo puede usarse en órdenes en estado Pendiente.
         /// </summary>
         /// <param name="ingredienteId">ID del ingrediente</param>
         /// <param name="nombre">Nombre del ingrediente</param>
         /// <param name="cantidad">Cantidad solicitada</param>
         /// <param name="unidadMedida">Unidad de medida</param>
-        /// <returns>El item agregado</returns>
+        /// <returns>El item agregado o actualizado</returns>
+        /// <exception cref="InvalidOperationException">Si la orden no está en estado Pendiente</exception>
         public ItemOrdenCompra AgregarItem(Guid ingredienteId, string nombre, decimal cantidad, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidadMedida)
         {
             if (Estado != EstadoOrdenCompra.Pendiente)

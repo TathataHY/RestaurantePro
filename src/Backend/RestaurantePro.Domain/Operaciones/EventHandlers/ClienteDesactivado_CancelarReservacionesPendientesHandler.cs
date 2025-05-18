@@ -2,7 +2,15 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
 {
     /// <summary>
     /// Manejador de eventos que cancela todas las reservaciones pendientes
-    /// de un cliente cuando éste es desactivado del sistema
+    /// de un cliente cuando éste es desactivado del sistema.
+    /// 
+    /// Este manejador representa un ejemplo de comunicación entre contextos delimitados:
+    /// - Comercial (Cliente) → Operaciones (Reservaciones)
+    /// 
+    /// El contexto Comercial emite el evento ClienteDesactivado cuando un cliente
+    /// es desactivado, y este manejador en el contexto Operaciones reacciona
+    /// cancelando automáticamente las reservaciones pendientes, manteniendo
+    /// así la consistencia del sistema sin acoplar directamente ambos contextos.
     /// </summary>
     public class ClienteDesactivado_CancelarReservacionesPendientesHandler : IDomainEventHandler<Comercial.Clientes.Events.Cliente.ClienteDesactivado>
     {
@@ -19,7 +27,16 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
         
         /// <summary>
         /// Maneja el evento ClienteDesactivado, buscando y cancelando todas las reservaciones
-        /// pendientes del cliente que ha sido desactivado
+        /// pendientes del cliente que ha sido desactivado.
+        /// 
+        /// Flujo de ejecución:
+        /// 1. Obtiene todas las reservaciones pendientes o confirmadas del cliente
+        /// 2. Para cada reservación, aplica la cancelación con el motivo "Cliente desactivado"
+        /// 3. Actualiza las reservaciones en el repositorio
+        /// 4. Registra los resultados en el log de eventos
+        /// 
+        /// Esta operación es idempotente y segura ante fallos, ya que verifica
+        /// el estado de cada reservación antes de cancelarla.
         /// </summary>
         public async Task Handle(Comercial.Clientes.Events.Cliente.ClienteDesactivado evento, CancellationToken cancellationToken = default)
         {

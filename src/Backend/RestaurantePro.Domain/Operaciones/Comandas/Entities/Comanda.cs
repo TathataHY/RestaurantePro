@@ -1,7 +1,24 @@
 namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
 {
     /// <summary>
-    /// Aggregate Root que representa una comanda en el restaurante
+    /// Agregado que representa una comanda (orden) en el restaurante.
+    /// 
+    /// Invariantes:
+    /// - Una comanda debe tener una mesa asignada y un mesero responsable
+    /// - Una comanda finalizada debe tener al menos un producto
+    /// - El total de la comanda debe reflejar la suma de los productos con impuestos y descuentos
+    /// - Las transiciones de estado deben seguir el flujo establecido: Creada → EnProceso → Lista → Entregada → Finalizada
+    /// - Una comanda cancelada no puede ser reactivada
+    /// 
+    /// Ciclo de vida:
+    /// - Creación → EnProceso → Lista → Entregada → Finalizada
+    ///           ↘ Cancelada
+    /// 
+    /// Reglas de negocio:
+    /// - Solo se pueden agregar/modificar productos en comandas con estado Creada o EnProceso
+    /// - Los descuentos se aplican sobre el subtotal y afectan el cálculo del total
+    /// - Cada cambio de estado genera eventos de dominio para notificar a otros subsistemas
+    /// - La finalización de una comanda genera eventos para acumular puntos de fidelización
     /// </summary>
     public class Comanda : EntityBase, IAggregateRoot
     {
@@ -18,7 +35,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         public Guid MeseroId { get; private set; }
 
         /// <summary>
-        /// ID del cliente asociado a la comanda
+        /// ID del cliente asociado a la comanda.
+        /// Opcional, pero necesario para aplicar descuentos de fidelización.
         /// </summary>
         public Guid? ClienteId { get; private set; }
 
@@ -28,43 +46,56 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         public new DateTime FechaCreacion { get; private set; }
 
         /// <summary>
-        /// Fecha de actualización de la comanda
+        /// Fecha de actualización de la comanda.
+        /// Se actualiza automáticamente con cada cambio en la comanda.
         /// </summary>
         public new DateTime? FechaActualizacion { get; private set; }
 
         /// <summary>
-        /// Estado actual de la comanda
+        /// Estado actual de la comanda.
+        /// Define las operaciones permitidas y el flujo de proceso.
         /// </summary>
         public EstadoComanda Estado { get; private set; }
 
         /// <summary>
-        /// Observaciones adicionales para la comanda
+        /// Observaciones adicionales para la comanda.
+        /// Puede incluir requisitos especiales, notas para cocina, etc.
         /// </summary>
         public string? Observaciones { get; private set; }
 
         /// <summary>
-        /// Total de la comanda
+        /// Total de la comanda.
+        /// Objeto de valor que encapsula el cálculo de subtotal, impuestos y total.
         /// </summary>
         public TotalComanda? Total { get; private set; }
 
         /// <summary>
-        /// Descuento por fidelización aplicado a la comanda
+        /// Descuento por fidelización aplicado a la comanda.
+        /// Solo aplica cuando la comanda está asociada a un cliente con tarjeta de fidelización.
         /// </summary>
         public decimal? DescuentoFidelizacion { get; private set; }
 
         /// <summary>
-        /// Detalles de los productos incluidos en la comanda
+        /// Detalles de los productos incluidos en la comanda.
+        /// Colección de solo lectura para preservar la encapsulación.
         /// </summary>
         public IReadOnlyCollection<ItemComanda> Items => _items.AsReadOnly();
 
         /// <summary>
-        /// Constructor privado para EF Core
+        /// Constructor privado para EF Core.
+        /// La creación de comandas debe hacerse a través del factory method Crear().
         /// </summary>
         private Comanda() { }
 
         /// <summary>
-        /// Constructor para crear una nueva comanda
+        /// Factory method para crear una nueva comanda.
+        /// Este es el único punto de entrada para crear instancias válidas.
         /// </summary>
+        /// <param name="mesaId">ID de la mesa donde se crea la comanda</param>
+        /// <param name="meseroId">ID del mesero responsable</param>
+        /// <param name="clienteId">ID del cliente (opcional)</param>
+        /// <param name="observaciones">Observaciones iniciales (opcional)</param>
+        /// <returns>Una nueva instancia de Comanda en estado Creada</returns>
         public static Comanda Crear(Guid mesaId, Guid meseroId, Guid? clienteId = null, string? observaciones = null)
         {
             var comanda = new Comanda
@@ -85,8 +116,14 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         }
 
         /// <summary>
-        /// Método para agregar un producto a la comanda
+        /// Agrega un producto a la comanda.
+        /// Solo puede ejecutarse para comandas en estado Creada o EnProceso.
         /// </summary>
+        /// <param name="productoId">ID del producto a agregar</param>
+        /// <param name="cantidad">Cantidad del producto</param>
+        /// <param name="precioUnitario">Precio unitario del producto</param>
+        /// <param name="observaciones">Observaciones específicas para este producto</param>
+        /// <exception cref="InvalidOperationException">Si la comanda no está en estado Creada o EnProceso</exception>
         public void AgregarProducto(Guid productoId, int cantidad, decimal precioUnitario, string? observaciones = null)
         {
             ValidarComandaActiva();
@@ -96,13 +133,17 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
 
             RecalcularTotal();
             ActualizarFecha();
+            ValidarInvariantes();
 
             AddDomainEvent(new ProductoAgregadoAComanda(Id, productoId, cantidad));
         }
 
         /// <summary>
-        /// Método para actualizar el estado de la comanda
+        /// Actualiza el estado de la comanda siguiendo el flujo establecido.
+        /// Valida que la transición sea correcta según las reglas de negocio.
         /// </summary>
+        /// <param name="nuevoEstado">Nuevo estado de la comanda</param>
+        /// <exception cref="InvalidOperationException">Si la transición de estado no es válida</exception>
         public void ActualizarEstado(EstadoComanda nuevoEstado)
         {
             // Validar transición de estado válida
@@ -120,6 +161,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             var estadoAnterior = Estado;
             Estado = nuevoEstado;
             ActualizarFecha();
+            ValidarInvariantes();
 
             AddDomainEvent(new EstadoComandaActualizado(Id, estadoAnterior, nuevoEstado));
 
@@ -143,6 +185,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 : $"{Observaciones} | Cancelada: {motivo}";
 
             ActualizarFecha();
+            ValidarInvariantes();
 
             AddDomainEvent(new ComandaCancelada(Id, motivo));
         }
@@ -174,9 +217,81 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             // Recalculamos el total con el descuento
             RecalcularTotal();
             ActualizarFecha();
+            ValidarInvariantes();
 
             // Agregamos un evento de descuento aplicado (si se necesita implementar)
             // AddDomainEvent(new DescuentoFidelizacionAplicado(Id, DescuentoFidelizacion.Value, porcentajeDescuento));
+        }
+
+        /// <summary>
+        /// Método para remover un producto específico de la comanda
+        /// </summary>
+        /// <param name="itemId">Id del item a remover</param>
+        /// <exception cref="InvalidOperationException">Si la comanda no está en estado activo o el item no existe</exception>
+        public void RemoverProducto(Guid itemId)
+        {
+            ValidarComandaActiva();
+            
+            var item = _items.FirstOrDefault(i => i.Id == itemId);
+            if (item == null)
+                throw new InvalidOperationException($"No existe un item con ID {itemId} en esta comanda");
+                
+            _items.Remove(item);
+            
+            RecalcularTotal();
+            ActualizarFecha();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new ProductoRemovidoDeComanda(Id, item.ProductoId, item.Cantidad));
+        }
+
+        /// <summary>
+        /// Valida todas las invariantes del agregado Comanda.
+        /// Se llama después de cada operación que modifica el estado para asegurar la consistencia.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Si alguna invariante se viola</exception>
+        private void ValidarInvariantes()
+        {
+            // Verificar que el estado sea válido
+            if (!Enum.IsDefined(typeof(EstadoComanda), Estado))
+                throw new InvalidOperationException($"Estado de comanda no válido: {Estado}");
+            
+            // Verificar que la comanda finalizada tiene productos
+            if (Estado == EstadoComanda.Finalizada && !Items.Any())
+                throw new InvalidOperationException("Una comanda finalizada debe tener al menos un producto");
+            
+            // Verificar que el total sea consistente con los items
+            decimal subtotalCalculado = _items.Sum(i => i.Subtotal);
+            decimal descuento = DescuentoFidelizacion ?? 0;
+            
+            if (Total == null)
+                throw new InvalidOperationException("El total de la comanda no puede ser nulo");
+                
+            if (Math.Abs(Total.Subtotal - subtotalCalculado) > 0.01m)
+                throw new InvalidOperationException($"Inconsistencia en el subtotal de la comanda. Calculado: {subtotalCalculado}, Actual: {Total.Subtotal}");
+            
+            // Verificar que el descuento sea válido
+            if (DescuentoFidelizacion.HasValue)
+            {
+                if (DescuentoFidelizacion < 0)
+                    throw new InvalidOperationException("El descuento no puede ser negativo");
+                    
+                if (DescuentoFidelizacion > subtotalCalculado)
+                    throw new InvalidOperationException("El descuento no puede ser mayor que el subtotal");
+            }
+            
+            // Verificar que cada item tenga un precio y cantidad válidos
+            foreach (var item in _items)
+            {
+                if (item.ComandaId != Id)
+                    throw new InvalidOperationException($"Item con ID {item.Id} pertenece a otra comanda");
+                    
+                if (item.Cantidad <= 0)
+                    throw new InvalidOperationException($"Item con ID {item.Id} tiene cantidad inválida: {item.Cantidad}");
+                    
+                if (item.PrecioUnitario < 0)
+                    throw new InvalidOperationException($"Item con ID {item.Id} tiene precio unitario inválido: {item.PrecioUnitario}");
+            }
         }
 
         /// <summary>

@@ -1,7 +1,23 @@
 namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 {
     /// <summary>
-    /// Entidad que representa una tarjeta de fidelización para clientes
+    /// Agregado que representa una tarjeta de fidelización para clientes.
+    /// 
+    /// Invariantes:
+    /// - Los puntos acumulados y disponibles nunca pueden ser negativos
+    /// - Solo las tarjetas activas pueden acumular o canjear puntos
+    /// - Cada movimiento de puntos debe registrarse en el historial interno
+    /// - Una vez cancelada, una tarjeta no puede ser reactivada
+    /// - Una tarjeta debe estar vinculada a un cliente válido
+    /// 
+    /// Ciclo de vida:
+    /// - Creación/Emitida → [Activa ↔ Suspendida] → [Cancelada | Expirada | Reemplazada]
+    /// 
+    /// Reglas de negocio:
+    /// - La acumulación de puntos actualiza automáticamente el nivel de fidelización
+    /// - Los niveles de fidelización se determinan por la cantidad total de puntos acumulados
+    /// - Las tarjetas tienen una fecha de expiración y pueden marcarse como expiradas
+    /// - Cada operación de puntos genera un registro en el historial y eventos de dominio
     /// </summary>
     public class TarjetaFidelizacion : EntityBase, IAggregateRoot
     {

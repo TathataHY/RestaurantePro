@@ -1,7 +1,25 @@
 namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
 {
     /// <summary>
-    /// Representa una reservación de mesa en el restaurante
+    /// Agregado que representa una reservación de mesa en el restaurante.
+    /// 
+    /// Invariantes:
+    /// - Una reservación debe tener asociada una mesa válida y un cliente
+    /// - La fecha de reservación debe ser futura al momento de crearla
+    /// - La cantidad de personas debe ser mayor que cero
+    /// - Una reservación cancelada no puede volver a activarse
+    /// - Una reservación completada no puede modificarse
+    /// 
+    /// Ciclo de vida:
+    /// - Creación/Pendiente → [Confirmada → Completada]
+    ///                      ↘ [Cancelada | NoShow]
+    /// 
+    /// Reglas de negocio:
+    /// - Solo se pueden confirmar reservaciones en estado Pendiente
+    /// - Solo se pueden completar reservaciones Confirmadas o Pendientes
+    /// - Solo se pueden cancelar reservaciones Pendientes o Confirmadas
+    /// - Cada cambio de estado genera eventos de dominio
+    /// - La cancelación requiere especificar un motivo
     /// </summary>
     public class Reservacion : EntityBase, IAggregateRoot
     {

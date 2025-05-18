@@ -14,9 +14,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
     /// - Creación → Activo → [Desactivado ↔ Activado] → Eliminado lógico
     /// 
     /// Reglas de negocio:
-    /// - Cuando el stock cae por debajo del mínimo, se genera un evento StockBajoMinimo
-    /// - Se pueden asociar proveedores principales por ID para generar órdenes automáticas
-    /// - Todas las modificaciones al stock se realizan a través de movimientos de inventario
+    /// - Cuando el stock cae por debajo del mínimo, se emite un evento StockBajoMinimo
+    /// - Los movimientos de inventario son inmutables y deben aplicarse secuencialmente
+    /// - Las operaciones de modificación de stock generan movimientos que se registran internamente
     /// </summary>
     public class Ingrediente : EntityBase, IAggregateRoot
     {
@@ -131,6 +131,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             // Agregar a la colección de movimientos
             _movimientos.Add(movimiento);
 
+            // Verificar invariantes después de la modificación
+            ValidarInvariantes();
+
             // Emitir evento de stock actualizado
             AddDomainEvent(new StockActualizado(Id, Nombre, Stock));
 
@@ -166,6 +169,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             // Agregar a la colección de movimientos
             _movimientos.Add(movimiento);
 
+            // Verificar invariantes después de la modificación
+            ValidarInvariantes();
+
             // Verificar si estamos por debajo del stock mínimo
             if (Stock < StockMinimo)
             {
@@ -191,6 +197,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
 
             StockMinimo = nuevoStockMinimo;
             MarkAsModified();
+
+            // Verificar invariantes después de la modificación
+            ValidarInvariantes();
 
             if (Stock < StockMinimo)
             {
@@ -243,6 +252,37 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             AddDomainEvent(new ProveedorPrincipalAsociado(Id, Nombre, proveedorId));
         }
         
+        /// <summary>
+        /// Valida todas las invariantes del agregado Ingrediente.
+        /// Se llama después de cada operación que modifica el estado para asegurar la consistencia.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Si alguna invariante se viola</exception>
+        private void ValidarInvariantes()
+        {
+            // Validar que el stock nunca sea negativo
+            if (Stock < 0)
+                throw new InvalidOperationException($"El stock del ingrediente '{Nombre}' no puede ser negativo. Valor actual: {Stock}");
+            
+            // Validar que el stock mínimo no sea negativo
+            if (StockMinimo < 0)
+                throw new InvalidOperationException($"El stock mínimo del ingrediente '{Nombre}' no puede ser negativo. Valor actual: {StockMinimo}");
+            
+            // Validar que el nombre no esté vacío
+            if (string.IsNullOrWhiteSpace(Nombre))
+                throw new InvalidOperationException("El nombre del ingrediente no puede estar vacío");
+            
+            // Validación de consistencia de movimientos con el stock actual
+            var stockCalculado = 0m;
+            foreach (var movimiento in _movimientos)
+            {
+                stockCalculado = movimiento.CalcularNuevoStock(stockCalculado);
+            }
+            
+            // Comprobar que el stock calculado coincide con el stock actual
+            if (Math.Abs(stockCalculado - Stock) > 0.001m) // Permitir pequeñas diferencias por redondeo
+                throw new InvalidOperationException($"Inconsistencia en el stock del ingrediente '{Nombre}'. Stock actual: {Stock}, Stock calculado desde movimientos: {stockCalculado}");
+        }
+
         /// <summary>
         /// Valida que el ingrediente esté activo para realizar operaciones.
         /// </summary>
