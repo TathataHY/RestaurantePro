@@ -221,7 +221,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new PuntosCanjeados(Id, puntos, PuntosAcumulados, motivo));
+            AddDomainEvent(new RestaurantePro.Domain.Comercial.Clientes.Events.Cliente.PuntosFidelizacionCanjeados(Id, puntos, PuntosAcumulados, motivo));
         }
         
         /// <summary>

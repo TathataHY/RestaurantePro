@@ -1,7 +1,22 @@
 namespace RestaurantePro.Domain.Core.Productos.Entities
 {
     /// <summary>
-    /// Entidad que representa un producto del restaurante
+    /// Agregado que representa un producto del restaurante.
+    /// 
+    /// Invariantes:
+    /// - El nombre del producto no puede estar vacío
+    /// - El precio debe ser mayor que cero
+    /// - Debe pertenecer a una categoría válida
+    /// 
+    /// Ciclo de vida:
+    /// - Creación/Activo → [Actualización → Activo]
+    ///                   ↘ [Desactivación → Inactivo → Activación → Activo]
+    /// 
+    /// Reglas de negocio:
+    /// - Un producto desactivado puede volver a activarse
+    /// - Los datos del producto (nombre, descripción, precio) pueden actualizarse en cualquier momento
+    /// - Cada cambio de estado genera eventos de dominio
+    /// - Un producto desactivado no se muestra a los clientes ni puede ser ordenado
     /// </summary>
     public class Producto : EntityBase, IAggregateRoot
     {
@@ -41,6 +56,7 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
             CategoriaId = categoriaId;
             EstaActivo = true;
 
+            ValidarInvariantes();
             AddDomainEvent(new ProductoCreado(Id, Nombre!, Precio.Valor));
         }
 
@@ -62,6 +78,7 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
             Precio = precio;
             MarkAsModified();
 
+            ValidarInvariantes();
             AddDomainEvent(new ProductoActualizado(Id, Nombre!, Descripcion!, Precio!.Valor));
         }
 
@@ -75,6 +92,7 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
             EstaActivo = false;
             MarkAsModified();
 
+            ValidarInvariantes();
             AddDomainEvent(new ProductoDesactivado(Id));
         }
 
@@ -88,7 +106,29 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
             EstaActivo = true;
             MarkAsModified();
 
+            ValidarInvariantes();
             AddDomainEvent(new ProductoActivado(Id));
+        }
+
+        /// <summary>
+        /// Valida las invariantes del agregado Producto
+        /// </summary>
+        private void ValidarInvariantes()
+        {
+            if (string.IsNullOrWhiteSpace(Nombre))
+            {
+                throw new InvalidOperationException("El nombre del producto no puede estar vacío");
+            }
+
+            if (Precio == null || Precio.Valor <= 0)
+            {
+                throw new InvalidOperationException("El precio del producto debe ser mayor que cero");
+            }
+
+            if (CategoriaId == Guid.Empty)
+            {
+                throw new InvalidOperationException("El producto debe pertenecer a una categoría válida");
+            }
         }
     }
 }

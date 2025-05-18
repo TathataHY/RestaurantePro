@@ -103,6 +103,9 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             };
 
             tarjeta.AddDomainEvent(new TarjetaFidelizacionCreada(tarjeta.Id, clienteId, codigo));
+            
+            // Validar invariantes al crear la tarjeta
+            tarjeta.ValidarInvariantes();
 
             return tarjeta;
         }
@@ -121,6 +124,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             Estado = EstadoTarjeta.Activa;
             FechaActivacion = DateTime.Now;
             MarkAsModified();
+            ValidarInvariantes();
 
             AddDomainEvent(new TarjetaFidelizacionActivada(Id, ClienteId, FechaActivacion.Value));
         }
@@ -139,6 +143,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 
             Estado = EstadoTarjeta.Suspendida;
             MarkAsModified();
+            ValidarInvariantes();
 
             AddDomainEvent(new TarjetaFidelizacionSuspendida(Id, ClienteId, motivo));
         }
@@ -157,6 +162,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 
             Estado = EstadoTarjeta.Cancelada;
             MarkAsModified();
+            ValidarInvariantes();
 
             AddDomainEvent(new TarjetaFidelizacionCancelada(Id, ClienteId, motivo));
         }
@@ -178,6 +184,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             PuntosAcumulados += puntos;
             PuntosDisponibles += puntos;
             MarkAsModified();
+            ValidarInvariantes();
 
             AddDomainEvent(new PuntosAgregadosATarjeta(Id, puntos, PuntosAcumulados));
 
@@ -218,6 +225,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             PuntosAcumulados += puntos;
             PuntosDisponibles += puntos;
             MarkAsModified();
+            ValidarInvariantes();
 
             AddDomainEvent(new PuntosAgregadosATarjeta(Id, puntos, PuntosAcumulados));
 
@@ -253,8 +261,9 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 
             PuntosDisponibles -= puntos;
             MarkAsModified();
+            ValidarInvariantes();
 
-            AddDomainEvent(new PuntosCanjeados(Id, puntos, concepto, PuntosDisponibles));
+            AddDomainEvent(new RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion.PuntosCanjeados(Id, puntos, concepto, PuntosDisponibles));
 
             // Registramos en el historial
             var historial = Comercial.Clientes.Entities.HistorialPuntos.CrearRegistroCanjeados(Id, puntos, concepto);
@@ -282,6 +291,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 
             PuntosDisponibles -= puntos;
             MarkAsModified();
+            ValidarInvariantes();
 
             // Registramos en el historial
             var historial = Comercial.Clientes.Entities.HistorialPuntos.CrearRegistroVencidos(Id, puntos, concepto);
@@ -302,6 +312,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             var nivelAnterior = NivelFidelizacion;
             NivelFidelizacion = nuevoNivel;
             MarkAsModified();
+            ValidarInvariantes();
 
             AddDomainEvent(new NivelFidelizacionActualizado(Id, ClienteId, nivelAnterior, nuevoNivel));
         }
@@ -322,6 +333,47 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 
             if (nuevoNivel != NivelFidelizacion)
                 ActualizarNivel(nuevoNivel);
+        }
+        
+        /// <summary>
+        /// Valida todas las invariantes del agregado TarjetaFidelizacion.
+        /// Se llama después de cada operación que modifica el estado para asegurar la consistencia.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Si alguna invariante se viola</exception>
+        private void ValidarInvariantes()
+        {
+            // Validar que los puntos nunca sean negativos
+            if (PuntosAcumulados < 0)
+                throw new InvalidOperationException($"Los puntos acumulados no pueden ser negativos. Valor actual: {PuntosAcumulados}");
+                
+            if (PuntosDisponibles < 0)
+                throw new InvalidOperationException($"Los puntos disponibles no pueden ser negativos. Valor actual: {PuntosDisponibles}");
+                
+            // Validar que los puntos disponibles nunca sean mayores que los acumulados
+            if (PuntosDisponibles > PuntosAcumulados)
+                throw new InvalidOperationException($"Los puntos disponibles ({PuntosDisponibles}) no pueden ser mayores que los acumulados ({PuntosAcumulados})");
+            
+            // Validar que el código no esté vacío
+            if (string.IsNullOrWhiteSpace(Codigo))
+                throw new InvalidOperationException("El código de la tarjeta no puede estar vacío");
+                
+            // Validar que la tarjeta esté asociada a un cliente válido
+            if (ClienteId == Guid.Empty)
+                throw new InvalidOperationException("La tarjeta debe estar asociada a un cliente válido");
+                
+            // Validar consistencia de fechas
+            if (FechaExpiracion.HasValue && FechaEmision > FechaExpiracion.Value)
+                throw new InvalidOperationException("La fecha de expiración no puede ser anterior a la fecha de emisión");
+                
+            if (FechaActivacion.HasValue && FechaEmision > FechaActivacion.Value)
+                throw new InvalidOperationException("La fecha de activación no puede ser anterior a la fecha de emisión");
+                
+            // Validar estado
+            if (!Enum.IsDefined(typeof(EstadoTarjeta), Estado))
+                throw new InvalidOperationException($"Estado de tarjeta no válido: {Estado}");
+                
+            if (!Enum.IsDefined(typeof(NivelFidelizacion), NivelFidelizacion))
+                throw new InvalidOperationException($"Nivel de fidelización no válido: {NivelFidelizacion}");
         }
     }
 }

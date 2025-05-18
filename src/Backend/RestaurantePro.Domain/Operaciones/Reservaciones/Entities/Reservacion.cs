@@ -108,6 +108,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
                 hora,
                 cantidadPersonas));
 
+            reservacion.ValidarInvariantes();
             return reservacion;
         }
 
@@ -124,6 +125,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
             Estado = EstadoReservacion.Confirmada;
             FechaActualizacion = DateTime.Now;
 
+            ValidarInvariantes();
             AddDomainEvent(new ReservacionConfirmada(Id));
         }
 
@@ -141,6 +143,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
             MotivoCancelacion = motivo;
             FechaActualizacion = DateTime.Now;
 
+            ValidarInvariantes();
             AddDomainEvent(new ReservacionCancelada(Id, motivo));
         }
 
@@ -157,6 +160,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
             Estado = EstadoReservacion.Completada;
             FechaActualizacion = DateTime.Now;
 
+            ValidarInvariantes();
             AddDomainEvent(new ReservacionCompletada(Id));
         }
 
@@ -173,8 +177,41 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
             Estado = EstadoReservacion.NoShow;
             FechaActualizacion = DateTime.Now;
 
+            ValidarInvariantes();
             // Aquí podríamos agregar un evento de dominio para el no-show
             // AddDomainEvent(new ReservacionNoShow(Id));
+        }
+
+        /// <summary>
+        /// Valida las invariantes del agregado Reservacion
+        /// </summary>
+        private void ValidarInvariantes()
+        {
+            if (ClienteId == Guid.Empty)
+            {
+                throw new InvalidOperationException("La reservación debe tener un cliente asociado");
+            }
+
+            if (MesaId == Guid.Empty)
+            {
+                throw new InvalidOperationException("La reservación debe tener una mesa asociada");
+            }
+
+            if (CantidadPersonas <= 0)
+            {
+                throw new InvalidOperationException("La cantidad de personas debe ser mayor que cero");
+            }
+
+            if (!Enum.IsDefined(typeof(EstadoReservacion), Estado))
+            {
+                throw new InvalidOperationException($"El estado {Estado} no es válido para una reservación");
+            }
+
+            // Si está cancelada, debe tener un motivo
+            if (Estado == EstadoReservacion.Cancelada && string.IsNullOrWhiteSpace(MotivoCancelacion))
+            {
+                throw new InvalidOperationException("Una reservación cancelada debe tener un motivo de cancelación");
+            }
         }
     }
 }

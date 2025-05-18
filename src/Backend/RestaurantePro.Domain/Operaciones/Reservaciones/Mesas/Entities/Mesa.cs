@@ -1,7 +1,23 @@
 namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
 {
     /// <summary>
-    /// Representa una mesa en el restaurante
+    /// Agregado que representa una mesa en el restaurante.
+    /// 
+    /// Invariantes:
+    /// - El número de mesa debe ser mayor que cero
+    /// - La capacidad debe ser mayor que cero
+    /// - La ubicación no puede estar vacía
+    /// - El estado debe ser un valor válido del enum EstadoMesa
+    /// 
+    /// Ciclo de vida:
+    /// - Creación/Disponible → [Reservada | Ocupada | FueraDeServicio]
+    /// - Desde cualquier estado puede volver a Disponible, excepto desde Ocupada a FueraDeServicio
+    /// 
+    /// Reglas de negocio:
+    /// - Solo se pueden ocupar mesas que estén disponibles
+    /// - Solo se pueden reservar mesas que estén disponibles
+    /// - No se puede marcar como fuera de servicio una mesa ocupada
+    /// - Cada cambio de estado genera eventos de dominio
     /// </summary>
     public class Mesa : EntityBase, IAggregateRoot
     {
@@ -62,6 +78,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
 
             mesa.AddDomainEvent(new MesaCreada(mesa.Id, numero, capacidad, ubicacion));
 
+            mesa.ValidarInvariantes();
             return mesa;
         }
 
@@ -78,6 +95,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
             Estado = EstadoMesa.Ocupada;
             FechaActualizacion = DateTime.Now;
 
+            ValidarInvariantes();
             AddDomainEvent(new MesaOcupada(Id));
         }
 
@@ -94,6 +112,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
             Estado = EstadoMesa.Reservada;
             FechaActualizacion = DateTime.Now;
 
+            ValidarInvariantes();
             AddDomainEvent(new MesaReservada(Id));
         }
 
@@ -110,6 +129,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
             Estado = EstadoMesa.Disponible;
             FechaActualizacion = DateTime.Now;
 
+            ValidarInvariantes();
             AddDomainEvent(new MesaDisponible(Id));
         }
 
@@ -126,8 +146,35 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
             Estado = EstadoMesa.FueraDeServicio;
             FechaActualizacion = DateTime.Now;
 
+            ValidarInvariantes();
             // Aquí podríamos añadir un evento de dominio para registrar que la mesa está fuera de servicio
             // AddDomainEvent(new MesaFueraDeServicio(Id, motivo));
+        }
+
+        /// <summary>
+        /// Valida las invariantes del agregado Mesa
+        /// </summary>
+        private void ValidarInvariantes()
+        {
+            if (Numero <= 0)
+            {
+                throw new InvalidOperationException("El número de mesa debe ser mayor que cero");
+            }
+
+            if (Capacidad <= 0)
+            {
+                throw new InvalidOperationException("La capacidad de la mesa debe ser mayor que cero");
+            }
+
+            if (string.IsNullOrWhiteSpace(Ubicacion))
+            {
+                throw new InvalidOperationException("La ubicación de la mesa no puede estar vacía");
+            }
+
+            if (!Enum.IsDefined(typeof(EstadoMesa), Estado))
+            {
+                throw new InvalidOperationException($"El estado {Estado} no es válido para una mesa");
+            }
         }
     }
 }

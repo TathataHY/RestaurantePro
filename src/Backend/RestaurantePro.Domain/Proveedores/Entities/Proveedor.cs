@@ -135,6 +135,9 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             FechaRegistro = DateTime.Now;
             
             AddDomainEvent(new ProveedorRegistrado(Id, nombre));
+            
+            // Validar invariantes al crear el proveedor
+            ValidarInvariantes();
         }
         
         /// <summary>
@@ -231,6 +234,8 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             DiasCredito = diasCredito;
             
             MarkAsModified();
+            ValidarInvariantes();
+            
             AddDomainEvent(new ProveedorActualizado(Id, nombre));
         }
         
@@ -244,6 +249,7 @@ namespace RestaurantePro.Domain.Proveedores.Entities
                 
             Observaciones = observaciones;
             MarkAsModified();
+            ValidarInvariantes();
         }
         
         /// <summary>
@@ -256,6 +262,8 @@ namespace RestaurantePro.Domain.Proveedores.Entities
                 
             Activo = true;
             MarkAsModified();
+            ValidarInvariantes();
+            
             AddDomainEvent(new ProveedorActivado(Id, Nombre));
         }
         
@@ -269,6 +277,8 @@ namespace RestaurantePro.Domain.Proveedores.Entities
                 
             Activo = false;
             MarkAsModified();
+            ValidarInvariantes();
+            
             AddDomainEvent(new ProveedorDesactivado(Id, Nombre));
         }
         
@@ -292,6 +302,8 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             _contactos.Add(contacto);
             
             MarkAsModified();
+            ValidarInvariantes();
+            
             AddDomainEvent(new ContactoProveedorAgregado(Id, contacto.Id, nombre, cargo, telefono, email));
             
             return contacto;
@@ -310,6 +322,7 @@ namespace RestaurantePro.Domain.Proveedores.Entities
                 
             _contactos.Remove(contacto);
             MarkAsModified();
+            ValidarInvariantes();
             
             AddDomainEvent(new ContactoProveedorEliminado(Id, contactoId, contacto.Nombre));
         }
@@ -325,6 +338,49 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             _historialOrdenes.Add(fechaOrden);
             UltimaOrden = fechaOrden;
             MarkAsModified();
+            ValidarInvariantes();
+        }
+        
+        /// <summary>
+        /// Valida todas las invariantes del agregado Proveedor.
+        /// Se llama después de cada operación que modifica el estado para asegurar la consistencia.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Si alguna invariante se viola</exception>
+        private void ValidarInvariantes()
+        {
+            // Validar que los datos básicos obligatorios estén presentes
+            if (string.IsNullOrWhiteSpace(Nombre))
+                throw new InvalidOperationException("El nombre del proveedor no puede estar vacío");
+                
+            if (string.IsNullOrWhiteSpace(Email))
+                throw new InvalidOperationException("El email del proveedor no puede estar vacío");
+                
+            // Validar formato de email
+            if (!Email.Contains("@") || !Email.Contains("."))
+                throw new InvalidOperationException($"El formato del email '{Email}' no es válido");
+                
+            // Validar que los días de crédito no sean negativos
+            if (DiasCredito < 0)
+                throw new InvalidOperationException($"Los días de crédito no pueden ser negativos. Valor actual: {DiasCredito}");
+                
+            // Validar consistencia del historial de órdenes y la última orden
+            if (UltimaOrden.HasValue && _historialOrdenes.Count > 0)
+            {
+                var ultimaFechaHistorial = _historialOrdenes.Max();
+                if (UltimaOrden.Value != ultimaFechaHistorial)
+                    throw new InvalidOperationException($"Inconsistencia en las fechas de órdenes. Última orden: {UltimaOrden}, Última en historial: {ultimaFechaHistorial}");
+            }
+            
+            // Validar que no haya fechas de órdenes futuras
+            if (_historialOrdenes.Any(fecha => fecha > DateTime.Now))
+                throw new InvalidOperationException("No puede haber fechas de órdenes en el futuro");
+                
+            // Validar que los contactos pertenezcan a este proveedor
+            foreach (var contacto in _contactos)
+            {
+                if (contacto.ProveedorId != Id)
+                    throw new InvalidOperationException($"El contacto {contacto.Id} no pertenece a este proveedor");
+            }
         }
     }
 } 

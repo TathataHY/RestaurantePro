@@ -141,5 +141,22 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities
             
             return nuevoStock;
         }
+        
+        /// <summary>
+        /// Calcula el nuevo stock después de aplicar este movimiento, sin modificar el estado
+        /// </summary>
+        /// <param name="stockActual">Stock actual antes de aplicar el movimiento</param>
+        /// <returns>Nuevo stock calculado después de aplicar el movimiento</returns>
+        public decimal CalcularNuevoStock(decimal stockActual)
+        {
+            if (TipoMovimiento == TipoMovimientoInventario.Ingreso)
+            {
+                return stockActual + Cantidad;
+            }
+            else
+            {
+                return stockActual - Cantidad;
+            }
+        }
     }
 } 
