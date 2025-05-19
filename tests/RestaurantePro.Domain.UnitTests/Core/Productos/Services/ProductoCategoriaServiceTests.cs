@@ -4,7 +4,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
     {
         private readonly Mock<IProductoRepository> _mockProductoRepository;
         private readonly Mock<IProductoCategoriaRepository> _mockCategoriaRepository;
-        private readonly ProductoCategoriaService _service;
+        private readonly IProductoCategoriaService _service;
 
         public ProductoCategoriaServiceTests()
         {

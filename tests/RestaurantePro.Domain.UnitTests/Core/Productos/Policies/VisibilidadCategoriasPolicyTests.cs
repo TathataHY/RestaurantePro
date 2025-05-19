@@ -5,7 +5,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Policies
         private readonly Mock<IProductoCategoriaRepository> _mockCategoriaRepository;
         private readonly Mock<IProductoRepository> _mockProductoRepository;
         private readonly Mock<IDateTimeService> _mockDateTimeService;
-        private readonly VisibilidadCategoriasPolicy _policy;
+        private readonly IVisibilidadCategoriasPolicy _policy;
 
         public VisibilidadCategoriasPolicyTests()
         {

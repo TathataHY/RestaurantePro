@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Core.Productos.Services
     /// <summary>
     /// Servicio de dominio para gestionar operaciones relacionadas con categorías de productos
     /// </summary>
-    public class ProductoCategoriaService
+    public class ProductoCategoriaService : IProductoCategoriaService
     {
         private readonly IProductoRepository _productoRepository;
         private readonly IProductoCategoriaRepository _categoriaRepository;

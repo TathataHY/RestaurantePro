@@ -80,34 +80,64 @@ namespace RestaurantePro.Domain.Inventario.Services
             return await _servicioNotificacionesCore.MarcarComoLeidaAsync(notificacionId);
         }
         
+        // Implementación de IServicioNotificaciones
+        
         /// <inheritdoc />
-        public async Task EnviarNotificacionAsync(Guid destinatarioId, string titulo, string mensaje, CancellationToken cancellationToken = default)
+        public async Task<Notificacion> EnviarNotificacionAsync(
+            string titulo,
+            string mensaje,
+            TipoNotificacion tipo,
+            Guid destinatarioId,
+            Guid? entidadRelacionadaId = null,
+            CancellationToken cancellationToken = default)
         {
-            await _servicioNotificacionesCore.EnviarNotificacionAsync(
+            return await _servicioNotificacionesCore.EnviarNotificacionAsync(
                 titulo,
                 mensaje,
-                TipoNotificacion.Personalizada,
+                tipo,
                 destinatarioId,
-                null,
+                entidadRelacionadaId,
                 cancellationToken);
         }
         
         /// <inheritdoc />
-        public async Task EnviarNotificacionMasivaAsync(IEnumerable<Guid> destinatariosIds, string titulo, string mensaje, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Notificacion>> EnviarNotificacionMasivaAsync(
+            string titulo,
+            string mensaje,
+            TipoNotificacion tipo,
+            IEnumerable<Guid> destinatarioIds,
+            Guid? entidadRelacionadaId = null,
+            CancellationToken cancellationToken = default)
         {
-            await _servicioNotificacionesCore.EnviarNotificacionMasivaAsync(
+            return await _servicioNotificacionesCore.EnviarNotificacionMasivaAsync(
                 titulo,
                 mensaje,
-                TipoNotificacion.Personalizada,
-                destinatariosIds,
-                null,
+                tipo,
+                destinatarioIds,
+                entidadRelacionadaId,
                 cancellationToken);
         }
         
         /// <inheritdoc />
-        public async Task MarcarComoLeidaAsync(Guid notificacionId, CancellationToken cancellationToken = default)
+        public async Task<bool> MarcarComoLeidaAsync(
+            Guid notificacionId, 
+            CancellationToken cancellationToken = default)
         {
-            await _servicioNotificacionesCore.MarcarComoLeidaAsync(notificacionId, cancellationToken);
+            return await _servicioNotificacionesCore.MarcarComoLeidaAsync(
+                notificacionId, 
+                cancellationToken);
+        }
+        
+        /// <inheritdoc />
+        public async Task<IEnumerable<Notificacion>> ObtenerNotificacionesAsync(
+            Guid destinatarioId, 
+            bool soloNoLeidas = false, 
+            CancellationToken cancellationToken = default)
+        {
+            return await _servicioNotificacionesCore.ObtenerNotificacionesAsync(
+                destinatarioId, 
+                soloNoLeidas, 
+                cancellationToken);
         }
         
         // Método privado para obtener los IDs de los administradores

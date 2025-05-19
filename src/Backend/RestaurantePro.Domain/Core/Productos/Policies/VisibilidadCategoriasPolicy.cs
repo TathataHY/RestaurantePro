@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Core.Productos.Policies
     /// <summary>
     /// Política que determina qué categorías deben ser visibles según reglas de negocio específicas
     /// </summary>
-    public class VisibilidadCategoriasPolicy
+    public class VisibilidadCategoriasPolicy : IVisibilidadCategoriasPolicy
     {
         private readonly IProductoCategoriaRepository _categoriaRepository;
         private readonly IProductoRepository _productoRepository;
