@@ -131,9 +131,16 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var ingrediente = CrearIngrediente(proveedor.Id);
             var fecha = new DateTime(2023, 1, 1);
 
-            var ordenesExistentes = new List<OrdenCompra> {
-                OrdenCompra.Crear(proveedor.Id, "Orden automática", fecha)
-            };
+            // Crear una orden existente
+            var ordenExistente = OrdenCompra.Crear(proveedor.Id, "Orden automática", fecha);
+            
+            // Establecer fecha de entrega estimada posterior a la fecha de emisión
+            ordenExistente.EstablecerFechaEntrega(fecha.AddDays(7));
+
+            var ordenesExistentes = new List<OrdenCompra> { ordenExistente };
+
+            // Agregar el ingrediente al stock en la inicialización para evitar problemas de validación
+            ingrediente.IncrementarStock(5m, "Stock inicial");
 
             SetupObtenerIngredientesConStockBajo(new List<Ingrediente> { ingrediente });
 

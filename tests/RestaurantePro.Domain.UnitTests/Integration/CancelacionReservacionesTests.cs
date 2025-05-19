@@ -5,21 +5,17 @@ namespace RestaurantePro.Domain.UnitTests.Integration
     /// cuando se desactiva un cliente.
     /// Demuestra la interacción entre los contextos de Comercial y Operaciones.
     /// </summary>
-    public class ClienteDesactivado_CancelacionReservacionesTests
+    public class CancelacionReservacionesTests
     {
         private readonly Mock<IReservacionRepository> _reservacionRepositoryMock = new();
         private readonly Mock<IClienteRepository> _clienteRepositoryMock = new();
         private readonly Mock<IDomainEventLog> _eventLogMock = new();
-        private readonly Mock<IDateTimeService> _dateTimeServiceMock = new();
         
         private readonly ClienteDesactivado_CancelarReservacionesPendientesHandler _handler;
-        private readonly DateTime _fechaActual = new DateTime(2023, 1, 1, 12, 0, 0); // Fecha fija para pruebas
+        private readonly DateTime _fechaActual = DateTime.Now;
         
-        public ClienteDesactivado_CancelacionReservacionesTests()
+        public CancelacionReservacionesTests()
         {
-            // Configurar el servicio de fecha/hora para tests
-            _dateTimeServiceMock.Setup(svc => svc.Now).Returns(_fechaActual);
-            
             // Inicializar handler
             _handler = new ClienteDesactivado_CancelarReservacionesPendientesHandler(
                 _reservacionRepositoryMock.Object,
@@ -47,9 +43,9 @@ namespace RestaurantePro.Domain.UnitTests.Integration
             var horaReservacion1 = new TimeSpan(20, 0, 0); // 8:00 PM
             var horaReservacion2 = new TimeSpan(21, 0, 0); // 9:00 PM
             
-            // Usar fechas futuras para las reservaciones - importante usar fechas REALMENTE en el futuro
-            var fechaFutura1 = DateTime.Now.AddDays(30); // 30 días en el futuro
-            var fechaFutura2 = DateTime.Now.AddDays(45); // 45 días en el futuro
+            // Usar fechas futuras para las reservaciones
+            var fechaFutura1 = DateTime.Now.AddDays(5); // 5 días en el futuro
+            var fechaFutura2 = DateTime.Now.AddDays(7); // 7 días en el futuro
             
             var reservacion1 = Reservacion.Crear(
                 clienteId, 

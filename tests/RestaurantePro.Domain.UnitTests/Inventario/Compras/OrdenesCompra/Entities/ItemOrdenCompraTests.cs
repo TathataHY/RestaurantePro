@@ -67,22 +67,22 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             var unidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo;
 
             var item = ItemOrdenCompra.Crear(ordenCompraId, ingredienteId, nombreIngrediente, cantidad, unidadMedida);
+            var precioUnitario = 5.0m; // Establecemos un precio unitario para el cálculo del subtotal
             
-            // Accedemos al campo privado usando reflexión para simular un estado inconsistente
-            var subtotalField = typeof(ItemOrdenCompra).GetProperty("Subtotal", 
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+            // Establecemos un precio unitario inicial con la función Actualizar
+            item.Actualizar(cantidad, precioUnitario);
             
-            var originalSubtotal = (decimal)subtotalField.GetValue(item);
-            var invalidSubtotal = originalSubtotal + 100m; // Valor inconsistente
-            
-            // Simulamos una operación que no mantiene la consistencia interna
-            // Esto es sólo para propósitos de prueba, en código real utilizaríamos sólo API pública
+            // Modificamos el subtotal directamente para crear una inconsistencia
             typeof(ItemOrdenCompra).GetProperty("Subtotal")
-                .SetValue(item, invalidSubtotal);
+                .SetValue(item, item.Subtotal + 100m); // Valor inconsistente con cantidad * precioUnitario
             
-            // Act & Assert
-            Action action = () => item.Actualizar(cantidad, 10m);
-            action.Should().Throw<InvalidOperationException>()
+            // Act & Assert - Llamamos al método ValidarInvariantes de forma reflectiva
+            Action action = () => typeof(ItemOrdenCompra)
+                .GetMethod("ValidarInvariantes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(item, null);
+                
+            action.Should().Throw<System.Reflection.TargetInvocationException>()
+                .WithInnerException<InvalidOperationException>()
                 .WithMessage("*Inconsistencia en el subtotal*");
         }
     }

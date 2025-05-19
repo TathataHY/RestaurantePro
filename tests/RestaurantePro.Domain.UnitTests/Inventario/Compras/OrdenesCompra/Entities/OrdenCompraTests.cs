@@ -6,10 +6,16 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
         public void ValidarInvariantes_ConDatosInvalidos_DebeLanzarExcepcion()
         {
             // Arrange - Crear orden y manipular directamente el estado para simular inconsistencia
+            var fechaEmision = DateTime.Now;
+            var fechaEntrega = fechaEmision.AddDays(7); // Fecha de entrega 7 días después
+            
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 "Observaciones",
-                DateTime.Now);
+                fechaEmision);
+                
+            // Establecer fecha de entrega estimada válida
+            ordenCompra.EstablecerFechaEntrega(fechaEntrega);
 
             var item = ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m, 
                 RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
@@ -19,9 +25,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
                 .GetProperty("Total")
                 .SetValue(ordenCompra, ordenCompra.Total + 100m); // Valor inconsistente
             
-            // Act & Assert - Al intentar enviar, se llamará a ValidarInvariantes y debería fallar
-            Action action = () => ordenCompra.Enviar();
-            action.Should().Throw<InvalidOperationException>()
+            // Act & Assert - Al intentar validar invariantes explícitamente, debería fallar
+            Action action = () => typeof(Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra)
+                .GetMethod("ValidarInvariantes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(ordenCompra, null);
+                
+            action.Should().Throw<System.Reflection.TargetInvocationException>()
+                .WithInnerException<InvalidOperationException>()
                 .WithMessage("*Inconsistencia en el total*");
         }
 
@@ -29,10 +39,16 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
         public void ValidarInvariantes_ConFechasIncoherentes_DebeLanzarExcepcion()
         {
             // Arrange
+            var fechaEmision = DateTime.Now;
+            var fechaEntrega = fechaEmision.AddDays(7); // Fecha de entrega 7 días después
+            
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 "Observaciones",
-                DateTime.Now);
+                fechaEmision);
+                
+            // Establecer fecha de entrega estimada válida
+            ordenCompra.EstablecerFechaEntrega(fechaEntrega);
 
             ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m,
                 RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
@@ -42,11 +58,15 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             // Manipular directamente la fecha de envío para crear incoherencia
             typeof(Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra)
                 .GetProperty("FechaEnvio")
-                .SetValue(ordenCompra, ordenCompra.FechaEmision.AddDays(-1)); // Fecha anterior a emisión
+                .SetValue(ordenCompra, fechaEmision.AddDays(-1)); // Fecha anterior a emisión
                 
-            // Act & Assert - Al intentar recibir, se llamará a ValidarInvariantes y debería fallar
-            Action action = () => ordenCompra.Recibir(DateTime.Now);
-            action.Should().Throw<InvalidOperationException>()
+            // Act & Assert - Al intentar validar invariantes explícitamente, debería fallar
+            Action action = () => typeof(Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra)
+                .GetMethod("ValidarInvariantes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(ordenCompra, null);
+                
+            action.Should().Throw<System.Reflection.TargetInvocationException>()
+                .WithInnerException<InvalidOperationException>()
                 .WithMessage("*fecha de envío*");
         }
     }

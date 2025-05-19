@@ -180,10 +180,14 @@ namespace RestaurantePro.Domain.Inventario.Services
                 return;
                 
             // Crear nueva orden
+            var fechaActual = _dateTimeService.Now;
             var nuevaOrden = OrdenCompra.Crear(
                 proveedor.Id,
-                $"Orden automática - {_dateTimeService.Now:dd/MM/yyyy}",
-                _dateTimeService.Now);
+                $"Orden automática - {fechaActual:dd/MM/yyyy}",
+                fechaActual);
+                
+            // Establecer fecha de entrega estimada (7 días después de la fecha de emisión)
+            nuevaOrden.EstablecerFechaEntrega(fechaActual.AddDays(7));
                 
             // Agregar los ingredientes a la orden
             foreach (var ingrediente in ingredientes)

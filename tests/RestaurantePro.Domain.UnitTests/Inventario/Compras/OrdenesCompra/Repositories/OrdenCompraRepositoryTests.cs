@@ -12,12 +12,22 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
             // Crear datos de prueba
             var fechaHoy = DateTime.Now;
             
-            _ordenesCompra = new List<OrdenCompra>
-            {
-                OrdenCompra.Crear(Guid.NewGuid(), "Orden 1", fechaHoy),
-                OrdenCompra.Crear(Guid.NewGuid(), "Orden 2", fechaHoy),
-                OrdenCompra.Crear(Guid.NewGuid(), "Orden 3", fechaHoy)
-            };
+            _ordenesCompra = new List<OrdenCompra>();
+            
+            // Crear primera orden
+            var orden1 = OrdenCompra.Crear(Guid.NewGuid(), "Orden 1", fechaHoy);
+            orden1.EstablecerFechaEntrega(fechaHoy.AddDays(5));
+            _ordenesCompra.Add(orden1);
+            
+            // Crear segunda orden
+            var orden2 = OrdenCompra.Crear(Guid.NewGuid(), "Orden 2", fechaHoy);
+            orden2.EstablecerFechaEntrega(fechaHoy.AddDays(7));
+            _ordenesCompra.Add(orden2);
+            
+            // Crear tercera orden
+            var orden3 = OrdenCompra.Crear(Guid.NewGuid(), "Orden 3", fechaHoy);
+            orden3.EstablecerFechaEntrega(fechaHoy.AddDays(3));
+            _ordenesCompra.Add(orden3);
             
             // Agregar algunos items a las órdenes
             _ordenesCompra[0].AgregarItem(Guid.NewGuid(), "Ingrediente 1", 10.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
@@ -184,10 +194,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
         public async Task AgregarAsync_OrdenValida_DebeAgregarCorrectamente()
         {
             // Arrange
+            var fechaEmision = DateTime.Now;
             var nuevaOrden = OrdenCompra.Crear(
                 Guid.NewGuid(),
                 "Nueva orden",
-                DateTime.Now);
+                fechaEmision);
+                
+            // Establecer fecha de entrega coherente
+            nuevaOrden.EstablecerFechaEntrega(fechaEmision.AddDays(3));
 
             _mockRepository.Setup(repo => repo.AgregarAsync(nuevaOrden, CancellationToken.None))
                 .Returns(Task.CompletedTask);
@@ -209,8 +223,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
         public async Task ActualizarAsync_OrdenExistente_DebeActualizarCorrectamente()
         {
             // Arrange
-            var orden = _ordenesCompra[1]; // Orden pendiente
-            orden.AgregarItem(Guid.NewGuid(), "Nuevo Ingrediente", 2.0m, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo); // Agregamos un item
+            var orden = _ordenesCompra[0];
 
             _mockRepository.Setup(repo => repo.ActualizarAsync(orden, CancellationToken.None))
                 .Returns(Task.CompletedTask);

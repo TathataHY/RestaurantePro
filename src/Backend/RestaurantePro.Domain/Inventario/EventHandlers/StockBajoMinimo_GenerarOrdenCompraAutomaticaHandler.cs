@@ -67,19 +67,28 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 var ordenesExistentes = await _ordenCompraRepository.ObtenerPendientesPorProveedorAsync(
                     proveedor.Id, cancellationToken);
                     
+                bool ingredienteYaEnOrden = false;
                 foreach (var orden in ordenesExistentes)
                 {
                     foreach (var item in orden.Items)
                     {
                         if (item.IngredienteId == ingrediente.Id)
                         {
+                            ingredienteYaEnOrden = true;
                             await _eventLog.LogEvent(evento, 
                                 $"No se generó orden automática: Ya existe una orden pendiente para '{ingrediente.Nombre}' (Orden ID: {orden.Id})",
                                 cancellationToken);
-                            return;
+                            break;
                         }
                     }
+                    
+                    if (ingredienteYaEnOrden)
+                        break;
                 }
+                
+                // Si ya existe una orden pendiente para este ingrediente, no crear una nueva
+                if (ingredienteYaEnOrden)
+                    return;
                 
                 // Crear una nueva orden de compra
                 var fechaActual = _dateTimeService.Now;
@@ -87,6 +96,11 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                                    $"Stock actual: {ingrediente.Stock}, Stock mínimo: {ingrediente.StockMinimo}";
                 
                 var ordenCompra = OrdenCompra.Crear(proveedor.Id, observaciones, fechaActual);
+                
+                // IMPORTANTE: Establecer fecha estimada de entrega ANTES de agregar items
+                // para evitar validaciones que fallen por inconsistencia de fechas
+                var fechaEntrega = fechaActual.AddDays(5);
+                ordenCompra.EstablecerFechaEntrega(fechaEntrega);
                 
                 // Calcular cantidad a pedir: al menos lo necesario para estar por encima del mínimo + margen adicional
                 var deficitStock = ingrediente.StockMinimo - ingrediente.Stock;
@@ -104,9 +118,6 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                     cantidadPedir, 
                     ingrediente.UnidadMedida);
                 
-                // Establecer fecha estimada de entrega (5 días hábiles)
-                ordenCompra.EstablecerFechaEntrega(fechaActual.AddDays(5));
-                
                 // Guardar la orden de compra
                 await _ordenCompraRepository.AgregarAsync(ordenCompra, cancellationToken);
                 
@@ -120,6 +131,8 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 await _eventLog.LogEvent(evento, 
                     $"Error al generar orden automática: {ex.Message}",
                     cancellationToken);
+                // IMPORTANTE: Propagar la excepción para que las pruebas puedan detectarla
+                throw;
             }
         }
     }
