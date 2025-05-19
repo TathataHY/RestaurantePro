@@ -59,7 +59,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// La relación se mantiene por ID para preservar los límites del agregado.
         /// </summary>
         public Guid? TarjetaFidelizacionPrincipalId { get; private set; }
-        
+
         /// <summary>
         /// Segmento al que pertenece el cliente según su comportamiento y patrones de consumo.
         /// Se actualiza mediante análisis de comportamiento de compra y visitación.

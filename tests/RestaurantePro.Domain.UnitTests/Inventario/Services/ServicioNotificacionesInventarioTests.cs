@@ -48,7 +48,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(notificaciones);
             
             // Act
-            var resultado = await _servicio.NotificarStockBajo(ingredienteId, nombreIngrediente, stockActual, stockMinimo);
+            var resultado = await _servicio.NotificarStockBajo(ingredienteId, nombreIngrediente, stockActual, stockMinimo, _cancellationToken);
             
             // Assert
             Assert.NotEqual(Guid.Empty, resultado);
@@ -62,7 +62,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                     TipoNotificacion.StockBajo,
                     It.IsAny<IEnumerable<Guid>>(),
                     ingredienteId,
-                    It.IsAny<CancellationToken>()),
+                    _cancellationToken),
                 Times.Once);
         }
         
@@ -94,7 +94,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(notificaciones);
             
             // Act
-            var resultado = await _servicio.NotificarOrdenCompraGenerada(ordenCompraId, proveedorId, nombreProveedor);
+            var resultado = await _servicio.NotificarOrdenCompraGenerada(ordenCompraId, proveedorId, nombreProveedor, _cancellationToken);
             
             // Assert
             Assert.NotEqual(Guid.Empty, resultado);
@@ -106,7 +106,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                     TipoNotificacion.OrdenCompraGenerada,
                     It.IsAny<IEnumerable<Guid>>(),
                     ordenCompraId,
-                    It.IsAny<CancellationToken>()),
+                    _cancellationToken),
                 Times.Once);
         }
         
@@ -129,13 +129,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(notificaciones);
                 
             // Act
-            var resultado = await _servicio.ObtenerNotificacionesPendientes(destinatarioId);
+            var resultado = await _servicio.ObtenerNotificacionesPendientes(destinatarioId, _cancellationToken);
             
             // Assert
             Assert.Equal(notificaciones, resultado);
             
             _coreServicioMock.Verify(
-                r => r.ObtenerNotificacionesAsync(destinatarioId, true, It.IsAny<CancellationToken>()), 
+                r => r.ObtenerNotificacionesAsync(destinatarioId, true, _cancellationToken), 
                 Times.Once);
         }
         
@@ -150,13 +150,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(true);
                 
             // Act
-            var resultado = await _servicio.MarcarNotificacionComoLeida(notificacionId);
+            var resultado = await _servicio.MarcarNotificacionComoLeida(notificacionId, _cancellationToken);
             
             // Assert
             Assert.True(resultado);
             
             _coreServicioMock.Verify(
-                r => r.MarcarComoLeidaAsync(notificacionId, It.IsAny<CancellationToken>()), 
+                r => r.MarcarComoLeidaAsync(notificacionId, _cancellationToken), 
                 Times.Once);
         }
         
@@ -169,7 +169,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var mensaje = "Test Message";
             
             // Act
-            await _servicio.EnviarNotificacionAsync(destinatarioId, titulo, mensaje, _cancellationToken);
+            await _servicio.EnviarNotificacionAsync(
+                titulo,
+                mensaje,
+                TipoNotificacion.Personalizada,
+                destinatarioId,
+                null,
+                _cancellationToken);
             
             // Assert
             _coreServicioMock.Verify(
@@ -192,7 +198,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var mensaje = "Test Message";
             
             // Act
-            await _servicio.EnviarNotificacionMasivaAsync(destinatariosIds, titulo, mensaje, _cancellationToken);
+            await _servicio.EnviarNotificacionMasivaAsync(
+                titulo,
+                mensaje,
+                TipoNotificacion.Personalizada,
+                destinatariosIds,
+                null,
+                _cancellationToken);
             
             // Assert
             _coreServicioMock.Verify(

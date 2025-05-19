@@ -292,6 +292,111 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 if (item.PrecioUnitario < 0)
                     throw new InvalidOperationException($"Item con ID {item.Id} tiene precio unitario inválido: {item.PrecioUnitario}");
             }
+            
+            // VALIDACIONES EXISTENTES
+            
+            // Validar IDs obligatorios
+            if (MesaId == Guid.Empty)
+                throw new InvalidOperationException("La comanda debe tener una mesa asignada");
+                
+            if (MeseroId == Guid.Empty)
+                throw new InvalidOperationException("La comanda debe tener un mesero asignado");
+                
+            // Validar fechas
+            if (FechaCreacion == default)
+                throw new InvalidOperationException("La fecha de creación no puede ser la fecha predeterminada");
+                
+            if (FechaActualizacion.HasValue && FechaActualizacion < FechaCreacion)
+                throw new InvalidOperationException("La fecha de actualización no puede ser anterior a la fecha de creación");
+                
+            // Validar coherencia de estado con propiedades
+            if (Estado == EstadoComanda.Cancelada && string.IsNullOrWhiteSpace(Observaciones))
+                throw new InvalidOperationException("Una comanda cancelada debe incluir observaciones con el motivo de cancelación");
+                
+            // Límites en campos de texto
+            if (!string.IsNullOrEmpty(Observaciones) && Observaciones.Length > 500)
+                throw new InvalidOperationException("Las observaciones no pueden exceder los 500 caracteres");
+                
+            // Validar coherencia de descuentos con cliente
+            if (DescuentoFidelizacion > 0 && !ClienteId.HasValue)
+                throw new InvalidOperationException("No se puede aplicar descuento de fidelización sin un cliente asociado");
+                
+            // Validar límites y coherencia de valores monetarios
+            if (Total.Total < 0)
+                throw new InvalidOperationException("El total de la comanda no puede ser negativo");
+                
+            if (Total.Total > 1000000m) // Un límite razonable para una comanda
+                throw new InvalidOperationException("El total de la comanda excede el límite máximo permitido");
+                
+            // Validar límite de items en la comanda
+            if (_items.Count > 100) // Un límite razonable para los items en una comanda
+                throw new InvalidOperationException("La comanda excede el número máximo de items permitidos");
+                
+            // Validar que no haya duplicados de productos si el modelo de negocio no lo permite
+            var productosUnicos = _items.Select(i => i.ProductoId).Distinct().Count();
+            if (productosUnicos != _items.Count)
+                throw new InvalidOperationException("Existen productos duplicados en la comanda. Use la función de modificar cantidad en lugar de agregar el mismo producto múltiples veces");
+                
+            // Validar que el impuesto calculado sea correcto (asumiendo 16% de IVA)
+            decimal subtotalConDescuento = subtotalCalculado - descuento;
+            decimal impuestoEsperado = Math.Round(subtotalConDescuento * 0.16m, 2);
+            
+            if (Math.Abs(Total.Impuestos - impuestoEsperado) > 0.01m)
+                throw new InvalidOperationException($"Inconsistencia en los impuestos. Esperado: {impuestoEsperado}, Actual: {Total.Impuestos}");
+                
+            // Validar coherencia del total
+            decimal totalCalculado = subtotalConDescuento + impuestoEsperado;
+            
+            if (Math.Abs(Total.Total - totalCalculado) > 0.01m)
+                throw new InvalidOperationException($"Inconsistencia en el total. Calculado: {totalCalculado}, Actual: {Total.Total}");
+            
+            // VALIDACIONES ADICIONALES
+            
+            // Validar que la comanda entregada tenga todos los productos necesarios
+            if (Estado == EstadoComanda.Entregada && _items.Count == 0)
+                throw new InvalidOperationException("Una comanda entregada debe tener al menos un producto");
+            
+            // Validar que la comanda lista tenga todos los productos necesarios
+            if (Estado == EstadoComanda.Lista && _items.Count == 0)
+                throw new InvalidOperationException("Una comanda lista debe tener al menos un producto");
+            
+            // Validar consistencia de eventos de dominio
+            if (DomainEvents.Count == 0)
+                throw new InvalidOperationException("La comanda debe tener al menos un evento de dominio registrado");
+            
+            // Validar que no existan cantidades excesivas por item individual
+            foreach (var item in _items)
+            {
+                if (item.Cantidad > 50) // Un límite razonable para un solo producto en una comanda
+                    throw new InvalidOperationException($"La cantidad del item con ID {item.Id} excede el límite máximo permitido por item");
+                
+                if (item.PrecioUnitario > 100000m) // Un límite razonable para el precio unitario
+                    throw new InvalidOperationException($"El precio unitario del item con ID {item.Id} excede el límite máximo permitido");
+                
+                if (!string.IsNullOrEmpty(item.Observaciones) && item.Observaciones.Length > 200)
+                    throw new InvalidOperationException($"Las observaciones del item con ID {item.Id} no pueden exceder los 200 caracteres");
+            }
+            
+            // Validar coherencia del ciclo de vida
+            if (Estado == EstadoComanda.Finalizada && !FechaActualizacion.HasValue)
+                throw new InvalidOperationException("Una comanda finalizada debe tener fecha de actualización");
+            
+            // Validar que la diferencia entre la fecha de creación y actualización no sea excesiva
+            if (FechaActualizacion.HasValue && (FechaActualizacion.Value - FechaCreacion).TotalDays > 30)
+                throw new InvalidOperationException("La comanda no puede estar activa por más de 30 días");
+            
+            // Validar rangos válidos para descuentos según política de negocio
+            if (DescuentoFidelizacion.HasValue && DescuentoFidelizacion.Value > 0)
+            {
+                decimal porcentajeDescuento = DescuentoFidelizacion.Value / subtotalCalculado;
+                if (porcentajeDescuento > 0.5m) // Máximo 50% de descuento permitido
+                    throw new InvalidOperationException("El descuento no puede exceder el 50% del subtotal");
+                
+                // En caso de tener rangos específicos de descuento permitidos
+                // decimal[] rangosPermitidos = new decimal[] { 0.05m, 0.10m, 0.15m, 0.20m, 0.25m, 0.5m };
+                // if (!rangosPermitidos.Any(r => Math.Abs(porcentajeDescuento - r) < 0.01m))
+                //    throw new InvalidOperationException($"El porcentaje de descuento {porcentajeDescuento:P0} no es un valor permitido");
+            }
         }
 
         /// <summary>

@@ -139,7 +139,7 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
-| Sistema de suscripción entre agregados | Implementar un mecanismo más robusto que permita la suscripción a eventos entre diferentes agregados dentro y fuera de contextos | Alta | Pendiente |
+| Sistema de suscripción entre agregados | Implementar un mecanismo más robusto que permita la suscripción a eventos entre diferentes agregados dentro y fuera de contextos | Alta | ✅ Completado |
 | Registro centralizado de eventos | Crear un servicio que almacene todos los eventos de dominio para auditoría y reconstrucción del estado | Media | ✅ Completado |
 | Manejadores de eventos configurables | Permitir la configuración declarativa de manejadores de eventos sin acoplamiento directo | Media | ✅ Completado |
 
@@ -155,7 +155,7 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
-| Invariantes en OrdenCompra | Reforzar las reglas de negocio que deben cumplirse en órdenes de compra | Alta | Pendiente |
+| Invariantes en OrdenCompra | Reforzar las reglas de negocio que deben cumplirse en órdenes de compra | Alta | ✅ Completado |
 | Invariantes en Comanda | Mejorar validaciones para garantizar la integridad de las comandas | Media | Pendiente |
 | Validaciones en ValueObjects | Introducir validaciones más específicas para objetos como Email, Teléfono, etc. | Media | Pendiente |
 
@@ -174,7 +174,7 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
-| Corregir ServicioNotificacionesInventarioTests | Resolver errores de compilación en las pruebas | Alta | Pendiente |
+| Corregir ServicioNotificacionesInventarioTests | Resolver errores de compilación en las pruebas | Alta | ✅ Completado |
 | Ajustar mocks con problemas de expresiones | Modificar setup de pruebas con problemas de árboles de expresión | Alta | Pendiente |
 | Aplicar #nullable context | Aplicar contexto de nulabilidad en pruebas para eliminar advertencias | Media | Pendiente |
 
@@ -197,6 +197,9 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | 2024-03-15 | ClienteFrecuenteSpecification | Pruebas → Implementación → Refactor |
 | 2024-03-20 | Segmentación de Clientes | Diseño → Pruebas → Implementación → Refactor |
 | 2024-03-25 | Priorización en StockBajoPolicy | Diseño → Pruebas → Implementación → Refactor |
+| 2024-03-30 | Sistema de Suscripción entre Agregados | Diseño → Pruebas → Implementación → Refactor |
+| 2024-04-05 | Validaciones Robustas OrdenCompra | Pruebas → Implementación → Refactor |
+| 2024-04-05 | Corrección ServicioNotificacionesInventarioTests | Pruebas → Implementación → Refactor |
 
 ## Decisiones de Diseño
 
@@ -323,3 +326,91 @@ Se ha ampliado la política `StockBajoPolicy` para incorporar un sistema intelig
    - Validación de notificaciones y órdenes en orden de prioridad
 
 Esta mejora permite optimizar las compras priorizando ingredientes de alta rotación, en temporada actual, con stock más crítico y considerando costos, lo que resulta en mejor aprovechamiento del presupuesto y reducción de desabastecimientos en productos clave para el negocio.
+
+### Sistema de Suscripción entre Agregados
+
+Se ha implementado un sistema de suscripción a eventos que permite a los agregados de diferentes contextos delimitados suscribirse a eventos específicos sin crear dependencias directas entre ellos. Este sistema mejora significativamente la modularidad y desacoplamiento de la arquitectura.
+
+#### Cambios realizados
+
+1. **Nuevas clases e interfaces para suscripciones**:
+   - Creación de `IEventSubscriptionManager` como interfaz principal
+   - Implementación de `EventSubscriptionManager` para gestionar suscripciones
+   - Definición de `EventSubscriptionCriteria` para filtrar eventos por tipo, entidad y contexto
+
+2. **Ampliación del sistema de eventos**:
+   - Mejora de `DomainEventDispatcher` para notificar a suscriptores
+   - Métodos de suscripción tipados y con criterios específicos
+   - Manejo seguro de excepciones para evitar que errores en un manejador afecten a otros
+
+3. **Servicios de extensión para configuración**:
+   - Nuevos métodos de extensión para facilitar la configuración
+   - Opciones para registrar solo los servicios necesarios
+   - Implementación `NullDomainEventRegistry` para casos donde no se necesita persistencia
+
+4. **Documentación completa**:
+   - Guía de utilización con ejemplos prácticos
+   - Buenas prácticas para evitar problemas comunes
+   - Descripción detallada de los conceptos clave
+
+5. **Pruebas unitarias exhaustivas**:
+   - Verificación de filtrado por tipo de evento
+   - Pruebas de filtrado por entidad emisora y contexto delimitado
+   - Validación de comportamiento ante suscripciones múltiples y excepciones
+
+Esta implementación refuerza la arquitectura orientada a eventos del sistema, permitiendo que los diferentes módulos reaccionen a cambios en otros contextos de forma desacoplada. Esto facilita la ampliación de la funcionalidad sin modificar código existente y mejora la mantenibilidad a largo plazo.
+
+### Mejora de validaciones robustas en OrdenCompra
+
+Se ha realizado una mejora significativa en las validaciones de invariantes del agregado OrdenCompra para garantizar la consistencia y robustez de este componente crítico del sistema.
+
+#### Cambios realizados
+
+1. **Validaciones de límites y valores**:
+   - Implementación de validaciones para el total de la orden (positivo y límite máximo)
+   - Validación de cantidades y precios unitarios para evitar valores inválidos
+   - Establecimiento de límites máximos razonables para cantidades por item
+
+2. **Validaciones de coherencia de estado**:
+   - Validación de coherencia entre estado de la orden y presencia de fechas (envío, recepción, cancelación)
+   - Verificación de que órdenes canceladas no tengan fechas de recepción
+   - Comprobación de que órdenes con fecha de cancelación estén en estado cancelado
+
+3. **Validaciones de campos de texto**:
+   - Establecimiento de límites de longitud para observaciones y motivos
+   - Validación de presencia de información obligatoria según el estado
+
+4. **Pruebas unitarias exhaustivas**:
+   - Pruebas para cantidades negativas e inválidas
+   - Pruebas para cantidades excesivas
+   - Pruebas para observaciones y motivos excesivamente largos
+   - Pruebas para incoherencias entre estado y fechas
+
+5. **Enfoque de validación integral**:
+   - Validación en todos los puntos de cambio de estado
+   - Validación durante modificaciones de items
+   - Aplicación de validaciones antes de emitir eventos de dominio
+
+Esta mejora garantiza la consistencia del agregado OrdenCompra en todas las operaciones, evitando estados inválidos que podrían comprometer la integridad del sistema. Cada operación que modifica el estado del agregado ahora pasa por un conjunto completo de validaciones que mantienen las invariantes del dominio.
+
+### Corrección de ServicioNotificacionesInventario
+
+Se ha realizado una importante corrección en el servicio de notificaciones para inventario, mejorando su fiabilidad y consistencia con el resto del sistema.
+
+#### Problemas identificados y soluciones
+
+1. **Gestión de CancellationToken**:
+   - Se identificó que los métodos específicos de notificación no propagaban correctamente el token de cancelación
+   - Se implementó la propagación adecuada en todos los métodos del servicio
+   - Se actualizó la interfaz para incluir el parámetro CancellationToken en todos los métodos relevantes
+
+2. **Coherencia de métodos**:
+   - Se aseguró que todos los métodos que llaman al servicio core pasen el CancellationToken adecuadamente
+   - Se estandarizó la implementación para mantener consistencia en toda la clase
+
+3. **Pruebas unitarias**:
+   - Se actualizaron todas las pruebas para verificar el uso correcto del token de cancelación
+   - Se adaptaron los mocks para verificar que los métodos reciben y propagan correctamente el token
+   - Se verificó la interacción correcta con el servicio core en todos los escenarios de prueba
+
+Estas correcciones garantizan que el servicio de notificaciones de inventario funcione de manera robusta, especialmente en escenarios de cancelación de operaciones asíncronas, lo que mejora la responsividad del sistema bajo carga y permite la cancelación apropiada de operaciones cuando sea necesario.

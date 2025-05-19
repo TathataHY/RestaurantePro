@@ -306,6 +306,60 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
             // Validar que una orden enviada tenga items
             if ((Estado == EstadoOrdenCompra.Enviada || Estado == EstadoOrdenCompra.Recibida) && !_items.Any())
                 throw new InvalidOperationException("La orden debe tener al menos un item");
+            
+            // NUEVAS VALIDACIONES
+            
+            // Validar límites de valores para la orden
+            if (Total < 0)
+                throw new InvalidOperationException("El total de la orden no puede ser negativo");
+                
+            if (Total > 1000000m) // Ejemplo: un millón como límite superior razonable
+                throw new InvalidOperationException("El total de la orden excede el límite máximo permitido");
+                
+            // Validar que los items tengan cantidades y precios válidos
+            foreach (var item in _items)
+            {
+                if (item.Cantidad <= 0)
+                    throw new InvalidOperationException($"El item {item.Nombre} (ID: {item.Id}) tiene una cantidad inválida: {item.Cantidad}");
+                    
+                if (item.PrecioUnitario < 0)
+                    throw new InvalidOperationException($"El item {item.Nombre} (ID: {item.Id}) tiene un precio unitario inválido: {item.PrecioUnitario}");
+                    
+                if (item.Subtotal != item.Cantidad * item.PrecioUnitario)
+                    throw new InvalidOperationException($"Inconsistencia en el subtotal del item {item.Nombre} (ID: {item.Id})");
+                    
+                // Validar límite máximo por item (ejemplo: 1000 unidades como límite razonable)
+                if (item.Cantidad > 1000m)
+                    throw new InvalidOperationException($"La cantidad del item {item.Nombre} (ID: {item.Id}) excede el límite máximo permitido");
+            }
+            
+            // Validar las transiciones de estado
+            if (Estado == EstadoOrdenCompra.Recibida && !FechaRecepcion.HasValue)
+                throw new InvalidOperationException("Una orden en estado Recibida debe tener fecha de recepción");
+                
+            if (Estado == EstadoOrdenCompra.Enviada && !FechaEnvio.HasValue)
+                throw new InvalidOperationException("Una orden en estado Enviada debe tener fecha de envío");
+                
+            if (Estado == EstadoOrdenCompra.Cancelada && !FechaCancelacion.HasValue)
+                throw new InvalidOperationException("Una orden en estado Cancelada debe tener fecha de cancelación");
+                
+            // Validar longitud de campos de texto
+            if (!string.IsNullOrEmpty(Observaciones) && Observaciones.Length > 500)
+                throw new InvalidOperationException("Las observaciones no pueden exceder los 500 caracteres");
+                
+            if (!string.IsNullOrEmpty(ObservacionesRecepcion) && ObservacionesRecepcion.Length > 500)
+                throw new InvalidOperationException("Las observaciones de recepción no pueden exceder los 500 caracteres");
+                
+            if (!string.IsNullOrEmpty(MotivoCancelacion) && MotivoCancelacion.Length > 500)
+                throw new InvalidOperationException("El motivo de cancelación no puede exceder los 500 caracteres");
+                
+            // Validar que las órdenes canceladas no tengan fecha de recepción
+            if (Estado == EstadoOrdenCompra.Cancelada && FechaRecepcion.HasValue)
+                throw new InvalidOperationException("Una orden cancelada no puede tener fecha de recepción");
+                
+            // Validar coherencia entre estado y fechas
+            if (FechaCancelacion.HasValue && Estado != EstadoOrdenCompra.Cancelada)
+                throw new InvalidOperationException("Una orden con fecha de cancelación debe estar en estado Cancelada");
         }
         
         /// <summary>

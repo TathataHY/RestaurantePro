@@ -21,10 +21,10 @@ namespace RestaurantePro.Domain.Inventario.Services
         }
         
         /// <inheritdoc />
-        public async Task<Guid> NotificarStockBajo(Guid ingredienteId, string nombre, decimal stockActual, decimal stockMinimo)
+        public async Task<Guid> NotificarStockBajo(Guid ingredienteId, string nombre, decimal stockActual, decimal stockMinimo, CancellationToken cancellationToken = default)
         {
             // Obtener los destinatarios (administradores del sistema)
-            var administradores = await ObtenerAdministradoresAsync();
+            var administradores = await ObtenerAdministradoresAsync(cancellationToken);
             
             if (!administradores.Any())
                 throw new InvalidOperationException("No hay administradores configurados para recibir notificaciones");
@@ -38,17 +38,18 @@ namespace RestaurantePro.Domain.Inventario.Services
                 mensaje,
                 TipoNotificacion.StockBajo,
                 administradores,
-                ingredienteId);
+                ingredienteId,
+                cancellationToken);
                 
             // Devolver el ID de la primera notificación
             return notificaciones.First().Id;
         }
         
         /// <inheritdoc />
-        public async Task<Guid> NotificarOrdenCompraGenerada(Guid ordenCompraId, Guid proveedorId, string nombreProveedor)
+        public async Task<Guid> NotificarOrdenCompraGenerada(Guid ordenCompraId, Guid proveedorId, string nombreProveedor, CancellationToken cancellationToken = default)
         {
             // Obtener los destinatarios (administradores del sistema)
-            var administradores = await ObtenerAdministradoresAsync();
+            var administradores = await ObtenerAdministradoresAsync(cancellationToken);
             
             if (!administradores.Any())
                 throw new InvalidOperationException("No hay administradores configurados para recibir notificaciones");
@@ -62,22 +63,23 @@ namespace RestaurantePro.Domain.Inventario.Services
                 mensaje,
                 TipoNotificacion.OrdenCompraGenerada,
                 administradores,
-                ordenCompraId);
+                ordenCompraId,
+                cancellationToken);
                 
             // Devolver el ID de la primera notificación
             return notificaciones.First().Id;
         }
         
         /// <inheritdoc />
-        public async Task<IEnumerable<Notificacion>> ObtenerNotificacionesPendientes(Guid destinatarioId)
+        public async Task<IEnumerable<Notificacion>> ObtenerNotificacionesPendientes(Guid destinatarioId, CancellationToken cancellationToken = default)
         {
-            return await _servicioNotificacionesCore.ObtenerNotificacionesAsync(destinatarioId, true);
+            return await _servicioNotificacionesCore.ObtenerNotificacionesAsync(destinatarioId, true, cancellationToken);
         }
         
         /// <inheritdoc />
-        public async Task<bool> MarcarNotificacionComoLeida(Guid notificacionId)
+        public async Task<bool> MarcarNotificacionComoLeida(Guid notificacionId, CancellationToken cancellationToken = default)
         {
-            return await _servicioNotificacionesCore.MarcarComoLeidaAsync(notificacionId);
+            return await _servicioNotificacionesCore.MarcarComoLeidaAsync(notificacionId, cancellationToken);
         }
         
         // Implementación de IServicioNotificaciones
@@ -141,7 +143,7 @@ namespace RestaurantePro.Domain.Inventario.Services
         }
         
         // Método privado para obtener los IDs de los administradores
-        private async Task<List<Guid>> ObtenerAdministradoresAsync()
+        private async Task<List<Guid>> ObtenerAdministradoresAsync(CancellationToken cancellationToken = default)
         {
             // En un entorno real, se obtendría de la base de datos o de un servicio de usuarios
             // Por ahora, devolvemos un ID fijo para simular al menos un administrador

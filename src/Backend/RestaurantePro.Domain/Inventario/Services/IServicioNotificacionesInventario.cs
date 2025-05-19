@@ -12,8 +12,9 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// <param name="nombre">Nombre del ingrediente</param>
         /// <param name="stockActual">Stock actual</param>
         /// <param name="stockMinimo">Stock mínimo establecido</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>ID de la notificación generada</returns>
-        Task<Guid> NotificarStockBajo(Guid ingredienteId, string nombre, decimal stockActual, decimal stockMinimo);
+        Task<Guid> NotificarStockBajo(Guid ingredienteId, string nombre, decimal stockActual, decimal stockMinimo, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Notifica la generación de una orden de compra automática
@@ -21,21 +22,24 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// <param name="ordenCompraId">ID de la orden de compra</param>
         /// <param name="proveedorId">ID del proveedor</param>
         /// <param name="nombreProveedor">Nombre del proveedor</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>ID de la notificación generada</returns>
-        Task<Guid> NotificarOrdenCompraGenerada(Guid ordenCompraId, Guid proveedorId, string nombreProveedor);
+        Task<Guid> NotificarOrdenCompraGenerada(Guid ordenCompraId, Guid proveedorId, string nombreProveedor, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene las notificaciones pendientes (no leídas) de un destinatario
         /// </summary>
         /// <param name="destinatarioId">ID del destinatario</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de notificaciones pendientes</returns>
-        Task<IEnumerable<Core.Notificaciones.Entities.Notificacion>> ObtenerNotificacionesPendientes(Guid destinatarioId);
+        Task<IEnumerable<Core.Notificaciones.Entities.Notificacion>> ObtenerNotificacionesPendientes(Guid destinatarioId, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Marca una notificación como leída
         /// </summary>
         /// <param name="notificacionId">ID de la notificación</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>True si la operación fue exitosa, False en caso contrario</returns>
-        Task<bool> MarcarNotificacionComoLeida(Guid notificacionId);
+        Task<bool> MarcarNotificacionComoLeida(Guid notificacionId, CancellationToken cancellationToken = default);
     }
 } 
