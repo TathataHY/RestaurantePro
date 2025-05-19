@@ -10,7 +10,7 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
         private readonly IComandaRepository _comandaRepository;
         private readonly IClienteRepository _clienteRepository;
         private readonly IServicioFidelizacion _servicioFidelizacion;
-        private readonly IDomainEventLog _eventLog;
+        private readonly IDomainEventRegistry _eventRegistry;
 
         /// <summary>
         /// Constructor
@@ -19,12 +19,12 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
             IComandaRepository comandaRepository,
             IClienteRepository clienteRepository,
             IServicioFidelizacion servicioFidelizacion,
-            IDomainEventLog eventLog)
+            IDomainEventRegistry eventRegistry)
         {
             _comandaRepository = comandaRepository ?? throw new ArgumentNullException(nameof(comandaRepository));
             _clienteRepository = clienteRepository ?? throw new ArgumentNullException(nameof(clienteRepository));
             _servicioFidelizacion = servicioFidelizacion ?? throw new ArgumentNullException(nameof(servicioFidelizacion));
-            _eventLog = eventLog ?? throw new ArgumentNullException(nameof(eventLog));
+            _eventRegistry = eventRegistry ?? throw new ArgumentNullException(nameof(eventRegistry));
         }
 
         /// <summary>
@@ -37,9 +37,7 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
                 // Solo aplicamos descuentos automáticos si el nivel mejoró a Oro o Platino
                 if (evento.NuevoNivel != NivelFidelizacion.Oro && evento.NuevoNivel != NivelFidelizacion.Platino)
                 {
-                    await _eventLog.LogEvent(evento, 
-                        $"No se aplicaron descuentos porque el nivel {evento.NuevoNivel} no califica para descuentos automáticos", 
-                        cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
 
@@ -47,9 +45,7 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
                 var cliente = await _clienteRepository.ObtenerPorIdAsync(evento.ClienteId, cancellationToken);
                 if (cliente == null)
                 {
-                    await _eventLog.LogEvent(evento, 
-                        $"No se encontró el cliente con ID {evento.ClienteId}", 
-                        cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
 
@@ -57,9 +53,7 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
                 var comandasAbiertas = await _comandaRepository.ObtenerComandasAbiertas(cliente.Id, cancellationToken);
                 if (!comandasAbiertas.Any())
                 {
-                    await _eventLog.LogEvent(evento, 
-                        $"El cliente no tiene comandas abiertas para aplicar descuentos", 
-                        cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
 
@@ -86,16 +80,12 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
                 }
 
                 // Registrar éxito
-                await _eventLog.LogEvent(evento, 
-                    $"Se aplicaron descuentos por mejora de nivel en {comandasActualizadas} comandas por un total de ${descuentoAplicado:N2}", 
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
             catch (Exception ex)
             {
                 // Registrar error
-                await _eventLog.LogEvent(evento, 
-                    $"Error al aplicar descuentos automáticos: {ex.Message}", 
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
                 throw;
             }
         }

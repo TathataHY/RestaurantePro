@@ -10,7 +10,7 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
         private readonly ITarjetaFidelizacionRepository _tarjetaRepository;
         private readonly IProductoRepository _productoRepository;
         private readonly Core.Notificaciones.Services.IServicioNotificaciones _notificacionService;
-        private readonly IDomainEventLog _eventLog;
+        private readonly IDomainEventRegistry _eventRegistry;
         private readonly IIngredienteRepository _ingredienteRepository;
 
         /// <summary>
@@ -21,14 +21,14 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
             ITarjetaFidelizacionRepository tarjetaRepository,
             IProductoRepository productoRepository,
             Core.Notificaciones.Services.IServicioNotificaciones notificacionService,
-            IDomainEventLog eventLog,
+            IDomainEventRegistry eventRegistry,
             IIngredienteRepository ingredienteRepository)
         {
             _clienteRepository = clienteRepository ?? throw new ArgumentNullException(nameof(clienteRepository));
             _tarjetaRepository = tarjetaRepository ?? throw new ArgumentNullException(nameof(tarjetaRepository));
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
             _notificacionService = notificacionService ?? throw new ArgumentNullException(nameof(notificacionService));
-            _eventLog = eventLog ?? throw new ArgumentNullException(nameof(eventLog));
+            _eventRegistry = eventRegistry ?? throw new ArgumentNullException(nameof(eventRegistry));
             _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
         }
 
@@ -43,9 +43,7 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
                 var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(evento.IngredienteId, cancellationToken);
                 if (ingrediente == null)
                 {
-                    await _eventLog.LogEvent(evento, 
-                        $"No se encontró el ingrediente {evento.IngredienteId}", 
-                        cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
 
@@ -55,9 +53,7 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
 
                 if (!productos.Any())
                 {
-                    await _eventLog.LogEvent(evento,
-                        $"No se encontraron productos con el ingrediente {ingrediente.Nombre}",
-                        cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
 
@@ -91,16 +87,12 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
                 }
 
                 // 7. Registrar éxito
-                await _eventLog.LogEvent(evento, 
-                    $"Se notificaron {clientesNotificados} clientes frecuentes sobre productos próximos a agotarse", 
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
             catch (Exception ex)
             {
                 // Registrar error
-                await _eventLog.LogEvent(evento, 
-                    $"Error al notificar a clientes frecuentes: {ex.Message}", 
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
                 throw;
             }
         }

@@ -11,7 +11,7 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
         private readonly ITarjetaFidelizacionRepository _tarjetaRepository;
         private readonly IServicioFidelizacion _servicioFidelizacion;
         private readonly IDateTimeService _dateTimeService;
-        private readonly IDomainEventLog _eventLog;
+        private readonly IDomainEventRegistry _eventRegistry;
         
         public ComandaFinalizada_AcumularPuntosHandler(
             IClienteRepository clienteRepository,
@@ -19,14 +19,14 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
             ITarjetaFidelizacionRepository tarjetaRepository,
             IServicioFidelizacion servicioFidelizacion,
             IDateTimeService dateTimeService,
-            IDomainEventLog eventLog)
+            IDomainEventRegistry eventRegistry)
         {
             _clienteRepository = clienteRepository ?? throw new ArgumentNullException(nameof(clienteRepository));
             _comandaRepository = comandaRepository ?? throw new ArgumentNullException(nameof(comandaRepository));
             _tarjetaRepository = tarjetaRepository ?? throw new ArgumentNullException(nameof(tarjetaRepository));
             _servicioFidelizacion = servicioFidelizacion ?? throw new ArgumentNullException(nameof(servicioFidelizacion));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
-            _eventLog = eventLog ?? throw new ArgumentNullException(nameof(eventLog));
+            _eventRegistry = eventRegistry ?? throw new ArgumentNullException(nameof(eventRegistry));
         }
         
         /// <summary>
@@ -40,9 +40,7 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
                 var comanda = await _comandaRepository.ObtenerPorIdAsync(evento.ComandaId, cancellationToken);
                 if (comanda == null || !comanda.ClienteId.HasValue || comanda.Estado != EstadoComanda.Finalizada)
                 {
-                    await _eventLog.LogEvent(evento, 
-                        $"No se acumularon puntos: Comanda con ID {evento.ComandaId} no encontrada, sin cliente asociado o no finalizada",
-                        cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
                     
@@ -50,9 +48,7 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
                 var cliente = await _clienteRepository.ObtenerPorIdAsync(comanda.ClienteId.Value, cancellationToken);
                 if (cliente == null || !cliente.EstaActivo)
                 {
-                    await _eventLog.LogEvent(evento, 
-                        $"No se acumularon puntos: Cliente con ID {comanda.ClienteId.Value} no encontrado o inactivo",
-                        cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
                 
@@ -63,15 +59,11 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
                     comanda.Id, 
                     evento.Total);
                 
-                await _eventLog.LogEvent(evento, 
-                    $"Se procesó acumulación de puntos para el cliente {cliente.Nombre.NombreCompleto} por su comanda de {evento.Total:C2}",
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
             catch (Exception ex)
             {
-                await _eventLog.LogEvent(evento, 
-                    $"Error al acumular puntos: {ex.Message}",
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
         }
     }
