@@ -1,25 +1,26 @@
-namespace RestaurantePro.Domain.Inventario.Notificaciones.Events
+namespace RestaurantePro.Domain.Core.Notificaciones.Events
 {
-
     /// <summary>
-    /// Evento de dominio emitido cuando una notificación es marcada como leída
+    /// Evento de dominio que se emite cuando se marca una notificación como leída
     /// </summary>
     public class NotificacionLeida : DomainEvent
     {
         /// <summary>
-        /// ID de la notificación leída
+        /// ID de la notificación que fue leída
         /// </summary>
         public Guid NotificacionId { get; }
         
         /// <summary>
-        /// ID del destinatario que leyó la notificación
+        /// ID del destinatario de la notificación
         /// </summary>
         public Guid DestinatarioId { get; }
-        
+
         /// <summary>
-        /// Constructor del evento NotificacionLeida
+        /// Constructor del evento
         /// </summary>
-        public NotificacionLeida(Guid notificacionId, Guid destinatarioId)
+        public NotificacionLeida(
+            Guid notificacionId,
+            Guid destinatarioId) : base()
         {
             NotificacionId = notificacionId;
             DestinatarioId = destinatarioId;

@@ -38,6 +38,13 @@ global using RestaurantePro.Domain.Core.SharedKernel.Services;
 // Domain core imports - BoundedContexts
 global using RestaurantePro.Domain.Core.BoundedContexts;
 
+// Domain core imports - Notificaciones
+global using RestaurantePro.Domain.Core.Notificaciones.Entities;
+global using RestaurantePro.Domain.Core.Notificaciones.Enums;
+global using RestaurantePro.Domain.Core.Notificaciones.Events;
+global using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
+global using RestaurantePro.Domain.Core.Notificaciones.Services;
+
 // Domain core imports - Productos
 global using RestaurantePro.Domain.Core.Productos.Entities;
 global using RestaurantePro.Domain.Core.Productos.ValueObjects;
@@ -45,6 +52,7 @@ global using RestaurantePro.Domain.Core.Productos.Interfaces;
 // global using RestaurantePro.Domain.Core.Productos.Enums;
 global using RestaurantePro.Domain.Core.Productos.Events;
 global using RestaurantePro.Domain.Core.Productos.Events.Producto;
+global using RestaurantePro.Domain.Core.Productos.Events.ProductoCategoria;
 
 // Domain Operaciones - Comandas
 global using RestaurantePro.Domain.Operaciones.Comandas.Entities;
@@ -99,12 +107,6 @@ global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
 
 // Domain Inventario - Services
 global using RestaurantePro.Domain.Inventario.Services;
-
-// Domain Inventario - Notificaciones
-global using RestaurantePro.Domain.Inventario.Notificaciones.Entities;
-global using RestaurantePro.Domain.Inventario.Notificaciones.Enums;
-global using RestaurantePro.Domain.Inventario.Notificaciones.Interfaces;
-global using RestaurantePro.Domain.Inventario.Notificaciones.Events;
 
 // Domain Inventario - Policies
 global using RestaurantePro.Domain.Inventario.Policies;

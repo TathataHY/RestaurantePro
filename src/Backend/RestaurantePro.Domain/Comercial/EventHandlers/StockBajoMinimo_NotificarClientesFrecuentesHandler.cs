@@ -9,7 +9,7 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
         private readonly IClienteRepository _clienteRepository;
         private readonly ITarjetaFidelizacionRepository _tarjetaRepository;
         private readonly IProductoRepository _productoRepository;
-        private readonly IServicioNotificaciones _notificacionService;
+        private readonly Core.Notificaciones.Services.IServicioNotificaciones _notificacionService;
         private readonly IDomainEventLog _eventLog;
         private readonly IIngredienteRepository _ingredienteRepository;
 
@@ -20,7 +20,7 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
             IClienteRepository clienteRepository,
             ITarjetaFidelizacionRepository tarjetaRepository,
             IProductoRepository productoRepository,
-            IServicioNotificaciones notificacionService,
+            Core.Notificaciones.Services.IServicioNotificaciones notificacionService,
             IDomainEventLog eventLog,
             IIngredienteRepository ingredienteRepository)
         {
@@ -80,9 +80,11 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
                 foreach (var cliente in clientes.Where(c => c.EstaActivo))
                 {
                     await _notificacionService.EnviarNotificacionAsync(
-                        cliente.Id,
                         "Productos próximos a agotarse",
                         mensaje,
+                        TipoNotificacion.Personalizada,
+                        cliente.Id,
+                        null,
                         cancellationToken);
                     
                     clientesNotificados++;

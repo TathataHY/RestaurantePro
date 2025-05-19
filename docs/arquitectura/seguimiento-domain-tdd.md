@@ -14,6 +14,11 @@ Este documento sirve como guía y registro del desarrollo de la capa de dominio 
 ```
 RestaurantePro.Domain/
 ├── Core/                 # Componentes base y compartidos
+│   ├── Base/             # Clases base (Entity, ValueObject, etc.)
+│   ├── BoundedContexts/  # Definición de contextos delimitados
+│   ├── Notificaciones/   # Sistema central de notificaciones
+│   ├── Productos/        # Catálogo de productos
+│   └── SharedKernel/     # Componentes compartidos entre contextos
 ├── Comercial/            # Gestión de clientes y fidelización
 ├── Operaciones/          # Comandas y reservaciones
 ├── Inventario/           # Gestión de inventario y compras
@@ -31,6 +36,7 @@ RestaurantePro.Domain/
 | DomainEvent | ✅ Completo | ✅ Completas | Eventos de dominio |
 | Productos | ✅ Completo | ✅ Completas | Catálogo de productos |
 | IDateTimeService | ✅ Completo | ✅ Completas | Servicio de fecha/hora |
+| Notificaciones | ✅ Completo | ✅ Completas | Sistema central de notificaciones |
 
 ### Comercial
 
@@ -61,7 +67,7 @@ RestaurantePro.Domain/
 | OrdenCompra | ✅ Completo | ✅ Completas | Órdenes a proveedores |
 | VerificadorStock | ✅ Completo | ✅ Completas | Verificación y generación de órdenes |
 | GeneradorOrdenesCompra | ✅ Completo | ✅ Completas | Generación de órdenes automáticas |
-| ServicioNotificaciones | ✅ Completo | ✅ Completas | Notificaciones de sistema |
+| ServicioNotificacionesInventario | ✅ Completo | ✅ Completas | Adaptador de notificaciones para inventario |
 | StockBajoPolicy | ✅ Completo | ✅ Completas | Política para stock bajo |
 
 ### Proveedores
@@ -154,6 +160,8 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 - Interfaces y clases de implementación se separan en archivos diferentes
 - Los eventos de dominio se nombran sin sufijo "Event" y en tiempo pasado
 - Las políticas de dominio encapsulan reglas de negocio complejas que implican múltiples entidades y servicios
+- El sistema de notificaciones se ha centralizado en el módulo Core para permitir su uso por todos los contextos
+- Se utilizan adaptadores específicos para cada contexto que requiere enviar notificaciones
 
 ## Plan de integración con otras capas
 
@@ -171,3 +179,38 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
    - Desarrollar controladores API para exponer funcionalidades
    - Implementar autenticación y autorización
    - Configurar middleware para manejo de errores y logging
+
+## Mejoras recientes en la arquitectura
+
+### Centralización del sistema de notificaciones
+
+Una de las mejoras importantes realizadas recientemente ha sido la centralización del sistema de notificaciones, que anteriormente estaba ubicado en el contexto de Inventario. Al tratarse de una funcionalidad transversal utilizada por varios módulos de la aplicación, se ha decidido moverlo al módulo Core para facilitar su reutilización.
+
+#### Cambios realizados
+
+1. **Creación de estructura en Core**:
+   - Creación de la estructura de directorios en `Core/Notificaciones`
+   - Organización en capas: Entities, Enums, Events, Interfaces, Services
+
+2. **Implementación del servicio genérico**:
+   - Desarrollo de `IServicioNotificaciones` como interfaz principal
+   - Implementación de `ServicioNotificaciones` para gestionar notificaciones de cualquier tipo
+   - Adición de métodos genéricos para envío masivo y gestión de notificaciones
+
+3. **Adaptador específico por dominio**:
+   - Creación de `ServicioNotificacionesInventario` como adaptador para el contexto de Inventario
+   - Mantenimiento de la interfaz `IServicioNotificaciones` específica para Inventario
+   - Implementación delegando al servicio principal en Core
+
+4. **Actualización de referencias**:
+   - Modificación de `GlobalUsings.cs` para utilizar los nuevos namespaces
+   - Actualización de las pruebas unitarias para reflejar los cambios
+
+#### Beneficios
+
+- **Reutilización**: El servicio de notificaciones ahora puede ser utilizado por cualquier contexto sin duplicar código
+- **Consistencia**: Todas las notificaciones siguen la misma estructura y comportamiento
+- **Extensibilidad**: Fácil adición de nuevos tipos de notificaciones o canales de entrega
+- **Mantenimiento**: Centralización de la lógica de notificaciones en un solo lugar
+
+Esta refactorización demuestra nuestro compromiso con los principios de diseño de dominio, donde identificamos conceptos transversales y los colocamos en un nivel apropiado de la arquitectura, facilitando su reutilización y separando claramente las responsabilidades.

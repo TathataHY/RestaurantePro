@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Notificaciones.Enums
+namespace RestaurantePro.Domain.Core.Notificaciones.Enums
 {
     /// <summary>
     /// Tipos de notificaciones del sistema

@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Notificaciones.Entities
+namespace RestaurantePro.Domain.Core.Notificaciones.Entities
 {
     /// <summary>
     /// Entidad que representa una notificación en el sistema

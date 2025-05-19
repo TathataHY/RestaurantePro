@@ -1,8 +1,7 @@
-namespace RestaurantePro.Domain.Inventario.Notificaciones.Events
+namespace RestaurantePro.Domain.Core.Notificaciones.Events
 {
-
     /// <summary>
-    /// Evento de dominio emitido cuando se crea una nueva notificación
+    /// Evento de dominio que se emite cuando se crea una nueva notificación
     /// </summary>
     public class NotificacionCreada : DomainEvent
     {
@@ -17,7 +16,7 @@ namespace RestaurantePro.Domain.Inventario.Notificaciones.Events
         public string Titulo { get; }
         
         /// <summary>
-        /// Tipo de la notificación
+        /// Tipo de notificación
         /// </summary>
         public TipoNotificacion Tipo { get; }
         
@@ -25,15 +24,15 @@ namespace RestaurantePro.Domain.Inventario.Notificaciones.Events
         /// ID del destinatario de la notificación
         /// </summary>
         public Guid DestinatarioId { get; }
-        
+
         /// <summary>
-        /// Constructor del evento NotificacionCreada
+        /// Constructor del evento
         /// </summary>
         public NotificacionCreada(
             Guid notificacionId,
             string titulo,
             TipoNotificacion tipo,
-            Guid destinatarioId)
+            Guid destinatarioId) : base()
         {
             NotificacionId = notificacionId;
             Titulo = titulo;

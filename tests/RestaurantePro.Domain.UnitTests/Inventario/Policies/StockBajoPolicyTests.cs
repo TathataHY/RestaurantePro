@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
     public class StockBajoPolicyTests
     {
         private readonly Mock<IIngredienteRepository> _ingredienteRepositoryMock;
-        private readonly Mock<IServicioNotificaciones> _servicioNotificacionesMock;
+        private readonly Mock<IServicioNotificacionesInventario> _servicioNotificacionesMock;
         private readonly Mock<IVerificadorStock> _verificadorStockMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
         private readonly StockBajoPolicy _policy;
@@ -11,7 +11,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
         public StockBajoPolicyTests()
         {
             _ingredienteRepositoryMock = new Mock<IIngredienteRepository>();
-            _servicioNotificacionesMock = new Mock<IServicioNotificaciones>();
+            _servicioNotificacionesMock = new Mock<IServicioNotificacionesInventario>();
             _verificadorStockMock = new Mock<IVerificadorStock>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
 

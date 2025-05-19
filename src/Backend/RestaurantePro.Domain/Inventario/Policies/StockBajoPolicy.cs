@@ -6,7 +6,7 @@ namespace RestaurantePro.Domain.Inventario.Policies
     public class StockBajoPolicy : IStockBajoPolicy
     {
         private readonly IIngredienteRepository _ingredienteRepository;
-        private readonly IServicioNotificaciones _servicioNotificaciones;
+        private readonly IServicioNotificacionesInventario _servicioNotificaciones;
         private readonly IVerificadorStock _verificadorStock;
         private readonly IDateTimeService _dateTimeService;
         
@@ -15,7 +15,7 @@ namespace RestaurantePro.Domain.Inventario.Policies
         /// </summary>
         public StockBajoPolicy(
             IIngredienteRepository ingredienteRepository,
-            IServicioNotificaciones servicioNotificaciones,
+            IServicioNotificacionesInventario servicioNotificaciones,
             IVerificadorStock verificadorStock,
             IDateTimeService dateTimeService)
         {
