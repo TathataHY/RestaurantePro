@@ -7,6 +7,7 @@ global using System.Text.RegularExpressions;
 global using System.Globalization;
 global using System.Text;
 global using System.Threading;
+global using System.Text.Json;
 
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +21,8 @@ global using RestaurantePro.Domain.Core.Base.Interfaces;
 global using RestaurantePro.Domain.Core.Base.Events;
 global using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 global using RestaurantePro.Domain.Core.Base.Events.Handlers;
+global using RestaurantePro.Domain.Core.Base.Events.Registry;
+global using RestaurantePro.Domain.Core.Base.Events.Extensions;
 global using RestaurantePro.Domain.Core.Base.Services;
 
 // Domain core imports - SharedKernel

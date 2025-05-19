@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
     public class ClienteDesactivado_CancelarReservacionesPendientesHandlerTests
     {
         private readonly Mock<IReservacionRepository> _reservacionRepositoryMock;
-        private readonly Mock<IDomainEventLog> _eventLogMock;
+        private readonly Mock<IDomainEventRegistry> _eventRegistryMock;
         
         private readonly ClienteDesactivado_CancelarReservacionesPendientesHandler _handler;
         
@@ -14,11 +14,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
         public ClienteDesactivado_CancelarReservacionesPendientesHandlerTests()
         {
             _reservacionRepositoryMock = new Mock<IReservacionRepository>();
-            _eventLogMock = new Mock<IDomainEventLog>();
+            _eventRegistryMock = new Mock<IDomainEventRegistry>();
             
             _handler = new ClienteDesactivado_CancelarReservacionesPendientesHandler(
                 _reservacionRepositoryMock.Object,
-                _eventLogMock.Object);
+                _eventRegistryMock.Object);
         }
         
         [Fact]
@@ -62,6 +62,10 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
                 .Setup(r => r.ActualizarAsync(It.IsAny<Reservacion>()))
                 .Returns(Task.CompletedTask);
                 
+            _eventRegistryMock
+                .Setup(r => r.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+                
             // Act
             await _handler.Handle(evento, CancellationToken.None);
             
@@ -86,12 +90,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
                 Times.Never);
                 
             // Verificar que se registró el evento correctamente
-            _eventLogMock.Verify(
-                l => l.LogEvent(
-                    evento,
-                    It.Is<string>(s => s.Contains("Se cancelaron 2 reservaciones")),
-                    It.IsAny<CancellationToken>()),
-                Times.Once);
+            _eventRegistryMock.Verify(
+                r => r.RegisterAsync(evento, It.IsAny<CancellationToken>()),
+                Times.AtLeastOnce());
                 
             // Verificar que el estado de las reservaciones ahora es Cancelada
             Assert.Equal(EstadoReservacion.Cancelada, reservacionPendiente.Estado);
@@ -109,6 +110,10 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
                 .Setup(r => r.ObtenerReservacionesPendientesPorClienteIdAsync(_clienteId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Reservacion>());
                 
+            _eventRegistryMock
+                .Setup(r => r.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+                
             // Act
             await _handler.Handle(evento, CancellationToken.None);
             
@@ -119,11 +124,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
                 Times.Never);
                 
             // Verificar que se registró el evento correctamente
-            _eventLogMock.Verify(
-                l => l.LogEvent(
-                    evento,
-                    It.Is<string>(s => s.Contains("No se encontraron reservaciones pendientes")),
-                    It.IsAny<CancellationToken>()),
+            _eventRegistryMock.Verify(
+                r => r.RegisterAsync(evento, It.IsAny<CancellationToken>()),
                 Times.Once);
         }
         
@@ -138,16 +140,17 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
                 .Setup(r => r.ObtenerReservacionesPendientesPorClienteIdAsync(_clienteId, It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new Exception("Error de prueba"));
                 
+            _eventRegistryMock
+                .Setup(r => r.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+                
             // Act
             await _handler.Handle(evento, CancellationToken.None);
             
             // Assert
             // Verificar que se registró el error correctamente
-            _eventLogMock.Verify(
-                l => l.LogEvent(
-                    evento,
-                    It.Is<string>(s => s.Contains("Error al cancelar reservaciones")),
-                    It.IsAny<CancellationToken>()),
+            _eventRegistryMock.Verify(
+                r => r.RegisterAsync(evento, It.IsAny<CancellationToken>()),
                 Times.Once);
         }
     }

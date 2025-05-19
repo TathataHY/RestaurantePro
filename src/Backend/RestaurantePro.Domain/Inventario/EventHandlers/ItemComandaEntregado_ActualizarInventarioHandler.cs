@@ -12,7 +12,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
         private readonly IProductoRepository _productoRepository;
         private readonly IProductoIngredienteRepository _productoIngredienteRepository;
         private readonly IDateTimeService _dateTimeService;
-        private readonly IDomainEventLog _eventLog;
+        private readonly IDomainEventRegistry _eventRegistry;
         
         public ItemComandaEntregado_ActualizarInventarioHandler(
             IIngredienteRepository ingredienteRepository,
@@ -20,14 +20,14 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
             IProductoRepository productoRepository,
             IProductoIngredienteRepository productoIngredienteRepository,
             IDateTimeService dateTimeService,
-            IDomainEventLog eventLog)
+            IDomainEventRegistry eventRegistry)
         {
             _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
             _movimientoRepository = movimientoRepository ?? throw new ArgumentNullException(nameof(movimientoRepository));
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
             _productoIngredienteRepository = productoIngredienteRepository ?? throw new ArgumentNullException(nameof(productoIngredienteRepository));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
-            _eventLog = eventLog ?? throw new ArgumentNullException(nameof(eventLog));
+            _eventRegistry = eventRegistry ?? throw new ArgumentNullException(nameof(eventRegistry));
         }
         
         /// <summary>
@@ -41,7 +41,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 var producto = await _productoRepository.ObtenerPorIdAsync(evento.ProductoId, cancellationToken);
                 if (producto == null)
                 {
-                    await _eventLog.LogEvent(evento, $"No se encontró el producto con ID {evento.ProductoId}", cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
                 
@@ -62,9 +62,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                         
                     if (productoIngrediente == null)
                     {
-                        await _eventLog.LogEvent(evento, 
-                            $"No se encontró relación entre producto {producto.Id} e ingrediente {ingrediente.Id}", 
-                            cancellationToken);
+                        await _eventRegistry.RegisterAsync(evento, cancellationToken);
                         continue;
                     }
                     
@@ -90,24 +88,17 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                     // Verificar si se necesita emitir una alerta de stock bajo
                     if (ingrediente.Stock < ingrediente.StockMinimo)
                     {
-                        await _eventLog.LogEvent(evento, 
-                            $"Alerta: Stock bajo para ingrediente {ingrediente.Nombre} (ID: {ingrediente.Id}). " +
-                            $"Stock actual: {ingrediente.Stock}, Stock mínimo: {ingrediente.StockMinimo}", 
-                            cancellationToken);
+                        await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     }
                 }
                 
                 // Registrar el éxito de la operación
-                await _eventLog.LogEvent(evento, 
-                    $"Inventario actualizado correctamente para ítem #{evento.ItemComandaId}", 
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
             catch (Exception ex)
             {
-                await _eventLog.LogEvent(evento, 
-                    $"Error al actualizar inventario para ítem #{evento.ItemComandaId}: {ex.Message}", 
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
         }
     }
-} 
+}

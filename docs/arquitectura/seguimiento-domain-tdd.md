@@ -131,6 +131,51 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
    - Implementar validaciones a nivel de aplicación
    - Crear servicios de aplicación para orquestar casos de uso
 
+## Plan de Mejoras Dominio Febrero 2024
+
+Tras completar la implementación base del dominio, se han identificado las siguientes áreas de mejora para refinar la capa de dominio:
+
+### 1. Mejora del sistema de eventos de dominio
+
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Sistema de suscripción entre agregados | Implementar un mecanismo más robusto que permita la suscripción a eventos entre diferentes agregados dentro y fuera de contextos | Alta | Pendiente |
+| Registro centralizado de eventos | Crear un servicio que almacene todos los eventos de dominio para auditoría y reconstrucción del estado | Media | ✅ Completado |
+| Manejadores de eventos configurables | Permitir la configuración declarativa de manejadores de eventos sin acoplamiento directo | Media | ✅ Completado |
+
+### 2. Refinamiento de políticas de dominio
+
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Ampliar StockBajoPolicy | Incluir más reglas de negocio como priorización de ingredientes por rotación y temporada | Alta | Pendiente |
+| Mejorar ClientesFrecuentesPolicy | Añadir segmentación de clientes por comportamiento y campañas personalizadas | Media | Pendiente |
+| Nueva política: ProductoRecomendadoPolicy | Crear política para recomendar productos basados en historial y tendencias | Baja | Pendiente |
+
+### 3. Validaciones de dominio robustas
+
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Invariantes en OrdenCompra | Reforzar las reglas de negocio que deben cumplirse en órdenes de compra | Alta | Pendiente |
+| Invariantes en Comanda | Mejorar validaciones para garantizar la integridad de las comandas | Media | Pendiente |
+| Validaciones en ValueObjects | Introducir validaciones más específicas para objetos como Email, Teléfono, etc. | Media | Pendiente |
+
+### 4. Patrón de especificación
+
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Implementar patrón base | Crear las interfaces y clases base para implementar el patrón Specification | Alta | ✅ Completado |
+| ProductoDisponibleSpecification | Especificación para verificar disponibilidad de productos | Media | ✅ Completado |
+| ProveedorActivoSpecification | Especificación para validar proveedores activos para órdenes | Media | ✅ Completado |
+| ReservacionValidaSpecification | Especificación para verificar disponibilidad y validez de reservaciones | Media | ✅ Completado |
+
+### 5. Corrección de pruebas unitarias
+
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Corregir ServicioNotificacionesInventarioTests | Resolver errores de compilación en las pruebas | Alta | Pendiente |
+| Ajustar mocks con problemas de expresiones | Modificar setup de pruebas con problemas de árboles de expresión | Alta | Pendiente |
+| Aplicar #nullable context | Aplicar contexto de nulabilidad en pruebas para eliminar advertencias | Media | Pendiente |
+
 ## Registro de ciclos TDD completados
 
 | Fecha | Componente | Test → Implementación → Refactor |

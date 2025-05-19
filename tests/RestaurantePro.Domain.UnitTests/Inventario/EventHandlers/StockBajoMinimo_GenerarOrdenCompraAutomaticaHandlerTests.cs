@@ -5,7 +5,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
         private readonly Mock<IIngredienteRepository> _ingredienteRepositoryMock;
         private readonly Mock<IProveedorRepository> _proveedorRepositoryMock;
         private readonly Mock<IOrdenCompraRepository> _ordenCompraRepositoryMock;
-        private readonly Mock<IDomainEventLog> _eventLogMock;
+        private readonly Mock<IDomainEventRegistry> _eventRegistryMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
         
         private readonly StockBajoMinimo_GenerarOrdenCompraAutomaticaHandler _handler;
@@ -22,14 +22,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             _ingredienteRepositoryMock = new Mock<IIngredienteRepository>();
             _proveedorRepositoryMock = new Mock<IProveedorRepository>();
             _ordenCompraRepositoryMock = new Mock<IOrdenCompraRepository>();
-            _eventLogMock = new Mock<IDomainEventLog>();
+            _eventRegistryMock = new Mock<IDomainEventRegistry>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
             
             _handler = new StockBajoMinimo_GenerarOrdenCompraAutomaticaHandler(
                 _ingredienteRepositoryMock.Object,
                 _proveedorRepositoryMock.Object,
                 _ordenCompraRepositoryMock.Object,
-                _eventLogMock.Object,
+                _eventRegistryMock.Object,
                 _dateTimeServiceMock.Object);
                 
             _ingredienteId = Guid.NewGuid();
@@ -113,11 +113,11 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 })
                 .Returns(Task.CompletedTask);
             
-            // Capturar logs del evento para depurar
-            _eventLogMock
-                .Setup(l => l.LogEvent(It.IsAny<DomainEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Callback<DomainEvent, string, CancellationToken>((ev, msg, _) => {
-                    Console.WriteLine($"EVENT LOG: {msg}");
+            // Capturar eventos registrados para depurar
+            _eventRegistryMock
+                .Setup(r => r.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
+                .Callback<DomainEvent, CancellationToken>((ev, _) => {
+                    Console.WriteLine($"EVENT REGISTERED: {ev.GetType().Name}");
                 })
                 .Returns(Task.CompletedTask);
             
@@ -262,11 +262,11 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 .Setup(r => r.ObtenerPendientesPorProveedorAsync(_proveedorId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<OrdenCompra> { ordenExistente });
             
-            // Capturar logs del evento para comprobar
-            _eventLogMock
-                .Setup(l => l.LogEvent(It.IsAny<DomainEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Callback<DomainEvent, string, CancellationToken>((ev, msg, _) => {
-                    Console.WriteLine($"EVENT LOG: {msg}");
+            // Capturar eventos registrados para comprobar
+            _eventRegistryMock
+                .Setup(r => r.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
+                .Callback<DomainEvent, CancellationToken>((ev, _) => {
+                    Console.WriteLine($"EVENT REGISTERED: {ev.GetType().Name}");
                 })
                 .Returns(Task.CompletedTask);
             

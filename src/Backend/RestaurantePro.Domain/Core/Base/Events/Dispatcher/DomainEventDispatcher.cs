@@ -1,58 +1,67 @@
 namespace RestaurantePro.Domain.Core.Base.Events.Dispatcher
 {
     /// <summary>
-    /// Servicio que se encarga de distribuir eventos de dominio a sus manejadores correspondientes
+    /// Implementación del despachador de eventos de dominio con soporte para registro
     /// </summary>
     public class DomainEventDispatcher : IDomainEventDispatcher
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly IDomainEventLog _eventLog;
+        private readonly IDomainEventRegistry? _eventRegistry;
 
         /// <summary>
-        /// Constructor
+        /// Constructor del despachador de eventos
         /// </summary>
-        public DomainEventDispatcher(IServiceProvider serviceProvider, IDomainEventLog eventLog)
+        /// <param name="serviceProvider">Proveedor de servicios para resolver manejadores</param>
+        /// <param name="eventRegistry">Registro de eventos (opcional)</param>
+        public DomainEventDispatcher(IServiceProvider serviceProvider, IDomainEventRegistry? eventRegistry = null)
         {
-            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-            _eventLog = eventLog ?? throw new ArgumentNullException(nameof(eventLog));
+            _serviceProvider = serviceProvider;
+            _eventRegistry = eventRegistry;
         }
 
         /// <summary>
         /// Distribuye un evento de dominio a todos sus manejadores registrados
         /// </summary>
+        /// <param name="evento">Evento a distribuir</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
         public async Task Dispatch(DomainEvent evento, CancellationToken cancellationToken = default)
         {
-            if (evento == null)
-                throw new ArgumentNullException(nameof(evento));
-
-            var eventType = evento.GetType();
-            var handlerType = typeof(IDomainEventHandler<>).MakeGenericType(eventType);
-
-            // Obtener todos los manejadores registrados para este tipo de evento
-            var handlers = _serviceProvider.GetServices(handlerType) as IEnumerable<object>;
-
-            if (handlers == null || !handlers.Any())
-            {
-                // Si no hay manejadores, registrar en el log y salir
-                await _eventLog.LogEvent(evento, 
-                    $"No se encontraron manejadores para el evento {eventType.Name}", 
-                    cancellationToken);
-                return;
-            }
-
-            // Llamar a cada manejador
-            foreach (dynamic handler in handlers)
+            // Si hay un registro de eventos, registramos el evento
+            if (_eventRegistry != null)
             {
                 try
                 {
-                    await handler.Handle((dynamic)evento, cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                 }
                 catch (Exception ex)
                 {
-                    // Registrar error pero continuar con los demás manejadores
-                    await _eventLog.LogEvent(evento, 
-                        $"Error en manejador {handler.GetType().Name}: {ex.Message}", 
-                        cancellationToken);
+                    // Log error but continue with dispatch
+                    // En una implementación real, se registraría este error
+                    System.Diagnostics.Debug.WriteLine($"Error registering event: {ex.Message}");
+                }
+            }
+
+            // Obtenemos el tipo del evento
+            var eventType = evento.GetType();
+            
+            // Construimos el tipo del handler genérico
+            var handlerType = typeof(IDomainEventHandler<>).MakeGenericType(eventType);
+            
+            // Obtenemos todos los handlers para este tipo de evento
+            var handlers = _serviceProvider.GetServices(handlerType);
+            
+            foreach (var handler in handlers)
+            {
+                // Invocamos el método Handle en cada handler
+                var method = handlerType.GetMethod("Handle");
+                if (method != null)
+                {
+                    // Creamos una tarea para el manejador
+                    var task = (Task)method.Invoke(handler, new object[] { evento, cancellationToken });
+                    if (task != null)
+                    {
+                        await task;
+                    }
                 }
             }
         }
@@ -60,12 +69,26 @@ namespace RestaurantePro.Domain.Core.Base.Events.Dispatcher
         /// <summary>
         /// Distribuye una colección de eventos de dominio a sus respectivos manejadores
         /// </summary>
+        /// <param name="eventos">Colección de eventos a distribuir</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
         public async Task DispatchAll(IEnumerable<DomainEvent> eventos, CancellationToken cancellationToken = default)
         {
-            if (eventos == null)
-                throw new ArgumentNullException(nameof(eventos));
-                
-            // Procesar cada evento en secuencia
+            // Si hay un registro de eventos, registramos todos los eventos en una sola operación
+            if (_eventRegistry != null)
+            {
+                try
+                {
+                    await _eventRegistry.RegisterAllAsync(eventos, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    // Log error but continue with dispatch
+                    // En una implementación real, se registraría este error
+                    System.Diagnostics.Debug.WriteLine($"Error registering events: {ex.Message}");
+                }
+            }
+
+            // Distribuimos cada evento individualmente
             foreach (var evento in eventos)
             {
                 await Dispatch(evento, cancellationToken);

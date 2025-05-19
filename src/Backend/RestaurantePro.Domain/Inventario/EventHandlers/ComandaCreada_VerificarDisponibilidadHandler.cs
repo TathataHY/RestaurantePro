@@ -10,7 +10,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
         private readonly IComandaRepository _comandaRepository;
         private readonly IProductoRepository _productoRepository;
         private readonly IProductoIngredienteRepository _productoIngredienteRepository;
-        private readonly IDomainEventLog _eventLog;
+        private readonly IDomainEventRegistry _eventRegistry;
         
         /// <summary>
         /// Constructor
@@ -20,13 +20,13 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
             IComandaRepository comandaRepository,
             IProductoRepository productoRepository,
             IProductoIngredienteRepository productoIngredienteRepository,
-            IDomainEventLog eventLog)
+            IDomainEventRegistry eventRegistry)
         {
             _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
             _comandaRepository = comandaRepository ?? throw new ArgumentNullException(nameof(comandaRepository));
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
             _productoIngredienteRepository = productoIngredienteRepository ?? throw new ArgumentNullException(nameof(productoIngredienteRepository));
-            _eventLog = eventLog ?? throw new ArgumentNullException(nameof(eventLog));
+            _eventRegistry = eventRegistry ?? throw new ArgumentNullException(nameof(eventRegistry));
         }
         
         /// <summary>
@@ -44,7 +44,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 if (comanda == null)
                 {
                     string errorMsg = $"No se encontró la comanda con ID {evento.ComandaId}";
-                    await _eventLog.LogEvent(evento, errorMsg, cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
                 
@@ -73,7 +73,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                     if (producto == null)
                     {
                         string errorMsg = $"No se encontró el producto con ID {item.ProductoId}";
-                        await _eventLog.LogEvent(evento, errorMsg, cancellationToken);
+                        await _eventRegistry.RegisterAsync(evento, cancellationToken);
                         continue;
                     }
                     
@@ -90,7 +90,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                     {
                         logMessage = $"No se encontraron ingredientes para el producto {producto.Nombre}";
                         Console.WriteLine(logMessage);
-                        await _eventLog.LogEvent(evento, logMessage, cancellationToken);
+                        await _eventRegistry.RegisterAsync(evento, cancellationToken);
                         continue;
                     }
                     
@@ -111,7 +111,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                         {
                             logMessage = $"No se encontró la relación producto-ingrediente para {producto.Id} e {ingrediente.Id}";
                             Console.WriteLine(logMessage);
-                            await _eventLog.LogEvent(evento, logMessage, cancellationToken);
+                            await _eventRegistry.RegisterAsync(evento, cancellationToken);
                             continue;
                         }
                         
@@ -149,7 +149,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                     
                     logMessage = $"Generando advertencia: {mensaje}";
                     Console.WriteLine(logMessage);
-                    await _eventLog.LogEvent(evento, mensaje, cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     logMessage = "Advertencia generada correctamente";
                     Console.WriteLine(logMessage);
                 }
@@ -167,7 +167,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 string errorMessage = $"ERROR: {ex.Message}";
                 Console.WriteLine(errorMessage);
                 Console.WriteLine($"StackTrace: {ex.StackTrace}");
-                await _eventLog.LogEvent(evento, $"Error al verificar inventario: {ex.Message}", cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
         }
     }

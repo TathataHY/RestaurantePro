@@ -14,14 +14,14 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
     public class DomainEventDispatcherTests
     {
         private readonly Mock<IServiceProvider> _serviceProviderMock;
-        private readonly Mock<IDomainEventLog> _eventLogMock;
+        private readonly Mock<IDomainEventRegistry> _eventRegistryMock;
         private readonly DomainEventDispatcher _dispatcher;
 
         public DomainEventDispatcherTests()
         {
             _serviceProviderMock = new Mock<IServiceProvider>();
-            _eventLogMock = new Mock<IDomainEventLog>();
-            _dispatcher = new DomainEventDispatcher(_serviceProviderMock.Object, _eventLogMock.Object);
+            _eventRegistryMock = new Mock<IDomainEventRegistry>();
+            _dispatcher = new DomainEventDispatcher(_serviceProviderMock.Object, _eventRegistryMock.Object);
         }
 
         [Fact]
@@ -66,10 +66,9 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             await _dispatcher.Dispatch(evento);
 
             // Assert
-            _eventLogMock.Verify(
-                l => l.LogEvent(
+            _eventRegistryMock.Verify(
+                l => l.RegisterAsync(
                     evento, 
-                    It.Is<string>(msg => msg.Contains("No se encontraron manejadores")), 
                     It.IsAny<CancellationToken>()),
                 Times.Once);
         }
@@ -105,10 +104,9 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             handler1.Verify(h => h.Handle(evento, It.IsAny<CancellationToken>()), Times.Once);
             handler2.Verify(h => h.Handle(evento, It.IsAny<CancellationToken>()), Times.Once);
             
-            _eventLogMock.Verify(
-                l => l.LogEvent(
+            _eventRegistryMock.Verify(
+                l => l.RegisterAsync(
                     evento, 
-                    It.Is<string>(msg => msg.Contains("Error en manejador") && msg.Contains("Error de prueba")), 
                     It.IsAny<CancellationToken>()),
                 Times.Once);
         }

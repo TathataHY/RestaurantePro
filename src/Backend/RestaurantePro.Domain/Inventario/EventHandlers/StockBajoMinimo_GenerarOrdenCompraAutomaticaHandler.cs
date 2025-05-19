@@ -9,20 +9,20 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
         private readonly IIngredienteRepository _ingredienteRepository;
         private readonly IProveedorRepository _proveedorRepository;
         private readonly IOrdenCompraRepository _ordenCompraRepository;
-        private readonly IDomainEventLog _eventLog;
+        private readonly IDomainEventRegistry _eventRegistry;
         private readonly IDateTimeService _dateTimeService;
         
         public StockBajoMinimo_GenerarOrdenCompraAutomaticaHandler(
             IIngredienteRepository ingredienteRepository,
             IProveedorRepository proveedorRepository,
             IOrdenCompraRepository ordenCompraRepository,
-            IDomainEventLog eventLog,
+            IDomainEventRegistry eventRegistry,
             IDateTimeService dateTimeService)
         {
             _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
             _proveedorRepository = proveedorRepository ?? throw new ArgumentNullException(nameof(proveedorRepository));
             _ordenCompraRepository = ordenCompraRepository ?? throw new ArgumentNullException(nameof(ordenCompraRepository));
-            _eventLog = eventLog ?? throw new ArgumentNullException(nameof(eventLog));
+            _eventRegistry = eventRegistry ?? throw new ArgumentNullException(nameof(eventRegistry));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
         }
         
@@ -38,18 +38,14 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(evento.IngredienteId, cancellationToken);
                 if (ingrediente == null)
                 {
-                    await _eventLog.LogEvent(evento, 
-                        $"No se pudo generar orden automática: Ingrediente con ID {evento.IngredienteId} no encontrado",
-                        cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
                 
                 // Verificar si tiene proveedor principal
                 if (!ingrediente.ProveedorPrincipalId.HasValue)
                 {
-                    await _eventLog.LogEvent(evento, 
-                        $"No se pudo generar orden automática: Ingrediente '{ingrediente.Nombre}' no tiene proveedor principal asignado",
-                        cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
                 
@@ -57,9 +53,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 var proveedor = await _proveedorRepository.ObtenerPorIdAsync(ingrediente.ProveedorPrincipalId.Value, cancellationToken);
                 if (proveedor == null || !proveedor.EstaActivo)
                 {
-                    await _eventLog.LogEvent(evento, 
-                        $"No se pudo generar orden automática: Proveedor no encontrado o inactivo para ingrediente '{ingrediente.Nombre}'",
-                        cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
                 
@@ -75,9 +69,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                         if (item.IngredienteId == ingrediente.Id)
                         {
                             ingredienteYaEnOrden = true;
-                            await _eventLog.LogEvent(evento, 
-                                $"No se generó orden automática: Ya existe una orden pendiente para '{ingrediente.Nombre}' (Orden ID: {orden.Id})",
-                                cancellationToken);
+                            await _eventRegistry.RegisterAsync(evento, cancellationToken);
                             break;
                         }
                     }
@@ -121,16 +113,11 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 // Guardar la orden de compra
                 await _ordenCompraRepository.AgregarAsync(ordenCompra, cancellationToken);
                 
-                await _eventLog.LogEvent(evento, 
-                    $"Se generó orden de compra automática (ID: {ordenCompra.Id}) para ingrediente '{ingrediente.Nombre}' " +
-                    $"al proveedor '{proveedor.Nombre}'. Cantidad: {cantidadPedir} {ingrediente.UnidadMedida}",
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
             catch (Exception ex)
             {
-                await _eventLog.LogEvent(evento, 
-                    $"Error al generar orden automática: {ex.Message}",
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
                 // IMPORTANTE: Propagar la excepción para que las pruebas puedan detectarla
                 throw;
             }

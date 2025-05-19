@@ -15,14 +15,14 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
     public class ClienteDesactivado_CancelarReservacionesPendientesHandler : IDomainEventHandler<Comercial.Clientes.Events.Cliente.ClienteDesactivado>
     {
         private readonly IReservacionRepository _reservacionRepository;
-        private readonly IDomainEventLog _eventLog;
+        private readonly IDomainEventRegistry _eventRegistry;
         
         public ClienteDesactivado_CancelarReservacionesPendientesHandler(
             IReservacionRepository reservacionRepository,
-            IDomainEventLog eventLog)
+            IDomainEventRegistry eventRegistry)
         {
             _reservacionRepository = reservacionRepository ?? throw new ArgumentNullException(nameof(reservacionRepository));
-            _eventLog = eventLog ?? throw new ArgumentNullException(nameof(eventLog));
+            _eventRegistry = eventRegistry ?? throw new ArgumentNullException(nameof(eventRegistry));
         }
         
         /// <summary>
@@ -49,17 +49,12 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
                 if (reservacionesPendientes == null || !reservacionesPendientes.Any())
                 {
                     // No hay reservaciones pendientes, no es necesario hacer nada
-                    await _eventLog.LogEvent(evento, 
-                        $"No se encontraron reservaciones pendientes para el cliente desactivado {evento.NombreCompleto} (ID: {evento.ClienteId})",
-                        cancellationToken);
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
                 
                 // Registrar cuántas reservaciones se van a cancelar
-                await _eventLog.LogEvent(evento, 
-                    $"Se encontraron {reservacionesPendientes.Count()} reservaciones pendientes para el cliente " +
-                    $"{evento.NombreCompleto} (ID: {evento.ClienteId}) que serán canceladas",
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
                 
                 int canceladas = 0;
                 
@@ -81,15 +76,11 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
                 }
                 
                 // Registrar el resultado final
-                await _eventLog.LogEvent(evento, 
-                    $"Se cancelaron {canceladas} reservaciones pendientes del cliente {evento.NombreCompleto} (ID: {evento.ClienteId})",
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
             catch (Exception ex)
             {
-                await _eventLog.LogEvent(evento, 
-                    $"Error al cancelar reservaciones pendientes: {ex.Message}",
-                    cancellationToken);
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
         }
     }

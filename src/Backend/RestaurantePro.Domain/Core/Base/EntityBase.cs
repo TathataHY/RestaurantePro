@@ -33,6 +33,11 @@ namespace RestaurantePro.Domain.Core.Base
         public IReadOnlyCollection<DomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
         /// <summary>
+        /// Obtiene el nombre del contexto de dominio al que pertenece esta entidad
+        /// </summary>
+        public virtual string DomainContext => GetType().Namespace?.Split('.')[2] ?? "Core";
+
+        /// <summary>
         /// Constructor base que asigna un nuevo ID a la entidad
         /// </summary>
         protected EntityBase()
@@ -54,6 +59,17 @@ namespace RestaurantePro.Domain.Core.Base
         public void ClearDomainEvents()
         {
             _domainEvents.Clear();
+        }
+
+        /// <summary>
+        /// Extrae todos los eventos pendientes y los devuelve, dejando la lista vacía
+        /// </summary>
+        /// <returns>Lista de eventos pendientes</returns>
+        public IReadOnlyCollection<DomainEvent> ExtractDomainEvents()
+        {
+            var events = _domainEvents.ToArray();
+            _domainEvents.Clear();
+            return events;
         }
 
         /// <summary>
