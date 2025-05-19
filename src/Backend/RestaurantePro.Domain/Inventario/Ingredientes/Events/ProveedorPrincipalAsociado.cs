@@ -6,18 +6,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
     public class ProveedorPrincipalAsociado : DomainEvent
     {
         /// <summary>
-        /// Momento en que ocurrió el evento
-        /// </summary>
-                
-        /// <summary>
         /// ID del ingrediente
         /// </summary>
         public Guid IngredienteId { get; }
-        
-        /// <summary>
-        /// Nombre del ingrediente
-        /// </summary>
-        public string IngredienteNombre { get; }
         
         /// <summary>
         /// ID del proveedor asociado
@@ -28,12 +19,10 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
         /// Constructor
         /// </summary>
         /// <param name="ingredienteId">ID del ingrediente</param>
-        /// <param name="ingredienteNombre">Nombre del ingrediente</param>
         /// <param name="proveedorId">ID del proveedor</param>
-        public ProveedorPrincipalAsociado(Guid ingredienteId, string ingredienteNombre, Guid proveedorId)
+        public ProveedorPrincipalAsociado(Guid ingredienteId, Guid proveedorId) : base()
         {
             IngredienteId = ingredienteId;
-            IngredienteNombre = ingredienteNombre;
             ProveedorId = proveedorId;
         }
     }

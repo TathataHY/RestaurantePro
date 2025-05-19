@@ -14,6 +14,16 @@ namespace RestaurantePro.Domain.Comercial.Policies
         /// Lista de IDs de tarjetas de fidelización creadas
         /// </summary>
         public List<Guid> TarjetasCreadas { get; } = new List<Guid>();
+        
+        /// <summary>
+        /// Lista de IDs de clientes con segmentos actualizados
+        /// </summary>
+        public List<Guid> ClientesSegmentados { get; } = new List<Guid>();
+        
+        /// <summary>
+        /// Conteo de clientes por segmento
+        /// </summary>
+        public Dictionary<SegmentoCliente, int> ConteoSegmentos { get; } = new Dictionary<SegmentoCliente, int>();
     }
     
     /// <summary>
@@ -38,5 +48,12 @@ namespace RestaurantePro.Domain.Comercial.Policies
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Resultado de la ejecución de la política</returns>
         Task<ResultadoClientesFrecuentesPolicy> EjecutarPolicyParaCliente(Guid clienteId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Ejecuta la segmentación de clientes basada en su comportamiento
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado de la ejecución de la política</returns>
+        Task<ResultadoClientesFrecuentesPolicy> EjecutarSegmentacionClientes(CancellationToken cancellationToken = default);
     }
 } 

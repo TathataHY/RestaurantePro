@@ -68,6 +68,26 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// Relación por ID para mantener la independencia entre agregados.
         /// </summary>
         public Guid? ProveedorPrincipalId { get; private set; }
+        
+        /// <summary>
+        /// Nivel de rotación del ingrediente, usado para priorizar en políticas de stock.
+        /// </summary>
+        public RotacionIngrediente Rotacion { get; private set; }
+        
+        /// <summary>
+        /// Temporada principal del ingrediente.
+        /// </summary>
+        public TemporadaIngrediente Temporada { get; private set; }
+        
+        /// <summary>
+        /// Indica si el ingrediente está bloqueado por control de calidad.
+        /// </summary>
+        public bool BloqueadoControlCalidad { get; private set; }
+        
+        /// <summary>
+        /// Costo promedio en el inventario.
+        /// </summary>
+        public decimal CostoPromedio { get; private set; }
 
         // Constructor privado para EF Core
         private Ingrediente() { }
@@ -82,9 +102,19 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// <param name="unidadMedida">Unidad de medida del ingrediente</param>
         /// <param name="stockMinimo">Stock mínimo recomendado</param>
         /// <param name="stockActual">Stock actual del ingrediente</param>
+        /// <param name="rotacion">Nivel de rotación del ingrediente (opcional)</param>
+        /// <param name="temporada">Temporada del ingrediente (opcional)</param>
         /// <returns>Una nueva instancia de Ingrediente</returns>
         /// <exception cref="ArgumentException">Si los datos no son válidos (nombre vacío o stock mínimo negativo)</exception>
-        public static Ingrediente Crear(string nombre, string codigo, string descripcion, RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidadMedida, decimal stockMinimo, decimal stockActual)
+        public static Ingrediente Crear(
+            string nombre, 
+            string codigo, 
+            string descripcion, 
+            RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidadMedida, 
+            decimal stockMinimo, 
+            decimal stockActual,
+            RotacionIngrediente rotacion = RotacionIngrediente.Media,
+            TemporadaIngrediente temporada = TemporadaIngrediente.TodoElAño)
         {
             if (string.IsNullOrWhiteSpace(nombre))
                 throw new ArgumentException("El nombre no puede estar vacío", nameof(nombre));
@@ -98,7 +128,11 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
                 UnidadMedida = unidadMedida,
                 StockMinimo = stockMinimo,
                 Stock = stockActual,
-                EstaActivo = true
+                EstaActivo = true,
+                Rotacion = rotacion,
+                Temporada = temporada,
+                BloqueadoControlCalidad = false,
+                CostoPromedio = 0
             };
 
             ingrediente.AddDomainEvent(new IngredienteCreado(ingrediente.Id, nombre));
@@ -249,7 +283,74 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             ProveedorPrincipalId = proveedorId;
             MarkAsModified();
             
-            AddDomainEvent(new ProveedorPrincipalAsociado(Id, Nombre, proveedorId));
+            AddDomainEvent(new ProveedorPrincipalAsociado(Id, proveedorId));
+        }
+        
+        /// <summary>
+        /// Actualiza el nivel de rotación del ingrediente.
+        /// </summary>
+        /// <param name="rotacion">Nuevo nivel de rotación</param>
+        public void ActualizarRotacion(RotacionIngrediente rotacion)
+        {
+            if (Rotacion == rotacion)
+                return;
+            
+            Rotacion = rotacion;
+            MarkAsModified();
+            
+            AddDomainEvent(new RotacionIngredienteActualizada(Id, Nombre, rotacion));
+        }
+        
+        /// <summary>
+        /// Actualiza la temporada del ingrediente.
+        /// </summary>
+        /// <param name="temporada">Nueva temporada del ingrediente</param>
+        public void ActualizarTemporada(TemporadaIngrediente temporada)
+        {
+            if (Temporada == temporada)
+                return;
+            
+            Temporada = temporada;
+            MarkAsModified();
+            
+            AddDomainEvent(new TemporadaIngredienteActualizada(Id, Nombre, temporada));
+        }
+        
+        /// <summary>
+        /// Establece o quita el bloqueo de control de calidad.
+        /// </summary>
+        /// <param name="bloqueado">Indica si debe estar bloqueado</param>
+        /// <param name="motivo">Motivo del bloqueo o desbloqueo</param>
+        public void ActualizarBloqueoControlCalidad(bool bloqueado, string motivo)
+        {
+            if (BloqueadoControlCalidad == bloqueado)
+                return;
+            
+            BloqueadoControlCalidad = bloqueado;
+            MarkAsModified();
+            
+            if (bloqueado)
+                AddDomainEvent(new IngredienteBloqueadoPorCalidad(Id, Nombre, motivo));
+            else
+                AddDomainEvent(new IngredienteDesbloqueadoPorCalidad(Id, Nombre, motivo));
+        }
+        
+        /// <summary>
+        /// Actualiza el costo promedio del ingrediente.
+        /// </summary>
+        /// <param name="nuevoCosto">Nuevo costo promedio</param>
+        public void ActualizarCostoPromedio(decimal nuevoCosto)
+        {
+            if (nuevoCosto < 0)
+                throw new ArgumentException("El costo no puede ser negativo", nameof(nuevoCosto));
+            
+            if (CostoPromedio == nuevoCosto)
+                return;
+            
+            CostoPromedio = nuevoCosto;
+            MarkAsModified();
+            
+            AddDomainEvent(new CostoPromedioActualizado(Id, Nombre, nuevoCosto));
         }
         
         /// <summary>

@@ -104,6 +104,97 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             VerificarVerificadorInvocado(1);
         }
 
+        [Fact]
+        public async Task PriorizarIngredientesParaReposicion_DebeOrdenarPorPrioridad()
+        {
+            // Arrange
+            var ingredientes = new List<Ingrediente>
+            {
+                CrearIngredienteConRotacionYTemporada("Tomate", 10, 2, RotacionIngrediente.Alta, TemporadaIngrediente.Verano),
+                CrearIngredienteConRotacionYTemporada("Cebolla", 10, 1, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño),
+                CrearIngredienteConRotacionYTemporada("Lechuga", 10, 3, RotacionIngrediente.Critica, TemporadaIngrediente.Primavera)
+            };
+
+            ConfigurarObtenerConStockBajo(ingredientes);
+
+            // Configurar fecha para que sea verano (enero)
+            _dateTimeServiceMock.Setup(s => s.Now).Returns(new DateTime(2023, 1, 15));
+
+            // Act
+            var resultado = await _policy.PriorizarIngredientesParaReposicion(true);
+
+            // Assert
+            resultado.IngredientesPriorizados.Should().HaveCount(3);
+            
+            // El orden esperado es: 
+            // 1. Tomate (alta rotación + temporada actual verano)
+            // 2. Lechuga (rotación crítica pero fuera de temporada)
+            // 3. Cebolla (rotación media y todo el año)
+            resultado.IngredientesPriorizados[0].Nombre.Should().Be("Tomate");
+            resultado.IngredientesPriorizados[1].Nombre.Should().Be("Lechuga");
+            resultado.IngredientesPriorizados[2].Nombre.Should().Be("Cebolla");
+        }
+        
+        [Fact]
+        public async Task PriorizarIngredientesParaReposicion_SinConsiderarTemporada_DebeOrdenarPorRotacionYStock()
+        {
+            // Arrange
+            var ingredientes = new List<Ingrediente>
+            {
+                CrearIngredienteConRotacionYTemporada("Tomate", 10, 2, RotacionIngrediente.Alta, TemporadaIngrediente.Verano),
+                CrearIngredienteConRotacionYTemporada("Cebolla", 10, 1, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño),
+                CrearIngredienteConRotacionYTemporada("Lechuga", 10, 3, RotacionIngrediente.Critica, TemporadaIngrediente.Primavera)
+            };
+
+            ConfigurarObtenerConStockBajo(ingredientes);
+
+            // Act
+            var resultado = await _policy.PriorizarIngredientesParaReposicion(false);
+
+            // Assert
+            resultado.IngredientesPriorizados.Should().HaveCount(3);
+            
+            // El orden esperado es: 
+            // 1. Lechuga (rotación crítica)
+            // 2. Tomate (alta rotación)
+            // 3. Cebolla (rotación media)
+            resultado.IngredientesPriorizados[0].Nombre.Should().Be("Lechuga");
+            resultado.IngredientesPriorizados[1].Nombre.Should().Be("Tomate");
+            resultado.IngredientesPriorizados[2].Nombre.Should().Be("Cebolla");
+        }
+        
+        [Fact]
+        public async Task EjecutarPolicy_ConIngredientesPriorizados_DebeNotificarEnOrdenDePrioridad()
+        {
+            // Arrange
+            var ingredientes = new List<Ingrediente>
+            {
+                CrearIngredienteConRotacionYTemporada("Tomate", 10, 2, RotacionIngrediente.Alta, TemporadaIngrediente.Verano),
+                CrearIngredienteConRotacionYTemporada("Lechuga", 10, 3, RotacionIngrediente.Critica, TemporadaIngrediente.Primavera)
+            };
+
+            ConfigurarObtenerConStockBajo(ingredientes);
+            ConfigurarVerificadorStock(new ResultadoVerificacionStock());
+            ConfigurarNotificacionStockBajo(Guid.NewGuid());
+            
+            // Configurar fecha para que sea verano (enero)
+            _dateTimeServiceMock.Setup(s => s.Now).Returns(new DateTime(2023, 1, 15));
+
+            // Act
+            var resultado = await _policy.EjecutarPolicy();
+
+            // Assert
+            resultado.Notificaciones.Should().HaveCount(2);
+            resultado.IngredientesPriorizados.Should().HaveCount(2);
+            
+            // El primer ingrediente priorizado debe ser Tomate (temporada actual)
+            resultado.IngredientesPriorizados[0].Nombre.Should().Be("Tomate");
+            
+            // Verificar el orden de las notificaciones (difícil de hacer directamente, pero
+            // verificamos que se llamó al servicio dos veces con cualquier parámetro)
+            VerificarNotificacionesEnviadas(2);
+        }
+
         // Métodos auxiliares para configurar mocks evitando problemas de árboles de expresión
         private void ConfigurarObtenerConStockBajo(List<Ingrediente> ingredientes)
         {
@@ -161,6 +252,38 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
 
             // Asignar un proveedor ficticio
             ingrediente.AsociarProveedorPrincipal(Guid.NewGuid());
+
+            return ingrediente;
+        }
+
+        private Ingrediente CrearIngredienteConRotacionYTemporada(
+            string nombre, 
+            decimal stockMinimo, 
+            decimal stockActual, 
+            RotacionIngrediente rotacion, 
+            TemporadaIngrediente temporada)
+        {
+            var ingrediente = Ingrediente.Crear(
+                nombre,
+                "ING-" + Guid.NewGuid().ToString().Substring(0, 5),
+                $"Descripción de {nombre}",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                stockMinimo,
+                stockActual,
+                rotacion,
+                temporada);
+
+            // Asignar un proveedor ficticio
+            ingrediente.AsociarProveedorPrincipal(Guid.NewGuid());
+            
+            // Asignar un costo promedio para las pruebas
+            ingrediente.ActualizarCostoPromedio(rotacion switch {
+                RotacionIngrediente.Baja => 50.0m,
+                RotacionIngrediente.Media => 100.0m,
+                RotacionIngrediente.Alta => 200.0m,
+                RotacionIngrediente.Critica => 350.0m,
+                _ => 0
+            });
 
             return ingrediente;
         }

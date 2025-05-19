@@ -147,8 +147,8 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
-| Ampliar StockBajoPolicy | Incluir más reglas de negocio como priorización de ingredientes por rotación y temporada | Alta | Pendiente |
-| Mejorar ClientesFrecuentesPolicy | Añadir segmentación de clientes por comportamiento y campañas personalizadas | Media | Pendiente |
+| Ampliar StockBajoPolicy | Incluir más reglas de negocio como priorización de ingredientes por rotación y temporada | Alta | ✅ Completado |
+| Mejorar ClientesFrecuentesPolicy | Añadir segmentación de clientes por comportamiento y campañas personalizadas | Media | ✅ Completado |
 | Nueva política: ProductoRecomendadoPolicy | Crear política para recomendar productos basados en historial y tendencias | Baja | Pendiente |
 
 ### 3. Validaciones de dominio robustas
@@ -167,6 +167,8 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | ProductoDisponibleSpecification | Especificación para verificar disponibilidad de productos | Media | ✅ Completado |
 | ProveedorActivoSpecification | Especificación para validar proveedores activos para órdenes | Media | ✅ Completado |
 | ReservacionValidaSpecification | Especificación para verificar disponibilidad y validez de reservaciones | Media | ✅ Completado |
+| IngredienteDisponibleSpecification | Especificación para verificar disponibilidad de ingredientes | Media | ✅ Completado |
+| ClienteFrecuenteSpecification | Especificación para identificar clientes frecuentes según criterios de visitas y gastos | Media | ✅ Completado |
 
 ### 5. Corrección de pruebas unitarias
 
@@ -192,6 +194,9 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | 2023-12-15 | GeneradorOrdenesCompra | Pruebas → Implementación → Refactor |
 | 2023-12-20 | StockBajoPolicy | Pruebas → Implementación → Refactor |
 | 2023-12-25 | ClientesFrecuentesPolicy | Pruebas → Implementación → Refactor |
+| 2024-03-15 | ClienteFrecuenteSpecification | Pruebas → Implementación → Refactor |
+| 2024-03-20 | Segmentación de Clientes | Diseño → Pruebas → Implementación → Refactor |
+| 2024-03-25 | Priorización en StockBajoPolicy | Diseño → Pruebas → Implementación → Refactor |
 
 ## Decisiones de Diseño
 
@@ -259,3 +264,62 @@ Una de las mejoras importantes realizadas recientemente ha sido la centralizaci�
 - **Mantenimiento**: Centralización de la lógica de notificaciones en un solo lugar
 
 Esta refactorización demuestra nuestro compromiso con los principios de diseño de dominio, donde identificamos conceptos transversales y los colocamos en un nivel apropiado de la arquitectura, facilitando su reutilización y separando claramente las responsabilidades.
+
+### Mejora de ClientesFrecuentesPolicy con segmentación
+
+Se ha mejorado la política `ClientesFrecuentesPolicy` para incluir una funcionalidad de segmentación de clientes basada en su comportamiento de consumo. Esta mejora permite categorizar a los clientes en varios segmentos para facilitar campañas de marketing personalizadas y estrategias de fidelización más efectivas.
+
+#### Cambios realizados
+
+1. **Creación de nuevo enum**:
+   - Definición de `SegmentoCliente` con categorías como: FrecuenciaAlta, TicketAlto, Premium, Creciente, Decreciente, Inactivo
+   - Documentación completa de cada segmento y su significado
+
+2. **Ampliación de la entidad Cliente**:
+   - Adición de la propiedad `Segmento` para almacenar la clasificación
+   - Implementación del método `ActualizarSegmento` para cambiar la clasificación y emitir eventos
+
+3. **Nuevo evento de dominio**:
+   - Creación de `SegmentoClienteActualizado` que se dispara cuando cambia la clasificación de un cliente
+   - Mantenimiento de estado anterior y nuevo para análisis de tendencias
+
+4. **Implementación de algoritmo de segmentación**:
+   - Método `DeterminarSegmentoCliente` que analiza el comportamiento del cliente
+   - Criterios para cada segmento basados en frecuencia, gasto y tendencias
+
+5. **Actualización de interfaces**:
+   - Nuevo método en `IClienteRepository` para obtener clientes con historial de visitas
+   - Ampliación de `ResultadoClientesFrecuentesPolicy` para incluir información sobre segmentación
+
+Esta mejora permite a los restaurantes comprender mejor el comportamiento de sus clientes y adaptar sus estrategias comerciales según los diferentes segmentos, lo que facilitará la creación de campañas personalizadas y acciones específicas para cada grupo.
+
+### Mejora de StockBajoPolicy con priorización inteligente
+
+Se ha ampliado la política `StockBajoPolicy` para incorporar un sistema inteligente de priorización de ingredientes basado en múltiples factores. Esta mejora permite una gestión más eficiente del inventario y optimiza el proceso de reposición de stock.
+
+#### Cambios realizados
+
+1. **Nuevos enums para clasificación de ingredientes**:
+   - Creación de `RotacionIngrediente` con niveles: Baja, Media, Alta, Crítica
+   - Implementación de `TemporadaIngrediente` para clasificar ingredientes según estacionalidad
+
+2. **Ampliación de la entidad Ingrediente**:
+   - Adición de propiedades para rotación, temporada, control de calidad y costo promedio
+   - Implementación de métodos para actualizar estos atributos
+   - Creación de eventos de dominio para cada cambio
+
+3. **Algoritmo de priorización**:
+   - Ponderación de factores múltiples: rotación (40%), temporada (30%), nivel de stock (20%) y costo (10%)
+   - Cálculo de puntuación por temporada considerando la estación actual
+   - Ordenamiento inteligente de ingredientes según prioridad calculada
+
+4. **Nueva funcionalidad en la política**:
+   - Método para priorizar ingredientes para reposición
+   - Integración con notificaciones y generación de órdenes considerando prioridades
+
+5. **Pruebas unitarias**:
+   - Verificación del ordenamiento por prioridad considerando temporada
+   - Prueba del comportamiento sin considerar temporada
+   - Validación de notificaciones y órdenes en orden de prioridad
+
+Esta mejora permite optimizar las compras priorizando ingredientes de alta rotación, en temporada actual, con stock más crítico y considerando costos, lo que resulta en mejor aprovechamiento del presupuesto y reducción de desabastecimientos en productos clave para el negocio.

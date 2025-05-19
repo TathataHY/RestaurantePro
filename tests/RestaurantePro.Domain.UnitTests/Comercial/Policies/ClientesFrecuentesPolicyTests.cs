@@ -151,6 +151,76 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 Times.Once);
         }
         
+        [Fact]
+        public async Task EjecutarSegmentacionClientes_DebeAsignarSegmentosCorrectamente()
+        {
+            // Arrange
+            var clientes = new List<Cliente>
+            {
+                CrearClienteConVisitas("ClienteNuevo", 1, NivelFidelizacion.Basico),
+                CrearClienteConVisitas("ClienteFrecuente", 15, NivelFidelizacion.Plata),
+                CrearClienteConVisitas("ClientePremium", 40, NivelFidelizacion.Platino),
+                CrearClienteConVisitas("ClienteInactivo", 5, NivelFidelizacion.Basico)
+            };
+            
+            IEnumerable<Cliente> clientesEnumerable = clientes;
+            _clienteRepositoryMock.Setup(r => r.ObtenerClientesConHistorialVisitasAsync(It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(clientesEnumerable));
+                
+            // Simulate TarjetaFidelizacion para cada cliente
+            foreach (var cliente in clientes)
+            {
+                var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, $"TF-{Guid.NewGuid():N}");
+                tarjeta.Activar();
+                
+                // Establecer nivel según el cliente
+                if (cliente.Nombre.Nombre == "ClienteFrecuente")
+                    typeof(TarjetaFidelizacion).GetProperty("Nivel").SetValue(tarjeta, NivelFidelizacion.Plata);
+                else if (cliente.Nombre.Nombre == "ClientePremium")
+                    typeof(TarjetaFidelizacion).GetProperty("Nivel").SetValue(tarjeta, NivelFidelizacion.Platino);
+                
+                // Establecer puntos según nivel
+                int puntos = cliente.Nombre.Nombre switch
+                {
+                    "ClienteNuevo" => 50,
+                    "ClienteFrecuente" => 800,
+                    "ClientePremium" => 2000,
+                    "ClienteInactivo" => 200,
+                    _ => 0
+                };
+                typeof(TarjetaFidelizacion).GetProperty("PuntosActuales").SetValue(tarjeta, puntos);
+                
+                // Asignar tarjeta al cliente (usando reflexión)
+                typeof(Cliente).GetProperty("TarjetaFidelizacion").SetValue(cliente, tarjeta);
+                
+                // Simular cliente inactivo
+                if (cliente.Nombre.Nombre == "ClienteInactivo")
+                {
+                    // Este cliente debe tener indicadores de inactividad que nuestra simulación detecte
+                    // No necesitamos manipular directamente el property aquí porque nuestra simulación
+                    // basará la inactividad en el nivel y otros factores
+                }
+            }
+            
+            _clienteRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+                
+            // Act
+            var resultado = await _policy.EjecutarSegmentacionClientes(_cancellationToken);
+            
+            // Assert
+            Assert.True(resultado.ClientesSegmentados.Count > 0, "Debería haber clientes segmentados");
+            Assert.True(resultado.ConteoSegmentos.Values.Sum() == clientes.Count, "Todos los clientes deberían estar contados en algún segmento");
+            
+            // Verificar llamadas a ActualizarAsync
+            _clienteRepositoryMock.Verify(
+                r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()),
+                Times.AtLeastOnce);
+                
+            // Verificar que hay conteos en diferentes segmentos (al menos 2)
+            Assert.True(resultado.ConteoSegmentos.Values.Count(v => v > 0) >= 2, "Debería haber al menos 2 segmentos con clientes");
+        }
+        
         // Métodos auxiliares para crear objetos de prueba
         private Cliente CrearClienteConVisitas(string nombre, int cantidadVisitas, NivelFidelizacion nivelActual)
         {

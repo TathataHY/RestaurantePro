@@ -16,6 +16,15 @@ namespace RestaurantePro.Domain.Comercial.Policies
         private const int UMBRAL_ORO = 20;
         private const int UMBRAL_PLATINO = 30;
         
+        // Umbral para clientes inactivos (días sin visita)
+        private const int DIAS_INACTIVIDAD = 90;
+        
+        // Umbrales para segmentación
+        private const int UMBRAL_FRECUENCIA_ALTA = 8;  // Visitas en los últimos 60 días
+        private const decimal UMBRAL_TICKET_ALTO = 50.0m;  // Gasto promedio por visita
+        private const int UMBRAL_CLIENTE_CRECIENTE = 3;  // Incremento de visitas respecto al periodo anterior
+        private const int UMBRAL_CLIENTE_DECRECIENTE = -3;  // Decremento de visitas respecto al periodo anterior
+        
         /// <summary>
         /// Constructor
         /// </summary>
@@ -85,6 +94,44 @@ namespace RestaurantePro.Domain.Comercial.Policies
             return resultado;
         }
         
+        /// <inheritdoc />
+        public async Task<ResultadoClientesFrecuentesPolicy> EjecutarSegmentacionClientes(CancellationToken cancellationToken = default)
+        {
+            var resultado = new ResultadoClientesFrecuentesPolicy();
+            
+            // Obtener todos los clientes activos con su historial de visitas
+            var clientes = await _clienteRepository.ObtenerClientesConHistorialVisitasAsync(cancellationToken);
+            
+            if (!clientes.Any())
+                return resultado;
+                
+            // Inicializar conteo de segmentos
+            foreach (SegmentoCliente segmento in Enum.GetValues(typeof(SegmentoCliente)))
+            {
+                resultado.ConteoSegmentos[segmento] = 0;
+            }
+            
+            // Procesar cada cliente para determinar su segmento
+            foreach (var cliente in clientes)
+            {
+                var segmentoAnterior = cliente.Segmento;
+                var nuevoSegmento = DeterminarSegmentoCliente(cliente);
+                
+                // Solo actualizar si el segmento ha cambiado
+                if (segmentoAnterior != nuevoSegmento)
+                {
+                    cliente.ActualizarSegmento(nuevoSegmento);
+                    await _clienteRepository.ActualizarAsync(cliente, cancellationToken);
+                    resultado.ClientesSegmentados.Add(cliente.Id);
+                }
+                
+                // Actualizar conteo de segmentos
+                resultado.ConteoSegmentos[nuevoSegmento]++;
+            }
+            
+            return resultado;
+        }
+        
         /// <summary>
         /// Procesa un cliente y actualiza su nivel de fidelización según sus visitas
         /// </summary>
@@ -150,6 +197,107 @@ namespace RestaurantePro.Domain.Comercial.Policies
             {
                 return NivelFidelizacion.Basico;
             }
+        }
+        
+        /// <summary>
+        /// Determina el segmento al que pertenece un cliente según su comportamiento de consumo
+        /// </summary>
+        /// <param name="cliente">Cliente a analizar</param>
+        /// <returns>Segmento al que pertenece el cliente</returns>
+        private SegmentoCliente DeterminarSegmentoCliente(Cliente cliente)
+        {
+            // Si el cliente no tiene datos suficientes para segmentar
+            if (cliente.CantidadVisitas == 0)
+                return SegmentoCliente.SinClasificar;
+                
+            // Simulación: en implementación real estos datos vendrían de repositorios
+            // Esto sería reemplazado por consultas a la base de datos real
+            var visitasUltimos60Dias = SimularVisitasRecientes(cliente, 60);
+            var visitasPeriodoAnterior = SimularVisitasRecientes(cliente, 120, 60);
+            var gastoPromedio = SimularGastoPromedio(cliente);
+            var diasDesdeUltimaVisita = SimularDiasDesdeUltimaVisita(cliente);
+            
+            // Verificar criterios por prioridad
+            
+            // 1. Cliente inactivo
+            if (diasDesdeUltimaVisita >= DIAS_INACTIVIDAD)
+                return SegmentoCliente.Inactivo;
+                
+            // 2. Cliente Premium - alta frecuencia y alto ticket
+            if (visitasUltimos60Dias >= UMBRAL_FRECUENCIA_ALTA && gastoPromedio >= UMBRAL_TICKET_ALTO)
+                return SegmentoCliente.Premium;
+                
+            // 3. Detectar crecimiento o decrecimiento
+            var variacionVisitas = visitasUltimos60Dias - visitasPeriodoAnterior;
+            
+            if (variacionVisitas >= UMBRAL_CLIENTE_CRECIENTE)
+                return SegmentoCliente.Creciente;
+                
+            if (variacionVisitas <= UMBRAL_CLIENTE_DECRECIENTE)
+                return SegmentoCliente.Decreciente;
+                
+            // 4. Alta frecuencia o alto ticket
+            if (visitasUltimos60Dias >= UMBRAL_FRECUENCIA_ALTA)
+                return SegmentoCliente.FrecuenciaAlta;
+                
+            if (gastoPromedio >= UMBRAL_TICKET_ALTO)
+                return SegmentoCliente.TicketAlto;
+                
+            // Cliente sin clasificación específica
+            return SegmentoCliente.SinClasificar;
+        }
+        
+        // Métodos de simulación - en implementación real se reemplazarían por consultas a repositorios
+        
+        private int SimularVisitasRecientes(Cliente cliente, int dias, int diasAntes = 0)
+        {
+            // En implementación real: consulta a repositorio de comandas
+            // Aquí simulamos basado en puntos y nivel
+            
+            // Fórmula simulada: visitas proporcionales a nivel y puntos
+            var factorNivel = cliente.TarjetaFidelizacion?.NivelFidelizacion switch
+            {
+                NivelFidelizacion.Platino => 0.8,
+                NivelFidelizacion.Oro => 0.6,
+                NivelFidelizacion.Plata => 0.4,
+                _ => 0.2
+            };
+            
+            // Simulación simple: más días = más visitas, más puntos = más visitas
+            var basePuntos = Math.Min(cliente.PuntosAcumulados / 50, 20);
+            
+            // Aplicar factor de decaimiento por días anteriores
+            var factorDecaimiento = diasAntes > 0 ? 0.5 : 1.0;
+            
+            return (int)(basePuntos * factorNivel * factorDecaimiento * dias / 30);
+        }
+        
+        private decimal SimularGastoPromedio(Cliente cliente)
+        {
+            // En implementación real: consulta a repositorio de comandas
+            // Aquí simulamos basado en nivel de fidelización
+            
+            return cliente.TarjetaFidelizacion?.NivelFidelizacion switch
+            {
+                NivelFidelizacion.Platino => 75.0m,
+                NivelFidelizacion.Oro => 50.0m,
+                NivelFidelizacion.Plata => 30.0m,
+                _ => 20.0m
+            };
+        }
+        
+        private int SimularDiasDesdeUltimaVisita(Cliente cliente)
+        {
+            // En implementación real: consulta a repositorio de comandas
+            // Aquí simulamos inverso al nivel: niveles altos = visita reciente
+            
+            return cliente.TarjetaFidelizacion?.NivelFidelizacion switch
+            {
+                NivelFidelizacion.Platino => 7,
+                NivelFidelizacion.Oro => 14,
+                NivelFidelizacion.Plata => 30,
+                _ => 60
+            };
         }
     }
 } 

@@ -59,6 +59,12 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// La relación se mantiene por ID para preservar los límites del agregado.
         /// </summary>
         public Guid? TarjetaFidelizacionPrincipalId { get; private set; }
+        
+        /// <summary>
+        /// Segmento al que pertenece el cliente según su comportamiento y patrones de consumo.
+        /// Se actualiza mediante análisis de comportamiento de compra y visitación.
+        /// </summary>
+        public SegmentoCliente Segmento { get; private set; }
 
         // Constructor privado para EF Core
         private Cliente() { }
@@ -222,6 +228,23 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             ValidarInvariantes();
             
             AddDomainEvent(new RestaurantePro.Domain.Comercial.Clientes.Events.Cliente.PuntosFidelizacionCanjeados(Id, puntos, PuntosAcumulados, motivo));
+        }
+        
+        /// <summary>
+        /// Actualiza el segmento al que pertenece el cliente según su comportamiento.
+        /// Este método es utilizado por análisis de comportamiento y segmentación automática.
+        /// </summary>
+        /// <param name="nuevoSegmento">Nuevo segmento del cliente</param>
+        public void ActualizarSegmento(SegmentoCliente nuevoSegmento)
+        {
+            if (Segmento == nuevoSegmento)
+                return;
+                
+            var segmentoAnterior = Segmento;
+            Segmento = nuevoSegmento;
+            MarkAsModified();
+            
+            AddDomainEvent(new SegmentoClienteActualizado(Id, segmentoAnterior, nuevoSegmento));
         }
         
         /// <summary>
