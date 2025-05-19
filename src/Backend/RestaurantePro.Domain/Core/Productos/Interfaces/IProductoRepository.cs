@@ -25,9 +25,10 @@ namespace RestaurantePro.Domain.Core.Productos.Interfaces
         /// Obtiene productos por categoría
         /// </summary>
         /// <param name="categoriaId">ID de la categoría</param>
+        /// <param name="soloActivos">True para obtener solo productos activos</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de productos de la categoría</returns>
-        Task<IEnumerable<Producto>> ObtenerPorCategoriaAsync(Guid categoriaId, CancellationToken cancellationToken = default);
+        Task<List<Producto>> ObtenerPorCategoriaAsync(Guid categoriaId, bool soloActivos = true, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene productos que utilizan un ingrediente específico

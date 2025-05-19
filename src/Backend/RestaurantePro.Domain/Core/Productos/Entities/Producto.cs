@@ -41,19 +41,25 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         public Guid CategoriaId { get; private set; }
 
         /// <summary>
+        /// Nombre de la categoría a la que pertenece el producto
+        /// </summary>
+        public string? CategoriaNombre { get; private set; }
+
+        /// <summary>
         /// Indica si el producto está activo
         /// </summary>
         public bool EstaActivo { get; private set; }
 
         protected Producto() { }
 
-        private Producto(string nombre, string descripcion, PrecioProducto precio, Guid categoriaId)
+        private Producto(string nombre, string descripcion, PrecioProducto precio, Guid categoriaId, string? categoriaNombre = null)
         {
             Id = Guid.NewGuid();
             Nombre = nombre;
             Descripcion = descripcion;
             Precio = precio;
             CategoriaId = categoriaId;
+            CategoriaNombre = categoriaNombre ?? "Sin categoría";
             EstaActivo = true;
 
             ValidarInvariantes();
@@ -63,9 +69,9 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         /// <summary>
         /// Crea una nueva instancia de un producto
         /// </summary>
-        public static Producto Crear(string nombre, string descripcion, PrecioProducto precio, Guid categoriaId)
+        public static Producto Crear(string nombre, string descripcion, PrecioProducto precio, Guid categoriaId, string? categoriaNombre = null)
         {
-            return new Producto(nombre, descripcion, precio, categoriaId);
+            return new Producto(nombre, descripcion, precio, categoriaId, categoriaNombre);
         }
 
         /// <summary>
@@ -80,6 +86,21 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
 
             ValidarInvariantes();
             AddDomainEvent(new ProductoActualizado(Id, Nombre!, Descripcion!, Precio!.Valor));
+        }
+
+        /// <summary>
+        /// Actualiza la categoría del producto
+        /// </summary>
+        public void ActualizarCategoria(Guid categoriaId, string categoriaNombre)
+        {
+            if (CategoriaId == categoriaId && CategoriaNombre == categoriaNombre) return;
+
+            CategoriaId = categoriaId;
+            CategoriaNombre = categoriaNombre;
+            MarkAsModified();
+
+            ValidarInvariantes();
+            AddDomainEvent(new ProductoCambioCategoria(Id, CategoriaId, CategoriaNombre!));
         }
 
         /// <summary>
@@ -128,6 +149,11 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
             if (CategoriaId == Guid.Empty)
             {
                 throw new InvalidOperationException("El producto debe pertenecer a una categoría válida");
+            }
+
+            if (string.IsNullOrWhiteSpace(CategoriaNombre))
+            {
+                throw new InvalidOperationException("El nombre de la categoría no puede estar vacío");
             }
         }
     }

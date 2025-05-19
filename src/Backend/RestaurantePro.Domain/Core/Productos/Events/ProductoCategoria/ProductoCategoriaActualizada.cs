@@ -6,22 +6,22 @@ namespace RestaurantePro.Domain.Core.Productos.Events.ProductoCategoria
     public class ProductoCategoriaActualizada : DomainEvent
     {
         /// <summary>
-        /// Identificador de la categoría actualizada
+        /// Identificador de la categoría
         /// </summary>
         public Guid Id { get; }
         
         /// <summary>
-        /// Nuevo nombre de la categoría
+        /// Nombre actualizado de la categoría
         /// </summary>
         public string Nombre { get; }
         
         /// <summary>
-        /// Nueva descripción de la categoría
+        /// Descripción actualizada de la categoría
         /// </summary>
         public string Descripcion { get; }
         
         /// <summary>
-        /// Nuevo orden de visualización
+        /// Orden actualizado de la categoría
         /// </summary>
         public int Orden { get; }
         
