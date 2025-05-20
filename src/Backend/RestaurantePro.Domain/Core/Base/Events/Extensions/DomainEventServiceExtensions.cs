@@ -158,7 +158,7 @@ namespace RestaurantePro.Domain.Core.Base.Events.Extensions
     /// Implementación en memoria del registro de eventos.
     /// Útil para entornos de desarrollo y pruebas.
     /// </summary>
-    internal class InMemoryDomainEventRegistry : IDomainEventRegistry
+    public class InMemoryDomainEventRegistry : IDomainEventRegistry
     {
         private readonly List<DomainEvent> _events = new List<DomainEvent>();
         

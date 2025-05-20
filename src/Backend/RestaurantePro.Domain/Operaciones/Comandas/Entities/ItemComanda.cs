@@ -218,5 +218,23 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         {
             Subtotal = Cantidad * PrecioUnitario;
         }
+
+        /// <summary>
+        /// Método para obtener el ID del producto.
+        /// Facilita el mockeo de la clase.
+        /// </summary>
+        public virtual Guid ObtenerProductoId()
+        {
+            return ProductoId;
+        }
+        
+        /// <summary>
+        /// Método para obtener la cantidad.
+        /// Facilita el mockeo de la clase.
+        /// </summary>
+        public virtual int ObtenerCantidad()
+        {
+            return Cantidad;
+        }
     }
 }

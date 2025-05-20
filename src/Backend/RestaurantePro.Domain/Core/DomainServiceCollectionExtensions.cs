@@ -37,8 +37,20 @@ namespace RestaurantePro.Domain.Core
             // Registrar eventos de dominio pero con implementación nula del registro
             services.AddDomainEventServices();
             
-            // Registrar el mock de servicios compartidos
-            services.AddSingleton<IDateTimeService>(new MockDateTimeService(DateTime.Now));
+            // Importamos la clase MockDateTimeService de las pruebas
+            var mockDateTimeServiceType = Type.GetType("RestaurantePro.Domain.UnitTests.Core.MockDateTimeService, RestaurantePro.Domain.UnitTests");
+            if (mockDateTimeServiceType != null)
+            {
+                // Crear instancia usando reflection
+                var constructor = mockDateTimeServiceType.GetConstructor(new[] { typeof(DateTime) });
+                var instance = constructor.Invoke(new object[] { DateTime.Now });
+                services.AddSingleton(typeof(IDateTimeService), instance);
+            }
+            else
+            {
+                // Fallback al mock interno
+                services.AddSingleton<IDateTimeService>(new MockDateTimeService(DateTime.Now));
+            }
             
             // Registrar políticas de dominio
             services.AddTransient<IClientesFrecuentesPolicy, ClientesFrecuentesPolicy>();

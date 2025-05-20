@@ -82,6 +82,24 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         public IReadOnlyCollection<ItemComanda> Items => _items.AsReadOnly();
 
         /// <summary>
+        /// Método para obtener la lista de items.
+        /// Facilita el mockeo de la clase.
+        /// </summary>
+        public virtual IReadOnlyCollection<ItemComanda> ObtenerItems()
+        {
+            return Items;
+        }
+        
+        /// <summary>
+        /// Método para obtener el ID del cliente.
+        /// Facilita el mockeo de la clase.
+        /// </summary>
+        public virtual Guid ObtenerClienteId()
+        {
+            return ClienteId ?? Guid.Empty;
+        }
+
+        /// <summary>
         /// Constructor privado para EF Core.
         /// La creación de comandas debe hacerse a través del factory method Crear().
         /// </summary>

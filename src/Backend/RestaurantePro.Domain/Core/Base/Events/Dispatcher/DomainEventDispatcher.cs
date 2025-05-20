@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace RestaurantePro.Domain.Core.Base.Events.Dispatcher
 {
     /// <summary>
@@ -26,102 +28,122 @@ namespace RestaurantePro.Domain.Core.Base.Events.Dispatcher
         }
 
         /// <summary>
-        /// Distribuye un evento de dominio a todos sus manejadores registrados y suscriptores
+        /// Despacha un evento de dominio a todos sus manejadores registrados
         /// </summary>
-        /// <param name="evento">Evento a distribuir</param>
+        /// <param name="evento">Evento de dominio a despachar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         public async Task Dispatch(DomainEvent evento, CancellationToken cancellationToken = default)
         {
-            // Si hay un registro de eventos, registramos el evento
-            if (_eventRegistry != null)
-            {
-                try
+            if (evento == null)
+                throw new ArgumentNullException(nameof(evento));
+            
+            try
+            {    
+                // Obtener el tipo del evento
+                var eventType = evento.GetType();
+                
+                // Construir el tipo genérico IDomainEventHandler<T> específico para este evento
+                var handlerType = typeof(IDomainEventHandler<>).MakeGenericType(eventType);
+                
+                // Resolver los manejadores registrados para este tipo de evento
+                var handlerWrapperType = typeof(IEnumerable<>).MakeGenericType(handlerType);
+                var handlers = _serviceProvider.GetService(handlerWrapperType) as IEnumerable<object>;
+                
+                var handlersFound = false;
+                bool hasExceptionOccurred = false;
+                
+                // Si hay manejadores, despacharlos
+                if (handlers != null && handlers.Any())
                 {
-                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    // Log error but continue with dispatch
-                    // En una implementación real, se registraría este error
-                    System.Diagnostics.Debug.WriteLine($"Error registering event: {ex.Message}");
-                }
-            }
-
-            // Obtenemos el tipo del evento
-            var eventType = evento.GetType();
-            
-            // Construimos el tipo del handler genérico
-            var handlerType = typeof(IDomainEventHandler<>).MakeGenericType(eventType);
-            
-            // Obtenemos todos los handlers para este tipo de evento
-            var handlers = _serviceProvider.GetServices(handlerType);
-            
-            // Lista para almacenar las tareas de los manejadores
-            var handlerTasks = new List<Task>();
-            
-            // Invocamos cada manejador registrado en el contenedor
-            foreach (var handler in handlers)
-            {
-                // Invocamos el método Handle en cada handler
-                var method = handlerType.GetMethod("Handle");
-                if (method != null)
-                {
-                    try
+                    handlersFound = true;
+                    
+                    // Si solo hay un handler y lanza excepción, la propagaremos
+                    bool hasOnlySingleHandler = handlers.Count() == 1;
+                    
+                    foreach (var handler in handlers)
                     {
-                        // Creamos una tarea para el manejador
-                        var task = (Task)method.Invoke(handler, new object[] { evento, cancellationToken });
-                        if (task != null)
+                        try
                         {
-                            handlerTasks.Add(task);
+                            // Obtener método Handle del manejador mediante reflexión
+                            var method = handler.GetType().GetMethod("Handle");
+                            
+                            if (method != null)
+                            {
+                                // Invocar el método Handle con los parámetros correctos
+                                var task = (Task)method.Invoke(handler, new object[] { evento, cancellationToken });
+                                await task.ConfigureAwait(false);
+                            }
+                        }
+                        catch (TargetInvocationException ex)
+                        {
+                            hasExceptionOccurred = true;
+                            
+                            // Registrar el evento si ocurre un error
+                            await RegisterEventAsync(evento, cancellationToken);
+                            
+                            // Si hay un solo handler, propagar la excepción
+                            if (hasOnlySingleHandler)
+                            {
+                                throw ex.InnerException ?? ex;
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            hasExceptionOccurred = true;
+                            
+                            // Registrar el evento en caso de cualquier otra excepción
+                            await RegisterEventAsync(evento, cancellationToken);
+                            
+                            // Si hay un solo handler, propagar la excepción
+                            if (hasOnlySingleHandler)
+                            {
+                                throw;
+                            }
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        // Log error but continue with other handlers
-                        System.Diagnostics.Debug.WriteLine($"Error invoking handler: {ex.Message}");
-                    }
+                }
+                
+                // Si no hay manejadores o después de procesarlos, notificar a los suscriptores
+                if (_subscriptionManager != null)
+                {
+                    await _subscriptionManager.NotifySubscribersAsync(evento, cancellationToken);
+                }
+                
+                // Si no hay manejadores, registrar el evento para su procesamiento posterior
+                if ((!handlersFound || hasExceptionOccurred) && _eventRegistry != null)
+                {
+                    await RegisterEventAsync(evento, cancellationToken);
                 }
             }
-            
-            // Esperar a que todos los manejadores registrados terminen
-            if (handlerTasks.Count > 0)
+            catch (Exception)
             {
-                await Task.WhenAll(handlerTasks);
-            }
-            
-            // Notificar a los suscriptores si hay un administrador de suscripciones
-            if (_subscriptionManager != null)
-            {
-                await _subscriptionManager.NotifySubscribersAsync(evento, cancellationToken);
+                // Asegurarse de que el evento se registre incluso si hay una excepción
+                await RegisterEventAsync(evento, cancellationToken);
+                throw;
             }
         }
 
         /// <summary>
-        /// Distribuye una colección de eventos de dominio a sus respectivos manejadores y suscriptores
+        /// Despacha una colección de eventos de dominio en secuencia
         /// </summary>
-        /// <param name="eventos">Colección de eventos a distribuir</param>
+        /// <param name="eventos">Eventos de dominio a despachar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         public async Task DispatchAll(IEnumerable<DomainEvent> eventos, CancellationToken cancellationToken = default)
         {
-            // Si hay un registro de eventos, registramos todos los eventos en una sola operación
-            if (_eventRegistry != null)
-            {
-                try
-                {
-                    await _eventRegistry.RegisterAllAsync(eventos, cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    // Log error but continue with dispatch
-                    // En una implementación real, se registraría este error
-                    System.Diagnostics.Debug.WriteLine($"Error registering events: {ex.Message}");
-                }
-            }
-
-            // Distribuimos cada evento individualmente
+            if (eventos == null)
+                throw new ArgumentNullException(nameof(eventos));
+                
             foreach (var evento in eventos)
             {
                 await Dispatch(evento, cancellationToken);
+            }
+        }
+        
+        private async Task RegisterEventAsync(DomainEvent evento, CancellationToken cancellationToken)
+        {
+            if (_eventRegistry != null)
+            {
+                await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
         }
     }

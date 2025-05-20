@@ -214,16 +214,26 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
 
         private Ingrediente CrearIngrediente(Guid proveedorId)
         {
-            // Proporcionamos todos los parámetros de forma explícita para evitar usar argumentos opcionales
+            // Usamos variables locales en lugar de argumentos nombrados
+            string nombre = "Ingrediente" + Guid.NewGuid().ToString().Substring(0, 8);
+            string codigo = "ING-" + Guid.NewGuid().ToString().Substring(0, 5);
+            string descripcion = "Descripción ingrediente";
+            var unidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo;
+            decimal stockMinimo = 10.0m;
+            decimal stockActual = 0.0m;
+            var rotacion = RestaurantePro.Domain.Inventario.Ingredientes.Enums.RotacionIngrediente.Media;
+            var temporada = RestaurantePro.Domain.Inventario.Ingredientes.Enums.TemporadaIngrediente.TodoElAño;
+
+            // Crear ingrediente sin usar argumentos nombrados
             var ingrediente = Ingrediente.Crear(
-                nombre: "Ingrediente" + Guid.NewGuid().ToString().Substring(0, 8),
-                codigo: "ING-" + Guid.NewGuid().ToString().Substring(0, 5),
-                descripcion: "Descripción ingrediente",
-                unidadMedida: RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
-                stockMinimo: 10.0m,
-                stockActual: 0.0m,
-                rotacion: RestaurantePro.Domain.Inventario.Ingredientes.Enums.RotacionIngrediente.Media,
-                temporada: RestaurantePro.Domain.Inventario.Ingredientes.Enums.TemporadaIngrediente.TodoElAño);
+                nombre,
+                codigo,
+                descripcion,
+                unidadMedida,
+                stockMinimo,
+                stockActual,
+                rotacion,
+                temporada);
 
             // Simulamos que este ingrediente está asociado al proveedor
             ingrediente.AsociarProveedorPrincipal(proveedorId);

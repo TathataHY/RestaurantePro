@@ -102,16 +102,16 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base.Events.Registry
         }
 
         [Fact]
-        public void Clear_DebeLimpiarTodosLosEventos()
+        public async Task Clear_DebeLimpiarTodosLosEventos()
         {
             // Arrange
             var registro = new InMemoryDomainEventRegistry();
-            registro.RegisterAsync(new EventoPrueba { ProductoId = Guid.NewGuid() }).Wait();
-            registro.RegisterAsync(new EventoPrueba { ProductoId = Guid.NewGuid() }).Wait();
+            await registro.RegisterAsync(new EventoPrueba { ProductoId = Guid.NewGuid() });
+            await registro.RegisterAsync(new EventoPrueba { ProductoId = Guid.NewGuid() });
 
             // Act
             registro.Clear();
-            var eventos = registro.GetEventsByTypeAsync<EventoPrueba>().Result;
+            var eventos = await registro.GetEventsByTypeAsync<EventoPrueba>();
 
             // Assert
             eventos.Should().BeEmpty();
@@ -120,7 +120,17 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base.Events.Registry
         // Clase de evento para pruebas
         private class EventoPrueba : DomainEvent
         {
-            public Guid ProductoId { get; set; }
+            private Guid _productoId;
+            
+            public Guid ProductoId 
+            { 
+                get => _productoId;
+                set
+                {
+                    _productoId = value;
+                    EntityId = value; // Aseguramos que EntityId se actualice cuando se establece ProductoId
+                }
+            }
         }
     }
 } 

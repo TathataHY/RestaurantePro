@@ -28,11 +28,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
         public async Task EjecutarPolicy_ConIngredientesBajoStock_DebeNotificarYGenerarOrdenes()
         {
             // Arrange
-            var ingredientes = new List<Ingrediente>
-            {
-                CrearIngrediente("Tomate", 5, 2),
-                CrearIngrediente("Cebolla", 8, 3)
-            };
+            // Creamos ingredientes de manera segura para evitar problemas con árboles de expresión
+            var tomate = CrearIngredienteConRotacionYTemporadadManual(
+                "Tomate", 5, 2, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño);
+                
+            var cebolla = CrearIngredienteConRotacionYTemporadadManual(
+                "Cebolla", 8, 3, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño);
+                
+            var ingredientes = new List<Ingrediente> { tomate, cebolla };
 
             // Configuración de repository sin usar It.IsAny
             ConfigurarObtenerConStockBajo(ingredientes);
@@ -83,11 +86,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
         public async Task EjecutarPolicy_ConIngredientesBajoStockPeroSinGenerarOrdenes_DebeNotificarPeroNoGenerarOrdenes()
         {
             // Arrange
-            var ingredientes = new List<Ingrediente>
-            {
-                CrearIngrediente("Tomate", 5, 2),
-                CrearIngrediente("Cebolla", 8, 3)
-            };
+            // Creamos ingredientes de manera segura para evitar problemas con árboles de expresión
+            var tomate = CrearIngredienteConRotacionYTemporadadManual(
+                "Tomate", 5, 2, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño);
+                
+            var cebolla = CrearIngredienteConRotacionYTemporadadManual(
+                "Cebolla", 8, 3, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño);
+                
+            var ingredientes = new List<Ingrediente> { tomate, cebolla };
 
             ConfigurarObtenerConStockBajo(ingredientes);
             ConfigurarVerificadorStock(new ResultadoVerificacionStock());
@@ -108,12 +114,17 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
         public async Task PriorizarIngredientesParaReposicion_DebeOrdenarPorPrioridad()
         {
             // Arrange
-            var ingredientes = new List<Ingrediente>
-            {
-                CrearIngredienteConRotacionYTemporada("Tomate", 10, 2, RotacionIngrediente.Alta, TemporadaIngrediente.Verano),
-                CrearIngredienteConRotacionYTemporada("Cebolla", 10, 1, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño),
-                CrearIngredienteConRotacionYTemporada("Lechuga", 10, 3, RotacionIngrediente.Critica, TemporadaIngrediente.Primavera)
-            };
+            // Creamos los ingredientes fuera de la lista para evitar problemas con árboles de expresión
+            var tomate = CrearIngredienteConRotacionYTemporadadManual(
+                "Tomate", 10, 2, RotacionIngrediente.Alta, TemporadaIngrediente.Verano);
+                
+            var cebolla = CrearIngredienteConRotacionYTemporadadManual(
+                "Cebolla", 10, 1, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño);
+                
+            var lechuga = CrearIngredienteConRotacionYTemporadadManual(
+                "Lechuga", 10, 3, RotacionIngrediente.Critica, TemporadaIngrediente.Primavera);
+
+            var ingredientes = new List<Ingrediente> { tomate, cebolla, lechuga };
 
             ConfigurarObtenerConStockBajo(ingredientes);
 
@@ -139,12 +150,17 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
         public async Task PriorizarIngredientesParaReposicion_SinConsiderarTemporada_DebeOrdenarPorRotacionYStock()
         {
             // Arrange
-            var ingredientes = new List<Ingrediente>
-            {
-                CrearIngredienteConRotacionYTemporada("Tomate", 10, 2, RotacionIngrediente.Alta, TemporadaIngrediente.Verano),
-                CrearIngredienteConRotacionYTemporada("Cebolla", 10, 1, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño),
-                CrearIngredienteConRotacionYTemporada("Lechuga", 10, 3, RotacionIngrediente.Critica, TemporadaIngrediente.Primavera)
-            };
+            // Creamos los ingredientes fuera de la lista para evitar problemas con árboles de expresión
+            var tomate = CrearIngredienteConRotacionYTemporadadManual(
+                "Tomate", 10, 2, RotacionIngrediente.Alta, TemporadaIngrediente.Verano);
+                
+            var cebolla = CrearIngredienteConRotacionYTemporadadManual(
+                "Cebolla", 10, 1, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño);
+                
+            var lechuga = CrearIngredienteConRotacionYTemporadadManual(
+                "Lechuga", 10, 3, RotacionIngrediente.Critica, TemporadaIngrediente.Primavera);
+
+            var ingredientes = new List<Ingrediente> { tomate, cebolla, lechuga };
 
             ConfigurarObtenerConStockBajo(ingredientes);
 
@@ -167,11 +183,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
         public async Task EjecutarPolicy_ConIngredientesPriorizados_DebeNotificarEnOrdenDePrioridad()
         {
             // Arrange
-            var ingredientes = new List<Ingrediente>
-            {
-                CrearIngredienteConRotacionYTemporada("Tomate", 10, 2, RotacionIngrediente.Alta, TemporadaIngrediente.Verano),
-                CrearIngredienteConRotacionYTemporada("Lechuga", 10, 3, RotacionIngrediente.Critica, TemporadaIngrediente.Primavera)
-            };
+            // Creamos los ingredientes fuera de la lista para evitar problemas con árboles de expresión
+            var tomate = CrearIngredienteConRotacionYTemporadadManual(
+                "Tomate", 10, 2, RotacionIngrediente.Alta, TemporadaIngrediente.Verano);
+                
+            var lechuga = CrearIngredienteConRotacionYTemporadadManual(
+                "Lechuga", 10, 3, RotacionIngrediente.Critica, TemporadaIngrediente.Primavera);
+
+            var ingredientes = new List<Ingrediente> { tomate, lechuga };
 
             ConfigurarObtenerConStockBajo(ingredientes);
             ConfigurarVerificadorStock(new ResultadoVerificacionStock());
@@ -212,25 +231,30 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
 
         private void ConfigurarNotificacionStockBajo(Guid notificacionId)
         {
-            // Evitamos usar It.IsAny dentro de la configuración del mock
-            // Usamos Setup con parámetros simples y Callback para verificar
+            // En lugar de configurar el método con argumentos opcionales,
+            // creamos un delegado que maneje el caso específico
             _servicioNotificacionesMock
                 .Setup(s => s.NotificarStockBajo(
-                    It.Is<Guid>(g => true),
-                    It.Is<string>(s => true),
-                    It.Is<decimal>(d => true),
-                    It.Is<decimal>(d => true)))
-                .ReturnsAsync(notificacionId);
+                    It.IsAny<Guid>(), 
+                    It.IsAny<string>(), 
+                    It.IsAny<decimal>(), 
+                    It.IsAny<decimal>(), 
+                    It.IsAny<CancellationToken>()))
+                .Returns((Guid ingredienteId, string nombre, decimal stockActual, decimal stockMinimo, CancellationToken ct) => 
+                    Task.FromResult(notificacionId));
         }
 
         private void VerificarNotificacionesEnviadas(int veces)
         {
+            // En lugar de verificar con argumentos opcionales,
+            // verificamos con It.IsAny para evitar el problema con los árboles de expresión
             _servicioNotificacionesMock.Verify(
                 s => s.NotificarStockBajo(
-                    It.Is<Guid>(g => true),
-                    It.Is<string>(s => true),
-                    It.Is<decimal>(d => true),
-                    It.Is<decimal>(d => true)),
+                    It.IsAny<Guid>(), 
+                    It.IsAny<string>(), 
+                    It.IsAny<decimal>(), 
+                    It.IsAny<decimal>(), 
+                    It.IsAny<CancellationToken>()),
                 Times.Exactly(veces));
         }
 
@@ -242,62 +266,36 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
                 Times.Exactly(veces)); 
         }
 
-        private Ingrediente CrearIngrediente(string nombre, decimal stockMinimo, decimal stockActual)
-        {
-            // Usamos variables locales en lugar de argumentos opcionales o nombrados
-            string codigo = "ING-" + Guid.NewGuid().ToString().Substring(0, 5);
-            string descripcion = $"Descripción de {nombre}";
-            var unidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo;
-            var rotacion = RotacionIngrediente.Media;
-            var temporada = TemporadaIngrediente.TodoElAño;
-
-            // Creamos el ingrediente sin argumentos nombrados
-            var ingrediente = Ingrediente.Crear(
-                nombre, 
-                codigo, 
-                descripcion, 
-                unidadMedida, 
-                stockMinimo, 
-                stockActual, 
-                rotacion, 
-                temporada);
-
-            // Asignar un proveedor ficticio
-            ingrediente.AsociarProveedorPrincipal(Guid.NewGuid());
-
-            return ingrediente;
-        }
-
-        private Ingrediente CrearIngredienteConRotacionYTemporada(
+        private Ingrediente CrearIngredienteConRotacionYTemporadadManual(
             string nombre, 
             decimal stockMinimo, 
             decimal stockActual, 
             RotacionIngrediente rotacion, 
             TemporadaIngrediente temporada)
         {
-            // Usamos variables locales en lugar de argumentos opcionales o nombrados
+            // Creamos el ingrediente fuera del contexto de expresión lambda
             string codigo = "ING-" + Guid.NewGuid().ToString().Substring(0, 5);
             string descripcion = $"Descripción de {nombre}";
             var unidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo;
 
-            // Creamos el ingrediente sin argumentos nombrados
+            // Crear el ingrediente usando el método factory
             var ingrediente = Ingrediente.Crear(
-                nombre, 
+                nombre,
                 codigo, 
                 descripcion, 
                 unidadMedida, 
-                stockMinimo, 
-                stockActual, 
-                rotacion, 
+                stockMinimo,
+                stockActual,
+                rotacion,
                 temporada);
 
-            // Asignar un proveedor ficticio
-            ingrediente.AsociarProveedorPrincipal(Guid.NewGuid());
+            // Asociar proveedor ficticio
+            var proveedorId = Guid.NewGuid();
+            ingrediente.AsociarProveedorPrincipal(proveedorId);
             
-            // Asignar un costo promedio para las pruebas
-            decimal costoPromedio = 0;
+            // Asignar costo promedio según rotación
+            decimal costoPromedio;
             
-            // En lugar de usar switch con expresión lambda, usamos un switch convencional
             switch (rotacion)
             {
                 case RotacionIngrediente.Baja:

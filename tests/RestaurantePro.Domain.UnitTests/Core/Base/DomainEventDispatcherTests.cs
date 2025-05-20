@@ -3,8 +3,6 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
     // Evento de dominio de prueba - lo movemos fuera de la clase de tests para hacerlo público
     public class TestDomainEvent : DomainEvent
     {
-        public Guid EntityId { get; }
-
         public TestDomainEvent(Guid entityId)
         {
             EntityId = entityId;
@@ -97,18 +95,60 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
                 .Setup(s => s.GetService(typeof(IEnumerable<IDomainEventHandler<TestDomainEvent>>)))
                 .Returns(handlers);
 
-            // Act
+            // Act & Assert
+            // Si hay múltiples handlers, la excepción no debe propagarse
             await _dispatcher.Dispatch(evento);
 
-            // Assert
+            // Verificamos que ambos handlers se llamen
             handler1.Verify(h => h.Handle(evento, It.IsAny<CancellationToken>()), Times.Once);
             handler2.Verify(h => h.Handle(evento, It.IsAny<CancellationToken>()), Times.Once);
             
+            // Verificamos que el evento se registre al menos una vez
+            // Con la nueva implementación, se registra cuando ocurre un error y también al final
             _eventRegistryMock.Verify(
                 l => l.RegisterAsync(
                     evento, 
                     It.IsAny<CancellationToken>()),
-                Times.Once);
+                Times.AtLeastOnce);
+        }
+
+        [Fact]
+        public async Task Dispatch_ConUnSoloHandlerQueArrojaExcepcion_DebePropagar()
+        {
+            // Arrange
+            var evento = new TestDomainEvent(Guid.NewGuid());
+            
+            var handler = new Mock<IDomainEventHandler<TestDomainEvent>>();
+
+            // El handler arrojará una excepción
+            handler
+                .Setup(h => h.Handle(evento, It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new InvalidOperationException("Error de prueba"));
+
+            var handlers = new List<IDomainEventHandler<TestDomainEvent>> 
+            { 
+                handler.Object
+            };
+
+            _serviceProviderMock
+                .Setup(s => s.GetService(typeof(IEnumerable<IDomainEventHandler<TestDomainEvent>>)))
+                .Returns(handlers);
+
+            // Act & Assert
+            // Si solo hay un handler, la excepción debe propagarse
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => _dispatcher.Dispatch(evento));
+                
+            Assert.Equal("Error de prueba", exception.Message);
+            
+            // Verificamos que el handler se llame y que el evento se registre al menos una vez
+            // Con la nueva implementación, se registra cuando ocurre un error y luego en el catch final
+            handler.Verify(h => h.Handle(evento, It.IsAny<CancellationToken>()), Times.Once);
+            _eventRegistryMock.Verify(
+                l => l.RegisterAsync(
+                    evento, 
+                    It.IsAny<CancellationToken>()),
+                Times.AtLeastOnce);
         }
 
         [Fact]
