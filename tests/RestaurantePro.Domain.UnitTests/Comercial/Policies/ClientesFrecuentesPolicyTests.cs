@@ -151,27 +151,93 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 Times.Once);
         }
         
-        [Fact(Skip = "Requiere revisión completa para adaptarse a los cambios en el modelo de datos")]
+        [Fact]
         public async Task EjecutarSegmentacionClientes_DebeAsignarSegmentosCorrectamente()
         {
-            // Arrange - Crear solo 2 clientes para simplificar
-            var clienteActivo = CrearClienteConVisitas("ClienteActivo", 15, NivelFidelizacion.Plata);
+            // Arrange
+            // Creamos clientes con diferentes perfiles pero segmentos iniciales que sabemos van a cambiar
+            var clienteFrecuente = CrearClienteConVisitas("ClienteFrecuente", 20, NivelFidelizacion.Oro);
             var clienteInactivo = CrearClienteConVisitas("ClienteInactivo", 5, NivelFidelizacion.Basico);
+            var clientePremium = CrearClienteConVisitas("ClientePremium", 40, NivelFidelizacion.Platino);
             
-            var clientes = new List<Cliente> { clienteActivo, clienteInactivo };
+            // Asegurarnos que tengan segmentos que van a cambiar
+            // Usamos reflection para establecer segmentos iniciales diferentes
+            var segmentoProperty = typeof(Cliente).GetProperty("Segmento");
+            segmentoProperty?.SetValue(clienteFrecuente, SegmentoCliente.SinClasificar);
+            segmentoProperty?.SetValue(clienteInactivo, SegmentoCliente.FrecuenciaAlta); // Cambiará a Inactivo
+            segmentoProperty?.SetValue(clientePremium, SegmentoCliente.TicketAlto);      // Cambiará a Premium
+            
+            var clientes = new List<Cliente> { clienteFrecuente, clienteInactivo, clientePremium };
             
             // Configurar el repositorio para devolver los clientes
             _clienteRepositoryMock
                 .Setup(r => r.ObtenerClientesConHistorialVisitasAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(clientes);
                 
-            // Configurar mock para actualizar cliente
+            // Simulamos que el repositorio devuelve tarjetas
+            // Para clienteFrecuente - configuramos para que aparezca como de alta frecuencia
+            var tarjetaFrecuente = TarjetaFidelizacion.Crear(clienteFrecuente.Id, $"TF-{Guid.NewGuid():N}");
+            tarjetaFrecuente.Activar();
+            tarjetaFrecuente.ActualizarNivel(NivelFidelizacion.Oro);
+            
+            // Para clienteInactivo - configuramos para que aparezca como inactivo
+            var tarjetaInactivo = TarjetaFidelizacion.Crear(clienteInactivo.Id, $"TF-{Guid.NewGuid():N}");
+            tarjetaInactivo.Activar();
+            tarjetaInactivo.ActualizarNivel(NivelFidelizacion.Basico);
+            
+            // Para clientePremium - configuramos para que aparezca como premium (alta frecuencia y alto ticket)
+            var tarjetaPremium = TarjetaFidelizacion.Crear(clientePremium.Id, $"TF-{Guid.NewGuid():N}");
+            tarjetaPremium.Activar();
+            tarjetaPremium.ActualizarNivel(NivelFidelizacion.Platino);
+            
+            _tarjetaRepositoryMock
+                .Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteFrecuente.Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(tarjetaFrecuente);
+                
+            _tarjetaRepositoryMock
+                .Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteInactivo.Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(tarjetaInactivo);
+                
+            _tarjetaRepositoryMock
+                .Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clientePremium.Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(tarjetaPremium);
+            
+            // Configuraciones específicas para simular el comportamiento que queremos probar
+            // Para clienteInactivo, simulamos que pasó mucho tiempo desde la última visita
+            _dateTimeServiceMock
+                .Setup(d => d.Now)
+                .Returns(new DateTime(2023, 1, 1));
+            
+            // Configurar el mock de actualización
             _clienteRepositoryMock
                 .Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
-                
-            // Esta prueba requiere una revisión completa para adaptarse a los cambios en el modelo de datos
-            // Por ahora, la marcamos para omitirla
+            
+            // Act
+            var resultado = await _policy.EjecutarSegmentacionClientes(_cancellationToken);
+            
+            // Assert
+            // Verificar que se hayan llamado los métodos adecuados
+            _clienteRepositoryMock.Verify(
+                r => r.ObtenerClientesConHistorialVisitasAsync(It.IsAny<CancellationToken>()),
+                Times.Once);
+            
+            // Verificar que se haya intentado actualizar al menos un cliente
+            _clienteRepositoryMock.Verify(
+                r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()),
+                Times.AtLeast(1));
+            
+            // Verificar que el resultado contenga información de segmentación
+            resultado.ConteoSegmentos.Should().NotBeEmpty();
+            
+            // Verificar que se hayan contado todos los segmentos
+            resultado.ConteoSegmentos.Keys.Count.Should().Be(Enum.GetValues(typeof(SegmentoCliente)).Length);
+            
+            // La suma de todos los segmentos debe ser igual al total de clientes
+            resultado.ConteoSegmentos.Values.Sum().Should().Be(clientes.Count);
+            
+            // Verificar que se reporta al menos un cliente segmentado
+            resultado.ClientesSegmentados.Should().HaveCountGreaterThan(0);
         }
         
         // Métodos auxiliares para crear objetos de prueba

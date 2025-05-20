@@ -218,27 +218,33 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         }
 
         /// <summary>
-        /// Aplica un descuento de fidelización a la comanda
+        /// Aplica un descuento por fidelización a la comanda.
         /// </summary>
-        /// <param name="porcentajeDescuento">Porcentaje de descuento a aplicar (entre 0 y 1)</param>
+        /// <param name="porcentajeDescuento">Porcentaje de descuento (de 0 a 1)</param>
+        /// <exception cref="ArgumentException">Si el porcentaje es inválido</exception>
+        /// <exception cref="InvalidOperationException">Si la comanda no está activa o no tiene cliente asociado</exception>
         public void AplicarDescuentoFidelizacion(decimal porcentajeDescuento)
         {
+            ValidarComandaActiva();
+            
             if (porcentajeDescuento < 0 || porcentajeDescuento > 1)
                 throw new ArgumentException("El porcentaje de descuento debe estar entre 0 y 1", nameof(porcentajeDescuento));
 
-            // Solo se puede aplicar a comandas activas
-            ValidarComandaActiva();
+            if (!ClienteId.HasValue)
+                throw new InvalidOperationException("No se puede aplicar descuento sin un cliente asociado");
 
-            // Calculamos el descuento sobre el subtotal
-            DescuentoFidelizacion = Math.Round(Total!.Subtotal * porcentajeDescuento, 2);
-
-            // Recalculamos el total con el descuento
+            // Calcular el monto del descuento
+            decimal subtotal = _items.Sum(i => i.Subtotal);
+            decimal descuento = Math.Round(subtotal * porcentajeDescuento, 2);
+            
+            // Aplicar descuento
+            DescuentoFidelizacion = descuento;
+            
             RecalcularTotal();
             ActualizarFecha();
             ValidarInvariantes();
-
-            // Agregamos un evento de descuento aplicado (si se necesita implementar)
-            // AddDomainEvent(new DescuentoFidelizacionAplicado(Id, DescuentoFidelizacion.Value, porcentajeDescuento));
+            
+            AddDomainEvent(new DescuentoFidelizacionAplicado(Id, descuento, porcentajeDescuento));
         }
 
         /// <summary>
@@ -278,6 +284,14 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             if (Estado == EstadoComanda.Finalizada && !Items.Any())
                 throw new InvalidOperationException("Una comanda finalizada debe tener al menos un producto");
             
+            // Verificar que la comanda entregada tenga todos los productos necesarios
+            if (Estado == EstadoComanda.Entregada && !Items.Any())
+                throw new InvalidOperationException("Una comanda entregada debe tener al menos un producto");
+            
+            // Verificar que la comanda lista tenga todos los productos necesarios
+            if (Estado == EstadoComanda.Lista && !Items.Any())
+                throw new InvalidOperationException("Una comanda lista debe tener al menos un producto");
+                
             // Verificar que el total sea consistente con los items
             decimal subtotalCalculado = _items.Sum(i => i.Subtotal);
             decimal descuento = DescuentoFidelizacion ?? 0;
@@ -309,9 +323,19 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                     
                 if (item.PrecioUnitario < 0)
                     throw new InvalidOperationException($"Item con ID {item.Id} tiene precio unitario inválido: {item.PrecioUnitario}");
+                
+                // Validar que la cantidad no sea excesiva para un solo producto
+                if (item.Cantidad > 50) // Un límite razonable para un solo producto en una comanda
+                    throw new InvalidOperationException($"La cantidad del item con ID {item.Id} excede el límite máximo permitido por item");
+                
+                // Validar que el precio unitario no sea excesivo
+                if (item.PrecioUnitario > 100000m) // Un límite razonable para el precio unitario
+                    throw new InvalidOperationException($"El precio unitario del item con ID {item.Id} excede el límite máximo permitido");
+                
+                // Validar longitud de las observaciones por item
+                if (!string.IsNullOrEmpty(item.Observaciones) && item.Observaciones.Length > 200)
+                    throw new InvalidOperationException($"Las observaciones del item con ID {item.Id} no pueden exceder los 200 caracteres");
             }
-            
-            // VALIDACIONES EXISTENTES
             
             // Validar IDs obligatorios
             if (MesaId == Guid.Empty)
@@ -326,6 +350,14 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 
             if (FechaActualizacion.HasValue && FechaActualizacion < FechaCreacion)
                 throw new InvalidOperationException("La fecha de actualización no puede ser anterior a la fecha de creación");
+            
+            // Validar que la fecha de creación no esté en el futuro
+            if (FechaCreacion > DateTime.Now)
+                throw new InvalidOperationException("La fecha de creación no puede ser en el futuro");
+            
+            // Validar que la fecha de actualización no esté en el futuro
+            if (FechaActualizacion.HasValue && FechaActualizacion > DateTime.Now)
+                throw new InvalidOperationException("La fecha de actualización no puede ser en el futuro");
                 
             // Validar coherencia de estado con propiedades
             if (Estado == EstadoComanda.Cancelada && string.IsNullOrWhiteSpace(Observaciones))
@@ -368,33 +400,6 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             if (Math.Abs(Total.Total - totalCalculado) > 0.01m)
                 throw new InvalidOperationException($"Inconsistencia en el total. Calculado: {totalCalculado}, Actual: {Total.Total}");
             
-            // VALIDACIONES ADICIONALES
-            
-            // Validar que la comanda entregada tenga todos los productos necesarios
-            if (Estado == EstadoComanda.Entregada && _items.Count == 0)
-                throw new InvalidOperationException("Una comanda entregada debe tener al menos un producto");
-            
-            // Validar que la comanda lista tenga todos los productos necesarios
-            if (Estado == EstadoComanda.Lista && _items.Count == 0)
-                throw new InvalidOperationException("Una comanda lista debe tener al menos un producto");
-            
-            // Validar consistencia de eventos de dominio
-            if (DomainEvents.Count == 0)
-                throw new InvalidOperationException("La comanda debe tener al menos un evento de dominio registrado");
-            
-            // Validar que no existan cantidades excesivas por item individual
-            foreach (var item in _items)
-            {
-                if (item.Cantidad > 50) // Un límite razonable para un solo producto en una comanda
-                    throw new InvalidOperationException($"La cantidad del item con ID {item.Id} excede el límite máximo permitido por item");
-                
-                if (item.PrecioUnitario > 100000m) // Un límite razonable para el precio unitario
-                    throw new InvalidOperationException($"El precio unitario del item con ID {item.Id} excede el límite máximo permitido");
-                
-                if (!string.IsNullOrEmpty(item.Observaciones) && item.Observaciones.Length > 200)
-                    throw new InvalidOperationException($"Las observaciones del item con ID {item.Id} no pueden exceder los 200 caracteres");
-            }
-            
             // Validar coherencia del ciclo de vida
             if (Estado == EstadoComanda.Finalizada && !FechaActualizacion.HasValue)
                 throw new InvalidOperationException("Una comanda finalizada debe tener fecha de actualización");
@@ -409,12 +414,11 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 decimal porcentajeDescuento = DescuentoFidelizacion.Value / subtotalCalculado;
                 if (porcentajeDescuento > 0.5m) // Máximo 50% de descuento permitido
                     throw new InvalidOperationException("El descuento no puede exceder el 50% del subtotal");
-                
-                // En caso de tener rangos específicos de descuento permitidos
-                // decimal[] rangosPermitidos = new decimal[] { 0.05m, 0.10m, 0.15m, 0.20m, 0.25m, 0.5m };
-                // if (!rangosPermitidos.Any(r => Math.Abs(porcentajeDescuento - r) < 0.01m))
-                //    throw new InvalidOperationException($"El porcentaje de descuento {porcentajeDescuento:P0} no es un valor permitido");
             }
+            
+            // Validar consistencia de eventos de dominio
+            if (DomainEvents.Count == 0)
+                throw new InvalidOperationException("La comanda debe tener al menos un evento de dominio registrado");
         }
 
         /// <summary>

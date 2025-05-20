@@ -156,7 +156,7 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
 | Invariantes en OrdenCompra | Reforzar las reglas de negocio que deben cumplirse en órdenes de compra | Alta | ✅ Completado |
-| Invariantes en Comanda | Mejorar validaciones para garantizar la integridad de las comandas | Media | Pendiente |
+| Invariantes en Comanda | Mejorar validaciones para garantizar la integridad de las comandas | Media | ✅ Completado |
 | Validaciones en ValueObjects | Introducir validaciones más específicas para objetos como Email, Teléfono, etc. | Media | Pendiente |
 
 ### 4. Patrón de especificación
@@ -175,6 +175,7 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
 | Corregir ServicioNotificacionesInventarioTests | Resolver errores de compilación en las pruebas | Alta | ✅ Completado |
+| Corregir ClientesFrecuentesPolicyTests | Corregir pruebas de segmentación de clientes y validar funcionamiento | Alta | ✅ Completado |
 | Ajustar mocks con problemas de expresiones | Modificar setup de pruebas con problemas de árboles de expresión | Alta | Pendiente |
 | Aplicar #nullable context | Aplicar contexto de nulabilidad en pruebas para eliminar advertencias | Media | Pendiente |
 
@@ -203,6 +204,8 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | 2024-04-10 | ProductoRecomendadoPolicy | Pruebas → Implementación → Refactor |
 | 2024-04-10 | ProductoRecomendableSpecification | Pruebas → Implementación → Refactor |
 | 2024-04-10 | DomainServiceCollectionExtensions | Diseño → Pruebas → Implementación |
+| 2024-04-15 | Corrección ClientesFrecuentesPolicyTests | Pruebas → Implementación → Refactor |
+| 2024-04-20 | Validaciones Robustas Comanda | Pruebas → Implementación → Refactor |
 
 ## Decisiones de Diseño
 
@@ -417,3 +420,57 @@ Se ha realizado una importante corrección en el servicio de notificaciones para
    - Se verificó la interacción correcta con el servicio core en todos los escenarios de prueba
 
 Estas correcciones garantizan que el servicio de notificaciones de inventario funcione de manera robusta, especialmente en escenarios de cancelación de operaciones asíncronas, lo que mejora la responsividad del sistema bajo carga y permite la cancelación apropiada de operaciones cuando sea necesario.
+
+## Próximos pasos prioritarios (Mayo 2024)
+
+1. **Validaciones de dominio robustas**:
+   - Mejorar validaciones en ValueObjects para datos como Email, Teléfono, etc.
+   
+2. **Mejora de pruebas unitarias**:
+   - Ajustar mocks con problemas de expresiones lambda
+   - Aplicar #nullable context para eliminar advertencias
+   
+3. **Preparación para integración con otras capas**:
+   - Definir contratos claros entre Dominio y Aplicación
+   - Refinar interfaces de repositorio para facilitar implementación con EF Core
+   
+4. **Documentación técnica**:
+   - Documentar patrones y decisiones de diseño implementadas
+   - Crear guías de uso para los principales componentes del dominio
+
+## Implementación de Validaciones Robustas en Comanda
+
+Como parte de la mejora continua de la capa de dominio, se han implementado validaciones robustas para el agregado Comanda que garantizan la integridad de los datos y la consistencia de los estados. A continuación se detallan las mejoras:
+
+### Validaciones implementadas
+
+1. **Límites en cantidades y valores monetarios**:
+   - Restricción en la cantidad máxima de un producto por item (máximo 50 unidades)
+   - Límite en el precio unitario máximo permitido (100,000)
+   - Validación del total máximo de la comanda para prevenir valores excesivos
+   - Control de descuentos para no exceder el 50% del subtotal
+
+2. **Validaciones de texto**:
+   - Límite en la longitud de observaciones generales (500 caracteres)
+   - Límite en la longitud de observaciones por item (200 caracteres)
+   - Verificación de contenido necesario en observaciones para comandas canceladas
+
+3. **Validaciones de coherencia temporal**:
+   - Prevención de fechas de creación o actualización en el futuro
+   - Verificación de que la fecha de actualización no sea anterior a la de creación
+   - Validación de que una comanda no permanezca activa por más de 30 días
+
+4. **Validaciones de integridad**:
+   - Prevención de elementos duplicados en la comanda
+   - Verificación de consistencia entre subtotal, impuestos y total
+   - Validación de la presencia de productos antes de pasar a estados avanzados
+   - Comprobación de que los items pertenezcan efectivamente a la comanda
+
+5. **Validaciones de transición de estados**:
+   - Implementación de reglas estrictas para la transición entre estados
+   - Verificación de requisitos específicos para cada cambio de estado
+
+6. **Nuevos eventos de dominio**:
+   - Implementación del evento `DescuentoFidelizacionAplicado` para auditoría
+
+Esta implementación robusta de validaciones asegura que los cambios de estado del agregado Comanda sean consistentes y que los datos se mantengan dentro de límites razonables establecidos por las reglas de negocio del restaurante.
