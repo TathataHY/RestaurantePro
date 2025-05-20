@@ -214,13 +214,16 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
 
         private Ingrediente CrearIngrediente(Guid proveedorId)
         {
+            // Proporcionamos todos los parámetros de forma explícita para evitar usar argumentos opcionales
             var ingrediente = Ingrediente.Crear(
-                "Ingrediente" + Guid.NewGuid().ToString().Substring(0, 8),
-                "ING-" + Guid.NewGuid().ToString().Substring(0, 5),
-                "Descripción ingrediente",
-                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
-                10.0m,
-                0.0m);
+                nombre: "Ingrediente" + Guid.NewGuid().ToString().Substring(0, 8),
+                codigo: "ING-" + Guid.NewGuid().ToString().Substring(0, 5),
+                descripcion: "Descripción ingrediente",
+                unidadMedida: RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                stockMinimo: 10.0m,
+                stockActual: 0.0m,
+                rotacion: RestaurantePro.Domain.Inventario.Ingredientes.Enums.RotacionIngrediente.Media,
+                temporada: RestaurantePro.Domain.Inventario.Ingredientes.Enums.TemporadaIngrediente.TodoElAño);
 
             // Simulamos que este ingrediente está asociado al proveedor
             ingrediente.AsociarProveedorPrincipal(proveedorId);

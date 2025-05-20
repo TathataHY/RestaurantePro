@@ -22,9 +22,9 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Specifications
             var specification = new RestaurantePro.Domain.Comercial.Clientes.Specifications.ClienteFrecuenteSpecification();
             
             // Crear un cliente y marcarlo como inactivo
+            var nombre = ClienteNombre.Crear("Juan", "Pérez");
             var cliente = Cliente.Crear(
-                "Juan", 
-                "Pérez",
+                nombre,
                 "juan@ejemplo.com",
                 "+5491155554444"
             );
@@ -53,9 +53,9 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Specifications
             );
             
             // Crear un cliente "nuevo" (con fecha de creación reciente)
+            var nombre = ClienteNombre.Crear("Ana", "García");
             var cliente = Cliente.Crear(
-                "Ana", 
-                "García",
+                nombre,
                 "ana@ejemplo.com",
                 "+5491155556666"
             );
@@ -81,24 +81,24 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Specifications
             );
             
             // Crear un cliente con tarjeta de fidelización
+            var nombre = ClienteNombre.Crear("Carlos", "López");
             var cliente = Cliente.Crear(
-                "Carlos", 
-                "López",
+                nombre,
                 "carlos@ejemplo.com",
                 "+5491155557777"
             );
             
             // Crear y asignar tarjeta con pocos puntos (= pocas visitas)
-            var tarjeta = TarjetaFidelizacion.Crear(cliente.Id);
+            var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, "TF-12345");
             
             // Asignar puntos que equivalen a menos visitas que el mínimo
             // En la especificación, 100 puntos = 1 visita
             typeof(TarjetaFidelizacion).GetProperty("PuntosActuales")
                 .SetValue(tarjeta, (visitasMinimas - 1) * 100);
                 
-            // Asignar tarjeta al cliente
-            typeof(Cliente).GetProperty("TarjetaFidelizacion")
-                .SetValue(cliente, tarjeta);
+            // Asignar tarjeta al cliente usando TarjetaFidelizacionPrincipalId
+            typeof(Cliente).GetProperty("TarjetaFidelizacionPrincipalId")
+                .SetValue(cliente, tarjeta.Id);
             
             // Act
             var result = specification.IsSatisfiedBy(cliente);
@@ -118,9 +118,9 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Specifications
             );
             
             // Crear un cliente que cumple todos los criterios
+            var nombre = ClienteNombre.Crear("María", "Rodríguez");
             var cliente = Cliente.Crear(
-                "María", 
-                "Rodríguez",
+                nombre,
                 "maria@ejemplo.com",
                 "+5491155558888"
             );
@@ -130,19 +130,19 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Specifications
                 .SetValue(cliente, DateTime.Now.AddDays(-90));
             
             // Crear tarjeta con nivel Oro (que según la implementación tiene gasto promedio de 50)
-            var tarjeta = TarjetaFidelizacion.Crear(cliente.Id);
+            var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, "TF-67890");
             
             // Establecer nivel Oro
-            typeof(TarjetaFidelizacion).GetProperty("Nivel")
+            typeof(TarjetaFidelizacion).GetProperty("NivelFidelizacion")
                 .SetValue(tarjeta, NivelFidelizacion.Oro);
                 
             // Establecer puntos suficientes (al menos 300 = 3 visitas)
             typeof(TarjetaFidelizacion).GetProperty("PuntosActuales")
                 .SetValue(tarjeta, 500);
                 
-            // Asignar tarjeta al cliente
-            typeof(Cliente).GetProperty("TarjetaFidelizacion")
-                .SetValue(cliente, tarjeta);
+            // Asignar tarjeta al cliente usando TarjetaFidelizacionPrincipalId
+            typeof(Cliente).GetProperty("TarjetaFidelizacionPrincipalId")
+                .SetValue(cliente, tarjeta.Id);
             
             // Act
             var result = specification.IsSatisfiedBy(cliente);

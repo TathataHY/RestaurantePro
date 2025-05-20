@@ -10,7 +10,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration
         private readonly Mock<IClienteRepository> _clienteRepositoryMock = new();
         private readonly Mock<IComandaRepository> _comandaRepositoryMock = new();
         private readonly Mock<IServicioFidelizacion> _servicioFidelizacionMock = new();
-        private readonly Mock<IDomainEventLog> _eventLogMock = new();
+        private readonly Mock<IDomainEventRegistry> _eventRegistryMock = new();
         
         private readonly ComandaFinalizada_AcumularPuntosHandler _handler;
         private readonly DateTime _fechaActual = new DateTime(2023, 5, 15, 10, 0, 0);
@@ -28,7 +28,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration
                 Mock.Of<ITarjetaFidelizacionRepository>(), // No se usa directamente en la implementación actual
                 _servicioFidelizacionMock.Object,
                 dateTimeServiceMock.Object,
-                _eventLogMock.Object);
+                _eventRegistryMock.Object);
         }
         
         [Fact]
@@ -106,10 +106,9 @@ namespace RestaurantePro.Domain.UnitTests.Integration
                 Times.Once);
                 
             // 4. Verificar que se registró el evento en el log
-            _eventLogMock.Verify(
-                l => l.LogEvent(
+            _eventRegistryMock.Verify(
+                l => l.RegisterAsync(
                     It.IsAny<ComandaFinalizada>(),
-                    It.Is<string>(s => s.Contains("Se procesó acumulación de puntos")),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
         }
@@ -179,10 +178,9 @@ namespace RestaurantePro.Domain.UnitTests.Integration
                 Times.Never);
                 
             // 3. Verificar que se registró el evento en el log
-            _eventLogMock.Verify(
-                l => l.LogEvent(
+            _eventRegistryMock.Verify(
+                l => l.RegisterAsync(
                     It.IsAny<ComandaFinalizada>(),
-                    It.Is<string>(s => s.Contains("no encontrado o inactivo")),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
         }

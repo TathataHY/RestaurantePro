@@ -112,6 +112,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Policies
         {
             // Arrange
             var comandaId = Guid.NewGuid();
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
             var categoriaComida = Guid.NewGuid();
             var categoriaBebida = Guid.NewGuid();
             var categoriaPostre = Guid.NewGuid();
@@ -127,19 +129,20 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Policies
                 CrearProductoMock(Guid.NewGuid(), "Helado", 60, true, "Postres", categoriaPostre)
             };
             
-            var comanda = new Comanda(); // Mock básico
-            var itemComanda = new ItemComanda(comandaId, comidaEnComanda.Id, 1, comidaEnComanda.Precio.Valor);
+            // Crear una comanda real usando el factory method
+            var comanda = Comanda.Crear(mesaId, meseroId);
             
-            // Configurar comando con un ítem de comida
-            var comandaMock = new Mock<Comanda>();
-            comandaMock.Setup(c => c.Id).Returns(comandaId);
-            comandaMock.Setup(c => c.Items).Returns(new List<ItemComanda> { itemComanda });
+            // Usar reflexión para establecer el ID
+            typeof(EntityBase).GetProperty("Id").SetValue(comanda, comandaId);
+            
+            // Agregar un ítem de comida a la comanda
+            comanda.AgregarProducto(comidaEnComanda.Id, 1, comidaEnComanda.Precio.Valor);
             
             _productoRepositoryMock.Setup(repo => repo.ObtenerTodosAsync(true, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(productos);
                 
             _comandaRepositoryMock.Setup(repo => repo.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(comandaMock.Object);
+                .ReturnsAsync(comanda);
                 
             _productoRepositoryMock.Setup(repo => repo.ObtenerPorIdAsync(comidaEnComanda.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(comidaEnComanda);

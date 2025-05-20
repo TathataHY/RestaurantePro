@@ -85,15 +85,8 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
             // En una implementación real, se realizaría una consulta a la base de datos
             // para contar las comandas del cliente en el periodo especificado.
             
-            // Simulación basada en la puntuación de fidelidad
-            // Asumimos que cada 100 puntos representan aproximadamente una visita
-            if (cliente.TarjetaFidelizacion != null)
-            {
-                int puntos = cliente.TarjetaFidelizacion.PuntosActuales;
-                return Math.Min(puntos / 100, 20); // Máximo 20 visitas para evitar valores extremos
-            }
-            
-            return 0;
+            // Usamos directamente la propiedad CantidadVisitas del cliente
+            return cliente.CantidadVisitas;
         }
         
         /// <summary>
@@ -106,23 +99,22 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
             // En una implementación real, se realizaría una consulta a la base de datos
             // para calcular el promedio de gasto por comanda en el periodo especificado.
             
-            // Simulación basada en el nivel de fidelización
-            if (cliente.TarjetaFidelizacion != null)
-            {
-                switch (cliente.TarjetaFidelizacion.Nivel)
-                {
-                    case NivelFidelizacion.Platino:
-                        return 75.0m;
-                    case NivelFidelizacion.Oro:
-                        return 50.0m;
-                    case NivelFidelizacion.Plata:
-                        return 30.0m;
-                    default:
-                        return 20.0m;
-                }
-            }
+            // Simulación basada en los puntos acumulados y el segmento
+            // Asumimos que 10 puntos equivalen aproximadamente a 1 unidad monetaria de gasto
+            decimal gastoBase = cliente.PuntosAcumulados / 10.0m;
             
-            return 0m;
+            // Aplicamos un multiplicador según el segmento del cliente
+            switch (cliente.Segmento)
+            {
+                case SegmentoCliente.Premium:
+                    return gastoBase * 1.5m;
+                case SegmentoCliente.TicketAlto:
+                    return gastoBase * 1.3m;
+                case SegmentoCliente.FrecuenciaAlta:
+                    return gastoBase * 0.8m;
+                default:
+                    return gastoBase;
+            }
         }
     }
 } 

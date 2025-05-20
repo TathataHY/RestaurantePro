@@ -9,7 +9,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration
         private readonly Mock<IIngredienteRepository> _ingredienteRepositoryMock = new();
         private readonly Mock<IProveedorRepository> _proveedorRepositoryMock = new();
         private readonly Mock<IOrdenCompraRepository> _ordenCompraRepositoryMock = new();
-        private readonly Mock<IDomainEventLog> _eventLogMock = new();
+        private readonly Mock<IDomainEventRegistry> _eventRegistryMock = new();
         private readonly Mock<IDateTimeService> _dateTimeServiceMock = new();
         
         private readonly StockBajoMinimo_GenerarOrdenCompraAutomaticaHandler _handler;
@@ -25,7 +25,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration
                 _ingredienteRepositoryMock.Object,
                 _proveedorRepositoryMock.Object,
                 _ordenCompraRepositoryMock.Object,
-                _eventLogMock.Object,
+                _eventRegistryMock.Object,
                 _dateTimeServiceMock.Object);
         }
         
@@ -106,10 +106,10 @@ namespace RestaurantePro.Domain.UnitTests.Integration
                 .Returns(Task.CompletedTask);
                 
             // Capturar todos los eventos de log para ver qué está ocurriendo
-            _eventLogMock
-                .Setup(l => l.LogEvent(It.IsAny<DomainEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Callback<DomainEvent, string, CancellationToken>((ev, msg, _) => {
-                    Console.WriteLine($"EVENT LOG: {msg}");
+            _eventRegistryMock
+                .Setup(l => l.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
+                .Callback<DomainEvent, CancellationToken>((ev, _) => {
+                    Console.WriteLine($"EVENT REGISTERED: {ev.GetType().Name}");
                 })
                 .Returns(Task.CompletedTask);
                 
@@ -131,6 +131,13 @@ namespace RestaurantePro.Domain.UnitTests.Integration
             _ordenCompraRepositoryMock.Verify(
                 r => r.AgregarAsync(It.IsAny<OrdenCompra>(), It.IsAny<CancellationToken>()),
                 Times.Once);
+            
+            // Verificar que se registró el evento
+            _eventRegistryMock.Verify(
+                l => l.RegisterAsync(
+                    It.IsAny<RestaurantePro.Domain.Inventario.Ingredientes.Events.StockBajoMinimo>(),
+                    It.IsAny<CancellationToken>()),
+                Times.AtLeastOnce);
         }
         
         [Fact]
@@ -229,10 +236,9 @@ namespace RestaurantePro.Domain.UnitTests.Integration
                 Times.Never);
                 
             // Verificar que se registró un mensaje indicando que ya existe una orden
-            _eventLogMock.Verify(
-                l => l.LogEvent(
+            _eventRegistryMock.Verify(
+                l => l.RegisterAsync(
                     It.IsAny<RestaurantePro.Domain.Inventario.Ingredientes.Events.StockBajoMinimo>(),
-                    It.Is<string>(s => s.Contains("Ya existe una orden pendiente")),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
         }

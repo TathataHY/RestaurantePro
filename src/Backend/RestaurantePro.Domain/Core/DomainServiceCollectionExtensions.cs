@@ -1,10 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using RestaurantePro.Domain.Comercial.Policies;
-using RestaurantePro.Domain.Core.Base.Events.Extensions;
-using RestaurantePro.Domain.Core.Productos.Policies;
-using RestaurantePro.Domain.Core.SharedKernel.Services;
-using RestaurantePro.Domain.Inventario.Policies;
-
 namespace RestaurantePro.Domain.Core
 {
     /// <summary>

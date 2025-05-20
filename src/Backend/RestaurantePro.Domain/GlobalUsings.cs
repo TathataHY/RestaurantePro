@@ -5,6 +5,7 @@ global using System.Linq;
 global using System.Threading.Tasks;
 global using System.Text.RegularExpressions;
 global using System.Globalization;
+global using System.Reflection;
 global using System.Text;
 global using System.Threading;
 global using System.Text.Json;
@@ -58,6 +59,7 @@ global using RestaurantePro.Domain.Core.Productos.Events;
 global using RestaurantePro.Domain.Core.Productos.Events.Producto;
 global using RestaurantePro.Domain.Core.Productos.Events.ProductoCategoria;
 global using RestaurantePro.Domain.Core.Productos.Services;
+global using RestaurantePro.Domain.Core.Productos.Specifications;
 global using RestaurantePro.Domain.Core.Productos.Policies;
 
 // Domain Operaciones - Comandas

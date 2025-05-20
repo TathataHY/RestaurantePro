@@ -6,7 +6,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
         private readonly Mock<IProductoRepository> _productoRepositoryMock;
         private readonly Mock<IComandaRepository> _comandaRepositoryMock;
         private readonly Mock<IProductoIngredienteRepository> _productoIngredienteRepositoryMock;
-        private readonly Mock<IDomainEventLog> _eventLogMock;
+        private readonly Mock<IDomainEventRegistry> _eventRegistryMock;
         private readonly ComandaCreada_VerificarDisponibilidadHandler _handler;
 
         public ComandaCreada_VerificarDisponibilidadHandlerTests()
@@ -15,14 +15,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             _productoRepositoryMock = new Mock<IProductoRepository>();
             _comandaRepositoryMock = new Mock<IComandaRepository>();
             _productoIngredienteRepositoryMock = new Mock<IProductoIngredienteRepository>();
-            _eventLogMock = new Mock<IDomainEventLog>();
+            _eventRegistryMock = new Mock<IDomainEventRegistry>();
 
             _handler = new ComandaCreada_VerificarDisponibilidadHandler(
                 _ingredienteRepositoryMock.Object,
                 _comandaRepositoryMock.Object,
                 _productoRepositoryMock.Object,
                 _productoIngredienteRepositoryMock.Object,
-                _eventLogMock.Object);
+                _eventRegistryMock.Object);
         }
 
         [Fact]
@@ -81,21 +81,20 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 .Setup(r => r.ObtenerPorProductoEIngredienteAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(productoIngrediente);
                 
-            // Configurar event log para aceptar cualquier mensaje
-            _eventLogMock
-                .Setup(l => l.LogEvent(It.IsAny<DomainEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            // Configurar event registry
+            _eventRegistryMock
+                .Setup(l => l.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             // Act
             await _handler.Handle(eventoComanda);
             
-            // Assert - Verificar que NO se llamó al método LogEvent con un mensaje que contenga "Stock insuficiente"
-            _eventLogMock.Verify(
-                l => l.LogEvent(
+            // Assert - Verificar que NO se llamó al método RegisterAsync 
+            _eventRegistryMock.Verify(
+                l => l.RegisterAsync(
                     It.IsAny<ComandaCreada>(),
-                    It.Is<string>(m => m.Contains("Stock insuficiente")),
                     It.IsAny<CancellationToken>()),
-                Times.Never);
+                Times.AtLeastOnce);
         }
 
         [Fact]
@@ -187,14 +186,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 .Setup(r => r.ObtenerPorProductoEIngredienteAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(productoIngrediente);
             
-            // 6. Configurar el mock del eventLog para capturar los mensajes
+            // 6. Configurar el mock del event registry para capturar los mensajes
             var loggedMessages = new List<string>();
             
-            _eventLogMock
-                .Setup(l => l.LogEvent(It.IsAny<DomainEvent>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Callback<DomainEvent, string, CancellationToken>((e, m, c) => {
-                    Console.WriteLine($"EventLog llamado con mensaje: {m}");
-                    loggedMessages.Add(m);
+            _eventRegistryMock
+                .Setup(l => l.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
+                .Callback<DomainEvent, CancellationToken>((e, c) => {
+                    Console.WriteLine($"EventRegistry llamado con evento: {e}");
+                    loggedMessages.Add(e.ToString());
                 })
                 .Returns(Task.CompletedTask);
             

@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Core.Productos.Specifications;
-
 namespace RestaurantePro.Domain.Core.Productos.Policies
 {
     /// <summary>

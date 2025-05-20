@@ -7,7 +7,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
         private readonly Mock<IProductoRepository> _productoRepositoryMock;
         private readonly Mock<IProductoIngredienteRepository> _productoIngredienteRepositoryMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
-        private readonly Mock<IDomainEventLog> _eventLogMock;
+        private readonly Mock<IDomainEventRegistry> _eventRegistryMock;
         private readonly ItemComandaEntregado_ActualizarInventarioHandler _handler;
         private readonly CancellationToken _cancellationToken = CancellationToken.None;
         private readonly DateTime _fechaActual = new DateTime(2023, 1, 1, 12, 0, 0);
@@ -19,7 +19,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             _productoRepositoryMock = new Mock<IProductoRepository>();
             _productoIngredienteRepositoryMock = new Mock<IProductoIngredienteRepository>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
-            _eventLogMock = new Mock<IDomainEventLog>();
+            _eventRegistryMock = new Mock<IDomainEventRegistry>();
             
             _dateTimeServiceMock.Setup(s => s.Now).Returns(_fechaActual);
             
@@ -29,7 +29,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 _productoRepositoryMock.Object,
                 _productoIngredienteRepositoryMock.Object,
                 _dateTimeServiceMock.Object,
-                _eventLogMock.Object);
+                _eventRegistryMock.Object);
         }
         
         [Fact]
@@ -116,8 +116,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             _ingredienteRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<Ingrediente>(), _cancellationToken))
                 .Returns(Task.CompletedTask);
                 
-            // Configurar log
-            _eventLogMock.Setup(l => l.LogEvent(It.IsAny<DomainEvent>(), It.IsAny<string>(), _cancellationToken))
+            // Configurar el mock del event registry
+            _eventRegistryMock
+                .Setup(l => l.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             // Act - El test ya no llamará a DecrementarStock directamente, sólo dejamos que el handler lo haga
@@ -139,10 +140,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             _movimientoRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<MovimientoInventario>()), Times.Exactly(2));
                 
             // Verificar que se registró el éxito
-            _eventLogMock.Verify(l => l.LogEvent(
+            _eventRegistryMock.Verify(l => l.RegisterAsync(
                 It.IsAny<DomainEvent>(),
-                It.Is<string>(s => s.Contains("actualizado correctamente")),
-                _cancellationToken), 
+                It.Is<CancellationToken>(c => c == _cancellationToken)), 
                 Times.Once);
         }
         
@@ -168,10 +168,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             
             // Assert
             // Verificar que se registró el error
-            _eventLogMock.Verify(l => l.LogEvent(
+            _eventRegistryMock.Verify(l => l.RegisterAsync(
                 It.IsAny<DomainEvent>(),
-                It.Is<string>(s => s.Contains("No se encontró el producto")),
-                _cancellationToken), 
+                It.Is<CancellationToken>(c => c == _cancellationToken)), 
                 Times.Once);
                 
             // Verificar que no se intentó actualizar nada

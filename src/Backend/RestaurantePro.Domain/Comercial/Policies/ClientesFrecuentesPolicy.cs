@@ -252,10 +252,14 @@ namespace RestaurantePro.Domain.Comercial.Policies
         private int SimularVisitasRecientes(Cliente cliente, int dias, int diasAntes = 0)
         {
             // En implementación real: consulta a repositorio de comandas
-            // Aquí simulamos basado en puntos y nivel
+            // Aquí simulamos basado en puntos y segmento del cliente
+            
+            // Obtener nivel de fidelización del cliente a través del repositorio
+            var tarjeta = _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, CancellationToken.None).Result;
+            var nivel = tarjeta?.NivelFidelizacion ?? NivelFidelizacion.Basico;
             
             // Fórmula simulada: visitas proporcionales a nivel y puntos
-            var factorNivel = cliente.TarjetaFidelizacion?.NivelFidelizacion switch
+            var factorNivel = nivel switch
             {
                 NivelFidelizacion.Platino => 0.8,
                 NivelFidelizacion.Oro => 0.6,
@@ -277,7 +281,11 @@ namespace RestaurantePro.Domain.Comercial.Policies
             // En implementación real: consulta a repositorio de comandas
             // Aquí simulamos basado en nivel de fidelización
             
-            return cliente.TarjetaFidelizacion?.NivelFidelizacion switch
+            // Obtener nivel de fidelización del cliente a través del repositorio
+            var tarjeta = _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, CancellationToken.None).Result;
+            var nivel = tarjeta?.NivelFidelizacion ?? NivelFidelizacion.Basico;
+            
+            return nivel switch
             {
                 NivelFidelizacion.Platino => 75.0m,
                 NivelFidelizacion.Oro => 50.0m,
@@ -291,7 +299,11 @@ namespace RestaurantePro.Domain.Comercial.Policies
             // En implementación real: consulta a repositorio de comandas
             // Aquí simulamos inverso al nivel: niveles altos = visita reciente
             
-            return cliente.TarjetaFidelizacion?.NivelFidelizacion switch
+            // Obtener nivel de fidelización del cliente a través del repositorio
+            var tarjeta = _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, CancellationToken.None).Result;
+            var nivel = tarjeta?.NivelFidelizacion ?? NivelFidelizacion.Basico;
+            
+            return nivel switch
             {
                 NivelFidelizacion.Platino => 7,
                 NivelFidelizacion.Oro => 14,

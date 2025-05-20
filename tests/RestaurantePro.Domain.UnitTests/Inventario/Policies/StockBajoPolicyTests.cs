@@ -212,7 +212,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
 
         private void ConfigurarNotificacionStockBajo(Guid notificacionId)
         {
-            // Usamos genéricamente para cualquier parámetro para evitar árboles de expresión
+            // Evitamos usar It.IsAny dentro de la configuración del mock
+            // Usamos Setup con parámetros simples y Callback para verificar
             _servicioNotificacionesMock
                 .Setup(s => s.NotificarStockBajo(
                     It.Is<Guid>(g => true),
@@ -235,6 +236,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
 
         private void VerificarVerificadorInvocado(int veces) 
         { 
+            // Usamos It.Is en lugar de un valor específico para evitar problemas con árboles de expresión
             _verificadorStockMock.Verify(
                 v => v.VerificarYGenerarOrdenesCompraAsync(It.Is<CancellationToken>(t => true)), 
                 Times.Exactly(veces)); 
@@ -242,13 +244,23 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
 
         private Ingrediente CrearIngrediente(string nombre, decimal stockMinimo, decimal stockActual)
         {
+            // Usamos variables locales en lugar de argumentos opcionales o nombrados
+            string codigo = "ING-" + Guid.NewGuid().ToString().Substring(0, 5);
+            string descripcion = $"Descripción de {nombre}";
+            var unidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo;
+            var rotacion = RotacionIngrediente.Media;
+            var temporada = TemporadaIngrediente.TodoElAño;
+
+            // Creamos el ingrediente sin argumentos nombrados
             var ingrediente = Ingrediente.Crear(
-                nombre,
-                "ING-" + Guid.NewGuid().ToString().Substring(0, 5),
-                $"Descripción de {nombre}",
-                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
-                stockMinimo,
-                stockActual);
+                nombre, 
+                codigo, 
+                descripcion, 
+                unidadMedida, 
+                stockMinimo, 
+                stockActual, 
+                rotacion, 
+                temporada);
 
             // Asignar un proveedor ficticio
             ingrediente.AsociarProveedorPrincipal(Guid.NewGuid());
@@ -263,27 +275,49 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             RotacionIngrediente rotacion, 
             TemporadaIngrediente temporada)
         {
+            // Usamos variables locales en lugar de argumentos opcionales o nombrados
+            string codigo = "ING-" + Guid.NewGuid().ToString().Substring(0, 5);
+            string descripcion = $"Descripción de {nombre}";
+            var unidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo;
+
+            // Creamos el ingrediente sin argumentos nombrados
             var ingrediente = Ingrediente.Crear(
-                nombre,
-                "ING-" + Guid.NewGuid().ToString().Substring(0, 5),
-                $"Descripción de {nombre}",
-                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
-                stockMinimo,
-                stockActual,
-                rotacion,
+                nombre, 
+                codigo, 
+                descripcion, 
+                unidadMedida, 
+                stockMinimo, 
+                stockActual, 
+                rotacion, 
                 temporada);
 
             // Asignar un proveedor ficticio
             ingrediente.AsociarProveedorPrincipal(Guid.NewGuid());
             
             // Asignar un costo promedio para las pruebas
-            ingrediente.ActualizarCostoPromedio(rotacion switch {
-                RotacionIngrediente.Baja => 50.0m,
-                RotacionIngrediente.Media => 100.0m,
-                RotacionIngrediente.Alta => 200.0m,
-                RotacionIngrediente.Critica => 350.0m,
-                _ => 0
-            });
+            decimal costoPromedio = 0;
+            
+            // En lugar de usar switch con expresión lambda, usamos un switch convencional
+            switch (rotacion)
+            {
+                case RotacionIngrediente.Baja:
+                    costoPromedio = 50.0m;
+                    break;
+                case RotacionIngrediente.Media:
+                    costoPromedio = 100.0m;
+                    break;
+                case RotacionIngrediente.Alta:
+                    costoPromedio = 200.0m;
+                    break;
+                case RotacionIngrediente.Critica:
+                    costoPromedio = 350.0m;
+                    break;
+                default:
+                    costoPromedio = 0;
+                    break;
+            }
+            
+            ingrediente.ActualizarCostoPromedio(costoPromedio);
 
             return ingrediente;
         }

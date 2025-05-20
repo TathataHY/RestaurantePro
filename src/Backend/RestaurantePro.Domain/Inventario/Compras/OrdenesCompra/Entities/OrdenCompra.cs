@@ -320,17 +320,17 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
             foreach (var item in _items)
             {
                 if (item.Cantidad <= 0)
-                    throw new InvalidOperationException($"El item {item.Nombre} (ID: {item.Id}) tiene una cantidad inválida: {item.Cantidad}");
+                    throw new InvalidOperationException($"El item {item.NombreIngrediente} (ID: {item.Id}) tiene una cantidad inválida: {item.Cantidad}");
                     
                 if (item.PrecioUnitario < 0)
-                    throw new InvalidOperationException($"El item {item.Nombre} (ID: {item.Id}) tiene un precio unitario inválido: {item.PrecioUnitario}");
+                    throw new InvalidOperationException($"El item {item.NombreIngrediente} (ID: {item.Id}) tiene un precio unitario inválido: {item.PrecioUnitario}");
                     
                 if (item.Subtotal != item.Cantidad * item.PrecioUnitario)
-                    throw new InvalidOperationException($"Inconsistencia en el subtotal del item {item.Nombre} (ID: {item.Id})");
+                    throw new InvalidOperationException($"Inconsistencia en el subtotal del item {item.NombreIngrediente} (ID: {item.Id})");
                     
                 // Validar límite máximo por item (ejemplo: 1000 unidades como límite razonable)
                 if (item.Cantidad > 1000m)
-                    throw new InvalidOperationException($"La cantidad del item {item.Nombre} (ID: {item.Id}) excede el límite máximo permitido");
+                    throw new InvalidOperationException($"La cantidad del item {item.NombreIngrediente} (ID: {item.Id}) excede el límite máximo permitido");
             }
             
             // Validar las transiciones de estado

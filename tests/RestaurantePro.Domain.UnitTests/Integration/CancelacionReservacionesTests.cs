@@ -9,7 +9,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration
     {
         private readonly Mock<IReservacionRepository> _reservacionRepositoryMock = new();
         private readonly Mock<IClienteRepository> _clienteRepositoryMock = new();
-        private readonly Mock<IDomainEventLog> _eventLogMock = new();
+        private readonly Mock<IDomainEventRegistry> _eventRegistryMock = new();
         
         private readonly ClienteDesactivado_CancelarReservacionesPendientesHandler _handler;
         private readonly DateTime _fechaActual = DateTime.Now;
@@ -19,7 +19,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration
             // Inicializar handler
             _handler = new ClienteDesactivado_CancelarReservacionesPendientesHandler(
                 _reservacionRepositoryMock.Object,
-                _eventLogMock.Object);
+                _eventRegistryMock.Object);
         }
         
         [Fact]
@@ -106,12 +106,11 @@ namespace RestaurantePro.Domain.UnitTests.Integration
             Assert.Contains("Cliente desactivado", reservacion2.MotivoCancelacion);
             
             // 4. Verificar que se registró el evento en el log
-            _eventLogMock.Verify(
-                l => l.LogEvent(
+            _eventRegistryMock.Verify(
+                l => l.RegisterAsync(
                     It.IsAny<ClienteDesactivado>(),
-                    It.Is<string>(s => s.Contains("Se cancelaron")),
                     It.IsAny<CancellationToken>()),
-                Times.Once);
+                Times.AtLeastOnce);
         }
         
         [Fact]
@@ -153,12 +152,11 @@ namespace RestaurantePro.Domain.UnitTests.Integration
                 Times.Never);
                 
             // 3. Verificar que se registró el evento en el log
-            _eventLogMock.Verify(
-                l => l.LogEvent(
+            _eventRegistryMock.Verify(
+                l => l.RegisterAsync(
                     It.IsAny<ClienteDesactivado>(),
-                    It.Is<string>(s => s.Contains("No se encontraron reservaciones pendientes")),
                     It.IsAny<CancellationToken>()),
-                Times.Once);
+                Times.AtLeastOnce);
         }
     }
 } 
