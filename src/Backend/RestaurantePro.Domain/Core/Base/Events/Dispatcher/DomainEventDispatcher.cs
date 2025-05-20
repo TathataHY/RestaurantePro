@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace RestaurantePro.Domain.Core.Base.Events.Dispatcher
 {
     /// <summary>

@@ -1,7 +1,3 @@
-using RestaurantePro.Domain.Core;
-using RestaurantePro.Domain.Core.Base.Events.Extensions;
-using RestaurantePro.Domain.Core.Base.Events.Registry;
-
 namespace RestaurantePro.Domain.UnitTests.Core
 {
     // Evento de prueba para el test de registro de manejadores
