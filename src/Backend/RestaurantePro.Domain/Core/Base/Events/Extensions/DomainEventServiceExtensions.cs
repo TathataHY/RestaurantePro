@@ -44,7 +44,7 @@ namespace RestaurantePro.Domain.Core.Base.Events.Extensions
         public static IServiceCollection AddInMemoryDomainEventRegistry(this IServiceCollection services)
         {
             // Registrar el registro de eventos en memoria como singleton
-            services.AddSingleton<IDomainEventRegistry, InMemoryDomainEventRegistry>();
+            services.AddSingleton<IDomainEventRegistry, Registry.InMemoryDomainEventRegistry>();
             
             return services;
         }
@@ -160,6 +160,9 @@ namespace RestaurantePro.Domain.Core.Base.Events.Extensions
     /// </summary>
     public class InMemoryDomainEventRegistry : IDomainEventRegistry
     {
+        // IMPORTANTE: Esta implementación es obsoleta y está duplicada.
+        // Se mantiene aquí para compatibilidad con código existente.
+        // Usar Registry.InMemoryDomainEventRegistry en su lugar.
         private readonly List<DomainEvent> _events = new List<DomainEvent>();
         
         /// <inheritdoc />

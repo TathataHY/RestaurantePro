@@ -1,5 +1,6 @@
 using RestaurantePro.Domain.Core;
 using RestaurantePro.Domain.Core.Base.Events.Extensions;
+using RestaurantePro.Domain.Core.Base.Events.Registry;
 
 namespace RestaurantePro.Domain.UnitTests.Core
 {
@@ -100,7 +101,7 @@ namespace RestaurantePro.Domain.UnitTests.Core
             
             // Verificar que sea InMemoryDomainEventRegistry
             var descriptor = services.First(d => d.ServiceType == typeof(IDomainEventRegistry));
-            descriptor.ImplementationType.Should().Be(typeof(RestaurantePro.Domain.Core.Base.Events.Extensions.InMemoryDomainEventRegistry));
+            descriptor.ImplementationType.Should().Be(typeof(RestaurantePro.Domain.Core.Base.Events.Registry.InMemoryDomainEventRegistry));
             descriptor.Lifetime.Should().Be(ServiceLifetime.Singleton);
         }
         
@@ -164,20 +165,5 @@ namespace RestaurantePro.Domain.UnitTests.Core
             services.Any(s => s.ServiceType == serviceType).Should().BeTrue(
                 $"El servicio {serviceType.Name} debería estar registrado");
         }
-    }
-    
-    // Implementación simple de MockDateTimeService para pruebas
-    internal class MockDateTimeService : IDateTimeService
-    {
-        private readonly DateTime _currentDateTime;
-        
-        public MockDateTimeService(DateTime currentDateTime)
-        {
-            _currentDateTime = currentDateTime;
-        }
-        
-        public DateTime Now => _currentDateTime;
-        public DateTime UtcNow => _currentDateTime.ToUniversalTime();
-        public DateTime Today => _currentDateTime.Date;
     }
 } 
