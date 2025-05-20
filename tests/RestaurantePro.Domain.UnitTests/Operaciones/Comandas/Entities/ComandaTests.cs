@@ -180,18 +180,28 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         {
             // Arrange
             var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            
+            // Agregamos un producto para que no falle por otras validaciones
+            comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
+            
+            // Obtenemos acceso al método ValidarInvariantes directamente
+            var validarInvariantes = typeof(Comanda).GetMethod(
+                "ValidarInvariantes", 
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            
+            // Establecer las fechas incoherentes después de cualquier otra operación
             var fechaCreacion = DateTime.Now;
             var fechaActualizacionInvalida = fechaCreacion.AddDays(-1); // Fecha anterior
             
-            // Manipulamos directamente las propiedades
             typeof(Comanda).GetProperty("FechaCreacion").SetValue(comanda, fechaCreacion);
             typeof(Comanda).GetProperty("FechaActualizacion").SetValue(comanda, fechaActualizacionInvalida);
             
-            // Triggereamos ValidarInvariantes a través de algún método público
-            Action action = () => comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
+            // Act & Assert - Llamamos directamente a ValidarInvariantes
+            Action action = () => validarInvariantes.Invoke(comanda, null);
             
             // Assert
-            action.Should().Throw<InvalidOperationException>()
+            action.Should().Throw<TargetInvocationException>()
+                .WithInnerException<InvalidOperationException>()
                 .WithMessage("*La fecha de actualización no puede ser anterior a la fecha de creación*");
         }
         
@@ -209,16 +219,28 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             var itemsField = typeof(Comanda).GetField("_items", BindingFlags.NonPublic | BindingFlags.Instance);
             var items = (List<ItemComanda>)itemsField.GetValue(comanda);
             
-            // Crear un nuevo ItemComanda con el mismo productoId
-            var nuevoItem = new ItemComanda(comanda.Id, productoId, 2, 150m, "Duplicado");
+            // Crear un nuevo ItemComanda con el mismo productoId pero asegurándonos de que el subtotal sea correcto
+            var nuevoItem = new ItemComanda(comanda.Id, productoId, 3, 100m, "Duplicado");
             items.Add(nuevoItem);
             
-            // Triggereamos ValidarInvariantes a través de algún método público que no sea AgregarProducto
-            // ya que esta validación es de agregar duplicados
-            Action action = () => comanda.ActualizarEstado(EstadoComanda.EnProceso);
+            // Actualizamos el Total para que no falle por inconsistencia de total
+            var totalField = typeof(Comanda).GetProperty("Total");
+            var nuevoSubtotal = items.Sum(i => i.Subtotal); // 100 + 300 = 400
+            var nuevoImpuesto = nuevoSubtotal * 0.16m; // 64
+            var nuevoTotal = TotalComanda.Crear(nuevoSubtotal, nuevoImpuesto);
+            totalField.SetValue(comanda, nuevoTotal);
+            
+            // Obtenemos acceso al método ValidarInvariantes directamente
+            var validarInvariantes = typeof(Comanda).GetMethod(
+                "ValidarInvariantes", 
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            
+            // Act & Assert - Llamamos directamente a ValidarInvariantes
+            Action action = () => validarInvariantes.Invoke(comanda, null);
             
             // Assert
-            action.Should().Throw<InvalidOperationException>()
+            action.Should().Throw<TargetInvocationException>()
+                .WithInnerException<InvalidOperationException>()
                 .WithMessage("*Existen productos duplicados en la comanda*");
         }
     }

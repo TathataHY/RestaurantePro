@@ -147,11 +147,15 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
         {
             // Arrange
             var fechaEmision = DateTime.Now;
+            var fechaEntrega = fechaEmision.AddDays(7); // Fecha de entrega 7 días después
             
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 "Observaciones cortas",
                 fechaEmision);
+                
+            // Establecer fecha de entrega estimada válida
+            ordenCompra.EstablecerFechaEntrega(fechaEntrega);
                 
             // Manipular directamente las observaciones para hacerlas excesivas
             var observacionesExcesivas = new string('X', 501); // 501 caracteres
@@ -174,11 +178,15 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
         {
             // Arrange
             var fechaEmision = DateTime.Now;
+            var fechaEntrega = fechaEmision.AddDays(7); // Fecha de entrega 7 días después
             
             var ordenCompra = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
                 Guid.NewGuid(),
                 "Observaciones",
                 fechaEmision);
+                
+            // Establecer fecha de entrega estimada válida
+            ordenCompra.EstablecerFechaEntrega(fechaEntrega);
                 
             ordenCompra.AgregarItem(Guid.NewGuid(), "Tomate", 10.0m,
                 RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
