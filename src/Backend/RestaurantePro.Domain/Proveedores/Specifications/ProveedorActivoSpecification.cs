@@ -1,6 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.Specifications;
-using RestaurantePro.Domain.Proveedores.Entities;
-
 namespace RestaurantePro.Domain.Proveedores.Specifications
 {
     /// <summary>

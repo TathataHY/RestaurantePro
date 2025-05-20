@@ -24,13 +24,13 @@ global using RestaurantePro.Domain.Core.Base.Events.Handlers;
 global using RestaurantePro.Domain.Core.Base.Events.Registry;
 global using RestaurantePro.Domain.Core.Base.Events.Extensions;
 global using RestaurantePro.Domain.Core.Base.Events.Subscription;
-global using RestaurantePro.Domain.Core.Base.Services;
 
 // Domain core imports - SharedKernel
 global using RestaurantePro.Domain.Core.SharedKernel;
 global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Services;
+global using RestaurantePro.Domain.Core.SharedKernel.Specifications;
 
 // Domain core imports - BoundedContexts
 global using RestaurantePro.Domain.Core.BoundedContexts;

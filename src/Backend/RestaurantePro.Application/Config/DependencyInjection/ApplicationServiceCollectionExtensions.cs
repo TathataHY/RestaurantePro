@@ -3,6 +3,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Application.Common.Behaviors;
+using RestaurantePro.Domain.Core;
 
 namespace RestaurantePro.Application.Config.DependencyInjection
 {
@@ -22,6 +23,9 @@ namespace RestaurantePro.Application.Config.DependencyInjection
             // Registrar behaviors para validación y logging
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+            
+            // Registrar servicios de dominio
+            services.AddDomainServices();
             
             return services;
         }

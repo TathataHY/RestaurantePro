@@ -149,7 +149,7 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 |-------|-------------|-----------|--------|
 | Ampliar StockBajoPolicy | Incluir más reglas de negocio como priorización de ingredientes por rotación y temporada | Alta | ✅ Completado |
 | Mejorar ClientesFrecuentesPolicy | Añadir segmentación de clientes por comportamiento y campañas personalizadas | Media | ✅ Completado |
-| Nueva política: ProductoRecomendadoPolicy | Crear política para recomendar productos basados en historial y tendencias | Baja | Pendiente |
+| Nueva política: ProductoRecomendadoPolicy | Crear política para recomendar productos basados en historial y tendencias | Baja | ✅ Completado |
 
 ### 3. Validaciones de dominio robustas
 
@@ -200,6 +200,9 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | 2024-03-30 | Sistema de Suscripción entre Agregados | Diseño → Pruebas → Implementación → Refactor |
 | 2024-04-05 | Validaciones Robustas OrdenCompra | Pruebas → Implementación → Refactor |
 | 2024-04-05 | Corrección ServicioNotificacionesInventarioTests | Pruebas → Implementación → Refactor |
+| 2024-04-10 | ProductoRecomendadoPolicy | Pruebas → Implementación → Refactor |
+| 2024-04-10 | ProductoRecomendableSpecification | Pruebas → Implementación → Refactor |
+| 2024-04-10 | DomainServiceCollectionExtensions | Diseño → Pruebas → Implementación |
 
 ## Decisiones de Diseño
 

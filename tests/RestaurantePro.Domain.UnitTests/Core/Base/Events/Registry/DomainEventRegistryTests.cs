@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Core.Base.Events.Registry;
-
 namespace RestaurantePro.Domain.UnitTests.Core.Base.Events.Registry
 {
     public class DomainEventRegistryTests

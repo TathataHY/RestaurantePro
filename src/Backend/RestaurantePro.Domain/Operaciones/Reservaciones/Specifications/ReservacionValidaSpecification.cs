@@ -1,6 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.Specifications;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
-
 namespace RestaurantePro.Domain.Operaciones.Reservaciones.Specifications
 {
     /// <summary>
