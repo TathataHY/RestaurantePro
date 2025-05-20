@@ -85,8 +85,12 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
             // En una implementación real, se realizaría una consulta a la base de datos
             // para contar las comandas del cliente en el periodo especificado.
             
-            // Usamos directamente la propiedad CantidadVisitas del cliente
-            return cliente.CantidadVisitas;
+            // Para no depender de una propiedad CantidadVisitas que puede estar sin inicializar,
+            // utilizamos una estimación basada en los puntos acumulados
+            int visitasEstimadas = cliente.PuntosAcumulados / 100;
+            
+            // Nos aseguramos de un mínimo de 0 visitas
+            return Math.Max(0, visitasEstimadas);
         }
         
         /// <summary>

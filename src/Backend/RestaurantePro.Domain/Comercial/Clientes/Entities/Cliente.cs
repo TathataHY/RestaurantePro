@@ -85,7 +85,9 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
                 Email = email,
                 Telefono = telefono,
                 EstaActivo = true,
-                PuntosAcumulados = 0
+                PuntosAcumulados = 0,
+                CantidadVisitas = 0,
+                Segmento = SegmentoCliente.SinClasificar
             };
 
             cliente.AddDomainEvent(new ClienteCreado(cliente.Id, nombre.NombreCompleto));
