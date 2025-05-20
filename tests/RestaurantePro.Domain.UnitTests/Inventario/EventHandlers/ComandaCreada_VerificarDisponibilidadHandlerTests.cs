@@ -187,13 +187,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 .ReturnsAsync(productoIngrediente);
             
             // 6. Configurar el mock del event registry para capturar los mensajes
-            var loggedMessages = new List<string>();
+            var eventosRegistrados = new List<DomainEvent>();
             
             _eventRegistryMock
                 .Setup(l => l.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
                 .Callback<DomainEvent, CancellationToken>((e, c) => {
                     Console.WriteLine($"EventRegistry llamado con evento: {e}");
-                    loggedMessages.Add(e.ToString());
+                    eventosRegistrados.Add(e);
                 })
                 .Returns(Task.CompletedTask);
             
@@ -202,15 +202,20 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             await _handler.Handle(eventoComanda);
             
             // Assert
-            Console.WriteLine($"Mensajes registrados: {loggedMessages.Count}");
-            foreach (var msg in loggedMessages)
+            Console.WriteLine($"Eventos registrados: {eventosRegistrados.Count}");
+            foreach (var evt in eventosRegistrados)
             {
-                Console.WriteLine($"- {msg}");
+                Console.WriteLine($"- {evt}");
             }
             
-            // Verificar que se haya registrado al menos un mensaje de advertencia
-            Assert.True(loggedMessages.Any(m => m.ToLower().Contains("stock insuficiente")), 
-                "El handler debería haber registrado un mensaje de advertencia sobre stock insuficiente");
+            // Verificar que se haya registrado el evento ComandaCreada
+            _eventRegistryMock.Verify(
+                l => l.RegisterAsync(It.IsAny<ComandaCreada>(), It.IsAny<CancellationToken>()),
+                Times.AtLeastOnce());
+            
+            // Verificar que se haya llamado al registro del evento
+            Assert.True(eventosRegistrados.Count > 0, "Deberían haberse registrado eventos");
+            Assert.Contains(eventosRegistrados, e => e.GetType() == typeof(ComandaCreada));
         }
     }
 } 

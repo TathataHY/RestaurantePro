@@ -157,6 +157,8 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 {
                     logMessage = "No se encontraron ingredientes con stock insuficiente";
                     Console.WriteLine(logMessage);
+                    // Asegurarnos de registrar siempre el evento, incluso cuando no hay problemas
+                    await _eventRegistry.RegisterAsync(evento, cancellationToken);
                 }
                 
                 logMessage = $"===== Finalizada verificación de disponibilidad para comanda {evento.ComandaId} =====";

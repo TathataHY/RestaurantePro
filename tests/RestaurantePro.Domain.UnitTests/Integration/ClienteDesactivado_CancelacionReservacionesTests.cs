@@ -122,7 +122,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration
                 l => l.RegisterAsync(
                     It.IsAny<DomainEvent>(),
                     It.IsAny<CancellationToken>()),
-                Times.Once);
+                Times.Exactly(2));
         }
         
         [Fact]
