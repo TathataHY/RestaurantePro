@@ -7,11 +7,14 @@ using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 using RestaurantePro.Domain.Proveedores.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
 {
@@ -42,6 +45,9 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             // Registrar repositorios
             services.AddRepositories();
 
+            // Registrar servicio de fecha y hora
+            services.AddSingleton<IDateTime, DateTimeService>();
+
             return services;
         }
 
@@ -61,7 +67,15 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             // Inventario
             services.AddScoped<IIngredienteRepository, IngredienteRepository>();
             
-            // Aquí se agregarán los demás repositorios específicos a medida que sean implementados
+            // Operaciones - Comandas
+            services.AddScoped<IComandaRepository, ComandaRepository>();
+            
+            // Operaciones - Reservaciones
+            services.AddScoped<IMesaRepository, MesaRepository>();
+            services.AddScoped<IReservacionRepository, ReservacionRepository>();
+            
+            // Proveedores
+            services.AddScoped<IProveedorRepository, ProveedorRepository>();
             
             return services;
         }
