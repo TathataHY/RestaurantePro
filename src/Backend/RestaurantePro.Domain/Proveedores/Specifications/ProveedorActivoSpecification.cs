@@ -1,3 +1,7 @@
+using System;
+using System.Linq.Expressions;
+using RestaurantePro.Domain.Core.SharedKernel.Specifications;
+
 namespace RestaurantePro.Domain.Proveedores.Specifications
 {
     /// <summary>
@@ -7,7 +11,7 @@ namespace RestaurantePro.Domain.Proveedores.Specifications
     /// 2. Tiene información de contacto válida (email y teléfono)
     /// 3. No está en periodo de gracia para pagos pendientes (opcional)
     /// </summary>
-    public class ProveedorActivoSpecification : SpecificationBase<Proveedor>
+    public class ProveedorActivoSpecification : Specification<Proveedor>
     {
         private readonly bool _verificarPagosPendientes;
         private readonly int _diasGraciaPagos;
@@ -24,35 +28,36 @@ namespace RestaurantePro.Domain.Proveedores.Specifications
         }
         
         /// <summary>
-        /// Verifica si un proveedor cumple con los criterios para estar activo y elegible
+        /// Convierte la especificación a una expresión LINQ
         /// </summary>
-        /// <param name="proveedor">Proveedor a evaluar</param>
-        /// <returns>True si el proveedor está activo y elegible, False en caso contrario</returns>
-        public override bool IsSatisfiedBy(Proveedor proveedor)
+        /// <returns>Expresión que representa esta especificación</returns>
+        public override Expression<Func<Proveedor, bool>> ToExpression()
         {
-            // Verificación básica
-            if (proveedor == null)
-                return false;
-                
-            // Debe estar activo
-            if (!proveedor.Activo)
-                return false;
-                
-            // Debe tener información de contacto válida
-            if (string.IsNullOrWhiteSpace(proveedor.Email) || string.IsNullOrWhiteSpace(proveedor.Telefono))
-                return false;
-                
-            // Verificación de pagos pendientes (si se solicitó)
-            if (_verificarPagosPendientes)
+            if (!_verificarPagosPendientes)
             {
-                // En un sistema real, deberíamos consultar los pagos pendientes del proveedor
-                // Para este ejemplo, simulamos esta verificación utilizando un método del dominio
-                // que podría implementarse posteriormente
-                if (TienePagosPendientesFueraDeGracia(proveedor, _diasGraciaPagos))
-                    return false;
+                // Versión simple sin verificar pagos pendientes
+                return proveedor => 
+                    proveedor != null &&
+                    proveedor.Activo &&
+                    !string.IsNullOrWhiteSpace(proveedor.Email) && 
+                    !string.IsNullOrWhiteSpace(proveedor.Telefono);
             }
-            
-            return true;
+            else
+            {
+                // Versión que verifica pagos pendientes
+                // En este caso, como dependemos de un método privado que no puede ser parte
+                // de la expresión LINQ, usamos un método de extensión IsSatisfiedBy
+                // que delegará la lógica compleja al método local
+                
+                // Para una implementación real, esta verificación de pagos pendientes
+                // debería idealmente ser otra especificación independiente que podamos componer
+                return proveedor => 
+                    proveedor != null &&
+                    proveedor.Activo &&
+                    !string.IsNullOrWhiteSpace(proveedor.Email) && 
+                    !string.IsNullOrWhiteSpace(proveedor.Telefono) &&
+                    !TienePagosPendientesFueraDeGracia(proveedor, _diasGraciaPagos);
+            }
         }
         
         /// <summary>
@@ -60,7 +65,7 @@ namespace RestaurantePro.Domain.Proveedores.Specifications
         /// Nota: Este método es una simulación. En un sistema real, requeriría consultar
         /// información financiera del proveedor desde un repositorio.
         /// </summary>
-        private bool TienePagosPendientesFueraDeGracia(Proveedor proveedor, int diasGracia)
+        private static bool TienePagosPendientesFueraDeGracia(Proveedor proveedor, int diasGracia)
         {
             // Esta es una implementación simulada
             // En una implementación real, se consultaría una fuente de datos financieros

@@ -68,13 +68,6 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces
         Task ActualizarAsync(OrdenCompra ordenCompra, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Guarda los cambios en el repositorio
-        /// </summary>
-        /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Número de entidades afectadas</returns>
-        Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
-        
-        /// <summary>
         /// Obtiene órdenes de compra pendientes para un proveedor específico
         /// </summary>
         /// <param name="proveedorId">ID del proveedor</param>

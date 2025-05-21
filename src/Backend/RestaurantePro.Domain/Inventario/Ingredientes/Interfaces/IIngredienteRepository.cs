@@ -46,13 +46,6 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
         Task<IEnumerable<Ingrediente>> ObtenerPorTemporadaAsync(TemporadaIngrediente temporada, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Guarda los cambios y publica eventos de dominio
-        /// </summary>
-        /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Número de entidades modificadas</returns>
-        Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
-        
-        /// <summary>
         /// Obtiene ingredientes activos o inactivos
         /// </summary>
         /// <param name="activos">Indica si se deben obtener ingredientes activos o inactivos</param>

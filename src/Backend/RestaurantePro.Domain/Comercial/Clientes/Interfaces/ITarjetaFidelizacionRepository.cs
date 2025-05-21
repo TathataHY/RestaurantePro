@@ -78,13 +78,6 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         Task ActualizarAsync(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Guarda los cambios en la unidad de trabajo
-        /// </summary>
-        /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Tarea asíncrona</returns>
-        Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
-
-        /// <summary>
         /// Genera un código único para una nueva tarjeta
         /// </summary>
         /// <param name="prefijo">Prefijo opcional para el código</param>

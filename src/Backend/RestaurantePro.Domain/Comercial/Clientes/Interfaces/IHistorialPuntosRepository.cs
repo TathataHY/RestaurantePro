@@ -58,13 +58,6 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarea asíncrona</returns>
         Task AgregarAsync(HistorialPuntos historial, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Guarda los cambios en la unidad de trabajo
-        /// </summary>
-        /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Tarea asíncrona</returns>
-        Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Actualiza un registro de historial

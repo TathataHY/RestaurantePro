@@ -98,10 +98,10 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces
         Task<(IEnumerable<Proveedor> Proveedores, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, bool incluirContactos = false, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Guarda los cambios y publica eventos de dominio
+        /// Obtiene estadísticas de proveedores
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Número de entidades modificadas</returns>
-        Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
+        /// <returns>Estadísticas de proveedores</returns>
+        Task<EstadisticasProveedores> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default);
     }
 } 

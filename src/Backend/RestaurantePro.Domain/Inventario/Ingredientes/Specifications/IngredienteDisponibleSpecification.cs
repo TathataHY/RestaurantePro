@@ -9,7 +9,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Specifications
     /// 2. Tiene stock mayor que cero
     /// 3. No está bloqueado por control de calidad (opcional, según configuración)
     /// </summary>
-    public class IngredienteDisponibleSpecification : Core.SharedKernel.Specifications.SpecificationBase<Entities.Ingrediente>
+    public class IngredienteDisponibleSpecification : Core.SharedKernel.Specifications.Specification<Entities.Ingrediente>
     {
         private readonly bool _verificarControlCalidad;
         private readonly decimal _cantidadMinima;
@@ -26,29 +26,14 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Specifications
         }
         
         /// <summary>
-        /// Verifica si un ingrediente cumple con los criterios de disponibilidad
+        /// Verifica si un ingrediente está disponible para uso
         /// </summary>
-        /// <param name="ingrediente">Ingrediente a evaluar</param>
-        /// <returns>True si el ingrediente está disponible, False en caso contrario</returns>
-        public override bool IsSatisfiedBy(Entities.Ingrediente ingrediente)
+        public override Expression<Func<Entities.Ingrediente, bool>> ToExpression()
         {
-            // Verificación básica
-            if (ingrediente == null)
-                return false;
-                
-            // No debe estar eliminado lógicamente
-            if (ingrediente.EstaEliminado)
-                return false;
-                
-            // Debe tener stock mayor que cero o la cantidad mínima configurada
-            if (ingrediente.Stock < _cantidadMinima)
-                return false;
-                
-            // Verificación de control de calidad (si se solicitó)
-            if (_verificarControlCalidad && ingrediente.BloqueadoControlCalidad)
-                return false;
-            
-            return true;
+            return ingrediente => 
+                ingrediente.EstaActivo &&
+                ingrediente.Stock > _cantidadMinima &&
+                (!_verificarControlCalidad || !ingrediente.BloqueadoControlCalidad);
         }
     }
 } 

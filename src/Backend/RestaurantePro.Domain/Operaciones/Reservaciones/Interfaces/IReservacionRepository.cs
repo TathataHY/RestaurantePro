@@ -8,7 +8,9 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces
         /// <summary>
         /// Obtiene todas las reservaciones
         /// </summary>
-        Task<IEnumerable<Reservacion>> ObtenerTodasAsync();
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de todas las reservaciones</returns>
+        Task<IEnumerable<Reservacion>> ObtenerTodasAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Obtiene una reservación por su ID
@@ -29,7 +31,11 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces
         /// <summary>
         /// Obtiene las reservaciones activas (confirmadas o pendientes) para una mesa en una fecha específica
         /// </summary>
-        Task<IEnumerable<Reservacion>> ObtenerReservacionesActivasPorMesaYFechaAsync(Guid mesaId, DateTime fecha);
+        /// <param name="mesaId">ID de la mesa</param>
+        /// <param name="fecha">Fecha de las reservaciones</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de reservaciones activas para la mesa y fecha</returns>
+        Task<IEnumerable<Reservacion>> ObtenerReservacionesActivasPorMesaYFechaAsync(Guid mesaId, DateTime fecha, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Obtiene las reservaciones por cliente
@@ -58,22 +64,34 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces
         /// <summary>
         /// Agrega una nueva reservación
         /// </summary>
-        Task AgregarAsync(Reservacion reservacion);
+        /// <param name="reservacion">Reservación a agregar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        Task AgregarAsync(Reservacion reservacion, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Actualiza una reservación existente
         /// </summary>
-        Task ActualizarAsync(Reservacion reservacion);
+        /// <param name="reservacion">Reservación a actualizar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        Task ActualizarAsync(Reservacion reservacion, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Elimina una reservación
         /// </summary>
-        Task EliminarAsync(Guid id);
+        /// <param name="id">ID de la reservación a eliminar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        Task EliminarAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Verifica si existe una reservación para una mesa en un rango de tiempo específico
         /// </summary>
-        Task<bool> ExisteReservacionEnRangoHorarioAsync(Guid mesaId, DateTime fecha, TimeSpan horaInicio, TimeSpan horaFin);
+        /// <param name="mesaId">ID de la mesa</param>
+        /// <param name="fecha">Fecha de la reservación</param>
+        /// <param name="horaInicio">Hora de inicio</param>
+        /// <param name="horaFin">Hora de fin</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>True si existe una reservación en el rango especificado, False en caso contrario</returns>
+        Task<bool> ExisteReservacionEnRangoHorarioAsync(Guid mesaId, DateTime fecha, TimeSpan horaInicio, TimeSpan horaFin, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene reservaciones por mesa
@@ -131,12 +149,5 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Diccionario con estadísticas por día</returns>
         Task<Dictionary<DateTime, int>> ObtenerEstadisticasPorDiaAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default);
-        
-        /// <summary>
-        /// Guarda los cambios y publica eventos de dominio
-        /// </summary>
-        /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Número de entidades modificadas</returns>
-        Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
     }
 }

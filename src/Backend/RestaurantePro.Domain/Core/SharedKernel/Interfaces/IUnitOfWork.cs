@@ -8,50 +8,55 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
         /// <summary>
         /// Inicia una nueva transacción
         /// </summary>
-        Task BeginTransactionAsync(CancellationToken cancellationToken = default);
+        /// <param name="cancellationToken">Token de cancelación</param>
+        Task IniciarTransaccionAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Confirma la transacción actual
         /// </summary>
-        Task CommitTransactionAsync(CancellationToken cancellationToken = default);
+        /// <param name="cancellationToken">Token de cancelación</param>
+        Task ConfirmarTransaccionAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Deshace la transacción actual
         /// </summary>
-        Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
+        /// <param name="cancellationToken">Token de cancelación</param>
+        Task RevertirTransaccionAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Guarda todos los cambios en la base de datos
         /// </summary>
-        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Número de registros afectados</returns>
+        Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Guarda todos los cambios en la base de datos y publica los eventos de dominio
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Número de registros afectados</returns>
-        Task<int> SaveEntitiesAsync(CancellationToken cancellationToken = default);
+        Task<int> GuardarEntidadesAsync(CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Ejecuta una acción dentro de una transacción
         /// </summary>
-        /// <param name="action">Acción a ejecutar</param>
+        /// <param name="accion">Acción a ejecutar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Resultado de la ejecución de la acción</returns>
-        Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default);
+        Task EjecutarEnTransaccionAsync(Func<Task> accion, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Ejecuta una función dentro de una transacción y devuelve su resultado
         /// </summary>
-        /// <typeparam name="TResult">Tipo del resultado de la función</typeparam>
-        /// <param name="func">Función a ejecutar</param>
+        /// <typeparam name="TResultado">Tipo del resultado de la función</typeparam>
+        /// <param name="funcion">Función a ejecutar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Resultado de la ejecución de la función</returns>
-        Task<TResult> ExecuteInTransactionAsync<TResult>(Func<Task<TResult>> func, CancellationToken cancellationToken = default);
+        Task<TResultado> EjecutarEnTransaccionAsync<TResultado>(Func<Task<TResultado>> funcion, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Verifica si hay una transacción activa
         /// </summary>
-        bool HasActiveTransaction { get; }
+        bool TieneTransaccionActiva { get; }
     }
 }

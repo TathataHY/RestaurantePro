@@ -32,7 +32,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
         public async Task ObtenerTodasAsync_DebeRetornarTodasLasReservaciones()
         {
             // Arrange
-            _mockRepository.Setup(repo => repo.ObtenerTodasAsync())
+            _mockRepository.Setup(repo => repo.ObtenerTodasAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(_reservaciones);
 
             // Act
@@ -51,7 +51,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
             var reservacionId = _reservaciones[0].Id;
             var reservacionEsperada = _reservaciones[0];
 
-            _mockRepository.Setup(repo => repo.ObtenerPorIdAsync(reservacionId))
+            _mockRepository.Setup(repo => repo.ObtenerPorIdAsync(reservacionId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(reservacionEsperada);
 
             // Act
@@ -60,7 +60,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
             // Assert
             resultado.Should().NotBeNull();
             resultado.Should().BeSameAs(reservacionEsperada);
-            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(reservacionId), Times.Once);
+            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(reservacionId, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -70,7 +70,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
             var fecha = DateTime.Now.AddDays(1).Date;
             var reservacionesEsperadas = _reservaciones.Where(r => r.Fecha.Date == fecha).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorFechaAsync(fecha))
+            _mockRepository.Setup(repo => repo.ObtenerPorFechaAsync(fecha, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(reservacionesEsperadas);
 
             // Act
@@ -92,7 +92,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
                            (r.Estado == EstadoReservacion.Pendiente || r.Estado == EstadoReservacion.Confirmada))
                 .ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerReservacionesActivasPorMesaYFechaAsync(_mesaId, fecha))
+            _mockRepository.Setup(repo => repo.ObtenerReservacionesActivasPorMesaYFechaAsync(_mesaId, fecha, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(reservacionesActivas);
 
             // Act
@@ -111,7 +111,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
             // Arrange
             var reservacionesCliente = _reservaciones.Where(r => r.ClienteId == _clienteId).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorClienteAsync(_clienteId))
+            _mockRepository.Setup(repo => repo.ObtenerPorClienteAsync(_clienteId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(reservacionesCliente);
 
             // Act
@@ -130,7 +130,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
             var estado = EstadoReservacion.Confirmada;
             var reservacionesConfirmadas = _reservaciones.Where(r => r.Estado == estado).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(estado))
+            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(estado, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(reservacionesConfirmadas);
 
             // Act
@@ -151,7 +151,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
             var horaFin = new TimeSpan(20, 30, 0); // 8:30 PM
 
             // Hay una reserva a las 7:00 PM que entra en este rango
-            _mockRepository.Setup(repo => repo.ExisteReservacionEnRangoHorarioAsync(_mesaId, fecha, horaInicio, horaFin))
+            _mockRepository.Setup(repo => repo.ExisteReservacionEnRangoHorarioAsync(_mesaId, fecha, horaInicio, horaFin, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);
 
             // Act
@@ -173,14 +173,14 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
                 2,
                 "Nueva reserva");
 
-            _mockRepository.Setup(repo => repo.AgregarAsync(nuevaReservacion))
+            _mockRepository.Setup(repo => repo.AgregarAsync(nuevaReservacion, It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             // Act
             await _mockRepository.Object.AgregarAsync(nuevaReservacion);
 
             // Assert
-            _mockRepository.Verify(repo => repo.AgregarAsync(nuevaReservacion), Times.Once);
+            _mockRepository.Verify(repo => repo.AgregarAsync(nuevaReservacion, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -190,14 +190,14 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
             var reservacion = _reservaciones[1]; // Reservación pendiente
             reservacion.Confirmar(); // La confirmamos
 
-            _mockRepository.Setup(repo => repo.ActualizarAsync(reservacion))
+            _mockRepository.Setup(repo => repo.ActualizarAsync(reservacion, It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             // Act
             await _mockRepository.Object.ActualizarAsync(reservacion);
 
             // Assert
-            _mockRepository.Verify(repo => repo.ActualizarAsync(reservacion), Times.Once);
+            _mockRepository.Verify(repo => repo.ActualizarAsync(reservacion, It.IsAny<CancellationToken>()), Times.Once);
             reservacion.Estado.Should().Be(EstadoReservacion.Confirmada);
         }
 
@@ -207,14 +207,14 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
             // Arrange
             var reservacionId = _reservaciones[2].Id; // Reservación cancelada
 
-            _mockRepository.Setup(repo => repo.EliminarAsync(reservacionId))
+            _mockRepository.Setup(repo => repo.EliminarPorIdAsync(reservacionId, It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             // Act
-            await _mockRepository.Object.EliminarAsync(reservacionId);
+            await _mockRepository.Object.EliminarPorIdAsync(reservacionId);
 
             // Assert
-            _mockRepository.Verify(repo => repo.EliminarAsync(reservacionId), Times.Once);
+            _mockRepository.Verify(repo => repo.EliminarPorIdAsync(reservacionId, It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

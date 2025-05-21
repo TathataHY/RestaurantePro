@@ -1,3 +1,7 @@
+using System;
+using System.Linq.Expressions;
+using RestaurantePro.Domain.Core.SharedKernel.Specifications;
+
 namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
 {
     /// <summary>
@@ -7,7 +11,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
     /// Esta especificación es útil para campañas de fidelización, ofertas personalizadas
     /// y para la política ClientesFrecuentesPolicy.
     /// </summary>
-    public class ClienteFrecuenteSpecification : SpecificationBase<Cliente>
+    public class ClienteFrecuenteSpecification : Specification<Cliente>
     {
         private readonly int _visitasMinimas;
         private readonly decimal _gastoPromedioMinimo;
@@ -36,51 +40,32 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
             _periodoDiasAnalisis = periodoDiasAnalisis;
             _fechaReferencia = fechaReferencia ?? DateTime.Now;
         }
+
+        /// <summary>
+        /// Convierte la especificación a una expresión LINQ
+        /// </summary>
+        /// <returns>Expresión que representa esta especificación</returns>
+        public override Expression<Func<Cliente, bool>> ToExpression()
+        {
+            return cliente => 
+                cliente.EstaActivo &&
+                (_diasAntiguedadMinima <= 0 || (_fechaReferencia - cliente.FechaCreacion).TotalDays >= _diasAntiguedadMinima) &&
+                ObtenerVisitasRecientesCliente(cliente, _fechaReferencia, _periodoDiasAnalisis) >= _visitasMinimas &&
+                (_gastoPromedioMinimo <= 0 || ObtenerGastoPromedioCliente(cliente, _fechaReferencia, _periodoDiasAnalisis) >= _gastoPromedioMinimo);
+        }
         
         /// <summary>
         /// Verifica si un cliente cumple con los criterios para ser considerado frecuente
+        /// Nota: Este método ahora se implementa automáticamente por la clase base utilizando
+        /// la expresión definida en ToExpression()
         /// </summary>
-        /// <param name="cliente">Cliente a evaluar</param>
-        /// <returns>True si el cliente es frecuente según los criterios, False en caso contrario</returns>
-        public override bool IsSatisfiedBy(Cliente cliente)
-        {
-            // Verificación básica
-            if (cliente == null || !cliente.EstaActivo)
-                return false;
-                
-            // Verificar antigüedad mínima
-            if (_diasAntiguedadMinima > 0)
-            {
-                var antiguedadDias = (_fechaReferencia - cliente.FechaCreacion).TotalDays;
-                if (antiguedadDias < _diasAntiguedadMinima)
-                    return false;
-            }
-            
-            // Verificar visitas y gasto promedio
-            // Nota: En una implementación real, estos datos se obtendrían mediante queries a repositorios
-            // de comandas o un servicio específico. Para esta especificación, usamos las propiedades del cliente
-            // como demostración, aunque en un sistema real requeriría información adicional.
-            
-            var visitasRecientes = ObtenerVisitasRecientesCliente(cliente, _fechaReferencia, _periodoDiasAnalisis);
-            if (visitasRecientes < _visitasMinimas)
-                return false;
-                
-            if (_gastoPromedioMinimo > 0)
-            {
-                var gastoPromedio = ObtenerGastoPromedioCliente(cliente, _fechaReferencia, _periodoDiasAnalisis);
-                if (gastoPromedio < _gastoPromedioMinimo)
-                    return false;
-            }
-            
-            return true;
-        }
         
         /// <summary>
         /// Obtiene el número de visitas del cliente en el periodo especificado
         /// Nota: Esta es una implementación simulada. En un sistema real, se consultaría
         /// el historial de comandas del cliente desde un repositorio.
         /// </summary>
-        private int ObtenerVisitasRecientesCliente(Cliente cliente, DateTime fechaReferencia, int periodoDias)
+        private static int ObtenerVisitasRecientesCliente(Cliente cliente, DateTime fechaReferencia, int periodoDias)
         {
             // En una implementación real, se realizaría una consulta a la base de datos
             // para contar las comandas del cliente en el periodo especificado.
@@ -98,7 +83,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
         /// Nota: Esta es una implementación simulada. En un sistema real, se consultaría
         /// el historial de comandas del cliente desde un repositorio.
         /// </summary>
-        private decimal ObtenerGastoPromedioCliente(Cliente cliente, DateTime fechaReferencia, int periodoDias)
+        private static decimal ObtenerGastoPromedioCliente(Cliente cliente, DateTime fechaReferencia, int periodoDias)
         {
             // En una implementación real, se realizaría una consulta a la base de datos
             // para calcular el promedio de gasto por comanda en el periodo especificado.

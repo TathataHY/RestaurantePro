@@ -17,12 +17,18 @@ namespace RestaurantePro.Domain.Core
             
             // Registrar servicios compartidos
             services.AddTransient<IDateTimeService, DateTimeService>();
+            services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
             
             // Registrar políticas de dominio
             services.AddTransient<IClientesFrecuentesPolicy, ClientesFrecuentesPolicy>();
             services.AddTransient<IStockBajoPolicy, StockBajoPolicy>();
             services.AddTransient<IProductoRecomendadoPolicy, ProductoRecomendadoPolicy>();
             services.AddTransient<IVisibilidadCategoriasPolicy, VisibilidadCategoriasPolicy>();
+            
+            // Registrar especificaciones reutilizables
+            services.AddTransient<Comercial.Clientes.Specifications.ClienteFrecuenteSpecification>();
+            services.AddTransient<Inventario.Ingredientes.Specifications.IngredienteRotacionAltaSpecification>();
+            services.AddTransient<Core.Productos.Specifications.ProductoDisponibleSpecification>();
             
             // Registrar interfaces de fachada para la capa de aplicación
             services.AddScoped<Comercial.Services.IComercialServiceFacade, Comercial.Services.ComercialServiceFacade>();
@@ -45,12 +51,18 @@ namespace RestaurantePro.Domain.Core
             
             // Usar directamente el MockDateTimeService de Core/SharedKernel/Services
             services.AddSingleton<IDateTimeService>(new MockDateTimeService(DateTime.Now));
+            services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
             
             // Registrar políticas de dominio
             services.AddTransient<IClientesFrecuentesPolicy, ClientesFrecuentesPolicy>();
             services.AddTransient<IStockBajoPolicy, StockBajoPolicy>();
             services.AddTransient<IProductoRecomendadoPolicy, ProductoRecomendadoPolicy>();
             services.AddTransient<IVisibilidadCategoriasPolicy, VisibilidadCategoriasPolicy>();
+            
+            // Registrar especificaciones reutilizables para pruebas
+            services.AddTransient<Comercial.Clientes.Specifications.ClienteFrecuenteSpecification>();
+            services.AddTransient<Inventario.Ingredientes.Specifications.IngredienteRotacionAltaSpecification>();
+            services.AddTransient<Core.Productos.Specifications.ProductoDisponibleSpecification>();
             
             // Registrar mocks de interfaces de fachada para pruebas
             // Aquí se pueden usar implementaciones simuladas para pruebas

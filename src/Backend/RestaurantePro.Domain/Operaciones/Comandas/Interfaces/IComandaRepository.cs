@@ -101,12 +101,5 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Diccionario con estadísticas por día</returns>
         Task<Dictionary<DateTime, int>> ObtenerEstadisticasPorPeriodoAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default);
-        
-        /// <summary>
-        /// Guarda los cambios y publica eventos de dominio
-        /// </summary>
-        /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Número de entidades modificadas</returns>
-        Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
     }
 }

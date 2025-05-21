@@ -164,11 +164,14 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
 | Implementar patrón base | Crear las interfaces y clases base para implementar el patrón Specification | Alta | ✅ Completado |
+| Refactorizar especificaciones | Cambiar de SpecificationBase a Specification | Media | ✅ Completado |
 | ProductoDisponibleSpecification | Especificación para verificar disponibilidad de productos | Media | ✅ Completado |
 | ProveedorActivoSpecification | Especificación para validar proveedores activos para órdenes | Media | ✅ Completado |
 | ReservacionValidaSpecification | Especificación para verificar disponibilidad y validez de reservaciones | Media | ✅ Completado |
 | IngredienteDisponibleSpecification | Especificación para verificar disponibilidad de ingredientes | Media | ✅ Completado |
 | ClienteFrecuenteSpecification | Especificación para identificar clientes frecuentes según criterios de visitas y gastos | Media | ✅ Completado |
+| PromocionActivaSpecification | Especificación para verificar promociones activas disponibles | Media | ✅ Completado |
+| PromocionElegibleSpecification | Especificación para identificar promociones elegibles para aplicar | Media | ✅ Completado |
 
 ### 5. Corrección de pruebas unitarias
 
@@ -211,6 +214,8 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | 2024-05-15 | Corrección Mocks con Expresiones Lambda | Pruebas → Implementación → Refactor |
 | 2024-05-20 | Aplicación #nullable context en pruebas | Pruebas → Implementación → Refactor |
 | 2024-05-25 | Implementación de Personalización en Ítems | Diseño → Pruebas → Implementación → Refactor |
+| 2024-06-05 | Refactorización de Specifications | Refactor → Pruebas → Validación |
+| 2024-08-01 | Corrección de nombres en Specifications | Refactor → Pruebas → Validación |
 
 ## Decisiones de Diseño
 
@@ -425,6 +430,65 @@ Se ha realizado una importante corrección en el servicio de notificaciones para
    - Se verificó la interacción correcta con el servicio core en todos los escenarios de prueba
 
 Estas correcciones garantizan que el servicio de notificaciones de inventario funcione de manera robusta, especialmente en escenarios de cancelación de operaciones asíncronas, lo que mejora la responsividad del sistema bajo carga y permite la cancelación apropiada de operaciones cuando sea necesario.
+
+### Refactorización del Patrón Specification
+
+Se ha llevado a cabo una importante refactorización del patrón Specification, simplificando su implementación y mejorando su integración con LINQ y Entity Framework:
+
+#### Cambios realizados
+
+1. **Eliminación de SpecificationBase**:
+   - Se eliminó la clase `SpecificationBase<T>` para evitar duplicación y confusión
+   - Se consolidó toda la funcionalidad en la clase `Specification<T>`
+
+2. **Mejora de la implementación**:
+   - La interfaz `ISpecification<T>` ahora está enfocada en expresiones LINQ
+   - El método `ToExpression()` retorna una expresión LINQ que puede ser utilizada directamente con EF Core
+   - El método `IsSatisfiedBy(T entity)` ahora se deriva automáticamente de `ToExpression()`
+
+3. **Simplificación del diseño**:
+   - Se eliminó la implementación dual que confundía a los desarrolladores
+   - Ahora todas las especificaciones implementan `Specification<T>` directamente
+   - Se consolidaron las clases auxiliares (`AndSpecification`, `OrSpecification`, `NotSpecification`)
+
+4. **Operadores de composición**:
+   - Los operadores `And`, `Or` y `Not` ahora retornan `Specification<T>` en lugar de `ISpecification<T>`
+   - Esto permite un mejor encadenamiento de llamadas con tipo fuerte
+
+5. **Actualización de especificaciones existentes**:
+   - Se actualizaron todas las especificaciones existentes para usar el nuevo enfoque
+   - Se reemplazaron las implementaciones de `IsSatisfiedBy` por implementaciones de `ToExpression`
+   - Se corrigieron errores de compilación relacionados con el cambio
+
+Esta refactorización hace que el patrón Specification sea más fácil de usar, más compatible con Entity Framework Core, y reduce la duplicación de código. Las expresiones LINQ generadas ahora pueden ser traducidas directamente a consultas SQL, mejorando el rendimiento de las aplicaciones que utilizan este patrón.
+
+### Corrección de nombres de propiedades en Especificaciones
+
+Se ha realizado una revisión y corrección de los nombres de propiedades utilizados en las expresiones LINQ de las especificaciones, para asegurar que correspondan a las propiedades reales de las entidades:
+
+#### Cambios realizados
+
+1. **Actualización de IngredienteDisponibleSpecification**:
+   - Corrección de `Activo` a `EstaActivo`
+   - Corrección de `StockActual` a `Stock`
+   - Uso correcto de la propiedad `_cantidadMinima` 
+
+2. **Actualización de IngredienteRotacionAltaSpecification**:
+   - Corrección de `Activo` a `EstaActivo`
+   - Corrección de `StockActual` a `Stock`
+
+3. **Actualización de ReservacionValidaSpecification**:
+   - Corrección de `FechaReservacion` a `Fecha.Date`
+   - Corrección de `EstadoReservacion.Rechazada` a `EstadoReservacion.NoShow`
+   - Uso de `CantidadPersonas` con límites mínimos y máximos
+   - Implementación de método auxiliar `TieneMesaCapacidadSuficiente`
+
+4. **Mejoras en la validación**:
+   - Implementación de patrones más robustos de validación
+   - Encapsulación de lógica compleja en métodos auxiliares donde corresponde
+   - Uso de comparaciones correctas para fechas y horas
+
+Estas correcciones permiten que las especificaciones funcionen correctamente cuando se traduzcan a consultas SQL a través de Entity Framework Core, lo que es fundamental para mantener la coherencia entre la capa de dominio y la capa de persistencia.
 
 ## Próximos pasos prioritarios (Mayo 2024)
 
@@ -708,3 +772,25 @@ Se ha implementado la configuración de inyección de dependencias para registra
 - Los repositorios específicos
 
 Este trabajo establece las bases para implementar el resto de los repositorios específicos y permite comenzar a trabajar en la capa de aplicación con una infraestructura sólida para persistencia de datos.
+
+## Próximos pasos prioritarios (Agosto 2024)
+
+1. **Finalizar corrección de errores de compilación**:
+   - ✅ Actualizar referencias a la clase Specification en lugar de SpecificationBase
+   - ✅ Corregir nombres de propiedades en expresiones ToExpression de especificaciones
+   - ⏳ Homogeneizar interfaz IRepository y sus implementaciones (AddAsync vs AgregarAsync, etc.)
+   - ⏳ Actualizar métodos de servicio para utilizar CancellationToken correctamente
+
+2. **Continuar desarrollo de capa de Infraestructura**:
+   - ⏳ Finalizar implementación de repositorios específicos con Entity Framework Core
+   - ⏳ Configurar inyección de dependencias con autofac
+   - ⏳ Implementar servicios de persistencia de eventos de dominio
+
+3. **Implementar pruebas de integración**:
+   - ⏳ Desarrollar pruebas de integración para repositorios y EF Core
+   - ⏳ Configurar base de datos en memoria para pruebas
+
+4. **Iniciar desarrollo de capa de API**:
+   - ⏳ Implementar primeros endpoints REST para comandas y clientes
+   - ⏳ Configurar swagger y documentación de API
+   - ⏳ Implementar filtros de excepciones y validación

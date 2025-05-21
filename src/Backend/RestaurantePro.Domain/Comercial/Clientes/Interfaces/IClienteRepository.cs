@@ -78,13 +78,6 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         Task<(IEnumerable<Cliente> Clientes, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Guarda los cambios y publica eventos de dominio
-        /// </summary>
-        /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Número de entidades modificadas</returns>
-        Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
-        
-        /// <summary>
         /// Obtiene clientes registrados en un rango de fechas
         /// </summary>
         /// <param name="fechaInicio">Fecha inicial</param>

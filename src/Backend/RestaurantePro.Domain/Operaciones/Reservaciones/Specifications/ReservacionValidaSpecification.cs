@@ -8,7 +8,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Specifications
     /// 3. La cantidad de personas está dentro de los límites permitidos
     /// 4. La mesa asignada tiene capacidad suficiente (opcional, según configuración)
     /// </summary>
-    public class ReservacionValidaSpecification : SpecificationBase<Reservacion>
+    public class ReservacionValidaSpecification : Specification<Reservacion>
     {
         private readonly bool _verificarCapacidadMesa;
         private readonly DateTime _fechaActual;
@@ -37,45 +37,15 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Specifications
         /// <summary>
         /// Verifica si una reservación cumple con los criterios de validez
         /// </summary>
-        /// <param name="reservacion">Reservación a evaluar</param>
-        /// <returns>True si la reservación es válida, False en caso contrario</returns>
-        public override bool IsSatisfiedBy(Reservacion reservacion)
+        public override Expression<Func<Reservacion, bool>> ToExpression()
         {
-            // Verificación básica
-            if (reservacion == null)
-                return false;
-                
-            // No debe estar cancelada
-            if (reservacion.Estado == EstadoReservacion.Cancelada)
-                return false;
-                
-            // Debe ser para hoy o una fecha futura
-            if (reservacion.Fecha.Date < _fechaActual.Date)
-                return false;
-                
-            // Si es para hoy, la hora debe ser futura
-            if (reservacion.Fecha.Date == _fechaActual.Date && 
-                reservacion.Hora <= _fechaActual.TimeOfDay)
-                return false;
-                
-            // La cantidad de personas debe estar dentro de los límites
-            if (reservacion.CantidadPersonas < _minimoPersonas || 
-                reservacion.CantidadPersonas > _maximoPersonas)
-                return false;
-                
-            // Verificación de capacidad de mesa (si se solicitó)
-            if (_verificarCapacidadMesa)
-            {
-                // En un sistema real, deberíamos consultar la capacidad de la mesa
-                // Para este ejemplo, asumimos que no tenemos acceso directo a esa información
-                // y sería necesario obtenerla a través de un repositorio
-                
-                // Esta es una implementación de ejemplo incompleta:
-                // if (!TieneMesaCapacidadSuficiente(reservacion))
-                //    return false;
-            }
-            
-            return true;
+            return reservacion => 
+                reservacion.Fecha.Date >= _fechaActual.Date &&
+                reservacion.Estado != EstadoReservacion.Cancelada &&
+                reservacion.Estado != EstadoReservacion.NoShow &&
+                reservacion.CantidadPersonas >= _minimoPersonas &&
+                reservacion.CantidadPersonas <= _maximoPersonas &&
+                (!_verificarCapacidadMesa || TieneMesaCapacidadSuficiente(reservacion));
         }
         
         /// <summary>
