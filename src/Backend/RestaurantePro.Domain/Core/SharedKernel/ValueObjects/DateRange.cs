@@ -110,4 +110,187 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
             yield return End;
         }
     }
+
+    /// <summary>
+    /// Objeto de valor que representa las estaciones del año en el hemisferio sur (Chile)
+    /// Útil para trabajar con ingredientes de temporada y promociones estacionales
+    /// </summary>
+    public class TemporadaChile : ValueObject
+    {
+        /// <summary>
+        /// Fecha de inicio de la temporada
+        /// </summary>
+        public DateOnly Inicio { get; }
+        
+        /// <summary>
+        /// Fecha de fin de la temporada
+        /// </summary>
+        public DateOnly Fin { get; }
+        
+        /// <summary>
+        /// Nombre de la temporada
+        /// </summary>
+        public string Nombre { get; }
+        
+        /// <summary>
+        /// Estación correspondiente a la temporada
+        /// </summary>
+        public RestaurantePro.Domain.Inventario.Ingredientes.Enums.TemporadaIngrediente Estacion { get; }
+        
+        private TemporadaChile(DateOnly inicio, DateOnly fin, string nombre, RestaurantePro.Domain.Inventario.Ingredientes.Enums.TemporadaIngrediente estacion)
+        {
+            Inicio = inicio;
+            Fin = fin;
+            Nombre = nombre;
+            Estacion = estacion;
+        }
+        
+        /// <summary>
+        /// Obtiene la temporada de verano en Chile (Diciembre a Febrero)
+        /// </summary>
+        /// <param name="año">Año para el cual obtener la temporada</param>
+        public static TemporadaChile Verano(int año)
+        {
+            return new TemporadaChile(
+                new DateOnly(año, 12, 21), 
+                new DateOnly(año + 1, 3, 20),
+                "Verano",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.TemporadaIngrediente.Verano
+            );
+        }
+        
+        /// <summary>
+        /// Obtiene la temporada de otoño en Chile (Marzo a Mayo)
+        /// </summary>
+        /// <param name="año">Año para el cual obtener la temporada</param>
+        public static TemporadaChile Otoño(int año)
+        {
+            return new TemporadaChile(
+                new DateOnly(año, 3, 21), 
+                new DateOnly(año, 6, 20),
+                "Otoño",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.TemporadaIngrediente.Otoño
+            );
+        }
+        
+        /// <summary>
+        /// Obtiene la temporada de invierno en Chile (Junio a Agosto)
+        /// </summary>
+        /// <param name="año">Año para el cual obtener la temporada</param>
+        public static TemporadaChile Invierno(int año)
+        {
+            return new TemporadaChile(
+                new DateOnly(año, 6, 21), 
+                new DateOnly(año, 9, 20),
+                "Invierno",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.TemporadaIngrediente.Invierno
+            );
+        }
+        
+        /// <summary>
+        /// Obtiene la temporada de primavera en Chile (Septiembre a Noviembre)
+        /// </summary>
+        /// <param name="año">Año para el cual obtener la temporada</param>
+        public static TemporadaChile Primavera(int año)
+        {
+            return new TemporadaChile(
+                new DateOnly(año, 9, 21), 
+                new DateOnly(año, 12, 20),
+                "Primavera",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.TemporadaIngrediente.Primavera
+            );
+        }
+        
+        /// <summary>
+        /// Obtiene la temporada actual según la fecha del sistema
+        /// </summary>
+        public static TemporadaChile ObtenerTemporadaActual()
+        {
+            var hoy = DateOnly.FromDateTime(DateTime.Today);
+            int año = hoy.Year;
+            
+            // Verificar en qué estación estamos
+            var fechaActualMesDia = new DateOnly(1, hoy.Month, hoy.Day);
+            
+            if (EstaEnRango(hoy, new DateOnly(año, 12, 21), new DateOnly(año + 1, 3, 20)))
+                return Verano(año);
+                
+            if (EstaEnRango(hoy, new DateOnly(año, 3, 21), new DateOnly(año, 6, 20)))
+                return Otoño(año);
+                
+            if (EstaEnRango(hoy, new DateOnly(año, 6, 21), new DateOnly(año, 9, 20)))
+                return Invierno(año);
+                
+            if (EstaEnRango(hoy, new DateOnly(año, 9, 21), new DateOnly(año, 12, 20)))
+                return Primavera(año);
+                
+            // Si por alguna razón no cae en ninguna (no debería suceder)
+            if (hoy.Month == 12)
+                return Verano(año);
+                
+            // Para el caso especial de inicio de año (enero a marzo), es verano del año anterior
+            if (hoy.Month < 3 || (hoy.Month == 3 && hoy.Day <= 20))
+                return Verano(año - 1);
+                
+            throw new InvalidOperationException("No se pudo determinar la temporada actual");
+        }
+        
+        /// <summary>
+        /// Verifica si una fecha está dentro del rango de la temporada
+        /// </summary>
+        /// <param name="fecha">Fecha a verificar</param>
+        /// <returns>True si la fecha está dentro de la temporada, false en caso contrario</returns>
+        public bool Contiene(DateOnly fecha)
+        {
+            if (Inicio.Year < Fin.Year)
+            {
+                // Para temporadas que cruzan el año (ej. Verano)
+                if (fecha.Year == Inicio.Year)
+                    return fecha >= Inicio;
+                else if (fecha.Year == Fin.Year)
+                    return fecha <= Fin;
+                else
+                    return false;
+            }
+            else
+            {
+                // Para temporadas dentro del mismo año
+                return fecha >= Inicio && fecha <= Fin;
+            }
+        }
+        
+        /// <summary>
+        /// Verifica si una fecha está dentro de un rango
+        /// </summary>
+        private static bool EstaEnRango(DateOnly fecha, DateOnly inicio, DateOnly fin)
+        {
+            if (inicio.Year < fin.Year)
+            {
+                // Para rangos que cruzan el año (ej. Verano)
+                if (fecha.Year == inicio.Year || fecha.Year == inicio.Year - 1)
+                    return fecha >= inicio || fecha.Year > inicio.Year;
+                else if (fecha.Year == fin.Year || fecha.Year == fin.Year + 1)
+                    return fecha <= fin || fecha.Year < fin.Year;
+                else
+                    return false;
+            }
+            else
+            {
+                // Para rangos dentro del mismo año
+                return fecha >= inicio && fecha <= fin;
+            }
+        }
+        
+        public override string ToString()
+        {
+            return $"{Nombre} ({Inicio:dd/MM} - {Fin:dd/MM})";
+        }
+        
+        protected override IEnumerable<object> GetEqualityComponents()
+        {
+            yield return Inicio;
+            yield return Fin;
+            yield return Estacion;
+        }
+    }
 } 

@@ -158,4 +158,111 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
             yield return Currency;
         }
     }
+
+    /// <summary>
+    /// Objeto de valor que representa el IVA (Impuesto al Valor Agregado) para Chile.
+    /// Permite calcular impuestos de forma estandarizada en todo el sistema.
+    /// </summary>
+    public class Iva : ValueObject
+    {
+        /// <summary>
+        /// Tasa estándar de IVA en Chile (19%)
+        /// </summary>
+        public static readonly decimal TasaEstandarChile = 0.19m;
+        
+        /// <summary>
+        /// Tasa de IVA que se aplica (valor entre 0 y 1)
+        /// </summary>
+        public decimal Tasa { get; }
+        
+        private Iva(decimal tasa)
+        {
+            Tasa = tasa;
+        }
+        
+        /// <summary>
+        /// Crea una instancia de IVA con la tasa especificada
+        /// </summary>
+        /// <param name="tasa">Tasa de IVA (entre 0 y 1)</param>
+        /// <returns>Objeto IVA validado</returns>
+        /// <exception cref="ArgumentException">Si la tasa está fuera del rango válido</exception>
+        public static Iva Create(decimal tasa)
+        {
+            if (tasa < 0 || tasa > 1)
+                throw new ArgumentException("La tasa de IVA debe estar entre 0 y 1", nameof(tasa));
+                
+            return new Iva(Math.Round(tasa, 4));
+        }
+        
+        /// <summary>
+        /// Crea una instancia de IVA con la tasa estándar de Chile (19%)
+        /// </summary>
+        /// <returns>Objeto IVA con tasa estándar de Chile</returns>
+        public static Iva TasaChile()
+        {
+            return new Iva(TasaEstandarChile);
+        }
+        
+        /// <summary>
+        /// Crea una instancia de IVA con tasa cero (0%)
+        /// </summary>
+        /// <returns>Objeto IVA con tasa cero</returns>
+        public static Iva TasaCero()
+        {
+            return new Iva(0);
+        }
+        
+        /// <summary>
+        /// Calcula el monto de impuesto para un valor dado
+        /// </summary>
+        /// <param name="monto">Monto sobre el cual calcular el impuesto</param>
+        /// <returns>Monto del impuesto</returns>
+        public decimal CalcularImpuesto(decimal monto)
+        {
+            return Math.Round(monto * Tasa, 2);
+        }
+        
+        /// <summary>
+        /// Calcula el monto de impuesto para un valor monetario dado
+        /// </summary>
+        /// <param name="monto">Monto monetario sobre el cual calcular el impuesto</param>
+        /// <returns>Monto monetario del impuesto</returns>
+        public Money CalcularImpuesto(Money monto)
+        {
+            return Money.Create(CalcularImpuesto(monto.Amount), monto.Currency);
+        }
+        
+        /// <summary>
+        /// Calcula el monto total incluyendo el impuesto
+        /// </summary>
+        /// <param name="montoSinImpuesto">Monto sin impuesto</param>
+        /// <returns>Monto total (monto + impuesto)</returns>
+        public decimal CalcularMontoConImpuesto(decimal montoSinImpuesto)
+        {
+            return montoSinImpuesto + CalcularImpuesto(montoSinImpuesto);
+        }
+        
+        /// <summary>
+        /// Calcula el monto total incluyendo el impuesto para un valor monetario
+        /// </summary>
+        /// <param name="montoSinImpuesto">Monto monetario sin impuesto</param>
+        /// <returns>Monto monetario total (monto + impuesto)</returns>
+        public Money CalcularMontoConImpuesto(Money montoSinImpuesto)
+        {
+            return Money.Create(CalcularMontoConImpuesto(montoSinImpuesto.Amount), montoSinImpuesto.Currency);
+        }
+        
+        /// <summary>
+        /// Representación de la tasa de IVA como porcentaje
+        /// </summary>
+        public override string ToString()
+        {
+            return $"{Tasa:P0}"; // Formato de porcentaje, por ejemplo: "19%"
+        }
+        
+        protected override IEnumerable<object> GetEqualityComponents()
+        {
+            yield return Tasa;
+        }
+    }
 }

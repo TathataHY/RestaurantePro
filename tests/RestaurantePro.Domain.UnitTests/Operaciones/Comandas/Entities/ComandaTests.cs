@@ -57,8 +57,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             // Verificar el total
             comanda.Total.Should().NotBeNull();
             comanda.Total.Subtotal.Should().Be(cantidad * precioUnitario);
-            comanda.Total.Impuestos.Should().Be(cantidad * precioUnitario * 0.16m);
-            comanda.Total.Total.Should().Be(cantidad * precioUnitario * 1.16m);
+            comanda.Total.Impuestos.Should().Be(cantidad * precioUnitario * 0.19m);
+            comanda.Total.Total.Should().Be(cantidad * precioUnitario * 1.19m);
 
             // Verificar evento de dominio
             comanda.DomainEvents.Should().Contain(e => e is ProductoAgregadoAComanda);
@@ -226,7 +226,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             // Actualizamos el Total para que no falle por inconsistencia de total
             var totalField = typeof(Comanda).GetProperty("Total");
             var nuevoSubtotal = items.Sum(i => i.Subtotal); // 100 + 300 = 400
-            var nuevoImpuesto = nuevoSubtotal * 0.16m; // 64
+            var nuevoImpuesto = nuevoSubtotal * 0.19m; // 76
             var nuevoTotal = TotalComanda.Crear(nuevoSubtotal, nuevoImpuesto);
             totalField.SetValue(comanda, nuevoTotal);
             
