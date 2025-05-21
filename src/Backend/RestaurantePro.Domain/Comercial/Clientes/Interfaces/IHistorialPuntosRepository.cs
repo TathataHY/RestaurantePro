@@ -1,3 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+
 namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
 {
     /// <summary>
@@ -11,7 +19,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="id">ID del registro</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Registro encontrado o null si no existe</returns>
-        Task<HistorialPuntos> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+        new Task<HistorialPuntos> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Obtiene todos los registros de una tarjeta de fidelización
@@ -57,7 +65,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="historial">Registro a agregar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarea asíncrona</returns>
-        Task AgregarAsync(HistorialPuntos historial, CancellationToken cancellationToken = default);
+        new Task AgregarAsync(HistorialPuntos historial, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Actualiza un registro de historial
@@ -65,7 +73,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="historial">Registro a actualizar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarea asíncrona</returns>
-        Task ActualizarAsync(HistorialPuntos historial, CancellationToken cancellationToken = default);
+        new Task ActualizarAsync(HistorialPuntos historial, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Elimina un registro de historial

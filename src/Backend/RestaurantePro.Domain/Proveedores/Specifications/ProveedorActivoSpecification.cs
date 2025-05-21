@@ -38,7 +38,7 @@ namespace RestaurantePro.Domain.Proveedores.Specifications
                 // Versión simple sin verificar pagos pendientes
                 return proveedor => 
                     proveedor != null &&
-                    proveedor.Activo &&
+                    proveedor.EstaActivo &&
                     !string.IsNullOrWhiteSpace(proveedor.Email) && 
                     !string.IsNullOrWhiteSpace(proveedor.Telefono);
             }
@@ -53,7 +53,7 @@ namespace RestaurantePro.Domain.Proveedores.Specifications
                 // debería idealmente ser otra especificación independiente que podamos componer
                 return proveedor => 
                     proveedor != null &&
-                    proveedor.Activo &&
+                    proveedor.EstaActivo &&
                     !string.IsNullOrWhiteSpace(proveedor.Email) && 
                     !string.IsNullOrWhiteSpace(proveedor.Telefono) &&
                     !TienePagosPendientesFueraDeGracia(proveedor, _diasGraciaPagos);

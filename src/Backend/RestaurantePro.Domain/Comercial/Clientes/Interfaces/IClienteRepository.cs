@@ -1,3 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+
 namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
 {
     /// <summary>
@@ -11,7 +19,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="id">ID del cliente</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Cliente encontrado o null si no existe</returns>
-        Task<Cliente?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+        new Task<Cliente?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene un cliente por su email
@@ -75,7 +83,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="elementosPorPagina">Elementos por página</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tupla con clientes y total de elementos</returns>
-        Task<(IEnumerable<Cliente> Clientes, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default);
+        new Task<(IEnumerable<Cliente> Clientes, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene clientes registrados en un rango de fechas

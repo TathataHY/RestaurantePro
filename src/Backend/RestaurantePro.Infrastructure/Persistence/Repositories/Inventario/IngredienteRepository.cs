@@ -73,7 +73,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<(IEnumerable<Ingrediente> Ingredientes, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default)
+        public new async Task<(IEnumerable<Ingrediente> Ingredientes, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default)
         {
             var query = _context.Set<Ingrediente>().AsQueryable();
             

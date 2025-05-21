@@ -1,3 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+
 namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
 {
     /// <summary>
@@ -11,7 +19,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="id">ID de la tarjeta</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarjeta encontrada o null si no existe</returns>
-        Task<TarjetaFidelizacion> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+        new Task<TarjetaFidelizacion> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Obtiene una tarjeta de fidelización por su código
@@ -67,7 +75,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="tarjeta">Tarjeta a agregar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarea asíncrona</returns>
-        Task AgregarAsync(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken = default);
+        new Task AgregarAsync(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Actualiza una tarjeta existente
@@ -75,7 +83,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="tarjeta">Tarjeta a actualizar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarea asíncrona</returns>
-        Task ActualizarAsync(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken = default);
+        new Task ActualizarAsync(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Genera un código único para una nueva tarjeta

@@ -1,3 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
+using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
+
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces
 {
     /// <summary>
@@ -11,7 +19,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces
         /// <param name="id">ID del movimiento</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Movimiento encontrado o null si no existe</returns>
-        Task<MovimientoInventario> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+        new Task<MovimientoInventario> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene todos los movimientos de un ingrediente
@@ -36,7 +44,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces
         /// <param name="tipoMovimiento">Tipo de movimiento</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de movimientos del tipo especificado</returns>
-        Task<IEnumerable<MovimientoInventario>> ObtenerPorTipoAsync(Enums.TipoMovimientoInventario tipoMovimiento, CancellationToken cancellationToken = default);
+        Task<IEnumerable<MovimientoInventario>> ObtenerPorTipoAsync(TipoMovimientoInventario tipoMovimiento, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Registra un nuevo movimiento de inventario
@@ -51,7 +59,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces
         /// </summary>
         /// <param name="movimiento">Movimiento a actualizar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        Task ActualizarAsync(MovimientoInventario movimiento, CancellationToken cancellationToken = default);
+        new Task ActualizarAsync(MovimientoInventario movimiento, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Calcula el stock actual de un ingrediente basado en sus movimientos

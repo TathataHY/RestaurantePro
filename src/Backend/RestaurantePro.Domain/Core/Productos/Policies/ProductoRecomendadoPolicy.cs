@@ -1,3 +1,15 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using RestaurantePro.Domain.Core.SharedKernel.Services;
+using RestaurantePro.Domain.Core.Productos.Entities;
+using RestaurantePro.Domain.Core.Productos.Interfaces;
+using RestaurantePro.Domain.Core.Productos.Specifications;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+
 namespace RestaurantePro.Domain.Core.Productos.Policies
 {
     /// <summary>
@@ -19,9 +31,9 @@ namespace RestaurantePro.Domain.Core.Productos.Policies
             IComandaRepository comandaRepository,
             IDateTimeService dateTimeService)
         {
-            _productoRepository = productoRepository;
-            _comandaRepository = comandaRepository;
-            _dateTimeService = dateTimeService;
+            _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
+            _comandaRepository = comandaRepository ?? throw new ArgumentNullException(nameof(comandaRepository));
+            _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
             _productoRecomendableSpec = new ProductoRecomendableSpecification();
         }
 
@@ -37,7 +49,7 @@ namespace RestaurantePro.Domain.Core.Productos.Policies
             };
 
             // 1. Obtener historial de comandas del cliente
-            var comandasCliente = await _comandaRepository.ObtenerPorClienteAsync(clienteId, cancellationToken);
+            var comandasCliente = await _comandaRepository.ObtenerPorClienteAsync(clienteId, true, cancellationToken);
             if (comandasCliente == null || !comandasCliente.Any())
             {
                 // Si no hay historial, usar recomendaciones populares
@@ -45,7 +57,7 @@ namespace RestaurantePro.Domain.Core.Productos.Policies
             }
 
             // 2. Obtener todos los productos activos
-            var productosActivos = await _productoRepository.ObtenerTodosAsync(true, cancellationToken);
+            var productosActivos = await _productoRepository.ObtenerTodosAsync(soloActivos: true, cancellationToken);
             
             // 3. Filtrar productos que pueden ser recomendados según la especificación
             var productosRecomendables = productosActivos
@@ -53,7 +65,7 @@ namespace RestaurantePro.Domain.Core.Productos.Policies
                 .ToList();
             
             // 4. Analizar productos que el cliente ha consumido
-            var productosConsumidos = ObtenerProductosConsumidos(comandasCliente);
+            var productosConsumidos = await ObtenerProductosConsumidosAsync(comandasCliente, cancellationToken);
             
             // 5. Encontrar categorías preferidas
             var categoriasPreferidas = productosConsumidos
@@ -162,10 +174,11 @@ namespace RestaurantePro.Domain.Core.Productos.Policies
             var comandasRecientes = await _comandaRepository.ObtenerPorRangoFechasAsync(
                 fechaInicio, 
                 fechaActual, 
+                true, 
                 cancellationToken);
             
             // 2. Obtener productos activos
-            var productosActivos = await _productoRepository.ObtenerTodosAsync(true, cancellationToken);
+            var productosActivos = await _productoRepository.ObtenerTodosAsync(soloActivos: true, cancellationToken);
             
             // 3. Contar frecuencia de productos en comandas
             var conteoProductos = new Dictionary<Guid, int>();
@@ -233,7 +246,7 @@ namespace RestaurantePro.Domain.Core.Productos.Policies
             }
             
             // 2. Obtener todos los productos activos
-            var productosActivos = await _productoRepository.ObtenerTodosAsync(true, cancellationToken);
+            var productosActivos = await _productoRepository.ObtenerTodosAsync(soloActivos: true, cancellationToken);
             
             // 3. Identificar categorías ya presentes en la comanda
             var categoriasEnComanda = new HashSet<Guid>();
@@ -326,10 +339,11 @@ namespace RestaurantePro.Domain.Core.Productos.Policies
             var comandasRecientes = await _comandaRepository.ObtenerPorRangoFechasAsync(
                 fechaInicio, 
                 fechaActual, 
+                true, 
                 cancellationToken);
             
             // 2. Obtener productos activos
-            var productosActivos = await _productoRepository.ObtenerTodosAsync(true, cancellationToken);
+            var productosActivos = await _productoRepository.ObtenerTodosAsync(soloActivos: true, cancellationToken);
             
             // 3. Contar frecuencia de productos en comandas
             var conteoProductos = new Dictionary<Guid, int>();
@@ -361,7 +375,7 @@ namespace RestaurantePro.Domain.Core.Productos.Policies
         /// <summary>
         /// Extrae los productos consumidos de una lista de comandas
         /// </summary>
-        private List<Producto> ObtenerProductosConsumidos(IEnumerable<Comanda> comandas)
+        private async Task<List<Producto>> ObtenerProductosConsumidosAsync(IEnumerable<Comanda> comandas, CancellationToken cancellationToken = default)
         {
             var productosConsumidos = new List<Producto>();
             
@@ -369,7 +383,7 @@ namespace RestaurantePro.Domain.Core.Productos.Policies
             {
                 foreach (var item in comanda.Items)
                 {
-                    var producto = _productoRepository.ObtenerPorIdAsync(item.ProductoId).Result;
+                    var producto = await _productoRepository.ObtenerPorIdAsync(item.ProductoId, cancellationToken);
                     if (producto != null)
                     {
                         productosConsumidos.Add(producto);

@@ -1,3 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
+using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums;
+
 namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces
 {
     /// <summary>
@@ -11,7 +19,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces
         /// <param name="id">Identificador de la orden</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>La orden de compra o null si no existe</returns>
-        Task<OrdenCompra> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+        new Task<OrdenCompra> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene todas las órdenes de compra
@@ -58,14 +66,14 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces
         /// </summary>
         /// <param name="ordenCompra">Orden de compra a agregar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        Task AgregarAsync(OrdenCompra ordenCompra, CancellationToken cancellationToken = default);
+        new Task AgregarAsync(OrdenCompra ordenCompra, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Actualiza una orden de compra existente
         /// </summary>
         /// <param name="ordenCompra">Orden de compra a actualizar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        Task ActualizarAsync(OrdenCompra ordenCompra, CancellationToken cancellationToken = default);
+        new Task ActualizarAsync(OrdenCompra ordenCompra, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene órdenes de compra pendientes para un proveedor específico

@@ -1,3 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Domain.Core.Productos.Entities;
+
 namespace RestaurantePro.Domain.Core.Productos.Interfaces
 {
     /// <summary>
@@ -36,7 +43,7 @@ namespace RestaurantePro.Domain.Core.Productos.Interfaces
         /// <param name="productoIngrediente">Relación a agregar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarea asíncrona</returns>
-        Task AgregarAsync(ProductoIngrediente productoIngrediente, CancellationToken cancellationToken = default);
+        new Task AgregarAsync(ProductoIngrediente productoIngrediente, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Actualiza una relación producto-ingrediente existente
@@ -44,7 +51,7 @@ namespace RestaurantePro.Domain.Core.Productos.Interfaces
         /// <param name="productoIngrediente">Relación a actualizar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarea asíncrona</returns>
-        Task ActualizarAsync(ProductoIngrediente productoIngrediente, CancellationToken cancellationToken = default);
+        new Task ActualizarAsync(ProductoIngrediente productoIngrediente, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Elimina una relación producto-ingrediente

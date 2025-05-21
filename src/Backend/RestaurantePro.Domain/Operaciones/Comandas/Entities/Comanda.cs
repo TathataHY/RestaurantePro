@@ -244,7 +244,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             ActualizarFecha();
             ValidarInvariantes();
             
-            AddDomainEvent(new DescuentoFidelizacionAplicado(Id, descuento, porcentajeDescuento));
+            AddDomainEvent(new DescuentoFidelizacionAplicado(Id, ClienteId.Value, descuento));
         }
 
         /// <summary>
@@ -463,6 +463,244 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         private void ActualizarFecha()
         {
             FechaActualizacion = DateTime.Now;
+        }
+
+        /// <summary>
+        /// Agrega un ítem a la comanda
+        /// </summary>
+        /// <param name="productoId">ID del producto</param>
+        /// <param name="nombreProducto">Nombre del producto</param>
+        /// <param name="cantidad">Cantidad</param>
+        /// <param name="precioUnitario">Precio unitario</param>
+        /// <param name="observaciones">Observaciones del ítem</param>
+        /// <returns>El ítem agregado</returns>
+        public ItemComanda AgregarItem(Guid productoId, string nombreProducto, int cantidad, decimal precioUnitario, string? observaciones = null)
+        {
+            ValidarComandaActiva();
+
+            var item = new ItemComanda(Id, productoId, cantidad, precioUnitario, observaciones ?? string.Empty);
+            _items.Add(item);
+
+            RecalcularTotal();
+            ActualizarFecha();
+            ValidarInvariantes();
+
+            AddDomainEvent(new ProductoAgregadoAComanda(Id, productoId, cantidad));
+            
+            return item;
+        }
+        
+        /// <summary>
+        /// Agrega una personalización de tipo "extra" a un ítem de la comanda
+        /// </summary>
+        /// <param name="itemId">ID del ítem</param>
+        /// <param name="ingredienteId">ID del ingrediente</param>
+        /// <param name="nombreIngrediente">Nombre del ingrediente</param>
+        /// <param name="cantidad">Cantidad</param>
+        /// <param name="precioAdicional">Precio adicional</param>
+        /// <returns>True si se agregó correctamente, false en caso contrario</returns>
+        public bool AgregarPersonalizacionExtra(
+            Guid itemId, 
+            Guid ingredienteId, 
+            string nombreIngrediente, 
+            decimal cantidad, 
+            decimal precioAdicional = 0)
+        {
+            var item = _items.FirstOrDefault(i => i.Id == itemId);
+            if (item == null)
+                return false;
+            
+            if (item.Estado != EstadoItemComanda.Pendiente)
+                return false;
+            
+            item.AgregarPersonalizacionExtra(ingredienteId, nombreIngrediente, cantidad, precioAdicional);
+            
+            RecalcularTotal();
+            ActualizarFecha();
+            ValidarInvariantes();
+            
+            return true;
+        }
+        
+        /// <summary>
+        /// Agrega una personalización de tipo "quitar" a un ítem de la comanda
+        /// </summary>
+        /// <param name="itemId">ID del ítem</param>
+        /// <param name="ingredienteId">ID del ingrediente</param>
+        /// <param name="nombreIngrediente">Nombre del ingrediente</param>
+        /// <returns>True si se agregó correctamente, false en caso contrario</returns>
+        public bool AgregarPersonalizacionQuitar(
+            Guid itemId, 
+            Guid ingredienteId, 
+            string nombreIngrediente)
+        {
+            var item = _items.FirstOrDefault(i => i.Id == itemId);
+            if (item == null)
+                return false;
+            
+            if (item.Estado != EstadoItemComanda.Pendiente)
+                return false;
+            
+            item.AgregarPersonalizacionQuitar(ingredienteId, nombreIngrediente);
+            
+            ActualizarFecha();
+            ValidarInvariantes();
+            
+            return true;
+        }
+        
+        /// <summary>
+        /// Agrega una personalización de tipo "sustituir" a un ítem de la comanda
+        /// </summary>
+        /// <param name="itemId">ID del ítem</param>
+        /// <param name="ingredienteId">ID del ingrediente a sustituir</param>
+        /// <param name="nombreIngrediente">Nombre del ingrediente a sustituir</param>
+        /// <param name="ingredienteSustitucionId">ID del ingrediente de sustitución</param>
+        /// <param name="nombreIngredienteSustitucion">Nombre del ingrediente de sustitución</param>
+        /// <param name="cantidad">Cantidad</param>
+        /// <param name="precioAdicional">Precio adicional</param>
+        /// <returns>True si se agregó correctamente, false en caso contrario</returns>
+        public bool AgregarPersonalizacionSustituir(
+            Guid itemId, 
+            Guid ingredienteId, 
+            string nombreIngrediente, 
+            Guid ingredienteSustitucionId, 
+            string nombreIngredienteSustitucion, 
+            decimal cantidad = 1, 
+            decimal precioAdicional = 0)
+        {
+            var item = _items.FirstOrDefault(i => i.Id == itemId);
+            if (item == null)
+                return false;
+            
+            if (item.Estado != EstadoItemComanda.Pendiente)
+                return false;
+            
+            item.AgregarPersonalizacionSustituir(
+                ingredienteId, 
+                nombreIngrediente, 
+                ingredienteSustitucionId, 
+                nombreIngredienteSustitucion, 
+                cantidad, 
+                precioAdicional);
+            
+            if (precioAdicional > 0)
+            {
+                RecalcularTotal();
+            }
+            
+            ActualizarFecha();
+            ValidarInvariantes();
+            
+            return true;
+        }
+        
+        /// <summary>
+        /// Marca la comanda como "En Preparación"
+        /// </summary>
+        /// <returns>True si se cambió el estado correctamente, false en caso contrario</returns>
+        public bool MarcarEnPreparacion()
+        {
+            if (Estado != EstadoComanda.Creada)
+                return false;
+            
+            Estado = EstadoComanda.EnProceso;
+            ActualizarFecha();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new EstadoComandaActualizado(Id, EstadoComanda.Creada, EstadoComanda.EnProceso));
+            
+            return true;
+        }
+        
+        /// <summary>
+        /// Marca la comanda como "Lista"
+        /// </summary>
+        /// <returns>True si se cambió el estado correctamente, false en caso contrario</returns>
+        public bool MarcarLista()
+        {
+            if (Estado != EstadoComanda.EnProceso)
+                return false;
+            
+            Estado = EstadoComanda.Lista;
+            ActualizarFecha();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new EstadoComandaActualizado(Id, EstadoComanda.EnProceso, EstadoComanda.Lista));
+            
+            return true;
+        }
+        
+        /// <summary>
+        /// Marca la comanda como "Entregada"
+        /// </summary>
+        /// <returns>True si se cambió el estado correctamente, false en caso contrario</returns>
+        public bool MarcarEntregada()
+        {
+            if (Estado != EstadoComanda.Lista)
+                return false;
+            
+            Estado = EstadoComanda.Entregada;
+            ActualizarFecha();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new EstadoComandaActualizado(Id, EstadoComanda.Lista, EstadoComanda.Entregada));
+            
+            return true;
+        }
+        
+        /// <summary>
+        /// Marca la comanda como "Pagada"
+        /// </summary>
+        /// <returns>True si se cambió el estado correctamente, false en caso contrario</returns>
+        public bool MarcarPagada()
+        {
+            if (Estado != EstadoComanda.Entregada)
+                return false;
+            
+            Estado = EstadoComanda.Finalizada; // En este modelo, Finalizada equivale a Pagada
+            ActualizarFecha();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new EstadoComandaActualizado(Id, EstadoComanda.Entregada, EstadoComanda.Finalizada));
+            AddDomainEvent(new ComandaFinalizada(Id, Total!.Total));
+            
+            return true;
+        }
+        
+        /// <summary>
+        /// Aplica un descuento a la comanda
+        /// </summary>
+        /// <param name="monto">Monto del descuento</param>
+        /// <param name="motivo">Motivo del descuento</param>
+        /// <returns>True si se aplicó correctamente, false en caso contrario</returns>
+        public bool AplicarDescuento(decimal monto, string motivo)
+        {
+            if (monto <= 0)
+                return false;
+            
+            if (monto > Total!.Subtotal * 0.5m) // El descuento no puede ser mayor al 50% del subtotal
+                return false;
+            
+            // Verificar si la comanda tiene un cliente asociado
+            if (!ClienteId.HasValue)
+                return false;
+            
+            DescuentoFidelizacion = monto;
+            if (!string.IsNullOrEmpty(motivo))
+            {
+                Observaciones = string.IsNullOrEmpty(Observaciones) 
+                    ? $"Descuento: {motivo}" 
+                    : $"{Observaciones} | Descuento: {motivo}";
+            }
+            
+            RecalcularTotal();
+            ActualizarFecha();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new DescuentoFidelizacionAplicado(Id, ClienteId.Value, monto));
+            
+            return true;
         }
     }
 }

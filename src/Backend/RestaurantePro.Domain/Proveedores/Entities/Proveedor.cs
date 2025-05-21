@@ -240,6 +240,86 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         }
         
         /// <summary>
+        /// Actualiza la dirección del proveedor
+        /// </summary>
+        /// <param name="direccion">Nueva dirección</param>
+        public void ActualizarDireccion(string direccion)
+        {
+            if (string.IsNullOrWhiteSpace(direccion))
+                throw new ArgumentException("La dirección no puede estar vacía", nameof(direccion));
+
+            Direccion = direccion;
+            MarkAsModified();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new ProveedorActualizado(Id, Nombre));
+        }
+        
+        /// <summary>
+        /// Actualiza el teléfono del proveedor
+        /// </summary>
+        /// <param name="telefono">Nuevo teléfono</param>
+        public void ActualizarTelefono(string telefono)
+        {
+            if (string.IsNullOrWhiteSpace(telefono))
+                throw new ArgumentException("El teléfono no puede estar vacío", nameof(telefono));
+                
+            Telefono = telefono;
+            MarkAsModified();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new ProveedorActualizado(Id, Nombre));
+        }
+        
+        /// <summary>
+        /// Actualiza el email del proveedor
+        /// </summary>
+        /// <param name="email">Nuevo email</param>
+        public void ActualizarEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                throw new ArgumentException("El email no puede estar vacío", nameof(email));
+                
+            // Validar formato de email
+            if (!email.Contains("@") || !email.Contains("."))
+                throw new ArgumentException("El formato del email no es válido", nameof(email));
+                
+            Email = email;
+            MarkAsModified();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new ProveedorActualizado(Id, Nombre));
+        }
+        
+        /// <summary>
+        /// Actualiza el sitio web del proveedor
+        /// </summary>
+        /// <param name="sitioWeb">Nuevo sitio web</param>
+        public void ActualizarSitioWeb(string sitioWeb)
+        {
+            // El sitio web puede ser nulo o vacío
+            
+            // Si tenemos un sitio web específico, es propiedad de NombreContacto en esta implementación
+            if (!string.IsNullOrWhiteSpace(sitioWeb))
+                NombreContacto = sitioWeb;
+                
+            MarkAsModified();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new ProveedorActualizado(Id, Nombre));
+        }
+        
+        /// <summary>
+        /// Actualiza las notas del proveedor
+        /// </summary>
+        /// <param name="notas">Nuevas notas</param>
+        public void ActualizarNotas(string notas)
+        {
+            // Las notas pueden estar vacías
+            AgregarObservaciones(notas);
+        }
+        
+        /// <summary>
         /// Agrega observaciones al proveedor
         /// </summary>
         public void AgregarObservaciones(string observaciones)
@@ -270,12 +350,17 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         /// <summary>
         /// Desactiva el proveedor
         /// </summary>
-        public void Desactivar()
+        /// <param name="motivo">Motivo de la desactivación</param>
+        public void Desactivar(string motivo)
         {
             if (!Activo)
                 return;
                 
+            if (string.IsNullOrWhiteSpace(motivo))
+                throw new ArgumentException("El motivo de desactivación no puede estar vacío", nameof(motivo));
+                
             Activo = false;
+            Observaciones = motivo;
             MarkAsModified();
             ValidarInvariantes();
             
@@ -289,8 +374,16 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         /// <param name="cargo">Cargo del contacto</param>
         /// <param name="telefono">Teléfono del contacto</param>
         /// <param name="email">Email del contacto</param>
+        /// <param name="esPrincipal">Indica si es el contacto principal</param>
+        /// <param name="notas">Notas sobre el contacto</param>
         /// <returns>El contacto agregado</returns>
-        public ContactoProveedor AgregarContacto(string nombre, string cargo, string telefono, string email)
+        public ContactoProveedor AgregarContacto(
+            string nombre, 
+            string cargo, 
+            string telefono, 
+            string email, 
+            bool esPrincipal = false, 
+            string? notas = null)
         {
             if (string.IsNullOrWhiteSpace(nombre))
                 throw new ArgumentException("El nombre del contacto es obligatorio", nameof(nombre));
@@ -300,6 +393,12 @@ namespace RestaurantePro.Domain.Proveedores.Entities
                 
             var contacto = ContactoProveedor.Crear(Id, nombre, cargo, telefono, email);
             _contactos.Add(contacto);
+            
+            // Si es contacto principal, actualizar el nombre de contacto principal
+            if (esPrincipal)
+            {
+                NombreContacto = nombre;
+            }
             
             MarkAsModified();
             ValidarInvariantes();

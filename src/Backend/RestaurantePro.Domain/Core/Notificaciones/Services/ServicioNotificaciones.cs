@@ -34,7 +34,7 @@ namespace RestaurantePro.Domain.Core.Notificaciones.Services
                 destinatarioId,
                 entidadRelacionadaId);
                 
-            await _notificacionRepository.AddAsync(notificacion, cancellationToken);
+            await _notificacionRepository.AgregarAsync(notificacion, cancellationToken);
             return notificacion;
         }
         
@@ -77,7 +77,7 @@ namespace RestaurantePro.Domain.Core.Notificaciones.Services
             Guid notificacionId, 
             CancellationToken cancellationToken = default)
         {
-            var notificacion = await _notificacionRepository.GetByIdAsync(notificacionId, cancellationToken);
+            var notificacion = await _notificacionRepository.ObtenerPorIdAsync(notificacionId, cancellationToken);
             if (notificacion == null)
                 return false;
                 
@@ -85,7 +85,7 @@ namespace RestaurantePro.Domain.Core.Notificaciones.Services
                 return true;
                 
             notificacion.MarcarComoLeida();
-            await _notificacionRepository.UpdateAsync(notificacion, cancellationToken);
+            await _notificacionRepository.ActualizarAsync(notificacion, cancellationToken);
             
             return true;
         }
@@ -98,18 +98,12 @@ namespace RestaurantePro.Domain.Core.Notificaciones.Services
             bool soloNoLeidas = false, 
             CancellationToken cancellationToken = default)
         {
+            var notificaciones = await _notificacionRepository.GetByRecipientIdAsync(destinatarioId, cancellationToken);
+            
             if (soloNoLeidas)
-            {
-                return await _notificacionRepository.GetUnreadByRecipientIdAsync(
-                    destinatarioId, 
-                    cancellationToken);
-            }
-            else
-            {
-                return await _notificacionRepository.GetByRecipientIdAsync(
-                    destinatarioId, 
-                    cancellationToken);
-            }
+                return notificaciones.Where(n => !n.EstaLeida);
+                
+            return notificaciones;
         }
     }
 } 

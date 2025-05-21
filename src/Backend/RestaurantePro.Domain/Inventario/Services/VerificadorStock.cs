@@ -125,12 +125,12 @@ namespace RestaurantePro.Domain.Inventario.Services
             // Guardar las órdenes generadas y actualizadas
             foreach (var orden in resultado.OrdenesGeneradas)
             {
-                await _ordenCompraRepository.AddAsync(orden);
+                await _ordenCompraRepository.AgregarAsync(orden);
             }
             
             foreach (var orden in resultado.OrdenesActualizadas)
             {
-                await _ordenCompraRepository.UpdateAsync(orden);
+                await _ordenCompraRepository.ActualizarAsync(orden);
             }
             
             return resultado;

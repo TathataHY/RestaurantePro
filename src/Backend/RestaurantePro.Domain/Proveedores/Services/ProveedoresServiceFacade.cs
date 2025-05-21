@@ -38,15 +38,33 @@ namespace RestaurantePro.Domain.Proveedores.Services
                 throw new InvalidOperationException($"Ya existe un proveedor con el RUT {rut}");
             }
             
+            // Valores predeterminados para los parámetros faltantes
+            string nombreContacto = nombre; // Usamos el nombre del proveedor como contacto principal
+            string ciudad = "Santiago"; // Valor predeterminado
+            string codigoPostal = "0000000"; // Valor predeterminado
+            string pais = "Chile"; // Valor predeterminado requerido
+            string informacionBancaria = string.Empty; // Valor predeterminado
+            int diasCredito = 30; // Valor predeterminado: 30 días
+            
             // Crear el proveedor
             var proveedor = Proveedor.Crear(
                 nombre,
-                rut,
-                direccion,
-                telefono,
+                nombreContacto,
                 email,
-                sitioWeb,
-                notas);
+                telefono,
+                direccion,
+                ciudad,
+                codigoPostal,
+                pais,
+                rut, // RFC en México, RUT en Chile
+                informacionBancaria,
+                diasCredito);
+            
+            // Agregar notas si se proporcionaron
+            if (!string.IsNullOrEmpty(notas))
+            {
+                proveedor.AgregarObservaciones(notas);
+            }
             
             // Persistir el proveedor
             await _proveedorRepository.AgregarAsync(proveedor);

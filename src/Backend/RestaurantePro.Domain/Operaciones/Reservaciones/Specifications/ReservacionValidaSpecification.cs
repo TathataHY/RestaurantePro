@@ -1,3 +1,9 @@
+using System;
+using System.Linq.Expressions;
+using RestaurantePro.Domain.Core.SharedKernel.Specifications;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
+
 namespace RestaurantePro.Domain.Operaciones.Reservaciones.Specifications
 {
     /// <summary>

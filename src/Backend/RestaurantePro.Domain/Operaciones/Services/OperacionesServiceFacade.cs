@@ -216,7 +216,7 @@ namespace RestaurantePro.Domain.Operaciones.Services
             // Actualizar estado según el tipo
             switch (nuevoEstado)
             {
-                case EstadoComanda.EnPreparacion:
+                case EstadoComanda.EnProceso:
                     comanda.MarcarEnPreparacion();
                     break;
                 case EstadoComanda.Lista:
@@ -225,7 +225,7 @@ namespace RestaurantePro.Domain.Operaciones.Services
                 case EstadoComanda.Entregada:
                     comanda.MarcarEntregada();
                     break;
-                case EstadoComanda.Pagada:
+                case EstadoComanda.Finalizada:
                     comanda.MarcarPagada();
                     break;
                 case EstadoComanda.Cancelada:
@@ -380,7 +380,7 @@ namespace RestaurantePro.Domain.Operaciones.Services
                 case EstadoReservacion.Cancelada:
                     reservacion.Cancelar("Cancelada desde servicio de operaciones");
                     break;
-                case EstadoReservacion.NoAsistio:
+                case EstadoReservacion.NoShow:
                     reservacion.MarcarNoAsistio();
                     break;
                 default:

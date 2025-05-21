@@ -1,5 +1,13 @@
 namespace RestaurantePro.Domain.Proveedores.Interfaces
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+    using RestaurantePro.Domain.Proveedores.DTOs;
+    using RestaurantePro.Domain.Proveedores.Entities;
+    
     /// <summary>
     /// Interfaz para el repositorio de proveedores
     /// </summary>
@@ -29,6 +37,14 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores que coinciden con el RFC</returns>
         Task<IEnumerable<Proveedor>> ObtenerPorRFCAsync(string rfc, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene un proveedor por su RUT
+        /// </summary>
+        /// <param name="rut">RUT del proveedor</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Proveedor encontrado o null si no existe</returns>
+        Task<Proveedor?> ObtenerPorRutAsync(string rut, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene todos los proveedores
@@ -62,6 +78,14 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores que ofrecen el ingrediente</returns>
         Task<IEnumerable<Proveedor>> ObtenerPorIngredienteAsync(Guid ingredienteId, bool soloActivos = true, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene proveedores por tipo de producto o servicio
+        /// </summary>
+        /// <param name="tipoProducto">Tipo de producto o servicio</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de proveedores que ofrecen el tipo de producto</returns>
+        Task<IEnumerable<Proveedor>> ObtenerPorTipoProductoAsync(string tipoProducto, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene un contacto de proveedor por su ID

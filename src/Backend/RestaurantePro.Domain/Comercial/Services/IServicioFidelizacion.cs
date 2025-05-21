@@ -30,5 +30,13 @@ namespace RestaurantePro.Domain.Comercial.Services
         /// <param name="concepto">Motivo del canje</param>
         /// <returns>Tarea asíncrona</returns>
         Task CanjearPuntosAsync(Guid clienteId, int puntos, string concepto);
+        
+        /// <summary>
+        /// Calcula el descuento basado en los puntos a utilizar
+        /// </summary>
+        /// <param name="puntos">Puntos a utilizar</param>
+        /// <param name="montoTotal">Monto total (opcional, solo para validaciones)</param>
+        /// <returns>Monto del descuento calculado</returns>
+        decimal CalcularDescuentoPorPuntos(int puntos, decimal montoTotal);
     }
 } 

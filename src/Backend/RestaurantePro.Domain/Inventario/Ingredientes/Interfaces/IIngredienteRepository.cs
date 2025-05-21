@@ -1,3 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
+using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
+
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
 {
     /// <summary>
@@ -68,7 +76,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
         /// <param name="elementosPorPagina">Elementos por página</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tupla con ingredientes y total de elementos</returns>
-        Task<(IEnumerable<Ingrediente> Ingredientes, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default);
+        new Task<(IEnumerable<Ingrediente> Ingredientes, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene ingredientes bloqueados por control de calidad

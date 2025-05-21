@@ -44,6 +44,16 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
         public TimeSpan Hora { get; private set; }
 
         /// <summary>
+        /// Fecha y hora completa de la reservación
+        /// </summary>
+        public DateTime FechaReservacion => Fecha.Add(Hora);
+
+        /// <summary>
+        /// Duración estimada de la reservación
+        /// </summary>
+        public TimeSpan DuracionEstimada { get; private set; }
+
+        /// <summary>
         /// Número de personas para la reservación
         /// </summary>
         public int CantidadPersonas { get; private set; }
@@ -71,7 +81,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
         /// <summary>
         /// Método de fábrica para crear una nueva reservación
         /// </summary>
-        public static Reservacion Crear(Guid clienteId, Guid mesaId, DateTime fecha, TimeSpan hora, int cantidadPersonas, string observaciones = null)
+        public static Reservacion Crear(Guid mesaId, Guid clienteId, DateTime fecha, TimeSpan duracionEstimada, int cantidadPersonas, string telefono, string email, string observaciones = null)
         {
             // Validar que la fecha sea futura
             if (fecha.Date < DateTime.Now.Date)
@@ -85,6 +95,12 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
                 throw new ArgumentException("La cantidad de personas debe ser mayor que cero", nameof(cantidadPersonas));
             }
 
+            // Validar duración estimada
+            if (duracionEstimada.TotalMinutes < 15)
+            {
+                throw new ArgumentException("La duración estimada debe ser de al menos 15 minutos", nameof(duracionEstimada));
+            }
+
             // Crear la reservación
             var reservacion = new Reservacion
             {
@@ -92,7 +108,8 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
                 ClienteId = clienteId,
                 MesaId = mesaId,
                 Fecha = fecha.Date, // Guardamos solo la fecha sin la hora
-                Hora = hora,
+                Hora = fecha.TimeOfDay,
+                DuracionEstimada = duracionEstimada,
                 CantidadPersonas = cantidadPersonas,
                 Observaciones = observaciones,
                 Estado = EstadoReservacion.Pendiente,
@@ -105,7 +122,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
                 clienteId,
                 mesaId,
                 fecha.Date,
-                hora,
+                fecha.TimeOfDay,
                 cantidadPersonas));
 
             reservacion.ValidarInvariantes();
@@ -167,7 +184,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
         /// <summary>
         /// Marca la reservación como no-show (los clientes no se presentaron)
         /// </summary>
-        public void MarcarComoNoShow()
+        public void MarcarNoAsistio()
         {
             if (Estado != EstadoReservacion.Confirmada && Estado != EstadoReservacion.Pendiente)
             {
@@ -178,8 +195,32 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
             FechaActualizacion = DateTime.Now;
 
             ValidarInvariantes();
-            // Aquí podríamos agregar un evento de dominio para el no-show
-            // AddDomainEvent(new ReservacionNoShow(Id));
+            AddDomainEvent(new ReservacionNoAsistio(Id, ClienteId, MesaId, Fecha, CantidadPersonas));
+        }
+
+        /// <summary>
+        /// Cambia la mesa asignada a la reservación
+        /// </summary>
+        /// <param name="nuevaMesaId">ID de la nueva mesa</param>
+        /// <exception cref="InvalidOperationException">Si la reservación no está en un estado que permita cambios</exception>
+        public void CambiarMesa(Guid nuevaMesaId)
+        {
+            if (Estado != EstadoReservacion.Pendiente && Estado != EstadoReservacion.Confirmada)
+            {
+                throw new InvalidOperationException($"No se puede cambiar la mesa de una reservación con estado {Estado}");
+            }
+
+            if (nuevaMesaId == Guid.Empty)
+            {
+                throw new ArgumentException("El ID de la mesa no puede estar vacío", nameof(nuevaMesaId));
+            }
+
+            var mesaAnterior = MesaId;
+            MesaId = nuevaMesaId;
+            FechaActualizacion = DateTime.Now;
+
+            ValidarInvariantes();
+            AddDomainEvent(new MesaReservacionCambiada(Id, mesaAnterior, nuevaMesaId));
         }
 
         /// <summary>
@@ -200,6 +241,11 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
             if (CantidadPersonas <= 0)
             {
                 throw new InvalidOperationException("La cantidad de personas debe ser mayor que cero");
+            }
+
+            if (DuracionEstimada.TotalMinutes < 15)
+            {
+                throw new InvalidOperationException("La duración estimada debe ser de al menos 15 minutos");
             }
 
             if (!Enum.IsDefined(typeof(EstadoReservacion), Estado))

@@ -279,5 +279,160 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             if (string.IsNullOrWhiteSpace(Telefono))
                 throw new InvalidOperationException("El teléfono del cliente no puede estar vacío");
         }
+
+        /// <summary>
+        /// Crea y asocia una nueva tarjeta de fidelización al cliente
+        /// </summary>
+        /// <returns>El ID de la tarjeta creada</returns>
+        /// <exception cref="InvalidOperationException">Si el cliente ya tiene una tarjeta o está inactivo</exception>
+        public Guid CrearTarjetaFidelizacion()
+        {
+            if (!EstaActivo)
+                throw new InvalidOperationException("No se puede crear una tarjeta para un cliente inactivo");
+
+            if (TarjetaFidelizacionPrincipalId.HasValue)
+                throw new InvalidOperationException("El cliente ya tiene una tarjeta de fidelización asociada");
+            
+            // Generar un nuevo ID para la tarjeta (la creación real se hace en otro contexto)
+            var tarjetaId = Guid.NewGuid();
+            
+            // Asociar la tarjeta
+            TarjetaFidelizacionPrincipalId = tarjetaId;
+            MarkAsModified();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new RestaurantePro.Domain.Comercial.Clientes.Events.Cliente.TarjetaFidelizacionCreada(Id, tarjetaId));
+            
+            return tarjetaId;
+        }
+        
+        /// <summary>
+        /// Actualiza el nombre del cliente
+        /// </summary>
+        /// <param name="nuevoNombre">Nuevo nombre del cliente</param>
+        /// <exception cref="ArgumentNullException">Si el nombre es nulo</exception>
+        public void ActualizarNombre(ClienteNombre nuevoNombre)
+        {
+            if (nuevoNombre == null)
+                throw new ArgumentNullException(nameof(nuevoNombre), "El nombre no puede ser nulo");
+            
+            if (Nombre.Equals(nuevoNombre))
+                return;
+            
+            var nombreAnterior = Nombre;
+            Nombre = nuevoNombre;
+            MarkAsModified();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new NombreClienteActualizado(Id, nombreAnterior.NombreCompleto, nuevoNombre.NombreCompleto));
+        }
+        
+        /// <summary>
+        /// Actualiza el email del cliente
+        /// </summary>
+        /// <param name="nuevoEmail">Nuevo email del cliente</param>
+        /// <exception cref="ArgumentException">Si el email es inválido</exception>
+        public void ActualizarEmail(string nuevoEmail)
+        {
+            if (string.IsNullOrWhiteSpace(nuevoEmail))
+                throw new ArgumentException("El email no puede estar vacío", nameof(nuevoEmail));
+            
+            if (!nuevoEmail.Contains("@") || !nuevoEmail.Contains("."))
+                throw new ArgumentException("El formato del email no es válido", nameof(nuevoEmail));
+            
+            if (Email == nuevoEmail)
+                return;
+            
+            var emailAnterior = Email;
+            Email = nuevoEmail;
+            MarkAsModified();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new EmailClienteActualizado(Id, emailAnterior, nuevoEmail));
+        }
+        
+        /// <summary>
+        /// Actualiza el teléfono del cliente
+        /// </summary>
+        /// <param name="nuevoTelefono">Nuevo teléfono del cliente</param>
+        /// <exception cref="ArgumentException">Si el teléfono es inválido</exception>
+        public void ActualizarTelefono(string nuevoTelefono)
+        {
+            if (string.IsNullOrWhiteSpace(nuevoTelefono))
+                throw new ArgumentException("El teléfono no puede estar vacío", nameof(nuevoTelefono));
+            
+            if (Telefono == nuevoTelefono)
+                return;
+            
+            var telefonoAnterior = Telefono;
+            Telefono = nuevoTelefono;
+            MarkAsModified();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new TelefonoClienteActualizado(Id, telefonoAnterior, nuevoTelefono));
+        }
+        
+        /// <summary>
+        /// Verifica si el cliente tiene una tarjeta de fidelización asociada
+        /// </summary>
+        /// <returns>True si tiene tarjeta, False en caso contrario</returns>
+        public bool TieneTarjetaFidelizacion()
+        {
+            return TarjetaFidelizacionPrincipalId.HasValue && EstaActivo;
+        }
+        
+        /// <summary>
+        /// Obtiene los puntos de fidelización disponibles del cliente
+        /// </summary>
+        /// <returns>Cantidad de puntos disponibles, 0 si no tiene tarjeta</returns>
+        public int ObtenerPuntosFidelizacionDisponibles()
+        {
+            return TieneTarjetaFidelizacion() ? PuntosAcumulados : 0;
+        }
+        
+        /// <summary>
+        /// Agrega puntos de fidelización al cliente
+        /// </summary>
+        /// <param name="puntos">Cantidad de puntos a agregar</param>
+        /// <param name="motivo">Motivo de la adición de puntos</param>
+        /// <exception cref="InvalidOperationException">Si el cliente no tiene tarjeta o está inactivo</exception>
+        public void AgregarPuntosFidelizacion(int puntos, string motivo)
+        {
+            if (!TieneTarjetaFidelizacion())
+                throw new InvalidOperationException("El cliente no tiene una tarjeta de fidelización activa");
+            
+            if (puntos <= 0)
+                throw new ArgumentException("La cantidad de puntos debe ser mayor a cero", nameof(puntos));
+            
+            PuntosAcumulados += puntos;
+            MarkAsModified();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new PuntosFidelizacionAgregados(Id, TarjetaFidelizacionPrincipalId.Value, puntos, PuntosAcumulados, motivo));
+        }
+        
+        /// <summary>
+        /// Usa puntos de fidelización del cliente
+        /// </summary>
+        /// <param name="puntos">Cantidad de puntos a usar</param>
+        /// <param name="motivo">Motivo del uso de puntos</param>
+        /// <exception cref="InvalidOperationException">Si el cliente no tiene tarjeta, está inactivo o no tiene suficientes puntos</exception>
+        public void UsarPuntosFidelizacion(int puntos, string motivo)
+        {
+            if (!TieneTarjetaFidelizacion())
+                throw new InvalidOperationException("El cliente no tiene una tarjeta de fidelización activa");
+            
+            if (puntos <= 0)
+                throw new ArgumentException("La cantidad de puntos debe ser mayor a cero", nameof(puntos));
+            
+            if (PuntosAcumulados < puntos)
+                throw new InvalidOperationException($"No hay suficientes puntos disponibles. Disponibles: {PuntosAcumulados}, Solicitados: {puntos}");
+            
+            PuntosAcumulados -= puntos;
+            MarkAsModified();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new PuntosFidelizacionUtilizados(Id, TarjetaFidelizacionPrincipalId.Value, puntos, PuntosAcumulados, motivo));
+        }
     }
 }

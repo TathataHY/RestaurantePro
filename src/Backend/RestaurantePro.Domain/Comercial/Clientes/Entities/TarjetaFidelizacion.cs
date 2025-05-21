@@ -102,7 +102,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
                 PuntosDisponibles = 0
             };
 
-            tarjeta.AddDomainEvent(new TarjetaFidelizacionCreada(tarjeta.Id, clienteId, codigo));
+            tarjeta.AddDomainEvent(new RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion.TarjetaFidelizacionCreada(tarjeta.Id, clienteId, codigo));
             
             // Validar invariantes al crear la tarjeta
             tarjeta.ValidarInvariantes();

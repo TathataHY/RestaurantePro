@@ -231,6 +231,35 @@ namespace RestaurantePro.Domain.Comercial.Services
             
             return $"TF-{randomPart}-{hashPart}";
         }
+
+        /// <summary>
+        /// Calcula el descuento basado en los puntos a utilizar
+        /// </summary>
+        /// <param name="puntos">Puntos a utilizar</param>
+        /// <param name="montoTotal">Monto total (opcional, solo para validaciones)</param>
+        /// <returns>Monto del descuento calculado</returns>
+        public decimal CalcularDescuentoPorPuntos(int puntos, decimal montoTotal)
+        {
+            if (puntos <= 0)
+                return 0;
+            
+            // Valor de cada punto en pesos (podría variar según lógica de negocio)
+            const decimal VALOR_PUNTO = 0.5m;
+            
+            // Calcular el descuento
+            decimal descuento = puntos * VALOR_PUNTO;
+            
+            // Verificar que el descuento no exceda límites si hay un monto total
+            if (montoTotal > 0)
+            {
+                // El descuento máximo es el 50% del monto total
+                decimal descuentoMaximo = montoTotal * 0.5m;
+                if (descuento > descuentoMaximo)
+                    descuento = descuentoMaximo;
+            }
+            
+            return descuento;
+        }
     }
 
     /// <summary>

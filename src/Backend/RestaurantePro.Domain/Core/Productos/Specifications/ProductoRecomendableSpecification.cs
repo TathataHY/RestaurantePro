@@ -1,3 +1,8 @@
+using System;
+using System.Linq.Expressions;
+using RestaurantePro.Domain.Core.SharedKernel.Specifications;
+using RestaurantePro.Domain.Core.Productos.Entities;
+
 namespace RestaurantePro.Domain.Core.Productos.Specifications
 {
     /// <summary>
@@ -11,10 +16,10 @@ namespace RestaurantePro.Domain.Core.Productos.Specifications
         public override Expression<Func<Producto, bool>> ToExpression()
         {
             return producto => 
-                producto.Disponible &&
-                producto.Stock > 0 &&
-                producto.Destacado &&
-                (producto.Categoria != null && producto.Categoria.Activa);
+                producto.EstaActivo &&
+                producto.Precio != null &&
+                producto.Precio.Valor > 0 &&
+                (!string.IsNullOrEmpty(producto.CategoriaNombre) && producto.CategoriaId != Guid.Empty);
         }
     }
 } 

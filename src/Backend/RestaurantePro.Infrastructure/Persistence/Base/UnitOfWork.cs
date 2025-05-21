@@ -19,12 +19,14 @@ namespace RestaurantePro.Infrastructure.Persistence.Base
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }
 
-        public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
+        public bool TieneTransaccionActiva => _transaction != null;
+
+        public async Task IniciarTransaccionAsync(CancellationToken cancellationToken = default)
         {
             _transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
         }
 
-        public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
+        public async Task ConfirmarTransaccionAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -40,7 +42,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Base
             }
         }
 
-        public async Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
+        public async Task RevertirTransaccionAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -56,28 +58,67 @@ namespace RestaurantePro.Infrastructure.Persistence.Base
             }
         }
 
-        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        public async Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default)
         {
             return await _context.SaveChangesAsync(cancellationToken);
         }
         
-        public async Task PublishDomainEventsAsync(CancellationToken cancellationToken = default)
+        public async Task<int> GuardarEntidadesAsync(CancellationToken cancellationToken = default)
+        {
+            // Aquí publicaríamos eventos de dominio antes de guardar los cambios
+            await PublicarEventosDominioAsync(cancellationToken);
+            return await _context.SaveChangesAsync(cancellationToken);
+        }
+        
+        public async Task EjecutarEnTransaccionAsync(Func<Task> accion, CancellationToken cancellationToken = default)
+        {
+            if (TieneTransaccionActiva)
+            {
+                await accion();
+                return;
+            }
+            
+            await IniciarTransaccionAsync(cancellationToken);
+            try
+            {
+                await accion();
+                await ConfirmarTransaccionAsync(cancellationToken);
+            }
+            catch
+            {
+                await RevertirTransaccionAsync(cancellationToken);
+                throw;
+            }
+        }
+        
+        public async Task<TResultado> EjecutarEnTransaccionAsync<TResultado>(Func<Task<TResultado>> funcion, CancellationToken cancellationToken = default)
+        {
+            if (TieneTransaccionActiva)
+            {
+                return await funcion();
+            }
+            
+            await IniciarTransaccionAsync(cancellationToken);
+            try
+            {
+                var resultado = await funcion();
+                await ConfirmarTransaccionAsync(cancellationToken);
+                return resultado;
+            }
+            catch
+            {
+                await RevertirTransaccionAsync(cancellationToken);
+                throw;
+            }
+        }
+        
+        private async Task PublicarEventosDominioAsync(CancellationToken cancellationToken = default)
         {
             // Aquí implementaremos la publicación de eventos de dominio
             // Por ahora dejamos una implementación vacía
             await Task.CompletedTask;
         }
         
-        public async Task<bool> HasPendingChangesAsync(CancellationToken cancellationToken = default)
-        {
-            return _context.ChangeTracker.HasChanges();
-        }
-        
-        public async Task<bool> HasActiveTransactionAsync(CancellationToken cancellationToken = default)
-        {
-            return _transaction != null;
-        }
-
         public void Dispose()
         {
             Dispose(true);
