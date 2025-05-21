@@ -9,9 +9,10 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces
         /// Obtiene un proveedor por su ID
         /// </summary>
         /// <param name="id">ID del proveedor</param>
+        /// <param name="incluirContactos">Indica si se deben incluir los contactos del proveedor</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Proveedor encontrado o null si no existe</returns>
-        Task<Proveedor> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<Proveedor?> ObtenerPorIdAsync(Guid id, bool incluirContactos = true, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene un proveedor por su nombre
@@ -19,48 +20,88 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces
         /// <param name="nombre">Nombre del proveedor</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Proveedor encontrado o null si no existe</returns>
-        Task<Proveedor> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default);
+        Task<Proveedor?> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene proveedores por RFC
+        /// </summary>
+        /// <param name="rfc">RFC del proveedor</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de proveedores que coinciden con el RFC</returns>
+        Task<IEnumerable<Proveedor>> ObtenerPorRFCAsync(string rfc, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene todos los proveedores
         /// </summary>
+        /// <param name="incluirContactos">Indica si se deben incluir los contactos de los proveedores</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores</returns>
-        Task<IEnumerable<Proveedor>> ObtenerTodosAsync(CancellationToken cancellationToken = default);
+        Task<IEnumerable<Proveedor>> ObtenerTodosAsync(bool incluirContactos = false, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene proveedores activos
         /// </summary>
+        /// <param name="incluirContactos">Indica si se deben incluir los contactos de los proveedores</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores activos</returns>
-        Task<IEnumerable<Proveedor>> ObtenerActivosAsync(CancellationToken cancellationToken = default);
+        Task<IEnumerable<Proveedor>> ObtenerActivosAsync(bool incluirContactos = false, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Agrega un nuevo proveedor
+        /// Obtiene proveedores por ciudad o región
         /// </summary>
-        /// <param name="proveedor">Proveedor a agregar</param>
+        /// <param name="ciudad">Ciudad o región</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        Task AgregarAsync(Proveedor proveedor, CancellationToken cancellationToken = default);
+        /// <returns>Lista de proveedores de la ciudad o región especificada</returns>
+        Task<IEnumerable<Proveedor>> ObtenerPorCiudadAsync(string ciudad, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Actualiza un proveedor existente
+        /// Obtiene proveedores que proveen un ingrediente específico
         /// </summary>
-        /// <param name="proveedor">Proveedor a actualizar</param>
+        /// <param name="ingredienteId">ID del ingrediente</param>
+        /// <param name="soloActivos">Indica si se deben obtener solo proveedores activos</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        Task ActualizarAsync(Proveedor proveedor, CancellationToken cancellationToken = default);
+        /// <returns>Lista de proveedores que ofrecen el ingrediente</returns>
+        Task<IEnumerable<Proveedor>> ObtenerPorIngredienteAsync(Guid ingredienteId, bool soloActivos = true, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Elimina un proveedor
+        /// Obtiene un contacto de proveedor por su ID
         /// </summary>
-        /// <param name="id">ID del proveedor a eliminar</param>
+        /// <param name="contactoId">ID del contacto</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        Task EliminarAsync(Guid id, CancellationToken cancellationToken = default);
+        /// <returns>Contacto encontrado o null si no existe</returns>
+        Task<ContactoProveedor?> ObtenerContactoPorIdAsync(Guid contactoId, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Guarda los cambios en la base de datos
+        /// Obtiene contactos de un proveedor
+        /// </summary>
+        /// <param name="proveedorId">ID del proveedor</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de contactos del proveedor</returns>
+        Task<IEnumerable<ContactoProveedor>> ObtenerContactosPorProveedorAsync(Guid proveedorId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Busca proveedores por término (nombre, ciudad, email, etc.)
+        /// </summary>
+        /// <param name="termino">Término de búsqueda</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de proveedores que coinciden con el término</returns>
+        Task<IEnumerable<Proveedor>> BuscarAsync(string termino, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene proveedores con paginación
+        /// </summary>
+        /// <param name="pagina">Número de página (base 0)</param>
+        /// <param name="elementosPorPagina">Elementos por página</param>
+        /// <param name="incluirContactos">Indica si se deben incluir los contactos de los proveedores</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tupla con proveedores y total de elementos</returns>
+        Task<(IEnumerable<Proveedor> Proveedores, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, bool incluirContactos = false, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Guarda los cambios y publica eventos de dominio
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Número de entidades afectadas</returns>
+        /// <returns>Número de entidades modificadas</returns>
         Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
     }
 } 

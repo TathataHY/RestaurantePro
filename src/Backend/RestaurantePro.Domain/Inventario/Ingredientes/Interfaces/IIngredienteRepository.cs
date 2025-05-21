@@ -8,53 +8,80 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
         /// <summary>
         /// Obtiene un ingrediente por su ID
         /// </summary>
-        /// <param name="id">ID del ingrediente a buscar</param>
+        /// <param name="id">ID del ingrediente</param>
+        /// <param name="incluirMovimientos">Indica si se deben incluir los movimientos del ingrediente</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>El ingrediente si existe, null en caso contrario</returns>
-        Task<Ingrediente> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+        /// <returns>Ingrediente encontrado o null si no existe</returns>
+        Task<Ingrediente?> ObtenerPorIdAsync(Guid id, bool incluirMovimientos = false, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Obtiene un ingrediente por su nombre
+        /// Obtiene ingredientes por nombre (búsqueda parcial)
         /// </summary>
-        /// <param name="nombre">Nombre del ingrediente a buscar</param>
-        /// <returns>El ingrediente si existe, null en caso contrario</returns>
-        Task<Ingrediente> ObtenerPorNombreAsync(string nombre);
+        /// <param name="nombre">Nombre completo o parcial</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de ingredientes que coinciden con el criterio</returns>
+        Task<IEnumerable<Ingrediente>> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Obtiene todos los ingredientes activos
-        /// </summary>
-        /// <returns>Lista de ingredientes activos</returns>
-        Task<List<Ingrediente>> ObtenerActivosAsync();
-        
-        /// <summary>
-        /// Obtiene los ingredientes que tienen stock por debajo de su mínimo
+        /// Obtiene ingredientes con stock por debajo del mínimo
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de ingredientes con stock bajo</returns>
-        Task<List<Ingrediente>> ObtenerConStockBajoAsync(CancellationToken cancellationToken = default);
+        Task<IEnumerable<Ingrediente>> ObtenerConStockBajoAsync(CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Busca ingredientes por unidad de medida
+        /// Obtiene ingredientes por nivel de rotación
         /// </summary>
-        /// <param name="unidadMedida">Unidad de medida a buscar</param>
+        /// <param name="rotacion">Nivel de rotación</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Lista de ingredientes que coinciden con la unidad de medida</returns>
-        Task<IEnumerable<Ingrediente>> BuscarPorUnidadMedidaAsync(RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidadMedida, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Obtiene ingredientes utilizados en un producto
-        /// </summary>
-        /// <param name="productoId">ID del producto</param>
-        /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Lista de ingredientes utilizados en el producto</returns>
-        Task<IEnumerable<Ingrediente>> ObtenerIngredientesPorProductoAsync(Guid productoId, CancellationToken cancellationToken = default);
+        /// <returns>Lista de ingredientes con el nivel de rotación especificado</returns>
+        Task<IEnumerable<Ingrediente>> ObtenerPorRotacionAsync(RotacionIngrediente rotacion, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Actualiza un ingrediente existente
+        /// Obtiene ingredientes por temporada
         /// </summary>
-        /// <param name="ingrediente">Ingrediente a actualizar</param>
+        /// <param name="temporada">Temporada</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Tarea asíncrona</returns>
-        Task ActualizarAsync(Ingrediente ingrediente, CancellationToken cancellationToken = default);
+        /// <returns>Lista de ingredientes de la temporada especificada</returns>
+        Task<IEnumerable<Ingrediente>> ObtenerPorTemporadaAsync(TemporadaIngrediente temporada, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Guarda los cambios y publica eventos de dominio
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Número de entidades modificadas</returns>
+        Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene ingredientes activos o inactivos
+        /// </summary>
+        /// <param name="activos">Indica si se deben obtener ingredientes activos o inactivos</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de ingredientes según el criterio</returns>
+        Task<IEnumerable<Ingrediente>> ObtenerPorEstadoActivoAsync(bool activos, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene ingredientes que provee un determinado proveedor
+        /// </summary>
+        /// <param name="proveedorId">ID del proveedor</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de ingredientes provistos por el proveedor</returns>
+        Task<IEnumerable<Ingrediente>> ObtenerPorProveedorAsync(Guid proveedorId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene ingredientes con paginación
+        /// </summary>
+        /// <param name="pagina">Número de página (base 0)</param>
+        /// <param name="elementosPorPagina">Elementos por página</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tupla con ingredientes y total de elementos</returns>
+        Task<(IEnumerable<Ingrediente> Ingredientes, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene ingredientes bloqueados por control de calidad
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de ingredientes bloqueados</returns>
+        Task<IEnumerable<Ingrediente>> ObtenerBloqueadosPorCalidadAsync(CancellationToken cancellationToken = default);
     }
 }

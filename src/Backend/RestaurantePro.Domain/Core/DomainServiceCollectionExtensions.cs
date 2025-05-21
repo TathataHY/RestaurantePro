@@ -24,6 +24,12 @@ namespace RestaurantePro.Domain.Core
             services.AddTransient<IProductoRecomendadoPolicy, ProductoRecomendadoPolicy>();
             services.AddTransient<IVisibilidadCategoriasPolicy, VisibilidadCategoriasPolicy>();
             
+            // Registrar interfaces de fachada para la capa de aplicación
+            services.AddScoped<Comercial.Services.IComercialServiceFacade, Comercial.Services.ComercialServiceFacade>();
+            services.AddScoped<Operaciones.Services.IOperacionesServiceFacade, Operaciones.Services.OperacionesServiceFacade>();
+            services.AddScoped<Inventario.Services.IInventarioServiceFacade, Inventario.Services.InventarioServiceFacade>();
+            services.AddScoped<Proveedores.Services.IProveedoresServiceFacade, Proveedores.Services.ProveedoresServiceFacade>();
+            
             return services;
         }
         
@@ -45,6 +51,9 @@ namespace RestaurantePro.Domain.Core
             services.AddTransient<IStockBajoPolicy, StockBajoPolicy>();
             services.AddTransient<IProductoRecomendadoPolicy, ProductoRecomendadoPolicy>();
             services.AddTransient<IVisibilidadCategoriasPolicy, VisibilidadCategoriasPolicy>();
+            
+            // Registrar mocks de interfaces de fachada para pruebas
+            // Aquí se pueden usar implementaciones simuladas para pruebas
             
             return services;
         }

@@ -1,65 +1,98 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
 {
-    public class ClienteRepository : IClienteRepository
+    public class ClienteRepository : Repository<Cliente>, IClienteRepository
     {
-        private readonly RestauranteProDbContext _context;
-
-        public ClienteRepository(RestauranteProDbContext context)
+        public ClienteRepository(RestauranteProDbContext context) : base(context)
         {
-            _context = context;
         }
 
-        public async Task<Cliente> GetByIdAsync(int id)
+        public async Task<Cliente?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _context.Clientes.FindAsync(id);
+            return await _context.Set<Cliente>()
+                .FindAsync(new object[] { id }, cancellationToken);
         }
 
-        public async Task<IEnumerable<Cliente>> GetAllAsync()
+        public async Task<Cliente?> ObtenerPorEmailAsync(string email, CancellationToken cancellationToken = default)
         {
-            return await _context.Clientes.ToListAsync();
+            return await _context.Set<Cliente>()
+                .FirstOrDefaultAsync(c => c.Email == email, cancellationToken);
         }
 
-        public async Task<IEnumerable<Cliente>> GetActivosAsync()
+        public async Task<IEnumerable<Cliente>> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default)
         {
-            return await _context.Clientes
-                .Where(c => c.Activo)
-                .ToListAsync();
+            return await _context.Set<Cliente>()
+                .Where(c => c.Nombre.NombreCompleto.Contains(nombre))
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task<Cliente> GetByEmailAsync(string email)
+        public async Task<IEnumerable<Cliente>> ObtenerPorSegmentoAsync(SegmentoCliente segmento, CancellationToken cancellationToken = default)
         {
-            return await _context.Clientes
-                .FirstOrDefaultAsync(c => c.Email == email);
+            return await _context.Set<Cliente>()
+                .Where(c => c.Segmento == segmento)
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task<Cliente> AddAsync(Cliente cliente)
+        public async Task<IEnumerable<Cliente>> ObtenerPorEstadoActivoAsync(bool activos, CancellationToken cancellationToken = default)
         {
-            await _context.Clientes.AddAsync(cliente);
-            return cliente;
+            return await _context.Set<Cliente>()
+                .Where(c => c.EstaActivo == activos)
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task UpdateAsync(Cliente cliente)
+        public async Task<IEnumerable<Cliente>> ObtenerConTarjetaFidelizacionAsync(CancellationToken cancellationToken = default)
         {
-            _context.Entry(cliente).State = EntityState.Modified;
+            return await _context.Set<Cliente>()
+                .Where(c => c.TarjetaFidelizacionPrincipalId != null)
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task<IEnumerable<Cliente>> ObtenerClientesMasFrecuentesAsync(int cantidad, CancellationToken cancellationToken = default)
         {
-            var cliente = await _context.Clientes.FindAsync(id);
-            if (cliente != null)
-            {
-                // Soft delete - solo marcamos como inactivo
-                cliente.Activo = false;
-                _context.Entry(cliente).State = EntityState.Modified;
-            }
+            return await _context.Set<Cliente>()
+                .Where(c => c.EstaActivo)
+                .OrderByDescending(c => c.CantidadVisitas)
+                .Take(cantidad)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<Cliente>> ObtenerPorPuntosMinimosAsync(int puntosMinimos, CancellationToken cancellationToken = default)
+        {
+            return await _context.Set<Cliente>()
+                .Where(c => c.PuntosAcumulados >= puntosMinimos)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<(IEnumerable<Cliente> Clientes, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default)
+        {
+            var query = _context.Set<Cliente>().AsQueryable();
+            
+            var total = await query.CountAsync(cancellationToken);
+            
+            var clientes = await query
+                .Skip(pagina * elementosPorPagina)
+                .Take(elementosPorPagina)
+                .ToListAsync(cancellationToken);
+                
+            return (clientes, total);
+        }
+
+        public async Task<IEnumerable<Cliente>> ObtenerPorRangoFechasRegistroAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default)
+        {
+            return await _context.Set<Cliente>()
+                .Where(c => c.FechaCreacion >= fechaInicio && c.FechaCreacion <= fechaFin)
+                .ToListAsync(cancellationToken);
         }
     }
 } 

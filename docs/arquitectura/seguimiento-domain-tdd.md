@@ -210,7 +210,7 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | 2024-05-10 | ValueObject PhoneNumber con validaciones Chile | Diseño → Pruebas → Implementación → Refactor |
 | 2024-05-15 | Corrección Mocks con Expresiones Lambda | Pruebas → Implementación → Refactor |
 | 2024-05-20 | Aplicación #nullable context en pruebas | Pruebas → Implementación → Refactor |
-| 2024-05-25 | Implementación de Personalización en Ítems | Diseño → Implementación → (Pendiente Pruebas) |
+| 2024-05-25 | Implementación de Personalización en Ítems | Diseño → Pruebas → Implementación → Refactor |
 
 ## Decisiones de Diseño
 
@@ -432,8 +432,8 @@ Estas correcciones garantizan que el servicio de notificaciones de inventario fu
    - ✅ Mejorar validaciones en ValueObjects para datos como Email, Teléfono, etc.
    
 2. **Mejora de pruebas unitarias**:
-   - Ajustar mocks con problemas de expresiones lambda
-   - Aplicar #nullable context para eliminar advertencias
+   - ✅ Ajustar mocks con problemas de expresiones lambda
+   - ✅ Aplicar #nullable context para eliminar advertencias
    
 3. **Preparación para integración con otras capas**:
    - Definir contratos claros entre Dominio y Aplicación
@@ -582,6 +582,12 @@ Siguiendo los principios de Domain-Driven Design, se han implementado las siguie
    - Recálculo automático del precio al agregar personalizaciones con costo adicional
    - Métodos para calcular el costo total de las personalizaciones
 
+5. **Pruebas unitarias exhaustivas**:
+   - Implementación de pruebas para todas las acciones de personalización (agregar, quitar, sustituir)
+   - Verificación del impacto de personalizaciones en el precio
+   - Pruebas de validación de estados y comportamientos ante distintos escenarios
+   - Cobertura del 100% para las nuevas funcionalidades
+
 Esta implementación aporta varias ventajas:
 
 - **Experiencia del cliente mejorada** al permitir personalizar productos
@@ -591,6 +597,114 @@ Esta implementación aporta varias ventajas:
 
 ### Próximos pasos
 
-1. Implementar pruebas unitarias para las nuevas funcionalidades
-2. Integrar con la capa de Aplicación para exponer estas funcionalidades en los casos de uso
-3. Actualizar la UI para permitir agregar personalizaciones a los productos
+1. Integrar con la capa de Aplicación para exponer estas funcionalidades en los casos de uso
+2. Actualizar la UI para permitir agregar personalizaciones a los productos
+3. Implementar lógica de negocio adicional para sugerencias de personalizaciones populares
+
+## Próximos pasos prioritarios (Julio 2024)
+
+1. **Iniciar desarrollo de capa de Infraestructura**:
+   - ✅ Preparar interfaces de repositorio para facilitar implementación con Entity Framework Core
+   - ✅ Implementar clases base de repositorios y UnitOfWork para Entity Framework Core
+   - ⏳ Implementar repositorios específicos para cada agregado principal
+   - ⏳ Configurar inyección de dependencias con autofac
+   - ⏳ Implementar servicios de persistencia de eventos de dominio
+   
+2. **Desarrollar capa de Aplicación**:
+   - ✅ Definir contratos claros entre Dominio y Aplicación mediante interfaces de fachada
+   - ⏳ Implementar primeros DTOs para comandas y clientes
+   - ⏳ Desarrollar CommandHandlers y QueryHandlers usando CQRS
+   - ⏳ Establecer validaciones a nivel de aplicación con FluentValidation
+   
+3. **Mejorar documentación técnica**:
+   - ⏳ Crear guías de uso para los principales componentes del dominio
+   - ⏳ Documentar flujos de integración entre contextos
+   - ⏳ Desarrollar diagramas de secuencia para los principales casos de uso
+   
+4. **Implementar pruebas de integración**:
+   - ⏳ Desarrollar pruebas de integración para los repositorios
+   - ⏳ Implementar pruebas de integración para los servicios de aplicación
+   - ⏳ Configurar base de datos en memoria para pruebas
+
+## Preparación del Dominio para integración (Julio 2024)
+
+Como parte de la preparación para integrar el dominio con otras capas, se ha realizado una mejora sustancial de las interfaces de repositorio y se han definido contratos claros para la comunicación entre las capas de Dominio y Aplicación:
+
+### 1. Mejora de interfaces de repositorio
+
+Se han refinado las interfaces de repositorio para todos los agregados principales, agregando métodos específicos que facilitarán su implementación con Entity Framework Core:
+
+- Parámetros opcionales para incluir entidades relacionadas (eager loading)
+- Métodos para paginación con conteo total
+- Consultas optimizadas por criterios comunes
+- Soporte para consultas asíncronas con CancellationToken
+- Métodos para estadísticas y búsquedas avanzadas
+
+### 2. Contratos claros entre capas
+
+Se han definido interfaces de fachada para cada contexto del dominio que exponen las operaciones disponibles para la capa de aplicación:
+
+- Comercial: Gestión de clientes, fidelización y segmentación
+- Operaciones: Comandas, personalizaciones y reservaciones
+- Inventario: Gestión de ingredientes, movimientos y órdenes de compra
+- Proveedores: Gestión de proveedores y contactos
+
+Estas interfaces se encargan de orquestar operaciones complejas que involucran múltiples agregados, proporcionando un API claro y cohesivo a la capa de aplicación.
+
+### 3. Implementación de validaciones robustas
+
+Para garantizar la consistencia de datos al interactuar con el exterior:
+
+- Validación de parámetros en métodos de repositorio
+- Comprobaciones de datos en interfaces de fachada
+- Manejo adecuado de valores nulos mediante tipos anulables
+- Documentación completa mediante XML comments
+
+### 4. Soporte para transacciones distribuidas
+
+La interfaz IUnitOfWork ha sido mejorada para soportar:
+
+- Transacciones explícitas
+- Manejo de eventos transaccionales
+- Cancelación asíncrona
+- Commit/rollback con confirmación de cambios
+
+## Implementación de Repositorios Base con Entity Framework Core (Julio 2024)
+
+Como paso fundamental para la integración del dominio con la capa de infraestructura, se han implementado las clases base para los repositorios utilizando Entity Framework Core:
+
+### 1. Implementación de Repository<T>
+
+Se ha creado una implementación genérica del `IRepository<T>` que sirve como base para todos los repositorios específicos:
+
+- Soporte completo para operaciones CRUD asíncronas
+- Manejo de consultas paginadas
+- Implementación de métodos de búsqueda y filtrado
+- Soporte para operaciones en lote (batch)
+
+### 2. Mejora del UnitOfWork
+
+Se ha mejorado la implementación del patrón Unit of Work para soportar:
+
+- Transacciones explícitas
+- Publicación de eventos de dominio
+- Detección de cambios pendientes
+- Adecuado manejo de recursos con IDisposable
+
+### 3. Repositorios Específicos
+
+Se han comenzado a implementar los repositorios específicos para cada agregado raíz:
+
+- Repositorio de Ingredientes con soporte para consultas específicas del dominio
+- Repositorio de Clientes actualizado para la nueva estructura
+
+### 4. Configuración de Inyección de Dependencias
+
+Se ha implementado la configuración de inyección de dependencias para registrar:
+
+- El contexto de Entity Framework
+- El Unit of Work
+- El repositorio genérico
+- Los repositorios específicos
+
+Este trabajo establece las bases para implementar el resto de los repositorios específicos y permite comenzar a trabajar en la capa de aplicación con una infraestructura sólida para persistencia de datos.
