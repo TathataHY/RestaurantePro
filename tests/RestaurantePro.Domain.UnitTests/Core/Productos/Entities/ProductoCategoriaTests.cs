@@ -34,14 +34,14 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Entities
         [InlineData("")]
         [InlineData(null)]
         [InlineData("   ")]
-        public void Crear_ConNombreInvalido_DebeLanzarExcepcion(string nombreInvalido)
+        public void Crear_NombreInvalido_DebeLanzarExcepcion(string? nombreInvalido)
         {
             // Arrange
             var descripcion = "Descripción válida";
             var orden = 1;
 
             // Act & Assert
-            Action action = () => ProductoCategoria.Crear(nombreInvalido, descripcion, orden);
+            Action action = () => ProductoCategoria.Crear(nombreInvalido!, descripcion, orden);
             action.Should().Throw<InvalidOperationException>()
                 .WithMessage("*nombre*");
         }

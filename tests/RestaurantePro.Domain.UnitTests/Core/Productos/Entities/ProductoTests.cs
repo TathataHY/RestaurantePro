@@ -157,6 +157,23 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Entities
             action.Should().Throw<InvalidOperationException>()
                 .WithMessage("*categoría*");
         }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        [InlineData("   ")]
+        public void Crear_NombreInvalido_DebeLanzarExcepcion(string? nombreInvalido)
+        {
+            // Arrange
+            var categoriaId = Guid.NewGuid();
+            var precio = new PrecioProducto(100m);
+            var descripcion = "Descripción de prueba";
+
+            // Act & Assert
+            Action action = () => Producto.Crear(nombreInvalido!, descripcion, precio, categoriaId);
+            action.Should().Throw<InvalidOperationException>()
+                .WithMessage("*nombre*");
+        }
     }
 }
 

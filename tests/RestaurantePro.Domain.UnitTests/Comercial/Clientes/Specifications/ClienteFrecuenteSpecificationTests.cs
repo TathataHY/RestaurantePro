@@ -44,7 +44,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Specifications
             // Assert
             Assert.False(result);
         }
-
+        
         [Fact]
         public void IsSatisfiedBy_ConPocosONingunPunto_DebeRetornarFalse()
         {

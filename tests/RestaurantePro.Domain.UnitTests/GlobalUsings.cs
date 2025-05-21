@@ -1,4 +1,4 @@
-#nullable disable
+#nullable enable
 // Test Frameworks and tools
 global using Xunit;
 global using FluentAssertions;

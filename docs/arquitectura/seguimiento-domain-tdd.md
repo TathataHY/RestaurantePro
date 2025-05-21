@@ -157,7 +157,7 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 |-------|-------------|-----------|--------|
 | Invariantes en OrdenCompra | Reforzar las reglas de negocio que deben cumplirse en órdenes de compra | Alta | ✅ Completado |
 | Invariantes en Comanda | Mejorar validaciones para garantizar la integridad de las comandas | Media | ✅ Completado |
-| Validaciones en ValueObjects | Introducir validaciones más específicas para objetos como Email, Teléfono, etc. | Media | Pendiente |
+| Validaciones en ValueObjects | Introducir validaciones más específicas para objetos como Email, Teléfono, etc. | Media | ✅ Completado |
 
 ### 4. Patrón de especificación
 
@@ -176,8 +176,8 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 |-------|-------------|-----------|--------|
 | Corregir ServicioNotificacionesInventarioTests | Resolver errores de compilación en las pruebas | Alta | ✅ Completado |
 | Corregir ClientesFrecuentesPolicyTests | Corregir pruebas de segmentación de clientes y validar funcionamiento | Alta | ✅ Completado |
-| Ajustar mocks con problemas de expresiones | Modificar setup de pruebas con problemas de árboles de expresión | Alta | Pendiente |
-| Aplicar #nullable context | Aplicar contexto de nulabilidad en pruebas para eliminar advertencias | Media | Pendiente |
+| Ajustar mocks con problemas de expresiones | Modificar setup de pruebas con problemas de árboles de expresión | Alta | ✅ Completado |
+| Aplicar #nullable context | Aplicar contexto de nulabilidad en pruebas para eliminar advertencias | Media | ✅ Completado |
 
 ## Registro de ciclos TDD completados
 
@@ -206,6 +206,10 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | 2024-04-10 | DomainServiceCollectionExtensions | Diseño → Pruebas → Implementación |
 | 2024-04-15 | Corrección ClientesFrecuentesPolicyTests | Pruebas → Implementación → Refactor |
 | 2024-04-20 | Validaciones Robustas Comanda | Pruebas → Implementación → Refactor |
+| 2024-05-10 | ValueObject Email con validaciones Chile | Diseño → Pruebas → Implementación → Refactor |
+| 2024-05-10 | ValueObject PhoneNumber con validaciones Chile | Diseño → Pruebas → Implementación → Refactor |
+| 2024-05-15 | Corrección Mocks con Expresiones Lambda | Pruebas → Implementación → Refactor |
+| 2024-05-20 | Aplicación #nullable context en pruebas | Pruebas → Implementación → Refactor |
 
 ## Decisiones de Diseño
 
@@ -424,7 +428,7 @@ Estas correcciones garantizan que el servicio de notificaciones de inventario fu
 ## Próximos pasos prioritarios (Mayo 2024)
 
 1. **Validaciones de dominio robustas**:
-   - Mejorar validaciones en ValueObjects para datos como Email, Teléfono, etc.
+   - ✅ Mejorar validaciones en ValueObjects para datos como Email, Teléfono, etc.
    
 2. **Mejora de pruebas unitarias**:
    - Ajustar mocks con problemas de expresiones lambda
@@ -435,8 +439,28 @@ Estas correcciones garantizan que el servicio de notificaciones de inventario fu
    - Refinar interfaces de repositorio para facilitar implementación con EF Core
    
 4. **Documentación técnica**:
-   - Documentar patrones y decisiones de diseño implementadas
+   - ✅ Documentar patrones y decisiones de diseño implementadas
    - Crear guías de uso para los principales componentes del dominio
+
+## Próximos pasos prioritarios (Junio 2024)
+
+1. **Finalizar mejoras en pruebas unitarias**:
+   - ✅ Ajustar mocks con problemas de expresiones lambda
+   - ✅ Aplicar #nullable context para eliminar advertencias
+   
+2. **Preparación para integración con capa de Infraestructura**:
+   - Definir contratos claros entre Dominio e Infraestructura
+   - Refinar interfaces de repositorio para facilitar implementación con EF Core
+   - Diseñar mapeos entre entidades de dominio y modelos de EF Core
+   
+3. **Iniciar desarrollo de capa de Aplicación**:
+   - Implementar primeros DTOs para comandas y clientes
+   - Desarrollar servicios de aplicación básicos
+   - Establecer validaciones a nivel de aplicación
+   
+4. **Guías técnicas**:
+   - Crear guías de uso para los principales componentes del dominio
+   - Documentar flujos de integración entre contextos
 
 ## Implementación de Validaciones Robustas en Comanda
 
@@ -474,3 +498,51 @@ Como parte de la mejora continua de la capa de dominio, se han implementado vali
    - Implementación del evento `DescuentoFidelizacionAplicado` para auditoría
 
 Esta implementación robusta de validaciones asegura que los cambios de estado del agregado Comanda sean consistentes y que los datos se mantengan dentro de límites razonables establecidos por las reglas de negocio del restaurante.
+
+## Mejora de ValueObjects con validaciones específicas para Chile
+
+Como parte de la adaptación del sistema para su uso en Chile, se han implementado mejoras significativas en los ValueObjects que manejan datos de contacto y ubicación, incorporando validaciones específicas para el contexto chileno.
+
+### 1. Mejora del ValueObject Email
+
+Se ha reforzado el ValueObject `Email` con validaciones robustas y específicas para el mercado chileno:
+
+#### Funcionalidades implementadas:
+
+- **Validación RFC 5322 más restrictiva**: Se implementó una expresión regular más estricta que cumple con los estándares actuales y evita errores comunes.
+- **Detección de dominios chilenos**: Identificación automática de correos con dominio `.cl` y dominios específicos de instituciones chilenas.
+- **Validación de dominios prohibidos**: Lista de dominios temporales o desechables no permitidos para registro.
+- **Validación de longitudes**: Límites en la longitud total del email (254 caracteres), nombre de usuario (64) y dominio (253).
+- **Detección de patrones repetitivos**: Algoritmo que identifica patrones repetitivos que podrían indicar emails no válidos.
+- **Categorización de dominios**: Identificación de emails gubernamentales, educativos y empresariales.
+
+#### Métodos específicos:
+
+- `CreateChilean()`: Método factory específico que valida que el correo pertenezca a un dominio chileno.
+- `CreateEmpresarial()`: Valida que el correo pertenezca a un dominio empresarial (no gratuito).
+- `EsDominioChileno`: Propiedad que indica si el correo tiene un dominio chileno.
+- `EsDominioGubernamental`: Propiedad para identificar correos de organismos gubernamentales.
+- `EsDominioEducativo`: Propiedad para identificar correos de instituciones educativas.
+
+### 2. Mejora del ValueObject PhoneNumber
+
+Se ha mejorado significativamente el ValueObject `PhoneNumber` para adaptarlo al sistema telefónico chileno:
+
+#### Funcionalidades implementadas:
+
+- **Validación específica para Chile**: Expresiones regulares dedicadas para teléfonos móviles chilenos (+56 9 xxxx xxxx) y fijos (+56 2 xxxx xxxx).
+- **Catálogo de códigos de área**: Implementación de un diccionario de códigos de área por región de Chile.
+- **Normalización de formato**: Métodos para normalizar números a formato estándar chileno.
+- **Propiedades de clasificación**: Identificación automática de números móviles vs. fijos.
+- **Validación por región**: Capacidad de validar números de teléfono por región específica de Chile.
+
+#### Métodos específicos:
+
+- `CreateChilean()`: Método factory que valida específicamente números chilenos.
+- `CreateChileanForRegion()`: Valida que el número pertenezca a una región específica de Chile.
+- `EsMovilChileno` y `EsFijoChileno`: Propiedades para identificar el tipo de número.
+- `RegionTelefono`: Propiedad que intenta determinar la región de Chile basada en el código de área.
+- `ToFormattedString()`: Formatea el número según las convenciones chilenas.
+- `ToDialFormat()`: Formatea el número para ser marcado dentro de Chile.
+
+Estas mejoras aseguran la correcta validación y manejo de información de contacto específica para Chile, permitiendo una mejor integración con los sistemas locales y facilitando la categorización y segmentación de clientes según su ubicación geográfica dentro del país.

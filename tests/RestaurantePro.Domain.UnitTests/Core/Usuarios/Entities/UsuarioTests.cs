@@ -39,13 +39,13 @@ namespace RestaurantePro.Domain.UnitTests.Core.Usuarios.Entities
         [InlineData("", "Usuario Uno", "usuario@ejemplo.com")]
         [InlineData(null, "Usuario Uno", "usuario@ejemplo.com")]
         [InlineData("   ", "Usuario Uno", "usuario@ejemplo.com")]
-        public void Crear_ConNombreUsuarioInvalido_DebeLanzarExcepcion(string nombreUsuarioInvalido, string nombreCompleto, string email)
+        public void Crear_ConNombreUsuarioInvalido_DebeLanzarExcepcion(string? nombreUsuarioInvalido, string nombreCompleto, string email)
         {
             // Arrange
             var rol = RolUsuario.Cajero;
 
             // Act & Assert
-            Action action = () => Usuario.Crear(nombreUsuarioInvalido, nombreCompleto, email, rol);
+            Action action = () => Usuario.Crear(nombreUsuarioInvalido!, nombreCompleto, email, rol);
             action.Should().Throw<InvalidOperationException>()
                 .WithMessage("*usuario*");
         }
@@ -54,13 +54,13 @@ namespace RestaurantePro.Domain.UnitTests.Core.Usuarios.Entities
         [InlineData("usuario1", "Usuario Uno", "")]
         [InlineData("usuario1", "Usuario Uno", null)]
         [InlineData("usuario1", "Usuario Uno", "   ")]
-        public void Crear_ConEmailInvalido_DebeLanzarExcepcion(string nombreUsuario, string nombreCompleto, string emailInvalido)
+        public void Crear_ConEmailInvalido_DebeLanzarExcepcion(string nombreUsuario, string nombreCompleto, string? emailInvalido)
         {
             // Arrange
             var rol = RolUsuario.Cajero;
 
             // Act & Assert
-            Action action = () => Usuario.Crear(nombreUsuario, nombreCompleto, emailInvalido, rol);
+            Action action = () => Usuario.Crear(nombreUsuario, nombreCompleto, emailInvalido!, rol);
             action.Should().Throw<InvalidOperationException>()
                 .WithMessage("*email*");
         }
@@ -105,13 +105,13 @@ namespace RestaurantePro.Domain.UnitTests.Core.Usuarios.Entities
         [InlineData("")]
         [InlineData(null)]
         [InlineData("   ")]
-        public void AsociarIdentity_ConIdInvalido_DebeLanzarExcepcion(string identityIdInvalido)
+        public void AsociarIdentity_ConIdInvalido_DebeLanzarExcepcion(string? identityIdInvalido)
         {
             // Arrange
             var usuario = CrearUsuarioPrueba();
 
             // Act & Assert
-            Action action = () => usuario.AsociarIdentity(identityIdInvalido);
+            Action action = () => usuario.AsociarIdentity(identityIdInvalido!);
             action.Should().Throw<InvalidOperationException>()
                 .WithMessage("*ID de Identity*");
         }
