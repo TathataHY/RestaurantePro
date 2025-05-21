@@ -210,6 +210,7 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | 2024-05-10 | ValueObject PhoneNumber con validaciones Chile | Diseño → Pruebas → Implementación → Refactor |
 | 2024-05-15 | Corrección Mocks con Expresiones Lambda | Pruebas → Implementación → Refactor |
 | 2024-05-20 | Aplicación #nullable context en pruebas | Pruebas → Implementación → Refactor |
+| 2024-05-25 | Implementación de Personalización en Ítems | Diseño → Implementación → (Pendiente Pruebas) |
 
 ## Decisiones de Diseño
 
@@ -546,3 +547,50 @@ Se ha mejorado significativamente el ValueObject `PhoneNumber` para adaptarlo al
 - `ToDialFormat()`: Formatea el número para ser marcado dentro de Chile.
 
 Estas mejoras aseguran la correcta validación y manejo de información de contacto específica para Chile, permitiendo una mejor integración con los sistemas locales y facilitando la categorización y segmentación de clientes según su ubicación geográfica dentro del país.
+
+## Implementación de Personalización en Ítems de Comanda
+
+Como parte de la evolución del sistema, se ha implementado la funcionalidad de personalización de ítems en comandas, que permite a los clientes modificar los platos según sus preferencias personales.
+
+### Análisis del sistema legacy
+
+En el análisis del código legacy, se identificó una funcionalidad crítica que aún no había sido implementada en la nueva arquitectura: la capacidad de personalizar los productos en una comanda. Esta funcionalidad permite:
+
+1. **Agregar** ingredientes extra a un producto (ej. "extra queso")
+2. **Quitar** ingredientes de un producto (ej. "sin cebolla")
+3. **Sustituir** un ingrediente por otro (ej. "sustituir papas por ensalada")
+
+### Implementación DDD
+
+Siguiendo los principios de Domain-Driven Design, se han implementado las siguientes mejoras:
+
+1. **Value Object para Personalizaciones**:
+   - Creación de `PersonalizacionItem` como objeto de valor inmutable
+   - Métodos factory específicos para cada tipo de personalización
+   - Validaciones de dominio para garantizar integridad
+
+2. **Ampliación de la entidad ItemComanda**:
+   - Adición de colección privada de personalizaciones
+   - Métodos específicos para agregar/quitar personalizaciones
+   - Encapsulación de la lógica de modificación de precio
+
+3. **Eventos de Dominio**:
+   - Implementación de `PersonalizacionAgregadaAItem` para notificar cuando se agrega una personalización
+   - Implementación de `PersonalizacionEliminadaDeItem` para notificar cuando se elimina una personalización
+
+4. **Impacto en el Precio**:
+   - Recálculo automático del precio al agregar personalizaciones con costo adicional
+   - Métodos para calcular el costo total de las personalizaciones
+
+Esta implementación aporta varias ventajas:
+
+- **Experiencia del cliente mejorada** al permitir personalizar productos
+- **Gestión precisa del inventario** al registrar modificaciones a los ingredientes
+- **Cálculo correcto de precios** incluyendo extras con costo adicional
+- **Información detallada para cocina** sobre cómo preparar cada plato
+
+### Próximos pasos
+
+1. Implementar pruebas unitarias para las nuevas funcionalidades
+2. Integrar con la capa de Aplicación para exponer estas funcionalidades en los casos de uso
+3. Actualizar la UI para permitir agregar personalizaciones a los productos

@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Enums
+namespace RestaurantePro.Domain.Operaciones.Comandas.Enums
 {
     /// <summary>
     /// Tipos de acciones para personalizar un producto

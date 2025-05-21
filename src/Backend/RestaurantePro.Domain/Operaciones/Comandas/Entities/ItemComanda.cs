@@ -65,6 +65,16 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// </summary>
         public string MotivoCancelacion { get; private set; }
 
+        /// <summary>
+        /// Personalizaciones aplicadas a este ítem
+        /// </summary>
+        private readonly List<PersonalizacionItem> _personalizaciones = new List<PersonalizacionItem>();
+
+        /// <summary>
+        /// Personalizaciones aplicadas a este ítem (colección de solo lectura)
+        /// </summary>
+        public IReadOnlyCollection<PersonalizacionItem> Personalizaciones => _personalizaciones.AsReadOnly();
+
         // Constructor privado para EF Core
         private ItemComanda() { }
 
@@ -235,6 +245,149 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         public virtual int ObtenerCantidad()
         {
             return Cantidad;
+        }
+
+        /// <summary>
+        /// Agrega una personalización para agregar mayor cantidad de un ingrediente
+        /// </summary>
+        /// <param name="ingredienteId">ID del ingrediente a agregar</param>
+        /// <param name="nombreIngrediente">Nombre del ingrediente</param>
+        /// <param name="cantidad">Cantidad a agregar</param>
+        /// <param name="precioAdicional">Precio adicional (si aplica)</param>
+        /// <returns>El ítem actualizado para chaining</returns>
+        public ItemComanda AgregarPersonalizacionExtra(
+            Guid ingredienteId, 
+            string nombreIngrediente, 
+            decimal cantidad, 
+            decimal precioAdicional = 0)
+        {
+            if (Estado != EstadoItemComanda.Pendiente)
+                throw new InvalidOperationException($"No se pueden agregar personalizaciones a un ítem con estado {Estado}");
+
+            var personalizacion = PersonalizacionItem.CrearAgregar(
+                ingredienteId,
+                nombreIngrediente,
+                cantidad,
+                precioAdicional);
+
+            _personalizaciones.Add(personalizacion);
+
+            // Si tiene precio adicional, actualizar el precio del ítem
+            if (personalizacion.AfectaPrecio())
+            {
+                PrecioUnitario += precioAdicional;
+                RecalcularSubtotal();
+            }
+
+            AddDomainEvent(new PersonalizacionAgregadaAItem(Id, ComandaId, PersonalizacionItemDto.FromPersonalizacionItem(personalizacion)));
+
+            return this;
+        }
+
+        /// <summary>
+        /// Agrega una personalización para quitar un ingrediente
+        /// </summary>
+        /// <param name="ingredienteId">ID del ingrediente a quitar</param>
+        /// <param name="nombreIngrediente">Nombre del ingrediente</param>
+        /// <returns>El ítem actualizado para chaining</returns>
+        public ItemComanda AgregarPersonalizacionQuitar(
+            Guid ingredienteId, 
+            string nombreIngrediente)
+        {
+            if (Estado != EstadoItemComanda.Pendiente)
+                throw new InvalidOperationException($"No se pueden agregar personalizaciones a un ítem con estado {Estado}");
+
+            var personalizacion = PersonalizacionItem.CrearQuitar(ingredienteId, nombreIngrediente);
+            _personalizaciones.Add(personalizacion);
+
+            AddDomainEvent(new PersonalizacionAgregadaAItem(Id, ComandaId, PersonalizacionItemDto.FromPersonalizacionItem(personalizacion)));
+
+            return this;
+        }
+
+        /// <summary>
+        /// Agrega una personalización para sustituir un ingrediente por otro
+        /// </summary>
+        /// <param name="ingredienteId">ID del ingrediente a sustituir</param>
+        /// <param name="nombreIngrediente">Nombre del ingrediente a sustituir</param>
+        /// <param name="ingredienteSustitucionId">ID del ingrediente de sustitución</param>
+        /// <param name="nombreIngredienteSustitucion">Nombre del ingrediente de sustitución</param>
+        /// <param name="cantidad">Cantidad del ingrediente de sustitución</param>
+        /// <param name="precioAdicional">Precio adicional por la sustitución (si aplica)</param>
+        /// <returns>El ítem actualizado para chaining</returns>
+        public ItemComanda AgregarPersonalizacionSustituir(
+            Guid ingredienteId, 
+            string nombreIngrediente,
+            Guid ingredienteSustitucionId,
+            string nombreIngredienteSustitucion,
+            decimal cantidad = 1,
+            decimal precioAdicional = 0)
+        {
+            if (Estado != EstadoItemComanda.Pendiente)
+                throw new InvalidOperationException($"No se pueden agregar personalizaciones a un ítem con estado {Estado}");
+
+            var personalizacion = PersonalizacionItem.CrearSustituir(
+                ingredienteId,
+                nombreIngrediente,
+                ingredienteSustitucionId,
+                nombreIngredienteSustitucion,
+                cantidad,
+                precioAdicional);
+
+            _personalizaciones.Add(personalizacion);
+
+            // Si tiene precio adicional, actualizar el precio del ítem
+            if (personalizacion.AfectaPrecio())
+            {
+                PrecioUnitario += precioAdicional;
+                RecalcularSubtotal();
+            }
+
+            AddDomainEvent(new PersonalizacionAgregadaAItem(Id, ComandaId, PersonalizacionItemDto.FromPersonalizacionItem(personalizacion)));
+
+            return this;
+        }
+
+        /// <summary>
+        /// Elimina una personalización específica
+        /// </summary>
+        /// <param name="personalizacion">Personalización a eliminar</param>
+        /// <returns>El ítem actualizado para chaining</returns>
+        public ItemComanda EliminarPersonalizacion(PersonalizacionItem personalizacion)
+        {
+            if (Estado != EstadoItemComanda.Pendiente)
+                throw new InvalidOperationException($"No se pueden eliminar personalizaciones de un ítem con estado {Estado}");
+
+            if (_personalizaciones.Contains(personalizacion))
+            {
+                _personalizaciones.Remove(personalizacion);
+
+                // Si tenía precio adicional, actualizar el precio del ítem
+                if (personalizacion.AfectaPrecio())
+                {
+                    PrecioUnitario -= personalizacion.PrecioAdicional;
+                    RecalcularSubtotal();
+                }
+
+                AddDomainEvent(new PersonalizacionEliminadaDeItem(Id, ComandaId, PersonalizacionItemDto.FromPersonalizacionItem(personalizacion)));
+            }
+
+            return this;
+        }
+
+        /// <summary>
+        /// Verifica si el ítem tiene personalizaciones
+        /// </summary>
+        /// <returns>True si tiene al menos una personalización, false en caso contrario</returns>
+        public bool TienePersonalizaciones() => _personalizaciones.Any();
+
+        /// <summary>
+        /// Calcula el precio adicional total por personalizaciones
+        /// </summary>
+        /// <returns>Suma de precios adicionales de todas las personalizaciones</returns>
+        public decimal CalcularPrecioAdicionalPersonalizaciones()
+        {
+            return _personalizaciones.Sum(p => p.PrecioAdicional);
         }
     }
 }
