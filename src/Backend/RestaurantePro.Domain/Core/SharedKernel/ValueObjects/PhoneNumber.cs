@@ -19,6 +19,27 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         private static readonly Regex ChileanFixedRegex = new Regex(
             @"^(\+?56)?[\s\-]?[2-9][\s\-]?\d{4}[\s\-]?\d{4}$",
             RegexOptions.Compiled);
+            
+        // Códigos de área para cada región de Chile
+        private static readonly Dictionary<RegionChile, List<string>> CodigosAreaPorRegion = new Dictionary<RegionChile, List<string>>
+        {
+            { RegionChile.Arica, new List<string> { "58" } },
+            { RegionChile.Tarapaca, new List<string> { "57" } },
+            { RegionChile.Antofagasta, new List<string> { "55" } },
+            { RegionChile.Atacama, new List<string> { "52" } },
+            { RegionChile.Coquimbo, new List<string> { "51", "53" } },
+            { RegionChile.Valparaiso, new List<string> { "32", "33", "34", "35" } },
+            { RegionChile.Metropolitana, new List<string> { "2" } },
+            { RegionChile.OHiggins, new List<string> { "72", "73" } },
+            { RegionChile.Maule, new List<string> { "71", "73", "75" } },
+            { RegionChile.Nuble, new List<string> { "42" } },
+            { RegionChile.Biobio, new List<string> { "41", "43" } },
+            { RegionChile.Araucania, new List<string> { "45" } },
+            { RegionChile.LosRios, new List<string> { "63" } },
+            { RegionChile.LosLagos, new List<string> { "64", "65" } },
+            { RegionChile.Aysen, new List<string> { "67" } },
+            { RegionChile.Magallanes, new List<string> { "61" } }
+        };
 
         /// <summary>
         /// El número telefónico en formato normalizado
@@ -39,6 +60,55 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         /// Indica si el número es un teléfono chileno (fijo o móvil)
         /// </summary>
         public bool EsTelefonoChileno => EsMovilChileno || EsFijoChileno;
+        
+        /// <summary>
+        /// Obtiene el código de área del número (para teléfonos fijos chilenos)
+        /// </summary>
+        public string CodigoArea
+        {
+            get
+            {
+                if (!EsFijoChileno) return string.Empty;
+                
+                string digitsOnly = new string(Value.Where(char.IsDigit).ToArray());
+                if (digitsOnly.StartsWith("56")) digitsOnly = digitsOnly.Substring(2);
+                
+                if (digitsOnly.StartsWith("2")) return "2"; // Santiago (Región Metropolitana)
+                
+                // Códigos de área de dos dígitos
+                if (digitsOnly.Length >= 2)
+                {
+                    string posibleCodigo = digitsOnly.Substring(0, 2);
+                    foreach (var regionCodigos in CodigosAreaPorRegion)
+                    {
+                        if (regionCodigos.Value.Contains(posibleCodigo))
+                            return posibleCodigo;
+                    }
+                }
+                
+                return string.Empty;
+            }
+        }
+        
+        /// <summary>
+        /// Intenta determinar la región de Chile basada en el código de área
+        /// </summary>
+        public RegionChile? RegionTelefono
+        {
+            get
+            {
+                if (!EsFijoChileno || string.IsNullOrEmpty(CodigoArea)) 
+                    return null;
+                
+                foreach (var kvp in CodigosAreaPorRegion)
+                {
+                    if (kvp.Value.Contains(CodigoArea))
+                        return kvp.Key;
+                }
+                
+                return null;
+            }
+        }
 
         private PhoneNumber(string value)
         {
@@ -111,6 +181,27 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
             
             return new PhoneNumber(normalizado);
         }
+        
+        /// <summary>
+        /// Crea un número de teléfono chileno fijo para una región específica
+        /// </summary>
+        /// <param name="phoneNumber">Número telefónico a validar</param>
+        /// <param name="region">Región de Chile para validar el código de área</param>
+        /// <returns>Objeto PhoneNumber validado como teléfono fijo de la región indicada</returns>
+        /// <exception cref="ArgumentException">Si el número no corresponde a la región especificada</exception>
+        public static PhoneNumber CreateChileanForRegion(string phoneNumber, RegionChile region)
+        {
+            var phone = CreateChilean(phoneNumber, false);
+            
+            // Verificar que el código de área corresponda a la región
+            string codigoArea = phone.CodigoArea;
+            if (string.IsNullOrEmpty(codigoArea) || !CodigosAreaPorRegion[region].Contains(codigoArea))
+            {
+                throw new ArgumentException($"El número telefónico no corresponde a un teléfono fijo de la región {region}", nameof(phoneNumber));
+            }
+            
+            return phone;
+        }
 
         /// <summary>
         /// Intenta crear un PhoneNumber sin lanzar excepciones
@@ -155,6 +246,20 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
                 return false;
             }
         }
+        
+        /// <summary>
+        /// Determina si un número telefónico podría pertenecer a una región específica de Chile
+        /// </summary>
+        /// <param name="region">Región de Chile a verificar</param>
+        /// <returns>True si el número corresponde a la región especificada</returns>
+        public bool PerteneceARegion(RegionChile region)
+        {
+            if (!EsFijoChileno || string.IsNullOrEmpty(CodigoArea))
+                return false;
+                
+            return CodigosAreaPorRegion.ContainsKey(region) && 
+                   CodigosAreaPorRegion[region].Contains(CodigoArea);
+        }
 
         /// <summary>
         /// Conversión implícita de PhoneNumber a string
@@ -188,11 +293,52 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
             {
                 return $"+56 9 {digitsOnly.Substring(1, 4)} {digitsOnly.Substring(5, 4)}";
             }
+            // Es fijo con código de área de 1 dígito (Santiago)
+            else if (digitsOnly.StartsWith("2") && digitsOnly.Length >= 9)
+            {
+                return $"+56 2 {digitsOnly.Substring(1, 4)} {digitsOnly.Substring(5, 4)}";
+            }
+            // Es fijo con código de área de 2 dígitos (regiones)
+            else if (digitsOnly.Length >= 10)
+            {
+                string areaCode = digitsOnly.Substring(0, 2);
+                return $"+56 {areaCode} {digitsOnly.Substring(2, 4)} {digitsOnly.Substring(6, 4)}";
+            }
+            
+            return Value;
+        }
+        
+        /// <summary>
+        /// Formatea el número para ser marcado desde Chile
+        /// </summary>
+        /// <returns>Número telefónico en formato para marcar (ej: 9 1234 5678)</returns>
+        public string ToDialFormat()
+        {
+            if (!EsTelefonoChileno)
+                return Value;
+                
+            string digitsOnly = new string(Value.Where(char.IsDigit).ToArray());
+            
+            if (digitsOnly.StartsWith("56"))
+                digitsOnly = digitsOnly.Substring(2);
+                
+            // Es móvil
+            if (digitsOnly.StartsWith("9") && digitsOnly.Length >= 9)
+            {
+                return $"9 {digitsOnly.Substring(1, 4)} {digitsOnly.Substring(5, 4)}";
+            }
             // Es fijo
             else if (digitsOnly.Length >= 9)
             {
-                char areaCode = digitsOnly[0];
-                return $"+56 {areaCode} {digitsOnly.Substring(1, 4)} {digitsOnly.Substring(5, 4)}";
+                if (digitsOnly.StartsWith("2")) // Santiago
+                {
+                    return $"2 {digitsOnly.Substring(1, 4)} {digitsOnly.Substring(5, 4)}";
+                }
+                else if (digitsOnly.Length >= 10) // Regiones
+                {
+                    string areaCode = digitsOnly.Substring(0, 2);
+                    return $"{areaCode} {digitsOnly.Substring(2, 4)} {digitsOnly.Substring(6, 4)}";
+                }
             }
             
             return Value;

@@ -19,8 +19,52 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
             "mailinator.com",
             "throwawaymail.com",
             "yopmail.com",
-            "fakeinbox.com"
-            // Añadir más dominios según sea necesario
+            "fakeinbox.com",
+            "tempr.email",
+            "discard.email",
+            "emailfake.com",
+            "mailnesia.com",
+            "maildrop.cc",
+            "getnada.com",
+            "mailtemp.net",
+            "trashmail.com",
+            "sharklasers.com",
+            "deadaddress.com",
+            "tafmail.com",
+            "incognitomail.com",
+            "spamgourmet.com"
+        };
+        
+        // Dominios chilenos comunes para validación específica
+        private static readonly HashSet<string> DominiosChilenos = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "gmail.cl",
+            "outlook.cl",
+            "hotmail.cl",
+            "yahoo.cl",
+            "live.cl",
+            "uc.cl", // Universidad Católica
+            "uchile.cl", // Universidad de Chile
+            "uai.cl", // Universidad Adolfo Ibáñez
+            "udp.cl", // Universidad Diego Portales
+            "uandes.cl", // Universidad de los Andes
+            "udd.cl", // Universidad del Desarrollo
+            "usm.cl", // Universidad Santa María
+            "uach.cl", // Universidad Austral de Chile
+            "ucv.cl", // Universidad Católica de Valparaíso
+            "ust.cl", // Universidad Santo Tomás
+            "sii.cl", // Servicio de Impuestos Internos
+            "gob.cl", // Dominios gubernamentales
+            "mineduc.cl",
+            "minsal.cl",
+            "codelco.cl",
+            "copec.cl",
+            "falabella.cl",
+            "entel.cl",
+            "movistar.cl",
+            "wom.cl",
+            "vtr.cl",
+            "ccaf.cl"
         };
         
         // Límites de longitud
@@ -47,6 +91,44 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         /// Extensión del dominio (.com, .cl, etc.)
         /// </summary>
         public string Extension => Domain.Contains(".") ? Domain.Substring(Domain.LastIndexOf('.')) : string.Empty;
+        
+        /// <summary>
+        /// Indica si el correo tiene un dominio chileno
+        /// </summary>
+        public bool EsDominioChileno => Extension.Equals(".cl", StringComparison.OrdinalIgnoreCase) || 
+                                       DominiosChilenos.Contains(Domain);
+                                       
+        /// <summary>
+        /// Indica si el correo electrónico es de un dominio empresarial (no un proveedor de correo gratuito común)
+        /// </summary>
+        public bool EsDominioEmpresarial
+        {
+            get
+            {
+                string[] dominiosGratuitos = { "gmail.com", "outlook.com", "hotmail.com", "yahoo.com", "live.com", "icloud.com", "aol.com", "protonmail.com", "mail.com" };
+                return !dominiosGratuitos.Contains(Domain.ToLowerInvariant()) && Extension != ".edu" && Extension != ".gov";
+            }
+        }
+        
+        /// <summary>
+        /// Indica si el correo es de una institución educativa
+        /// </summary>
+        public bool EsDominioEducativo => Domain.EndsWith(".edu") || 
+                                         Domain.EndsWith(".edu.cl") || 
+                                         Domain.Contains("univ") || 
+                                         Domain.Contains("instituto") ||
+                                         new[] { "uc.cl", "uchile.cl", "uai.cl", "udp.cl", "uandes.cl", "udd.cl", "usm.cl", "uach.cl", "ucv.cl", "ust.cl" }
+                                            .Contains(Domain.ToLowerInvariant());
+                                            
+        /// <summary>
+        /// Indica si el correo es de una institución gubernamental
+        /// </summary>
+        public bool EsDominioGubernamental => Domain.EndsWith(".gob") || 
+                                             Domain.EndsWith(".gob.cl") || 
+                                             Domain.EndsWith(".gov") || 
+                                             Domain.EndsWith(".gov.cl") ||
+                                             new[] { "sii.cl", "mineduc.cl", "minsal.cl", "ine.cl", "dt.gob.cl", "aduana.cl" }
+                                                .Contains(Domain.ToLowerInvariant());
 
         private Email(string value)
         {
@@ -95,8 +177,87 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
             // Validar que el dominio tenga al menos un punto (ej: gmail.com)
             if (!parts[1].Contains("."))
                 throw new ArgumentException("El dominio debe contener al menos un punto", nameof(email));
+                
+            // Validación adicional para evitar caracteres repetidos
+            if (ContieneCadenaRepetitiva(parts[0], 5))
+                throw new ArgumentException("El nombre de usuario contiene patrones repetitivos", nameof(email));
 
             return new Email(email);
+        }
+        
+        /// <summary>
+        /// Crea un correo electrónico validando que pertenezca a un dominio chileno
+        /// </summary>
+        /// <param name="email">Dirección de correo a validar</param>
+        /// <returns>Objeto Email validado como correo chileno</returns>
+        /// <exception cref="ArgumentException">Si el correo no pertenece a un dominio chileno</exception>
+        public static Email CreateChilean(string email)
+        {
+            Email resultado = Create(email);
+            
+            if (!resultado.EsDominioChileno)
+                throw new ArgumentException("El correo debe pertenecer a un dominio chileno (.cl)", nameof(email));
+                
+            return resultado;
+        }
+        
+        /// <summary>
+        /// Crea un correo electrónico validando que pertenezca a un dominio empresarial
+        /// </summary>
+        /// <param name="email">Dirección de correo a validar</param>
+        /// <returns>Objeto Email validado como correo empresarial</returns>
+        /// <exception cref="ArgumentException">Si el correo no pertenece a un dominio empresarial</exception>
+        public static Email CreateEmpresarial(string email)
+        {
+            Email resultado = Create(email);
+            
+            if (!resultado.EsDominioEmpresarial)
+                throw new ArgumentException("El correo debe pertenecer a un dominio empresarial (no proveedores gratuitos como Gmail)", nameof(email));
+                
+            return resultado;
+        }
+        
+        /// <summary>
+        /// Verifica si una cadena contiene patrones repetitivos (ej: "aaaaa", "abcabcabc")
+        /// </summary>
+        private static bool ContieneCadenaRepetitiva(string text, int longitudPatron)
+        {
+            if (string.IsNullOrEmpty(text) || text.Length < longitudPatron * 2)
+                return false;
+                
+            // Verificar caracteres repetidos (ej: "aaaaa")
+            for (int i = 0; i < text.Length - longitudPatron; i++)
+            {
+                bool todoIgual = true;
+                char c = text[i];
+                
+                for (int j = 1; j < longitudPatron; j++)
+                {
+                    if (i + j < text.Length && text[i + j] != c)
+                    {
+                        todoIgual = false;
+                        break;
+                    }
+                }
+                
+                if (todoIgual)
+                    return true;
+            }
+            
+            // Verificar secuencias repetitivas (ej: "abcabcabc")
+            for (int patternLength = 2; patternLength <= longitudPatron; patternLength++)
+            {
+                for (int i = 0; i <= text.Length - patternLength * 2; i++)
+                {
+                    string pattern = text.Substring(i, patternLength);
+                    string nextChunk = text.Substring(i + patternLength, patternLength);
+                    
+                    if (pattern == nextChunk)
+                        return true;
+                }
+            }
+            
+            return false;
         }
 
         /// <summary>
@@ -112,6 +273,27 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
             try
             {
                 result = Create(email);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// Intenta crear un Email chileno sin lanzar excepciones
+        /// </summary>
+        /// <param name="email">Dirección de correo a validar</param>
+        /// <param name="result">Email resultante si es válido como correo chileno</param>
+        /// <returns>True si se creó correctamente como correo chileno, False en caso contrario</returns>
+        public static bool TryCreateChilean(string email, out Email result)
+        {
+            result = null;
+            
+            try
+            {
+                result = CreateChilean(email);
                 return true;
             }
             catch
@@ -159,10 +341,33 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
             if (!extension.StartsWith(".")) extension = "." + extension;
             return Domain.EndsWith(extension, StringComparison.OrdinalIgnoreCase);
         }
+        
+        /// <summary>
+        /// Genera un alias Gmail agregando un + al username (útil para pruebas o categorización)
+        /// </summary>
+        /// <param name="alias">Alias a agregar después del +</param>
+        /// <returns>Nueva dirección con el alias agregado, o null si no es un correo Gmail</returns>
+        public Email GenerarAliasGmail(string alias)
+        {
+            if (!TieneDominio("gmail.com") || string.IsNullOrWhiteSpace(alias))
+                return null;
+                
+            string newEmail = $"{Username}+{alias}@{Domain}";
+            return new Email(newEmail);
+        }
+        
+        /// <summary>
+        /// Obtiene una versión normalizada del email (lowercase)
+        /// </summary>
+        /// <returns>Email con mismo valor pero en minúsculas</returns>
+        public Email ToLowerCase()
+        {
+            return new Email(Value.ToLowerInvariant());
+        }
 
         protected override IEnumerable<object> GetEqualityComponents()
         {
-            yield return Value;
+            yield return Value.ToLowerInvariant(); // Emails son case-insensitive
         }
     }
 } 
