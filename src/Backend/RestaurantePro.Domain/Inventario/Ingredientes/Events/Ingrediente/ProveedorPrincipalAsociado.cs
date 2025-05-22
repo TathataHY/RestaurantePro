@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente
 {
     /// <summary>
     /// Evento que se dispara cuando se asocia un proveedor principal a un ingrediente

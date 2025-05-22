@@ -4,7 +4,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
     /// Manejador para el evento ItemOrdenCompraCompletado
     /// Cuando un item de orden de compra se completa, se incrementa el stock del ingrediente correspondiente
     /// </summary>
-    public class ItemOrdenCompraCompletadoHandler : IDomainEventHandler<Compras.OrdenesCompra.Events.ItemOrdenCompraCompletado>
+    public class ItemOrdenCompraCompletadoHandler : IDomainEventHandler<Compras.OrdenesCompra.Events.ItemOrdenCompra.ItemOrdenCompraCompletado>
     {
         private readonly IIngredienteRepository _ingredienteRepository;
         
@@ -22,7 +22,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
         /// </summary>
         /// <param name="notification">Evento de item completado</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        public async Task Handle(Compras.OrdenesCompra.Events.ItemOrdenCompraCompletado notification, CancellationToken cancellationToken)
+        public async Task Handle(Compras.OrdenesCompra.Events.ItemOrdenCompra.ItemOrdenCompraCompletado notification, CancellationToken cancellationToken)
         {
             // Obtener el ingrediente por su ID
             var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(notification.IngredienteId, cancellationToken);

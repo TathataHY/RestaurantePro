@@ -1,13 +1,13 @@
-namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
+    namespace RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente
 {
     /// <summary>
-    /// Evento que se lanza cuando se activa un ingrediente
+    /// Evento que se lanza cuando se desactiva un ingrediente
     /// </summary>
-    public class IngredienteActivado : DomainEvent
+    public class IngredienteDesactivado : DomainEvent
     {
                 
         /// <summary>
-        /// Id del ingrediente activado
+        /// Id del ingrediente desactivado
         /// </summary>
         public Guid IngredienteId { get; }
         
@@ -16,7 +16,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
         /// </summary>
         public string Nombre { get; }
         
-        public IngredienteActivado(Guid ingredienteId, string nombre)
+        public IngredienteDesactivado(Guid ingredienteId, string nombre)
         {
                         IngredienteId = ingredienteId;
             Nombre = nombre;

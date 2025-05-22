@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente
 {
     /// <summary>
     /// Evento de dominio que se dispara cuando se crea un ingrediente

@@ -4,7 +4,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
     /// Manejador de eventos que genera órdenes de compra automáticas cuando el stock 
     /// de un ingrediente cae por debajo del mínimo recomendado
     /// </summary>
-    public class StockBajoMinimo_GenerarOrdenCompraAutomaticaHandler : IDomainEventHandler<Ingredientes.Events.StockBajoMinimo>
+    public class StockBajoMinimo_GenerarOrdenCompraAutomaticaHandler : IDomainEventHandler<Ingredientes.Events.Ingrediente.StockBajoMinimo>
     {
         private readonly IIngredienteRepository _ingredienteRepository;
         private readonly IProveedorRepository _proveedorRepository;
@@ -30,7 +30,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
         /// Maneja el evento StockBajoMinimo generando una orden de compra automática al proveedor principal
         /// Solo genera la orden si el ingrediente tiene un proveedor principal asociado y activo
         /// </summary>
-        public async Task Handle(Ingredientes.Events.StockBajoMinimo evento, CancellationToken cancellationToken = default)
+        public async Task Handle(Ingredientes.Events.Ingrediente.StockBajoMinimo evento, CancellationToken cancellationToken = default)
         {
             try
             {

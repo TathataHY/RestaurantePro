@@ -1,9 +1,9 @@
-namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
+namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events.ItemOrdenCompra
 {
     /// <summary>
-    /// Evento que se dispara cuando se elimina un item de una orden de compra
+    /// Evento que se dispara cuando un item de una orden de compra ha sido completamente recibido
     /// </summary>
-    public class ItemOrdenCompraEliminado : DomainEvent
+    public class ItemOrdenCompraCompletado : DomainEvent
     {
         /// <summary>
         /// ID de la orden de compra
@@ -11,7 +11,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
         public Guid OrdenCompraId { get; }
         
         /// <summary>
-        /// ID del item eliminado
+        /// ID del item completado
         /// </summary>
         public Guid ItemId { get; }
         
@@ -21,25 +21,23 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
         public Guid IngredienteId { get; }
         
         /// <summary>
-        /// Nuevo total de la orden de compra
+        /// Cantidad recibida
         /// </summary>
-        public decimal NuevoTotal { get; }
+        public decimal CantidadRecibida { get; }
         
-                
         /// <summary>
         /// Constructor del evento
         /// </summary>
+        /// <param name="itemId">ID del item completado</param>
         /// <param name="ordenCompraId">ID de la orden de compra</param>
-        /// <param name="itemId">ID del item eliminado</param>
         /// <param name="ingredienteId">ID del ingrediente</param>
-        /// <param name="nuevoTotal">Nuevo total de la orden</param>
-        public ItemOrdenCompraEliminado(Guid ordenCompraId, Guid itemId, Guid ingredienteId, decimal nuevoTotal)
+        /// <param name="cantidadRecibida">Cantidad recibida</param>
+        public ItemOrdenCompraCompletado(Guid itemId, Guid ordenCompraId, Guid ingredienteId, decimal cantidadRecibida)
         {
-            OrdenCompraId = ordenCompraId;
             ItemId = itemId;
+            OrdenCompraId = ordenCompraId;
             IngredienteId = ingredienteId;
-            NuevoTotal = nuevoTotal;
+            CantidadRecibida = cantidadRecibida;
         }
     }
 } 
-

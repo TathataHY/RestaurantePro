@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Comercial.Clientes.Events
+namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
 {
     /// <summary>
     /// Evento de dominio que se dispara cuando se registra una visita de un cliente

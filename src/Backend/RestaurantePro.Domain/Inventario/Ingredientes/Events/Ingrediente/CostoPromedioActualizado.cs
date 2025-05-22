@@ -1,12 +1,12 @@
-namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente
 {
     /// <summary>
-    /// Evento que se genera cuando un ingrediente es bloqueado por control de calidad.
+    /// Evento que se genera cuando se actualiza el costo promedio de un ingrediente.
     /// </summary>
-    public class IngredienteBloqueadoPorCalidad : DomainEvent
+    public class CostoPromedioActualizado : DomainEvent
     {
         /// <summary>
-        /// ID del ingrediente bloqueado
+        /// ID del ingrediente cuyo costo ha sido actualizado
         /// </summary>
         public Guid IngredienteId { get; }
         
@@ -16,21 +16,21 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
         public string Nombre { get; }
         
         /// <summary>
-        /// Motivo del bloqueo
+        /// Nuevo costo promedio
         /// </summary>
-        public string Motivo { get; }
+        public decimal CostoPromedio { get; }
         
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="ingredienteId">ID del ingrediente</param>
         /// <param name="nombre">Nombre del ingrediente</param>
-        /// <param name="motivo">Motivo del bloqueo</param>
-        public IngredienteBloqueadoPorCalidad(Guid ingredienteId, string nombre, string motivo) : base()
+        /// <param name="costoPromedio">Nuevo costo promedio</param>
+        public CostoPromedioActualizado(Guid ingredienteId, string nombre, decimal costoPromedio) : base()
         {
             IngredienteId = ingredienteId;
             Nombre = nombre;
-            Motivo = motivo;
+            CostoPromedio = costoPromedio;
         }
     }
 } 

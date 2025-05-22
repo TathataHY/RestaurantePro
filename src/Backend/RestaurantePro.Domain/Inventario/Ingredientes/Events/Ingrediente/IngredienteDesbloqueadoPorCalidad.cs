@@ -1,12 +1,12 @@
-namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente
 {
     /// <summary>
-    /// Evento que se genera cuando se actualiza el costo promedio de un ingrediente.
+    /// Evento que se genera cuando un ingrediente es desbloqueado por control de calidad.
     /// </summary>
-    public class CostoPromedioActualizado : DomainEvent
+    public class IngredienteDesbloqueadoPorCalidad : DomainEvent
     {
         /// <summary>
-        /// ID del ingrediente cuyo costo ha sido actualizado
+        /// ID del ingrediente desbloqueado
         /// </summary>
         public Guid IngredienteId { get; }
         
@@ -16,21 +16,21 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
         public string Nombre { get; }
         
         /// <summary>
-        /// Nuevo costo promedio
+        /// Motivo del desbloqueo
         /// </summary>
-        public decimal CostoPromedio { get; }
+        public string Motivo { get; }
         
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="ingredienteId">ID del ingrediente</param>
         /// <param name="nombre">Nombre del ingrediente</param>
-        /// <param name="costoPromedio">Nuevo costo promedio</param>
-        public CostoPromedioActualizado(Guid ingredienteId, string nombre, decimal costoPromedio) : base()
+        /// <param name="motivo">Motivo del desbloqueo</param>
+        public IngredienteDesbloqueadoPorCalidad(Guid ingredienteId, string nombre, string motivo) : base()
         {
             IngredienteId = ingredienteId;
             Nombre = nombre;
-            CostoPromedio = costoPromedio;
+            Motivo = motivo;
         }
     }
 } 

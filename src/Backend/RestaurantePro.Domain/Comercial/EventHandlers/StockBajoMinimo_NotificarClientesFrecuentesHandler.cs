@@ -4,7 +4,7 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
     /// Manejador de eventos que notifica a clientes frecuentes cuando un producto está por agotarse
     /// Este es un ejemplo de comunicación entre contextos: Inventario → Comercial
     /// </summary>
-    public class StockBajoMinimo_NotificarClientesFrecuentesHandler : IDomainEventHandler<RestaurantePro.Domain.Inventario.Ingredientes.Events.StockBajoMinimo>
+    public class StockBajoMinimo_NotificarClientesFrecuentesHandler : IDomainEventHandler<RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente.StockBajoMinimo>
     {
         private readonly IClienteRepository _clienteRepository;
         private readonly ITarjetaFidelizacionRepository _tarjetaRepository;
@@ -35,7 +35,7 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
         /// <summary>
         /// Maneja el evento de stock bajo notificando a clientes frecuentes
         /// </summary>
-        public async Task Handle(RestaurantePro.Domain.Inventario.Ingredientes.Events.StockBajoMinimo evento, CancellationToken cancellationToken = default)
+        public async Task Handle(RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente.StockBajoMinimo evento, CancellationToken cancellationToken = default)
         {
             try
             {

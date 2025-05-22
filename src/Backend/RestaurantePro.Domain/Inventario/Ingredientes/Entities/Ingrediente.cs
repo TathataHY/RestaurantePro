@@ -119,8 +119,14 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             if (string.IsNullOrWhiteSpace(nombre))
                 throw new ArgumentException("El nombre no puede estar vacío", nameof(nombre));
 
+            if (string.IsNullOrWhiteSpace(codigo))
+                throw new ArgumentException("El código no puede estar vacío", nameof(codigo));
+
             if (stockMinimo < 0)
                 throw new ArgumentException("El stock mínimo no puede ser negativo", nameof(stockMinimo));
+
+            if (stockActual < 0)
+                throw new ArgumentException("El stock actual no puede ser negativo", nameof(stockActual));
 
             var ingrediente = new Ingrediente
             {
@@ -135,7 +141,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
                 CostoPromedio = 0
             };
 
-            ingrediente.AddDomainEvent(new IngredienteCreado(ingrediente.Id, nombre));
+            ingrediente.AddDomainEvent(new Events.Ingrediente.IngredienteCreado(ingrediente.Id, nombre));
 
             return ingrediente;
         }
@@ -169,7 +175,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             ValidarInvariantes();
 
             // Emitir evento de stock actualizado
-            AddDomainEvent(new StockActualizado(Id, Nombre, Stock));
+            AddDomainEvent(new Events.Ingrediente.StockActualizado(Id, Nombre, Stock));
 
             return movimiento;
         }
@@ -209,11 +215,11 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             // Verificar si estamos por debajo del stock mínimo
             if (Stock < StockMinimo)
             {
-                AddDomainEvent(new StockBajoMinimo(Id, Nombre, Stock, StockMinimo));
+                AddDomainEvent(new Events.Ingrediente.StockBajoMinimo(Id, Nombre, Stock, StockMinimo));
             }
 
             // Emitir evento de stock actualizado
-            AddDomainEvent(new StockActualizado(Id, Nombre, Stock));
+            AddDomainEvent(new Events.Ingrediente.StockActualizado(Id, Nombre, Stock));
 
             return movimiento;
         }
@@ -237,7 +243,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
 
             if (Stock < StockMinimo)
             {
-                AddDomainEvent(new StockBajoMinimo(Id, Nombre, Stock, StockMinimo));
+                AddDomainEvent(new Events.Ingrediente.StockBajoMinimo(Id, Nombre, Stock, StockMinimo));
             }
         }
 
@@ -254,7 +260,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             EstaActivo = false;
             MarkAsModified();
 
-            AddDomainEvent(new IngredienteDesactivado(Id, Nombre));
+            AddDomainEvent(new Events.Ingrediente.IngredienteDesactivado(Id, Nombre));
         }
 
         /// <summary>
@@ -270,7 +276,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             EstaActivo = true;
             MarkAsModified();
 
-            AddDomainEvent(new IngredienteActivado(Id, Nombre));
+            AddDomainEvent(new Events.Ingrediente.IngredienteActivado(Id, Nombre));
         }
 
         /// <summary>
@@ -283,7 +289,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             ProveedorPrincipalId = proveedorId;
             MarkAsModified();
             
-            AddDomainEvent(new ProveedorPrincipalAsociado(Id, proveedorId));
+            AddDomainEvent(new Events.Ingrediente.ProveedorPrincipalAsociado(Id, proveedorId));
         }
         
         /// <summary>
@@ -298,7 +304,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             Rotacion = rotacion;
             MarkAsModified();
             
-            AddDomainEvent(new RotacionIngredienteActualizada(Id, Nombre, rotacion));
+            AddDomainEvent(new Events.Ingrediente.RotacionIngredienteActualizada(Id, Nombre, rotacion));
         }
         
         /// <summary>
@@ -313,7 +319,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             Temporada = temporada;
             MarkAsModified();
             
-            AddDomainEvent(new TemporadaIngredienteActualizada(Id, Nombre, temporada));
+            AddDomainEvent(new Events.Ingrediente.TemporadaIngredienteActualizada(Id, Nombre, temporada));
         }
         
         /// <summary>
@@ -330,9 +336,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             MarkAsModified();
             
             if (bloqueado)
-                AddDomainEvent(new IngredienteBloqueadoPorCalidad(Id, Nombre, motivo));
+                AddDomainEvent(new Events.Ingrediente.IngredienteBloqueadoPorCalidad(Id, Nombre, motivo));
             else
-                AddDomainEvent(new IngredienteDesbloqueadoPorCalidad(Id, Nombre, motivo));
+                AddDomainEvent(new Events.Ingrediente.IngredienteDesbloqueadoPorCalidad(Id, Nombre, motivo));
         }
         
         /// <summary>
@@ -350,7 +356,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             CostoPromedio = nuevoCosto;
             MarkAsModified();
             
-            AddDomainEvent(new CostoPromedioActualizado(Id, Nombre, nuevoCosto));
+            AddDomainEvent(new Events.Ingrediente.CostoPromedioActualizado(Id, Nombre, nuevoCosto));
         }
         
         /// <summary>

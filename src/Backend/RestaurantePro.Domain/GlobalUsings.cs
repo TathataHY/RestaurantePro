@@ -111,6 +111,7 @@ global using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
 global using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
 global using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
 global using RestaurantePro.Domain.Inventario.Ingredientes.Events;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente;
 
 // Domain Inventario - Ingredientes - Movimientos
 global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
@@ -123,6 +124,8 @@ global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
 global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums;
 global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
 global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events;
+global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events.OrdenCompra;
+global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events.ItemOrdenCompra;
 
 // Domain Inventario - Services
 global using RestaurantePro.Domain.Inventario.Services;

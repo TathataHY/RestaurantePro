@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events
+namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events.OrdenCompra
 {
     /// <summary>
     /// Evento que se dispara cuando una orden de compra es enviada al proveedor

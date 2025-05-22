@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente
 {
     /// <summary>
     /// Evento que se genera cuando se actualiza el nivel de rotación de un ingrediente.

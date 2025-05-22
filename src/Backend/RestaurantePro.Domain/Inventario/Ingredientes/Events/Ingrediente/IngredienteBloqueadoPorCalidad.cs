@@ -1,12 +1,12 @@
-namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
+namespace RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente
 {
     /// <summary>
-    /// Evento que se genera cuando se actualiza la temporada de un ingrediente.
+    /// Evento que se genera cuando un ingrediente es bloqueado por control de calidad.
     /// </summary>
-    public class TemporadaIngredienteActualizada : DomainEvent
+    public class IngredienteBloqueadoPorCalidad : DomainEvent
     {
         /// <summary>
-        /// ID del ingrediente cuya temporada ha sido actualizada
+        /// ID del ingrediente bloqueado
         /// </summary>
         public Guid IngredienteId { get; }
         
@@ -16,21 +16,21 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Events
         public string Nombre { get; }
         
         /// <summary>
-        /// Nueva temporada asignada
+        /// Motivo del bloqueo
         /// </summary>
-        public TemporadaIngrediente Temporada { get; }
+        public string Motivo { get; }
         
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="ingredienteId">ID del ingrediente</param>
         /// <param name="nombre">Nombre del ingrediente</param>
-        /// <param name="temporada">Nueva temporada</param>
-        public TemporadaIngredienteActualizada(Guid ingredienteId, string nombre, TemporadaIngrediente temporada) : base()
+        /// <param name="motivo">Motivo del bloqueo</param>
+        public IngredienteBloqueadoPorCalidad(Guid ingredienteId, string nombre, string motivo) : base()
         {
             IngredienteId = ingredienteId;
             Nombre = nombre;
-            Temporada = temporada;
+            Motivo = motivo;
         }
     }
 } 
