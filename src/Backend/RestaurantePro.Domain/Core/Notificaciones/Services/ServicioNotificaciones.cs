@@ -98,12 +98,10 @@ namespace RestaurantePro.Domain.Core.Notificaciones.Services
             bool soloNoLeidas = false, 
             CancellationToken cancellationToken = default)
         {
-            var notificaciones = await _notificacionRepository.GetByRecipientIdAsync(destinatarioId, cancellationToken);
-            
             if (soloNoLeidas)
-                return notificaciones.Where(n => !n.EstaLeida);
+                return await _notificacionRepository.GetUnreadByRecipientIdAsync(destinatarioId, cancellationToken);
                 
-            return notificaciones;
+            return await _notificacionRepository.GetByRecipientIdAsync(destinatarioId, cancellationToken);
         }
     }
 } 

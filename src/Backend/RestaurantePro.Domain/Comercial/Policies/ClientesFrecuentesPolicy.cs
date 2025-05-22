@@ -45,8 +45,8 @@ namespace RestaurantePro.Domain.Comercial.Policies
         {
             var resultado = new ResultadoClientesFrecuentesPolicy();
             
-            // Obtener todos los clientes activos con información de visitas
-            var clientes = await _clienteRepository.ObtenerClientesActivosConVisitasAsync(3, 90, cancellationToken);
+                // Obtener todos los clientes activos con información de visitas
+    var clientes = await _clienteRepository.ObtenerClientesActivosConVisitasAsync(90, 3, cancellationToken);
             
             if (!clientes.Any())
             {
@@ -56,11 +56,47 @@ namespace RestaurantePro.Domain.Comercial.Policies
             // Procesar cada cliente
             foreach (var cliente in clientes)
             {
-                var resultadoCliente = await ProcesarCliente(cliente, cancellationToken);
-                
-                // Agregar los resultados de este cliente al resultado general
-                resultado.ClientesActualizados.AddRange(resultadoCliente.ClientesActualizados);
-                resultado.TarjetasCreadas.AddRange(resultadoCliente.TarjetasCreadas);
+                try
+                {
+                    // Obtener la tarjeta de fidelización del cliente
+                    var tarjeta = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, cancellationToken);
+                    
+                    // Determinar el nivel que debería tener según sus visitas
+                    NivelFidelizacion nivelSegunVisitas = DeterminarNivelSegunVisitas(cliente.CantidadVisitas);
+                    
+                    // Si no tiene tarjeta, crear una
+                    if (tarjeta == null)
+                    {
+                        tarjeta = TarjetaFidelizacion.Crear(
+                            cliente.Id,
+                            $"TF-{_dateTimeService.Now:yyyyMMdd}-{cliente.Id.ToString().Substring(0, 8)}"
+                        );
+                        tarjeta.Activar();
+                        
+                        // Si el nivel por defecto no es el que debería tener, actualizarlo
+                        if (tarjeta.NivelFidelizacion != nivelSegunVisitas)
+                        {
+                            tarjeta.ActualizarNivel(nivelSegunVisitas);
+                        }
+                        
+                        await _tarjetaRepository.AgregarAsync(tarjeta, cancellationToken);
+                        resultado.TarjetasCreadas.Add(tarjeta.Id);
+                    }
+                    else
+                    {
+                        // Actualizar el nivel de la tarjeta si es necesario
+                        tarjeta.ActualizarNivel(nivelSegunVisitas);
+                        await _tarjetaRepository.ActualizarAsync(tarjeta, cancellationToken);
+                    }
+                    
+                    // Agregar el cliente a la lista de actualizados
+                    resultado.ClientesActualizados.Add(cliente.Id);
+                }
+                catch (Exception ex)
+                {
+                    // Log error but continue with other clients
+                    Console.WriteLine($"Error al procesar cliente {cliente.Id}: {ex.Message}");
+                }
             }
             
             return resultado;
@@ -84,12 +120,47 @@ namespace RestaurantePro.Domain.Comercial.Policies
                 return resultado; // No procesamos clientes inactivos
             }
             
-            // Procesar el cliente
-            var resultadoCliente = await ProcesarCliente(cliente, cancellationToken);
-            
-            // Agregar los resultados al resultado general
-            resultado.ClientesActualizados.AddRange(resultadoCliente.ClientesActualizados);
-            resultado.TarjetasCreadas.AddRange(resultadoCliente.TarjetasCreadas);
+            try
+            {
+                // Obtener la tarjeta de fidelización del cliente
+                var tarjeta = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, cancellationToken);
+                
+                // Determinar el nivel que debería tener según sus visitas
+                NivelFidelizacion nivelSegunVisitas = DeterminarNivelSegunVisitas(cliente.CantidadVisitas);
+                
+                // Si no tiene tarjeta, crear una
+                if (tarjeta == null)
+                {
+                    tarjeta = TarjetaFidelizacion.Crear(
+                        cliente.Id,
+                        $"TF-{_dateTimeService.Now:yyyyMMdd}-{cliente.Id.ToString().Substring(0, 8)}"
+                    );
+                    tarjeta.Activar();
+                    
+                    // Si el nivel por defecto no es el que debería tener, actualizarlo
+                    if (tarjeta.NivelFidelizacion != nivelSegunVisitas)
+                    {
+                        tarjeta.ActualizarNivel(nivelSegunVisitas);
+                    }
+                    
+                    await _tarjetaRepository.AgregarAsync(tarjeta, cancellationToken);
+                    resultado.TarjetasCreadas.Add(tarjeta.Id);
+                }
+                else
+                {
+                    // Actualizar el nivel de la tarjeta si es necesario
+                    tarjeta.ActualizarNivel(nivelSegunVisitas);
+                    await _tarjetaRepository.ActualizarAsync(tarjeta, cancellationToken);
+                }
+                
+                // Agregar el cliente a la lista de actualizados
+                resultado.ClientesActualizados.Add(cliente.Id);
+            }
+            catch (Exception ex)
+            {
+                // Log error
+                Console.WriteLine($"Error al procesar cliente {cliente.Id}: {ex.Message}");
+            }
             
             return resultado;
         }
@@ -129,50 +200,6 @@ namespace RestaurantePro.Domain.Comercial.Policies
                 
                 // Actualizar conteo de segmentos
                 resultado.ConteoSegmentos[nuevoSegmento]++;
-            }
-            
-            return resultado;
-        }
-        
-        /// <summary>
-        /// Procesa un cliente y actualiza su nivel de fidelización según sus visitas
-        /// </summary>
-        private async Task<ResultadoClientesFrecuentesPolicy> ProcesarCliente(Cliente cliente, CancellationToken cancellationToken)
-        {
-            var resultado = new ResultadoClientesFrecuentesPolicy();
-            
-            // Obtener la tarjeta de fidelización del cliente
-            var tarjeta = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, cancellationToken);
-            
-            // Determinar el nivel que debería tener según sus visitas
-            NivelFidelizacion nivelSegunVisitas = DeterminarNivelSegunVisitas(cliente.CantidadVisitas);
-            
-            // Si no tiene tarjeta, crear una
-            if (tarjeta == null)
-            {
-                tarjeta = TarjetaFidelizacion.Crear(
-                    cliente.Id,
-                    $"TF-{_dateTimeService.Now:yyyyMMdd}-{cliente.Id.ToString().Substring(0, 8)}"
-                );
-                tarjeta.Activar();
-                
-                // Si el nivel por defecto no es el que debería tener, actualizarlo
-                if (tarjeta.NivelFidelizacion != nivelSegunVisitas)
-                {
-                    tarjeta.ActualizarNivel(nivelSegunVisitas);
-                }
-                
-                await _tarjetaRepository.AgregarAsync(tarjeta, cancellationToken);
-                resultado.TarjetasCreadas.Add(tarjeta.Id);
-                resultado.ClientesActualizados.Add(cliente.Id);  // Siempre se actualiza al crear tarjeta
-            }
-            else
-            {
-                // En las pruebas se espera que siempre se actualice la tarjeta
-                // incluso si el nivel no cambia
-                tarjeta.ActualizarNivel(nivelSegunVisitas);
-                await _tarjetaRepository.ActualizarAsync(tarjeta, cancellationToken);
-                resultado.ClientesActualizados.Add(cliente.Id);
             }
             
             return resultado;
@@ -313,12 +340,13 @@ namespace RestaurantePro.Domain.Comercial.Policies
                 _ => 60
             };
         }
-
+        
         /// <inheritdoc />
-        public async Task<ResultadoClientesFrecuentesPolicy> EjecutarAsync(int diasHistorial = 90, CancellationToken cancellationToken = default)
+        public Task<ResultadoClientesFrecuentesPolicy> EjecutarAsync(int diasHistorial = 90, CancellationToken cancellationToken = default)
         {
-            // Este método es un alias de EjecutarPolicy
-            return await EjecutarPolicy(cancellationToken);
+            // Este método es simplemente un alias de EjecutarPolicy
+            // pero podría usar el parámetro diasHistorial para personalizar la consulta en el futuro
+            return EjecutarPolicy(cancellationToken);
         }
     }
 } 

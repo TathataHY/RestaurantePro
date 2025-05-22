@@ -82,8 +82,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             // Crear evento ComandaFinalizada
             var evento = new ComandaFinalizada(comandaId, 100.0m);
             
-            // Crear comanda sin cliente asociado
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            // Crear comanda sin cliente asociado (clienteId = null)
+            var comanda = Comanda.Crear(Guid.NewGuid(), null, Guid.NewGuid());
             
             // Asignar el ID de la comanda manualmente para el test
             var idField = typeof(EntityBase).GetField("_id", BindingFlags.NonPublic | BindingFlags.Instance);

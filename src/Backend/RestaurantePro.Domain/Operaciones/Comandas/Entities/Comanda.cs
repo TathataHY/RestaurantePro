@@ -134,26 +134,43 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         }
 
         /// <summary>
-        /// Agrega un producto a la comanda.
-        /// Solo puede ejecutarse para comandas en estado Creada o EnProceso.
+        /// Agrega un nuevo producto a la comanda
         /// </summary>
         /// <param name="productoId">ID del producto a agregar</param>
         /// <param name="cantidad">Cantidad del producto</param>
         /// <param name="precioUnitario">Precio unitario del producto</param>
-        /// <param name="observaciones">Observaciones específicas para este producto</param>
-        /// <exception cref="InvalidOperationException">Si la comanda no está en estado Creada o EnProceso</exception>
+        /// <param name="observaciones">Observaciones o instrucciones especiales</param>
+        /// <exception cref="InvalidOperationException">Si la comanda no está en estado activo</exception>
+        /// <exception cref="ArgumentException">Si la cantidad o precio son inválidos</exception>
         public void AgregarProducto(Guid productoId, int cantidad, decimal precioUnitario, string? observaciones = null)
         {
             ValidarComandaActiva();
-
-            var item = new ItemComanda(Id, productoId, cantidad, precioUnitario, observaciones ?? string.Empty);
+            
+            // Validaciones de argumentos
+            if (cantidad <= 0 || cantidad > 50)
+                throw new ArgumentException("La cantidad debe estar entre 1 y 50", nameof(cantidad));
+                
+            if (precioUnitario <= 0 || precioUnitario > 1000000m)
+                throw new ArgumentException("El precio unitario debe ser mayor que cero y no exceder 1000000", nameof(precioUnitario));
+                
+            if (!string.IsNullOrEmpty(observaciones) && observaciones.Length > 200)
+                throw new ArgumentException("Las observaciones del item no pueden exceder los 200 caracteres", nameof(observaciones));
+            
+            // Validar que no exista un item con el mismo producto
+            if (_items.Any(i => i.ProductoId == productoId))
+                throw new InvalidOperationException($"Ya existe un item con el producto {productoId} en esta comanda");
+            
+            // Crear el nuevo item
+            var item = new ItemComanda(Id, productoId, cantidad, precioUnitario, observaciones);
             _items.Add(item);
-
+            
+            // Recalcular el total
             RecalcularTotal();
             ActualizarFecha();
             ValidarInvariantes();
-
-            AddDomainEvent(new ProductoAgregadoAComanda(Id, productoId, cantidad));
+            
+            // Registrar el evento de dominio
+            AddDomainEvent(new ProductoAgregadoAComanda(Id, productoId, cantidad, precioUnitario));
         }
 
         /// <summary>
@@ -191,20 +208,29 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         }
 
         /// <summary>
-        /// Método para cancelar la comanda
+        /// Cancela la comanda
         /// </summary>
+        /// <param name="motivo">Motivo de la cancelación</param>
+        /// <exception cref="InvalidOperationException">Si la comanda no está en estado correcto para ser cancelada</exception>
         public void Cancelar(string motivo)
         {
-            ValidarComandaActiva();
-
+            // Solo se pueden cancelar comandas en estado Creada o EnProceso
+            if (Estado != EstadoComanda.Creada && Estado != EstadoComanda.EnProceso)
+            {
+                throw new InvalidOperationException($"No se puede cancelar una comanda en estado {Estado}");
+            }
+            
+            if (string.IsNullOrWhiteSpace(motivo))
+            {
+                throw new ArgumentException("Debe especificar un motivo para la cancelación", nameof(motivo));
+            }
+            
             Estado = EstadoComanda.Cancelada;
-            Observaciones = string.IsNullOrEmpty(Observaciones)
-                ? $"Cancelada: {motivo}"
-                : $"{Observaciones} | Cancelada: {motivo}";
-
+            Observaciones = $"CANCELADA: {motivo}";
+            
             ActualizarFecha();
             ValidarInvariantes();
-
+            
             AddDomainEvent(new ComandaCancelada(Id, motivo));
         }
 
@@ -218,24 +244,28 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         }
 
         /// <summary>
-        /// Aplica un descuento por fidelización a la comanda.
+        /// Aplica un descuento de fidelización a la comanda
         /// </summary>
-        /// <param name="porcentajeDescuento">Porcentaje de descuento (de 0 a 1)</param>
-        /// <exception cref="ArgumentException">Si el porcentaje es inválido</exception>
-        /// <exception cref="InvalidOperationException">Si la comanda no está activa o no tiene cliente asociado</exception>
+        /// <param name="porcentajeDescuento">Porcentaje de descuento a aplicar (entre 0 y 1)</param>
+        /// <exception cref="InvalidOperationException">Si la comanda no tiene cliente asociado</exception>
+        /// <exception cref="ArgumentException">Si el porcentaje de descuento es inválido</exception>
         public void AplicarDescuentoFidelizacion(decimal porcentajeDescuento)
         {
             ValidarComandaActiva();
             
             if (porcentajeDescuento < 0 || porcentajeDescuento > 1)
                 throw new ArgumentException("El porcentaje de descuento debe estar entre 0 y 1", nameof(porcentajeDescuento));
-
+            
+            // Verificar límite de política de negocio (máximo 50% de descuento)
+            if (porcentajeDescuento > 0.5m)
+                throw new ArgumentException("El porcentaje de descuento no puede exceder el 50%", nameof(porcentajeDescuento));
+                
             if (!ClienteId.HasValue)
-                throw new InvalidOperationException("No se puede aplicar descuento sin un cliente asociado");
-
-            // Calcular el monto del descuento
+                throw new InvalidOperationException("No se puede aplicar descuento de fidelización sin un cliente asociado");
+            
+            // Calcular el descuento
             decimal subtotal = _items.Sum(i => i.Subtotal);
-            decimal descuento = Math.Round(subtotal * porcentajeDescuento, 2);
+            decimal descuento = subtotal * porcentajeDescuento;
             
             // Aplicar descuento
             DescuentoFidelizacion = descuento;
@@ -407,14 +437,6 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             // Validar que la diferencia entre la fecha de creación y actualización no sea excesiva
             if (FechaActualizacion.HasValue && (FechaActualizacion.Value - FechaCreacion).TotalDays > 30)
                 throw new InvalidOperationException("La comanda no puede estar activa por más de 30 días");
-            
-            // Validar rangos válidos para descuentos según política de negocio
-            if (DescuentoFidelizacion.HasValue && DescuentoFidelizacion.Value > 0)
-            {
-                decimal porcentajeDescuento = DescuentoFidelizacion.Value / subtotalCalculado;
-                if (porcentajeDescuento > 0.5m) // Máximo 50% de descuento permitido
-                    throw new InvalidOperationException("El descuento no puede exceder el 50% del subtotal");
-            }
             
             // Validar consistencia de eventos de dominio
             if (DomainEvents.Count == 0)

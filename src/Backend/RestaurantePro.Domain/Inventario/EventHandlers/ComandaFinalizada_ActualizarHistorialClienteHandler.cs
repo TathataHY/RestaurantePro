@@ -26,7 +26,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
             var comanda = await _comandaRepository.ObtenerPorIdAsync(evento.ComandaId, cancellationToken);
             
             // Si la comanda no existe o no tiene cliente asociado, no hacer nada
-            if (comanda == null || !comanda.ClienteId.HasValue)
+            if (comanda == null || !comanda.ClienteId.HasValue || comanda.ClienteId.Value == Guid.Empty)
                 return;
                 
             // Obtener el cliente por ID

@@ -16,8 +16,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
             // Crear datos de prueba
             _reservaciones = new List<Reservacion>
             {
-                Reservacion.Crear(_clienteId, _mesaId, DateTime.Now.AddDays(1), new TimeSpan(19, 0, 0), 2, "612345678", "cliente1@example.com", "Celebración de aniversario"),
-                Reservacion.Crear(_clienteId, _mesaId, DateTime.Now.AddDays(2), new TimeSpan(20, 0, 0), 4, "612345678", "cliente1@example.com", "Cena familiar"),
+                Reservacion.Crear(_mesaId, _clienteId, DateTime.Now.AddDays(1), new TimeSpan(19, 0, 0), 2, "612345678", "cliente1@example.com", "Celebración de aniversario"),
+                Reservacion.Crear(_mesaId, _clienteId, DateTime.Now.AddDays(2), new TimeSpan(20, 0, 0), 4, "612345678", "cliente1@example.com", "Cena familiar"),
                 Reservacion.Crear(Guid.NewGuid(), Guid.NewGuid(), DateTime.Now.AddDays(1), new TimeSpan(21, 0, 0), 6, "623456789", "cliente2@example.com", "Reunión de negocios")
             };
 
@@ -165,9 +165,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
         public async Task AgregarAsync_ReservacionValida_DebeAgregarCorrectamente()
         {
             // Arrange
+            var mesaId = Guid.NewGuid();
+            var clienteId = Guid.NewGuid();
             var nuevaReservacion = Reservacion.Crear(
-                Guid.NewGuid(),
-                Guid.NewGuid(),
+                mesaId,
+                clienteId,
                 DateTime.Now.AddDays(3),
                 new TimeSpan(19, 30, 0),
                 2,
