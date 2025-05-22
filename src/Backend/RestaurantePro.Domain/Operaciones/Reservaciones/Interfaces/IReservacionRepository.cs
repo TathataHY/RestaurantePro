@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
 
 namespace RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces
 {
@@ -159,3 +152,4 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces
         Task<Dictionary<DateTime, int>> ObtenerEstadisticasPorDiaAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default);
     }
 }
+

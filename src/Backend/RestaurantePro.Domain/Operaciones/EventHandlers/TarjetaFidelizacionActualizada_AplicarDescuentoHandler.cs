@@ -85,6 +85,7 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
             catch (Exception ex)
             {
                 // Registrar error
+                Console.WriteLine($"Error al aplicar descuento automático: {ex.Message}");
                 await _eventRegistry.RegisterAsync(evento, cancellationToken);
                 throw;
             }

@@ -61,8 +61,9 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
                 
                 await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
-            catch (Exception ex)
+            catch
             {
+                // Registrar el evento para procesamiento posterior en caso de cualquier error
                 await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
         }

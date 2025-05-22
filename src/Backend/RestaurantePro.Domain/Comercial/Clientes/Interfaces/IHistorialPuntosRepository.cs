@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 
 namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
 {
@@ -84,3 +77,4 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         Task EliminarAsync(Guid id, CancellationToken cancellationToken = default);
     }
 }
+

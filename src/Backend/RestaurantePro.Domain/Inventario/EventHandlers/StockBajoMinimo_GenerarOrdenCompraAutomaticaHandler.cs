@@ -117,6 +117,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error al generar orden de compra automática: {ex.Message}");
                 await _eventRegistry.RegisterAsync(evento, cancellationToken);
                 // IMPORTANTE: Propagar la excepción para que las pruebas puedan detectarla
                 throw;

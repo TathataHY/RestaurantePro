@@ -143,11 +143,11 @@ namespace RestaurantePro.Domain.Inventario.Services
         }
         
         // Método privado para obtener los IDs de los administradores
-        private async Task<List<Guid>> ObtenerAdministradoresAsync(CancellationToken cancellationToken = default)
+        private Task<List<Guid>> ObtenerAdministradoresAsync(CancellationToken cancellationToken = default)
         {
             // En un entorno real, se obtendría de la base de datos o de un servicio de usuarios
             // Por ahora, devolvemos un ID fijo para simular al menos un administrador
-            return new List<Guid> { Guid.Parse("11111111-1111-1111-1111-111111111111") };
+            return Task.FromResult(new List<Guid> { Guid.Parse("11111111-1111-1111-1111-111111111111") });
         }
     }
 } 

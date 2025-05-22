@@ -92,6 +92,7 @@ namespace RestaurantePro.Domain.Comercial.EventHandlers
             catch (Exception ex)
             {
                 // Registrar error
+                Console.WriteLine($"Error al notificar a clientes frecuentes: {ex.Message}");
                 await _eventRegistry.RegisterAsync(evento, cancellationToken);
                 throw;
             }

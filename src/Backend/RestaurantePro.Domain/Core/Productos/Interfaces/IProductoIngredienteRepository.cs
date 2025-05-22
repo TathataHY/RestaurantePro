@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-using RestaurantePro.Domain.Core.Productos.Entities;
 
 namespace RestaurantePro.Domain.Core.Productos.Interfaces
 {

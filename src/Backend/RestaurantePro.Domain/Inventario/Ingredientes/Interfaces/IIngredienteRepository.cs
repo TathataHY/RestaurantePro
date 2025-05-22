@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
-using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
 
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
 {
@@ -101,3 +94,4 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
         Task<IEnumerable<Ingrediente>> ObtenerIngredientesConStockBajoAsync(CancellationToken cancellationToken = default);
     }
 }
+

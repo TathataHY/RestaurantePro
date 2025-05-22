@@ -1,6 +1,3 @@
-using System;
-using System.Linq.Expressions;
-using RestaurantePro.Domain.Core.SharedKernel.Specifications;
 
 namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
 {

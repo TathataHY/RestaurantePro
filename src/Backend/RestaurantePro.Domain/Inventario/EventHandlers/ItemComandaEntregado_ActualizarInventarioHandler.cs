@@ -97,6 +97,7 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error al actualizar inventario: {ex.Message}");
                 await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
         }

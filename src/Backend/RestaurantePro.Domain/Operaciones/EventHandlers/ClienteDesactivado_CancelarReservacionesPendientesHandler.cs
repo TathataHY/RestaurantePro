@@ -80,6 +80,7 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error al cancelar reservaciones del cliente desactivado: {ex.Message}");
                 await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
         }
