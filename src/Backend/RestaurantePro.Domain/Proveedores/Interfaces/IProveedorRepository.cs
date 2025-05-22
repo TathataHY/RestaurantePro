@@ -1,4 +1,5 @@
-namespace RestaurantePro.Domain.Proveedores.Interfaces{    
+namespace RestaurantePro.Domain.Proveedores.Interfaces
+{
     /// <summary>
     /// Interfaz para el repositorio de proveedores
     /// </summary>
@@ -12,7 +13,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Proveedor encontrado o null si no existe</returns>
         Task<Proveedor?> ObtenerPorIdAsync(Guid id, bool incluirContactos = true, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Obtiene un proveedor por su nombre
         /// </summary>
@@ -20,7 +21,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Proveedor encontrado o null si no existe</returns>
         Task<Proveedor?> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Obtiene proveedores por RFC
         /// </summary>
@@ -28,7 +29,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores que coinciden con el RFC</returns>
         Task<IEnumerable<Proveedor>> ObtenerPorRFCAsync(string rfc, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Obtiene un proveedor por su RUT
         /// </summary>
@@ -36,7 +37,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Proveedor encontrado o null si no existe</returns>
         Task<Proveedor?> ObtenerPorRutAsync(string rut, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Obtiene todos los proveedores
         /// </summary>
@@ -44,7 +45,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores</returns>
         Task<IEnumerable<Proveedor>> ObtenerTodosAsync(bool incluirContactos = false, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Obtiene proveedores activos
         /// </summary>
@@ -52,7 +53,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores activos</returns>
         Task<IEnumerable<Proveedor>> ObtenerActivosAsync(bool incluirContactos = false, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Obtiene proveedores por ciudad o región
         /// </summary>
@@ -60,7 +61,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores de la ciudad o región especificada</returns>
         Task<IEnumerable<Proveedor>> ObtenerPorCiudadAsync(string ciudad, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Obtiene proveedores que proveen un ingrediente específico
         /// </summary>
@@ -69,7 +70,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores que ofrecen el ingrediente</returns>
         Task<IEnumerable<Proveedor>> ObtenerPorIngredienteAsync(Guid ingredienteId, bool soloActivos = true, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Obtiene proveedores por tipo de producto o servicio
         /// </summary>
@@ -77,7 +78,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores que ofrecen el tipo de producto</returns>
         Task<IEnumerable<Proveedor>> ObtenerPorTipoProductoAsync(string tipoProducto, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Obtiene un contacto de proveedor por su ID
         /// </summary>
@@ -85,7 +86,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Contacto encontrado o null si no existe</returns>
         Task<ContactoProveedor?> ObtenerContactoPorIdAsync(Guid contactoId, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Obtiene contactos de un proveedor
         /// </summary>
@@ -93,7 +94,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de contactos del proveedor</returns>
         Task<IEnumerable<ContactoProveedor>> ObtenerContactosPorProveedorAsync(Guid proveedorId, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Busca proveedores por término (nombre, ciudad, email, etc.)
         /// </summary>
@@ -101,7 +102,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores que coinciden con el término</returns>
         Task<IEnumerable<Proveedor>> BuscarAsync(string termino, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Obtiene proveedores con paginación
         /// </summary>
@@ -111,7 +112,7 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tupla con proveedores y total de elementos</returns>
         Task<(IEnumerable<Proveedor> Proveedores, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, bool incluirContactos = false, CancellationToken cancellationToken = default);
-        
+
         /// <summary>
         /// Obtiene estadísticas de proveedores
         /// </summary>
@@ -119,4 +120,4 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces{
         /// <returns>Estadísticas de proveedores</returns>
         Task<EstadisticasProveedores> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default);
     }
-} 
+}
