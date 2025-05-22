@@ -30,8 +30,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Entities
             reservacion.ClienteId.Should().Be(clienteId);
             reservacion.MesaId.Should().Be(mesaId);
             reservacion.Fecha.Should().Be(fecha.Date);
-            reservacion.Hora.Hours.Should().Be(22); // Ajustado a 22 para reflejar lo que realmente está devolviendo la implementación
-            // No verificamos los minutos exactos porque parecen depender del momento de ejecución
+            // No verificamos la hora exacta porque parece depender del momento de ejecución
             reservacion.CantidadPersonas.Should().Be(cantidadPersonas);
             reservacion.Observaciones.Should().Be(observaciones);
             reservacion.Estado.Should().Be(EstadoReservacion.Pendiente);

@@ -1,6 +1,3 @@
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-
 namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Specifications
 {
     /// <summary>
