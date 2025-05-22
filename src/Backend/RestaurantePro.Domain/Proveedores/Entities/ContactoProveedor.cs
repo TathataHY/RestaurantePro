@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.Proveedores.Entities
 {
+    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+    
     /// <summary>
     /// Entidad que representa un contacto de un proveedor
     /// </summary>

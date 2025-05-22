@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.Proveedores.Events.Proveedor
 {
+    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+    
     /// <summary>
     /// Evento que se dispara cuando se actualiza un proveedor
     /// </summary>
@@ -22,12 +24,12 @@ namespace RestaurantePro.Domain.Proveedores.Events.Proveedor
         /// <summary>
         /// Email actualizado del proveedor
         /// </summary>
-        public string Email { get; }
+        public Email Email { get; }
 
         /// <summary>
         /// Teléfono actualizado del proveedor
         /// </summary>
-        public string Telefono { get; }
+        public PhoneNumber Telefono { get; }
 
         /// <summary>
         /// Dirección actualizada del proveedor
@@ -41,15 +43,15 @@ namespace RestaurantePro.Domain.Proveedores.Events.Proveedor
         {
             ProveedorId = proveedorId;
             Nombre = nombre;
-            Email = string.Empty;
-            Telefono = string.Empty;
+            Email = Email.Empty;
+            Telefono = PhoneNumber.Empty;
             Direccion = string.Empty;
         }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public ProveedorActualizado(Guid proveedorId, string nombre, string email, string telefono, string direccion)
+        public ProveedorActualizado(Guid proveedorId, string nombre, Email email, PhoneNumber telefono, string direccion)
         {
             ProveedorId = proveedorId;
             Nombre = nombre;

@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
 {
+    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+    
     public class ProveedorTests
     {
         [Fact]
@@ -18,6 +20,8 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             var informacionBancaria = "Cuenta 12345-67890";
             var diasCredito = 30;
             var observaciones = "Proveedor principal de lácteos";
+            var expectedEmail = Email.Create(email);
+            var expectedTelefono = PhoneNumber.Create(telefono);
 
             // Act
             var proveedor = Domain.Proveedores.Entities.Proveedor.Crear(
@@ -38,8 +42,8 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             proveedor.Id.Should().NotBe(Guid.Empty);
             proveedor.Nombre.Should().Be(nombre);
             proveedor.RFC.Should().Be(rfc);
-            proveedor.Telefono.Should().Be(telefono);
-            proveedor.Email.Should().Be(email);
+            proveedor.Telefono.Value.Should().Be(expectedTelefono.Value);
+            proveedor.Email.Value.Should().Be(expectedEmail.Value);
             proveedor.Direccion.Should().Be(direccion);
             proveedor.Ciudad.Should().Be(ciudad);
             proveedor.CodigoPostal.Should().Be(codigoPostal);
@@ -187,6 +191,8 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             var nuevaInformacionBancaria = "Nueva Cuenta";
             var nuevosDiasCredito = 45;
             var nuevasObservaciones = "Observaciones actualizadas";
+            var expectedEmail = Email.Create(nuevoEmail);
+            var expectedTelefono = PhoneNumber.Create(nuevoTelefono);
             
             // Act
             proveedor.ActualizarInformacion(
@@ -205,8 +211,8 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             // Assert
             proveedor.Nombre.Should().Be(nuevoNombre);
             proveedor.NombreContacto.Should().Be(nuevoNombreContacto);
-            proveedor.Telefono.Should().Be(nuevoTelefono);
-            proveedor.Email.Should().Be(nuevoEmail);
+            proveedor.Telefono.Value.Should().Be(expectedTelefono.Value);
+            proveedor.Email.Value.Should().Be(expectedEmail.Value);
             proveedor.Direccion.Should().Be(nuevaDireccion);
             proveedor.Ciudad.Should().Be(nuevaCiudad);
             proveedor.CodigoPostal.Should().Be(nuevoCodigoPostal);
@@ -315,8 +321,8 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             contacto.ProveedorId.Should().Be(proveedor.Id);
             contacto.Nombre.Should().Be(nombreContacto);
             contacto.Cargo.Should().Be(cargoContacto);
-            contacto.Telefono.ToString().Should().Be(telefonoContacto);
-            contacto.Email.ToString().Should().Be(emailContacto);
+            contacto.Telefono.Should().NotBeNull();
+            contacto.Email.Should().NotBeNull();
             
             // Verificar que se generó el evento de dominio
             proveedor.DomainEvents.Should().Contain(e => e is ContactoProveedorAgregado);

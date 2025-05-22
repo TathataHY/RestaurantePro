@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.Proveedores.Events.ContactoProveedor
 {
+    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+    
     /// <summary>
     /// Evento que se dispara cuando se agrega un contacto a un proveedor
     /// </summary>
@@ -32,17 +34,17 @@ namespace RestaurantePro.Domain.Proveedores.Events.ContactoProveedor
         /// <summary>
         /// Email del contacto
         /// </summary>
-        public string Email { get; }
+        public Email Email { get; }
 
         /// <summary>
         /// Teléfono del contacto
         /// </summary>
-        public string Telefono { get; }
+        public PhoneNumber Telefono { get; }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public ContactoProveedorAgregado(Guid proveedorId, Guid contactoId, string nombre, string cargo, string email, string telefono)
+        public ContactoProveedorAgregado(Guid proveedorId, Guid contactoId, string nombre, string cargo, Email email, PhoneNumber telefono)
         {
             ProveedorId = proveedorId;
             ContactoId = contactoId;

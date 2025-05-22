@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.Proveedores.Entities
 {
+    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+    
     /// <summary>
     /// Entidad que representa un proveedor en el sistema
     /// </summary>
@@ -18,12 +20,12 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         /// <summary>
         /// Email del proveedor
         /// </summary>
-        public string Email { get; private set; }
+        public Email Email { get; private set; }
         
         /// <summary>
         /// Teléfono del proveedor
         /// </summary>
-        public string Telefono { get; private set; }
+        public PhoneNumber Telefono { get; private set; }
         
         /// <summary>
         /// Dirección del proveedor
@@ -117,8 +119,8 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         private Proveedor(
             string nombre,
             string nombreContacto,
-            string email,
-            string telefono,
+            Email email,
+            PhoneNumber telefono,
             string direccion,
             string ciudad,
             string codigoPostal,
@@ -166,13 +168,10 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             // Validaciones
             if (string.IsNullOrWhiteSpace(nombre))
                 throw new ArgumentException("El nombre del proveedor es obligatorio", nameof(nombre));
-                
-            if (string.IsNullOrWhiteSpace(email))
-                throw new ArgumentException("El email del proveedor es obligatorio", nameof(email));
-                
-            // Validar formato de email
-            if (!email.Contains("@") || !email.Contains("."))
-                throw new ArgumentException("El formato del email no es válido", nameof(email));
+            
+            // Las validaciones de email y teléfono se realizan en los ValueObjects
+            var emailVO = Email.Create(email);
+            var telefonoVO = PhoneNumber.Create(telefono);
                 
             if (diasCredito < 0)
                 throw new ArgumentException("Los días de crédito no pueden ser negativos", nameof(diasCredito));
@@ -184,8 +183,8 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             return new Proveedor(
                 nombre, 
                 nombreContacto, 
-                email, 
-                telefono, 
+                emailVO, 
+                telefonoVO, 
                 direccion, 
                 ciudad, 
                 codigoPostal, 
@@ -213,13 +212,10 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         {
             if (string.IsNullOrWhiteSpace(nombre))
                 throw new ArgumentException("El nombre del proveedor es obligatorio", nameof(nombre));
-                
-            if (string.IsNullOrWhiteSpace(email))
-                throw new ArgumentException("El email del proveedor es obligatorio", nameof(email));
-                
-            // Validar formato de email
-            if (!email.Contains("@") || !email.Contains("."))
-                throw new ArgumentException("El formato del email no es válido", nameof(email));
+            
+            // Las validaciones de email y teléfono se realizan en los ValueObjects
+            var emailVO = Email.Create(email);
+            var telefonoVO = PhoneNumber.Create(telefono);
                 
             if (diasCredito < 0)
                 throw new ArgumentException("Los días de crédito no pueden ser negativos", nameof(diasCredito));
@@ -230,8 +226,8 @@ namespace RestaurantePro.Domain.Proveedores.Entities
                 
             Nombre = nombre;
             NombreContacto = nombreContacto;
-            Email = email;
-            Telefono = telefono;
+            Email = emailVO;
+            Telefono = telefonoVO;
             Direccion = direccion;
             Ciudad = ciudad;
             CodigoPostal = codigoPostal;
@@ -243,7 +239,7 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new ProveedorActualizado(Id, nombre));
+            AddDomainEvent(new ProveedorActualizado(Id, nombre, Email, Telefono, direccion));
         }
         
         /// <summary>
@@ -259,7 +255,7 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new ProveedorActualizado(Id, Nombre));
+            AddDomainEvent(new ProveedorActualizado(Id, Nombre, Email, Telefono, direccion));
         }
         
         /// <summary>
@@ -268,14 +264,13 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         /// <param name="telefono">Nuevo teléfono</param>
         public void ActualizarTelefono(string telefono)
         {
-            if (string.IsNullOrWhiteSpace(telefono))
-                throw new ArgumentException("El teléfono no puede estar vacío", nameof(telefono));
+            var telefonoVO = PhoneNumber.Create(telefono);
                 
-            Telefono = telefono;
+            Telefono = telefonoVO;
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new ProveedorActualizado(Id, Nombre));
+            AddDomainEvent(new ProveedorActualizado(Id, Nombre, Email, Telefono, Direccion));
         }
         
         /// <summary>
@@ -284,18 +279,13 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         /// <param name="email">Nuevo email</param>
         public void ActualizarEmail(string email)
         {
-            if (string.IsNullOrWhiteSpace(email))
-                throw new ArgumentException("El email no puede estar vacío", nameof(email));
+            var emailVO = Email.Create(email);
                 
-            // Validar formato de email
-            if (!email.Contains("@") || !email.Contains("."))
-                throw new ArgumentException("El formato del email no es válido", nameof(email));
-                
-            Email = email;
+            Email = emailVO;
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new ProveedorActualizado(Id, Nombre));
+            AddDomainEvent(new ProveedorActualizado(Id, Nombre, Email, Telefono, Direccion));
         }
         
         /// <summary>
@@ -313,7 +303,7 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new ProveedorActualizado(Id, Nombre));
+            AddDomainEvent(new ProveedorActualizado(Id, Nombre, Email, Telefono, Direccion));
         }
         
         /// <summary>
@@ -394,10 +384,8 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         {
             if (string.IsNullOrWhiteSpace(nombre))
                 throw new ArgumentException("El nombre del contacto es obligatorio", nameof(nombre));
-                
-            if (string.IsNullOrWhiteSpace(email))
-                throw new ArgumentException("El email del contacto es obligatorio", nameof(email));
-                
+            
+            // Las validaciones de email y teléfono se realizan en los ValueObjects
             var contacto = ContactoProveedor.Crear(Id, nombre, cargo, telefono, email);
             _contactos.Add(contacto);
             
@@ -410,7 +398,7 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new ContactoProveedorAgregado(Id, contacto.Id, nombre, cargo, telefono, email));
+            AddDomainEvent(new ContactoProveedorAgregado(Id, contacto.Id, nombre, cargo, contacto.Email, contacto.Telefono));
             
             return contacto;
         }
@@ -458,13 +446,14 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             if (string.IsNullOrWhiteSpace(Nombre))
                 throw new InvalidOperationException("El nombre del proveedor no puede estar vacío");
                 
-            if (string.IsNullOrWhiteSpace(Email))
-                throw new InvalidOperationException("El email del proveedor no puede estar vacío");
+            if (Email == null)
+                throw new InvalidOperationException("El email del proveedor no puede ser nulo");
                 
-            // Validar formato de email
-            if (!Email.Contains("@") || !Email.Contains("."))
-                throw new InvalidOperationException($"El formato del email '{Email}' no es válido");
+            if (Telefono == null)
+                throw new InvalidOperationException("El teléfono del proveedor no puede ser nulo");
                 
+            // La validación del formato de email ya se realiza en el ValueObject Email
+            
             // Validar que los días de crédito no sean negativos
             if (DiasCredito < 0)
                 throw new InvalidOperationException($"Los días de crédito no pueden ser negativos. Valor actual: {DiasCredito}");

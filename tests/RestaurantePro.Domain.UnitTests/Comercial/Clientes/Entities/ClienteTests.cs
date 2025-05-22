@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
 {
+    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+    
     public class ClienteTests
     {
         [Fact]
@@ -9,6 +11,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
             var email = "juan.perez@example.com";
             var telefono = "+34612345678";
+            var expectedEmail = Email.Create(email);
+            var expectedTelefono = PhoneNumber.Create(telefono);
 
             // Act
             var cliente = Cliente.Crear(nombre, email, telefono);
@@ -16,8 +20,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             // Assert
             cliente.Should().NotBeNull();
             cliente.Nombre.Should().Be(nombre);
-            cliente.Email.Should().Be(email);
-            cliente.Telefono.Should().Be(telefono);
+            cliente.Email.Value.Should().Be(expectedEmail.Value);
+            cliente.Telefono.Value.Should().Be(expectedTelefono.Value);
             cliente.EstaActivo.Should().BeTrue();
             cliente.PuntosAcumulados.Should().Be(0);
             cliente.Id.Should().NotBe(Guid.Empty);
@@ -131,13 +135,15 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
             var nuevoEmail = "nuevo.juan@example.com";
             var nuevoTelefono = "687654321";
+            var expectedEmail = Email.Create(nuevoEmail);
+            var expectedTelefono = PhoneNumber.Create(nuevoTelefono);
 
             // Act
             cliente.ActualizarInformacionContacto(nuevoEmail, nuevoTelefono);
 
             // Assert
-            cliente.Email.Should().Be(nuevoEmail);
-            cliente.Telefono.Should().Be(nuevoTelefono);
+            cliente.Email.Value.Should().Be(expectedEmail.Value);
+            cliente.Telefono.Value.Should().Be(expectedTelefono.Value);
             cliente.DomainEvents.Should().ContainSingle(e => e is InformacionContactoActualizada);
         }
 
@@ -155,8 +161,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             cliente.ActualizarInformacionContacto(email, telefono);
 
             // Assert
-            cliente.Email.Should().Be(email);
-            cliente.Telefono.Should().Be(telefono);
+            cliente.Email.Value.Should().Be(email);
+            cliente.Telefono.Value.Should().Be(telefono);
             cliente.DomainEvents.Should().BeEmpty();
         }
 

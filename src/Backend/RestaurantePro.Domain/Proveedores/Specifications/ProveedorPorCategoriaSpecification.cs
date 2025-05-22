@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using RestaurantePro.Domain.Core.Base.Specifications;
+using RestaurantePro.Domain.Core.SharedKernel.Specifications;
 using RestaurantePro.Domain.Proveedores.Entities;
 using RestaurantePro.Domain.Proveedores.Enums;
 
