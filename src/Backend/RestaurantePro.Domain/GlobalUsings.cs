@@ -136,6 +136,7 @@ global using RestaurantePro.Domain.Proveedores.Interfaces;
 global using RestaurantePro.Domain.Proveedores.Events;
 global using RestaurantePro.Domain.Proveedores.Events.Proveedor;
 global using RestaurantePro.Domain.Proveedores.Events.ContactoProveedor;
+global using RestaurantePro.Domain.Proveedores.DTOs;
 
 // Event Handlers
 global using RestaurantePro.Domain.Comercial.EventHandlers;

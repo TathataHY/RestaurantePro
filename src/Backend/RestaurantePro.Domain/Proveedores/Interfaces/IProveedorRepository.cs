@@ -1,13 +1,4 @@
-namespace RestaurantePro.Domain.Proveedores.Interfaces
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-    using RestaurantePro.Domain.Proveedores.DTOs;
-    using RestaurantePro.Domain.Proveedores.Entities;
-    
+namespace RestaurantePro.Domain.Proveedores.Interfaces{    
     /// <summary>
     /// Interfaz para el repositorio de proveedores
     /// </summary>
