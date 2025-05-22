@@ -34,6 +34,9 @@ global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Services;
 global using RestaurantePro.Domain.Core.SharedKernel.Specifications;
 
+// Domain core imports - Services
+global using RestaurantePro.Domain.Core.Services;
+
 // Domain core imports - BoundedContexts
 global using RestaurantePro.Domain.Core.BoundedContexts;
 
@@ -92,6 +95,10 @@ global using RestaurantePro.Domain.Comercial.Clientes.Events;
 global using RestaurantePro.Domain.Comercial.Clientes.Events.Cliente;
 global using RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion;
 global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
+
+// Domain Comercial - Promociones
+global using RestaurantePro.Domain.Comercial.Promociones.Entities;
+global using RestaurantePro.Domain.Comercial.Promociones.Specifications;
 
 // Domain Comercial - Services
 global using RestaurantePro.Domain.Comercial.Services;
