@@ -41,37 +41,48 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Policies
             // Crear una comanda con el producto 1
             var mesaId1 = Guid.NewGuid();
             var meseroId1 = Guid.NewGuid();
-            var comanda1 = Comanda.Crear(mesaId1, meseroId1);
+            var comanda1 = Comanda.Crear(meseroId1, null, mesaId1);
             comanda1.AgregarProducto(productoId1, 3, 100m);
             comandasParaRepositorio.Add(comanda1);
             
             // Crear una comanda con el producto 2
             var mesaId2 = Guid.NewGuid();
             var meseroId2 = Guid.NewGuid();
-            var comanda2 = Comanda.Crear(mesaId2, meseroId2);
+            var comanda2 = Comanda.Crear(meseroId2, null, mesaId2);
             comanda2.AgregarProducto(productoId2, 2, 100m);
             comandasParaRepositorio.Add(comanda2);
             
             // Crear una comanda con el producto 3
             var mesaId3 = Guid.NewGuid();
             var meseroId3 = Guid.NewGuid();
-            var comanda3 = Comanda.Crear(mesaId3, meseroId3);
+            var comanda3 = Comanda.Crear(meseroId3, null, mesaId3);
             comanda3.AgregarProducto(productoId3, 1, 100m);
             comandasParaRepositorio.Add(comanda3);
             
             // Crear una comanda con el producto 4
             var mesaId4 = Guid.NewGuid();
             var meseroId4 = Guid.NewGuid();
-            var comanda4 = Comanda.Crear(mesaId4, meseroId4);
+            var comanda4 = Comanda.Crear(meseroId4, null, mesaId4);
             comanda4.AgregarProducto(productoId4, 1, 100m);
             comandasParaRepositorio.Add(comanda4);
             
             // Configurar productos
-            ConfigurarProductos(productoId1, productoId2, productoId3, productoId4);
+            var productos = ConfigurarProductos(productoId1, productoId2, productoId3, productoId4);
+            
+            // Verificar que los productos estén activos
+            foreach (var producto in productos)
+            {
+                producto.Should().NotBeNull();
+                producto.EstaActivo.Should().BeTrue();
+                producto.Precio.Should().NotBeNull();
+                producto.Precio.Valor.Should().BeGreaterThan(0);
+                producto.CategoriaNombre.Should().NotBeNullOrEmpty();
+                producto.CategoriaId.Should().NotBe(Guid.Empty);
+            }
             
             // Configurar repositorio para devolver comandas
             _comandaRepositoryMock
-                .Setup(r => r.ObtenerPorRangoFechasAsync(fechaInicio, fechaActual, false, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorRangoFechasAsync(fechaInicio, fechaActual, true, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(comandasParaRepositorio);
             
             // Act
@@ -79,11 +90,16 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Policies
             
             // Assert
             resultado.Should().NotBeNull();
+            
+            // Depuración: verificar que las comandas fueron proporcionadas correctamente
+            _comandaRepositoryMock.Verify(r => r.ObtenerPorRangoFechasAsync(
+                It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
+            
+            resultado.Criterios.Should().Contain("popularidad");
             resultado.ProductosRecomendados.Should().HaveCount(3);
             resultado.ProductosRecomendados[0].ProductoId.Should().Be(productoId1);
             resultado.ProductosRecomendados[1].ProductoId.Should().Be(productoId2);
             resultado.ProductosRecomendados[2].ProductoId.Should().Be(productoId3);
-            resultado.Criterios.Should().Contain("popularidad");
         }
         
         [Fact]
@@ -100,23 +116,34 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Policies
             // Crear una comanda con el producto 1
             var mesaId1 = Guid.NewGuid();
             var meseroId1 = Guid.NewGuid();
-            var comanda1 = Comanda.Crear(mesaId1, meseroId1, clienteId);
+            var comanda1 = Comanda.Crear(meseroId1, clienteId, mesaId1);
             comanda1.AgregarProducto(productoId1, 2, 100m);
             comandasParaRepositorio.Add(comanda1);
             
             // Crear una comanda con el producto 2
             var mesaId2 = Guid.NewGuid();
             var meseroId2 = Guid.NewGuid();
-            var comanda2 = Comanda.Crear(mesaId2, meseroId2, clienteId);
+            var comanda2 = Comanda.Crear(meseroId2, clienteId, mesaId2);
             comanda2.AgregarProducto(productoId2, 1, 100m);
             comandasParaRepositorio.Add(comanda2);
             
             // Configurar productos
-            ConfigurarProductos(productoId1, productoId2, Guid.NewGuid(), Guid.NewGuid());
+            var productos = ConfigurarProductos(productoId1, productoId2, Guid.NewGuid(), Guid.NewGuid());
+            
+            // Verificar que los productos estén activos
+            foreach (var producto in productos)
+            {
+                producto.Should().NotBeNull();
+                producto.EstaActivo.Should().BeTrue();
+                producto.Precio.Should().NotBeNull();
+                producto.Precio.Valor.Should().BeGreaterThan(0);
+                producto.CategoriaNombre.Should().NotBeNullOrEmpty();
+                producto.CategoriaId.Should().NotBe(Guid.Empty);
+            }
             
             // Configurar repositorio para devolver comandas del cliente
             _comandaRepositoryMock
-                .Setup(r => r.ObtenerPorClienteAsync(clienteId, false, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorClienteAsync(clienteId, true, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(comandasParaRepositorio);
             
             // Act
@@ -124,11 +151,16 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Policies
             
             // Assert
             resultado.Should().NotBeNull();
-            resultado.ProductosRecomendados.Should().HaveCount(2);
+            
+            // Depuración: verificar que las comandas fueron proporcionadas correctamente
+            _comandaRepositoryMock.Verify(r => r.ObtenerPorClienteAsync(
+                clienteId, true, It.IsAny<CancellationToken>()), Times.Once);
+                
             resultado.Criterios.Should().Contain("historial");
+            resultado.ProductosRecomendados.Should().HaveCount(2);
         }
         
-        private void ConfigurarProductos(params Guid[] productosIds)
+        private List<Producto> ConfigurarProductos(params Guid[] productosIds)
         {
             var productos = new List<Producto>();
             
@@ -169,6 +201,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Policies
                     .Setup(r => r.ObtenerPorIdAsync(producto.Id, It.IsAny<CancellationToken>()))
                     .ReturnsAsync(producto);
             }
+            
+            return productos;
         }
         
         private Producto CrearProductoMock(Guid id, string nombre, decimal precio, bool activo, string categoria = "Test", Guid? categoriaId = null)

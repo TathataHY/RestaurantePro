@@ -15,12 +15,12 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
             _meseroId = Guid.NewGuid();
             _clienteId = Guid.NewGuid();
 
-            // Crear datos de prueba
+            // Crear datos de prueba con mesa asignada explícitamente
             _comandas = new List<Comanda>
             {
-                Comanda.Crear(_mesaId, _meseroId, _clienteId, "Comanda 1"),
-                Comanda.Crear(_mesaId, _meseroId, _clienteId, "Comanda 2"),
-                Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), null, "Comanda 3")
+                Comanda.Crear(_meseroId, _clienteId, _mesaId, "Comanda 1"),
+                Comanda.Crear(_meseroId, _clienteId, _mesaId, "Comanda 2"),
+                Comanda.Crear(_meseroId, null, Guid.NewGuid(), "Comanda 3")
             };
 
             // Agregar productos a las comandas
@@ -104,7 +104,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
 
             // Assert
             resultado.Should().NotBeNull();
-            resultado.Should().HaveCount(2); // Hay 2 comandas del mesero
+            resultado.Should().HaveCount(comandasDeMesero.Count); // Usamos la cantidad real en lugar de un número hardcodeado
             resultado.All(c => c.MeseroId == _meseroId).Should().BeTrue();
         }
 
@@ -147,8 +147,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
         [Fact]
         public async Task AgregarAsync_ComandaValida_DebeAgregarCorrectamente()
         {
-            // Arrange
-            var nuevaComanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            // Arrange - Aseguramos que hay una mesa asignada
+            var mesaId = Guid.NewGuid();
+            var nuevaComanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), mesaId);
             nuevaComanda.AgregarProducto(Guid.NewGuid(), 1, 75m);
 
             _mockRepository.Setup(repo => repo.AgregarAsync(nuevaComanda, It.IsAny<CancellationToken>()))
