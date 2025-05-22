@@ -11,16 +11,12 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Events
         public Guid MesaId { get; }
 
         /// <summary>
-        /// Fecha en que ocurrió el evento
-        /// </summary>
-        
-        /// <summary>
         /// Constructor para crear una nueva instancia del evento
         /// </summary>
         public MesaDisponible(Guid mesaId)
         {
             MesaId = mesaId;
-                    }
+        }
     }
 }
 

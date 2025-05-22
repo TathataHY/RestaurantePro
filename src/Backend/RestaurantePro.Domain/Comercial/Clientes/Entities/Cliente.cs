@@ -76,28 +76,41 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// Este es el único punto de entrada para crear instancias válidas de Cliente.
         /// </summary>
         /// <param name="nombre">Nombre completo del cliente</param>
-        /// <param name="email">Email del cliente</param>
-        /// <param name="telefono">Teléfono del cliente</param>
+        /// <param name="email">Email del cliente como ValueObject</param>
+        /// <param name="telefono">Teléfono del cliente como ValueObject</param>
         /// <returns>Una nueva instancia de Cliente</returns>
-        public static Cliente Crear(ClienteNombre nombre, string email, string telefono)
+        public static Cliente Crear(ClienteNombre nombre, Email email, PhoneNumber telefono)
         {
-            var emailVO = Email.Create(email);
-            var telefonoVO = PhoneNumber.Create(telefono);
-            
             var cliente = new Cliente
             {
                 Nombre = nombre,
-                Email = emailVO,
-                Telefono = telefonoVO,
+                Email = email,
+                Telefono = telefono,
                 EstaActivo = true,
                 PuntosAcumulados = 0,
                 CantidadVisitas = 0,
                 Segmento = SegmentoCliente.SinClasificar
             };
 
-            cliente.AddDomainEvent(new ClienteCreado(cliente.Id, nombre.NombreCompleto));
+            cliente.AddDomainEvent(new ClienteCreado(cliente.Id, nombre.NombreCompleto, email, telefono));
 
             return cliente;
+        }
+
+        /// <summary>
+        /// Factory Method alternativo para crear una nueva instancia de cliente a partir de strings.
+        /// Este método es una conveniencia para casos donde solo están disponibles los valores como string.
+        /// </summary>
+        /// <param name="nombre">Nombre completo del cliente</param>
+        /// <param name="email">Email del cliente como string</param>
+        /// <param name="telefono">Teléfono del cliente como string</param>
+        /// <returns>Una nueva instancia de Cliente</returns>
+        public static Cliente Crear(ClienteNombre nombre, string email, string telefono)
+        {
+            var emailVO = Email.Create(email);
+            var telefonoVO = PhoneNumber.Create(telefono);
+            
+            return Crear(nombre, emailVO, telefonoVO);
         }
 
         /// <summary>
@@ -159,22 +172,39 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// Actualiza la información de contacto del cliente.
         /// Solo se genera un evento de actualización si alguno de los valores cambia.
         /// </summary>
-        /// <param name="email">Nuevo email</param>
-        /// <param name="telefono">Nuevo teléfono</param>
+        /// <param name="email">Nuevo email como ValueObject</param>
+        /// <param name="telefono">Nuevo teléfono como ValueObject</param>
+        public void ActualizarInformacionContacto(Email email, PhoneNumber telefono)
+        {
+            if (email == null)
+                throw new ArgumentNullException(nameof(email), "El email no puede ser nulo");
+            
+            if (telefono == null)
+                throw new ArgumentNullException(nameof(telefono), "El teléfono no puede ser nulo");
+            
+            if (Email.Value == email.Value && Telefono.Value == telefono.Value)
+                return;
+
+            Email = email;
+            Telefono = telefono;
+            MarkAsModified();
+            ValidarInvariantes();
+
+            AddDomainEvent(new InformacionContactoActualizada(Id, Email, Telefono));
+        }
+
+        /// <summary>
+        /// Actualiza la información de contacto del cliente (método de conveniencia).
+        /// Solo se genera un evento de actualización si alguno de los valores cambia.
+        /// </summary>
+        /// <param name="email">Nuevo email como string</param>
+        /// <param name="telefono">Nuevo teléfono como string</param>
         public void ActualizarInformacionContacto(string email, string telefono)
         {
             var emailVO = Email.Create(email);
             var telefonoVO = PhoneNumber.Create(telefono);
             
-            if (Email.Value == emailVO.Value && Telefono.Value == telefonoVO.Value)
-                return;
-
-            Email = emailVO;
-            Telefono = telefonoVO;
-            MarkAsModified();
-            ValidarInvariantes();
-
-            AddDomainEvent(new InformacionContactoActualizada(Id, Email, Telefono));
+            ActualizarInformacionContacto(emailVO, telefonoVO);
         }
 
         /// <summary>
@@ -329,17 +359,18 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// <summary>
         /// Actualiza el email del cliente
         /// </summary>
-        /// <param name="nuevoEmail">Nuevo email del cliente</param>
-        /// <exception cref="ArgumentException">Si el email es inválido</exception>
-        public void ActualizarEmail(string nuevoEmail)
+        /// <param name="nuevoEmail">Nuevo email del cliente como ValueObject</param>
+        /// <exception cref="ArgumentNullException">Si el email es nulo</exception>
+        public void ActualizarEmail(Email nuevoEmail)
         {
-            var emailVO = Email.Create(nuevoEmail);
+            if (nuevoEmail == null)
+                throw new ArgumentNullException(nameof(nuevoEmail), "El email no puede ser nulo");
             
-            if (Email.Value == emailVO.Value)
+            if (Email.Value == nuevoEmail.Value)
                 return;
             
             var emailAnterior = Email;
-            Email = emailVO;
+            Email = nuevoEmail;
             MarkAsModified();
             ValidarInvariantes();
             
@@ -347,23 +378,46 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         }
         
         /// <summary>
+        /// Actualiza el email del cliente (método de conveniencia)
+        /// </summary>
+        /// <param name="nuevoEmail">Nuevo email del cliente como string</param>
+        /// <exception cref="ArgumentException">Si el email es inválido</exception>
+        public void ActualizarEmail(string nuevoEmail)
+        {
+            var emailVO = Email.Create(nuevoEmail);
+            ActualizarEmail(emailVO);
+        }
+        
+        /// <summary>
         /// Actualiza el teléfono del cliente
         /// </summary>
-        /// <param name="nuevoTelefono">Nuevo teléfono del cliente</param>
-        /// <exception cref="ArgumentException">Si el teléfono es inválido</exception>
-        public void ActualizarTelefono(string nuevoTelefono)
+        /// <param name="nuevoTelefono">Nuevo teléfono del cliente como ValueObject</param>
+        /// <exception cref="ArgumentNullException">Si el teléfono es nulo</exception>
+        public void ActualizarTelefono(PhoneNumber nuevoTelefono)
         {
-            var telefonoVO = PhoneNumber.Create(nuevoTelefono);
+            if (nuevoTelefono == null)
+                throw new ArgumentNullException(nameof(nuevoTelefono), "El teléfono no puede ser nulo");
             
-            if (Telefono.Value == telefonoVO.Value)
+            if (Telefono.Value == nuevoTelefono.Value)
                 return;
             
             var telefonoAnterior = Telefono;
-            Telefono = telefonoVO;
+            Telefono = nuevoTelefono;
             MarkAsModified();
             ValidarInvariantes();
             
             AddDomainEvent(new TelefonoClienteActualizado(Id, telefonoAnterior, Telefono));
+        }
+        
+        /// <summary>
+        /// Actualiza el teléfono del cliente (método de conveniencia)
+        /// </summary>
+        /// <param name="nuevoTelefono">Nuevo teléfono del cliente como string</param>
+        /// <exception cref="ArgumentException">Si el teléfono es inválido</exception>
+        public void ActualizarTelefono(string nuevoTelefono)
+        {
+            var telefonoVO = PhoneNumber.Create(nuevoTelefono);
+            ActualizarTelefono(telefonoVO);
         }
         
         /// <summary>

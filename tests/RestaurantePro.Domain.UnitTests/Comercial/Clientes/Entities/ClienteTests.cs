@@ -9,10 +9,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var email = "juan.perez@example.com";
-            var telefono = "+34612345678";
-            var expectedEmail = Email.Create(email);
-            var expectedTelefono = PhoneNumber.Create(telefono);
+            var email = Email.Create("juan.perez@example.com");
+            var telefono = PhoneNumber.Create("+34612345678");
 
             // Act
             var cliente = Cliente.Crear(nombre, email, telefono);
@@ -20,12 +18,19 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             // Assert
             cliente.Should().NotBeNull();
             cliente.Nombre.Should().Be(nombre);
-            cliente.Email.Value.Should().Be(expectedEmail.Value);
-            cliente.Telefono.Value.Should().Be(expectedTelefono.Value);
+            cliente.Email.Should().Be(email);
+            cliente.Telefono.Should().Be(telefono);
             cliente.EstaActivo.Should().BeTrue();
             cliente.PuntosAcumulados.Should().Be(0);
             cliente.Id.Should().NotBe(Guid.Empty);
             cliente.DomainEvents.Should().ContainSingle(e => e is ClienteCreado);
+            
+            // Verificar el evento
+            var evento = cliente.DomainEvents.OfType<ClienteCreado>().First();
+            evento.ClienteId.Should().Be(cliente.Id);
+            evento.NombreCompleto.Should().Be(nombre.NombreCompleto);
+            evento.Email.Should().Be(email);
+            evento.Telefono.Should().Be(telefono);
         }
 
         [Fact]

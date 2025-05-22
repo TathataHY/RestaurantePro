@@ -16,17 +16,13 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion
         public string Motivo { get; }
 
         /// <summary>
-        /// Fecha en que ocurrió el evento
-        /// </summary>
-        
-        /// <summary>
         /// Constructor para crear una nueva instancia del evento
         /// </summary>
         public ReservacionCancelada(Guid reservacionId, string motivo)
         {
             ReservacionId = reservacionId;
             Motivo = motivo;
-                    }
+        }
     }
 }
 

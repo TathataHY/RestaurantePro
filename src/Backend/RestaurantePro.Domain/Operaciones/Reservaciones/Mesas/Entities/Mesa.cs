@@ -147,8 +147,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
             FechaActualizacion = DateTime.Now;
 
             ValidarInvariantes();
-            // Aquí podríamos añadir un evento de dominio para registrar que la mesa está fuera de servicio
-            // AddDomainEvent(new MesaFueraDeServicio(Id, motivo));
+            AddDomainEvent(new MesaFueraDeServicio(Id, motivo));
         }
 
         /// <summary>
