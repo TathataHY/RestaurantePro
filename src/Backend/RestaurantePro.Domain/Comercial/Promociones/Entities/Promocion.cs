@@ -18,108 +18,108 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
         /// Código único de la promoción (para usar en el punto de venta)
         /// </summary>
         public string Codigo { get; private set; }
-        
+
         /// <summary>
         /// Nombre descriptivo de la promoción
         /// </summary>
         public string Nombre { get; private set; }
-        
+
         /// <summary>
         /// Descripción detallada de la promoción
         /// </summary>
         public string Descripcion { get; private set; }
-        
+
         /// <summary>
         /// Tipo de promoción
         /// </summary>
         public TipoPromocion Tipo { get; private set; }
-        
+
         /// <summary>
         /// Valor del descuento (monto fijo o porcentaje según el tipo)
         /// </summary>
         public decimal ValorDescuento { get; private set; }
-        
+
         /// <summary>
         /// Monto mínimo de compra para aplicar la promoción
         /// </summary>
         public decimal MontoMinimo { get; private set; }
-        
+
         /// <summary>
         /// Puntos de fidelización requeridos para canjear la promoción
         /// </summary>
         public int PuntosRequeridos { get; private set; }
-        
+
         /// <summary>
         /// Fecha de inicio de la promoción
         /// </summary>
         public DateTime FechaInicio { get; private set; }
-        
+
         /// <summary>
         /// Fecha de fin de la promoción
         /// </summary>
         public DateTime FechaFin { get; private set; }
-        
+
         /// <summary>
         /// Número máximo de veces que se puede usar la promoción (null = ilimitado)
         /// </summary>
         public int? MaximoUsos { get; private set; }
-        
+
         /// <summary>
         /// Número de veces que se ha usado la promoción
         /// </summary>
         public int VecesUsada { get; private set; }
-        
+
         /// <summary>
         /// Estado actual de la promoción
         /// </summary>
         public EstadoPromocion Estado { get; private set; }
-        
+
         /// <summary>
         /// Indica si la promoción es acumulable con otras
         /// </summary>
         public bool EsAcumulable { get; private set; }
-        
+
         /// <summary>
         /// Días de la semana en que es válida la promoción (si es null, es válida todos los días)
         /// Se almacena como un valor de bits donde cada bit representa un día de la semana (domingo = 1, lunes = 2, etc.)
         /// </summary>
         public int? DiasValidos { get; private set; }
-        
+
         /// <summary>
         /// IDs de los productos a los que aplica la promoción
         /// </summary>
         private readonly List<Guid> _productosAplicablesIds = new();
-        
+
         /// <summary>
         /// IDs de las categorías a las que aplica la promoción
         /// </summary>
         private readonly List<Guid> _categoriasAplicablesIds = new();
-        
+
         /// <summary>
         /// IDs de los clientes que han usado la promoción
         /// </summary>
         private readonly List<Guid> _clientesQueUsaronIds = new();
-        
+
         /// <summary>
         /// Lista de IDs de productos a los que aplica la promoción
         /// </summary>
         public IReadOnlyCollection<Guid> ProductosAplicablesIds => _productosAplicablesIds.AsReadOnly();
-        
+
         /// <summary>
         /// Lista de IDs de categorías a las que aplica la promoción
         /// </summary>
         public IReadOnlyCollection<Guid> CategoriasAplicablesIds => _categoriasAplicablesIds.AsReadOnly();
-        
+
         /// <summary>
         /// Lista de IDs de clientes que han usado la promoción
         /// </summary>
         public IReadOnlyCollection<Guid> ClientesQueUsaronIds => _clientesQueUsaronIds.AsReadOnly();
-        
+
         /// <summary>
         /// Constructor protegido para EF Core
         /// </summary>
         protected Promocion() { }
-        
+
         /// <summary>
         /// Constructor privado para crear una promoción
         /// </summary>
@@ -154,14 +154,14 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             
             ValidarInvariantes();
         }
-        
+
         /// <summary>
         /// Factory method para crear una nueva promoción
         /// </summary>
         public static Promocion Crear(
             string codigo, 
-            string nombre, 
-            string descripcion, 
+            string nombre,
+            string descripcion,
             TipoPromocion tipo, 
             decimal valorDescuento, 
             DateTime fechaInicio, 
@@ -229,7 +229,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             if (tipo == TipoPromocion.CanjePuntos && puntosRequeridos <= 0)
                 throw new ArgumentException("Para promociones de canje de puntos, debe especificar los puntos requeridos", nameof(puntosRequeridos));
         }
-        
+
         /// <summary>
         /// Activa la promoción
         /// </summary>
@@ -249,7 +249,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             
             AddDomainEvent(new PromocionEstadoActualizado(Id, Codigo, Nombre, estadoAnterior, Estado));
         }
-        
+
         /// <summary>
         /// Pausa la promoción
         /// </summary>
@@ -269,7 +269,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             
             AddDomainEvent(new PromocionEstadoActualizado(Id, Codigo, Nombre, estadoAnterior, Estado));
         }
-        
+
         /// <summary>
         /// Finaliza la promoción
         /// </summary>
@@ -289,7 +289,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             
             AddDomainEvent(new PromocionEstadoActualizado(Id, Codigo, Nombre, estadoAnterior, Estado));
         }
-        
+
         /// <summary>
         /// Cancela la promoción
         /// </summary>
@@ -347,10 +347,10 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             
             AddDomainEvent(new PromocionUsada(Id, Codigo, Nombre, clienteId, comandaId, montoAplicado));
         }
-        
-        /// <summary>
+    
+    /// <summary>
         /// Agrega un producto a la lista de productos aplicables
-        /// </summary>
+    /// </summary>
         /// <param name="productoId">ID del producto</param>
         public void AgregarProductoAplicable(Guid productoId)
         {
@@ -378,11 +378,11 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             ValidarInvariantes();
             
             AddDomainEvent(new PromocionProductoEliminado(Id, Codigo, Nombre, productoId));
-        }
-        
-        /// <summary>
+    }
+    
+    /// <summary>
         /// Agrega una categoría a la lista de categorías aplicables
-        /// </summary>
+    /// </summary>
         /// <param name="categoriaId">ID de la categoría</param>
         public void AgregarCategoriaAplicable(Guid categoriaId)
         {
@@ -410,11 +410,11 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             ValidarInvariantes();
             
             AddDomainEvent(new PromocionCategoriaEliminada(Id, Codigo, Nombre, categoriaId));
-        }
-        
-        /// <summary>
+    }
+    
+    /// <summary>
         /// Establece los días de la semana en que la promoción es válida
-        /// </summary>
+    /// </summary>
         /// <param name="dias">Array con los días de la semana válidos</param>
         public void EstablecerDiasValidos(params DayOfWeek[] dias)
         {
@@ -449,11 +449,11 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
                 
             // Verificar si el bit correspondiente al día está activo
             return (DiasValidos.Value & (1 << (int)dia)) != 0;
-        }
-        
-        /// <summary>
+    }
+    
+    /// <summary>
         /// Actualiza la información de la promoción
-        /// </summary>
+    /// </summary>
         public void ActualizarInformacion(
             string nombre, 
             string descripcion, 
@@ -522,11 +522,11 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
                 return true;
                 
             return false;
-        }
-        
-        /// <summary>
+    }
+    
+    /// <summary>
         /// Verifica si la promoción está vigente en la fecha actual
-        /// </summary>
+    /// </summary>
         /// <returns>True si la promoción está vigente</returns>
         public bool EstaVigente()
         {
@@ -559,11 +559,11 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
                 return false;
                 
             return true;
-        }
-        
-        /// <summary>
+    }
+    
+    /// <summary>
         /// Calcula el descuento aplicable a un monto
-        /// </summary>
+    /// </summary>
         /// <param name="montoOriginal">Monto original sin descuento</param>
         /// <returns>Monto del descuento a aplicar</returns>
         public decimal CalcularDescuento(decimal montoOriginal)

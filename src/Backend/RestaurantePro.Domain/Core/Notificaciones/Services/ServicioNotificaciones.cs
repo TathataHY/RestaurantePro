@@ -99,9 +99,9 @@ namespace RestaurantePro.Domain.Core.Notificaciones.Services
             CancellationToken cancellationToken = default)
         {
             if (soloNoLeidas)
-                return await _notificacionRepository.GetUnreadByRecipientIdAsync(destinatarioId, cancellationToken);
+                return await _notificacionRepository.ObtenerNoLeidasPorDestinatarioAsync(destinatarioId, cancellationToken);
                 
-            return await _notificacionRepository.GetByRecipientIdAsync(destinatarioId, cancellationToken);
+            return await _notificacionRepository.ObtenerPorDestinatarioAsync(destinatarioId, cancellationToken);
         }
     }
 } 

@@ -110,6 +110,11 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
             }
         }
 
+        /// <summary>
+        /// Instancia estática que representa un número de teléfono vacío
+        /// </summary>
+        public static readonly PhoneNumber Empty = new PhoneNumber(string.Empty);
+
         private PhoneNumber(string value)
         {
             Value = value;

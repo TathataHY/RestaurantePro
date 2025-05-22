@@ -99,6 +99,30 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
         Task<T?> PrimeroODefaultAsync(Func<T, bool> predicado, CancellationToken cancellationToken = default);
         
         /// <summary>
+        /// Obtiene entidades que satisfacen una especificación
+        /// </summary>
+        /// <param name="specification">Especificación a aplicar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Colección de entidades que satisfacen la especificación</returns>
+        Task<IEnumerable<T>> ObtenerPorSpecAsync(SharedKernel.Specifications.ISpecification<T> specification, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Cuenta la cantidad de entidades que satisfacen una especificación
+        /// </summary>
+        /// <param name="specification">Especificación a aplicar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Cantidad de entidades que satisfacen la especificación</returns>
+        Task<int> ContarPorSpecAsync(SharedKernel.Specifications.ISpecification<T> specification, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene la primera entidad que satisface una especificación
+        /// </summary>
+        /// <param name="specification">Especificación a aplicar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>La primera entidad que satisface la especificación o null si no existe</returns>
+        Task<T?> PrimeroODefaultPorSpecAsync(SharedKernel.Specifications.ISpecification<T> specification, CancellationToken cancellationToken = default);
+        
+        /// <summary>
         /// Guarda los cambios y publica eventos de dominio
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>

@@ -130,6 +130,11 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
                                              new[] { "sii.cl", "mineduc.cl", "minsal.cl", "ine.cl", "dt.gob.cl", "aduana.cl" }
                                                 .Contains(Domain.ToLowerInvariant());
 
+        /// <summary>
+        /// Instancia estática que representa un email vacío
+        /// </summary>
+        public static readonly Email Empty = new Email(string.Empty);
+
         private Email(string value)
         {
             Value = value;
