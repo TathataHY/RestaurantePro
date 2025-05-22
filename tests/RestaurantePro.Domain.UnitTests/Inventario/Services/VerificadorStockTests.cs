@@ -206,7 +206,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
 
             if (!activo)
             {
-                proveedor.Desactivar();
+                proveedor.Desactivar("Proveedor inactivo para pruebas");
             }
 
             return proveedor;

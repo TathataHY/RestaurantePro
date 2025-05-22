@@ -109,17 +109,17 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// Factory method para crear una nueva comanda.
         /// Este es el único punto de entrada para crear instancias válidas.
         /// </summary>
-        /// <param name="mesaId">ID de la mesa donde se crea la comanda</param>
         /// <param name="meseroId">ID del mesero responsable</param>
         /// <param name="clienteId">ID del cliente (opcional)</param>
+        /// <param name="mesaId">ID de la mesa donde se crea la comanda (opcional)</param>
         /// <param name="observaciones">Observaciones iniciales (opcional)</param>
         /// <returns>Una nueva instancia de Comanda en estado Creada</returns>
-        public static Comanda Crear(Guid mesaId, Guid meseroId, Guid? clienteId = null, string? observaciones = null)
+        public static Comanda Crear(Guid meseroId, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null)
         {
             var comanda = new Comanda
             {
                 Id = Guid.NewGuid(),
-                MesaId = mesaId,
+                MesaId = mesaId ?? Guid.Empty,
                 MeseroId = meseroId,
                 ClienteId = clienteId,
                 FechaCreacion = DateTime.Now,
@@ -128,7 +128,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 Total = TotalComanda.Crear(0, 0)
             };
 
-            comanda.AddDomainEvent(new ComandaCreada(comanda.Id, mesaId, meseroId));
+            comanda.AddDomainEvent(new ComandaCreada(comanda.Id, comanda.MesaId, meseroId));
 
             return comanda;
         }

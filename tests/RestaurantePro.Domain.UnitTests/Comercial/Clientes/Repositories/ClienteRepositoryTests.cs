@@ -76,16 +76,16 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
         }
 
         [Fact]
-        public async Task ObtenerPorEstadoAsync_ClientesActivos_DebeRetornarSoloActivos()
+        public async Task ObtenerPorEstadoActivoAsync_ClientesActivos_DebeRetornarSoloActivos()
         {
             // Arrange
             var clientesActivos = _clientes.Where(c => c.EstaActivo).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(true, CancellationToken.None))
+            _mockRepository.Setup(repo => repo.ObtenerPorEstadoActivoAsync(true, CancellationToken.None))
                 .ReturnsAsync(clientesActivos);
 
             // Act
-            var resultado = await _mockRepository.Object.ObtenerPorEstadoAsync(true);
+            var resultado = await _mockRepository.Object.ObtenerPorEstadoActivoAsync(true);
 
             // Assert
             resultado.Should().NotBeNull();
@@ -94,16 +94,16 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
         }
 
         [Fact]
-        public async Task ObtenerPorEstadoAsync_ClientesInactivos_DebeRetornarSoloInactivos()
+        public async Task ObtenerPorEstadoActivoAsync_ClientesInactivos_DebeRetornarSoloInactivos()
         {
             // Arrange
             var clientesInactivos = _clientes.Where(c => !c.EstaActivo).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(false, CancellationToken.None))
+            _mockRepository.Setup(repo => repo.ObtenerPorEstadoActivoAsync(false, CancellationToken.None))
                 .ReturnsAsync(clientesInactivos);
 
             // Act
-            var resultado = await _mockRepository.Object.ObtenerPorEstadoAsync(false);
+            var resultado = await _mockRepository.Object.ObtenerPorEstadoActivoAsync(false);
 
             // Assert
             resultado.Should().NotBeNull();

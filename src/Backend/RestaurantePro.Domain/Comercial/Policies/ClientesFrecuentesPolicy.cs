@@ -46,7 +46,7 @@ namespace RestaurantePro.Domain.Comercial.Policies
             var resultado = new ResultadoClientesFrecuentesPolicy();
             
             // Obtener todos los clientes activos con información de visitas
-            var clientes = await _clienteRepository.ObtenerClientesActivosConVisitasAsync(cancellationToken);
+            var clientes = await _clienteRepository.ObtenerClientesActivosConVisitasAsync(3, 90, cancellationToken);
             
             if (!clientes.Any())
             {
@@ -100,7 +100,9 @@ namespace RestaurantePro.Domain.Comercial.Policies
             var resultado = new ResultadoClientesFrecuentesPolicy();
             
             // Obtener todos los clientes activos con su historial de visitas
-            var clientes = await _clienteRepository.ObtenerClientesConHistorialVisitasAsync(cancellationToken);
+            var fechaInicio = _dateTimeService.Now.AddDays(-90);
+            var fechaFin = _dateTimeService.Now;
+            var clientes = await _clienteRepository.ObtenerClientesConHistorialVisitasAsync(fechaInicio, fechaFin, cancellationToken);
             
             if (!clientes.Any())
                 return resultado;
@@ -310,6 +312,13 @@ namespace RestaurantePro.Domain.Comercial.Policies
                 NivelFidelizacion.Plata => 30,
                 _ => 60
             };
+        }
+
+        /// <inheritdoc />
+        public async Task<ResultadoClientesFrecuentesPolicy> EjecutarAsync(int diasHistorial = 90, CancellationToken cancellationToken = default)
+        {
+            // Este método es un alias de EjecutarPolicy
+            return await EjecutarPolicy(cancellationToken);
         }
     }
 } 

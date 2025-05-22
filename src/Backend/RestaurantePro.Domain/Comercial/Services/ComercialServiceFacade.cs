@@ -176,23 +176,25 @@ namespace RestaurantePro.Domain.Comercial.Services
             // Obtener clientes a procesar
             var clientes = clienteIds != null
                 ? await _clienteRepository.ObtenerClientesPorIdsAsync(clienteIds, cancellationToken)
-                : await _clienteRepository.ObtenerTodosConHistorialVisitasAsync(cancellationToken);
+                : await _clienteRepository.ObtenerTodosConHistorialVisitasAsync(90, cancellationToken);
             
             // Ejecutar política
-            var resultado = await _clientesFrecuentesPolicy.EjecutarAsync(clientes, cancellationToken);
+            var resultado = await _clientesFrecuentesPolicy.EjecutarAsync(90, cancellationToken);
             
-            // Persistir cambios en clientes
-            foreach (var clienteId in resultado.Keys)
+            // Construir diccionario de resultados
+            var resultadoClientes = new Dictionary<Guid, SegmentoCliente>();
+            
+            // Agregar todos los clientes actualizados
+            foreach (var clienteId in resultado.ClientesActualizados)
             {
-                var cliente = clientes.FirstOrDefault(c => c.Id == clienteId);
+                var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId, cancellationToken);
                 if (cliente != null)
                 {
-                    await _clienteRepository.ActualizarAsync(cliente);
+                    resultadoClientes[clienteId] = cliente.Segmento;
                 }
             }
-            await _clienteRepository.GuardarCambiosAsync(cancellationToken);
             
-            return resultado.ToDictionary(r => r.Key, r => r.Value.Segmento);
+            return resultadoClientes;
         }
     }
 } 

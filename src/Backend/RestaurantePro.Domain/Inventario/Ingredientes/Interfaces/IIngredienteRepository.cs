@@ -84,5 +84,20 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de ingredientes bloqueados</returns>
         Task<IEnumerable<Ingrediente>> ObtenerBloqueadosPorCalidadAsync(CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene ingredientes asociados a un producto
+        /// </summary>
+        /// <param name="productoId">ID del producto</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de ingredientes asociados al producto</returns>
+        Task<IEnumerable<Ingrediente>> ObtenerIngredientesPorProductoAsync(Guid productoId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene ingredientes con stock por debajo del mínimo
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de ingredientes con stock bajo</returns>
+        Task<IEnumerable<Ingrediente>> ObtenerIngredientesConStockBajoAsync(CancellationToken cancellationToken = default);
     }
 }

@@ -28,6 +28,16 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums
         /// <summary>
         /// La orden ha sido cancelada
         /// </summary>
-        Cancelada = 4
+        Cancelada = 4,
+        
+        /// <summary>
+        /// Alias de Pendiente - La orden está en estado borrador
+        /// </summary>
+        Borrador = Pendiente,
+        
+        /// <summary>
+        /// Alias de Recibida - La orden está completada
+        /// </summary>
+        Completada = Recibida
     }
 } 

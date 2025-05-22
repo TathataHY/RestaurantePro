@@ -33,8 +33,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.Notificaciones.Services
                 entidadRelacionadaId);
             
             _notificacionRepositoryMock
-                .Setup(r => r.AddAsync(It.IsAny<Notificacion>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(notificacionCreada);
+                .Setup(r => r.AgregarAsync(It.IsAny<Notificacion>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(notificacionCreada));
             
             // Act
             var resultado = await _servicio.EnviarNotificacionAsync(
@@ -50,7 +50,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Notificaciones.Services
             Assert.Equal(tipo, resultado.Tipo);
             
             _notificacionRepositoryMock.Verify(
-                r => r.AddAsync(It.Is<Notificacion>(n => 
+                r => r.AgregarAsync(It.Is<Notificacion>(n => 
                     n.Tipo == tipo && 
                     n.Titulo == titulo &&
                     n.Mensaje == mensaje &&
@@ -71,8 +71,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.Notificaciones.Services
             var entidadRelacionadaId = Guid.NewGuid();
             
             _notificacionRepositoryMock
-                .Setup(r => r.AddAsync(It.IsAny<Notificacion>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((Notificacion n, CancellationToken ct) => n);
+                .Setup(r => r.AgregarAsync(It.IsAny<Notificacion>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult((Notificacion)null));
             
             // Act
             var resultados = await _servicio.EnviarNotificacionMasivaAsync(
@@ -88,7 +88,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Notificaciones.Services
             Assert.Equal(destinatarioIds.Count, resultados.Count());
             
             _notificacionRepositoryMock.Verify(
-                r => r.AddAsync(It.IsAny<Notificacion>(), It.IsAny<CancellationToken>()), 
+                r => r.AgregarAsync(It.IsAny<Notificacion>(), It.IsAny<CancellationToken>()), 
                 Times.Exactly(destinatarioIds.Count));
         }
         

@@ -82,5 +82,20 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de órdenes de compra pendientes</returns>
         Task<List<OrdenCompra>> ObtenerPendientesPorProveedorAsync(Guid proveedorId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene una orden de compra con sus items por su identificador
+        /// </summary>
+        /// <param name="id">Identificador de la orden</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>La orden de compra con sus items o null si no existe</returns>
+        Task<OrdenCompra> ObtenerPorIdConItemsAsync(Guid id, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Agrega una nueva orden de compra (Alias de AgregarAsync)
+        /// </summary>
+        /// <param name="ordenCompra">Orden de compra a agregar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        Task AddAsync(OrdenCompra ordenCompra, CancellationToken cancellationToken = default);
     }
 } 

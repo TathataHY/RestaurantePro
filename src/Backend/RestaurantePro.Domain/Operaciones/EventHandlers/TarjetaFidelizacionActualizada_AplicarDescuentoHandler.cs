@@ -50,7 +50,7 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
                 }
 
                 // Obtener comandas abiertas del cliente
-                var comandasAbiertas = await _comandaRepository.ObtenerComandasAbiertas(cliente.Id, cancellationToken);
+                var comandasAbiertas = await _comandaRepository.ObtenerPorClienteAsync(cliente.Id, true, cancellationToken);
                 if (!comandasAbiertas.Any())
                 {
                     await _eventRegistry.RegisterAsync(evento, cancellationToken);

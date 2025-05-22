@@ -292,5 +292,12 @@ namespace RestaurantePro.Domain.Inventario.Policies
                 _ => TemporadaIngrediente.TodoElAño  // Por si acaso, aunque nunca debería llegar aquí
             };
         }
+
+        /// <inheritdoc />
+        public async Task<ResultadoStockBajoPolicy> EjecutarAsync(CancellationToken cancellationToken = default)
+        {
+            // Este método es simplemente un alias de EjecutarPolicy
+            return await EjecutarPolicy(cancellationToken);
+        }
     }
 } 

@@ -81,8 +81,8 @@ namespace RestaurantePro.Domain.Inventario.Services
                 }
                 
                 // Guardar la orden de compra
-                var ordenGuardada = await _ordenCompraRepository.AddAsync(ordenCompra);
-                ordenesGeneradas.Add(ordenGuardada.Id);
+                await _ordenCompraRepository.AddAsync(ordenCompra);
+                ordenesGeneradas.Add(ordenCompra.Id);
             }
             
             return ordenesGeneradas;
@@ -138,8 +138,8 @@ namespace RestaurantePro.Domain.Inventario.Services
             );
             
             // Guardar la orden de compra
-            var ordenGuardada = await _ordenCompraRepository.AddAsync(ordenCompra);
-            return ordenGuardada.Id;
+            await _ordenCompraRepository.AddAsync(ordenCompra);
+            return ordenCompra.Id;
         }
     }
 } 

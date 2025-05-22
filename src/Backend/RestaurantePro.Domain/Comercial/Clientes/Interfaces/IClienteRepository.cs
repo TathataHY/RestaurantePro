@@ -93,5 +93,47 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de clientes registrados en el rango de fechas</returns>
         Task<IEnumerable<Cliente>> ObtenerPorRangoFechasRegistroAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Verifica si existe un cliente con el ID especificado
+        /// </summary>
+        /// <param name="id">ID del cliente a verificar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>True si existe, False en caso contrario</returns>
+        Task<bool> VerificarExistenciaAsync(Guid id, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene clientes por sus IDs
+        /// </summary>
+        /// <param name="ids">Lista de IDs de clientes</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de clientes correspondientes a los IDs proporcionados</returns>
+        Task<IEnumerable<Cliente>> ObtenerClientesPorIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene clientes activos con sus historiales de visitas
+        /// </summary>
+        /// <param name="cantidadMinimaVisitas">Cantidad mínima de visitas para incluir al cliente</param>
+        /// <param name="cantidadDias">Días hacia atrás para considerar las visitas</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de clientes activos con historial de visitas</returns>
+        Task<IEnumerable<Cliente>> ObtenerClientesActivosConVisitasAsync(int cantidadMinimaVisitas, int cantidadDias, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene clientes con su historial de visitas
+        /// </summary>
+        /// <param name="fechaInicio">Fecha de inicio para considerar las visitas</param>
+        /// <param name="fechaFin">Fecha de fin para considerar las visitas</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de clientes con su historial de visitas</returns>
+        Task<IEnumerable<Cliente>> ObtenerClientesConHistorialVisitasAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene todos los clientes con su historial de visitas
+        /// </summary>
+        /// <param name="diasHistorial">Días hacia atrás para considerar las visitas</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de todos los clientes con su historial de visitas</returns>
+        Task<IEnumerable<Cliente>> ObtenerTodosConHistorialVisitasAsync(int diasHistorial, CancellationToken cancellationToken = default);
     }
 }

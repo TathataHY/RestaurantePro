@@ -13,6 +13,21 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums
         /// <summary>
         /// Salida de productos del inventario (consumo, ventas, pérdidas, ajustes negativos)
         /// </summary>
-        Egreso = 1
+        Egreso = 1,
+        
+        /// <summary>
+        /// Alias de Ingreso - Entrada de productos
+        /// </summary>
+        Entrada = Ingreso,
+        
+        /// <summary>
+        /// Alias de Egreso - Salida de productos
+        /// </summary>
+        Salida = Egreso,
+        
+        /// <summary>
+        /// Ajuste de inventario (puede ser positivo o negativo)
+        /// </summary>
+        Ajuste = 2
     }
 } 

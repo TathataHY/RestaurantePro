@@ -55,16 +55,32 @@ namespace RestaurantePro.Domain.Inventario.Services
             decimal costo = 0,
             CancellationToken cancellationToken = default)
         {
+            // Convertir string unidadMedida a enum UnidadMedida
+            UnidadMedida unidadMedidaEnum;
+            if (!Enum.TryParse(unidadMedida, true, out unidadMedidaEnum))
+            {
+                throw new ArgumentException($"Unidad de medida no válida: {unidadMedida}", nameof(unidadMedida));
+            }
+            
+            // Generar código (usando las primeras letras del nombre y un timestamp)
+            string codigo = $"{nombre.Substring(0, Math.Min(3, nombre.Length)).ToUpper()}-{DateTime.Now:yyyyMMdd}";
+            
             // Crear el ingrediente
             var ingrediente = Ingrediente.Crear(
                 nombre,
+                codigo,
                 descripcion,
-                unidadMedida,
+                unidadMedidaEnum,
                 stockMinimo,
                 stockActual,
                 rotacion,
-                temporada,
-                costo);
+                temporada);
+                
+            // Establecer el costo promedio si se proporciona
+            if (costo > 0)
+            {
+                ingrediente.ActualizarCostoPromedio(costo);
+            }
             
             // Persistir el ingrediente
             await _ingredienteRepository.AgregarAsync(ingrediente);
@@ -89,31 +105,37 @@ namespace RestaurantePro.Domain.Inventario.Services
                 return null;
             }
             
-            // Crear movimiento según el tipo
-            if (cantidad > 0 && tipoMovimiento == TipoMovimientoInventario.Salida)
-            {
-                throw new InvalidOperationException("Para movimientos de salida, la cantidad debe ser negativa");
-            }
+            // Preparar el motivo para el movimiento
+            string motivo = string.IsNullOrEmpty(observacion) 
+                ? $"Movimiento de {tipoMovimiento} - {referencia ?? "N/A"}" 
+                : observacion;
             
-            if (cantidad < 0 && tipoMovimiento == TipoMovimientoInventario.Entrada)
+            // Crear movimiento según el tipo
+            if (cantidad <= 0)
             {
-                throw new InvalidOperationException("Para movimientos de entrada, la cantidad debe ser positiva");
+                throw new InvalidOperationException("La cantidad debe ser mayor que cero");
             }
             
             // Crear el movimiento según el tipo
-            MovimientoInventario movimiento;
             switch (tipoMovimiento)
             {
-                case TipoMovimientoInventario.Entrada:
-                    movimiento = ingrediente.RegistrarEntrada(cantidad, referencia, observacion);
+                case TipoMovimientoInventario.Ingreso:
+                    ingrediente.IncrementarStock(cantidad, motivo);
                     break;
-                case TipoMovimientoInventario.Salida:
-                    // Para salidas, asegurar que la cantidad sea negativa
-                    var cantidadSalida = cantidad > 0 ? -cantidad : cantidad;
-                    movimiento = ingrediente.RegistrarSalida(Math.Abs(cantidadSalida), referencia, observacion);
+                case TipoMovimientoInventario.Egreso:
+                    ingrediente.DecrementarStock(cantidad, motivo);
                     break;
                 case TipoMovimientoInventario.Ajuste:
-                    movimiento = ingrediente.RegistrarAjuste(cantidad, referencia, observacion);
+                    if (cantidad > ingrediente.Stock)
+                    {
+                        // Incremento (ajuste positivo)
+                        ingrediente.IncrementarStock(cantidad - ingrediente.Stock, $"Ajuste positivo - {motivo}");
+                    }
+                    else if (cantidad < ingrediente.Stock)
+                    {
+                        // Decremento (ajuste negativo)
+                        ingrediente.DecrementarStock(ingrediente.Stock - cantidad, $"Ajuste negativo - {motivo}");
+                    }
                     break;
                 default:
                     throw new InvalidOperationException($"Tipo de movimiento no soportado: {tipoMovimiento}");
@@ -158,9 +180,11 @@ namespace RestaurantePro.Domain.Inventario.Services
             // Crear la orden de compra
             var ordenCompra = OrdenCompra.Crear(
                 proveedorId,
-                proveedor.Nombre,
-                fechaEntregaEstimada,
-                observaciones);
+                observaciones,
+                _dateTimeService.Now);
+                
+            // Establecer la fecha de entrega estimada
+            ordenCompra.EstablecerFechaEntrega(fechaEntregaEstimada);
             
             // Persistir la orden
             await _ordenCompraRepository.AgregarAsync(ordenCompra);
@@ -199,7 +223,7 @@ namespace RestaurantePro.Domain.Inventario.Services
             }
             
             // Agregar el item
-            ordenCompra.AgregarItem(ingredienteId, ingrediente.Nombre, cantidad, precioUnitario, observacion);
+            ordenCompra.AgregarItem(ingredienteId, ingrediente.Nombre, cantidad, ingrediente.UnidadMedida);
             
             // Persistir cambios
             await _ordenCompraRepository.ActualizarAsync(ordenCompra);
@@ -230,8 +254,8 @@ namespace RestaurantePro.Domain.Inventario.Services
                 case EstadoOrdenCompra.Cancelada:
                     ordenCompra.Cancelar("Cancelada desde servicio de inventario");
                     break;
-                case EstadoOrdenCompra.Completada:
-                    ordenCompra.Completar();
+                case EstadoOrdenCompra.Recibida:
+                    ordenCompra.Recibir(_dateTimeService.Now, "Recibida desde servicio de inventario");
                     break;
                 default:
                     throw new InvalidOperationException($"No se puede actualizar al estado {nuevoEstado} directamente");
@@ -251,33 +275,32 @@ namespace RestaurantePro.Domain.Inventario.Services
             CancellationToken cancellationToken = default)
         {
             // Obtener la orden de compra
-            var ordenCompra = await _ordenCompraRepository.ObtenerPorIdConItemsAsync(ordenCompraId, cancellationToken);
+            var ordenCompra = await _ordenCompraRepository.ObtenerPorIdAsync(ordenCompraId, cancellationToken);
             if (ordenCompra == null)
             {
                 return false;
             }
             
-            // Verificar que la orden esté en estado Enviada
+            // Verificar que esté en estado Enviada
             if (ordenCompra.Estado != EstadoOrdenCompra.Enviada)
             {
                 throw new InvalidOperationException($"Solo se pueden recibir órdenes en estado Enviada. Estado actual: {ordenCompra.Estado}");
             }
             
             // Marcar como recibida
-            ordenCompra.Recibir(observaciones);
+            ordenCompra.Recibir(_dateTimeService.Now, observaciones);
             
-            // Actualizar el stock de los ingredientes
+            // Registrar entrada de stock para cada ítem
             foreach (var item in ordenCompra.Items)
             {
                 var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(item.IngredienteId, cancellationToken);
                 if (ingrediente != null)
                 {
-                    ingrediente.RegistrarEntrada(
-                        item.Cantidad,
-                        $"Orden de compra #{ordenCompraId}",
-                        $"Recepción de orden completa: {item.Observacion}");
+                    ingrediente.IncrementarStock(
+                        item.Cantidad, 
+                        $"Recepción de orden de compra #{ordenCompraId}");
                     
-                    await _ingredienteRepository.ActualizarAsync(ingrediente);
+                    await _ingredienteRepository.ActualizarAsync(ingrediente, cancellationToken);
                 }
             }
             
@@ -297,45 +320,53 @@ namespace RestaurantePro.Domain.Inventario.Services
             CancellationToken cancellationToken = default)
         {
             // Obtener la orden de compra
-            var ordenCompra = await _ordenCompraRepository.ObtenerPorIdConItemsAsync(ordenCompraId, cancellationToken);
+            var ordenCompra = await _ordenCompraRepository.ObtenerPorIdAsync(ordenCompraId, cancellationToken);
             if (ordenCompra == null)
             {
                 return false;
             }
             
-            // Verificar que la orden esté en estado Enviada
+            // Verificar que esté en estado Enviada
             if (ordenCompra.Estado != EstadoOrdenCompra.Enviada)
             {
                 throw new InvalidOperationException($"Solo se pueden recibir órdenes en estado Enviada. Estado actual: {ordenCompra.Estado}");
             }
             
-            // Verificar que los items existan en la orden
+            // Verificar que haya al menos un item para recibir
+            if (itemsRecibidos == null || !itemsRecibidos.Any())
+            {
+                throw new ArgumentException("Debe especificar al menos un item para recibir", nameof(itemsRecibidos));
+            }
+            
+            // Validar que todos los items especificados existen en la orden
             foreach (var itemId in itemsRecibidos.Keys)
             {
-                if (!ordenCompra.ExisteItem(itemId))
+                if (!ordenCompra.Items.Any(i => i.Id == itemId))
                 {
-                    throw new InvalidOperationException($"No existe un item con ID {itemId} en la orden de compra");
+                    throw new ArgumentException($"El item con ID {itemId} no existe en esta orden", nameof(itemsRecibidos));
                 }
             }
             
-            // Marcar como recibida parcialmente
-            ordenCompra.RecibirParcialmente(itemsRecibidos, observaciones);
+            // La orden se considera como recibida de forma parcial pero el estado actual será Recibida
+            ordenCompra.Recibir(_dateTimeService.Now, $"{observaciones} (Recepción parcial)");
             
-            // Actualizar el stock de los ingredientes recibidos
-            foreach (var itemPair in itemsRecibidos)
+            // Registrar entrada de stock para los items recibidos
+            foreach (var kvp in itemsRecibidos)
             {
-                var item = ordenCompra.ObtenerItem(itemPair.Key);
-                if (item != null)
+                var itemId = kvp.Key;
+                var cantidadRecibida = kvp.Value;
+                
+                var item = ordenCompra.Items.FirstOrDefault(i => i.Id == itemId);
+                if (item != null && cantidadRecibida > 0)
                 {
                     var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(item.IngredienteId, cancellationToken);
                     if (ingrediente != null)
                     {
-                        ingrediente.RegistrarEntrada(
-                            itemPair.Value,
-                            $"Orden de compra #{ordenCompraId}",
-                            $"Recepción parcial: {item.Observacion}");
+                        ingrediente.IncrementarStock(
+                            cantidadRecibida, 
+                            $"Recepción parcial de orden de compra #{ordenCompraId}");
                         
-                        await _ingredienteRepository.ActualizarAsync(ingrediente);
+                        await _ingredienteRepository.ActualizarAsync(ingrediente, cancellationToken);
                     }
                 }
             }
@@ -351,70 +382,67 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// <inheritdoc />
         public async Task<IEnumerable<OrdenCompra>> GenerarOrdenesCompraAutomaticasAsync(CancellationToken cancellationToken = default)
         {
-            // Ejecutar la política de stock bajo
-            var resultados = await _stockBajoPolicy.EjecutarAsync(cancellationToken);
+            // Ejecutar política de stock bajo para obtener ingredientes priorizados
+            var resultado = await _stockBajoPolicy.EjecutarAsync(cancellationToken);
             
-            // Convertir las recomendaciones en órdenes de compra
-            var ordenesGeneradas = new List<OrdenCompra>();
+            var ordenesCompra = new List<OrdenCompra>();
             
-            foreach (var resultado in resultados)
+            // Agrupar ingredientes por proveedor
+            var ingredientesPorProveedor = resultado.IngredientesPriorizados
+                .Select(async ip => {
+                    // Obtener el ingrediente completo con su proveedor
+                    var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(ip.IngredienteId, cancellationToken);
+                    return new { Ingrediente = ingrediente, Prioridad = ip.Prioridad };
+                })
+                .Select(t => t.Result)
+                .Where(t => t.Ingrediente != null && t.Ingrediente.ProveedorPrincipalId.HasValue)
+                .GroupBy(t => t.Ingrediente.ProveedorPrincipalId.Value);
+            
+            // Generar una orden por cada proveedor
+            foreach (var grupo in ingredientesPorProveedor)
             {
-                // Agrupar por proveedor
-                var itemsPorProveedor = new Dictionary<Guid, List<(Guid IngredienteId, string Nombre, decimal Cantidad, decimal PrecioUnitario)>>();
+                var proveedorId = grupo.Key;
                 
-                foreach (var recomendacion in resultado.RecomendacionesCompra)
-                {
-                    if (!itemsPorProveedor.ContainsKey(recomendacion.ProveedorId))
-                    {
-                        itemsPorProveedor[recomendacion.ProveedorId] = new List<(Guid, string, decimal, decimal)>();
-                    }
+                // Verificar si existe el proveedor
+                var proveedor = await _proveedorRepository.ObtenerPorIdAsync(proveedorId, cancellationToken);
+                if (proveedor == null || !proveedor.Activo)
+                    continue;
                     
-                    itemsPorProveedor[recomendacion.ProveedorId].Add((
-                        recomendacion.IngredienteId,
-                        recomendacion.NombreIngrediente,
-                        recomendacion.CantidadRecomendada,
-                        recomendacion.PrecioUnitarioEstimado
-                    ));
+                // Crear la orden
+                var orden = OrdenCompra.Crear(
+                    proveedorId,
+                    $"Orden automática por stock bajo - {_dateTimeService.Now:dd/MM/yyyy}",
+                    _dateTimeService.Now);
+                    
+                // Establecer fecha de entrega estimada (3 días después)
+                orden.EstablecerFechaEntrega(_dateTimeService.Now.AddDays(3));
+                
+                // Agregar items a la orden
+                foreach (var item in grupo.OrderByDescending(g => g.Prioridad))
+                {
+                    var ingrediente = item.Ingrediente;
+                    
+                    // Calcular cantidad a pedir
+                    decimal cantidadFaltante = ingrediente.StockMinimo - ingrediente.Stock;
+                    decimal cantidadPedir = Math.Max(1, Math.Ceiling(cantidadFaltante * 1.2m));
+                    
+                    // Agregar a la orden
+                    orden.AgregarItem(
+                        ingrediente.Id,
+                        ingrediente.Nombre,
+                        cantidadPedir,
+                        ingrediente.UnidadMedida);
                 }
                 
-                // Crear una orden por cada proveedor
-                foreach (var proveedorId in itemsPorProveedor.Keys)
-                {
-                    // Verificar que el proveedor exista y esté activo
-                    var proveedor = await _proveedorRepository.ObtenerPorIdAsync(proveedorId, cancellationToken);
-                    if (proveedor == null || !proveedor.Activo)
-                    {
-                        continue;
-                    }
-                    
-                    // Crear la orden
-                    var fechaEntrega = _dateTimeService.Now.AddDays(7); // Una semana por defecto
-                    var orden = OrdenCompra.Crear(
-                        proveedorId,
-                        proveedor.Nombre,
-                        fechaEntrega,
-                        $"Orden automática generada por stock bajo: {resultado.MotivoGeneracion}");
-                    
-                    // Agregar items
-                    foreach (var item in itemsPorProveedor[proveedorId])
-                    {
-                        orden.AgregarItem(
-                            item.IngredienteId,
-                            item.Nombre,
-                            item.Cantidad,
-                            item.PrecioUnitario,
-                            "Generado automáticamente");
-                    }
-                    
-                    // Persistir la orden
-                    await _ordenCompraRepository.AgregarAsync(orden);
-                    ordenesGeneradas.Add(orden);
-                }
+                // Persistir la orden
+                await _ordenCompraRepository.AgregarAsync(orden);
+                ordenesCompra.Add(orden);
             }
             
+            // Guardar todos los cambios
             await _ordenCompraRepository.GuardarCambiosAsync(cancellationToken);
             
-            return ordenesGeneradas;
+            return ordenesCompra;
         }
         
         #endregion

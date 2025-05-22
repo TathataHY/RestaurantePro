@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
 {
     public class ComandaRepositoryTests
@@ -42,7 +41,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
             var comandaId = _comandas[0].Id;
             var comandaEsperada = _comandas[0];
 
-            _mockRepository.Setup(repo => repo.ObtenerPorIdAsync(comandaId))
+            _mockRepository.Setup(repo => repo.ObtenerPorIdAsync(comandaId, It.Is<CancellationToken>(ct => true)))
                 .ReturnsAsync(comandaEsperada);
 
             // Act
@@ -51,7 +50,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
             // Assert
             resultado.Should().NotBeNull();
             resultado.Should().BeSameAs(comandaEsperada);
-            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(comandaId), Times.Once);
+            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(comandaId, It.Is<CancellationToken>(ct => true)), Times.Once);
         }
 
         [Fact]
@@ -61,7 +60,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
             var estado = EstadoComanda.EnProceso;
             var comandasEnProceso = _comandas.Where(c => c.Estado == estado).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(estado))
+            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(estado, It.Is<CancellationToken>(ct => true)))
                 .ReturnsAsync(comandasEnProceso);
 
             // Act
@@ -79,7 +78,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
             // Arrange
             var comandasDeMesa = _comandas.Where(c => c.MesaId == _mesaId).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorMesaAsync(_mesaId))
+            _mockRepository.Setup(repo => repo.ObtenerPorMesaAsync(_mesaId, It.Is<CancellationToken>(ct => true)))
                 .ReturnsAsync(comandasDeMesa);
 
             // Act
@@ -97,7 +96,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
             // Arrange
             var comandasDeMesero = _comandas.Where(c => c.MeseroId == _meseroId).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorMeseroAsync(_meseroId))
+            _mockRepository.Setup(repo => repo.ObtenerPorMeseroAsync(_meseroId, It.Is<CancellationToken>(ct => true)))
                 .ReturnsAsync(comandasDeMesero);
 
             // Act
@@ -115,7 +114,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
             // Arrange
             var comandasDeCliente = _comandas.Where(c => c.ClienteId == _clienteId).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorClienteAsync(_clienteId))
+            _mockRepository.Setup(repo => repo.ObtenerPorClienteAsync(_clienteId, It.Is<CancellationToken>(ct => true)))
                 .ReturnsAsync(comandasDeCliente);
 
             // Act
@@ -134,7 +133,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
             var fechaInicio = DateTime.Now.AddDays(-1);
             var fechaFin = DateTime.Now.AddDays(1);
 
-            _mockRepository.Setup(repo => repo.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin))
+            _mockRepository.Setup(repo => repo.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin, It.Is<CancellationToken>(ct => true)))
                 .ReturnsAsync(_comandas);
 
             // Act
@@ -152,14 +151,14 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
             var nuevaComanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
             nuevaComanda.AgregarProducto(Guid.NewGuid(), 1, 75m);
 
-            _mockRepository.Setup(repo => repo.AgregarAsync(nuevaComanda))
+            _mockRepository.Setup(repo => repo.AgregarAsync(nuevaComanda, It.Is<CancellationToken>(ct => true)))
                 .Returns(Task.CompletedTask);
 
             // Act
             await _mockRepository.Object.AgregarAsync(nuevaComanda);
 
             // Assert
-            _mockRepository.Verify(repo => repo.AgregarAsync(nuevaComanda), Times.Once);
+            _mockRepository.Verify(repo => repo.AgregarAsync(nuevaComanda, It.Is<CancellationToken>(ct => true)), Times.Once);
         }
 
         [Fact]
@@ -169,32 +168,18 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
             var comanda = _comandas[2]; // Comanda creada
             comanda.ActualizarEstado(EstadoComanda.EnProceso); // La actualizamos a en proceso
 
-            _mockRepository.Setup(repo => repo.ActualizarAsync(comanda))
+            _mockRepository.Setup(repo => repo.ActualizarAsync(comanda, It.Is<CancellationToken>(ct => true)))
                 .Returns(Task.CompletedTask);
 
             // Act
             await _mockRepository.Object.ActualizarAsync(comanda);
 
             // Assert
-            _mockRepository.Verify(repo => repo.ActualizarAsync(comanda), Times.Once);
+            _mockRepository.Verify(repo => repo.ActualizarAsync(comanda, It.Is<CancellationToken>(ct => true)), Times.Once);
             comanda.Estado.Should().Be(EstadoComanda.EnProceso);
         }
 
-        [Fact]
-        public async Task EliminarAsync_ComandaExistente_DebeEliminarCorrectamente()
-        {
-            // Arrange
-            var comandaId = _comandas[0].Id;
-
-            _mockRepository.Setup(repo => repo.EliminarAsync(comandaId))
-                .Returns(Task.CompletedTask);
-
-            // Act
-            await _mockRepository.Object.EliminarAsync(comandaId);
-
-            // Assert
-            _mockRepository.Verify(repo => repo.EliminarAsync(comandaId), Times.Once);
-        }
+                [Fact]        public async Task EliminarAsync_ComandaExistente_DebeEliminarCorrectamente()        {            // Arrange            var comanda = _comandas[0]; // Usar la entidad directamente            _mockRepository.Setup(repo => repo.EliminarAsync(comanda, It.Is<CancellationToken>(ct => true)))                .Returns(Task.CompletedTask);            // Act            await _mockRepository.Object.EliminarAsync(comanda);            // Assert            _mockRepository.Verify(repo => repo.EliminarAsync(comanda, It.Is<CancellationToken>(ct => true)), Times.Once);        }
     }
 }
 

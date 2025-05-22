@@ -55,5 +55,13 @@ namespace RestaurantePro.Domain.Comercial.Policies
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Resultado de la ejecución de la política</returns>
         Task<ResultadoClientesFrecuentesPolicy> EjecutarSegmentacionClientes(CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Alias de EjecutarPolicy que ejecuta la política para todos los clientes activos
+        /// </summary>
+        /// <param name="diasHistorial">Días de historial a considerar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado de la ejecución de la política</returns>
+        Task<ResultadoClientesFrecuentesPolicy> EjecutarAsync(int diasHistorial = 90, CancellationToken cancellationToken = default);
     }
 } 

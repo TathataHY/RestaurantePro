@@ -37,7 +37,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             };
             
             IEnumerable<Cliente> clientesEnumerable = clientes;
-            _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(90, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(clientesEnumerable));
                 
             // Setup para cada llamada específica a ObtenerTarjetaActivaPorClienteIdAsync con los IDs de cada cliente
@@ -69,7 +69,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
         {
             // Arrange
             IEnumerable<Cliente> clientesVacios = new List<Cliente>();
-            _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(90, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(clientesVacios));
                 
             // Act
@@ -94,7 +94,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             };
             
             IEnumerable<Cliente> clientesEnumerable = clientes;
-            _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(90, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(clientesEnumerable));
                 
             // Simular que no tienen tarjeta - usamos variable explícitamente nula
@@ -171,7 +171,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             
             // Configurar el repositorio para devolver los clientes
             _clienteRepositoryMock
-                .Setup(r => r.ObtenerClientesConHistorialVisitasAsync(It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerClientesConHistorialVisitasAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(clientes);
                 
             // Simulamos que el repositorio devuelve tarjetas
@@ -219,7 +219,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             // Assert
             // Verificar que se hayan llamado los métodos adecuados
             _clienteRepositoryMock.Verify(
-                r => r.ObtenerClientesConHistorialVisitasAsync(It.IsAny<CancellationToken>()),
+                r => r.ObtenerClientesConHistorialVisitasAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()),
                 Times.Once);
             
             // Verificar que se haya intentado actualizar al menos un cliente

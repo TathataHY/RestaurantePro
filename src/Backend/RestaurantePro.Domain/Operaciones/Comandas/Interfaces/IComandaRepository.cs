@@ -101,5 +101,13 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Diccionario con estadísticas por día</returns>
         Task<Dictionary<DateTime, int>> ObtenerEstadisticasPorPeriodoAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene comandas abiertas (estados Creada, EnProceso, Lista)
+        /// </summary>
+        /// <param name="incluirItems">Indica si se deben incluir los items de las comandas</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de comandas abiertas</returns>
+        Task<IEnumerable<Comanda>> ObtenerComandasAbiertas(bool incluirItems = false, CancellationToken cancellationToken = default);
     }
 }

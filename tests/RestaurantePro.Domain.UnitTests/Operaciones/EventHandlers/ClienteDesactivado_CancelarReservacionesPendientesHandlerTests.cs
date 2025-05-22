@@ -35,14 +35,14 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
             var mesaId2 = Guid.NewGuid();
             var mesaId3 = Guid.NewGuid();
             
-            var reservacionPendiente = Reservacion.Crear(_clienteId, mesaId1, fechaReservacion, horaReservacion, 4, "Reserva pendiente");
+            var reservacionPendiente = Reservacion.Crear(_clienteId, mesaId1, fechaReservacion, horaReservacion, 4, "612345678", "cliente@example.com", "Reserva pendiente");
             typeof(EntityBase).GetProperty("Id").SetValue(reservacionPendiente, Guid.NewGuid());
             
-            var reservacionConfirmada = Reservacion.Crear(_clienteId, mesaId2, fechaReservacion, horaReservacion, 6, "Reserva confirmada");
+            var reservacionConfirmada = Reservacion.Crear(_clienteId, mesaId2, fechaReservacion, horaReservacion, 6, "612345678", "cliente@example.com", "Reserva confirmada");
             typeof(EntityBase).GetProperty("Id").SetValue(reservacionConfirmada, Guid.NewGuid());
             reservacionConfirmada.Confirmar();
             
-            var reservacionCancelada = Reservacion.Crear(_clienteId, mesaId3, fechaReservacion, horaReservacion, 2, "Reserva a cancelar");
+            var reservacionCancelada = Reservacion.Crear(_clienteId, mesaId3, fechaReservacion, horaReservacion, 2, "612345678", "cliente@example.com", "Reserva a cancelar");
             typeof(EntityBase).GetProperty("Id").SetValue(reservacionCancelada, Guid.NewGuid());
             reservacionCancelada.Cancelar("Cancelada previamente");
             
@@ -55,15 +55,15 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
             
             // Configurar mocks
             _reservacionRepositoryMock
-                .Setup(r => r.ObtenerReservacionesPendientesPorClienteIdAsync(_clienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerReservacionesPendientesPorClienteIdAsync(_clienteId, It.Is<CancellationToken>(ct => true)))
                 .ReturnsAsync(reservaciones);
                 
             _reservacionRepositoryMock
-                .Setup(r => r.ActualizarAsync(It.IsAny<Reservacion>()))
+                .Setup(r => r.ActualizarAsync(It.IsAny<Reservacion>(), It.Is<CancellationToken>(ct => true)))
                 .Returns(Task.CompletedTask);
                 
             _eventRegistryMock
-                .Setup(r => r.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.RegisterAsync(It.IsAny<DomainEvent>(), It.Is<CancellationToken>(ct => true)))
                 .Returns(Task.CompletedTask);
                 
             // Act
@@ -72,26 +72,26 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
             // Assert
             // Verificar que se llamó a actualizar 2 veces (para las reservaciones pendiente y confirmada)
             _reservacionRepositoryMock.Verify(
-                r => r.ActualizarAsync(It.IsAny<Reservacion>()),
+                r => r.ActualizarAsync(It.IsAny<Reservacion>(), It.Is<CancellationToken>(ct => true)),
                 Times.Exactly(2));
                 
             // Verificar que se actualizaron las reservaciones correctas
             _reservacionRepositoryMock.Verify(
-                r => r.ActualizarAsync(reservacionPendiente),
+                r => r.ActualizarAsync(reservacionPendiente, It.Is<CancellationToken>(ct => true)),
                 Times.Once);
                 
             _reservacionRepositoryMock.Verify(
-                r => r.ActualizarAsync(reservacionConfirmada),
+                r => r.ActualizarAsync(reservacionConfirmada, It.Is<CancellationToken>(ct => true)),
                 Times.Once);
                 
             // Verificar que NO se actualizó la reservación ya cancelada
             _reservacionRepositoryMock.Verify(
-                r => r.ActualizarAsync(reservacionCancelada),
+                r => r.ActualizarAsync(reservacionCancelada, It.Is<CancellationToken>(ct => true)),
                 Times.Never);
                 
             // Verificar que se registró el evento correctamente
             _eventRegistryMock.Verify(
-                r => r.RegisterAsync(evento, It.IsAny<CancellationToken>()),
+                r => r.RegisterAsync(evento, It.Is<CancellationToken>(ct => true)),
                 Times.AtLeastOnce());
                 
             // Verificar que el estado de las reservaciones ahora es Cancelada
@@ -107,11 +107,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
             
             // Configurar mocks para devolver lista vacía
             _reservacionRepositoryMock
-                .Setup(r => r.ObtenerReservacionesPendientesPorClienteIdAsync(_clienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerReservacionesPendientesPorClienteIdAsync(_clienteId, It.Is<CancellationToken>(ct => true)))
                 .ReturnsAsync(new List<Reservacion>());
                 
             _eventRegistryMock
-                .Setup(r => r.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.RegisterAsync(It.IsAny<DomainEvent>(), It.Is<CancellationToken>(ct => true)))
                 .Returns(Task.CompletedTask);
                 
             // Act
@@ -120,12 +120,12 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
             // Assert
             // Verificar que NO se llamó a actualizar ninguna reservación
             _reservacionRepositoryMock.Verify(
-                r => r.ActualizarAsync(It.IsAny<Reservacion>()),
+                r => r.ActualizarAsync(It.IsAny<Reservacion>(), It.Is<CancellationToken>(ct => true)),
                 Times.Never);
                 
             // Verificar que se registró el evento correctamente
             _eventRegistryMock.Verify(
-                r => r.RegisterAsync(evento, It.IsAny<CancellationToken>()),
+                r => r.RegisterAsync(evento, It.Is<CancellationToken>(ct => true)),
                 Times.Once);
         }
         
@@ -137,11 +137,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
             
             // Configurar mock para lanzar excepción
             _reservacionRepositoryMock
-                .Setup(r => r.ObtenerReservacionesPendientesPorClienteIdAsync(_clienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerReservacionesPendientesPorClienteIdAsync(_clienteId, It.Is<CancellationToken>(ct => true)))
                 .ThrowsAsync(new Exception("Error de prueba"));
                 
             _eventRegistryMock
-                .Setup(r => r.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.RegisterAsync(It.IsAny<DomainEvent>(), It.Is<CancellationToken>(ct => true)))
                 .Returns(Task.CompletedTask);
                 
             // Act
@@ -150,7 +150,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers
             // Assert
             // Verificar que se registró el error correctamente
             _eventRegistryMock.Verify(
-                r => r.RegisterAsync(evento, It.IsAny<CancellationToken>()),
+                r => r.RegisterAsync(evento, It.Is<CancellationToken>(ct => true)),
                 Times.Once);
         }
     }

@@ -48,7 +48,11 @@ namespace RestaurantePro.Domain.Operaciones.Services
             CancellationToken cancellationToken = default)
         {
             // Crear la comanda
-            var comanda = Comanda.Crear(meseroId, clienteId, mesaId, observaciones);
+            var comanda = Comanda.Crear(
+                meseroId,
+                clienteId, 
+                mesaId.HasValue ? mesaId.Value : (Guid?)null, 
+                observaciones);
             
             // Persistir la comanda
             await _comandaRepository.AgregarAsync(comanda);
@@ -80,7 +84,7 @@ namespace RestaurantePro.Domain.Operaciones.Services
             }
             
             // Agregar el producto a la comanda
-            comanda.AgregarItem(productoId, producto.Nombre, cantidad, producto.Precio, observaciones);
+            comanda.AgregarItem(productoId, producto.Nombre, cantidad, producto.Precio.Valor, observaciones);
             
             // Persistir cambios
             await _comandaRepository.ActualizarAsync(comanda);

@@ -118,5 +118,12 @@ namespace RestaurantePro.Domain.Inventario.Policies
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Resultado con la lista de ingredientes priorizados</returns>
         Task<ResultadoStockBajoPolicy> PriorizarIngredientesParaReposicion(bool considerarTemporadaActual = true, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Alias de EjecutarPolicy que ejecuta la política de stock bajo
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado de la ejecución de la política</returns>
+        Task<ResultadoStockBajoPolicy> EjecutarAsync(CancellationToken cancellationToken = default);
     }
 } 

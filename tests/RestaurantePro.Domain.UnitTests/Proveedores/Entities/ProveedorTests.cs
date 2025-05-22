@@ -237,7 +237,7 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
                 30);
                 
             // Act
-            proveedor.Desactivar();
+            proveedor.Desactivar("Proveedor con mal servicio");
             
             // Assert
             proveedor.Activo.Should().BeFalse();
@@ -265,7 +265,7 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
                 "Cuenta 12345-67890",
                 30);
                 
-            proveedor.Desactivar(); // Lo desactivamos primero
+            proveedor.Desactivar("Inactivo temporalmente"); // Lo desactivamos primero con un motivo
             
             // Act
             proveedor.Activar();
