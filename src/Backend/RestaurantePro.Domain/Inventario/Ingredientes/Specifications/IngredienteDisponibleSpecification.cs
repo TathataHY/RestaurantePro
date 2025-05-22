@@ -34,9 +34,22 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Specifications
         public override Expression<Func<Entities.Ingrediente, bool>> ToExpression()
         {
             return ingrediente => 
-                ingrediente.EstaActivo &&
+                ingrediente != null &&
+                !ingrediente.EstaEliminado && 
                 ingrediente.Stock > _cantidadMinima &&
                 (!_verificarControlCalidad || !ingrediente.BloqueadoControlCalidad);
+        }
+
+        /// <summary>
+        /// Sobrescribe el método IsSatisfiedBy de la clase base para manejar el caso null explícitamente
+        /// </summary>
+        public override bool IsSatisfiedBy(Entities.Ingrediente entity)
+        {
+            if (entity == null)
+                return false;
+                
+            var predicate = ToExpression().Compile();
+            return predicate(entity);
         }
     }
 } 

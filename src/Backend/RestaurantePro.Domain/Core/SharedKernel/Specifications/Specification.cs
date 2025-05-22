@@ -38,7 +38,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Specifications
         /// </summary>
         /// <param name="entity">Entidad a evaluar</param>
         /// <returns>True si satisface la especificación, False en caso contrario</returns>
-        public bool IsSatisfiedBy(T entity)
+        public virtual bool IsSatisfiedBy(T entity)
         {
             var predicate = ToExpression().Compile();
             return predicate(entity);

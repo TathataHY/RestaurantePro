@@ -48,6 +48,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
         public override Expression<Func<Cliente, bool>> ToExpression()
         {
             return cliente => 
+                cliente != null &&
                 cliente.EstaActivo &&
                 (_diasAntiguedadMinima <= 0 || (_fechaReferencia - cliente.FechaCreacion).TotalDays >= _diasAntiguedadMinima) &&
                 ObtenerVisitasRecientesCliente(cliente, _fechaReferencia, _periodoDiasAnalisis) >= _visitasMinimas &&
@@ -55,10 +56,16 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
         }
         
         /// <summary>
-        /// Verifica si un cliente cumple con los criterios para ser considerado frecuente
-        /// Nota: Este método ahora se implementa automáticamente por la clase base utilizando
-        /// la expresión definida en ToExpression()
+        /// Sobrescribe el método IsSatisfiedBy de la clase base para manejar el caso null explícitamente
         /// </summary>
+        public override bool IsSatisfiedBy(Cliente entity)
+        {
+            if (entity == null)
+                return false;
+                
+            var predicate = ToExpression().Compile();
+            return predicate(entity);
+        }
         
         /// <summary>
         /// Obtiene el número de visitas del cliente en el periodo especificado
@@ -67,6 +74,9 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
         /// </summary>
         private static int ObtenerVisitasRecientesCliente(Cliente cliente, DateTime fechaReferencia, int periodoDias)
         {
+            if (cliente == null)
+                return 0;
+                
             // En una implementación real, se realizaría una consulta a la base de datos
             // para contar las comandas del cliente en el periodo especificado.
             
@@ -85,6 +95,9 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
         /// </summary>
         private static decimal ObtenerGastoPromedioCliente(Cliente cliente, DateTime fechaReferencia, int periodoDias)
         {
+            if (cliente == null)
+                return 0;
+                
             // En una implementación real, se realizaría una consulta a la base de datos
             // para calcular el promedio de gasto por comanda en el periodo especificado.
             
@@ -93,7 +106,10 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Specifications
             decimal gastoBase = cliente.PuntosAcumulados / 10.0m;
             
             // Aplicamos un multiplicador según el segmento del cliente
-            switch (cliente.Segmento)
+            // Protegemos contra posible null en Segmento
+            var segmento = cliente.Segmento;
+            
+            switch (segmento)
             {
                 case SegmentoCliente.Premium:
                     return gastoBase * 1.5m;
