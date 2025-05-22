@@ -1,6 +1,3 @@
-using System;
-using System.Linq.Expressions;
-
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Specifications
 {
     /// <summary>

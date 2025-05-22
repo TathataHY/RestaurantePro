@@ -1,6 +1,3 @@
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
-
 namespace RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda
 {
     /// <summary>

@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Core.Base;
-
 namespace RestaurantePro.Domain.Comercial.Promociones.Entities
 {
     /// <summary>
