@@ -49,8 +49,8 @@ namespace RestaurantePro.Domain.UnitTests.Integration
             // Establecer ID del cliente usando reflexión
             typeof(EntityBase).GetProperty("Id").SetValue(cliente, clienteId);
             
-            // 3. Crear comanda 
-            var comanda = Comanda.Crear(mesaId, meseroId, clienteId);
+            // 3. Crear comanda (usar el orden correcto de parámetros: meseroId, clienteId, mesaId)
+            var comanda = Comanda.Crear(meseroId, clienteId, mesaId);
             
             // Establecer ID de la comanda usando reflexión
             typeof(EntityBase).GetProperty("Id").SetValue(comanda, comandaId);
@@ -131,8 +131,8 @@ namespace RestaurantePro.Domain.UnitTests.Integration
             // Establecer ID del cliente usando reflexión
             typeof(EntityBase).GetProperty("Id").SetValue(cliente, clienteId);
             
-            // 3. Crear comanda 
-            var comanda = Comanda.Crear(mesaId, meseroId, clienteId);
+            // 3. Crear comanda (usar el orden correcto de parámetros: meseroId, clienteId, mesaId) 
+            var comanda = Comanda.Crear(meseroId, clienteId, mesaId);
             
             // Establecer ID de la comanda usando reflexión
             typeof(EntityBase).GetProperty("Id").SetValue(comanda, comandaId);

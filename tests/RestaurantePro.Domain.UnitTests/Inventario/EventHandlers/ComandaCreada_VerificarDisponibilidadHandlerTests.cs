@@ -39,8 +39,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             // Crear evento de comanda
             var eventoComanda = new ComandaCreada(comandaId, mesaId, meseroId);
             
-            // Configurar comanda
-            var comanda = Comanda.Crear(mesaId, meseroId);
+            // Configurar comanda con mesa específica
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             
             // Necesitamos configurar manualmente el ID para efectos de la prueba
             var comandaIdField = typeof(EntityBase).GetField("_id", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -115,7 +115,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             Console.WriteLine($"Evento ComandaCreada generado: ID={comandaId}");
             
             // 2. Crear comanda con un ítem que requiere más stock del disponible
-            var comanda = Comanda.Crear(mesaId, meseroId);
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             
             // Configurar manualmente el ID de la comanda para que coincida con el evento
             var idField = typeof(EntityBase).GetField("_id", BindingFlags.NonPublic | BindingFlags.Instance);

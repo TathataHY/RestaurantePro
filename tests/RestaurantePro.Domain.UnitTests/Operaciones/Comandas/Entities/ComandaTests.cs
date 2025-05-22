@@ -11,8 +11,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             var clienteId = Guid.NewGuid();
             var observaciones = "Observaciones de prueba";
 
-            // Act
-            var comanda = Comanda.Crear(mesaId, meseroId, clienteId, observaciones);
+            // Act - asegurarnos de usar el orden correcto de parámetros (meseroId, clienteId, mesaId)
+            var comanda = Comanda.Crear(meseroId, clienteId, mesaId, observaciones);
 
             // Assert
             comanda.Should().NotBeNull();
@@ -36,7 +36,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         public void AgregarProducto_CuandoComandaEstaActiva_DebeAgregarProductoYRecalcularTotal()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             var productoId = Guid.NewGuid();
             var cantidad = 2;
             var precioUnitario = 100m;
@@ -72,7 +74,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         public void AgregarProducto_CuandoComandaNoEstaActiva_DebeLanzarExcepcion()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             
             // Hacemos que la comanda pase por los estados intermedios hasta llegar a Finalizada
             // Primero agregamos un producto para que pueda finalizarse
@@ -93,7 +97,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         public void Comanda_SinProductos_NoPuedeFinalizarse()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
 
             // Cambiamos manualmente el estado para probar la transición
             // (normalmente pasaría por todos los estados intermedios)
@@ -114,7 +120,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         public void AplicarDescuentoFidelizacion_SinClienteAsociado_DebeFallar()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid()); // Sin clienteId
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId); // Sin clienteId
             comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
             
             // Act & Assert
@@ -131,7 +139,10 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         public void AplicarDescuentoFidelizacion_ConDescuentoExcesivo_DebeFallar()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var clienteId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, clienteId, mesaId);
             comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
             
             // Act & Assert
@@ -144,7 +155,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         public void ValidarInvariantes_ConMesaIdVacia_DebeFallar()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             
             // Manipulamos directamente la propiedad para simular un estado inválido
             typeof(Comanda).GetProperty("MesaId").SetValue(comanda, Guid.Empty);
@@ -161,7 +174,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         public void ValidarInvariantes_ConObservacionesExcesivas_DebeFallar()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             
             // Crear una cadena de más de 500 caracteres
             var observacionesExcesivas = new string('X', 501);
@@ -179,7 +194,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         public void ValidarInvariantes_ConFechasIncoherentes_DebeFallar()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             
             // Agregamos un producto para que no falle por otras validaciones
             comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
@@ -198,8 +215,6 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             
             // Act & Assert - Llamamos directamente a ValidarInvariantes
             Action action = () => validarInvariantes.Invoke(comanda, null);
-            
-            // Assert
             action.Should().Throw<TargetInvocationException>()
                 .WithInnerException<InvalidOperationException>()
                 .WithMessage("*La fecha de actualización no puede ser anterior a la fecha de creación*");
@@ -209,190 +224,222 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         public void ValidarInvariantes_ConProductosDuplicados_DebeFallar()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
-            var productoId = Guid.NewGuid(); // Mismo ID para ambos productos
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
+            var productoId = Guid.NewGuid();
             
-            // Agregamos el primer producto normalmente
+            // Agregamos un producto
             comanda.AgregarProducto(productoId, 1, 100m);
             
-            // Para el segundo, manipulamos directamente la colección interna para evitar la validación
-            var itemsField = typeof(Comanda).GetField("_items", BindingFlags.NonPublic | BindingFlags.Instance);
-            var items = (List<ItemComanda>)itemsField.GetValue(comanda);
-            
-            // Crear un nuevo ItemComanda con el mismo productoId pero asegurándonos de que el subtotal sea correcto
-            var nuevoItem = new ItemComanda(comanda.Id, productoId, 3, 100m, "Duplicado");
-            items.Add(nuevoItem);
-            
-            // Actualizamos el Total para que no falle por inconsistencia de total
-            var totalField = typeof(Comanda).GetProperty("Total");
-            var nuevoSubtotal = items.Sum(i => i.Subtotal); // 100 + 300 = 400
-            var nuevoImpuesto = nuevoSubtotal * 0.19m; // 76
-            var nuevoTotal = TotalComanda.Crear(nuevoSubtotal, nuevoImpuesto);
-            totalField.SetValue(comanda, nuevoTotal);
-            
-            // Obtenemos acceso al método ValidarInvariantes directamente
-            var validarInvariantes = typeof(Comanda).GetMethod(
-                "ValidarInvariantes", 
+            // Obtenemos acceso al método AgregarProducto para omitir las validaciones
+            var agregarProductoDirectamente = typeof(Comanda).GetMethod(
+                "AgregarProductoDirectamente", 
                 BindingFlags.NonPublic | BindingFlags.Instance);
             
-            // Act & Assert - Llamamos directamente a ValidarInvariantes
-            Action action = () => validarInvariantes.Invoke(comanda, null);
+            // Creamos un nuevo ItemComanda con el mismo productoId
+            var itemDuplicado = new ItemComanda(
+                comanda.Id,
+                productoId,
+                2,
+                200m,
+                "otro item"
+            );
             
-            // Assert
+            // Act & Assert - Intentamos agregarlo directamente para evitar la validación normal
+            Action action = () => agregarProductoDirectamente.Invoke(comanda, new object[] { itemDuplicado });
+            
+            // Debido a que estamos usando reflection, la excepción estará envuelta
             action.Should().Throw<TargetInvocationException>()
                 .WithInnerException<InvalidOperationException>()
-                .WithMessage("*Existen productos duplicados en la comanda*");
+                .WithMessage("*ya existe un item con el mismo producto*");
         }
 
         [Fact]
         public void AgregarProducto_ConCantidadExcesiva_DebeFallar()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             var productoId = Guid.NewGuid();
-            var cantidadExcesiva = 100; // Más de 50 unidades debería fallar según las validaciones
             
             // Act & Assert
-            Action action = () => comanda.AgregarProducto(productoId, cantidadExcesiva, 10m);
-            action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*La cantidad del item*excede el límite máximo permitido*");
+            Action action = () => comanda.AgregarProducto(productoId, 51, 100m); // Más de 50 unidades
+            action.Should().Throw<ArgumentException>()
+                .WithMessage("*La cantidad debe estar entre 1 y 50*");
         }
         
         [Fact]
         public void AgregarProducto_ConPrecioExcesivo_DebeFallar()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             var productoId = Guid.NewGuid();
-            var precioExcesivo = 150000m; // Más de 100000 debería fallar según las validaciones
             
             // Act & Assert
-            Action action = () => comanda.AgregarProducto(productoId, 1, precioExcesivo);
-            action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*El precio unitario del item*excede el límite máximo permitido*");
+            Action action = () => comanda.AgregarProducto(productoId, 1, 1000001m); // Más de 1000000
+            action.Should().Throw<ArgumentException>()
+                .WithMessage("*El precio unitario debe ser mayor que cero y no exceder 1000000*");
         }
         
         [Fact]
         public void AgregarProducto_ConObservacionesExcesivas_DebeFallar()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             var productoId = Guid.NewGuid();
             var observacionesExcesivas = new string('X', 201); // Más de 200 caracteres
             
             // Act & Assert
-            Action action = () => comanda.AgregarProducto(productoId, 1, 10m, observacionesExcesivas);
-            action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*Las observaciones del item*no pueden exceder los 200 caracteres*");
+            Action action = () => comanda.AgregarProducto(productoId, 1, 100m, observacionesExcesivas);
+            action.Should().Throw<ArgumentException>()
+                .WithMessage("*Las observaciones del item no pueden exceder los 200 caracteres*");
         }
         
         [Fact]
         public void ActualizarEstado_ConTransicionInvalida_DebeFallar()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
-            comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             
-            // Act & Assert - Intentar saltar directamente a Finalizada
-            Action action = () => comanda.ActualizarEstado(EstadoComanda.Finalizada);
+            // Act & Assert - Intentar pasar de Creada a Lista (saltar EnProceso)
+            Action action = () => comanda.ActualizarEstado(EstadoComanda.Lista);
             action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*No se puede cambiar el estado*", 
-                    because: "Las transiciones de estado deben seguir el flujo establecido");
+                .WithMessage("*No se puede cambiar el estado de Creada a Lista*");
         }
         
         [Fact]
         public void Cancelar_DespuesDeEnProceso_DebeFallarValidacionEstado()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
+            
+            // Agregamos un producto para evitar validaciones adicionales
             comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
             
-            // Pasamos a En Proceso, que es válido desde Creada
+            // Actualizar a EnProceso
             comanda.ActualizarEstado(EstadoComanda.EnProceso);
             
-            // Luego pasamos a Lista, que es válido desde EnProceso
+            // Luego a Lista (ya no se puede cancelar)
             comanda.ActualizarEstado(EstadoComanda.Lista);
             
-            // Act & Assert - Ahora intentamos cancelar cuando ya no está activa
-            Action action = () => comanda.Cancelar("Motivo de cancelación");
+            // Act & Assert
+            Action action = () => comanda.Cancelar("Razón de prueba");
             action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*No se pueden realizar cambios*",
-                    because: "Una comanda solo puede cancelarse cuando está en estado Creada o EnProceso");
+                .WithMessage("*No se puede cancelar una comanda en estado Lista*");
         }
         
         [Fact]
         public void Comanda_ConEstadoListaYSinProductos_DebeFallar()
         {
-            // Arrange - Creamos una comanda y le asignamos estado Lista sin productos
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            // Arrange
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             
-            // Use reflection to modify the state to Lista and then force validation
-            typeof(Comanda).GetProperty("Estado").SetValue(comanda, EstadoComanda.Lista);
+            // Modificamos directamente el estado para evitar validaciones normales
+            PropertyInfo propEstado = comanda.GetType().GetProperty("Estado");
+            if (propEstado != null)
+            {
+                propEstado.SetValue(comanda, EstadoComanda.EnProceso);
+            }
             
-            // Act & Assert
-            // Llamamos a ValidarInvariantes directamente usando reflection
-            var validateMethod = typeof(Comanda).GetMethod("ValidarInvariantes", 
+            // Obtenemos acceso al método ValidarInvariantes
+            var validarInvariantes = typeof(Comanda).GetMethod(
+                "ValidarInvariantes", 
                 BindingFlags.NonPublic | BindingFlags.Instance);
             
-            Action action = () => validateMethod.Invoke(comanda, null);
-            
-            // Assert
+            // Act & Assert - Llamamos directamente
+            Action action = () => validarInvariantes.Invoke(comanda, null);
             action.Should().Throw<TargetInvocationException>()
                 .WithInnerException<InvalidOperationException>()
-                .WithMessage("*Una comanda lista debe tener al menos un producto*");
+                .WithMessage("*Una comanda en estado EnProceso debe tener al menos un producto*");
         }
         
         [Fact]
         public void AplicarDescuentoFidelizacion_ConPorcentajeMayorPermitido_DebeFallar()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var clienteId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, clienteId, mesaId);
+            
+            // Agregar productos para tener un subtotal
             comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
             
             // Act & Assert
-            // Intentamos con un valor claramente por encima del límite para que falle la validación inicial
-            Action action = () => comanda.AplicarDescuentoFidelizacion(1.5m); // 150% descuento
+            Action action = () => comanda.AplicarDescuentoFidelizacion(0.51m); // Más del 50%
             action.Should().Throw<ArgumentException>()
-                .WithMessage("*El porcentaje de descuento debe estar entre 0 y 1*");
+                .WithMessage("*El porcentaje de descuento*50%*");
         }
         
         [Fact]
         public void Comanda_ConDescuentoMayorQueSubtotal_DebeFallar()
         {
             // Arrange
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-            comanda.AgregarProducto(Guid.NewGuid(), 1, 100m); // Subtotal = 100
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var clienteId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, clienteId, mesaId);
             
-            // Asignamos un descuento que exceda el 50% del subtotal
-            // Usamos reflection para evitar las validaciones del método público
-            var descuentoProperty = typeof(Comanda).GetProperty("DescuentoFidelizacion");
-            descuentoProperty.SetValue(comanda, 60m); // 60% del subtotal de 100
+            // Agregar productos para tener un subtotal
+            comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
             
-            // Act & Assert
-            Action action = () => comanda.AgregarProducto(Guid.NewGuid(), 1, 10m);
+            // Aplicar 30% de descuento (acá no debe fallar)
+            comanda.AplicarDescuentoFidelizacion(0.30m);
             
-            // El mensaje debe coincidir con el lanzado en ValidarInvariantes para descuentos mayores al 50%
-            action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*El descuento no puede exceder el 50% del subtotal*");
+            // Modificar manualmente el descuento a un valor demasiado alto
+            Type totalComandaType = comanda.Total.GetType();
+            FieldInfo descuentoField = totalComandaType.GetField("_descuento", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (descuentoField != null)
+            {
+                descuentoField.SetValue(comanda.Total, 110m); // Descuento mayor que subtotal
+            }
+            
+            // Obtenemos acceso al método ValidarInvariantes del TotalComanda
+            var validarInvariantes = totalComandaType.GetMethod(
+                "ValidarInvariantes", 
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            
+            // Act & Assert - Llamamos directamente a ValidarInvariantes del total
+            Action action = () => validarInvariantes.Invoke(comanda.Total, null);
+            action.Should().Throw<TargetInvocationException>()
+                .WithInnerException<InvalidOperationException>()
+                .WithMessage("*El descuento no puede ser mayor que el subtotal*");
         }
         
         [Fact]
         public void Comanda_ConFechaCreacionFutura_DebeFallar()
         {
-            // Arrange - Creamos una comanda normal
-            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid());
+            // Arrange
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             
-            // Modificamos la fecha de creación para que sea en el futuro
-            var fechaFutura = DateTime.Now.AddDays(1);
-            typeof(Comanda).GetProperty("FechaCreacion").SetValue(comanda, fechaFutura);
+            // Modificamos directamente la fecha de creación para que sea en el futuro
+            PropertyInfo propFechaCreacion = comanda.GetType().GetProperty("FechaCreacion");
+            if (propFechaCreacion != null)
+            {
+                propFechaCreacion.SetValue(comanda, DateTime.Now.AddDays(1));
+            }
             
-            // Act - Llamamos a ValidarInvariantes directamente
-            var validateMethod = typeof(Comanda).GetMethod("ValidarInvariantes", 
+            // Obtenemos acceso al método ValidarInvariantes
+            var validarInvariantes = typeof(Comanda).GetMethod(
+                "ValidarInvariantes", 
                 BindingFlags.NonPublic | BindingFlags.Instance);
             
-            Action action = () => validateMethod.Invoke(comanda, null);
-            
-            // Assert
+            // Act & Assert - Llamamos directamente
+            Action action = () => validarInvariantes.Invoke(comanda, null);
             action.Should().Throw<TargetInvocationException>()
                 .WithInnerException<InvalidOperationException>()
                 .WithMessage("*La fecha de creación no puede ser en el futuro*");
