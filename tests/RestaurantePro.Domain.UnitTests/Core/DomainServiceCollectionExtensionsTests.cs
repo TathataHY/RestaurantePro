@@ -1,8 +1,5 @@
 namespace RestaurantePro.Domain.UnitTests.Core
 {
-    // Añadir directivas using para los namespaces de los métodos de extensión
-    using RestaurantePro.Domain.Core; // Para DomainServiceCollectionExtensions
-    using RestaurantePro.Domain.Core.Base.Events.Extensions; // Para métodos como AddDomainEventServices
     
     // Evento de prueba para el test de registro de manejadores
     public class TestEvent : DomainEvent

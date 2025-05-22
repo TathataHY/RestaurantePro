@@ -6,7 +6,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base.Events.Registry
         public async Task RegisterAsync_DebeGuardarEvento()
         {
             // Arrange
-            var registro = new InMemoryDomainEventRegistry();
+            var registro = new RestaurantePro.Domain.Core.Base.Events.Registry.InMemoryDomainEventRegistry();
             var evento = new EventoPrueba { ProductoId = Guid.NewGuid() };
 
             // Act
@@ -23,7 +23,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base.Events.Registry
         public async Task RegisterAllAsync_DebeGuardarMultiplesEventos()
         {
             // Arrange
-            var registro = new InMemoryDomainEventRegistry();
+            var registro = new RestaurantePro.Domain.Core.Base.Events.Registry.InMemoryDomainEventRegistry();
             var eventos = new List<DomainEvent>
             {
                 new EventoPrueba { ProductoId = Guid.NewGuid() },
@@ -43,7 +43,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base.Events.Registry
         public async Task GetEventsForEntityAsync_DebeRetornarEventosDeUnaEntidad()
         {
             // Arrange
-            var registro = new InMemoryDomainEventRegistry();
+            var registro = new RestaurantePro.Domain.Core.Base.Events.Registry.InMemoryDomainEventRegistry();
             var entityId = Guid.NewGuid();
             
             await registro.RegisterAsync(new EventoPrueba { ProductoId = entityId });
@@ -62,7 +62,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base.Events.Registry
         public async Task GetEventsByTypeAsync_DebeRetornarEventosDeUnTipo()
         {
             // Arrange
-            var registro = new InMemoryDomainEventRegistry();
+            var registro = new RestaurantePro.Domain.Core.Base.Events.Registry.InMemoryDomainEventRegistry();
             var ahora = DateTime.UtcNow;
             
             var evento1 = new EventoPrueba { ProductoId = Guid.NewGuid() };
@@ -84,7 +84,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base.Events.Registry
         public async Task GetEventsByTypeAsync_ConFiltroFechas_DebeRetornarEventosFiltrados()
         {
             // Arrange - Este test es más conceptual ya que no podemos controlar directamente el timestamp en InMemoryDomainEventRegistry
-            var registro = new InMemoryDomainEventRegistry();
+            var registro = new RestaurantePro.Domain.Core.Base.Events.Registry.InMemoryDomainEventRegistry();
             await registro.RegisterAsync(new EventoPrueba { ProductoId = Guid.NewGuid() });
             
             // Esperamos un poco para tener una diferencia de tiempo
@@ -105,7 +105,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base.Events.Registry
         public async Task Clear_DebeLimpiarTodosLosEventos()
         {
             // Arrange
-            var registro = new InMemoryDomainEventRegistry();
+            var registro = new RestaurantePro.Domain.Core.Base.Events.Registry.InMemoryDomainEventRegistry();
             await registro.RegisterAsync(new EventoPrueba { ProductoId = Guid.NewGuid() });
             await registro.RegisterAsync(new EventoPrueba { ProductoId = Guid.NewGuid() });
 

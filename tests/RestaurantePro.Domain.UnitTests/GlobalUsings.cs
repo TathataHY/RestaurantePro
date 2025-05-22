@@ -29,6 +29,11 @@ global using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 global using RestaurantePro.Domain.Core.Base.Events.Handlers;
 global using RestaurantePro.Domain.Core.Base.Events.Registry;
 global using RestaurantePro.Domain.Core.Base.Events.Subscription;
+global using RestaurantePro.Domain.Core.Base.Events.Extensions;
+
+// Domain core imports - Core
+global using RestaurantePro.Domain.Core;
+global using RestaurantePro.Domain.Core.Services;
 
 // Domain core imports - SharedKernel
 global using RestaurantePro.Domain.Core.SharedKernel;
