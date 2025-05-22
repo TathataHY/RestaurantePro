@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 {
+    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+
     /// <summary>
     /// Agregado que representa a un cliente del restaurante.
     /// 
@@ -28,13 +30,13 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// Email del cliente.
         /// Utilizado como medio de contacto principal y para identificación.
         /// </summary>
-        public string Email { get; private set; }
+        public Email Email { get; private set; }
 
         /// <summary>
         /// Teléfono del cliente.
         /// Medio de contacto alternativo para notificaciones.
         /// </summary>
-        public string Telefono { get; private set; }
+        public PhoneNumber Telefono { get; private set; }
 
         /// <summary>
         /// Indica si el cliente está activo en el sistema.
@@ -79,11 +81,14 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// <returns>Una nueva instancia de Cliente</returns>
         public static Cliente Crear(ClienteNombre nombre, string email, string telefono)
         {
+            var emailVO = Email.Create(email);
+            var telefonoVO = PhoneNumber.Create(telefono);
+            
             var cliente = new Cliente
             {
                 Nombre = nombre,
-                Email = email,
-                Telefono = telefono,
+                Email = emailVO,
+                Telefono = telefonoVO,
                 EstaActivo = true,
                 PuntosAcumulados = 0,
                 CantidadVisitas = 0,
@@ -158,17 +163,14 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// <param name="telefono">Nuevo teléfono</param>
         public void ActualizarInformacionContacto(string email, string telefono)
         {
-            if (string.IsNullOrWhiteSpace(email))
-                throw new ArgumentException("El email no puede estar vacío", nameof(email));
-                
-            if (string.IsNullOrWhiteSpace(telefono))
-                throw new ArgumentException("El teléfono no puede estar vacío", nameof(telefono));
-
-            if (Email == email && Telefono == telefono)
+            var emailVO = Email.Create(email);
+            var telefonoVO = PhoneNumber.Create(telefono);
+            
+            if (Email.Value == emailVO.Value && Telefono.Value == telefonoVO.Value)
                 return;
 
-            Email = email;
-            Telefono = telefono;
+            Email = emailVO;
+            Telefono = telefonoVO;
             MarkAsModified();
             ValidarInvariantes();
 
@@ -268,16 +270,13 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             if (Nombre == null)
                 throw new InvalidOperationException("El nombre del cliente no puede ser nulo");
             
-            // Validar que el email no esté vacío y tenga un formato válido
-            if (string.IsNullOrWhiteSpace(Email))
-                throw new InvalidOperationException("El email del cliente no puede estar vacío");
-                
-            if (!Email.Contains("@") || !Email.Contains("."))
-                throw new InvalidOperationException($"El email '{Email}' no tiene un formato válido");
+            // Validar que el email no sea nulo
+            if (Email == null)
+                throw new InvalidOperationException("El email del cliente no puede ser nulo");
             
-            // Validar que el teléfono no esté vacío
-            if (string.IsNullOrWhiteSpace(Telefono))
-                throw new InvalidOperationException("El teléfono del cliente no puede estar vacío");
+            // Validar que el teléfono no sea nulo
+            if (Telefono == null)
+                throw new InvalidOperationException("El teléfono del cliente no puede ser nulo");
         }
 
         /// <summary>
@@ -334,21 +333,17 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// <exception cref="ArgumentException">Si el email es inválido</exception>
         public void ActualizarEmail(string nuevoEmail)
         {
-            if (string.IsNullOrWhiteSpace(nuevoEmail))
-                throw new ArgumentException("El email no puede estar vacío", nameof(nuevoEmail));
+            var emailVO = Email.Create(nuevoEmail);
             
-            if (!nuevoEmail.Contains("@") || !nuevoEmail.Contains("."))
-                throw new ArgumentException("El formato del email no es válido", nameof(nuevoEmail));
-            
-            if (Email == nuevoEmail)
+            if (Email.Value == emailVO.Value)
                 return;
             
             var emailAnterior = Email;
-            Email = nuevoEmail;
+            Email = emailVO;
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new EmailClienteActualizado(Id, emailAnterior, nuevoEmail));
+            AddDomainEvent(new EmailClienteActualizado(Id, emailAnterior, Email));
         }
         
         /// <summary>
@@ -358,18 +353,17 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// <exception cref="ArgumentException">Si el teléfono es inválido</exception>
         public void ActualizarTelefono(string nuevoTelefono)
         {
-            if (string.IsNullOrWhiteSpace(nuevoTelefono))
-                throw new ArgumentException("El teléfono no puede estar vacío", nameof(nuevoTelefono));
+            var telefonoVO = PhoneNumber.Create(nuevoTelefono);
             
-            if (Telefono == nuevoTelefono)
+            if (Telefono.Value == telefonoVO.Value)
                 return;
             
             var telefonoAnterior = Telefono;
-            Telefono = nuevoTelefono;
+            Telefono = telefonoVO;
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new TelefonoClienteActualizado(Id, telefonoAnterior, nuevoTelefono));
+            AddDomainEvent(new TelefonoClienteActualizado(Id, telefonoAnterior, Telefono));
         }
         
         /// <summary>

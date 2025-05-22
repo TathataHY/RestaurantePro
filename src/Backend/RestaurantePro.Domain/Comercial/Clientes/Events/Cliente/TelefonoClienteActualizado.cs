@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
 {
+    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+    
     /// <summary>
     /// Evento que se dispara cuando se actualiza el teléfono de un cliente
     /// </summary>
@@ -13,12 +15,12 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
         /// <summary>
         /// Teléfono anterior del cliente
         /// </summary>
-        public string TelefonoAnterior { get; }
+        public PhoneNumber TelefonoAnterior { get; }
         
         /// <summary>
         /// Nuevo teléfono del cliente
         /// </summary>
-        public string NuevoTelefono { get; }
+        public PhoneNumber NuevoTelefono { get; }
         
         /// <summary>
         /// Constructor
@@ -26,7 +28,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
         /// <param name="clienteId">ID del cliente</param>
         /// <param name="telefonoAnterior">Teléfono anterior</param>
         /// <param name="nuevoTelefono">Nuevo teléfono</param>
-        public TelefonoClienteActualizado(Guid clienteId, string telefonoAnterior, string nuevoTelefono)
+        public TelefonoClienteActualizado(Guid clienteId, PhoneNumber telefonoAnterior, PhoneNumber nuevoTelefono)
         {
             ClienteId = clienteId;
             TelefonoAnterior = telefonoAnterior;

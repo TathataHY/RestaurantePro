@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
 {
+    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+    
     /// <summary>
     /// Evento que se dispara cuando se actualiza el email de un cliente
     /// </summary>
@@ -13,12 +15,12 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
         /// <summary>
         /// Email anterior del cliente
         /// </summary>
-        public string EmailAnterior { get; }
+        public Email EmailAnterior { get; }
         
         /// <summary>
         /// Nuevo email del cliente
         /// </summary>
-        public string NuevoEmail { get; }
+        public Email NuevoEmail { get; }
         
         /// <summary>
         /// Constructor
@@ -26,7 +28,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
         /// <param name="clienteId">ID del cliente</param>
         /// <param name="emailAnterior">Email anterior</param>
         /// <param name="nuevoEmail">Nuevo email</param>
-        public EmailClienteActualizado(Guid clienteId, string emailAnterior, string nuevoEmail)
+        public EmailClienteActualizado(Guid clienteId, Email emailAnterior, Email nuevoEmail)
         {
             ClienteId = clienteId;
             EmailAnterior = emailAnterior;

@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
 {
+    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+    
     /// <summary>
     /// Evento de dominio que se dispara cuando se actualiza la información de contacto
     /// </summary>
@@ -13,15 +15,17 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
         /// <summary>
         /// Nuevo email del cliente
         /// </summary>
-        public string Email { get; }
+        public Email Email { get; }
 
         /// <summary>
         /// Nuevo teléfono del cliente
         /// </summary>
-        public string Telefono { get; }
+        public PhoneNumber Telefono { get; }
 
-        
-        public InformacionContactoActualizada(Guid clienteId, string email, string telefono)
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public InformacionContactoActualizada(Guid clienteId, Email email, PhoneNumber telefono)
         {
             ClienteId = clienteId;
             Email = email;
