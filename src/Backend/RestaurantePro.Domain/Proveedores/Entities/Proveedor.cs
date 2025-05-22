@@ -94,6 +94,13 @@ namespace RestaurantePro.Domain.Proveedores.Entities
         /// </summary>
         public IReadOnlyCollection<ContactoProveedor> Contactos => _contactos.AsReadOnly();
 
+        private readonly List<ValueObjects.ProveedorCategoria> _categorias = new();
+        
+        /// <summary>
+        /// Lista de categorías asignadas al proveedor
+        /// </summary>
+        public IReadOnlyCollection<ValueObjects.ProveedorCategoria> Categorias => _categorias.AsReadOnly();
+
         /// <summary>
         /// Indica si el proveedor está activo
         /// </summary>
@@ -480,6 +487,171 @@ namespace RestaurantePro.Domain.Proveedores.Entities
                 if (contacto.ProveedorId != Id)
                     throw new InvalidOperationException($"El contacto {contacto.Id} no pertenece a este proveedor");
             }
+        }
+
+        /// <summary>
+        /// Agrega una categoría al proveedor
+        /// </summary>
+        /// <param name="categoria">Categoría a agregar</param>
+        /// <param name="porcentajeDescuento">Porcentaje de descuento para esta categoría</param>
+        /// <param name="esProveedorPrincipal">Si es proveedor principal para esta categoría</param>
+        /// <exception cref="InvalidOperationException">Si la categoría ya existe para este proveedor</exception>
+        public void AgregarCategoria(Enums.CategoriaProveedor categoria, decimal porcentajeDescuento = 0, bool esProveedorPrincipal = false)
+        {
+            // Verificar que no exista ya la categoría
+            if (_categorias.Any(c => c.Categoria == categoria))
+                throw new InvalidOperationException($"El proveedor ya tiene asignada la categoría {categoria}");
+                
+            // Crear y agregar la categoría
+            var nuevaCategoria = ValueObjects.ProveedorCategoria.Crear(categoria, porcentajeDescuento, esProveedorPrincipal);
+            _categorias.Add(nuevaCategoria);
+            
+            // Emitir evento de dominio
+            AddDomainEvent(new Events.ProveedorCategoriaAgregada(
+                Id, 
+                Nombre, 
+                categoria, 
+                porcentajeDescuento, 
+                esProveedorPrincipal));
+                
+            MarkAsModified();
+        }
+        
+        /// <summary>
+        /// Elimina una categoría del proveedor
+        /// </summary>
+        /// <param name="categoria">Categoría a eliminar</param>
+        /// <exception cref="InvalidOperationException">Si la categoría no existe para este proveedor</exception>
+        public void EliminarCategoria(Enums.CategoriaProveedor categoria)
+        {
+            // Buscar la categoría
+            var categoriaExistente = _categorias.FirstOrDefault(c => c.Categoria == categoria);
+            if (categoriaExistente == null)
+                throw new InvalidOperationException($"El proveedor no tiene asignada la categoría {categoria}");
+                
+            // Guardar el estado de proveedor principal antes de eliminar
+            bool eraProveedorPrincipal = categoriaExistente.EsProveedorPrincipal;
+            
+            // Eliminar la categoría
+            _categorias.RemoveAll(c => c.Categoria == categoria);
+            
+            // Emitir evento de dominio
+            AddDomainEvent(new Events.ProveedorCategoriaEliminada(
+                Id, 
+                Nombre, 
+                categoria, 
+                eraProveedorPrincipal));
+                
+            MarkAsModified();
+        }
+        
+        /// <summary>
+        /// Actualiza el porcentaje de descuento para una categoría
+        /// </summary>
+        /// <param name="categoria">Categoría a actualizar</param>
+        /// <param name="porcentajeDescuento">Nuevo porcentaje de descuento</param>
+        /// <exception cref="InvalidOperationException">Si la categoría no existe para este proveedor</exception>
+        public void ActualizarPorcentajeDescuento(Enums.CategoriaProveedor categoria, decimal porcentajeDescuento)
+        {
+            // Validar porcentaje
+            if (porcentajeDescuento < 0 || porcentajeDescuento > 100)
+                throw new ArgumentException("El porcentaje de descuento debe estar entre 0 y 100", nameof(porcentajeDescuento));
+                
+            // Buscar la categoría
+            var index = _categorias.FindIndex(c => c.Categoria == categoria);
+            if (index < 0)
+                throw new InvalidOperationException($"El proveedor no tiene asignada la categoría {categoria}");
+                
+            var categoriaExistente = _categorias[index];
+            
+            // Si el porcentaje es el mismo, no hacer nada
+            if (categoriaExistente.PorcentajeDescuento == porcentajeDescuento)
+                return;
+                
+            // Guardar el porcentaje anterior
+            var porcentajeAnterior = categoriaExistente.PorcentajeDescuento;
+            
+            // Actualizar la categoría (creando una nueva instancia ya que es un ValueObject)
+            _categorias[index] = categoriaExistente.ConPorcentajeDescuento(porcentajeDescuento);
+            
+            // Emitir evento de dominio
+            AddDomainEvent(new Events.ProveedorCategoriaActualizada(
+                Id,
+                Nombre,
+                categoria,
+                porcentajeAnterior,
+                porcentajeDescuento,
+                categoriaExistente.EsProveedorPrincipal,
+                categoriaExistente.EsProveedorPrincipal));
+                
+            MarkAsModified();
+        }
+        
+        /// <summary>
+        /// Establece o quita el estado de proveedor principal para una categoría
+        /// </summary>
+        /// <param name="categoria">Categoría a actualizar</param>
+        /// <param name="esProveedorPrincipal">Si debe ser proveedor principal</param>
+        /// <exception cref="InvalidOperationException">Si la categoría no existe para este proveedor</exception>
+        public void EstablecerProveedorPrincipal(Enums.CategoriaProveedor categoria, bool esProveedorPrincipal)
+        {
+            // Buscar la categoría
+            var index = _categorias.FindIndex(c => c.Categoria == categoria);
+            if (index < 0)
+                throw new InvalidOperationException($"El proveedor no tiene asignada la categoría {categoria}");
+                
+            var categoriaExistente = _categorias[index];
+            
+            // Si el estado es el mismo, no hacer nada
+            if (categoriaExistente.EsProveedorPrincipal == esProveedorPrincipal)
+                return;
+                
+            // Actualizar la categoría (creando una nueva instancia ya que es un ValueObject)
+            _categorias[index] = categoriaExistente.ConEstadoPrincipal(esProveedorPrincipal);
+            
+            // Emitir evento de dominio
+            AddDomainEvent(new Events.ProveedorCategoriaActualizada(
+                Id,
+                Nombre,
+                categoria,
+                categoriaExistente.PorcentajeDescuento,
+                categoriaExistente.PorcentajeDescuento,
+                !esProveedorPrincipal,
+                esProveedorPrincipal));
+                
+            MarkAsModified();
+        }
+        
+        /// <summary>
+        /// Verifica si el proveedor tiene una categoría específica
+        /// </summary>
+        /// <param name="categoria">Categoría a verificar</param>
+        /// <returns>True si el proveedor tiene la categoría, False en caso contrario</returns>
+        public bool TieneCategoria(Enums.CategoriaProveedor categoria)
+        {
+            return _categorias.Any(c => c.Categoria == categoria);
+        }
+        
+        /// <summary>
+        /// Verifica si el proveedor es el principal para una categoría específica
+        /// </summary>
+        /// <param name="categoria">Categoría a verificar</param>
+        /// <returns>True si el proveedor es principal para esta categoría, False en caso contrario</returns>
+        public bool EsProveedorPrincipalPara(Enums.CategoriaProveedor categoria)
+        {
+            var cat = _categorias.FirstOrDefault(c => c.Categoria == categoria);
+            return cat != null && cat.EsProveedorPrincipal;
+        }
+        
+        /// <summary>
+        /// Obtiene el porcentaje de descuento para una categoría específica
+        /// </summary>
+        /// <param name="categoria">Categoría a consultar</param>
+        /// <returns>Porcentaje de descuento o 0 si el proveedor no tiene la categoría</returns>
+        public decimal ObtenerPorcentajeDescuento(Enums.CategoriaProveedor categoria)
+        {
+            var cat = _categorias.FirstOrDefault(c => c.Categoria == categoria);
+            return cat?.PorcentajeDescuento ?? 0;
         }
     }
 } 
