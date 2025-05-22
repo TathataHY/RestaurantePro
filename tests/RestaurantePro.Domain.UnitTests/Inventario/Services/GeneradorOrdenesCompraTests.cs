@@ -30,7 +30,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         public async Task GenerarOrdenesCompraAutomaticas_SinIngredientesConStockBajo_RetornaListaVacia()
         {
             // Arrange
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerConStockBajoAsync(It.Is<CancellationToken>(ct => true)))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerConStockBajoAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Ingrediente?>());
                 
             // Act
@@ -38,7 +38,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             
             // Assert
             Assert.Empty(resultado);
-            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.IsAny<OrdenCompra>()), Times.Never);
+            _ordenCompraRepositoryMock.Verify(r => r.AddAsync(It.IsAny<OrdenCompra>(), It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 } 

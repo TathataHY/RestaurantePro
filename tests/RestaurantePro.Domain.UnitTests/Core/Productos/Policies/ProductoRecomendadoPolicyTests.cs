@@ -71,7 +71,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Policies
             
             // Configurar repositorio para devolver comandas
             _comandaRepositoryMock
-                .Setup(r => r.ObtenerPorRangoFechasAsync(fechaInicio, fechaActual, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorRangoFechasAsync(fechaInicio, fechaActual, false, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(comandasParaRepositorio);
             
             // Act
@@ -116,7 +116,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Policies
             
             // Configurar repositorio para devolver comandas del cliente
             _comandaRepositoryMock
-                .Setup(r => r.ObtenerPorClienteAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorClienteAsync(clienteId, false, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(comandasParaRepositorio);
             
             // Act

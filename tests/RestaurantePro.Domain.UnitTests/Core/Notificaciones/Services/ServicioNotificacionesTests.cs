@@ -171,7 +171,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Notificaciones.Services
                 Guid.NewGuid());
             
             _notificacionRepositoryMock
-                .Setup(r => r.GetByIdAsync(notificacionId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(notificacionId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(notificacion);
                 
             // Act
@@ -181,7 +181,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Notificaciones.Services
             Assert.True(resultado);
             
             _notificacionRepositoryMock.Verify(
-                r => r.UpdateAsync(It.Is<Notificacion>(n => n == notificacion), It.IsAny<CancellationToken>()), 
+                r => r.ActualizarAsync(It.Is<Notificacion>(n => n == notificacion), It.IsAny<CancellationToken>()), 
                 Times.Once);
         }
         
@@ -193,7 +193,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Notificaciones.Services
             
             Notificacion? notificacionNull = null;
             _notificacionRepositoryMock
-                .Setup(r => r.GetByIdAsync(notificacionId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(notificacionId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(notificacionNull);
                 
             // Act
@@ -203,7 +203,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Notificaciones.Services
             Assert.False(resultado);
             
             _notificacionRepositoryMock.Verify(
-                r => r.UpdateAsync(It.IsAny<Notificacion>(), It.IsAny<CancellationToken>()), 
+                r => r.ActualizarAsync(It.IsAny<Notificacion>(), It.IsAny<CancellationToken>()), 
                 Times.Never);
         }
     }
