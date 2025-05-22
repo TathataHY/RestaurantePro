@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Domain.Proveedores.Entities;
 using RestaurantePro.Domain.Proveedores.Interfaces;
+using RestaurantePro.Domain.Proveedores.Results;
 using RestaurantePro.Infrastructure.Persistence.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 
@@ -131,6 +132,76 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores
                 .ToListAsync(cancellationToken);
                 
             return (proveedores, total);
+        }
+
+        public async Task<ResultadoEstadisticasProveedores> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default)
+        {
+            // Calcular estadísticas básicas
+            var totalProveedores = await _context.Set<Proveedor>().CountAsync(cancellationToken);
+            var proveedoresActivos = await _context.Set<Proveedor>().CountAsync(p => p.EstaActivo, cancellationToken);
+            
+            // Obtener las órdenes de compra para estadísticas
+            var fechaInicio = DateTime.Now.AddDays(-30); // último mes
+            var ordenesCompra = await _context.Set<OrdenCompra>()
+                .Where(o => o.FechaCreacion >= fechaInicio)
+                .ToListAsync(cancellationToken);
+                
+            // Calcular estadísticas de órdenes
+            var ordenesEnPeriodo = ordenesCompra.Count;
+            var valorTotalOrdenes = ordenesCompra.Sum(o => o.ValorTotal);
+            
+            // Calcular tiempo promedio de entrega
+            var tiempoPromedioEntrega = 0m;
+            var ordenesEntregadas = ordenesCompra.Where(o => o.FechaEntregaReal.HasValue && o.FechaEntrega.HasValue).ToList();
+            if (ordenesEntregadas.Any())
+            {
+                tiempoPromedioEntrega = ordenesEntregadas.Average(o => 
+                    (decimal)(o.FechaEntregaReal!.Value - o.FechaEntrega!.Value).TotalDays);
+            }
+            
+            // Obtener órdenes pendientes por proveedor
+            var proveedoresConOrdenesPendientes = await _context.Set<Proveedor>()
+                .CountAsync(p => p.OrdenesCompra.Any(o => o.Estado == Core.Inventario.Compras.OrdenesCompra.Enums.EstadoOrdenCompra.EnProceso), 
+                    cancellationToken);
+            
+            // Obtener top proveedores por volumen
+            var proveedoresTop = await _context.Set<Proveedor>()
+                .Where(p => p.OrdenesCompra.Any(o => o.FechaCreacion >= fechaInicio))
+                .Select(p => new 
+                {
+                    Proveedor = p,
+                    TotalOrdenes = p.OrdenesCompra.Count(o => o.FechaCreacion >= fechaInicio),
+                    ValorTotalOrdenes = p.OrdenesCompra.Where(o => o.FechaCreacion >= fechaInicio).Sum(o => o.ValorTotal),
+                    TiempoPromedio = p.OrdenesCompra
+                        .Where(o => o.FechaCreacion >= fechaInicio && o.FechaEntregaReal.HasValue && o.FechaEntrega.HasValue)
+                        .Select(o => (decimal)(o.FechaEntregaReal!.Value - o.FechaEntrega!.Value).TotalDays)
+                        .DefaultIfEmpty(0)
+                        .Average()
+                })
+                .OrderByDescending(x => x.ValorTotalOrdenes)
+                .Take(5)
+                .ToListAsync(cancellationToken);
+                
+            // Mapear a estadísticas de proveedor
+            var topProveedores = proveedoresTop.Select(p => new EstadisticaProveedor(
+                p.Proveedor.Id,
+                p.Proveedor.Nombre,
+                p.TotalOrdenes,
+                p.ValorTotalOrdenes,
+                p.TiempoPromedio
+            )).ToList();
+            
+            // Crear y devolver el resultado
+            return new ResultadoEstadisticasProveedores(
+                totalProveedores,
+                proveedoresActivos,
+                ordenesEnPeriodo,
+                valorTotalOrdenes,
+                tiempoPromedioEntrega,
+                topProveedores,
+                proveedoresConOrdenesPendientes,
+                DateTime.Now
+            );
         }
 
         public async Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default)

@@ -1,92 +1,44 @@
+using RestaurantePro.Domain.Core.SharedKernel.Specifications;
+using RestaurantePro.Domain.Comercial.Promociones.Entities;
+using RestaurantePro.Domain.Comercial.Promociones.Enums;
+using System;
+using System.Linq.Expressions;
 
 namespace RestaurantePro.Domain.Comercial.Promociones.Specifications
 {
     /// <summary>
-    /// Especificación que identifica promociones activas disponibles para ser aplicadas
+    /// Especificación para filtrar promociones activas y vigentes
     /// </summary>
     public class PromocionActivaSpecification : Specification<Promocion>
     {
-        private readonly DateTime _fechaConsulta;
-
+        private readonly DateTime _fechaActual;
+        
         /// <summary>
-        /// Crea una nueva instancia de la especificación
+        /// Constructor de la especificación
         /// </summary>
-        /// <param name="fechaConsulta">Fecha para verificar si la promoción está activa (por defecto DateTime.Now)</param>
-        public PromocionActivaSpecification(DateTime? fechaConsulta = null)
+        /// <param name="fechaActual">Fecha actual para verificar vigencia (inyectable para pruebas)</param>
+        public PromocionActivaSpecification(DateTime fechaActual)
         {
-            _fechaConsulta = fechaConsulta ?? DateTime.Now;
+            _fechaActual = fechaActual;
         }
-
+        
         /// <summary>
-        /// Convierte la especificación a una expresión LINQ
+        /// Constructor que usa la fecha actual del sistema
+        /// </summary>
+        public PromocionActivaSpecification() : this(DateTime.Now)
+        {
+        }
+        
+        /// <summary>
+        /// Retorna la expresión que verifica si una promoción está activa y vigente
         /// </summary>
         public override Expression<Func<Promocion, bool>> ToExpression()
         {
-            return promocion =>
-                promocion.Activa &&
-                (!promocion.FechaInicio.HasValue || promocion.FechaInicio.Value <= _fechaConsulta) &&
-                (!promocion.FechaFin.HasValue || promocion.FechaFin.Value >= _fechaConsulta) &&
-                promocion.CantidadDisponible > 0;
-        }
-    }
-
-    /// <summary>
-    /// Especificación que identifica promociones aplicables en días específicos de la semana
-    /// </summary>
-    public class PromocionDiaSemanaSpecification : Specification<Promocion>
-    {
-        private readonly DayOfWeek _diaSemana;
-
-        /// <summary>
-        /// Crea una nueva instancia de la especificación
-        /// </summary>
-        /// <param name="diaSemana">Día de la semana a verificar</param>
-        public PromocionDiaSemanaSpecification(DayOfWeek diaSemana)
-        {
-            _diaSemana = diaSemana;
-        }
-
-        /// <summary>
-        /// Convierte la especificación a una expresión LINQ
-        /// </summary>
-        public override Expression<Func<Promocion, bool>> ToExpression()
-        {
-            return promocion =>
-                !promocion.DiasValidos.HasValue || 
-                (promocion.DiasValidos.Value & (1 << (int)_diaSemana)) != 0;
-        }
-    }
-
-    /// <summary>
-    /// Especificación compuesta que identifica promociones elegibles para ser aplicadas
-    /// en un momento determinado, combinando estado activo y validez para el día de la semana
-    /// </summary>
-    public class PromocionElegibleSpecification : Specification<Promocion>
-    {
-        /// <summary>
-        /// Crea una nueva instancia de la especificación
-        /// </summary>
-        /// <param name="fechaConsulta">Fecha para verificar si la promoción está activa</param>
-        public PromocionElegibleSpecification(DateTime? fechaConsulta = null)
-        {
-            DateTime fecha = fechaConsulta ?? DateTime.Now;
-            
-            // Componer especificaciones usando los operadores And
-            var promocionActiva = new PromocionActivaSpecification(fecha);
-            var promocionDiaSemana = new PromocionDiaSemanaSpecification(fecha.DayOfWeek);
-            
-            // Esta especificación combina ambas condiciones
-            _especificacionCombinada = promocionActiva.And(promocionDiaSemana);
-        }
-
-        private readonly Specification<Promocion> _especificacionCombinada;
-
-        /// <summary>
-        /// Convierte la especificación a una expresión LINQ
-        /// </summary>
-        public override Expression<Func<Promocion, bool>> ToExpression()
-        {
-            return _especificacionCombinada.ToExpression();
+            return promocion => 
+                promocion.Estado == EstadoPromocion.Activa && 
+                promocion.FechaInicio <= _fechaActual && 
+                promocion.FechaFin >= _fechaActual &&
+                (!promocion.MaximoUsos.HasValue || promocion.VecesUsada < promocion.MaximoUsos.Value);
         }
     }
 } 
