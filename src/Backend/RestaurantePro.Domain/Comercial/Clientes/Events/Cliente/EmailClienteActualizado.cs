@@ -1,7 +1,5 @@
 namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
 {
-    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-    
     /// <summary>
     /// Evento que se dispara cuando se actualiza el email de un cliente
     /// </summary>

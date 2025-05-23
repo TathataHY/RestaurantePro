@@ -1,21 +1,17 @@
-using RestaurantePro.Domain.Core.Base.Events;
-using RestaurantePro.Domain.Comercial.Promociones.Enums;
-using System;
-
 namespace RestaurantePro.Domain.Comercial.Promociones.Events
 {
     /// <summary>
-    /// Evento de dominio que se dispara cuando se crea una promoción
+    /// Evento de dominio que se dispara cuando se crea una nueva promoción
     /// </summary>
     public class PromocionCreada : DomainEvent
     {
         /// <summary>
-        /// ID de la promoción
+        /// Identificador único de la promoción
         /// </summary>
         public Guid PromocionId { get; }
         
         /// <summary>
-        /// Código único de la promoción
+        /// Código de la promoción
         /// </summary>
         public string Codigo { get; }
         
@@ -30,7 +26,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Events
         public TipoPromocion Tipo { get; }
         
         /// <summary>
-        /// Valor del descuento (monto fijo o porcentaje según el tipo)
+        /// Valor del descuento
         /// </summary>
         public decimal ValorDescuento { get; }
         
@@ -47,6 +43,13 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Events
         /// <summary>
         /// Constructor para el evento PromocionCreada
         /// </summary>
+        /// <param name="promocionId">Identificador de la promoción</param>
+        /// <param name="codigo">Código de la promoción</param>
+        /// <param name="nombre">Nombre de la promoción</param>
+        /// <param name="tipo">Tipo de la promoción</param>
+        /// <param name="valorDescuento">Valor del descuento</param>
+        /// <param name="fechaInicio">Fecha de inicio</param>
+        /// <param name="fechaFin">Fecha de fin</param>
         public PromocionCreada(
             Guid promocionId, 
             string codigo, 

@@ -1,20 +1,17 @@
-using RestaurantePro.Domain.Core.Base.Events;
-using System;
-
 namespace RestaurantePro.Domain.Comercial.Promociones.Events
 {
     /// <summary>
-    /// Evento de dominio que se dispara cuando se actualiza una promoción
+    /// Evento de dominio que se dispara cuando se actualizan propiedades de una promoción
     /// </summary>
     public class PromocionActualizada : DomainEvent
     {
         /// <summary>
-        /// ID de la promoción
+        /// Identificador único de la promoción
         /// </summary>
         public Guid PromocionId { get; }
         
         /// <summary>
-        /// Código único de la promoción
+        /// Código de la promoción
         /// </summary>
         public string Codigo { get; }
         
@@ -24,37 +21,16 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Events
         public string Nombre { get; }
         
         /// <summary>
-        /// Valor del descuento actualizado
-        /// </summary>
-        public decimal ValorDescuento { get; }
-        
-        /// <summary>
-        /// Fecha de inicio actualizada
-        /// </summary>
-        public DateTime FechaInicio { get; }
-        
-        /// <summary>
-        /// Fecha de fin actualizada
-        /// </summary>
-        public DateTime FechaFin { get; }
-        
-        /// <summary>
         /// Constructor para el evento PromocionActualizada
         /// </summary>
-        public PromocionActualizada(
-            Guid promocionId, 
-            string codigo, 
-            string nombre, 
-            decimal valorDescuento, 
-            DateTime fechaInicio, 
-            DateTime fechaFin)
+        /// <param name="promocionId">Identificador de la promoción</param>
+        /// <param name="codigo">Código de la promoción</param>
+        /// <param name="nombre">Nombre de la promoción</param>
+        public PromocionActualizada(Guid promocionId, string codigo, string nombre)
         {
             PromocionId = promocionId;
             Codigo = codigo;
             Nombre = nombre;
-            ValorDescuento = valorDescuento;
-            FechaInicio = fechaInicio;
-            FechaFin = fechaFin;
         }
     }
 } 

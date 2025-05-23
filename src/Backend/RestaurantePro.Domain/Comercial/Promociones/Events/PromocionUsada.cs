@@ -1,35 +1,22 @@
-using RestaurantePro.Domain.Core.Base.Events;
-using System;
-
 namespace RestaurantePro.Domain.Comercial.Promociones.Events
 {
     /// <summary>
-    /// Evento de dominio que se dispara cuando se usa una promoción
+    /// Evento de dominio que se dispara cuando se utiliza una promoción
     /// </summary>
     public class PromocionUsada : DomainEvent
     {
         /// <summary>
-        /// ID de la promoción
+        /// Identificador único de la promoción
         /// </summary>
         public Guid PromocionId { get; }
         
         /// <summary>
-        /// Código único de la promoción
-        /// </summary>
-        public string Codigo { get; }
-        
-        /// <summary>
-        /// Nombre de la promoción
-        /// </summary>
-        public string Nombre { get; }
-        
-        /// <summary>
-        /// ID del cliente que usó la promoción
+        /// Identificador del cliente que usó la promoción
         /// </summary>
         public Guid ClienteId { get; }
         
         /// <summary>
-        /// ID de la comanda donde se aplicó la promoción
+        /// Identificador de la comanda donde se aplicó la promoción
         /// </summary>
         public Guid ComandaId { get; }
         
@@ -39,22 +26,30 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Events
         public decimal MontoAplicado { get; }
         
         /// <summary>
+        /// Fecha en que se usó la promoción
+        /// </summary>
+        public DateTime FechaUso { get; }
+        
+        /// <summary>
         /// Constructor para el evento PromocionUsada
         /// </summary>
+        /// <param name="promocionId">Identificador de la promoción</param>
+        /// <param name="clienteId">Identificador del cliente</param>
+        /// <param name="comandaId">Identificador de la comanda</param>
+        /// <param name="montoAplicado">Monto del descuento aplicado</param>
+        /// <param name="fechaUso">Fecha en que se usó la promoción</param>
         public PromocionUsada(
             Guid promocionId, 
-            string codigo, 
-            string nombre, 
             Guid clienteId, 
             Guid comandaId, 
-            decimal montoAplicado)
+            decimal montoAplicado, 
+            DateTime fechaUso)
         {
             PromocionId = promocionId;
-            Codigo = codigo;
-            Nombre = nombre;
             ClienteId = clienteId;
             ComandaId = comandaId;
             MontoAplicado = montoAplicado;
+            FechaUso = fechaUso;
         }
     }
 } 

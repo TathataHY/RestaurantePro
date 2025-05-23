@@ -1,6 +1,3 @@
-using RestaurantePro.Domain.Core.Base.Events;
-using System;
-
 namespace RestaurantePro.Domain.Comercial.Promociones.Events
 {
     /// <summary>

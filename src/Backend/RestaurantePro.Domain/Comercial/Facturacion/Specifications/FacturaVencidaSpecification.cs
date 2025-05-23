@@ -1,8 +1,3 @@
-using System.Linq.Expressions;
-using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-using RestaurantePro.Domain.Core.SharedKernel.Specifications;
-
 namespace RestaurantePro.Domain.Comercial.Facturacion.Specifications
 {
     /// <summary>

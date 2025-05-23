@@ -1,7 +1,4 @@
-using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-
-namespace RestaurantePro.Domain.Comercial.Facturacion.Interfaces
+namespace RestaurantePro.Domain.Comercial.Facturacion.Services
 {
     /// <summary>
     /// Interfaz para el servicio de facturación

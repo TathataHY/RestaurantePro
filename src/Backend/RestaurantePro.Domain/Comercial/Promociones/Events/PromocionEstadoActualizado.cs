@@ -1,7 +1,3 @@
-using RestaurantePro.Domain.Core.Base.Events;
-using RestaurantePro.Domain.Comercial.Promociones.Enums;
-using System;
-
 namespace RestaurantePro.Domain.Comercial.Promociones.Events
 {
     /// <summary>
@@ -10,19 +6,9 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Events
     public class PromocionEstadoActualizado : DomainEvent
     {
         /// <summary>
-        /// ID de la promoción
+        /// Identificador único de la promoción
         /// </summary>
         public Guid PromocionId { get; }
-        
-        /// <summary>
-        /// Código único de la promoción
-        /// </summary>
-        public string Codigo { get; }
-        
-        /// <summary>
-        /// Nombre de la promoción
-        /// </summary>
-        public string Nombre { get; }
         
         /// <summary>
         /// Estado anterior de la promoción
@@ -35,20 +21,27 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Events
         public EstadoPromocion NuevoEstado { get; }
         
         /// <summary>
+        /// Fecha en que se realizó el cambio de estado
+        /// </summary>
+        public DateTime FechaCambio { get; }
+        
+        /// <summary>
         /// Constructor para el evento PromocionEstadoActualizado
         /// </summary>
+        /// <param name="promocionId">Identificador de la promoción</param>
+        /// <param name="estadoAnterior">Estado anterior</param>
+        /// <param name="nuevoEstado">Nuevo estado</param>
+        /// <param name="fechaCambio">Fecha en que se realizó el cambio</param>
         public PromocionEstadoActualizado(
             Guid promocionId, 
-            string codigo, 
-            string nombre, 
             EstadoPromocion estadoAnterior, 
-            EstadoPromocion nuevoEstado)
+            EstadoPromocion nuevoEstado, 
+            DateTime fechaCambio)
         {
             PromocionId = promocionId;
-            Codigo = codigo;
-            Nombre = nombre;
             EstadoAnterior = estadoAnterior;
             NuevoEstado = nuevoEstado;
+            FechaCambio = fechaCambio;
         }
     }
 } 

@@ -1,19 +1,9 @@
-using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
-using RestaurantePro.Domain.Comercial.Facturacion.Specifications;
-using RestaurantePro.Domain.Core.Notificaciones;
-using RestaurantePro.Domain.Core.Notificaciones.Entities;
-using RestaurantePro.Domain.Core.Notificaciones.Enums;
-using RestaurantePro.Domain.Core.Notificaciones.Services;
-using RestaurantePro.Domain.Core.Services;
-
 namespace RestaurantePro.Domain.Comercial.Facturacion.Services
 {
     /// <summary>
     /// Servicio para gestionar facturas vencidas
     /// </summary>
-    public class ServicioGestionFacturasVencidas
+    public class ServicioGestionFacturasVencidas : IServicioGestionFacturasVencidas
     {
         private readonly IFacturaRepository _facturaRepository;
         private readonly IDateTimeService _dateTimeService;

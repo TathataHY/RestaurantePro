@@ -1,6 +1,4 @@
-using RestaurantePro.Domain.Comercial.Pagos.Enums;
-using RestaurantePro.Domain.Comercial.Pagos.Events.Pago;
-using RestaurantePro.Domain.Core.Services;
+
 
 namespace RestaurantePro.Domain.Comercial.Pagos.Entities
 {

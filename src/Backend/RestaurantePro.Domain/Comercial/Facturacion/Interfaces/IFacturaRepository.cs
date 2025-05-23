@@ -1,6 +1,3 @@
-using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-
 namespace RestaurantePro.Domain.Comercial.Facturacion.Interfaces
 {
     /// <summary>

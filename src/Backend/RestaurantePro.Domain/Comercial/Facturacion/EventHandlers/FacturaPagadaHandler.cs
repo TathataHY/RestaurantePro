@@ -1,13 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
-using RestaurantePro.Domain.Comercial.Facturacion.Events;
-using RestaurantePro.Domain.Core.Base.Events;
-using RestaurantePro.Domain.Core.Base.Events.Handlers;
-using RestaurantePro.Domain.Core.Notificaciones;
-using RestaurantePro.Domain.Core.Notificaciones.Entities;
-using RestaurantePro.Domain.Core.Notificaciones.Enums;
-using RestaurantePro.Domain.Core.Notificaciones.Services;
-
 namespace RestaurantePro.Domain.Comercial.Facturacion.EventHandlers
 {
     /// <summary>

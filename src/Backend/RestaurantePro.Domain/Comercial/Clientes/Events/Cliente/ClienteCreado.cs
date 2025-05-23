@@ -1,7 +1,5 @@
 namespace RestaurantePro.Domain.Comercial.Clientes.Events.Cliente
 {
-    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-    
     /// <summary>
     /// Evento de dominio que se dispara cuando se crea un cliente
     /// </summary>

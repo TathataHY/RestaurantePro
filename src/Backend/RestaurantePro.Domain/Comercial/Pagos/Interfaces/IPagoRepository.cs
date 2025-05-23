@@ -1,5 +1,4 @@
-using RestaurantePro.Domain.Comercial.Pagos.Entities;
-using RestaurantePro.Domain.Comercial.Pagos.Enums;
+
 
 namespace RestaurantePro.Domain.Comercial.Pagos.Interfaces
 {

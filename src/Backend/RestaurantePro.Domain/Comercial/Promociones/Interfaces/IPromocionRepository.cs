@@ -1,11 +1,3 @@
-using RestaurantePro.Domain.Core.Base.Interfaces;
-using RestaurantePro.Domain.Comercial.Promociones.Entities;
-using RestaurantePro.Domain.Comercial.Promociones.Enums;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace RestaurantePro.Domain.Comercial.Promociones.Interfaces
 {
     /// <summary>
@@ -14,36 +6,44 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Interfaces
     public interface IPromocionRepository : IRepository<Promocion>
     {
         /// <summary>
-        /// Obtiene una promoción por su código
+        /// Obtiene las promociones activas en una fecha determinada
         /// </summary>
-        /// <param name="codigo">Código único de la promoción</param>
+        /// <param name="fecha">Fecha para verificar promociones activas</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>La promoción encontrada o null si no existe</returns>
-        Task<Promocion> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken = default);
+        /// <returns>Colección de promociones activas</returns>
+        Task<IEnumerable<Promocion>> ObtenerPromocionesActivasAsync(DateTime fecha, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Obtiene todas las promociones activas y vigentes
+        /// Obtiene todas las promociones activas y vigentes en la fecha actual
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de promociones activas y vigentes</returns>
         Task<IEnumerable<Promocion>> ObtenerPromocionesActivasAsync(CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Obtiene todas las promociones por estado
+        /// Obtiene las promociones por estado
         /// </summary>
-        /// <param name="estado">Estado de las promociones a buscar</param>
+        /// <param name="estado">Estado de la promoción</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Lista de promociones con el estado especificado</returns>
-        Task<IEnumerable<Promocion>> ObtenerPorEstadoAsync(EstadoPromocion estado, CancellationToken cancellationToken = default);
+        /// <returns>Colección de promociones con el estado especificado</returns>
+        Task<IEnumerable<Promocion>> ObtenerPromocionesPorEstadoAsync(EstadoPromocion estado, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Obtiene promociones aplicables a un producto específico
+        /// Obtiene las promociones aplicables a un producto específico
         /// </summary>
         /// <param name="productoId">ID del producto</param>
         /// <param name="categoriaId">ID de la categoría del producto (opcional)</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Lista de promociones aplicables al producto</returns>
-        Task<IEnumerable<Promocion>> ObtenerPromocionesParaProductoAsync(Guid productoId, Guid? categoriaId = null, CancellationToken cancellationToken = default);
+        /// <returns>Colección de promociones aplicables al producto</returns>
+        Task<IEnumerable<Promocion>> ObtenerPromocionesPorProductoAsync(Guid productoId, Guid? categoriaId = null, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene una promoción por su código
+        /// </summary>
+        /// <param name="codigo">Código de la promoción</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Promoción encontrada o null si no existe</returns>
+        Task<Promocion?> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene las promociones que un cliente ha utilizado

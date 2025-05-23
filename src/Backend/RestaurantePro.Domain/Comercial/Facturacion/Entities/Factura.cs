@@ -1,7 +1,3 @@
-using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-using RestaurantePro.Domain.Comercial.Facturacion.Events;
-using RestaurantePro.Domain.Core.Services;
-
 namespace RestaurantePro.Domain.Comercial.Facturacion.Entities
 {
     /// <summary>

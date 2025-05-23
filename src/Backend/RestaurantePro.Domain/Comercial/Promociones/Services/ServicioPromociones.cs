@@ -1,14 +1,3 @@
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Domain.Comercial.Promociones.Entities;
-using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
-using RestaurantePro.Domain.Comercial.Promociones.Specifications;
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace RestaurantePro.Domain.Comercial.Promociones.Services
 {
     /// <summary>
@@ -36,6 +25,103 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Services
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
         }
         
+        /// <summary>
+        /// Obtiene las promociones aplicables para un cliente y monto específicos
+        /// </summary>
+        /// <param name="clienteId">ID del cliente</param>
+        /// <param name="monto">Monto de la compra</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de promociones aplicables</returns>
+        public async Task<IEnumerable<Promocion>> ObtenerPromocionesAplicablesAsync(
+            Guid clienteId, 
+            decimal monto, 
+            CancellationToken cancellationToken = default)
+        {
+            // Obtener cliente y sus datos
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId, cancellationToken);
+            if (cliente == null)
+            {
+                return Enumerable.Empty<Promocion>();
+            }
+            
+            // Obtener todas las promociones activas
+            var promocionesActivas = await _promocionRepository.ObtenerPromocionesActivasAsync(cancellationToken);
+            
+            // Filtrar por las que son aplicables al cliente y monto
+            var puntosDisponibles = cliente.TarjetaFidelizacion?.PuntosActuales ?? 0;
+            var fechaActual = _dateTimeService.Now;
+            
+            var especificacion = new PromocionValidaParaClienteSpecification(
+                clienteId, 
+                puntosDisponibles, 
+                monto, 
+                fechaActual);
+                
+            return promocionesActivas.Where(p => especificacion.IsSatisfiedBy(p));
+        }
+        
+        /// <summary>
+        /// Aplica una promoción específica a una comanda
+        /// </summary>
+        /// <param name="promocionId">ID de la promoción</param>
+        /// <param name="clienteId">ID del cliente</param>
+        /// <param name="comandaId">ID de la comanda</param>
+        /// <param name="montoOriginal">Monto original de la comanda</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Monto del descuento aplicado, o 0 si no es aplicable</returns>
+        public async Task<decimal> AplicarPromocionAsync(
+            Guid promocionId, 
+            Guid clienteId, 
+            Guid comandaId, 
+            decimal montoOriginal, 
+            CancellationToken cancellationToken = default)
+        {
+            // Obtener la promoción
+            var promocion = await _promocionRepository.ObtenerPorIdAsync(promocionId, cancellationToken);
+            if (promocion == null || promocion.Estado != EstadoPromocion.Activa)
+            {
+                return 0;
+            }
+            
+            // Verificar que la promoción está vigente
+            if (!promocion.EstaVigente())
+            {
+                return 0;
+            }
+            
+            // Verificar monto mínimo
+            if (montoOriginal < promocion.MontoMinimo)
+            {
+                return 0;
+            }
+            
+            // Si es promoción de tipo canje de puntos, verificar puntos del cliente
+            if (promocion.Tipo == TipoPromocion.CanjePuntos)
+            {
+                var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId, cancellationToken);
+                if (cliente == null || cliente.TarjetaFidelizacion == null || 
+                    cliente.TarjetaFidelizacion.PuntosActuales < promocion.PuntosRequeridos)
+                {
+                    return 0;
+                }
+                
+                // Restar puntos al cliente
+                await _clienteRepository.RestarPuntosAsync(
+                    clienteId, 
+                    promocion.PuntosRequeridos, 
+                    cancellationToken);
+            }
+            
+            // Calcular descuento
+            var descuento = promocion.CalcularDescuento(montoOriginal);
+            
+            // Registrar uso de la promoción
+            promocion.RegistrarUso(clienteId, comandaId, descuento);
+            await _promocionRepository.ActualizarAsync(promocion, cancellationToken);
+            
+            return descuento;
+        }
+        
         /// <inheritdoc/>
         public async Task<IEnumerable<Promocion>> ObtenerPromocionesValidasParaClienteAsync(
             Guid clienteId,
@@ -51,7 +137,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Services
             int puntosDisponibles = 0;
             if (cliente.TieneTarjetaFidelizacion() && cliente.TarjetaFidelizacionPrincipalId.HasValue)
             {
-                var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value, cancellationToken);
+                var tarjeta = await _promocionRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value, cancellationToken);
                 puntosDisponibles = tarjeta?.PuntosDisponibles ?? 0;
             }
             else

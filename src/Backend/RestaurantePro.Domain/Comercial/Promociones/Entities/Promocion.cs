@@ -1,12 +1,3 @@
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Domain.Comercial.Promociones.Enums;
-using RestaurantePro.Domain.Comercial.Promociones.Events;
-using RestaurantePro.Domain.Core.Productos.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-
 namespace RestaurantePro.Domain.Comercial.Promociones.Entities
 {
     /// <summary>

@@ -1,7 +1,5 @@
 namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 {
-    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-
     /// <summary>
     /// Agregado que representa a un cliente del restaurante.
     /// 
