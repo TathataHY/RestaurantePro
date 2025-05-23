@@ -14,6 +14,7 @@ Ejemplos:
 - Gestión de categorías de productos
 - Cálculos de precios y márgenes 
 - Validaciones complejas de productos
+- Gestión de recetas y sus ingredientes
 
 ## Cuándo NO crear un servicio aquí
 
@@ -28,3 +29,13 @@ En esos casos, el servicio debe ubicarse en un nivel superior.
 
 - Servicios de dominio: `XxxService` (En inglés para ser consistente con el nombre del directorio)
 - Interfaces: `IXxxService` 
+
+## Servicios actuales
+
+### ProductoCategoriaService
+
+Gestiona las operaciones relacionadas con las categorías de productos, incluyendo asignación, eliminación y actualización de categorías.
+
+### RecetaService
+
+Gestiona las recetas asociadas a productos, incluyendo la consulta de ingredientes necesarios y la verificación de disponibilidad de stock para elaborar productos. 

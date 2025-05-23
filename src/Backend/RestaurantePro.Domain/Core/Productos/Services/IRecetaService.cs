@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Operaciones.Services
+namespace RestaurantePro.Domain.Core.Productos.Services
 {
     /// <summary>
     /// Servicio para gestionar recetas de productos y sus ingredientes.
