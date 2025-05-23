@@ -1,10 +1,3 @@
-using System;
-using System.Linq;
-using Xunit;
-using RestaurantePro.Domain.Comercial.Promociones.Entities;
-using RestaurantePro.Domain.Comercial.Promociones.Enums;
-using RestaurantePro.Domain.Comercial.Promociones.Events;
-
 namespace RestaurantePro.Domain.UnitTests.Comercial.Promociones.Entities
 {
     /// <summary>

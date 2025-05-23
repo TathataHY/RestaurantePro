@@ -1,11 +1,4 @@
-using Moq;
-using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
-using RestaurantePro.Domain.Comercial.Facturacion.Services;
-using RestaurantePro.Domain.Core.Services;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+
 
 namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
 {

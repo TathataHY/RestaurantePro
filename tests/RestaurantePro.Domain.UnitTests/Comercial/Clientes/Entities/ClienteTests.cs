@@ -1,7 +1,5 @@
 namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
 {
-    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-    
     public class ClienteTests
     {
         [Fact]
