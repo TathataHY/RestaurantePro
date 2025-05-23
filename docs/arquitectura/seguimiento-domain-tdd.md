@@ -59,6 +59,9 @@ RestaurantePro.Domain/
 | PhoneNumber ValueObject | ✅ Completo | ✅ Completas | Con validaciones específicas para Chile |
 | Specification | ✅ Completo | ✅ Completas | Patrón de especificación refactorizado |
 | Usuarios | ✅ Completo | ✅ Completas | Gestión de usuarios y servicios relacionados |
+| Receta | ✅ Completo | ⏳ Pendiente | Recetas para elaboración de productos |
+| IngredienteReceta | ✅ Completo | ⏳ Pendiente | Value Object para ingredientes de recetas |
+| RecetaService | ✅ Completo | ⏳ Pendiente | Gestión de recetas e ingredientes |
 
 ### Comercial
 
@@ -142,6 +145,10 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 ### Operaciones ↔ Inventario
 - Comanda reduce stock de Ingredientes
 - ItemComanda verifica disponibilidad de Ingredientes
+
+### Core ↔ Inventario
+- Recetas de Productos utilizan Ingredientes del inventario
+- RecetaService verifica disponibilidad de Ingredientes para Productos
 
 ### Inventario ↔ Proveedores
 - OrdenCompra se genera para un Proveedor específico
@@ -230,6 +237,8 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-10-23 | Organización Pruebas de Integración | Análisis → Refactor |
 | 2024-10-25 | UsuarioCreado_AsignacionRolesTests | Pruebas → Implementación |
 | 2024-10-26 | ComandaModificada_ActualizacionInventarioTests | Pruebas → Implementación → Refactor |
+| 2024-11-05 | RecetaService | Diseño → Implementación → Refactor |
+| 2024-11-05 | Validación de disponibilidad de ingredientes | Diseño → Implementación → Refactor |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -438,5 +447,5 @@ Se ha llevado a cabo una importante refactorización del patrón Specification, 
 
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
-| Implementar RecetaService | Implementar servicio de recetas para productos | Alta | ⏳ Pendiente |
-| Validación de disponibilidad | Implementar validación de disponibilidad de ingredientes | Media | ⏳ Pendiente |
+| Implementar RecetaService | Implementar servicio de recetas para productos | Alta | ✅ Completado |
+| Validación de disponibilidad | Implementar validación de disponibilidad de ingredientes | Media | ✅ Completado |
