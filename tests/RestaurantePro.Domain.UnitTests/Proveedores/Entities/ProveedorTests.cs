@@ -1,7 +1,5 @@
 namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
 {
-    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-    
     public class ProveedorTests
     {
         [Fact]

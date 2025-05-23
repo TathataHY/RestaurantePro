@@ -21,7 +21,6 @@ global using Microsoft.Extensions.DependencyInjection;
 // Domain core imports - Base
 global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;
-// global using RestaurantePro.Domain.Core.Base.Exceptions;
 
 // Domain Base - Events
 global using RestaurantePro.Domain.Core.Base.Events;
@@ -57,12 +56,12 @@ global using RestaurantePro.Domain.Core.Usuarios.Enums;
 global using RestaurantePro.Domain.Core.Usuarios.Events;
 global using RestaurantePro.Domain.Core.Usuarios.Events.Usuario;
 global using RestaurantePro.Domain.Core.Usuarios.Interfaces;
+global using RestaurantePro.Domain.Core.Usuarios.EventHandlers;
 
 // Domain core imports - Productos
 global using RestaurantePro.Domain.Core.Productos.Entities;
 global using RestaurantePro.Domain.Core.Productos.ValueObjects;
 global using RestaurantePro.Domain.Core.Productos.Interfaces;
-// global using RestaurantePro.Domain.Core.Productos.Enums;
 global using RestaurantePro.Domain.Core.Productos.Events;
 global using RestaurantePro.Domain.Core.Productos.Events.Producto;
 global using RestaurantePro.Domain.Core.Productos.Events.ProductoCategoria;
@@ -80,7 +79,6 @@ global using RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda;
 
 // Domain Operaciones - Reservaciones
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
-// global using RestaurantePro.Domain.Operaciones.Reservaciones.ValueObjects;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Events;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
@@ -98,6 +96,19 @@ global using RestaurantePro.Domain.Comercial.Clientes.Events;
 global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 global using RestaurantePro.Domain.Comercial.Clientes.Events.Cliente;
 global using RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion;
+
+// Domain Comercial - Promociones
+global using RestaurantePro.Domain.Comercial.Promociones.Entities;
+global using RestaurantePro.Domain.Comercial.Promociones.Enums;
+global using RestaurantePro.Domain.Comercial.Promociones.Events;
+global using RestaurantePro.Domain.Comercial.Promociones.Specifications;
+
+// Domain Comercial - Facturacion
+global using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+global using RestaurantePro.Domain.Comercial.Facturacion.Enums;
+global using RestaurantePro.Domain.Comercial.Facturacion.Events;
+global using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+global using RestaurantePro.Domain.Comercial.Facturacion.Services;
 
 // Domain Comercial - Services
 global using RestaurantePro.Domain.Comercial.Services;
@@ -135,9 +146,14 @@ global using RestaurantePro.Domain.Proveedores.Interfaces;
 global using RestaurantePro.Domain.Proveedores.Events;
 global using RestaurantePro.Domain.Proveedores.Events.Proveedor;
 global using RestaurantePro.Domain.Proveedores.Events.ContactoProveedor;
+global using RestaurantePro.Domain.Proveedores.Enums;
+global using RestaurantePro.Domain.Proveedores.ValueObjects;
+global using RestaurantePro.Domain.Proveedores.Specifications;
 
 // Event Handlers
 global using RestaurantePro.Domain.Comercial.EventHandlers;
 global using RestaurantePro.Domain.Inventario.EventHandlers;
 global using RestaurantePro.Domain.Operaciones.EventHandlers;
-// global using RestaurantePro.Domain.Proveedores.EventHandlers;
+
+// Additional Services
+global using RestaurantePro.Domain.Operaciones.Services;
