@@ -238,7 +238,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new PromocionEstadoActualizado(Id, Codigo, Nombre, estadoAnterior, Estado));
+            AddDomainEvent(new PromocionEstadoActualizado(Id, estadoAnterior, Estado, DateTime.Now));
         }
 
         /// <summary>
@@ -258,7 +258,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new PromocionEstadoActualizado(Id, Codigo, Nombre, estadoAnterior, Estado));
+            AddDomainEvent(new PromocionEstadoActualizado(Id, estadoAnterior, Estado, DateTime.Now));
         }
 
         /// <summary>
@@ -278,7 +278,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new PromocionEstadoActualizado(Id, Codigo, Nombre, estadoAnterior, Estado));
+            AddDomainEvent(new PromocionEstadoActualizado(Id, estadoAnterior, Estado, DateTime.Now));
         }
 
         /// <summary>
@@ -333,10 +333,10 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             {
                 var estadoAnterior = Estado;
                 Estado = EstadoPromocion.Finalizada;
-                AddDomainEvent(new PromocionEstadoActualizado(Id, Codigo, Nombre, estadoAnterior, Estado));
+                AddDomainEvent(new PromocionEstadoActualizado(Id, estadoAnterior, Estado, DateTime.Now));
             }
             
-            AddDomainEvent(new PromocionUsada(Id, Codigo, Nombre, clienteId, comandaId, montoAplicado));
+            AddDomainEvent(new PromocionUsada(Id, clienteId, comandaId, montoAplicado, DateTime.Now));
         }
     
     /// <summary>
@@ -489,7 +489,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
             MarkAsModified();
             ValidarInvariantes();
             
-            AddDomainEvent(new PromocionActualizada(Id, Codigo, Nombre, ValorDescuento, FechaInicio, FechaFin));
+            AddDomainEvent(new PromocionActualizada(Id, Codigo, Nombre));
         }
         
         /// <summary>

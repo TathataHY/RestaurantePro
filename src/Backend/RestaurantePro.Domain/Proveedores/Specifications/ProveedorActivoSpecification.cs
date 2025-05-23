@@ -35,8 +35,8 @@ namespace RestaurantePro.Domain.Proveedores.Specifications
                 return proveedor => 
                     proveedor != null &&
                     proveedor.EstaActivo &&
-                    !string.IsNullOrWhiteSpace(proveedor.Email) && 
-                    !string.IsNullOrWhiteSpace(proveedor.Telefono);
+                    proveedor.Email != null && 
+                    proveedor.Telefono != null;
             }
             else
             {
@@ -50,8 +50,8 @@ namespace RestaurantePro.Domain.Proveedores.Specifications
                 return proveedor => 
                     proveedor != null &&
                     proveedor.EstaActivo &&
-                    !string.IsNullOrWhiteSpace(proveedor.Email) && 
-                    !string.IsNullOrWhiteSpace(proveedor.Telefono) &&
+                    proveedor.Email != null && 
+                    proveedor.Telefono != null &&
                     !TienePagosPendientesFueraDeGracia(proveedor, _diasGraciaPagos);
             }
         }
@@ -59,33 +59,24 @@ namespace RestaurantePro.Domain.Proveedores.Specifications
         /// <summary>
         /// Verifica si un proveedor tiene pagos pendientes fuera del periodo de gracia
         /// Este método evalúa si el proveedor tiene pagos vencidos basándose en su historial
-        /// de pagos, fecha de último pago y última compra.
+        /// de pagos, fecha de última orden y días de crédito.
         /// </summary>
         /// <param name="proveedor">Proveedor a evaluar</param>
-        /// <param name="diasGracia">Días de gracia permitidos para pagos pendientes</param>
+        /// <param name="diasGracia">Días de gracia adicionales permitidos para pagos pendientes</param>
         /// <returns>True si el proveedor tiene pagos pendientes fuera del periodo de gracia, False en caso contrario</returns>
         private static bool TienePagosPendientesFueraDeGracia(Proveedor proveedor, int diasGracia)
         {
             if (proveedor == null)
                 throw new ArgumentNullException(nameof(proveedor));
             
-            if (!proveedor.UltimaCompra.HasValue)
-                return false; // Sin compras no hay pagos pendientes
+            if (!proveedor.UltimaOrden.HasValue)
+                return false; // Sin órdenes no hay pagos pendientes
             
-            if (!proveedor.UltimoPago.HasValue)
-            {
-                // Si hay compra pero no hay pago registrado, verificar si ya pasó el tiempo de gracia
-                var diasDesdeUltimaCompra = (DateTime.Now - proveedor.UltimaCompra.Value).TotalDays;
-                return diasDesdeUltimaCompra > diasGracia;
-            }
+            // Verificar si ya pasó el tiempo de crédito más el de gracia
+            var diasDesdeUltimaOrden = (DateTime.Now - proveedor.UltimaOrden.Value).TotalDays;
+            var diasTotalesPermitidos = proveedor.DiasCredito + diasGracia;
             
-            // Si la fecha del último pago es posterior a la última compra, no hay pagos pendientes
-            if (proveedor.UltimoPago > proveedor.UltimaCompra)
-                return false;
-            
-            // Si el último pago es anterior a la última compra, verificar si está dentro del periodo de gracia
-            var diasPendientes = (DateTime.Now - proveedor.UltimaCompra.Value).TotalDays;
-            return diasPendientes > diasGracia;
+            return diasDesdeUltimaOrden > diasTotalesPermitidos;
         }
     }
 } 

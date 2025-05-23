@@ -44,7 +44,7 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
             }
 
             // Verificar que la comanda no esté anulada
-            if (comanda.EstaAnulada)
+            if (comanda.Estado == EstadoComanda.Cancelada)
             {
                 throw new InvalidOperationException($"No se puede generar factura para una comanda anulada");
             }
@@ -71,11 +71,11 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                 // Para cada ítem de la comanda, crear un detalle de factura
                 factura.AgregarDetalle(
                     item.ProductoId,
-                    item.Descripcion,
+                    item.Observaciones ?? $"Producto {item.ProductoId}",
                     item.Cantidad,
                     item.PrecioUnitario,
                     16.0m,  // IVA fijo del 16% - en una implementación real esto podría obtenerse del producto o de configuración
-                    item.PorcentajeDescuento);
+                    0m);    // No hay descuento por ítem
             }
 
             // Guardar la factura
@@ -112,7 +112,7 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                 }
 
                 // Verificar que la comanda no esté anulada
-                if (comanda.EstaAnulada)
+                if (comanda.Estado == EstadoComanda.Cancelada)
                 {
                     throw new InvalidOperationException($"No se puede generar factura para una comanda anulada (ID: {comandaId})");
                 }
@@ -144,11 +144,11 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                     // Para cada ítem de cada comanda, crear un detalle de factura
                     factura.AgregarDetalle(
                         item.ProductoId,
-                        item.Descripcion,
+                        item.Observaciones ?? $"Producto {item.ProductoId}",
                         item.Cantidad,
                         item.PrecioUnitario,
                         16.0m,  // IVA fijo del 16%
-                        item.PorcentajeDescuento);
+                        0m);    // No hay descuento por ítem
                 }
             }
 

@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Core.Usuarios.EventHandlers
     /// <summary>
     /// Manejador de eventos que asigna roles predeterminados a un usuario recién creado.
     /// </summary>
-    public class UsuarioCreado_AsignarRolPredeterminadoHandler : IEventHandler<UsuarioCreado>
+    public class UsuarioCreado_AsignarRolPredeterminadoHandler : IDomainEventHandler<UsuarioCreado>
     {
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IRolRepository _rolRepository;

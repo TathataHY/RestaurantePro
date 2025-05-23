@@ -5,8 +5,8 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
     /// Este handler maneja eventos de tipo ProductoAgregadoAComanda y ProductoEliminadoDeComanda.
     /// </summary>
     public class ComandaModificada_ActualizarInventarioHandler : 
-        IEventHandler<Comandas.Events.ItemComanda.ProductoAgregadoAComanda>,
-        IEventHandler<Comandas.Events.ItemComanda.ProductoEliminadoDeComanda>
+        IDomainEventHandler<Comandas.Events.ItemComanda.ProductoAgregadoAComanda>,
+        IDomainEventHandler<Comandas.Events.ItemComanda.ProductoEliminadoDeComanda>
     {
         private readonly IComandaRepository _comandaRepository;
         private readonly IIngredienteRepository _ingredienteRepository;

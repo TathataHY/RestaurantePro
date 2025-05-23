@@ -48,7 +48,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Services
             var promocionesActivas = await _promocionRepository.ObtenerPromocionesActivasAsync(cancellationToken);
             
             // Filtrar por las que son aplicables al cliente y monto
-            var puntosDisponibles = cliente.TarjetaFidelizacion?.PuntosActuales ?? 0;
+            var puntosDisponibles = cliente.ObtenerPuntosFidelizacionDisponibles();
             var fechaActual = _dateTimeService.Now;
             
             var especificacion = new PromocionValidaParaClienteSpecification(
@@ -99,17 +99,15 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Services
             if (promocion.Tipo == TipoPromocion.CanjePuntos)
             {
                 var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId, cancellationToken);
-                if (cliente == null || cliente.TarjetaFidelizacion == null || 
-                    cliente.TarjetaFidelizacion.PuntosActuales < promocion.PuntosRequeridos)
+                if (cliente == null || !cliente.TieneTarjetaFidelizacion() || 
+                    cliente.ObtenerPuntosFidelizacionDisponibles() < promocion.PuntosRequeridos)
                 {
                     return 0;
                 }
                 
                 // Restar puntos al cliente
-                await _clienteRepository.RestarPuntosAsync(
-                    clienteId, 
-                    promocion.PuntosRequeridos, 
-                    cancellationToken);
+                cliente.RestarPuntos(promocion.PuntosRequeridos, $"Usado en promoción: {promocion.Nombre}");
+                await _clienteRepository.ActualizarAsync(cliente, cancellationToken);
             }
             
             // Calcular descuento
@@ -133,26 +131,21 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Services
             if (cliente == null)
                 return Enumerable.Empty<Promocion>();
                 
-            // Obtener los puntos disponibles (de tarjeta o del cliente)
-            int puntosDisponibles = 0;
-            if (cliente.TieneTarjetaFidelizacion() && cliente.TarjetaFidelizacionPrincipalId.HasValue)
-            {
-                var tarjeta = await _promocionRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value, cancellationToken);
-                puntosDisponibles = tarjeta?.PuntosDisponibles ?? 0;
-            }
-            else
-            {
-                puntosDisponibles = cliente.ObtenerPuntosFidelizacionDisponibles();
-            }
-            
             // Obtener promociones activas
             var promocionesActivas = await _promocionRepository.ObtenerPromocionesActivasAsync(cancellationToken);
             
             // Aplicar especificación para validar promociones para este cliente y monto
             var fechaActual = _dateTimeService.Now;
-            var spec = new PromocionValidaParaClienteSpecification(clienteId, puntosDisponibles, montoTotal, fechaActual);
+            var spec = new PromocionValidaParaClienteSpecification(clienteId, 0, montoTotal, fechaActual);
             
-            return promocionesActivas.Where(p => spec.IsSatisfiedBy(p)).ToList();
+            if (promocionesActivas.Any(p => p.PuntosRequeridos > 0))
+            {
+                var puntos = cliente.ObtenerPuntosFidelizacionDisponibles();
+                var promos = promocionesActivas.Where(p => p.PuntosRequeridos <= puntos).ToList();
+                return promos;
+            }
+            
+            return promocionesActivas;
         }
         
         /// <inheritdoc/>
