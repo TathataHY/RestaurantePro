@@ -1,5 +1,22 @@
 # Seguimiento del Desarrollo TDD - Capa de Dominio
 
+## Índice de Contenidos
+1. [Propósito de este documento](#propósito-de-este-documento)
+2. [Estructura General del Dominio](#estructura-general-del-dominio)
+3. [Estado de Implementación por Contexto](#estado-de-implementación)
+   - [Core](#core)
+   - [Comercial](#comercial)
+   - [Operaciones](#operaciones)
+   - [Inventario](#inventario)
+   - [Proveedores](#proveedores)
+4. [Estandarización de Eventos de Dominio](#estandarización-de-eventos-de-dominio)
+5. [Relaciones entre Contextos](#relaciones-entre-contextos)
+6. [Registro Cronológico de Ciclos TDD](#registro-de-ciclos-tdd-completados)
+7. [Mejoras y Refactorizaciones](#mejoras-recientes-en-la-arquitectura)
+8. [Decisiones de Diseño](#decisiones-de-diseño)
+9. [Plan de Integración con Otras Capas](#plan-de-integración-con-otras-capas)
+10. [Estado Actual y Tareas Pendientes](#próximos-pasos-prioritarios-noviembre-2024)
+
 ## Propósito de este documento
 
 Este documento sirve como guía y registro del desarrollo de la capa de dominio utilizando Test-Driven Development (TDD). Aquí encontrarás:
@@ -37,6 +54,11 @@ RestaurantePro.Domain/
 | Productos | ✅ Completo | ✅ Completas | Catálogo de productos |
 | IDateTimeService | ✅ Completo | ✅ Completas | Servicio de fecha/hora |
 | Notificaciones | ✅ Completo | ✅ Completas | Sistema central de notificaciones |
+| DomainServiceCollection | ✅ Completo | ✅ Completas | Extensiones para registro de servicios |
+| Email ValueObject | ✅ Completo | ✅ Completas | Con validaciones específicas para Chile |
+| PhoneNumber ValueObject | ✅ Completo | ✅ Completas | Con validaciones específicas para Chile |
+| Specification | ✅ Completo | ✅ Completas | Patrón de especificación refactorizado |
+| Usuarios | ✅ Completo | ✅ Completas | Gestión de usuarios y servicios relacionados |
 
 ### Comercial
 
@@ -48,6 +70,12 @@ RestaurantePro.Domain/
 | HistorialPuntos | ✅ Completo | ✅ Completas | Registro de puntos de fidelización |
 | ServicioFidelizacion | ✅ Completo | ✅ Completas | Servicios de fidelización y descuentos |
 | ClientesFrecuentesPolicy | ✅ Completo | ✅ Completas | Política para clientes frecuentes |
+| Factura | ✅ Completo | ✅ Completas | Gestión de facturas |
+| DetalleFactura | ✅ Completo | ✅ Completas | Líneas de detalle de facturas |
+| ServicioFacturacion | ✅ Completo | ✅ Completas | Servicio para gestionar facturación |
+| ClienteFrecuenteSpecification | ✅ Completo | ✅ Completas | Especificación para identificar clientes frecuentes |
+| PromocionActivaSpecification | ✅ Completo | ✅ Completas | Especificación para verificar promociones activas |
+| PromocionElegibleSpecification | ✅ Completo | ✅ Completas | Especificación para determinar elegibilidad |
 
 ### Operaciones
 
@@ -57,6 +85,8 @@ RestaurantePro.Domain/
 | ItemComanda | ✅ Completo | ✅ Completas | Elementos de una comanda |
 | Reservacion | ✅ Completo | ✅ Completas | Reservación de mesas |
 | Mesa | ✅ Completo | ✅ Completas | Gestión de mesas |
+| ReservacionValidaSpecification | ✅ Completo | ✅ Completas | Validación de reservaciones |
+| PersonalizacionItem | ✅ Completo | ✅ Completas | Personalización de ítems de comanda |
 
 ### Inventario
 
@@ -69,6 +99,8 @@ RestaurantePro.Domain/
 | GeneradorOrdenesCompra | ✅ Completo | ✅ Completas | Generación de órdenes automáticas |
 | ServicioNotificacionesInventario | ✅ Completo | ✅ Completas | Adaptador de notificaciones para inventario |
 | StockBajoPolicy | ✅ Completo | ✅ Completas | Política para stock bajo |
+| IngredienteDisponibleSpecification | ✅ Completo | ✅ Completas | Especificación de disponibilidad |
+| IngredienteRotacionAltaSpecification | ✅ Completo | ✅ Completas | Especificación por rotación |
 
 ### Proveedores
 
@@ -76,6 +108,9 @@ RestaurantePro.Domain/
 |------------|--------|---------|-------|
 | Proveedor | ✅ Completo | ✅ Completas | Gestión de proveedores |
 | ContactoProveedor | ✅ Completo | ✅ Completas | Contactos de proveedores |
+| ProveedorActivoSpecification | ✅ Completo | ✅ Completas | Validación de proveedores activos |
+| ProveedorPorCategoriaSpecification | ✅ Completo | ✅ Completas | Filtro por categoría |
+| ProveedorCategoria | ✅ Completo | ✅ Completas | Value object para categorías |
 
 ## Estandarización de Eventos de Dominio
 
@@ -112,77 +147,41 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 - OrdenCompra se genera para un Proveedor específico
 - Proveedor suministra Ingredientes
 
-## Próximos pasos (TDD)
-
-1. **Servicios de integración entre contextos**:
-   - ✅ Implementar `ServicioGeneracionOrdenesCompra`: Servicio que analiza niveles de inventario y genera órdenes de compra automáticas
-   - ✅ Implementar `ServicioNotificaciones`: Para manejar notificaciones entre contextos (ej. notificar stock bajo a administradores)
-   
-2. **Políticas de dominio**:
-   - ✅ Implementar política `StockBajoPolicy`: Para manejar automáticamente acciones cuando el stock está por debajo del mínimo
-   - ✅ Implementar política `ClientesFrecuentesPolicy`: Para analizar patrones de consumo y ofrecer beneficios
-
-3. **Mejoras en eventos de dominio**:
-   - Implementar un sistema de suscripción a eventos entre contextos delimitados
-   - Mejorar el sistema de registro de eventos para facilitar la auditoría
-
-4. **Capa de Aplicación**:
-   - Definir DTOs para la comunicación con capas externas
-   - Implementar validaciones a nivel de aplicación
-   - Crear servicios de aplicación para orquestar casos de uso
-
-## Plan de Mejoras Dominio Febrero 2024
-
-Tras completar la implementación base del dominio, se han identificado las siguientes áreas de mejora para refinar la capa de dominio:
+## Mejoras Implementadas
 
 ### 1. Mejora del sistema de eventos de dominio
 
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Sistema de suscripción entre agregados | Implementar un mecanismo más robusto que permita la suscripción a eventos entre diferentes agregados dentro y fuera de contextos | Alta | ✅ Completado |
-| Registro centralizado de eventos | Crear un servicio que almacene todos los eventos de dominio para auditoría y reconstrucción del estado | Media | ✅ Completado |
-| Manejadores de eventos configurables | Permitir la configuración declarativa de manejadores de eventos sin acoplamiento directo | Media | ✅ Completado |
+| Tarea | Descripción | Estado |
+|-------|-------------|--------|
+| Sistema de suscripción entre agregados | Implementación de mecanismo para suscripción a eventos entre diferentes agregados dentro y fuera de contextos | ✅ Completado |
+| Registro centralizado de eventos | Servicio para almacenar eventos de dominio para auditoría y reconstrucción del estado | ✅ Completado |
+| Manejadores de eventos configurables | Configuración declarativa de manejadores sin acoplamiento directo | ✅ Completado |
 
 ### 2. Refinamiento de políticas de dominio
 
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Ampliar StockBajoPolicy | Incluir más reglas de negocio como priorización de ingredientes por rotación y temporada | Alta | ✅ Completado |
-| Mejorar ClientesFrecuentesPolicy | Añadir segmentación de clientes por comportamiento y campañas personalizadas | Media | ✅ Completado |
-| Nueva política: ProductoRecomendadoPolicy | Crear política para recomendar productos basados en historial y tendencias | Baja | ✅ Completado |
+| Tarea | Descripción | Estado |
+|-------|-------------|--------|
+| Ampliar StockBajoPolicy | Incluye reglas para priorización de ingredientes por rotación y temporada | ✅ Completado |
+| Mejorar ClientesFrecuentesPolicy | Segmentación de clientes por comportamiento y campañas personalizadas | ✅ Completado |
+| Implementar ProductoRecomendadoPolicy | Recomendación de productos basados en historial y tendencias | ✅ Completado |
 
 ### 3. Validaciones de dominio robustas
 
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Invariantes en OrdenCompra | Reforzar las reglas de negocio que deben cumplirse en órdenes de compra | Alta | ✅ Completado |
-| Invariantes en Comanda | Mejorar validaciones para garantizar la integridad de las comandas | Media | ✅ Completado |
-| Validaciones en ValueObjects | Introducir validaciones más específicas para objetos como Email, Teléfono, etc. | Media | ✅ Completado |
+| Tarea | Descripción | Estado |
+|-------|-------------|--------|
+| Invariantes en OrdenCompra | Reglas de negocio para órdenes de compra | ✅ Completado |
+| Invariantes en Comanda | Validaciones para integridad de comandas | ✅ Completado |
+| Validaciones en ValueObjects | Validaciones específicas para Email, Teléfono, etc. | ✅ Completado |
 
 ### 4. Patrón de especificación
 
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Implementar patrón base | Crear las interfaces y clases base para implementar el patrón Specification | Alta | ✅ Completado |
-| Refactorizar especificaciones | Cambiar de SpecificationBase a Specification | Media | ✅ Completado |
-| ProductoDisponibleSpecification | Especificación para verificar disponibilidad de productos | Media | ✅ Completado |
-| ProveedorActivoSpecification | Especificación para validar proveedores activos para órdenes | Media | ✅ Completado |
-| ReservacionValidaSpecification | Especificación para verificar disponibilidad y validez de reservaciones | Media | ✅ Completado |
-| IngredienteDisponibleSpecification | Especificación para verificar disponibilidad de ingredientes | Media | ✅ Completado |
-| ClienteFrecuenteSpecification | Especificación para identificar clientes frecuentes según criterios de visitas y gastos | Media | ✅ Completado |
-| PromocionActivaSpecification | Especificación para verificar promociones activas disponibles | Media | ✅ Completado |
-| PromocionElegibleSpecification | Especificación para identificar promociones elegibles para aplicar | Media | ✅ Completado |
+| Tarea | Descripción | Estado |
+|-------|-------------|--------|
+| Implementar patrón base | Interfaces y clases base para el patrón Specification | ✅ Completado |
+| Refactorizar especificaciones | Cambio de SpecificationBase a Specification | ✅ Completado |
+| Implementar especificaciones específicas | Conjunto completo de especificaciones para cada contexto | ✅ Completado |
 
-### 5. Corrección de pruebas unitarias
-
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Corregir ServicioNotificacionesInventarioTests | Resolver errores de compilación en las pruebas | Alta | ✅ Completado |
-| Corregir ClientesFrecuentesPolicyTests | Corregir pruebas de segmentación de clientes y validar funcionamiento | Alta | ✅ Completado |
-| Ajustar mocks con problemas de expresiones | Modificar setup de pruebas con problemas de árboles de expresión | Alta | ✅ Completado |
-| Aplicar #nullable context | Aplicar contexto de nulabilidad en pruebas para eliminar advertencias | Media | ✅ Completado |
-
-## Registro de ciclos TDD completados
+## Registro de Ciclos TDD Completados
 
 | Fecha | Componente | Test → Implementación → Refactor |
 |-------|------------|----------------------------------|
@@ -216,40 +215,23 @@ Tras completar la implementación base del dominio, se han identificado las sigu
 | 2024-05-25 | Implementación de Personalización en Ítems | Diseño → Pruebas → Implementación → Refactor |
 | 2024-06-05 | Refactorización de Specifications | Refactor → Pruebas → Validación |
 | 2024-08-01 | Corrección de nombres en Specifications | Refactor → Pruebas → Validación |
+| 2024-09-10 | Factura | Diseño → Pruebas → Implementación → Refactor |
+| 2024-09-10 | DetalleFactura | Diseño → Pruebas → Implementación → Refactor |
+| 2024-09-10 | ServicioFacturacion | Diseño → Pruebas → Implementación → Refactor |
+| 2024-10-15 | Homogeneización IRepository | Diseño → Pruebas → Implementación → Refactor |
+| 2024-10-15 | Implementación ObtenerPorSpecAsync | Diseño → Pruebas → Implementación → Refactor |
+| 2024-10-15 | ServicioNotificacionesExtensions | Diseño → Pruebas → Implementación → Refactor |
+| 2024-10-15 | ValueObjects Empty | Diseño → Pruebas → Implementación → Refactor |
+| 2024-10-20 | Cliente con ValueObjects | Diseño → Pruebas → Implementación → Refactor |
+| 2024-10-20 | MesaFueraDeServicio | Diseño → Implementación → Refactor |
+| 2024-10-20 | Interfaces de repositorio en Application | Análisis → Diseño → Implementación → Refactor |
+| 2024-10-21 | IUsuarioActualService consistente | Análisis → Diseño → Implementación |
+| 2024-10-21 | Standardización de interfaces en Application | Análisis → Diseño → Implementación |
+| 2024-10-23 | Organización Pruebas de Integración | Análisis → Refactor |
+| 2024-10-25 | UsuarioCreado_AsignacionRolesTests | Pruebas → Implementación |
+| 2024-10-26 | ComandaModificada_ActualizacionInventarioTests | Pruebas → Implementación → Refactor |
 
-## Decisiones de Diseño
-
-- Las entidades usan Factory Methods (Crear) en lugar de constructores públicos
-- Se utiliza encapsulación estricta con propiedades privadas (set privado)
-- Los cambios de estado se realizan mediante métodos específicos
-- Cada cambio de estado genera eventos de dominio
-- Se priorizan objetos inmutables para valores
-- Se separan interfaces de repositorio por contexto
-- Los servicios de dominio implementan lógica que involucra múltiples agregados
-- Interfaces y clases de implementación se separan en archivos diferentes
-- Los eventos de dominio se nombran sin sufijo "Event" y en tiempo pasado
-- Las políticas de dominio encapsulan reglas de negocio complejas que implican múltiples entidades y servicios
-- El sistema de notificaciones se ha centralizado en el módulo Core para permitir su uso por todos los contextos
-- Se utilizan adaptadores específicos para cada contexto que requiere enviar notificaciones
-
-## Plan de integración con otras capas
-
-1. **Capa de Infraestructura**:
-   - Implementar repositorios con Entity Framework Core
-   - Configurar inyección de dependencias
-   - Implementar servicios de persistencia de eventos de dominio
-
-2. **Capa de Aplicación**:
-   - Desarrollar servicios de aplicación que orquesten los casos de uso
-   - Implementar DTOs y mapeos desde/hacia entidades de dominio
-   - Agregar validaciones a nivel de aplicación
-
-3. **Capa de Presentación/API**:
-   - Desarrollar controladores API para exponer funcionalidades
-   - Implementar autenticación y autorización
-   - Configurar middleware para manejo de errores y logging
-
-## Mejoras recientes en la arquitectura
+## Mejoras Recientes en la Arquitectura
 
 ### Centralización del sistema de notificaciones
 
@@ -282,8 +264,6 @@ Una de las mejoras importantes realizadas recientemente ha sido la centralizaci�
 - **Extensibilidad**: Fácil adición de nuevos tipos de notificaciones o canales de entrega
 - **Mantenimiento**: Centralización de la lógica de notificaciones en un solo lugar
 
-Esta refactorización demuestra nuestro compromiso con los principios de diseño de dominio, donde identificamos conceptos transversales y los colocamos en un nivel apropiado de la arquitectura, facilitando su reutilización y separando claramente las responsabilidades.
-
 ### Mejora de ClientesFrecuentesPolicy con segmentación
 
 Se ha mejorado la política `ClientesFrecuentesPolicy` para incluir una funcionalidad de segmentación de clientes basada en su comportamiento de consumo. Esta mejora permite categorizar a los clientes en varios segmentos para facilitar campañas de marketing personalizadas y estrategias de fidelización más efectivas.
@@ -306,12 +286,6 @@ Se ha mejorado la política `ClientesFrecuentesPolicy` para incluir una funciona
    - Método `DeterminarSegmentoCliente` que analiza el comportamiento del cliente
    - Criterios para cada segmento basados en frecuencia, gasto y tendencias
 
-5. **Actualización de interfaces**:
-   - Nuevo método en `IClienteRepository` para obtener clientes con historial de visitas
-   - Ampliación de `ResultadoClientesFrecuentesPolicy` para incluir información sobre segmentación
-
-Esta mejora permite a los restaurantes comprender mejor el comportamiento de sus clientes y adaptar sus estrategias comerciales según los diferentes segmentos, lo que facilitará la creación de campañas personalizadas y acciones específicas para cada grupo.
-
 ### Mejora de StockBajoPolicy con priorización inteligente
 
 Se ha ampliado la política `StockBajoPolicy` para incorporar un sistema inteligente de priorización de ingredientes basado en múltiples factores. Esta mejora permite una gestión más eficiente del inventario y optimiza el proceso de reposición de stock.
@@ -332,465 +306,137 @@ Se ha ampliado la política `StockBajoPolicy` para incorporar un sistema intelig
    - Cálculo de puntuación por temporada considerando la estación actual
    - Ordenamiento inteligente de ingredientes según prioridad calculada
 
-4. **Nueva funcionalidad en la política**:
-   - Método para priorizar ingredientes para reposición
-   - Integración con notificaciones y generación de órdenes considerando prioridades
-
-5. **Pruebas unitarias**:
-   - Verificación del ordenamiento por prioridad considerando temporada
-   - Prueba del comportamiento sin considerar temporada
-   - Validación de notificaciones y órdenes en orden de prioridad
-
-Esta mejora permite optimizar las compras priorizando ingredientes de alta rotación, en temporada actual, con stock más crítico y considerando costos, lo que resulta en mejor aprovechamiento del presupuesto y reducción de desabastecimientos en productos clave para el negocio.
-
 ### Sistema de Suscripción entre Agregados
 
 Se ha implementado un sistema de suscripción a eventos que permite a los agregados de diferentes contextos delimitados suscribirse a eventos específicos sin crear dependencias directas entre ellos. Este sistema mejora significativamente la modularidad y desacoplamiento de la arquitectura.
 
-#### Cambios realizados
+#### Componentes principales
 
 1. **Nuevas clases e interfaces para suscripciones**:
-   - Creación de `IEventSubscriptionManager` como interfaz principal
-   - Implementación de `EventSubscriptionManager` para gestionar suscripciones
-   - Definición de `EventSubscriptionCriteria` para filtrar eventos por tipo, entidad y contexto
+   - `IEventSubscriptionManager` como interfaz principal
+   - `EventSubscriptionManager` para gestionar suscripciones
+   - `EventSubscriptionCriteria` para filtrar eventos por tipo, entidad y contexto
 
 2. **Ampliación del sistema de eventos**:
    - Mejora de `DomainEventDispatcher` para notificar a suscriptores
    - Métodos de suscripción tipados y con criterios específicos
    - Manejo seguro de excepciones para evitar que errores en un manejador afecten a otros
 
-3. **Servicios de extensión para configuración**:
-   - Nuevos métodos de extensión para facilitar la configuración
-   - Opciones para registrar solo los servicios necesarios
-   - Implementación `NullDomainEventRegistry` para casos donde no se necesita persistencia
-
-4. **Documentación completa**:
-   - Guía de utilización con ejemplos prácticos
-   - Buenas prácticas para evitar problemas comunes
-   - Descripción detallada de los conceptos clave
-
-5. **Pruebas unitarias exhaustivas**:
-   - Verificación de filtrado por tipo de evento
-   - Pruebas de filtrado por entidad emisora y contexto delimitado
-   - Validación de comportamiento ante suscripciones múltiples y excepciones
-
-Esta implementación refuerza la arquitectura orientada a eventos del sistema, permitiendo que los diferentes módulos reaccionen a cambios en otros contextos de forma desacoplada. Esto facilita la ampliación de la funcionalidad sin modificar código existente y mejora la mantenibilidad a largo plazo.
-
-### Mejora de validaciones robustas en OrdenCompra
-
-Se ha realizado una mejora significativa en las validaciones de invariantes del agregado OrdenCompra para garantizar la consistencia y robustez de este componente crítico del sistema.
-
-#### Cambios realizados
-
-1. **Validaciones de límites y valores**:
-   - Implementación de validaciones para el total de la orden (positivo y límite máximo)
-   - Validación de cantidades y precios unitarios para evitar valores inválidos
-   - Establecimiento de límites máximos razonables para cantidades por item
-
-2. **Validaciones de coherencia de estado**:
-   - Validación de coherencia entre estado de la orden y presencia de fechas (envío, recepción, cancelación)
-   - Verificación de que órdenes canceladas no tengan fechas de recepción
-   - Comprobación de que órdenes con fecha de cancelación estén en estado cancelado
-
-3. **Validaciones de campos de texto**:
-   - Establecimiento de límites de longitud para observaciones y motivos
-   - Validación de presencia de información obligatoria según el estado
-
-4. **Pruebas unitarias exhaustivas**:
-   - Pruebas para cantidades negativas e inválidas
-   - Pruebas para cantidades excesivas
-   - Pruebas para observaciones y motivos excesivamente largos
-   - Pruebas para incoherencias entre estado y fechas
-
-5. **Enfoque de validación integral**:
-   - Validación en todos los puntos de cambio de estado
-   - Validación durante modificaciones de items
-   - Aplicación de validaciones antes de emitir eventos de dominio
-
-Esta mejora garantiza la consistencia del agregado OrdenCompra en todas las operaciones, evitando estados inválidos que podrían comprometer la integridad del sistema. Cada operación que modifica el estado del agregado ahora pasa por un conjunto completo de validaciones que mantienen las invariantes del dominio.
-
-### Corrección de ServicioNotificacionesInventario
-
-Se ha realizado una importante corrección en el servicio de notificaciones para inventario, mejorando su fiabilidad y consistencia con el resto del sistema.
-
-#### Problemas identificados y soluciones
-
-1. **Gestión de CancellationToken**:
-   - Se identificó que los métodos específicos de notificación no propagaban correctamente el token de cancelación
-   - Se implementó la propagación adecuada en todos los métodos del servicio
-   - Se actualizó la interfaz para incluir el parámetro CancellationToken en todos los métodos relevantes
-
-2. **Coherencia de métodos**:
-   - Se aseguró que todos los métodos que llaman al servicio core pasen el CancellationToken adecuadamente
-   - Se estandarizó la implementación para mantener consistencia en toda la clase
-
-3. **Pruebas unitarias**:
-   - Se actualizaron todas las pruebas para verificar el uso correcto del token de cancelación
-   - Se adaptaron los mocks para verificar que los métodos reciben y propagan correctamente el token
-   - Se verificó la interacción correcta con el servicio core en todos los escenarios de prueba
-
-Estas correcciones garantizan que el servicio de notificaciones de inventario funcione de manera robusta, especialmente en escenarios de cancelación de operaciones asíncronas, lo que mejora la responsividad del sistema bajo carga y permite la cancelación apropiada de operaciones cuando sea necesario.
-
 ### Refactorización del Patrón Specification
 
 Se ha llevado a cabo una importante refactorización del patrón Specification, simplificando su implementación y mejorando su integración con LINQ y Entity Framework:
 
-#### Cambios realizados
+#### Aspectos clave
 
 1. **Eliminación de SpecificationBase**:
-   - Se eliminó la clase `SpecificationBase<T>` para evitar duplicación y confusión
    - Se consolidó toda la funcionalidad en la clase `Specification<T>`
 
 2. **Mejora de la implementación**:
-   - La interfaz `ISpecification<T>` ahora está enfocada en expresiones LINQ
-   - El método `ToExpression()` retorna una expresión LINQ que puede ser utilizada directamente con EF Core
-   - El método `IsSatisfiedBy(T entity)` ahora se deriva automáticamente de `ToExpression()`
-
-3. **Simplificación del diseño**:
-   - Se eliminó la implementación dual que confundía a los desarrolladores
-   - Ahora todas las especificaciones implementan `Specification<T>` directamente
-   - Se consolidaron las clases auxiliares (`AndSpecification`, `OrSpecification`, `NotSpecification`)
-
-4. **Operadores de composición**:
-   - Los operadores `And`, `Or` y `Not` ahora retornan `Specification<T>` en lugar de `ISpecification<T>`
-   - Esto permite un mejor encadenamiento de llamadas con tipo fuerte
-
-5. **Actualización de especificaciones existentes**:
-   - Se actualizaron todas las especificaciones existentes para usar el nuevo enfoque
-   - Se reemplazaron las implementaciones de `IsSatisfiedBy` por implementaciones de `ToExpression`
-   - Se corrigieron errores de compilación relacionados con el cambio
-
-Esta refactorización hace que el patrón Specification sea más fácil de usar, más compatible con Entity Framework Core, y reduce la duplicación de código. Las expresiones LINQ generadas ahora pueden ser traducidas directamente a consultas SQL, mejorando el rendimiento de las aplicaciones que utilizan este patrón.
-
-### Corrección de nombres de propiedades en Especificaciones
-
-Se ha realizado una revisión y corrección de los nombres de propiedades utilizados en las expresiones LINQ de las especificaciones, para asegurar que correspondan a las propiedades reales de las entidades:
-
-#### Cambios realizados
-
-1. **Actualización de IngredienteDisponibleSpecification**:
-   - Corrección de `Activo` a `EstaActivo`
-   - Corrección de `StockActual` a `Stock`
-   - Uso correcto de la propiedad `_cantidadMinima` 
-
-2. **Actualización de IngredienteRotacionAltaSpecification**:
-   - Corrección de `Activo` a `EstaActivo`
-   - Corrección de `StockActual` a `Stock`
-
-3. **Actualización de ReservacionValidaSpecification**:
-   - Corrección de `FechaReservacion` a `Fecha.Date`
-   - Corrección de `EstadoReservacion.Rechazada` a `EstadoReservacion.NoShow`
-   - Uso de `CantidadPersonas` con límites mínimos y máximos
-   - Implementación de método auxiliar `TieneMesaCapacidadSuficiente`
-
-4. **Mejoras en la validación**:
-   - Implementación de patrones más robustos de validación
-   - Encapsulación de lógica compleja en métodos auxiliares donde corresponde
-   - Uso de comparaciones correctas para fechas y horas
-
-Estas correcciones permiten que las especificaciones funcionen correctamente cuando se traduzcan a consultas SQL a través de Entity Framework Core, lo que es fundamental para mantener la coherencia entre la capa de dominio y la capa de persistencia.
-
-## Próximos pasos prioritarios (Mayo 2024)
-
-1. **Validaciones de dominio robustas**:
-   - ✅ Mejorar validaciones en ValueObjects para datos como Email, Teléfono, etc.
-   
-2. **Mejora de pruebas unitarias**:
-   - ✅ Ajustar mocks con problemas de expresiones lambda
-   - ✅ Aplicar #nullable context para eliminar advertencias
-   
-3. **Preparación para integración con otras capas**:
-   - Definir contratos claros entre Dominio y Aplicación
-   - Refinar interfaces de repositorio para facilitar implementación con EF Core
-   
-4. **Documentación técnica**:
-   - ✅ Documentar patrones y decisiones de diseño implementadas
-   - Crear guías de uso para los principales componentes del dominio
-
-## Próximos pasos prioritarios (Junio 2024)
-
-1. **Finalizar mejoras en pruebas unitarias**:
-   - ✅ Ajustar mocks con problemas de expresiones lambda
-   - ✅ Aplicar #nullable context para eliminar advertencias
-   
-2. **Preparación para integración con capa de Infraestructura**:
-   - Definir contratos claros entre Dominio e Infraestructura
-   - Refinar interfaces de repositorio para facilitar implementación con EF Core
-   - Diseñar mapeos entre entidades de dominio y modelos de EF Core
-   
-3. **Iniciar desarrollo de capa de Aplicación**:
-   - Implementar primeros DTOs para comandas y clientes
-   - Desarrollar servicios de aplicación básicos
-   - Establecer validaciones a nivel de aplicación
-   
-4. **Guías técnicas**:
-   - Crear guías de uso para los principales componentes del dominio
-   - Documentar flujos de integración entre contextos
+   - La interfaz `ISpecification<T>` enfocada en expresiones LINQ
+   - El método `ToExpression()` retorna una expresión LINQ compatible con EF Core
+   - El método `IsSatisfiedBy(T entity)` derivado automáticamente de `ToExpression()`
 
-## Implementación de Validaciones Robustas en Comanda
+3. **Operadores de composición**:
+   - Los operadores `And`, `Or` y `Not` retornan `Specification<T>`
+   - Mejor encadenamiento de llamadas con tipo fuerte
 
-Como parte de la mejora continua de la capa de dominio, se han implementado validaciones robustas para el agregado Comanda que garantizan la integridad de los datos y la consistencia de los estados. A continuación se detallan las mejoras:
+## Decisiones de Diseño
 
-### Validaciones implementadas
+- Las entidades usan Factory Methods (Crear) en lugar de constructores públicos
+- Se utiliza encapsulación estricta con propiedades privadas (set privado)
+- Los cambios de estado se realizan mediante métodos específicos
+- Cada cambio de estado genera eventos de dominio
+- Se priorizan objetos inmutables para valores
+- Se separan interfaces de repositorio por contexto
+- Los servicios de dominio implementan lógica que involucra múltiples agregados
+- Interfaces y clases de implementación se separan en archivos diferentes
+- Los eventos de dominio se nombran sin sufijo "Event" y en tiempo pasado
+- Las políticas de dominio encapsulan reglas de negocio complejas que implican múltiples entidades y servicios
+- El sistema de notificaciones se ha centralizado en el módulo Core para permitir su uso por todos los contextos
+- Se utilizan adaptadores específicos para cada contexto que requiere enviar notificaciones
 
-1. **Límites en cantidades y valores monetarios**:
-   - Restricción en la cantidad máxima de un producto por item (máximo 50 unidades)
-   - Límite en el precio unitario máximo permitido (100,000)
-   - Validación del total máximo de la comanda para prevenir valores excesivos
-   - Control de descuentos para no exceder el 50% del subtotal
+## Plan de Integración con Otras Capas
 
-2. **Validaciones de texto**:
-   - Límite en la longitud de observaciones generales (500 caracteres)
-   - Límite en la longitud de observaciones por item (200 caracteres)
-   - Verificación de contenido necesario en observaciones para comandas canceladas
+1. **Capa de Infraestructura**:
+   - Implementar repositorios con Entity Framework Core
+   - Configurar inyección de dependencias
+   - Implementar servicios de persistencia de eventos de dominio
 
-3. **Validaciones de coherencia temporal**:
-   - Prevención de fechas de creación o actualización en el futuro
-   - Verificación de que la fecha de actualización no sea anterior a la de creación
-   - Validación de que una comanda no permanezca activa por más de 30 días
+2. **Capa de Aplicación**:
+   - Desarrollar servicios de aplicación que orquesten los casos de uso
+   - Implementar DTOs y mapeos desde/hacia entidades de dominio
+   - Agregar validaciones a nivel de aplicación
 
-4. **Validaciones de integridad**:
-   - Prevención de elementos duplicados en la comanda
-   - Verificación de consistencia entre subtotal, impuestos y total
-   - Validación de la presencia de productos antes de pasar a estados avanzados
-   - Comprobación de que los items pertenezcan efectivamente a la comanda
+3. **Capa de Presentación/API**:
+   - Desarrollar controladores API para exponer funcionalidades
+   - Implementar autenticación y autorización
+   - Configurar middleware para manejo de errores y logging
 
-5. **Validaciones de transición de estados**:
-   - Implementación de reglas estrictas para la transición entre estados
-   - Verificación de requisitos específicos para cada cambio de estado
+## Próximos Pasos Prioritarios (Octubre 2024)
 
-6. **Nuevos eventos de dominio**:
-   - Implementación del evento `DescuentoFidelizacionAplicado` para auditoría
+### 1. Homogeneización de interfaces de repositorio
 
-Esta implementación robusta de validaciones asegura que los cambios de estado del agregado Comanda sean consistentes y que los datos se mantengan dentro de límites razonables establecidos por las reglas de negocio del restaurante.
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Estandarización de nombres de métodos | Resolver inconsistencia entre `GetByIdAsync` (legacy) y `ObtenerPorIdAsync` (nuevo) | Alta | ✅ Completado |
+| Consistencia de CancellationToken | Asegurar que todos los métodos asíncronos acepten y propaguen CancellationToken | Alta | ✅ Completado |
+| Interfaces de Application | Revisar y actualizar las interfaces de repositorio en la capa de Application | Media | ✅ Completado |
+| Soporte para Especificaciones | Agregar métodos para trabajar con especificaciones en IRepository | Alta | ✅ Completado |
 
-## Mejora de ValueObjects con validaciones específicas para Chile
+### 2. Utilización consistente de ValueObjects
 
-Como parte de la adaptación del sistema para su uso en Chile, se han implementado mejoras significativas en los ValueObjects que manejan datos de contacto y ubicación, incorporando validaciones específicas para el contexto chileno.
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Refactorizar Cliente (Comercial) | Implementar Email y PhoneNumber ValueObjects | Alta | ✅ Completado |
 
-### 1. Mejora del ValueObject Email
+### 3. Limpieza y formato
 
-Se ha reforzado el ValueObject `Email` con validaciones robustas y específicas para el mercado chileno:
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Comentarios inconsistentes | Eliminar o implementar comentarios sin funcionalidad correspondiente | Baja | ✅ Completado |
+| Formato de eventos | Corregir indentación en eventos de Reservaciones | Baja | ✅ Completado |
 
-#### Funcionalidades implementadas:
+### 4. Mejoras en documentación
 
-- **Validación RFC 5322 más restrictiva**: Se implementó una expresión regular más estricta que cumple con los estándares actuales y evita errores comunes.
-- **Detección de dominios chilenos**: Identificación automática de correos con dominio `.cl` y dominios específicos de instituciones chilenas.
-- **Validación de dominios prohibidos**: Lista de dominios temporales o desechables no permitidos para registro.
-- **Validación de longitudes**: Límites en la longitud total del email (254 caracteres), nombre de usuario (64) y dominio (253).
-- **Detección de patrones repetitivos**: Algoritmo que identifica patrones repetitivos que podrían indicar emails no válidos.
-- **Categorización de dominios**: Identificación de emails gubernamentales, educativos y empresariales.
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Guías de uso | Crear guías de uso para los principales componentes del dominio | Baja | ⏳ Pendiente |
+| Documentación de Usuarios | Documentar el módulo de usuarios y servicios relacionados | Media | ⏳ Pendiente |
 
-#### Métodos específicos:
+### 5. Mejoras en interfaces de servicio
 
-- `CreateChilean()`: Método factory específico que valida que el correo pertenezca a un dominio chileno.
-- `CreateEmpresarial()`: Valida que el correo pertenezca a un dominio empresarial (no gratuito).
-- `EsDominioChileno`: Propiedad que indica si el correo tiene un dominio chileno.
-- `EsDominioGubernamental`: Propiedad para identificar correos de organismos gubernamentales.
-- `EsDominioEducativo`: Propiedad para identificar correos de instituciones educativas.
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Estandarización de IUsuarioActualService | Actualizar a convenciones y tipos consistentes | Media | ✅ Completado |
+| Revisión de interfaces de servicio | Actualizar y añadir documentación a interfaces de servicio en Application | Media | ✅ Completado |
 
-### 2. Mejora del ValueObject PhoneNumber
+### 6. Organización de Pruebas de Integración
 
-Se ha mejorado significativamente el ValueObject `PhoneNumber` para adaptarlo al sistema telefónico chileno:
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Estructurar pruebas por contexto | Reorganizar pruebas de integración en carpetas por contexto | Media | ✅ Completado |
+| Implementar test Core-Usuarios | Implementar prueba UsuarioCreado_AsignacionRolesTests | Alta | ✅ Completado |
 
-#### Funcionalidades implementadas:
+## Próximos Pasos Prioritarios (Noviembre 2024)
 
-- **Validación específica para Chile**: Expresiones regulares dedicadas para teléfonos móviles chilenos (+56 9 xxxx xxxx) y fijos (+56 2 xxxx xxxx).
-- **Catálogo de códigos de área**: Implementación de un diccionario de códigos de área por región de Chile.
-- **Normalización de formato**: Métodos para normalizar números a formato estándar chileno.
-- **Propiedades de clasificación**: Identificación automática de números móviles vs. fijos.
-- **Validación por región**: Capacidad de validar números de teléfono por región específica de Chile.
+### 1. Integración con capas superiores
 
-#### Métodos específicos:
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Puente con Application | Desarrollar servicios puente entre Domain y Application | Alta | ⏳ Pendiente |
+| Mapeo con DTOs | Implementar perfil de AutoMapper para entidades y DTOs | Media | ⏳ Pendiente |
 
-- `CreateChilean()`: Método factory que valida específicamente números chilenos.
-- `CreateChileanForRegion()`: Valida que el número pertenezca a una región específica de Chile.
-- `EsMovilChileno` y `EsFijoChileno`: Propiedades para identificar el tipo de número.
-- `RegionTelefono`: Propiedad que intenta determinar la región de Chile basada en el código de área.
-- `ToFormattedString()`: Formatea el número según las convenciones chilenas.
-- `ToDialFormat()`: Formatea el número para ser marcado dentro de Chile.
+### 2. Pruebas de integración
 
-Estas mejoras aseguran la correcta validación y manejo de información de contacto específica para Chile, permitiendo una mejor integración con los sistemas locales y facilitando la categorización y segmentación de clientes según su ubicación geográfica dentro del país.
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Pruebas Core-Comercial | Probar integración entre contextos Core y Comercial | Alta | ⏳ Pendiente |
+| Pruebas Operaciones-Inventario | Probar integración entre contextos Operaciones e Inventario | Alta | ✅ Completado |
+| Implementar test Operaciones-Comandas | Implementar pruebas en Integration/Operaciones/Comandas | Media | ✅ Completado |
 
-## Implementación de Personalización en Ítems de Comanda
+### 3. Servicios de dominio
 
-Como parte de la evolución del sistema, se ha implementado la funcionalidad de personalización de ítems en comandas, que permite a los clientes modificar los platos según sus preferencias personales.
-
-### Análisis del sistema legacy
-
-En el análisis del código legacy, se identificó una funcionalidad crítica que aún no había sido implementada en la nueva arquitectura: la capacidad de personalizar los productos en una comanda. Esta funcionalidad permite:
-
-1. **Agregar** ingredientes extra a un producto (ej. "extra queso")
-2. **Quitar** ingredientes de un producto (ej. "sin cebolla")
-3. **Sustituir** un ingrediente por otro (ej. "sustituir papas por ensalada")
-
-### Implementación DDD
-
-Siguiendo los principios de Domain-Driven Design, se han implementado las siguientes mejoras:
-
-1. **Value Object para Personalizaciones**:
-   - Creación de `PersonalizacionItem` como objeto de valor inmutable
-   - Métodos factory específicos para cada tipo de personalización
-   - Validaciones de dominio para garantizar integridad
-
-2. **Ampliación de la entidad ItemComanda**:
-   - Adición de colección privada de personalizaciones
-   - Métodos específicos para agregar/quitar personalizaciones
-   - Encapsulación de la lógica de modificación de precio
-
-3. **Eventos de Dominio**:
-   - Implementación de `PersonalizacionAgregadaAItem` para notificar cuando se agrega una personalización
-   - Implementación de `PersonalizacionEliminadaDeItem` para notificar cuando se elimina una personalización
-
-4. **Impacto en el Precio**:
-   - Recálculo automático del precio al agregar personalizaciones con costo adicional
-   - Métodos para calcular el costo total de las personalizaciones
-
-5. **Pruebas unitarias exhaustivas**:
-   - Implementación de pruebas para todas las acciones de personalización (agregar, quitar, sustituir)
-   - Verificación del impacto de personalizaciones en el precio
-   - Pruebas de validación de estados y comportamientos ante distintos escenarios
-   - Cobertura del 100% para las nuevas funcionalidades
-
-Esta implementación aporta varias ventajas:
-
-- **Experiencia del cliente mejorada** al permitir personalizar productos
-- **Gestión precisa del inventario** al registrar modificaciones a los ingredientes
-- **Cálculo correcto de precios** incluyendo extras con costo adicional
-- **Información detallada para cocina** sobre cómo preparar cada plato
-
-### Próximos pasos
-
-1. Integrar con la capa de Aplicación para exponer estas funcionalidades en los casos de uso
-2. Actualizar la UI para permitir agregar personalizaciones a los productos
-3. Implementar lógica de negocio adicional para sugerencias de personalizaciones populares
-
-## Próximos pasos prioritarios (Julio 2024)
-
-1. **Iniciar desarrollo de capa de Infraestructura**:
-   - ✅ Preparar interfaces de repositorio para facilitar implementación con Entity Framework Core
-   - ✅ Implementar clases base de repositorios y UnitOfWork para Entity Framework Core
-   - ⏳ Implementar repositorios específicos para cada agregado principal
-   - ⏳ Configurar inyección de dependencias con autofac
-   - ⏳ Implementar servicios de persistencia de eventos de dominio
-   
-2. **Desarrollar capa de Aplicación**:
-   - ✅ Definir contratos claros entre Dominio y Aplicación mediante interfaces de fachada
-   - ⏳ Implementar primeros DTOs para comandas y clientes
-   - ⏳ Desarrollar CommandHandlers y QueryHandlers usando CQRS
-   - ⏳ Establecer validaciones a nivel de aplicación con FluentValidation
-   
-3. **Mejorar documentación técnica**:
-   - ⏳ Crear guías de uso para los principales componentes del dominio
-   - ⏳ Documentar flujos de integración entre contextos
-   - ⏳ Desarrollar diagramas de secuencia para los principales casos de uso
-   
-4. **Implementar pruebas de integración**:
-   - ⏳ Desarrollar pruebas de integración para los repositorios
-   - ⏳ Implementar pruebas de integración para los servicios de aplicación
-   - ⏳ Configurar base de datos en memoria para pruebas
-
-## Preparación del Dominio para integración (Julio 2024)
-
-Como parte de la preparación para integrar el dominio con otras capas, se ha realizado una mejora sustancial de las interfaces de repositorio y se han definido contratos claros para la comunicación entre las capas de Dominio y Aplicación:
-
-### 1. Mejora de interfaces de repositorio
-
-Se han refinado las interfaces de repositorio para todos los agregados principales, agregando métodos específicos que facilitarán su implementación con Entity Framework Core:
-
-- Parámetros opcionales para incluir entidades relacionadas (eager loading)
-- Métodos para paginación con conteo total
-- Consultas optimizadas por criterios comunes
-- Soporte para consultas asíncronas con CancellationToken
-- Métodos para estadísticas y búsquedas avanzadas
-
-### 2. Contratos claros entre capas
-
-Se han definido interfaces de fachada para cada contexto del dominio que exponen las operaciones disponibles para la capa de aplicación:
-
-- Comercial: Gestión de clientes, fidelización y segmentación
-- Operaciones: Comandas, personalizaciones y reservaciones
-- Inventario: Gestión de ingredientes, movimientos y órdenes de compra
-- Proveedores: Gestión de proveedores y contactos
-
-Estas interfaces se encargan de orquestar operaciones complejas que involucran múltiples agregados, proporcionando un API claro y cohesivo a la capa de aplicación.
-
-### 3. Implementación de validaciones robustas
-
-Para garantizar la consistencia de datos al interactuar con el exterior:
-
-- Validación de parámetros en métodos de repositorio
-- Comprobaciones de datos en interfaces de fachada
-- Manejo adecuado de valores nulos mediante tipos anulables
-- Documentación completa mediante XML comments
-
-### 4. Soporte para transacciones distribuidas
-
-La interfaz IUnitOfWork ha sido mejorada para soportar:
-
-- Transacciones explícitas
-- Manejo de eventos transaccionales
-- Cancelación asíncrona
-- Commit/rollback con confirmación de cambios
-
-## Implementación de Repositorios Base con Entity Framework Core (Julio 2024)
-
-Como paso fundamental para la integración del dominio con la capa de infraestructura, se han implementado las clases base para los repositorios utilizando Entity Framework Core:
-
-### 1. Implementación de Repository<T>
-
-Se ha creado una implementación genérica del `IRepository<T>` que sirve como base para todos los repositorios específicos:
-
-- Soporte completo para operaciones CRUD asíncronas
-- Manejo de consultas paginadas
-- Implementación de métodos de búsqueda y filtrado
-- Soporte para operaciones en lote (batch)
-
-### 2. Mejora del UnitOfWork
-
-Se ha mejorado la implementación del patrón Unit of Work para soportar:
-
-- Transacciones explícitas
-- Publicación de eventos de dominio
-- Detección de cambios pendientes
-- Adecuado manejo de recursos con IDisposable
-
-### 3. Repositorios Específicos
-
-Se han comenzado a implementar los repositorios específicos para cada agregado raíz:
-
-- Repositorio de Ingredientes con soporte para consultas específicas del dominio
-- Repositorio de Clientes actualizado para la nueva estructura
-
-### 4. Configuración de Inyección de Dependencias
-
-Se ha implementado la configuración de inyección de dependencias para registrar:
-
-- El contexto de Entity Framework
-- El Unit of Work
-- El repositorio genérico
-- Los repositorios específicos
-
-Este trabajo establece las bases para implementar el resto de los repositorios específicos y permite comenzar a trabajar en la capa de aplicación con una infraestructura sólida para persistencia de datos.
-
-## Próximos pasos prioritarios (Agosto 2024)
-
-1. **Finalizar corrección de errores de compilación**:
-   - ✅ Actualizar referencias a la clase Specification en lugar de SpecificationBase
-   - ✅ Corregir nombres de propiedades en expresiones ToExpression de especificaciones
-   - ⏳ Homogeneizar interfaz IRepository y sus implementaciones (AddAsync vs AgregarAsync, etc.)
-   - ⏳ Actualizar métodos de servicio para utilizar CancellationToken correctamente
-
-2. **Continuar desarrollo de capa de Infraestructura**:
-   - ⏳ Finalizar implementación de repositorios específicos con Entity Framework Core
-   - ⏳ Configurar inyección de dependencias con autofac
-   - ⏳ Implementar servicios de persistencia de eventos de dominio
-
-3. **Implementar pruebas de integración**:
-   - ⏳ Desarrollar pruebas de integración para repositorios y EF Core
-   - ⏳ Configurar base de datos en memoria para pruebas
-
-4. **Iniciar desarrollo de capa de API**:
-   - ⏳ Implementar primeros endpoints REST para comandas y clientes
-   - ⏳ Configurar swagger y documentación de API
-   - ⏳ Implementar filtros de excepciones y validación
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Implementar RecetaService | Implementar servicio de recetas para productos | Alta | ⏳ Pendiente |
+| Validación de disponibilidad | Implementar validación de disponibilidad de ingredientes | Media | ⏳ Pendiente |
