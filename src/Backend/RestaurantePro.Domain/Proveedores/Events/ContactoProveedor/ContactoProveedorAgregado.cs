@@ -1,7 +1,5 @@
 namespace RestaurantePro.Domain.Proveedores.Events.ContactoProveedor
 {
-    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-    
     /// <summary>
     /// Evento que se dispara cuando se agrega un contacto a un proveedor
     /// </summary>

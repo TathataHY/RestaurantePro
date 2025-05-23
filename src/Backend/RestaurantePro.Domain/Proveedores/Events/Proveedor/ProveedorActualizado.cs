@@ -1,7 +1,5 @@
 namespace RestaurantePro.Domain.Proveedores.Events.Proveedor
 {
-    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-    
     /// <summary>
     /// Evento que se dispara cuando se actualiza un proveedor
     /// </summary>

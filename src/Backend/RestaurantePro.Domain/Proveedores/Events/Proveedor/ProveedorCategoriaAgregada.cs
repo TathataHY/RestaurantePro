@@ -1,7 +1,4 @@
-using RestaurantePro.Domain.Core.Base.Events;
-using RestaurantePro.Domain.Proveedores.Enums;
-
-namespace RestaurantePro.Domain.Proveedores.Events
+namespace RestaurantePro.Domain.Proveedores.Events.Proveedor
 {
     /// <summary>
     /// Evento de dominio que se dispara cuando se agrega una categoría a un proveedor

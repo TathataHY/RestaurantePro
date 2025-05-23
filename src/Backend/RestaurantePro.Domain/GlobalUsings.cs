@@ -17,7 +17,6 @@ global using Microsoft.Extensions.DependencyInjection;
 // Domain Base
 global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;
-// global using RestaurantePro.Domain.Core.Base.Exceptions;
 
 // Domain Base - Events
 global using RestaurantePro.Domain.Core.Base.Events;
@@ -32,6 +31,7 @@ global using RestaurantePro.Domain.Core.SharedKernel;
 global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Services;
+global using ISpec = RestaurantePro.Domain.Core.SharedKernel.Interfaces.ISpecification<>;
 global using RestaurantePro.Domain.Core.SharedKernel.Specifications;
 
 // Domain core imports - Services
@@ -58,7 +58,6 @@ global using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 global using RestaurantePro.Domain.Core.Productos.Entities;
 global using RestaurantePro.Domain.Core.Productos.ValueObjects;
 global using RestaurantePro.Domain.Core.Productos.Interfaces;
-// global using RestaurantePro.Domain.Core.Productos.Enums;
 global using RestaurantePro.Domain.Core.Productos.Events;
 global using RestaurantePro.Domain.Core.Productos.Events.Producto;
 global using RestaurantePro.Domain.Core.Productos.Events.ProductoCategoria;
@@ -77,7 +76,6 @@ global using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 
 // Domain Operaciones - Reservaciones
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
-// global using RestaurantePro.Domain.Operaciones.Reservaciones.ValueObjects;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Events;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion;
@@ -98,7 +96,26 @@ global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 
 // Domain Comercial - Promociones
 global using RestaurantePro.Domain.Comercial.Promociones.Entities;
+global using RestaurantePro.Domain.Comercial.Promociones.Enums;
+global using RestaurantePro.Domain.Comercial.Promociones.Events;
+global using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
 global using RestaurantePro.Domain.Comercial.Promociones.Specifications;
+
+// Domain Comercial - Facturacion
+global using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+global using RestaurantePro.Domain.Comercial.Facturacion.Enums;
+global using RestaurantePro.Domain.Comercial.Facturacion.EventHandlers;
+global using RestaurantePro.Domain.Comercial.Facturacion.Events;
+global using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+global using RestaurantePro.Domain.Comercial.Facturacion.Services;
+global using RestaurantePro.Domain.Comercial.Facturacion.Specifications;
+
+// Domain Comercial - Pagos
+global using RestaurantePro.Domain.Comercial.Pagos.Entities;
+global using RestaurantePro.Domain.Comercial.Pagos.Enums;
+global using RestaurantePro.Domain.Comercial.Pagos.Events;
+global using RestaurantePro.Domain.Comercial.Pagos.Events.Pago;
+global using RestaurantePro.Domain.Comercial.Pagos.Interfaces;
 
 // Domain Comercial - Services
 global using RestaurantePro.Domain.Comercial.Services;
@@ -135,14 +152,19 @@ global using RestaurantePro.Domain.Inventario.Policies;
 
 // Domain Proveedores
 global using RestaurantePro.Domain.Proveedores.Entities;
+global using RestaurantePro.Domain.Proveedores.Enums;
 global using RestaurantePro.Domain.Proveedores.Interfaces;
 global using RestaurantePro.Domain.Proveedores.Events;
 global using RestaurantePro.Domain.Proveedores.Events.Proveedor;
 global using RestaurantePro.Domain.Proveedores.Events.ContactoProveedor;
 global using RestaurantePro.Domain.Proveedores.Results;
+global using RestaurantePro.Domain.Proveedores.ValueObjects;
+global using RestaurantePro.Domain.Proveedores.Specifications;
 
 // Event Handlers
 global using RestaurantePro.Domain.Comercial.EventHandlers;
 global using RestaurantePro.Domain.Inventario.EventHandlers;
 global using RestaurantePro.Domain.Operaciones.EventHandlers;
-// global using RestaurantePro.Domain.Proveedores.EventHandlers;
+
+// Services
+global using RestaurantePro.Domain.Operaciones.Services;

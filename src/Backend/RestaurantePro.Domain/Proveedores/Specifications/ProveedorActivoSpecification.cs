@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.Proveedores.Specifications
 {
     /// <summary>
@@ -59,16 +58,34 @@ namespace RestaurantePro.Domain.Proveedores.Specifications
         
         /// <summary>
         /// Verifica si un proveedor tiene pagos pendientes fuera del periodo de gracia
-        /// Nota: Este método es una simulación. En un sistema real, requeriría consultar
-        /// información financiera del proveedor desde un repositorio.
+        /// Este método evalúa si el proveedor tiene pagos vencidos basándose en su historial
+        /// de pagos, fecha de último pago y última compra.
         /// </summary>
+        /// <param name="proveedor">Proveedor a evaluar</param>
+        /// <param name="diasGracia">Días de gracia permitidos para pagos pendientes</param>
+        /// <returns>True si el proveedor tiene pagos pendientes fuera del periodo de gracia, False en caso contrario</returns>
         private static bool TienePagosPendientesFueraDeGracia(Proveedor proveedor, int diasGracia)
         {
-            // Esta es una implementación simulada
-            // En una implementación real, se consultaría una fuente de datos financieros
+            if (proveedor == null)
+                throw new ArgumentNullException(nameof(proveedor));
             
-            // Por ahora, asumimos que ningún proveedor tiene pagos pendientes fuera de gracia
-            return false;
+            if (!proveedor.UltimaCompra.HasValue)
+                return false; // Sin compras no hay pagos pendientes
+            
+            if (!proveedor.UltimoPago.HasValue)
+            {
+                // Si hay compra pero no hay pago registrado, verificar si ya pasó el tiempo de gracia
+                var diasDesdeUltimaCompra = (DateTime.Now - proveedor.UltimaCompra.Value).TotalDays;
+                return diasDesdeUltimaCompra > diasGracia;
+            }
+            
+            // Si la fecha del último pago es posterior a la última compra, no hay pagos pendientes
+            if (proveedor.UltimoPago > proveedor.UltimaCompra)
+                return false;
+            
+            // Si el último pago es anterior a la última compra, verificar si está dentro del periodo de gracia
+            var diasPendientes = (DateTime.Now - proveedor.UltimaCompra.Value).TotalDays;
+            return diasPendientes > diasGracia;
         }
     }
 } 

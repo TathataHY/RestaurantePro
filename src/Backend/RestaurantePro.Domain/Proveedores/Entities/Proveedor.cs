@@ -1,7 +1,5 @@
 namespace RestaurantePro.Domain.Proveedores.Entities
 {
-    using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-    
     /// <summary>
     /// Entidad que representa un proveedor en el sistema
     /// </summary>
@@ -495,12 +493,12 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             var nuevaCategoria = ValueObjects.ProveedorCategoria.Crear(categoria, porcentajeDescuento, esProveedorPrincipal);
             _categorias.Add(nuevaCategoria);
             
-            // Emitir evento de dominio
-            AddDomainEvent(new Events.ProveedorCategoriaAgregada(
-                Id, 
-                Nombre, 
-                categoria, 
-                porcentajeDescuento, 
+            // Agregar evento de dominio
+            AddDomainEvent(new Events.Proveedor.ProveedorCategoriaAgregada(
+                Id,
+                Nombre,
+                categoria,
+                porcentajeDescuento,
                 esProveedorPrincipal));
                 
             MarkAsModified();
@@ -524,11 +522,11 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             // Eliminar la categoría
             _categorias.RemoveAll(c => c.Categoria == categoria);
             
-            // Emitir evento de dominio
-            AddDomainEvent(new Events.ProveedorCategoriaEliminada(
-                Id, 
-                Nombre, 
-                categoria, 
+            // Agregar evento de dominio
+            AddDomainEvent(new Events.Proveedor.ProveedorCategoriaEliminada(
+                Id,
+                Nombre,
+                categoria,
                 eraProveedorPrincipal));
                 
             MarkAsModified();
@@ -563,12 +561,12 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             // Actualizar la categoría (creando una nueva instancia ya que es un ValueObject)
             _categorias[index] = categoriaExistente.ConPorcentajeDescuento(porcentajeDescuento);
             
-            // Emitir evento de dominio
-            AddDomainEvent(new Events.ProveedorCategoriaActualizada(
+            // Agregar evento de dominio
+            AddDomainEvent(new Events.Proveedor.ProveedorCategoriaActualizada(
                 Id,
                 Nombre,
                 categoria,
-                porcentajeAnterior,
+                categoriaExistente.PorcentajeDescuento,
                 porcentajeDescuento,
                 categoriaExistente.EsProveedorPrincipal,
                 categoriaExistente.EsProveedorPrincipal));
@@ -598,14 +596,14 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             // Actualizar la categoría (creando una nueva instancia ya que es un ValueObject)
             _categorias[index] = categoriaExistente.ConEstadoPrincipal(esProveedorPrincipal);
             
-            // Emitir evento de dominio
-            AddDomainEvent(new Events.ProveedorCategoriaActualizada(
+            // Agregar evento de dominio
+            AddDomainEvent(new Events.Proveedor.ProveedorCategoriaActualizada(
                 Id,
                 Nombre,
                 categoria,
                 categoriaExistente.PorcentajeDescuento,
                 categoriaExistente.PorcentajeDescuento,
-                !esProveedorPrincipal,
+                categoriaExistente.EsProveedorPrincipal,
                 esProveedorPrincipal));
                 
             MarkAsModified();

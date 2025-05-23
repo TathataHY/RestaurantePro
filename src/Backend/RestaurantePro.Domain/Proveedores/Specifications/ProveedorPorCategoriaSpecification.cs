@@ -1,7 +1,4 @@
-using System.Linq.Expressions;
-using RestaurantePro.Domain.Core.SharedKernel.Specifications;
-using RestaurantePro.Domain.Proveedores.Entities;
-using RestaurantePro.Domain.Proveedores.Enums;
+
 
 namespace RestaurantePro.Domain.Proveedores.Specifications
 {
