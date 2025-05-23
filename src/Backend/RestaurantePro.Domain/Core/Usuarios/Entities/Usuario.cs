@@ -49,6 +49,11 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
         public EstadoUsuario Estado { get; private set; }
         
         /// <summary>
+        /// Tipo de usuario
+        /// </summary>
+        public TipoUsuario TipoUsuario { get; private set; }
+        
+        /// <summary>
         /// Roles asignados al usuario
         /// </summary>
         private readonly List<RolUsuario> _roles = new();
@@ -84,11 +89,12 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
             Estado = EstadoUsuario.PendienteConfirmacion;
             MotivoBloqueo = null;
             UltimoAcceso = null;
+            TipoUsuario = TipoUsuario.Empleado;
             
             _roles.Add(rol);
             
             ValidarInvariantes();
-            AddDomainEvent(new UsuarioCreado(Id, NombreUsuario, Email, Estado));
+            AddDomainEvent(new UsuarioCreado(Id, NombreUsuario, Email, Estado, TipoUsuario));
         }
         
         /// <summary>
@@ -227,6 +233,16 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
         }
         
         /// <summary>
+        /// Asigna un nuevo rol al usuario mediante su identificador
+        /// </summary>
+        public void AsignarRol(Guid rolId)
+        {
+            MarkAsModified();
+            
+            AddDomainEvent(new RolAsignadoPorId(Id, rolId));
+        }
+        
+        /// <summary>
         /// Remueve un rol asignado al usuario
         /// </summary>
         public void RemoverRol(RolUsuario rol)
@@ -249,6 +265,20 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
         public bool TieneRol(RolUsuario rol)
         {
             return _roles.Contains(rol);
+        }
+        
+        /// <summary>
+        /// Establece el tipo de usuario
+        /// </summary>
+        public void EstablecerTipo(TipoUsuario tipoUsuario)
+        {
+            if (TipoUsuario == tipoUsuario)
+                return;
+                
+            TipoUsuario = tipoUsuario;
+            MarkAsModified();
+            
+            AddDomainEvent(new UsuarioTipoActualizado(Id, TipoUsuario));
         }
         
         /// <summary>

@@ -26,14 +26,20 @@ namespace RestaurantePro.Domain.Core.Usuarios.Events.Usuario
         public EstadoUsuario Estado { get; }
         
         /// <summary>
+        /// Tipo de usuario
+        /// </summary>
+        public TipoUsuario TipoUsuario { get; }
+        
+        /// <summary>
         /// Constructor del evento
         /// </summary>
-        public UsuarioCreado(Guid usuarioId, string nombreUsuario, string email, EstadoUsuario estado)
+        public UsuarioCreado(Guid usuarioId, string nombreUsuario, string email, EstadoUsuario estado, TipoUsuario tipoUsuario = TipoUsuario.Empleado)
         {
             UsuarioId = usuarioId;
             NombreUsuario = nombreUsuario;
             Email = email;
             Estado = estado;
+            TipoUsuario = tipoUsuario;
         }
     }
 } 

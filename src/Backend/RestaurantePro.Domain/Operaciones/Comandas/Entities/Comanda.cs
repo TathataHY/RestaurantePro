@@ -170,7 +170,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             ValidarInvariantes();
             
             // Registrar el evento de dominio
-            AddDomainEvent(new ProductoAgregadoAComanda(Id, productoId, cantidad, precioUnitario));
+            AddDomainEvent(new Events.Comanda.ProductoAgregadoAComanda(Id, productoId, cantidad, precioUnitario));
         }
 
         /// <summary>
@@ -507,7 +507,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             ActualizarFecha();
             ValidarInvariantes();
 
-            AddDomainEvent(new ProductoAgregadoAComanda(Id, productoId, cantidad));
+            AddDomainEvent(new Events.Comanda.ProductoAgregadoAComanda(Id, productoId, cantidad));
             
             return item;
         }

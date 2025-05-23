@@ -65,6 +65,6 @@ namespace RestaurantePro.Domain.Core.Usuarios.Interfaces
         /// <param name="spec">Especificación que define los criterios de filtrado.</param>
         /// <param name="cancellationToken">Token de cancelación.</param>
         /// <returns>Lista de roles que cumplen con la especificación.</returns>
-        Task<IReadOnlyList<Rol>> ObtenerPorSpecAsync(ISpecification<Rol> spec, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<Rol>> ObtenerPorSpecAsync(SharedKernel.Specifications.ISpecification<Rol> spec, CancellationToken cancellationToken = default);
     }
 } 

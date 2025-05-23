@@ -31,7 +31,6 @@ global using RestaurantePro.Domain.Core.SharedKernel;
 global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Services;
-global using ISpec = RestaurantePro.Domain.Core.SharedKernel.Interfaces.ISpecification<>;
 global using RestaurantePro.Domain.Core.SharedKernel.Specifications;
 
 // Domain core imports - Services
@@ -52,6 +51,7 @@ global using RestaurantePro.Domain.Core.Usuarios.Entities;
 global using RestaurantePro.Domain.Core.Usuarios.Enums;
 global using RestaurantePro.Domain.Core.Usuarios.Events;
 global using RestaurantePro.Domain.Core.Usuarios.Events.Usuario;
+global using RestaurantePro.Domain.Core.Usuarios.Events.Rol;
 global using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 
 // Domain core imports - Productos

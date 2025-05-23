@@ -5,8 +5,8 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
     /// Este handler maneja eventos de tipo ProductoAgregadoAComanda y ProductoEliminadoDeComanda.
     /// </summary>
     public class ComandaModificada_ActualizarInventarioHandler : 
-        IEventHandler<ProductoAgregadoAComanda>,
-        IEventHandler<ProductoEliminadoDeComanda>
+        IEventHandler<Comandas.Events.ItemComanda.ProductoAgregadoAComanda>,
+        IEventHandler<Comandas.Events.ItemComanda.ProductoEliminadoDeComanda>
     {
         private readonly IComandaRepository _comandaRepository;
         private readonly IIngredienteRepository _ingredienteRepository;
@@ -31,7 +31,7 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
         /// <summary>
         /// Maneja el evento ProductoAgregadoAComanda y decrementa el stock de los ingredientes correspondientes.
         /// </summary>
-        public async Task Handle(ProductoAgregadoAComanda evento, CancellationToken cancellationToken)
+        public async Task Handle(Comandas.Events.ItemComanda.ProductoAgregadoAComanda evento, CancellationToken cancellationToken)
         {
             // Registrar el evento para trazabilidad
             await _eventRegistry.RegisterAsync(evento, cancellationToken);
@@ -74,14 +74,14 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
                 ingredienteEntity.DecrementarStock(cantidadTotal, $"Comanda #{evento.ComandaId}: {evento.Cantidad} x {evento.NombreProducto}");
 
                 // Guardar el ingrediente actualizado
-                await _ingredienteRepository.GuardarAsync(ingredienteEntity, cancellationToken);
+                await _ingredienteRepository.ActualizarAsync(ingredienteEntity, cancellationToken);
             }
         }
 
         /// <summary>
         /// Maneja el evento ProductoEliminadoDeComanda e incrementa el stock de los ingredientes correspondientes.
         /// </summary>
-        public async Task Handle(ProductoEliminadoDeComanda evento, CancellationToken cancellationToken)
+        public async Task Handle(Comandas.Events.ItemComanda.ProductoEliminadoDeComanda evento, CancellationToken cancellationToken)
         {
             // Registrar el evento para trazabilidad
             await _eventRegistry.RegisterAsync(evento, cancellationToken);
@@ -117,7 +117,7 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
                     $"Devolución por cancelación: Comanda #{evento.ComandaId}: {evento.Cantidad} x {evento.NombreProducto}. Motivo: {evento.Motivo}");
 
                 // Guardar el ingrediente actualizado
-                await _ingredienteRepository.GuardarAsync(ingredienteEntity, cancellationToken);
+                await _ingredienteRepository.ActualizarAsync(ingredienteEntity, cancellationToken);
             }
         }
     }

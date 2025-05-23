@@ -58,7 +58,7 @@ namespace RestaurantePro.Domain.Core.Usuarios.EventHandlers
                 usuario.AsignarRol(rolParaAsignar.Id);
 
                 // Guardar los cambios
-                await _usuarioRepository.GuardarAsync(usuario, cancellationToken);
+                await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
             }
         }
     }
