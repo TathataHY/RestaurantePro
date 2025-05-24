@@ -249,9 +249,15 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 partes.Length > 1 ? partes[1] : "Apellido");
                 
             // Usar un formato de email válido sin patrones repetitivos
+            // Mezclamos texto aleatorio para evitar patrones repetitivos
+            var random = new Random();
+            var randomText = new string(Enumerable.Range(0, 8)
+                .Select(_ => (char)('a' + random.Next(0, 26)))
+                .ToArray());
+                
             var cliente = Cliente.Crear(
                 nombreCliente, 
-                $"{partes[0].ToLowerInvariant()}.{Guid.NewGuid().ToString().Substring(0, 8)}@example.com", 
+                $"{partes[0].ToLowerInvariant()}{randomText}@testmail.com", 
                 "123456789");
                 
             // Simular historial de visitas

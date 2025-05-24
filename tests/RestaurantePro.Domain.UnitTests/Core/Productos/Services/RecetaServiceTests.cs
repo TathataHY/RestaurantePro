@@ -201,50 +201,22 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             resultado.Should().BeFalse();
         }
 
-        [Fact]
-        public async Task VerificarDisponibilidadIngredientesAsync_StockInsuficiente_DebeRetornarFalse()
+        // Helper para crear ingredientes simulados para pruebas
+        private Ingrediente CrearIngredienteSimulado(Guid id, decimal stock)
         {
-            // Arrange
-            var productoId = Guid.NewGuid();
-            var cantidad = 5;
-            var precio = new PrecioProducto(10.99m);
+            // Crear un ingrediente real usando el factory method
+            var ingrediente = Ingrediente.Crear(
+                "Ingrediente de prueba",
+                "TEST-" + id.ToString().Substring(0, 8),
+                "Ingrediente simulado para pruebas",
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                stock / 2, // StockMinimo (no importa para estas pruebas)
+                stock);    // Stock actual
 
-            var producto = Producto.Crear(
-                "Pizza Margarita", 
-                "Pizza clásica italiana", 
-                precio, 
-                Guid.NewGuid(), 
-                "Pizzas");
-
-            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 30);
+            // Reemplazar el Id generado con el Id específico que queremos
+            typeof(EntityBase).GetProperty("Id")!.SetValue(ingrediente, id);
             
-            var ingrediente1Id = Guid.NewGuid();
-            
-            receta.AgregarIngrediente(
-                ingrediente1Id, 
-                "Tomate", 
-                0.2m, 
-                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
-
-            // Crear mock explícito de Ingrediente
-            var ingredienteMock = new Mock<Ingrediente>();
-            ingredienteMock.Setup(i => i.Id).Returns(ingrediente1Id);
-            ingredienteMock.Setup(i => i.Stock).Returns(0.5m); // Stock insuficiente para 5 unidades (5 * 0.2 = 1kg)
-
-            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
-                .ReturnsAsync(producto);
-
-            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
-                .ReturnsAsync(receta);
-
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
-                .ReturnsAsync(ingredienteMock.Object);
-
-            // Act
-            var resultado = await _recetaService.VerificarDisponibilidadIngredientesAsync(productoId, cantidad, _cancellationToken);
-
-            // Assert
-            resultado.Should().BeFalse();
+            return ingrediente;
         }
 
         [Fact]
@@ -272,10 +244,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 0.2m, 
                 RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
 
-            // Crear mock explícito de Ingrediente
-            var ingredienteMock = new Mock<Ingrediente>();
-            ingredienteMock.Setup(i => i.Id).Returns(ingrediente1Id);
-            ingredienteMock.Setup(i => i.Stock).Returns(2.0m); // Stock suficiente para 5 unidades (5 * 0.2 = 1kg)
+            // Crear un ingrediente simulado con stock suficiente
+            var ingrediente = CrearIngredienteSimulado(ingrediente1Id, 2.0m); // Stock suficiente para 5 unidades (5 * 0.2 = 1kg)
 
             _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
                 .ReturnsAsync(producto);
@@ -284,13 +254,57 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 .ReturnsAsync(receta);
 
             _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
-                .ReturnsAsync(ingredienteMock.Object);
+                .ReturnsAsync(ingrediente);
 
             // Act
             var resultado = await _recetaService.VerificarDisponibilidadIngredientesAsync(productoId, cantidad, _cancellationToken);
 
             // Assert
             resultado.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task VerificarDisponibilidadIngredientesAsync_StockInsuficiente_DebeRetornarFalse()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var cantidad = 5;
+            var precio = new PrecioProducto(10.99m);
+
+            var producto = Producto.Crear(
+                "Pizza Margarita", 
+                "Pizza clásica italiana", 
+                precio, 
+                Guid.NewGuid(), 
+                "Pizzas");
+
+            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 30);
+            
+            var ingrediente1Id = Guid.NewGuid();
+            
+            receta.AgregarIngrediente(
+                ingrediente1Id, 
+                "Tomate", 
+                0.2m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+
+            // Crear un ingrediente simulado con stock insuficiente
+            var ingrediente = CrearIngredienteSimulado(ingrediente1Id, 0.5m); // Stock insuficiente para 5 unidades (5 * 0.2 = 1kg)
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(receta);
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente);
+
+            // Act
+            var resultado = await _recetaService.VerificarDisponibilidadIngredientesAsync(productoId, cantidad, _cancellationToken);
+
+            // Assert
+            resultado.Should().BeFalse();
         }
 
         #endregion
@@ -370,14 +384,9 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 0.3m, 
                 RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
 
-            // Crear mocks explícitos de Ingrediente
-            var ingrediente1Mock = new Mock<Ingrediente>();
-            ingrediente1Mock.Setup(i => i.Id).Returns(ingrediente1Id);
-            ingrediente1Mock.Setup(i => i.Stock).Returns(0.5m); // Stock insuficiente para 5 unidades (5 * 0.2 = 1kg)
-
-            var ingrediente2Mock = new Mock<Ingrediente>();
-            ingrediente2Mock.Setup(i => i.Id).Returns(ingrediente2Id);
-            ingrediente2Mock.Setup(i => i.Stock).Returns(2.0m); // Stock suficiente para 5 unidades (5 * 0.3 = 1.5kg)
+            // Crear ingredientes simulados
+            var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 0.5m); // Stock insuficiente para 5 unidades (5 * 0.2 = 1kg)
+            var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 2.0m); // Stock suficiente para 5 unidades (5 * 0.3 = 1.5kg)
 
             _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
                 .ReturnsAsync(producto);
@@ -386,10 +395,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 .ReturnsAsync(receta);
 
             _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
-                .ReturnsAsync(ingrediente1Mock.Object);
+                .ReturnsAsync(ingrediente1);
 
             _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
-                .ReturnsAsync(ingrediente2Mock.Object);
+                .ReturnsAsync(ingrediente2);
 
             // Act
             var resultado = await _recetaService.ObtenerIngredientesFaltantesAsync(productoId, cantidad, _cancellationToken);
@@ -426,10 +435,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 0.2m, 
                 RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
 
-            // Crear mock explícito de Ingrediente
-            var ingrediente1Mock = new Mock<Ingrediente>();
-            ingrediente1Mock.Setup(i => i.Id).Returns(ingrediente1Id);
-            ingrediente1Mock.Setup(i => i.Stock).Returns(2.0m); // Stock suficiente para 5 unidades (5 * 0.2 = 1kg)
+            // Crear un ingrediente simulado con stock suficiente
+            var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 2.0m); // Stock suficiente para 5 unidades (5 * 0.2 = 1kg)
 
             _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
                 .ReturnsAsync(producto);
@@ -438,7 +445,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 .ReturnsAsync(receta);
 
             _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
-                .ReturnsAsync(ingrediente1Mock.Object);
+                .ReturnsAsync(ingrediente1);
 
             // Act
             var resultado = await _recetaService.ObtenerIngredientesFaltantesAsync(productoId, cantidad, _cancellationToken);

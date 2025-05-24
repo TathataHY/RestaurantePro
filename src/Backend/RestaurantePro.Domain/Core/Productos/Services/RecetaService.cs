@@ -67,8 +67,8 @@ namespace RestaurantePro.Domain.Core.Productos.Services
             // Verificar stock de cada ingrediente
             foreach (var (ingredienteId, cantidadUnitaria) in ingredientesReceta)
             {
-                // Obtener el ingrediente actual
-                var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteId, cancellationToken);
+                // Obtener el ingrediente actual, sin incluir movimientos
+                var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteId, false, cancellationToken);
                 if (ingrediente == null)
                 {
                     // Si el ingrediente no existe, no hay stock suficiente
@@ -112,8 +112,8 @@ namespace RestaurantePro.Domain.Core.Productos.Services
             // Verificar stock de cada ingrediente
             foreach (var (ingredienteId, cantidadUnitaria) in ingredientesReceta)
             {
-                // Obtener el ingrediente actual
-                var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteId, cancellationToken);
+                // Obtener el ingrediente actual, sin incluir movimientos
+                var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteId, false, cancellationToken);
                 if (ingrediente == null)
                 {
                     // Si el ingrediente no existe, registramos la cantidad total como faltante
