@@ -56,7 +56,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             // Assert
             resultado.Should().NotBeNull();
             resultado.Should().BeSameAs(clienteEsperado);
-            resultado.Email.Should().Be(email);
+            resultado.Email.Value.Should().Be(email);
         }
 
         [Fact]

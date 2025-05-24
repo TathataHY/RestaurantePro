@@ -115,7 +115,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration
                 
             // Act
             // 1. Capturar el evento StockBajoMinimo para un stock que ya está bajo
-            var evento = new RestaurantePro.Domain.Inventario.Ingredientes.Events.StockBajoMinimo(
+            var evento = new RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente.StockBajoMinimo(
                 ingredienteId, "Tomate", stockActual, stockMinimo);
                 
             // 2. Simular que el ingrediente ya está guardado en la BD
@@ -135,7 +135,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration
             // Verificar que se registró el evento
             _eventRegistryMock.Verify(
                 l => l.RegisterAsync(
-                    It.IsAny<RestaurantePro.Domain.Inventario.Ingredientes.Events.StockBajoMinimo>(),
+                    It.IsAny<RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente.StockBajoMinimo>(),
                     It.IsAny<CancellationToken>()),
                 Times.AtLeastOnce);
         }
@@ -215,7 +215,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration
             
             // 2. Capturar el evento StockBajoMinimo
             var evento = ingrediente.DomainEvents
-                .OfType<RestaurantePro.Domain.Inventario.Ingredientes.Events.StockBajoMinimo>()
+                .OfType<RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente.StockBajoMinimo>()
                 .FirstOrDefault();
                 
             // Verificar que se generó el evento
@@ -238,7 +238,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration
             // Verificar que se registró un mensaje indicando que ya existe una orden
             _eventRegistryMock.Verify(
                 l => l.RegisterAsync(
-                    It.IsAny<RestaurantePro.Domain.Inventario.Ingredientes.Events.StockBajoMinimo>(),
+                    It.IsAny<RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente.StockBajoMinimo>(),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
         }

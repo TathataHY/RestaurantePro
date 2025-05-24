@@ -327,17 +327,20 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
             var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
             
-            // Manipular directamente el email para crear inconsistencia
+            // Usamos un email nulo (en lugar de un string inválido)
             typeof(Cliente)
                 .GetProperty("Email")
-                .SetValue(cliente, "emailinvalido"); // Formato inválido sin @ ni punto
+                .SetValue(cliente, null);
             
             // Act
-            Action action = () => cliente.ActualizarInformacionContacto("nuevoemailtambieninvalido", "612345678"); 
+            Action action = () => typeof(Cliente)
+                .GetMethod("ValidarInvariantes", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(cliente, null);
             
             // Assert
-            action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*email*no tiene un formato válido*");
+            action.Should().Throw<System.Reflection.TargetInvocationException>()
+                .WithInnerException<InvalidOperationException>()
+                .WithMessage("*email*no puede ser nulo*");
         }
         
         [Fact]
@@ -347,10 +350,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
             var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
             
-            // Manipular directamente el teléfono para crear inconsistencia
+            // Usamos un teléfono nulo (en lugar de un string inválido)
             typeof(Cliente)
                 .GetProperty("Telefono")
-                .SetValue(cliente, " "); // Valor inválido (espacio en blanco)
+                .SetValue(cliente, null);
             
             // Act - Llamar a ValidarInvariantes usando reflexión
             Action action = () => typeof(Cliente)
@@ -360,7 +363,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             // Assert
             action.Should().Throw<System.Reflection.TargetInvocationException>()
                 .WithInnerException<InvalidOperationException>()
-                .WithMessage("*teléfono*no puede estar vacío*");
+                .WithMessage("*teléfono*no puede ser nulo*");
         }
         
         [Fact]

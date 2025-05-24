@@ -248,9 +248,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 partes[0],
                 partes.Length > 1 ? partes[1] : "Apellido");
                 
+            // Usar un formato de email válido sin patrones repetitivos
             var cliente = Cliente.Crear(
                 nombreCliente, 
-                $"cliente{Guid.NewGuid().ToString().Substring(0, 8)}@test.com", 
+                $"{partes[0].ToLowerInvariant()}.{Guid.NewGuid().ToString().Substring(0, 8)}@example.com", 
                 "123456789");
                 
             // Simular historial de visitas

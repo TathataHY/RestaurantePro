@@ -121,7 +121,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 })
                 .Returns(Task.CompletedTask);
             
-            var evento = new StockBajoMinimo(_ingredienteId, _nombreIngrediente, stockActualBajo, _stockMinimo);
+            var evento = new RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente.StockBajoMinimo(_ingredienteId, _nombreIngrediente, stockActualBajo, _stockMinimo);
             
             // Act
             await _handler.Handle(evento, CancellationToken.None);
@@ -167,7 +167,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 .Setup(r => r.ObtenerPorIdAsync(_ingredienteId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ingrediente);
                 
-            var evento = new StockBajoMinimo(_ingredienteId, _nombreIngrediente, _stockActual, _stockMinimo);
+            var evento = new RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente.StockBajoMinimo(_ingredienteId, _nombreIngrediente, _stockActual, _stockMinimo);
             
             // Act
             await _handler.Handle(evento, CancellationToken.None);
@@ -270,7 +270,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 })
                 .Returns(Task.CompletedTask);
             
-            var evento = new StockBajoMinimo(_ingredienteId, _nombreIngrediente, _stockActual, _stockMinimo);
+            var evento = new RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente.StockBajoMinimo(_ingredienteId, _nombreIngrediente, _stockActual, _stockMinimo);
             
             // Act
             await _handler.Handle(evento, CancellationToken.None);

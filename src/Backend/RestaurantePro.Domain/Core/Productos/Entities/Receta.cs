@@ -131,7 +131,7 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         {
             var indice = _ingredientes.FindIndex(i => i.IngredienteId == ingredienteId);
             if (indice < 0)
-                throw new InvalidOperationException($"El ingrediente con ID {ingredienteId} no existe en la receta");
+                return; // Si el ingrediente no existe, simplemente no hacemos nada
 
             _ingredientes.RemoveAt(indice);
             MarkAsModified();

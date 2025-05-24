@@ -1,9 +1,9 @@
 namespace RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda
 {
     /// <summary>
-    /// Evento de dominio que se dispara cuando se agrega un producto a una comanda
+    /// Evento de dominio que se dispara cuando se crea un ítem de comanda
     /// </summary>
-    public class ProductoAgregadoAComanda : DomainEvent
+    public class ItemComandaCreado : DomainEvent
     {
         /// <summary>
         /// Identificador único de la comanda
@@ -33,7 +33,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda
         /// <summary>
         /// Constructor
         /// </summary>
-        public ProductoAgregadoAComanda(
+        public ItemComandaCreado(
             Guid comandaId,
             Guid itemId,
             Guid productoId,

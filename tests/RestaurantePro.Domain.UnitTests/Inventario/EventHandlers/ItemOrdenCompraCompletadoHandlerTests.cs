@@ -45,7 +45,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 .Setup(r => r.ActualizarAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
-            var evento = new ItemOrdenCompraCompletado(_itemId, _ordenCompraId, _ingredienteId, _cantidadRecibida);
+            var evento = new RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events.ItemOrdenCompra.ItemOrdenCompraCompletado(_itemId, _ordenCompraId, _ingredienteId, _cantidadRecibida);
             
             // Act
             await _handler.Handle(evento, CancellationToken.None);
@@ -75,7 +75,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 .Setup(r => r.ObtenerPorIdAsync(_ingredienteId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Ingrediente)null);
                 
-            var evento = new ItemOrdenCompraCompletado(_itemId, _ordenCompraId, _ingredienteId, _cantidadRecibida);
+            var evento = new RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events.ItemOrdenCompra.ItemOrdenCompraCompletado(_itemId, _ordenCompraId, _ingredienteId, _cantidadRecibida);
             
             // Act
             await _handler.Handle(evento, CancellationToken.None);

@@ -1,5 +1,3 @@
-
-
 namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
 {
     public class ServicioFacturacionTests
@@ -33,22 +31,17 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
             var numeroFactura = "F-2024-001";
             
             // Crear una comanda simulada con un ítem
-            var comanda = new Comanda
-            {
-                Id = comandaId,
-                EstaAnulada = false,
-                Items = new List<ItemComanda>
-                {
-                    new ItemComanda
-                    {
-                        ProductoId = productoId,
-                        Descripcion = "Producto de prueba",
-                        Cantidad = 2,
-                        PrecioUnitario = 100.0m,
-                        PorcentajeDescuento = 0
-                    }
-                }
-            };
+            var comanda = Comanda.Crear(Guid.NewGuid(), null, comandaId);
+            
+            // Usar reflection para pruebas (ya que no podemos acceder directamente a las propiedades privadas)
+            var comandaType = typeof(Comanda);
+            var itemsField = comandaType.GetField("_items", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            var items = new List<ItemComanda>();
+            var item = ItemComanda.Crear(comandaId, productoId, "Producto de prueba", 2, 100.0m, "Descripción de producto");
+            items.Add(item);
+            
+            itemsField?.SetValue(comanda, items);
             
             // Configurar el mock del repositorio de comandas
             _comandaRepositoryMock
@@ -118,14 +111,14 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
         {
             // Arrange
             var comandaId = Guid.NewGuid();
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
             
-            // Crear una comanda simulada anulada
-            var comanda = new Comanda
-            {
-                Id = comandaId,
-                EstaAnulada = true,
-                Items = new List<ItemComanda>()
-            };
+            // Crear una comanda simulada anulada con mesa y mesero válidos
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
+            // Agregamos un producto para que la comanda sea válida
+            comanda.AgregarProducto(Guid.NewGuid(), 1, 100.0m);
+            comanda.Cancelar("Anulada para test");
             
             // Configurar el mock del repositorio de comandas
             _comandaRepositoryMock

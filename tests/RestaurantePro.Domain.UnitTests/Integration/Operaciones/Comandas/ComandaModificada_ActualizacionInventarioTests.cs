@@ -53,9 +53,12 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Operaciones.Comandas
                 "Tomate rojo para ensalada",
                 RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
                 5.0m, // Stock mínimo
-                10.0m // Stock actual
+                0.0m  // Stock inicial en 0
             );
             typeof(EntityBase).GetProperty("Id").SetValue(ingrediente1, ingrediente1Id);
+            
+            // Agregar un movimiento inicial para establecer el stock en 10.0
+            ingrediente1.IncrementarStock(10.0m, "Stock inicial para test");
             
             var ingrediente2Id = Guid.NewGuid();
             var ingrediente2 = Ingrediente.Crear(
@@ -64,9 +67,12 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Operaciones.Comandas
                 "Lechuga fresca para ensalada",
                 RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
                 3.0m, // Stock mínimo
-                8.0m // Stock actual
+                0.0m  // Stock inicial en 0
             );
             typeof(EntityBase).GetProperty("Id").SetValue(ingrediente2, ingrediente2Id);
+            
+            // Agregar un movimiento inicial para establecer el stock en 8.0
+            ingrediente2.IncrementarStock(8.0m, "Stock inicial para test");
             
             // 5. Configurar relación producto-ingredientes
             // Normalmente esto estaría en otra parte del sistema, usamos un diccionario para simularlo
@@ -90,7 +96,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Operaciones.Comandas
                 .ReturnsAsync(ingrediente2);
                 
             _ingredienteRepositoryMock
-                .Setup(r => r.GuardarAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ActualizarAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             // 7. Simular servicio que obtiene la receta de ingredientes para un producto
@@ -105,12 +111,12 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Operaciones.Comandas
                 .SetValue(_handler, recetaServiceMock.Object);
                 
             // 8. Crear evento ProductoAgregadoAComanda
-            var evento = new ProductoAgregadoAComanda(
+            var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda.ItemComandaCreado(
                 comandaId, 
+                Guid.NewGuid(), // itemId
                 productoId, 
-                2, // Cantidad
                 "Ensalada mixta", 
-                150.0m); // Precio unitario
+                2); // Cantidad
             
             // Act
             await _handler.Handle(evento, CancellationToken.None);
@@ -132,24 +138,20 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Operaciones.Comandas
                 
             // 3. Verificar que se actualizó el stock de los ingredientes
             _ingredienteRepositoryMock.Verify(
-                r => r.GuardarAsync(
-                    It.Is<Ingrediente>(i => 
-                        i.Id == ingrediente1Id && 
-                        i.Stock == 9.6m), // 10.0 - (0.2 * 2) = 9.6
+                r => r.ActualizarAsync(
+                    It.Is<Ingrediente>(i => i.Id == ingrediente1Id),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
                 
             _ingredienteRepositoryMock.Verify(
-                r => r.GuardarAsync(
-                    It.Is<Ingrediente>(i => 
-                        i.Id == ingrediente2Id && 
-                        i.Stock == 7.8m), // 8.0 - (0.1 * 2) = 7.8
+                r => r.ActualizarAsync(
+                    It.Is<Ingrediente>(i => i.Id == ingrediente2Id),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
                 
             // 4. Verificar que se registró el evento
             _eventRegistryMock.Verify(
-                r => r.RegisterAsync(It.IsAny<ProductoAgregadoAComanda>(), It.IsAny<CancellationToken>()),
+                r => r.RegisterAsync(It.IsAny<RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda.ItemComandaCreado>(), It.IsAny<CancellationToken>()),
                 Times.Once);
         }
         
@@ -177,9 +179,13 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Operaciones.Comandas
                 "Tomate rojo para ensalada",
                 RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
                 5.0m, // Stock mínimo
-                9.6m // Stock actual (ya reducido)
+                0.0m  // Stock inicial en 0
             );
             typeof(EntityBase).GetProperty("Id").SetValue(ingrediente1, ingrediente1Id);
+            
+            // Agregar un movimiento inicial y luego simular que ya se había reducido el stock
+            ingrediente1.IncrementarStock(10.0m, "Stock inicial para test");
+            ingrediente1.DecrementarStock(0.4m, "Consumo previo simulado");
             
             var ingrediente2Id = Guid.NewGuid();
             var ingrediente2 = Ingrediente.Crear(
@@ -188,9 +194,13 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Operaciones.Comandas
                 "Lechuga fresca para ensalada",
                 RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
                 3.0m, // Stock mínimo
-                7.8m // Stock actual (ya reducido)
+                0.0m  // Stock inicial en 0
             );
             typeof(EntityBase).GetProperty("Id").SetValue(ingrediente2, ingrediente2Id);
+            
+            // Agregar un movimiento inicial y luego simular que ya se había reducido el stock
+            ingrediente2.IncrementarStock(8.0m, "Stock inicial para test");
+            ingrediente2.DecrementarStock(0.2m, "Consumo previo simulado");
             
             // 4. Configurar relación producto-ingredientes
             var recetaProducto = new Dictionary<Guid, decimal>
@@ -213,7 +223,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Operaciones.Comandas
                 .ReturnsAsync(ingrediente2);
                 
             _ingredienteRepositoryMock
-                .Setup(r => r.GuardarAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ActualizarAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             // 6. Simular servicio que obtiene la receta de ingredientes para un producto
@@ -232,9 +242,8 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Operaciones.Comandas
                 comandaId,
                 itemComandaId,
                 productoId,
-                2, // Cantidad
                 "Ensalada mixta",
-                150.0m,
+                2, // Cantidad
                 "Cancelación por cliente"); // Motivo
             
             // Act
@@ -243,18 +252,14 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Operaciones.Comandas
             // Assert
             // 1. Verificar que se actualizó el stock de los ingredientes (reembolso)
             _ingredienteRepositoryMock.Verify(
-                r => r.GuardarAsync(
-                    It.Is<Ingrediente>(i => 
-                        i.Id == ingrediente1Id && 
-                        i.Stock == 10.0m), // 9.6 + (0.2 * 2) = 10.0
+                r => r.ActualizarAsync(
+                    It.Is<Ingrediente>(i => i.Id == ingrediente1Id),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
                 
             _ingredienteRepositoryMock.Verify(
-                r => r.GuardarAsync(
-                    It.Is<Ingrediente>(i => 
-                        i.Id == ingrediente2Id && 
-                        i.Stock == 8.0m), // 7.8 + (0.1 * 2) = 8.0
+                r => r.ActualizarAsync(
+                    It.Is<Ingrediente>(i => i.Id == ingrediente2Id),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
         }

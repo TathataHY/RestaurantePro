@@ -63,8 +63,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             comanda.Total.Total.Should().Be(cantidad * precioUnitario * 1.19m);
 
             // Verificar evento de dominio
-            comanda.DomainEvents.Should().Contain(e => e is ProductoAgregadoAComanda);
-            var evento = comanda.DomainEvents.OfType<ProductoAgregadoAComanda>().First();
+            comanda.DomainEvents.Should().Contain(e => e is RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ProductoAgregadoAComanda);
+            var evento = comanda.DomainEvents.OfType<RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ProductoAgregadoAComanda>().First();
             evento.ComandaId.Should().Be(comanda.Id);
             evento.ProductoId.Should().Be(productoId);
             evento.Cantidad.Should().Be(cantidad);

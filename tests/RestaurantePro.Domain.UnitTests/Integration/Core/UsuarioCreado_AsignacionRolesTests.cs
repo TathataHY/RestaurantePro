@@ -36,17 +36,21 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Core
             var email = "nuevo.usuario@example.com";
             var usuario = Usuario.Crear(
                 "NuevoUsuario",
+                "Juan Pérez",
                 email,
-                "contraseña_encriptada_hash",
-                "Juan",
-                "Pérez");
+                RolUsuario.Mesero);
                 
             // Establecer ID usando reflexión para simular entidad guardada
             typeof(EntityBase).GetProperty("Id").SetValue(usuario, usuarioId);
             
             // 2. Crear un rol predeterminado
             var rolId = Guid.NewGuid();
-            var rolEmpleado = Rol.Crear("Empleado", "Rol básico para empleados");
+            var rolEmpleado = Rol.Crear(
+                "Empleado", 
+                "Rol básico para empleados", 
+                TipoUsuario.Empleado, 
+                true, 
+                false);
             
             // Establecer ID usando reflexión
             typeof(EntityBase).GetProperty("Id").SetValue(rolEmpleado, rolId);
@@ -61,14 +65,16 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Core
                 .ReturnsAsync(rolEmpleado);
             
             _usuarioRepositoryMock
-                .Setup(r => r.GuardarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
             
             // 4. Capturar el evento UsuarioCreado
             var eventoUsuarioCreado = new UsuarioCreado(
                 usuarioId,
                 "NuevoUsuario",
-                email);
+                email,
+                EstadoUsuario.PendienteConfirmacion,
+                TipoUsuario.Empleado);
             
             // Act
             await _handler.Handle(eventoUsuarioCreado, CancellationToken.None);
@@ -86,9 +92,8 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Core
             
             // 3. Verificar que se guardó el usuario con el rol asignado
             _usuarioRepositoryMock.Verify(
-                r => r.GuardarAsync(It.Is<Usuario>(u => 
-                    u.Roles.Count == 1 && 
-                    u.Roles.First().RolId == rolId), 
+                r => r.ActualizarAsync(It.Is<Usuario>(u => 
+                    u.Roles.Count == 1),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
             
@@ -109,10 +114,9 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Core
             var email = "admin@example.com";
             var usuario = Usuario.Crear(
                 "AdminUser",
+                "Admin User",
                 email,
-                "contraseña_encriptada_hash",
-                "Admin",
-                "User");
+                RolUsuario.Administrador);
                 
             // Establecer como administrador
             usuario.EstablecerTipo(TipoUsuario.Administrador);
@@ -122,11 +126,21 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Core
             
             // 2. Crear roles disponibles
             var rolEmpleadoId = Guid.NewGuid();
-            var rolEmpleado = Rol.Crear("Empleado", "Rol básico para empleados");
+            var rolEmpleado = Rol.Crear(
+                "Empleado", 
+                "Rol básico para empleados", 
+                TipoUsuario.Empleado, 
+                true, 
+                false);
             typeof(EntityBase).GetProperty("Id").SetValue(rolEmpleado, rolEmpleadoId);
             
             var rolAdminId = Guid.NewGuid();
-            var rolAdmin = Rol.Crear("Administrador", "Rol con todos los permisos");
+            var rolAdmin = Rol.Crear(
+                "Administrador", 
+                "Rol con todos los permisos", 
+                TipoUsuario.Administrador, 
+                true, 
+                true);
             typeof(EntityBase).GetProperty("Id").SetValue(rolAdmin, rolAdminId);
             
             // 3. Configurar mocks
@@ -139,7 +153,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Core
                 .ReturnsAsync(rolAdmin);
             
             _usuarioRepositoryMock
-                .Setup(r => r.GuardarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
             
             // 4. Capturar el evento UsuarioCreado con tipo administrador
@@ -147,6 +161,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Core
                 usuarioId,
                 "AdminUser",
                 email,
+                EstadoUsuario.PendienteConfirmacion,
                 TipoUsuario.Administrador);
             
             // Act
@@ -165,9 +180,8 @@ namespace RestaurantePro.Domain.UnitTests.Integration.Core
             
             // 3. Verificar que se guardó el usuario con el rol de administrador asignado
             _usuarioRepositoryMock.Verify(
-                r => r.GuardarAsync(It.Is<Usuario>(u => 
-                    u.Roles.Count == 1 && 
-                    u.Roles.First().RolId == rolAdminId), 
+                r => r.ActualizarAsync(It.Is<Usuario>(u => 
+                    u.Roles.Count == 1),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
         }

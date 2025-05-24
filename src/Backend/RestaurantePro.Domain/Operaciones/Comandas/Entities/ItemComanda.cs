@@ -100,6 +100,31 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             
             // No emitimos evento de creación, la comanda ya lo hace
         }
+        
+        /// <summary>
+        /// Factory method para crear un nuevo ItemComanda
+        /// </summary>
+        /// <param name="comandaId">ID de la comanda a la que pertenece</param>
+        /// <param name="productoId">ID del producto</param>
+        /// <param name="nombreProducto">Nombre del producto</param>
+        /// <param name="cantidad">Cantidad solicitada</param>
+        /// <param name="precioUnitario">Precio unitario</param>
+        /// <param name="observaciones">Observaciones opcionales</param>
+        /// <returns>Nuevo ItemComanda</returns>
+        public static ItemComanda Crear(Guid comandaId, Guid productoId, string nombreProducto, int cantidad, decimal precioUnitario, string observaciones = "")
+        {
+            var item = new ItemComanda(comandaId, productoId, cantidad, precioUnitario, observaciones);
+            
+            // Emitir evento de ítem de comanda creado
+            item.AddDomainEvent(new Events.ItemComanda.ItemComandaCreado(
+                comandaId,
+                item.Id,
+                productoId,
+                nombreProducto,
+                cantidad));
+                
+            return item;
+        }
 
         /// <summary>
         /// Marca el ítem como "En Preparación"

@@ -107,7 +107,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Notificaciones.Services
             };
             
             _notificacionRepositoryMock
-                .Setup(r => r.GetUnreadByRecipientIdAsync(destinatarioId, _cancellationToken))
+                .Setup(r => r.ObtenerNoLeidasPorDestinatarioAsync(destinatarioId, _cancellationToken))
                 .ReturnsAsync(notificaciones);
                 
             // Act
@@ -117,11 +117,11 @@ namespace RestaurantePro.Domain.UnitTests.Core.Notificaciones.Services
             Assert.Equal(notificaciones, resultado);
             
             _notificacionRepositoryMock.Verify(
-                r => r.GetUnreadByRecipientIdAsync(destinatarioId, _cancellationToken), 
+                r => r.ObtenerNoLeidasPorDestinatarioAsync(destinatarioId, _cancellationToken), 
                 Times.Once);
                 
             _notificacionRepositoryMock.Verify(
-                r => r.GetByRecipientIdAsync(destinatarioId, _cancellationToken), 
+                r => r.ObtenerPorDestinatarioAsync(destinatarioId, _cancellationToken), 
                 Times.Never);
         }
         
@@ -140,7 +140,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Notificaciones.Services
             };
             
             _notificacionRepositoryMock
-                .Setup(r => r.GetByRecipientIdAsync(destinatarioId, _cancellationToken))
+                .Setup(r => r.ObtenerPorDestinatarioAsync(destinatarioId, _cancellationToken))
                 .ReturnsAsync(notificaciones);
                 
             // Act
@@ -150,11 +150,11 @@ namespace RestaurantePro.Domain.UnitTests.Core.Notificaciones.Services
             Assert.Equal(notificaciones, resultado);
             
             _notificacionRepositoryMock.Verify(
-                r => r.GetByRecipientIdAsync(destinatarioId, _cancellationToken), 
+                r => r.ObtenerPorDestinatarioAsync(destinatarioId, _cancellationToken), 
                 Times.Once);
                 
             _notificacionRepositoryMock.Verify(
-                r => r.GetUnreadByRecipientIdAsync(destinatarioId, _cancellationToken), 
+                r => r.ObtenerNoLeidasPorDestinatarioAsync(destinatarioId, _cancellationToken), 
                 Times.Never);
         }
         

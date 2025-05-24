@@ -22,10 +22,10 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             item.EstaCompletoEnRecepcion.Should().BeTrue();
             
             // Verificar que se emitió el evento ItemOrdenCompraCompletado
-            item.DomainEvents.Should().Contain(e => e is ItemOrdenCompraCompletado);
+            item.DomainEvents.Should().Contain(e => e is RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events.ItemOrdenCompra.ItemOrdenCompraCompletado);
             
             // Verificar propiedades del evento
-            var evento = item.DomainEvents.OfType<ItemOrdenCompraCompletado>().First();
+            var evento = item.DomainEvents.OfType<RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events.ItemOrdenCompra.ItemOrdenCompraCompletado>().First();
             evento.ItemId.Should().Be(item.Id);
             evento.OrdenCompraId.Should().Be(ordenCompraId);
             evento.IngredienteId.Should().Be(ingredienteId);
@@ -53,7 +53,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Entit
             item.EstaCompletoEnRecepcion.Should().BeFalse();
             
             // Verificar que NO se emitió el evento ItemOrdenCompraCompletado
-            item.DomainEvents.Should().NotContain(e => e is ItemOrdenCompraCompletado);
+            item.DomainEvents.Should().NotContain(e => e is RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events.ItemOrdenCompra.ItemOrdenCompraCompletado);
         }
         
         [Fact]

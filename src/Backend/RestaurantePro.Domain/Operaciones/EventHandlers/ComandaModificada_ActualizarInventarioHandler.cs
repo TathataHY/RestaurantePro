@@ -2,10 +2,10 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
 {
     /// <summary>
     /// Manejador de eventos que actualiza el inventario cuando se modifica una comanda.
-    /// Este handler maneja eventos de tipo ProductoAgregadoAComanda y ProductoEliminadoDeComanda.
+    /// Este handler maneja eventos de tipo ItemComandaCreado y ProductoEliminadoDeComanda.
     /// </summary>
     public class ComandaModificada_ActualizarInventarioHandler : 
-        IDomainEventHandler<Comandas.Events.ItemComanda.ProductoAgregadoAComanda>,
+        IDomainEventHandler<Comandas.Events.ItemComanda.ItemComandaCreado>,
         IDomainEventHandler<Comandas.Events.ItemComanda.ProductoEliminadoDeComanda>
     {
         private readonly IComandaRepository _comandaRepository;
@@ -29,9 +29,9 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
         }
 
         /// <summary>
-        /// Maneja el evento ProductoAgregadoAComanda y decrementa el stock de los ingredientes correspondientes.
+        /// Maneja el evento ItemComandaCreado y decrementa el stock de los ingredientes correspondientes.
         /// </summary>
-        public async Task Handle(Comandas.Events.ItemComanda.ProductoAgregadoAComanda evento, CancellationToken cancellationToken)
+        public async Task Handle(Comandas.Events.ItemComanda.ItemComandaCreado evento, CancellationToken cancellationToken)
         {
             // Registrar el evento para trazabilidad
             await _eventRegistry.RegisterAsync(evento, cancellationToken);
