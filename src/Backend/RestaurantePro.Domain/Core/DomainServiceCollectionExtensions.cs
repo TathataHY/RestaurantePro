@@ -15,6 +15,9 @@ namespace RestaurantePro.Domain.Core
             // Registrar eventos de dominio (con suscripciones y registro)
             services.AddDomainEventServicesComplete();
             
+            // Registrar manejador de eventos para invalidación automática de caché
+            services.AddScoped<IDomainEventHandler<DomainEvent>, CacheInvalidationEventHandler>();
+            
             // Registrar servicios compartidos
             services.AddTransient<IDateTimeService, DateTimeService>();
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
@@ -118,6 +121,9 @@ namespace RestaurantePro.Domain.Core
         {
             // Registrar eventos de dominio pero con implementación nula del registro
             services.AddDomainEventServices();
+            
+            // Registrar manejador de eventos para invalidación automática de caché en pruebas
+            services.AddScoped<IDomainEventHandler<DomainEvent>, CacheInvalidationEventHandler>();
             
             // Usar directamente el MockDateTimeService de Core/SharedKernel/Services
             services.AddSingleton<IDateTimeService>(new MockDateTimeService(DateTime.Now));

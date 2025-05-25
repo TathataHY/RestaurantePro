@@ -16,6 +16,7 @@
 8. [Decisiones de Diseño](#decisiones-de-diseño)
 9. [Plan de Integración con Otras Capas](#plan-de-integración-con-otras-capas)
 10. [Estado Actual y Tareas Pendientes](#próximos-pasos-prioritarios-noviembre-2024)
+11. [Próximos Pasos Prioritarios (Diciembre 2024)](#próximos-pasos-prioritarios-diciembre-2024)
 
 ## Propósito de este documento
 
@@ -251,6 +252,9 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-11-30 | ServicioNotificacionesCached | Pruebas → Implementación → Refactor |
 | 2024-11-30 | GeneradorOrdenesCompraCached | Pruebas → Implementación → Refactor |
 | 2024-11-30 | Estrategia de caché y documentación | Diseño → Implementación |
+| 2024-12-02 | CacheInvalidationEventHandler | Diseño → Pruebas → Implementación → Refactor |
+| 2024-12-02 | CacheInvalidationExtensions | Diseño → Pruebas → Implementación → Refactor |
+| 2024-12-02 | Integración con DomainEventDispatcher | Diseño → Implementación → Refactor |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -409,6 +413,41 @@ Se ha implementado un sistema de caché para mejorar el rendimiento de servicios
    - Invalidación por patrón para grupos relacionados
    - Invalidación completa para operaciones que afectan múltiples recursos
 
+### Invalidación de caché basada en eventos de dominio
+
+Una mejora significativa recién implementada es la invalidación automática de caché basada en eventos de dominio. Este sistema permite que la caché se mantenga actualizada automáticamente cuando ocurren cambios en el sistema, sin necesidad de código de invalidación manual en cada servicio.
+
+#### Componentes principales
+
+1. **CacheInvalidationEventHandler**:
+   - Implementa `IDomainEventHandler` para recibir todos los eventos de dominio
+   - Contiene una tabla de mapeo entre tipos de eventos y patrones de caché a invalidar
+   - Procesa cada evento y ejecuta la invalidación según las reglas configuradas
+   - Soporta jerarquías de eventos (tipos base e interfaces)
+
+2. **CacheInvalidationExtensions**:
+   - Proporciona métodos de extensión para facilitar la invalidación
+   - Implementa análisis inteligente para extraer IDs de entidades de los eventos
+   - Soporta invalidación granular (por entidad) o general (por servicio)
+
+#### Beneficios
+
+- **Menor acoplamiento**: Los servicios no necesitan conocer los detalles de la caché
+- **Mantenibilidad**: Centralización de la lógica de invalidación
+- **Consistencia**: Los datos en caché siempre están actualizados
+- **Rendimiento**: Invalidación selectiva que maximiza el hit-ratio de la caché
+
+#### Integración
+
+El sistema se integra perfectamente con el mecanismo existente de eventos de dominio:
+
+1. Las entidades emiten eventos de dominio al cambiar su estado
+2. El `DomainEventDispatcher` distribuye estos eventos a todos los manejadores
+3. El `CacheInvalidationEventHandler` recibe los eventos y ejecuta las reglas de invalidación
+4. Los servicios con caché simplemente obtienen datos actualizados en la siguiente solicitud
+
+Esta implementación elimina la necesidad de invalidación manual en cada servicio y garantiza que los cambios en un contexto se reflejen correctamente en servicios de otros contextos que dependen de esos datos.
+
 ## Decisiones de Diseño
 
 - Las entidades usan Factory Methods (Crear) en lugar de constructores públicos
@@ -486,7 +525,7 @@ Se ha implementado un sistema de caché para mejorar el rendimiento de servicios
 |-------|-------------|-----------|--------|
 | Caché para UsuarioService | Implementar caché para el servicio de usuarios | Media | ⏳ Pendiente |
 | Telemetría de caché | Agregar métricas y logging para monitoreo de la caché | Baja | ⏳ Pendiente |
-| Invalidación por eventos | Automatizar invalidación de caché mediante eventos de dominio | Alta | ⏳ Pendiente |
+| Invalidación por eventos | Automatizar invalidación de caché mediante eventos de dominio | Alta | ✅ Completado |
 | Gestión de TTL dinámico | Implementar TTL dinámico basado en el tipo de datos | Baja | ⏳ Pendiente |
 
 ### 2. Integración de contextos

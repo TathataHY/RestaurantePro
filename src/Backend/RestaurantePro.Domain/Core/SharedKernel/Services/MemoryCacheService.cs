@@ -1,224 +1,123 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace RestaurantePro.Domain.Core.SharedKernel.Services
 {
     /// <summary>
-    /// Implementación del servicio de caché que utiliza memoria
+    /// Implementación básica de ICacheService que utiliza un diccionario en memoria
     /// </summary>
     public class MemoryCacheService : ICacheService
     {
-        private readonly Dictionary<string, CacheEntry> _cache = new();
-        private readonly ReaderWriterLockSlim _lock = new();
-        private readonly IDateTimeService _dateTimeService;
-        
-        /// <summary>
-        /// Constructor del servicio de caché
-        /// </summary>
-        /// <param name="dateTimeService">Servicio de fecha y hora</param>
-        public MemoryCacheService(IDateTimeService dateTimeService)
+        private class CacheEntry<T>
         {
-            _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
+            public T Value { get; set; }
+            public DateTime ExpirationTime { get; set; }
+            public bool IsExpired => DateTime.Now > ExpirationTime;
         }
         
-        /// <inheritdoc/>
-        public T GetOrAdd<T>(string key, Func<T> loadFunc, int timeToLiveMinutes = 10)
+        private readonly Dictionary<string, object> _cache = new Dictionary<string, object>();
+        private readonly object _lock = new object();
+        
+        /// <inheritdoc />
+        public T Get<T>(string key)
         {
-            if (string.IsNullOrWhiteSpace(key))
-                throw new ArgumentException("La clave no puede estar vacía", nameof(key));
-            
-            if (loadFunc == null)
-                throw new ArgumentNullException(nameof(loadFunc));
-            
-            // Intenta obtener el valor de la caché
-            _lock.EnterReadLock();
-            try
+            lock (_lock)
             {
-                if (_cache.TryGetValue(key, out var entry) && IsValid(entry))
+                if (_cache.TryGetValue(key, out var entry) && entry is CacheEntry<T> typedEntry)
                 {
-                    return (T)entry.Value;
+                    if (!typedEntry.IsExpired)
+                    {
+                        return typedEntry.Value;
+                    }
+                    _cache.Remove(key);
                 }
-            }
-            finally
-            {
-                _lock.ExitReadLock();
-            }
-            
-            // Si no está en caché o ha expirado, cargarlo
-            _lock.EnterWriteLock();
-            try
-            {
-                // Verificar nuevamente dentro del write lock (double-check)
-                if (_cache.TryGetValue(key, out var entry) && IsValid(entry))
-                {
-                    return (T)entry.Value;
-                }
-                
-                // Cargar el valor
-                var value = loadFunc();
-                
-                // Calcular la fecha de expiración
-                DateTime? expiration = null;
-                if (timeToLiveMinutes > 0)
-                {
-                    expiration = _dateTimeService.Now.AddMinutes(timeToLiveMinutes);
-                }
-                
-                // Guardar en caché
-                _cache[key] = new CacheEntry(value, expiration);
-                
-                return value;
-            }
-            finally
-            {
-                _lock.ExitWriteLock();
+                return default;
             }
         }
         
-        /// <inheritdoc/>
-        public async Task<T> GetOrAddAsync<T>(string key, Func<CancellationToken, Task<T>> loadFunc, int timeToLiveMinutes = 10, CancellationToken cancellationToken = default)
+        /// <inheritdoc />
+        public bool Exists(string key)
         {
-            if (string.IsNullOrWhiteSpace(key))
-                throw new ArgumentException("La clave no puede estar vacía", nameof(key));
-            
-            if (loadFunc == null)
-                throw new ArgumentNullException(nameof(loadFunc));
-            
-            // Intenta obtener el valor de la caché
-            _lock.EnterReadLock();
-            try
+            lock (_lock)
             {
-                if (_cache.TryGetValue(key, out var entry) && IsValid(entry))
-                {
-                    return (T)entry.Value;
-                }
-            }
-            finally
-            {
-                _lock.ExitReadLock();
-            }
-            
-            // Si no está en caché o ha expirado, cargarlo
-            // Nota: Liberamos el lock durante la carga asíncrona para no bloquear
-            
-            // Cargar el valor
-            var value = await loadFunc(cancellationToken);
-            
-            _lock.EnterWriteLock();
-            try
-            {
-                // Verificar nuevamente dentro del write lock
-                if (_cache.TryGetValue(key, out var entry) && IsValid(entry))
-                {
-                    return (T)entry.Value;
-                }
-                
-                // Calcular la fecha de expiración
-                DateTime? expiration = null;
-                if (timeToLiveMinutes > 0)
-                {
-                    expiration = _dateTimeService.Now.AddMinutes(timeToLiveMinutes);
-                }
-                
-                // Guardar en caché
-                _cache[key] = new CacheEntry(value, expiration);
-                
-                return value;
-            }
-            finally
-            {
-                _lock.ExitWriteLock();
+                return _cache.ContainsKey(key) && !((dynamic)_cache[key]).IsExpired;
             }
         }
         
-        /// <inheritdoc/>
-        public bool Remove(string key)
+        /// <inheritdoc />
+        public void Set<T>(string key, T value, int expirationMinutes = 60)
         {
-            if (string.IsNullOrWhiteSpace(key))
-                throw new ArgumentException("La clave no puede estar vacía", nameof(key));
-            
-            _lock.EnterWriteLock();
-            try
+            lock (_lock)
             {
-                return _cache.Remove(key);
-            }
-            finally
-            {
-                _lock.ExitWriteLock();
+                var entry = new CacheEntry<T>
+                {
+                    Value = value,
+                    ExpirationTime = DateTime.Now.AddMinutes(expirationMinutes)
+                };
+                _cache[key] = entry;
             }
         }
         
-        /// <inheritdoc/>
-        public int InvalidatePattern(string keyPattern)
+        /// <inheritdoc />
+        public void Remove(string key)
         {
-            if (string.IsNullOrWhiteSpace(keyPattern))
-                throw new ArgumentException("El patrón no puede estar vacío", nameof(keyPattern));
-            
-            _lock.EnterWriteLock();
-            try
+            lock (_lock)
             {
-                var keysToRemove = _cache.Keys.Where(k => k.StartsWith(keyPattern)).ToList();
+                _cache.Remove(key);
+            }
+        }
+        
+        /// <inheritdoc />
+        public void InvalidatePattern(string pattern)
+        {
+            lock (_lock)
+            {
+                var keysToRemove = _cache.Keys
+                    .Where(k => k.Contains(pattern))
+                    .ToList();
+                
                 foreach (var key in keysToRemove)
                 {
                     _cache.Remove(key);
                 }
-                
-                return keysToRemove.Count;
-            }
-            finally
-            {
-                _lock.ExitWriteLock();
             }
         }
         
-        /// <inheritdoc/>
-        public void Clear()
+        /// <inheritdoc />
+        public T GetOrCreate<T>(string key, Func<T> factory, int expirationMinutes = 60)
         {
-            _lock.EnterWriteLock();
-            try
+            T result = Get<T>(key);
+            
+            if (EqualityComparer<T>.Default.Equals(result, default))
             {
-                _cache.Clear();
+                result = factory();
+                Set(key, result, expirationMinutes);
             }
-            finally
-            {
-                _lock.ExitWriteLock();
-            }
+            
+            return result;
         }
         
-        /// <summary>
-        /// Verifica si una entrada de caché sigue siendo válida
-        /// </summary>
-        private bool IsValid(CacheEntry entry)
+        /// <inheritdoc />
+        public T GetOrAdd<T>(string key, Func<T> loadFunc, int timeToLiveMinutes = 10)
         {
-            if (entry == null)
-                return false;
-            
-            if (!entry.Expiration.HasValue)
-                return true; // Sin expiración
-            
-            return entry.Expiration.Value > _dateTimeService.Now;
+            return GetOrCreate(key, loadFunc, timeToLiveMinutes);
         }
         
-        /// <summary>
-        /// Clase interna para representar una entrada en la caché
-        /// </summary>
-        private class CacheEntry
+        /// <inheritdoc />
+        public async Task<T> GetOrAddAsync<T>(string key, Func<CancellationToken, Task<T>> loadFunc, int timeToLiveMinutes = 10, CancellationToken cancellationToken = default)
         {
-            /// <summary>
-            /// Valor almacenado
-            /// </summary>
-            public object Value { get; }
+            T result = Get<T>(key);
             
-            /// <summary>
-            /// Fecha y hora de expiración (null si no expira)
-            /// </summary>
-            public DateTime? Expiration { get; }
-            
-            /// <summary>
-            /// Constructor
-            /// </summary>
-            public CacheEntry(object value, DateTime? expiration = null)
+            if (EqualityComparer<T>.Default.Equals(result, default))
             {
-                Value = value;
-                Expiration = expiration;
+                result = await loadFunc(cancellationToken);
+                Set(key, result, timeToLiveMinutes);
             }
+            
+            return result;
         }
     }
 } 
