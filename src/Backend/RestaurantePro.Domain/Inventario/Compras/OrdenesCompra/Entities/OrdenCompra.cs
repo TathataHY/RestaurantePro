@@ -189,6 +189,30 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         }
         
         /// <summary>
+        /// Aprueba la orden de compra
+        /// </summary>
+        /// <param name="dateTimeService">Servicio de fecha/hora</param>
+        /// <exception cref="InvalidOperationException">Si la orden no está en estado Pendiente o no tiene items</exception>
+        public void Aprobar(IDateTimeService dateTimeService)
+        {
+            if (Estado != EstadoOrdenCompra.Pendiente)
+                throw new InvalidOperationException("No se puede aprobar una orden que no está en estado pendiente");
+                
+            if (!_items.Any())
+                throw new InvalidOperationException("No se puede aprobar una orden sin items");
+            
+            // La orden se considera aprobada pero aún no enviada
+            // En un flujo real, primero se aprueba y luego se envía
+            var fechaAprobacion = dateTimeService.Now;
+            
+            // Emitir evento de aprobación
+            AddDomainEvent(new OrdenCompraAprobada(Id, ProveedorId, fechaAprobacion, Total));
+            
+            MarkAsModified();
+            ValidarInvariantes();
+        }
+        
+        /// <summary>
         /// Envía la orden de compra al proveedor
         /// </summary>
         /// <exception cref="InvalidOperationException">Si la orden no está en estado Pendiente o no tiene items</exception>

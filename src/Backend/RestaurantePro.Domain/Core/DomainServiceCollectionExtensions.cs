@@ -138,6 +138,14 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<Inventario.Services.IInventarioServiceFacade, Inventario.Services.InventarioServiceFacade>();
             services.AddScoped<Proveedores.Services.IProveedoresServiceFacade, Proveedores.Services.ProveedoresServiceFacade>();
             
+            // Registrar servicios de integración entre contextos (ACL)
+            services.AddScoped<Core.Services.IProveedoresComercialIntegrationService, Core.Services.ProveedoresComercialIntegrationService>();
+            
+            // Registrar manejadores de eventos de integración
+            services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_FacturacionHandler>();
+            services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_NotificacionProveedorHandler>();
+            services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_ActualizarEstadisticasProveedorHandler>();
+            
             return services;
         }
         
