@@ -262,6 +262,9 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-12-06 | IDynamicTtlStrategy | Diseño → Implementación |
 | 2024-12-06 | UsageBasedTtlStrategy | Diseño → Implementación |
 | 2024-12-06 | SmartCacheDecorator | Diseño → Implementación |
+| 2024-12-10 | IUsuarioService y UsuarioService | Diseño → Implementación → Pruebas |
+| 2024-12-10 | UsuarioServiceCached | Diseño → Pruebas → Implementación |
+| 2024-12-10 | CacheInvalidationUsuarioEventHandler | Diseño → Implementación |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -598,7 +601,7 @@ Esta mejora complementa el sistema de telemetría e invalidación automática, c
 
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
-| Caché para UsuarioService | Implementar caché para el servicio de usuarios | Media | ⏳ Pendiente |
+| Caché para UsuarioService | Implementar caché para el servicio de usuarios | Media | ✅ Completado |
 | Telemetría de caché | Agregar métricas y logging para monitoreo de la caché | Baja | ✅ Completado |
 | Invalidación por eventos | Automatizar invalidación de caché mediante eventos de dominio | Alta | ✅ Completado |
 | Gestión de TTL dinámico | Implementar TTL dinámico basado en el tipo de datos | Baja | ✅ Completado |

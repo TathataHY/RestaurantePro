@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace RestaurantePro.Domain.Core.SharedKernel.Services
+namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
 {
     /// <summary>
     /// Decorador para ICacheService que añade telemetría

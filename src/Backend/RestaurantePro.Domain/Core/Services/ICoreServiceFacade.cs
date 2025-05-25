@@ -147,48 +147,60 @@ namespace RestaurantePro.Domain.Core.Services
         #region Usuarios
         
         /// <summary>
-        /// Registra un nuevo usuario
+        /// Crear un nuevo usuario en el sistema
         /// </summary>
-        /// <param name="nombreUsuario">Nombre de usuario</param>
-        /// <param name="nombre">Nombre completo</param>
-        /// <param name="email">Email</param>
-        /// <param name="rolesIds">Lista de IDs de roles</param>
+        /// <param name="nombreUsuario">Nombre de usuario para login</param>
+        /// <param name="nombreCompleto">Nombre completo del usuario</param>
+        /// <param name="email">Email del usuario</param>
+        /// <param name="rol">Rol inicial del usuario</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Usuario registrado</returns>
-        Task<Usuarios.Entities.Usuario> RegistrarUsuarioAsync(
-            string nombreUsuario, 
-            string nombre, 
-            string email, 
-            List<Guid>? rolesIds = null, 
-            CancellationToken cancellationToken = default);
+        /// <returns>Usuario creado</returns>
+        Task<Usuarios.Entities.Usuario> CrearUsuarioAsync(string nombreUsuario, string nombreCompleto, string email, string rol, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Actualiza un usuario existente
+        /// Actualizar el nombre de un usuario
         /// </summary>
         /// <param name="usuarioId">ID del usuario</param>
-        /// <param name="nombre">Nuevo nombre (null para no cambiar)</param>
-        /// <param name="email">Nuevo email (null para no cambiar)</param>
-        /// <param name="activo">Estado activo (null para no cambiar)</param>
+        /// <param name="nuevoNombre">Nuevo nombre completo</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Usuario actualizado o null si no existe</returns>
-        Task<Usuarios.Entities.Usuario?> ActualizarUsuarioAsync(
-            Guid usuarioId, 
-            string? nombre = null, 
-            string? email = null, 
-            bool? activo = null, 
-            CancellationToken cancellationToken = default);
+        /// <returns>Usuario actualizado</returns>
+        Task<Usuarios.Entities.Usuario> ActualizarNombreUsuarioAsync(Guid usuarioId, string nuevoNombre, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Asigna roles a un usuario
+        /// Actualizar el email de un usuario
         /// </summary>
         /// <param name="usuarioId">ID del usuario</param>
-        /// <param name="rolesIds">Lista de IDs de roles</param>
+        /// <param name="nuevoEmail">Nuevo email</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>True si se asignaron los roles, False si no se encontró el usuario</returns>
-        Task<bool> AsignarRolesUsuarioAsync(
-            Guid usuarioId, 
-            List<Guid> rolesIds, 
-            CancellationToken cancellationToken = default);
+        /// <returns>Usuario actualizado</returns>
+        Task<Usuarios.Entities.Usuario> ActualizarEmailUsuarioAsync(Guid usuarioId, string nuevoEmail, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Cambiar el estado de un usuario (activar/desactivar)
+        /// </summary>
+        /// <param name="usuarioId">ID del usuario</param>
+        /// <param name="activar">True para activar, False para desactivar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Usuario actualizado</returns>
+        Task<Usuarios.Entities.Usuario> CambiarEstadoUsuarioAsync(Guid usuarioId, bool activar, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Limpia los roles de un usuario dejando solo el rol predeterminado especificado
+        /// </summary>
+        /// <param name="usuarioId">ID del usuario</param>
+        /// <param name="rolPredeterminado">Rol predeterminado a mantener</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Usuario actualizado</returns>
+        Task<Usuarios.Entities.Usuario> LimpiarRolesUsuarioAsync(Guid usuarioId, string rolPredeterminado, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Asignar un rol a un usuario
+        /// </summary>
+        /// <param name="usuarioId">ID del usuario</param>
+        /// <param name="rol">Rol a asignar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Usuario actualizado</returns>
+        Task<Usuarios.Entities.Usuario> AsignarRolUsuarioAsync(Guid usuarioId, string rol, CancellationToken cancellationToken = default);
         
         #endregion
         

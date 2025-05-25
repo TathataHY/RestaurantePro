@@ -1,10 +1,4 @@
-using RestaurantePro.Domain.Core.Base;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace RestaurantePro.Domain.Core.SharedKernel.Services
+namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Invalidation
 {
     /// <summary>
     /// Manejador de eventos de dominio que invalida automáticamente entradas de caché según reglas configuradas

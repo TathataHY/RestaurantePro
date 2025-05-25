@@ -1,3 +1,15 @@
+using Moq;
+using Xunit;
+using FluentAssertions;
+using RestaurantePro.Domain.Core.Productos.Entities;
+using RestaurantePro.Domain.Core.Productos.ValueObjects;
+using RestaurantePro.Domain.Core.Productos.Services;
+using RestaurantePro.Domain.Core.Productos.Specifications;
+using System.Linq.Expressions;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace RestaurantePro.Domain.UnitTests.Core.Productos.Specifications
 {
     public class ProductoRecomendableSpecificationTests
@@ -131,7 +143,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Specifications
             recetaServiceMock.Setup(r => r.CalcularRentabilidadProductoAsync(
                     producto.Id, 
                     It.IsAny<CancellationToken>()))
-                .ReturnsAsync(ValueObjects.RentabilidadProducto.Calcular(8.0m, 10.99m));
+                .ReturnsAsync(RestaurantePro.Domain.Core.Productos.ValueObjects.RentabilidadProducto.Calcular(8.0m, 10.99m));
                 
             var spec = new ProductoRecomendableSpecification(
                 rentabilidadMinima: 50.0m, // La rentabilidad simulada es 27.2%
@@ -166,7 +178,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Specifications
             recetaServiceMock.Setup(r => r.CalcularRentabilidadProductoAsync(
                     producto.Id, 
                     It.IsAny<CancellationToken>()))
-                .ReturnsAsync(ValueObjects.RentabilidadProducto.Calcular(2.0m, 10.99m));
+                .ReturnsAsync(RestaurantePro.Domain.Core.Productos.ValueObjects.RentabilidadProducto.Calcular(2.0m, 10.99m));
                 
             var spec = new ProductoRecomendableSpecification(
                 rentabilidadMinima: 50.0m, // La rentabilidad simulada es 81.8%
@@ -201,7 +213,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Specifications
             recetaServiceMock.Setup(r => r.CalcularRentabilidadProductoAsync(
                     producto.Id, 
                     It.IsAny<CancellationToken>()))
-                .ReturnsAsync(ValueObjects.RentabilidadProducto.Calcular(2.0m, 10.99m));
+                .ReturnsAsync(RestaurantePro.Domain.Core.Productos.ValueObjects.RentabilidadProducto.Calcular(2.0m, 10.99m));
                 
             recetaServiceMock.Setup(r => r.VerificarDisponibilidadIngredientesAsync(
                     producto.Id,
@@ -242,7 +254,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Specifications
             recetaServiceMock.Setup(r => r.CalcularRentabilidadProductoAsync(
                     producto.Id, 
                     It.IsAny<CancellationToken>()))
-                .ReturnsAsync(ValueObjects.RentabilidadProducto.Calcular(2.0m, 10.99m));
+                .ReturnsAsync(RestaurantePro.Domain.Core.Productos.ValueObjects.RentabilidadProducto.Calcular(2.0m, 10.99m));
                 
             recetaServiceMock.Setup(r => r.VerificarDisponibilidadIngredientesAsync(
                     producto.Id,

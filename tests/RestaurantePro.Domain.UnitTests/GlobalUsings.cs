@@ -40,6 +40,15 @@ global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Services;
 
+// Domain core imports - SharedKernel Services
+// NOTA: Estructura lógica recomendada para los servicios en SharedKernel:
+// - Cache/ICacheService.cs, MemoryCacheService.cs
+// - Cache/Decorators/TelemetryCacheDecorator.cs, SmartCacheDecorator.cs, DynamicTtlCacheDecorator.cs
+// - Cache/Telemetry/ICacheTelemetry.cs, InMemoryCacheTelemetry.cs, CacheTelemetryExtensions.cs
+// - Cache/Strategy/IDynamicTtlStrategy.cs, UsageBasedTtlStrategy.cs
+// - Cache/Invalidation/CacheInvalidationEventHandler.cs, CacheInvalidationExtensions.cs
+// - Notification/EventBasedNotificationService.cs
+
 // Domain core imports - BoundedContexts
 global using RestaurantePro.Domain.Core.BoundedContexts;
 

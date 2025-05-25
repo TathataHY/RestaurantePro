@@ -243,139 +243,175 @@ namespace RestaurantePro.Domain.Core.Services
         #region Usuarios
 
         /// <inheritdoc/>
-        public async Task<Usuarios.Entities.Usuario> RegistrarUsuarioAsync(
+        public async Task<Usuario> CrearUsuarioAsync(
             string nombreUsuario, 
-            string nombre, 
+            string nombreCompleto, 
             string email, 
-            List<Guid>? rolesIds = null, 
+            string rol, 
             CancellationToken cancellationToken = default)
         {
-            // Validaciones básicas
+            // Validar parámetros
             if (string.IsNullOrWhiteSpace(nombreUsuario))
                 throw new ArgumentException("El nombre de usuario no puede estar vacío", nameof(nombreUsuario));
             
-            if (string.IsNullOrWhiteSpace(nombre))
-                throw new ArgumentException("El nombre no puede estar vacío", nameof(nombre));
+            if (string.IsNullOrWhiteSpace(nombreCompleto))
+                throw new ArgumentException("El nombre completo no puede estar vacío", nameof(nombreCompleto));
             
             if (string.IsNullOrWhiteSpace(email))
                 throw new ArgumentException("El email no puede estar vacío", nameof(email));
             
-            // Verificar que el nombre de usuario no exista
+            if (string.IsNullOrWhiteSpace(rol))
+                throw new ArgumentException("El rol no puede estar vacío", nameof(rol));
+            
+            // Verificar si ya existe un usuario con el mismo nombre
             var usuarioExistente = await _usuarioRepository.ObtenerPorNombreUsuarioAsync(nombreUsuario, cancellationToken);
             if (usuarioExistente != null)
-                throw new ArgumentException($"El nombre de usuario '{nombreUsuario}' ya está en uso", nameof(nombreUsuario));
+                throw new InvalidOperationException($"Ya existe un usuario con el nombre '{nombreUsuario}'");
             
-            // Verificar que el email no exista
-            usuarioExistente = await _usuarioRepository.ObtenerPorEmailAsync(email, cancellationToken);
-            if (usuarioExistente != null)
-                throw new ArgumentException($"El email '{email}' ya está en uso", nameof(email));
+            // Convertir el rol a enum
+            if (!Enum.TryParse<RolUsuario>(rol, true, out var rolEnum))
+                throw new ArgumentException($"Rol no válido: {rol}", nameof(rol));
             
-            // Crear y persistir usuario
-            var emailVO = new SharedKernel.ValueObjects.Email(email);
-            var usuario = Usuarios.Entities.Usuario.Crear(nombreUsuario, nombre, emailVO);
+            // Crear el usuario
+            var usuario = Usuario.Crear(nombreUsuario, nombreCompleto, email, rolEnum);
             
-            // Asignar roles si se proporcionaron
-            if (rolesIds != null && rolesIds.Count > 0)
-            {
-                foreach (var rolId in rolesIds)
-                {
-                    var rol = await _rolRepository.ObtenerPorIdAsync(rolId, cancellationToken);
-                    if (rol != null)
-                    {
-                        usuario.AsignarRol(rol);
-                    }
-                }
-            }
-            
+            // Persistir el usuario
             await _usuarioRepository.AgregarAsync(usuario, cancellationToken);
             
             return usuario;
         }
 
         /// <inheritdoc/>
-        public async Task<Usuarios.Entities.Usuario?> ActualizarUsuarioAsync(
+        public async Task<Usuario> AsignarRolUsuarioAsync(
             Guid usuarioId, 
-            string? nombre = null, 
-            string? email = null, 
-            bool? activo = null, 
+            string rol, 
             CancellationToken cancellationToken = default)
         {
             // Obtener el usuario
             var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
             if (usuario == null)
-                return null;
+                throw new InvalidOperationException($"No se encontró el usuario con ID {usuarioId}");
             
-            bool modificado = false;
+            // Convertir el rol a enum
+            if (!Enum.TryParse<RolUsuario>(rol, true, out var rolEnum))
+                throw new ArgumentException($"Rol no válido: {rol}", nameof(rol));
             
-            // Actualizar nombre si se proporcionó
-            if (!string.IsNullOrWhiteSpace(nombre) && nombre != usuario.Nombre)
-            {
-                usuario.ActualizarNombre(nombre);
-                modificado = true;
-            }
+            // Asignar el rol
+            usuario.AsignarRol(rolEnum);
             
-            // Actualizar email si se proporcionó
-            if (!string.IsNullOrWhiteSpace(email) && email != usuario.Email.Value)
-            {
-                // Verificar que el email no exista para otro usuario
-                var usuarioExistente = await _usuarioRepository.ObtenerPorEmailAsync(email, cancellationToken);
-                if (usuarioExistente != null && usuarioExistente.Id != usuarioId)
-                    throw new ArgumentException($"El email '{email}' ya está en uso", nameof(email));
-                
-                // Crear valor de objeto Email y actualizar
-                var emailVO = new SharedKernel.ValueObjects.Email(email);
-                usuario.ActualizarEmail(emailVO);
-                modificado = true;
-            }
-            
-            // Actualizar estado activo si se proporcionó
-            if (activo.HasValue && activo.Value != usuario.EstaActivo)
-            {
-                if (activo.Value)
-                    usuario.Activar();
-                else
-                    usuario.Desactivar();
-                
-                modificado = true;
-            }
-            
-            // Solo persistir si hubo cambios
-            if (modificado)
-            {
-                await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
-            }
+            // Persistir los cambios
+            await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
             
             return usuario;
         }
 
         /// <inheritdoc/>
-        public async Task<bool> AsignarRolesUsuarioAsync(
+        public async Task<Usuario> ActualizarNombreUsuarioAsync(
             Guid usuarioId, 
-            List<Guid> rolesIds, 
+            string nuevoNombre, 
             CancellationToken cancellationToken = default)
         {
             // Obtener el usuario
             var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
             if (usuario == null)
-                return false;
+                throw new InvalidOperationException($"No se encontró el usuario con ID {usuarioId}");
             
-            // Limpiar roles existentes
-            usuario.LimpiarRoles();
+            // Actualizar el nombre
+            usuario.Actualizar(nuevoNombre, usuario.Email);
             
-            // Asignar nuevos roles
-            foreach (var rolId in rolesIds)
+            // Persistir los cambios
+            await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
+            
+            return usuario;
+        }
+
+        /// <inheritdoc/>
+        public async Task<Usuario> ActualizarEmailUsuarioAsync(
+            Guid usuarioId, 
+            string nuevoEmail, 
+            CancellationToken cancellationToken = default)
+        {
+            // Obtener el usuario
+            var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
+            if (usuario == null)
+                throw new InvalidOperationException($"No se encontró el usuario con ID {usuarioId}");
+            
+            // Actualizar el email
+            usuario.Actualizar(usuario.NombreCompleto, nuevoEmail);
+            
+            // Persistir los cambios
+            await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
+            
+            return usuario;
+        }
+
+        /// <inheritdoc/>
+        public async Task<Usuario> CambiarEstadoUsuarioAsync(
+            Guid usuarioId, 
+            bool activar, 
+            CancellationToken cancellationToken = default)
+        {
+            // Obtener el usuario
+            var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
+            if (usuario == null)
+                throw new InvalidOperationException($"No se encontró el usuario con ID {usuarioId}");
+            
+            // Cambiar el estado
+            if (activar)
+                usuario.Activar();
+            else
+                usuario.Desactivar();
+            
+            // Persistir los cambios
+            await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
+            
+            return usuario;
+        }
+
+        /// <inheritdoc/>
+        public async Task<Usuario> LimpiarRolesUsuarioAsync(
+            Guid usuarioId, 
+            string rolPredeterminado, 
+            CancellationToken cancellationToken = default)
+        {
+            // Esta operación no está directamente soportada por la entidad Usuario
+            // porque viola la invariante de que un usuario debe tener al menos un rol.
+            // En lugar de eso, asignaremos un rol predeterminado y mantendremos ese único rol.
+            
+            // Obtener el usuario
+            var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
+            if (usuario == null)
+                throw new InvalidOperationException($"No se encontró el usuario con ID {usuarioId}");
+            
+            // Convertir el rol predeterminado a enum
+            if (!Enum.TryParse<RolUsuario>(rolPredeterminado, true, out var rolEnum))
+                throw new ArgumentException($"Rol no válido: {rolPredeterminado}", nameof(rolPredeterminado));
+            
+            // Primero asegurar que el usuario tenga el rol predeterminado
+            if (!usuario.TieneRol(rolEnum))
+                usuario.AsignarRol(rolEnum);
+            
+            // Ahora recorremos los roles actuales y eliminamos todos excepto el predeterminado
+            foreach (var rol in usuario.Roles.ToList())
             {
-                var rol = await _rolRepository.ObtenerPorIdAsync(rolId, cancellationToken);
-                if (rol != null)
+                if (rol != rolEnum)
                 {
-                    usuario.AsignarRol(rol);
+                    try
+                    {
+                        usuario.RemoverRol(rol);
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // Ignoramos la excepción si es que estamos intentando quitar el último rol
+                        break;
+                    }
                 }
             }
             
-            // Persistir cambios
+            // Persistir los cambios
             await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
             
-            return true;
+            return usuario;
         }
 
         #endregion

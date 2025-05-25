@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace RestaurantePro.Domain.Core.SharedKernel.Services
+namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache
 {
     /// <summary>
     /// Implementación básica de ICacheService que utiliza un diccionario en memoria

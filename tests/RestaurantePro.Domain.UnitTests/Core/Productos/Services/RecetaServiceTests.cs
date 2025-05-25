@@ -566,7 +566,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 .ReturnsAsync(receta);
 
             var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 5.0m);
-            ingrediente2.ActualizarCosto(15.0m); // 15 por kg de queso
+            ingrediente2.ActualizarCostoPromedio(20m); // $20 por kilogramo
 
             _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
                 .ReturnsAsync((Ingrediente?)null);
@@ -578,8 +578,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             var resultado = await _recetaService.CalcularCostoRecetaAsync(productoId, _cancellationToken);
 
             // Assert
-            // Solo debe contar el costo del queso: 0.3kg * 15.0 = 4.5
-            resultado.Should().Be(4.5m);
+            // Solo debe contar el costo del queso: 0.3kg * 20.0 = 6.0
+            resultado.Should().Be(6.0m);
         }
 
         [Fact]
@@ -620,10 +620,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 .ReturnsAsync(receta);
 
             var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 10.0m);
-            ingrediente1.ActualizarCosto(5.0m); // 5 por kg de tomate
+            ingrediente1.ActualizarCostoPromedio(20m); // $20 por kilogramo
             
             var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 5.0m);
-            ingrediente2.ActualizarCosto(15.0m); // 15 por kg de queso
+            ingrediente2.ActualizarCostoPromedio(5m);  // $5 por pieza
 
             _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
                 .ReturnsAsync(ingrediente1);
@@ -635,8 +635,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             var resultado = await _recetaService.CalcularCostoRecetaAsync(productoId, _cancellationToken);
 
             // Assert
-            // Tomate: 0.2kg * 5.0 = 1.0
-            // Queso: 0.3kg * 15.0 = 4.5
+            // Tomate: 0.2kg * 20.0 = 4.0
+            // Queso: 0.3kg * 5.0 = 1.5
             // Total: 5.5
             resultado.Should().Be(5.5m);
         }
@@ -687,13 +687,13 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 .ReturnsAsync(receta);
 
             var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 10.0m);
-            ingrediente1.ActualizarCosto(5.0m); // 5 por kg de tomate
+            ingrediente1.ActualizarCostoPromedio(20m); // $20 por kilogramo
             
             var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 5.0m);
-            ingrediente2.ActualizarCosto(15.0m); // 15 por kg de queso
+            ingrediente2.ActualizarCostoPromedio(5m);  // $5 por pieza
             
             var ingrediente3 = CrearIngredienteSimulado(ingrediente3Id, 2.0m);
-            ingrediente3.ActualizarCosto(20.0m); // 20 por kg de aceitunas
+            ingrediente3.ActualizarCostoPromedio(30m); // $30 por litro
 
             _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
                 .ReturnsAsync(ingrediente1);
@@ -708,11 +708,11 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             var resultado = await _recetaService.CalcularCostoRecetaAsync(productoId, _cancellationToken);
 
             // Assert
-            // Tomate: 0.2kg * 5.0 = 1.0
-            // Queso: 0.3kg * 15.0 = 4.5
-            // Aceitunas: 0.05kg * 20.0 = 1.0
-            // Total: 6.5
-            resultado.Should().Be(6.5m);
+            // Tomate: 0.2kg * 20.0 = 4.0
+            // Queso: 0.3kg * 5.0 = 1.5
+            // Aceitunas: 0.05kg * 30.0 = 1.5
+            // Total: 7.0
+            resultado.Should().Be(7.0m);
         }
 
         #endregion
@@ -834,10 +834,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 .ReturnsAsync(receta);
 
             var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 10.0m);
-            ingrediente1.ActualizarCosto(5.0m); // 5 por kg de tomate
+            ingrediente1.ActualizarCostoPromedio(20m); // $20 por kilogramo
             
             var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 5.0m);
-            ingrediente2.ActualizarCosto(15.0m); // 15 por kg de queso
+            ingrediente2.ActualizarCostoPromedio(5m);  // $5 por pieza
 
             _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
                 .ReturnsAsync(ingrediente1);
@@ -849,7 +849,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             var resultado = await _recetaService.CalcularRentabilidadProductoAsync(productoId, _cancellationToken);
 
             // Assert
-            // Costo: Tomate (0.2kg * 5.0 = 1.0) + Queso (0.3kg * 15.0 = 4.5) = 5.5
+            // Costo: Tomate (0.2kg * 20.0 = 4.0) + Queso (0.3kg * 5.0 = 1.5) = 5.5
             // Precio venta: 20.0
             // Margen: 20.0 - 5.5 = 14.5
             // Rentabilidad: (14.5 / 20.0) * 100 = 72.5%
@@ -890,7 +890,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 .ReturnsAsync(receta);
 
             var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 1.0m);
-            ingrediente1.ActualizarCosto(150.0m); // 150 por kg de trufa (ingrediente caro)
+            ingrediente1.ActualizarCostoPromedio(150.0m); // 150 por kg de trufa (ingrediente caro)
 
             _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
                 .ReturnsAsync(ingrediente1);
@@ -940,7 +940,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 .ReturnsAsync(receta);
 
             var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 1.0m);
-            ingrediente1.ActualizarCosto(200.0m); // 200 por kg de trufa blanca (muy caro)
+            ingrediente1.ActualizarCostoPromedio(200.0m); // 200 por kg de trufa blanca (muy caro)
 
             _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
                 .ReturnsAsync(ingrediente1);

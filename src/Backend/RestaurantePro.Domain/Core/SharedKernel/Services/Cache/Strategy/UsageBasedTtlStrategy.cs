@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace RestaurantePro.Domain.Core.SharedKernel.Services
+namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Strategy
 {
     /// <summary>
     /// Implementación de estrategia de TTL dinámico basado en patrones de uso

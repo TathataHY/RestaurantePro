@@ -1,5 +1,4 @@
-
-namespace RestaurantePro.Domain.Core.Services
+namespace RestaurantePro.Domain.Core.SharedKernel.Services
 {
     /// <summary>
     /// Servicio que maneja notificaciones basadas en eventos de dominio

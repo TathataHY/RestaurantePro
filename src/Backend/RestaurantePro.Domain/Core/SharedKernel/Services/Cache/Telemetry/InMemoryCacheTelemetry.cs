@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-
-namespace RestaurantePro.Domain.Core.SharedKernel.Services
+namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Telemetry
 {
     /// <summary>
     /// Implementación en memoria de la telemetría de caché
@@ -24,6 +18,12 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services
         private long _totalKeysAffected;
         
         private readonly Stopwatch _uptime = Stopwatch.StartNew();
+        
+        private long _totalAccesses;
+        private long _totalAccessTimeMs;
+        private int _recentInvalidations;
+        private readonly ConcurrentQueue<string> _recentErrors = new ConcurrentQueue<string>();
+        private const int MAX_ERRORS_TO_KEEP = 50;
         
         /// <summary>
         /// Información de un error en la caché
@@ -63,6 +63,9 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services
             
             var durations = _operationDurationsByType.GetOrAdd(operationType, _ => new ConcurrentBag<TimeSpan>());
             durations.Add(TimeSpan.FromMilliseconds(elapsedMilliseconds));
+            
+            System.Threading.Interlocked.Increment(ref _totalAccesses);
+            System.Threading.Interlocked.Add(ref _totalAccessTimeMs, elapsedMilliseconds);
         }
         
         /// <inheritdoc />
@@ -77,6 +80,11 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services
             
             var durations = _operationDurationsByType.GetOrAdd("Invalidation", _ => new ConcurrentBag<TimeSpan>());
             durations.Add(TimeSpan.FromMilliseconds(elapsedMilliseconds));
+            
+            System.Threading.Interlocked.Increment(ref _recentInvalidations);
+            
+            var durationsInvalidation = _operationDurationsByType.GetOrAdd("Invalidation", _ => new ConcurrentBag<TimeSpan>());
+            durationsInvalidation.Add(TimeSpan.FromMilliseconds(elapsedMilliseconds));
         }
         
         /// <inheritdoc />
@@ -87,6 +95,16 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services
                 
             _errors.Add(new CacheErrorInfo(key, operationType, exception));
             Interlocked.Increment(ref _totalErrors);
+            
+            string errorMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Error in {operationType} for key '{key}': {exception.Message}";
+            
+            _recentErrors.Enqueue(errorMessage);
+            
+            // Mantener un número limitado de errores recientes
+            while (_recentErrors.Count > MAX_ERRORS_TO_KEEP && _recentErrors.TryDequeue(out _))
+            {
+                // Solo dequeue si hay más del máximo
+            }
         }
         
         /// <inheritdoc />
@@ -151,6 +169,21 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services
                 .ToList();
                 
             return stats;
+        }
+        
+        /// <summary>
+        /// Obtiene las métricas actuales de la caché
+        /// </summary>
+        public CacheMetrics GetMetrics()
+        {
+            return new CacheMetrics
+            {
+                TotalAccesses = _totalAccesses,
+                TotalHits = _totalHits,
+                AverageAccessTimeMs = _totalAccesses > 0 ? (double)_totalAccessTimeMs / _totalAccesses : 0,
+                RecentInvalidations = _recentInvalidations,
+                RecentErrors = _recentErrors.ToList()
+            };
         }
     }
 } 

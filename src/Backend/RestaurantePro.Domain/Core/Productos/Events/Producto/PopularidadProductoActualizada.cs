@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Core.Productos.Events
+namespace RestaurantePro.Domain.Core.Productos.Events.Producto
 {
     /// <summary>
     /// Evento de dominio que se dispara cuando se actualiza la popularidad de un producto

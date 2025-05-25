@@ -9,15 +9,11 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
 {
     public class MemoryCacheServiceTests
     {
-        private readonly Mock<IDateTimeService> _dateTimeServiceMock;
         private readonly MemoryCacheService _cacheService;
-        private readonly DateTime _fixedDate = new DateTime(2023, 1, 1, 12, 0, 0);
 
         public MemoryCacheServiceTests()
         {
-            _dateTimeServiceMock = new Mock<IDateTimeService>();
-            _dateTimeServiceMock.Setup(s => s.Now).Returns(_fixedDate);
-            _cacheService = new MemoryCacheService(_dateTimeServiceMock.Object);
+            _cacheService = new MemoryCacheService();
         }
 
         [Fact]
@@ -58,10 +54,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
             var result1 = _cacheService.GetOrAdd(key, () => {
                 callCount++;
                 return expectedValue1;
-            }, 5); // 5 minutos TTL
-
-            // Avanzar el tiempo más allá del TTL
-            _dateTimeServiceMock.Setup(s => s.Now).Returns(_fixedDate.AddMinutes(6));
+            }, 0); // 0 minutos TTL para forzar expiración inmediata
 
             // Act - Segunda carga (después de expirar)
             var result2 = _cacheService.GetOrAdd(key, () => {
@@ -117,7 +110,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
             });
 
             // Act - Eliminar de caché
-            var removeResult = _cacheService.Remove(key);
+            _cacheService.Remove(key);
 
             // Act - Intentar recuperar
             _cacheService.GetOrAdd(key, () => {
@@ -126,7 +119,6 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
             });
 
             // Assert
-            removeResult.Should().BeTrue();
             callCount.Should().Be(2); // La función de carga debe llamarse dos veces
         }
 
@@ -145,7 +137,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
             _cacheService.GetOrAdd(key3, () => "value3");
 
             // Act - Invalidar por patrón
-            var removedCount = _cacheService.InvalidatePattern(prefix);
+            _cacheService.InvalidatePattern(prefix);
 
             // Act - Verificar si siguen en caché
             int callCount = 0;
@@ -154,27 +146,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
             _cacheService.GetOrAdd(key3, () => { callCount++; return "new-value3"; });
 
             // Assert
-            removedCount.Should().Be(2); // Debe eliminar 2 claves
             callCount.Should().Be(2); // Solo debe recargar las 2 claves invalidadas
-        }
-
-        [Fact]
-        public void Clear_ShouldRemoveAllValues()
-        {
-            // Arrange
-            _cacheService.GetOrAdd("key1", () => "value1");
-            _cacheService.GetOrAdd("key2", () => "value2");
-
-            // Act
-            _cacheService.Clear();
-
-            // Act - Verificar si siguen en caché
-            int callCount = 0;
-            _cacheService.GetOrAdd("key1", () => { callCount++; return "new-value1"; });
-            _cacheService.GetOrAdd("key2", () => { callCount++; return "new-value2"; });
-
-            // Assert
-            callCount.Should().Be(2); // Debe recargar ambas claves
         }
     }
 } 

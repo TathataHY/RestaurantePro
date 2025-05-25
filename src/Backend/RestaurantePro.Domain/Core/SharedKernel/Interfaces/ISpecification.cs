@@ -1,3 +1,6 @@
+using System;
+using System.Linq.Expressions;
+
 namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
 {
     /// <summary>
@@ -6,6 +9,12 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
     /// <typeparam name="T">Tipo de entidad a la que se aplica la especificación</typeparam>
     public interface ISpecification<T>
     {
+        /// <summary>
+        /// Expresión que define la especificación
+        /// </summary>
+        /// <returns>Una expresión LINQ que representa la especificación</returns>
+        Expression<Func<T, bool>> ToExpression();
+        
         /// <summary>
         /// Verifica si una entidad satisface esta especificación
         /// </summary>

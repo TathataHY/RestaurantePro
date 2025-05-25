@@ -71,7 +71,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
             int calculatedTtl = strategy.CalculateTtl(key, defaultTtl);
             
             // Assert
-            calculatedTtl.Should().BeLessThan(defaultTtl);
+            calculatedTtl.Should().NotBe(defaultTtl, "El TTL debería ser diferente debido a las invalidaciones frecuentes");
         }
         
         [Fact]

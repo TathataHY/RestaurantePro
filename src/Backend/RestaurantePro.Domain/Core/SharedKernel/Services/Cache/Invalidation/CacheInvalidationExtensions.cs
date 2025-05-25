@@ -1,8 +1,4 @@
-using RestaurantePro.Domain.Core.Base;
-using System;
-using System.Reflection;
-
-namespace RestaurantePro.Domain.Core.SharedKernel.Services
+namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Invalidation
 {
     /// <summary>
     /// Extensiones para facilitar la invalidación de caché basada en eventos

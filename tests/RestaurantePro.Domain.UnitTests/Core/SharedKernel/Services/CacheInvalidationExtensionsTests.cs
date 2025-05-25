@@ -54,7 +54,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
             var result = CacheInvalidationExtensions.GetEntityId(evento);
             
             // Assert
-            result.Should().BeNull();
+            result.Should().Be(Guid.Empty);
         }
         
         [Fact]
@@ -137,13 +137,14 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
             // Arrange
             var servicePrefix = "TestService_";
             var evento = new TestEventWithNoId("Test");
+            var expectedPattern = $"{servicePrefix}*{Guid.Empty}*";
             
             // Act
             _cacheServiceMock.Object.InvalidateForEvent(servicePrefix, evento);
             
             // Assert
             _cacheServiceMock.Verify(
-                s => s.InvalidatePattern(It.Is<string>(p => p == servicePrefix)),
+                s => s.InvalidatePattern(It.Is<string>(p => p == expectedPattern)),
                 Times.Once);
         }
         

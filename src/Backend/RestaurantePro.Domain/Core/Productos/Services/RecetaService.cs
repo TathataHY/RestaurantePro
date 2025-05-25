@@ -167,7 +167,7 @@ namespace RestaurantePro.Domain.Core.Productos.Services
                 if (ingrediente != null)
                 {
                     // Calcular el costo de este ingrediente según su cantidad
-                    decimal costoIngrediente = ingrediente.CostoUnitario * ingredienteReceta.Cantidad;
+                    decimal costoIngrediente = ingrediente.CostoPromedio * ingredienteReceta.Cantidad;
                     costoTotal += costoIngrediente;
                 }
                 // Si el ingrediente no existe, no sumamos nada al costo total

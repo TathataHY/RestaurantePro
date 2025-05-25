@@ -1,6 +1,4 @@
-using System;
-
-namespace RestaurantePro.Domain.Core.SharedKernel.Services
+namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Strategy
 {
     /// <summary>
     /// Interfaz para estrategias de cálculo de TTL (tiempo de vida) dinámico para caché

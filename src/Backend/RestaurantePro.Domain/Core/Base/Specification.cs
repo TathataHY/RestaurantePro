@@ -1,24 +1,9 @@
-namespace RestaurantePro.Domain.Core.SharedKernel.Specifications
+using System;
+using System.Linq.Expressions;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+
+namespace RestaurantePro.Domain.Core.Base
 {
-    /// <summary>
-    /// Interfaz base para el patrón Specification
-    /// </summary>
-    /// <typeparam name="T">Tipo de entidad a evaluar</typeparam>
-    public interface ISpecification<T>
-    {
-        /// <summary>
-        /// Expresión que define la especificación
-        /// </summary>
-        Expression<Func<T, bool>> ToExpression();
-        
-        /// <summary>
-        /// Evalúa si una entidad satisface la especificación
-        /// </summary>
-        /// <param name="entity">Entidad a evaluar</param>
-        /// <returns>True si satisface la especificación, False en caso contrario</returns>
-        bool IsSatisfiedBy(T entity);
-    }
-    
     /// <summary>
     /// Clase base para implementar especificaciones
     /// </summary>
@@ -46,9 +31,12 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Specifications
         /// </summary>
         /// <param name="other">Otra especificación</param>
         /// <returns>Una nueva especificación que representa la combinación AND</returns>
-        public Specification<T> And(Specification<T> other)
+        public ISpecification<T> And(ISpecification<T> other)
         {
-            return new AndSpecification<T>(this, other);
+            if (other is Specification<T> otherSpec)
+                return new AndSpecification<T>(this, otherSpec);
+            
+            throw new ArgumentException("La especificación debe ser del tipo Specification<T>", nameof(other));
         }
         
         /// <summary>
@@ -56,16 +44,19 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Specifications
         /// </summary>
         /// <param name="other">Otra especificación</param>
         /// <returns>Una nueva especificación que representa la combinación OR</returns>
-        public Specification<T> Or(Specification<T> other)
+        public ISpecification<T> Or(ISpecification<T> other)
         {
-            return new OrSpecification<T>(this, other);
+            if (other is Specification<T> otherSpec)
+                return new OrSpecification<T>(this, otherSpec);
+            
+            throw new ArgumentException("La especificación debe ser del tipo Specification<T>", nameof(other));
         }
         
         /// <summary>
         /// Niega esta especificación
         /// </summary>
         /// <returns>Una nueva especificación que representa la negación</returns>
-        public Specification<T> Not()
+        public ISpecification<T> Not()
         {
             return new NotSpecification<T>(this);
         }

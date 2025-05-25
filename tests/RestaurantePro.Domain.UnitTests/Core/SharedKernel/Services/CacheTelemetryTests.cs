@@ -23,10 +23,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
             telemetry.TrackCacheAccess("test_key2", false, "Get", 15);
             
             // Assert
-            var stats = telemetry.GetStatistics();
-            stats["TotalHits"].Should().Be(2L);
-            stats["TotalMisses"].Should().Be(1L);
-            stats["HitRate"].Should().Be(2.0 / 3.0);
+            var metrics = telemetry.GetMetrics();
+            metrics.TotalHits.Should().Be(2);
+            metrics.TotalAccesses.Should().Be(3);
+            metrics.HitRate.Should().Be(2.0 / 3.0);
         }
         
         [Fact]
@@ -40,9 +40,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
             telemetry.TrackCacheInvalidation("pattern2", 3, 8);
             
             // Assert
-            var stats = telemetry.GetStatistics();
-            stats["TotalInvalidations"].Should().Be(2L);
-            stats["TotalKeysAffected"].Should().Be(8L);
+            var metrics = telemetry.GetMetrics();
+            metrics.RecentInvalidations.Should().Be(2);
         }
         
         [Fact]
@@ -56,11 +55,9 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
             telemetry.TrackCacheError("test_key", "Get", exception);
             
             // Assert
-            var stats = telemetry.GetStatistics();
-            stats["TotalErrors"].Should().Be(1L);
-            var errors = (List<dynamic>)stats["RecentErrors"];
-            errors.Should().HaveCount(1);
-            ((string)errors[0].Error).Should().Be("Test error");
+            var metrics = telemetry.GetMetrics();
+            metrics.RecentErrors.Should().HaveCount(1);
+            metrics.RecentErrors[0].Should().Contain("Test error");
         }
         
         [Fact]
@@ -138,13 +135,32 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
             telemetry.TrackCacheInvalidation("pattern1", 3, 5);
             
             // Act
-            var report = telemetry.GetHumanReadableReport();
+            var report = telemetry.GenerarInformeTelemetria();
             
             // Assert
             report.Should().Contain("INFORME DE TELEMETRÍA DE CACHÉ");
-            report.Should().Contain("Total aciertos: 1");
-            report.Should().Contain("Total fallos: 1");
+            report.Should().Contain("Total de accesos: 2");
+            report.Should().Contain("Total de aciertos: 1");
             report.Should().Contain("Tasa de aciertos: 50.00%");
+        }
+
+        [Fact]
+        public void GenerarInformeTelemetria_ShouldGenerateReadableReport()
+        {
+            // Arrange
+            var telemetry = new InMemoryCacheTelemetry();
+            telemetry.TrackCacheAccess("test_key1", true, "Get", 10);
+            telemetry.TrackCacheAccess("test_key2", false, "Get", 15);
+            telemetry.TrackCacheInvalidation("pattern1", 3, 5);
+            
+            // Act
+            var informe = telemetry.GenerarInformeTelemetria();
+            
+            // Assert
+            informe.Should().Contain("INFORME DE TELEMETRÍA DE CACHÉ");
+            informe.Should().Contain("Total de accesos: 2");
+            informe.Should().Contain("Total de aciertos: 1");
+            informe.Should().Contain("Tasa de aciertos: 50.00%");
         }
     }
 } 
