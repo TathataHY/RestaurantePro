@@ -19,6 +19,32 @@ namespace RestaurantePro.Domain.Core
             services.AddTransient<IDateTimeService, DateTimeService>();
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
             
+            // Registrar servicio de caché
+            services.AddSingleton<ICacheService, MemoryCacheService>();
+            
+            // Registrar servicios de dominio decorados con caché
+            // 1. Verificador de Stock
+            services.AddScoped<VerificadorStock>(); // Implementación original
+            services.AddScoped<IVerificadorStock>(sp => 
+            {
+                var original = sp.GetRequiredService<VerificadorStock>();
+                var cacheService = sp.GetRequiredService<ICacheService>();
+                return new VerificadorStockCached(original, cacheService);
+            });
+            services.AddScoped<IVerificadorStockCached>(sp => 
+                (IVerificadorStockCached)sp.GetRequiredService<IVerificadorStock>());
+                
+            // 2. Servicio de Fidelización
+            services.AddScoped<ServicioFidelizacion>(); // Implementación original
+            services.AddScoped<IServicioFidelizacion>(sp => 
+            {
+                var original = sp.GetRequiredService<ServicioFidelizacion>();
+                var cacheService = sp.GetRequiredService<ICacheService>();
+                return new ServicioFidelizacionCached(original, cacheService);
+            });
+            services.AddScoped<IServicioFidelizacionCached>(sp => 
+                (IServicioFidelizacionCached)sp.GetRequiredService<IServicioFidelizacion>());
+            
             // Registrar políticas de dominio
             services.AddTransient<IClientesFrecuentesPolicy, ClientesFrecuentesPolicy>();
             services.AddTransient<IStockBajoPolicy, StockBajoPolicy>();
@@ -52,6 +78,32 @@ namespace RestaurantePro.Domain.Core
             // Usar directamente el MockDateTimeService de Core/SharedKernel/Services
             services.AddSingleton<IDateTimeService>(new MockDateTimeService(DateTime.Now));
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
+            
+            // Registrar servicio de caché para pruebas (singleton para mantenerlo en memoria durante las pruebas)
+            services.AddSingleton<ICacheService, MemoryCacheService>();
+            
+            // Registrar servicios de dominio decorados con caché para pruebas
+            // 1. Verificador de Stock
+            services.AddScoped<VerificadorStock>(); // Implementación original
+            services.AddScoped<IVerificadorStock>(sp => 
+            {
+                var original = sp.GetRequiredService<VerificadorStock>();
+                var cacheService = sp.GetRequiredService<ICacheService>();
+                return new VerificadorStockCached(original, cacheService);
+            });
+            services.AddScoped<IVerificadorStockCached>(sp => 
+                (IVerificadorStockCached)sp.GetRequiredService<IVerificadorStock>());
+                
+            // 2. Servicio de Fidelización
+            services.AddScoped<ServicioFidelizacion>(); // Implementación original
+            services.AddScoped<IServicioFidelizacion>(sp => 
+            {
+                var original = sp.GetRequiredService<ServicioFidelizacion>();
+                var cacheService = sp.GetRequiredService<ICacheService>();
+                return new ServicioFidelizacionCached(original, cacheService);
+            });
+            services.AddScoped<IServicioFidelizacionCached>(sp => 
+                (IServicioFidelizacionCached)sp.GetRequiredService<IServicioFidelizacion>());
             
             // Registrar políticas de dominio
             services.AddTransient<IClientesFrecuentesPolicy, ClientesFrecuentesPolicy>();
