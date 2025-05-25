@@ -1,11 +1,4 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Domain.Core.Usuarios.Events.Usuario;
-using RestaurantePro.Domain.Core.Usuarios.Services;
-
-namespace RestaurantePro.Domain.Core.Usuarios.Events
+namespace RestaurantePro.Domain.Core.Usuarios.EventHandlers
 {
     /// <summary>
     /// Manejador de eventos para invalidar la caché de usuarios cuando se producen eventos de dominio relacionados con usuarios
