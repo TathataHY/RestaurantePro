@@ -21,6 +21,7 @@ global using Microsoft.Extensions.DependencyInjection;
 // Domain core imports - Base
 global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;
+global using RestaurantePro.Domain.Core.Base.Services;
 
 // Domain Base - Events
 global using RestaurantePro.Domain.Core.Base.Events;
@@ -170,16 +171,4 @@ global using RestaurantePro.Domain.Operaciones.EventHandlers;
 // Additional Services
 global using RestaurantePro.Domain.Operaciones.Services;
 
-// Productos y Recetas
-global using RestaurantePro.Domain.Core.Productos.Entities;
-global using RestaurantePro.Domain.Core.Productos.ValueObjects;
-global using RestaurantePro.Domain.Core.Productos.Interfaces;
-global using RestaurantePro.Domain.Core.Productos.Services;
-
-// Políticas de producto
-global using RestaurantePro.Domain.Core.Productos.Policies;
-
-// Promociones y descuentos
-global using RestaurantePro.Domain.Comercial.Promociones.Entities;
-global using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
-global using RestaurantePro.Domain.Comercial.Promociones.Services;
+// Eliminando importaciones duplicadas de Productos y Recetas que generan advertencias

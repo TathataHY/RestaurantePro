@@ -1,17 +1,17 @@
 namespace RestaurantePro.Domain.Core.SharedKernel.Services.Notification
 {
     /// <summary>
-    /// Interfaz del servicio de notificaciones basadas en eventos de dominio
+    /// Interfaz para el servicio que maneja notificaciones basadas en eventos de dominio
     /// </summary>
     public interface IEventBasedNotificationService
     {
         /// <summary>
-        /// Suscribe un manejador de eventos para generar notificaciones cuando ocurra un evento específico
+        /// Permite suscribirse a un evento de dominio para generar notificaciones
         /// </summary>
-        /// <typeparam name="TEvent">Tipo de evento al que suscribirse</typeparam>
-        /// <param name="nombreCanal">Nombre del canal de notificación (email, sms, push, etc.)</param>
-        /// <param name="generadorNotificacion">Función que genera una notificación a partir del evento</param>
-        /// <param name="selectorDestinatarios">Función que selecciona los destinatarios a partir del evento</param>
+        /// <typeparam name="TEvent">Tipo del evento de dominio</typeparam>
+        /// <param name="nombreCanal">Nombre del canal de notificación</param>
+        /// <param name="generadorNotificacion">Función que genera la notificación a partir del evento</param>
+        /// <param name="selectorDestinatarios">Función que selecciona los destinatarios de la notificación</param>
         void SuscribirseAEvento<TEvent>(
             string nombreCanal, 
             Func<TEvent, Task<Notificaciones.Entities.Notificacion>> generadorNotificacion, 
@@ -19,12 +19,12 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Notification
             where TEvent : Base.Events.DomainEvent;
         
         /// <summary>
-        /// Suscribe un manejador de eventos para generar notificaciones para usuarios con un rol específico
+        /// Permite suscribirse a un evento de dominio para generar notificaciones a usuarios con un rol específico
         /// </summary>
-        /// <typeparam name="TEvent">Tipo de evento al que suscribirse</typeparam>
-        /// <param name="nombreCanal">Nombre del canal de notificación (email, sms, push, etc.)</param>
-        /// <param name="generadorNotificacion">Función que genera una notificación a partir del evento</param>
-        /// <param name="rolNecesario">Rol que deben tener los usuarios para recibir la notificación</param>
+        /// <typeparam name="TEvent">Tipo del evento de dominio</typeparam>
+        /// <param name="nombreCanal">Nombre del canal de notificación</param>
+        /// <param name="generadorNotificacion">Función que genera la notificación a partir del evento</param>
+        /// <param name="rolNecesario">Rol requerido para recibir la notificación</param>
         void SuscribirseAEventoPorRol<TEvent>(
             string nombreCanal, 
             Func<TEvent, Task<Notificaciones.Entities.Notificacion>> generadorNotificacion, 
