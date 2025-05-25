@@ -1,11 +1,4 @@
-using Moq;
-using Xunit;
-using FluentAssertions;
-using RestaurantePro.Domain.Core.SharedKernel.Services;
-using System.Threading.Tasks;
-using System;
-
-namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
+namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services.Cache
 {
     public class MemoryCacheServiceTests
     {

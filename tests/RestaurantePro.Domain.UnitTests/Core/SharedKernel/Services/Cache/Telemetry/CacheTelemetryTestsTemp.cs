@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using Xunit;
-using RestaurantePro.Domain.Core.SharedKernel.Services;
-using FluentAssertions;
-
-namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
+namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services.Cache.Telemetry
 {
     public class CacheTelemetryTestsTemp
     {

@@ -1,13 +1,4 @@
-using Moq;
-using Xunit;
-using FluentAssertions;
-using RestaurantePro.Domain.Core.SharedKernel.Services;
-using RestaurantePro.Domain.Core.Base;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services
+namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services.Cache.Invalidation
 {
     public class CacheInvalidationEventHandlerTests
     {

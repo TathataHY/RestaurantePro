@@ -1,12 +1,4 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Moq;
-using Xunit;
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Domain.Core.SharedKernel.Services;
-
-namespace RestaurantePro.Domain.UnitTests.CacheInvalidationTests
+namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services.Cache.Invalidation
 {
     public class CacheInvalidationTests
     {
