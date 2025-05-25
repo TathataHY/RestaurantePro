@@ -17,6 +17,7 @@
 9. [Plan de Integración con Otras Capas](#plan-de-integración-con-otras-capas)
 10. [Estado Actual y Tareas Pendientes](#próximos-pasos-prioritarios-noviembre-2024)
 11. [Próximos Pasos Prioritarios (Diciembre 2024)](#próximos-pasos-prioritarios-diciembre-2024)
+12. [Reorganización de Pruebas de Integración (Mayo 2025)](#reorganización-de-pruebas-de-integración-mayo-2025)
 
 ## Propósito de este documento
 
@@ -265,6 +266,9 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-12-10 | IUsuarioService y UsuarioService | Diseño → Implementación → Pruebas |
 | 2024-12-10 | UsuarioServiceCached | Diseño → Pruebas → Implementación |
 | 2024-12-10 | CacheInvalidationUsuarioEventHandler | Diseño → Implementación |
+| 2025-05-25 | Reorganización de Pruebas de Integración | Análisis → Diseño → Implementación → Documentación |
+| 2025-05-27 | Actualización de pruebas de integración entre contextos | Refactor → Pruebas → Validación |
+| 2025-05-29 | Corrección de pruebas de integración entre Core y Comercial | Análisis → Refactor → Pruebas |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -572,7 +576,7 @@ Esta mejora complementa el sistema de telemetría e invalidación automática, c
 
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
-| Pruebas Core-Comercial | Probar integración entre contextos Core y Comercial | Alta | ⏳ Pendiente |
+| Pruebas Core-Comercial | Probar integración entre contextos Core y Comercial | Alta | 🔄 En proceso |
 | Pruebas Operaciones-Inventario | Probar integración entre contextos Operaciones e Inventario | Alta | ✅ Completado |
 | Implementar test Operaciones-Comandas | Implementar pruebas en Integration/Operaciones/Comandas | Media | ✅ Completado |
 
@@ -612,7 +616,7 @@ Esta mejora complementa el sistema de telemetría e invalidación automática, c
 |-------|-------------|-----------|--------|
 | Integración Comercial-Proveedores | Implementar flujo de datos entre contextos comercial y proveedores | Alta | ⏳ Pendiente |
 | Integración Core-Operaciones | Mejorar integración entre catálogo de productos y comandas | Media | ⏳ Pendiente |
-| Pruebas de integración multi-contexto | Implementar pruebas que verifiquen flujos completos a través de múltiples contextos | Alta | ⏳ Pendiente |
+| Pruebas de integración multi-contexto | Implementar pruebas que verifiquen flujos completos a través de múltiples contextos | Alta | 🔄 En proceso |
 
 ### 3. Implementación completa de CoreServiceFacade
 
@@ -630,3 +634,27 @@ Esta mejora complementa el sistema de telemetría e invalidación automática, c
 | Mock repositories | Crear implementaciones de prueba para todos los repositorios | Media | ⏳ Pendiente |
 | Especificaciones para EF Core | Optimizar especificaciones para su uso con Entity Framework Core | Media | ⏳ Pendiente |
 | Pruebas de concepto con EF Core | Implementar ejemplos básicos de repositorios con EF Core | Alta | ⏳ Pendiente |
+
+## Reorganización de Pruebas de Integración (Mayo 2025)
+
+Se ha implementado una reorganización completa de las pruebas de integración para mejorar la claridad y mantenibilidad del código. La nueva estructura organiza las pruebas en dos categorías principales:
+
+1. **Pruebas entre Contextos (BetweenContexts)**: Verifican la integración y comunicación entre dos o más contextos delimitados
+2. **Pruebas dentro de un Contexto (WithinContext)**: Verifican la integración entre componentes dentro del mismo contexto
+
+### Detalles de la reorganización
+
+- Las pruebas entre contextos ahora están organizadas por pares de contextos que interactúan (por ejemplo, Comercial_Operaciones, Core_Comercial)
+- Las pruebas dentro de un contexto están organizadas por contexto individual
+- Se ha establecido una convención de nomenclatura clara para facilitar la identificación de pruebas
+- Se ha documentado la nueva estructura en un archivo README.md en el directorio de pruebas de integración
+
+Esta reorganización mejora significativamente la claridad y mantenibilidad del código, facilita la identificación de pruebas relacionadas, y hace que la organización misma documente las relaciones entre contextos.
+
+### Beneficios obtenidos
+
+- Mayor claridad en la identificación de pruebas relacionadas con contextos específicos
+- Mejor mantenibilidad al reducir la fricción para encontrar y actualizar pruebas relacionadas
+- La organización misma documenta las relaciones entre contextos
+- Permite identificar fácilmente áreas con poca cobertura de pruebas de integración
+- Facilita la incorporación de nuevos desarrolladores al proyecto al hacer más explícita la estructura del dominio

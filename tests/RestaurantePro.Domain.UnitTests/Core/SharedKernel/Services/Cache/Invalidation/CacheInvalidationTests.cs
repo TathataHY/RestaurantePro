@@ -39,7 +39,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services.Cache.Inval
         
         private class TestEntityEvent : DomainEvent
         {
-            public Guid EntityId { get; }
+            public new Guid EntityId { get; }
             
             public TestEntityEvent(Guid entityId) : base()
             {

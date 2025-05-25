@@ -80,8 +80,42 @@ RestaurantePro.Domain.UnitTests/
 ├── Comercial/                 # Pruebas para el contexto comercial
 │   └── Clientes/              # Pruebas para la gestión de clientes
 │
+├── Integration/               # Pruebas de integración organizadas por tipo de interacción
+│   ├── BetweenContexts/       # Pruebas entre diferentes contextos delimitados
+│   │   ├── Comercial_Inventario/    # Integración entre contextos Comercial e Inventario
+│   │   ├── Comercial_Operaciones/   # Integración entre contextos Comercial y Operaciones
+│   │   ├── Core_Comercial/          # Integración entre contextos Core y Comercial
+│   │   └── Operaciones_Inventario/  # Integración entre contextos Operaciones e Inventario
+│   │
+│   ├── WithinContext/         # Pruebas dentro del mismo contexto delimitado
+│   │   ├── Core/              # Integración dentro del contexto Core
+│   │   ├── Inventario/        # Integración dentro del contexto Inventario
+│   │   └── Operaciones/       # Integración dentro del contexto Operaciones
+│   │
+│   └── README.md              # Documentación específica sobre la organización de pruebas de integración
+│
 └── GlobalUsings.cs            # Importaciones globales para el proyecto de pruebas
 ```
+
+## Organización de Pruebas de Integración
+
+Las pruebas de integración han sido reorganizadas siguiendo un enfoque claro que distingue entre:
+
+1. **Pruebas entre Contextos (BetweenContexts)**: Verifican la integración y comunicación entre dos o más contextos delimitados.
+   - Ejemplos: Comercial_Operaciones, Core_Comercial, Operaciones_Inventario.
+   - Estas pruebas ayudan a validar que los límites entre contextos están bien definidos y que la comunicación entre ellos funciona correctamente.
+
+2. **Pruebas dentro de un Contexto (WithinContext)**: Verifican la integración entre componentes dentro del mismo contexto.
+   - Ejemplos: Core, Inventario, Operaciones.
+   - Estas pruebas validan que los componentes internos de un contexto trabajan juntos correctamente.
+
+Esta organización proporciona varias ventajas:
+- Mayor claridad en la identificación de pruebas relacionadas con contextos específicos
+- Mejor mantenibilidad al reducir la fricción para encontrar y actualizar pruebas relacionadas
+- La estructura misma documenta las relaciones entre contextos
+- Permite identificar fácilmente áreas con poca cobertura de pruebas de integración
+
+Para más detalles, consultar el archivo `Integration/README.md`.
 
 ## Tecnologías Utilizadas
 

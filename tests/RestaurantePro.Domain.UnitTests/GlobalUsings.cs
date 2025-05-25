@@ -114,6 +114,7 @@ global using RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion
 global using RestaurantePro.Domain.Comercial.Promociones.Entities;
 global using RestaurantePro.Domain.Comercial.Promociones.Enums;
 global using RestaurantePro.Domain.Comercial.Promociones.Events;
+global using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
 global using RestaurantePro.Domain.Comercial.Promociones.Specifications;
 
 // Domain Comercial - Facturacion
