@@ -22,13 +22,15 @@ namespace RestaurantePro.Domain.Core
             services.AddTransient<IDateTimeService, DateTimeService>();
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
             
-            // Registrar servicio de caché con telemetría
+            // Registrar servicios de caché con telemetría y TTL dinámico
             services.AddSingleton<ICacheTelemetry, InMemoryCacheTelemetry>();
+            services.AddSingleton<IDynamicTtlStrategy, UsageBasedTtlStrategy>();
             services.AddSingleton<ICacheService>(sp => 
             {
                 var baseCacheService = new MemoryCacheService();
                 var telemetry = sp.GetRequiredService<ICacheTelemetry>();
-                return new TelemetryCacheDecorator(baseCacheService, telemetry);
+                var ttlStrategy = sp.GetRequiredService<IDynamicTtlStrategy>();
+                return new SmartCacheDecorator(baseCacheService, telemetry, ttlStrategy);
             });
             
             // Registrar servicio de notificaciones con caché
@@ -135,13 +137,15 @@ namespace RestaurantePro.Domain.Core
             services.AddSingleton<IDateTimeService>(new MockDateTimeService(DateTime.Now));
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
             
-            // Registrar servicio de caché con telemetría para pruebas
+            // Registrar servicios de caché con telemetría y TTL dinámico para pruebas
             services.AddSingleton<ICacheTelemetry, InMemoryCacheTelemetry>();
+            services.AddSingleton<IDynamicTtlStrategy, UsageBasedTtlStrategy>();
             services.AddSingleton<ICacheService>(sp => 
             {
                 var baseCacheService = new MemoryCacheService();
                 var telemetry = sp.GetRequiredService<ICacheTelemetry>();
-                return new TelemetryCacheDecorator(baseCacheService, telemetry);
+                var ttlStrategy = sp.GetRequiredService<IDynamicTtlStrategy>();
+                return new SmartCacheDecorator(baseCacheService, telemetry, ttlStrategy);
             });
             
             // Registrar servicio de notificaciones con caché para pruebas

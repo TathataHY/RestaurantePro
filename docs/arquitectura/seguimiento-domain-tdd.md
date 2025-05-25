@@ -259,6 +259,9 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-12-05 | InMemoryCacheTelemetry | Diseño → Implementación → Pruebas |
 | 2024-12-05 | TelemetryCacheDecorator | Diseño → Implementación → Pruebas |
 | 2024-12-05 | CacheTelemetryExtensions | Diseño → Implementación |
+| 2024-12-06 | IDynamicTtlStrategy | Diseño → Implementación |
+| 2024-12-06 | UsageBasedTtlStrategy | Diseño → Implementación |
+| 2024-12-06 | SmartCacheDecorator | Diseño → Implementación |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -488,6 +491,38 @@ Se ha implementado un sistema completo de telemetría para monitorizar y analiza
 
 Esta mejora complementa perfectamente la invalidación automática de caché implementada anteriormente, proporcionando los datos necesarios para evaluar su efectividad y realizar ajustes.
 
+### TTL Dinámico para Caché
+
+Se ha implementado un sistema de TTL dinámico que ajusta automáticamente los tiempos de expiración de la caché basándose en patrones de uso reales. Esta implementación permite optimizar el rendimiento y la eficiencia de memoria, adaptándose a las necesidades específicas de cada tipo de dato.
+
+#### Componentes principales
+
+1. **IDynamicTtlStrategy**:
+   - Interfaz para estrategias de cálculo de TTL dinámico
+   - Define métodos para calcular TTL y registrar patrones de uso
+   - Permite implementaciones alternativas o mockups para pruebas
+
+2. **UsageBasedTtlStrategy**:
+   - Implementación que calcula TTL basado en múltiples factores
+   - Considera frecuencia de acceso, tasa de aciertos, recencia e invalidaciones
+   - Utiliza un algoritmo de puntuación ponderada para decisiones
+   - Incluye normalización mediante función sigmoide para transiciones suaves
+
+3. **SmartCacheDecorator**:
+   - Combina telemetría y TTL dinámico en un solo decorador
+   - Intercepta todas las operaciones de caché para análisis
+   - Aplica TTL calculado dinámicamente en operaciones de escritura
+   - Registra métricas para ambos subsistemas
+
+#### Beneficios
+
+- **Eficiencia de recursos**: Optimiza el uso de memoria ajustando TTL
+- **Rendimiento mejorado**: Mantiene datos frecuentes en caché por más tiempo
+- **Adaptabilidad**: Se ajusta automáticamente a cambios en patrones de uso
+- **Sinergia con telemetría**: Integración perfecta con el sistema de telemetría
+
+Esta mejora complementa el sistema de telemetría e invalidación automática, completando un sistema de caché robusto, adaptativo y altamente monitorizable que optimiza automáticamente su comportamiento basado en el uso real.
+
 ## Decisiones de Diseño
 
 - Las entidades usan Factory Methods (Crear) en lugar de constructores públicos
@@ -566,7 +601,7 @@ Esta mejora complementa perfectamente la invalidación automática de caché imp
 | Caché para UsuarioService | Implementar caché para el servicio de usuarios | Media | ⏳ Pendiente |
 | Telemetría de caché | Agregar métricas y logging para monitoreo de la caché | Baja | ✅ Completado |
 | Invalidación por eventos | Automatizar invalidación de caché mediante eventos de dominio | Alta | ✅ Completado |
-| Gestión de TTL dinámico | Implementar TTL dinámico basado en el tipo de datos | Baja | ⏳ Pendiente |
+| Gestión de TTL dinámico | Implementar TTL dinámico basado en el tipo de datos | Baja | ✅ Completado |
 
 ### 2. Integración de contextos
 
