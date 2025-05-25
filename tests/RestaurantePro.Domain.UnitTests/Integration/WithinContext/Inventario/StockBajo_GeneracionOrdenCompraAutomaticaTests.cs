@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.UnitTests.Integration
+namespace RestaurantePro.Domain.UnitTests.Integration.WithinContext.Inventario
 {
     /// <summary>
     /// Tests de integración para verificar el flujo completo de generación automática 

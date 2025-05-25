@@ -1,25 +1,37 @@
-namespace RestaurantePro.Domain.UnitTests.Integration
+namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_Operaciones
 {
     /// <summary>
     /// Tests de integración para verificar el flujo completo de cancelación de reservaciones
     /// cuando se desactiva un cliente.
     /// Demuestra la interacción entre los contextos de Comercial y Operaciones.
     /// </summary>
-    public class CancelacionReservacionesTests
+    public class ClienteDesactivado_CancelacionReservacionesTests
     {
         private readonly Mock<IReservacionRepository> _reservacionRepositoryMock = new();
         private readonly Mock<IClienteRepository> _clienteRepositoryMock = new();
         private readonly Mock<IDomainEventRegistry> _eventRegistryMock = new();
+        private readonly Mock<IDateTimeService> _dateTimeServiceMock = new();
+        private readonly Mock<IServiceProvider> _serviceProviderMock = new();
         
         private readonly ClienteDesactivado_CancelarReservacionesPendientesHandler _handler;
-        private readonly DateTime _fechaActual = DateTime.Now;
+        private readonly DateTime _fechaActual = new DateTime(2023, 1, 1, 12, 0, 0); // Fecha fija para pruebas
         
-        public CancelacionReservacionesTests()
+        public ClienteDesactivado_CancelacionReservacionesTests()
         {
+            // Configurar el servicio de fecha/hora para tests
+            _dateTimeServiceMock.Setup(svc => svc.Now).Returns(_fechaActual);
+            
             // Inicializar handler
             _handler = new ClienteDesactivado_CancelarReservacionesPendientesHandler(
                 _reservacionRepositoryMock.Object,
                 _eventRegistryMock.Object);
+                
+            // Configurar mock de IServiceProvider para resolver el handler
+            _serviceProviderMock
+                .Setup(sp => sp.GetService(typeof(IDomainEventHandler<ClienteDesactivado>)))
+                .Returns(_handler);
+                
+            // Ya no necesitamos el dispatcher, usaremos directamente el handler en las pruebas
         }
         
         [Fact]
@@ -43,28 +55,28 @@ namespace RestaurantePro.Domain.UnitTests.Integration
             var horaReservacion1 = new TimeSpan(20, 0, 0); // 8:00 PM
             var horaReservacion2 = new TimeSpan(21, 0, 0); // 9:00 PM
             
-            // Usar fechas futuras para las reservaciones
-            var fechaFutura1 = DateTime.Now.AddDays(5); // 5 días en el futuro
-            var fechaFutura2 = DateTime.Now.AddDays(7); // 7 días en el futuro
+            // Usar fechas futuras para las reservaciones - importante usar fechas REALMENTE en el futuro
+            var fechaFutura1 = DateTime.Now.AddDays(30); // 30 días en el futuro
+            var fechaFutura2 = DateTime.Now.AddDays(45); // 45 días en el futuro
             
             var reservacion1 = Reservacion.Crear(
-                mesaId, 
                 clienteId, 
+                mesaId, 
                 fechaFutura1,
-                TimeSpan.FromMinutes(90),
+                horaReservacion1,
                 2,
-                "555-123456",
-                "cliente@example.com",
+                "612345678", // Teléfono
+                "cliente1@example.com", // Email
                 "Cena de aniversario");
                 
             var reservacion2 = Reservacion.Crear(
-                mesaId,
                 clienteId,
+                mesaId,
                 fechaFutura2,
-                TimeSpan.FromMinutes(90),
+                horaReservacion2,
                 4,
-                "555-123456",
-                "cliente@example.com",
+                "612345678", // Teléfono
+                "cliente1@example.com", // Email
                 "Reunión familiar");
                 
             // Establecer IDs de las reservaciones usando reflexión
@@ -112,9 +124,9 @@ namespace RestaurantePro.Domain.UnitTests.Integration
             // 4. Verificar que se registró el evento en el log
             _eventRegistryMock.Verify(
                 l => l.RegisterAsync(
-                    It.IsAny<ClienteDesactivado>(),
+                    It.IsAny<DomainEvent>(),
                     It.Is<CancellationToken>(ct => true)),
-                Times.AtLeastOnce);
+                Times.Exactly(2));
         }
         
         [Fact]
@@ -158,9 +170,9 @@ namespace RestaurantePro.Domain.UnitTests.Integration
             // 3. Verificar que se registró el evento en el log
             _eventRegistryMock.Verify(
                 l => l.RegisterAsync(
-                    It.IsAny<ClienteDesactivado>(),
+                    It.IsAny<DomainEvent>(),
                     It.Is<CancellationToken>(ct => true)),
-                Times.AtLeastOnce);
+                Times.Once);
         }
     }
 } 

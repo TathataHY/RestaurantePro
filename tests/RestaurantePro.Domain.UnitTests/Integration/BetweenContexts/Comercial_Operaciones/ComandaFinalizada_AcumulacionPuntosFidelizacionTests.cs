@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.UnitTests.Integration
+namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_Operaciones
 {
     /// <summary>
     /// Tests de integración para verificar el flujo completo de acumulación de puntos

@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.UnitTests.Integration.Core
+namespace RestaurantePro.Domain.UnitTests.Integration.WithinContext.Core
 {
     /// <summary>
     /// Tests de integración para verificar la asignación automática de roles

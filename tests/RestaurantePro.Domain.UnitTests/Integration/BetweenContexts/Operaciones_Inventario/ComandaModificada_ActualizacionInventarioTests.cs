@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.UnitTests.Integration.Operaciones.Comandas
+namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Operaciones_Inventario
 {
     /// <summary>
     /// Tests de integración para verificar la actualización del inventario cuando se modifica una comanda.

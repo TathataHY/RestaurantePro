@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.UnitTests.Integration.Comercial.Proveedores
+namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_Inventario
 {
     /// <summary>
     /// Pruebas de integración entre el contexto Comercial (Facturación) y el contexto Proveedores (Órdenes de Compra).

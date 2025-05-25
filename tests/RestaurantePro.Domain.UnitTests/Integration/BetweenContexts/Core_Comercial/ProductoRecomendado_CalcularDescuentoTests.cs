@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.UnitTests.Integration.Core.Comercial
+namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Core_Comercial
 {
     /// <summary>
     /// Pruebas de integración para verificar la interacción entre el sistema de recomendación de productos
