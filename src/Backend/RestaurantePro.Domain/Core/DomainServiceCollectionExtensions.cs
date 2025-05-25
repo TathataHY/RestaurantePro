@@ -44,6 +44,17 @@ namespace RestaurantePro.Domain.Core
             });
             services.AddScoped<IServicioFidelizacionCached>(sp => 
                 (IServicioFidelizacionCached)sp.GetRequiredService<IServicioFidelizacion>());
+                
+            // 3. Servicio de Recetas
+            services.AddScoped<RecetaService>(); // Implementación original
+            services.AddScoped<IRecetaService>(sp => 
+            {
+                var original = sp.GetRequiredService<RecetaService>();
+                var cacheService = sp.GetRequiredService<ICacheService>();
+                return new RecetaServiceCached(original, cacheService);
+            });
+            services.AddScoped<IRecetaServiceCached>(sp => 
+                (IRecetaServiceCached)sp.GetRequiredService<IRecetaService>());
             
             // Registrar políticas de dominio
             services.AddTransient<IClientesFrecuentesPolicy, ClientesFrecuentesPolicy>();
@@ -104,6 +115,17 @@ namespace RestaurantePro.Domain.Core
             });
             services.AddScoped<IServicioFidelizacionCached>(sp => 
                 (IServicioFidelizacionCached)sp.GetRequiredService<IServicioFidelizacion>());
+                
+            // 3. Servicio de Recetas
+            services.AddScoped<RecetaService>(); // Implementación original
+            services.AddScoped<IRecetaService>(sp => 
+            {
+                var original = sp.GetRequiredService<RecetaService>();
+                var cacheService = sp.GetRequiredService<ICacheService>();
+                return new RecetaServiceCached(original, cacheService);
+            });
+            services.AddScoped<IRecetaServiceCached>(sp => 
+                (IRecetaServiceCached)sp.GetRequiredService<IRecetaService>());
             
             // Registrar políticas de dominio
             services.AddTransient<IClientesFrecuentesPolicy, ClientesFrecuentesPolicy>();

@@ -247,6 +247,7 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-11-16 | CalcularCostoReceta en RecetaService | Pruebas → Implementación → Refactor |
 | 2024-11-18 | CalcularRentabilidadProducto en RecetaService | Pruebas → Implementación → Refactor |
 | 2024-11-20 | ProductoRecomendableSpecification mejorada | Pruebas → Implementación → Refactor |
+| 2024-11-25 | Implementación de caché para servicios de dominio | Diseño → Pruebas → Implementación → Refactor |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -489,5 +490,5 @@ Se ha llevado a cabo una importante refactorización del patrón Specification, 
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
 | Análisis de performance | Identificar cuellos de botella en el dominio | Media | ⏳ Pendiente |
-| Implementación de caché | Estrategia de caché para servicios de dominio frecuentes | Baja | ⏳ Pendiente |
+| Implementación de caché | Estrategia de caché para servicios de dominio frecuentes | Baja | ✅ Completado |
 | Optimización de consultas | Mejorar las interfaces de repositorio para consultas optimizadas | Media | ⏳ Pendiente |
