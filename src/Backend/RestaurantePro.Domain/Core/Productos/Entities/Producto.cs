@@ -49,6 +49,11 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         /// Indica si el producto está activo
         /// </summary>
         public bool EstaActivo { get; private set; }
+        
+        /// <summary>
+        /// Nivel de popularidad del producto en escala de 0-10
+        /// </summary>
+        public int Popularidad { get; private set; }
 
         protected Producto() { }
 
@@ -61,6 +66,7 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
             CategoriaId = categoriaId;
             CategoriaNombre = categoriaNombre ?? "Sin categoría";
             EstaActivo = true;
+            Popularidad = 0; // Nuevo producto inicia con popularidad 0
 
             ValidarInvariantes();
             AddDomainEvent(new ProductoCreado(Id, Nombre!, Precio.Valor));
@@ -101,6 +107,44 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
 
             ValidarInvariantes();
             AddDomainEvent(new ProductoCambioCategoria(Id, CategoriaId, CategoriaNombre!));
+        }
+        
+        /// <summary>
+        /// Actualiza el nivel de popularidad del producto
+        /// </summary>
+        /// <param name="nuevaPopularidad">Nuevo valor de popularidad (0-10)</param>
+        public void ActualizarPopularidad(int nuevaPopularidad)
+        {
+            if (nuevaPopularidad < 0 || nuevaPopularidad > 10)
+                throw new ArgumentOutOfRangeException(nameof(nuevaPopularidad), "La popularidad debe estar entre 0 y 10");
+            
+            if (Popularidad == nuevaPopularidad) return;
+            
+            int popularidadAnterior = Popularidad;
+            Popularidad = nuevaPopularidad;
+            MarkAsModified();
+            
+            AddDomainEvent(new PopularidadProductoActualizada(Id, popularidadAnterior, Popularidad));
+        }
+        
+        /// <summary>
+        /// Incrementa el nivel de popularidad del producto
+        /// </summary>
+        /// <param name="incremento">Cantidad a incrementar</param>
+        public void IncrementarPopularidad(int incremento = 1)
+        {
+            int nuevaPopularidad = Math.Min(Popularidad + incremento, 10);
+            ActualizarPopularidad(nuevaPopularidad);
+        }
+        
+        /// <summary>
+        /// Decrementa el nivel de popularidad del producto
+        /// </summary>
+        /// <param name="decremento">Cantidad a decrementar</param>
+        public void DecrementarPopularidad(int decremento = 1)
+        {
+            int nuevaPopularidad = Math.Max(Popularidad - decremento, 0);
+            ActualizarPopularidad(nuevaPopularidad);
         }
 
         /// <summary>
@@ -154,6 +198,11 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
             if (string.IsNullOrWhiteSpace(CategoriaNombre))
             {
                 throw new InvalidOperationException("El nombre de la categoría no puede estar vacío");
+            }
+            
+            if (Popularidad < 0 || Popularidad > 10)
+            {
+                throw new InvalidOperationException("La popularidad debe estar entre 0 y 10");
             }
         }
     }

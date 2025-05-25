@@ -456,5 +456,509 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
         }
 
         #endregion
+
+        #region CalcularCostoRecetaAsync
+
+        [Fact]
+        public async Task CalcularCostoRecetaAsync_CuandoProductoNoExiste_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync((Producto?)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _recetaService.CalcularCostoRecetaAsync(productoId, _cancellationToken));
+        }
+
+        [Fact]
+        public async Task CalcularCostoRecetaAsync_SinReceta_DebeRetornarCero()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var precio = new PrecioProducto(10.99m);
+
+            var producto = Producto.Crear(
+                "Pizza Margarita", 
+                "Pizza clásica italiana", 
+                precio, 
+                Guid.NewGuid(), 
+                "Pizzas");
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync((Receta?)null);
+
+            // Act
+            var resultado = await _recetaService.CalcularCostoRecetaAsync(productoId, _cancellationToken);
+
+            // Assert
+            resultado.Should().Be(0m);
+        }
+
+        [Fact]
+        public async Task CalcularCostoRecetaAsync_ConRecetaSinIngredientes_DebeRetornarCero()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var precio = new PrecioProducto(10.99m);
+
+            var producto = Producto.Crear(
+                "Pizza Margarita", 
+                "Pizza clásica italiana", 
+                precio, 
+                Guid.NewGuid(), 
+                "Pizzas");
+
+            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 30);
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(receta);
+
+            // Act
+            var resultado = await _recetaService.CalcularCostoRecetaAsync(productoId, _cancellationToken);
+
+            // Assert
+            resultado.Should().Be(0m);
+        }
+
+        [Fact]
+        public async Task CalcularCostoRecetaAsync_IngredienteNoExiste_DebeExcluirDelCalculo()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var precio = new PrecioProducto(10.99m);
+
+            var producto = Producto.Crear(
+                "Pizza Margarita", 
+                "Pizza clásica italiana", 
+                precio, 
+                Guid.NewGuid(), 
+                "Pizzas");
+
+            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 30);
+            
+            var ingrediente1Id = Guid.NewGuid();
+            var ingrediente2Id = Guid.NewGuid();
+            
+            receta.AgregarIngrediente(
+                ingrediente1Id, 
+                "Tomate", 
+                0.2m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            
+            receta.AgregarIngrediente(
+                ingrediente2Id, 
+                "Queso Mozzarella", 
+                0.3m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(receta);
+
+            var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 5.0m);
+            ingrediente2.ActualizarCosto(15.0m); // 15 por kg de queso
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+                .ReturnsAsync((Ingrediente?)null);
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente2);
+
+            // Act
+            var resultado = await _recetaService.CalcularCostoRecetaAsync(productoId, _cancellationToken);
+
+            // Assert
+            // Solo debe contar el costo del queso: 0.3kg * 15.0 = 4.5
+            resultado.Should().Be(4.5m);
+        }
+
+        [Fact]
+        public async Task CalcularCostoRecetaAsync_ConTodosLosIngredientes_DebeCalcularCostoTotal()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var precio = new PrecioProducto(10.99m);
+
+            var producto = Producto.Crear(
+                "Pizza Margarita", 
+                "Pizza clásica italiana", 
+                precio, 
+                Guid.NewGuid(), 
+                "Pizzas");
+
+            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 30);
+            
+            var ingrediente1Id = Guid.NewGuid();
+            var ingrediente2Id = Guid.NewGuid();
+            
+            receta.AgregarIngrediente(
+                ingrediente1Id, 
+                "Tomate", 
+                0.2m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            
+            receta.AgregarIngrediente(
+                ingrediente2Id, 
+                "Queso Mozzarella", 
+                0.3m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(receta);
+
+            var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 10.0m);
+            ingrediente1.ActualizarCosto(5.0m); // 5 por kg de tomate
+            
+            var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 5.0m);
+            ingrediente2.ActualizarCosto(15.0m); // 15 por kg de queso
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente1);
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente2);
+
+            // Act
+            var resultado = await _recetaService.CalcularCostoRecetaAsync(productoId, _cancellationToken);
+
+            // Assert
+            // Tomate: 0.2kg * 5.0 = 1.0
+            // Queso: 0.3kg * 15.0 = 4.5
+            // Total: 5.5
+            resultado.Should().Be(5.5m);
+        }
+
+        [Fact]
+        public async Task CalcularCostoRecetaAsync_ConIngredientesOpcionales_DebeIncluirOpcionalesEnCalculo()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var precio = new PrecioProducto(10.99m);
+
+            var producto = Producto.Crear(
+                "Pizza Margarita", 
+                "Pizza clásica italiana", 
+                precio, 
+                Guid.NewGuid(), 
+                "Pizzas");
+
+            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 30);
+            
+            var ingrediente1Id = Guid.NewGuid();
+            var ingrediente2Id = Guid.NewGuid();
+            var ingrediente3Id = Guid.NewGuid();
+            
+            receta.AgregarIngrediente(
+                ingrediente1Id, 
+                "Tomate", 
+                0.2m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            
+            receta.AgregarIngrediente(
+                ingrediente2Id, 
+                "Queso Mozzarella", 
+                0.3m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+                
+            receta.AgregarIngrediente(
+                ingrediente3Id, 
+                "Aceitunas", 
+                0.05m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                true); // Ingrediente opcional
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(receta);
+
+            var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 10.0m);
+            ingrediente1.ActualizarCosto(5.0m); // 5 por kg de tomate
+            
+            var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 5.0m);
+            ingrediente2.ActualizarCosto(15.0m); // 15 por kg de queso
+            
+            var ingrediente3 = CrearIngredienteSimulado(ingrediente3Id, 2.0m);
+            ingrediente3.ActualizarCosto(20.0m); // 20 por kg de aceitunas
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente1);
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente2);
+                
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente3Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente3);
+
+            // Act
+            var resultado = await _recetaService.CalcularCostoRecetaAsync(productoId, _cancellationToken);
+
+            // Assert
+            // Tomate: 0.2kg * 5.0 = 1.0
+            // Queso: 0.3kg * 15.0 = 4.5
+            // Aceitunas: 0.05kg * 20.0 = 1.0
+            // Total: 6.5
+            resultado.Should().Be(6.5m);
+        }
+
+        #endregion
+
+        #region CalcularRentabilidadProductoAsync
+
+        [Fact]
+        public async Task CalcularRentabilidadProductoAsync_ProductoNoExiste_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync((Producto?)null);
+
+            // Act & Assert
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _recetaService.CalcularRentabilidadProductoAsync(productoId, _cancellationToken));
+        }
+
+        [Fact]
+        public async Task CalcularRentabilidadProductoAsync_SinReceta_DebeCalcularSoloConPrecioVenta()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var precio = new PrecioProducto(10.0m);
+
+            var producto = Producto.Crear(
+                "Pizza Margarita", 
+                "Pizza clásica italiana", 
+                precio, 
+                Guid.NewGuid(), 
+                "Pizzas");
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync((Receta?)null);
+
+            // Act
+            var resultado = await _recetaService.CalcularRentabilidadProductoAsync(productoId, _cancellationToken);
+
+            // Assert
+            // Sin receta, el costo es 0, así que la rentabilidad es 100%
+            resultado.Rentabilidad.Should().Be(100.0m);
+            resultado.MargenGanancia.Should().Be(10.0m);
+            resultado.CostoTotal.Should().Be(0.0m);
+            resultado.PrecioVenta.Should().Be(10.0m);
+        }
+
+        [Fact]
+        public async Task CalcularRentabilidadProductoAsync_ConRecetaSinIngredientes_DebeCalcularSoloConPrecioVenta()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var precio = new PrecioProducto(15.0m);
+
+            var producto = Producto.Crear(
+                "Pizza Margarita", 
+                "Pizza clásica italiana", 
+                precio, 
+                Guid.NewGuid(), 
+                "Pizzas");
+
+            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 30);
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(receta);
+
+            // Act
+            var resultado = await _recetaService.CalcularRentabilidadProductoAsync(productoId, _cancellationToken);
+
+            // Assert
+            // Sin ingredientes, el costo es 0, así que la rentabilidad es 100%
+            resultado.Rentabilidad.Should().Be(100.0m);
+            resultado.MargenGanancia.Should().Be(15.0m);
+            resultado.CostoTotal.Should().Be(0.0m);
+            resultado.PrecioVenta.Should().Be(15.0m);
+        }
+
+        [Fact]
+        public async Task CalcularRentabilidadProductoAsync_ConReceta_DebeCalcularCorrectamente()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var precio = new PrecioProducto(20.0m);
+
+            var producto = Producto.Crear(
+                "Pizza Margarita", 
+                "Pizza clásica italiana", 
+                precio, 
+                Guid.NewGuid(), 
+                "Pizzas");
+
+            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 30);
+            
+            var ingrediente1Id = Guid.NewGuid();
+            var ingrediente2Id = Guid.NewGuid();
+            
+            receta.AgregarIngrediente(
+                ingrediente1Id, 
+                "Tomate", 
+                0.2m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+            
+            receta.AgregarIngrediente(
+                ingrediente2Id, 
+                "Queso Mozzarella", 
+                0.3m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(receta);
+
+            var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 10.0m);
+            ingrediente1.ActualizarCosto(5.0m); // 5 por kg de tomate
+            
+            var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 5.0m);
+            ingrediente2.ActualizarCosto(15.0m); // 15 por kg de queso
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente1);
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente2);
+
+            // Act
+            var resultado = await _recetaService.CalcularRentabilidadProductoAsync(productoId, _cancellationToken);
+
+            // Assert
+            // Costo: Tomate (0.2kg * 5.0 = 1.0) + Queso (0.3kg * 15.0 = 4.5) = 5.5
+            // Precio venta: 20.0
+            // Margen: 20.0 - 5.5 = 14.5
+            // Rentabilidad: (14.5 / 20.0) * 100 = 72.5%
+            resultado.CostoTotal.Should().Be(5.5m);
+            resultado.PrecioVenta.Should().Be(20.0m);
+            resultado.MargenGanancia.Should().Be(14.5m);
+            resultado.Rentabilidad.Should().Be(72.5m);
+        }
+
+        [Fact]
+        public async Task CalcularRentabilidadProductoAsync_ConCostoAlto_DebeCalcularRentabilidadBaja()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var precio = new PrecioProducto(10.0m);
+
+            var producto = Producto.Crear(
+                "Pizza Margarita", 
+                "Pizza clásica italiana", 
+                precio, 
+                Guid.NewGuid(), 
+                "Pizzas");
+
+            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 30);
+            
+            var ingrediente1Id = Guid.NewGuid();
+            
+            receta.AgregarIngrediente(
+                ingrediente1Id, 
+                "Trufa", 
+                0.05m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(receta);
+
+            var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 1.0m);
+            ingrediente1.ActualizarCosto(150.0m); // 150 por kg de trufa (ingrediente caro)
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente1);
+
+            // Act
+            var resultado = await _recetaService.CalcularRentabilidadProductoAsync(productoId, _cancellationToken);
+
+            // Assert
+            // Costo: Trufa (0.05kg * 150.0 = 7.5)
+            // Precio venta: 10.0
+            // Margen: 10.0 - 7.5 = 2.5
+            // Rentabilidad: (2.5 / 10.0) * 100 = 25%
+            resultado.CostoTotal.Should().Be(7.5m);
+            resultado.PrecioVenta.Should().Be(10.0m);
+            resultado.MargenGanancia.Should().Be(2.5m);
+            resultado.Rentabilidad.Should().Be(25.0m);
+        }
+
+        [Fact]
+        public async Task CalcularRentabilidadProductoAsync_ConCostoMayorQuePrecio_DebeCalcularRentabilidadNegativa()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var precio = new PrecioProducto(8.0m);
+
+            var producto = Producto.Crear(
+                "Pizza Especial", 
+                "Pizza con ingredientes premium", 
+                precio, 
+                Guid.NewGuid(), 
+                "Pizzas");
+
+            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 30);
+            
+            var ingrediente1Id = Guid.NewGuid();
+            
+            receta.AgregarIngrediente(
+                ingrediente1Id, 
+                "Trufa Blanca", 
+                0.1m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(receta);
+
+            var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 1.0m);
+            ingrediente1.ActualizarCosto(200.0m); // 200 por kg de trufa blanca (muy caro)
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente1);
+
+            // Act
+            var resultado = await _recetaService.CalcularRentabilidadProductoAsync(productoId, _cancellationToken);
+
+            // Assert
+            // Costo: Trufa Blanca (0.1kg * 200.0 = 20.0)
+            // Precio venta: 8.0
+            // Margen: 8.0 - 20.0 = -12.0
+            // Rentabilidad: (-12.0 / 8.0) * 100 = -150%
+            resultado.CostoTotal.Should().Be(20.0m);
+            resultado.PrecioVenta.Should().Be(8.0m);
+            resultado.MargenGanancia.Should().Be(-12.0m);
+            resultado.Rentabilidad.Should().Be(-150.0m);
+        }
+
+        #endregion
     }
 } 

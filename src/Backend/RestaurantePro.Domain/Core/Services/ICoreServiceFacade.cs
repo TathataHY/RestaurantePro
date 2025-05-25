@@ -121,6 +121,26 @@ namespace RestaurantePro.Domain.Core.Services
             Guid productoId, 
             int cantidad, 
             CancellationToken cancellationToken = default);
+            
+        /// <summary>
+        /// Calcula el costo total de los ingredientes necesarios para elaborar un producto según su receta
+        /// </summary>
+        /// <param name="productoId">ID del producto</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Costo total de los ingredientes en la receta</returns>
+        Task<decimal> CalcularCostoRecetaProductoAsync(
+            Guid productoId,
+            CancellationToken cancellationToken = default);
+            
+        /// <summary>
+        /// Calcula la rentabilidad de un producto basado en su precio de venta y el costo de sus ingredientes
+        /// </summary>
+        /// <param name="productoId">ID del producto</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Objeto con información detallada sobre la rentabilidad</returns>
+        Task<Productos.ValueObjects.RentabilidadProducto> CalcularRentabilidadProductoAsync(
+            Guid productoId,
+            CancellationToken cancellationToken = default);
         
         #endregion
         

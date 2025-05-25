@@ -244,6 +244,9 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-11-10 | Optimización ClientesFrecuentesPolicyTests | Pruebas → Implementación → Refactor |
 | 2024-11-12 | Mejora de validaciones en Email ValueObject | Pruebas → Implementación → Refactor |
 | 2024-11-14 | CoreServiceFacade | Diseño → Implementación → Pruebas → Refactor |
+| 2024-11-16 | CalcularCostoReceta en RecetaService | Pruebas → Implementación → Refactor |
+| 2024-11-18 | CalcularRentabilidadProducto en RecetaService | Pruebas → Implementación → Refactor |
+| 2024-11-20 | ProductoRecomendableSpecification mejorada | Pruebas → Implementación → Refactor |
 
 ## Mejoras Recientes en la Arquitectura
 

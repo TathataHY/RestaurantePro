@@ -134,5 +134,66 @@ namespace RestaurantePro.Domain.Core.Productos.Services
 
             return ingredientesFaltantes;
         }
+        
+        /// <inheritdoc/>
+        public async Task<decimal> CalcularCostoRecetaAsync(Guid productoId, CancellationToken cancellationToken = default)
+        {
+            // Verificar que el producto exista
+            var producto = await _productoRepository.ObtenerPorIdAsync(productoId, cancellationToken);
+            if (producto == null)
+            {
+                throw new InvalidOperationException($"No se encontró el producto con ID {productoId}");
+            }
+            
+            // Obtener la receta del producto
+            var receta = await _recetaRepository.ObtenerPorProductoIdAsync(productoId, cancellationToken);
+            if (receta == null || !receta.Ingredientes.Any())
+            {
+                // Si no hay receta o no tiene ingredientes, el costo es cero
+                return 0m;
+            }
+            
+            decimal costoTotal = 0m;
+            
+            // Sumar el costo de cada ingrediente
+            foreach (var ingredienteReceta in receta.Ingredientes)
+            {
+                // Obtener el ingrediente del repositorio
+                var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(
+                    ingredienteReceta.IngredienteId, 
+                    false, 
+                    cancellationToken);
+                
+                if (ingrediente != null)
+                {
+                    // Calcular el costo de este ingrediente según su cantidad
+                    decimal costoIngrediente = ingrediente.CostoUnitario * ingredienteReceta.Cantidad;
+                    costoTotal += costoIngrediente;
+                }
+                // Si el ingrediente no existe, no sumamos nada al costo total
+            }
+            
+            return costoTotal;
+        }
+        
+        /// <inheritdoc/>
+        public async Task<ValueObjects.RentabilidadProducto> CalcularRentabilidadProductoAsync(Guid productoId, CancellationToken cancellationToken = default)
+        {
+            // Verificar que el producto exista
+            var producto = await _productoRepository.ObtenerPorIdAsync(productoId, cancellationToken);
+            if (producto == null)
+            {
+                throw new InvalidOperationException($"No se encontró el producto con ID {productoId}");
+            }
+            
+            // Obtener el costo total de los ingredientes
+            decimal costoTotal = await CalcularCostoRecetaAsync(productoId, cancellationToken);
+            
+            // Obtener el precio de venta del producto
+            decimal precioVenta = producto.Precio.Valor;
+            
+            // Calcular rentabilidad usando el value object
+            return ValueObjects.RentabilidadProducto.Calcular(costoTotal, precioVenta);
+        }
     }
 } 

@@ -215,6 +215,22 @@ namespace RestaurantePro.Domain.Core.Services
             return await _recetaService.ObtenerIngredientesFaltantesAsync(productoId, cantidad, cancellationToken);
         }
 
+        /// <inheritdoc/>
+        public async Task<decimal> CalcularCostoRecetaProductoAsync(
+            Guid productoId,
+            CancellationToken cancellationToken = default)
+        {
+            return await _recetaService.CalcularCostoRecetaAsync(productoId, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task<Productos.ValueObjects.RentabilidadProducto> CalcularRentabilidadProductoAsync(
+            Guid productoId,
+            CancellationToken cancellationToken = default)
+        {
+            return await _recetaService.CalcularRentabilidadProductoAsync(productoId, cancellationToken);
+        }
+
         // Método auxiliar para obtener nombre de ingrediente
         private async Task<string?> ObtenerNombreIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken)
         {
