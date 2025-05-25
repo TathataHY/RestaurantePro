@@ -22,6 +22,17 @@ namespace RestaurantePro.Domain.Core
             // Registrar servicio de caché
             services.AddSingleton<ICacheService, MemoryCacheService>();
             
+            // Registrar servicio de notificaciones con caché
+            services.AddScoped<ServicioNotificaciones>(); // Implementación original
+            services.AddScoped<IServicioNotificaciones>(sp => 
+            {
+                var original = sp.GetRequiredService<ServicioNotificaciones>();
+                var cacheService = sp.GetRequiredService<ICacheService>();
+                return new ServicioNotificacionesCached(original, cacheService);
+            });
+            services.AddScoped<IServicioNotificacionesCached>(sp => 
+                (IServicioNotificacionesCached)sp.GetRequiredService<IServicioNotificaciones>());
+            
             // Registrar servicios de dominio decorados con caché
             // 1. Verificador de Stock
             services.AddScoped<VerificadorStock>(); // Implementación original
@@ -55,6 +66,17 @@ namespace RestaurantePro.Domain.Core
             });
             services.AddScoped<IRecetaServiceCached>(sp => 
                 (IRecetaServiceCached)sp.GetRequiredService<IRecetaService>());
+                
+            // 4. Servicio de Productos y Categorías
+            services.AddScoped<ProductoCategoriaService>(); // Implementación original
+            services.AddScoped<IProductoCategoriaService>(sp => 
+            {
+                var original = sp.GetRequiredService<ProductoCategoriaService>();
+                var cacheService = sp.GetRequiredService<ICacheService>();
+                return new ProductoCategoriaServiceCached(original, cacheService);
+            });
+            services.AddScoped<IProductoCategoriaServiceCached>(sp => 
+                (IProductoCategoriaServiceCached)sp.GetRequiredService<IProductoCategoriaService>());
             
             // Registrar políticas de dominio
             services.AddTransient<IClientesFrecuentesPolicy, ClientesFrecuentesPolicy>();
@@ -66,6 +88,17 @@ namespace RestaurantePro.Domain.Core
             services.AddTransient<Comercial.Clientes.Specifications.ClienteFrecuenteSpecification>();
             services.AddTransient<Inventario.Ingredientes.Specifications.IngredienteRotacionAltaSpecification>();
             services.AddTransient<Core.Productos.Specifications.ProductoDisponibleSpecification>();
+            
+            // 5. Generador de Órdenes de Compra
+            services.AddScoped<Inventario.Services.GeneradorOrdenesCompra>(); // Implementación original
+            services.AddScoped<Inventario.Services.IGeneradorOrdenesCompra>(sp => 
+            {
+                var original = sp.GetRequiredService<Inventario.Services.GeneradorOrdenesCompra>();
+                var cacheService = sp.GetRequiredService<ICacheService>();
+                return new Inventario.Services.GeneradorOrdenesCompraCached(original, cacheService);
+            });
+            services.AddScoped<Inventario.Services.IGeneradorOrdenesCompraCached>(sp => 
+                (Inventario.Services.IGeneradorOrdenesCompraCached)sp.GetRequiredService<Inventario.Services.IGeneradorOrdenesCompra>());
             
             // Registrar interfaces de fachada para la capa de aplicación
             services.AddScoped<Comercial.Services.IComercialServiceFacade, Comercial.Services.ComercialServiceFacade>();
@@ -92,6 +125,17 @@ namespace RestaurantePro.Domain.Core
             
             // Registrar servicio de caché para pruebas (singleton para mantenerlo en memoria durante las pruebas)
             services.AddSingleton<ICacheService, MemoryCacheService>();
+            
+            // Registrar servicio de notificaciones con caché para pruebas
+            services.AddScoped<ServicioNotificaciones>(); // Implementación original
+            services.AddScoped<IServicioNotificaciones>(sp => 
+            {
+                var original = sp.GetRequiredService<ServicioNotificaciones>();
+                var cacheService = sp.GetRequiredService<ICacheService>();
+                return new ServicioNotificacionesCached(original, cacheService);
+            });
+            services.AddScoped<IServicioNotificacionesCached>(sp => 
+                (IServicioNotificacionesCached)sp.GetRequiredService<IServicioNotificaciones>());
             
             // Registrar servicios de dominio decorados con caché para pruebas
             // 1. Verificador de Stock
@@ -126,6 +170,17 @@ namespace RestaurantePro.Domain.Core
             });
             services.AddScoped<IRecetaServiceCached>(sp => 
                 (IRecetaServiceCached)sp.GetRequiredService<IRecetaService>());
+                
+            // 4. Servicio de Productos y Categorías
+            services.AddScoped<ProductoCategoriaService>(); // Implementación original
+            services.AddScoped<IProductoCategoriaService>(sp => 
+            {
+                var original = sp.GetRequiredService<ProductoCategoriaService>();
+                var cacheService = sp.GetRequiredService<ICacheService>();
+                return new ProductoCategoriaServiceCached(original, cacheService);
+            });
+            services.AddScoped<IProductoCategoriaServiceCached>(sp => 
+                (IProductoCategoriaServiceCached)sp.GetRequiredService<IProductoCategoriaService>());
             
             // Registrar políticas de dominio
             services.AddTransient<IClientesFrecuentesPolicy, ClientesFrecuentesPolicy>();
@@ -137,6 +192,17 @@ namespace RestaurantePro.Domain.Core
             services.AddTransient<Comercial.Clientes.Specifications.ClienteFrecuenteSpecification>();
             services.AddTransient<Inventario.Ingredientes.Specifications.IngredienteRotacionAltaSpecification>();
             services.AddTransient<Core.Productos.Specifications.ProductoDisponibleSpecification>();
+            
+            // 5. Generador de Órdenes de Compra para pruebas
+            services.AddScoped<Inventario.Services.GeneradorOrdenesCompra>(); // Implementación original
+            services.AddScoped<Inventario.Services.IGeneradorOrdenesCompra>(sp => 
+            {
+                var original = sp.GetRequiredService<Inventario.Services.GeneradorOrdenesCompra>();
+                var cacheService = sp.GetRequiredService<ICacheService>();
+                return new Inventario.Services.GeneradorOrdenesCompraCached(original, cacheService);
+            });
+            services.AddScoped<Inventario.Services.IGeneradorOrdenesCompraCached>(sp => 
+                (Inventario.Services.IGeneradorOrdenesCompraCached)sp.GetRequiredService<Inventario.Services.IGeneradorOrdenesCompra>());
             
             // Registrar mocks de interfaces de fachada para pruebas
             // Aquí se pueden usar implementaciones simuladas para pruebas

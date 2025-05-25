@@ -248,6 +248,9 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-11-18 | CalcularRentabilidadProducto en RecetaService | Pruebas → Implementación → Refactor |
 | 2024-11-20 | ProductoRecomendableSpecification mejorada | Pruebas → Implementación → Refactor |
 | 2024-11-25 | Implementación de caché para servicios de dominio | Diseño → Pruebas → Implementación → Refactor |
+| 2024-11-30 | ServicioNotificacionesCached | Pruebas → Implementación → Refactor |
+| 2024-11-30 | GeneradorOrdenesCompraCached | Pruebas → Implementación → Refactor |
+| 2024-11-30 | Estrategia de caché y documentación | Diseño → Implementación |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -382,6 +385,30 @@ Se ha llevado a cabo una importante refactorización del patrón Specification, 
    - Los operadores `And`, `Or` y `Not` retornan `Specification<T>`
    - Mejor encadenamiento de llamadas con tipo fuerte
 
+### Implementación de Caché para Servicios de Dominio
+
+Se ha implementado un sistema de caché para mejorar el rendimiento de servicios de dominio claves, siguiendo el patrón Decorador:
+
+#### Componentes implementados
+
+1. **Interfaces de caché**:
+   - `ICacheService` como interfaz base para operaciones de caché
+   - `MemoryCacheService` como implementación basada en memoria
+   - Interfaces extendidas específicas (`IXxxCached`) para cada servicio con caché
+
+2. **Servicios con caché**:
+   - `ProductoCategoriaServiceCached` para caché de productos y categorías (60 min)
+   - `ServicioNotificacionesCached` para caché de notificaciones (30 min)
+   - `GeneradorOrdenesCompraCached` para caché de órdenes de compra (15 min)
+   - `RecetaServiceCached` para caché de recetas (60 min)
+   - `VerificadorStockCached` para caché de verificación de stock (15 min)
+   - `ServicioFidelizacionCached` para caché de servicios de fidelización (30 min)
+
+3. **Estrategias de invalidación**:
+   - Invalidación específica por recurso (ID)
+   - Invalidación por patrón para grupos relacionados
+   - Invalidación completa para operaciones que afectan múltiples recursos
+
 ## Decisiones de Diseño
 
 - Las entidades usan Factory Methods (Crear) en lugar de constructores públicos
@@ -413,51 +440,6 @@ Se ha llevado a cabo una importante refactorización del patrón Specification, 
    - Desarrollar controladores API para exponer funcionalidades
    - Implementar autenticación y autorización
    - Configurar middleware para manejo de errores y logging
-
-## Próximos Pasos Prioritarios (Octubre 2024)
-
-### 1. Homogeneización de interfaces de repositorio
-
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Estandarización de nombres de métodos | Resolver inconsistencia entre `GetByIdAsync` (legacy) y `ObtenerPorIdAsync` (nuevo) | Alta | ✅ Completado |
-| Consistencia de CancellationToken | Asegurar que todos los métodos asíncronos acepten y propaguen CancellationToken | Alta | ✅ Completado |
-| Interfaces de Application | Revisar y actualizar las interfaces de repositorio en la capa de Application | Media | ✅ Completado |
-| Soporte para Especificaciones | Agregar métodos para trabajar con especificaciones en IRepository | Alta | ✅ Completado |
-
-### 2. Utilización consistente de ValueObjects
-
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Refactorizar Cliente (Comercial) | Implementar Email y PhoneNumber ValueObjects | Alta | ✅ Completado |
-
-### 3. Limpieza y formato
-
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Comentarios inconsistentes | Eliminar o implementar comentarios sin funcionalidad correspondiente | Baja | ✅ Completado |
-| Formato de eventos | Corregir indentación en eventos de Reservaciones | Baja | ✅ Completado |
-
-### 4. Mejoras en documentación
-
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Guías de uso | Crear guías de uso para los principales componentes del dominio | Baja | ⏳ Pendiente |
-| Documentación de Usuarios | Documentar el módulo de usuarios y servicios relacionados | Media | ⏳ Pendiente |
-
-### 5. Mejoras en interfaces de servicio
-
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Estandarización de IUsuarioActualService | Actualizar a convenciones y tipos consistentes | Media | ✅ Completado |
-| Revisión de interfaces de servicio | Actualizar y añadir documentación a interfaces de servicio en Application | Media | ✅ Completado |
-
-### 6. Organización de Pruebas de Integración
-
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Estructurar pruebas por contexto | Reorganizar pruebas de integración en carpetas por contexto | Media | ✅ Completado |
-| Implementar test Core-Usuarios | Implementar prueba UsuarioCreado_AsignacionRolesTests | Alta | ✅ Completado |
 
 ## Próximos Pasos Prioritarios (Noviembre 2024)
 
@@ -491,4 +473,43 @@ Se ha llevado a cabo una importante refactorización del patrón Specification, 
 |-------|-------------|-----------|--------|
 | Análisis de performance | Identificar cuellos de botella en el dominio | Media | ⏳ Pendiente |
 | Implementación de caché | Estrategia de caché para servicios de dominio frecuentes | Baja | ✅ Completado |
+| Caché para notificaciones | Implementar caché para el servicio de notificaciones | Media | ✅ Completado |
+| Caché para generación de órdenes | Implementar caché para generación de órdenes de compra | Media | ✅ Completado |
+| Documentación de estrategia de caché | Crear documentación detallada sobre la estrategia de caché | Baja | ✅ Completado |
 | Optimización de consultas | Mejorar las interfaces de repositorio para consultas optimizadas | Media | ⏳ Pendiente |
+
+## Próximos Pasos Prioritarios (Diciembre 2024)
+
+### 1. Ampliación del sistema de caché
+
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Caché para UsuarioService | Implementar caché para el servicio de usuarios | Media | ⏳ Pendiente |
+| Telemetría de caché | Agregar métricas y logging para monitoreo de la caché | Baja | ⏳ Pendiente |
+| Invalidación por eventos | Automatizar invalidación de caché mediante eventos de dominio | Alta | ⏳ Pendiente |
+| Gestión de TTL dinámico | Implementar TTL dinámico basado en el tipo de datos | Baja | ⏳ Pendiente |
+
+### 2. Integración de contextos
+
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Integración Comercial-Proveedores | Implementar flujo de datos entre contextos comercial y proveedores | Alta | ⏳ Pendiente |
+| Integración Core-Operaciones | Mejorar integración entre catálogo de productos y comandas | Media | ⏳ Pendiente |
+| Pruebas de integración multi-contexto | Implementar pruebas que verifiquen flujos completos a través de múltiples contextos | Alta | ⏳ Pendiente |
+
+### 3. Implementación completa de CoreServiceFacade
+
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Pruebas unitarias CoreServiceFacade | Completar las pruebas unitarias para la fachada de servicios del Core | Alta | ⏳ Pendiente |
+| Refactorización CoreServiceFacade | Corregir errores y optimizar implementación actual | Alta | ⏳ Pendiente |
+| Documentación de uso | Crear guía de uso para desarrolladores sobre cómo usar la fachada | Media | ⏳ Pendiente |
+
+### 4. Preparación para capa de infraestructura
+
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Interfaces de persistencia | Finalizar y documentar todas las interfaces de repositorio | Alta | ⏳ Pendiente |
+| Mock repositories | Crear implementaciones de prueba para todos los repositorios | Media | ⏳ Pendiente |
+| Especificaciones para EF Core | Optimizar especificaciones para su uso con Entity Framework Core | Media | ⏳ Pendiente |
+| Pruebas de concepto con EF Core | Implementar ejemplos básicos de repositorios con EF Core | Alta | ⏳ Pendiente |
