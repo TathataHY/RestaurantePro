@@ -1,15 +1,3 @@
-using Moq;
-using Xunit;
-using FluentAssertions;
-using RestaurantePro.Domain.Core.Productos.Entities;
-using RestaurantePro.Domain.Core.Productos.ValueObjects;
-using RestaurantePro.Domain.Core.Productos.Services;
-using RestaurantePro.Domain.Core.Productos.Specifications;
-using System.Linq.Expressions;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace RestaurantePro.Domain.UnitTests.Core.Productos.Specifications
 {
     public class ProductoRecomendableSpecificationTests

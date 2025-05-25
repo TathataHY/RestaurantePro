@@ -60,11 +60,11 @@ namespace RestaurantePro.Domain.Core.Usuarios.Interfaces
         Task EliminarAsync(Guid id, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Obtiene roles mediante una especificación.
+        /// Obtiene todos los roles que cumplan con la especificación
         /// </summary>
-        /// <param name="spec">Especificación que define los criterios de filtrado.</param>
-        /// <param name="cancellationToken">Token de cancelación.</param>
-        /// <returns>Lista de roles que cumplen con la especificación.</returns>
-        Task<IReadOnlyList<Rol>> ObtenerPorSpecAsync(SharedKernel.Specifications.ISpecification<Rol> spec, CancellationToken cancellationToken = default);
+        /// <param name="spec">Especificación a aplicar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de roles que cumplen la especificación</returns>
+        Task<IReadOnlyList<Rol>> ObtenerPorSpecAsync(Core.SharedKernel.Interfaces.ISpecification<Rol> spec, CancellationToken cancellationToken = default);
     }
 } 

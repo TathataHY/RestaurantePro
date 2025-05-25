@@ -99,28 +99,28 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
         Task<T?> PrimeroODefaultAsync(Func<T, bool> predicado, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Obtiene entidades que satisfacen una especificación
+        /// Obtiene todas las entidades que cumplan con la especificación
         /// </summary>
         /// <param name="specification">Especificación a aplicar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Colección de entidades que satisfacen la especificación</returns>
-        Task<IEnumerable<T>> ObtenerPorSpecAsync(SharedKernel.Specifications.ISpecification<T> specification, CancellationToken cancellationToken = default);
+        /// <returns>Colección de entidades que cumplen la especificación</returns>
+        Task<IEnumerable<T>> ObtenerPorSpecAsync(ISpecification<T> specification, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Cuenta la cantidad de entidades que satisfacen una especificación
+        /// Cuenta cuántas entidades cumplen con la especificación
         /// </summary>
         /// <param name="specification">Especificación a aplicar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Cantidad de entidades que satisfacen la especificación</returns>
-        Task<int> ContarPorSpecAsync(SharedKernel.Specifications.ISpecification<T> specification, CancellationToken cancellationToken = default);
+        /// <returns>Número de entidades que cumplen la especificación</returns>
+        Task<int> ContarPorSpecAsync(ISpecification<T> specification, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Obtiene la primera entidad que satisface una especificación
+        /// Obtiene la primera entidad que cumple con la especificación
         /// </summary>
         /// <param name="specification">Especificación a aplicar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>La primera entidad que satisface la especificación o null si no existe</returns>
-        Task<T?> PrimeroODefaultPorSpecAsync(SharedKernel.Specifications.ISpecification<T> specification, CancellationToken cancellationToken = default);
+        /// <returns>Primera entidad que cumple la especificación o null si no hay ninguna</returns>
+        Task<T?> PrimeroODefaultPorSpecAsync(ISpecification<T> specification, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Guarda los cambios y publica eventos de dominio

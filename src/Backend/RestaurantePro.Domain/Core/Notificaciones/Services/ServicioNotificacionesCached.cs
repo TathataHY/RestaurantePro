@@ -1,12 +1,3 @@
-using RestaurantePro.Domain.Core.Notificaciones.Entities;
-using RestaurantePro.Domain.Core.Notificaciones.Enums;
-using RestaurantePro.Domain.Core.SharedKernel.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace RestaurantePro.Domain.Core.Notificaciones.Services
 {
     /// <summary>

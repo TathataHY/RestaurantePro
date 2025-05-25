@@ -81,7 +81,13 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                     entidadRelacionadaId: factura.Id);
 
                 // Enviar notificación
-                await _servicioNotificaciones.EnviarNotificacionAsync(notificacion, cancellationToken);
+                await _servicioNotificaciones.EnviarNotificacionAsync(
+                    notificacion.Titulo,
+                    notificacion.Mensaje,
+                    notificacion.Tipo,
+                    notificacion.DestinatarioId,
+                    notificacion.EntidadRelacionadaId,
+                    cancellationToken);
                 
                 // Guardar cambios
                 await _facturaRepository.GuardarCambiosAsync(cancellationToken);

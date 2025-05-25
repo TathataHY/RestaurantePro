@@ -67,6 +67,7 @@ global using RestaurantePro.Domain.Core.Usuarios.Events;
 global using RestaurantePro.Domain.Core.Usuarios.Events.Usuario;
 global using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 global using RestaurantePro.Domain.Core.Usuarios.EventHandlers;
+global using RestaurantePro.Domain.Core.Usuarios.Services;
 
 // Domain core imports - Productos
 global using RestaurantePro.Domain.Core.Productos.Entities;
@@ -76,6 +77,7 @@ global using RestaurantePro.Domain.Core.Productos.Events;
 global using RestaurantePro.Domain.Core.Productos.Events.Producto;
 global using RestaurantePro.Domain.Core.Productos.Events.ProductoCategoria;
 global using RestaurantePro.Domain.Core.Productos.Services;
+global using RestaurantePro.Domain.Core.Productos.Specifications;
 global using RestaurantePro.Domain.Core.Productos.Policies;
 
 // Domain Operaciones - Comandas

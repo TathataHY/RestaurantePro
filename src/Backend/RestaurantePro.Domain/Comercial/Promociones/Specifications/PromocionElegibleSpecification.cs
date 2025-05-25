@@ -4,10 +4,10 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Specifications
     /// Especificación compuesta para filtrar promociones elegibles para ser aplicadas
     /// en un momento determinado (activas y válidas para el día)
     /// </summary>
-    public class PromocionElegibleSpecification : Specification<Promocion>
+    public class PromocionElegibleSpecification : Core.Base.Specification<Promocion>
     {
-        private readonly Specification<Promocion> _especificacionCombinada;
-        
+        private readonly Core.Base.Specification<Promocion> _especificacionCombinada;
+
         /// <summary>
         /// Constructor de la especificación
         /// </summary>
@@ -17,15 +17,15 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Specifications
         {
             DateTime fechaEfectiva = fecha ?? DateTime.Now;
             DayOfWeek diaEfectivo = diaSemana ?? fechaEfectiva.DayOfWeek;
-            
+
             // Combinar especificaciones
             var promocionActiva = new PromocionActivaSpecification(fechaEfectiva);
             var promocionDiaSemana = new PromocionDiaSemanaSpecification(diaEfectivo);
-            
+
             // Esta especificación combina ambas condiciones
-            _especificacionCombinada = promocionActiva.And(promocionDiaSemana);
+            _especificacionCombinada = (Core.Base.Specification<Promocion>)promocionActiva.And(promocionDiaSemana);
         }
-        
+
         /// <summary>
         /// Retorna la expresión combinada
         /// </summary>
@@ -34,4 +34,4 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Specifications
             return _especificacionCombinada.ToExpression();
         }
     }
-} 
+}

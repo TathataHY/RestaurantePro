@@ -13,8 +13,8 @@ namespace RestaurantePro.Domain.Core.Services
         private readonly Notificaciones.Interfaces.INotificacionRepository _notificacionRepository;
         private readonly Productos.Services.IProductoCategoriaService _productoCategoriaService;
         private readonly Productos.Services.IRecetaService _recetaService;
-        private readonly IEventBasedNotificationService _notificationService;
-        private readonly SharedKernel.Services.IDateTimeService _dateTimeService;
+        private readonly SharedKernel.Services.Notification.IEventBasedNotificationService _notificationService;
+        private readonly Core.Base.Services.IDateTimeService _dateTimeService;
 
         /// <summary>
         /// Constructor con inyección de dependencias
@@ -28,8 +28,8 @@ namespace RestaurantePro.Domain.Core.Services
             Notificaciones.Interfaces.INotificacionRepository notificacionRepository,
             Productos.Services.IProductoCategoriaService productoCategoriaService,
             Productos.Services.IRecetaService recetaService,
-            IEventBasedNotificationService notificationService,
-            SharedKernel.Services.IDateTimeService dateTimeService)
+            SharedKernel.Services.Notification.IEventBasedNotificationService notificationService,
+            Core.Base.Services.IDateTimeService dateTimeService)
         {
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
             _productoCategoriaRepository = productoCategoriaRepository ?? throw new ArgumentNullException(nameof(productoCategoriaRepository));

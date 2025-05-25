@@ -9,7 +9,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Specifications
     /// 2. Tiene stock mayor que cero
     /// 3. No está bloqueado por control de calidad (opcional, según configuración)
     /// </summary>
-    public class IngredienteDisponibleSpecification : Core.SharedKernel.Specifications.Specification<Entities.Ingrediente>
+    public class IngredienteDisponibleSpecification : Core.Base.Specification<Entities.Ingrediente>
     {
         private readonly bool _verificarControlCalidad;
         private readonly decimal _cantidadMinima;

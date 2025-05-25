@@ -32,7 +32,13 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.EventHandlers
                 entidadRelacionadaId: evento.FacturaId);
 
             // Enviar la notificación
-            await _servicioNotificaciones.EnviarNotificacionAsync(notificacion, cancellationToken);
+            await _servicioNotificaciones.EnviarNotificacionAsync(
+                notificacion.Titulo,
+                notificacion.Mensaje,
+                notificacion.Tipo,
+                notificacion.DestinatarioId,
+                notificacion.EntidadRelacionadaId,
+                cancellationToken);
 
             // Aquí podrían ir otras acciones como:
             // - Actualizar estadísticas de ventas

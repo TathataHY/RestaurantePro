@@ -1,9 +1,3 @@
-using System;
-using System.Linq;
-using FluentAssertions;
-using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-using Xunit;
-
 namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.ValueObjects
 {
     public class EmailTests

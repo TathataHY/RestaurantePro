@@ -10,6 +10,8 @@ global using System.Reflection;
 global using System.Text;
 global using System.Threading;
 global using System.Text.Json;
+global using System.Collections.Concurrent;
+global using System.Diagnostics;
 
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +19,7 @@ global using Microsoft.Extensions.DependencyInjection;
 // Domain Base
 global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;
+global using RestaurantePro.Domain.Core.Base.Services;
 
 // Domain Base - Events
 global using RestaurantePro.Domain.Core.Base.Events;
@@ -39,7 +42,8 @@ global using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Telemetry;
 global using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Strategy;
 global using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Invalidation;
 
-// Domain core imports - SharedKernel Services - Notification
+// Domain core imports - SharedKernel Services
+global using RestaurantePro.Domain.Core.SharedKernel.Services;
 global using RestaurantePro.Domain.Core.SharedKernel.Services.Notification;
 
 // Domain core imports - Services
@@ -62,6 +66,8 @@ global using RestaurantePro.Domain.Core.Usuarios.Events;
 global using RestaurantePro.Domain.Core.Usuarios.Events.Usuario;
 global using RestaurantePro.Domain.Core.Usuarios.Events.Rol;
 global using RestaurantePro.Domain.Core.Usuarios.Interfaces;
+global using RestaurantePro.Domain.Core.Usuarios.Services;
+global using RestaurantePro.Domain.Core.Usuarios.EventHandlers;
 
 // Domain core imports - Productos
 global using RestaurantePro.Domain.Core.Productos.Entities;

@@ -56,14 +56,14 @@ namespace RestaurantePro.Domain.Core
                 (Usuarios.Services.IUsuarioServiceCached)sp.GetRequiredService<Usuarios.Services.IUsuarioService>());
                 
             // Registrar manejador de eventos específico para invalidación de caché de usuarios
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioCreado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioActualizado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioDesactivado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioActivado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioBloqueado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioDesbloqueado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.RolAsignado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.RolRemovido>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioCreado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioActualizado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioDesactivado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioActivado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioBloqueado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioDesbloqueado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.RolAsignado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.RolRemovido>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
             
             // Registrar servicios de dominio decorados con caché
             // 1. Verificador de Stock
@@ -262,14 +262,14 @@ namespace RestaurantePro.Domain.Core
                 (Usuarios.Services.IUsuarioServiceCached)sp.GetRequiredService<Usuarios.Services.IUsuarioService>());
                 
             // Registrar manejador de eventos específico para invalidación de caché de usuarios en pruebas
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioCreado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioActualizado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioDesactivado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioActivado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioBloqueado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioDesbloqueado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.RolAsignado>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
-            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.RolRemovido>, Usuarios.Events.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioCreado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioActualizado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioDesactivado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioActivado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioBloqueado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioDesbloqueado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.RolAsignado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.RolRemovido>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
             
             return services;
         }
