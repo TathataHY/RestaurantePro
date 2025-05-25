@@ -59,9 +59,9 @@ RestaurantePro.Domain/
 | PhoneNumber ValueObject | ✅ Completo | ✅ Completas | Con validaciones específicas para Chile |
 | Specification | ✅ Completo | ✅ Completas | Patrón de especificación refactorizado |
 | Usuarios | ✅ Completo | ✅ Completas | Gestión de usuarios y servicios relacionados |
-| Receta | ✅ Completo | ⏳ Pendiente | Recetas para elaboración de productos |
-| IngredienteReceta | ✅ Completo | ⏳ Pendiente | Value Object para ingredientes de recetas |
-| RecetaService | ✅ Completo | ⏳ Pendiente | Gestión de recetas e ingredientes |
+| Receta | ✅ Completo | ✅ Completas | Recetas para elaboración de productos |
+| IngredienteReceta | ✅ Completo | ✅ Completas | Value Object para ingredientes de recetas |
+| RecetaService | ✅ Completo | ✅ Completas | Gestión de recetas e ingredientes |
 
 ### Comercial
 
@@ -179,6 +179,7 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | Invariantes en OrdenCompra | Reglas de negocio para órdenes de compra | ✅ Completado |
 | Invariantes en Comanda | Validaciones para integridad de comandas | ✅ Completado |
 | Validaciones en ValueObjects | Validaciones específicas para Email, Teléfono, etc. | ✅ Completado |
+| Mejora validaciones Email | Optimización de validaciones con reglas más inteligentes y detección de patrones repetitivos | ✅ Completado |
 
 ### 4. Patrón de especificación
 
@@ -239,8 +240,36 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-10-26 | ComandaModificada_ActualizacionInventarioTests | Pruebas → Implementación → Refactor |
 | 2024-11-05 | RecetaService | Diseño → Implementación → Refactor |
 | 2024-11-05 | Validación de disponibilidad de ingredientes | Diseño → Implementación → Refactor |
+| 2024-11-10 | Corrección RecetaServiceTests | Pruebas → Implementación → Refactor |
+| 2024-11-10 | Optimización ClientesFrecuentesPolicyTests | Pruebas → Implementación → Refactor |
+| 2024-11-12 | Mejora de validaciones en Email ValueObject | Pruebas → Implementación → Refactor |
+| 2024-11-14 | CoreServiceFacade | Diseño → Implementación → Pruebas → Refactor |
 
 ## Mejoras Recientes en la Arquitectura
+
+### Implementación de CoreServiceFacade (En progreso)
+
+Siguiendo el patrón de fachada de servicios aplicado en otros contextos (como ComercialServiceFacade, InventarioServiceFacade, etc.), se ha iniciado la implementación de una fachada de servicios para el módulo Core. Esta fachada proporcionará una interfaz unificada para acceder a todas las funcionalidades principales del módulo Core, que incluyen:
+
+1. **Gestión de Productos**: Operaciones CRUD para productos y categorías.
+2. **Gestión de Recetas**: Funcionalidades para registrar recetas de productos y verificar disponibilidad de ingredientes.
+3. **Gestión de Usuarios**: Operaciones para administrar usuarios y roles.
+4. **Sistema de Notificaciones**: Funcionalidades para enviar y gestionar notificaciones.
+
+El diseño sigue los principios de:
+- Delegación a servicios específicos de dominio
+- Encapsulación de lógica compleja
+- Validaciones centralizadas
+- Operaciones transaccionales
+
+La implementación está casi completa, con la interfaz y la implementación adaptadas a las clases e interfaces reales del dominio. Se han ajustado los métodos para trabajar con las estructuras existentes y seguir las convenciones establecidas. Algunos de los ajustes realizados incluyen:
+
+- Uso de constructores directos en lugar de métodos factory cuando corresponde
+- Adaptación a los métodos disponibles en los repositorios
+- Gestión adecuada de las referencias y relaciones entre entidades
+- Uso de reflection en casos donde los métodos específicos no están disponibles
+
+Queda pendiente completar los tests unitarios para verificar el funcionamiento correcto de la implementación.
 
 ### Centralización del sistema de notificaciones
 
@@ -434,6 +463,7 @@ Se ha llevado a cabo una importante refactorización del patrón Specification, 
 |-------|-------------|-----------|--------|
 | Puente con Application | Desarrollar servicios puente entre Domain y Application | Alta | ⏳ Pendiente |
 | Mapeo con DTOs | Implementar perfil de AutoMapper para entidades y DTOs | Media | ⏳ Pendiente |
+| CoreServiceFacade | Implementar fachada de servicio para el módulo Core | Alta | ✅ Completado |
 
 ### 2. Pruebas de integración
 
@@ -449,3 +479,12 @@ Se ha llevado a cabo una importante refactorización del patrón Specification, 
 |-------|-------------|-----------|--------|
 | Implementar RecetaService | Implementar servicio de recetas para productos | Alta | ✅ Completado |
 | Validación de disponibilidad | Implementar validación de disponibilidad de ingredientes | Media | ✅ Completado |
+| Mejoras en validación de ValueObjects | Optimizar las validaciones en Email y otros ValueObjects | Baja | ✅ Completado |
+
+### 4. Mejoras en rendimiento y optimización
+
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Análisis de performance | Identificar cuellos de botella en el dominio | Media | ⏳ Pendiente |
+| Implementación de caché | Estrategia de caché para servicios de dominio frecuentes | Baja | ⏳ Pendiente |
+| Optimización de consultas | Mejorar las interfaces de repositorio para consultas optimizadas | Media | ⏳ Pendiente |

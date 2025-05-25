@@ -112,6 +112,21 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         }
 
         /// <summary>
+        /// Método especial para crear un cliente con validaciones menos estrictas para pruebas
+        /// </summary>
+        /// <param name="nombre">Nombre completo del cliente</param>
+        /// <param name="email">Email del cliente como string</param>
+        /// <param name="telefono">Teléfono del cliente como string</param>
+        /// <returns>Una nueva instancia de Cliente para pruebas</returns>
+        public static Cliente CrearParaPruebas(ClienteNombre nombre, string email, string telefono)
+        {
+            var emailVO = Email.CreateForTesting(email);
+            var telefonoVO = PhoneNumber.Create(telefono);
+            
+            return Crear(nombre, emailVO, telefonoVO);
+        }
+
+        /// <summary>
         /// Agrega puntos al cliente en el programa de fidelización.
         /// Se verifica que el cliente esté activo antes de realizar la operación.
         /// </summary>

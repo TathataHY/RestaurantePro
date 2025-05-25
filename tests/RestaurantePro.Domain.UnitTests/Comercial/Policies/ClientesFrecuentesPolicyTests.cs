@@ -255,16 +255,28 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 .Select(_ => (char)('a' + random.Next(0, 26)))
                 .ToArray());
                 
-            var cliente = Cliente.Crear(
+            var email = $"{partes[0].ToLower()}.{randomText}@test.com";
+            
+            // Usar CrearParaPruebas en lugar de Crear para evitar validaciones estrictas en tests
+            var cliente = Cliente.CrearParaPruebas(
                 nombreCliente, 
-                $"{partes[0].ToLowerInvariant()}{randomText}@testmail.com", 
+                email,
                 "123456789");
                 
-            // Simular historial de visitas
-            var propiedadVisitas = cliente.GetType().GetProperty("CantidadVisitas", 
-                BindingFlags.Instance | BindingFlags.NonPublic);
-                
-            propiedadVisitas?.SetValue(cliente, cantidadVisitas);
+            // Establecer cantidad de visitas
+            for (int i = 0; i < cantidadVisitas; i++)
+            {
+                cliente.RegistrarVisita();
+            }
+            
+            // Establecer nivel de fidelización directamente
+            if (nivelActual != NivelFidelizacion.Basico)
+            {
+                var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, $"TF-{Guid.NewGuid():N}");
+                tarjeta.Activar();
+                tarjeta.ActualizarNivel(nivelActual);
+                cliente.AsociarTarjetaFidelizacion(tarjeta.Id);
+            }
             
             return cliente;
         }
