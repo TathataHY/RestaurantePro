@@ -22,8 +22,14 @@ namespace RestaurantePro.Domain.Core
             services.AddTransient<IDateTimeService, DateTimeService>();
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
             
-            // Registrar servicio de caché
-            services.AddSingleton<ICacheService, MemoryCacheService>();
+            // Registrar servicio de caché con telemetría
+            services.AddSingleton<ICacheTelemetry, InMemoryCacheTelemetry>();
+            services.AddSingleton<ICacheService>(sp => 
+            {
+                var baseCacheService = new MemoryCacheService();
+                var telemetry = sp.GetRequiredService<ICacheTelemetry>();
+                return new TelemetryCacheDecorator(baseCacheService, telemetry);
+            });
             
             // Registrar servicio de notificaciones con caché
             services.AddScoped<ServicioNotificaciones>(); // Implementación original
@@ -129,8 +135,14 @@ namespace RestaurantePro.Domain.Core
             services.AddSingleton<IDateTimeService>(new MockDateTimeService(DateTime.Now));
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
             
-            // Registrar servicio de caché para pruebas (singleton para mantenerlo en memoria durante las pruebas)
-            services.AddSingleton<ICacheService, MemoryCacheService>();
+            // Registrar servicio de caché con telemetría para pruebas
+            services.AddSingleton<ICacheTelemetry, InMemoryCacheTelemetry>();
+            services.AddSingleton<ICacheService>(sp => 
+            {
+                var baseCacheService = new MemoryCacheService();
+                var telemetry = sp.GetRequiredService<ICacheTelemetry>();
+                return new TelemetryCacheDecorator(baseCacheService, telemetry);
+            });
             
             // Registrar servicio de notificaciones con caché para pruebas
             services.AddScoped<ServicioNotificaciones>(); // Implementación original

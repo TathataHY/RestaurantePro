@@ -255,6 +255,10 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-12-02 | CacheInvalidationEventHandler | Diseño → Pruebas → Implementación → Refactor |
 | 2024-12-02 | CacheInvalidationExtensions | Diseño → Pruebas → Implementación → Refactor |
 | 2024-12-02 | Integración con DomainEventDispatcher | Diseño → Implementación → Refactor |
+| 2024-12-05 | ICacheTelemetry | Diseño → Implementación |
+| 2024-12-05 | InMemoryCacheTelemetry | Diseño → Implementación → Pruebas |
+| 2024-12-05 | TelemetryCacheDecorator | Diseño → Implementación → Pruebas |
+| 2024-12-05 | CacheTelemetryExtensions | Diseño → Implementación |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -448,6 +452,42 @@ El sistema se integra perfectamente con el mecanismo existente de eventos de dom
 
 Esta implementación elimina la necesidad de invalidación manual en cada servicio y garantiza que los cambios en un contexto se reflejen correctamente en servicios de otros contextos que dependen de esos datos.
 
+### Telemetría de caché
+
+Se ha implementado un sistema completo de telemetría para monitorizar y analizar el rendimiento de la caché en tiempo real. Esta implementación permite obtener métricas detalladas sobre el uso de la caché, incluyendo tasas de aciertos, tiempos de respuesta y patrones de invalidación.
+
+#### Componentes principales
+
+1. **ICacheTelemetry**:
+   - Interfaz base para la recolección de métricas de caché
+   - Define métodos para registrar accesos, invalidaciones y errores
+   - Proporciona acceso a estadísticas acumuladas
+
+2. **InMemoryCacheTelemetry**:
+   - Implementación thread-safe para entornos de alta concurrencia
+   - Mantiene contadores de aciertos, fallos e invalidaciones
+   - Almacena información detallada sobre tiempos de operación
+   - Proporciona historial de errores recientes para diagnóstico
+
+3. **TelemetryCacheDecorator**:
+   - Decorador para ICacheService que añade telemetría
+   - Intercepta todas las operaciones para medir tiempo y resultados
+   - Registra automáticamente aciertos, fallos y errores
+   - No interfiere con el funcionamiento normal de la caché
+
+4. **CacheTelemetryExtensions**:
+   - Extensiones para generar informes en formato legible
+   - Facilita el acceso a la telemetría desde cualquier componente
+
+#### Beneficios
+
+- **Visibilidad en producción**: Permite monitorear el rendimiento real de la caché
+- **Diagnóstico de problemas**: Facilita la identificación de cuellos de botella
+- **Optimización dirigida**: Proporciona datos para optimizar estrategias de caché
+- **Validación de cambios**: Permite verificar que la invalidación automática funciona correctamente
+
+Esta mejora complementa perfectamente la invalidación automática de caché implementada anteriormente, proporcionando los datos necesarios para evaluar su efectividad y realizar ajustes.
+
 ## Decisiones de Diseño
 
 - Las entidades usan Factory Methods (Crear) en lugar de constructores públicos
@@ -524,7 +564,7 @@ Esta implementación elimina la necesidad de invalidación manual en cada servic
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
 | Caché para UsuarioService | Implementar caché para el servicio de usuarios | Media | ⏳ Pendiente |
-| Telemetría de caché | Agregar métricas y logging para monitoreo de la caché | Baja | ⏳ Pendiente |
+| Telemetría de caché | Agregar métricas y logging para monitoreo de la caché | Baja | ✅ Completado |
 | Invalidación por eventos | Automatizar invalidación de caché mediante eventos de dominio | Alta | ✅ Completado |
 | Gestión de TTL dinámico | Implementar TTL dinámico basado en el tipo de datos | Baja | ⏳ Pendiente |
 
