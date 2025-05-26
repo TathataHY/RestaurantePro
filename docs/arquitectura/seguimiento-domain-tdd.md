@@ -300,6 +300,7 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2025-06-01 | Pruebas Comercial-Inventario | Diseño → Implementación → Pruebas |
 | 2025-01-26 | Adaptación de ServicioFacturacion y ServicioGestionFacturasVencidas a patrones Result y Notification | Análisis → Diseño → Implementación |
 | 2025-01-27 | Adaptación de ProveedoresComercialIntegrationService a patrones Result y Notification | Análisis → Diseño → Implementación |
+| 2025-12-01 | Corrección de errores de compilación en CoreServiceFacade y OrdenCompra | Análisis → Implementación → Refactor |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -618,6 +619,7 @@ Esta mejora complementa el sistema de telemetría e invalidación automática, c
 | Implementar RecetaService | Implementar servicio de recetas para productos | Alta | ✅ Completado |
 | Validación de disponibilidad | Implementar validación de disponibilidad de ingredientes | Media | ✅ Completado |
 | Mejoras en validación de ValueObjects | Optimizar las validaciones en Email y otros ValueObjects | Baja | ✅ Completado |
+| Corrección de errores en CoreServiceFacade | Resolver problemas de compatibilidad con entidades actuales | Alta | ✅ Completado |
 
 ### 4. Mejoras en rendimiento y optimización
 

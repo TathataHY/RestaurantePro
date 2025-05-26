@@ -178,17 +178,18 @@ namespace RestaurantePro.Domain.Core.Services
                 // Actualizar propiedades si se proporcionan valores
                 if (!string.IsNullOrWhiteSpace(nombre))
                 {
-                    producto.ActualizarNombre(nombre);
+                    producto.Actualizar(nombre, producto.Descripcion, producto.Precio);
                 }
                 
                 if (!string.IsNullOrWhiteSpace(descripcion))
                 {
-                    producto.ActualizarDescripcion(descripcion);
+                    producto.Actualizar(producto.Nombre, descripcion, producto.Precio);
                 }
                 
                 if (precio.HasValue)
                 {
-                    producto.ActualizarPrecio(new Productos.ValueObjects.PrecioProducto(precio.Value));
+                    var nuevoPrecio = new Productos.ValueObjects.PrecioProducto(precio.Value);
+                    producto.Actualizar(producto.Nombre, producto.Descripcion, nuevoPrecio);
                 }
                 
                 if (categoriaId.HasValue)
@@ -291,8 +292,16 @@ namespace RestaurantePro.Domain.Core.Services
                             continue;
                         }
                         
-                        // Agregar ingrediente a la receta
-                        receta.AgregarIngrediente(ingredienteId, cantidad);
+                        // Obtener nombre de ingrediente
+                        string nombreIngrediente = await ObtenerNombreIngredienteAsync(ingredienteId, cancellationToken) ?? 
+                                                  $"Ingrediente {ingredienteId.ToString().Substring(0, 4)}";
+                        
+                        // Agregar ingrediente a la receta con los parámetros requeridos
+                        receta.AgregarIngrediente(
+                            ingredienteId, 
+                            nombreIngrediente, 
+                            cantidad, 
+                            RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Gramo);
                     }
                     
                     await _recetaRepository.AgregarAsync(receta, cancellationToken);
@@ -303,8 +312,12 @@ namespace RestaurantePro.Domain.Core.Services
                     receta.ActualizarPreparacion(instrucciones);
                     receta.ActualizarTiempoPreparacion(tiempoPreparacion);
                     
-                    // Limpiar ingredientes existentes y agregar los nuevos
-                    receta.LimpiarIngredientes();
+                    // Eliminar ingredientes existentes uno por uno
+                    var ingredientesActuales = receta.Ingredientes.ToList();
+                    foreach (var ingrediente in ingredientesActuales)
+                    {
+                        receta.EliminarIngrediente(ingrediente.IngredienteId);
+                    }
                     
                     // Agregar ingredientes
                     foreach (var kvp in ingredientes)
@@ -319,8 +332,16 @@ namespace RestaurantePro.Domain.Core.Services
                             continue;
                         }
                         
-                        // Agregar ingrediente a la receta
-                        receta.AgregarIngrediente(ingredienteId, cantidad);
+                        // Obtener nombre de ingrediente
+                        string nombreIngrediente = await ObtenerNombreIngredienteAsync(ingredienteId, cancellationToken) ?? 
+                                                  $"Ingrediente {ingredienteId.ToString().Substring(0, 4)}";
+                        
+                        // Agregar ingrediente a la receta con los parámetros requeridos
+                        receta.AgregarIngrediente(
+                            ingredienteId, 
+                            nombreIngrediente, 
+                            cantidad, 
+                            RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Gramo);
                     }
                     
                     await _recetaRepository.ActualizarAsync(receta, cancellationToken);
