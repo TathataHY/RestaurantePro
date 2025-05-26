@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
-
 namespace RestaurantePro.Domain.Inventario.Results
 {
     /// <summary>
