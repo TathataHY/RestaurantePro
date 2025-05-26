@@ -507,6 +507,39 @@ namespace RestaurantePro.Domain.Operaciones.Services
         }
 
         /// <inheritdoc />
+        public async Task<Result<Reservacion>> ObtenerReservacionAsync(Guid reservacionId, CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.Require(reservacionId != Guid.Empty, "El ID de la reservación no puede estar vacío", "ReservacionId");
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<Reservacion>(null);
+            }
+            
+            try
+            {
+                // Obtener la reservación
+                var reservacion = await _reservacionRepository.ObtenerPorIdAsync(reservacionId, cancellationToken);
+                
+                if (reservacion == null)
+                {
+                    _notificationManager.AddError($"No se encontró la reservación con ID {reservacionId}", "ReservacionId");
+                    return _notificationManager.ToResult<Reservacion>(null);
+                }
+                
+                return Result.Success(reservacion);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al obtener la reservación: {ex.Message}", "ObtenerReservacion");
+                return _notificationManager.ToResult<Reservacion>(null);
+            }
+        }
+
+        /// <inheritdoc />
         public async Task<Result<bool>> AsignarMesaAReservacionAsync(
             Guid reservacionId, 
             Guid mesaId, 

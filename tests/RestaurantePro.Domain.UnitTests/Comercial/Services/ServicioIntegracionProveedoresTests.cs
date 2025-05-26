@@ -37,27 +37,37 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Arrange
             var ordenCompraId = Guid.NewGuid();
             var proveedorId = Guid.NewGuid();
-            var evento = new OrdenCompraAprobada(ordenCompraId, proveedorId);
-            
             var fechaActual = DateTime.Now;
+            var evento = new OrdenCompraAprobada(ordenCompraId, proveedorId, fechaActual, 1500m);
+            
             _dateTimeServiceMock.Setup(s => s.Now).Returns(fechaActual);
             
-            var ordenCompra = OrdenCompra.Crear(
+            var items = new List<ItemOrdenCompra>();
+            items.Add(ItemOrdenCompra.Crear(ordenCompraId, Guid.NewGuid(), "Ingrediente 1", 10, UnidadMedida.Kilogramo));
+            items.Add(ItemOrdenCompra.Crear(ordenCompraId, Guid.NewGuid(), "Ingrediente 2", 5, UnidadMedida.Kilogramo));
+            
+            var ordenCompraResult = OrdenCompra.Crear(
                 proveedorId,
-                "Orden de prueba",
-                "Observaciones de prueba",
+                items,
                 fechaActual,
-                fechaActual.AddDays(7));
-            ordenCompra.AgregarItem(Guid.NewGuid(), "Ingrediente 1", 10, 100);
-            ordenCompra.AgregarItem(Guid.NewGuid(), "Ingrediente 2", 5, 200);
+                fechaActual.AddDays(7),
+                "Orden de prueba",
+                _notificationManager);
+                
+            var ordenCompra = ordenCompraResult.Value;
             
             var proveedor = Proveedor.Crear(
                 "Proveedor de prueba",
-                "12345678901",
-                "Dirección de prueba",
-                "123456789",
+                "Contacto Test",
                 "proveedor@example.com",
-                ProveedorCategoria.Crear("Ingredientes"));
+                "123456789",
+                "Dirección de prueba",
+                "Ciudad Test",
+                "12345",
+                "País Test",
+                "12345678901",
+                "Cuenta: 123456789",
+                30);
             
             var factura = Factura.Crear(
                 "FAC-001",
@@ -128,7 +138,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Arrange
             var ordenCompraId = Guid.NewGuid();
             var proveedorId = Guid.NewGuid();
-            var evento = new OrdenCompraAprobada(ordenCompraId, proveedorId);
+            var fechaActual = DateTime.Now;
+            var evento = new OrdenCompraAprobada(ordenCompraId, proveedorId, fechaActual, 1500m);
             
             _ordenCompraRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(ordenCompraId, It.IsAny<CancellationToken>()))
@@ -150,17 +161,23 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Arrange
             var ordenCompraId = Guid.NewGuid();
             var proveedorId = Guid.NewGuid();
-            var evento = new OrdenCompraAprobada(ordenCompraId, proveedorId);
-            
             var fechaActual = DateTime.Now;
+            var evento = new OrdenCompraAprobada(ordenCompraId, proveedorId, fechaActual, 1500m);
+            
             _dateTimeServiceMock.Setup(s => s.Now).Returns(fechaActual);
             
-            var ordenCompra = OrdenCompra.Crear(
+            var items = new List<ItemOrdenCompra>();
+            items.Add(ItemOrdenCompra.Crear(ordenCompraId, Guid.NewGuid(), "Ingrediente 1", 10, UnidadMedida.Kilogramo));
+            
+            var ordenCompraResult = OrdenCompra.Crear(
                 proveedorId,
-                "Orden de prueba",
-                "Observaciones de prueba",
+                items,
                 fechaActual,
-                fechaActual.AddDays(7));
+                fechaActual.AddDays(7),
+                "Orden de prueba",
+                _notificationManager);
+                
+            var ordenCompra = ordenCompraResult.Value;
             
             _ordenCompraRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(ordenCompraId, It.IsAny<CancellationToken>()))
@@ -186,25 +203,36 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Arrange
             var ordenCompraId = Guid.NewGuid();
             var proveedorId = Guid.NewGuid();
-            var evento = new OrdenCompraAprobada(ordenCompraId, proveedorId);
-            
             var fechaActual = DateTime.Now;
+            var evento = new OrdenCompraAprobada(ordenCompraId, proveedorId, fechaActual, 1500m);
+            
             _dateTimeServiceMock.Setup(s => s.Now).Returns(fechaActual);
             
-            var ordenCompra = OrdenCompra.Crear(
+            var items = new List<ItemOrdenCompra>();
+            items.Add(ItemOrdenCompra.Crear(ordenCompraId, Guid.NewGuid(), "Ingrediente 1", 10, UnidadMedida.Kilogramo));
+            
+            var ordenCompraResult = OrdenCompra.Crear(
                 proveedorId,
-                "Orden de prueba",
-                "Observaciones de prueba",
+                items,
                 fechaActual,
-                fechaActual.AddDays(7));
+                fechaActual.AddDays(7),
+                "Orden de prueba",
+                _notificationManager);
+                
+            var ordenCompra = ordenCompraResult.Value;
             
             var proveedor = Proveedor.Crear(
                 "Proveedor de prueba",
-                "12345678901",
-                "Dirección de prueba",
-                "123456789",
+                "Contacto Test",
                 "proveedor@example.com",
-                ProveedorCategoria.Crear("Ingredientes"));
+                "123456789",
+                "Dirección de prueba",
+                "Ciudad Test",
+                "12345",
+                "País Test",
+                "12345678901",
+                "Cuenta: 123456789",
+                30);
             
             _ordenCompraRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(ordenCompraId, It.IsAny<CancellationToken>()))

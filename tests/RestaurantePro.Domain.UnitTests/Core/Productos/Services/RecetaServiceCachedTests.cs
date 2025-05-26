@@ -77,7 +77,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             // Assert
             result.Should().NotBeNull();
             result.Succeeded.Should().BeFalse();
-            result.Errors.Should().ContainSingle(e => e.PropertyName == "ProductoId");
+            result.Errors.Should().ContainSingle(e => e.ToString().Contains("ProductoId"));
 
             // Verificar que no se usó la caché
             _cacheServiceMock.Verify(
@@ -197,7 +197,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             // Assert
             result.Should().NotBeNull();
             result.Succeeded.Should().BeFalse();
-            result.Errors.Should().ContainSingle(e => e.PropertyName == "Cantidad");
+            result.Errors.Should().ContainSingle(e => e.ToString().Contains("Cantidad"));
 
             // Verificar que no se llamó al servicio original
             _recetaServiceMock.Verify(

@@ -103,7 +103,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Operacione
             Mock<IRecetaService> recetaServiceMock = new Mock<IRecetaService>();
             recetaServiceMock
                 .Setup(s => s.ObtenerIngredientesParaProductoAsync(productoId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(recetaProducto);
+                .Returns(Task.FromResult(Result.Success(recetaProducto)));
                 
             // Inyectar el servicio de recetas al handler (esto debería hacerse en el constructor)
             typeof(ComandaModificada_ActualizarInventarioHandler)
@@ -230,7 +230,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Operacione
             Mock<IRecetaService> recetaServiceMock = new Mock<IRecetaService>();
             recetaServiceMock
                 .Setup(s => s.ObtenerIngredientesParaProductoAsync(productoId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(recetaProducto);
+                .Returns(Task.FromResult(Result.Success(recetaProducto)));
                 
             // Inyectar el servicio de recetas al handler
             typeof(ComandaModificada_ActualizarInventarioHandler)

@@ -19,15 +19,16 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
         {
             // Arrange
             var montoTotal = 100m;
-            var resultado = new ResultadoDescuento(10, 10m);
+            var descuentoEsperado = 10m;
+            var resultado = Result.Success(descuentoEsperado);
             var cacheKey = $"ServicioFidelizacion_CalcularDescuento_{_clienteId}_{montoTotal}";
             
             _cacheServiceMock
                 .Setup(s => s.GetOrAddAsync(
                     It.Is<string>(k => k == cacheKey),
-                    It.IsAny<Func<CancellationToken, Task<ResultadoDescuento>>>(),
-                    It.IsAny<int>(),
-                    It.IsAny<CancellationToken>()))
+                    It.Is<Func<CancellationToken, Task<Result<decimal>>>>(f => true),
+                    It.Is<int>(i => true),
+                    It.Is<CancellationToken>(c => true)))
                 .ReturnsAsync(resultado);
                 
             // Act
@@ -38,9 +39,9 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             _cacheServiceMock.Verify(
                 s => s.GetOrAddAsync(
                     It.Is<string>(k => k == cacheKey),
-                    It.IsAny<Func<CancellationToken, Task<ResultadoDescuento>>>(),
+                    It.Is<Func<CancellationToken, Task<Result<decimal>>>>(f => true),
                     It.Is<int>(ttl => ttl == 60), // Verificamos que se use el tiempo de caché correcto
-                    It.IsAny<CancellationToken>()),
+                    It.Is<CancellationToken>(c => true)),
                 Times.Once);
         }
         
@@ -60,8 +61,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             _cacheServiceMock
                 .Setup(s => s.GetOrAdd(
                     It.Is<string>(k => k == cacheKey),
-                    It.IsAny<Func<decimal>>(),
-                    It.IsAny<int>()))
+                    It.Is<Func<decimal>>(f => true),
+                    It.Is<int>(i => true)))
                 .Returns(descuentoEsperado);
                 
             // Act
@@ -72,7 +73,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             _cacheServiceMock.Verify(
                 s => s.GetOrAdd(
                     It.Is<string>(k => k == cacheKey),
-                    It.IsAny<Func<decimal>>(),
+                    It.Is<Func<decimal>>(f => true),
                     It.Is<int>(ttl => ttl == 60)), // Verificamos que se use el tiempo de caché correcto
                 Times.Once);
         }

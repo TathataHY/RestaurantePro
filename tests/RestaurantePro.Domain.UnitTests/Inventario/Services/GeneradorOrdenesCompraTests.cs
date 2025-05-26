@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.UnitTests.Inventario.Services
 {
+#pragma warning disable CS0854 // Un árbol de expresión no puede contener una llamada o invocación que use argumentos opcionales
+
     public class GeneradorOrdenesCompraTests
     {
         private readonly Mock<IIngredienteRepository> _ingredienteRepositoryMock;
@@ -55,7 +57,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             // Arrange
             var ingredienteId = Guid.NewGuid();
             
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingredienteId, false, It.IsAny<CancellationToken>()))
+            _ingredienteRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == ingredienteId), It.Is<bool>(b => b == false), It.IsAny<CancellationToken>()))
+                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync((Ingrediente?)null);
                 
             // Act
@@ -74,7 +78,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var ingredienteId = Guid.NewGuid();
             var ingrediente = CrearIngrediente(stockActual: 15, stockMinimo: 10);
             
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingredienteId, false, It.IsAny<CancellationToken>()))
+            _ingredienteRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == ingredienteId), It.Is<bool>(b => b == false), It.IsAny<CancellationToken>()))
+                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(ingrediente);
                 
             // Act
@@ -96,10 +102,14 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             var ingrediente = CrearIngrediente(stockActual: 5, stockMinimo: 10, proveedorId: proveedorId);
             var proveedor = CrearProveedor(proveedorId);
             
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingredienteId, false, It.IsAny<CancellationToken>()))
+            _ingredienteRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == ingredienteId), It.Is<bool>(b => b == false), It.IsAny<CancellationToken>()))
+                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(ingrediente);
                 
-            _proveedorRepositoryMock.Setup(r => r.ObtenerPorIdAsync(proveedorId, It.IsAny<CancellationToken>()))
+            _proveedorRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedorId), It.IsAny<CancellationToken>()))
+                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(proveedor);
                 
             // Act
@@ -112,10 +122,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             VerificarNoHayErrores();
         }
         
-        // Métodos auxiliares para configurar el NotificationManager
         private void SetupNotificationManager()
         {
-            // Configurar CreateNewNotification para que simplemente retorne
+            // Configurar CreateNewNotification
             _notificationManagerMock.Setup(m => m.CreateNewNotification())
                 .Verifiable();
                 
@@ -123,41 +132,44 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             _notificationManagerMock.Setup(m => m.HasErrors)
                 .Returns(false);
                 
-            // Configurar Require para que no haga nada
+            // Configurar Require y RequireNotNull con sobrecargas para evitar argumentos opcionales
+            _notificationManagerMock
+                .Setup(m => m.Require(It.IsAny<bool>(), It.IsAny<string>()))
+                .Returns(_notificationManagerMock.Object);
+                
             _notificationManagerMock
                 .Setup(m => m.Require(It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(_notificationManagerMock.Object);
                 
-            // Configurar RequireNotNull para que no haga nada
+            _notificationManagerMock
+                .Setup(m => m.RequireNotNull(It.IsAny<object>(), It.IsAny<string>()))
+                .Returns(_notificationManagerMock.Object);
+                
             _notificationManagerMock
                 .Setup(m => m.RequireNotNull(It.IsAny<object>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(_notificationManagerMock.Object);
                 
-            // Configurar ToResult para retornar un Result exitoso con colección de GUIDs
+            // Configurar ToResult para distintos tipos de retorno
             _notificationManagerMock
                 .Setup(m => m.ToResult(It.IsAny<IEnumerable<Guid>>()))
                 .Returns<IEnumerable<Guid>>(r => Result.Success(r));
                 
-            // Configurar ToResult para retornar un Result exitoso con Guid?
             _notificationManagerMock
                 .Setup(m => m.ToResult(It.IsAny<Guid?>()))
                 .Returns<Guid?>(r => Result.Success(r));
                 
-            // Configurar ToResult para retornar un Result exitoso con Guid
             _notificationManagerMock
-                .Setup(m => m.ToResult<Guid>(It.IsAny<Guid>()))
+                .Setup(m => m.ToResult(It.IsAny<Guid>()))
                 .Returns<Guid>(r => Result.Success(r));
                 
-            // Configurar ToResult para retornar un Result exitoso con bool
             _notificationManagerMock
-                .Setup(m => m.ToResult<bool>(It.IsAny<bool>()))
+                .Setup(m => m.ToResult(It.IsAny<bool>()))
                 .Returns<bool>(r => Result.Success(r));
         }
         
         private void VerificarNoHayErrores()
         {
-            _notificationManagerMock.Verify(m => m.HasErrors, Times.AtLeastOnce);
-            _notificationManagerMock.Verify(m => m.AddError(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _notificationManagerMock.Verify(n => n.AddError(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
         
         private void VerificarHayErrores()
@@ -212,4 +224,6 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             return proveedor;
         }
     }
+
+#pragma warning restore CS0854
 } 

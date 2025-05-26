@@ -12,6 +12,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
         private readonly Mock<IRecetaService> _recetaServiceMock;
         private readonly Mock<IEventBasedNotificationService> _notificationServiceMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
+        private readonly Mock<INotificationManager> _notificationManagerMock;
+        private readonly INotificationManager _notificationManager;
         
         private readonly CoreServiceFacade _sut; // System Under Test
         
@@ -27,6 +29,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             _recetaServiceMock = new Mock<IRecetaService>();
             _notificationServiceMock = new Mock<IEventBasedNotificationService>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
+            _notificationManagerMock = new Mock<INotificationManager>();
+            
+            // Usamos una implementación real para evitar problemas con los mocks
+            _notificationManager = new NotificationManager();
             
             _sut = new CoreServiceFacade(
                 _productoRepositoryMock.Object,
@@ -38,7 +44,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
                 _productoCategoriaServiceMock.Object,
                 _recetaServiceMock.Object,
                 _notificationServiceMock.Object,
-                _dateTimeServiceMock.Object);
+                _dateTimeServiceMock.Object,
+                _notificationManager);
         }
         
         #region Productos Tests
@@ -89,10 +96,12 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             
             // Assert
             Assert.NotNull(resultado);
-            Assert.Equal(nombre, resultado.Nombre);
-            Assert.Equal(descripcion, resultado.Descripcion);
-            Assert.Equal(precio, resultado.Precio.Valor);
-            Assert.Equal(categoriaId, resultado.CategoriaId);
+            Assert.True(resultado.Succeeded);
+            Assert.NotNull(resultado.Value);
+            Assert.Equal(nombre, resultado.Value.Nombre);
+            Assert.Equal(descripcion, resultado.Value.Descripcion);
+            Assert.Equal(precio, resultado.Value.Precio.Valor);
+            Assert.Equal(categoriaId, resultado.Value.CategoriaId);
             
             _productoRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<Producto>(), It.IsAny<CancellationToken>()), Times.Once);
         }
@@ -110,7 +119,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             
             _recetaServiceMock
                 .Setup(s => s.VerificarDisponibilidadIngredientesAsync(productoId, cantidad, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true);
+                .ReturnsAsync(Result.Success(true));
             
             // Act
             var resultado = await _sut.VerificarDisponibilidadProductoAsync(productoId, cantidad);
@@ -134,7 +143,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             
             _recetaServiceMock
                 .Setup(s => s.ObtenerIngredientesFaltantesAsync(productoId, cantidad, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(ingredientesFaltantes);
+                .ReturnsAsync(Result.Success(ingredientesFaltantes));
             
             // Act
             var resultado = await _sut.ObtenerIngredientesFaltantesProductoAsync(productoId, cantidad);
@@ -180,16 +189,18 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             
             // Assert
             Assert.NotNull(resultado);
-            Assert.Equal(nombreUsuario, resultado.NombreUsuario);
-            Assert.Equal(nombre, resultado.NombreCompleto);
-            Assert.Equal(emailString, resultado.Email);
+            Assert.True(resultado.Succeeded);
+            Assert.NotNull(resultado.Value);
+            Assert.Equal(nombreUsuario, resultado.Value.NombreUsuario);
+            Assert.Equal(nombre, resultado.Value.NombreCompleto);
+            Assert.Equal(emailString, resultado.Value.Email);
             
             _usuarioRepositoryMock.Verify(r => r.ObtenerPorNombreUsuarioAsync(nombreUsuario, It.IsAny<CancellationToken>()), Times.Once);
             _usuarioRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Once);
         }
         
         [Fact]
-        public async Task RegistrarUsuarioAsync_DebeLanzarExcepcion_CuandoNombreUsuarioExiste()
+        public async Task RegistrarUsuarioAsync_DebeRetornarError_CuandoNombreUsuarioExiste()
         {
             // Arrange
             var nombreUsuario = "usuario_existente";
@@ -203,11 +214,13 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
                 .Setup(r => r.ObtenerPorNombreUsuarioAsync(nombreUsuario, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(usuarioExistente);
             
-            // Act & Assert
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => 
-                _sut.CrearUsuarioAsync(nombreUsuario, nombre, emailString, "Cajero"));
+            // Act
+            var resultado = await _sut.CrearUsuarioAsync(nombreUsuario, nombre, emailString, "Cajero");
             
-            Assert.Contains("Ya existe un usuario con el nombre", exception.Message);
+            // Assert
+            Assert.NotNull(resultado);
+            Assert.False(resultado.Succeeded);
+            Assert.NotNull(resultado.Error);
         }
         
         [Fact]
@@ -241,7 +254,9 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             
             // Assert
             Assert.NotNull(resultado);
-            Assert.Equal(nombreNuevo, resultado.NombreCompleto);
+            Assert.True(resultado.Succeeded);
+            Assert.NotNull(resultado.Value);
+            Assert.Equal(nombreNuevo, resultado.Value.NombreCompleto);
             
             _usuarioRepositoryMock.Verify(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()), Times.Once);
             _usuarioRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Once);
@@ -383,7 +398,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             var resultado = await _sut.MarcarNotificacionComoLeidaAsync(notificacionId);
             
             // Assert
-            Assert.True(resultado);
+            Assert.True(resultado.Succeeded);
             Assert.True(notificacion.EstaLeida);
             
             _notificacionRepositoryMock.Verify(
@@ -409,7 +424,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             var resultado = await _sut.MarcarNotificacionComoLeidaAsync(notificacionId);
             
             // Assert
-            Assert.False(resultado);
+            Assert.False(resultado.Succeeded);
             
             _notificacionRepositoryMock.Verify(
                 r => r.ObtenerPorIdAsync(notificacionId, It.IsAny<CancellationToken>()), 
@@ -466,8 +481,9 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             
             // Assert
             Assert.NotNull(resultado);
-            Assert.Equal(2, resultado.Count);
-            Assert.All(resultado, n => Assert.Equal(usuarioId, n.DestinatarioId));
+            Assert.True(resultado.Succeeded);
+            Assert.Equal(2, resultado.Value.Count);
+            Assert.All(resultado.Value, n => Assert.Equal(usuarioId, n.DestinatarioId));
             
             _notificacionRepositoryMock.Verify(
                 r => r.ObtenerTodosAsync(It.IsAny<CancellationToken>()), 

@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.UnitTests.Inventario.Services
 {
+#pragma warning disable CS0854 // Un árbol de expresión no puede contener una llamada o invocación que use argumentos opcionales
+
     public class VerificadorStockTests
     {
         private readonly Mock<IIngredienteRepository> _ingredienteRepositoryMock;
@@ -58,7 +60,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             SetupObtenerIngredientesConStockBajo(new List<Ingrediente> { ingrediente });
 
             // Usamos IsMatcher en lugar de It.IsAny para evitar problemas de árboles de expresión
-            SetupProveedorPorId(proveedor);
+            _proveedorRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor.Id), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(proveedor);
 
             // Act
             var resultado = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
@@ -185,19 +189,22 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             _notificationManagerMock.Setup(m => m.HasErrors)
                 .Returns(false);
                 
-            // Configurar RequireNotNull para que no haga nada
+            // Configurar RequireNotNull para evitar argumentos opcionales
+            _notificationManagerMock
+                .Setup(m => m.RequireNotNull(It.IsAny<object>(), It.IsAny<string>()))
+                .Returns(_notificationManagerMock.Object);
+                
             _notificationManagerMock
                 .Setup(m => m.RequireNotNull(It.IsAny<object>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(_notificationManagerMock.Object);
                 
-            // Configurar ToResult para retornar un Result exitoso
+            // Configurar ToResult para diferentes tipos
             _notificationManagerMock
                 .Setup(m => m.ToResult(It.IsAny<ResultadoVerificacionStock>()))
                 .Returns<ResultadoVerificacionStock>(r => Result.Success(r));
                 
-            // Configurar ToResult<bool> para retornar un Result<bool> exitoso
             _notificationManagerMock
-                .Setup(m => m.ToResult<bool>(It.IsAny<bool>()))
+                .Setup(m => m.ToResult(It.IsAny<bool>()))
                 .Returns<bool>(b => Result.Success(b));
         }
         
@@ -214,23 +221,28 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
 
         private void SetupProveedorPorId(Proveedor proveedor)
         {
-            // En vez de usar It.IsAny<> que causa problemas con árboles de expresión
+            // Usar Callback en lugar de usar directamente It.IsAny para el token de cancelación
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(g => true), It.Is<CancellationToken>(t => true)))
+                .Setup(r => r.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(proveedor);
         }
 
         private void SetupProveedorPorIdEspecifico(Guid proveedorId, Proveedor proveedor)
         {
+            // Usar Callback en lugar de usar directamente It.IsAny para el token de cancelación
             _proveedorRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(g => g == proveedorId), It.Is<CancellationToken>(t => true)))
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(g => g == proveedorId), It.IsAny<CancellationToken>()))
+                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(proveedor);
         }
 
         private void SetupOrdenesPendientesPorProveedor(Guid proveedorId, List<OrdenCompra> ordenes)
         {
+            // Usar Callback en lugar de usar directamente It.IsAny para el token de cancelación
             _ordenCompraRepositoryMock
-                .Setup(r => r.ObtenerPendientesPorProveedorAsync(It.Is<Guid>(g => g == proveedorId), It.Is<CancellationToken>(t => true)))
+                .Setup(r => r.ObtenerPendientesPorProveedorAsync(It.Is<Guid>(g => g == proveedorId), It.IsAny<CancellationToken>()))
+                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(ordenes);
         }
 
@@ -238,7 +250,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         private void SetupObtenerIngredientesConStockBajo(List<Ingrediente> ingredientes)
         {
             _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync(It.Is<CancellationToken>(t => true)))
+                .Setup(r => r.ObtenerConStockBajoAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ingredientes ?? new List<Ingrediente>());
         }
 
@@ -296,6 +308,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             return ingrediente;
         }
     }
+
+#pragma warning restore CS0854
 }
 
 

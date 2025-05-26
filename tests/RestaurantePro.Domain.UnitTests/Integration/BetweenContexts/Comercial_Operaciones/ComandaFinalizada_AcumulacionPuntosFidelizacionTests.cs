@@ -70,16 +70,16 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_
             
             // 6. Configurar mocks
             _clienteRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(clienteId, It.Is<CancellationToken>(c => true)))
                 .ReturnsAsync(cliente);
                 
             _comandaRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(comandaId, It.Is<CancellationToken>(c => true)))
                 .ReturnsAsync(comanda);
                 
             _servicioFidelizacionMock
                 .Setup(s => s.AcumularPuntosAsync(clienteId, comandaId, montoTotal))
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(Result.Success(37)); // Devolver un resultado exitoso con los puntos acumulados
             
             // 7. Capturar el evento ComandaFinalizada y cambiarlo por uno creado manualmente
             // ya que necesitamos controlar el monto total
@@ -92,12 +92,12 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_
             // Assert
             // 1. Verificar que se consultó al cliente
             _clienteRepositoryMock.Verify(
-                r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()),
+                r => r.ObtenerPorIdAsync(clienteId, It.Is<CancellationToken>(c => true)),
                 Times.Once);
                 
             // 2. Verificar que se consultó a la comanda
             _comandaRepositoryMock.Verify(
-                r => r.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()),
+                r => r.ObtenerPorIdAsync(comandaId, It.Is<CancellationToken>(c => true)),
                 Times.Once);
                 
             // 3. Verificar que se llamó al servicio de fidelización
@@ -108,8 +108,8 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_
             // 4. Verificar que se registró el evento en el log
             _eventRegistryMock.Verify(
                 l => l.RegisterAsync(
-                    It.IsAny<ComandaFinalizada>(),
-                    It.IsAny<CancellationToken>()),
+                    It.Is<ComandaFinalizada>(e => true),
+                    It.Is<CancellationToken>(c => true)),
                 Times.Once);
         }
         
@@ -148,11 +148,11 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_
             
             // 6. Configurar mocks
             _clienteRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(clienteId, It.Is<CancellationToken>(c => true)))
                 .ReturnsAsync(cliente);
                 
             _comandaRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(comandaId, It.Is<CancellationToken>(c => true)))
                 .ReturnsAsync(comanda);
             
             // 7. Crear evento de comanda finalizada
@@ -165,23 +165,23 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_
             // Assert
             // 1. Verificar que se consultó al cliente y la comanda
             _clienteRepositoryMock.Verify(
-                r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()),
+                r => r.ObtenerPorIdAsync(clienteId, It.Is<CancellationToken>(c => true)),
                 Times.Once);
                 
             _comandaRepositoryMock.Verify(
-                r => r.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()),
+                r => r.ObtenerPorIdAsync(comandaId, It.Is<CancellationToken>(c => true)),
                 Times.Once);
             
             // 2. Verificar que NO se llamó al servicio de fidelización
             _servicioFidelizacionMock.Verify(
-                s => s.AcumularPuntosAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<decimal>()),
+                s => s.AcumularPuntosAsync(It.Is<Guid>(g => true), It.Is<Guid>(g => true), It.Is<decimal>(d => true)),
                 Times.Never);
                 
             // 3. Verificar que se registró el evento en el log
             _eventRegistryMock.Verify(
                 l => l.RegisterAsync(
-                    It.IsAny<ComandaFinalizada>(),
-                    It.IsAny<CancellationToken>()),
+                    It.Is<ComandaFinalizada>(e => true),
+                    It.Is<CancellationToken>(c => true)),
                 Times.Once);
         }
     }

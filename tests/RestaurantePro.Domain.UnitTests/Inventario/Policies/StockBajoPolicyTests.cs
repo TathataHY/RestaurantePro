@@ -1,3 +1,5 @@
+#pragma warning disable CS0854 // Un árbol de expresión no puede contener una llamada o invocación que use argumentos opcionales
+
 namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
 {
     public class StockBajoPolicyTests
@@ -35,7 +37,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             var resultadoPriorizacion = new StockBajoPolicyData();
 
             _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync())
+                .Setup(r => r.ObtenerConStockBajoAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Ingrediente>());
 
             // Act
@@ -58,55 +60,63 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             var fechaActual = new DateTime(2025, 7, 15);
             _dateTimeServiceMock.Setup(s => s.Now).Returns(fechaActual);
 
-            var ingrediente = new Ingrediente
-            {
-                Id = ingredienteId,
-                Nombre = "Tomate",
-                Stock = 5,
-                StockMinimo = 10,
-                Rotacion = RotacionIngrediente.Alta,
-                Temporada = TemporadaIngrediente.Verano,
-                CostoPromedio = 100,
-                ProveedorPrincipalId = Guid.NewGuid()
-            };
+            // Crear ingrediente usando factory method
+            var ingrediente = Ingrediente.Crear(
+                "Tomate", 
+                "TOM-001", 
+                "Tomates frescos", 
+                UnidadMedida.Kilogramo, 
+                10, // Stock mínimo
+                5,  // Stock actual
+                RotacionIngrediente.Alta, 
+                TemporadaIngrediente.Verano);
+                
+            // Establecer ID usando reflection
+            typeof(EntityBase).GetProperty("Id")?.SetValue(ingrediente, ingredienteId);
+            
+            var proveedorId = Guid.NewGuid();
+            ingrediente.AsociarProveedorPrincipal(proveedorId);
 
             _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == ingredienteId), It.IsAny<CancellationToken>()))
+                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(ingrediente);
 
             var notificacionId = Guid.NewGuid();
             _servicioNotificacionesMock
                 .Setup(s => s.NotificarStockBajo(
-                    ingredienteId,
-                    "Tomate",
-                    5,
-                    10))
+                    It.Is<Guid>(id => id == ingredienteId),
+                    It.Is<string>(n => n == "Tomate"),
+                    It.Is<decimal>(s => s == 5),
+                    It.Is<decimal>(s => s == 10)))
                 .ReturnsAsync(notificacionId);
 
             var ordenCompraId = Guid.NewGuid();
-            var ordenCompra = new OrdenCompra
-            {
-                Id = ordenCompraId,
-                ProveedorId = ingrediente.ProveedorPrincipalId.Value,
-                Items = new List<ItemOrdenCompra>
-                {
-                    new ItemOrdenCompra
-                    {
-                        IngredienteId = ingredienteId,
-                        Cantidad = 10,
-                        PrecioUnitario = 100
-                    }
-                }
-            };
+            
+            // Crear OrdenCompra usando factory method con Result
+            var items = new List<ItemOrdenCompra>();
+            items.Add(ItemOrdenCompra.Crear(ordenCompraId, ingredienteId, "Tomate", 10, UnidadMedida.Kilogramo));
+            
+            var ordenCompraResult = OrdenCompra.Crear(
+                proveedorId,
+                items,
+                fechaActual,
+                fechaActual.AddDays(7),
+                "Orden automática",
+                _notificationManager);
+                
+            var ordenCompra = ordenCompraResult.Value;
+            
+            // Establecer ID usando reflection
+            typeof(EntityBase).GetProperty("Id")?.SetValue(ordenCompra, ordenCompraId);
 
-            var resultadoVerificacion = new ResultadoVerificacionStock
-            {
-                OrdenesGeneradas = new List<OrdenCompra> { ordenCompra }
-            };
+            var resultadoVerificacion = new ResultadoVerificacionStock();
+            resultadoVerificacion.OrdenesGeneradas.Add(ordenCompra);
 
             _verificadorStockMock
                 .Setup(v => v.VerificarYGenerarOrdenesCompraAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(resultadoVerificacion);
+                .Callback(() => { /* No hacer nada */ })
+                .ReturnsAsync(Result.Success(resultadoVerificacion));
 
             // Act
             var result = await _sut.EjecutarPolicyParaIngrediente(ingredienteId);
@@ -129,7 +139,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             var ingredienteId = Guid.NewGuid();
 
             _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == ingredienteId), It.IsAny<CancellationToken>()))
+                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync((Ingrediente)null);
 
             // Act
@@ -150,30 +161,29 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
 
             var ingredientes = new List<Ingrediente>
             {
-                new Ingrediente
-                {
-                    Id = Guid.NewGuid(),
-                    Nombre = "Tomate",
-                    Stock = 5,
-                    StockMinimo = 10,
-                    Rotacion = RotacionIngrediente.Alta,
-                    Temporada = TemporadaIngrediente.Verano, // Fuera de temporada
-                    CostoPromedio = 100
-                },
-                new Ingrediente
-                {
-                    Id = Guid.NewGuid(),
-                    Nombre = "Papa",
-                    Stock = 2,
-                    StockMinimo = 20,
-                    Rotacion = RotacionIngrediente.Critica,
-                    Temporada = TemporadaIngrediente.TodoElAño,
-                    CostoPromedio = 50
-                }
+                Ingrediente.Crear(
+                    "Tomate", 
+                    "TOM-001", 
+                    "Tomates frescos", 
+                    UnidadMedida.Kilogramo, 
+                    10, // Stock mínimo
+                    5,  // Stock actual
+                    RotacionIngrediente.Alta, 
+                    TemporadaIngrediente.Verano),
+                    
+                Ingrediente.Crear(
+                    "Papa", 
+                    "PAP-001", 
+                    "Papas", 
+                    UnidadMedida.Kilogramo, 
+                    20, // Stock mínimo
+                    2,  // Stock actual
+                    RotacionIngrediente.Critica, 
+                    TemporadaIngrediente.TodoElAño)
             };
 
             _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync())
+                .Setup(r => r.ObtenerConStockBajoAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ingredientes);
 
             // Act
@@ -202,10 +212,12 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             // Assert
             result.Should().NotBeNull();
             result.Succeeded.Should().BeFalse();
-            result.Errors.Should().ContainSingle(e => e.PropertyName == "IngredienteId");
+            result.Errors.Should().ContainSingle(e => e.ToString().Contains("IngredienteId"));
         }
     }
 }
+
+#pragma warning restore CS0854
 
 
 

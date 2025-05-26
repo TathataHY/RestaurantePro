@@ -6,6 +6,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
         private readonly Mock<ITarjetaFidelizacionRepository> _tarjetaRepositoryMock;
         private readonly Mock<IServicioFidelizacion> _servicioFidelizacionMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
+        private readonly Mock<INotificationManager> _notificationManagerMock;
+        private readonly INotificationManager _notificationManager;
         private readonly ClientesFrecuentesPolicy _policy;
         private readonly CancellationToken _cancellationToken = CancellationToken.None;
 
@@ -15,14 +17,19 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             _tarjetaRepositoryMock = new Mock<ITarjetaFidelizacionRepository>();
             _servicioFidelizacionMock = new Mock<IServicioFidelizacion>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
+            _notificationManagerMock = new Mock<INotificationManager>();
             
             _dateTimeServiceMock.Setup(s => s.Now).Returns(new DateTime(2023, 1, 1));
+            
+            // Usar NotificationManager real en lugar de mock para evitar errores
+            _notificationManager = new NotificationManager();
             
             _policy = new ClientesFrecuentesPolicy(
                 _clienteRepositoryMock.Object,
                 _tarjetaRepositoryMock.Object,
                 _servicioFidelizacionMock.Object,
-                _dateTimeServiceMock.Object);
+                _dateTimeServiceMock.Object,
+                _notificationManager);
         }
         
         [Fact]

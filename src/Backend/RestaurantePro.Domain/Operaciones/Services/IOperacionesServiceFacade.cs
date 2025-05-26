@@ -104,6 +104,14 @@ namespace RestaurantePro.Domain.Operaciones.Services
         Task<Result<Reservacion>> CrearReservacionAsync(Guid clienteId, DateTime fecha, int cantidadPersonas, string observaciones = "", CancellationToken cancellationToken = default);
         
         /// <summary>
+        /// Obtiene una reservación por su ID
+        /// </summary>
+        /// <param name="reservacionId">ID de la reservación a obtener</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la reservación solicitada</returns>
+        Task<Result<Reservacion>> ObtenerReservacionAsync(Guid reservacionId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
         /// Asigna una mesa a una reservación
         /// </summary>
         /// <param name="reservacionId">ID de la reservación</param>
