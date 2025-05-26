@@ -139,7 +139,8 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<Proveedores.Services.IProveedoresServiceFacade, Proveedores.Services.ProveedoresServiceFacade>();
             
             // Registrar servicios de integración entre contextos (ACL)
-            services.AddScoped<Core.Services.IProveedoresComercialIntegrationService, Core.Services.ProveedoresComercialIntegrationService>();
+            // Registramos el servicio de integración de proveedores-comercial (trasladado desde Core a Comercial)
+            services.AddScoped<Comercial.Services.IServicioIntegracionProveedores, Comercial.Services.ServicioIntegracionProveedores>();
             
             // Registrar manejadores de eventos de integración
             services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_NotificacionProveedorHandler>();

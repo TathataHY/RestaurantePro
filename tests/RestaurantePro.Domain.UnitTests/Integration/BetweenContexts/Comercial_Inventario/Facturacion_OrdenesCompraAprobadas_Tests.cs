@@ -12,7 +12,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
         private readonly Mock<IServicioFacturacion> _servicioFacturacionMock;
         
-        private readonly Mock<IProveedoresComercialIntegrationService> _integrationServiceMock;
+        private readonly Mock<IServicioIntegracionProveedores> _integrationServiceMock;
         private Guid _ordenCompraId = Guid.NewGuid();
         private Guid _proveedorId = Guid.NewGuid();
         private Guid _facturaId = Guid.NewGuid();
@@ -25,7 +25,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_
             _proveedorRepositoryMock = new Mock<IProveedorRepository>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
             _servicioFacturacionMock = new Mock<IServicioFacturacion>();
-            _integrationServiceMock = new Mock<IProveedoresComercialIntegrationService>();
+            _integrationServiceMock = new Mock<IServicioIntegracionProveedores>();
             
             // Configurar fecha actual para pruebas
             _dateTimeServiceMock.Setup(s => s.Now).Returns(new DateTime(2025, 6, 1, 12, 0, 0));
@@ -43,12 +43,16 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_
             _integrationServiceMock.Setup(s => s.ProcesarOrdenCompraAprobadaAsync(
                 It.IsAny<OrdenCompraAprobada>(), 
                 It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(Result.Success(true));
             
             // Act
-            await _integrationServiceMock.Object.ProcesarOrdenCompraAprobadaAsync(evento);
+            var result = await _integrationServiceMock.Object.ProcesarOrdenCompraAprobadaAsync(evento);
             
             // Assert
+            result.Should().NotBeNull();
+            result.Succeeded.Should().BeTrue();
+            result.Value.Should().BeTrue();
+            
             _integrationServiceMock.Verify(s => s.ProcesarOrdenCompraAprobadaAsync(
                 It.Is<OrdenCompraAprobada>(e => e.OrdenCompraId == _ordenCompraId && e.ProveedorId == _proveedorId),
                 It.IsAny<CancellationToken>()),
