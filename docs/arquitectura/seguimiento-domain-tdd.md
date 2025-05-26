@@ -193,8 +193,8 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 
 ## Registro de Ciclos TDD Completados
 
-| Fecha | Componente | Test → Implementación → Refactor |
-|-------|------------|----------------------------------|
+| Fecha | Componente | Ciclo |
+|-------|------------|-------|
 | 2023-10-15 | Ingrediente | Pruebas → Implementación → Refactor |
 | 2023-10-20 | MovimientoInventario | Pruebas → Implementación → Refactor |
 | 2023-10-25 | OrdenCompra | Pruebas → Implementación → Refactor |
@@ -269,6 +269,8 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2025-05-25 | Reorganización de Pruebas de Integración | Análisis → Diseño → Implementación → Documentación |
 | 2025-05-27 | Actualización de pruebas de integración entre contextos | Refactor → Pruebas → Validación |
 | 2025-05-29 | Corrección de pruebas de integración entre Core y Comercial | Análisis → Refactor → Pruebas |
+| 2025-06-01 | Pruebas Core-Comercial | Diseño → Implementación → Pruebas |
+| 2025-06-01 | Pruebas Comercial-Inventario | Diseño → Implementación → Pruebas |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -601,14 +603,29 @@ Esta mejora complementa el sistema de telemetría e invalidación automática, c
 
 ## Próximos Pasos Prioritarios (Diciembre 2024)
 
-### 1. Ampliación del sistema de caché
+### 1. Refactorización
 
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
-| Caché para UsuarioService | Implementar caché para el servicio de usuarios | Media | ✅ Completado |
-| Telemetría de caché | Agregar métricas y logging para monitoreo de la caché | Baja | ✅ Completado |
-| Invalidación por eventos | Automatizar invalidación de caché mediante eventos de dominio | Alta | ✅ Completado |
-| Gestión de TTL dinámico | Implementar TTL dinámico basado en el tipo de datos | Baja | ✅ Completado |
+| Mover lógica validación | Mover validaciones de comandos/peticiones a FluentValidation | Media | ⏳ Pendiente |
+| Mover lógica de mapeo | Extraer mapeos de entidades a DTOs a clases dedicadas con AutoMapper | Media | ⏳ Pendiente |
+| Eliminar duplicación | Consolidar código duplicado en servicios base o componentes reusables | Media | ⏳ Pendiente |
+
+### 2. Pruebas de integración
+
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Pruebas Core-Comercial | Probar integración entre contextos Core y Comercial | Alta | ✅ Completado |
+| Pruebas Operaciones-Inventario | Probar integración entre contextos Operaciones e Inventario | Alta | ✅ Completado |
+| Implementar test Operaciones-Comandas | Implementar pruebas en Integration/Operaciones/Comandas | Media | ✅ Completado |
+
+### 3. Componentes del dominio
+
+| Tarea | Descripción | Prioridad | Estado |
+|-------|-------------|-----------|--------|
+| Implementar Notification Pattern | Mejorar mecanismo de retorno de errores con Notification Pattern | Alta | ⏳ Pendiente |
+| Agregar ResultType genérico | Crear un tipo Result<T> para devolver éxito/error con datos | Alta | ⏳ Pendiente |
+| Expandir DomainEvents | Mejorar publicación y manejo de eventos de dominio | Media | ⏳ Pendiente |
 
 ### 2. Integración de contextos
 
@@ -616,7 +633,7 @@ Esta mejora complementa el sistema de telemetría e invalidación automática, c
 |-------|-------------|-----------|--------|
 | Integración Comercial-Proveedores | Implementar flujo de datos entre contextos comercial y proveedores | Alta | ⏳ Pendiente |
 | Integración Core-Operaciones | Mejorar integración entre catálogo de productos y comandas | Media | ⏳ Pendiente |
-| Pruebas de integración multi-contexto | Implementar pruebas que verifiquen flujos completos a través de múltiples contextos | Alta | 🔄 En proceso |
+| Pruebas de integración multi-contexto | Implementar pruebas que verifiquen flujos completos a través de múltiples contextos | Alta | ✅ Completado |
 
 ### 3. Implementación completa de CoreServiceFacade
 
