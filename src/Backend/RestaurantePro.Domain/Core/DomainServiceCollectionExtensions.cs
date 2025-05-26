@@ -142,9 +142,20 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<Core.Services.IProveedoresComercialIntegrationService, Core.Services.ProveedoresComercialIntegrationService>();
             
             // Registrar manejadores de eventos de integración
-            services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_FacturacionHandler>();
             services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_NotificacionProveedorHandler>();
             services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_ActualizarEstadisticasProveedorHandler>();
+            
+            // Registrar servicio de notificación
+            services.AddScoped<INotification, Notification>();
+            
+            // Core services
+            services.AddScoped<IDateTimeService, DateTimeService>();
+            services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+            services.AddScoped<IEventSubscriptionManager, EventSubscriptionManager>();
+            services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
+            
+            // Core services - Product            
+            // ... existing code ...
             
             return services;
         }

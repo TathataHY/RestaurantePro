@@ -266,6 +266,8 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-12-10 | IUsuarioService y UsuarioService | Diseño → Implementación → Pruebas |
 | 2024-12-10 | UsuarioServiceCached | Diseño → Pruebas → Implementación |
 | 2024-12-10 | CacheInvalidationUsuarioEventHandler | Diseño → Implementación |
+| 2024-12-15 | ResultType<T> y extensiones | Diseño → Implementación → Pruebas → Documentación |
+| 2024-12-20 | Notification Pattern | Diseño → Implementación → Pruebas → Documentación |
 | 2025-05-25 | Reorganización de Pruebas de Integración | Análisis → Diseño → Implementación → Documentación |
 | 2025-05-27 | Actualización de pruebas de integración entre contextos | Refactor → Pruebas → Validación |
 | 2025-05-29 | Corrección de pruebas de integración entre Core y Comercial | Análisis → Refactor → Pruebas |
@@ -623,8 +625,8 @@ Esta mejora complementa el sistema de telemetría e invalidación automática, c
 
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
-| Implementar Notification Pattern | Mejorar mecanismo de retorno de errores con Notification Pattern | Alta | ⏳ Pendiente |
-| Agregar ResultType genérico | Crear un tipo Result<T> para devolver éxito/error con datos | Alta | ⏳ Pendiente |
+| Implementar Notification Pattern | Mejorar mecanismo de retorno de errores con Notification Pattern | Alta | ✅ Completado |
+| Agregar ResultType genérico | Crear un tipo Result<T> para devolver éxito/error con datos | Alta | ✅ Completado |
 | Expandir DomainEvents | Mejorar publicación y manejo de eventos de dominio | Media | ⏳ Pendiente |
 
 ### 2. Integración de contextos

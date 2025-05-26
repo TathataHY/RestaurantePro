@@ -35,6 +35,12 @@ global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Services;
 
+// Domain core imports - SharedKernel Results
+global using RestaurantePro.Domain.Core.SharedKernel.Results;
+
+// Domain core imports - SharedKernel Validation
+global using RestaurantePro.Domain.Core.SharedKernel.Validation;
+
 // Domain core imports - SharedKernel Services - Cache
 global using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
 global using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators;
