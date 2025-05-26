@@ -20,8 +20,8 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// <param name="temporada">Indicador de temporada</param>
         /// <param name="costo">Costo promedio</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Ingrediente registrado</returns>
-        Task<Ingrediente> RegistrarIngredienteAsync(
+        /// <returns>Resultado con el ingrediente registrado</returns>
+        Task<Result<Ingrediente>> RegistrarIngredienteAsync(
             string nombre, 
             string descripcion, 
             string unidadMedida, 
@@ -41,8 +41,8 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// <param name="referencia">Referencia al documento origen (opcional)</param>
         /// <param name="observacion">Observación del movimiento (opcional)</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Ingrediente actualizado o null si no se encontró</returns>
-        Task<Ingrediente?> ActualizarStockIngredienteAsync(
+        /// <returns>Resultado con el ingrediente actualizado o error si no se encontró</returns>
+        Task<Result<Ingrediente>> ActualizarStockIngredienteAsync(
             Guid ingredienteId, 
             decimal cantidad, 
             TipoMovimientoInventario tipoMovimiento, 
@@ -54,8 +54,8 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// Verifica los ingredientes con stock bajo
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Lista de ingredientes con stock bajo</returns>
-        Task<IEnumerable<Ingrediente>> VerificarIngredientesStockBajoAsync(CancellationToken cancellationToken = default);
+        /// <returns>Resultado con la lista de ingredientes con stock bajo</returns>
+        Task<Result<IEnumerable<Ingrediente>>> VerificarIngredientesStockBajoAsync(CancellationToken cancellationToken = default);
         
         #endregion
         
@@ -68,8 +68,8 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// <param name="fechaEntregaEstimada">Fecha estimada de entrega</param>
         /// <param name="observaciones">Observaciones generales</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Orden de compra creada</returns>
-        Task<OrdenCompra> CrearOrdenCompraAsync(
+        /// <returns>Resultado con la orden de compra creada</returns>
+        Task<Result<OrdenCompra>> CrearOrdenCompraAsync(
             Guid proveedorId, 
             DateTime fechaEntregaEstimada, 
             string observaciones = "", 
@@ -84,8 +84,8 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// <param name="precioUnitario">Precio unitario</param>
         /// <param name="observacion">Observación del ítem</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Orden de compra actualizada o null si no se encontró</returns>
-        Task<OrdenCompra?> AgregarItemOrdenCompraAsync(
+        /// <returns>Resultado con la orden de compra actualizada o error si no se encontró</returns>
+        Task<Result<OrdenCompra>> AgregarItemOrdenCompraAsync(
             Guid ordenCompraId, 
             Guid ingredienteId, 
             decimal cantidad, 
@@ -99,8 +99,8 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// <param name="ordenCompraId">ID de la orden de compra</param>
         /// <param name="nuevoEstado">Nuevo estado</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>True si se actualizó correctamente, False si no se encontró la orden</returns>
-        Task<bool> ActualizarEstadoOrdenCompraAsync(
+        /// <returns>Resultado indicando éxito o error si no se encontró la orden</returns>
+        Task<Result<bool>> ActualizarEstadoOrdenCompraAsync(
             Guid ordenCompraId, 
             EstadoOrdenCompra nuevoEstado, 
             CancellationToken cancellationToken = default);
@@ -111,8 +111,8 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// <param name="ordenCompraId">ID de la orden de compra</param>
         /// <param name="observaciones">Observaciones de la recepción</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>True si se registró correctamente, False si no se encontró la orden</returns>
-        Task<bool> RecibirOrdenCompraCompletaAsync(
+        /// <returns>Resultado indicando éxito o error si no se encontró la orden</returns>
+        Task<Result<bool>> RecibirOrdenCompraCompletaAsync(
             Guid ordenCompraId, 
             string observaciones = "", 
             CancellationToken cancellationToken = default);
@@ -124,8 +124,8 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// <param name="itemsRecibidos">Diccionario con ID de ítem y cantidad recibida</param>
         /// <param name="observaciones">Observaciones de la recepción</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>True si se registró correctamente, False si no se encontró la orden</returns>
-        Task<bool> RecibirOrdenCompraParcialAsync(
+        /// <returns>Resultado indicando éxito o error si no se encontró la orden</returns>
+        Task<Result<bool>> RecibirOrdenCompraParcialAsync(
             Guid ordenCompraId, 
             Dictionary<Guid, decimal> itemsRecibidos, 
             string observaciones = "", 
@@ -135,8 +135,8 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// Genera órdenes de compra automáticas basadas en inventario bajo
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Lista de órdenes de compra generadas</returns>
-        Task<IEnumerable<OrdenCompra>> GenerarOrdenesCompraAutomaticasAsync(CancellationToken cancellationToken = default);
+        /// <returns>Resultado con la lista de órdenes de compra generadas</returns>
+        Task<Result<IEnumerable<OrdenCompra>>> GenerarOrdenesCompraAutomaticasAsync(CancellationToken cancellationToken = default);
         
         #endregion
     }
