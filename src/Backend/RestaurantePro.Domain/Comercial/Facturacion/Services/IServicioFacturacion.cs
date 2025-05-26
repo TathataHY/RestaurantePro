@@ -16,8 +16,8 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         /// <param name="direccionCliente">Dirección del cliente (opcional)</param>
         /// <param name="observaciones">Observaciones adicionales (opcional)</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Factura generada</returns>
-        Task<Factura> GenerarFacturaParaComandaAsync(
+        /// <returns>Resultado con la factura generada</returns>
+        Task<Result<Factura>> GenerarFacturaParaComandaAsync(
             Guid comandaId,
             TipoFactura tipoFactura,
             string nombreCliente,
@@ -38,8 +38,8 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         /// <param name="direccionCliente">Dirección del cliente (opcional)</param>
         /// <param name="observaciones">Observaciones adicionales (opcional)</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Factura generada</returns>
-        Task<Factura> GenerarFacturaParaComandasAsync(
+        /// <returns>Resultado con la factura generada</returns>
+        Task<Result<Factura>> GenerarFacturaParaComandasAsync(
             IEnumerable<Guid> comandasIds,
             TipoFactura tipoFactura,
             string nombreCliente,
@@ -55,8 +55,8 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         /// <param name="facturaId">Identificador de la factura</param>
         /// <param name="diasVencimiento">Días para vencimiento (0 para pago inmediato)</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Factura emitida</returns>
-        Task<Factura> EmitirFacturaAsync(
+        /// <returns>Resultado con la factura emitida</returns>
+        Task<Result<Factura>> EmitirFacturaAsync(
             Guid facturaId,
             int diasVencimiento = 0,
             CancellationToken cancellationToken = default);
@@ -67,8 +67,8 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         /// <param name="facturaId">Identificador de la factura</param>
         /// <param name="motivo">Motivo de la anulación</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Factura anulada</returns>
-        Task<Factura> AnularFacturaAsync(
+        /// <returns>Resultado con la factura anulada</returns>
+        Task<Result<Factura>> AnularFacturaAsync(
             Guid facturaId,
             string motivo,
             CancellationToken cancellationToken = default);
@@ -80,8 +80,8 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         /// <param name="pagoId">Identificador del pago</param>
         /// <param name="monto">Monto del pago</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Factura actualizada</returns>
-        Task<Factura> RegistrarPagoFacturaAsync(
+        /// <returns>Resultado con la factura actualizada</returns>
+        Task<Result<Factura>> RegistrarPagoFacturaAsync(
             Guid facturaId,
             Guid pagoId,
             decimal monto,
@@ -92,8 +92,8 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         /// </summary>
         /// <param name="prefijo">Prefijo para el número de factura (opcional)</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Siguiente número de factura disponible</returns>
-        Task<string> GenerarSiguienteNumeroFacturaAsync(
+        /// <returns>Resultado con el siguiente número de factura disponible</returns>
+        Task<Result<string>> GenerarSiguienteNumeroFacturaAsync(
             string? prefijo = null,
             CancellationToken cancellationToken = default);
     }

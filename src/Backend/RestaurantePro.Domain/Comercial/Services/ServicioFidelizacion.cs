@@ -9,6 +9,7 @@ namespace RestaurantePro.Domain.Comercial.Services
         private readonly IClienteRepository _clienteRepository;
         private readonly IHistorialPuntosRepository _historialPuntosRepository;
         private readonly IDateTimeService _dateTimeService;
+        private readonly INotificationManager _notificationManager;
 
         /// <summary>
         /// Constructor del servicio de fidelización
@@ -17,30 +18,40 @@ namespace RestaurantePro.Domain.Comercial.Services
             ITarjetaFidelizacionRepository tarjetaRepository,
             IClienteRepository clienteRepository,
             IHistorialPuntosRepository historialPuntosRepository,
-            IDateTimeService dateTimeService)
+            IDateTimeService dateTimeService,
+            INotificationManager notificationManager)
         {
             _tarjetaRepository = tarjetaRepository ?? throw new ArgumentNullException(nameof(tarjetaRepository));
             _clienteRepository = clienteRepository ?? throw new ArgumentNullException(nameof(clienteRepository));
             _historialPuntosRepository = historialPuntosRepository ?? throw new ArgumentNullException(nameof(historialPuntosRepository));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
+            _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
         }
 
         /// <summary>
         /// Crea una nueva tarjeta de fidelización y la asocia al cliente
         /// </summary>
         /// <param name="clienteId">ID del cliente</param>
-        /// <returns>La tarjeta creada</returns>
-        public async Task<TarjetaFidelizacion> CrearTarjetaFidelizacionAsync(Guid clienteId)
+        /// <returns>Resultado de la operación con la tarjeta creada</returns>
+        public async Task<Result<TarjetaFidelizacion>> CrearTarjetaFidelizacionAsync(Guid clienteId)
         {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.Require(clienteId != Guid.Empty, "El ID del cliente no puede estar vacío", propertyName: "ClienteId");
+            
+            if (_notificationManager.HasErrors)
+                return _notificationManager.ToResult<TarjetaFidelizacion>(null!);
+            
             // Verificar que el cliente existe
             var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
             if (cliente == null)
-                throw new InvalidOperationException($"No existe un cliente con el ID {clienteId}");
+                return Result.Failure<TarjetaFidelizacion>("No existe un cliente con el ID especificado");
 
             // Verificar si ya tiene una tarjeta activa
             var tarjetaExistente = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(clienteId);
             if (tarjetaExistente != null)
-                throw new InvalidOperationException($"El cliente ya tiene una tarjeta activa con código {tarjetaExistente.Codigo}");
+                return Result.Failure<TarjetaFidelizacion>($"El cliente ya tiene una tarjeta activa con código {tarjetaExistente.Codigo}");
 
             // Generar código único para la tarjeta
             string codigo = GenerarCodigoTarjeta(clienteId);
@@ -55,42 +66,52 @@ namespace RestaurantePro.Domain.Comercial.Services
             cliente.AsociarTarjetaFidelizacion(tarjeta.Id);
             await _clienteRepository.ActualizarAsync(cliente);
 
-            return tarjeta;
+            return Result.Success(tarjeta);
         }
 
         /// <summary>
         /// Calcula el descuento aplicable para un cliente según su nivel de fidelización
         /// </summary>
-        /// <param name="clienteId">Identificador del cliente</param>
+        /// <param name="clienteId">ID del cliente</param>
         /// <param name="montoTotal">Monto total de la comanda</param>
         /// <returns>Información del descuento aplicable</returns>
-        public async Task<ResultadoDescuento> CalcularDescuentoAsync(Guid clienteId, decimal montoTotal)
+        public async Task<Result<decimal>> CalcularDescuentoAsync(Guid clienteId, decimal montoTotal)
         {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager
+                .Require(clienteId != Guid.Empty, "El ID del cliente no puede estar vacío", propertyName: "ClienteId")
+                .Require(montoTotal > 0, "El monto total debe ser mayor a cero", propertyName: "MontoTotal");
+                
+            if (_notificationManager.HasErrors)
+                return _notificationManager.ToResult<decimal>(0);
+                
             // Obtener el cliente primero
             var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
             if (cliente == null)
-                return new ResultadoDescuento(0, 0);
+                return Result.Success(0m); // Sin cliente, no hay descuento
 
             // Verificar si el cliente está activo
             if (!cliente.EstaActivo)
-                return new ResultadoDescuento(0, 0);
+                return Result.Success(0m); // Cliente inactivo, no hay descuento
 
             // Verificar si el cliente tiene una tarjeta asociada
             if (!cliente.TarjetaFidelizacionPrincipalId.HasValue)
-                return new ResultadoDescuento(0, 0);
+                return Result.Success(0m); // Sin tarjeta, no hay descuento
                 
             // Obtener tarjeta activa del cliente
             var tarjeta = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(clienteId);
             
             // Si no existe o no está activa, no hay descuento
             if (tarjeta == null || tarjeta.Estado != EstadoTarjeta.Activa)
-                return new ResultadoDescuento(0, 0);
+                return Result.Success(0m);
             
             // Calcular descuento según el nivel
             int porcentajeDescuento = ObtenerPorcentajeDescuentoPorNivel(tarjeta.NivelFidelizacion);
             decimal montoDescuento = montoTotal * (porcentajeDescuento / 100m);
             
-            return new ResultadoDescuento(porcentajeDescuento, montoDescuento);
+            return Result.Success(montoDescuento);
         }
 
         /// <summary>
@@ -99,31 +120,42 @@ namespace RestaurantePro.Domain.Comercial.Services
         /// <param name="clienteId">Identificador del cliente</param>
         /// <param name="comandaId">Identificador de la comanda</param>
         /// <param name="montoTotal">Monto total de la comanda</param>
-        /// <returns>Tarea asíncrona</returns>
-        public async Task AcumularPuntosAsync(Guid clienteId, Guid comandaId, decimal montoTotal)
+        /// <returns>Resultado de la operación con los puntos acumulados</returns>
+        public async Task<Result<int>> AcumularPuntosAsync(Guid clienteId, Guid comandaId, decimal montoTotal)
         {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager
+                .Require(clienteId != Guid.Empty, "El ID del cliente no puede estar vacío", propertyName: "ClienteId")
+                .Require(comandaId != Guid.Empty, "El ID de la comanda no puede estar vacío", propertyName: "ComandaId")
+                .Require(montoTotal > 0, "El monto total debe ser mayor a cero", propertyName: "MontoTotal");
+                
+            if (_notificationManager.HasErrors)
+                return _notificationManager.ToResult<int>(0);
+                
             // Verificamos primero si el cliente existe
             var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
             if (cliente == null)
-                throw new InvalidOperationException($"No existe un cliente con el ID {clienteId}");
+                return Result.Failure<int>("No se encontró el cliente especificado");
             
             // Verificar si el cliente está activo
             if (!cliente.EstaActivo)
-                throw new InvalidOperationException("No se pueden acumular puntos para un cliente inactivo");
+                return Result.Failure<int>("No se pueden acumular puntos para un cliente inactivo");
 
             // Verificar si el cliente tiene una tarjeta asociada
             if (!cliente.TarjetaFidelizacionPrincipalId.HasValue)
-                throw new InvalidOperationException("El cliente no tiene una tarjeta de fidelización asociada");
+                return Result.Failure<int>("El cliente no tiene una tarjeta de fidelización asociada");
                 
             // Obtener tarjeta por ID
             var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value);
             
             // Si no existe o no está activa, no puede acumular puntos
             if (tarjeta == null)
-                throw new InvalidOperationException("No se encontró la tarjeta asociada al cliente");
+                return Result.Failure<int>("No se encontró la tarjeta asociada al cliente");
                 
             if (tarjeta.Estado != EstadoTarjeta.Activa)
-                throw new InvalidOperationException($"La tarjeta no está activa, estado actual: {tarjeta.Estado}");
+                return Result.Failure<int>($"La tarjeta no está activa, estado actual: {tarjeta.Estado}");
             
             // Factor de conversión basado en el nivel
             int factorConversion = ObtenerFactorConversionPorNivel(tarjeta.NivelFidelizacion);
@@ -141,6 +173,8 @@ namespace RestaurantePro.Domain.Comercial.Services
             // Actualizar el cliente con los puntos acumulados
             cliente.AgregarPuntos(historial.Puntos);
             await _clienteRepository.ActualizarAsync(cliente);
+            
+            return Result.Success(historial.Puntos);
         }
 
         /// <summary>
@@ -149,37 +183,55 @@ namespace RestaurantePro.Domain.Comercial.Services
         /// <param name="clienteId">Identificador del cliente</param>
         /// <param name="puntos">Cantidad de puntos a canjear</param>
         /// <param name="concepto">Motivo del canje</param>
-        /// <returns>Tarea asíncrona</returns>
-        public async Task CanjearPuntosAsync(Guid clienteId, int puntos, string concepto)
+        /// <returns>Resultado de la operación con los puntos restantes</returns>
+        public async Task<Result<int>> CanjearPuntosAsync(Guid clienteId, int puntos, string concepto)
         {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager
+                .Require(clienteId != Guid.Empty, "El ID del cliente no puede estar vacío", propertyName: "ClienteId")
+                .Require(puntos > 0, "Los puntos a canjear deben ser mayores a cero", propertyName: "Puntos")
+                .RequireNotEmpty(concepto, "El concepto del canje no puede estar vacío", propertyName: "Concepto");
+                
+            if (_notificationManager.HasErrors)
+                return _notificationManager.ToResult<int>(0);
+                
             // Verificamos primero si el cliente existe
             var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
             if (cliente == null)
-                throw new InvalidOperationException($"No existe un cliente con el ID {clienteId}");
+                return Result.Failure<int>($"No existe un cliente con el ID {clienteId}");
             
             // Verificar si el cliente está activo
             if (!cliente.EstaActivo)
-                throw new InvalidOperationException("No se pueden canjear puntos para un cliente inactivo");
+                return Result.Failure<int>("No se pueden canjear puntos para un cliente inactivo");
 
             // Verificar si el cliente tiene una tarjeta asociada
             if (!cliente.TarjetaFidelizacionPrincipalId.HasValue)
-                throw new InvalidOperationException("El cliente no tiene una tarjeta de fidelización asociada");
+                return Result.Failure<int>("El cliente no tiene una tarjeta de fidelización asociada");
                 
             // Obtener tarjeta por ID
             var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value);
             
             // Si no existe o no está activa, no puede canjear puntos
             if (tarjeta == null)
-                throw new InvalidOperationException("No se encontró la tarjeta asociada al cliente");
+                return Result.Failure<int>("No se encontró la tarjeta asociada al cliente");
                 
             if (tarjeta.Estado != EstadoTarjeta.Activa)
-                throw new InvalidOperationException($"La tarjeta no está activa, estado actual: {tarjeta.Estado}");
+                return Result.Failure<int>($"La tarjeta no está activa, estado actual: {tarjeta.Estado}");
             
+            // Verificar si tiene puntos suficientes
+            if (tarjeta.PuntosDisponibles < puntos)
+                return Result.Failure<int>($"El cliente no tiene suficientes puntos disponibles. " +
+                    $"Disponibles: {tarjeta.PuntosDisponibles}, Solicitados: {puntos}");
+                    
             // Canjear puntos directamente en la tarjeta (la tarjeta maneja su historial interno)
             tarjeta.CanjearPuntos(puntos, concepto);
             
             // Actualizar la tarjeta en el repositorio
             await _tarjetaRepository.ActualizarAsync(tarjeta);
+            
+            return Result.Success(tarjeta.PuntosDisponibles);
         }
 
         /// <summary>
@@ -260,27 +312,58 @@ namespace RestaurantePro.Domain.Comercial.Services
             
             return descuento;
         }
-    }
 
-    /// <summary>
-    /// Representa el resultado de un cálculo de descuento
-    /// </summary>
-    public class ResultadoDescuento
-    {
         /// <summary>
-        /// Porcentaje de descuento aplicado
+        /// Agrega puntos a la tarjeta de fidelización de un cliente
         /// </summary>
-        public int PorcentajeDescuento { get; }
-        
-        /// <summary>
-        /// Monto del descuento calculado
-        /// </summary>
-        public decimal MontoDescuento { get; }
-        
-        public ResultadoDescuento(int porcentajeDescuento, decimal montoDescuento)
+        /// <param name="clienteId">ID del cliente</param>
+        /// <param name="puntos">Puntos a agregar</param>
+        /// <param name="motivo">Motivo por el que se agregan los puntos</param>
+        /// <returns>Resultado de la operación con los puntos totales</returns>
+        public async Task<Result<int>> AgregarPuntosAsync(Guid clienteId, int puntos, string motivo)
         {
-            PorcentajeDescuento = porcentajeDescuento;
-            MontoDescuento = montoDescuento;
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager
+                .Require(clienteId != Guid.Empty, "El ID del cliente no puede estar vacío", propertyName: "ClienteId")
+                .Require(puntos > 0, "Los puntos deben ser mayores a cero", propertyName: "Puntos")
+                .RequireNotEmpty(motivo, "El motivo no puede estar vacío", propertyName: "Motivo");
+                
+            if (_notificationManager.HasErrors)
+                return _notificationManager.ToResult<int>(0);
+                
+            // Obtener el cliente
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
+            if (cliente == null)
+                return Result.Failure<int>("No se encontró el cliente especificado");
+                
+            // Verificar si el cliente tiene tarjeta de fidelización
+            if (!cliente.TarjetaFidelizacionPrincipalId.HasValue)
+                return Result.Failure<int>("El cliente no tiene tarjeta de fidelización");
+                
+            // Obtener tarjeta por ID
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value);
+            
+            // Si no existe, error
+            if (tarjeta == null)
+                return Result.Failure<int>("No se encontró la tarjeta asociada al cliente");
+                
+            try
+            {
+                // Agregar puntos a la tarjeta
+                var historial = tarjeta.AgregarPuntos(puntos, motivo);
+                
+                // Persistir cambios
+                await _tarjetaRepository.ActualizarAsync(tarjeta);
+                
+                // Retornar los puntos disponibles
+                return Result.Success(tarjeta.PuntosDisponibles);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<int>(ex.Message);
+            }
         }
     }
 } 

@@ -22,27 +22,49 @@ namespace RestaurantePro.Domain.Inventario.Services
         }
         
         /// <inheritdoc/>
-        public async Task<IEnumerable<Guid>> GenerarOrdenesCompraAutomaticas()
+        public async Task<Result<IEnumerable<Guid>>> GenerarOrdenesCompraAutomaticas(CancellationToken cancellationToken = default)
         {
             // Esta operación es costosa pero sus resultados pueden cambiar frecuentemente
             // La cacheamos por un tiempo corto (15 minutos)
             var cacheKey = $"{CacheKeyPrefix}GenerarOrdenesCompraAutomaticas";
             
-            return await _cacheService.GetOrAddAsync(
-                cacheKey,
-                async (ct) => await _servicioOriginal.GenerarOrdenesCompraAutomaticas(),
-                CacheDurationMinutes);
+            try
+            {
+                return await _cacheService.GetOrAddAsync(
+                    cacheKey,
+                    async (ct) => await _servicioOriginal.GenerarOrdenesCompraAutomaticas(ct),
+                    CacheDurationMinutes,
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Si hay un error en la caché, ejecutamos directamente la operación
+                return await _servicioOriginal.GenerarOrdenesCompraAutomaticas(cancellationToken);
+            }
         }
         
         /// <inheritdoc/>
-        public async Task<Guid?> GenerarOrdenCompraParaIngrediente(Guid ingredienteId)
+        public async Task<Result<Guid?>> GenerarOrdenCompraParaIngrediente(Guid ingredienteId, CancellationToken cancellationToken = default)
         {
+            // Si el ID no es válido, falla temprano sin consultar caché
+            if (ingredienteId == Guid.Empty)
+                return Result.Failure<Guid?>("El ID del ingrediente no puede estar vacío");
+                
             var cacheKey = $"{CacheKeyPrefix}GenerarOrdenCompraParaIngrediente_{ingredienteId}";
             
-            return await _cacheService.GetOrAddAsync(
-                cacheKey,
-                async (ct) => await _servicioOriginal.GenerarOrdenCompraParaIngrediente(ingredienteId),
-                CacheDurationMinutes);
+            try
+            {
+                return await _cacheService.GetOrAddAsync(
+                    cacheKey,
+                    async (ct) => await _servicioOriginal.GenerarOrdenCompraParaIngrediente(ingredienteId, ct),
+                    CacheDurationMinutes,
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Si hay un error en la caché, ejecutamos directamente la operación
+                return await _servicioOriginal.GenerarOrdenCompraParaIngrediente(ingredienteId, cancellationToken);
+            }
         }
         
         /// <inheritdoc/>

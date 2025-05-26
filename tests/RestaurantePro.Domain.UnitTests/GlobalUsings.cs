@@ -41,6 +41,12 @@ global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Services;
 
+// Domain core imports - SharedKernel Results
+global using RestaurantePro.Domain.Core.SharedKernel.Results;
+
+// Domain core imports - SharedKernel Validation
+global using RestaurantePro.Domain.Core.SharedKernel.Validation;
+
 // Domain core imports - SharedKernel Services - Cache
 global using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
 global using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators;
@@ -115,6 +121,7 @@ global using RestaurantePro.Domain.Comercial.Promociones.Entities;
 global using RestaurantePro.Domain.Comercial.Promociones.Enums;
 global using RestaurantePro.Domain.Comercial.Promociones.Events;
 global using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
+global using RestaurantePro.Domain.Comercial.Promociones.Services;
 global using RestaurantePro.Domain.Comercial.Promociones.Specifications;
 
 // Domain Comercial - Facturacion
@@ -143,6 +150,7 @@ global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interface
 global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
 global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums;
 global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events;
+global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events.OrdenCompra;
 global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
 
 // Domain Inventario - Services
@@ -150,6 +158,9 @@ global using RestaurantePro.Domain.Inventario.Services;
 
 // Domain Inventario - Policies
 global using RestaurantePro.Domain.Inventario.Policies;
+
+// Domain Inventario - Results
+global using RestaurantePro.Domain.Inventario.Results;
 
 // Domain Comercial - Policies
 global using RestaurantePro.Domain.Comercial.Policies;

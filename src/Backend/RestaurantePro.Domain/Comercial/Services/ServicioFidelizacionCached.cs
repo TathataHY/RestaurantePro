@@ -22,7 +22,7 @@ namespace RestaurantePro.Domain.Comercial.Services
         }
         
         /// <inheritdoc/>
-        public async Task<ResultadoDescuento> CalcularDescuentoAsync(Guid clienteId, decimal montoTotal)
+        public async Task<Result<decimal>> CalcularDescuentoAsync(Guid clienteId, decimal montoTotal)
         {
             // Solo aplicamos caché para este método que es consultivo
             // La clave incluye el clienteId y el montoTotal para ser único por cada combinación
@@ -35,23 +35,35 @@ namespace RestaurantePro.Domain.Comercial.Services
         }
         
         /// <inheritdoc/>
-        public async Task AcumularPuntosAsync(Guid clienteId, Guid comandaId, decimal montoTotal)
+        public async Task<Result<int>> AcumularPuntosAsync(Guid clienteId, Guid comandaId, decimal montoTotal)
         {
             // Este método modifica estado, no lo cachemos pero invalidamos la caché existente
-            await _servicioFidelizacionOriginal.AcumularPuntosAsync(clienteId, comandaId, montoTotal);
+            var resultado = await _servicioFidelizacionOriginal.AcumularPuntosAsync(clienteId, comandaId, montoTotal);
             
-            // Invalida cualquier caché relacionada con este cliente
-            InvalidarCacheCliente(clienteId);
+            // Solo invalidamos caché si la operación fue exitosa
+            if (resultado.Succeeded)
+            {
+                // Invalida cualquier caché relacionada con este cliente
+                InvalidarCacheCliente(clienteId);
+            }
+            
+            return resultado;
         }
         
         /// <inheritdoc/>
-        public async Task CanjearPuntosAsync(Guid clienteId, int puntos, string concepto)
+        public async Task<Result<int>> CanjearPuntosAsync(Guid clienteId, int puntos, string concepto)
         {
             // Este método modifica estado, no lo cachemos pero invalidamos la caché existente
-            await _servicioFidelizacionOriginal.CanjearPuntosAsync(clienteId, puntos, concepto);
+            var resultado = await _servicioFidelizacionOriginal.CanjearPuntosAsync(clienteId, puntos, concepto);
             
-            // Invalida cualquier caché relacionada con este cliente
-            InvalidarCacheCliente(clienteId);
+            // Solo invalidamos caché si la operación fue exitosa
+            if (resultado.Succeeded)
+            {
+                // Invalida cualquier caché relacionada con este cliente
+                InvalidarCacheCliente(clienteId);
+            }
+            
+            return resultado;
         }
         
         /// <inheritdoc/>
@@ -64,6 +76,38 @@ namespace RestaurantePro.Domain.Comercial.Services
                 cacheKey,
                 () => _servicioFidelizacionOriginal.CalcularDescuentoPorPuntos(puntos, montoTotal),
                 CacheDurationMinutes);
+        }
+        
+        /// <inheritdoc/>
+        public async Task<Result<int>> AgregarPuntosAsync(Guid clienteId, int puntos, string motivo)
+        {
+            // Este método modifica estado, no lo cachemos pero invalidamos la caché existente
+            var resultado = await _servicioFidelizacionOriginal.AgregarPuntosAsync(clienteId, puntos, motivo);
+            
+            // Solo invalidamos caché si la operación fue exitosa
+            if (resultado.Succeeded)
+            {
+                // Invalida cualquier caché relacionada con este cliente
+                InvalidarCacheCliente(clienteId);
+            }
+            
+            return resultado;
+        }
+        
+        /// <inheritdoc/>
+        public async Task<Result<TarjetaFidelizacion>> CrearTarjetaFidelizacionAsync(Guid clienteId)
+        {
+            // Este método modifica estado, no lo cachemos pero invalidamos la caché existente
+            var resultado = await _servicioFidelizacionOriginal.CrearTarjetaFidelizacionAsync(clienteId);
+            
+            // Solo invalidamos caché si la operación fue exitosa
+            if (resultado.Succeeded)
+            {
+                // Invalida cualquier caché relacionada con este cliente
+                InvalidarCacheCliente(clienteId);
+            }
+            
+            return resultado;
         }
         
         /// <summary>

@@ -1,3 +1,28 @@
+/*
+ * TODO: Plan de Adaptación a Patrón Result/Notification (Julio 2025)
+ * 
+ * Esta clase debe ser adaptada para utilizar los patrones Result y Notification
+ * reemplazando la clase ResultadoStockBajoPolicy por Result<T>.
+ * 
+ * Cambios requeridos:
+ * 1. Modificar la interfaz IStockBajoPolicy para que los métodos devuelvan:
+ *    - Task<Result<StockBajoPolicyData>> en lugar de Task<ResultadoStockBajoPolicy>
+ * 
+ * 2. Actualizar la implementación de los métodos:
+ *    - Usar _notificationManager para validaciones y acumulación de errores
+ *    - Convertir excepciones a errores en Result
+ *    - Retornar Result.Success o Result.Failure según corresponda
+ * 
+ * 3. Crear clase StockBajoPolicyData para contener los datos de resultado:
+ *    - Notificaciones
+ *    - OrdenesCompraGeneradas
+ *    - IngredientesPriorizados
+ * 
+ * 4. Actualizar pruebas unitarias para verificar el comportamiento con Result
+ * 
+ * 5. Actualizar servicios que dependen de esta política para trabajar con Result<T>
+ */
+
 namespace RestaurantePro.Domain.Inventario.Policies
 {
     /// <summary>
@@ -9,6 +34,7 @@ namespace RestaurantePro.Domain.Inventario.Policies
         private readonly IServicioNotificacionesInventario _servicioNotificaciones;
         private readonly IVerificadorStock _verificadorStock;
         private readonly IDateTimeService _dateTimeService;
+        private readonly INotificationManager _notificationManager;
         
         // Ponderaciones para el cálculo de prioridades
         private const int PONDERACION_ROTACION = 40;
@@ -23,155 +49,134 @@ namespace RestaurantePro.Domain.Inventario.Policies
             IIngredienteRepository ingredienteRepository,
             IServicioNotificacionesInventario servicioNotificaciones,
             IVerificadorStock verificadorStock,
-            IDateTimeService dateTimeService)
+            IDateTimeService dateTimeService,
+            INotificationManager notificationManager)
         {
             _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
             _servicioNotificaciones = servicioNotificaciones ?? throw new ArgumentNullException(nameof(servicioNotificaciones));
             _verificadorStock = verificadorStock ?? throw new ArgumentNullException(nameof(verificadorStock));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
+            _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
         }
         
         /// <inheritdoc />
-        public async Task<ResultadoStockBajoPolicy> EjecutarPolicy(CancellationToken cancellationToken = default)
+        public async Task<Result<StockBajoPolicyData>> EjecutarPolicy(CancellationToken cancellationToken = default)
         {
-            var resultado = new ResultadoStockBajoPolicy();
+            _notificationManager.CreateNewNotification();
             
-            // Priorizar ingredientes según rotación y temporada actual
-            var resultadoPriorizacion = await PriorizarIngredientesParaReposicion(true, cancellationToken);
-            
-            // Si no hay ingredientes con stock bajo, no hay acciones
-            if (!resultadoPriorizacion.IngredientesPriorizados.Any())
+            try
             {
-                return resultado;
-            }
-            
-            // Transferir los ingredientes priorizados al resultado
-            resultado.IngredientesPriorizados.AddRange(resultadoPriorizacion.IngredientesPriorizados);
-            
-            // Enviar notificaciones para cada ingrediente con stock bajo, ordenados por prioridad
-            foreach (var ingredientePriorizado in resultado.IngredientesPriorizados)
-            {
-                var notificacionId = await _servicioNotificaciones.NotificarStockBajo(
-                    ingredientePriorizado.IngredienteId,
-                    ingredientePriorizado.Nombre,
-                    ingredientePriorizado.Stock,
-                    ingredientePriorizado.StockMinimo);
-                    
-                resultado.Notificaciones.Add(notificacionId);
-            }
-            
-            // Generar órdenes de compra automáticas
-            var resultadoVerificacion = await _verificadorStock.VerificarYGenerarOrdenesCompraAsync(cancellationToken);
-            
-            // Registrar las órdenes generadas en el resultado
-            foreach (var orden in resultadoVerificacion.OrdenesGeneradas)
-            {
-                resultado.OrdenesCompraGeneradas.Add(orden.Id);
+                var resultado = new StockBajoPolicyData();
                 
-                // Notificar sobre la orden de compra generada
-                await _servicioNotificaciones.NotificarOrdenCompraGenerada(
-                    orden.Id,
-                    orden.ProveedorId,
-                    "Proveedor"); // Idealmente, obtendríamos el nombre real del proveedor
-            }
-            
-            return resultado;
-        }
-        
-        /// <inheritdoc />
-        public async Task<ResultadoStockBajoPolicy> EjecutarPolicyParaIngrediente(Guid ingredienteId, CancellationToken cancellationToken = default)
-        {
-            var resultado = new ResultadoStockBajoPolicy();
-            
-            // Obtener el ingrediente
-            var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteId, cancellationToken);
-            
-            if (ingrediente == null)
-            {
-                throw new ArgumentException($"No existe un ingrediente con el ID {ingredienteId}", nameof(ingredienteId));
-            }
-            
-            // Verificar si el stock está por debajo del mínimo
-            if (ingrediente.Stock >= ingrediente.StockMinimo)
-            {
-                return resultado; // El stock no está bajo, no hay acciones a tomar
-            }
-            
-            // Calcular prioridad del ingrediente
-            int prioridad = CalcularPrioridadIngrediente(
-                ingrediente.Rotacion, 
-                ingrediente.Temporada, 
-                ingrediente.Stock, 
-                ingrediente.StockMinimo,
-                ingrediente.CostoPromedio,
-                _dateTimeService.Now);
-            
-            var ingredientePriorizado = new IngredientePriorizado(
-                ingrediente.Id,
-                ingrediente.Nombre,
-                prioridad,
-                ingrediente.Rotacion,
-                ingrediente.Temporada,
-                ingrediente.Stock,
-                ingrediente.StockMinimo);
-                
-            resultado.IngredientesPriorizados.Add(ingredientePriorizado);
-            
-            // Enviar notificación de stock bajo
-            var notificacionId = await _servicioNotificaciones.NotificarStockBajo(
-                ingrediente.Id,
-                ingrediente.Nombre,
-                ingrediente.Stock,
-                ingrediente.StockMinimo);
-                
-            resultado.Notificaciones.Add(notificacionId);
-            
-            // Verificar si tiene proveedor principal
-            if (!ingrediente.ProveedorPrincipalId.HasValue)
-            {
-                return resultado; // No se puede generar orden sin proveedor
-            }
-            
-            // Intentar generar una orden de compra para este ingrediente
-            var resultadoVerificacion = await _verificadorStock.VerificarYGenerarOrdenesCompraAsync(cancellationToken);
-            
-            // Registrar las órdenes generadas en el resultado
-            foreach (var orden in resultadoVerificacion.OrdenesGeneradas)
-            {
-                if (orden.Items.Any(i => i.IngredienteId == ingredienteId))
+                // Priorizar ingredientes según rotación y temporada actual
+                var resultadoPriorizacion = await PriorizarIngredientesParaReposicion(true, cancellationToken);
+                if (!resultadoPriorizacion.Succeeded)
                 {
-                    resultado.OrdenesCompraGeneradas.Add(orden.Id);
-                    
-                    // Notificar sobre la orden de compra generada
-                    await _servicioNotificaciones.NotificarOrdenCompraGenerada(
-                        orden.Id,
-                        orden.ProveedorId,
-                        "Proveedor"); // Idealmente, obtendríamos el nombre real del proveedor
+                    return resultadoPriorizacion;
                 }
+                
+                // Si no hay ingredientes con stock bajo, no hay acciones
+                if (!resultadoPriorizacion.Value.IngredientesPriorizados.Any())
+                {
+                    return Result.Success(resultado);
+                }
+                
+                // Transferir los ingredientes priorizados al resultado
+                resultado.IngredientesPriorizados.AddRange(resultadoPriorizacion.Value.IngredientesPriorizados);
+                
+                // Enviar notificaciones para cada ingrediente con stock bajo, ordenados por prioridad
+                foreach (var ingredientePriorizado in resultado.IngredientesPriorizados)
+                {
+                    try
+                    {
+                        var notificacionId = await _servicioNotificaciones.NotificarStockBajo(
+                            ingredientePriorizado.IngredienteId,
+                            ingredientePriorizado.Nombre,
+                            ingredientePriorizado.Stock,
+                            ingredientePriorizado.StockMinimo);
+                            
+                        resultado.Notificaciones.Add(notificacionId);
+                    }
+                    catch (Exception ex)
+                    {
+                        _notificationManager.AddError(
+                            $"Error al notificar stock bajo para ingrediente {ingredientePriorizado.Nombre}: {ex.Message}", 
+                            "NotificarStockBajo");
+                    }
+                }
+                
+                // Generar órdenes de compra automáticas
+                var resultadoVerificacion = await _verificadorStock.VerificarYGenerarOrdenesCompraAsync(cancellationToken);
+                
+                // Registrar las órdenes generadas en el resultado
+                if (resultadoVerificacion.Succeeded)
+                {
+                    foreach (var orden in resultadoVerificacion.Value.OrdenesGeneradas)
+                    {
+                        resultado.OrdenesCompraGeneradas.Add(orden.Id);
+                        
+                        try
+                        {
+                            // Notificar sobre la orden de compra generada
+                            await _servicioNotificaciones.NotificarOrdenCompraGenerada(
+                                orden.Id,
+                                orden.ProveedorId,
+                                "Proveedor"); // Idealmente, obtendríamos el nombre real del proveedor
+                        }
+                        catch (Exception ex)
+                        {
+                            _notificationManager.AddError(
+                                $"Error al notificar orden generada {orden.Id}: {ex.Message}",
+                                "NotificarOrdenCompra");
+                        }
+                    }
+                }
+                
+                if (_notificationManager.HasErrors)
+                {
+                    return _notificationManager.ToResult(resultado);
+                }
+                
+                return Result.Success(resultado);
             }
-            
-            return resultado;
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al ejecutar política de stock bajo: {ex.Message}", "EjecutarPolicy");
+                return _notificationManager.ToResult<StockBajoPolicyData>(new StockBajoPolicyData());
+            }
         }
         
         /// <inheritdoc />
-        public async Task<ResultadoStockBajoPolicy> PriorizarIngredientesParaReposicion(bool considerarTemporadaActual = true, CancellationToken cancellationToken = default)
+        public async Task<Result<StockBajoPolicyData>> EjecutarPolicyParaIngrediente(Guid ingredienteId, CancellationToken cancellationToken = default)
         {
-            var resultado = new ResultadoStockBajoPolicy();
+            _notificationManager.CreateNewNotification();
             
-            // Obtener los ingredientes con stock bajo
-            var ingredientes = await _ingredienteRepository.ObtenerConStockBajoAsync();
+            // Validar parámetros
+            _notificationManager.Require(ingredienteId != Guid.Empty, "El ID del ingrediente no puede estar vacío", "IngredienteId");
             
-            if (!ingredientes.Any())
+            if (_notificationManager.HasErrors)
             {
-                return resultado; // No hay ingredientes con stock bajo
+                return _notificationManager.ToResult<StockBajoPolicyData>(null);
             }
             
-            // Fecha actual para cálculos de temporada
-            var fechaActual = _dateTimeService.Now;
-            
-            // Calcular prioridades y crear lista de ingredientes priorizados
-            foreach (var ingrediente in ingredientes)
+            try
             {
+                var resultado = new StockBajoPolicyData();
+                
+                // Obtener el ingrediente
+                var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteId, cancellationToken);
+                
+                if (ingrediente == null)
+                {
+                    return Result.Failure<StockBajoPolicyData>($"No existe un ingrediente con el ID {ingredienteId}");
+                }
+                
+                // Verificar si el stock está por debajo del mínimo
+                if (ingrediente.Stock >= ingrediente.StockMinimo)
+                {
+                    return Result.Success(resultado); // El stock no está bajo, no hay acciones a tomar
+                }
+                
                 // Calcular prioridad del ingrediente
                 int prioridad = CalcularPrioridadIngrediente(
                     ingrediente.Rotacion, 
@@ -179,8 +184,7 @@ namespace RestaurantePro.Domain.Inventario.Policies
                     ingrediente.Stock, 
                     ingrediente.StockMinimo,
                     ingrediente.CostoPromedio,
-                    fechaActual,
-                    considerarTemporadaActual);
+                    _dateTimeService.Now);
                 
                 var ingredientePriorizado = new IngredientePriorizado(
                     ingrediente.Id,
@@ -192,12 +196,149 @@ namespace RestaurantePro.Domain.Inventario.Policies
                     ingrediente.StockMinimo);
                     
                 resultado.IngredientesPriorizados.Add(ingredientePriorizado);
+                
+                try
+                {
+                    // Enviar notificación de stock bajo
+                    var notificacionId = await _servicioNotificaciones.NotificarStockBajo(
+                        ingrediente.Id,
+                        ingrediente.Nombre,
+                        ingrediente.Stock,
+                        ingrediente.StockMinimo);
+                        
+                    resultado.Notificaciones.Add(notificacionId);
+                }
+                catch (Exception ex)
+                {
+                    _notificationManager.AddError(
+                        $"Error al notificar stock bajo para ingrediente {ingrediente.Nombre}: {ex.Message}", 
+                        "NotificarStockBajo");
+                }
+                
+                // Verificar si tiene proveedor principal
+                if (!ingrediente.ProveedorPrincipalId.HasValue)
+                {
+                    if (_notificationManager.HasErrors)
+                    {
+                        return _notificationManager.ToResult(resultado);
+                    }
+                    
+                    return Result.Success(resultado); // No se puede generar orden sin proveedor
+                }
+                
+                // Intentar generar una orden de compra para este ingrediente
+                var resultadoVerificacion = await _verificadorStock.VerificarYGenerarOrdenesCompraAsync(cancellationToken);
+                
+                // Registrar las órdenes generadas en el resultado
+                if (resultadoVerificacion.Succeeded)
+                {
+                    foreach (var orden in resultadoVerificacion.Value.OrdenesGeneradas)
+                    {
+                        if (orden.Items.Any(i => i.IngredienteId == ingredienteId))
+                        {
+                            resultado.OrdenesCompraGeneradas.Add(orden.Id);
+                            
+                            try
+                            {
+                                // Notificar sobre la orden de compra generada
+                                await _servicioNotificaciones.NotificarOrdenCompraGenerada(
+                                    orden.Id,
+                                    orden.ProveedorId,
+                                    "Proveedor"); // Idealmente, obtendríamos el nombre real del proveedor
+                            }
+                            catch (Exception ex)
+                            {
+                                _notificationManager.AddError(
+                                    $"Error al notificar orden generada {orden.Id}: {ex.Message}",
+                                    "NotificarOrdenCompra");
+                            }
+                        }
+                    }
+                }
+                
+                if (_notificationManager.HasErrors)
+                {
+                    return _notificationManager.ToResult(resultado);
+                }
+                
+                return Result.Success(resultado);
             }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al ejecutar política para ingrediente: {ex.Message}", "EjecutarPolicyParaIngrediente");
+                return _notificationManager.ToResult<StockBajoPolicyData>(new StockBajoPolicyData());
+            }
+        }
+        
+        /// <inheritdoc />
+        public async Task<Result<StockBajoPolicyData>> PriorizarIngredientesParaReposicion(bool considerarTemporadaActual = true, CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
             
-            // Ordenar por prioridad (mayor a menor)
-            resultado.IngredientesPriorizados.Sort((a, b) => b.Prioridad.CompareTo(a.Prioridad));
-            
-            return resultado;
+            try
+            {
+                var resultado = new StockBajoPolicyData();
+                
+                // Obtener los ingredientes con stock bajo
+                var ingredientes = await _ingredienteRepository.ObtenerConStockBajoAsync();
+                
+                if (!ingredientes.Any())
+                {
+                    return Result.Success(resultado); // No hay ingredientes con stock bajo
+                }
+                
+                // Fecha actual para cálculos de temporada
+                var fechaActual = _dateTimeService.Now;
+                
+                // Calcular prioridades y crear lista de ingredientes priorizados
+                foreach (var ingrediente in ingredientes)
+                {
+                    try
+                    {
+                        // Calcular prioridad del ingrediente
+                        int prioridad = CalcularPrioridadIngrediente(
+                            ingrediente.Rotacion, 
+                            ingrediente.Temporada, 
+                            ingrediente.Stock, 
+                            ingrediente.StockMinimo,
+                            ingrediente.CostoPromedio,
+                            fechaActual,
+                            considerarTemporadaActual);
+                        
+                        var ingredientePriorizado = new IngredientePriorizado(
+                            ingrediente.Id,
+                            ingrediente.Nombre,
+                            prioridad,
+                            ingrediente.Rotacion,
+                            ingrediente.Temporada,
+                            ingrediente.Stock,
+                            ingrediente.StockMinimo);
+                            
+                        resultado.IngredientesPriorizados.Add(ingredientePriorizado);
+                    }
+                    catch (Exception ex)
+                    {
+                        _notificationManager.AddError(
+                            $"Error al priorizar ingrediente {ingrediente.Nombre}: {ex.Message}", 
+                            "PriorizarIngrediente");
+                    }
+                }
+                
+                // Ordenar por prioridad (mayor a menor)
+                resultado.IngredientesPriorizados.Sort((a, b) => b.Prioridad.CompareTo(a.Prioridad));
+                
+                if (_notificationManager.HasErrors)
+                {
+                    return _notificationManager.ToResult(resultado);
+                }
+                
+                return Result.Success(resultado);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al priorizar ingredientes: {ex.Message}", "PriorizarIngredientes");
+                return _notificationManager.ToResult<StockBajoPolicyData>(new StockBajoPolicyData());
+            }
         }
         
         /// <summary>
@@ -294,7 +435,7 @@ namespace RestaurantePro.Domain.Inventario.Policies
         }
 
         /// <inheritdoc />
-        public async Task<ResultadoStockBajoPolicy> EjecutarAsync(CancellationToken cancellationToken = default)
+        public async Task<Result<StockBajoPolicyData>> EjecutarAsync(CancellationToken cancellationToken = default)
         {
             // Este método es simplemente un alias de EjecutarPolicy
             return await EjecutarPolicy(cancellationToken);

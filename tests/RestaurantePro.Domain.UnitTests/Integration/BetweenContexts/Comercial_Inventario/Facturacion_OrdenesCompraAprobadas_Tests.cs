@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Events.OrdenCompra;
-
 namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_Inventario
 {
     /// <summary>

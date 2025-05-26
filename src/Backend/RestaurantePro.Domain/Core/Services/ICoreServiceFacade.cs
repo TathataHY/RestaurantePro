@@ -25,8 +25,8 @@ namespace RestaurantePro.Domain.Core.Services
         /// <param name="categoriaId">ID de la categoría</param>
         /// <param name="categoriaNombre">Nombre de la categoría (si no existe)</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Producto registrado</returns>
-        Task<Productos.Entities.Producto> RegistrarProductoAsync(
+        /// <returns>Resultado con el producto registrado</returns>
+        Task<Result<Productos.Entities.Producto>> RegistrarProductoAsync(
             string nombre, 
             string descripcion, 
             decimal precio, 
@@ -44,8 +44,8 @@ namespace RestaurantePro.Domain.Core.Services
         /// <param name="categoriaId">Nueva categoría (null para no cambiar)</param>
         /// <param name="activo">Estado activo (null para no cambiar)</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Producto actualizado o null si no existe</returns>
-        Task<Productos.Entities.Producto?> ActualizarProductoAsync(
+        /// <returns>Resultado con el producto actualizado o null si no existe</returns>
+        Task<Result<Productos.Entities.Producto?>> ActualizarProductoAsync(
             Guid id, 
             string? nombre = null, 
             string? descripcion = null, 
@@ -90,8 +90,8 @@ namespace RestaurantePro.Domain.Core.Services
         /// <param name="tiempoPreparacion">Tiempo de preparación en minutos</param>
         /// <param name="ingredientes">Diccionario con ID de ingrediente como clave y cantidad como valor</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Receta registrada o actualizada</returns>
-        Task<Productos.Entities.Receta> RegistrarRecetaProductoAsync(
+        /// <returns>Resultado con la receta registrada o actualizada</returns>
+        Task<Result<Productos.Entities.Receta>> RegistrarRecetaProductoAsync(
             Guid productoId, 
             string instrucciones, 
             int tiempoPreparacion, 
@@ -147,15 +147,15 @@ namespace RestaurantePro.Domain.Core.Services
         #region Usuarios
         
         /// <summary>
-        /// Crear un nuevo usuario en el sistema
+        /// Crear un nuevo usuario
         /// </summary>
-        /// <param name="nombreUsuario">Nombre de usuario para login</param>
+        /// <param name="nombreUsuario">Nombre de usuario único</param>
         /// <param name="nombreCompleto">Nombre completo del usuario</param>
         /// <param name="email">Email del usuario</param>
         /// <param name="rol">Rol inicial del usuario</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Usuario creado</returns>
-        Task<Usuarios.Entities.Usuario> CrearUsuarioAsync(string nombreUsuario, string nombreCompleto, string email, string rol, CancellationToken cancellationToken = default);
+        /// <returns>Resultado con el usuario creado</returns>
+        Task<Result<Usuarios.Entities.Usuario>> CrearUsuarioAsync(string nombreUsuario, string nombreCompleto, string email, string rol, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Actualizar el nombre de un usuario
@@ -163,8 +163,8 @@ namespace RestaurantePro.Domain.Core.Services
         /// <param name="usuarioId">ID del usuario</param>
         /// <param name="nuevoNombre">Nuevo nombre completo</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Usuario actualizado</returns>
-        Task<Usuarios.Entities.Usuario> ActualizarNombreUsuarioAsync(Guid usuarioId, string nuevoNombre, CancellationToken cancellationToken = default);
+        /// <returns>Resultado con el usuario actualizado</returns>
+        Task<Result<Usuarios.Entities.Usuario>> ActualizarNombreUsuarioAsync(Guid usuarioId, string nuevoNombre, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Actualizar el email de un usuario
@@ -172,8 +172,8 @@ namespace RestaurantePro.Domain.Core.Services
         /// <param name="usuarioId">ID del usuario</param>
         /// <param name="nuevoEmail">Nuevo email</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Usuario actualizado</returns>
-        Task<Usuarios.Entities.Usuario> ActualizarEmailUsuarioAsync(Guid usuarioId, string nuevoEmail, CancellationToken cancellationToken = default);
+        /// <returns>Resultado con el usuario actualizado</returns>
+        Task<Result<Usuarios.Entities.Usuario>> ActualizarEmailUsuarioAsync(Guid usuarioId, string nuevoEmail, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Cambiar el estado de un usuario (activar/desactivar)
@@ -181,8 +181,8 @@ namespace RestaurantePro.Domain.Core.Services
         /// <param name="usuarioId">ID del usuario</param>
         /// <param name="activar">True para activar, False para desactivar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Usuario actualizado</returns>
-        Task<Usuarios.Entities.Usuario> CambiarEstadoUsuarioAsync(Guid usuarioId, bool activar, CancellationToken cancellationToken = default);
+        /// <returns>Resultado con el usuario actualizado</returns>
+        Task<Result<Usuarios.Entities.Usuario>> CambiarEstadoUsuarioAsync(Guid usuarioId, bool activar, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Limpia los roles de un usuario dejando solo el rol predeterminado especificado
@@ -190,8 +190,8 @@ namespace RestaurantePro.Domain.Core.Services
         /// <param name="usuarioId">ID del usuario</param>
         /// <param name="rolPredeterminado">Rol predeterminado a mantener</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Usuario actualizado</returns>
-        Task<Usuarios.Entities.Usuario> LimpiarRolesUsuarioAsync(Guid usuarioId, string rolPredeterminado, CancellationToken cancellationToken = default);
+        /// <returns>Resultado con el usuario actualizado</returns>
+        Task<Result<Usuarios.Entities.Usuario>> LimpiarRolesUsuarioAsync(Guid usuarioId, string rolPredeterminado, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Asignar un rol a un usuario
@@ -199,8 +199,8 @@ namespace RestaurantePro.Domain.Core.Services
         /// <param name="usuarioId">ID del usuario</param>
         /// <param name="rol">Rol a asignar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Usuario actualizado</returns>
-        Task<Usuarios.Entities.Usuario> AsignarRolUsuarioAsync(Guid usuarioId, string rol, CancellationToken cancellationToken = default);
+        /// <returns>Resultado con el usuario actualizado</returns>
+        Task<Result<Usuarios.Entities.Usuario>> AsignarRolUsuarioAsync(Guid usuarioId, string rol, CancellationToken cancellationToken = default);
         
         #endregion
         
@@ -216,8 +216,8 @@ namespace RestaurantePro.Domain.Core.Services
         /// <param name="datos">Datos adicionales (opcional)</param>
         /// <param name="prioridad">Prioridad de la notificación</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Notificación enviada</returns>
-        Task<Notificaciones.Entities.Notificacion> EnviarNotificacionAsync(
+        /// <returns>Resultado con la notificación enviada</returns>
+        Task<Result<Notificaciones.Entities.Notificacion>> EnviarNotificacionAsync(
             Guid? destinatarioId, 
             string tipo, 
             string titulo, 
@@ -231,8 +231,8 @@ namespace RestaurantePro.Domain.Core.Services
         /// </summary>
         /// <param name="notificacionId">ID de la notificación</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>True si se marcó como leída, False si no se encontró</returns>
-        Task<bool> MarcarNotificacionComoLeidaAsync(
+        /// <returns>Resultado con True si se marcó como leída, False si no se encontró</returns>
+        Task<Result<bool>> MarcarNotificacionComoLeidaAsync(
             Guid notificacionId, 
             CancellationToken cancellationToken = default);
         
@@ -242,8 +242,8 @@ namespace RestaurantePro.Domain.Core.Services
         /// <param name="usuarioId">ID del usuario</param>
         /// <param name="soloNoLeidas">Indica si solo se deben obtener notificaciones no leídas</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Lista de notificaciones del usuario</returns>
-        Task<List<Notificaciones.Entities.Notificacion>> ObtenerNotificacionesUsuarioAsync(
+        /// <returns>Resultado con la lista de notificaciones del usuario</returns>
+        Task<Result<List<Notificaciones.Entities.Notificacion>>> ObtenerNotificacionesUsuarioAsync(
             Guid usuarioId, 
             bool soloNoLeidas = false, 
             CancellationToken cancellationToken = default);

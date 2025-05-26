@@ -94,7 +94,7 @@ namespace RestaurantePro.Domain.Core
             {
                 var original = sp.GetRequiredService<RecetaService>();
                 var cacheService = sp.GetRequiredService<ICacheService>();
-                return new RecetaServiceCached(original, cacheService);
+                return new RecetaServiceCached(original, cacheService, sp.GetRequiredService<INotificationManager>());
             });
             services.AddScoped<IRecetaServiceCached>(sp => 
                 (IRecetaServiceCached)sp.GetRequiredService<IRecetaService>());
@@ -228,7 +228,7 @@ namespace RestaurantePro.Domain.Core
             {
                 var original = sp.GetRequiredService<RecetaService>();
                 var cacheService = sp.GetRequiredService<ICacheService>();
-                return new RecetaServiceCached(original, cacheService);
+                return new RecetaServiceCached(original, cacheService, sp.GetRequiredService<INotificationManager>());
             });
             services.AddScoped<IRecetaServiceCached>(sp => 
                 (IRecetaServiceCached)sp.GetRequiredService<IRecetaService>());

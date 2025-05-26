@@ -1,11 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using RestaurantePro.Domain.Core.SharedKernel.Validation;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using Xunit;
-using FluentAssertions;
-
 namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Validation
 {
     public class NotificationTests

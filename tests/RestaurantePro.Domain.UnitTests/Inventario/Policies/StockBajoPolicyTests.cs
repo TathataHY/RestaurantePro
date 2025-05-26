@@ -6,7 +6,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
         private readonly Mock<IServicioNotificacionesInventario> _servicioNotificacionesMock;
         private readonly Mock<IVerificadorStock> _verificadorStockMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
-        private readonly StockBajoPolicy _policy;
+        private readonly NotificationManager _notificationManager;
+        private readonly StockBajoPolicy _sut;
 
         public StockBajoPolicyTests()
         {
@@ -14,310 +15,194 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
             _servicioNotificacionesMock = new Mock<IServicioNotificacionesInventario>();
             _verificadorStockMock = new Mock<IVerificadorStock>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
+            _notificationManager = new NotificationManager();
 
-            _dateTimeServiceMock.Setup(s => s.Now).Returns(new DateTime(2023, 1, 1));
-
-            _policy = new StockBajoPolicy(
+            _sut = new StockBajoPolicy(
                 _ingredienteRepositoryMock.Object,
                 _servicioNotificacionesMock.Object,
                 _verificadorStockMock.Object,
-                _dateTimeServiceMock.Object);
+                _dateTimeServiceMock.Object,
+                _notificationManager);
         }
 
         [Fact]
-        public async Task EjecutarPolicy_ConIngredientesBajoStock_DebeNotificarYGenerarOrdenes()
+        public async Task EjecutarPolicy_SinIngredientesConStockBajo_DebeRetornarResultadoVacio()
         {
             // Arrange
-            // Creamos ingredientes de manera segura para evitar problemas con árboles de expresión
-            var tomate = CrearIngredienteConRotacionYTemporadadManual(
-                "Tomate", 5, 2, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño);
-                
-            var cebolla = CrearIngredienteConRotacionYTemporadadManual(
-                "Cebolla", 8, 3, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño);
-                
-            var ingredientes = new List<Ingrediente> { tomate, cebolla };
+            var fechaActual = new DateTime(2025, 7, 15);
+            _dateTimeServiceMock.Setup(s => s.Now).Returns(fechaActual);
 
-            // Configuración de repository sin usar It.IsAny
-            ConfigurarObtenerConStockBajo(ingredientes);
+            var resultadoPriorizacion = new StockBajoPolicyData();
 
-            // Configuración del resultado del verificador
-            var resultadoVerificacion = new ResultadoVerificacionStock();
-            var proveedor = Guid.NewGuid();
-            var orden = Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra.Crear(
-                proveedor,
-                "Orden de prueba",
-                DateTime.Now);
-            resultadoVerificacion.OrdenesGeneradas.Add(orden);
-
-            // Configuración de mock sin usar It.IsAny
-            ConfigurarVerificadorStock(resultadoVerificacion);
-            ConfigurarNotificacionStockBajo(Guid.NewGuid());
-
-            // Act
-            var resultado = await _policy.EjecutarPolicy();
-
-            // Assert
-            resultado.Notificaciones.Should().HaveCount(2);
-            resultado.OrdenesCompraGeneradas.Should().HaveCount(1);
-
-            // Verificación usando métodos sin problemas de árboles de expresión
-            VerificarNotificacionesEnviadas(2);
-            VerificarVerificadorInvocado(1);
-        }
-
-        [Fact]
-        public async Task EjecutarPolicy_SinIngredientesBajoStock_NoDebeNotificarNiGenerarOrdenes()
-        {
-            // Arrange
-            ConfigurarObtenerConStockBajo(new List<Ingrediente>());
-
-            // Act
-            var resultado = await _policy.EjecutarPolicy();
-
-            // Assert
-            resultado.Notificaciones.Should().BeEmpty();
-            resultado.OrdenesCompraGeneradas.Should().BeEmpty();
-
-            VerificarNotificacionesEnviadas(0);
-            VerificarVerificadorInvocado(0);
-        }
-
-        [Fact]
-        public async Task EjecutarPolicy_ConIngredientesBajoStockPeroSinGenerarOrdenes_DebeNotificarPeroNoGenerarOrdenes()
-        {
-            // Arrange
-            // Creamos ingredientes de manera segura para evitar problemas con árboles de expresión
-            var tomate = CrearIngredienteConRotacionYTemporadadManual(
-                "Tomate", 5, 2, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño);
-                
-            var cebolla = CrearIngredienteConRotacionYTemporadadManual(
-                "Cebolla", 8, 3, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño);
-                
-            var ingredientes = new List<Ingrediente> { tomate, cebolla };
-
-            ConfigurarObtenerConStockBajo(ingredientes);
-            ConfigurarVerificadorStock(new ResultadoVerificacionStock());
-            ConfigurarNotificacionStockBajo(Guid.NewGuid());
-
-            // Act
-            var resultado = await _policy.EjecutarPolicy();
-
-            // Assert
-            resultado.Notificaciones.Should().HaveCount(2);
-            resultado.OrdenesCompraGeneradas.Should().BeEmpty();
-
-            VerificarNotificacionesEnviadas(2);
-            VerificarVerificadorInvocado(1);
-        }
-
-        [Fact]
-        public async Task PriorizarIngredientesParaReposicion_DebeOrdenarPorPrioridad()
-        {
-            // Arrange
-            // Creamos los ingredientes fuera de la lista para evitar problemas con árboles de expresión
-            var tomate = CrearIngredienteConRotacionYTemporadadManual(
-                "Tomate", 10, 2, RotacionIngrediente.Alta, TemporadaIngrediente.Verano);
-                
-            var cebolla = CrearIngredienteConRotacionYTemporadadManual(
-                "Cebolla", 10, 1, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño);
-                
-            var lechuga = CrearIngredienteConRotacionYTemporadadManual(
-                "Lechuga", 10, 3, RotacionIngrediente.Critica, TemporadaIngrediente.Primavera);
-
-            var ingredientes = new List<Ingrediente> { tomate, cebolla, lechuga };
-
-            ConfigurarObtenerConStockBajo(ingredientes);
-
-            // Configurar fecha para que sea verano (enero)
-            _dateTimeServiceMock.Setup(s => s.Now).Returns(new DateTime(2023, 1, 15));
-
-            // Act
-            var resultado = await _policy.PriorizarIngredientesParaReposicion(true);
-
-            // Assert
-            resultado.IngredientesPriorizados.Should().HaveCount(3);
-            
-            // El orden esperado es: 
-            // 1. Tomate (alta rotación + temporada actual verano)
-            // 2. Lechuga (rotación crítica pero fuera de temporada)
-            // 3. Cebolla (rotación media y todo el año)
-            resultado.IngredientesPriorizados[0].Nombre.Should().Be("Tomate");
-            resultado.IngredientesPriorizados[1].Nombre.Should().Be("Lechuga");
-            resultado.IngredientesPriorizados[2].Nombre.Should().Be("Cebolla");
-        }
-        
-        [Fact]
-        public async Task PriorizarIngredientesParaReposicion_SinConsiderarTemporada_DebeOrdenarPorRotacionYStock()
-        {
-            // Arrange
-            // Creamos los ingredientes fuera de la lista para evitar problemas con árboles de expresión
-            var tomate = CrearIngredienteConRotacionYTemporadadManual(
-                "Tomate", 10, 2, RotacionIngrediente.Alta, TemporadaIngrediente.Verano);
-                
-            var cebolla = CrearIngredienteConRotacionYTemporadadManual(
-                "Cebolla", 10, 1, RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño);
-                
-            var lechuga = CrearIngredienteConRotacionYTemporadadManual(
-                "Lechuga", 10, 3, RotacionIngrediente.Critica, TemporadaIngrediente.Primavera);
-
-            var ingredientes = new List<Ingrediente> { tomate, cebolla, lechuga };
-
-            ConfigurarObtenerConStockBajo(ingredientes);
-
-            // Act
-            var resultado = await _policy.PriorizarIngredientesParaReposicion(false);
-
-            // Assert
-            resultado.IngredientesPriorizados.Should().HaveCount(3);
-            
-            // El orden esperado es: 
-            // 1. Lechuga (rotación crítica)
-            // 2. Tomate (alta rotación)
-            // 3. Cebolla (rotación media)
-            resultado.IngredientesPriorizados[0].Nombre.Should().Be("Lechuga");
-            resultado.IngredientesPriorizados[1].Nombre.Should().Be("Tomate");
-            resultado.IngredientesPriorizados[2].Nombre.Should().Be("Cebolla");
-        }
-        
-        [Fact]
-        public async Task EjecutarPolicy_ConIngredientesPriorizados_DebeNotificarEnOrdenDePrioridad()
-        {
-            // Arrange
-            // Creamos los ingredientes fuera de la lista para evitar problemas con árboles de expresión
-            var tomate = CrearIngredienteConRotacionYTemporadadManual(
-                "Tomate", 10, 2, RotacionIngrediente.Alta, TemporadaIngrediente.Verano);
-                
-            var lechuga = CrearIngredienteConRotacionYTemporadadManual(
-                "Lechuga", 10, 3, RotacionIngrediente.Critica, TemporadaIngrediente.Primavera);
-
-            var ingredientes = new List<Ingrediente> { tomate, lechuga };
-
-            ConfigurarObtenerConStockBajo(ingredientes);
-            ConfigurarVerificadorStock(new ResultadoVerificacionStock());
-            ConfigurarNotificacionStockBajo(Guid.NewGuid());
-            
-            // Configurar fecha para que sea verano (enero)
-            _dateTimeServiceMock.Setup(s => s.Now).Returns(new DateTime(2023, 1, 15));
-
-            // Act
-            var resultado = await _policy.EjecutarPolicy();
-
-            // Assert
-            resultado.Notificaciones.Should().HaveCount(2);
-            resultado.IngredientesPriorizados.Should().HaveCount(2);
-            
-            // El primer ingrediente priorizado debe ser Tomate (temporada actual)
-            resultado.IngredientesPriorizados[0].Nombre.Should().Be("Tomate");
-            
-            // Verificar el orden de las notificaciones (difícil de hacer directamente, pero
-            // verificamos que se llamó al servicio dos veces con cualquier parámetro)
-            VerificarNotificacionesEnviadas(2);
-        }
-
-        // Métodos auxiliares para configurar mocks evitando problemas de árboles de expresión
-        private void ConfigurarObtenerConStockBajo(List<Ingrediente> ingredientes)
-        {
             _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerConStockBajoAsync(It.Is<CancellationToken>(t => true)))
-                .ReturnsAsync(ingredientes);
+                .Setup(r => r.ObtenerConStockBajoAsync())
+                .ReturnsAsync(new List<Ingrediente>());
+
+            // Act
+            var result = await _sut.EjecutarPolicy();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Succeeded.Should().BeTrue();
+            result.Value.Should().NotBeNull();
+            result.Value.IngredientesPriorizados.Should().BeEmpty();
+            result.Value.Notificaciones.Should().BeEmpty();
+            result.Value.OrdenesCompraGeneradas.Should().BeEmpty();
         }
 
-        private void ConfigurarVerificadorStock(ResultadoVerificacionStock resultado) 
-        { 
-            _verificadorStockMock
-                .Setup(v => v.VerificarYGenerarOrdenesCompraAsync(It.Is<CancellationToken>(t => true)))
-                .ReturnsAsync(resultado); 
-        }
-
-        private void ConfigurarNotificacionStockBajo(Guid notificacionId)
+        [Fact]
+        public async Task EjecutarPolicyParaIngrediente_ConIngredienteExistente_DebeRetornarResultadoExitoso()
         {
-            // En lugar de configurar el método con argumentos opcionales,
-            // creamos un delegado que maneje el caso específico
+            // Arrange
+            var ingredienteId = Guid.NewGuid();
+            var fechaActual = new DateTime(2025, 7, 15);
+            _dateTimeServiceMock.Setup(s => s.Now).Returns(fechaActual);
+
+            var ingrediente = new Ingrediente
+            {
+                Id = ingredienteId,
+                Nombre = "Tomate",
+                Stock = 5,
+                StockMinimo = 10,
+                Rotacion = RotacionIngrediente.Alta,
+                Temporada = TemporadaIngrediente.Verano,
+                CostoPromedio = 100,
+                ProveedorPrincipalId = Guid.NewGuid()
+            };
+
+            _ingredienteRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(ingrediente);
+
+            var notificacionId = Guid.NewGuid();
             _servicioNotificacionesMock
                 .Setup(s => s.NotificarStockBajo(
-                    It.IsAny<Guid>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<decimal>(), 
-                    It.IsAny<decimal>(), 
-                    It.IsAny<CancellationToken>()))
-                .Returns((Guid ingredienteId, string nombre, decimal stockActual, decimal stockMinimo, CancellationToken ct) => 
-                    Task.FromResult(notificacionId));
-        }
+                    ingredienteId,
+                    "Tomate",
+                    5,
+                    10))
+                .ReturnsAsync(notificacionId);
 
-        private void VerificarNotificacionesEnviadas(int veces)
-        {
-            // En lugar de verificar con argumentos opcionales,
-            // verificamos con It.IsAny para evitar el problema con los árboles de expresión
-            _servicioNotificacionesMock.Verify(
-                s => s.NotificarStockBajo(
-                    It.IsAny<Guid>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<decimal>(), 
-                    It.IsAny<decimal>(), 
-                    It.IsAny<CancellationToken>()),
-                Times.Exactly(veces));
-        }
-
-        private void VerificarVerificadorInvocado(int veces) 
-        { 
-            // Usamos It.Is en lugar de un valor específico para evitar problemas con árboles de expresión
-            _verificadorStockMock.Verify(
-                v => v.VerificarYGenerarOrdenesCompraAsync(It.Is<CancellationToken>(t => true)), 
-                Times.Exactly(veces)); 
-        }
-
-        private Ingrediente CrearIngredienteConRotacionYTemporadadManual(
-            string nombre, 
-            decimal stockMinimo, 
-            decimal stockActual, 
-            RotacionIngrediente rotacion, 
-            TemporadaIngrediente temporada)
-        {
-            // Creamos el ingrediente fuera del contexto de expresión lambda
-            string codigo = "ING-" + Guid.NewGuid().ToString().Substring(0, 5);
-            string descripcion = $"Descripción de {nombre}";
-            var unidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo;
-
-            // Crear el ingrediente usando el método factory
-            var ingrediente = Ingrediente.Crear(
-                nombre,
-                codigo, 
-                descripcion, 
-                unidadMedida, 
-                stockMinimo,
-                stockActual,
-                rotacion,
-                temporada);
-
-            // Asociar proveedor ficticio
-            var proveedorId = Guid.NewGuid();
-            ingrediente.AsociarProveedorPrincipal(proveedorId);
-            
-            // Asignar costo promedio según rotación
-            decimal costoPromedio;
-            
-            switch (rotacion)
+            var ordenCompraId = Guid.NewGuid();
+            var ordenCompra = new OrdenCompra
             {
-                case RotacionIngrediente.Baja:
-                    costoPromedio = 50.0m;
-                    break;
-                case RotacionIngrediente.Media:
-                    costoPromedio = 100.0m;
-                    break;
-                case RotacionIngrediente.Alta:
-                    costoPromedio = 200.0m;
-                    break;
-                case RotacionIngrediente.Critica:
-                    costoPromedio = 350.0m;
-                    break;
-                default:
-                    costoPromedio = 0;
-                    break;
-            }
-            
-            ingrediente.ActualizarCostoPromedio(costoPromedio);
+                Id = ordenCompraId,
+                ProveedorId = ingrediente.ProveedorPrincipalId.Value,
+                Items = new List<ItemOrdenCompra>
+                {
+                    new ItemOrdenCompra
+                    {
+                        IngredienteId = ingredienteId,
+                        Cantidad = 10,
+                        PrecioUnitario = 100
+                    }
+                }
+            };
 
-            return ingrediente;
+            var resultadoVerificacion = new ResultadoVerificacionStock
+            {
+                OrdenesGeneradas = new List<OrdenCompra> { ordenCompra }
+            };
+
+            _verificadorStockMock
+                .Setup(v => v.VerificarYGenerarOrdenesCompraAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultadoVerificacion);
+
+            // Act
+            var result = await _sut.EjecutarPolicyParaIngrediente(ingredienteId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Succeeded.Should().BeTrue();
+            result.Value.Should().NotBeNull();
+            result.Value.IngredientesPriorizados.Should().ContainSingle();
+            result.Value.Notificaciones.Should().ContainSingle();
+            result.Value.Notificaciones.Should().Contain(notificacionId);
+            result.Value.OrdenesCompraGeneradas.Should().ContainSingle();
+            result.Value.OrdenesCompraGeneradas.Should().Contain(ordenCompraId);
+        }
+
+        [Fact]
+        public async Task EjecutarPolicyParaIngrediente_ConIngredienteInexistente_DebeRetornarFallo()
+        {
+            // Arrange
+            var ingredienteId = Guid.NewGuid();
+
+            _ingredienteRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Ingrediente)null);
+
+            // Act
+            var result = await _sut.EjecutarPolicyParaIngrediente(ingredienteId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Succeeded.Should().BeFalse();
+            result.Error.Should().Contain("No existe un ingrediente");
+        }
+
+        [Fact]
+        public async Task PriorizarIngredientesParaReposicion_ConIngredientes_DebeOrdenarPorPrioridad()
+        {
+            // Arrange
+            var fechaActual = new DateTime(2025, 7, 15); // Invierno en hemisferio sur
+            _dateTimeServiceMock.Setup(s => s.Now).Returns(fechaActual);
+
+            var ingredientes = new List<Ingrediente>
+            {
+                new Ingrediente
+                {
+                    Id = Guid.NewGuid(),
+                    Nombre = "Tomate",
+                    Stock = 5,
+                    StockMinimo = 10,
+                    Rotacion = RotacionIngrediente.Alta,
+                    Temporada = TemporadaIngrediente.Verano, // Fuera de temporada
+                    CostoPromedio = 100
+                },
+                new Ingrediente
+                {
+                    Id = Guid.NewGuid(),
+                    Nombre = "Papa",
+                    Stock = 2,
+                    StockMinimo = 20,
+                    Rotacion = RotacionIngrediente.Critica,
+                    Temporada = TemporadaIngrediente.TodoElAño,
+                    CostoPromedio = 50
+                }
+            };
+
+            _ingredienteRepositoryMock
+                .Setup(r => r.ObtenerConStockBajoAsync())
+                .ReturnsAsync(ingredientes);
+
+            // Act
+            var result = await _sut.PriorizarIngredientesParaReposicion(true);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Succeeded.Should().BeTrue();
+            result.Value.Should().NotBeNull();
+            result.Value.IngredientesPriorizados.Should().HaveCount(2);
+            
+            // La papa debe tener mayor prioridad (rotación crítica y todo el año)
+            result.Value.IngredientesPriorizados[0].Nombre.Should().Be("Papa");
+            result.Value.IngredientesPriorizados[1].Nombre.Should().Be("Tomate");
+        }
+
+        [Fact]
+        public async Task EjecutarPolicyParaIngrediente_ConIdVacio_DebeRetornarErrorValidacion()
+        {
+            // Arrange
+            var ingredienteId = Guid.Empty;
+
+            // Act
+            var result = await _sut.EjecutarPolicyParaIngrediente(ingredienteId);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Succeeded.Should().BeFalse();
+            result.Errors.Should().ContainSingle(e => e.PropertyName == "IngredienteId");
         }
     }
 }

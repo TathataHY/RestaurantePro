@@ -46,14 +46,16 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
             }
 
             // Obtener los ingredientes necesarios para el producto
-            var ingredientesProducto = await _recetaService.ObtenerIngredientesParaProductoAsync(
+            var resultadoIngredientes = await _recetaService.ObtenerIngredientesParaProductoAsync(
                 evento.ProductoId, cancellationToken);
 
-            if (ingredientesProducto == null || !ingredientesProducto.Any())
+            if (!resultadoIngredientes.Succeeded || resultadoIngredientes.Value == null || !resultadoIngredientes.Value.Any())
             {
-                // Este producto no tiene ingredientes registrados
+                // Este producto no tiene ingredientes registrados o hubo un error
                 return;
             }
+
+            var ingredientesProducto = resultadoIngredientes.Value;
 
             // Decrementar el stock de cada ingrediente
             foreach (var ingrediente in ingredientesProducto)
@@ -87,14 +89,16 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
             await _eventRegistry.RegisterAsync(evento, cancellationToken);
 
             // Obtener los ingredientes necesarios para el producto
-            var ingredientesProducto = await _recetaService.ObtenerIngredientesParaProductoAsync(
+            var resultadoIngredientes = await _recetaService.ObtenerIngredientesParaProductoAsync(
                 evento.ProductoId, cancellationToken);
 
-            if (ingredientesProducto == null || !ingredientesProducto.Any())
+            if (!resultadoIngredientes.Succeeded || resultadoIngredientes.Value == null || !resultadoIngredientes.Value.Any())
             {
-                // Este producto no tiene ingredientes registrados
+                // Este producto no tiene ingredientes registrados o hubo un error
                 return;
             }
+
+            var ingredientesProducto = resultadoIngredientes.Value;
 
             // Incrementar el stock de cada ingrediente (reembolso por eliminación)
             foreach (var ingrediente in ingredientesProducto)

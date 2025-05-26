@@ -307,6 +307,87 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             resultado.Should().BeFalse();
         }
 
+        [Fact]
+        public async Task VerificarDisponibilidadIngredientesAsync_IngredientesFaltantes_DebeAgregarErroresDetallados()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var cantidad = 5;
+            var precio = new PrecioProducto(10.99m);
+            var notificationManager = new NotificationManager();
+
+            var recetaService = new RecetaService(
+                _recetaRepositoryMock.Object,
+                _productoRepositoryMock.Object,
+                _ingredienteRepositoryMock.Object,
+                notificationManager);
+
+            var producto = Producto.Crear(
+                "Pizza Margarita", 
+                "Pizza clásica italiana", 
+                precio, 
+                Guid.NewGuid(), 
+                "Pizzas");
+
+            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 30);
+            
+            var ingrediente1Id = Guid.NewGuid();
+            var ingrediente2Id = Guid.NewGuid();
+            
+            receta.AgregarIngrediente(
+                ingrediente1Id, 
+                "Tomate", 
+                0.2m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+
+            receta.AgregarIngrediente(
+                ingrediente2Id, 
+                "Queso", 
+                0.3m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+
+            // Crear un ingrediente con stock insuficiente
+            var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 0.5m); // Stock insuficiente para 5 unidades (5 * 0.2 = 1kg)
+            ingrediente1.ActualizarNombre("Tomate");
+
+            // El segundo ingrediente no existe en la base de datos
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(receta);
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente1);
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+                .ReturnsAsync((Ingrediente?)null);
+
+            // Act
+            var resultado = await recetaService.VerificarDisponibilidadIngredientesAsync(productoId, cantidad, _cancellationToken);
+
+            // Assert
+            resultado.Succeeded.Should().BeTrue(); // Retorna True pero con errores en NotificationManager
+            resultado.Value.Should().BeFalse(); // El valor indica que no hay disponibilidad
+            
+            notificationManager.HasErrors.Should().BeTrue();
+            notificationManager.GetErrors().Should().HaveCountGreaterThan(1);
+            
+            // Verificar que hay un error específico para cada ingrediente faltante
+            var errores = notificationManager.GetErrors().ToList();
+            errores.Should().Contain(e => e.PropertyName == $"Ingrediente_{ingrediente1Id}");
+            errores.Should().Contain(e => e.PropertyName == $"Ingrediente_{ingrediente2Id}");
+            
+            // Verificar que los mensajes contienen información detallada
+            var mensajeIngrediente1 = errores.FirstOrDefault(e => e.PropertyName == $"Ingrediente_{ingrediente1Id}")?.Message;
+            mensajeIngrediente1.Should().Contain("Tomate");
+            mensajeIngrediente1.Should().Contain("0.5"); // Stock disponible
+            
+            var mensajeIngrediente2 = errores.FirstOrDefault(e => e.PropertyName == $"Ingrediente_{ingrediente2Id}")?.Message;
+            mensajeIngrediente2.Should().Contain("Ingrediente no encontrado");
+        }
+
         #endregion
 
         #region ObtenerIngredientesFaltantesAsync
@@ -453,6 +534,109 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             // Assert
             resultado.Should().NotBeNull();
             resultado.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task ObtenerIngredientesFaltantesAsync_ConFaltantes_DebeRetornarDiccionarioYNotificaciones()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var cantidad = 3;
+            var precio = new PrecioProducto(12.99m);
+            var notificationManager = new NotificationManager();
+
+            var recetaService = new RecetaService(
+                _recetaRepositoryMock.Object,
+                _productoRepositoryMock.Object,
+                _ingredienteRepositoryMock.Object,
+                notificationManager);
+
+            var producto = Producto.Crear(
+                "Hamburguesa Completa", 
+                "Hamburguesa con todos los ingredientes", 
+                precio, 
+                Guid.NewGuid(), 
+                "Hamburguesas");
+
+            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 20);
+            
+            var ingrediente1Id = Guid.NewGuid(); // Pan
+            var ingrediente2Id = Guid.NewGuid(); // Carne
+            var ingrediente3Id = Guid.NewGuid(); // Queso - Faltante
+            
+            receta.AgregarIngrediente(
+                ingrediente1Id, 
+                "Pan", 
+                1.0m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Unidad);
+
+            receta.AgregarIngrediente(
+                ingrediente2Id, 
+                "Carne", 
+                0.2m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+                
+            receta.AgregarIngrediente(
+                ingrediente3Id, 
+                "Queso", 
+                0.1m, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
+
+            // Configurar ingredientes disponibles e insuficientes
+            var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 10.0m); // Stock suficiente
+            ingrediente1.ActualizarNombre("Pan");
+            
+            var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 1.0m); // Stock suficiente para 5 hamburguesas
+            ingrediente2.ActualizarNombre("Carne");
+            
+            var ingrediente3 = CrearIngredienteSimulado(ingrediente3Id, 0.1m); // Stock solo para 1 hamburguesa
+            ingrediente3.ActualizarNombre("Queso");
+
+            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(producto);
+
+            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
+                .ReturnsAsync(receta);
+
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente1);
+                
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente2);
+                
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente3Id, false, _cancellationToken))
+                .ReturnsAsync(ingrediente3);
+
+            // Act
+            var resultado = await recetaService.ObtenerIngredientesFaltantesAsync(productoId, cantidad, _cancellationToken);
+
+            // Assert
+            resultado.Succeeded.Should().BeTrue();
+            resultado.Value.Should().NotBeEmpty();
+            resultado.Value.Should().ContainKey(ingrediente3Id); // Solo el queso debería faltar
+            resultado.Value.Should().NotContainKey(ingrediente1Id);
+            resultado.Value.Should().NotContainKey(ingrediente2Id);
+            
+            // Verificar la cantidad faltante de queso
+            var cantidadFaltanteQueso = resultado.Value[ingrediente3Id];
+            cantidadFaltanteQueso.Should().Be(0.2m); // Falta 0.2kg de queso (se necesita 0.3kg, hay 0.1kg)
+            
+            // Verificar notificaciones
+            notificationManager.HasErrors.Should().BeTrue();
+            
+            var errores = notificationManager.GetErrors().ToList();
+            errores.Should().Contain(e => e.PropertyName == "Producto"); // Error general del producto
+            errores.Should().Contain(e => e.PropertyName == $"Ingrediente_{ingrediente3Id}"); // Error específico del queso
+            
+            // Verificar contenido de los mensajes
+            var mensajeProducto = errores.FirstOrDefault(e => e.PropertyName == "Producto")?.Message;
+            mensajeProducto.Should().Contain("Hamburguesa Completa");
+            mensajeProducto.Should().Contain("3 unidad");
+            
+            var mensajeQueso = errores.FirstOrDefault(e => e.PropertyName == $"Ingrediente_{ingrediente3Id}")?.Message;
+            mensajeQueso.Should().Contain("Queso");
+            mensajeQueso.Should().Contain("0.1"); // Stock disponible
+            mensajeQueso.Should().Contain("0.3"); // Stock requerido
         }
 
         #endregion

@@ -1,6 +1,3 @@
-using System.Collections.ObjectModel;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-
 namespace RestaurantePro.Domain.Core.SharedKernel.Validation;
 
 /// <summary>

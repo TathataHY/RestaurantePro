@@ -6,6 +6,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         private readonly Mock<IOrdenCompraRepository> _ordenCompraRepositoryMock;
         private readonly Mock<IProveedorRepository> _proveedorRepositoryMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
+        private readonly Mock<INotificationManager> _notificationManagerMock;
         private readonly IVerificadorStock _verificadorService;
         private readonly CancellationToken _cancellationToken = CancellationToken.None;
 
@@ -15,14 +16,19 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             _ordenCompraRepositoryMock = new Mock<IOrdenCompraRepository>();
             _proveedorRepositoryMock = new Mock<IProveedorRepository>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
+            _notificationManagerMock = new Mock<INotificationManager>();
 
             _dateTimeServiceMock.Setup(s => s.Now).Returns(new DateTime(2023, 1, 1));
+            
+            // Configurar el mock del NotificationManager
+            SetupNotificationManager();
 
             _verificadorService = new VerificadorStock(
                 _ingredienteRepositoryMock.Object,
                 _ordenCompraRepositoryMock.Object,
                 _proveedorRepositoryMock.Object,
-                _dateTimeServiceMock.Object);
+                _dateTimeServiceMock.Object,
+                _notificationManagerMock.Object);
         }
 
         [Fact]
@@ -34,10 +40,12 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             SetupObtenerIngredientesConStockBajo(ingredientes);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
+            var resultado = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
-            result.OrdenesGeneradas.Should().BeEmpty();
+            resultado.Succeeded.Should().BeTrue();
+            resultado.Value.OrdenesGeneradas.Should().BeEmpty();
+            VerificarNoHayErrores();
         }
 
         [Fact]
@@ -53,13 +61,15 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             SetupProveedorPorId(proveedor);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
+            var resultado = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
-            result.OrdenesGeneradas.Should().HaveCount(1);
-            result.OrdenesGeneradas.First().ProveedorId.Should().Be(proveedor.Id);
-            result.OrdenesGeneradas.First().Items.Should().HaveCount(1);
-            result.OrdenesGeneradas.First().Items.First().IngredienteId.Should().Be(ingrediente.Id);
+            resultado.Succeeded.Should().BeTrue();
+            resultado.Value.OrdenesGeneradas.Should().HaveCount(1);
+            resultado.Value.OrdenesGeneradas.First().ProveedorId.Should().Be(proveedor.Id);
+            resultado.Value.OrdenesGeneradas.First().Items.Should().HaveCount(1);
+            resultado.Value.OrdenesGeneradas.First().Items.First().IngredienteId.Should().Be(ingrediente.Id);
+            VerificarNoHayErrores();
         }
 
         [Fact]
@@ -75,11 +85,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             SetupProveedorPorId(proveedor);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
+            var resultado = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
-            result.OrdenesGeneradas.Should().HaveCount(1);
-            result.OrdenesGeneradas.First().Items.Should().HaveCount(2);
+            resultado.Succeeded.Should().BeTrue();
+            resultado.Value.OrdenesGeneradas.Should().HaveCount(1);
+            resultado.Value.OrdenesGeneradas.First().Items.Should().HaveCount(2);
+            VerificarNoHayErrores();
         }
 
         [Fact]
@@ -98,10 +110,12 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             SetupProveedorPorIdEspecifico(proveedor2.Id, proveedor2);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
+            var resultado = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
-            result.OrdenesGeneradas.Should().HaveCount(2);
+            resultado.Succeeded.Should().BeTrue();
+            resultado.Value.OrdenesGeneradas.Should().HaveCount(2);
+            VerificarNoHayErrores();
         }
 
         [Fact]
@@ -116,11 +130,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             SetupProveedorPorId(proveedor);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
+            var resultado = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
-            result.OrdenesGeneradas.Should().BeEmpty();
-            result.Errores.Should().HaveCount(1);
+            resultado.Succeeded.Should().BeFalse();
+            resultado.Value.OrdenesGeneradas.Should().BeEmpty();
+            resultado.Value.Errores.Should().HaveCount(1);
+            VerificarHayErrores();
         }
 
         [Fact]
@@ -149,14 +165,53 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             SetupOrdenesPendientesPorProveedor(proveedor.Id, ordenesExistentes);
 
             // Act
-            var result = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
+            var resultado = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
-            result.OrdenesGeneradas.Should().BeEmpty();
-            result.OrdenesActualizadas.Should().HaveCount(1);
+            resultado.Succeeded.Should().BeTrue();
+            resultado.Value.OrdenesGeneradas.Should().BeEmpty();
+            resultado.Value.OrdenesActualizadas.Should().HaveCount(1);
+            VerificarNoHayErrores();
         }
 
         // Métodos auxiliares para configurar mocks sin problemas de árboles de expresión
+        private void SetupNotificationManager()
+        {
+            // Configurar CreateNewNotification para que simplemente retorne
+            _notificationManagerMock.Setup(m => m.CreateNewNotification())
+                .Verifiable();
+                
+            // Configurar HasErrors para que retorne false por defecto
+            _notificationManagerMock.Setup(m => m.HasErrors)
+                .Returns(false);
+                
+            // Configurar RequireNotNull para que no haga nada
+            _notificationManagerMock
+                .Setup(m => m.RequireNotNull(It.IsAny<object>(), It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(_notificationManagerMock.Object);
+                
+            // Configurar ToResult para retornar un Result exitoso
+            _notificationManagerMock
+                .Setup(m => m.ToResult(It.IsAny<ResultadoVerificacionStock>()))
+                .Returns<ResultadoVerificacionStock>(r => Result.Success(r));
+                
+            // Configurar ToResult<bool> para retornar un Result<bool> exitoso
+            _notificationManagerMock
+                .Setup(m => m.ToResult<bool>(It.IsAny<bool>()))
+                .Returns<bool>(b => Result.Success(b));
+        }
+        
+        private void VerificarNoHayErrores()
+        {
+            _notificationManagerMock.Verify(m => m.HasErrors, Times.AtLeastOnce);
+            _notificationManagerMock.Verify(m => m.AddError(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+        
+        private void VerificarHayErrores()
+        {
+            _notificationManagerMock.Verify(m => m.AddError(It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce);
+        }
+
         private void SetupProveedorPorId(Proveedor proveedor)
         {
             // En vez de usar It.IsAny<> que causa problemas con árboles de expresión

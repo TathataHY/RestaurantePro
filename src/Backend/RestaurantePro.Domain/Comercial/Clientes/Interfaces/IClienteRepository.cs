@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
 {
     /// <summary>
@@ -128,6 +127,32 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de todos los clientes con su historial de visitas</returns>
         Task<IEnumerable<Cliente>> ObtenerTodosConHistorialVisitasAsync(int diasHistorial, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene facturas recientes de un cliente en un rango de fechas
+        /// </summary>
+        /// <param name="clienteId">ID del cliente</param>
+        /// <param name="fechaInicio">Fecha de inicio</param>
+        /// <param name="fechaFin">Fecha de fin</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de facturas del cliente en el rango de fechas especificado</returns>
+        Task<IEnumerable<Factura>> ObtenerFacturasRecientesAsync(Guid clienteId, DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Actualiza un cliente
+        /// </summary>
+        /// <param name="cliente">Cliente a actualizar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tarea completada cuando finaliza la operación</returns>
+        Task ActualizarAsync(Cliente cliente, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Guarda un cliente
+        /// </summary>
+        /// <param name="cliente">Cliente a guardar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tarea completada cuando finaliza la operación</returns>
+        Task GuardarAsync(Cliente cliente, CancellationToken cancellationToken = default);
     }
 }
 

@@ -1,4 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.Results;
 namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Results
 {
     public class AsyncResultExtensionsTests

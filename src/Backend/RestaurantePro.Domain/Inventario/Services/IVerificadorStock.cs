@@ -9,7 +9,7 @@ namespace RestaurantePro.Domain.Inventario.Services
         /// Verifica los ingredientes con stock bajo y genera órdenes de compra automáticas
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Resultado de la verificación</returns>
-        Task<ResultadoVerificacionStock> VerificarYGenerarOrdenesCompraAsync(CancellationToken cancellationToken = default);
+        /// <returns>Resultado con la información de órdenes generadas y errores</returns>
+        Task<Result<ResultadoVerificacionStock>> VerificarYGenerarOrdenesCompraAsync(CancellationToken cancellationToken = default);
     }
 } 

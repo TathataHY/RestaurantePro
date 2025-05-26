@@ -30,6 +30,7 @@ namespace RestaurantePro.Domain.Inventario.Services
         private readonly IOrdenCompraRepository _ordenCompraRepository;
         private readonly IProveedorRepository _proveedorRepository;
         private readonly IDateTimeService _dateTimeService;
+        private readonly INotificationManager _notificationManager;
         
         /// <summary>
         /// Constructor
@@ -38,20 +39,24 @@ namespace RestaurantePro.Domain.Inventario.Services
             IIngredienteRepository ingredienteRepository,
             IOrdenCompraRepository ordenCompraRepository,
             IProveedorRepository proveedorRepository,
-            IDateTimeService dateTimeService)
+            IDateTimeService dateTimeService,
+            INotificationManager notificationManager)
         {
-            _ingredienteRepository = ingredienteRepository;
-            _ordenCompraRepository = ordenCompraRepository;
-            _proveedorRepository = proveedorRepository;
-            _dateTimeService = dateTimeService;
+            _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
+            _ordenCompraRepository = ordenCompraRepository ?? throw new ArgumentNullException(nameof(ordenCompraRepository));
+            _proveedorRepository = proveedorRepository ?? throw new ArgumentNullException(nameof(proveedorRepository));
+            _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
+            _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
         }
         
         /// <summary>
         /// Verifica los ingredientes con stock bajo y genera órdenes de compra automáticas
         /// </summary>
-        /// <returns>Resultado de la verificación</returns>
-        public async Task<ResultadoVerificacionStock> VerificarYGenerarOrdenesCompraAsync(CancellationToken cancellationToken = default)
+        /// <returns>Resultado con la información de órdenes generadas y errores</returns>
+        public async Task<Result<ResultadoVerificacionStock>> VerificarYGenerarOrdenesCompraAsync(CancellationToken cancellationToken = default)
         {
+            _notificationManager.CreateNewNotification();
+            
             var resultado = new ResultadoVerificacionStock();
             
             // Obtener ingredientes con stock bajo
@@ -59,7 +64,7 @@ namespace RestaurantePro.Domain.Inventario.Services
             
             if (ingredientesBajoStock == null || !ingredientesBajoStock.Any())
             {
-                return resultado; // No hay ingredientes con stock bajo
+                return Result.Success(resultado); // No hay ingredientes con stock bajo
             }
             
             // Agrupar ingredientes por proveedor
@@ -69,7 +74,8 @@ namespace RestaurantePro.Domain.Inventario.Services
                 
             if (ingredientesConProveedor == null || !ingredientesConProveedor.Any())
             {
-                return resultado;
+                _notificationManager.AddError("No hay ingredientes con proveedor principal asignado", "Ingredientes");
+                return _notificationManager.ToResult(resultado);
             }
                 
             var ingredientesPorProveedor = ingredientesConProveedor
@@ -95,6 +101,7 @@ namespace RestaurantePro.Domain.Inventario.Services
                     if (proveedor == null)
                     {
                         resultado.Errores.Add($"No se encontró el proveedor con ID {proveedorId}");
+                        _notificationManager.AddError($"No se encontró el proveedor con ID {proveedorId}", "Proveedor");
                         continue;
                     }
                     
@@ -102,6 +109,7 @@ namespace RestaurantePro.Domain.Inventario.Services
                     if (!proveedor.EstaActivo)
                     {
                         resultado.Errores.Add($"El proveedor {proveedor.Nombre} (ID: {proveedorId}) no está activo");
+                        _notificationManager.AddError($"El proveedor {proveedor.Nombre} (ID: {proveedorId}) no está activo", "Proveedor");
                         continue;
                     }
                     
@@ -112,44 +120,80 @@ namespace RestaurantePro.Domain.Inventario.Services
                     {
                         // Actualizar orden existente en lugar de crear una nueva
                         var ordenExistente = ordenesPendientes.First();
-                        ActualizarOrdenExistente(ordenExistente, ingredientes, resultado);
+                        var resultadoActualizacion = ActualizarOrdenExistente(ordenExistente, ingredientes, resultado);
+                        
+                        if (resultadoActualizacion.Succeeded && !resultadoActualizacion.Value)
+                        {
+                            _notificationManager.AddError($"No se pudieron agregar ingredientes a la orden existente para el proveedor {proveedor.Nombre}", "ActualizacionOrden");
+                        }
                     }
                     else
                     {
                         // Crear nueva orden de compra
-                        CrearNuevaOrden(proveedor, ingredientes, resultado);
+                        var resultadoCreacion = CrearNuevaOrden(proveedor, ingredientes, resultado);
+                        
+                        if (!resultadoCreacion.Succeeded || !resultadoCreacion.Value)
+                        {
+                            _notificationManager.AddError($"No se pudo crear la orden para el proveedor {proveedor.Nombre}", "CreacionOrden");
+                        }
                     }
                 }
             }
             
             // Guardar las órdenes generadas y actualizadas
-            foreach (var orden in resultado.OrdenesGeneradas)
+            try 
             {
-                await _ordenCompraRepository.AgregarAsync(orden);
+                foreach (var orden in resultado.OrdenesGeneradas)
+                {
+                    await _ordenCompraRepository.AgregarAsync(orden, cancellationToken);
+                }
+                
+                foreach (var orden in resultado.OrdenesActualizadas)
+                {
+                    await _ordenCompraRepository.ActualizarAsync(orden, cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                resultado.Errores.Add($"Error al guardar órdenes: {ex.Message}");
+                _notificationManager.AddError($"Error al guardar órdenes: {ex.Message}", "Persistencia");
             }
             
-            foreach (var orden in resultado.OrdenesActualizadas)
+            // Si hay errores, los agregamos a las notificaciones
+            foreach (var error in resultado.Errores)
             {
-                await _ordenCompraRepository.ActualizarAsync(orden);
+                _notificationManager.AddError(error, "VerificacionStock");
             }
             
-            return resultado;
+            return _notificationManager.HasErrors
+                ? _notificationManager.ToResult(resultado)
+                : Result.Success(resultado);
         }
         
         /// <summary>
         /// Actualiza una orden de compra existente con nuevos ingredientes
         /// </summary>
-        private void ActualizarOrdenExistente(OrdenCompra orden, List<Ingrediente> ingredientes, ResultadoVerificacionStock resultado)
+        /// <returns>True si se agregaron ingredientes a la orden, False en caso contrario</returns>
+        private Result<bool> ActualizarOrdenExistente(OrdenCompra orden, List<Ingrediente> ingredientes, ResultadoVerificacionStock resultado)
         {
-            if (orden == null || ingredientes == null || resultado == null)
-                return;
+            _notificationManager.RequireNotNull(orden, "Orden de compra no puede ser nula", "OrdenCompra");
+            _notificationManager.RequireNotNull(ingredientes, "La lista de ingredientes no puede ser nula", "Ingredientes");
+            _notificationManager.RequireNotNull(resultado, "El resultado de verificación no puede ser nulo", "Resultado");
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<bool>(false);
+            }
                 
             var ingredientesAgregados = false;
             
             foreach (var ingrediente in ingredientes)
             {
                 if (ingrediente == null)
+                {
+                    _notificationManager.AddError($"Ingrediente no puede ser nulo", "Ingrediente");
                     continue;
+                }
                     
                 // Verificar si el ingrediente ya está en la orden
                 if (orden.Items.Any(i => i.IngredienteId == ingrediente.Id))
@@ -160,49 +204,98 @@ namespace RestaurantePro.Domain.Inventario.Services
                 // Calcular la cantidad a pedir (diferencia entre stock mínimo y stock actual)
                 var cantidadAPedir = CalcularCantidadAPedir(ingrediente);
                 
-                // Agregar el ingrediente a la orden
-                orden.AgregarItem(ingrediente.Id, ingrediente.Nombre, cantidadAPedir, ingrediente.UnidadMedida);
-                ingredientesAgregados = true;
+                try
+                {
+                    // Agregar el ingrediente a la orden
+                    orden.AgregarItem(ingrediente.Id, ingrediente.Nombre, cantidadAPedir, ingrediente.UnidadMedida);
+                    ingredientesAgregados = true;
+                }
+                catch (Exception ex)
+                {
+                    resultado.Errores.Add($"Error al agregar ingrediente '{ingrediente.Nombre}' a la orden: {ex.Message}");
+                    _notificationManager.AddError($"Error al agregar ingrediente '{ingrediente.Nombre}' a la orden: {ex.Message}", "OrdenCompra");
+                }
             }
             
             if (ingredientesAgregados)
             {
                 resultado.OrdenesActualizadas.Add(orden);
             }
+            
+            return Result.Success(ingredientesAgregados);
         }
         
         /// <summary>
         /// Crea una nueva orden de compra para un proveedor con ingredientes
         /// </summary>
-        private void CrearNuevaOrden(Proveedor proveedor, List<Ingrediente> ingredientes, ResultadoVerificacionStock resultado)
+        /// <returns>True si se creó la orden correctamente, False en caso contrario</returns>
+        private Result<bool> CrearNuevaOrden(Proveedor proveedor, List<Ingrediente> ingredientes, ResultadoVerificacionStock resultado)
         {
-            if (proveedor == null || ingredientes == null || resultado == null)
-                return;
-                
-            // Crear nueva orden
-            var fechaActual = _dateTimeService.Now;
-            var nuevaOrden = OrdenCompra.Crear(
-                proveedor.Id,
-                $"Orden automática - {fechaActual:dd/MM/yyyy}",
-                fechaActual);
-                
-            // Establecer fecha de entrega estimada (7 días después de la fecha de emisión)
-            nuevaOrden.EstablecerFechaEntrega(fechaActual.AddDays(7));
-                
-            // Agregar los ingredientes a la orden
-            foreach (var ingrediente in ingredientes)
-            {
-                if (ingrediente == null)
-                    continue;
-                    
-                // Calcular la cantidad a pedir
-                var cantidadAPedir = CalcularCantidadAPedir(ingrediente);
-                
-                // Agregar el ingrediente a la orden
-                nuevaOrden.AgregarItem(ingrediente.Id, ingrediente.Nombre, cantidadAPedir, ingrediente.UnidadMedida);
-            }
+            _notificationManager.RequireNotNull(proveedor, "Proveedor no puede ser nulo", "Proveedor");
+            _notificationManager.RequireNotNull(ingredientes, "La lista de ingredientes no puede ser nula", "Ingredientes");
+            _notificationManager.RequireNotNull(resultado, "El resultado de verificación no puede ser nulo", "Resultado");
             
-            resultado.OrdenesGeneradas.Add(nuevaOrden);
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<bool>(false);
+            }
+                
+            try
+            {
+                // Crear nueva orden
+                var fechaActual = _dateTimeService.Now;
+                var nuevaOrden = OrdenCompra.Crear(
+                    proveedor.Id,
+                    $"Orden automática - {fechaActual:dd/MM/yyyy}",
+                    fechaActual);
+                    
+                // Establecer fecha de entrega estimada (7 días después de la fecha de emisión)
+                nuevaOrden.EstablecerFechaEntrega(fechaActual.AddDays(7));
+                
+                var ingredientesAgregados = false;
+                    
+                // Agregar los ingredientes a la orden
+                foreach (var ingrediente in ingredientes)
+                {
+                    if (ingrediente == null)
+                    {
+                        _notificationManager.AddError("Ingrediente no puede ser nulo", "Ingrediente");
+                        continue;
+                    }
+                        
+                    try
+                    {
+                        // Calcular la cantidad a pedir
+                        var cantidadAPedir = CalcularCantidadAPedir(ingrediente);
+                        
+                        // Agregar el ingrediente a la orden
+                        nuevaOrden.AgregarItem(ingrediente.Id, ingrediente.Nombre, cantidadAPedir, ingrediente.UnidadMedida);
+                        ingredientesAgregados = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        resultado.Errores.Add($"Error al agregar ingrediente '{ingrediente.Nombre}' a la orden: {ex.Message}");
+                        _notificationManager.AddError($"Error al agregar ingrediente '{ingrediente.Nombre}' a la orden: {ex.Message}", "OrdenCompra");
+                    }
+                }
+                
+                if (ingredientesAgregados)
+                {
+                    resultado.OrdenesGeneradas.Add(nuevaOrden);
+                    return Result.Success(true);
+                }
+                else
+                {
+                    _notificationManager.AddError("No se pudo agregar ningún ingrediente a la orden", "OrdenCompra");
+                    return _notificationManager.ToResult<bool>(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                resultado.Errores.Add($"Error al crear orden para proveedor '{proveedor.Nombre}': {ex.Message}");
+                _notificationManager.AddError($"Error al crear orden para proveedor '{proveedor.Nombre}': {ex.Message}", "OrdenCompra");
+                return _notificationManager.ToResult<bool>(false);
+            }
         }
         
         /// <summary>

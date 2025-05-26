@@ -8,6 +8,7 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         private readonly IFacturaRepository _facturaRepository;
         private readonly IDateTimeService _dateTimeService;
         private readonly IServicioNotificaciones _servicioNotificaciones;
+        private readonly INotificationManager _notificationManager;
 
         /// <summary>
         /// Constructor del servicio
@@ -15,49 +16,67 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         /// <param name="facturaRepository">Repositorio de facturas</param>
         /// <param name="dateTimeService">Servicio de fecha/hora</param>
         /// <param name="servicioNotificaciones">Servicio de notificaciones</param>
+        /// <param name="notificationManager">Gestor de notificaciones para validaciones</param>
         public ServicioGestionFacturasVencidas(
             IFacturaRepository facturaRepository,
             IDateTimeService dateTimeService,
-            IServicioNotificaciones servicioNotificaciones)
+            IServicioNotificaciones servicioNotificaciones,
+            INotificationManager notificationManager)
         {
             _facturaRepository = facturaRepository ?? throw new ArgumentNullException(nameof(facturaRepository));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
             _servicioNotificaciones = servicioNotificaciones ?? throw new ArgumentNullException(nameof(servicioNotificaciones));
+            _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
         }
 
         /// <summary>
         /// Procesa las facturas vencidas
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Número de facturas procesadas</returns>
-        public async Task<int> ProcesarFacturasVencidasAsync(CancellationToken cancellationToken = default)
+        /// <returns>Resultado con el número de facturas procesadas</returns>
+        public async Task<Result<int>> ProcesarFacturasVencidasAsync(CancellationToken cancellationToken = default)
         {
-            // Obtener fecha actual
-            var fechaActual = _dateTimeService.Now;
-
-            // Crear especificación para facturas vencidas
-            var facturaVencidaSpec = new FacturaVencidaSpecification(fechaActual);
-
-            // Obtener facturas vencidas
-            var facturasVencidas = await _facturaRepository.ObtenerPorSpecAsync(facturaVencidaSpec, cancellationToken);
-            var listaFacturas = facturasVencidas.ToList();
-
-            if (!listaFacturas.Any())
+            _notificationManager.CreateNewNotification();
+            
+            try
             {
-                return 0;
-            }
+                // Obtener fecha actual
+                var fechaActual = _dateTimeService.Now;
 
-            // Actualizar estado de facturas vencidas
-            foreach (var factura in listaFacturas)
-            {
-                // Cambiar estado a vencida si no lo está ya
-                if (factura.Estado != EstadoFactura.Vencida)
+                // Crear especificación para facturas vencidas
+                var facturaVencidaSpec = new FacturaVencidaSpecification(fechaActual);
+
+                // Obtener facturas vencidas
+                var facturasVencidas = await _facturaRepository.ObtenerPorSpecAsync(facturaVencidaSpec, cancellationToken);
+                var listaFacturas = facturasVencidas.ToList();
+
+                if (!listaFacturas.Any())
                 {
-                    await CambiarEstadoAVencidaAsync(factura, cancellationToken);
+                    return Result.Success(0);
                 }
-            }
 
-            return listaFacturas.Count();
+                // Actualizar estado de facturas vencidas
+                var facturasActualizadas = 0;
+                foreach (var factura in listaFacturas)
+                {
+                    // Cambiar estado a vencida si no lo está ya
+                    if (factura.Estado != EstadoFactura.Vencida)
+                    {
+                        var resultado = await CambiarEstadoAVencidaAsync(factura, cancellationToken);
+                        if (resultado)
+                        {
+                            facturasActualizadas++;
+                        }
+                    }
+                }
+
+                return Result.Success(facturasActualizadas);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al procesar facturas vencidas: {ex.Message}", "ProcesarFacturas");
+                return _notificationManager.ToResult<int>(0);
+            }
         }
 
         /// <summary>
@@ -65,7 +84,8 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         /// </summary>
         /// <param name="factura">Factura a actualizar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        private async Task CambiarEstadoAVencidaAsync(Factura factura, CancellationToken cancellationToken)
+        /// <returns>True si la operación fue exitosa, false en caso contrario</returns>
+        private async Task<bool> CambiarEstadoAVencidaAsync(Factura factura, CancellationToken cancellationToken)
         {
             try
             {
@@ -91,11 +111,20 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                 
                 // Guardar cambios
                 await _facturaRepository.GuardarCambiosAsync(cancellationToken);
+                
+                return true;
             }
             catch (InvalidOperationException ex)
             {
-                // Loguear el error - en un sistema real esto podría ir a un sistema de logging
-                Console.WriteLine($"Error al marcar factura {factura.NumeroFactura} como vencida: {ex.Message}");
+                // Registrar el error
+                _notificationManager.AddError($"Error al marcar factura {factura.NumeroFactura} como vencida: {ex.Message}", "MarcarComoVencida");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                // Registrar el error
+                _notificationManager.AddError($"Error inesperado al marcar factura {factura.NumeroFactura} como vencida: {ex.Message}", "MarcarComoVencida");
+                return false;
             }
         }
 
@@ -103,41 +132,51 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         /// Genera un informe de facturas vencidas
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Informe de facturas vencidas</returns>
-        public async Task<InformeFacturasVencidas> GenerarInformeFacturasVencidasAsync(CancellationToken cancellationToken = default)
+        /// <returns>Resultado con el informe de facturas vencidas</returns>
+        public async Task<Result<InformeFacturasVencidas>> GenerarInformeFacturasVencidasAsync(CancellationToken cancellationToken = default)
         {
-            // Obtener fecha actual
-            var fechaActual = _dateTimeService.Now;
-
-            // Crear especificación para facturas vencidas
-            var facturaVencidaSpec = new FacturaVencidaSpecification(fechaActual);
-
-            // Obtener facturas vencidas
-            var facturasVencidas = await _facturaRepository.ObtenerPorSpecAsync(facturaVencidaSpec, cancellationToken);
-            var listaFacturas = facturasVencidas.ToList();
-
-            // Crear informe
-            var informe = new InformeFacturasVencidas
+            _notificationManager.CreateNewNotification();
+            
+            try
             {
-                FechaGeneracion = fechaActual,
-                CantidadFacturasVencidas = listaFacturas.Count(),
-                MontoTotalVencido = listaFacturas.Sum(f => f.Total - f.TotalPagado),
-                FacturasMasAntiguas = listaFacturas
-                    .OrderBy(f => f.FechaVencimiento)
-                    .Take(5)
-                    .Select(f => new FacturaVencidaResumen
-                    {
-                        Id = f.Id,
-                        NumeroFactura = f.NumeroFactura,
-                        Cliente = f.NombreCliente,
-                        FechaVencimiento = f.FechaVencimiento.Value,
-                        DiasVencimiento = (int)(fechaActual - f.FechaVencimiento.Value).TotalDays,
-                        MontoPendiente = f.Total - f.TotalPagado
-                    })
-                    .ToList()
-            };
+                // Obtener fecha actual
+                var fechaActual = _dateTimeService.Now;
 
-            return informe;
+                // Crear especificación para facturas vencidas
+                var facturaVencidaSpec = new FacturaVencidaSpecification(fechaActual);
+
+                // Obtener facturas vencidas
+                var facturasVencidas = await _facturaRepository.ObtenerPorSpecAsync(facturaVencidaSpec, cancellationToken);
+                var listaFacturas = facturasVencidas.ToList();
+
+                // Crear informe
+                var informe = new InformeFacturasVencidas
+                {
+                    FechaGeneracion = fechaActual,
+                    CantidadFacturasVencidas = listaFacturas.Count(),
+                    MontoTotalVencido = listaFacturas.Sum(f => f.Total - f.TotalPagado),
+                    FacturasMasAntiguas = listaFacturas
+                        .OrderBy(f => f.FechaVencimiento)
+                        .Take(5)
+                        .Select(f => new FacturaVencidaResumen
+                        {
+                            Id = f.Id,
+                            NumeroFactura = f.NumeroFactura,
+                            Cliente = f.NombreCliente,
+                            FechaVencimiento = f.FechaVencimiento.Value,
+                            DiasVencimiento = (int)(fechaActual - f.FechaVencimiento.Value).TotalDays,
+                            MontoPendiente = f.Total - f.TotalPagado
+                        })
+                        .ToList()
+                };
+
+                return Result.Success(informe);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al generar informe de facturas vencidas: {ex.Message}", "GenerarInforme");
+                return _notificationManager.ToResult<InformeFacturasVencidas>(null);
+            }
         }
     }
 

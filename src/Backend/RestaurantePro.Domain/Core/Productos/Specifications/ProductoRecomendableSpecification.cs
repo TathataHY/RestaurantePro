@@ -78,17 +78,17 @@ namespace RestaurantePro.Domain.Core.Productos.Specifications
                     // Calcular rentabilidad de forma sincrónica
                     // Nota: En producción sería mejor tener un método sincrónico en IRecetaService,
                     // pero por ahora utilizamos .Result con precaución
-                    var rentabilidad = _recetaService.CalcularRentabilidadProductoAsync(producto.Id).Result;
+                    var resultadoRentabilidad = _recetaService.CalcularRentabilidadProductoAsync(producto.Id).Result;
                     
                     // Verificar si la rentabilidad cumple el mínimo requerido
-                    if (rentabilidad.Rentabilidad < _rentabilidadMinima)
+                    if (!resultadoRentabilidad.Succeeded || resultadoRentabilidad.Value.Rentabilidad < _rentabilidadMinima)
                         return false;
                     
                     // Verificar disponibilidad de ingredientes si es necesario
                     if (_verificarDisponibilidadIngredientes)
                     {
-                        var hayDisponibilidad = _recetaService.VerificarDisponibilidadIngredientesAsync(producto.Id, 1).Result;
-                        if (!hayDisponibilidad)
+                        var resultadoDisponibilidad = _recetaService.VerificarDisponibilidadIngredientesAsync(producto.Id, 1).Result;
+                        if (!resultadoDisponibilidad.Succeeded || !resultadoDisponibilidad.Value)
                             return false;
                     }
                 }

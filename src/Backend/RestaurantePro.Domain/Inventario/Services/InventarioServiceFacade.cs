@@ -1,5 +1,3 @@
-
-
 namespace RestaurantePro.Domain.Inventario.Services
 {
     /// <summary>
@@ -373,8 +371,14 @@ namespace RestaurantePro.Domain.Inventario.Services
             
             var ordenesCompra = new List<OrdenCompra>();
             
+            // Verificar que el resultado fue exitoso
+            if (!resultado.Succeeded || resultado.Value == null)
+            {
+                return ordenesCompra;
+            }
+            
             // Agrupar ingredientes por proveedor
-            var ingredientesPorProveedor = resultado.IngredientesPriorizados
+            var ingredientesPorProveedor = resultado.Value.IngredientesPriorizados
                 .Select(async ip => {
                     // Obtener el ingrediente completo con su proveedor
                     var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(ip.IngredienteId, cancellationToken);

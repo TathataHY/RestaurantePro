@@ -399,5 +399,158 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
             FechaEntregaEstimada = fechaEntrega;
             MarkAsModified();
         }
+
+        /// <summary>
+        /// Valida que la orden de compra cumpla con todas las reglas de negocio
+        /// </summary>
+        /// <param name="notification">Gestor de notificaciones para acumular errores</param>
+        /// <returns>True si la orden es válida, False si tiene errores</returns>
+        public bool Validar(INotificationManager notification)
+        {
+            notification
+                .RequireNotNull(Proveedor, "El proveedor es obligatorio", propertyName: "Proveedor")
+                .Require(Items != null && Items.Count > 0, "La orden debe tener al menos un ítem", propertyName: "Items")
+                .Require(FechaEmision <= FechaEntregaEstimada, "La fecha de entrega esperada debe ser posterior a la fecha de emisión", propertyName: "FechaEntregaEsperada");
+                
+            // Si el estado es Completada, debe tener fecha de entrega real
+            if (Estado == EstadoOrdenCompra.Completada)
+            {
+                notification.Require(FechaRecepcion.HasValue, "Una orden completada debe tener fecha de recepción", propertyName: "FechaRecepcion");
+            }
+            
+            // Validar cada ítem
+            if (Items != null && Items.Count > 0)
+            {
+                foreach (var item in Items)
+                {
+                    notification
+                        .RequireNotNull(item.Ingrediente, "El ingrediente del ítem es obligatorio", propertyName: "Item.Ingrediente")
+                        .Require(item.Cantidad > 0, "La cantidad debe ser mayor a cero", propertyName: "Item.Cantidad")
+                        .Require(item.PrecioUnitario >= 0, "El precio unitario no puede ser negativo", propertyName: "Item.PrecioUnitario");
+                }
+            }
+            
+            return !notification.HasErrors;
+        }
+        
+        /// <summary>
+        /// Crea una orden de compra
+        /// </summary>
+        /// <param name="proveedor">Proveedor al que se realiza la orden</param>
+        /// <param name="items">Ítems de la orden</param>
+        /// <param name="fechaEmision">Fecha de emisión de la orden</param>
+        /// <param name="fechaEntregaEsperada">Fecha esperada de entrega</param>
+        /// <param name="usuario">Usuario que crea la orden</param>
+        /// <param name="notification">Gestor de notificaciones</param>
+        /// <returns>Resultado con la orden creada o errores de validación</returns>
+        public static Result<OrdenCompra> Crear(
+            Proveedor proveedor,
+            List<ItemOrdenCompra> items,
+            DateTime fechaEmision,
+            DateTime fechaEntregaEsperada,
+            string usuario,
+            INotificationManager notification)
+        {
+            notification.CreateNewNotification();
+            
+            notification
+                .RequireNotNull(proveedor, "El proveedor es obligatorio", propertyName: "Proveedor")
+                .Require(items != null && items.Count > 0, "La orden debe tener al menos un ítem", propertyName: "Items")
+                .Require(fechaEmision <= fechaEntregaEsperada, "La fecha de entrega esperada debe ser posterior a la fecha de emisión", propertyName: "FechaEntregaEsperada")
+                .RequireNotEmpty(usuario, "El usuario es obligatorio", propertyName: "Usuario");
+                
+            // Validar cada ítem
+            if (items != null && items.Count > 0)
+            {
+                foreach (var item in items)
+                {
+                    notification
+                        .RequireNotNull(item.Ingrediente, "El ingrediente del ítem es obligatorio", propertyName: "Item.Ingrediente")
+                        .Require(item.Cantidad > 0, "La cantidad debe ser mayor a cero", propertyName: "Item.Cantidad")
+                        .Require(item.PrecioUnitario >= 0, "El precio unitario no puede ser negativo", propertyName: "Item.PrecioUnitario");
+                }
+            }
+            
+            if (notification.HasErrors)
+                return notification.ToResult<OrdenCompra>(default!);
+                
+            var orden = new OrdenCompra
+            {
+                ProveedorId = proveedor.Id,
+                FechaEmision = fechaEmision,
+                FechaEntregaEstimada = fechaEntregaEsperada,
+                Estado = EstadoOrdenCompra.Pendiente,
+                Observaciones = "Orden de compra automática",
+                FechaCreacion = fechaEmision
+            };
+            
+            foreach (var item in items)
+            {
+                orden.AgregarItem(item.Ingrediente.Id, item.Ingrediente.Nombre, item.Cantidad, item.UnidadMedida);
+            }
+            
+            orden.RecalcularTotal();
+            orden.AddDomainEvent(new OrdenCompraCreada(orden.Id, orden.ProveedorId, orden.Total, orden.FechaEmision));
+            
+            return Result.Success(orden);
+        }
+        
+        /// <summary>
+        /// Recibe una orden de compra
+        /// </summary>
+        /// <param name="fechaEntregaReal">Fecha real de entrega</param>
+        /// <param name="usuario">Usuario que recibe la orden</param>
+        /// <param name="notification">Gestor de notificaciones</param>
+        /// <returns>Resultado de la operación</returns>
+        public Result RecibirOrden(DateTime fechaEntregaReal, string usuario, INotificationManager notification)
+        {
+            notification.CreateNewNotification();
+            
+            notification
+                .Require(Estado == EstadoOrdenCompra.Pendiente, "Solo se pueden recibir órdenes pendientes", propertyName: "Estado")
+                .Require(fechaEntregaReal >= FechaEmision, "La fecha de entrega real debe ser posterior a la fecha de emisión", propertyName: "FechaEntregaReal")
+                .RequireNotEmpty(usuario, "El usuario es obligatorio", propertyName: "Usuario");
+                
+            if (notification.HasErrors)
+                return notification.ToResult();
+                
+            Estado = EstadoOrdenCompra.Completada;
+            FechaRecepcion = fechaEntregaReal;
+            ObservacionesRecepcion = string.Empty;
+            MarkAsModified();
+            
+            AddDomainEvent(new OrdenCompraRecibida(Id, fechaEntregaReal, ObservacionesRecepcion));
+            
+            return Result.Success();
+        }
+        
+        /// <summary>
+        /// Cancela una orden de compra
+        /// </summary>
+        /// <param name="motivo">Motivo de la cancelación</param>
+        /// <param name="usuario">Usuario que cancela la orden</param>
+        /// <param name="notification">Gestor de notificaciones</param>
+        /// <returns>Resultado de la operación</returns>
+        public Result CancelarOrden(string motivo, string usuario, INotificationManager notification)
+        {
+            notification.CreateNewNotification();
+            
+            notification
+                .Require(Estado == EstadoOrdenCompra.Pendiente, "Solo se pueden cancelar órdenes pendientes", propertyName: "Estado")
+                .RequireNotEmpty(motivo, "El motivo de cancelación es obligatorio", propertyName: "Motivo")
+                .RequireNotEmpty(usuario, "El usuario es obligatorio", propertyName: "Usuario");
+                
+            if (notification.HasErrors)
+                return notification.ToResult();
+                
+            Estado = EstadoOrdenCompra.Cancelada;
+            FechaCancelacion = DateTime.Now;
+            MotivoCancelacion = motivo;
+            MarkAsModified();
+            
+            AddDomainEvent(new OrdenCompraCancelada(Id, FechaCancelacion.Value, motivo));
+            
+            return Result.Success();
+        }
     }
 } 

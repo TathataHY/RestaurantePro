@@ -10,6 +10,7 @@ namespace RestaurantePro.Domain.Comercial.Policies
         private readonly ITarjetaFidelizacionRepository _tarjetaRepository;
         private readonly IServicioFidelizacion _servicioFidelizacion;
         private readonly IDateTimeService _dateTimeService;
+        private readonly INotificationManager _notificationManager;
         
         // Umbrales para determinar los niveles según la cantidad de visitas
         private const int UMBRAL_PLATA = 10;
@@ -32,12 +33,14 @@ namespace RestaurantePro.Domain.Comercial.Policies
             IClienteRepository clienteRepository,
             ITarjetaFidelizacionRepository tarjetaRepository,
             IServicioFidelizacion servicioFidelizacion,
-            IDateTimeService dateTimeService)
+            IDateTimeService dateTimeService,
+            INotificationManager notificationManager)
         {
             _clienteRepository = clienteRepository ?? throw new ArgumentNullException(nameof(clienteRepository));
             _tarjetaRepository = tarjetaRepository ?? throw new ArgumentNullException(nameof(tarjetaRepository));
             _servicioFidelizacion = servicioFidelizacion ?? throw new ArgumentNullException(nameof(servicioFidelizacion));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
+            _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
         }
         
         /// <inheritdoc />
@@ -348,5 +351,206 @@ namespace RestaurantePro.Domain.Comercial.Policies
             // pero podría usar el parámetro diasHistorial para personalizar la consulta en el futuro
             return EjecutarPolicy(cancellationToken);
         }
+
+        /// <summary>
+        /// Determina el segmento de un cliente basado en su historial de compras
+        /// </summary>
+        /// <param name="clienteId">ID del cliente</param>
+        /// <returns>Resultado con el segmento del cliente</returns>
+        public async Task<Result<SegmentoCliente>> DeterminarSegmentoClienteAsync(Guid clienteId)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.Require(clienteId != Guid.Empty, "El ID del cliente no puede estar vacío");
+            
+            if (_notificationManager.HasErrors)
+                return _notificationManager.ToResult<SegmentoCliente>(SegmentoCliente.Inactivo);
+            
+            // Obtener el cliente
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
+            if (cliente == null)
+                return Result.Failure<SegmentoCliente>("No se encontró el cliente especificado");
+            
+            // Obtener historial de compras
+            var comprasRecientes = await _clienteRepository.ObtenerFacturasRecientesAsync(
+                clienteId, 
+                _dateTimeService.Now.AddMonths(-6), 
+                _dateTimeService.Now);
+            
+            // Si no hay compras recientes, el cliente está inactivo
+            if (comprasRecientes == null || !comprasRecientes.Any())
+                return Result.Success(SegmentoCliente.Inactivo);
+            
+            // Calcular métricas del cliente
+            var frecuenciaCompra = comprasRecientes.Count();
+            var ticketPromedio = comprasRecientes.Average(c => c.Total);
+            var tendencia = CalcularTendenciaCompra(comprasRecientes);
+            
+            // Determinar segmento basado en las métricas
+            var segmento = DeterminarSegmento(frecuenciaCompra, ticketPromedio, tendencia);
+            
+            // Actualizar segmento del cliente si ha cambiado
+            if (cliente.Segmento != segmento)
+            {
+                var segmentoAnterior = cliente.Segmento;
+                cliente.ActualizarSegmento(segmento);
+                await _clienteRepository.GuardarAsync(cliente);
+            }
+            
+            return Result.Success(segmento);
+        }
+        
+        /// <summary>
+        /// Genera recomendaciones para un cliente basadas en su segmento
+        /// </summary>
+        /// <param name="clienteId">ID del cliente</param>
+        /// <returns>Resultado con las recomendaciones para el cliente</returns>
+        public async Task<Result<List<Recomendacion>>> GenerarRecomendacionesAsync(Guid clienteId)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.Require(clienteId != Guid.Empty, "El ID del cliente no puede estar vacío");
+            
+            if (_notificationManager.HasErrors)
+                return _notificationManager.ToResult<List<Recomendacion>>(new List<Recomendacion>());
+            
+            // Obtener el segmento del cliente
+            var segmentoResult = await DeterminarSegmentoClienteAsync(clienteId);
+            if (!segmentoResult.Succeeded)
+                return Result.Failure<List<Recomendacion>>(segmentoResult.Error ?? "Error al determinar el segmento del cliente");
+            
+            var segmento = segmentoResult.Value;
+            
+            // Generar recomendaciones según el segmento
+            var recomendaciones = new List<Recomendacion>();
+            
+            switch (segmento)
+            {
+                case SegmentoCliente.Premium:
+                    recomendaciones.Add(new Recomendacion("Invitación a eventos VIP", TipoRecomendacion.Evento));
+                    recomendaciones.Add(new Recomendacion("Descuento en productos premium", TipoRecomendacion.Descuento));
+                    break;
+                    
+                case SegmentoCliente.FrecuenciaAlta:
+                    recomendaciones.Add(new Recomendacion("Programa de fidelización especial", TipoRecomendacion.Programa));
+                    recomendaciones.Add(new Recomendacion("Promoción 2x1 en productos seleccionados", TipoRecomendacion.Promocion));
+                    break;
+                    
+                case SegmentoCliente.TicketAlto:
+                    recomendaciones.Add(new Recomendacion("Descuento por volumen de compra", TipoRecomendacion.Descuento));
+                    recomendaciones.Add(new Recomendacion("Productos exclusivos", TipoRecomendacion.Producto));
+                    break;
+                    
+                case SegmentoCliente.Creciente:
+                    recomendaciones.Add(new Recomendacion("Promoción para aumentar frecuencia", TipoRecomendacion.Promocion));
+                    recomendaciones.Add(new Recomendacion("Cupón de descuento para próxima compra", TipoRecomendacion.Cupon));
+                    break;
+                    
+                case SegmentoCliente.Decreciente:
+                    recomendaciones.Add(new Recomendacion("Encuesta de satisfacción", TipoRecomendacion.Encuesta));
+                    recomendaciones.Add(new Recomendacion("Promoción para reactivación", TipoRecomendacion.Promocion));
+                    break;
+                    
+                case SegmentoCliente.Inactivo:
+                    recomendaciones.Add(new Recomendacion("Campaña de reactivación", TipoRecomendacion.Campana));
+                    recomendaciones.Add(new Recomendacion("Oferta especial de bienvenida", TipoRecomendacion.Oferta));
+                    break;
+                    
+                default:
+                    recomendaciones.Add(new Recomendacion("Promoción general", TipoRecomendacion.Promocion));
+                    break;
+            }
+            
+            return Result.Success(recomendaciones);
+        }
+        
+        // Métodos privados de apoyo
+        
+        private decimal CalcularTendenciaCompra(IEnumerable<Factura> compras)
+        {
+            // Ordenar compras por fecha
+            var comprasOrdenadas = compras.OrderBy(c => c.FechaEmision).ToList();
+            
+            // Si hay menos de 2 compras, no hay tendencia
+            if (comprasOrdenadas.Count < 2)
+                return 0;
+            
+            // Dividir las compras en dos mitades y comparar promedios
+            var mitad = comprasOrdenadas.Count / 2;
+            var primerasMitad = comprasOrdenadas.Take(mitad);
+            var segundasMitad = comprasOrdenadas.Skip(mitad);
+            
+            var promedioAnterior = primerasMitad.Average(c => c.Total);
+            var promedioReciente = segundasMitad.Average(c => c.Total);
+            
+            // Calcular tendencia como porcentaje de cambio
+            if (promedioAnterior > 0)
+                return (promedioReciente - promedioAnterior) / promedioAnterior;
+            
+            return 0;
+        }
+        
+        private SegmentoCliente DeterminarSegmento(int frecuencia, decimal ticketPromedio, decimal tendencia)
+        {
+            // Cliente Premium: alta frecuencia y alto ticket
+            if (frecuencia >= 10 && ticketPromedio >= 100000)
+                return SegmentoCliente.Premium;
+            
+            // Cliente de alta frecuencia
+            if (frecuencia >= 10)
+                return SegmentoCliente.FrecuenciaAlta;
+            
+            // Cliente de ticket alto
+            if (ticketPromedio >= 100000)
+                return SegmentoCliente.TicketAlto;
+            
+            // Cliente con tendencia creciente
+            if (tendencia >= 0.2m)
+                return SegmentoCliente.Creciente;
+            
+            // Cliente con tendencia decreciente
+            if (tendencia <= -0.2m)
+                return SegmentoCliente.Decreciente;
+            
+            // Cliente inactivo (poca frecuencia)
+            if (frecuencia <= 2)
+                return SegmentoCliente.Inactivo;
+            
+            // Cliente regular
+            return SegmentoCliente.Regular;
+        }
+    }
+
+    /// <summary>
+    /// Representa una recomendación para un cliente
+    /// </summary>
+    public class Recomendacion
+    {
+        public string Descripcion { get; }
+        public TipoRecomendacion Tipo { get; }
+        
+        public Recomendacion(string descripcion, TipoRecomendacion tipo)
+        {
+            Descripcion = descripcion;
+            Tipo = tipo;
+        }
+    }
+
+    /// <summary>
+    /// Tipos de recomendaciones para clientes
+    /// </summary>
+    public enum TipoRecomendacion
+    {
+        Promocion,
+        Descuento,
+        Producto,
+        Evento,
+        Programa,
+        Cupon,
+        Encuesta,
+        Campana,
+        Oferta
     }
 } 

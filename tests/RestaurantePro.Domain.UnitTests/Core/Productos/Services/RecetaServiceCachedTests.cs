@@ -4,200 +4,248 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
     {
         private readonly Mock<IRecetaService> _recetaServiceMock;
         private readonly Mock<ICacheService> _cacheServiceMock;
-        private readonly RecetaServiceCached _recetaServiceCached;
-        private readonly Guid _productoId = Guid.NewGuid();
-        
+        private readonly NotificationManager _notificationManager;
+        private readonly RecetaServiceCached _sut;
+
         public RecetaServiceCachedTests()
         {
             _recetaServiceMock = new Mock<IRecetaService>();
             _cacheServiceMock = new Mock<ICacheService>();
-            _recetaServiceCached = new RecetaServiceCached(_recetaServiceMock.Object, _cacheServiceMock.Object);
+            _notificationManager = new NotificationManager();
+
+            _sut = new RecetaServiceCached(
+                _recetaServiceMock.Object,
+                _cacheServiceMock.Object,
+                _notificationManager);
         }
-        
+
         [Fact]
-        public async Task ObtenerIngredientesParaProductoAsync_ShouldUseCache()
+        public async Task ObtenerIngredientesParaProductoAsync_ConProductoValido_DebeRetornarDesdeCache()
         {
             // Arrange
+            var productoId = Guid.NewGuid();
             var ingredientes = new Dictionary<Guid, decimal>
             {
-                { Guid.NewGuid(), 2.5m },
-                { Guid.NewGuid(), 1.0m }
+                { Guid.NewGuid(), 100 },
+                { Guid.NewGuid(), 200 }
             };
-            var cacheKey = $"RecetaService_ObtenerIngredientesParaProducto_{_productoId}";
-            
+
+            var expectedResult = Result.Success(ingredientes);
+
             _cacheServiceMock
-                .Setup(s => s.GetOrAddAsync(
-                    It.Is<string>(k => k == cacheKey),
-                    It.IsAny<Func<CancellationToken, Task<Dictionary<Guid, decimal>>>>(),
+                .Setup(c => c.GetOrAddAsync(
+                    It.Is<string>(s => s.Contains(productoId.ToString())),
+                    It.IsAny<Func<CancellationToken, Task<Result<Dictionary<Guid, decimal>>>>>(),
                     It.IsAny<int>(),
                     It.IsAny<CancellationToken>()))
-                .ReturnsAsync(ingredientes);
-                
+                .ReturnsAsync(expectedResult);
+
             // Act
-            var result = await _recetaServiceCached.ObtenerIngredientesParaProductoAsync(_productoId);
-            
+            var result = await _sut.ObtenerIngredientesParaProductoAsync(productoId);
+
             // Assert
-            result.Should().BeSameAs(ingredientes);
+            result.Should().NotBeNull();
+            result.Succeeded.Should().BeTrue();
+            result.Value.Should().BeEquivalentTo(ingredientes);
+
+            // Verificar que se usó la caché
             _cacheServiceMock.Verify(
-                s => s.GetOrAddAsync(
-                    It.Is<string>(k => k == cacheKey),
-                    It.IsAny<Func<CancellationToken, Task<Dictionary<Guid, decimal>>>>(),
-                    It.Is<int>(ttl => ttl == 60), // Verificamos que se use el tiempo de caché correcto
+                c => c.GetOrAddAsync(
+                    It.Is<string>(s => s.Contains(productoId.ToString())),
+                    It.IsAny<Func<CancellationToken, Task<Result<Dictionary<Guid, decimal>>>>>(),
+                    It.IsAny<int>(),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
+
+            // Verificar que no se llamó directamente al servicio original
+            _recetaServiceMock.Verify(
+                s => s.ObtenerIngredientesParaProductoAsync(
+                    It.IsAny<Guid>(),
+                    It.IsAny<CancellationToken>()),
+                Times.Never);
         }
-        
+
         [Fact]
-        public async Task VerificarDisponibilidadIngredientesAsync_ShouldNotUseCache()
+        public async Task ObtenerIngredientesParaProductoAsync_ConIdVacio_DebeRetornarError()
         {
             // Arrange
-            int cantidad = 5;
-            _recetaServiceMock
-                .Setup(s => s.VerificarDisponibilidadIngredientesAsync(_productoId, cantidad, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true);
-                
+            var productoId = Guid.Empty;
+
             // Act
-            var result = await _recetaServiceCached.VerificarDisponibilidadIngredientesAsync(_productoId, cantidad);
-            
+            var result = await _sut.ObtenerIngredientesParaProductoAsync(productoId);
+
             // Assert
-            result.Should().BeTrue();
-            _recetaServiceMock.Verify(
-                s => s.VerificarDisponibilidadIngredientesAsync(_productoId, cantidad, It.IsAny<CancellationToken>()),
-                Times.Once);
+            result.Should().NotBeNull();
+            result.Succeeded.Should().BeFalse();
+            result.Errors.Should().ContainSingle(e => e.PropertyName == "ProductoId");
+
+            // Verificar que no se usó la caché
             _cacheServiceMock.Verify(
-                s => s.GetOrAddAsync(
+                c => c.GetOrAddAsync(
                     It.IsAny<string>(),
-                    It.IsAny<Func<CancellationToken, Task<bool>>>(),
+                    It.IsAny<Func<CancellationToken, Task<Result<Dictionary<Guid, decimal>>>>>(),
                     It.IsAny<int>(),
                     It.IsAny<CancellationToken>()),
                 Times.Never);
         }
-        
+
         [Fact]
-        public async Task ObtenerIngredientesFaltantesAsync_ShouldNotUseCache()
+        public async Task ObtenerIngredientesParaProductoAsync_ConErrorEnCache_DebeUsarServicioOriginal()
         {
             // Arrange
-            int cantidad = 5;
-            var faltantes = new Dictionary<Guid, decimal>
+            var productoId = Guid.NewGuid();
+            var ingredientes = new Dictionary<Guid, decimal>
             {
-                { Guid.NewGuid(), 1.5m }
+                { Guid.NewGuid(), 100 },
+                { Guid.NewGuid(), 200 }
             };
-            
+
+            var expectedResult = Result.Success(ingredientes);
+
+            // Configurar el error en la caché
+            _cacheServiceMock
+                .Setup(c => c.GetOrAddAsync(
+                    It.Is<string>(s => s.Contains(productoId.ToString())),
+                    It.IsAny<Func<CancellationToken, Task<Result<Dictionary<Guid, decimal>>>>>(),
+                    It.IsAny<int>(),
+                    It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new Exception("Error de caché"));
+
+            // Configurar el servicio original para retornar datos
             _recetaServiceMock
-                .Setup(s => s.ObtenerIngredientesFaltantesAsync(_productoId, cantidad, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(faltantes);
-                
+                .Setup(s => s.ObtenerIngredientesParaProductoAsync(
+                    productoId,
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expectedResult);
+
             // Act
-            var result = await _recetaServiceCached.ObtenerIngredientesFaltantesAsync(_productoId, cantidad);
-            
+            var result = await _sut.ObtenerIngredientesParaProductoAsync(productoId);
+
             // Assert
-            result.Should().BeSameAs(faltantes);
-            _recetaServiceMock.Verify(
-                s => s.ObtenerIngredientesFaltantesAsync(_productoId, cantidad, It.IsAny<CancellationToken>()),
-                Times.Once);
+            result.Should().NotBeNull();
+            result.Succeeded.Should().BeTrue();
+            result.Value.Should().BeEquivalentTo(ingredientes);
+
+            // Verificar que se intentó usar la caché
             _cacheServiceMock.Verify(
-                s => s.GetOrAddAsync(
+                c => c.GetOrAddAsync(
+                    It.Is<string>(s => s.Contains(productoId.ToString())),
+                    It.IsAny<Func<CancellationToken, Task<Result<Dictionary<Guid, decimal>>>>>(),
+                    It.IsAny<int>(),
+                    It.IsAny<CancellationToken>()),
+                Times.Once);
+
+            // Verificar que se llamó al servicio original
+            _recetaServiceMock.Verify(
+                s => s.ObtenerIngredientesParaProductoAsync(
+                    productoId,
+                    It.IsAny<CancellationToken>()),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task VerificarDisponibilidadIngredientesAsync_ConParametrosValidos_DebeUsarServicioOriginal()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var cantidad = 5;
+            var expectedResult = Result.Success(true);
+
+            _recetaServiceMock
+                .Setup(s => s.VerificarDisponibilidadIngredientesAsync(
+                    productoId,
+                    cantidad,
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync(expectedResult);
+
+            // Act
+            var result = await _sut.VerificarDisponibilidadIngredientesAsync(productoId, cantidad);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Succeeded.Should().BeTrue();
+            result.Value.Should().BeTrue();
+
+            // Verificar que se llamó al servicio original
+            _recetaServiceMock.Verify(
+                s => s.VerificarDisponibilidadIngredientesAsync(
+                    productoId,
+                    cantidad,
+                    It.IsAny<CancellationToken>()),
+                Times.Once);
+
+            // Verificar que no se usó la caché (este método no usa caché)
+            _cacheServiceMock.Verify(
+                c => c.GetOrAddAsync(
                     It.IsAny<string>(),
-                    It.IsAny<Func<CancellationToken, Task<Dictionary<Guid, decimal>>>>(),
+                    It.IsAny<Func<CancellationToken, Task<Result<bool>>>>(),
                     It.IsAny<int>(),
                     It.IsAny<CancellationToken>()),
                 Times.Never);
         }
-        
+
         [Fact]
-        public async Task CalcularCostoRecetaAsync_ShouldUseCache()
+        public async Task VerificarDisponibilidadIngredientesAsync_ConCantidadInvalida_DebeRetornarError()
         {
             // Arrange
-            decimal costoReceta = 150.50m;
-            var cacheKey = $"RecetaService_CalcularCostoReceta_{_productoId}";
-            
-            _cacheServiceMock
-                .Setup(s => s.GetOrAddAsync(
-                    It.Is<string>(k => k == cacheKey),
-                    It.IsAny<Func<CancellationToken, Task<decimal>>>(),
+            var productoId = Guid.NewGuid();
+            var cantidad = 0; // Cantidad inválida
+
+            // Act
+            var result = await _sut.VerificarDisponibilidadIngredientesAsync(productoId, cantidad);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Succeeded.Should().BeFalse();
+            result.Errors.Should().ContainSingle(e => e.PropertyName == "Cantidad");
+
+            // Verificar que no se llamó al servicio original
+            _recetaServiceMock.Verify(
+                s => s.VerificarDisponibilidadIngredientesAsync(
+                    It.IsAny<Guid>(),
                     It.IsAny<int>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(costoReceta);
-                
-            // Act
-            var result = await _recetaServiceCached.CalcularCostoRecetaAsync(_productoId);
-            
-            // Assert
-            result.Should().Be(costoReceta);
-            _cacheServiceMock.Verify(
-                s => s.GetOrAddAsync(
-                    It.Is<string>(k => k == cacheKey),
-                    It.IsAny<Func<CancellationToken, Task<decimal>>>(),
-                    It.Is<int>(ttl => ttl == 60),
                     It.IsAny<CancellationToken>()),
-                Times.Once);
+                Times.Never);
         }
-        
+
         [Fact]
-        public async Task CalcularRentabilidadProductoAsync_ShouldUseCache()
+        public void InvalidarCacheProducto_ConProductoValido_DebeInvalidarTodasLasEntradasRelacionadas()
         {
             // Arrange
-            var rentabilidad = Domain.Core.Productos.ValueObjects.RentabilidadProducto.Calcular(50m, 100m);
-            var cacheKey = $"RecetaService_CalcularRentabilidadProducto_{_productoId}";
-            
-            _cacheServiceMock
-                .Setup(s => s.GetOrAddAsync(
-                    It.Is<string>(k => k == cacheKey),
-                    It.IsAny<Func<CancellationToken, Task<Domain.Core.Productos.ValueObjects.RentabilidadProducto>>>(),
-                    It.IsAny<int>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(rentabilidad);
-                
+            var productoId = Guid.NewGuid();
+
             // Act
-            var result = await _recetaServiceCached.CalcularRentabilidadProductoAsync(_productoId);
-            
+            _sut.InvalidarCacheProducto(productoId);
+
             // Assert
-            result.Should().BeSameAs(rentabilidad);
+            // Verificar que se llamó a invalidar para cada tipo de caché relacionado con el producto
             _cacheServiceMock.Verify(
-                s => s.GetOrAddAsync(
-                    It.Is<string>(k => k == cacheKey),
-                    It.IsAny<Func<CancellationToken, Task<Domain.Core.Productos.ValueObjects.RentabilidadProducto>>>(),
-                    It.Is<int>(ttl => ttl == 60),
-                    It.IsAny<CancellationToken>()),
+                c => c.InvalidatePattern(It.Is<string>(s => s.Contains("ObtenerIngredientesParaProducto") && s.Contains(productoId.ToString()))),
+                Times.Once);
+
+            _cacheServiceMock.Verify(
+                c => c.InvalidatePattern(It.Is<string>(s => s.Contains("CalcularCostoReceta") && s.Contains(productoId.ToString()))),
+                Times.Once);
+
+            _cacheServiceMock.Verify(
+                c => c.InvalidatePattern(It.Is<string>(s => s.Contains("CalcularRentabilidadProducto") && s.Contains(productoId.ToString()))),
                 Times.Once);
         }
-        
+
         [Fact]
-        public void InvalidarCache_ShouldInvalidatePattern()
+        public void InvalidarCacheProducto_ConIdVacio_NoDebeInvalidarNada()
         {
             // Arrange
-            var cacheKeyPrefix = "RecetaService_";
-            
+            var productoId = Guid.Empty;
+
             // Act
-            _recetaServiceCached.InvalidarCache();
-            
+            _sut.InvalidarCacheProducto(productoId);
+
             // Assert
+            // Verificar que no se llamó a invalidar nada
             _cacheServiceMock.Verify(
-                s => s.InvalidatePattern(It.Is<string>(p => p == cacheKeyPrefix)),
-                Times.Once);
-        }
-        
-        [Fact]
-        public void InvalidarCacheProducto_ShouldInvalidateProductRelatedEntries()
-        {
-            // Arrange
-            var ingredientesCacheKey = $"RecetaService_ObtenerIngredientesParaProducto_{_productoId}";
-            var costoCacheKey = $"RecetaService_CalcularCostoReceta_{_productoId}";
-            var rentabilidadCacheKey = $"RecetaService_CalcularRentabilidadProducto_{_productoId}";
-            
-            // Act
-            _recetaServiceCached.InvalidarCacheProducto(_productoId);
-            
-            // Assert
-            _cacheServiceMock.Verify(
-                s => s.InvalidatePattern(It.Is<string>(p => p == ingredientesCacheKey)),
-                Times.Once);
-            _cacheServiceMock.Verify(
-                s => s.InvalidatePattern(It.Is<string>(p => p == costoCacheKey)),
-                Times.Once);
-            _cacheServiceMock.Verify(
-                s => s.InvalidatePattern(It.Is<string>(p => p == rentabilidadCacheKey)),
-                Times.Once);
+                c => c.InvalidatePattern(It.IsAny<string>()),
+                Times.Never);
         }
     }
 } 

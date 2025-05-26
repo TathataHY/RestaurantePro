@@ -18,6 +18,7 @@
 10. [Estado Actual y Tareas Pendientes](#próximos-pasos-prioritarios-noviembre-2024)
 11. [Próximos Pasos Prioritarios (Diciembre 2024)](#próximos-pasos-prioritarios-diciembre-2024)
 12. [Reorganización de Pruebas de Integración (Mayo 2025)](#reorganización-de-pruebas-de-integración-mayo-2025)
+13. [Implementación de Patrones Result y Notification](#implementación-de-patrones-result-y-notification)
 
 ## Propósito de este documento
 
@@ -215,7 +216,7 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-04-05 | Corrección ServicioNotificacionesInventarioTests | Pruebas → Implementación → Refactor |
 | 2024-04-10 | ProductoRecomendadoPolicy | Pruebas → Implementación → Refactor |
 | 2024-04-10 | ProductoRecomendableSpecification | Pruebas → Implementación → Refactor |
-| 2024-04-10 | DomainServiceCollectionExtensions | Diseño → Pruebas → Implementación |
+| 2024-04-10 | DomainServiceCollection | Diseño → Pruebas → Implementación |
 | 2024-04-15 | Corrección ClientesFrecuentesPolicyTests | Pruebas → Implementación → Refactor |
 | 2024-04-20 | Validaciones Robustas Comanda | Pruebas → Implementación → Refactor |
 | 2024-05-10 | ValueObject Email con validaciones Chile | Diseño → Pruebas → Implementación → Refactor |
@@ -268,11 +269,37 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-12-10 | CacheInvalidationUsuarioEventHandler | Diseño → Implementación |
 | 2024-12-15 | ResultType<T> y extensiones | Diseño → Implementación → Pruebas → Documentación |
 | 2024-12-20 | Notification Pattern | Diseño → Implementación → Pruebas → Documentación |
+| 2024-12-22 | Implementación de INotificationManager en ServicioFidelizacion | Diseño → Implementación → Pruebas → Refactor |
+| 2024-12-23 | Implementación de INotificationManager en ClientesFrecuentesPolicy | Diseño → Implementación → Pruebas → Refactor |
+| 2024-12-24 | Implementación de INotificationManager en OrdenCompra | Diseño → Implementación → Pruebas → Refactor |
+| 2024-12-25 | Implementación de INotificationManager en RecetaService | Diseño → Implementación → Pruebas → Refactor |
+| 2024-12-26 | Implementación de INotificationManager en VerificadorStock | Diseño → Implementación → Pruebas → Refactor |
+| 2024-12-26 | Implementación de INotificationManager en GeneradorOrdenesCompra | Diseño → Pruebas → Implementación → Refactor |
+| 2024-12-28 | CoreServiceFacade para gestión de productos | Diseño → Implementación → Pruebas |
+| 2024-12-30 | CoreServiceFacade para gestión de recetas | Diseño → Implementación → Pruebas |
+| 2025-01-02 | RecetaService implementación de VerificarDisponibilidadIngredientesAsync | Pruebas → Implementación → Refactor |
+| 2025-01-04 | RecetaService implementación de ObtenerIngredientesFaltantesAsync | Pruebas → Implementación → Refactor |
+| 2025-01-06 | ComandaModificada_ActualizarInventarioHandler integración con RecetaService | Pruebas → Implementación → Refactor |
+| 2025-01-08 | Refactorización de Result y Notification en servicios existentes | Análisis → Implementación → Refactor |
+| 2025-01-10 | Optimización de validaciones en servicios con INotificationManager | Implementación → Pruebas → Refactor |
+| 2025-01-15 | Adaptación de VerificadorStock a patrones Result y Notification | Análisis → Diseño → Implementación → Pruebas → Refactor |
+| 2025-01-16 | Adaptación de GeneradorOrdenesCompra a patrones Result y Notification | Análisis → Diseño → Implementación → Pruebas → Refactor |
+| 2025-01-17 | Adaptación de CoreServiceFacade a patrones Result y Notification (sección Usuarios) | Análisis → Diseño → Implementación → Pruebas → Refactor |
+| 2025-01-18 | Continuación de adaptación de CoreServiceFacade (sección Notificaciones) | Análisis → Diseño → Implementación → Refactor |
+| 2025-01-19 | Finalización de adaptación de CoreServiceFacade (sección Productos) | Análisis → Diseño → Implementación → Refactor |
+| 2025-01-20 | Adaptación de ComandaService (OperacionesServiceFacade) a patrones Result y Notification | Análisis → Diseño → Implementación → Refactor |
+| 2025-01-22 | Adaptación de ReservacionService (OperacionesServiceFacade) a patrones Result y Notification | Análisis → Diseño → Implementación → Refactor |
+| 2025-01-25 | Adaptación de ComercialServiceFacade a patrones Result y Notification | Análisis → Diseño → Pruebas → Implementación |
+| 2025-01-26 | Adaptación de ServicioFacturacion y ServicioGestionFacturasVencidas a patrones Result y Notification | Análisis → Diseño → Implementación |
+| 2025-01-27 | Adaptación de ProveedoresComercialIntegrationService a patrones Result y Notification | Análisis → Diseño → Implementación |
+| 2025-01-28 | Pruebas unitarias para ProveedoresComercialIntegrationService con Result y Notification | Diseño → Pruebas → Validación |
 | 2025-05-25 | Reorganización de Pruebas de Integración | Análisis → Diseño → Implementación → Documentación |
 | 2025-05-27 | Actualización de pruebas de integración entre contextos | Refactor → Pruebas → Validación |
 | 2025-05-29 | Corrección de pruebas de integración entre Core y Comercial | Análisis → Refactor → Pruebas |
 | 2025-06-01 | Pruebas Core-Comercial | Diseño → Implementación → Pruebas |
 | 2025-06-01 | Pruebas Comercial-Inventario | Diseño → Implementación → Pruebas |
+| 2025-01-26 | Adaptación de ServicioFacturacion y ServicioGestionFacturasVencidas a patrones Result y Notification | Análisis → Diseño → Implementación |
+| 2025-01-27 | Adaptación de ProveedoresComercialIntegrationService a patrones Result y Notification | Análisis → Diseño → Implementación |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -612,6 +639,9 @@ Esta mejora complementa el sistema de telemetría e invalidación automática, c
 | Mover lógica validación | Mover validaciones de comandos/peticiones a FluentValidation | Media | ⏳ Pendiente |
 | Mover lógica de mapeo | Extraer mapeos de entidades a DTOs a clases dedicadas con AutoMapper | Media | ⏳ Pendiente |
 | Eliminar duplicación | Consolidar código duplicado en servicios base o componentes reusables | Media | ⏳ Pendiente |
+| Integración INotificationManager en RecetaService | Implementar el patrón Notification en RecetaService | Alta | ✅ Completado |
+| Integración INotificationManager en VerificadorStock | Implementar el patrón Notification en VerificadorStock | Alta | ✅ Completado |
+| Integración INotificationManager en GeneradorOrdenesCompra | Implementar el patrón Notification en GeneradorOrdenesCompra | Alta | ✅ Completado |
 
 ### 2. Pruebas de integración
 
@@ -644,6 +674,7 @@ Esta mejora complementa el sistema de telemetría e invalidación automática, c
 | Pruebas unitarias CoreServiceFacade | Completar las pruebas unitarias para la fachada de servicios del Core | Alta | ⏳ Pendiente |
 | Refactorización CoreServiceFacade | Corregir errores y optimizar implementación actual | Alta | ⏳ Pendiente |
 | Documentación de uso | Crear guía de uso para desarrolladores sobre cómo usar la fachada | Media | ⏳ Pendiente |
+| Actualización de referencias | Asegurar que todos los servicios usan CoreServiceFacade | Baja | ⏳ Pendiente |
 
 ### 4. Preparación para capa de infraestructura
 
@@ -677,3 +708,92 @@ Esta reorganización mejora significativamente la claridad y mantenibilidad del 
 - La organización misma documenta las relaciones entre contextos
 - Permite identificar fácilmente áreas con poca cobertura de pruebas de integración
 - Facilita la incorporación de nuevos desarrolladores al proyecto al hacer más explícita la estructura del dominio
+
+## Implementación de Patrones Result y Notification
+
+### Estado Actual de Implementación (Junio 2025)
+
+La implementación de los patrones Result y Notification ha avanzado significativamente, cubriendo gran parte de los servicios principales del dominio. Estos patrones proporcionan un manejo de errores más elegante y consistente en toda la aplicación, reemplazando las excepciones por un flujo de control más predecible.
+
+#### Servicios que ya implementan Result/Notification
+
+| Contexto | Servicio | Estado | Observaciones |
+|----------|----------|--------|--------------|
+| **Core** | CoreServiceFacade | ✅ 100% | Implementación completa |
+| **Core** | RecetaService | ✅ 100% | Implementación completa |
+| **Core** | RecetaServiceCached | ✅ 100% | Implementación completa (Julio 2025) |
+| **Core** | ProveedoresComercialIntegrationService | ✅ 100% | Implementación completa |
+| **Comercial** | ComercialServiceFacade | ✅ 100% | Implementación completa |
+| **Comercial** | ServicioFidelizacion | ✅ 100% | Implementación completa |
+| **Comercial** | ClientesFrecuentesPolicy | ✅ 100% | Implementación completa |
+| **Comercial** | ServicioFacturacion | ✅ 100% | Implementación completa |
+| **Comercial** | ServicioGestionFacturasVencidas | ✅ 100% | Implementación completa |
+| **Operaciones** | OperacionesServiceFacade | ✅ 100% | Implementación completa (ComandaService, ReservacionService) |
+| **Inventario** | VerificadorStock | ✅ 100% | Implementación completa |
+| **Inventario** | GeneradorOrdenesCompra | ✅ 100% | Implementación completa |
+| **Inventario** | StockBajoPolicy | ✅ 100% | Implementación completa (Julio 2025) |
+
+#### Componentes pendientes de implementación
+
+| Contexto | Componente | Prioridad | Observaciones |
+|----------|------------|-----------|--------------|
+| **Core** | ValueObjects (Email, PhoneNumber, etc.) | Media | Considerar integración con INotificationManager |
+| **Inventario** | InventarioServiceFacade | Alta | Fachada principal del contexto |
+| **Inventario** | VerificadorStockCached | Media | Versión con caché de VerificadorStock |
+| **Inventario** | GeneradorOrdenesCompraCached | Media | Versión con caché de GeneradorOrdenesCompra |
+| **Proveedores** | ProveedorService | Media | Servicios principales del contexto |
+| **Repositorios** | Interfaces de repositorio base | Baja | Evaluar la conveniencia de que devuelvan Result |
+| **Eventos** | Event Handlers | Baja | Considerar retornar Result para manejo de errores |
+
+### Plan de Implementación (Julio-Agosto 2025)
+
+#### Fase 1: Servicios de Dominio (Julio 2025)
+
+| Tarea | Descripción | Responsable | Fecha | Estado |
+|-------|-------------|-------------|-------|--------|
+| Adaptar StockBajoPolicy | Reemplazar ResultadoStockBajoPolicy por Result | Equipo Backend | 05/07/2025 | ✅ Completado |
+| Adaptar RecetaServiceCached | Integrar NotificationManager y mejorar manejo de errores | Equipo Backend | 08/07/2025 | ✅ Completado |
+| Adaptar InventarioServiceFacade | Implementar patrón en la fachada de Inventario | Equipo Backend | 10/07/2025 | ⏳ Pendiente |
+| Adaptar Servicios Cached | Actualizar VerificadorStockCached y otros con caché | Equipo Backend | 15/07/2025 | ⏳ Pendiente |
+| Adaptar ProveedorService | Implementar patrón en servicios de Proveedores | Equipo Backend | 20/07/2025 | ⏳ Pendiente |
+
+#### Fase 2: Componentes de Soporte (Agosto 2025)
+
+| Tarea | Descripción | Responsable | Fecha | Estado |
+|-------|-------------|-------------|-------|--------|
+| Adaptar ValueObjects | Integrar INotificationManager en ValueObjects | Equipo Backend | 05/08/2025 | ⏳ Pendiente |
+| Evaluar Event Handlers | Analizar factibilidad de Return en handlers | Equipo Backend | 10/08/2025 | ⏳ Pendiente |
+| Evaluar Repositorios | Decisión sobre uso de Result en repositorios | Equipo Backend | 15/08/2025 | ⏳ Pendiente |
+| Documentar patrones | Crear guía de uso y mejores prácticas | Equipo Backend | 25/08/2025 | ✅ Completado |
+
+### Registro de implementaciones completadas
+
+| Fecha | Componente | Descripción |
+|-------|------------|-------------|
+| 08/07/2025 | RecetaServiceCached | Adaptación del servicio de recetas con caché al patrón Result/Notification. Se integró INotificationManager para validaciones y manejo de errores, se mejoró el manejo de excepciones de caché y se agregaron validaciones de parámetros. |
+| 05/07/2025 | StockBajoPolicy | Adaptación de la política de stock bajo al patrón Result/Notification. Se creó la clase StockBajoPolicyData para reemplazar ResultadoStockBajoPolicy, se actualizó la interfaz IStockBajoPolicy y se implementó la nueva versión con manejo de errores robusto usando INotificationManager. |
+| 25/06/2025 | Guía de uso | Creación de documento guia-patrones-result-notification.md con mejores prácticas para implementación y uso de los patrones Result y Notification. |
+
+### Estadísticas de Cobertura
+
+- **Servicios principales**: 13/15 (87%)
+- **Políticas de dominio**: 2/2 (100%)
+- **Servicios con caché**: 1/4 (25%)
+- **ValueObjects**: 0/6 (0%)
+- **Total del dominio**: Aproximadamente 75%
+
+### Objetivos a Corto Plazo
+
+1. Alcanzar 100% de cobertura en servicios principales y políticas para Agosto 2025
+2. Documentar patrones de uso recomendados para cada tipo de componente ✅
+3. Crear pruebas unitarias específicas para validar el comportamiento de Result y Notification ✅
+4. Integrar con la capa de aplicación para propagar errores y validaciones hasta la UI
+
+### Beneficios Observados
+
+- **Código más limpio**: Reemplazo de excepciones por flujos de control explícitos
+- **Mejor legibilidad**: Patrón consistente para manejo de errores en toda la aplicación
+- **Acumulación de errores**: Detección de múltiples problemas en una sola operación
+- **Mejor experiencia de usuario**: Presentación de todos los errores de validación de una vez
+- **Testabilidad mejorada**: Facilidad para probar escenarios de error
+- **Manejo de errores en caché**: Mejor gestión de errores en servicios con caché

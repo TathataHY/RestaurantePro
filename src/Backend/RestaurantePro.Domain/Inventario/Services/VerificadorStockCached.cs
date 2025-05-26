@@ -22,17 +22,25 @@ namespace RestaurantePro.Domain.Inventario.Services
         }
         
         /// <inheritdoc/>
-        public async Task<ResultadoVerificacionStock> VerificarYGenerarOrdenesCompraAsync(CancellationToken cancellationToken = default)
+        public async Task<Result<ResultadoVerificacionStock>> VerificarYGenerarOrdenesCompraAsync(CancellationToken cancellationToken = default)
         {
             // Clave única para esta operación
             var cacheKey = $"{CacheKeyPrefix}VerificarYGenerarOrdenesCompra";
             
-            // Intentar obtener de caché o ejecutar la operación costosa
-            return await _cacheService.GetOrAddAsync(
-                cacheKey, 
-                async (ct) => await _verificadorStockOriginal.VerificarYGenerarOrdenesCompraAsync(ct),
-                CacheDurationMinutes,
-                cancellationToken);
+            try
+            {
+                // Intentar obtener de caché o ejecutar la operación costosa
+                return await _cacheService.GetOrAddAsync(
+                    cacheKey, 
+                    async (ct) => await _verificadorStockOriginal.VerificarYGenerarOrdenesCompraAsync(ct),
+                    CacheDurationMinutes,
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Si hay un error en la caché, ejecutamos directamente la operación
+                return await _verificadorStockOriginal.VerificarYGenerarOrdenesCompraAsync(cancellationToken);
+            }
         }
         
         /// <inheritdoc/>

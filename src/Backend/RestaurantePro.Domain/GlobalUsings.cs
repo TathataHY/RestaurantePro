@@ -1,17 +1,17 @@
 // .NET Base
 global using System;
+global using System.Collections.Concurrent;
 global using System.Collections.Generic;
+global using System.Collections.ObjectModel;
+global using System.Diagnostics;
+global using System.Globalization;
 global using System.Linq;
 global using System.Linq.Expressions;
-global using System.Threading.Tasks;
-global using System.Text.RegularExpressions;
-global using System.Globalization;
 global using System.Reflection;
 global using System.Text;
-global using System.Threading;
 global using System.Text.Json;
-global using System.Collections.Concurrent;
-global using System.Diagnostics;
+global using System.Threading;
+global using System.Threading.Tasks;
 
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
@@ -170,6 +170,9 @@ global using RestaurantePro.Domain.Inventario.Services;
 
 // Domain Inventario - Policies
 global using RestaurantePro.Domain.Inventario.Policies;
+
+// Domain Inventario - Results
+global using RestaurantePro.Domain.Inventario.Results;
 
 // Domain Proveedores
 global using RestaurantePro.Domain.Proveedores.Entities;

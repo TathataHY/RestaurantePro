@@ -1,7 +1,3 @@
-using RestaurantePro.Domain.Comercial.Promociones.Services;
-using RestaurantePro.Domain.Core.Productos.ValueObjects;
-using System.Reflection;
-
 namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Core_Comercial
 {
     /// <summary>

@@ -9,14 +9,14 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         /// Procesa las facturas vencidas
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Número de facturas procesadas</returns>
-        Task<int> ProcesarFacturasVencidasAsync(CancellationToken cancellationToken = default);
+        /// <returns>Resultado con el número de facturas procesadas</returns>
+        Task<Result<int>> ProcesarFacturasVencidasAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Genera un informe de facturas vencidas
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Informe de facturas vencidas</returns>
-        Task<InformeFacturasVencidas> GenerarInformeFacturasVencidasAsync(CancellationToken cancellationToken = default);
+        /// <returns>Resultado con el informe de facturas vencidas</returns>
+        Task<Result<InformeFacturasVencidas>> GenerarInformeFacturasVencidasAsync(CancellationToken cancellationToken = default);
     }
 } 

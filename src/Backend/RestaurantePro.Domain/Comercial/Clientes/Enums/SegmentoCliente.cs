@@ -39,6 +39,11 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Enums
         /// <summary>
         /// Cliente que no ha visitado el establecimiento en un período prolongado
         /// </summary>
-        Inactivo = 6
+        Inactivo = 6,
+        
+        /// <summary>
+        /// Cliente con patrones regulares de consumo
+        /// </summary>
+        Regular = 7
     }
 } 
