@@ -1,3 +1,4 @@
+#nullable disable
 namespace RestaurantePro.Domain.UnitTests.Core.Productos.Entities
 {
     public class ProductoTests
@@ -160,9 +161,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Entities
 
         [Theory]
         [InlineData("")]
-        [InlineData(null)]
         [InlineData("   ")]
-        public void Crear_NombreInvalido_DebeLanzarExcepcion(string? nombreInvalido)
+        public void Crear_NombreInvalido_DebeLanzarExcepcion(string nombreInvalido)
         {
             // Arrange
             var categoriaId = Guid.NewGuid();
@@ -170,7 +170,22 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Entities
             var descripcion = "Descripción de prueba";
 
             // Act & Assert
-            Action action = () => Producto.Crear(nombreInvalido!, descripcion, precio, categoriaId);
+            Action action = () => Producto.Crear(nombreInvalido, descripcion, precio, categoriaId);
+            action.Should().Throw<InvalidOperationException>()
+                .WithMessage("*nombre*");
+        }
+        
+        [Fact]
+        public void Crear_NombreNull_DebeLanzarExcepcion()
+        {
+            // Arrange
+            var categoriaId = Guid.NewGuid();
+            var precio = new PrecioProducto(100m);
+            var descripcion = "Descripción de prueba";
+            string? nombreNull = null;
+
+            // Act & Assert
+            Action action = () => Producto.Crear(nombreNull!, descripcion, precio, categoriaId);
             action.Should().Throw<InvalidOperationException>()
                 .WithMessage("*nombre*");
         }

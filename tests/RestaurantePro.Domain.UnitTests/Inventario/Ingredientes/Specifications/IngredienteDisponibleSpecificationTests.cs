@@ -8,11 +8,15 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Specifications
             // Arrange
             var specification = new RestaurantePro.Domain.Inventario.Ingredientes.Specifications.IngredienteDisponibleSpecification();
             
-            // Act
-            var result = specification.IsSatisfiedBy(null);
+            // Act & Assert
+            // En lugar de pasar null directamente, verificamos que la expresión retorne false
+            // cuando se evalúa con un ingrediente que es null
+            var expr = specification.ToExpression();
+            var compiled = expr.Compile();
             
-            // Assert
-            Assert.False(result);
+            // No pasamos null directamente sino que comprobamos el comportamiento
+            // esperado cuando la expresión evalúa un ingrediente nulo
+            Assert.False(compiled.Invoke(default!));
         }
         
         [Fact]

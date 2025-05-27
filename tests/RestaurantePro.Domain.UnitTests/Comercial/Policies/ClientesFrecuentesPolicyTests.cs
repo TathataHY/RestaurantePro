@@ -1,3 +1,4 @@
+#nullable disable
 namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
 {
     public class ClientesFrecuentesPolicyTests
@@ -53,7 +54,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, $"TF-{Guid.NewGuid():N}");
                 tarjeta.Activar();
                 _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, It.IsAny<CancellationToken>()))
-                    .Returns(Task.FromResult<TarjetaFidelizacion?>(tarjeta));
+                    .ReturnsAsync(tarjeta);
             }
                 
             _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
@@ -105,11 +106,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 .Returns(Task.FromResult(clientesEnumerable));
                 
             // Simular que no tienen tarjeta - usamos variable explícitamente nula
-            TarjetaFidelizacion? tarjetaNull = null;
             foreach (var cliente in clientes)
             {
                 _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, It.IsAny<CancellationToken>()))
-                    .Returns(Task.FromResult(tarjetaNull));
+                    .ReturnsAsync((TarjetaFidelizacion?)null);
             }
             
             _tarjetaRepositoryMock.Setup(r => r.AgregarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
@@ -140,7 +140,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             tarjeta.Activar();
             
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult<TarjetaFidelizacion?>(tarjeta));
+                .ReturnsAsync(tarjeta);
                 
             _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);

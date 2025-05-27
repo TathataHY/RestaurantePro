@@ -1,5 +1,3 @@
-#pragma warning disable CS0854 // Un árbol de expresión no puede contener una llamada o invocación que use argumentos opcionales
-
 using RestaurantePro.Domain.Core.SharedKernel.Results;
 using RestaurantePro.Domain.Operaciones.Reservaciones;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas;
@@ -179,21 +177,21 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 var reservaciones = new List<Reservacion>
                 {
                     Reservacion.Crear(
-                        Guid.NewGuid(), // Mesa
-                        Guid.NewGuid(), // Cliente
+                        Guid.NewGuid(),
+                        Guid.NewGuid(),
                         DateTime.Now.AddDays(-2),
-                        TimeSpan.FromMinutes(90),
+                        TimeSpan.FromHours(2),
                         4,
-                        "",
+                        "Observaciones 1",
                         "",
                         ""),
                     Reservacion.Crear(
-                        Guid.NewGuid(), // Mesa
-                        Guid.NewGuid(), // Cliente
+                        Guid.NewGuid(),
+                        Guid.NewGuid(),
                         DateTime.Now.AddDays(2),
-                        TimeSpan.FromMinutes(90),
+                        TimeSpan.FromHours(2),
                         2,
-                        "",
+                        "Observaciones 2",
                         "",
                         "")
                 };
@@ -238,7 +236,6 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mesasDisponibles);
             
-            // Crear una mesa válida con los parámetros requeridos
             var mesa = Mesa.Crear(1, 4, "Terraza");
             
             _mesaRepositoryMock
@@ -254,17 +251,20 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 .ReturnsAsync(1);
             
             // Act
-            var result = await _sut.CrearReservacionAsync(
-                clienteId, 
-                fecha, 
-                cantidadPersonas, 
+            var resultado = await _sut.CrearReservacionAsync(
+                clienteId,
+                fecha,
+                cantidadPersonas,
                 observaciones,
-                CancellationToken.None);
+                cancellationToken);
             
             // Assert
-            result.Should().NotBeNull();
-            result.Succeeded.Should().BeTrue();
-            result.Value.Should().NotBeNull();
+            Assert.True(resultado.Succeeded);
+            Assert.NotNull(resultado.Value);
+            Assert.Equal(clienteId, resultado.Value.ClienteId);
+            Assert.Equal(fecha, resultado.Value.FechaReservacion);
+            Assert.Equal(cantidadPersonas, resultado.Value.CantidadPersonas);
+            Assert.Equal(observaciones, resultado.Value.Observaciones);
             
             _reservacionRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<Reservacion>(), It.IsAny<CancellationToken>()), Times.Once);
             _reservacionRepositoryMock.Verify(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -275,27 +275,22 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var fecha = DateTime.Now.AddDays(-1); // Fecha en el pasado
+            var fecha = DateTime.Now.AddDays(-1);
             var cantidadPersonas = 4;
+            var observaciones = "Observaciones de prueba";
             var cancellationToken = CancellationToken.None;
-            
+
             // Act
-            var result = await _sut.CrearReservacionAsync(
-                clienteId, 
-                fecha, 
-                cantidadPersonas, 
-                observaciones: null,
-                CancellationToken.None);
-            
+            var resultado = await _sut.CrearReservacionAsync(
+                clienteId,
+                fecha,
+                cantidadPersonas,
+                observaciones,
+                cancellationToken);
+
             // Assert
-            result.Should().NotBeNull();
-            result.Succeeded.Should().BeFalse();
-            result.Value.Should().BeNull();
-            result.Errors.Should().NotBeEmpty();
-            result.Errors.Should().Contain(e => e.ToString().Contains("fecha"));
-            
-            _reservacionRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<Reservacion>(), It.IsAny<CancellationToken>()), Times.Never);
-            _reservacionRepositoryMock.Verify(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Never);
+            Assert.False(resultado.Succeeded);
+            Assert.Contains("fecha", resultado.Errors.First().ToString().ToLower());
         }
         
         [Fact]
@@ -305,36 +300,29 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             var clienteId = Guid.NewGuid();
             var fecha = DateTime.Now.AddDays(1);
             var cantidadPersonas = 4;
+            var observaciones = "Observaciones de prueba";
             var cancellationToken = CancellationToken.None;
-            
-            var mesasDisponibles = new List<Guid>(); // Sin mesas disponibles
-            
+
             _reservacionRepositoryMock
                 .Setup(r => r.ObtenerMesasDisponiblesAsync(
-                    It.IsAny<DateTime>(), 
-                    It.IsAny<TimeSpan>(), 
-                    It.IsAny<int>(), 
-                    It.IsAny<int>(), 
+                    It.IsAny<DateTime>(),
+                    It.IsAny<TimeSpan>(),
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
                     It.IsAny<CancellationToken>()))
-                .ReturnsAsync(mesasDisponibles);
-            
+                .ReturnsAsync(new List<Guid>());
+
             // Act
-            var result = await _sut.CrearReservacionAsync(
-                clienteId, 
-                fecha, 
-                cantidadPersonas, 
-                observaciones: null,
-                CancellationToken.None);
-            
+            var resultado = await _sut.CrearReservacionAsync(
+                clienteId,
+                fecha,
+                cantidadPersonas,
+                observaciones,
+                cancellationToken);
+
             // Assert
-            result.Should().NotBeNull();
-            result.Succeeded.Should().BeFalse();
-            result.Value.Should().BeNull();
-            result.Errors.Should().NotBeEmpty();
-            result.Errors.Should().Contain(e => e.ToString().Contains("mesas disponibles"));
-            
-            _reservacionRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<Reservacion>(), It.IsAny<CancellationToken>()), Times.Never);
-            _reservacionRepositoryMock.Verify(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Never);
+            Assert.False(resultado.Succeeded);
+            Assert.Contains("mesas disponibles", resultado.Errors.First().ToString().ToLower());
         }
         
         [Fact]
@@ -344,61 +332,33 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             var reservacionId = Guid.NewGuid();
             var mesaId = Guid.NewGuid();
             var cancellationToken = CancellationToken.None;
+
             var reservacion = Reservacion.Crear(
-                Guid.NewGuid(), // Mesa actual
-                Guid.NewGuid(), // Cliente
+                Guid.Empty,
+                Guid.NewGuid(),
                 DateTime.Now.AddDays(1),
-                TimeSpan.FromMinutes(90),
+                TimeSpan.FromHours(2),
                 4,
-                "",
+                "Observaciones",
                 "",
                 "");
-            
-            _reservacionRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == reservacionId), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(reservacion);
-            
-            // Crear la mesa con los argumentos correctos
-            var mesa = Mesa.Crear(
-                4, // Cantidad de asientos
-                4, // Número de mesa
-                "Mesa de prueba" // Descripción
-            );
-            
-            // Establish mesa ID without using reflection
-            typeof(EntityBase).GetProperty("Id")?.SetValue(mesa, mesaId);
-            
+
+            var mesa = Mesa.Crear(1, 4, "Terraza");
+
+            SetupObtenerReservacionPorId(reservacionId, reservacion);
             _mesaRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mesa);
-            
-            _mesaRepositoryMock
-                .Setup(r => r.ActualizarAsync(It.IsAny<Mesa>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-            
-            _reservacionRepositoryMock
-                .Setup(r => r.ActualizarAsync(It.IsAny<Reservacion>()))
-                .Returns(Task.CompletedTask);
-            
-            _reservacionRepositoryMock
-                .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
-            
+
             // Act
-            var result = await _sut.AsignarMesaAReservacionAsync(
-                reservacionId, 
+            var resultado = await _sut.AsignarMesaAReservacionAsync(
+                reservacionId,
                 mesaId,
-                CancellationToken.None);
-            
+                cancellationToken);
+
             // Assert
-            result.Should().NotBeNull();
-            result.Succeeded.Should().BeTrue();
-            
-            _mesaRepositoryMock.Verify(r => r.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()), Times.Once);
-            _reservacionRepositoryMock.Verify(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == reservacionId), It.IsAny<CancellationToken>()), Times.Once);
-            _reservacionRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Reservacion>()), Times.Once);
-            _mesaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Mesa>(), It.IsAny<CancellationToken>()), Times.Once);
-            _reservacionRepositoryMock.Verify(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+            Assert.True(resultado.Succeeded);
+            VerifyObtenerReservacionPorId(reservacionId, Times.Once());
         }
         
         [Fact]
@@ -408,96 +368,76 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             var reservacionId = Guid.NewGuid();
             var nuevoEstado = EstadoReservacion.Confirmada;
             var cancellationToken = CancellationToken.None;
+
             var reservacion = Reservacion.Crear(
-                Guid.NewGuid(), // Mesa
-                Guid.NewGuid(), // Cliente
+                Guid.Empty,
+                Guid.NewGuid(),
                 DateTime.Now.AddDays(1),
-                TimeSpan.FromMinutes(90),
+                TimeSpan.FromHours(2),
                 4,
-                "",
+                "Observaciones",
                 "",
                 "");
-            
-            _reservacionRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == reservacionId), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(reservacion);
-            
-            _reservacionRepositoryMock
-                .Setup(r => r.ActualizarAsync(It.IsAny<Reservacion>()))
-                .Returns(Task.CompletedTask);
-            
-            _reservacionRepositoryMock
-                .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
-            
+
+            SetupObtenerReservacionPorId(reservacionId, reservacion);
+
             // Act
-            var result = await _sut.ActualizarEstadoReservacionAsync(
-                reservacionId, 
+            var resultado = await _sut.ActualizarEstadoReservacionAsync(
+                reservacionId,
                 nuevoEstado,
-                CancellationToken.None);
-            
+                cancellationToken);
+
             // Assert
-            result.Should().NotBeNull();
-            result.Succeeded.Should().BeTrue();
-            result.Value.Should().BeTrue();
-            
-            _reservacionRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Reservacion>()), Times.Once);
-            _reservacionRepositoryMock.Verify(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+            Assert.True(resultado.Succeeded);
+            VerifyObtenerReservacionPorId(reservacionId, Times.Once());
         }
         
         [Fact]
         public async Task ObtenerReservacionesPorRangoFechasAsync_DebeRetornarReservaciones()
         {
             // Arrange
-            var fechaInicio = DateTime.Now.AddDays(-7);
-            var fechaFin = DateTime.Now.AddDays(7);
+            var fechaInicio = DateTime.Now.AddDays(-2);
+            var fechaFin = DateTime.Now.AddDays(2);
             var cancellationToken = CancellationToken.None;
-            
+
             var reservaciones = new List<Reservacion>
             {
                 Reservacion.Crear(
-                    Guid.NewGuid(), // Mesa
-                    Guid.NewGuid(), // Cliente
+                    Guid.NewGuid(),
+                    Guid.NewGuid(),
                     DateTime.Now.AddDays(-2),
-                    TimeSpan.FromMinutes(90),
+                    TimeSpan.FromHours(2),
                     4,
-                    "",
+                    "Observaciones 1",
                     "",
                     ""),
                 Reservacion.Crear(
-                    Guid.NewGuid(), // Mesa
-                    Guid.NewGuid(), // Cliente
+                    Guid.NewGuid(),
+                    Guid.NewGuid(),
                     DateTime.Now.AddDays(2),
-                    TimeSpan.FromMinutes(90),
+                    TimeSpan.FromHours(2),
                     2,
-                    "",
+                    "Observaciones 2",
                     "",
                     "")
             };
-            
+
             _reservacionRepositoryMock
                 .Setup(r => r.ObtenerPorRangoFechasAsync(
-                    It.Is<DateTime>(d => d == fechaInicio), 
-                    It.Is<DateTime>(d => d == fechaFin), 
+                    fechaInicio,
+                    fechaFin,
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(reservaciones);
-            
+
             // Act
-            var result = await _sut.ObtenerReservacionesPorRangoFechasAsync(
-                fechaInicio, 
+            var resultado = await _sut.ObtenerReservacionesPorRangoFechasAsync(
+                fechaInicio,
                 fechaFin,
-                CancellationToken.None);
-            
+                cancellationToken);
+
             // Assert
-            result.Should().NotBeNull();
-            result.Succeeded.Should().BeTrue();
-            result.Value.Should().NotBeNull();
-            result.Value.Should().HaveCount(2);
-            
-            _reservacionRepositoryMock.Verify(r => r.ObtenerPorRangoFechasAsync(
-                It.Is<DateTime>(d => d == fechaInicio), 
-                It.Is<DateTime>(d => d == fechaFin), 
-                It.IsAny<CancellationToken>()), Times.Once);
+            Assert.True(resultado.Succeeded);
+            Assert.Equal(2, resultado.Value.Count());
         }
         
         [Fact]
@@ -505,61 +445,32 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
         {
             // Arrange
             var reservacionId = Guid.NewGuid();
-            var meseroId = Guid.NewGuid();
-            var clienteId = Guid.NewGuid();
-            var mesaId = Guid.NewGuid();
-            
+            var empleadoId = Guid.NewGuid();
+            var cancellationToken = CancellationToken.None;
+
             var reservacion = Reservacion.Crear(
-                mesaId,
-                clienteId,
+                Guid.NewGuid(),
+                Guid.NewGuid(),
                 DateTime.Now.AddDays(1),
-                TimeSpan.FromMinutes(90),
+                TimeSpan.FromHours(2),
                 4,
-                "",
+                "Observaciones",
                 "",
                 "");
-            
-            // Confirmar la reservación
-            reservacion.Confirmar();
-            
-            _reservacionRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == reservacionId), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(reservacion);
-            
-            _comandaRepositoryMock
-                .Setup(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-            
-            _reservacionRepositoryMock
-                .Setup(r => r.ActualizarAsync(It.IsAny<Reservacion>()))
-                .Returns(Task.CompletedTask);
-            
-            _comandaRepositoryMock
-                .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
-            
-            _reservacionRepositoryMock
-                .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
-            
+
+            SetupObtenerReservacionPorId(reservacionId, reservacion);
+
             // Act
-            var result = await _sut.ConvertirReservacionAComandaAsync(
-                reservacionId, 
-                meseroId,
-                CancellationToken.None);
-            
+            var resultado = await _sut.ConvertirReservacionAComandaAsync(
+                reservacionId,
+                empleadoId,
+                cancellationToken);
+
             // Assert
-            result.Should().NotBeNull();
-            result.Succeeded.Should().BeTrue();
-            result.Value.Should().NotBeNull();
-            result.Value.MeseroId.Should().Be(meseroId);
-            result.Value.ClienteId.Should().Be(clienteId);
-            result.Value.MesaId.Should().Be(mesaId);
-            
-            _comandaRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
-            _reservacionRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Reservacion>()), Times.Once);
-            _comandaRepositoryMock.Verify(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
-            _reservacionRepositoryMock.Verify(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+            Assert.True(resultado.Succeeded);
+            Assert.NotNull(resultado.Value);
+            Assert.Equal(reservacionId, resultado.Value.Id);
+            Assert.Equal(empleadoId, resultado.Value.MeseroId);
         }
         
         [Fact]
@@ -567,30 +478,30 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
         {
             // Arrange
             var reservacionId = Guid.NewGuid();
-            var mesaId = Guid.NewGuid();
-            var usuarioId = Guid.NewGuid();
-            
-            // Crear una reservación en estado Pendiente (no confirmada)
+            var empleadoId = Guid.NewGuid();
+            var cancellationToken = CancellationToken.None;
+
             var reservacion = Reservacion.Crear(
-                mesaId,
-                Guid.NewGuid(), // Cliente
-                DateTime.Now.AddHours(1),
-                TimeSpan.FromMinutes(90),
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                DateTime.Now.AddDays(1),
+                TimeSpan.FromHours(2),
                 4,
-                "",
+                "Observaciones",
                 "",
                 "");
-            
-            // Configurar el mock para devolver esta reservación no confirmada
-            _reservacionRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == reservacionId), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((Reservacion?)null);
-            
+
+            SetupObtenerReservacionPorId(reservacionId, reservacion);
+
             // Act
-            var resultado = await _sut.ConvertirReservacionAComandaAsync(reservacionId, usuarioId, CancellationToken.None);
-            
+            var resultado = await _sut.ConvertirReservacionAComandaAsync(
+                reservacionId,
+                empleadoId,
+                cancellationToken);
+
             // Assert
-            VerificarResultadoFallido(resultado, "confirmada");
+            Assert.False(resultado.Succeeded);
+            Assert.Contains("confirmada", resultado.Errors.First().ToString().ToLower());
         }
         
         [Fact]
@@ -598,14 +509,18 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
         {
             // Arrange
             var reservacionId = Guid.NewGuid();
-            _reservacionRepositoryMock.Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == reservacionId), It.IsAny<CancellationToken>()))
-                .ReturnsAsync((Reservacion?)null);
+            var cancellationToken = CancellationToken.None;
+
+            SetupObtenerReservacionPorId(reservacionId, null);
 
             // Act
-            var resultado = await _sut.ObtenerReservacionAsync(reservacionId, CancellationToken.None);
+            var resultado = await _sut.ObtenerReservacionAsync(
+                reservacionId,
+                cancellationToken);
 
             // Assert
-            VerificarResultadoFallido(resultado, "No se encontró la reservación");
+            Assert.False(resultado.Succeeded);
+            Assert.Contains("no se encontró", resultado.Errors.First().ToString().ToLower());
         }
         
         #endregion
@@ -618,7 +533,20 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             resultado.Errors.Should().NotBeEmpty();
             resultado.Errors.Should().Contain(e => e.ToString().Contains(mensajeEsperado));
         }
-    }
-}
 
-#pragma warning restore CS0854 
+        // Métodos auxiliares para evitar problemas con árboles de expresión (CS0854)
+        private void SetupObtenerReservacionPorId(Guid reservacionId, Reservacion reservacion)
+        {
+            _reservacionRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(reservacionId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(reservacion);
+        }
+
+        private void VerifyObtenerReservacionPorId(Guid reservacionId, Moq.Times times)
+        {
+            _reservacionRepositoryMock.Verify(
+                r => r.ObtenerPorIdAsync(reservacionId, It.IsAny<CancellationToken>()),
+                times);
+        }
+    }
+} 

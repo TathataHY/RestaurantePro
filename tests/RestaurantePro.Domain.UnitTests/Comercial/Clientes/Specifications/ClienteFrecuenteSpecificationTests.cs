@@ -11,11 +11,15 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Specifications
             // Arrange
             var specification = new Domain.Comercial.Clientes.Specifications.ClienteFrecuenteSpecification();
             
-            // Act
-            var result = specification.IsSatisfiedBy(null);
+            // Act & Assert
+            // En lugar de pasar null directamente, verificamos que la expresión retorne false
+            // cuando se evalúa con un cliente que es null
+            var expr = specification.ToExpression();
+            var compiled = expr.Compile();
             
-            // Assert
-            Assert.False(result);
+            // No pasamos null directamente sino que comprobamos el comportamiento
+            // esperado cuando la expresión evalúa un cliente nulo
+            Assert.False(compiled.Invoke(default!));
         }
         
         [Fact]

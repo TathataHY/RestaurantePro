@@ -83,8 +83,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
             
             // Luego usamos reflection para modificar el estado directamente
-            var fieldInfo = typeof(Comanda).GetProperty("Estado");
-            fieldInfo?.SetValue(comanda, EstadoComanda.Finalizada);
+            var propertyInfo = typeof(Comanda).GetProperty("Estado", BindingFlags.Public | BindingFlags.Instance);
+            propertyInfo?.SetValue(comanda, EstadoComanda.Finalizada);
 
             // Act & Assert
             Action action = () => comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
@@ -102,12 +102,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             var comanda = Comanda.Crear(meseroId, null, mesaId);
 
             // Cambiamos manualmente el estado para probar la transición
-            // (normalmente pasaría por todos los estados intermedios)
-            PropertyInfo propEstado = comanda.GetType().GetProperty("Estado", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-            if (propEstado != null)
-            {
-                propEstado.SetValue(comanda, EstadoComanda.Entregada);
-            }
+            var propEstado = typeof(Comanda).GetProperty("Estado", BindingFlags.Public | BindingFlags.Instance);
+            propEstado?.SetValue(comanda, EstadoComanda.Entregada);
 
             // Act & Assert
             Action action = () => comanda.ActualizarEstado(EstadoComanda.Finalizada);
@@ -160,7 +156,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             var comanda = Comanda.Crear(meseroId, null, mesaId);
             
             // Manipulamos directamente la propiedad para simular un estado inválido
-            typeof(Comanda).GetProperty("MesaId").SetValue(comanda, Guid.Empty);
+            var mesaIdProperty = typeof(Comanda).GetProperty("MesaId", BindingFlags.Public | BindingFlags.Instance);
+            mesaIdProperty?.SetValue(comanda, Guid.Empty);
             
             // Triggereamos ValidarInvariantes a través de algún método público
             Action action = () => comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
@@ -180,7 +177,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             
             // Crear una cadena de más de 500 caracteres
             var observacionesExcesivas = new string('X', 501);
-            typeof(Comanda).GetProperty("Observaciones").SetValue(comanda, observacionesExcesivas);
+            var observacionesProperty = typeof(Comanda).GetProperty("Observaciones", BindingFlags.Public | BindingFlags.Instance);
+            observacionesProperty?.SetValue(comanda, observacionesExcesivas);
             
             // Triggereamos ValidarInvariantes a través de algún método público
             Action action = () => comanda.AgregarProducto(Guid.NewGuid(), 1, 100m);
@@ -210,8 +208,10 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             var fechaCreacion = DateTime.Now;
             var fechaActualizacionInvalida = fechaCreacion.AddDays(-1); // Fecha anterior
             
-            typeof(Comanda).GetProperty("FechaCreacion").SetValue(comanda, fechaCreacion);
-            typeof(Comanda).GetProperty("FechaActualizacion").SetValue(comanda, fechaActualizacionInvalida);
+            var fechaCreacionProperty = typeof(Comanda).GetProperty("FechaCreacion", BindingFlags.Public | BindingFlags.Instance);
+            var fechaActualizacionProperty = typeof(Comanda).GetProperty("FechaActualizacion", BindingFlags.Public | BindingFlags.Instance);
+            fechaCreacionProperty?.SetValue(comanda, fechaCreacion);
+            fechaActualizacionProperty?.SetValue(comanda, fechaActualizacionInvalida);
             
             // Act & Assert - Llamamos directamente a ValidarInvariantes
             Action action = () => validarInvariantes.Invoke(comanda, null);
@@ -331,11 +331,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             
             // Modificamos directamente el estado para evitar validaciones normales
             // Esto solo es para probar la invariante de que una comanda lista debe tener productos
-            PropertyInfo propEstado = comanda.GetType().GetProperty("Estado");
-            if (propEstado != null)
-            {
-                propEstado.SetValue(comanda, EstadoComanda.Lista);
-            }
+            var propEstado = typeof(Comanda).GetProperty("Estado", BindingFlags.Public | BindingFlags.Instance);
+            propEstado?.SetValue(comanda, EstadoComanda.Lista);
             
             // Forzar la invocación de ValidarInvariantes
             // Usando el método ActualizarEstado con el mismo estado para disparar la validación
@@ -394,7 +391,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             var comanda = Comanda.Crear(meseroId, null, mesaId);
             
             // Modificamos directamente la fecha de creación para que sea en el futuro
-            PropertyInfo propFechaCreacion = comanda.GetType().GetProperty("FechaCreacion");
+            var propFechaCreacion = typeof(Comanda).GetProperty("FechaCreacion", BindingFlags.Public | BindingFlags.Instance);
             if (propFechaCreacion != null)
             {
                 propFechaCreacion.SetValue(comanda, DateTime.Now.AddDays(1));

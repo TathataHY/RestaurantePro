@@ -17,7 +17,6 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             var pais = "México";
             var informacionBancaria = "Cuenta 12345-67890";
             var diasCredito = 30;
-            var observaciones = "Proveedor principal de lácteos";
             var expectedEmail = Email.Create(email);
             var expectedTelefono = PhoneNumber.Create(telefono);
 
@@ -188,9 +187,6 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             var nuevoRfc = "ABC987654XYZ";
             var nuevaInformacionBancaria = "Nueva Cuenta";
             var nuevosDiasCredito = 45;
-            var nuevasObservaciones = "Observaciones actualizadas";
-            var expectedEmail = Email.Create(nuevoEmail);
-            var expectedTelefono = PhoneNumber.Create(nuevoTelefono);
             
             // Act
             proveedor.ActualizarInformacion(
@@ -209,8 +205,8 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             // Assert
             proveedor.Nombre.Should().Be(nuevoNombre);
             proveedor.NombreContacto.Should().Be(nuevoNombreContacto);
-            proveedor.Telefono.Value.Should().Be(expectedTelefono.Value);
-            proveedor.Email.Value.Should().Be(expectedEmail.Value);
+            proveedor.Telefono.Value.Should().Be(PhoneNumber.Create(nuevoTelefono).Value);
+            proveedor.Email.Value.Should().Be(Email.Create(nuevoEmail).Value);
             proveedor.Direccion.Should().Be(nuevaDireccion);
             proveedor.Ciudad.Should().Be(nuevaCiudad);
             proveedor.CodigoPostal.Should().Be(nuevoCodigoPostal);

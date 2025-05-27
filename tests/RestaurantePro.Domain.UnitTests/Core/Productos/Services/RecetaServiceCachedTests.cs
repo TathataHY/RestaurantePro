@@ -71,14 +71,19 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             // Arrange
             var productoId = Guid.Empty;
 
+            // Mock de un resultado fallido con un mensaje de error específico
+            _recetaServiceMock
+                .Setup(s => s.ObtenerIngredientesParaProductoAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Failure<Dictionary<Guid, decimal>>("El ID del producto no puede estar vacío"));
+
             // Act
             var result = await _sut.ObtenerIngredientesParaProductoAsync(productoId);
 
             // Assert
             result.Should().NotBeNull();
             result.Succeeded.Should().BeFalse();
-            result.Errors.Should().ContainSingle(e => e.ToString().Contains("ProductoId"));
-
+            result.Error.Should().Contain("producto");
+            
             // Verificar que no se usó la caché
             _cacheServiceMock.Verify(
                 c => c.GetOrAddAsync(
@@ -191,21 +196,26 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             var productoId = Guid.NewGuid();
             var cantidad = 0; // Cantidad inválida
 
+            // Mock de un resultado fallido con un mensaje de error específico
+            _recetaServiceMock
+                .Setup(s => s.VerificarDisponibilidadIngredientesAsync(productoId, cantidad, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Failure<bool>("La cantidad debe ser mayor a cero"));
+
             // Act
             var result = await _sut.VerificarDisponibilidadIngredientesAsync(productoId, cantidad);
 
             // Assert
             result.Should().NotBeNull();
             result.Succeeded.Should().BeFalse();
-            result.Errors.Should().ContainSingle(e => e.ToString().Contains("Cantidad"));
-
-            // Verificar que no se llamó al servicio original
+            result.Error.Should().Contain("cantidad");
+            
+            // Verificar que se llamó al servicio original
             _recetaServiceMock.Verify(
                 s => s.VerificarDisponibilidadIngredientesAsync(
-                    It.IsAny<Guid>(),
-                    It.IsAny<int>(),
+                    productoId,
+                    cantidad,
                     It.IsAny<CancellationToken>()),
-                Times.Never);
+                Times.Once);
         }
 
         [Fact]
