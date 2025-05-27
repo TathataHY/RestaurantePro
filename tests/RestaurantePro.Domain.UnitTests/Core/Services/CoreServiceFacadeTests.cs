@@ -125,7 +125,8 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             var resultado = await _sut.VerificarDisponibilidadProductoAsync(productoId, cantidad);
             
             // Assert
-            Assert.True(resultado);
+            Assert.True(resultado.Succeeded);
+            Assert.True(resultado.Value);
             _recetaServiceMock.Verify(s => s.VerificarDisponibilidadIngredientesAsync(productoId, cantidad, It.IsAny<CancellationToken>()), Times.Once);
         }
         

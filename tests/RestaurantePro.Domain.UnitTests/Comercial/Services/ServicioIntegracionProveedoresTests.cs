@@ -129,7 +129,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Assert
             result.Should().NotBeNull();
             result.Succeeded.Should().BeFalse();
-            result.Value.Should().BeFalse();
+            result.Error.Should().NotBeNull();
             result.Errors.Should().NotBeEmpty();
         }
         
@@ -152,7 +152,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Assert
             result.Should().NotBeNull();
             result.Succeeded.Should().BeFalse();
-            result.Value.Should().BeFalse();
+            result.Error.Should().NotBeNull();
             result.Errors.Should().ContainSingle().Which.Should().Contain("No se encontró la orden");
         }
         
@@ -194,7 +194,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Assert
             result.Should().NotBeNull();
             result.Succeeded.Should().BeFalse();
-            result.Value.Should().BeFalse();
+            result.Error.Should().NotBeNull();
             result.Errors.Should().ContainSingle().Which.Should().Contain("No se encontró el proveedor");
         }
         
@@ -261,7 +261,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Assert
             result.Should().NotBeNull();
             result.Succeeded.Should().BeFalse();
-            result.Value.Should().BeFalse();
+            result.Error.Should().NotBeNull();
             
             _proveedorRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Proveedor>(), It.IsAny<CancellationToken>()), Times.Never);
         }
