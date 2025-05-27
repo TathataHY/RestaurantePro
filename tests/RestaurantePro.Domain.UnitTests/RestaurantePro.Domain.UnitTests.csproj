@@ -8,6 +8,7 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>CS0854</WarningsNotAsErrors>
   </PropertyGroup>
 
   <!-- No necesitamos incluir explícitamente estos archivos,       ya que el SDK de .NET incluye "Compile" elementos por defecto -->

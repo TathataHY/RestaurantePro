@@ -71,15 +71,18 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
                 RotacionIngrediente.Alta, 
                 TemporadaIngrediente.Verano);
                 
-            // Establecer ID usando reflection
-            typeof(EntityBase).GetProperty("Id")?.SetValue(ingrediente, ingredienteId);
+            // Corregir línea 70 - Inicialización de ID para ingrediente
+            var idProperty = typeof(EntityBase).GetProperty("Id");
+            if (idProperty != null)
+            {
+                idProperty.SetValue(ingrediente, ingredienteId);
+            }
             
             var proveedorId = Guid.NewGuid();
             ingrediente.AsociarProveedorPrincipal(proveedorId);
 
             _ingredienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == ingredienteId), It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(ingrediente);
 
             var notificacionId = Guid.NewGuid();
@@ -107,15 +110,17 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
                 
             var ordenCompra = ordenCompraResult.Value;
             
-            // Establecer ID usando reflection
-            typeof(EntityBase).GetProperty("Id")?.SetValue(ordenCompra, ordenCompraId);
+            // Corregir línea 96 - Inicialización de ID para ordenCompra
+            if (idProperty != null)
+            {
+                idProperty.SetValue(ordenCompra, ordenCompraId);
+            }
 
             var resultadoVerificacion = new ResultadoVerificacionStock();
             resultadoVerificacion.OrdenesGeneradas.Add(ordenCompra);
 
             _verificadorStockMock
                 .Setup(v => v.VerificarYGenerarOrdenesCompraAsync(It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(Result.Success(resultadoVerificacion));
 
             // Act
@@ -140,7 +145,6 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Policies
 
             _ingredienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == ingredienteId), It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync((Ingrediente)null);
 
             // Act

@@ -5,8 +5,6 @@ using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 
 namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 {
-#pragma warning disable CS0854 // Un árbol de expresión no puede contener una llamada o invocación que use argumentos opcionales
-
     /// <summary>
     /// Clases de datos necesarias para las pruebas
     /// </summary>
@@ -64,8 +62,11 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _clienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == clienteId), It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(cliente);
+            
+            _clienteRepositoryMock
+                .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
             
             // Act
             var result = await _sut.ObtenerClientePorIdAsync(clienteId);
@@ -85,8 +86,11 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _clienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == clienteId), It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync((Cliente)null);
+            
+            _clienteRepositoryMock
+                .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
             
             // Act
             var result = await _sut.ObtenerClientePorIdAsync(clienteId);
@@ -102,6 +106,14 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
         {
             // Arrange
             var clienteId = Guid.Empty;
+            
+            _clienteRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == clienteId), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Cliente)null);
+            
+            _clienteRepositoryMock
+                .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
             
             // Act
             var result = await _sut.ObtenerClientePorIdAsync(clienteId);
@@ -154,6 +166,14 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var apellidos = "Pérez";
             var email = "juan.perez@example.com";
             
+            _clienteRepositoryMock
+                .Setup(r => r.AgregarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+            
+            _clienteRepositoryMock
+                .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
+            
             // Act
             var result = await _sut.RegistrarNuevoClienteConTarjetaAsync(nombre, apellidos, email);
             
@@ -183,7 +203,6 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _clienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == clienteId), It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(cliente);
             
             _clienteRepositoryMock
@@ -192,7 +211,6 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _clienteRepositoryMock
                 .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(1);
             
             // Act
@@ -222,8 +240,11 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _clienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == clienteId), It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync((Cliente)null);
+            
+            _clienteRepositoryMock
+                .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
             
             // Act
             var result = await _sut.ActualizarDatosClienteAsync(
@@ -256,7 +277,6 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _clienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == clienteId), It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(cliente);
             
             _clienteRepositoryMock
@@ -265,7 +285,6 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _clienteRepositoryMock
                 .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(1);
             
             // Act
@@ -294,8 +313,11 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _clienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == clienteId), It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(cliente);
+            
+            _clienteRepositoryMock
+                .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
             
             // Act
             var result = await _sut.AsignarPuntosClienteAsync(clienteId, puntos, comandaId);
@@ -327,12 +349,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _clienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == clienteId), It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(cliente);
             
             _servicioFidelizacionMock
                 .Setup(s => s.CalcularDescuentoPorPuntos(It.Is<int>(p => p == puntosAUtilizar), It.IsAny<decimal>()))
-                .Callback(() => { /* No hacer nada */ })
                 .Returns(descuentoEsperado);
             
             _clienteRepositoryMock
@@ -341,7 +361,6 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _clienteRepositoryMock
                 .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(1);
             
             // Act
@@ -372,8 +391,11 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             _clienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == clienteId), It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(cliente);
+            
+            _clienteRepositoryMock
+                .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
             
             // Act
             var result = await _sut.CanjearPuntosPorDescuentoAsync(clienteId, puntosAUtilizar, comandaId);
@@ -409,10 +431,13 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             var resultado = new ResultadoClientesFrecuentesPolicy();
             
-            // Establecer las propiedades correctas del cliente para agregarlos
             // Asegurarnos de que Id esté asignado
-            typeof(EntityBase).GetProperty("Id").SetValue(cliente1, cliente1Id);
-            typeof(EntityBase).GetProperty("Id").SetValue(cliente2, cliente2Id);
+            var idProperty = typeof(EntityBase).GetProperty("Id");
+            if (idProperty != null)
+            {
+                idProperty.SetValue(cliente1, cliente1Id);
+                idProperty.SetValue(cliente2, cliente2Id);
+            }
             
             // Agregar los clientes a la colección
             resultado.ClientesActualizados.Add(cliente1Id);
@@ -433,6 +458,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             _clienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(cliente2Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(cliente2);
+            
+            _clienteRepositoryMock
+                .Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+                .ReturnsAsync(1);
             
             // Act
             var result = await _sut.EjecutarPoliticaClientesFrecuentesAsync();

@@ -1,4 +1,8 @@
 #nullable enable
+
+// Deshabilitamos permanentemente CS0854 para todo el proyecto
+#pragma warning disable CS0854
+
 // Test Frameworks and tools
 global using Xunit;
 global using FluentAssertions;
@@ -184,3 +188,6 @@ global using RestaurantePro.Domain.Operaciones.EventHandlers;
 global using RestaurantePro.Domain.Operaciones.Services;
 
 // Eliminando importaciones duplicadas de Productos y Recetas que generan advertencias
+
+// Suprimimos advertencias de argumentos opcionales en árboles de expresión
+#pragma warning disable CS0854 // Un árbol de expresión no puede contener una llamada o invocación que use argumentos opcionales

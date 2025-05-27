@@ -1,7 +1,7 @@
-namespace RestaurantePro.Domain.UnitTests.Inventario.Services
-{
 #pragma warning disable CS0854 // Un árbol de expresión no puede contener una llamada o invocación que use argumentos opcionales
 
+namespace RestaurantePro.Domain.UnitTests.Inventario.Services
+{
     public class VerificadorStockTests
     {
         private readonly Mock<IIngredienteRepository> _ingredienteRepositoryMock;
@@ -189,11 +189,13 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             _notificationManagerMock.Setup(m => m.HasErrors)
                 .Returns(false);
                 
-            // Configurar RequireNotNull para evitar argumentos opcionales
+            // Evitar sobrecargas con argumentos opcionales
+            // Utilizar sobrecarga completa en lugar de la versión con argumento opcional
             _notificationManagerMock
                 .Setup(m => m.RequireNotNull(It.IsAny<object>(), It.IsAny<string>()))
                 .Returns(_notificationManagerMock.Object);
                 
+            // Configurar sobrecarga específica en lugar de usar argumento opcional
             _notificationManagerMock
                 .Setup(m => m.RequireNotNull(It.IsAny<object>(), It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(_notificationManagerMock.Object);
@@ -201,39 +203,37 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             // Configurar ToResult para diferentes tipos
             _notificationManagerMock
                 .Setup(m => m.ToResult(It.IsAny<ResultadoVerificacionStock>()))
-                .Returns<ResultadoVerificacionStock>(r => Result.Success(r));
+                .Returns((ResultadoVerificacionStock r) => Result.Success(r));
                 
             _notificationManagerMock
                 .Setup(m => m.ToResult(It.IsAny<bool>()))
-                .Returns<bool>(b => Result.Success(b));
+                .Returns((bool b) => Result.Success(b));
         }
         
         private void VerificarNoHayErrores()
         {
             _notificationManagerMock.Verify(m => m.HasErrors, Times.AtLeastOnce);
-            _notificationManagerMock.Verify(m => m.AddError(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            _notificationManagerMock.Verify(m => m.AddError(It.Is<string>(s => true), It.Is<string>(s => true)), Times.Never);
         }
         
         private void VerificarHayErrores()
         {
-            _notificationManagerMock.Verify(m => m.AddError(It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce);
+            _notificationManagerMock.Verify(m => m.AddError(It.Is<string>(s => true), It.Is<string>(s => true)), Times.AtLeastOnce);
         }
 
         private void SetupProveedorPorId(Proveedor proveedor)
         {
-            // Usar Callback en lugar de usar directamente It.IsAny para el token de cancelación
+            // Evitar argumentos opcionales usando una expresión lambda completa
             _proveedorRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(proveedor);
         }
 
         private void SetupProveedorPorIdEspecifico(Guid proveedorId, Proveedor proveedor)
         {
-            // Usar Callback en lugar de usar directamente It.IsAny para el token de cancelación
+            // Evitar argumentos opcionales usando una expresión lambda completa
             _proveedorRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(g => g == proveedorId), It.IsAny<CancellationToken>()))
-                .Callback(() => { /* No hacer nada */ })
                 .ReturnsAsync(proveedor);
         }
 
@@ -308,8 +308,6 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             return ingrediente;
         }
     }
-
-#pragma warning restore CS0854
 }
 
 
