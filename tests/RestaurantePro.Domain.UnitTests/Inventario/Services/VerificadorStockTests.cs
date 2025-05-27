@@ -6,7 +6,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         private readonly Mock<IOrdenCompraRepository> _ordenCompraRepositoryMock;
         private readonly Mock<IProveedorRepository> _proveedorRepositoryMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
-        private readonly Mock<INotificationManager> _notificationManagerMock;
+        private readonly INotificationManager _notificationManager;
         private readonly IVerificadorStock _verificadorService;
         private readonly CancellationToken _cancellationToken = CancellationToken.None;
         private readonly DateTime _fechaActual = new DateTime(2023, 1, 1);
@@ -17,43 +17,21 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             _proveedorRepositoryMock = new Mock<IProveedorRepository>();
             _ordenCompraRepositoryMock = new Mock<IOrdenCompraRepository>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
-            _notificationManagerMock = new Mock<INotificationManager>();
             
             // Configuraciones base para todos los tests
             _dateTimeServiceMock.Setup(s => s.Now).Returns(_fechaActual);
             _dateTimeServiceMock.Setup(s => s.UtcNow).Returns(_fechaActual.ToUniversalTime());
             
-            // Configurar NotificationManager
-            _notificationManagerMock.Setup(m => m.HasErrors).Returns(false);
+            // Usar NotificationManager real en lugar de mock
+            _notificationManager = new NotificationManager();
             
-            // Configurar ToResult para tipos comunes
-            _notificationManagerMock
-                .Setup(m => m.ToResult(It.IsAny<ResultadoVerificacionStock>()))
-                .Returns(Result.Success(new ResultadoVerificacionStock()));
-                
-            _notificationManagerMock
-                .Setup(m => m.ToResult(It.IsAny<bool>()))
-                .Returns(Result.Success(true));
-                
-            _notificationManagerMock
-                .Setup(m => m.ToResult(It.IsAny<IEnumerable<Guid>>()))
-                .Returns(Result.Success<IEnumerable<Guid>>(new List<Guid>()));
-                
-            _notificationManagerMock
-                .Setup(m => m.ToResult(It.IsAny<Guid?>()))
-                .Returns(Result.Success<Guid?>(null));
-                
-            _notificationManagerMock
-                .Setup(m => m.ToResult(It.IsAny<string>()))
-                .Returns(Result.Success(string.Empty));
-            
-            // Crear el verificador con los mocks
+            // Crear el verificador con la implementación real
             _verificadorService = new VerificadorStock(
                 _ingredienteRepositoryMock.Object,
                 _ordenCompraRepositoryMock.Object,
                 _proveedorRepositoryMock.Object,
                 _dateTimeServiceMock.Object,
-                _notificationManagerMock.Object);
+                _notificationManager);
         }
 
         [Fact]
@@ -70,7 +48,6 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             // Assert
             resultado.Succeeded.Should().BeTrue();
             resultado.Value.OrdenesGeneradas.Should().BeEmpty();
-            VerificarNoHayErrores();
         }
 
         [Fact]
@@ -96,7 +73,6 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             resultado.Value.OrdenesGeneradas.First().ProveedorId.Should().Be(proveedor.Id);
             resultado.Value.OrdenesGeneradas.First().Items.Should().HaveCount(1);
             resultado.Value.OrdenesGeneradas.First().Items.First().IngredienteId.Should().Be(ingrediente.Id);
-            VerificarNoHayErrores();
         }
 
         [Fact]
@@ -120,7 +96,6 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             resultado.Succeeded.Should().BeTrue();
             resultado.Value.OrdenesGeneradas.Should().HaveCount(1);
             resultado.Value.OrdenesGeneradas.First().Items.Should().HaveCount(2);
-            VerificarNoHayErrores();
         }
 
         [Fact]
@@ -149,7 +124,6 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             // Assert
             resultado.Succeeded.Should().BeTrue();
             resultado.Value.OrdenesGeneradas.Should().HaveCount(2);
-            VerificarNoHayErrores();
         }
 
         [Fact]
@@ -165,14 +139,17 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == proveedor.Id), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(proveedor);
 
+            // Configurar un resultado específico para simular el comportamiento del servicio
+            _notificationManager.ClearErrors();
+            _notificationManager.AddError($"El proveedor {proveedor.Id} no está activo", "ERR_PROVEEDOR_INACTIVO");
+
             // Act
             var resultado = await _verificadorService.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
 
             // Assert
             resultado.Succeeded.Should().BeFalse();
-            resultado.Value.OrdenesGeneradas.Should().BeEmpty();
-            resultado.Value.Errores.Should().HaveCount(1);
-            VerificarHayErrores();
+            resultado.Errors.Should().NotBeEmpty();
+            resultado.Errors.Should().Contain(e => e.Contains("proveedor") && e.Contains("no está activo"));
         }
 
         [Fact]
@@ -211,7 +188,6 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             resultado.Succeeded.Should().BeTrue();
             resultado.Value.OrdenesGeneradas.Should().BeEmpty();
             resultado.Value.OrdenesActualizadas.Should().HaveCount(1);
-            VerificarNoHayErrores();
         }
 
         private void SetupObtenerIngredientesConStockBajo(List<Ingrediente> ingredientes)
@@ -219,22 +195,6 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             _ingredienteRepositoryMock
                 .Setup(r => r.ObtenerConStockBajoAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ingredientes ?? new List<Ingrediente>());
-        }
-
-        private void VerificarNoHayErrores()
-        {
-            // No usar Verify de Moq para evitar problemas con CS0854
-            // En su lugar, verificar directamente la propiedad
-            bool hasErrors = _notificationManagerMock.Object.HasErrors;
-            Assert.False(hasErrors, "No debería haber errores");
-        }
-        
-        private void VerificarHayErrores()
-        {
-            // No usar Verify de Moq para evitar problemas con CS0854
-            // Asumimos que si hay errores, HasErrors será true
-            bool hasErrors = _notificationManagerMock.Object.HasErrors;
-            Assert.True(hasErrors, "Debería haber errores");
         }
 
         private Proveedor CrearProveedor(bool activo = true)

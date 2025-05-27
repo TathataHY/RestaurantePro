@@ -14,6 +14,9 @@ global using System.Text.RegularExpressions;
 global using System.Threading;
 global using System.Threading.Tasks;
 
+// Alias para Error
+global using e = RestaurantePro.Domain.Core.SharedKernel.Validation.Error;
+
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
 

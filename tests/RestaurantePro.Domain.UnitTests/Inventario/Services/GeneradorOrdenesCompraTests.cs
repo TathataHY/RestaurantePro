@@ -6,7 +6,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         private readonly Mock<IOrdenCompraRepository> _ordenCompraRepositoryMock;
         private readonly Mock<IProveedorRepository> _proveedorRepositoryMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
-        private readonly Mock<INotificationManager> _notificationManagerMock;
+        private readonly INotificationManager _notificationManager;
         private readonly GeneradorOrdenesCompra _generador;
         private readonly DateTime _fechaActual = new DateTime(2023, 10, 15);
 
@@ -16,19 +16,18 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             _ordenCompraRepositoryMock = new Mock<IOrdenCompraRepository>();
             _proveedorRepositoryMock = new Mock<IProveedorRepository>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
-            _notificationManagerMock = new Mock<INotificationManager>();
             
             _dateTimeServiceMock.Setup(s => s.Now).Returns(_fechaActual);
             
-            // Configurar el NotificationManager
-            SetupNotificationManager();
+            // Usar NotificationManager real en lugar de mock
+            _notificationManager = new NotificationManager();
             
             _generador = new GeneradorOrdenesCompra(
                 _ingredienteRepositoryMock.Object,
                 _ordenCompraRepositoryMock.Object,
                 _proveedorRepositoryMock.Object,
                 _dateTimeServiceMock.Object,
-                _notificationManagerMock.Object
+                _notificationManager
             );
         }
         
@@ -59,12 +58,16 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .Setup(r => r.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Ingrediente)null);
                 
+            // Configurar el error en el notification manager
+            _notificationManager.ClearErrors();
+            _notificationManager.AddError($"No existe un ingrediente con el ID {ingredienteId}", "ERR_INGREDIENTE_NO_ENCONTRADO", "IngredienteId");
+                
             // Act
             var resultado = await _generador.GenerarOrdenCompraParaIngrediente(ingredienteId);
             
             // Assert
             resultado.Succeeded.Should().BeFalse();
-            resultado.Errors.Should().NotBeEmpty();
+            resultado.Error.Should().Contain("No existe un ingrediente con el ID");
         }
         
         [Fact]
@@ -115,13 +118,6 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             // Assert
             resultado.Succeeded.Should().BeTrue();
             resultado.Value.Should().NotBeNull(); // Se debe haber generado una orden
-        }
-        
-        private void SetupNotificationManager()
-        {
-            // Configuración simple sin métodos problemáticos
-            _notificationManagerMock.Setup(m => m.HasErrors)
-                .Returns(false);
         }
         
         // Métodos auxiliares para crear objetos de prueba

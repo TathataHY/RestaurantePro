@@ -86,6 +86,11 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var montoTotal = 100m;
             var clienteCachePattern = $"ServicioFidelizacion_CalcularDescuento_{_clienteId}_";
             
+            // Configurar el mock para que devuelva un resultado exitoso
+            _servicioFidelizacionMock
+                .Setup(s => s.AcumularPuntosAsync(_clienteId, comandaId, montoTotal))
+                .ReturnsAsync(Result.Success(100)); // Devuelve 100 puntos como resultado exitoso
+            
             // Act
             await _servicioFidelizacionCached.AcumularPuntosAsync(_clienteId, comandaId, montoTotal);
             
@@ -106,6 +111,11 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             int puntos = 50;
             string concepto = "Test";
             var clienteCachePattern = $"ServicioFidelizacion_CalcularDescuento_{_clienteId}_";
+            
+            // Configurar el mock para que devuelva un resultado exitoso
+            _servicioFidelizacionMock
+                .Setup(s => s.CanjearPuntosAsync(_clienteId, puntos, concepto))
+                .ReturnsAsync(Result.Success(50)); // Devuelve 50 puntos restantes como resultado exitoso
             
             // Act
             await _servicioFidelizacionCached.CanjearPuntosAsync(_clienteId, puntos, concepto);

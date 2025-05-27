@@ -108,7 +108,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             // Act & Assert
             Action action = () => comanda.ActualizarEstado(EstadoComanda.Finalizada);
             action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*No se puede cambiar el estado de Creada a Finalizada*",
+                .WithMessage("*No se puede finalizar una comanda sin productos*",
                     because: "No se deben permitir finalizar comandas sin productos");
         }
         

@@ -105,16 +105,26 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
                 .Setup(r => r.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Comanda)null);
                 
+            // Configurar el servicio para devolver un error cuando no se encuentra la comanda
+            var servicioFacturacion = new ServicioFacturacion(
+                _facturaRepositoryMock.Object,
+                _comandaRepositoryMock.Object,
+                _dateTimeServiceMock.Object,
+                _notificationManager);
+                
+            // Asegurarse de que el notification manager está limpio
+            _notificationManager.ClearErrors();
+                
             // Act
-            var resultado = await _servicioFacturacion.GenerarFacturaParaComandaAsync(
+            var resultado = await servicioFacturacion.GenerarFacturaParaComandaAsync(
                 comandaId,
                 TipoFactura.Normal,
                 "Cliente de Prueba");
                 
             // Assert
             resultado.Succeeded.Should().BeFalse();
-            resultado.Error.Should().NotBeNull();
-            // No verificamos el mensaje exacto para evitar problemas con los argumentos opcionales
+            // Comprobamos que al menos hay un error (no es importante el mensaje exacto)
+            resultado.Errors.Should().NotBeEmpty();
         }
         
         [Fact]
@@ -136,16 +146,26 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
                 .Setup(r => r.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(comanda);
                 
+            // Configurar el servicio para devolver un error cuando la comanda está anulada
+            var servicioFacturacion = new ServicioFacturacion(
+                _facturaRepositoryMock.Object,
+                _comandaRepositoryMock.Object,
+                _dateTimeServiceMock.Object,
+                _notificationManager);
+                
+            // Asegurarse de que el notification manager está limpio
+            _notificationManager.ClearErrors();
+                
             // Act
-            var resultado = await _servicioFacturacion.GenerarFacturaParaComandaAsync(
+            var resultado = await servicioFacturacion.GenerarFacturaParaComandaAsync(
                 comandaId,
                 TipoFactura.Normal,
                 "Cliente de Prueba");
                 
             // Assert
             resultado.Succeeded.Should().BeFalse();
-            resultado.Error.Should().NotBeNull();
-            // No verificamos el mensaje exacto para evitar problemas con los argumentos opcionales
+            // Comprobamos que al menos hay un error (no es importante el mensaje exacto)
+            resultado.Errors.Should().NotBeEmpty();
         }
         
         [Fact]
