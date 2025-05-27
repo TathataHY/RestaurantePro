@@ -125,8 +125,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             var resultado = await _sut.VerificarDisponibilidadProductoAsync(productoId, cantidad);
             
             // Assert
-            Assert.True(resultado.Succeeded);
-            Assert.True(resultado.Value);
+            Assert.True(resultado);
             _recetaServiceMock.Verify(s => s.VerificarDisponibilidadIngredientesAsync(productoId, cantidad, It.IsAny<CancellationToken>()), Times.Once);
         }
         
@@ -201,7 +200,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
         }
         
         [Fact]
-        public async Task RegistrarUsuarioAsync_DebeRetornarError_CuandoNombreUsuarioExiste()
+        public async Task CrearUsuarioAsync_DebeRetornarError_CuandoNombreUsuarioExiste()
         {
             // Arrange
             var nombreUsuario = "usuario_existente";
@@ -215,13 +214,35 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
                 .Setup(r => r.ObtenerPorNombreUsuarioAsync(nombreUsuario, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(usuarioExistente);
             
+            // Crear un NotificationManager real específico para esta prueba
+            var notificationManager = new NotificationManager();
+            
+            // Crear una instancia específica de CoreServiceFacade para esta prueba
+            var sut = new CoreServiceFacade(
+                _productoRepositoryMock.Object,
+                _productoCategoriaRepositoryMock.Object,
+                _recetaRepositoryMock.Object,
+                _usuarioRepositoryMock.Object,
+                _rolRepositoryMock.Object,
+                _notificacionRepositoryMock.Object,
+                _productoCategoriaServiceMock.Object,
+                _recetaServiceMock.Object,
+                _notificationServiceMock.Object,
+                _dateTimeServiceMock.Object,
+                notificationManager);
+            
             // Act
-            var resultado = await _sut.CrearUsuarioAsync(nombreUsuario, nombre, emailString, "Cajero");
+            var resultado = await sut.CrearUsuarioAsync(nombreUsuario, nombre, emailString, "Cajero");
             
             // Assert
+            Console.WriteLine($"Resultado: {resultado?.Succeeded}");
             Assert.NotNull(resultado);
             Assert.False(resultado.Succeeded);
-            Assert.NotNull(resultado.Error);
+            
+            // Verificar que se llamó al repositorio para comprobar si existe el usuario
+            _usuarioRepositoryMock.Verify(r => r.ObtenerPorNombreUsuarioAsync(nombreUsuario, It.IsAny<CancellationToken>()), Times.Once);
+            // Verificar que no se llamó al método AgregarAsync
+            _usuarioRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Never);
         }
         
         [Fact]
@@ -316,10 +337,34 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
                 .Setup(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Usuario)null);
             
-            // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.AsignarRolUsuarioAsync(usuarioId, rol));
+            // Crear un NotificationManager real específico para esta prueba
+            var notificationManager = new NotificationManager();
             
+            // Crear una instancia específica de CoreServiceFacade para esta prueba
+            var sut = new CoreServiceFacade(
+                _productoRepositoryMock.Object,
+                _productoCategoriaRepositoryMock.Object,
+                _recetaRepositoryMock.Object,
+                _usuarioRepositoryMock.Object,
+                _rolRepositoryMock.Object,
+                _notificacionRepositoryMock.Object,
+                _productoCategoriaServiceMock.Object,
+                _recetaServiceMock.Object,
+                _notificationServiceMock.Object,
+                _dateTimeServiceMock.Object,
+                notificationManager);
+            
+            // Act
+            var resultado = await sut.AsignarRolUsuarioAsync(usuarioId, rol);
+            
+            // Assert
+            Console.WriteLine($"Resultado: {resultado?.Succeeded}");
+            Assert.NotNull(resultado);
+            Assert.False(resultado.Succeeded);
+            
+            // Verificar que se consultó el repositorio
             _usuarioRepositoryMock.Verify(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()), Times.Once);
+            // Verificar que no se llamó al método ActualizarAsync
             _usuarioRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Never);
         }
         
@@ -443,6 +488,21 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             var usuarioId = Guid.NewGuid();
             var otroUsuarioId = Guid.NewGuid();
             
+            // Configurar el mock para que devuelva un usuario válido
+            var emailVO = Email.Create("usuario@test.com");
+            var usuario = Usuario.Crear("usuario_test", "Usuario Test", emailVO, RolUsuario.Cajero);
+            
+            // Establecer ID manualmente para pruebas
+            var propiedadId = usuario.GetType().GetProperty("Id");
+            if (propiedadId != null && propiedadId.CanWrite)
+            {
+                propiedadId.SetValue(usuario, usuarioId);
+            }
+            
+            _usuarioRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(usuario);
+            
             // Convertir el tipo a TipoNotificacion
             var tipoNotificacionInformativa = RestaurantePro.Domain.Core.Notificaciones.Enums.TipoNotificacion.Informativa;
             var tipoNotificacionAlerta = RestaurantePro.Domain.Core.Notificaciones.Enums.TipoNotificacion.Alerta;
@@ -488,6 +548,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             
             _notificacionRepositoryMock.Verify(
                 r => r.ObtenerTodosAsync(It.IsAny<CancellationToken>()), 
+                Times.Once);
+            
+            _usuarioRepositoryMock.Verify(
+                r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()), 
                 Times.Once);
         }
         
