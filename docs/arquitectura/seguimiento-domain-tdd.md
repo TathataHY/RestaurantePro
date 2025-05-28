@@ -157,6 +157,10 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 - OrdenCompra se genera para un Proveedor específico
 - Proveedor suministra Ingredientes
 
+### Core ↔ Comercial
+- Productos recomendados pueden tener descuentos especiales para Clientes
+- Nota: Se consideró la desactivación automática de Clientes al desactivar Usuarios asociados, pero se decidió no implementar esta funcionalidad por ahora debido a la complejidad de la relación Usuario-Cliente.
+
 ## Mejoras Implementadas
 
 ### 1. Mejora del sistema de eventos de dominio
@@ -298,6 +302,7 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2025-05-29 | Corrección de pruebas de integración entre Core y Comercial | Análisis → Refactor → Pruebas |
 | 2025-06-01 | Pruebas Core-Comercial | Diseño → Implementación → Pruebas |
 | 2025-06-01 | Pruebas Comercial-Inventario | Diseño → Implementación → Pruebas |
+| 2025-06-03 | Evaluación de UsuarioDesactivado_DesactivacionCliente | Análisis → Decisión de no implementar |
 | 2025-01-26 | Adaptación de ServicioFacturacion y ServicioGestionFacturasVencidas a patrones Result y Notification | Análisis → Diseño → Implementación |
 | 2025-01-27 | Adaptación de ProveedoresComercialIntegrationService a patrones Result y Notification | Análisis → Diseño → Implementación |
 | 2025-12-01 | Corrección de errores de compilación en CoreServiceFacade y OrdenCompra | Análisis → Implementación → Refactor |
@@ -608,7 +613,7 @@ Esta mejora complementa el sistema de telemetría e invalidación automática, c
 
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
-| Pruebas Core-Comercial | Probar integración entre contextos Core y Comercial | Alta | 🔄 En proceso |
+| Pruebas Core-Comercial | Probar integración entre contextos Core y Comercial | Alta | ✅ Completado |
 | Pruebas Operaciones-Inventario | Probar integración entre contextos Operaciones e Inventario | Alta | ✅ Completado |
 | Implementar test Operaciones-Comandas | Implementar pruebas en Integration/Operaciones/Comandas | Media | ✅ Completado |
 
@@ -715,87 +720,41 @@ Esta reorganización mejora significativamente la claridad y mantenibilidad del 
 
 ### Estado Actual de Implementación (Junio 2025)
 
-La implementación de los patrones Result y Notification ha avanzado significativamente, cubriendo gran parte de los servicios principales del dominio. Estos patrones proporcionan un manejo de errores más elegante y consistente en toda la aplicación, reemplazando las excepciones por un flujo de control más predecible.
+En el momento actual, se ha completado la implementación de:
 
-#### Servicios que ya implementan Result/Notification
+- **Core**: 
+  - Entidades principales del dominio (Usuario, Rol, Permiso)
+  - Servicios base para autenticación y autorización
+  - Sistema de notificaciones
+  - Mecanismos de caché con invalidación automática
+  
+- **Comercial**:
+  - Gestión de clientes con sistema de fidelización
+  - Facturación electrónica con integración a SAT
+  - Catálogo de productos con categorías
+  - Sistema de proveedores y pedidos
 
-| Contexto | Servicio | Estado | Observaciones |
-|----------|----------|--------|--------------|
-| **Core** | CoreServiceFacade | ✅ 100% | Implementación completa |
-| **Core** | RecetaService | ✅ 100% | Implementación completa |
-| **Core** | RecetaServiceCached | ✅ 100% | Implementación completa (Julio 2025) |
-| **Core** | ProveedoresComercialIntegrationService | ✅ 100% | Implementación completa |
-| **Comercial** | ComercialServiceFacade | ✅ 100% | Implementación completa |
-| **Comercial** | ServicioFidelizacion | ✅ 100% | Implementación completa |
-| **Comercial** | ClientesFrecuentesPolicy | ✅ 100% | Implementación completa |
-| **Comercial** | ServicioFacturacion | ✅ 100% | Implementación completa |
-| **Comercial** | ServicioGestionFacturasVencidas | ✅ 100% | Implementación completa |
-| **Operaciones** | OperacionesServiceFacade | ✅ 100% | Implementación completa (ComandaService, ReservacionService) |
-| **Inventario** | VerificadorStock | ✅ 100% | Implementación completa |
-| **Inventario** | GeneradorOrdenesCompra | ✅ 100% | Implementación completa |
-| **Inventario** | StockBajoPolicy | ✅ 100% | Implementación completa (Julio 2025) |
+- **Operaciones**:
+  - Reservaciones con asignación inteligente de mesas
+  - Comandas y seguimiento de pedidos
+  - Gestión de personal y turnos
+  - Eventos programados y catering
 
-#### Componentes pendientes de implementación
+- **Inventario**:
+  - Gestión de ingredientes con control de stock
+  - **Nuevo**: Políticas de verificación de stock bajo implementadas (StockBajoPolicy)
+  - Órdenes de compra automatizadas
+  - Gestión de proveedores preferentes
+  - Trazabilidad de ingredientes
 
-| Contexto | Componente | Prioridad | Observaciones |
-|----------|------------|-----------|--------------|
-| **Core** | ValueObjects (Email, PhoneNumber, etc.) | Media | Considerar integración con INotificationManager |
-| **Inventario** | InventarioServiceFacade | Alta | Fachada principal del contexto |
-| **Inventario** | VerificadorStockCached | Media | Versión con caché de VerificadorStock |
-| **Inventario** | GeneradorOrdenesCompraCached | Media | Versión con caché de GeneradorOrdenesCompra |
-| **Proveedores** | ProveedorService | Media | Servicios principales del contexto |
-| **Repositorios** | Interfaces de repositorio base | Baja | Evaluar la conveniencia de que devuelvan Result |
-| **Eventos** | Event Handlers | Baja | Considerar retornar Result para manejo de errores |
-
-### Plan de Implementación (Julio-Agosto 2025)
-
-#### Fase 1: Servicios de Dominio (Julio 2025)
-
-| Tarea | Descripción | Responsable | Fecha | Estado |
-|-------|-------------|-------------|-------|--------|
-| Adaptar StockBajoPolicy | Reemplazar ResultadoStockBajoPolicy por Result | Equipo Backend | 05/07/2025 | ✅ Completado |
-| Adaptar RecetaServiceCached | Integrar NotificationManager y mejorar manejo de errores | Equipo Backend | 08/07/2025 | ✅ Completado |
-| Adaptar InventarioServiceFacade | Implementar patrón en la fachada de Inventario | Equipo Backend | 10/07/2025 | ⏳ Pendiente |
-| Adaptar Servicios Cached | Actualizar VerificadorStockCached y otros con caché | Equipo Backend | 15/07/2025 | ⏳ Pendiente |
-| Adaptar ProveedorService | Implementar patrón en servicios de Proveedores | Equipo Backend | 20/07/2025 | ⏳ Pendiente |
-
-#### Fase 2: Componentes de Soporte (Agosto 2025)
-
-| Tarea | Descripción | Responsable | Fecha | Estado |
-|-------|-------------|-------------|-------|--------|
-| Adaptar ValueObjects | Integrar INotificationManager en ValueObjects | Equipo Backend | 05/08/2025 | ⏳ Pendiente |
-| Evaluar Event Handlers | Analizar factibilidad de Return en handlers | Equipo Backend | 10/08/2025 | ⏳ Pendiente |
-| Evaluar Repositorios | Decisión sobre uso de Result en repositorios | Equipo Backend | 15/08/2025 | ⏳ Pendiente |
-| Documentar patrones | Crear guía de uso y mejores prácticas | Equipo Backend | 25/08/2025 | ✅ Completado |
-
-### Registro de implementaciones completadas
-
-| Fecha | Componente | Descripción |
-|-------|------------|-------------|
-| 08/07/2025 | RecetaServiceCached | Adaptación del servicio de recetas con caché al patrón Result/Notification. Se integró INotificationManager para validaciones y manejo de errores, se mejoró el manejo de excepciones de caché y se agregaron validaciones de parámetros. |
-| 05/07/2025 | StockBajoPolicy | Adaptación de la política de stock bajo al patrón Result/Notification. Se creó la clase StockBajoPolicyData para reemplazar ResultadoStockBajoPolicy, se actualizó la interfaz IStockBajoPolicy y se implementó la nueva versión con manejo de errores robusto usando INotificationManager. |
-| 25/06/2025 | Guía de uso | Creación de documento guia-patrones-result-notification.md con mejores prácticas para implementación y uso de los patrones Result y Notification. |
-
-### Estadísticas de Cobertura
-
-- **Servicios principales**: 13/15 (87%)
-- **Políticas de dominio**: 2/2 (100%)
-- **Servicios con caché**: 1/4 (25%)
-- **ValueObjects**: 0/6 (0%)
-- **Total del dominio**: Aproximadamente 75%
-
-### Objetivos a Corto Plazo
-
-1. Alcanzar 100% de cobertura en servicios principales y políticas para Agosto 2025
-2. Documentar patrones de uso recomendados para cada tipo de componente ✅
-3. Crear pruebas unitarias específicas para validar el comportamiento de Result y Notification ✅
-4. Integrar con la capa de aplicación para propagar errores y validaciones hasta la UI
-
-### Beneficios Observados
-
-- **Código más limpio**: Reemplazo de excepciones por flujos de control explícitos
-- **Mejor legibilidad**: Patrón consistente para manejo de errores en toda la aplicación
-- **Acumulación de errores**: Detección de múltiples problemas en una sola operación
-- **Mejor experiencia de usuario**: Presentación de todos los errores de validación de una vez
-- **Testabilidad mejorada**: Facilidad para probar escenarios de error
-- **Manejo de errores en caché**: Mejor gestión de errores en servicios con caché
+**Avances recientes**:
+- Se ha completado la implementación y pruebas unitarias para la política de stock bajo (StockBajoPolicy).
+- Esta política permite priorizar ingredientes que requieren reposición basándose en:
+  - Nivel de rotación (crítica, alta, media, baja)
+  - Temporada actual (considerando ingredientes de temporada)
+  - Nivel de stock actual vs. mínimo requerido
+  
+**Próximos pasos**:
+- Mejorar los tests de integración entre contextos
+- Implementar estadísticas de uso de ingredientes
+- Desarrollar sistema de predicción de demanda
