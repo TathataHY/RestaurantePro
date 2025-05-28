@@ -466,6 +466,37 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
         }
 
         [Fact]
+        public async Task ObtenerIngredientesFaltantesAsync_DebeRetornarDiccionarioVacio_CuandoNoExisteReceta()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var producto = Producto.Crear(
+                "Producto Test",
+                "Descripción producto test",
+                new PrecioProducto(15.99m),
+                Guid.NewGuid(),
+                "Categoría Test");
+                
+            var cantidad = 5;
+                
+            _productoRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+                
+            _recetaRepositoryMock
+                .Setup(r => r.ObtenerPorProductoIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Receta)null);
+                
+            // Act
+            var resultado = await _recetaService.ObtenerIngredientesFaltantesAsync(productoId, cantidad, _cancellationToken);
+            
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.NotNull(resultado.Value);
+            Assert.Empty(resultado.Value);
+        }
+
+        [Fact]
         public async Task ObtenerIngredientesFaltantesAsync_SinIngredientes_DebeRetornarDiccionarioVacio()
         {
             // Arrange
@@ -497,64 +528,88 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
         }
 
         [Fact]
-        public async Task ObtenerIngredientesFaltantesAsync_IngredientesFaltantes_DebeRetornarIngredientesFaltantes()
+        public async Task ObtenerIngredientesFaltantesAsync_ConStockInsuficiente_DebeRetornarIngredientesFaltantes()
         {
             // Arrange
             var productoId = Guid.NewGuid();
-            var cantidad = 5;
-            // Usar una instancia real en lugar de un mock
-            var precio = new PrecioProducto(10.99m);
-
-            var producto = Producto.Crear(
-                "Pizza Margarita", 
-                "Pizza clásica italiana", 
-                precio, 
-                Guid.NewGuid(), 
-                "Pizzas");
-
-            var receta = Receta.Crear(productoId, "Instrucciones de preparación", 30);
-            
             var ingrediente1Id = Guid.NewGuid();
             var ingrediente2Id = Guid.NewGuid();
+            var cantidad = 10;
             
+            var producto = Producto.Crear(
+                "Ensalada César", 
+                "Ensalada fresca", 
+                new PrecioProducto(12.99m), 
+                Guid.NewGuid(), 
+                "Ensaladas");
+                
+            var receta = Receta.Crear(
+                productoId,
+                "Instrucciones para preparar ensalada César",
+                15);
+                
+            // Añadir ingredientes a la receta (100g de lechuga y 50g de pollo por ensalada)
             receta.AgregarIngrediente(
                 ingrediente1Id, 
-                "Tomate", 
-                0.2m, 
+                "Lechuga", 
+                0.1m, 
                 RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
-            
+                
             receta.AgregarIngrediente(
                 ingrediente2Id, 
-                "Queso Mozzarella", 
-                0.3m, 
+                "Pollo", 
+                0.05m, 
                 RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo);
-
-            _productoRepositoryMock.Setup(r => r.ObtenerPorIdAsync(productoId, _cancellationToken))
-                .ReturnsAsync(producto);
-
-            _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
-                .ReturnsAsync(receta);
-
-            // Simular ingredientes con stocks variados
-            var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 5.0m); // Más que suficiente para 5 pizzas (5 * 0.2 = 1.0)
-            var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 1.0m); // Insuficiente para 5 pizzas (5 * 0.3 = 1.5) -> Falta 0.5
-
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
-                .ReturnsAsync(ingrediente1);
+            
+            // Configurar ingredientes en el repositorio
+            var lechuga = Ingrediente.Crear(
+                "Lechuga", 
+                "LECH001", 
+                "Romana", 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                0.3m,  // Stock mínimo
+                0.5m); // Stock actual (500g disponibles)
                 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
-                .ReturnsAsync(ingrediente2);
-
+            var pollo = Ingrediente.Crear(
+                "Pollo", 
+                "POLL001", 
+                "Pechuga", 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                0.5m,  // Stock mínimo
+                0.8m); // Stock actual (800g disponibles)
+                
+            // Configurar los mocks
+            _productoRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+                
+            _recetaRepositoryMock
+                .Setup(r => r.ObtenerPorProductoIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(receta);
+                
+            _ingredienteRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(lechuga);
+                
+            _ingredienteRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(pollo);
+                
             // Act
             var resultado = await _recetaService.ObtenerIngredientesFaltantesAsync(productoId, cantidad, _cancellationToken);
-
+            
             // Assert
-            resultado.Should().NotBeNull();
-            resultado.Succeeded.Should().BeTrue();
-            resultado.Value.Should().NotBeNull();
-            resultado.Value.Should().HaveCount(1);
-            resultado.Value.Should().ContainKey(ingrediente2Id);
-            resultado.Value[ingrediente2Id].Should().BeApproximately(0.5m, 0.001m);
+            Assert.True(resultado.Succeeded);
+            Assert.NotNull(resultado.Value);
+            Assert.Equal(1, resultado.Value.Count);
+            
+            // Para preparar 10 ensaladas se necesitan:
+            // - 1kg de lechuga (10 * 0.1kg), pero solo hay 0.5kg, faltan 0.5kg
+            // - 0.5kg de pollo (10 * 0.05kg), pero hay 0.8kg, no falta pollo
+            Assert.True(resultado.Value.ContainsKey(ingrediente1Id));
+            Assert.Equal(0.5m, resultado.Value[ingrediente1Id]); // Faltan 500g de lechuga
+            
+            Assert.False(resultado.Value.ContainsKey(ingrediente2Id)); // No debe faltar pollo
         }
 
         #endregion
@@ -1000,7 +1055,48 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
         [Fact]
         public async Task BuscarSustitutoIngredienteAsync_ReemplazoDePan_DebeRetornarPanIntegral()
         {
-            // Implementar esta prueba cuando se agregue la función
+            // Arrange
+            var ingredienteOriginalId = Guid.NewGuid();
+            var ingredienteSustitutoId = Guid.NewGuid();
+            
+            var ingredienteOriginal = Ingrediente.Crear(
+                "Pan Blanco", 
+                "PAN001", 
+                "Pan de molde blanco", 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                0.5m,  // Stock mínimo
+                0.1m); // Stock muy bajo (insuficiente)
+                
+            var ingredienteSustituto = Ingrediente.Crear(
+                "Pan Integral", 
+                "PAN002", 
+                "Pan de molde integral", 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                0.5m,  // Stock mínimo
+                2.0m); // Stock abundante
+            
+            // Establecer IDs manualmente usando reflexión
+            typeof(EntityBase).GetProperty("Id")!.SetValue(ingredienteOriginal, ingredienteOriginalId);
+            typeof(EntityBase).GetProperty("Id")!.SetValue(ingredienteSustituto, ingredienteSustitutoId);
+            
+            _ingredienteRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(ingredienteOriginalId, false, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(ingredienteOriginal);
+                
+            // Configurar búsqueda de sustitutos por categoría/tipo similar
+            _ingredienteRepositoryMock
+                .Setup(r => r.BuscarPorCategoriaAsync("Pan", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Ingrediente> { ingredienteSustituto });
+            
+            // Act
+            var resultado = await _recetaService.BuscarSustitutoIngredienteAsync(ingredienteOriginalId, _cancellationToken);
+            
+            // Assert
+            resultado.Succeeded.Should().BeTrue();
+            resultado.Value.Should().NotBeNull();
+            resultado.Value.Id.Should().Be(ingredienteSustitutoId);
+            resultado.Value.Nombre.Should().Be("Pan Integral");
+            resultado.Value.Stock.Should().BeGreaterThan(ingredienteOriginal.Stock);
         }
 
         #endregion

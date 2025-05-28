@@ -292,6 +292,39 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
         }
         
         [Fact]
+        public async Task ObtenerIngredientesFaltantesProductoAsync_DebeRetornarDiccionarioVacio_CuandoTodosLosIngredientesEstanDisponibles()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var cantidad = 5;
+            
+            var productoExistente = Producto.Crear(
+                "Producto Test", 
+                "Descripción Test", 
+                new PrecioProducto(10.99m), 
+                Guid.NewGuid(), 
+                "Categoría Test");
+                
+            _productoRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(productoExistente);
+                
+            // Configurar servicio de recetas para devolver diccionario vacío (sin faltantes)
+            _recetaServiceMock
+                .Setup(s => s.ObtenerIngredientesFaltantesAsync(productoId, cantidad, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Success(new Dictionary<Guid, decimal>()));
+            
+            // Act
+            var resultado = await _sut.ObtenerIngredientesFaltantesProductoAsync(productoId, cantidad);
+            
+            // Assert
+            Assert.NotNull(resultado);
+            Assert.Empty(resultado);
+            
+            _recetaServiceMock.Verify(s => s.ObtenerIngredientesFaltantesAsync(productoId, cantidad, It.IsAny<CancellationToken>()), Times.Once);
+        }
+        
+        [Fact]
         public async Task CalcularCostoRecetaProductoAsync_DebeUsarRecetaService()
         {
             // Arrange
@@ -541,6 +574,175 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             
             _productoRepositoryMock.Verify(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
             _recetaRepositoryMock.Verify(r => r.ObtenerPorProductoIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Never);
+        }
+        
+        [Fact]
+        public async Task CalcularRentabilidadProductoAsync_DebeRetornarRentabilidadBaja_CuandoNoExisteReceta()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var producto = Producto.Crear(
+                "Producto Test", 
+                "Descripción Test", 
+                new PrecioProducto(10.99m), 
+                Guid.NewGuid(), 
+                "Categoría Test");
+                
+            _productoRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+                
+            _recetaRepositoryMock
+                .Setup(r => r.ObtenerPorProductoIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Receta)null);
+                
+            var rentabilidadEsperada = RentabilidadProducto.Calcular(0, 10.99m);
+            
+            _recetaServiceMock
+                .Setup(s => s.CalcularRentabilidadProductoAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Success(rentabilidadEsperada));
+            
+            // Act
+            var resultado = await _sut.CalcularRentabilidadProductoAsync(productoId);
+            
+            // Assert
+            Assert.Equal(rentabilidadEsperada.Rentabilidad, resultado.Rentabilidad);
+            Assert.Equal(rentabilidadEsperada.MargenGanancia, resultado.MargenGanancia);
+            Assert.Equal(rentabilidadEsperada.Nivel, resultado.Nivel);
+            
+            _recetaServiceMock.Verify(s => s.CalcularRentabilidadProductoAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
+        }
+        
+        [Fact]
+        public async Task RegistrarRecetaProductoAsync_DebeRetornarError_ConDatosInvalidos()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var instrucciones = ""; // Instrucciones vacías
+            var tiempoPreparacion = -5; // Tiempo negativo
+            var ingredientes = new Dictionary<Guid, decimal>();
+            
+            var notificationManager = new NotificationManager();
+            
+            var sut = new CoreServiceFacade(
+                _productoRepositoryMock.Object,
+                _productoCategoriaRepositoryMock.Object,
+                _recetaRepositoryMock.Object,
+                _usuarioRepositoryMock.Object,
+                _rolRepositoryMock.Object,
+                _notificacionRepositoryMock.Object,
+                _productoCategoriaServiceMock.Object,
+                _recetaServiceMock.Object,
+                _notificationServiceMock.Object,
+                _dateTimeServiceMock.Object,
+                notificationManager);
+                
+            // Act
+            var resultado = await sut.RegistrarRecetaProductoAsync(
+                productoId, 
+                instrucciones, 
+                tiempoPreparacion, 
+                ingredientes);
+            
+            // Assert
+            Assert.False(resultado.Succeeded);
+            Assert.Null(resultado.Value);
+            Assert.True(resultado.Errors.Count > 0);
+            
+            // Verificamos que no se llamó al repositorio
+            _recetaRepositoryMock.Verify(r => r.ObtenerPorProductoIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+            _recetaRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<Receta>(), It.IsAny<CancellationToken>()), Times.Never);
+            _recetaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Receta>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+        
+        [Fact]
+        public async Task BuscarSustitutoIngredienteAsync_ConIngredienteSustitutoDisponible_DebeRetornarSustituto()
+        {
+            // Arrange
+            var ingredienteOriginalId = Guid.NewGuid();
+            var ingredienteSustitutoId = Guid.NewGuid();
+            
+            var ingredienteSustituto = RestaurantePro.Domain.Inventario.Ingredientes.Entities.Ingrediente.Crear(
+                "Pan Integral", 
+                "PAN002", 
+                "Pan de molde integral", 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                0.5m,  // Stock mínimo
+                2.0m); // Stock abundante
+            
+            // Establecer ID manualmente usando reflexión
+            typeof(RestaurantePro.Domain.Core.Base.EntityBase).GetProperty("Id")!.SetValue(ingredienteSustituto, ingredienteSustitutoId);
+            
+            // Configurar el servicio mock para devolver el ingrediente sustituto
+            _recetaServiceMock
+                .Setup(s => s.BuscarSustitutoIngredienteAsync(ingredienteOriginalId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Success(ingredienteSustituto));
+            
+            // Act
+            var resultado = await _sut.BuscarSustitutoIngredienteAsync(ingredienteOriginalId);
+            
+            // Assert
+            Assert.NotNull(resultado);
+            Assert.Equal(ingredienteSustitutoId, resultado.Id);
+            Assert.Equal("Pan Integral", resultado.Nombre);
+        }
+        
+        [Fact]
+        public async Task BuscarSustitutoIngredienteAsync_SinIngredienteSustitutoDisponible_DebeRetornarNull()
+        {
+            // Arrange
+            var ingredienteOriginalId = Guid.NewGuid();
+            
+            // Configurar el servicio mock para devolver null
+            _recetaServiceMock
+                .Setup(s => s.BuscarSustitutoIngredienteAsync(ingredienteOriginalId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Success<RestaurantePro.Domain.Inventario.Ingredientes.Entities.Ingrediente>(null));
+            
+            // Act
+            var resultado = await _sut.BuscarSustitutoIngredienteAsync(ingredienteOriginalId);
+            
+            // Assert
+            Assert.Null(resultado);
+        }
+        
+        [Fact]
+        public async Task BuscarSustitutoIngredienteAsync_ConError_DebeRetornarNull()
+        {
+            // Arrange
+            var ingredienteOriginalId = Guid.NewGuid();
+            
+            // Configurar el servicio mock para devolver un error
+            _recetaServiceMock
+                .Setup(s => s.BuscarSustitutoIngredienteAsync(ingredienteOriginalId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Failure<RestaurantePro.Domain.Inventario.Ingredientes.Entities.Ingrediente>("Ingrediente no encontrado"));
+            
+            // Configurar que _notificationManagerMock para AddError (método void)
+            _notificationManagerMock
+                .Setup(n => n.AddError(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()));
+            
+            // Crear una instancia específica de CoreServiceFacade para esta prueba
+            // usando el mock de notificationManager en lugar de la implementación real
+            var sutForTest = new CoreServiceFacade(
+                _productoRepositoryMock.Object,
+                _productoCategoriaRepositoryMock.Object,
+                _recetaRepositoryMock.Object,
+                _usuarioRepositoryMock.Object,
+                _rolRepositoryMock.Object,
+                _notificacionRepositoryMock.Object,
+                _productoCategoriaServiceMock.Object,
+                _recetaServiceMock.Object,
+                _notificationServiceMock.Object,
+                _dateTimeServiceMock.Object,
+                _notificationManagerMock.Object);
+            
+            // Act
+            var resultado = await sutForTest.BuscarSustitutoIngredienteAsync(ingredienteOriginalId);
+            
+            // Assert
+            Assert.Null(resultado);
+            
+            // Verificar que se haya registrado el error
+            _notificationManagerMock.Verify(n => n.AddError(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce);
         }
         
         #endregion
