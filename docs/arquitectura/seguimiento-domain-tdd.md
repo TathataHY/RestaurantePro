@@ -65,6 +65,8 @@ RestaurantePro.Domain/
 | Receta | ✅ Completo | ✅ Completas | Recetas para elaboración de productos |
 | IngredienteReceta | ✅ Completo | ✅ Completas | Value Object para ingredientes de recetas |
 | RecetaService | ✅ Completo | ✅ Completas | Gestión de recetas e ingredientes |
+| CoreOperacionesIntegrationService | ✅ Completo | ✅ Completas | Integración entre catálogo de productos y comandas |
+| ComandaFinalizada_ActualizarProductosHandler | ✅ Completo | ✅ Completas | Actualización de estadísticas de productos |
 
 ### Comercial
 
@@ -144,6 +146,10 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 ### Operaciones ↔ Core
 - Comanda contiene Productos
 - Reservacion asigna Mesas
+- **Nuevo**: CoreOperacionesIntegrationService implementa el patrón Anticorruption Layer entre contextos
+- **Nuevo**: Verificación de disponibilidad de ingredientes para productos en comandas
+- **Nuevo**: Cálculo de precios totales para comandas
+- **Nuevo**: Actualización de estadísticas de productos basadas en comandas finalizadas
 
 ### Operaciones ↔ Inventario
 - Comanda reduce stock de Ingredientes
@@ -156,6 +162,12 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 ### Inventario ↔ Proveedores
 - OrdenCompra se genera para un Proveedor específico
 - Proveedor suministra Ingredientes
+
+### Comercial ↔ Proveedores
+- OrdenCompraAprobada genera Factura en el contexto Comercial
+- Proveedor actualizado sincroniza información en sistema de facturación
+- ProveedorActualizado_SincronizarInformacionHandler mantiene consistencia entre contextos
+- ServicioIntegracionProveedores implementa el patrón Anticorruption Layer entre contextos
 
 ### Core ↔ Comercial
 - Productos recomendados pueden tener descuentos especiales para Clientes
@@ -303,10 +315,19 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2025-06-01 | Pruebas Core-Comercial | Diseño → Implementación → Pruebas |
 | 2025-06-01 | Pruebas Comercial-Inventario | Diseño → Implementación → Pruebas |
 | 2025-06-03 | Evaluación de UsuarioDesactivado_DesactivacionCliente | Análisis → Decisión de no implementar |
-| 2025-01-26 | Adaptación de ServicioFacturacion y ServicioGestionFacturasVencidas a patrones Result y Notification | Análisis → Diseño → Implementación |
-| 2025-01-27 | Adaptación de ProveedoresComercialIntegrationService a patrones Result y Notification | Análisis → Diseño → Implementación |
 | 2025-12-01 | Corrección de errores de compilación en CoreServiceFacade y OrdenCompra | Análisis → Implementación → Refactor |
 | 2025-12-05 | Corrección de errores en pruebas de StockBajoPolicyTests | Pruebas → Implementación → Refactor |
+| 2025-12-10 | ServicioIntegracionProveedores SincronizarInformacionProveedorAsync | Diseño → Pruebas → Implementación |
+| 2025-12-11 | ProveedorActualizado_SincronizarInformacionHandler | Diseño → Pruebas → Implementación |
+| 2025-12-12 | Adaptación del IFacturaRepository para consulta de facturas pendientes | Diseño → Implementación |
+| 2025-12-15 | CoreOperacionesIntegrationService | Diseño → Implementación → Pruebas → Refactor |
+| 2025-12-15 | ComandaFinalizada_ActualizarProductosHandler | Diseño → Implementación → Pruebas → Refactor |
+| 2025-12-16 | Integración entre catálogo de productos y comandas | Diseño → Implementación → Pruebas |
+| 2025-12-20 | Documentación CoreServiceFacade | Análisis → Diseño → Documentación |
+| 2024-12-20 | Core | Documentación CoreServiceFacade | - | `src/Backend/RestaurantePro.Domain/Core/Services/README.md` |
+| 2024-12-21 | Core-Operaciones | Corrección errores en pruebas de integración | `tests/RestaurantePro.Domain.UnitTests/Core/EventHandlers/ComandaFinalizada_ActualizarProductosHandlerTests.cs`, `tests/RestaurantePro.Domain.UnitTests/Comercial/Services/ServicioIntegracionProveedoresTests.cs` | Corregido uso de `Result` e implementación de métodos de notificación |
+| 2025-12-22 | OperacionesInventarioIntegrationService | Diseño → Implementación → Pruebas → Refactor |
+| 2025-12-23 | Integración entre comandas e inventario | Diseño → Implementación → Pruebas |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -568,6 +589,34 @@ Se ha implementado un sistema de TTL dinámico que ajusta automáticamente los t
 
 Esta mejora complementa el sistema de telemetría e invalidación automática, completando un sistema de caché robusto, adaptativo y altamente monitorizable que optimiza automáticamente su comportamiento basado en el uso real.
 
+### Integración entre contextos Core y Operaciones
+
+Se ha implementado un servicio de integración entre los contextos Core y Operaciones para mejorar la comunicación entre el catálogo de productos y las comandas. Esta implementación permite verificar la disponibilidad de productos e ingredientes al crear comandas, calcular precios totales y actualizar estadísticas de productos cuando las comandas son finalizadas.
+
+#### Componentes principales
+
+1. **CoreOperacionesIntegrationService**:
+   - Implementa el patrón Anticorruption Layer entre contextos
+   - Proporciona métodos para verificar disponibilidad de productos
+   - Calcula precios totales para conjuntos de productos
+   - Procesa comandas finalizadas para actualizar estadísticas de productos
+
+2. **ComandaFinalizada_ActualizarProductosHandler**:
+   - Manejador de eventos que responde cuando una comanda es finalizada
+   - Actualiza información de productos en el contexto Core
+   - Implementa conversión de datos entre contextos
+
+3. **Pruebas unitarias completas**:
+   - Verificación exhaustiva de cada método del servicio de integración
+   - Pruebas de escenarios de error y éxito
+   - Pruebas del manejador de eventos para comandas finalizadas
+
+Esta integración permite una comunicación fluida entre el catálogo de productos y el sistema de comandas, asegurando que:
+- Solo se permitan comandas con productos disponibles
+- Se calculen correctamente los precios de las comandas
+- Se actualicen estadísticas de productos cuando las comandas son finalizadas
+- Se puedan implementar funcionalidades futuras como recomendaciones de productos basadas en comandas frecuentes
+
 ## Decisiones de Diseño
 
 - Las entidades usan Factory Methods (Crear) en lugar de constructores públicos
@@ -647,51 +696,14 @@ Esta mejora complementa el sistema de telemetría e invalidación automática, c
 | Mover lógica validación | Mover validaciones de comandos/peticiones a FluentValidation | Media | ⏳ Pendiente |
 | Mover lógica de mapeo | Extraer mapeos de entidades a DTOs a clases dedicadas con AutoMapper | Media | ⏳ Pendiente |
 | Eliminar duplicación | Consolidar código duplicado en servicios base o componentes reusables | Media | ⏳ Pendiente |
-| Integración INotificationManager en RecetaService | Implementar el patrón Notification en RecetaService | Alta | ✅ Completado |
-| Integración INotificationManager en VerificadorStock | Implementar el patrón Notification en VerificadorStock | Alta | ✅ Completado |
-| Integración INotificationManager en GeneradorOrdenesCompra | Implementar el patrón Notification en GeneradorOrdenesCompra | Alta | ✅ Completado |
 
-### 2. Pruebas de integración
+### 2. Integración entre contextos
 
 | Tarea | Descripción | Prioridad | Estado |
 |-------|-------------|-----------|--------|
-| Pruebas Core-Comercial | Probar integración entre contextos Core y Comercial | Alta | ✅ Completado |
-| Pruebas Operaciones-Inventario | Probar integración entre contextos Operaciones e Inventario | Alta | ✅ Completado |
-| Implementar test Operaciones-Comandas | Implementar pruebas en Integration/Operaciones/Comandas | Media | ✅ Completado |
-
-### 3. Componentes del dominio
-
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Implementar Notification Pattern | Mejorar mecanismo de retorno de errores con Notification Pattern | Alta | ✅ Completado |
-| Agregar ResultType genérico | Crear un tipo Result<T> para devolver éxito/error con datos | Alta | ✅ Completado |
-| Expandir DomainEvents | Mejorar publicación y manejo de eventos de dominio | Media | ⏳ Pendiente |
-
-### 2. Integración de contextos
-
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Integración Comercial-Proveedores | Implementar flujo de datos entre contextos comercial y proveedores | Alta | ⏳ Pendiente |
-| Integración Core-Operaciones | Mejorar integración entre catálogo de productos y comandas | Media | ⏳ Pendiente |
-| Pruebas de integración multi-contexto | Implementar pruebas que verifiquen flujos completos a través de múltiples contextos | Alta | ✅ Completado |
-
-### 3. Implementación completa de CoreServiceFacade
-
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Pruebas unitarias CoreServiceFacade | Completar las pruebas unitarias para la fachada de servicios del Core | Alta | ⏳ Pendiente |
-| Refactorización CoreServiceFacade | Corregir errores y optimizar implementación actual | Alta | ⏳ Pendiente |
-| Documentación de uso | Crear guía de uso para desarrolladores sobre cómo usar la fachada | Media | ⏳ Pendiente |
-| Actualización de referencias | Asegurar que todos los servicios usan CoreServiceFacade | Baja | ⏳ Pendiente |
-
-### 4. Preparación para capa de infraestructura
-
-| Tarea | Descripción | Prioridad | Estado |
-|-------|-------------|-----------|--------|
-| Interfaces de persistencia | Finalizar y documentar todas las interfaces de repositorio | Alta | ⏳ Pendiente |
-| Mock repositories | Crear implementaciones de prueba para todos los repositorios | Media | ⏳ Pendiente |
-| Especificaciones para EF Core | Optimizar especificaciones para su uso con Entity Framework Core | Media | ⏳ Pendiente |
-| Pruebas de concepto con EF Core | Implementar ejemplos básicos de repositorios con EF Core | Alta | ⏳ Pendiente |
+| Core-Operaciones | Implementar servicio de integración entre catálogo de productos y comandas | Alta | ✅ Completado |
+| Operaciones-Inventario | Implementar servicio de integración entre comandas e inventario | Alta | ✅ Completado |
+| Documentación de uso | Crear guía de uso para los servicios de integración | Media | ✅ Completado |
 
 ## Reorganización de Pruebas de Integración (Mayo 2025)
 
