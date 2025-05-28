@@ -19,7 +19,7 @@ global using System.Diagnostics.CodeAnalysis;
 global using System.Collections.ObjectModel;
 
 // Alias para Error
-global using e = RestaurantePro.Domain.Core.SharedKernel.Validation.Error;
+global using Error = RestaurantePro.Domain.Core.SharedKernel.Validation.Error;
 
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;

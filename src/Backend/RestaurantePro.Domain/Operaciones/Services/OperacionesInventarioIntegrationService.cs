@@ -8,322 +8,333 @@ namespace RestaurantePro.Domain.Operaciones.Services
     {
         private readonly Comandas.Interfaces.IComandaRepository _comandaRepository;
         private readonly Inventario.Ingredientes.Interfaces.IIngredienteRepository _ingredienteRepository;
-        private readonly Core.Productos.Interfaces.IProductoIngredienteRepository _productoIngredienteRepository;
-        private readonly Core.Productos.Interfaces.IProductoRepository _productoRepository;
-        private readonly Core.SharedKernel.Validation.INotificationManager _notificationManager;
-        private readonly Core.Base.Services.IDateTimeService _dateTimeService;
-        
+        private readonly Inventario.Ingredientes.Movimientos.Interfaces.IMovimientoInventarioRepository _movimientoRepository;
+        private readonly Core.Productos.Services.IRecetaService _recetaService;
+        private readonly IDateTimeService _dateTimeService;
+        private readonly ILogger<OperacionesInventarioIntegrationService> _logger;
+
         /// <summary>
         /// Constructor
         /// </summary>
         public OperacionesInventarioIntegrationService(
             Comandas.Interfaces.IComandaRepository comandaRepository,
             Inventario.Ingredientes.Interfaces.IIngredienteRepository ingredienteRepository,
-            Core.Productos.Interfaces.IProductoIngredienteRepository productoIngredienteRepository,
-            Core.Productos.Interfaces.IProductoRepository productoRepository,
-            Core.SharedKernel.Validation.INotificationManager notificationManager,
-            Core.Base.Services.IDateTimeService dateTimeService)
+            Inventario.Ingredientes.Movimientos.Interfaces.IMovimientoInventarioRepository movimientoRepository,
+            Core.Productos.Services.IRecetaService recetaService,
+            IDateTimeService dateTimeService,
+            ILogger<OperacionesInventarioIntegrationService> logger)
         {
             _comandaRepository = comandaRepository ?? throw new ArgumentNullException(nameof(comandaRepository));
             _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
-            _productoIngredienteRepository = productoIngredienteRepository ?? throw new ArgumentNullException(nameof(productoIngredienteRepository));
-            _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
-            _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
+            _movimientoRepository = movimientoRepository ?? throw new ArgumentNullException(nameof(movimientoRepository));
+            _recetaService = recetaService ?? throw new ArgumentNullException(nameof(recetaService));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-        
-        /// <inheritdoc/>
-        public async Task<Result<DisponibilidadIngredientesResult>> VerificarDisponibilidadIngredientesComandaAsync(
-            Guid comandaId,
+
+        /// <inheritdoc />
+        public async Task<Result<Results.DisponibilidadIngredientesResult>> VerificarDisponibilidadIngredientesComandaAsync(
+            Guid comandaId, 
             CancellationToken cancellationToken = default)
         {
-            _notificationManager.CreateNewNotification();
-            
             try
             {
-                var resultado = new DisponibilidadIngredientesResult();
-                
-                // Validar el ID de la comanda
-                if (comandaId == Guid.Empty)
-                {
-                    _notificationManager.AddError("El ID de la comanda no puede estar vacío", "ComandaId");
-                    return _notificationManager.ToResult<DisponibilidadIngredientesResult>(resultado);
-                }
+                _logger.LogInformation("Verificando disponibilidad de ingredientes para comanda {ComandaId}", comandaId);
                 
                 // Obtener la comanda
                 var comanda = await _comandaRepository.ObtenerPorIdAsync(comandaId, cancellationToken);
                 if (comanda == null)
                 {
-                    _notificationManager.AddError($"No se encontró la comanda con ID {comandaId}", "ComandaId");
-                    return _notificationManager.ToResult<DisponibilidadIngredientesResult>(resultado);
+                    return Result.Failure<Results.DisponibilidadIngredientesResult>(
+                        $"No se encontró la comanda con ID {comandaId}");
                 }
                 
-                // Verificar que la comanda tenga items
-                if (comanda.Items == null || !comanda.Items.Any())
+                var resultado = new Results.DisponibilidadIngredientesResult
                 {
-                    // Si no hay items, consideramos que todo está disponible
-                    return Result.Success(resultado);
-                }
+                    TodosDisponibles = true
+                };
                 
-                // Procesar todos los items de la comanda
+                // Verificar disponibilidad para cada producto en la comanda
                 foreach (var item in comanda.Items)
                 {
-                    // Obtener el producto
-                    var producto = await _productoRepository.ObtenerPorIdAsync(item.ProductoId, cancellationToken);
-                    if (producto == null)
+                    // Obtener la receta del producto
+                    var disponibilidadReceta = await _recetaService.VerificarDisponibilidadIngredientesAsync(
+                        item.ProductoId, 
+                        item.Cantidad, 
+                        cancellationToken);
+                        
+                    if (!disponibilidadReceta.Succeeded)
+                    {
+                        _logger.LogWarning("Error al verificar disponibilidad para producto {ProductoId}: {Error}", 
+                            item.ProductoId, disponibilidadReceta.Error);
+                            
+                        resultado.TodosDisponibles = false;
+                        resultado.ProductosNoDisponibles.Add(item.ProductoId, 
+                            disponibilidadReceta.Error ?? "Error desconocido");
+                        continue;
+                    }
+                    
+                    if (!disponibilidadReceta.Value)
                     {
                         resultado.TodosDisponibles = false;
-                        resultado.ProductosNoDisponibles[item.ProductoId] = "Producto no encontrado";
-                        continue;
-                    }
-                    
-                    // Obtener los ingredientes necesarios para el producto
-                    var ingredientes = await _ingredienteRepository.ObtenerIngredientesPorProductoAsync(
-                        producto.Id, cancellationToken);
-                    
-                    if (ingredientes == null || !ingredientes.Any())
-                    {
-                        // Si no hay ingredientes definidos, asumimos que está disponible
-                        continue;
-                    }
-                    
-                    // Verificar disponibilidad de cada ingrediente
-                    foreach (var ingrediente in ingredientes)
-                    {
-                        // Obtener la cantidad necesaria
-                        var productoIngrediente = await _productoIngredienteRepository.ObtenerPorProductoEIngredienteAsync(
-                            producto.Id, ingrediente.Id, cancellationToken);
-                            
-                        if (productoIngrediente == null)
-                        {
-                            continue; // Si no está definida la relación, continuamos
-                        }
                         
-                        // Calcular la cantidad total necesaria
-                        decimal cantidadNecesaria = productoIngrediente.Cantidad * item.Cantidad;
-                        
-                        // Verificar si hay suficiente stock
-                        if (ingrediente.Stock < cantidadNecesaria)
-                        {
-                            resultado.TodosDisponibles = false;
-                            resultado.IngredientesFaltantes[ingrediente.Nombre] = cantidadNecesaria - ingrediente.Stock;
+                        // Obtener ingredientes faltantes
+                        var ingredientesFaltantes = await _recetaService.ObtenerIngredientesFaltantesAsync(
+                            item.ProductoId, 
+                            item.Cantidad, 
+                            cancellationToken);
                             
-                            // Si no hay suficiente stock para este ingrediente, marcar el producto como no disponible
-                            if (!resultado.ProductosNoDisponibles.ContainsKey(producto.Id))
+                        if (ingredientesFaltantes.Succeeded)
+                        {
+                            foreach (var faltante in ingredientesFaltantes.Value)
                             {
-                                resultado.ProductosNoDisponibles[producto.Id] = 
-                                    $"Falta ingrediente: {ingrediente.Nombre}";
+                                var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(faltante.Key, cancellationToken);
+                                
+                                string nombreIngrediente = ingrediente?.Nombre ?? faltante.Key.ToString();
+                                
+                                if (resultado.IngredientesFaltantes.ContainsKey(nombreIngrediente))
+                                {
+                                    resultado.IngredientesFaltantes[nombreIngrediente] += faltante.Value;
+                                }
+                                else
+                                {
+                                    resultado.IngredientesFaltantes.Add(nombreIngrediente, faltante.Value);
+                                }
                             }
+                            
+                            // Agregar razón de no disponibilidad
+                            var razon = string.Join(", ", ingredientesFaltantes.Value.Select(kv => {
+                                var ingrediente = _ingredienteRepository.ObtenerPorIdAsync(kv.Key, cancellationToken).Result;
+                                return $"{ingrediente?.Nombre ?? kv.Key.ToString()}: {kv.Value}";
+                            }));
+                            
+                            resultado.ProductosNoDisponibles.Add(item.ProductoId, $"Falta ingrediente: {razon}");
+                        }
+                        else
+                        {
+                            resultado.ProductosNoDisponibles.Add(item.ProductoId, "No se pudo determinar ingredientes faltantes");
                         }
                     }
                 }
                 
+                _logger.LogInformation("Verificación completada para comanda {ComandaId}. Disponibilidad: {Disponibilidad}", 
+                    comandaId, resultado.TodosDisponibles);
+                    
                 return Result.Success(resultado);
             }
             catch (Exception ex)
             {
-                _notificationManager.AddError($"Error al verificar disponibilidad: {ex.Message}", "VerificarDisponibilidad");
-                return _notificationManager.ToResult<DisponibilidadIngredientesResult>(new DisponibilidadIngredientesResult
-                {
-                    TodosDisponibles = false
-                });
+                _logger.LogError(ex, "Error al verificar disponibilidad para comanda {ComandaId}", comandaId);
+                return Result.Failure<Results.DisponibilidadIngredientesResult>(
+                    $"Error al verificar disponibilidad: {ex.Message}");
             }
         }
-        
-        /// <inheritdoc/>
+
+        /// <inheritdoc />
         public async Task<Result<bool>> ReservarIngredientesComandaAsync(
-            Guid comandaId,
+            Guid comandaId, 
             CancellationToken cancellationToken = default)
         {
-            _notificationManager.CreateNewNotification();
-            
             try
             {
-                // Validar el ID de la comanda
-                if (comandaId == Guid.Empty)
-                {
-                    _notificationManager.AddError("El ID de la comanda no puede estar vacío", "ComandaId");
-                    return _notificationManager.ToResult<bool>(false);
-                }
+                _logger.LogInformation("Reservando ingredientes para comanda {ComandaId}", comandaId);
                 
                 // Obtener la comanda
                 var comanda = await _comandaRepository.ObtenerPorIdAsync(comandaId, cancellationToken);
                 if (comanda == null)
                 {
-                    _notificationManager.AddError($"No se encontró la comanda con ID {comandaId}", "ComandaId");
-                    return _notificationManager.ToResult<bool>(false);
+                    return Result.Failure<bool>(
+                        $"No se encontró la comanda con ID {comandaId}");
                 }
                 
-                // Verificar que la comanda tenga items
-                if (comanda.Items == null || !comanda.Items.Any())
+                // Verificar disponibilidad primero
+                var verificacion = await VerificarDisponibilidadIngredientesComandaAsync(comandaId, cancellationToken);
+                if (!verificacion.Succeeded)
                 {
-                    return Result.Success(true); // No hay nada que reservar
+                    return Result.Failure<bool>(verificacion.Error);
                 }
                 
-                // Primero verificamos que haya suficiente stock disponible
-                var verificacionResult = await VerificarDisponibilidadIngredientesComandaAsync(comandaId, cancellationToken);
-                if (!verificacionResult.Succeeded || !verificacionResult.Value.TodosDisponibles)
+                if (!verificacion.Value.TodosDisponibles)
                 {
-                    if (verificacionResult.Value != null)
-                    {
-                        foreach (var item in verificacionResult.Value.ProductosNoDisponibles)
-                        {
-                            _notificationManager.AddError($"Producto {item.Key}: {item.Value}", "Producto");
-                        }
-                        
-                        foreach (var item in verificacionResult.Value.IngredientesFaltantes)
-                        {
-                            _notificationManager.AddError($"Ingrediente {item.Key}: Falta {item.Value}", "Ingrediente");
-                        }
-                    }
-                    
-                    return _notificationManager.ToResult<bool>(false);
+                    return Result.Failure<bool>(
+                        "No hay suficiente stock para reservar los ingredientes");
                 }
                 
-                // Procesamos cada item de la comanda
+                // Crear movimientos de reserva para cada producto
                 foreach (var item in comanda.Items)
                 {
-                    var producto = await _productoRepository.ObtenerPorIdAsync(item.ProductoId, cancellationToken);
-                    if (producto == null) continue;
-                    
-                    var ingredientes = await _ingredienteRepository.ObtenerIngredientesPorProductoAsync(
-                        producto.Id, cancellationToken);
-                    
-                    if (ingredientes == null || !ingredientes.Any()) continue;
-                    
-                    // Reservar cada ingrediente
-                    foreach (var ingrediente in ingredientes)
+                    // Obtener ingredientes requeridos para el producto
+                    var ingredientes = await _recetaService.ObtenerIngredientesParaProductoAsync(item.ProductoId, cancellationToken);
+                    if (!ingredientes.Succeeded || ingredientes.Value == null)
                     {
-                        var productoIngrediente = await _productoIngredienteRepository.ObtenerPorProductoEIngredienteAsync(
-                            producto.Id, ingrediente.Id, cancellationToken);
+                        _logger.LogWarning("No se encontraron ingredientes para producto {ProductoId}", item.ProductoId);
+                        continue;
+                    }
+                    
+                    foreach (var ingredienteReceta in ingredientes.Value)
+                    {
+                        // Obtener el ingrediente
+                        var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteReceta.Key, cancellationToken);
                             
-                        if (productoIngrediente == null) continue;
+                        if (ingrediente == null)
+                        {
+                            _logger.LogWarning("No se encontró ingrediente con ID {IngredienteId}", ingredienteReceta.Key);
+                            continue;
+                        }
                         
-                        decimal cantidadNecesaria = productoIngrediente.Cantidad * item.Cantidad;
+                        // Calcular cantidad a reservar
+                        var cantidadRequerida = ingredienteReceta.Value * item.Cantidad;
                         
-                        // Decrementar el stock (reservar)
-                        ingrediente.DecrementarStock(cantidadNecesaria, $"Reserva para comanda #{comandaId}");
+                        // Crear movimiento de salida (egreso)
+                        var motivo = $"Reserva para comanda {comandaId}, ítem {item.Id}";
+                        var movimiento = ingrediente.DecrementarStock(cantidadRequerida, motivo);
+                            
+                        await _movimientoRepository.AgregarAsync(movimiento, cancellationToken);
                         
-                        // Guardar cambios
+                        // El stock ya se ha actualizado dentro del método DecrementarStock
                         await _ingredienteRepository.ActualizarAsync(ingrediente, cancellationToken);
                     }
                 }
                 
+                _logger.LogInformation("Ingredientes reservados correctamente para comanda {ComandaId}", comandaId);
                 return Result.Success(true);
             }
             catch (Exception ex)
             {
-                _notificationManager.AddError($"Error al reservar ingredientes: {ex.Message}", "ReservarIngredientes");
-                return _notificationManager.ToResult<bool>(false);
+                _logger.LogError(ex, "Error al reservar ingredientes para comanda {ComandaId}", comandaId);
+                return Result.Failure<bool>(
+                    $"Error al reservar ingredientes: {ex.Message}");
             }
         }
-        
-        /// <inheritdoc/>
+
+        /// <inheritdoc />
         public async Task<Result<bool>> ConfirmarConsumoIngredientesAsync(
-            Guid comandaId,
+            Guid comandaId, 
             CancellationToken cancellationToken = default)
         {
-            _notificationManager.CreateNewNotification();
-            
             try
             {
-                // En la implementación actual, cuando reservamos los ingredientes ya decrementamos el stock,
-                // por lo que confirmar el consumo no requiere acciones adicionales en el inventario.
-                // Sin embargo, podríamos registrar el consumo para fines de auditoría o estadísticas.
-                
-                // Validar el ID de la comanda
-                if (comandaId == Guid.Empty)
-                {
-                    _notificationManager.AddError("El ID de la comanda no puede estar vacío", "ComandaId");
-                    return _notificationManager.ToResult<bool>(false);
-                }
+                _logger.LogInformation("Confirmando consumo de ingredientes para comanda {ComandaId}", comandaId);
                 
                 // Obtener la comanda
                 var comanda = await _comandaRepository.ObtenerPorIdAsync(comandaId, cancellationToken);
                 if (comanda == null)
                 {
-                    _notificationManager.AddError($"No se encontró la comanda con ID {comandaId}", "ComandaId");
-                    return _notificationManager.ToResult<bool>(false);
+                    return Result.Failure<bool>(
+                        $"No se encontró la comanda con ID {comandaId}");
                 }
                 
-                // En una implementación más avanzada, podríamos registrar el consumo definitivo
-                // y liberar cualquier cantidad adicional que se haya reservado pero no utilizado.
+                // Crear movimientos de consumo para cada producto entregado
+                // Nota: Para los productos entregados, los ingredientes ya se reservaron previamente,
+                // así que no necesitamos reducir el stock nuevamente, solo registrar un movimiento informativo
+                foreach (var item in comanda.Items.Where(i => i.Estado == Comandas.Enums.EstadoItemComanda.Entregado))
+                {
+                    // Obtener ingredientes requeridos para el producto
+                    var ingredientes = await _recetaService.ObtenerIngredientesParaProductoAsync(item.ProductoId, cancellationToken);
+                    if (!ingredientes.Succeeded || ingredientes.Value == null)
+                    {
+                        _logger.LogWarning("No se encontraron ingredientes para producto {ProductoId}", item.ProductoId);
+                        continue;
+                    }
+                    
+                    foreach (var ingredienteReceta in ingredientes.Value)
+                    {
+                        // Obtener el ingrediente
+                        var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteReceta.Key, cancellationToken);
+                            
+                        if (ingrediente == null)
+                        {
+                            _logger.LogWarning("No se encontró ingrediente con ID {IngredienteId}", ingredienteReceta.Key);
+                            continue;
+                        }
+                        
+                        // Calcular cantidad consumida
+                        var cantidadConsumida = ingredienteReceta.Value * item.Cantidad;
+                        
+                        // Crear un movimiento informativo de consumo sin afectar el stock
+                        var motivo = $"Consumo por comanda {comandaId}, ítem {item.Id}";
+                        var movimiento = Inventario.Ingredientes.Movimientos.Entities.MovimientoInventario.CrearEgreso(
+                            ingrediente.Id, cantidadConsumida, motivo, _dateTimeService.Now);
+                            
+                        await _movimientoRepository.AgregarAsync(movimiento, cancellationToken);
+                        
+                        // No actualizamos el stock porque ya se hizo en la reserva
+                    }
+                }
                 
+                _logger.LogInformation("Consumo de ingredientes confirmado para comanda {ComandaId}", comandaId);
                 return Result.Success(true);
             }
             catch (Exception ex)
             {
-                _notificationManager.AddError($"Error al confirmar consumo: {ex.Message}", "ConfirmarConsumo");
-                return _notificationManager.ToResult<bool>(false);
+                _logger.LogError(ex, "Error al confirmar consumo de ingredientes para comanda {ComandaId}", comandaId);
+                return Result.Failure<bool>(
+                    $"Error al confirmar consumo: {ex.Message}");
             }
         }
-        
-        /// <inheritdoc/>
+
+        /// <inheritdoc />
         public async Task<Result<bool>> LiberarReservaIngredientesAsync(
-            Guid comandaId,
-            string motivo,
+            Guid comandaId, 
+            string motivo, 
             CancellationToken cancellationToken = default)
         {
-            _notificationManager.CreateNewNotification();
-            
             try
             {
-                // Validar el ID de la comanda
-                if (comandaId == Guid.Empty)
-                {
-                    _notificationManager.AddError("El ID de la comanda no puede estar vacío", "ComandaId");
-                    return _notificationManager.ToResult<bool>(false);
-                }
+                _logger.LogInformation("Liberando reserva de ingredientes para comanda {ComandaId}", comandaId);
                 
                 // Obtener la comanda
                 var comanda = await _comandaRepository.ObtenerPorIdAsync(comandaId, cancellationToken);
                 if (comanda == null)
                 {
-                    _notificationManager.AddError($"No se encontró la comanda con ID {comandaId}", "ComandaId");
-                    return _notificationManager.ToResult<bool>(false);
+                    return Result.Failure<bool>(
+                        $"No se encontró la comanda con ID {comandaId}");
                 }
                 
-                // Verificar que la comanda tenga items
-                if (comanda.Items == null || !comanda.Items.Any())
-                {
-                    return Result.Success(true); // No hay nada que liberar
-                }
-                
-                // Procesamos cada item de la comanda
+                // Crear movimientos de liberación para cada producto
                 foreach (var item in comanda.Items)
                 {
-                    var producto = await _productoRepository.ObtenerPorIdAsync(item.ProductoId, cancellationToken);
-                    if (producto == null) continue;
-                    
-                    var ingredientes = await _ingredienteRepository.ObtenerIngredientesPorProductoAsync(
-                        producto.Id, cancellationToken);
-                    
-                    if (ingredientes == null || !ingredientes.Any()) continue;
-                    
-                    // Liberar cada ingrediente
-                    foreach (var ingrediente in ingredientes)
+                    // Obtener ingredientes requeridos para el producto
+                    var ingredientes = await _recetaService.ObtenerIngredientesParaProductoAsync(item.ProductoId, cancellationToken);
+                    if (!ingredientes.Succeeded || ingredientes.Value == null)
                     {
-                        var productoIngrediente = await _productoIngredienteRepository.ObtenerPorProductoEIngredienteAsync(
-                            producto.Id, ingrediente.Id, cancellationToken);
+                        _logger.LogWarning("No se encontraron ingredientes para producto {ProductoId}", item.ProductoId);
+                        continue;
+                    }
+                    
+                    foreach (var ingredienteReceta in ingredientes.Value)
+                    {
+                        // Obtener el ingrediente
+                        var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteReceta.Key, cancellationToken);
                             
-                        if (productoIngrediente == null) continue;
+                        if (ingrediente == null)
+                        {
+                            _logger.LogWarning("No se encontró ingrediente con ID {IngredienteId}", ingredienteReceta.Key);
+                            continue;
+                        }
                         
-                        decimal cantidadNecesaria = productoIngrediente.Cantidad * item.Cantidad;
+                        // Calcular cantidad a liberar
+                        var cantidadLiberada = ingredienteReceta.Value * item.Cantidad;
                         
-                        // Incrementar el stock (liberar)
-                        ingrediente.IncrementarStock(cantidadNecesaria, $"Liberación de reserva comanda #{comandaId}. Motivo: {motivo}");
+                        // Crear movimiento de entrada (ingreso) y actualizar el stock
+                        var descripcionMotivo = $"Liberación para comanda {comandaId}, ítem {item.Id}. Motivo: {motivo}";
+                        var movimiento = ingrediente.IncrementarStock(cantidadLiberada, descripcionMotivo);
+                            
+                        await _movimientoRepository.AgregarAsync(movimiento, cancellationToken);
                         
-                        // Guardar cambios
+                        // El stock ya se ha actualizado dentro del método IncrementarStock
                         await _ingredienteRepository.ActualizarAsync(ingrediente, cancellationToken);
                     }
                 }
                 
+                _logger.LogInformation("Reserva de ingredientes liberada para comanda {ComandaId}", comandaId);
                 return Result.Success(true);
             }
             catch (Exception ex)
             {
-                _notificationManager.AddError($"Error al liberar reserva: {ex.Message}", "LiberarReserva");
-                return _notificationManager.ToResult<bool>(false);
+                _logger.LogError(ex, "Error al liberar reserva de ingredientes para comanda {ComandaId}", comandaId);
+                return Result.Failure<bool>(
+                    $"Error al liberar reserva: {ex.Message}");
             }
         }
     }

@@ -69,23 +69,26 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             var evento = new ItemComandaEntregado(itemId, productoId, comandaId, cantidad);
             
             // Configurar resultado con error del servicio de integración
-            var errors = new List<Error> { new Error("Error al confirmar consumo") };
+            var mensajeError = "Error al confirmar consumo";
             _integrationServiceMock
                 .Setup(s => s.ConfirmarConsumoIngredientesAsync(comandaId, _cancellationToken))
-                .ReturnsAsync(Result.Failure<bool>(errors));
+                .ReturnsAsync(Result.Failure<bool>(mensajeError));
                 
             // Configurar el mock del event registry
             _eventRegistryMock
-                .Setup(l => l.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.RegisterAsync(It.IsAny<DomainEvent>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             // Act
             await _handler.Handle(evento, _cancellationToken);
             
+            // Obtener el mensaje de error formateado
+            var errorMessage = $"Error al confirmar consumo de ingredientes: {mensajeError}";
+            
             // Assert
             // Verificar que se llamó al servicio de integración
             _integrationServiceMock.Verify(
-                s => s.ConfirmarConsumoIngredientesAsync(comandaId, _cancellationToken), 
+                s => s.ConfirmarConsumoIngredientesAsync(comandaId, _cancellationToken),
                 Times.Once);
                 
             // Verificar que se registró el evento a pesar del error

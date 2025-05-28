@@ -37,7 +37,8 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 
                 if (!resultado.Succeeded)
                 {
-                    logMessage = $"Error al verificar disponibilidad: {string.Join(", ", resultado.Errors)}";
+                    var errores = ObtenerMensajesError(resultado);
+                    logMessage = $"Error al verificar disponibilidad: {errores}";
                     Console.WriteLine(logMessage);
                     await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
@@ -85,6 +86,34 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 Console.WriteLine($"StackTrace: {ex.StackTrace}");
                 await _eventRegistry.RegisterAsync(evento, cancellationToken);
             }
+        }
+
+        /// <summary>
+        /// Obtiene los mensajes de error de manera segura desde un Result
+        /// </summary>
+        private static string ObtenerMensajesError(Result resultado)
+        {
+            var mensajes = new List<string>();
+            
+            // Agregar error único si existe
+            if (!string.IsNullOrEmpty(resultado.Error))
+            {
+                mensajes.Add(resultado.Error);
+            }
+            
+            // Agregar errores múltiples si existen
+            if (resultado.Errors?.Any() == true)
+            {
+                mensajes.AddRange(resultado.Errors);
+            }
+            
+            // Si no hay errores específicos, usar mensaje genérico
+            if (!mensajes.Any())
+            {
+                mensajes.Add("Error no especificado");
+            }
+            
+            return string.Join(", ", mensajes);
         }
     }
 } 

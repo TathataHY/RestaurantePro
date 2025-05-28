@@ -28,7 +28,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             var eventoComanda = new ComandaCreada(comandaId, mesaId, meseroId);
             
             // Configurar resultado exitoso del servicio de integración
-            var resultadoDisponibilidad = new Operaciones.Services.DisponibilidadIngredientesResult
+            var resultadoDisponibilidad = new RestaurantePro.Domain.Operaciones.Results.DisponibilidadIngredientesResult
             {
                 TodosDisponibles = true,
                 ProductosNoDisponibles = new Dictionary<Guid, string>(),
@@ -74,7 +74,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             var eventoComanda = new ComandaCreada(comandaId, mesaId, meseroId);
             
             // Configurar resultado del servicio de integración con stock insuficiente
-            var resultadoDisponibilidad = new Operaciones.Services.DisponibilidadIngredientesResult
+            var resultadoDisponibilidad = new RestaurantePro.Domain.Operaciones.Results.DisponibilidadIngredientesResult
             {
                 TodosDisponibles = false,
                 ProductosNoDisponibles = new Dictionary<Guid, string> 
@@ -125,10 +125,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             var eventoComanda = new ComandaCreada(comandaId, mesaId, meseroId);
             
             // Configurar error en el servicio de integración
-            var errors = new List<Error> { new Error("Error al verificar disponibilidad") };
             _integrationServiceMock
                 .Setup(s => s.VerificarDisponibilidadIngredientesComandaAsync(comandaId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Failure<Operaciones.Services.DisponibilidadIngredientesResult>(errors));
+                .ReturnsAsync(Result.Failure<RestaurantePro.Domain.Operaciones.Results.DisponibilidadIngredientesResult>("Error al verificar disponibilidad"));
                 
             // Configurar event registry
             _eventRegistryMock

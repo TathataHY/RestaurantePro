@@ -154,6 +154,10 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 ### Operaciones ↔ Inventario
 - Comanda reduce stock de Ingredientes
 - ItemComanda verifica disponibilidad de Ingredientes
+- **Nuevo**: OperacionesInventarioIntegrationService implementa el patrón Anticorruption Layer entre contextos
+- **Nuevo**: Verificación de disponibilidad de ingredientes para comandas
+- **Nuevo**: Reserva y liberación de ingredientes según el ciclo de vida de la comanda
+- **Nuevo**: Registro de movimientos de inventario asociados a comandas
 
 ### Core ↔ Inventario
 - Recetas de Productos utilizan Ingredientes del inventario
@@ -328,6 +332,14 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2024-12-21 | Core-Operaciones | Corrección errores en pruebas de integración | `tests/RestaurantePro.Domain.UnitTests/Core/EventHandlers/ComandaFinalizada_ActualizarProductosHandlerTests.cs`, `tests/RestaurantePro.Domain.UnitTests/Comercial/Services/ServicioIntegracionProveedoresTests.cs` | Corregido uso de `Result` e implementación de métodos de notificación |
 | 2025-12-22 | OperacionesInventarioIntegrationService | Diseño → Implementación → Pruebas → Refactor |
 | 2025-12-23 | Integración entre comandas e inventario | Diseño → Implementación → Pruebas |
+| 2026-01-05 | OperacionesInventarioIntegrationService | Diseño → Implementación → Pruebas → Refactor |
+| 2026-01-06 | Implementación de DisponibilidadIngredientesResult | Diseño → Implementación |
+| 2026-01-07 | Pruebas unitarias para OperacionesInventarioIntegrationService | Diseño → Pruebas → Validación |
+| 2026-01-08 | Actualización de GlobalUsings para Result pattern | Refactor → Validación |
+| 2026-01-10 | Documentación de OperacionesInventarioIntegrationService | Análisis → Documentación |
+| 2026-01-11 | Refactorización de Result.Failure para usar strings directos | Refactor → Pruebas → Validación |
+| 2026-01-11 | Reorganización de DisponibilidadIngredientesResult a carpeta Results | Refactor → Validación |
+| 2026-01-12 | Corrección de OperacionesInventarioIntegrationService y sus pruebas | Implementación → Pruebas → Validación |
 
 ## Mejoras Recientes en la Arquitectura
 
@@ -771,3 +783,10 @@ En el momento actual, se ha completado la implementación de:
 - Mejorar los tests de integración entre contextos
 - Implementar estadísticas de uso de ingredientes
 - Desarrollar sistema de predicción de demanda
+- **Nuevo**: Se ha implementado el servicio de integración entre Operaciones e Inventario (OperacionesInventarioIntegrationService)
+- **Nuevo**: Este servicio permite verificar la disponibilidad de ingredientes, reservarlos, confirmar su consumo y liberar reservas
+- **Nuevo**: Actualizar los manejadores de eventos relacionados con comandas para utilizar el nuevo servicio de integración
+- **Nuevo**: Implementar caché para consultas frecuentes de disponibilidad de ingredientes
+- **Nuevo**: Actualizar los tests unitarios de OperacionesInventarioIntegrationService para adaptarse a las firmas actualizadas de métodos como Comanda.Crear() e Ingrediente.Crear()
+- **Pendiente**: Corregir errores en los manejadores de eventos ComandaModificada_ActualizarInventarioHandler y ComandaCreada_VerificarDisponibilidadHandler
+- **Pendiente**: Actualizar tests de mock para clases sin constructores sin parámetros

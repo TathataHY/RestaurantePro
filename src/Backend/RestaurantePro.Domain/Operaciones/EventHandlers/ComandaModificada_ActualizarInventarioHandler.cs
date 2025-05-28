@@ -36,9 +36,9 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
                 
             if (!resultado.Succeeded)
             {
-                // Hubo un error al reservar los ingredientes
-                // En un caso real, se debería loggear este error
-                Console.WriteLine($"Error al reservar ingredientes: {string.Join(", ", resultado.Errors)}");
+                // Construir mensaje de error de manera segura
+                var errores = ObtenerMensajesError(resultado);
+                Console.WriteLine($"Error al reservar ingredientes: {errores}");
             }
             else
             {
@@ -62,14 +62,42 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
                 
             if (!resultado.Succeeded)
             {
-                // Hubo un error al liberar los ingredientes
-                // En un caso real, se debería loggear este error
-                Console.WriteLine($"Error al liberar ingredientes: {string.Join(", ", resultado.Errors)}");
+                // Construir mensaje de error de manera segura
+                var errores = ObtenerMensajesError(resultado);
+                Console.WriteLine($"Error al liberar ingredientes: {errores}");
             }
             else
             {
                 Console.WriteLine($"Ingredientes liberados correctamente para comanda {evento.ComandaId}");
             }
+        }
+
+        /// <summary>
+        /// Obtiene los mensajes de error de manera segura desde un Result
+        /// </summary>
+        private static string ObtenerMensajesError(Result resultado)
+        {
+            var mensajes = new List<string>();
+            
+            // Agregar error único si existe
+            if (!string.IsNullOrEmpty(resultado.Error))
+            {
+                mensajes.Add(resultado.Error);
+            }
+            
+            // Agregar errores múltiples si existen
+            if (resultado.Errors?.Any() == true)
+            {
+                mensajes.AddRange(resultado.Errors);
+            }
+            
+            // Si no hay errores específicos, usar mensaje genérico
+            if (!mensajes.Any())
+            {
+                mensajes.Add("Error no especificado");
+            }
+            
+            return string.Join(", ", mensajes);
         }
     }
 } 

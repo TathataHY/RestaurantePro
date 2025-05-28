@@ -127,10 +127,10 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Operacione
             var itemComandaId = Guid.NewGuid();
             
             // 2. Configurar el servicio de integración para simular un error en la reserva
-            var errors = new List<Error> { new Error("No hay suficiente stock") };
+            var mensajeError = "No hay suficiente stock";
             _integrationServiceMock
                 .Setup(s => s.ReservarIngredientesComandaAsync(comandaId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Failure<bool>(errors));
+                .ReturnsAsync(Result.Failure<bool>(mensajeError));
                 
             // 3. Configurar el event registry
             _eventRegistryMock
@@ -160,6 +160,8 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Operacione
                     It.IsAny<RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda.ItemComandaCreado>(), 
                     It.IsAny<CancellationToken>()),
                 Times.Once);
+
+            Console.WriteLine($"Error al reservar ingredientes: {mensajeError}");
         }
         
         [Fact]
@@ -172,10 +174,10 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Operacione
             var itemComandaId = Guid.NewGuid();
             
             // 2. Configurar el servicio de integración para simular un error en la liberación
-            var errors = new List<Error> { new Error("Error al liberar los ingredientes") };
+            var mensajeError = "Error al liberar los ingredientes";
             _integrationServiceMock
                 .Setup(s => s.LiberarReservaIngredientesAsync(comandaId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(Result.Failure<bool>(errors));
+                .ReturnsAsync(Result.Failure<bool>(mensajeError));
                 
             // 3. Configurar el event registry
             _eventRegistryMock
@@ -209,6 +211,8 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Operacione
                     It.IsAny<RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda.ProductoEliminadoDeComanda>(), 
                     It.IsAny<CancellationToken>()),
                 Times.Once);
+
+            Console.WriteLine($"Error al liberar ingredientes: {mensajeError}");
         }
     }
 } 
