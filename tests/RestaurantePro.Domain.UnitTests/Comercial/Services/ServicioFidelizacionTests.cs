@@ -47,10 +47,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var clienteId = Guid.Empty;
             var puntos = 0;
             var motivo = string.Empty;
-            
+
             // Act
             var resultado = await _servicio.AgregarPuntosAsync(clienteId, puntos, motivo);
-            
+
             // Assert
             resultado.Succeeded.Should().BeFalse();
             resultado.Errors.Should().NotBeEmpty();
@@ -128,7 +128,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Configurar las propiedades de puntos usando reflexión
             typeof(TarjetaFidelizacion).GetProperty("PuntosDisponibles")?.SetValue(tarjeta, puntosActuales);
             typeof(TarjetaFidelizacion).GetProperty("PuntosAcumulados")?.SetValue(tarjeta, puntosActuales);
-            
+
             // Configurar el ID de la tarjeta
             SetPrivateId(tarjeta, tarjetaId);
             
@@ -150,10 +150,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             _tarjetaRepositoryMock
                 .Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
-                
+
             // Act
             var resultado = await _servicio.AgregarPuntosAsync(clienteId, puntos, motivo);
-            
+
             // Assert
             resultado.Succeeded.Should().BeTrue();
             resultado.Value.Should().Be(puntosEsperados);
@@ -165,10 +165,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Arrange
             var clienteId = Guid.Empty;
             var montoTotal = 0m;
-            
+
             // Act
             var resultado = await _servicio.CalcularDescuentoAsync(clienteId, montoTotal);
-            
+
             // Assert
             resultado.Succeeded.Should().BeFalse();
             resultado.Errors.Should().NotBeEmpty();
@@ -359,7 +359,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Configurar el ID de la tarjeta
             SetPrivateId(tarjeta, tarjetaId);
-            
+
             // Crear cliente con la tarjeta asociada
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
             var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
@@ -370,14 +370,14 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             _clienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(cliente);
-                
+
             _tarjetaRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(tarjeta);
                 
             // Act
             var resultado = await _servicio.CanjearPuntosAsync(clienteId, puntos, motivo);
-            
+
             // Assert
             resultado.Succeeded.Should().BeFalse();
             resultado.Error.Should().NotBeNull();
@@ -408,7 +408,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Configurar el ID de la tarjeta
             SetPrivateId(tarjeta, tarjetaId);
-            
+
             // Crear cliente con la tarjeta asociada
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
             var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
@@ -427,10 +427,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             _tarjetaRepositoryMock
                 .Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
-                
+
             // Act
             var resultado = await _servicio.CanjearPuntosAsync(clienteId, puntos, motivo);
-            
+
             // Assert
             resultado.Succeeded.Should().BeTrue();
             resultado.Value.Should().Be(puntosEsperados);
@@ -520,7 +520,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Configurar la propiedad PuntosDisponibles usando reflexión
             typeof(TarjetaFidelizacion).GetProperty("PuntosDisponibles")?.SetValue(tarjeta, 100);
-            
+
             // Configurar el ID de la tarjeta
             SetPrivateId(tarjeta, tarjetaId);
             
@@ -534,14 +534,14 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             _clienteRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(cliente);
-                
+            
             _tarjetaRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(tarjeta);
-                
+
             // Act
             var resultado = await _servicio.CanjearPuntosAsync(clienteId, puntos, motivo);
-            
+
             // Assert
             resultado.Succeeded.Should().BeFalse();
             resultado.Error.Should().NotBeNull();
