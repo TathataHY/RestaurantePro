@@ -106,6 +106,143 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             _productoRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<Producto>(), It.IsAny<CancellationToken>()), Times.Once);
         }
         
+        [Fact]
+        public async Task ActualizarProductoAsync_DebeActualizarProducto_ConDatosValidos()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var nuevoNombre = "Producto Actualizado";
+            var nuevaDescripcion = "Descripción Actualizada";
+            var nuevoPrecio = 15.99m;
+            var nuevaCategoriaId = Guid.NewGuid();
+            
+            var productoExistente = Producto.Crear(
+                "Producto Original", 
+                "Descripción Original", 
+                new PrecioProducto(10.99m), 
+                Guid.NewGuid(), 
+                "Categoría Original");
+                
+            var nuevaCategoria = ProductoCategoria.Crear("Nueva Categoría", "Descripción Nueva Categoría", 2);
+            
+            _productoRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(productoExistente);
+                
+            _productoCategoriaRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(nuevaCategoriaId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(nuevaCategoria);
+            
+            // Act
+            var resultado = await _sut.ActualizarProductoAsync(
+                productoId, 
+                nuevoNombre, 
+                nuevaDescripcion, 
+                nuevoPrecio, 
+                nuevaCategoriaId, 
+                true);
+            
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.NotNull(resultado.Value);
+            Assert.Equal(nuevoNombre, resultado.Value.Nombre);
+            Assert.Equal(nuevaDescripcion, resultado.Value.Descripcion);
+            Assert.Equal(nuevoPrecio, resultado.Value.Precio.Valor);
+            Assert.Equal(nuevaCategoriaId, resultado.Value.CategoriaId);
+            Assert.True(resultado.Value.EstaActivo);
+            
+            _productoRepositoryMock.Verify(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
+            _productoRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Producto>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+        
+        [Fact]
+        public async Task ActualizarProductoAsync_DebeRetornarError_CuandoProductoNoExiste()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var nuevoNombre = "Producto Actualizado";
+            
+            _productoRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Producto)null);
+                
+            // Crear un NotificationManager real específico para esta prueba
+            var notificationManager = new NotificationManager();
+            
+            // Crear una instancia específica de CoreServiceFacade para esta prueba
+            var sut = new CoreServiceFacade(
+                _productoRepositoryMock.Object,
+                _productoCategoriaRepositoryMock.Object,
+                _recetaRepositoryMock.Object,
+                _usuarioRepositoryMock.Object,
+                _rolRepositoryMock.Object,
+                _notificacionRepositoryMock.Object,
+                _productoCategoriaServiceMock.Object,
+                _recetaServiceMock.Object,
+                _notificationServiceMock.Object,
+                _dateTimeServiceMock.Object,
+                notificationManager);
+            
+            // Act
+            var resultado = await sut.ActualizarProductoAsync(productoId, nuevoNombre);
+            
+            // Assert
+            Assert.False(resultado.Succeeded);
+            Assert.Null(resultado.Value);
+            _productoRepositoryMock.Verify(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
+            _productoRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Producto>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+        
+        [Fact]
+        public async Task ObtenerProductosPorCategoriaAsync_DebeUsarProductoCategoriaService()
+        {
+            // Arrange
+            var categoriaId = Guid.NewGuid();
+            var soloActivos = true;
+            
+            var productos = new List<Producto>
+            {
+                Producto.Crear("Producto 1", "Descripción 1", new PrecioProducto(10.99m), categoriaId, "Categoría Test"),
+                Producto.Crear("Producto 2", "Descripción 2", new PrecioProducto(15.99m), categoriaId, "Categoría Test")
+            };
+            
+            _productoCategoriaServiceMock
+                .Setup(s => s.ObtenerProductosPorCategoriaAsync(categoriaId, soloActivos, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(productos);
+            
+            // Act
+            var resultado = await _sut.ObtenerProductosPorCategoriaAsync(categoriaId, soloActivos);
+            
+            // Assert
+            Assert.NotNull(resultado);
+            Assert.Equal(2, resultado.Count);
+            _productoCategoriaServiceMock.Verify(
+                s => s.ObtenerProductosPorCategoriaAsync(categoriaId, soloActivos, It.IsAny<CancellationToken>()), 
+                Times.Once);
+        }
+        
+        [Fact]
+        public async Task ActualizarCategoriaProductosAsync_DebeUsarProductoCategoriaService()
+        {
+            // Arrange
+            var productosIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
+            var categoriaId = Guid.NewGuid();
+            var productosActualizados = 2;
+            
+            _productoCategoriaServiceMock
+                .Setup(s => s.ActualizarCategoriaProductosAsync(productosIds, categoriaId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(productosActualizados);
+            
+            // Act
+            var resultado = await _sut.ActualizarCategoriaProductosAsync(productosIds, categoriaId);
+            
+            // Assert
+            Assert.Equal(productosActualizados, resultado);
+            _productoCategoriaServiceMock.Verify(
+                s => s.ActualizarCategoriaProductosAsync(productosIds, categoriaId, It.IsAny<CancellationToken>()), 
+                Times.Once);
+        }
+        
         #endregion
         
         #region Recetas Tests
@@ -152,6 +289,258 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             Assert.NotNull(resultado);
             Assert.Equal(ingredientesFaltantes.Count, resultado.Count);
             _recetaServiceMock.Verify(s => s.ObtenerIngredientesFaltantesAsync(productoId, cantidad, It.IsAny<CancellationToken>()), Times.Once);
+        }
+        
+        [Fact]
+        public async Task CalcularCostoRecetaProductoAsync_DebeUsarRecetaService()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var costoEsperado = 15.5m;
+            
+            _recetaServiceMock
+                .Setup(s => s.CalcularCostoRecetaAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Success(costoEsperado));
+            
+            // Act
+            var resultado = await _sut.CalcularCostoRecetaProductoAsync(productoId);
+            
+            // Assert
+            Assert.Equal(costoEsperado, resultado);
+            _recetaServiceMock.Verify(s => s.CalcularCostoRecetaAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
+        }
+        
+        [Fact]
+        public async Task CalcularRentabilidadProductoAsync_DebeUsarRecetaService()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var categoriaId = Guid.NewGuid();
+            var producto = Producto.Crear(
+                "Producto Test", 
+                "Descripción Test", 
+                new PrecioProducto(25.99m), 
+                categoriaId, 
+                "Categoría Test");
+                
+            // Establecer el ID manualmente para pruebas
+            var propiedadId = producto.GetType().GetProperty("Id");
+            if (propiedadId != null && propiedadId.CanWrite)
+            {
+                propiedadId.SetValue(producto, productoId);
+            }
+            
+            var costoReceta = 10.5m;
+            var rentabilidadEsperada = RentabilidadProducto.Calcular(costoReceta, producto.Precio.Valor);
+            
+            _productoRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+                
+            _recetaServiceMock
+                .Setup(s => s.CalcularRentabilidadProductoAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Success(rentabilidadEsperada));
+            
+            // Act
+            var resultado = await _sut.CalcularRentabilidadProductoAsync(productoId);
+            
+            // Assert
+            Assert.NotNull(resultado);
+            Assert.Equal(costoReceta, resultado.CostoTotal);
+            Assert.Equal(producto.Precio.Valor, resultado.PrecioVenta);
+            _recetaServiceMock.Verify(s => s.CalcularRentabilidadProductoAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
+        }
+        
+        [Fact]
+        public async Task RegistrarRecetaProductoAsync_DebeRegistrarReceta_ConDatosValidos()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var preparacion = "Instrucciones de preparación";
+            var tiempoPreparacion = 30;
+            var ingredientes = new Dictionary<Guid, decimal>
+            {
+                { Guid.NewGuid(), 200 }, // 200g de ingrediente 1
+                { Guid.NewGuid(), 50 } // 50g de ingrediente 2
+            };
+            
+            var producto = Producto.Crear(
+                "Producto Test", 
+                "Descripción Test", 
+                new PrecioProducto(15.99m), 
+                Guid.NewGuid(), 
+                "Categoría Test");
+                
+            var recetaCreada = Receta.Crear(
+                productoId,
+                preparacion,
+                tiempoPreparacion);
+                
+            // Mock de nombres de ingredientes para usar en AgregarIngrediente
+            var nombresIngredientes = new Dictionary<Guid, string>();
+            foreach (var ing in ingredientes)
+            {
+                var ingredienteId = ing.Key;
+                nombresIngredientes[ingredienteId] = $"Ingrediente {ingredienteId}";
+                // Usamos el método correcto con todos los parámetros requeridos
+                recetaCreada.AgregarIngrediente(
+                    ingredienteId, 
+                    nombresIngredientes[ingredienteId], 
+                    ing.Value, 
+                    RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Gramo, 
+                    false);
+            }
+            
+            _productoRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+                
+            _recetaRepositoryMock
+                .Setup(r => r.ObtenerPorProductoIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Receta)null);
+                
+            _recetaRepositoryMock
+                .Setup(r => r.AgregarAsync(It.IsAny<Receta>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask)
+                .Callback<Receta, CancellationToken>((r, c) => 
+                {
+                    // Simulamos que se asigna un ID
+                    var propertyInfo = typeof(Receta).GetProperty("Id", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                    propertyInfo?.SetValue(r, Guid.NewGuid());
+                });
+            
+            // Act
+            var resultado = await _sut.RegistrarRecetaProductoAsync(
+                productoId, 
+                preparacion, 
+                tiempoPreparacion, 
+                ingredientes);
+            
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.NotNull(resultado.Value);
+            Assert.Equal(productoId, resultado.Value.ProductoId);
+            Assert.Equal(preparacion, resultado.Value.Preparacion);
+            Assert.Equal(tiempoPreparacion, resultado.Value.TiempoPreparacionMinutos);
+            Assert.Equal(ingredientes.Count, resultado.Value.Ingredientes.Count);
+            
+            _productoRepositoryMock.Verify(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
+            _recetaRepositoryMock.Verify(r => r.ObtenerPorProductoIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
+            _recetaRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<Receta>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+        
+        [Fact]
+        public async Task RegistrarRecetaProductoAsync_DebeActualizarReceta_CuandoYaExiste()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var preparacion = "Instrucciones actualizadas";
+            var tiempoPreparacion = 25;
+            var ingredientes = new Dictionary<Guid, decimal>
+            {
+                { Guid.NewGuid(), 150 }, // 150g de ingrediente 1
+                { Guid.NewGuid(), 75 } // 75g de ingrediente 2
+            };
+            
+            var producto = Producto.Crear(
+                "Producto Test", 
+                "Descripción Test", 
+                new PrecioProducto(15.99m), 
+                Guid.NewGuid(), 
+                "Categoría Test");
+                
+            var recetaExistente = Receta.Crear(
+                productoId,
+                "Instrucciones originales",
+                30);
+                
+            var ingredienteId = Guid.NewGuid();
+            recetaExistente.AgregarIngrediente(
+                ingredienteId, 
+                "Ingrediente original", 
+                100, 
+                RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Gramo, 
+                false);
+            
+            _productoRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+                
+            _recetaRepositoryMock
+                .Setup(r => r.ObtenerPorProductoIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(recetaExistente);
+                
+            _recetaRepositoryMock
+                .Setup(r => r.ActualizarAsync(It.IsAny<Receta>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+            
+            // Act
+            var resultado = await _sut.RegistrarRecetaProductoAsync(
+                productoId, 
+                preparacion, 
+                tiempoPreparacion, 
+                ingredientes);
+            
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.NotNull(resultado.Value);
+            Assert.Equal(productoId, resultado.Value.ProductoId);
+            Assert.Equal(preparacion, resultado.Value.Preparacion);
+            Assert.Equal(tiempoPreparacion, resultado.Value.TiempoPreparacionMinutos);
+            Assert.Equal(ingredientes.Count, resultado.Value.Ingredientes.Count);
+            
+            _productoRepositoryMock.Verify(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
+            _recetaRepositoryMock.Verify(r => r.ObtenerPorProductoIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
+            _recetaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Receta>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+        
+        [Fact]
+        public async Task RegistrarRecetaProductoAsync_DebeRetornarError_CuandoProductoNoExiste()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var preparacion = "Instrucciones de preparación";
+            var tiempoPreparacion = 30;
+            var ingredientes = new Dictionary<Guid, decimal>
+            {
+                { Guid.NewGuid(), 200 }, // 200g de ingrediente 1
+                { Guid.NewGuid(), 50 } // 50g de ingrediente 2
+            };
+            
+            _productoRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Producto)null);
+            
+            // Crear un NotificationManager real específico para esta prueba
+            var notificationManager = new NotificationManager();
+            
+            // Crear una instancia específica de CoreServiceFacade para esta prueba
+            var sut = new CoreServiceFacade(
+                _productoRepositoryMock.Object,
+                _productoCategoriaRepositoryMock.Object,
+                _recetaRepositoryMock.Object,
+                _usuarioRepositoryMock.Object,
+                _rolRepositoryMock.Object,
+                _notificacionRepositoryMock.Object,
+                _productoCategoriaServiceMock.Object,
+                _recetaServiceMock.Object,
+                _notificationServiceMock.Object,
+                _dateTimeServiceMock.Object,
+                notificationManager);
+            
+            // Act
+            var resultado = await sut.RegistrarRecetaProductoAsync(
+                productoId, 
+                preparacion, 
+                tiempoPreparacion, 
+                ingredientes);
+            
+            // Assert
+            Assert.False(resultado.Succeeded);
+            Assert.Null(resultado.Value);
+            
+            _productoRepositoryMock.Verify(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
+            _recetaRepositoryMock.Verify(r => r.ObtenerPorProductoIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Never);
         }
         
         #endregion
@@ -366,6 +755,167 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             _usuarioRepositoryMock.Verify(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()), Times.Once);
             // Verificar que no se llamó al método ActualizarAsync
             _usuarioRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+        
+        [Fact]
+        public async Task ActualizarEmailUsuarioAsync_DebeActualizarUsuario_ConEmailValido()
+        {
+            // Arrange
+            var usuarioId = Guid.NewGuid();
+            var nuevoEmail = "nuevo.email@test.com";
+            
+            var nombreUsuario = "usuario_test";
+            var nombreCompleto = "Usuario Test";
+            var emailActual = Email.Create("viejo.email@test.com");
+            var usuario = Usuario.Crear(nombreUsuario, nombreCompleto, emailActual, RolUsuario.Cajero);
+            
+            _usuarioRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(usuario);
+                
+            _usuarioRepositoryMock
+                .Setup(r => r.ObtenerPorEmailAsync(nuevoEmail, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Usuario)null);
+            
+            // Act
+            var resultado = await _sut.ActualizarEmailUsuarioAsync(usuarioId, nuevoEmail);
+            
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.Equal(nuevoEmail, resultado.Value.Email);
+            _usuarioRepositoryMock.Verify(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()), Times.Once);
+            _usuarioRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+        
+        [Fact]
+        public async Task ActualizarEmailUsuarioAsync_DebeLanzarExcepcion_CuandoEmailEsInvalido()
+        {
+            // Arrange
+            var usuarioId = Guid.NewGuid();
+            var nuevoEmail = "email-invalido"; // Email inválido
+            
+            var nombreUsuario = "usuario_test";
+            var nombreCompleto = "Usuario Test";
+            var emailActual = Email.Create("viejo.email@test.com");
+            var usuario = Usuario.Crear(nombreUsuario, nombreCompleto, emailActual, RolUsuario.Cajero);
+            
+            // Establecer ID manualmente para pruebas
+            var propiedadId = usuario.GetType().GetProperty("Id");
+            if (propiedadId != null && propiedadId.CanWrite)
+            {
+                propiedadId.SetValue(usuario, usuarioId);
+            }
+            
+            _usuarioRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(usuario);
+                
+            // Crear un NotificationManager real específico para esta prueba
+            var notificationManager = new NotificationManager();
+            
+            // Crear una instancia específica de CoreServiceFacade para esta prueba
+            var sut = new CoreServiceFacade(
+                _productoRepositoryMock.Object,
+                _productoCategoriaRepositoryMock.Object,
+                _recetaRepositoryMock.Object,
+                _usuarioRepositoryMock.Object,
+                _rolRepositoryMock.Object,
+                _notificacionRepositoryMock.Object,
+                _productoCategoriaServiceMock.Object,
+                _recetaServiceMock.Object,
+                _notificationServiceMock.Object,
+                _dateTimeServiceMock.Object,
+                notificationManager);
+            
+            // Act
+            var resultado = await sut.ActualizarEmailUsuarioAsync(usuarioId, nuevoEmail);
+            
+            // Assert
+            Assert.False(resultado.Succeeded);
+            Assert.Null(resultado.Value);
+            _usuarioRepositoryMock.Verify(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()), Times.Once);
+            _usuarioRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+        
+        [Fact]
+        public async Task CambiarEstadoUsuarioAsync_DebeActivarUsuario_CuandoActivarEsTrue()
+        {
+            // Arrange
+            var usuarioId = Guid.NewGuid();
+            var nombreUsuario = "usuario_test";
+            var nombreCompleto = "Usuario Test";
+            var email = "usuario@test.com";
+            var usuario = Usuario.Crear(nombreUsuario, nombreCompleto, email, RolUsuario.Cajero);
+            usuario.Desactivar(); // Aseguramos que el usuario está desactivado inicialmente
+            
+            _usuarioRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(usuario);
+            
+            // Act
+            var resultado = await _sut.CambiarEstadoUsuarioAsync(usuarioId, true);
+            
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.Equal(EstadoUsuario.Activo, resultado.Value.Estado);
+            _usuarioRepositoryMock.Verify(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()), Times.Once);
+            _usuarioRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+        
+        [Fact]
+        public async Task CambiarEstadoUsuarioAsync_DebeDesactivarUsuario_CuandoActivarEsFalse()
+        {
+            // Arrange
+            var usuarioId = Guid.NewGuid();
+            var nombreUsuario = "usuario_test";
+            var nombreCompleto = "Usuario Test";
+            var email = "usuario@test.com";
+            var usuario = Usuario.Crear(nombreUsuario, nombreCompleto, email, RolUsuario.Cajero);
+            usuario.ConfirmarCuenta(); // Confirmamos la cuenta para que esté activa
+            
+            _usuarioRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(usuario);
+            
+            // Act
+            var resultado = await _sut.CambiarEstadoUsuarioAsync(usuarioId, false);
+            
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.Equal(EstadoUsuario.Inactivo, resultado.Value.Estado);
+            _usuarioRepositoryMock.Verify(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()), Times.Once);
+            _usuarioRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+        
+        [Fact]
+        public async Task LimpiarRolesUsuarioAsync_DebeLimpiarRoles_YAsignarRolPredeterminado()
+        {
+            // Arrange
+            var usuarioId = Guid.NewGuid();
+            var rolPredeterminado = "Cajero"; // Este nombre debe coincidir con un valor del enum RolUsuario
+            
+            var nombreUsuario = "usuario_test";
+            var nombreCompleto = "Usuario Test";
+            var email = "usuario@test.com";
+            var usuario = Usuario.Crear(nombreUsuario, nombreCompleto, email, RolUsuario.Administrador);
+            usuario.AsignarRol(RolUsuario.Mesero);
+            usuario.AsignarRol(RolUsuario.Cocinero);
+            
+            _usuarioRepositoryMock
+                .Setup(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(usuario);
+            
+            // No necesitamos configurar _rolRepositoryMock ya que la implementación usa Enum.TryParse
+                
+            // Act
+            var resultado = await _sut.LimpiarRolesUsuarioAsync(usuarioId, rolPredeterminado);
+            
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.Contains(resultado.Value.Roles, r => r == RolUsuario.Cajero);
+            Assert.Single(resultado.Value.Roles); // Solo debe tener el rol predeterminado
+            _usuarioRepositoryMock.Verify(r => r.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()), Times.Once);
+            _usuarioRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Once);
         }
         
         #endregion
