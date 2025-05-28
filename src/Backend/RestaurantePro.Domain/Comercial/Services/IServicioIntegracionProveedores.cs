@@ -14,5 +14,15 @@ namespace RestaurantePro.Domain.Comercial.Services
         Task<Result<bool>> ProcesarOrdenCompraAprobadaAsync(
             OrdenCompraAprobada evento,
             CancellationToken cancellationToken = default);
+            
+        /// <summary>
+        /// Sincroniza información de un proveedor entre el contexto de Proveedores y Comercial
+        /// </summary>
+        /// <param name="proveedorId">ID del proveedor a sincronizar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con información del procesamiento</returns>
+        Task<Result<bool>> SincronizarInformacionProveedorAsync(
+            Guid proveedorId,
+            CancellationToken cancellationToken = default);
     }
 } 

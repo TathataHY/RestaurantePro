@@ -399,6 +399,34 @@ namespace RestaurantePro.Domain.Core.Services
             return resultado.Succeeded ? resultado.Value : Productos.ValueObjects.RentabilidadProducto.Calcular(0m, 0m);
         }
 
+        /// <inheritdoc/>
+        public async Task<Inventario.Ingredientes.Entities.Ingrediente?> BuscarSustitutoIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default)
+        {
+            var resultado = await _recetaService.BuscarSustitutoIngredienteAsync(ingredienteId, cancellationToken);
+            
+            if (!resultado.Succeeded)
+            {
+                if (resultado.Errors != null && resultado.Errors.Any())
+                {
+                    foreach (var error in resultado.Errors)
+                    {
+                        _notificationManager.AddError(error, "ERR001", "Ingrediente");
+                    }
+                }
+                else if (!string.IsNullOrEmpty(resultado.Error))
+                {
+                    _notificationManager.AddError(resultado.Error, "ERR001", "Ingrediente");
+                }
+                else
+                {
+                    _notificationManager.AddError("Error desconocido al buscar sustituto de ingrediente", "ERR001", "Ingrediente");
+                }
+                return null;
+            }
+            
+            return resultado.Value;
+        }
+
         // Método auxiliar para obtener nombre de ingrediente
         private async Task<string?> ObtenerNombreIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken)
         {

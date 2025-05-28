@@ -68,5 +68,13 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>True si existe, false en caso contrario</returns>
         Task<bool> ExisteNumeroFacturaAsync(string numeroFactura, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene las facturas pendientes de un proveedor específico
+        /// </summary>
+        /// <param name="proveedorId">Identificador del proveedor</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de facturas pendientes del proveedor</returns>
+        Task<IEnumerable<Factura>> ObtenerFacturasPendientesPorProveedorAsync(Guid proveedorId, CancellationToken cancellationToken = default);
     }
 } 

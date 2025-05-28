@@ -8,24 +8,18 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
         IDomainEventHandler<Comandas.Events.ItemComanda.ItemComandaCreado>,
         IDomainEventHandler<Comandas.Events.ItemComanda.ProductoEliminadoDeComanda>
     {
-        private readonly IComandaRepository _comandaRepository;
-        private readonly IIngredienteRepository _ingredienteRepository;
+        private readonly Services.IOperacionesInventarioIntegrationService _integrationService;
         private readonly IDomainEventRegistry _eventRegistry;
         private readonly IDateTimeService _dateTimeService;
-        private readonly IRecetaService _recetaService;
 
         public ComandaModificada_ActualizarInventarioHandler(
-            IComandaRepository comandaRepository,
-            IIngredienteRepository ingredienteRepository,
+            Services.IOperacionesInventarioIntegrationService integrationService,
             IDomainEventRegistry eventRegistry,
-            IDateTimeService dateTimeService,
-            IRecetaService recetaService = null) // Opcional para permitir inyección en tests
+            IDateTimeService dateTimeService)
         {
-            _comandaRepository = comandaRepository ?? throw new ArgumentNullException(nameof(comandaRepository));
-            _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
+            _integrationService = integrationService ?? throw new ArgumentNullException(nameof(integrationService));
             _eventRegistry = eventRegistry ?? throw new ArgumentNullException(nameof(eventRegistry));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
-            _recetaService = recetaService; // Puede ser null en tests
         }
 
         /// <summary>
@@ -36,47 +30,19 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
             // Registrar el evento para trazabilidad
             await _eventRegistry.RegisterAsync(evento, cancellationToken);
 
-            // Obtener la comanda
-            var comanda = await _comandaRepository.ObtenerPorIdAsync(evento.ComandaId, cancellationToken);
-            if (comanda == null)
+            // Usar el servicio de integración para reservar los ingredientes
+            var resultado = await _integrationService.ReservarIngredientesComandaAsync(
+                evento.ComandaId, cancellationToken);
+                
+            if (!resultado.Succeeded)
             {
-                // No se encontró la comanda, esto no debería ocurrir
+                // Hubo un error al reservar los ingredientes
                 // En un caso real, se debería loggear este error
-                return;
+                Console.WriteLine($"Error al reservar ingredientes: {string.Join(", ", resultado.Errors)}");
             }
-
-            // Obtener los ingredientes necesarios para el producto
-            var resultadoIngredientes = await _recetaService.ObtenerIngredientesParaProductoAsync(
-                evento.ProductoId, cancellationToken);
-
-            if (!resultadoIngredientes.Succeeded || resultadoIngredientes.Value == null || !resultadoIngredientes.Value.Any())
+            else
             {
-                // Este producto no tiene ingredientes registrados o hubo un error
-                return;
-            }
-
-            var ingredientesProducto = resultadoIngredientes.Value;
-
-            // Decrementar el stock de cada ingrediente
-            foreach (var ingrediente in ingredientesProducto)
-            {
-                var ingredienteId = ingrediente.Key;
-                var cantidadPorUnidad = ingrediente.Value;
-                var cantidadTotal = cantidadPorUnidad * evento.Cantidad;
-
-                // Obtener el ingrediente
-                var ingredienteEntity = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteId, cancellationToken);
-                if (ingredienteEntity == null)
-                {
-                    // Ingrediente no encontrado, esto es un error pero continuamos con los demás
-                    continue;
-                }
-
-                // Decrementar el stock
-                ingredienteEntity.DecrementarStock(cantidadTotal, $"Comanda #{evento.ComandaId}: {evento.Cantidad} x {evento.NombreProducto}");
-
-                // Guardar el ingrediente actualizado
-                await _ingredienteRepository.ActualizarAsync(ingredienteEntity, cancellationToken);
+                Console.WriteLine($"Ingredientes reservados correctamente para comanda {evento.ComandaId}");
             }
         }
 
@@ -88,40 +54,21 @@ namespace RestaurantePro.Domain.Operaciones.EventHandlers
             // Registrar el evento para trazabilidad
             await _eventRegistry.RegisterAsync(evento, cancellationToken);
 
-            // Obtener los ingredientes necesarios para el producto
-            var resultadoIngredientes = await _recetaService.ObtenerIngredientesParaProductoAsync(
-                evento.ProductoId, cancellationToken);
-
-            if (!resultadoIngredientes.Succeeded || resultadoIngredientes.Value == null || !resultadoIngredientes.Value.Any())
+            // Usar el servicio de integración para liberar los ingredientes
+            var resultado = await _integrationService.LiberarReservaIngredientesAsync(
+                evento.ComandaId,
+                evento.Motivo,
+                cancellationToken);
+                
+            if (!resultado.Succeeded)
             {
-                // Este producto no tiene ingredientes registrados o hubo un error
-                return;
+                // Hubo un error al liberar los ingredientes
+                // En un caso real, se debería loggear este error
+                Console.WriteLine($"Error al liberar ingredientes: {string.Join(", ", resultado.Errors)}");
             }
-
-            var ingredientesProducto = resultadoIngredientes.Value;
-
-            // Incrementar el stock de cada ingrediente (reembolso por eliminación)
-            foreach (var ingrediente in ingredientesProducto)
+            else
             {
-                var ingredienteId = ingrediente.Key;
-                var cantidadPorUnidad = ingrediente.Value;
-                var cantidadTotal = cantidadPorUnidad * evento.Cantidad;
-
-                // Obtener el ingrediente
-                var ingredienteEntity = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteId, cancellationToken);
-                if (ingredienteEntity == null)
-                {
-                    // Ingrediente no encontrado, esto es un error pero continuamos con los demás
-                    continue;
-                }
-
-                // Incrementar el stock (devolver los ingredientes al inventario)
-                ingredienteEntity.IncrementarStock(
-                    cantidadTotal, 
-                    $"Devolución por cancelación: Comanda #{evento.ComandaId}: {evento.Cantidad} x {evento.NombreProducto}. Motivo: {evento.Motivo}");
-
-                // Guardar el ingrediente actualizado
-                await _ingredienteRepository.ActualizarAsync(ingredienteEntity, cancellationToken);
+                Console.WriteLine($"Ingredientes liberados correctamente para comanda {evento.ComandaId}");
             }
         }
     }

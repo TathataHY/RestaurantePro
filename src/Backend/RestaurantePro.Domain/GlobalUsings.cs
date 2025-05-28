@@ -20,6 +20,9 @@ global using e = RestaurantePro.Domain.Core.SharedKernel.Validation.Error;
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
 
+// Microsoft
+global using Microsoft.Extensions.Logging;
+
 // Domain Base
 global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;

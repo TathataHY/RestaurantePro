@@ -244,5 +244,46 @@ namespace RestaurantePro.Domain.Core.Productos.Services
             _cacheService.InvalidatePattern($"{CacheKeyPrefix}CalcularCostoReceta_{productoId}");
             _cacheService.InvalidatePattern($"{CacheKeyPrefix}CalcularRentabilidadProducto_{productoId}");
         }
+        
+        /// <inheritdoc/>
+        public async Task<Result<Inventario.Ingredientes.Entities.Ingrediente>> BuscarSustitutoIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.Require(ingredienteId != Guid.Empty, "El ID del ingrediente no puede estar vacío", "IngredienteId");
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<Inventario.Ingredientes.Entities.Ingrediente>(null);
+            }
+            
+            var cacheKey = $"{CacheKeyPrefix}BuscarSustitutoIngrediente_{ingredienteId}";
+            
+            try
+            {
+                // Cachear los resultados de búsqueda de sustitutos por 30 minutos (la mitad del tiempo normal)
+                return await _cacheService.GetOrAddAsync(
+                    cacheKey,
+                    async (ct) => await _recetaServiceOriginal.BuscarSustitutoIngredienteAsync(ingredienteId, ct),
+                    CacheDurationMinutes / 2, // Menos tiempo de caché para información de sustitutos
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al buscar sustituto desde caché: {ex.Message}", "Cache");
+                
+                try
+                {
+                    // Si hay un problema con la caché, intentamos obtener directamente
+                    return await _recetaServiceOriginal.BuscarSustitutoIngredienteAsync(ingredienteId, cancellationToken);
+                }
+                catch (Exception innerEx)
+                {
+                    _notificationManager.AddError($"Error al buscar sustituto: {innerEx.Message}", "RecetaService");
+                    return _notificationManager.ToResult<Inventario.Ingredientes.Entities.Ingrediente>(null);
+                }
+            }
+        }
     }
 } 

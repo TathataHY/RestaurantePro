@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
 {
     /// <summary>
@@ -92,6 +91,14 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de ingredientes con stock bajo</returns>
         Task<IEnumerable<Ingrediente>> ObtenerIngredientesConStockBajoAsync(CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Busca ingredientes por categoría o tipo
+        /// </summary>
+        /// <param name="categoria">Categoría o tipo de ingrediente</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de ingredientes de la categoría especificada</returns>
+        Task<IEnumerable<Ingrediente>> BuscarPorCategoriaAsync(string categoria, CancellationToken cancellationToken = default);
     }
 }
 

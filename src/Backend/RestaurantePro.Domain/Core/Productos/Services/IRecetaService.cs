@@ -46,5 +46,13 @@ namespace RestaurantePro.Domain.Core.Productos.Services
         /// <param name="cancellationToken">Token de cancelación.</param>
         /// <returns>Resultado con objeto ValueObject con información detallada sobre la rentabilidad.</returns>
         Task<Result<ValueObjects.RentabilidadProducto>> CalcularRentabilidadProductoAsync(Guid productoId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Busca un ingrediente sustituto cuando el ingrediente original no tiene stock suficiente.
+        /// </summary>
+        /// <param name="ingredienteId">ID del ingrediente original.</param>
+        /// <param name="cancellationToken">Token de cancelación.</param>
+        /// <returns>Resultado con el ingrediente sustituto si se encuentra, null en caso contrario.</returns>
+        Task<Result<Inventario.Ingredientes.Entities.Ingrediente>> BuscarSustitutoIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default);
     }
 } 

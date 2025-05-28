@@ -142,6 +142,12 @@ namespace RestaurantePro.Domain.Core
             // Registramos el servicio de integración de proveedores-comercial (trasladado desde Core a Comercial)
             services.AddScoped<Comercial.Services.IServicioIntegracionProveedores, Comercial.Services.ServicioIntegracionProveedores>();
             
+            // Registro de servicio de integración entre Core y Operaciones
+            services.AddScoped<Core.Services.ICoreOperacionesIntegrationService, Core.Services.CoreOperacionesIntegrationService>();
+            
+            // Registro de servicio de integración entre Operaciones e Inventario
+            services.AddScoped<Operaciones.Services.IOperacionesInventarioIntegrationService, Operaciones.Services.OperacionesInventarioIntegrationService>();
+            
             // Registrar manejadores de eventos de integración
             services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_NotificacionProveedorHandler>();
             services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_ActualizarEstadisticasProveedorHandler>();
@@ -269,6 +275,12 @@ namespace RestaurantePro.Domain.Core
             
             // Registrar mocks de interfaces de fachada para pruebas
             // Aquí se pueden usar implementaciones simuladas para pruebas
+            
+            // Registro de servicio de integración entre Core y Operaciones para pruebas
+            services.AddScoped<Core.Services.ICoreOperacionesIntegrationService, Core.Services.CoreOperacionesIntegrationService>();
+            
+            // Registro de servicio de integración entre Operaciones e Inventario para pruebas
+            services.AddScoped<Operaciones.Services.IOperacionesInventarioIntegrationService, Operaciones.Services.OperacionesInventarioIntegrationService>();
             
             // Agregar el registro del servicio de usuarios con caché para pruebas
             services.AddScoped<Usuarios.Services.UsuarioService>(); // Implementación original

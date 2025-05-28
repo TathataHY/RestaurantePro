@@ -141,6 +141,16 @@ namespace RestaurantePro.Domain.Core.Services
         Task<Productos.ValueObjects.RentabilidadProducto> CalcularRentabilidadProductoAsync(
             Guid productoId,
             CancellationToken cancellationToken = default);
+            
+        /// <summary>
+        /// Busca un ingrediente sustituto cuando el ingrediente original no tiene stock suficiente
+        /// </summary>
+        /// <param name="ingredienteId">ID del ingrediente original</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Ingrediente sustituto si se encuentra, null en caso contrario</returns>
+        Task<Inventario.Ingredientes.Entities.Ingrediente?> BuscarSustitutoIngredienteAsync(
+            Guid ingredienteId,
+            CancellationToken cancellationToken = default);
         
         #endregion
         

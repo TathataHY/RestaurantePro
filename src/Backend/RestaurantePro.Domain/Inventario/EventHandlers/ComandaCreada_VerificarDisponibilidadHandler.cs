@@ -6,26 +6,17 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
     /// </summary>
     public class ComandaCreada_VerificarDisponibilidadHandler : IDomainEventHandler<ComandaCreada>
     {
-        private readonly IIngredienteRepository _ingredienteRepository;
-        private readonly IComandaRepository _comandaRepository;
-        private readonly IProductoRepository _productoRepository;
-        private readonly IProductoIngredienteRepository _productoIngredienteRepository;
+        private readonly Operaciones.Services.IOperacionesInventarioIntegrationService _integrationService;
         private readonly IDomainEventRegistry _eventRegistry;
         
         /// <summary>
         /// Constructor
         /// </summary>
         public ComandaCreada_VerificarDisponibilidadHandler(
-            IIngredienteRepository ingredienteRepository,
-            IComandaRepository comandaRepository,
-            IProductoRepository productoRepository,
-            IProductoIngredienteRepository productoIngredienteRepository,
+            Operaciones.Services.IOperacionesInventarioIntegrationService integrationService,
             IDomainEventRegistry eventRegistry)
         {
-            _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
-            _comandaRepository = comandaRepository ?? throw new ArgumentNullException(nameof(comandaRepository));
-            _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
-            _productoIngredienteRepository = productoIngredienteRepository ?? throw new ArgumentNullException(nameof(productoIngredienteRepository));
+            _integrationService = integrationService ?? throw new ArgumentNullException(nameof(integrationService));
             _eventRegistry = eventRegistry ?? throw new ArgumentNullException(nameof(eventRegistry));
         }
         
@@ -39,112 +30,35 @@ namespace RestaurantePro.Domain.Inventario.EventHandlers
                 string logMessage = $"===== Iniciando verificación de disponibilidad para comanda {evento.ComandaId} =====";
                 Console.WriteLine(logMessage);
                 
-                // Obtener la comanda completa
-                var comanda = await _comandaRepository.ObtenerPorIdAsync(evento.ComandaId, cancellationToken);
-                if (comanda == null)
+                // Usar el servicio de integración para verificar disponibilidad
+                var resultado = await _integrationService.VerificarDisponibilidadIngredientesComandaAsync(
+                    evento.ComandaId, 
+                    cancellationToken);
+                
+                if (!resultado.Succeeded)
                 {
-                    string errorMsg = $"No se encontró la comanda con ID {evento.ComandaId}";
+                    logMessage = $"Error al verificar disponibilidad: {string.Join(", ", resultado.Errors)}";
+                    Console.WriteLine(logMessage);
                     await _eventRegistry.RegisterAsync(evento, cancellationToken);
                     return;
                 }
                 
-                logMessage = $"Comanda encontrada: ID={comanda.Id}, Items: {comanda.Items?.Count ?? 0}";
-                Console.WriteLine(logMessage);
-                
-                // Verificar que la comanda tenga items
-                if (comanda.Items == null || !comanda.Items.Any())
-                {
-                    logMessage = "La comanda no tiene items, nada que verificar";
-                    Console.WriteLine(logMessage);
-                    return;
-                }
-                
-                // Lista para almacenar cualquier ingrediente con stock insuficiente
-                var ingredientesInsuficientes = new List<(string Nombre, decimal StockActual, decimal StockNecesario)>();
-                
-                // Procesar todos los items de la comanda
-                foreach (var item in comanda.Items)
-                {
-                    logMessage = $"Verificando item: ProductoId={item.ProductoId}, Cantidad={item.Cantidad}";
-                    Console.WriteLine(logMessage);
-                    
-                    // Obtener el producto
-                    var producto = await _productoRepository.ObtenerPorIdAsync(item.ProductoId, cancellationToken);
-                    if (producto == null)
-                    {
-                        string errorMsg = $"No se encontró el producto con ID {item.ProductoId}";
-                        await _eventRegistry.RegisterAsync(evento, cancellationToken);
-                        continue;
-                    }
-                    
-                    logMessage = $"Producto encontrado: {producto.Nombre} (ID={producto.Id})";
-                    Console.WriteLine(logMessage);
-                    
-                    // Obtener los ingredientes necesarios para el producto
-                    Console.WriteLine($"Buscando ingredientes para el producto {producto.Id}...");
-                    var ingredientes = await _ingredienteRepository.ObtenerIngredientesPorProductoAsync(producto.Id, cancellationToken);
-                    
-                    Console.WriteLine($"Resultado de ObtenerIngredientesPorProductoAsync: {(ingredientes == null ? "NULL" : ingredientes.Count().ToString())} ingredientes");
-                    
-                    if (ingredientes == null || !ingredientes.Any())
-                    {
-                        logMessage = $"No se encontraron ingredientes para el producto {producto.Nombre}";
-                        Console.WriteLine(logMessage);
-                        await _eventRegistry.RegisterAsync(evento, cancellationToken);
-                        continue;
-                    }
-                    
-                    logMessage = $"Se encontraron {ingredientes.Count()} ingredientes para el producto {producto.Nombre}";
-                    Console.WriteLine(logMessage);
-                    
-                    // Verificar el stock disponible para cada ingrediente
-                    foreach (var ingrediente in ingredientes)
-                    {
-                        logMessage = $"Verificando ingrediente: {ingrediente.Nombre} (ID={ingrediente.Id}), Stock={ingrediente.Stock}";
-                        Console.WriteLine(logMessage);
-                        
-                        // Obtener la cantidad necesaria del ingrediente por unidad de producto
-                        var productoIngrediente = await _productoIngredienteRepository.ObtenerPorProductoEIngredienteAsync(
-                            producto.Id, ingrediente.Id, cancellationToken);
-                            
-                        if (productoIngrediente == null)
-                        {
-                            logMessage = $"No se encontró la relación producto-ingrediente para {producto.Id} e {ingrediente.Id}";
-                            Console.WriteLine(logMessage);
-                            await _eventRegistry.RegisterAsync(evento, cancellationToken);
-                            continue;
-                        }
-                        
-                        // Calcular la cantidad total necesaria
-                        decimal cantidadNecesaria = productoIngrediente.Cantidad * item.Cantidad;
-                        logMessage = $"Cantidad necesaria: {cantidadNecesaria}, Stock disponible: {ingrediente.Stock}";
-                        Console.WriteLine(logMessage);
-                        
-                        // Verificar si hay suficiente stock
-                        if (ingrediente.Stock < cantidadNecesaria)
-                        {
-                            logMessage = $"¡STOCK INSUFICIENTE! Añadiendo a la lista: {ingrediente.Nombre} - Necesario: {cantidadNecesaria}, Disponible: {ingrediente.Stock}";
-                            Console.WriteLine(logMessage);
-                            ingredientesInsuficientes.Add((ingrediente.Nombre, ingrediente.Stock, cantidadNecesaria));
-                        }
-                        else
-                        {
-                            logMessage = $"Stock suficiente para {ingrediente.Nombre}";
-                            Console.WriteLine(logMessage);
-                        }
-                    }
-                }
-                
-                logMessage = $"Se encontraron {ingredientesInsuficientes.Count} ingredientes con stock insuficiente";
+                logMessage = $"Resultado de verificación: TodosDisponibles={resultado.Value.TodosDisponibles}";
                 Console.WriteLine(logMessage);
                 
                 // Si hay ingredientes con stock insuficiente, registrar una advertencia
-                if (ingredientesInsuficientes.Any())
+                if (!resultado.Value.TodosDisponibles)
                 {
                     var mensaje = $"Advertencia: stock insuficiente para comanda {evento.ComandaId}:\n";
-                    foreach (var item in ingredientesInsuficientes)
+                    
+                    foreach (var item in resultado.Value.IngredientesFaltantes)
                     {
-                        mensaje += $"- {item.Nombre}: Stock actual {item.StockActual}, Necesario {item.StockNecesario}\n";
+                        mensaje += $"- {item.Key}: Faltante {item.Value}\n";
+                    }
+                    
+                    foreach (var item in resultado.Value.ProductosNoDisponibles)
+                    {
+                        mensaje += $"- Producto {item.Key}: {item.Value}\n";
                     }
                     
                     logMessage = $"Generando advertencia: {mensaje}";

@@ -104,6 +104,77 @@ namespace RestaurantePro.Domain.Comercial.Services
         }
         
         /// <summary>
+        /// Sincroniza información de un proveedor entre el contexto de Proveedores y Comercial.
+        /// Asegura que ambos contextos tengan información consistente sobre el proveedor.
+        /// </summary>
+        /// <param name="proveedorId">ID del proveedor a sincronizar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con información del procesamiento</returns>
+        public async Task<Result<bool>> SincronizarInformacionProveedorAsync(
+            Guid proveedorId,
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.Require(proveedorId != Guid.Empty, "El ID del proveedor no puede estar vacío", "ProveedorId");
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<bool>(false);
+            }
+            
+            try
+            {
+                // 1. Obtener el proveedor del contexto de Proveedores
+                var proveedor = await _proveedorRepository.ObtenerPorIdAsync(
+                    proveedorId, cancellationToken);
+                    
+                if (proveedor == null)
+                {
+                    _notificationManager.AddError($"No se encontró el proveedor con ID {proveedorId}", "Proveedor");
+                    return _notificationManager.ToResult<bool>(false);
+                }
+                
+                // 2. Actualizar datos de contacto en el sistema de facturación si es necesario
+                await ActualizarDatosContactoProveedorAsync(proveedor, cancellationToken);
+                
+                // 3. Verificar si hay facturas pendientes para este proveedor
+                var facturasPendientes = await _facturaRepository.ObtenerFacturasPendientesPorProveedorAsync(
+                    proveedorId, cancellationToken);
+                
+                // 4. Verificar si hay pagos pendientes que deban ser gestionados
+                if (facturasPendientes.Any())
+                {
+                    // Aquí se implementaría la lógica para gestionar pagos pendientes
+                    // Por ahora, solo registramos la actividad
+                    _notificationManager.AddInformation(
+                        $"Proveedor {proveedor.Nombre} tiene {facturasPendientes.Count()} facturas pendientes",
+                        "SincronizarProveedor");
+                }
+                
+                return Result.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al sincronizar información del proveedor: {ex.Message}", "SincronizarProveedor");
+                return _notificationManager.ToResult<bool>(false);
+            }
+        }
+        
+        /// <summary>
+        /// Actualiza los datos de contacto del proveedor en el sistema de facturación
+        /// </summary>
+        private async Task ActualizarDatosContactoProveedorAsync(
+            Proveedor proveedor,
+            CancellationToken cancellationToken)
+        {
+            // En una implementación real, aquí se actualizarían los datos en el sistema de facturación
+            // Por ahora, es solo un método de placeholder
+            await Task.CompletedTask;
+        }
+        
+        /// <summary>
         /// Crea una factura en el contexto Comercial a partir de una orden de compra del contexto Proveedores
         /// </summary>
         private async Task<Result<Factura>> CrearFacturaDesdeOrdenCompraAsync(

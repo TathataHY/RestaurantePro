@@ -70,4 +70,11 @@ public interface INotificationManager
     /// <param name="value">Valor a incluir en el resultado</param>
     /// <returns>Un Result<T> exitoso con el valor si no hay errores, o fallido con los errores actuales</returns>
     Result<T> ToResult<T>(T value);
+    
+    /// <summary>
+    /// Añade un mensaje informativo a la notificación actual
+    /// </summary>
+    /// <param name="message">Mensaje informativo</param>
+    /// <param name="code">Código del mensaje (opcional)</param>
+    void AddInformation(string message, string? code = null);
 } 

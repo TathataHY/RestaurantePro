@@ -309,5 +309,42 @@ namespace RestaurantePro.Domain.Core.Productos.Services
             
             return Result.Success(rentabilidad);
         }
+        
+        public async Task<Result<Inventario.Ingredientes.Entities.Ingrediente>> BuscarSustitutoIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default)
+        {
+            if (ingredienteId == Guid.Empty)
+            {
+                _notificationManager.AddError("El ID del ingrediente no puede estar vacío", "ERR001", "IngredienteId");
+                return Result.Failure<Inventario.Ingredientes.Entities.Ingrediente>(_notificationManager.GetErrors().Select(e => e.Message).ToList());
+            }
+            
+            // Obtener el ingrediente original
+            var ingredienteOriginal = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteId, false, cancellationToken);
+            if (ingredienteOriginal == null)
+            {
+                _notificationManager.AddError($"No se encontró el ingrediente con ID {ingredienteId}", "ERR002", "IngredienteId");
+                return Result.Failure<Inventario.Ingredientes.Entities.Ingrediente>(_notificationManager.GetErrors().Select(e => e.Message).ToList());
+            }
+            
+            // Extraer la categoría del ingrediente (por simplicidad, tomamos la primera palabra del nombre)
+            var categoriaProbable = ingredienteOriginal.Nombre.Split(' ')[0];
+            
+            // Buscar ingredientes similares por categoría
+            var ingredientesSimilares = await _ingredienteRepository.BuscarPorCategoriaAsync(categoriaProbable, cancellationToken);
+            
+            // Filtrar solo aquellos con stock suficiente y que no sean el original
+            var sustitutosPosibles = ingredientesSimilares
+                .Where(i => i.Id != ingredienteOriginal.Id && i.Stock > ingredienteOriginal.Stock)
+                .OrderByDescending(i => i.Stock)
+                .ToList();
+                
+            if (!sustitutosPosibles.Any())
+            {
+                return Result.Success<Inventario.Ingredientes.Entities.Ingrediente>(null);
+            }
+            
+            // Retornar el mejor sustituto (el que tiene más stock)
+            return Result.Success(sustitutosPosibles.First());
+        }
     }
 } 

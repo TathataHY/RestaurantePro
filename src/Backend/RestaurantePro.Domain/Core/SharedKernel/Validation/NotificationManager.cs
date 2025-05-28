@@ -1,4 +1,5 @@
 namespace RestaurantePro.Domain.Core.SharedKernel.Validation;
+using System.Diagnostics;
 
 /// <summary>
 /// Implementación del gestor central de notificaciones de la aplicación
@@ -113,5 +114,18 @@ public class NotificationManager : INotificationManager
     public Result<T> ToResult<T>(T value)
     {
         return _currentNotification.ToResult(value);
+    }
+    
+    /// <summary>
+    /// Añade un mensaje informativo a la notificación actual
+    /// </summary>
+    /// <param name="message">Mensaje informativo</param>
+    /// <param name="code">Código del mensaje (opcional)</param>
+    public void AddInformation(string message, string? code = null)
+    {
+        // En esta implementación simple, solo guardamos la información en el log
+        // En una implementación más completa, podríamos guardar los mensajes informativos
+        // en la notificación actual
+        Debug.WriteLine($"INFO: [{code ?? "INFO"}] {message}");
     }
 } 
