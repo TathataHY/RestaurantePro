@@ -1,3 +1,14 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using FluentAssertions;
+using Moq;
+using Xunit;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+using RestaurantePro.Domain.Inventario.Services;
+using RestaurantePro.Domain.Inventario.Results;
+
 namespace RestaurantePro.Domain.UnitTests.Inventario.Services
 {
     public class VerificadorStockCachedTests
@@ -31,7 +42,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(resultSuccess);
                 
             // Act
-            var result = await _verificadorStockCached.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorStockCached.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
             
             // Assert
             result.Should().NotBeNull();
@@ -89,7 +100,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(expectedResult);
                 
             // Act
-            var result = await _verificadorStockCached.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorStockCached.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
             
             // Assert
             result.Should().NotBeNull();
@@ -118,7 +129,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 .ReturnsAsync(expectedResult);
                 
             // Act
-            var result = await _verificadorStockCached.VerificarYGenerarOrdenesCompraAsync();
+            var result = await _verificadorStockCached.VerificarYGenerarOrdenesCompraAsync(_cancellationToken);
             
             // Assert
             result.Should().NotBeNull();

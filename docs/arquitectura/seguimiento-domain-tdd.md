@@ -306,6 +306,7 @@ Se ha completado la estandarización de eventos de dominio siguiendo estas regla
 | 2025-01-26 | Adaptación de ServicioFacturacion y ServicioGestionFacturasVencidas a patrones Result y Notification | Análisis → Diseño → Implementación |
 | 2025-01-27 | Adaptación de ProveedoresComercialIntegrationService a patrones Result y Notification | Análisis → Diseño → Implementación |
 | 2025-12-01 | Corrección de errores de compilación en CoreServiceFacade y OrdenCompra | Análisis → Implementación → Refactor |
+| 2025-12-05 | Corrección de errores en pruebas de StockBajoPolicyTests | Pruebas → Implementación → Refactor |
 
 ## Mejoras Recientes en la Arquitectura
 

@@ -1,27 +1,6 @@
 namespace RestaurantePro.Domain.Inventario.Services
 {
     /// <summary>
-    /// Clase que representa el resultado de la verificación de stock
-    /// </summary>
-    public class ResultadoVerificacionStock
-    {
-        /// <summary>
-        /// Órdenes de compra generadas durante la verificación
-        /// </summary>
-        public List<OrdenCompra> OrdenesGeneradas { get; } = new List<OrdenCompra>();
-        
-        /// <summary>
-        /// Órdenes de compra existentes que fueron actualizadas
-        /// </summary>
-        public List<OrdenCompra> OrdenesActualizadas { get; } = new List<OrdenCompra>();
-        
-        /// <summary>
-        /// Errores ocurridos durante la verificación
-        /// </summary>
-        public List<string> Errores { get; } = new List<string>();
-    }
-    
-    /// <summary>
     /// Servicio de dominio que verifica el stock de ingredientes y genera órdenes de compra automáticas
     /// </summary>
     public class VerificadorStock : IVerificadorStock
