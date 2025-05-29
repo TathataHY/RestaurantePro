@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Core.Productos.Builders;
+
 namespace RestaurantePro.Domain.Core.Services
 {
     /// <summary>
@@ -16,6 +18,7 @@ namespace RestaurantePro.Domain.Core.Services
         private readonly SharedKernel.Services.Notification.IEventBasedNotificationService _notificationService;
         private readonly Core.Base.Services.IDateTimeService _dateTimeService;
         private readonly SharedKernel.Validation.INotificationManager _notificationManager;
+        private readonly ILogger<ProductoBuilder> _productoBuilderLogger;
 
         /// <summary>
         /// Constructor con inyección de dependencias
@@ -31,7 +34,8 @@ namespace RestaurantePro.Domain.Core.Services
             Productos.Services.IRecetaService recetaService,
             SharedKernel.Services.Notification.IEventBasedNotificationService notificationService,
             Core.Base.Services.IDateTimeService dateTimeService,
-            SharedKernel.Validation.INotificationManager notificationManager)
+            SharedKernel.Validation.INotificationManager notificationManager,
+            ILogger<ProductoBuilder> productoBuilderLogger)
         {
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
             _productoCategoriaRepository = productoCategoriaRepository ?? throw new ArgumentNullException(nameof(productoCategoriaRepository));
@@ -44,6 +48,7 @@ namespace RestaurantePro.Domain.Core.Services
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
+            _productoBuilderLogger = productoBuilderLogger ?? throw new ArgumentNullException(nameof(productoBuilderLogger));
         }
 
         #region Productos
@@ -63,33 +68,26 @@ namespace RestaurantePro.Domain.Core.Services
             string? categoriaNombre = null, 
             CancellationToken cancellationToken = default)
         {
-            _notificationManager.CreateNewNotification();
-            
-            // Validaciones básicas
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(nombre), "El nombre del producto no puede estar vacío", "Nombre");
-            _notificationManager.Require(precio > 0, "El precio debe ser mayor a cero", "Precio");
-            
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<Productos.Entities.Producto>(null);
-            }
+            // Limpiar notificaciones previas
+            _notificationManager.ClearErrors();
 
-            // Obtener o crear categoría si es necesario
-            Guid efectivaCategoriaId;
-            
             try
             {
+                // Obtener o crear categoría si es necesario
+                Guid efectivaCategoriaId;
+                string efectivaCategoriaNombre;
+                
                 if (categoriaId.HasValue)
                 {
                     // Verificar que la categoría existe
                     var categoria = await _productoCategoriaRepository.ObtenerPorIdAsync(categoriaId.Value, cancellationToken);
                     if (categoria == null)
                     {
-                        _notificationManager.AddError($"La categoría con ID {categoriaId} no existe", "CategoriaId");
-                        return _notificationManager.ToResult<Productos.Entities.Producto>(null);
+                        return Result.Failure<Productos.Entities.Producto>($"La categoría con ID {categoriaId} no existe");
                     }
                     
                     efectivaCategoriaId = categoriaId.Value;
+                    efectivaCategoriaNombre = categoria.Nombre;
                 }
                 else
                 {
@@ -105,27 +103,36 @@ namespace RestaurantePro.Domain.Core.Services
                     }
                     
                     efectivaCategoriaId = categoriaPorDefecto.Id;
+                    efectivaCategoriaNombre = categoriaPorDefecto.Nombre;
                 }
 
-                // Crear precio y producto
-                var precioProducto = new Productos.ValueObjects.PrecioProducto(precio);
-                var categoriaNombreFinal = (await _productoCategoriaRepository.ObtenerPorIdAsync(efectivaCategoriaId, cancellationToken))?.Nombre ?? "General";
+                // Usar ProductoBuilder para crear el producto con validaciones robustas
+                var builder = new ProductoBuilder(_notificationManager, _productoBuilderLogger);
                 
-                var producto = Productos.Entities.Producto.Crear(
-                    nombre,
-                    descripcion,
-                    precioProducto,
-                    efectivaCategoriaId,
-                    categoriaNombreFinal);
+                var resultado = builder
+                    .ConNombre(nombre)
+                    .ConDescripcion(descripcion)
+                    .ConPrecio(precio)
+                    .EnCategoria(efectivaCategoriaId, efectivaCategoriaNombre)
+                    .Construir();
                 
+                if (!resultado.Succeeded)
+                {
+                    return Result.Failure<Productos.Entities.Producto>($"Error al construir producto: {string.Join(", ", resultado.Errors ?? new List<string>())}");
+                }
+                
+                var producto = resultado.Value;
+                
+                // Persistir el producto
                 await _productoRepository.AgregarAsync(producto, cancellationToken);
                 
                 return Result.Success(producto);
             }
             catch (Exception ex)
             {
-                _notificationManager.AddError($"Error al registrar producto: {ex.Message}", "RegistrarProducto");
-                return _notificationManager.ToResult<Productos.Entities.Producto>(null);
+                var message = $"Error al registrar producto: {ex.Message}";
+                _notificationManager.AddError(message);
+                return Result.Failure<Productos.Entities.Producto>(message);
             }
         }
 
@@ -234,6 +241,73 @@ namespace RestaurantePro.Domain.Core.Services
             CancellationToken cancellationToken = default)
         {
             return await _productoCategoriaService.ActualizarCategoriaProductosAsync(productosIds, categoriaId, cancellationToken);
+        }
+
+        /// <summary>
+        /// Registra un nuevo producto usando el ProductoBuilder con opciones avanzadas
+        /// </summary>
+        /// <param name="nombre">Nombre del producto</param>
+        /// <param name="descripcion">Descripción del producto</param>
+        /// <param name="precio">Precio del producto</param>
+        /// <param name="categoriaId">ID de la categoría</param>
+        /// <param name="popularidadInicial">Popularidad inicial del producto (0-10)</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con el producto registrado</returns>
+        public async Task<Result<Productos.Entities.Producto>> RegistrarProductoAvanzadoAsync(
+            string nombre,
+            string descripcion,
+            decimal precio,
+            Guid categoriaId,
+            int popularidadInicial = 0,
+            CancellationToken cancellationToken = default)
+        {
+            // Limpiar notificaciones previas
+            _notificationManager.ClearErrors();
+
+            try
+            {
+                // Verificar que la categoría existe
+                var categoria = await _productoCategoriaRepository.ObtenerPorIdAsync(categoriaId, cancellationToken);
+                if (categoria == null)
+                {
+                    return Result.Failure<Productos.Entities.Producto>($"La categoría con ID {categoriaId} no existe");
+                }
+
+                // Usar ProductoBuilder para crear el producto con validaciones robustas
+                var builder = new ProductoBuilder(_notificationManager, _productoBuilderLogger);
+                
+                var builderResult = builder
+                    .ConNombre(nombre)
+                    .ConDescripcion(descripcion)
+                    .ConPrecio(precio)
+                    .EnCategoria(categoriaId, categoria.Nombre);
+
+                // Configurar popularidad inicial si se especifica
+                if (popularidadInicial > 0)
+                {
+                    builderResult.ConPopularidadInicial(popularidadInicial);
+                }
+
+                var resultado = builderResult.Construir();
+                
+                if (!resultado.Succeeded)
+                {
+                    return Result.Failure<Productos.Entities.Producto>($"Error al construir producto: {string.Join(", ", resultado.Errors ?? new List<string>())}");
+                }
+                
+                var producto = resultado.Value;
+                
+                // Persistir el producto
+                await _productoRepository.AgregarAsync(producto, cancellationToken);
+                
+                return Result.Success(producto);
+            }
+            catch (Exception ex)
+            {
+                var message = $"Error al registrar producto avanzado: {ex.Message}";
+                _notificationManager.AddError(message);
+                return Result.Failure<Productos.Entities.Producto>(message);
+            }
         }
 
         #endregion

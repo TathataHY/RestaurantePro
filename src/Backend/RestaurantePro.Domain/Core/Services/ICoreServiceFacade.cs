@@ -35,6 +35,24 @@ namespace RestaurantePro.Domain.Core.Services
             CancellationToken cancellationToken = default);
         
         /// <summary>
+        /// Registra un nuevo producto usando el ProductoBuilder con opciones avanzadas
+        /// </summary>
+        /// <param name="nombre">Nombre del producto</param>
+        /// <param name="descripcion">Descripción del producto</param>
+        /// <param name="precio">Precio del producto</param>
+        /// <param name="categoriaId">ID de la categoría</param>
+        /// <param name="popularidadInicial">Popularidad inicial del producto (0-10)</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con el producto registrado</returns>
+        Task<Result<Productos.Entities.Producto>> RegistrarProductoAvanzadoAsync(
+            string nombre,
+            string descripcion,
+            decimal precio,
+            Guid categoriaId,
+            int popularidadInicial = 0,
+            CancellationToken cancellationToken = default);
+        
+        /// <summary>
         /// Actualiza un producto existente
         /// </summary>
         /// <param name="id">ID del producto</param>

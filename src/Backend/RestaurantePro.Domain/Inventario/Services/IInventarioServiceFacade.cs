@@ -33,6 +33,34 @@ namespace RestaurantePro.Domain.Inventario.Services
             CancellationToken cancellationToken = default);
         
         /// <summary>
+        /// Registra un nuevo ingrediente usando el IngredienteBuilder con opciones avanzadas
+        /// </summary>
+        /// <param name="nombre">Nombre del ingrediente</param>
+        /// <param name="descripcion">Descripción del ingrediente</param>
+        /// <param name="unidadMedida">Unidad de medida</param>
+        /// <param name="stockMinimo">Stock mínimo</param>
+        /// <param name="stockActual">Stock actual</param>
+        /// <param name="codigo">Código personalizado (opcional - se genera automático si no se proporciona)</param>
+        /// <param name="proveedorPrincipalId">ID del proveedor principal (opcional)</param>
+        /// <param name="rotacion">Nivel de rotación del ingrediente</param>
+        /// <param name="temporada">Temporada del ingrediente</param>
+        /// <param name="costo">Costo promedio</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con el ingrediente registrado</returns>
+        Task<Result<Ingrediente>> RegistrarIngredienteAvanzadoAsync(
+            string nombre,
+            string descripcion,
+            UnidadMedida unidadMedida,
+            decimal stockMinimo,
+            decimal stockActual,
+            string? codigo = null,
+            Guid? proveedorPrincipalId = null,
+            RotacionIngrediente rotacion = RotacionIngrediente.Media,
+            TemporadaIngrediente temporada = TemporadaIngrediente.TodoElAño,
+            decimal costo = 0,
+            CancellationToken cancellationToken = default);
+        
+        /// <summary>
         /// Actualiza el stock de un ingrediente
         /// </summary>
         /// <param name="ingredienteId">ID del ingrediente</param>
@@ -62,17 +90,33 @@ namespace RestaurantePro.Domain.Inventario.Services
         #region Órdenes de Compra
         
         /// <summary>
-        /// Crea una nueva orden de compra
+        /// Crea una nueva orden de compra para el proveedor especificado
         /// </summary>
         /// <param name="proveedorId">ID del proveedor</param>
         /// <param name="fechaEntregaEstimada">Fecha estimada de entrega</param>
-        /// <param name="observaciones">Observaciones generales</param>
+        /// <param name="observaciones">Observaciones adicionales (opcional)</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Resultado con la orden de compra creada</returns>
         Task<Result<OrdenCompra>> CrearOrdenCompraAsync(
             Guid proveedorId, 
             DateTime fechaEntregaEstimada, 
             string observaciones = "", 
+            CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Crea una orden de compra usando el OrdenCompraBuilder con múltiples ítems
+        /// </summary>
+        /// <param name="proveedorId">ID del proveedor</param>
+        /// <param name="fechaEntregaEstimada">Fecha estimada de entrega</param>
+        /// <param name="items">Lista de ítems a incluir en la orden (ingredienteId, cantidad, precioUnitario)</param>
+        /// <param name="observaciones">Observaciones (opcional)</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la orden de compra creada</returns>
+        Task<Result<OrdenCompra>> CrearOrdenCompraAvanzadaAsync(
+            Guid proveedorId,
+            DateTime fechaEntregaEstimada,
+            List<(Guid ingredienteId, decimal cantidad, decimal precioUnitario)> items,
+            string observaciones = "",
             CancellationToken cancellationToken = default);
         
         /// <summary>

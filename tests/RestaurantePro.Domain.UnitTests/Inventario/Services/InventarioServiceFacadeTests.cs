@@ -33,6 +33,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         private readonly Mock<IStockBajoPolicy> _mockStockBajoPolicy;
         private readonly Mock<IDateTimeService> _mockDateTimeService;
         private readonly Mock<ILogger<OrdenCompraBuilder>> _mockOrdenCompraBuilderLogger;
+        private readonly Mock<ILogger<IngredienteBuilder>> _mockIngredienteBuilderLogger;
         private readonly INotificationManager _notificationManager;
         private readonly InventarioServiceFacade _inventarioServiceFacade;
         
@@ -46,6 +47,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             _mockStockBajoPolicy = new Mock<IStockBajoPolicy>();
             _mockDateTimeService = new Mock<IDateTimeService>();
             _mockOrdenCompraBuilderLogger = new Mock<ILogger<OrdenCompraBuilder>>();
+            _mockIngredienteBuilderLogger = new Mock<ILogger<IngredienteBuilder>>();
             _notificationManager = new NotificationManager();
             
             _mockDateTimeService.Setup(x => x.Now).Returns(_fechaActual);
@@ -57,6 +59,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
                 _notificationManager,
                 _mockDateTimeService.Object,
                 _mockOrdenCompraBuilderLogger.Object,
+                _mockIngredienteBuilderLogger.Object,
                 _mockStockBajoPolicy.Object);
         }
         

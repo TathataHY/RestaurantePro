@@ -157,5 +157,63 @@ namespace RestaurantePro.Domain.Operaciones.Services
         Task<Result<Comanda>> ConvertirReservacionAComandaAsync(Guid reservacionId, Guid meseroId, CancellationToken cancellationToken = default);
         
         #endregion
+        
+        #region Mesas
+        
+        /// <summary>
+        /// Registra una nueva mesa en el restaurante
+        /// </summary>
+        /// <param name="numero">Número de la mesa</param>
+        /// <param name="capacidad">Capacidad de personas</param>
+        /// <param name="ubicacion">Ubicación de la mesa</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la mesa registrada</returns>
+        Task<Result<Mesa>> RegistrarMesaAsync(int numero, int capacidad, string ubicacion, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Actualiza la información de una mesa existente
+        /// </summary>
+        /// <param name="mesaId">ID de la mesa a actualizar</param>
+        /// <param name="capacidad">Nueva capacidad</param>
+        /// <param name="ubicacion">Nueva ubicación</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la mesa actualizada</returns>
+        Task<Result<Mesa>> ActualizarMesaAsync(Guid mesaId, int capacidad, string ubicacion, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Cambia el estado de una mesa (Disponible, Ocupada, FueraDeServicio)
+        /// </summary>
+        /// <param name="mesaId">ID de la mesa</param>
+        /// <param name="nuevoEstado">Nuevo estado de la mesa</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado de la operación</returns>
+        Task<Result<bool>> CambiarEstadoMesaAsync(Guid mesaId, EstadoMesa nuevoEstado, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Pone una mesa fuera de servicio con motivo
+        /// </summary>
+        /// <param name="mesaId">ID de la mesa</param>
+        /// <param name="motivo">Motivo por el cual se pone fuera de servicio</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado de la operación</returns>
+        Task<Result<bool>> PonerMesaFueraDeServicioAsync(Guid mesaId, string motivo, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Libera una mesa y la marca como disponible
+        /// </summary>
+        /// <param name="mesaId">ID de la mesa</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado de la operación</returns>
+        Task<Result<bool>> LiberarMesaAsync(Guid mesaId, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene todas las mesas disponibles que cumplen con la capacidad mínima
+        /// </summary>
+        /// <param name="capacidadMinima">Capacidad mínima requerida</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la lista de mesas disponibles</returns>
+        Task<Result<IEnumerable<Mesa>>> ObtenerMesasDisponiblesAsync(int capacidadMinima = 1, CancellationToken cancellationToken = default);
+        
+        #endregion
     }
 } 

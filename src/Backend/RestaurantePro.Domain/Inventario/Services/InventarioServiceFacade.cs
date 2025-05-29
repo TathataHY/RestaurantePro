@@ -1,4 +1,5 @@
 using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Builders;
+using RestaurantePro.Domain.Inventario.Ingredientes.Builders;
 
 namespace RestaurantePro.Domain.Inventario.Services
 {
@@ -13,6 +14,7 @@ namespace RestaurantePro.Domain.Inventario.Services
         private readonly INotificationManager _notificationManager;
         private readonly IDateTimeService _dateTimeService;
         private readonly ILogger<OrdenCompraBuilder> _ordenCompraBuilderLogger;
+        private readonly ILogger<IngredienteBuilder> _ingredienteBuilderLogger;
         private readonly IStockBajoPolicy _stockBajoPolicy;
         
         /// <summary>
@@ -25,6 +27,7 @@ namespace RestaurantePro.Domain.Inventario.Services
             INotificationManager notificationManager,
             IDateTimeService dateTimeService,
             ILogger<OrdenCompraBuilder> ordenCompraBuilderLogger,
+            ILogger<IngredienteBuilder> ingredienteBuilderLogger,
             IStockBajoPolicy stockBajoPolicy)
         {
             _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
@@ -33,6 +36,7 @@ namespace RestaurantePro.Domain.Inventario.Services
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
             _ordenCompraBuilderLogger = ordenCompraBuilderLogger ?? throw new ArgumentNullException(nameof(ordenCompraBuilderLogger));
+            _ingredienteBuilderLogger = ingredienteBuilderLogger ?? throw new ArgumentNullException(nameof(ingredienteBuilderLogger));
             _stockBajoPolicy = stockBajoPolicy ?? throw new ArgumentNullException(nameof(stockBajoPolicy));
         }
         
@@ -50,48 +54,129 @@ namespace RestaurantePro.Domain.Inventario.Services
             decimal costo = 0,
             CancellationToken cancellationToken = default)
         {
-            _notificationManager.CreateNewNotification();
-            
-            // Validar parámetros
-            _notificationManager.CurrentNotification.Require(!string.IsNullOrWhiteSpace(nombre), "El nombre del ingrediente es requerido", propertyName: nameof(nombre));
-            _notificationManager.CurrentNotification.Require(!string.IsNullOrWhiteSpace(descripcion), "La descripción del ingrediente es requerida", propertyName: nameof(descripcion));
-            _notificationManager.CurrentNotification.Require(!string.IsNullOrWhiteSpace(unidadMedida), "La unidad de medida es requerida", propertyName: nameof(unidadMedida));
-            _notificationManager.CurrentNotification.Require(stockMinimo >= 0, "El stock mínimo no puede ser negativo", propertyName: nameof(stockMinimo));
-            _notificationManager.CurrentNotification.Require(stockActual >= 0, "El stock actual no puede ser negativo", propertyName: nameof(stockActual));
-            
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<Ingrediente>(null);
-            }
+            // Limpiar notificaciones previas
+            _notificationManager.ClearErrors();
             
             try
             {
                 // Convertir string unidadMedida a enum UnidadMedida
-                UnidadMedida unidadMedidaEnum;
-                if (!Enum.TryParse(unidadMedida, true, out unidadMedidaEnum))
+                if (!Enum.TryParse(unidadMedida, true, out UnidadMedida unidadMedidaEnum))
                 {
-                    _notificationManager.AddError($"Unidad de medida no válida: {unidadMedida}", propertyName: nameof(unidadMedida));
-                    return _notificationManager.ToResult<Ingrediente>(null);
+                    return Result.Failure<Ingrediente>($"Unidad de medida no válida: {unidadMedida}");
                 }
                 
-                // Generar código (usando las primeras letras del nombre y un timestamp)
-                string codigo = $"{nombre.Substring(0, Math.Min(3, nombre.Length)).ToUpper()}-{DateTime.Now:yyyyMMdd}";
+                // Generar código automático usando las primeras letras del nombre y un timestamp
+                string codigo = $"{nombre.Substring(0, Math.Min(3, nombre.Length)).ToUpper()}-{DateTime.Now:yyyyMMddHHmmss}";
                 
-                // Crear el ingrediente
-                var ingrediente = Ingrediente.Crear(
-                    nombre,
-                    codigo,
-                    descripcion,
-                    unidadMedidaEnum,
-                    stockMinimo,
-                    stockActual,
-                    rotacion,
-                    temporada);
-                    
-                // Establecer el costo promedio si se proporciona
-                if (costo > 0)
+                // Usar IngredienteBuilder para crear el ingrediente con validaciones robustas
+                var builder = new IngredienteBuilder(_notificationManager, _ingredienteBuilderLogger);
+                
+                var resultado = builder
+                    .ConNombre(nombre)
+                    .ConCodigo(codigo)
+                    .ConDescripcion(descripcion)
+                    .ConUnidadMedida(unidadMedidaEnum)
+                    .ConStockMinimo(stockMinimo)
+                    .ConStockActual(stockActual)
+                    .ConRotacion(rotacion)
+                    .ConTemporada(temporada)
+                    .ConCostoPromedio(costo)
+                    .Construir();
+                
+                if (!resultado.Succeeded)
                 {
-                    ingrediente.ActualizarCostoPromedio(costo);
+                    return Result.Failure<Ingrediente>($"Error al construir ingrediente: {string.Join(", ", resultado.Errors ?? new List<string>())}");
+                }
+                
+                var ingrediente = resultado.Value;
+                
+                // Persistir el ingrediente
+                await _ingredienteRepository.AgregarAsync(ingrediente);
+                await _ingredienteRepository.GuardarCambiosAsync(cancellationToken);
+                
+                return Result.Success(ingrediente);
+            }
+            catch (Exception ex)
+            {
+                var message = $"Error al registrar el ingrediente: {ex.Message}";
+                _notificationManager.AddError(message);
+                return Result.Failure<Ingrediente>(message);
+            }
+        }
+        
+        /// <summary>
+        /// Registra un nuevo ingrediente usando el IngredienteBuilder con opciones avanzadas
+        /// </summary>
+        /// <param name="nombre">Nombre del ingrediente</param>
+        /// <param name="descripcion">Descripción del ingrediente</param>
+        /// <param name="unidadMedida">Unidad de medida</param>
+        /// <param name="stockMinimo">Stock mínimo</param>
+        /// <param name="stockActual">Stock actual</param>
+        /// <param name="codigo">Código personalizado (opcional - se genera automático si no se proporciona)</param>
+        /// <param name="proveedorPrincipalId">ID del proveedor principal (opcional)</param>
+        /// <param name="rotacion">Nivel de rotación del ingrediente</param>
+        /// <param name="temporada">Temporada del ingrediente</param>
+        /// <param name="costo">Costo promedio</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con el ingrediente registrado</returns>
+        public async Task<Result<Ingrediente>> RegistrarIngredienteAvanzadoAsync(
+            string nombre,
+            string descripcion,
+            UnidadMedida unidadMedida,
+            decimal stockMinimo,
+            decimal stockActual,
+            string? codigo = null,
+            Guid? proveedorPrincipalId = null,
+            RotacionIngrediente rotacion = RotacionIngrediente.Media,
+            TemporadaIngrediente temporada = TemporadaIngrediente.TodoElAño,
+            decimal costo = 0,
+            CancellationToken cancellationToken = default)
+        {
+            // Limpiar notificaciones previas
+            _notificationManager.ClearErrors();
+            
+            try
+            {
+                // Generar código automático si no se proporciona
+                var codigoFinal = codigo ?? $"{nombre.Substring(0, Math.Min(3, nombre.Length)).ToUpper()}-{DateTime.Now:yyyyMMddHHmmss}";
+                
+                // Usar IngredienteBuilder para crear el ingrediente con validaciones robustas
+                var builder = new IngredienteBuilder(_notificationManager, _ingredienteBuilderLogger);
+                
+                builder
+                    .ConNombre(nombre)
+                    .ConCodigo(codigoFinal)
+                    .ConDescripcion(descripcion)
+                    .ConUnidadMedida(unidadMedida)
+                    .ConStockMinimo(stockMinimo)
+                    .ConStockActual(stockActual)
+                    .ConRotacion(rotacion)
+                    .ConTemporada(temporada)
+                    .ConCostoPromedio(costo);
+                
+                // Agregar proveedor principal si se proporciona
+                if (proveedorPrincipalId.HasValue)
+                {
+                    builder.ConProveedorPrincipal(proveedorPrincipalId.Value);
+                }
+                
+                var resultado = builder.Construir();
+                
+                if (!resultado.Succeeded)
+                {
+                    return Result.Failure<Ingrediente>($"Error al construir ingrediente: {string.Join(", ", resultado.Errors ?? new List<string>())}");
+                }
+                
+                var ingrediente = resultado.Value;
+                
+                // Verificar si el proveedor existe (si se especificó)
+                if (proveedorPrincipalId.HasValue)
+                {
+                    var proveedor = await _proveedorRepository.ObtenerPorIdAsync(proveedorPrincipalId.Value, cancellationToken);
+                    if (proveedor == null)
+                    {
+                        return Result.Failure<Ingrediente>($"No se encontró el proveedor con ID {proveedorPrincipalId.Value}");
+                    }
                 }
                 
                 // Persistir el ingrediente
@@ -102,8 +187,9 @@ namespace RestaurantePro.Domain.Inventario.Services
             }
             catch (Exception ex)
             {
-                _notificationManager.AddError($"Error al registrar el ingrediente: {ex.Message}");
-                return _notificationManager.ToResult<Ingrediente>(null);
+                var message = $"Error al registrar el ingrediente avanzado: {ex.Message}";
+                _notificationManager.AddError(message);
+                return Result.Failure<Ingrediente>(message);
             }
         }
         
@@ -329,6 +415,102 @@ namespace RestaurantePro.Domain.Inventario.Services
             catch (Exception ex)
             {
                 _notificationManager.AddError($"Error al agregar el ítem a la orden de compra: {ex.Message}");
+                return _notificationManager.ToResult<OrdenCompra>(null);
+            }
+        }
+        
+        /// <summary>
+        /// Crea una orden de compra usando el OrdenCompraBuilder con múltiples ítems
+        /// </summary>
+        /// <param name="proveedorId">ID del proveedor</param>
+        /// <param name="fechaEntregaEstimada">Fecha estimada de entrega</param>
+        /// <param name="items">Lista de ítems a incluir en la orden</param>
+        /// <param name="observaciones">Observaciones (opcional)</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la orden de compra creada</returns>
+        public async Task<Result<OrdenCompra>> CrearOrdenCompraAvanzadaAsync(
+            Guid proveedorId,
+            DateTime fechaEntregaEstimada,
+            List<(Guid ingredienteId, decimal cantidad, decimal precioUnitario)> items,
+            string observaciones = "",
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros básicos
+            _notificationManager.CurrentNotification.Require(proveedorId != Guid.Empty, "El ID del proveedor es requerido", propertyName: nameof(proveedorId));
+            _notificationManager.CurrentNotification.Require(fechaEntregaEstimada > _dateTimeService.Now, "La fecha de entrega estimada debe ser posterior a la fecha actual", propertyName: nameof(fechaEntregaEstimada));
+            _notificationManager.CurrentNotification.Require(items != null && items.Count > 0, "Debe especificar al menos un ítem", propertyName: nameof(items));
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<OrdenCompra>(null);
+            }
+            
+            try
+            {
+                // Verificar que exista el proveedor
+                var proveedor = await _proveedorRepository.ObtenerPorIdAsync(proveedorId, cancellationToken);
+                if (proveedor == null)
+                {
+                    _notificationManager.AddError($"No se encontró el proveedor con ID {proveedorId}", propertyName: nameof(proveedorId));
+                    return _notificationManager.ToResult<OrdenCompra>(null);
+                }
+                
+                if (!proveedor.Activo)
+                {
+                    _notificationManager.AddError($"El proveedor con ID {proveedorId} no está activo", propertyName: nameof(proveedorId));
+                    return _notificationManager.ToResult<OrdenCompra>(null);
+                }
+                
+                // Usar OrdenCompraBuilder para crear con validaciones robustas
+                var builder = new OrdenCompraBuilder(_notificationManager, _ordenCompraBuilderLogger);
+                
+                var builderResult = builder
+                    .ParaProveedor(proveedorId)
+                    .ConFechaEmision(_dateTimeService.Now)
+                    .ConFechaEntregaEstimada(fechaEntregaEstimada)
+                    .ConObservaciones(observaciones);
+                
+                // Agregar todos los ítems usando el builder
+                foreach (var (ingredienteId, cantidad, precioUnitario) in items)
+                {
+                    // Obtener información del ingrediente
+                    var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(ingredienteId, cancellationToken);
+                    if (ingrediente == null)
+                    {
+                        _notificationManager.AddError($"No se encontró el ingrediente con ID {ingredienteId}", propertyName: nameof(items));
+                        return _notificationManager.ToResult<OrdenCompra>(null);
+                    }
+                    
+                    // Agregar ítem al builder
+                    builderResult = builderResult.AgregarItem(
+                        ingredienteId,
+                        ingrediente.Nombre,
+                        cantidad,
+                        ingrediente.UnidadMedida,
+                        precioUnitario);
+                }
+                
+                // Construir la orden final
+                var resultadoOrden = builderResult.Construir();
+                
+                if (!resultadoOrden.Succeeded)
+                {
+                    return resultadoOrden; // Ya tiene los errores del builder
+                }
+                
+                var ordenCompra = resultadoOrden.Value!;
+                
+                // Persistir la orden
+                await _ordenCompraRepository.AgregarAsync(ordenCompra);
+                await _ordenCompraRepository.GuardarCambiosAsync(cancellationToken);
+                
+                return Result.Success(ordenCompra);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al crear la orden de compra avanzada: {ex.Message}");
                 return _notificationManager.ToResult<OrdenCompra>(null);
             }
         }

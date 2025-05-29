@@ -271,28 +271,80 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             
             public Task<Result<Comanda>> ConvertirReservacionAComandaAsync(Guid reservacionId, Guid empleadoId, CancellationToken cancellationToken = default)
             {
-                // Obtener la reservación
-                var reservacion = _reservacionRepository.ObtenerPorIdAsync(reservacionId, cancellationToken).Result;
-                if (reservacion == null)
-                {
-                    return Task.FromResult(Result.Failure<Comanda>("La reservación no existe"));
-                }
-                
-                // Verificar que la reservación esté confirmada
-                if (reservacion.Estado != EstadoReservacion.Confirmada)
-                {
-                    return Task.FromResult(Result.Failure<Comanda>("La reservación debe estar confirmada para convertirla en comanda"));
-                }
-                
-                // Crear una comanda real usando el factory method con los parámetros en el orden correcto
-                // Comanda.Crear(Guid meseroId, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null)
+                // Crear una comanda real usando el factory method
                 var comanda = Comanda.Crear(
-                    empleadoId,                  // meseroId
-                    reservacion.ClienteId,       // clienteId
-                    reservacion.MesaId,          // mesaId
-                    "Convertido desde reservación"); // observaciones
+                    Guid.NewGuid(), // mesaId
+                    empleadoId, 
+                    reservacionId,
+                    "Comanda generada desde reservación");
                     
                 return Task.FromResult(Result.Success(comanda));
+            }
+            
+            // Implementaciones stub para métodos de gestión de mesas
+            public Task<Result<Mesa>> RegistrarMesaAsync(int numero, int capacidad, string ubicacion, CancellationToken cancellationToken = default)
+            {
+                // Validaciones básicas para las pruebas
+                if (numero <= 0 || capacidad <= 0 || string.IsNullOrWhiteSpace(ubicacion))
+                {
+                    return Task.FromResult(Result.Failure<Mesa>("Parámetros inválidos para la mesa"));
+                }
+                
+                // Crear una mesa real usando el factory method
+                var mesa = Mesa.Crear(numero, capacidad, ubicacion);
+                return Task.FromResult(Result.Success(mesa));
+            }
+            
+            public Task<Result<Mesa>> ActualizarMesaAsync(Guid mesaId, int capacidad, string ubicacion, CancellationToken cancellationToken = default)
+            {
+                // Simulamos que no se permite actualizar mesas
+                return Task.FromResult(Result.Failure<Mesa>("No se permite actualizar la capacidad o ubicación de una mesa existente"));
+            }
+            
+            public Task<Result<bool>> CambiarEstadoMesaAsync(Guid mesaId, EstadoMesa nuevoEstado, CancellationToken cancellationToken = default)
+            {
+                // Validaciones básicas
+                if (mesaId == Guid.Empty)
+                {
+                    return Task.FromResult(Result.Failure<bool>("ID de mesa inválido"));
+                }
+                
+                return Task.FromResult(Result.Success(true));
+            }
+            
+            public Task<Result<bool>> PonerMesaFueraDeServicioAsync(Guid mesaId, string motivo, CancellationToken cancellationToken = default)
+            {
+                // Validaciones básicas
+                if (mesaId == Guid.Empty || string.IsNullOrWhiteSpace(motivo))
+                {
+                    return Task.FromResult(Result.Failure<bool>("Parámetros inválidos"));
+                }
+                
+                return Task.FromResult(Result.Success(true));
+            }
+            
+            public Task<Result<bool>> LiberarMesaAsync(Guid mesaId, CancellationToken cancellationToken = default)
+            {
+                // Validaciones básicas
+                if (mesaId == Guid.Empty)
+                {
+                    return Task.FromResult(Result.Failure<bool>("ID de mesa inválido"));
+                }
+                
+                return Task.FromResult(Result.Success(true));
+            }
+            
+            public Task<Result<IEnumerable<Mesa>>> ObtenerMesasDisponiblesAsync(int capacidadMinima = 1, CancellationToken cancellationToken = default)
+            {
+                // Crear algunas mesas de ejemplo para las pruebas
+                var mesas = new List<Mesa>
+                {
+                    Mesa.Crear(1, 4, "Interior"),
+                    Mesa.Crear(2, 6, "Terraza"),
+                    Mesa.Crear(3, 2, "Interior")
+                }.Where(m => m.Capacidad >= capacidadMinima);
+                
+                return Task.FromResult(Result.Success(mesas));
             }
         }
         

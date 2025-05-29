@@ -1,5 +1,6 @@
 using RestaurantePro.Domain.Operaciones.Comandas.Builders;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Builders;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Builders;
 
 namespace RestaurantePro.Domain.Operaciones.Services
 {
@@ -15,6 +16,7 @@ namespace RestaurantePro.Domain.Operaciones.Services
         private readonly INotificationManager _notificationManager;
         private readonly ILogger<ComandaBuilder> _comandaBuilderLogger;
         private readonly ILogger<ReservacionBuilder> _reservacionBuilderLogger;
+        private readonly ILogger<MesaBuilder> _mesaBuilderLogger;
         
         public OperacionesServiceFacade(
             IComandaRepository comandaRepository,
@@ -23,7 +25,8 @@ namespace RestaurantePro.Domain.Operaciones.Services
             IProductoRepository productoRepository,
             INotificationManager notificationManager,
             ILogger<ComandaBuilder> comandaBuilderLogger,
-            ILogger<ReservacionBuilder> reservacionBuilderLogger)
+            ILogger<ReservacionBuilder> reservacionBuilderLogger,
+            ILogger<MesaBuilder> mesaBuilderLogger)
         {
             _comandaRepository = comandaRepository ?? throw new ArgumentNullException(nameof(comandaRepository));
             _reservacionRepository = reservacionRepository ?? throw new ArgumentNullException(nameof(reservacionRepository));
@@ -32,6 +35,7 @@ namespace RestaurantePro.Domain.Operaciones.Services
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
             _comandaBuilderLogger = comandaBuilderLogger ?? throw new ArgumentNullException(nameof(comandaBuilderLogger));
             _reservacionBuilderLogger = reservacionBuilderLogger ?? throw new ArgumentNullException(nameof(reservacionBuilderLogger));
+            _mesaBuilderLogger = mesaBuilderLogger ?? throw new ArgumentNullException(nameof(mesaBuilderLogger));
         }
         
         #region Comandas
@@ -839,6 +843,274 @@ namespace RestaurantePro.Domain.Operaciones.Services
             }
         }
 
+        #endregion
+        
+        #region Mesas
+        
+        /// <inheritdoc />
+        public async Task<Result<Mesa>> RegistrarMesaAsync(
+            int numero, 
+            int capacidad, 
+            string ubicacion, 
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            try
+            {
+                // Verificar que no exista una mesa con el mismo número
+                var mesaExistente = await _mesaRepository.ObtenerPorNumeroAsync(numero);
+                if (mesaExistente != null)
+                {
+                    _notificationManager.AddError($"Ya existe una mesa con el número {numero}", nameof(numero));
+                    return _notificationManager.ToResult<Mesa>(null);
+                }
+                
+                // Usar MesaBuilder para crear la mesa con validaciones robustas
+                var builder = new MesaBuilder(_notificationManager, _mesaBuilderLogger);
+                
+                var resultadoMesa = builder
+                    .ConNumero(numero)
+                    .ConCapacidad(capacidad)
+                    .EnUbicacion(ubicacion)
+                    .Construir();
+                
+                if (!resultadoMesa.Succeeded)
+                {
+                    return resultadoMesa; // Ya tiene los errores del builder
+                }
+                
+                var mesa = resultadoMesa.Value!;
+                
+                // Persistir la mesa
+                await _mesaRepository.AgregarAsync(mesa);
+                await _mesaRepository.GuardarCambiosAsync();
+                
+                return Result.Success(mesa);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al registrar mesa: {ex.Message}", "RegistrarMesa");
+                return _notificationManager.ToResult<Mesa>(null);
+            }
+        }
+        
+        /// <inheritdoc />
+        public async Task<Result<Mesa>> ActualizarMesaAsync(
+            Guid mesaId, 
+            int capacidad, 
+            string ubicacion, 
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // NOTA: Este método no está implementado porque la entidad Mesa no permite
+            // actualizar capacidad ni ubicación por reglas de negocio.
+            // Una mesa debe mantener su configuración original.
+            _notificationManager.AddError("No se permite actualizar la capacidad o ubicación de una mesa existente", "ActualizarMesa");
+            return _notificationManager.ToResult<Mesa>(null);
+        }
+        
+        /// <inheritdoc />
+        public async Task<Result<bool>> CambiarEstadoMesaAsync(
+            Guid mesaId, 
+            EstadoMesa nuevoEstado, 
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.CurrentNotification.Require(mesaId != Guid.Empty, "El ID de la mesa es requerido", nameof(mesaId));
+            _notificationManager.CurrentNotification.Require(Enum.IsDefined(typeof(EstadoMesa), nuevoEstado), $"El estado '{nuevoEstado}' no es válido", nameof(nuevoEstado));
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<bool>(false);
+            }
+            
+            try
+            {
+                // Obtener la mesa
+                var mesa = await _mesaRepository.ObtenerPorIdAsync(mesaId);
+                if (mesa == null)
+                {
+                    _notificationManager.AddError($"No se encontró la mesa con ID {mesaId}", nameof(mesaId));
+                    return _notificationManager.ToResult<bool>(false);
+                }
+                
+                // Cambiar estado usando los métodos correctos de la entidad
+                try
+                {
+                    switch (nuevoEstado)
+                    {
+                        case EstadoMesa.Disponible:
+                            mesa.MarcarComoDisponible();
+                            break;
+                        case EstadoMesa.Ocupada:
+                            mesa.MarcarComoOcupada();
+                            break;
+                        case EstadoMesa.FueraDeServicio:
+                            mesa.MarcarComoFueraDeServicio("Cambiado desde servicio de operaciones");
+                            break;
+                        case EstadoMesa.Reservada:
+                            mesa.MarcarComoReservada();
+                            break;
+                        default:
+                            _notificationManager.AddError($"No se puede cambiar al estado {nuevoEstado}", nameof(nuevoEstado));
+                            return _notificationManager.ToResult<bool>(false);
+                    }
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _notificationManager.AddError(ex.Message, "CambiarEstado");
+                    return _notificationManager.ToResult<bool>(false);
+                }
+                
+                // Persistir cambios
+                await _mesaRepository.ActualizarAsync(mesa);
+                await _mesaRepository.GuardarCambiosAsync();
+                
+                return Result.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al cambiar estado de mesa: {ex.Message}", "CambiarEstadoMesa");
+                return _notificationManager.ToResult<bool>(false);
+            }
+        }
+        
+        /// <inheritdoc />
+        public async Task<Result<bool>> PonerMesaFueraDeServicioAsync(
+            Guid mesaId, 
+            string motivo, 
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.CurrentNotification.Require(mesaId != Guid.Empty, "El ID de la mesa es requerido", nameof(mesaId));
+            _notificationManager.CurrentNotification.Require(!string.IsNullOrWhiteSpace(motivo), "El motivo es requerido", nameof(motivo));
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<bool>(false);
+            }
+            
+            try
+            {
+                // Obtener la mesa
+                var mesa = await _mesaRepository.ObtenerPorIdAsync(mesaId);
+                if (mesa == null)
+                {
+                    _notificationManager.AddError($"No se encontró la mesa con ID {mesaId}", nameof(mesaId));
+                    return _notificationManager.ToResult<bool>(false);
+                }
+                
+                // Poner fuera de servicio con motivo específico
+                try
+                {
+                    mesa.MarcarComoFueraDeServicio(motivo.Trim());
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _notificationManager.AddError(ex.Message, "PonerFueraDeServicio");
+                    return _notificationManager.ToResult<bool>(false);
+                }
+                
+                // Persistir cambios
+                await _mesaRepository.ActualizarAsync(mesa);
+                await _mesaRepository.GuardarCambiosAsync();
+                
+                return Result.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al poner mesa fuera de servicio: {ex.Message}", "PonerMesaFueraDeServicio");
+                return _notificationManager.ToResult<bool>(false);
+            }
+        }
+        
+        /// <inheritdoc />
+        public async Task<Result<bool>> LiberarMesaAsync(
+            Guid mesaId, 
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.CurrentNotification.Require(mesaId != Guid.Empty, "El ID de la mesa es requerido", nameof(mesaId));
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<bool>(false);
+            }
+            
+            try
+            {
+                // Obtener la mesa
+                var mesa = await _mesaRepository.ObtenerPorIdAsync(mesaId);
+                if (mesa == null)
+                {
+                    _notificationManager.AddError($"No se encontró la mesa con ID {mesaId}", nameof(mesaId));
+                    return _notificationManager.ToResult<bool>(false);
+                }
+                
+                // Liberar mesa (marcar como disponible)
+                try
+                {
+                    mesa.MarcarComoDisponible();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _notificationManager.AddError(ex.Message, "LiberarMesa");
+                    return _notificationManager.ToResult<bool>(false);
+                }
+                
+                // Persistir cambios
+                await _mesaRepository.ActualizarAsync(mesa);
+                await _mesaRepository.GuardarCambiosAsync();
+                
+                return Result.Success(true);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al liberar mesa: {ex.Message}", "LiberarMesa");
+                return _notificationManager.ToResult<bool>(false);
+            }
+        }
+        
+        /// <inheritdoc />
+        public async Task<Result<IEnumerable<Mesa>>> ObtenerMesasDisponiblesAsync(
+            int capacidadMinima = 1, 
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.CurrentNotification.Require(capacidadMinima > 0, "La capacidad mínima debe ser mayor a cero", nameof(capacidadMinima));
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<IEnumerable<Mesa>>(Array.Empty<Mesa>());
+            }
+            
+            try
+            {
+                // Obtener todas las mesas disponibles
+                var mesasDisponibles = await _mesaRepository.ObtenerMesasDisponiblesAsync();
+                
+                // Filtrar por capacidad mínima
+                var mesasFiltradas = mesasDisponibles.Where(m => m.Capacidad >= capacidadMinima);
+                
+                return Result.Success(mesasFiltradas);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al obtener mesas disponibles: {ex.Message}", "ObtenerMesasDisponibles");
+                return _notificationManager.ToResult<IEnumerable<Mesa>>(Array.Empty<Mesa>());
+            }
+        }
+        
         #endregion
     }
 } 
