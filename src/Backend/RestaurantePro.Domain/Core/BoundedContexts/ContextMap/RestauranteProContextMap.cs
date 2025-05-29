@@ -84,104 +84,227 @@ namespace RestaurantePro.Domain.Core.BoundedContexts.ContextMap
     }
 
     /// <summary>
-    /// Mapa de contextos completo del sistema
+    /// Mapa de contextos completo del sistema - ACTUALIZADO (Enero 2025)
+    /// Refleja la implementación real del dominio RestaurantePro
     /// </summary>
     public static class RestauranteProContextMap
     {
-        // Definición de Bounded Contexts
-        public static readonly BoundedContext CatalogoContext = new BoundedContext(
-            "Catálogo",
-            "Gestión de productos, categorías e ingredientes",
-            "Equipo Productos",
-            new List<string> { "Producto", "Categoria", "Ingrediente" }
+        // CONTEXTOS REALMENTE IMPLEMENTADOS 
+
+        public static readonly BoundedContext CoreContext = new BoundedContext(
+            "Core",
+            "Elementos fundamentales compartidos: usuarios, productos, recetas y notificaciones",
+            "Equipo Arquitectura",
+            new List<string> { "Usuario", "Rol", "Permiso", "Producto", "ProductoCategoria", "Receta", "ProductoIngrediente", "Notificacion" }
         );
 
         public static readonly BoundedContext OperacionesContext = new BoundedContext(
             "Operaciones",
-            "Gestión de comandas, mesas y reservaciones",
+            "Gestión operativa diaria: comandas, reservaciones, mesas y preparaciones",
             "Equipo Operaciones",
-            new List<string> { "Comanda", "Mesa", "Reservacion" }
+            new List<string> { "Comanda", "ItemComanda", "Reservacion", "Mesa", "PreparacionDiaria" }
+        );
+
+        public static readonly BoundedContext ComercialContext = new BoundedContext(
+            "Comercial",
+            "Gestión comercial: clientes, facturación, pagos y promociones",
+            "Equipo Comercial",
+            new List<string> { "Cliente", "TarjetaFidelizacion", "HistorialPuntos", "Factura", "DetalleFactura", "Pago", "Promocion" }
         );
 
         public static readonly BoundedContext InventarioContext = new BoundedContext(
             "Inventario",
-            "Control de stock, movimientos y compras",
+            "Control de stock, movimientos e inventario de ingredientes",
             "Equipo Inventario",
-            new List<string> { "Inventario", "MovimientoInventario", "OrdenCompra" }
-        );
-
-        public static readonly BoundedContext ClientesContext = new BoundedContext(
-            "Clientes",
-            "Gestión de clientes, fidelización y promociones",
-            "Equipo Comercial",
-            new List<string> { "Cliente", "TarjetaFidelizacion", "Promocion" }
+            new List<string> { "Ingrediente", "MovimientoInventario", "OrdenCompra", "ItemOrdenCompra" }
         );
 
         public static readonly BoundedContext ProveedoresContext = new BoundedContext(
             "Proveedores",
-            "Gestión de proveedores",
+            "Gestión de proveedores y contactos",
             "Equipo Compras",
-            new List<string> { "Proveedor", "ProveedorCategoria" }
+            new List<string> { "Proveedor", "ContactoProveedor" }
         );
 
-        public static readonly BoundedContext PagosContext = new BoundedContext(
-            "Pagos",
-            "Gestión de pagos y transacciones financieras",
-            "Equipo Finanzas",
-            new List<string> { "Pago", "Transaccion" }
-        );
+        // RELACIONES ENTRE CONTEXTOS ACTUALIZADAS
 
-        public static readonly BoundedContext IdentidadContext = new BoundedContext(
-            "Identidad",
-            "Gestión de usuarios, roles y permisos",
-            "Equipo Seguridad",
-            new List<string> { "Usuario", "Rol", "Permiso" }
-        );
-
-        // Definición de relaciones entre contextos
         public static readonly List<ContextRelation> ContextRelations = new List<ContextRelation>
         {
+            // Core → Operaciones: Proveedor-Cliente (Upstream-Downstream)
             new ContextRelation(
-                CatalogoContext,
+                CoreContext,
                 OperacionesContext,
                 ContextRelationship.CustomerSupplier,
-                "Operaciones consume productos del Catálogo para crear comandas"
+                "Core provee productos, usuarios y recetas a Operaciones para crear comandas y gestionar preparaciones"
             ),
 
-            new ContextRelation(
-                InventarioContext,
-                CatalogoContext,
-                ContextRelationship.ConformistDownstream,
-                "Inventario se adapta al modelo de productos definido por Catálogo"
-            ),
-
+            // Operaciones → Inventario: Anti-Corruption Layer
             new ContextRelation(
                 OperacionesContext,
-                PagosContext,
-                ContextRelationship.CustomerSupplier,
-                "Pagos procesa transacciones para las comandas de Operaciones"
-            ),
-
-            new ContextRelation(
-                ProveedoresContext,
                 InventarioContext,
-                ContextRelationship.Partnership,
-                "Colaboración para gestionar la compra y recepción de productos"
-            ),
-
-            new ContextRelation(
-                ClientesContext,
-                OperacionesContext,
                 ContextRelationship.AnticorruptionLayer,
-                "Clientes usa una capa de traducción para consumir datos de Operaciones"
+                "Operaciones usa OperacionesInventarioIntegrationService para traducir conceptos de comandas a movimientos de inventario"
             ),
 
+            // Operaciones → Comercial: Proveedor-Cliente
             new ContextRelation(
-                IdentidadContext,
                 OperacionesContext,
-                ContextRelationship.ConformistUpstream,
-                "Identidad proporciona usuarios y roles a Operaciones"
+                ComercialContext,
+                ContextRelationship.CustomerSupplier,
+                "Operaciones provee comandas finalizadas a Comercial para facturación y gestión de puntos"
+            ),
+
+            // Core → Inventario: Conformista Downstream
+            new ContextRelation(
+                CoreContext,
+                InventarioContext,
+                ContextRelationship.ConformistDownstream,
+                "Inventario se adapta al modelo de productos y recetas definido por Core"
+            ),
+
+            // Inventario → Proveedores: Partnership
+            new ContextRelation(
+                InventarioContext,
+                ProveedoresContext,
+                ContextRelationship.Partnership,
+                "Colaboración estrecha para gestionar órdenes de compra y recepción de mercancía"
+            ),
+
+            // Comercial → Proveedores: Anti-Corruption Layer
+            new ContextRelation(
+                ComercialContext,
+                ProveedoresContext,
+                ContextRelationship.AnticorruptionLayer,
+                "Comercial usa ServicioIntegracionProveedores para sincronizar información de facturación"
+            ),
+
+            // Core → Comercial: Conformista Downstream
+            new ContextRelation(
+                CoreContext,
+                ComercialContext,
+                ContextRelationship.ConformistDownstream,
+                "Comercial se adapta al modelo de usuarios y productos definido por Core"
+            ),
+
+            // Core → Proveedores: Separados
+            new ContextRelation(
+                CoreContext,
+                ProveedoresContext,
+                ContextRelationship.SeparateWays,
+                "Core y Proveedores mantienen modelos independientes con integración mínima"
             )
+        };
+
+        /// <summary>
+        /// Servicios de integración implementados entre contextos
+        /// </summary>
+        public static readonly Dictionary<string, List<string>> IntegrationServices = 
+            new Dictionary<string, List<string>>
+        {
+            ["Core-Operaciones"] = new List<string>
+            {
+                "ICoreOperacionesIntegrationService",
+                "ComandaFinalizada_ActualizarProductosHandler"
+            },
+
+            ["Operaciones-Inventario"] = new List<string>
+            {
+                "IOperacionesInventarioIntegrationService",
+                "ComandaCreada_VerificarDisponibilidadHandler",
+                "ComandaModificada_ActualizarInventarioHandler"
+            },
+
+            ["Comercial-Proveedores"] = new List<string>
+            {
+                "IServicioIntegracionProveedores",
+                "ProveedorActualizado_SincronizarInformacionHandler"
+            }
+        };
+
+        /// <summary>
+        /// Nuevas funcionalidades implementadas por contexto
+        /// </summary>
+        public static readonly Dictionary<string, List<string>> NewFeaturesByContext = 
+            new Dictionary<string, List<string>>
+        {
+            ["Operaciones"] = new List<string>
+            {
+                "PreparacionDiaria - Gestión de preparaciones diarias del chef",
+                "ServicioPreparaciones - Flujo híbrido de preparaciones",
+                "Mesa - Gestión completa de mesas del restaurante",
+                "MesaBuilder - Constructor fluido para mesas"
+            },
+
+            ["Core"] = new List<string>
+            {
+                "ProductoBuilder - Constructor fluido para productos",
+                "RecetaService - Gestión de recetas e ingredientes",
+                "UsuarioServiceCached - Caché para usuarios",
+                "Result<T> Pattern - Implementado globalmente"
+            },
+
+            ["Comercial"] = new List<string>
+            {
+                "FacturaBuilder - Constructor fluido para facturas",
+                "ServicioGestionFacturasVencidas - Gestión de facturas vencidas",
+                "Pago - Entidad completa de pagos",
+                "INotificationManager - Patrón de notificaciones"
+            },
+
+            ["Inventario"] = new List<string>
+            {
+                "IngredienteBuilder - Constructor fluido para ingredientes",
+                "OrdenCompraBuilder - Constructor fluido para órdenes",
+                "IngredienteFactory - Factory para ingredientes",
+                "StockBajoPolicy - Política de stock bajo"
+            },
+
+            ["Proveedores"] = new List<string>
+            {
+                "ProveedorBuilder - Constructor fluido para proveedores",
+                "ContactoProveedor - Entidad de contactos",
+                "ProveedorCategoria - Value object de categorías"
+            }
+        };
+
+        /// <summary>
+        /// Patrones arquitectónicos implementados por contexto
+        /// </summary>
+        public static readonly Dictionary<string, List<string>> ArchitecturalPatterns = 
+            new Dictionary<string, List<string>>
+        {
+            ["Builders"] = new List<string>
+            {
+                "ComandaBuilder (Operaciones)",
+                "ReservacionBuilder (Operaciones)", 
+                "MesaBuilder (Operaciones)",
+                "FacturaBuilder (Comercial)",
+                "ProductoBuilder (Core)",
+                "IngredienteBuilder (Inventario)",
+                "OrdenCompraBuilder (Inventario)",
+                "ProveedorBuilder (Proveedores)"
+            },
+
+            ["Factories"] = new List<string>
+            {
+                "ClienteFactory (Comercial)",
+                "IngredienteFactory (Inventario)"
+            },
+
+            ["IntegrationServices"] = new List<string>
+            {
+                "CoreOperacionesIntegrationService",
+                "OperacionesInventarioIntegrationService",
+                "ServicioIntegracionProveedores"
+            },
+
+            ["Specifications"] = new List<string>
+            {
+                "ClienteFrecuenteSpecification (Comercial)",
+                "IngredienteDisponibleSpecification (Inventario)",
+                "ProveedorActivoSpecification (Proveedores)",
+                "ReservacionValidaSpecification (Operaciones)"
+            }
         };
     }
 }
