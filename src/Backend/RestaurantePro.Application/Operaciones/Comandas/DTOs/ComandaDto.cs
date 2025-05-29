@@ -1,3 +1,5 @@
+using RestaurantePro.Application.Common.DTOs;
+
 namespace RestaurantePro.Application.Operaciones.Comandas.DTOs;
 
 /// <summary>
