@@ -67,7 +67,7 @@ public class IngredienteBuilderTests
         // Act
         _builder.ConNombre("");
 
-        // Assert - Verificamos el patrón real de AddError llamado por el builder
+        // Assert
         _notificationManagerMock.Verify(x => x.AddError("El nombre del ingrediente es obligatorio", "nombre", null), Times.AtLeastOnce);
     }
 
@@ -80,7 +80,7 @@ public class IngredienteBuilderTests
         // Act
         _builder.ConNombre(nombreLargo);
 
-        // Assert - Verificamos el patrón real de AddError llamado por el builder
+        // Assert
         _notificationManagerMock.Verify(x => x.AddError("El nombre no puede exceder 200 caracteres", "nombre", null), Times.AtLeastOnce);
     }
 
@@ -320,7 +320,7 @@ public class IngredienteBuilderTests
 
         // Assert
         Assert.False(resultado.Succeeded);
-        Assert.Equal("Error inesperado en la construcción del ingrediente", resultado.Error);
+        Assert.Equal("Errores de validación en la construcción del ingrediente", resultado.Error);
     }
 
     [Fact]
