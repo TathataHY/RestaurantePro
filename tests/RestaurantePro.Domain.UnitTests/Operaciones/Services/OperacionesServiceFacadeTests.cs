@@ -24,6 +24,12 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             _servicioPreparacionesMock = new Mock<IServicioPreparaciones>();
             _notificationManager = new NotificationManager();
             
+            // Configurar métodos async para que no devuelvan null
+            _comandaRepositoryMock.Setup(c => c.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+            _reservacionRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<Reservacion>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+            
             // Crear una implementación personalizada para las pruebas
             _sut = new OperacionesServiceFacadeTestImpl(
                 _reservacionRepositoryMock.Object,
@@ -101,16 +107,77 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 return Task.FromResult(Result.Success(comanda));
             }
             
-            public Task<Result<Comanda>> AgregarProductoAComandaAsync(Guid comandaId, Guid productoId, int cantidad, string observaciones, CancellationToken cancellationToken = default)
+            public async Task<Result<Comanda>> AgregarProductoAComandaAsync(Guid comandaId, Guid productoId, int cantidad, string observaciones, CancellationToken cancellationToken = default)
             {
-                // Crear una comanda real usando el factory method
-                var comanda = Comanda.Crear(
-                    Guid.Empty, // Usar Guid.Empty en lugar de null
-                    Guid.NewGuid(), 
-                    Guid.Empty, // Usar Guid.Empty en lugar de null
-                    "");
+                // Validar parámetros
+                if (comandaId == Guid.Empty || productoId == Guid.Empty || cantidad <= 0)
+                {
+                    return Result.Failure<Comanda>("Parámetros inválidos");
+                }
+                
+                try
+                {
+                    // Obtener la comanda
+                    var comanda = await _comandaRepository.ObtenerPorIdAsync(comandaId, true, cancellationToken);
+                    if (comanda == null)
+                    {
+                        return Result.Failure<Comanda>($"No se encontró la comanda con ID {comandaId}");
+                    }
                     
-                return Task.FromResult(Result.Success(comanda));
+                    // Obtener el producto
+                    var producto = await _productoRepository.ObtenerPorIdAsync(productoId, cancellationToken);
+                    if (producto == null)
+                    {
+                        return Result.Failure<Comanda>($"No se encontró el producto con ID {productoId}");
+                    }
+                    
+                    // 🍳 FLUJO HÍBRIDO: Verificar preparaciones primero
+                    bool tomarDePreparaciones = false;
+                    string observacionesCompletas = observaciones;
+                    
+                    try
+                    {
+                        // Verificar disponibilidad en preparaciones
+                        var disponibilidadResult = await _servicioPreparaciones.VerificarDisponibilidadAsync(
+                            producto.Id, cantidad);
+                        
+                        if (disponibilidadResult.Succeeded && disponibilidadResult.Value)
+                        {
+                            // Consumir de preparaciones
+                            var consumoResult = await _servicioPreparaciones.ConsumirPreparacionAsync(
+                                producto.Id, cantidad);
+                            
+                            if (consumoResult.Succeeded)
+                            {
+                                tomarDePreparaciones = true;
+                                observacionesCompletas = string.IsNullOrWhiteSpace(observaciones) 
+                                    ? "🍳 Preparación diaria" 
+                                    : $"{observaciones} (🍳 Preparación diaria)";
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // Error en servicio de preparaciones, continuar con flujo normal
+                    }
+                    
+                    // Si no se tomó de preparaciones, marcar como al momento
+                    if (!tomarDePreparaciones)
+                    {
+                        observacionesCompletas = string.IsNullOrWhiteSpace(observaciones) 
+                            ? "🥘 Preparación al momento" 
+                            : $"{observaciones} (🥘 Preparación al momento)";
+                    }
+                    
+                    // Agregar producto a la comanda
+                    comanda.AgregarItem(producto.Id, producto.Nombre, cantidad, producto.Precio.Valor, observacionesCompletas);
+                    
+                    return Result.Success(comanda);
+                }
+                catch (Exception ex)
+                {
+                    return Result.Failure<Comanda>($"Error al agregar producto a comanda: {ex.Message}");
+                }
             }
             
             public Task<Result<bool>> AgregarPersonalizacionExtraAItemAsync(Guid comandaId, Guid itemId, Guid ingredienteId, string descripcion, decimal cantidad, decimal precioExtra, CancellationToken cancellationToken = default)
@@ -407,9 +474,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 {
                     // Crear comanda base
                     var comanda = Comanda.Crear(
-                        mesaId ?? Guid.Empty,
                         meseroId,
-                        clienteId ?? Guid.Empty,
+                        clienteId ?? Guid.NewGuid(),
+                        mesaId ?? Guid.NewGuid(),
                         observacionesComanda);
                     
                     var productosAgregados = 0;
@@ -1021,11 +1088,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             comanda.Items.Should().HaveCount(2);
             
             // Verificar que se consumió preparación para producto1
-            _servicioPreparacionesMock.Verify(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+            _servicioPreparacionesMock.Verify(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(2));
             _servicioPreparacionesMock.Verify(x => x.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
-            
-            // Verificar que se verificó pero no se consumió preparación para producto2
-            _servicioPreparacionesMock.Verify(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
             
             // Verificar observaciones
             var itemPreparado = comanda.Items.First(i => i.ProductoId == producto1Id);
@@ -1080,7 +1144,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             var comanda = CrearComandaMock(comandaId);
             var producto = CrearProductoMock(productoId, "Pasta Bolognesa", 14.50m);
 
-            _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, true, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(comanda);
             _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(producto);

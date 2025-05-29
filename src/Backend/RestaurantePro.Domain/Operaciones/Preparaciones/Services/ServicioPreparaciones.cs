@@ -51,7 +51,8 @@ public class ServicioPreparaciones : IServicioPreparaciones
                 cantidad,
                 chefId,
                 fechaVencimiento,
-                observaciones);
+                observaciones,
+                _dateTimeService.Now);
 
             _logger.LogInformation("Preparación creada exitosamente: {PreparacionId}", preparacion.Id);
 
@@ -204,7 +205,7 @@ public class ServicioPreparaciones : IServicioPreparaciones
 
         if (_notificationManager.HasErrors)
         {
-            return _notificationManager.ToResult(false);
+            return _notificationManager.ToResult();
         }
 
         await Task.CompletedTask; // Para evitar warning async
@@ -227,7 +228,7 @@ public class ServicioPreparaciones : IServicioPreparaciones
 
         if (_notificationManager.HasErrors)
         {
-            return _notificationManager.ToResult(false);
+            return _notificationManager.ToResult();
         }
 
         await Task.CompletedTask; // Para evitar warning async

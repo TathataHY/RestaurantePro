@@ -14,6 +14,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
         private readonly Mock<ILogger<ComandaBuilder>> _comandaBuilderLoggerMock;
         private readonly Mock<ILogger<ReservacionBuilder>> _reservacionBuilderLoggerMock;
         private readonly Mock<ILogger<MesaBuilder>> _mesaBuilderLoggerMock;
+        private readonly Mock<ILogger<OperacionesServiceFacade>> _operacionesServiceLoggerMock;
         private readonly OperacionesServiceFacade _sut;
 
         public OperacionesServiceFacade_FlujoHibridoTests()
@@ -27,11 +28,21 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             _comandaBuilderLoggerMock = new Mock<ILogger<ComandaBuilder>>();
             _reservacionBuilderLoggerMock = new Mock<ILogger<ReservacionBuilder>>();
             _mesaBuilderLoggerMock = new Mock<ILogger<MesaBuilder>>();
+            _operacionesServiceLoggerMock = new Mock<ILogger<OperacionesServiceFacade>>();
 
-            // Configurar NotificationManager básico para las pruebas
+            // Configurar repositorio de comandas para que las actualizaciones sean exitosas
+            _comandaRepositoryMock.Setup(c => c.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
+
+            // Configurar NotificationManager
             _notificationManagerMock.Setup(n => n.HasErrors).Returns(false);
-            _notificationManagerMock.Setup(n => n.CreateNewNotification());
-            _notificationManagerMock.Setup(n => n.ToResult()).Returns(Result.Success());
+            _notificationManagerMock.Setup(n => n.ToResult<Comanda>(It.IsAny<Comanda>()))
+                .Returns<Comanda>(comanda => Result<Comanda>.Success(comanda));
+
+            // Configurar builders
+            var comandaBuilder = new ComandaBuilder(_notificationManagerMock.Object, _comandaBuilderLoggerMock.Object);
+            var reservacionBuilder = new ReservacionBuilder(_notificationManagerMock.Object, _reservacionBuilderLoggerMock.Object);
+            var mesaBuilder = new MesaBuilder(_notificationManagerMock.Object, _mesaBuilderLoggerMock.Object);
 
             _sut = new OperacionesServiceFacade(
                 _comandaRepositoryMock.Object,

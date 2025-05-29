@@ -56,8 +56,11 @@ public class PreparacionDiaria : EntityBase
         int cantidadPreparada,
         Guid chefId,
         DateTime? fechaVencimiento = null,
-        string? observaciones = null)
+        string? observaciones = null,
+        DateTime? fechaActual = null)
     {
+        var fechaDeReferencia = fechaActual ?? DateTime.Now;
+        
         if (productoId == Guid.Empty)
             throw new ArgumentException("El ID del producto no puede estar vacío", nameof(productoId));
         
@@ -67,7 +70,7 @@ public class PreparacionDiaria : EntityBase
         if (chefId == Guid.Empty)
             throw new ArgumentException("El ID del chef no puede estar vacío", nameof(chefId));
 
-        if (fechaVencimiento.HasValue && fechaVencimiento.Value <= DateTime.Now)
+        if (fechaVencimiento.HasValue && fechaVencimiento.Value <= fechaDeReferencia)
             throw new ArgumentException("La fecha de vencimiento debe ser futura", nameof(fechaVencimiento));
 
         var preparacion = new PreparacionDiaria
@@ -76,7 +79,7 @@ public class PreparacionDiaria : EntityBase
             ProductoId = productoId,
             CantidadPreparada = cantidadPreparada,
             CantidadDisponible = cantidadPreparada,
-            FechaPreparacion = DateTime.Now,
+            FechaPreparacion = fechaDeReferencia,
             FechaVencimiento = fechaVencimiento,
             Estado = EstadoPreparacion.Preparando,
             ChefId = chefId,
@@ -211,20 +214,22 @@ public class PreparacionDiaria : EntityBase
     /// <summary>
     /// Verifica si la preparación ha vencido
     /// </summary>
-    public bool HaVencido()
+    public bool HaVencido(DateTime? fechaActual = null)
     {
+        var fechaDeReferencia = fechaActual ?? DateTime.Now;
         return Estado == EstadoPreparacion.Vencida ||
-               (FechaVencimiento.HasValue && DateTime.Now > FechaVencimiento.Value);
+               (FechaVencimiento.HasValue && fechaDeReferencia > FechaVencimiento.Value);
     }
 
     /// <summary>
     /// Verifica si está por vencer en las próximas horas
     /// </summary>
-    public bool EstaPorVencer(int horasAnticipacion = 2)
+    public bool EstaPorVencer(int horasAnticipacion = 2, DateTime? fechaActual = null)
     {
         if (!FechaVencimiento.HasValue) return false;
         
-        return DateTime.Now.AddHours(horasAnticipacion) >= FechaVencimiento.Value &&
+        var fechaDeReferencia = fechaActual ?? DateTime.Now;
+        return fechaDeReferencia.AddHours(horasAnticipacion) >= FechaVencimiento.Value &&
                Estado == EstadoPreparacion.Disponible;
     }
 
