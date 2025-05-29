@@ -54,6 +54,8 @@ public abstract class DomainException : Exception
     public DomainException WithData(string key, object value)
     {
         AdditionalData[key] = value;
+        // Sincronizar con Exception.Data para compatibilidad con tests
+        Data[key] = value;
         return this;
     }
 
@@ -67,6 +69,8 @@ public abstract class DomainException : Exception
         foreach (var kvp in additionalData)
         {
             AdditionalData[kvp.Key] = kvp.Value;
+            // Sincronizar con Exception.Data para compatibilidad con tests
+            Data[kvp.Key] = kvp.Value;
         }
         return this;
     }
@@ -77,8 +81,7 @@ public abstract class DomainException : Exception
     /// <returns>Result con el error encapsulado</returns>
     public Result ToResult()
     {
-        var errorMessage = $"[{ErrorCode}] {Message}";
-        return Result.Failure(errorMessage);
+        return Result.Failure($"[{ErrorCode}] {Message}");
     }
 
     /// <summary>
@@ -88,8 +91,7 @@ public abstract class DomainException : Exception
     /// <returns>Result<T> con el error encapsulado</returns>
     public Result<T> ToResult<T>()
     {
-        var errorMessage = $"[{ErrorCode}] {Message}";
-        return Result.Failure<T>(errorMessage);
+        return Result.Failure<T>($"[{ErrorCode}] {Message}");
     }
 
     /// <summary>

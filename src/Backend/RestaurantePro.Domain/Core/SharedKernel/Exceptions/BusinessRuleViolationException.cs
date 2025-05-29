@@ -29,13 +29,15 @@ public class BusinessRuleViolationException : DomainException
     /// <param name="message">Mensaje descriptivo del error</param>
     /// <param name="domainContext">Contexto del dominio</param>
     /// <param name="entityId">ID de la entidad (opcional)</param>
+    /// <param name="errorCode">Código de error específico (opcional)</param>
     public BusinessRuleViolationException(
         string ruleName,
         string entityName,
         string message,
         string domainContext,
-        Guid? entityId = null) 
-        : base(message, "BUSINESS_RULE_VIOLATION", domainContext)
+        Guid? entityId = null,
+        string? errorCode = null) 
+        : base(message, errorCode ?? "BUSINESS_RULE_VIOLATION", domainContext)
     {
         RuleName = ruleName ?? throw new ArgumentNullException(nameof(ruleName));
         EntityName = entityName ?? throw new ArgumentNullException(nameof(entityName));
@@ -71,8 +73,8 @@ public class BusinessRuleViolationException : DomainException
     /// Crea una excepción para estado inválido de entidad
     /// </summary>
     /// <param name="entityName">Nombre de la entidad</param>
-    /// <param name="currentState">Estado actual</param>
-    /// <param name="expectedState">Estado esperado</param>
+    /// <param name="currentState">Estado actual de la entidad</param>
+    /// <param name="expectedState">Estado esperado de la entidad</param>
     /// <param name="domainContext">Contexto del dominio</param>
     /// <param name="entityId">ID de la entidad</param>
     /// <returns>Nueva instancia de BusinessRuleViolationException</returns>
@@ -83,10 +85,15 @@ public class BusinessRuleViolationException : DomainException
         string domainContext,
         Guid? entityId = null)
     {
-        var message = $"{entityName} está en estado '{currentState}' pero se esperaba '{expectedState}'";
-        return new BusinessRuleViolationException("InvalidEntityState", entityName, message, domainContext, entityId)
-            .WithData("CurrentState", currentState)
-            .WithData("ExpectedState", expectedState) as BusinessRuleViolationException;
+        var message = $"{entityName} está en estado inválido '{currentState}' pero se esperaba '{expectedState}'";
+        var excepcion = new BusinessRuleViolationException(
+            "InvalidState", entityName, message, domainContext, entityId, "INVALID_STATE");
+        
+        excepcion.WithData("EntityType", entityName)
+                 .WithData("CurrentState", currentState)
+                 .WithData("ExpectedState", expectedState);
+                 
+        return excepcion;
     }
 
     /// <summary>
@@ -101,8 +108,9 @@ public class BusinessRuleViolationException : DomainException
         string domainContext,
         Guid entityId)
     {
-        var message = $"No se puede operar con {entityName} porque está inactivo";
-        return new BusinessRuleViolationException("EntityInactive", entityName, message, domainContext, entityId);
+        var message = $"No se puede operar con {entityName} porque es una entidad inactiva";
+        return new BusinessRuleViolationException(
+            "EntityInactive", entityName, message, domainContext, entityId, "INACTIVE_ENTITY");
     }
 
     /// <summary>
@@ -121,10 +129,14 @@ public class BusinessRuleViolationException : DomainException
         string domainContext,
         Guid? entityId = null)
     {
-        var message = $"Operación '{operation}' no permitida en {entityName}: {reason}";
-        return new BusinessRuleViolationException("OperationNotAllowed", entityName, message, domainContext, entityId)
-            .WithData("Operation", operation)
-            .WithData("Reason", reason) as BusinessRuleViolationException;
+        var message = $"operación no permitida '{operation}' en {entityName}: {reason}";
+        var excepcion = new BusinessRuleViolationException(
+            "OperationNotAllowed", entityName, message, domainContext, entityId, "OPERATION_NOT_ALLOWED");
+        
+        excepcion.WithData("Operation", operation)
+                 .WithData("Reason", reason);
+                 
+        return excepcion;
     }
 
     /// <summary>
@@ -142,8 +154,11 @@ public class BusinessRuleViolationException : DomainException
         string domainContext)
     {
         var message = $"Ya existe un {entityName} con {duplicateField} = '{duplicateValue}'";
-        return new BusinessRuleViolationException("DuplicateNotAllowed", entityName, message, domainContext)
-            .WithData("DuplicateField", duplicateField)
-            .WithData("DuplicateValue", duplicateValue) as BusinessRuleViolationException;
+        var excepcion = new BusinessRuleViolationException("DuplicateNotAllowed", entityName, message, domainContext);
+        
+        excepcion.WithData("DuplicateField", duplicateField)
+                 .WithData("DuplicateValue", duplicateValue);
+                 
+        return excepcion;
     }
 } 

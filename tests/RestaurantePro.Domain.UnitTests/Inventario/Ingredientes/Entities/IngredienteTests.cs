@@ -125,7 +125,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Ingredientes.Entities
             
             // Act & Assert
             var action = () => ingrediente.DecrementarStock(cantidadDecremento, "Consumo");
-            action.Should().Throw<InvalidOperationException>().WithMessage("*stock*");
+            action.Should().Throw<StockInsuficienteException>().WithMessage("*Stock insuficiente*");
             
             // El stock no debe cambiar
             ingrediente.Stock.Should().Be(stockInicial);

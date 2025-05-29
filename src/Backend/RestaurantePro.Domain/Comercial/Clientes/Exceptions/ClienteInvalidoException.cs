@@ -70,14 +70,17 @@ public class ClienteInvalidoException : BusinessRuleViolationException
         string operacion = "usar puntos")
     {
         var diasVencida = (DateTime.Now - fechaVencimiento).Days;
-        return new ClienteInvalidoException(
+        var excepcion = new ClienteInvalidoException(
             clienteId,
             true,
             operacion,
-            $"La tarjeta de fidelización venció hace {diasVencida} días (venció {fechaVencimiento:dd/MM/yyyy})")
-            .WithData("FechaVencimiento", fechaVencimiento)
-            .WithData("DiasVencida", diasVencida)
-            .WithData("TipoProblema", "TarjetaVencida") as ClienteInvalidoException;
+            $"La tarjeta de fidelización venció hace {diasVencida} días (venció {fechaVencimiento:dd/MM/yyyy})");
+        
+        excepcion.WithData("FechaVencimiento", fechaVencimiento)
+                 .WithData("DiasVencida", diasVencida)
+                 .WithData("TipoProblema", "TarjetaVencida");
+                 
+        return excepcion;
     }
 
     /// <summary>
@@ -94,15 +97,18 @@ public class ClienteInvalidoException : BusinessRuleViolationException
         int puntosRequeridos,
         string operacion = "canjear puntos")
     {
-        return new ClienteInvalidoException(
+        var excepcion = new ClienteInvalidoException(
             clienteId,
             true,
             operacion,
-            $"Puntos insuficientes: tiene {puntosActuales}, necesita {puntosRequeridos}")
-            .WithData("PuntosActuales", puntosActuales)
-            .WithData("PuntosRequeridos", puntosRequeridos)
-            .WithData("Deficit", puntosRequeridos - puntosActuales)
-            .WithData("TipoProblema", "PuntosInsuficientes") as ClienteInvalidoException;
+            $"Puntos insuficientes: tiene {puntosActuales}, necesita {puntosRequeridos}");
+            
+        excepcion.WithData("PuntosActuales", puntosActuales)
+                 .WithData("PuntosRequeridos", puntosRequeridos)
+                 .WithData("Deficit", puntosRequeridos - puntosActuales)
+                 .WithData("TipoProblema", "PuntosInsuficientes");
+                 
+        return excepcion;
     }
 
     /// <summary>
@@ -113,12 +119,15 @@ public class ClienteInvalidoException : BusinessRuleViolationException
     /// <returns>Nueva instancia de ClienteInvalidoException</returns>
     public static ClienteInvalidoException ParaClienteSinTarjeta(Guid clienteId, string operacion = "usar fidelización")
     {
-        return new ClienteInvalidoException(
+        var excepcion = new ClienteInvalidoException(
             clienteId,
             true,
             operacion,
-            "El cliente no tiene una tarjeta de fidelización activa")
-            .WithData("TipoProblema", "SinTarjeta") as ClienteInvalidoException;
+            "El cliente no tiene una tarjeta de fidelización activa");
+            
+        excepcion.WithData("TipoProblema", "SinTarjeta");
+        
+        return excepcion;
     }
 
     /// <summary>
@@ -138,17 +147,20 @@ public class ClienteInvalidoException : BusinessRuleViolationException
         string operacion = "procesar venta a crédito")
     {
         var disponible = limiteCredito - saldoPendiente;
-        return new ClienteInvalidoException(
+        var excepcion = new ClienteInvalidoException(
             clienteId,
             true,
             operacion,
-            $"Límite de crédito excedido: disponible ${disponible:F2}, solicitado ${montoSolicitud:F2}")
-            .WithData("LimiteCredito", limiteCredito)
-            .WithData("SaldoPendiente", saldoPendiente)
-            .WithData("MontoSolicitud", montoSolicitud)
-            .WithData("Disponible", disponible)
-            .WithData("Exceso", montoSolicitud - disponible)
-            .WithData("TipoProblema", "LimiteCreditoExcedido") as ClienteInvalidoException;
+            $"Límite de crédito excedido: disponible ${disponible:F2}, solicitado ${montoSolicitud:F2}");
+            
+        excepcion.WithData("LimiteCredito", limiteCredito)
+                 .WithData("SaldoPendiente", saldoPendiente)
+                 .WithData("MontoSolicitud", montoSolicitud)
+                 .WithData("Disponible", disponible)
+                 .WithData("Exceso", montoSolicitud - disponible)
+                 .WithData("TipoProblema", "LimiteCreditoExcedido");
+                 
+        return excepcion;
     }
 
     /// <summary>
@@ -167,15 +179,18 @@ public class ClienteInvalidoException : BusinessRuleViolationException
         int diasVencimiento,
         string operacion = "nueva compra")
     {
-        return new ClienteInvalidoException(
+        var excepcion = new ClienteInvalidoException(
             clienteId,
             true,
             operacion,
-            $"Tiene {facturasPendientes} facturas vencidas por ${montoVencido:F2} (vencidas desde hace {diasVencimiento} días)")
-            .WithData("FacturasPendientes", facturasPendientes)
-            .WithData("MontoVencido", montoVencido)
-            .WithData("DiasVencimiento", diasVencimiento)
-            .WithData("TipoProblema", "FacturacionVencida") as ClienteInvalidoException;
+            $"Tiene {facturasPendientes} facturas vencidas por ${montoVencido:F2} (vencidas desde hace {diasVencimiento} días)");
+            
+        excepcion.WithData("FacturasPendientes", facturasPendientes)
+                 .WithData("MontoVencido", montoVencido)
+                 .WithData("DiasVencimiento", diasVencimiento)
+                 .WithData("TipoProblema", "FacturacionVencida");
+                 
+        return excepcion;
     }
 
     /// <summary>
@@ -191,13 +206,16 @@ public class ClienteInvalidoException : BusinessRuleViolationException
         string operacion = "procesar operación")
     {
         var campos = string.Join(", ", camposFaltantes);
-        return new ClienteInvalidoException(
+        var excepcion = new ClienteInvalidoException(
             clienteId,
             true,
             operacion,
-            $"Información de contacto incompleta. Campos requeridos: {campos}")
-            .WithData("CamposFaltantes", camposFaltantes)
-            .WithData("TipoProblema", "InformacionIncompleta") as ClienteInvalidoException;
+            $"Información de contacto incompleta. Campos requeridos: {campos}");
+            
+        excepcion.WithData("CamposFaltantes", camposFaltantes)
+                 .WithData("TipoProblema", "InformacionIncompleta");
+                 
+        return excepcion;
     }
 
     /// <summary>
@@ -214,14 +232,17 @@ public class ClienteInvalidoException : BusinessRuleViolationException
         int edadMinima,
         string operacion = "comprar productos restringidos")
     {
-        return new ClienteInvalidoException(
+        var excepcion = new ClienteInvalidoException(
             clienteId,
             true,
             operacion,
-            $"Cliente menor de edad: {edad} años (mínimo requerido: {edadMinima} años)")
-            .WithData("EdadCliente", edad)
-            .WithData("EdadMinima", edadMinima)
-            .WithData("TipoProblema", "MenorEdad") as ClienteInvalidoException;
+            $"Cliente menor de edad: {edad} años (mínimo requerido: {edadMinima} años)");
+            
+        excepcion.WithData("EdadCliente", edad)
+                 .WithData("EdadMinima", edadMinima)
+                 .WithData("TipoProblema", "MenorEdad");
+                 
+        return excepcion;
     }
 
     /// <summary>
@@ -239,15 +260,18 @@ public class ClienteInvalidoException : BusinessRuleViolationException
         string operacion = "realizar transacción")
     {
         var diasBloqueado = (DateTime.Now - fechaBloqueo).Days;
-        return new ClienteInvalidoException(
+        var excepcion = new ClienteInvalidoException(
             clienteId,
             false,
             operacion,
-            $"Cliente bloqueado por fraude: {razonBloqueo} (bloqueado hace {diasBloqueado} días)")
-            .WithData("RazonBloqueo", razonBloqueo)
-            .WithData("FechaBloqueo", fechaBloqueo)
-            .WithData("DiasBloqueado", diasBloqueado)
-            .WithData("TipoProblema", "ClienteBloqueado") as ClienteInvalidoException;
+            $"Cliente bloqueado por fraude: {razonBloqueo} (bloqueado hace {diasBloqueado} días)");
+            
+        excepcion.WithData("RazonBloqueo", razonBloqueo)
+                 .WithData("FechaBloqueo", fechaBloqueo)
+                 .WithData("DiasBloqueado", diasBloqueado)
+                 .WithData("TipoProblema", "ClienteBloqueado");
+                 
+        return excepcion;
     }
 
     /// <summary>
@@ -265,13 +289,16 @@ public class ClienteInvalidoException : BusinessRuleViolationException
         string operacion = "aplicar promoción")
     {
         var criterios = string.Join(", ", criteriosNoMet);
-        return new ClienteInvalidoException(
+        var excepcion = new ClienteInvalidoException(
             clienteId,
             true,
             operacion,
-            $"No elegible para la promoción. Criterios no cumplidos: {criterios}")
-            .WithData("PromocionId", promocionId)
-            .WithData("CriteriosNoMet", criteriosNoMet)
-            .WithData("TipoProblema", "PromocionNoElegible") as ClienteInvalidoException;
+            $"No elegible para la promoción. Criterios no cumplidos: {criterios}");
+            
+        excepcion.WithData("PromocionId", promocionId)
+                 .WithData("CriteriosNoMet", criteriosNoMet)
+                 .WithData("TipoProblema", "PromocionNoElegible");
+                 
+        return excepcion;
     }
 } 

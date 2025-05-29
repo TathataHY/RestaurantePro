@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Exceptions;
 /// <summary>
 /// Excepción que se lanza cuando se intenta realizar una operación con un cliente inactivo.
 /// </summary>
-public class ClienteInactivoException : BusinessRuleViolationException
+public class ClienteInactivoException : DomainException
 {
     /// <summary>
     /// ID del cliente inactivo
@@ -17,13 +17,12 @@ public class ClienteInactivoException : BusinessRuleViolationException
     /// <param name="operacion">Operación que se intentó realizar</param>
     public ClienteInactivoException(Guid clienteId, string operacion)
         : base(
-            "ClienteInactivo",
-            "Cliente", 
             $"No se puede realizar la operación '{operacion}' porque el cliente está inactivo",
-            "Comercial",
-            clienteId)
+            "CLIENT_INACTIVE", 
+            "Comercial")
     {
         ClienteId = clienteId;
+        WithData("ClienteId", clienteId);
         WithData("Operacion", operacion);
     }
 
@@ -44,8 +43,9 @@ public class ClienteInactivoException : BusinessRuleViolationException
     /// <returns>Nueva instancia de ClienteInactivoException</returns>
     public static ClienteInactivoException ParaAcumulacionPuntos(Guid clienteId, int puntos)
     {
-        return new ClienteInactivoException(clienteId, "acumular puntos")
-            .WithData("PuntosIntentoAcumular", puntos) as ClienteInactivoException;
+        var excepcion = new ClienteInactivoException(clienteId, "acumular puntos");
+        excepcion.WithData("Puntos", puntos);
+        return excepcion;
     }
 
     /// <summary>
@@ -56,8 +56,9 @@ public class ClienteInactivoException : BusinessRuleViolationException
     /// <returns>Nueva instancia de ClienteInactivoException</returns>
     public static ClienteInactivoException ParaAsociacionTarjeta(Guid clienteId, Guid tarjetaId)
     {
-        return new ClienteInactivoException(clienteId, "asociar tarjeta de fidelización")
-            .WithData("TarjetaId", tarjetaId) as ClienteInactivoException;
+        var excepcion = new ClienteInactivoException(clienteId, "asociar tarjeta de fidelización");
+        excepcion.WithData("TarjetaId", tarjetaId);
+        return excepcion;
     }
 
     /// <summary>

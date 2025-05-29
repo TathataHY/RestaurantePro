@@ -450,14 +450,14 @@ public class IngredienteFactoryTests
         // Assert
         resultado.Succeeded.Should().BeTrue();
         resultado.Value!.Codigo.Should().StartWith("AZÚ-");
-        resultado.Value!.Codigo.Should().MatchRegex(@"^[A-Z]{3}-\d{8}$");
+        resultado.Value!.Codigo.Should().MatchRegex(@"^[A-ZÀ-ÿ]{3}-\d{8}$");
     }
 
     [Fact]
     public void CrearIngredienteConCodigoAutomatico_NombreCorto_DebeCompletarConX()
     {
         // Arrange
-        var nombre = "Sal"; // Solo 2 caracteres
+        var nombre = "Sa"; // Solo 2 caracteres
 
         // Act
         var resultado = _ingredienteFactory.CrearIngredienteConCodigoAutomatico(

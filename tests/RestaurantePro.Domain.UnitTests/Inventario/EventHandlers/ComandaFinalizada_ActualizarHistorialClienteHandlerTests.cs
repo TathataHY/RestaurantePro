@@ -139,6 +139,9 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
             var clienteNombre = ClienteNombre.Crear("Juan", "Pérez");
             var cliente = Cliente.Crear(clienteNombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             
+            // Desactivar el cliente para que esté realmente inactivo
+            cliente.Desactivar();
+            
             // Asignar ID al cliente manualmente
             idField?.SetValue(cliente, clienteId);
             

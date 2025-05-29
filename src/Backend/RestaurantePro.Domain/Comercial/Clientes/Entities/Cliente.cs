@@ -204,18 +204,27 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             MarkAsModified();
             ValidarInvariantes();
 
-            AddDomainEvent(new PuntosRestados(Id, puntos, PuntosAcumulados, motivo));
+            AddDomainEvent(new PuntosFidelizacionCanjeados(Id, puntos, PuntosAcumulados, motivo));
         }
 
         /// <summary>
         /// Desactiva al cliente en el sistema.
         /// Cuando un cliente se desactiva, se genera un evento ClienteDesactivado
         /// que puede desencadenar otras acciones como cancelación de reservaciones.
+        /// Los puntos acumulados se ponen en 0 para mantener la consistencia.
         /// </summary>
         public void Desactivar()
         {
             if (!EstaActivo)
                 return;
+
+            // Al desactivar un cliente, sus puntos deben ir a 0 para mantener la invariante
+            if (PuntosAcumulados > 0)
+            {
+                var puntosAPerder = PuntosAcumulados;
+                PuntosAcumulados = 0;
+                AddDomainEvent(new PuntosRestados(Id, puntosAPerder, 0, "Desactivación de cliente"));
+            }
 
             EstaActivo = false;
             MarkAsModified();
@@ -339,6 +348,39 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// <exception cref="BusinessRuleViolationException">Si alguna invariante es violada</exception>
         private void ValidarInvariantes()
         {
+            // Validar que el nombre no sea nulo
+            if (Nombre == null)
+            {
+                throw BusinessRuleViolationException.ForInvalidState(
+                    "Cliente",
+                    "Nombre = null",
+                    "Nombre no puede ser nulo",
+                    "Comercial",
+                    Id);
+            }
+
+            // Validar que el email no sea nulo
+            if (Email == null)
+            {
+                throw BusinessRuleViolationException.ForInvalidState(
+                    "Cliente",
+                    "Email = null",
+                    "Email no puede ser nulo",
+                    "Comercial",
+                    Id);
+            }
+
+            // Validar que el teléfono no sea nulo
+            if (Telefono == null)
+            {
+                throw BusinessRuleViolationException.ForInvalidState(
+                    "Cliente",
+                    "Telefono = null",
+                    "Teléfono no puede ser nulo",
+                    "Comercial",
+                    Id);
+            }
+
             // Validar que los puntos nunca sean negativos
             if (PuntosAcumulados < 0)
             {

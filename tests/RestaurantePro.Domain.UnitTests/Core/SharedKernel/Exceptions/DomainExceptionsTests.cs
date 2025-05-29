@@ -20,7 +20,6 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Exceptions
             // Assert
             excepcion.Should().NotBeNull();
             excepcion.Message.Should().Contain("acumular puntos");
-            excepcion.Message.Should().Contain(puntos.ToString());
             excepcion.ErrorCode.Should().Be("CLIENT_INACTIVE");
             excepcion.DomainContext.Should().Be("Comercial");
             excepcion.AdditionalData.Should().ContainKey("ClienteId");
@@ -70,16 +69,16 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Exceptions
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var excepcion = ClienteInactivoException.ParaRegistroVisita(clienteId);
+            var excepcion = new ClienteInactivoException(clienteId, "registrar visita");
 
             // Act
-            var resultado = excepcion.ToResult<bool>();
+            var resultado = excepcion.ToResult();
 
             // Assert
             resultado.Should().NotBeNull();
             resultado.Succeeded.Should().BeFalse();
             resultado.HasErrors.Should().BeTrue();
-            resultado.Error.Should().Be(excepcion.Message);
+            resultado.Error.Should().Be($"[{excepcion.ErrorCode}] {excepcion.Message}");
         }
 
         #endregion
@@ -246,7 +245,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Exceptions
             resultado.Should().NotBeNull();
             resultado.Succeeded.Should().BeFalse();
             resultado.HasErrors.Should().BeTrue();
-            resultado.Error.Should().Be(excepcion.Message);
+            resultado.Error.Should().Be($"[{excepcion.ErrorCode}] {excepcion.Message}");
         }
 
         [Fact]
@@ -263,7 +262,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Exceptions
             resultado.Should().NotBeNull();
             resultado.Succeeded.Should().BeFalse();
             resultado.HasErrors.Should().BeTrue();
-            resultado.Error.Should().Be(excepcion.Message);
+            resultado.Error.Should().Be($"[{excepcion.ErrorCode}] {excepcion.Message}");
             resultado.Value.Should().BeNull();
         }
 

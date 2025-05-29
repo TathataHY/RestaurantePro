@@ -65,11 +65,7 @@ public class NotificationManager : INotificationManager
     {
         if (!result.Succeeded)
         {
-            if (!string.IsNullOrEmpty(result.Error))
-            {
-                AddError(result.Error);
-            }
-            
+            // Si hay errores en la colección, usarlos (esto incluye casos donde un error singular fue agregado a la colección)
             if (result.Errors != null && result.Errors.Count > 0)
             {
                 foreach (var error in result.Errors)
@@ -79,6 +75,11 @@ public class NotificationManager : INotificationManager
                         AddError(error);
                     }
                 }
+            }
+            // Solo si no hay errores en la colección pero hay un error singular, agregarlo
+            else if (!string.IsNullOrEmpty(result.Error))
+            {
+                AddError(result.Error);
             }
         }
     }

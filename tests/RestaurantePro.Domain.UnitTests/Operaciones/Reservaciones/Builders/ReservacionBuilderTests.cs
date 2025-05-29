@@ -442,7 +442,16 @@ public class ReservacionBuilderTests
     public void Construir_SinDatosObligatorios_DeberiaRetornarFallo()
     {
         // Arrange
-        var builderReal = new ReservacionBuilder(_notificationManagerMock.Object, _loggerMock.Object);
+        var notificationManagerMock = new Mock<INotificationManager>();
+        var loggerMock = new Mock<ILogger<ReservacionBuilder>>();
+        
+        // Configurar para que HasErrors devuelva true después de que se agreguen errores
+        var hasErrors = false;
+        notificationManagerMock.Setup(x => x.AddError(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => hasErrors = true);
+        notificationManagerMock.Setup(x => x.HasErrors).Returns(() => hasErrors);
+        
+        var builderReal = new ReservacionBuilder(notificationManagerMock.Object, loggerMock.Object);
 
         // Act
         var resultado = builderReal.Construir();

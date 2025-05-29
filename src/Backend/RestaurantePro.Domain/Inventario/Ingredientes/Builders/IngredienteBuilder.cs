@@ -244,10 +244,9 @@ public class IngredienteBuilder
             _notificationManager.AddError("El stock actual es obligatorio", nameof(_stockActual));
 
         // Si hay errores, retornar fallo
-        if (_notificationManager.GetErrors().Count > 0)
+        if (_notificationManager.HasErrors)
         {
-            _logger.LogWarning("Error en la construcción del ingrediente: {ErrorCount} errores encontrados", 
-                _notificationManager.GetErrors().Count);
+            _logger.LogWarning("Error en la construcción del ingrediente: errores de validación encontrados");
             return Result.Failure<Ingrediente>("Errores de validación en la construcción del ingrediente");
         }
 

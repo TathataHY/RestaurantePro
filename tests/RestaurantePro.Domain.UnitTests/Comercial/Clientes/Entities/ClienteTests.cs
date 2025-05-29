@@ -231,13 +231,13 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
             var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             cliente.AgregarPuntos(100);
-            cliente.Desactivar();
+            cliente.Desactivar(); // Esto pondrá los puntos en 0 automáticamente
 
             // Act
             Action action = () => cliente.RestarPuntos(50, "Descuento");
 
             // Assert
-            action.Should().Throw<InvalidOperationException>()
+            action.Should().Throw<ClienteInactivoException>()
                 .WithMessage("*inactivo*");
         }
 
@@ -253,8 +253,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             Action action = () => cliente.RestarPuntos(50, "Descuento");
 
             // Assert
-            action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*No hay suficientes puntos*");
+            action.Should().Throw<BusinessRuleViolationException>()
+                .WithMessage("*no tiene puntos suficientes*");
         }
 
         [Fact]
@@ -291,8 +291,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             Action action = () => cliente.AgregarPuntos(10); // Esta operación llamará a ValidarInvariantes
             
             // Assert
-            action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*puntos acumulados*negativos*");
+            action.Should().Throw<BusinessRuleViolationException>()
+                .WithMessage("*PuntosAcumulados*");
         }
         
         [Fact]
@@ -311,8 +311,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             Action action = () => cliente.RegistrarVisita(); // Esta operación llamará a ValidarInvariantes
             
             // Assert
-            action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*visitas*negativa*");
+            action.Should().Throw<BusinessRuleViolationException>()
+                .WithMessage("*CantidadVisitas*");
         }
         
         [Fact]
@@ -334,7 +334,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             
             // Assert
             action.Should().Throw<System.Reflection.TargetInvocationException>()
-                .WithInnerException<InvalidOperationException>()
+                .WithInnerException<BusinessRuleViolationException>()
                 .WithMessage("*email*no puede ser nulo*");
         }
         
@@ -357,7 +357,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             
             // Assert
             action.Should().Throw<System.Reflection.TargetInvocationException>()
-                .WithInnerException<InvalidOperationException>()
+                .WithInnerException<BusinessRuleViolationException>()
                 .WithMessage("*teléfono*no puede ser nulo*");
         }
         
@@ -377,7 +377,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             Action action = () => cliente.RegistrarVisita(); // Esta operación llamará a ValidarInvariantes
             
             // Assert
-            action.Should().Throw<InvalidOperationException>()
+            action.Should().Throw<BusinessRuleViolationException>()
                 .WithMessage("*nombre*no puede ser nulo*");
         }
         

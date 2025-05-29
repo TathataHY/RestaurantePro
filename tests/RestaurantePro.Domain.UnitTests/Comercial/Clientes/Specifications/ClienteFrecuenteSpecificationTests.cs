@@ -98,8 +98,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Specifications
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
             var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             
-            // Simular pocas visitas
-            for (int i = 0; i < 3; i++)
+            // Simular pocas visitas (menos de 3, que es el mínimo por defecto)
+            for (int i = 0; i < 2; i++)
             {
                 cliente.RegistrarVisita();
             }

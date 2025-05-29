@@ -340,6 +340,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Factories
             resultado.Succeeded.Should().BeTrue();
             
             // Verificar que se llamó al logger para información
+            // Se esperan 2 llamadas: una específica del ClienteFactory y otra de EntityFactoryBase
             _loggerMock.Verify(
                 x => x.Log(
                     LogLevel.Information,
@@ -347,7 +348,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Factories
                     It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cliente") && v.ToString()!.Contains("exitosamente")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Once);
+                Times.Exactly(2)); // ClienteFactory + EntityFactoryBase
         }
 
         #endregion

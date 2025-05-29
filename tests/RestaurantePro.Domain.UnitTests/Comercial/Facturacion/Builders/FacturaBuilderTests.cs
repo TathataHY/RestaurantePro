@@ -411,12 +411,21 @@ public class FacturaBuilderTests
     public void Construir_SinNumeroFactura_DeberiaRetornarError()
     {
         // Arrange
-        var builderReal = new FacturaBuilder(_notificationManagerMock.Object, _loggerMock.Object);
+        var notificationManagerMock = new Mock<INotificationManager>();
+        var loggerMock = new Mock<ILogger<FacturaBuilder>>();
+        
+        // Configurar para que HasErrors devuelva true después de que se agreguen errores
+        var hasErrors = false;
+        notificationManagerMock.Setup(x => x.AddError(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => hasErrors = true);
+        notificationManagerMock.Setup(x => x.HasErrors).Returns(() => hasErrors);
+        
+        var builderReal = new FacturaBuilder(notificationManagerMock.Object, loggerMock.Object);
 
         // Act
         var resultado = builderReal
-            .ConCliente(Guid.NewGuid())
-            .ConTipoFactura(TipoFactura.Normal)
+            .ParaCliente("Juan Pérez", Guid.NewGuid())
+            .DeTipo(TipoFactura.Normal)
             .ConFechaEmision(DateTime.Now)
             .Construir();
 

@@ -87,15 +87,29 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                 // Usar FacturaBuilder para crear la factura con validaciones robustas
                 var builder = new FacturaBuilder(_notificationManager, _facturaBuilderLogger);
                 
-                var resultadoFactura = builder
+                builder
                     .ConNumero(numeroFactura)
                     .DeTipo(tipoFactura)
                     .ParaCliente(nombreCliente, clienteId)
                     .ConInformacionFiscal(identificacionFiscal, direccionCliente)
                     .ConFechaEmision(_dateTimeService.Now)
                     .ConObservaciones(observaciones)
-                    .PorComandas(comandaId)
-                    .Construir();
+                    .PorComandas(comandaId);
+
+                // Agregar detalles de la comanda al builder antes de construir
+                foreach (var item in comanda.Items)
+                {
+                    builder.AgregarDetalle(
+                        item.ProductoId,
+                        item.Observaciones ?? $"Producto {item.ProductoId}",
+                        item.Cantidad,
+                        item.PrecioUnitario,
+                        16.0m,  // IVA fijo del 16% - en una implementación real esto podría obtenerse del producto o de configuración
+                        0m);    // No hay descuento por ítem
+                }
+
+                // Construir la factura con todos los detalles
+                var resultadoFactura = builder.Construir();
                 
                 if (!resultadoFactura.Succeeded)
                 {
@@ -103,31 +117,6 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                 }
                 
                 var factura = resultadoFactura.Value!;
-
-                // Agregar detalles de la comanda a la factura
-                foreach (var item in comanda.Items)
-                {
-                    try
-                    {
-                        // Para cada ítem de la comanda, crear un detalle de factura
-                        factura.AgregarDetalle(
-                            item.ProductoId,
-                            item.Observaciones ?? $"Producto {item.ProductoId}",
-                            item.Cantidad,
-                            item.PrecioUnitario,
-                            16.0m,  // IVA fijo del 16% - en una implementación real esto podría obtenerse del producto o de configuración
-                            0m);    // No hay descuento por ítem
-                    }
-                    catch (Exception ex)
-                    {
-                        _notificationManager.AddError($"Error al agregar detalle para producto {item.ProductoId}: {ex.Message}", "DetalleFactura");
-                    }
-                }
-                
-                if (_notificationManager.HasErrors)
-                {
-                    return _notificationManager.ToResult<Factura>(null);
-                }
 
                 // Guardar la factura
                 await _facturaRepository.AgregarAsync(factura, cancellationToken);
@@ -215,15 +204,32 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                 // Usar FacturaBuilder para crear la factura con validaciones robustas
                 var builder = new FacturaBuilder(_notificationManager, _facturaBuilderLogger);
                 
-                var resultadoFactura = builder
+                builder
                     .ConNumero(numeroFactura)
                     .DeTipo(tipoFactura)
                     .ParaCliente(nombreCliente, clienteId)
                     .ConInformacionFiscal(identificacionFiscal, direccionCliente)
                     .ConFechaEmision(_dateTimeService.Now)
                     .ConObservaciones(observaciones)
-                    .PorComandas(comandas.Select(c => c.Id).ToArray())
-                    .Construir();
+                    .PorComandas(comandas.Select(c => c.Id).ToArray());
+
+                // Agregar detalles de todas las comandas al builder antes de construir
+                foreach (var comanda in comandas)
+                {
+                    foreach (var item in comanda.Items)
+                    {
+                        builder.AgregarDetalle(
+                            item.ProductoId,
+                            item.Observaciones ?? $"Producto {item.ProductoId}",
+                            item.Cantidad,
+                            item.PrecioUnitario,
+                            16.0m,  // IVA fijo del 16%
+                            0m);    // No hay descuento por ítem
+                    }
+                }
+
+                // Construir la factura con todos los detalles
+                var resultadoFactura = builder.Construir();
                 
                 if (!resultadoFactura.Succeeded)
                 {
@@ -231,34 +237,6 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                 }
                 
                 var factura = resultadoFactura.Value!;
-
-                // Agregar detalles de todas las comandas a la factura
-                foreach (var comanda in comandas)
-                {
-                    foreach (var item in comanda.Items)
-                    {
-                        try
-                        {
-                            // Para cada ítem de cada comanda, crear un detalle de factura
-                            factura.AgregarDetalle(
-                                item.ProductoId,
-                                item.Observaciones ?? $"Producto {item.ProductoId}",
-                                item.Cantidad,
-                                item.PrecioUnitario,
-                                16.0m,  // IVA fijo del 16%
-                                0m);    // No hay descuento por ítem
-                        }
-                        catch (Exception ex)
-                        {
-                            _notificationManager.AddError($"Error al agregar detalle para producto {item.ProductoId}: {ex.Message}", "DetalleFactura");
-                        }
-                    }
-                }
-                
-                if (_notificationManager.HasErrors)
-                {
-                    return _notificationManager.ToResult<Factura>(null);
-                }
 
                 // Guardar la factura
                 await _facturaRepository.AgregarAsync(factura, cancellationToken);

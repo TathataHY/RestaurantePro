@@ -32,6 +32,13 @@ public class Result
     {
         Succeeded = succeeded;
         Error = error;
+        Errors = new List<string>();
+        
+        // Si hay un error, también agregarlo a la colección Errors
+        if (!string.IsNullOrEmpty(error))
+        {
+            Errors.Add(error);
+        }
     }
     
     /// <summary>
@@ -41,6 +48,7 @@ public class Result
     {
         Succeeded = succeeded;
         Errors = errors ?? new List<string>();
+        Error = null;
     }
     
     /// <summary>
@@ -48,7 +56,7 @@ public class Result
     /// </summary>
     public static Result Success()
     {
-        return new Result(true, error: null);
+        return new Result(true, new List<string>());
     }
     
     /// <summary>
@@ -56,7 +64,7 @@ public class Result
     /// </summary>
     public static Result<T> Success<T>(T value)
     {
-        return new Result<T>(value, true, error: null);
+        return new Result<T>(value, true, new List<string>());
     }
     
     /// <summary>

@@ -9,7 +9,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
         private readonly Mock<ILogger<FacturaBuilder>> _facturaBuilderLoggerMock;
         private readonly INotificationManager _notificationManager;
         private readonly ServicioFacturacion _servicioFacturacion;
-        private readonly DateTime _fechaActual = new DateTime(2024, 1, 1, 12, 0, 0);
+        private readonly DateTime _fechaActual = new DateTime(2025, 1, 1, 12, 0, 0);
 
         public ServicioFacturacionTests()
         {
@@ -39,20 +39,19 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
             // Arrange
             var comandaId = Guid.NewGuid();
             var productoId = Guid.NewGuid();
+            var mesaId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
             var numeroFactura = "F-2024-001";
             
-            // Crear una comanda simulada con un ítem
-            var comanda = Comanda.Crear(Guid.NewGuid(), null, comandaId);
+            // Crear una comanda simulada correctamente con meseroId, clienteId, mesaId
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
             
-            // Usar reflection para pruebas (ya que no podemos acceder directamente a las propiedades privadas)
-            var comandaType = typeof(Comanda);
-            var itemsField = comandaType.GetField("_items", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            // Agregar un producto a la comanda usando el método público
+            comanda.AgregarProducto(productoId, 2, 100.0m, "Producto de prueba");
             
-            var items = new List<ItemComanda>();
-            var item = ItemComanda.Crear(comandaId, productoId, "Producto de prueba", 2, 100.0m, "Descripción de producto");
-            items.Add(item);
-            
-            itemsField?.SetValue(comanda, items);
+            // Asignar el ID de la comanda manualmente para el test usando reflexión
+            var idField = typeof(EntityBase).GetField("_id", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            idField?.SetValue(comanda, comandaId);
             
             // Configurar el mock del repositorio de comandas
             _comandaRepositoryMock
@@ -75,6 +74,18 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
                 "Observaciones de prueba");
                 
             // Assert
+            if (!resultado.Succeeded)
+            {
+                // Mostrar errores para diagnóstico
+                var errores = string.Join(", ", resultado.Errors ?? new List<string>());
+                
+                // También verificar si hay errores en el notification manager
+                var notificationErrors = _notificationManager.GetErrors();
+                var notificationErrorsStr = string.Join(", ", notificationErrors.Select(e => $"{e.PropertyName}: {e.Message}"));
+                
+                throw new Exception($"El servicio falló con errores: {errores}. Errores de notificación: {notificationErrorsStr}");
+            }
+            
             resultado.Succeeded.Should().BeTrue();
             resultado.Value.Should().NotBeNull();
             resultado.Value.NumeroFactura.Should().Be(numeroFactura);

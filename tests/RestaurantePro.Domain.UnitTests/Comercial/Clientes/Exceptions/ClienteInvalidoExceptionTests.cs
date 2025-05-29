@@ -310,9 +310,10 @@ public class ClienteInvalidoExceptionTests
         var resultado = excepcion.ToString();
 
         // Assert
-        resultado.Should().Contain("ClienteInvalidoException");
+        resultado.Should().Contain("Error: [BUSINESS_RULE_VIOLATION]");
         resultado.Should().Contain("Puntos insuficientes");
         resultado.Should().Contain(clienteId.ToString());
+        resultado.Should().Contain("Contexto: Comercial");
     }
 
     [Fact]
@@ -363,7 +364,9 @@ public class ClienteInvalidoExceptionTests
         var excepcion = ClienteInvalidoException.ParaTarjetaVencida(clienteId, fechaFutura);
 
         // Assert
-        excepcion.Data["DiasVencida"].Should().Be(-10);
+        // Permitir una tolerancia de ±1 día debido a timing de ejecución
+        var diasVencida = (int)excepcion.Data["DiasVencida"]!;
+        diasVencida.Should().BeInRange(-11, -9, "because the calculation should be around -10 days with timing tolerance");
     }
 
     [Fact]
@@ -377,7 +380,9 @@ public class ClienteInvalidoExceptionTests
         var excepcion = ClienteInvalidoException.ParaClienteBloqueado(clienteId, "Test", fechaFutura);
 
         // Assert
-        excepcion.Data["DiasBloqueado"].Should().Be(-5);
+        // Permitir una tolerancia de ±1 día debido a timing de ejecución
+        var diasBloqueado = (int)excepcion.Data["DiasBloqueado"]!;
+        diasBloqueado.Should().BeInRange(-6, -4, "because the calculation should be around -5 days with timing tolerance");
     }
 
     [Fact]

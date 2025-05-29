@@ -307,10 +307,19 @@ public class IngredienteBuilderTests
     public void Construir_SinNombre_DeberiaRetornarFallo()
     {
         // Arrange
-        _notificationManagerMock.Setup(x => x.HasErrors).Returns(true);
+        var notificationManagerMock = new Mock<INotificationManager>();
+        var loggerMock = new Mock<ILogger<IngredienteBuilder>>();
+        
+        // Configurar para que HasErrors devuelva true después de que se agreguen errores
+        var hasErrors = false;
+        notificationManagerMock.Setup(x => x.AddError(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => hasErrors = true);
+        notificationManagerMock.Setup(x => x.HasErrors).Returns(() => hasErrors);
+        
+        var builderReal = new IngredienteBuilder(notificationManagerMock.Object, loggerMock.Object);
 
         // Act
-        var resultado = _builder
+        var resultado = builderReal
             .ConCodigo("TOM001")
             .ConDescripcion("Tomate rojo")
             .ConUnidadMedida(UnidadMedida.Kilogramo)

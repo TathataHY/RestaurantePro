@@ -78,7 +78,7 @@ public static class Guard
     {
         if (value <= 0)
         {
-            throw new ArgumentException(message ?? $"El parámetro {parameterName} debe ser mayor que cero", parameterName);
+            throw new ArgumentException(message ?? $"El parámetro {parameterName} debe ser mayor a cero", parameterName);
         }
     }
 
@@ -93,7 +93,7 @@ public static class Guard
     {
         if (value <= 0)
         {
-            throw new ArgumentException(message ?? $"El parámetro {parameterName} debe ser mayor que cero", parameterName);
+            throw new ArgumentException(message ?? $"El parámetro {parameterName} debe ser mayor a cero", parameterName);
         }
     }
 

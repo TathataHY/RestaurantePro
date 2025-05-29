@@ -3,7 +3,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Exceptions;
 /// <summary>
 /// Excepción que se lanza cuando no hay suficiente stock de un ingrediente para realizar una operación.
 /// </summary>
-public class StockInsuficienteException : BusinessRuleViolationException
+public class StockInsuficienteException : DomainException
 {
     /// <summary>
     /// ID del ingrediente con stock insuficiente
@@ -40,22 +40,21 @@ public class StockInsuficienteException : BusinessRuleViolationException
         decimal cantidadDisponible,
         string operacion = "operación")
         : base(
-            "StockInsuficiente",
-            "Ingrediente",
-            $"Stock insuficiente de '{nombreIngrediente}' para {operacion}. Requerido: {cantidadRequerida}, Disponible: {cantidadDisponible}",
-            "Inventario",
-            ingredienteId)
+            $"stock insuficiente de '{nombreIngrediente}' para {operacion}. Requerido: {cantidadRequerida}, Disponible: {cantidadDisponible}",
+            "INSUFFICIENT_STOCK",
+            "Inventario")
     {
         IngredienteId = ingredienteId;
         CantidadRequerida = cantidadRequerida;
         CantidadDisponible = cantidadDisponible;
         NombreIngrediente = nombreIngrediente;
 
-        WithData("CantidadRequerida", cantidadRequerida)
-            .WithData("CantidadDisponible", cantidadDisponible)
-            .WithData("NombreIngrediente", nombreIngrediente)
-            .WithData("Operacion", operacion)
-            .WithData("Deficit", cantidadRequerida - cantidadDisponible);
+        WithData("IngredienteId", ingredienteId);
+        WithData("CantidadRequerida", cantidadRequerida);
+        WithData("StockDisponible", cantidadDisponible);
+        WithData("NombreIngrediente", nombreIngrediente);
+        WithData("Operacion", operacion);
+        WithData("Deficit", cantidadRequerida - cantidadDisponible);
     }
 
     /// <summary>
@@ -74,13 +73,14 @@ public class StockInsuficienteException : BusinessRuleViolationException
         decimal cantidadDisponible,
         Guid comandaId)
     {
-        return new StockInsuficienteException(
+        var excepcion = new StockInsuficienteException(
             ingredienteId,
             nombreIngrediente,
             cantidadRequerida,
             cantidadDisponible,
-            "preparar comanda")
-            .WithData("ComandaId", comandaId) as StockInsuficienteException;
+            "preparar comanda");
+        excepcion.WithData("ComandaId", comandaId);
+        return excepcion;
     }
 
     /// <summary>
@@ -101,14 +101,15 @@ public class StockInsuficienteException : BusinessRuleViolationException
         Guid recetaId,
         string productoNombre)
     {
-        return new StockInsuficienteException(
+        var excepcion = new StockInsuficienteException(
             ingredienteId,
             nombreIngrediente,
             cantidadRequerida,
             cantidadDisponible,
-            $"preparar receta de {productoNombre}")
-            .WithData("RecetaId", recetaId)
-            .WithData("ProductoNombre", productoNombre) as StockInsuficienteException;
+            $"preparar receta de {productoNombre}");
+        excepcion.WithData("RecetaId", recetaId);
+        excepcion.WithData("ProductoNombre", productoNombre);
+        return excepcion;
     }
 
     /// <summary>
@@ -131,8 +132,8 @@ public class StockInsuficienteException : BusinessRuleViolationException
             primerIngrediente.Value.disponible,
             operacion);
 
-        exception.WithData("CantidadIngredientesFaltantes", ingredientesFaltantes.Count)
-                 .WithData("IngredientesFaltantes", ingredientesFaltantes);
+        exception.WithData("CantidadIngredientesFaltantes", ingredientesFaltantes.Count);
+        exception.WithData("IngredientesFaltantes", ingredientesFaltantes);
 
         return exception;
     }

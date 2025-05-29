@@ -1,4 +1,8 @@
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Factories;
+using System.Text;
+using System.Globalization;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// Factory para crear instancias de Ingrediente siguiendo el patrón Factory con Result/Notification
@@ -30,10 +34,8 @@ public class IngredienteFactory : EntityFactoryBase<Ingrediente, Guid>
 
         try
         {
-            // Crear la entidad Ingrediente
-            var id = parametros.Id ?? Guid.NewGuid();
             var ingrediente = Ingrediente.Crear(
-                id,
+                parametros.Id ?? Guid.NewGuid(),
                 parametros.Nombre,
                 parametros.Codigo,
                 parametros.Descripcion,
@@ -41,9 +43,10 @@ public class IngredienteFactory : EntityFactoryBase<Ingrediente, Guid>
                 parametros.StockMinimo,
                 parametros.StockActual,
                 parametros.Rotacion,
-                parametros.Temporada);
+                parametros.Temporada
+            );
 
-            // Asignar propiedades adicionales si se proporcionan
+            // Aplicar configuraciones adicionales si se proporcionan
             if (parametros.ProveedorPrincipalId.HasValue)
             {
                 ingrediente.AsociarProveedorPrincipal(parametros.ProveedorPrincipalId.Value);
@@ -54,15 +57,15 @@ public class IngredienteFactory : EntityFactoryBase<Ingrediente, Guid>
                 ingrediente.ActualizarCostoPromedio(parametros.CostoPromedio);
             }
 
-            Logger.LogInformation("Ingrediente {IngredienteId} creado exitosamente: {Nombre} ({UnidadMedida})", 
-                ingrediente.Id, parametros.Nombre, parametros.UnidadMedida);
-
+            Logger.LogInformation("Ingrediente creado exitosamente: {Nombre} con código {Codigo}", 
+                parametros.Nombre, parametros.Codigo);
             return ingrediente;
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error al crear Ingrediente: {Message}", ex.Message);
-            throw; // Re-lanzar para que EntityFactoryBase lo maneje
+            Logger.LogError(ex, "Excepción al crear ingrediente {Nombre}", parametros.Nombre);
+            AgregarError("Excepcion", "Error interno al crear el ingrediente");
+            return null;
         }
     }
 
@@ -74,50 +77,53 @@ public class IngredienteFactory : EntityFactoryBase<Ingrediente, Guid>
     /// <returns>Entidad reconstruida</returns>
     protected override Ingrediente? ReconstruirEntidadInterno(Guid id, object data)
     {
-        if (data is not IngredienteReconstructionData datos)
+        if (data is not IngredienteReconstructionData datosReconstruccion)
         {
             Logger.LogError("Los datos deben ser de tipo IngredienteReconstructionData");
+            AgregarError("TipoParametros", "Los datos deben ser de tipo IngredienteReconstructionData");
             return null;
         }
 
         try
         {
-            // Reconstruir entidad usando el factory method básico
             var ingrediente = Ingrediente.Crear(
                 id,
-                datos.Nombre,
-                datos.Codigo,
-                datos.Descripcion,
-                datos.UnidadMedida,
-                datos.StockMinimo,
-                datos.Stock,
-                datos.Rotacion,
-                datos.Temporada);
+                datosReconstruccion.Nombre,
+                datosReconstruccion.Codigo,
+                datosReconstruccion.Descripcion,
+                datosReconstruccion.UnidadMedida,
+                datosReconstruccion.StockMinimo,
+                datosReconstruccion.Stock,
+                datosReconstruccion.Rotacion,
+                datosReconstruccion.Temporada
+            );
 
-            // Usar reflection para establecer valores que no se pueden establecer a través de los métodos públicos
-            if (datos.ProveedorPrincipalId.HasValue)
+            // Aplicar configuraciones adicionales si se proporcionan
+            if (datosReconstruccion.ProveedorPrincipalId.HasValue)
             {
-                ingrediente.AsociarProveedorPrincipal(datos.ProveedorPrincipalId.Value);
+                ingrediente.AsociarProveedorPrincipal(datosReconstruccion.ProveedorPrincipalId.Value);
             }
 
-            if (datos.CostoPromedio > 0)
+            if (datosReconstruccion.CostoPromedio > 0)
             {
-                ingrediente.ActualizarCostoPromedio(datos.CostoPromedio);
+                ingrediente.ActualizarCostoPromedio(datosReconstruccion.CostoPromedio);
             }
 
-            // Usar reflection para propiedades que no tienen métodos públicos
-            if (!datos.EstaActivo)
+            if (!datosReconstruccion.EstaActivo)
             {
                 ingrediente.Desactivar();
             }
 
-            Logger.LogDebug("Ingrediente {IngredienteId} reconstruido exitosamente", id);
+            Logger.LogInformation("Ingrediente {IngredienteId} reconstruido exitosamente: {Nombre}", 
+                id, datosReconstruccion.Nombre);
+
             return ingrediente;
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error al reconstruir Ingrediente {IngredienteId}: {Message}", id, ex.Message);
-            throw;
+            AgregarError("Reconstruccion", $"Error al reconstruir el ingrediente: {ex.Message}");
+            return null;
         }
     }
 
@@ -135,65 +141,65 @@ public class IngredienteFactory : EntityFactoryBase<Ingrediente, Guid>
 
         // Validar campos requeridos
         ValidarStringRequerido(parametros.Nombre, nameof(parametros.Nombre), 100);
-        ValidarStringRequerido(parametros.Codigo, nameof(parametros.Codigo), 50);
         
-        // Validar descripción (opcional)
-        if (!string.IsNullOrWhiteSpace(parametros.Descripcion) && parametros.Descripcion.Length > 500)
+        // Validar código - debe estar presente y no vacío
+        if (string.IsNullOrWhiteSpace(parametros.Codigo))
         {
-            AgregarError(nameof(parametros.Descripcion), "La descripción no puede exceder 500 caracteres");
+            AgregarError(nameof(parametros.Codigo), "Codigo es requerido");
         }
-
-        // Validar stocks
-        if (parametros.StockMinimo < 0)
+        else
         {
-            AgregarError(nameof(parametros.StockMinimo), "El stock mínimo no puede ser negativo");
-        }
-
-        if (parametros.StockActual < 0)
-        {
-            AgregarError(nameof(parametros.StockActual), "El stock actual no puede ser negativo");
-        }
-
-        // Validar costo promedio
-        if (parametros.CostoPromedio < 0)
-        {
-            AgregarError(nameof(parametros.CostoPromedio), "El costo promedio no puede ser negativo");
-        }
-
-        // Validar unidad de medida
-        if (!Enum.IsDefined(typeof(UnidadMedida), parametros.UnidadMedida))
-        {
-            AgregarError(nameof(parametros.UnidadMedida), "La unidad de medida no es válida");
-        }
-
-        // Validar rotación
-        if (!Enum.IsDefined(typeof(RotacionIngrediente), parametros.Rotacion))
-        {
-            AgregarError(nameof(parametros.Rotacion), "El nivel de rotación no es válido");
-        }
-
-        // Validar temporada
-        if (!Enum.IsDefined(typeof(TemporadaIngrediente), parametros.Temporada))
-        {
-            AgregarError(nameof(parametros.Temporada), "La temporada no es válida");
-        }
-
-        // Validar código único (formato básico)
-        if (!string.IsNullOrWhiteSpace(parametros.Codigo))
-        {
-            if (!Regex.IsMatch(parametros.Codigo, @"^[A-Z]{2,5}-\d{4,8}$"))
+            if (parametros.Codigo.Length > 50)
+            {
+                AgregarError(nameof(parametros.Codigo), "Codigo no puede exceder 50 caracteres");
+            }
+            
+            // Validar formato de código - permitir caracteres acentuados para códigos generados automáticamente
+            if (!Regex.IsMatch(parametros.Codigo, @"^[A-ZÀ-ÿ]{2,5}-\d{3,8}$"))
             {
                 AgregarError(nameof(parametros.Codigo), 
-                    "El código debe tener el formato: 2-5 letras mayúsculas, guión, 4-8 dígitos (ej: TOM-20241125)");
+                    "Codigo debe tener el formato: 2-5 letras mayúsculas (con o sin acentos), guión, 3-8 dígitos (ej: TOM-20241125, AZÚ-20250529)");
             }
         }
 
-        // Validar coherencia de stocks - generar advertencia no crítica
-        if (parametros.StockActual > 0 && parametros.StockMinimo > 0 && parametros.StockActual > parametros.StockMinimo * 10)
+        // Validar descripción
+        if (!string.IsNullOrWhiteSpace(parametros.Descripcion) && parametros.Descripcion.Length > 500)
         {
-            // Por ahora esto es solo una nota para el desarrollador
-            Logger.LogWarning("El stock actual ({StockActual}) es significativamente mayor al stock mínimo ({StockMinimo}). Verificar si es correcto.", 
-                parametros.StockActual, parametros.StockMinimo);
+            AgregarError(nameof(parametros.Descripcion), "Descripcion no puede exceder 500 caracteres");
+        }
+
+        // Validar valores numéricos
+        ValidarNoNegativo(parametros.StockMinimo, nameof(parametros.StockMinimo));
+        ValidarNoNegativo(parametros.StockActual, nameof(parametros.StockActual));
+        
+        // Validar costo promedio - debe ser NO negativo (puede ser cero)
+        if (parametros.CostoPromedio < 0)
+        {
+            AgregarError(nameof(parametros.CostoPromedio), "CostoPromedio no puede ser negativo");
+        }
+
+        // Validar enums
+        if (!Enum.IsDefined(typeof(UnidadMedida), parametros.UnidadMedida))
+        {
+            AgregarError(nameof(parametros.UnidadMedida), "UnidadMedida no es válida");
+        }
+
+        if (!Enum.IsDefined(typeof(RotacionIngrediente), parametros.Rotacion))
+        {
+            AgregarError(nameof(parametros.Rotacion), "Rotacion no es válida");
+        }
+
+        if (!Enum.IsDefined(typeof(TemporadaIngrediente), parametros.Temporada))
+        {
+            AgregarError(nameof(parametros.Temporada), "Temporada no es válida");
+        }
+
+        // Advertencia si el stock actual es muy alto comparado con el mínimo
+        if (parametros.StockActual > parametros.StockMinimo * 10 && parametros.StockMinimo > 0)
+        {
+            // Se podría agregar un log de advertencia aquí si fuera necesario
+            Logger.LogWarning("El stock actual ({StockActual}) es significativamente mayor que el mínimo ({StockMinimo}) para el ingrediente {Nombre}", 
+                parametros.StockActual, parametros.StockMinimo, parametros.Nombre);
         }
     }
 
@@ -260,13 +266,51 @@ public class IngredienteFactory : EntityFactoryBase<Ingrediente, Guid>
         RotacionIngrediente rotacion = RotacionIngrediente.Media,
         TemporadaIngrediente temporada = TemporadaIngrediente.TodoElAño)
     {
-        // Generar código automático
+        // Generar código automáticamente preservando acentos
         var prefijo = nombre.Length >= 3 
             ? nombre.Substring(0, 3).ToUpper() 
             : nombre.ToUpper().PadRight(3, 'X');
         var codigo = $"{prefijo}-{DateTime.Now:yyyyMMdd}";
 
         return CrearIngrediente(nombre, codigo, descripcion, unidadMedida, stockMinimo, stockActual, rotacion, temporada);
+    }
+
+    /// <summary>
+    /// Normaliza texto eliminando acentos y caracteres especiales para generar códigos válidos
+    /// </summary>
+    /// <param name="texto">Texto a normalizar</param>
+    /// <returns>Texto normalizado solo con caracteres A-Z</returns>
+    private static string NormalizarTextoParaCodigo(string texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+            return "XXX";
+
+        // Normalizar caracteres acentuados a su equivalente ASCII
+        var stringNormalizada = texto.Normalize(NormalizationForm.FormD);
+        var stringBuilder = new StringBuilder();
+
+        foreach (char caracter in stringNormalizada)
+        {
+            var categoria = CharUnicodeInfo.GetUnicodeCategory(caracter);
+            if (categoria != UnicodeCategory.NonSpacingMark)
+            {
+                if (char.IsLetter(caracter))
+                {
+                    stringBuilder.Append(caracter);
+                }
+            }
+        }
+
+        var resultado = stringBuilder.ToString();
+        
+        // Si después de la normalización no quedan caracteres válidos, usar XXX
+        if (string.IsNullOrWhiteSpace(resultado))
+        {
+            return "XXX";
+        }
+
+        // Asegurar que solo contenga letras A-Z
+        return new string(resultado.Where(c => char.IsLetter(c)).ToArray());
     }
 }
 

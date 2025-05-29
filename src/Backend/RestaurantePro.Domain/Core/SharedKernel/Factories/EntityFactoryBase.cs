@@ -46,7 +46,19 @@ public abstract class EntityFactoryBase<TEntity, TId> : IEntityFactory<TEntity, 
             var validationResult = ValidarParametros(parameters);
             if (!validationResult.Succeeded)
             {
-                return Result.Failure<TEntity>(validationResult.Errors);
+                // Manejar correctamente tanto Error como Errors
+                if (validationResult.Errors != null && validationResult.Errors.Count > 0)
+                {
+                    return Result.Failure<TEntity>(validationResult.Errors);
+                }
+                else if (!string.IsNullOrEmpty(validationResult.Error))
+                {
+                    return Result.Failure<TEntity>(validationResult.Error);
+                }
+                else
+                {
+                    return Result.Failure<TEntity>("Error de validación desconocido");
+                }
             }
 
             // Crear la entidad
@@ -93,6 +105,15 @@ public abstract class EntityFactoryBase<TEntity, TId> : IEntityFactory<TEntity, 
             var entidad = ReconstruirEntidadInterno(id, data);
             if (entidad == null)
             {
+                // Revisar si hay errores en el NotificationManager
+                if (NotificationManager.HasErrors)
+                {
+                    var errores = NotificationManager.GetErrors()
+                        .Select(n => n.Message)
+                        .ToList();
+                    return Result.Failure<TEntity>(errores);
+                }
+                
                 var error = $"Error interno: no se pudo reconstruir la entidad {typeof(TEntity).Name} con ID {id}";
                 Logger?.LogError(error);
                 return Result.Failure<TEntity>(error);
@@ -138,6 +159,11 @@ public abstract class EntityFactoryBase<TEntity, TId> : IEntityFactory<TEntity, 
                 var errores = NotificationManager.GetErrors()
                     .Select(n => n.Message)
                     .ToArray();
+                
+                // Log de errores de validación
+                Logger?.LogError("Error en validación de parámetros para {EntityType}: {Errores}", 
+                    typeof(TEntity).Name, string.Join(", ", errores));
+                
                 return Result.Failure(errores.ToList());
             }
 
