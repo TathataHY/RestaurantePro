@@ -1,6 +1,7 @@
 using RestaurantePro.Domain.Operaciones.Comandas.Builders;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Builders;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Builders;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Services;
 
 namespace RestaurantePro.Domain.Operaciones.Services
 {
@@ -13,6 +14,7 @@ namespace RestaurantePro.Domain.Operaciones.Services
         private readonly IReservacionRepository _reservacionRepository;
         private readonly IMesaRepository _mesaRepository;
         private readonly IProductoRepository _productoRepository;
+        private readonly IServicioPreparaciones _servicioPreparaciones;
         private readonly INotificationManager _notificationManager;
         private readonly ILogger<ComandaBuilder> _comandaBuilderLogger;
         private readonly ILogger<ReservacionBuilder> _reservacionBuilderLogger;
@@ -23,6 +25,7 @@ namespace RestaurantePro.Domain.Operaciones.Services
             IReservacionRepository reservacionRepository,
             IMesaRepository mesaRepository,
             IProductoRepository productoRepository,
+            IServicioPreparaciones servicioPreparaciones,
             INotificationManager notificationManager,
             ILogger<ComandaBuilder> comandaBuilderLogger,
             ILogger<ReservacionBuilder> reservacionBuilderLogger,
@@ -32,6 +35,7 @@ namespace RestaurantePro.Domain.Operaciones.Services
             _reservacionRepository = reservacionRepository ?? throw new ArgumentNullException(nameof(reservacionRepository));
             _mesaRepository = mesaRepository ?? throw new ArgumentNullException(nameof(mesaRepository));
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
+            _servicioPreparaciones = servicioPreparaciones ?? throw new ArgumentNullException(nameof(servicioPreparaciones));
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
             _comandaBuilderLogger = comandaBuilderLogger ?? throw new ArgumentNullException(nameof(comandaBuilderLogger));
             _reservacionBuilderLogger = reservacionBuilderLogger ?? throw new ArgumentNullException(nameof(reservacionBuilderLogger));
@@ -149,9 +153,16 @@ namespace RestaurantePro.Domain.Operaciones.Services
                     _notificationManager.AddError($"No se encontró el producto con ID {productoId}", "ProductoId");
                     return _notificationManager.ToResult<Comanda>(null);
                 }
+
+                // 🍳 FLUJO HÍBRIDO: Verificar preparaciones primero y agregar producto
+                var resultadoAgregar = await AgregarProductoConFlujoPrepararcionesAsync(
+                    comanda, producto, cantidad, observaciones);
                 
-                // Agregar el producto a la comanda
-                comanda.AgregarItem(productoId, producto.Nombre, cantidad, producto.Precio.Valor, observaciones);
+                if (!resultadoAgregar.Succeeded)
+                {
+                    _notificationManager.AddError("Error al agregar producto con flujo de preparaciones", "AgregarProducto");
+                    return _notificationManager.ToResult<Comanda>(null);
+                }
                 
                 // Persistir cambios
                 await _comandaRepository.ActualizarAsync(comanda);
@@ -163,6 +174,90 @@ namespace RestaurantePro.Domain.Operaciones.Services
             {
                 _notificationManager.AddError($"Error al agregar producto a comanda: {ex.Message}", "AgregarProducto");
                 return _notificationManager.ToResult<Comanda>(null);
+            }
+        }
+
+        /// <summary>
+        /// 🍳 Flujo híbrido: Verifica preparaciones primero, luego inventario si es necesario
+        /// </summary>
+        private async Task<Result> AgregarProductoConFlujoPrepararcionesAsync(
+            Comanda comanda, 
+            Producto producto, 
+            int cantidad, 
+            string observaciones)
+        {
+            bool tomarDePreparaciones = false;
+            string observacionesCompletas = observaciones;
+            
+            try
+            {
+                // 🔍 Paso 1: Verificar disponibilidad en preparaciones diarias
+                var disponibilidadResult = await _servicioPreparaciones.VerificarDisponibilidadAsync(
+                    producto.Id, cantidad);
+                
+                if (disponibilidadResult.Succeeded && disponibilidadResult.Value)
+                {
+                    // ✅ Paso 2: Consumir de preparaciones diarias
+                    var consumoResult = await _servicioPreparaciones.ConsumirPreparacionAsync(
+                        producto.Id, cantidad);
+                    
+                    if (consumoResult.Succeeded)
+                    {
+                        tomarDePreparaciones = true;
+                        _notificationManager.AddInformation(
+                            $"✅ Producto '{producto.Nombre}' (cantidad: {cantidad}) tomado de preparaciones diarias", 
+                            "FlujoPreparariones");
+                        
+                        // Agregar información a las observaciones
+                        observacionesCompletas = string.IsNullOrWhiteSpace(observaciones) 
+                            ? "🍳 Preparación diaria" 
+                            : $"{observaciones} (🍳 Preparación diaria)";
+                    }
+                    else
+                    {
+                        _notificationManager.AddError(
+                            $"⚠️ No se pudo consumir preparación para '{producto.Nombre}'. Motivo: {consumoResult.Error}", 
+                            "FlujoPreparariones");
+                    }
+                }
+                else
+                {
+                    _notificationManager.AddInformation(
+                        $"ℹ️ Producto '{producto.Nombre}' no disponible en preparaciones, se preparará al momento", 
+                        "FlujoPreparariones");
+                }
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError(
+                    $"⚠️ Error verificando preparaciones para '{producto.Nombre}': {ex.Message}. Continuando con flujo normal.", 
+                    "FlujoPreparariones");
+            }
+
+            // 🥘 Paso 3: Si no se tomó de preparaciones, verificar inventario
+            if (!tomarDePreparaciones)
+            {
+                // TODO: Aquí se integraría con el verificador de inventario/ingredientes
+                // Por ahora solo agregamos información
+                observacionesCompletas = string.IsNullOrWhiteSpace(observaciones) 
+                    ? "🥘 Preparación al momento" 
+                    : $"{observaciones} (🥘 Preparación al momento)";
+                    
+                _notificationManager.AddInformation(
+                    $"🥘 Producto '{producto.Nombre}' será preparado al momento", 
+                    "FlujoPreparariones");
+            }
+
+            // 📝 Paso 4: Agregar el producto a la comanda
+            try
+            {
+                comanda.AgregarItem(producto.Id, producto.Nombre, cantidad, producto.Precio.Valor, observacionesCompletas);
+                return Result.Success();
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error agregando ítem a comanda: {ex.Message}", "AgregarItem");
+                return Result.Failure($"Error agregando ítem a comanda: {ex.Message}");
             }
         }
 
@@ -471,6 +566,109 @@ namespace RestaurantePro.Domain.Operaciones.Services
             {
                 _notificationManager.AddError($"Error al aplicar descuento a comanda: {ex.Message}", "AplicarDescuentoComanda");
                 return _notificationManager.ToResult<bool>(false);
+            }
+        }
+
+        /// <summary>
+        /// 🍳 Crea una nueva comanda con productos y flujo híbrido de preparaciones
+        /// </summary>
+        public async Task<Result<Comanda>> CrearComandaConProductosAsync(
+            Guid? clienteId,
+            Guid? mesaId,
+            Guid meseroId,
+            IEnumerable<(Guid ProductoId, int Cantidad, string Observaciones)> productos,
+            string observacionesComanda = "",
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros básicos
+            _notificationManager.Require(meseroId != Guid.Empty, "El ID del mesero no puede estar vacío", "MeseroId");
+            _notificationManager.Require(productos?.Any() == true, "Debe incluir al menos un producto", "Productos");
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<Comanda>(null);
+            }
+            
+            try
+            {
+                // 🏗️ Paso 1: Crear comanda base
+                var resultadoComandaBase = await CrearNuevaComandaAsync(
+                    clienteId, mesaId, meseroId, observacionesComanda, cancellationToken);
+                
+                if (!resultadoComandaBase.Succeeded)
+                {
+                    return resultadoComandaBase;
+                }
+                
+                var comanda = resultadoComandaBase.Value!;
+                
+                // 🍳 Paso 2: Agregar productos con flujo híbrido de preparaciones
+                var productosAgregados = 0;
+                var productosDePreparaciones = 0;
+                var productosAlMomento = 0;
+                
+                foreach (var (productoId, cantidad, observaciones) in productos)
+                {
+                    // Validar producto
+                    _notificationManager.Require(productoId != Guid.Empty, $"ID de producto no válido: {productoId}", "ProductoId");
+                    _notificationManager.Require(cantidad > 0, $"Cantidad debe ser mayor a 0: {cantidad}", "Cantidad");
+                    
+                    if (_notificationManager.HasErrors)
+                    {
+                        continue; // Saltar este producto y continuar
+                    }
+                    
+                    // Obtener producto
+                    var producto = await _productoRepository.ObtenerPorIdAsync(productoId, cancellationToken);
+                    if (producto == null)
+                    {
+                        _notificationManager.AddError($"Producto no encontrado: {productoId}", "ProductoId");
+                        continue;
+                    }
+                    
+                    // Agregar con flujo híbrido
+                    var resultadoAgregar = await AgregarProductoConFlujoPrepararcionesAsync(
+                        comanda, producto, cantidad, observaciones);
+                    
+                    if (resultadoAgregar.Succeeded)
+                    {
+                        productosAgregados++;
+                        
+                        // Contar estadísticas del flujo
+                        if (observaciones.Contains("🍳 Preparación diaria"))
+                            productosDePreparaciones++;
+                        else
+                            productosAlMomento++;
+                    }
+                }
+                
+                // ✅ Paso 3: Validar que se agregó al menos un producto
+                if (productosAgregados == 0)
+                {
+                    _notificationManager.AddError("No se pudo agregar ningún producto a la comanda", "Productos");
+                    return _notificationManager.ToResult<Comanda>(null);
+                }
+                
+                // 📊 Paso 4: Log estadísticas del flujo híbrido
+                var porcentajePreparaciones = (productosDePreparaciones * 100.0) / productosAgregados;
+                _notificationManager.AddInformation(
+                    $"📊 Comanda creada con {productosAgregados} productos: " +
+                    $"{productosDePreparaciones} de preparaciones ({porcentajePreparaciones:F1}%), " +
+                    $"{productosAlMomento} al momento", 
+                    "EstadisticasComanda");
+                
+                // Persistir cambios finales
+                await _comandaRepository.ActualizarAsync(comanda);
+                await _comandaRepository.GuardarCambiosAsync(cancellationToken);
+                
+                return Result.Success(comanda);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error creando comanda con productos: {ex.Message}", "CrearComandaConProductos");
+                return _notificationManager.ToResult<Comanda>(null);
             }
         }
 
@@ -1111,6 +1309,165 @@ namespace RestaurantePro.Domain.Operaciones.Services
             }
         }
         
+        #endregion
+
+        #region Preparaciones Diarias
+
+        /// <summary>
+        /// Prepara un producto con una cantidad específica para el día
+        /// </summary>
+        public async Task<Result<PreparacionDiaria>> PrepararProductoAsync(
+            Guid productoId,
+            int cantidad,
+            Guid chefId,
+            DateTime? fechaVencimiento = null,
+            string? observaciones = null,
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+
+            // Validar parámetros
+            _notificationManager.Require(productoId != Guid.Empty, "El ID del producto no puede estar vacío", "ProductoId");
+            _notificationManager.Require(cantidad > 0, "La cantidad debe ser mayor que cero", "Cantidad");
+            _notificationManager.Require(chefId != Guid.Empty, "El ID del chef no puede estar vacío", "ChefId");
+
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<PreparacionDiaria>(null);
+            }
+
+            try
+            {
+                // Verificar que el producto existe
+                var producto = await _productoRepository.ObtenerPorIdAsync(productoId, cancellationToken);
+                if (producto == null)
+                {
+                    _notificationManager.AddError($"No se encontró el producto con ID {productoId}", "ProductoId");
+                    return _notificationManager.ToResult<PreparacionDiaria>(null);
+                }
+
+                // Preparar el producto usando el servicio de preparaciones
+                var resultado = await _servicioPreparaciones.PrepararProductoAsync(
+                    productoId, 
+                    cantidad, 
+                    chefId, 
+                    fechaVencimiento, 
+                    observaciones);
+
+                if (!resultado.Succeeded)
+                {
+                    _notificationManager.AddError($"Error al preparar producto: {string.Join(", ", resultado.Errors)}", "PrepararProducto");
+                    return _notificationManager.ToResult<PreparacionDiaria>(null);
+                }
+
+                return Result.Success(resultado.Value!);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al preparar producto: {ex.Message}", "PrepararProducto");
+                return _notificationManager.ToResult<PreparacionDiaria>(null);
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las preparaciones del día actual
+        /// </summary>
+        public async Task<Result<IEnumerable<PreparacionDiaria>>> ObtenerPreparacionesDelDiaAsync(
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var resultado = await _servicioPreparaciones.ObtenerPreparacionesDelDiaAsync();
+
+                if (!resultado.Succeeded)
+                {
+                    _notificationManager.AddError($"Error al obtener preparaciones: {string.Join(", ", resultado.Errors)}", "ObtenerPreparaciones");
+                    return _notificationManager.ToResult<IEnumerable<PreparacionDiaria>>(Array.Empty<PreparacionDiaria>());
+                }
+
+                return Result.Success(resultado.Value!.AsEnumerable());
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al obtener preparaciones del día: {ex.Message}", "ObtenerPreparaciones");
+                return _notificationManager.ToResult<IEnumerable<PreparacionDiaria>>(Array.Empty<PreparacionDiaria>());
+            }
+        }
+
+        /// <summary>
+        /// Obtiene las preparaciones de un producto específico
+        /// </summary>
+        public async Task<Result<IEnumerable<PreparacionDiaria>>> ObtenerPreparacionesPorProductoAsync(
+            Guid productoId,
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+
+            // Validar parámetros
+            _notificationManager.Require(productoId != Guid.Empty, "El ID del producto no puede estar vacío", "ProductoId");
+
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<IEnumerable<PreparacionDiaria>>(Array.Empty<PreparacionDiaria>());
+            }
+
+            try
+            {
+                var resultado = await _servicioPreparaciones.ObtenerPreparacionesPorProductoAsync(productoId);
+
+                if (!resultado.Succeeded)
+                {
+                    _notificationManager.AddError($"Error al obtener preparaciones del producto: {string.Join(", ", resultado.Errors)}", "ObtenerPreparacionesProducto");
+                    return _notificationManager.ToResult<IEnumerable<PreparacionDiaria>>(Array.Empty<PreparacionDiaria>());
+                }
+
+                return Result.Success(resultado.Value!.AsEnumerable());
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al obtener preparaciones por producto: {ex.Message}", "ObtenerPreparacionesProducto");
+                return _notificationManager.ToResult<IEnumerable<PreparacionDiaria>>(Array.Empty<PreparacionDiaria>());
+            }
+        }
+
+        /// <summary>
+        /// Verifica si hay suficiente cantidad preparada de un producto
+        /// </summary>
+        public async Task<Result<bool>> VerificarDisponibilidadPreparacionAsync(
+            Guid productoId,
+            int cantidadRequerida,
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+
+            // Validar parámetros
+            _notificationManager.Require(productoId != Guid.Empty, "El ID del producto no puede estar vacío", "ProductoId");
+            _notificationManager.Require(cantidadRequerida > 0, "La cantidad requerida debe ser mayor que cero", "CantidadRequerida");
+
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<bool>(false);
+            }
+
+            try
+            {
+                var resultado = await _servicioPreparaciones.VerificarDisponibilidadAsync(productoId, cantidadRequerida);
+
+                if (!resultado.Succeeded)
+                {
+                    _notificationManager.AddError($"Error al verificar disponibilidad: {string.Join(", ", resultado.Errors)}", "VerificarDisponibilidad");
+                    return _notificationManager.ToResult<bool>(false);
+                }
+
+                return Result.Success(resultado.Value);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al verificar disponibilidad de preparación: {ex.Message}", "VerificarDisponibilidad");
+                return _notificationManager.ToResult<bool>(false);
+            }
+        }
+
         #endregion
     }
 } 

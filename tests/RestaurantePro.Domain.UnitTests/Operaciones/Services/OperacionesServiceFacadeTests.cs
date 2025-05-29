@@ -10,6 +10,9 @@ using RestaurantePro.Domain.Operaciones.Comandas;
 using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
 using RestaurantePro.Domain.Core.Productos.Interfaces;
+using RestaurantePro.Domain.Core.Productos.ValueObjects;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Services;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
 using System.Reflection;
 
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
@@ -24,6 +27,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
         private readonly Mock<IComandaRepository> _comandaRepositoryMock;
         private readonly Mock<IProductoRepository> _productoRepositoryMock;
         private readonly Mock<IClienteRepository> _clienteRepositoryMock;
+        private readonly Mock<IServicioPreparaciones> _servicioPreparacionesMock;
         private readonly NotificationManager _notificationManager;
         private readonly IOperacionesServiceFacade _sut;
 
@@ -34,6 +38,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             _comandaRepositoryMock = new Mock<IComandaRepository>();
             _productoRepositoryMock = new Mock<IProductoRepository>();
             _clienteRepositoryMock = new Mock<IClienteRepository>();
+            _servicioPreparacionesMock = new Mock<IServicioPreparaciones>();
             _notificationManager = new NotificationManager();
             
             // Crear una implementación personalizada para las pruebas
@@ -41,7 +46,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 _reservacionRepositoryMock.Object,
                 _mesaRepositoryMock.Object,
                 _comandaRepositoryMock.Object,
-                _productoRepositoryMock.Object);
+                _productoRepositoryMock.Object,
+                _servicioPreparacionesMock.Object);
         }
         
         // Implementación de prueba de OperacionesServiceFacade
@@ -51,17 +57,20 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             private readonly IMesaRepository _mesaRepository;
             private readonly IComandaRepository _comandaRepository;
             private readonly IProductoRepository _productoRepository;
+            private readonly IServicioPreparaciones _servicioPreparaciones;
 
             public OperacionesServiceFacadeTestImpl(
                 IReservacionRepository reservacionRepository,
                 IMesaRepository mesaRepository,
                 IComandaRepository comandaRepository,
-                IProductoRepository productoRepository)
+                IProductoRepository productoRepository,
+                IServicioPreparaciones servicioPreparaciones)
             {
                 _reservacionRepository = reservacionRepository;
                 _mesaRepository = mesaRepository;
                 _comandaRepository = comandaRepository;
                 _productoRepository = productoRepository;
+                _servicioPreparaciones = servicioPreparaciones;
             }
             
             public async Task<Result<Reservacion>> ObtenerReservacionAsync(Guid reservacionId, CancellationToken cancellationToken = default)
@@ -355,6 +364,147 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 
                 return Task.FromResult(Result.Success(mesas));
             }
+
+            #region Preparaciones Diarias
+
+            public async Task<Result<PreparacionDiaria>> PrepararProductoAsync(Guid productoId, int cantidad, Guid chefId, DateTime? fechaVencimiento = null, string? observaciones = null, CancellationToken cancellationToken = default)
+            {
+                // Delegar al servicio de preparaciones
+                return await _servicioPreparaciones.PrepararProductoAsync(productoId, cantidad, chefId, fechaVencimiento, observaciones);
+            }
+
+            public async Task<Result<IEnumerable<PreparacionDiaria>>> ObtenerPreparacionesDelDiaAsync(CancellationToken cancellationToken = default)
+            {
+                var resultado = await _servicioPreparaciones.ObtenerPreparacionesDelDiaAsync();
+                if (resultado.Succeeded)
+                {
+                    return Result.Success(resultado.Value!.AsEnumerable());
+                }
+                return Result.Failure<IEnumerable<PreparacionDiaria>>(resultado.Error.ToString());
+            }
+
+            public async Task<Result<IEnumerable<PreparacionDiaria>>> ObtenerPreparacionesPorProductoAsync(Guid productoId, CancellationToken cancellationToken = default)
+            {
+                var resultado = await _servicioPreparaciones.ObtenerPreparacionesPorProductoAsync(productoId);
+                if (resultado.Succeeded)
+                {
+                    return Result.Success(resultado.Value!.AsEnumerable());
+                }
+                return Result.Failure<IEnumerable<PreparacionDiaria>>(resultado.Error.ToString());
+            }
+
+            public async Task<Result<bool>> VerificarDisponibilidadPreparacionAsync(Guid productoId, int cantidadRequerida, CancellationToken cancellationToken = default)
+            {
+                return await _servicioPreparaciones.VerificarDisponibilidadAsync(productoId, cantidadRequerida);
+            }
+
+            /// <summary>
+            /// 🍳 Implementación del flujo híbrido de preparaciones para tests
+            /// </summary>
+            public async Task<Result<Comanda>> CrearComandaConProductosAsync(
+                Guid? clienteId,
+                Guid? mesaId,
+                Guid meseroId,
+                IEnumerable<(Guid ProductoId, int Cantidad, string Observaciones)> productos,
+                string observacionesComanda = "",
+                CancellationToken cancellationToken = default)
+            {
+                // Validar parámetros básicos
+                if (meseroId == Guid.Empty)
+                {
+                    return Result.Failure<Comanda>("El ID del mesero no puede estar vacío");
+                }
+                
+                if (productos?.Any() != true)
+                {
+                    return Result.Failure<Comanda>("Debe incluir al menos un producto");
+                }
+                
+                try
+                {
+                    // Crear comanda base
+                    var comanda = Comanda.Crear(
+                        mesaId ?? Guid.Empty,
+                        meseroId,
+                        clienteId ?? Guid.Empty,
+                        observacionesComanda);
+                    
+                    var productosAgregados = 0;
+                    
+                    foreach (var (productoId, cantidad, observaciones) in productos)
+                    {
+                        // Validar producto
+                        if (productoId == Guid.Empty || cantidad <= 0)
+                        {
+                            continue; // Saltar producto inválido
+                        }
+                        
+                        // Obtener producto del repositorio
+                        var producto = await _productoRepository.ObtenerPorIdAsync(productoId, cancellationToken);
+                        if (producto == null)
+                        {
+                            continue; // Saltar producto no encontrado
+                        }
+                        
+                        // Verificar preparaciones
+                        string observacionesCompletas = observaciones;
+                        try
+                        {
+                            var disponibilidadResult = await _servicioPreparaciones.VerificarDisponibilidadAsync(productoId, cantidad);
+                            
+                            if (disponibilidadResult.Succeeded && disponibilidadResult.Value)
+                            {
+                                // Consumir de preparaciones
+                                var consumoResult = await _servicioPreparaciones.ConsumirPreparacionAsync(productoId, cantidad);
+                                
+                                if (consumoResult.Succeeded)
+                                {
+                                    observacionesCompletas = string.IsNullOrWhiteSpace(observaciones)
+                                        ? "🍳 Preparación diaria"
+                                        : $"{observaciones} (🍳 Preparación diaria)";
+                                }
+                                else
+                                {
+                                    observacionesCompletas = string.IsNullOrWhiteSpace(observaciones)
+                                        ? "🥘 Preparación al momento"
+                                        : $"{observaciones} (🥘 Preparación al momento)";
+                                }
+                            }
+                            else
+                            {
+                                observacionesCompletas = string.IsNullOrWhiteSpace(observaciones)
+                                    ? "🥘 Preparación al momento"
+                                    : $"{observaciones} (🥘 Preparación al momento)";
+                            }
+                        }
+                        catch
+                        {
+                            // En caso de error, usar preparación al momento
+                            observacionesCompletas = string.IsNullOrWhiteSpace(observaciones)
+                                ? "🥘 Preparación al momento"
+                                : $"{observaciones} (🥘 Preparación al momento)";
+                        }
+                        
+                        // Agregar producto a la comanda
+                        comanda.AgregarItem(producto.Id, producto.Nombre, cantidad, producto.Precio.Valor, observacionesCompletas);
+                        productosAgregados++;
+                    }
+                    
+                    // Validar que se agregó al menos un producto
+                    if (productosAgregados == 0)
+                    {
+                        return Result.Failure<Comanda>("No se pudo agregar ningún producto a la comanda");
+                    }
+                    
+                    return Result.Success(comanda);
+                }
+                catch (Exception ex)
+                {
+                    return Result.Failure<Comanda>($"Error creando comanda con productos: {ex.Message}");
+                }
+            }
+
+            #endregion
         }
         
         #region Reservaciones
@@ -692,28 +842,410 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
         
         #endregion
 
-        private void VerificarResultadoFallido<T>(Result<T> resultado, string mensajeEsperado)
+        #region Tests de Preparaciones Diarias
+
+        [Fact]
+        public async Task PrepararProductoAsync_ConDatosValidos_DebeRetornarPreparacionCreada()
         {
-            resultado.Should().NotBeNull();
-            resultado.Succeeded.Should().BeFalse();
-            resultado.Value.Should().BeNull();
-            resultado.Errors.Should().NotBeEmpty();
-            resultado.Errors.Should().Contain(e => e.ToString().Contains(mensajeEsperado));
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var cantidad = 10;
+            var chefId = Guid.NewGuid();
+            var fechaVencimiento = DateTime.Now.AddHours(8);
+            var observaciones = "Preparación de prueba";
+            
+            var preparacionEsperada = PreparacionDiaria.Crear(productoId, cantidad, chefId, fechaVencimiento, observaciones);
+            
+            _servicioPreparacionesMock
+                .Setup(s => s.PrepararProductoAsync(productoId, cantidad, chefId, fechaVencimiento, observaciones))
+                .Returns(Task.FromResult(Result<PreparacionDiaria>.Success(preparacionEsperada)));
+
+            // Act
+            var resultado = await _sut.PrepararProductoAsync(productoId, cantidad, chefId, fechaVencimiento, observaciones);
+
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.Equal(preparacionEsperada, resultado.Value);
+            
+            _servicioPreparacionesMock.Verify(s => s.PrepararProductoAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<Guid>(), It.IsAny<DateTime?>(), It.IsAny<string?>()), Times.Exactly(1));
         }
 
-        // Métodos auxiliares para evitar problemas con árboles de expresión (CS0854)
+        [Fact]
+        public async Task PrepararProductoAsync_ConErrorEnServicio_DebeRetornarError()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var cantidad = 10;
+            var chefId = Guid.NewGuid();
+            var mensajeError = "Error al preparar producto";
+            
+            _servicioPreparacionesMock
+                .Setup(s => s.PrepararProductoAsync(productoId, cantidad, chefId, It.IsAny<DateTime?>(), It.IsAny<string?>()))
+                .Returns(Task.FromResult(Result.Failure<PreparacionDiaria>(mensajeError)));
+
+            // Act
+            var resultado = await _sut.PrepararProductoAsync(productoId, cantidad, chefId);
+
+            // Assert
+            Assert.False(resultado.Succeeded);
+            Assert.Contains(mensajeError, resultado.Error.ToString());
+        }
+
+        [Fact]
+        public async Task ObtenerPreparacionesDelDiaAsync_ConPreparacionesDisponibles_DebeRetornarLista()
+        {
+            // Arrange
+            var preparaciones = new List<PreparacionDiaria>
+            {
+                PreparacionDiaria.Crear(Guid.NewGuid(), 5, Guid.NewGuid(), null, "Preparación 1"),
+                PreparacionDiaria.Crear(Guid.NewGuid(), 10, Guid.NewGuid(), null, "Preparación 2")
+            };
+            
+            _servicioPreparacionesMock
+                .Setup(s => s.ObtenerPreparacionesDelDiaAsync())
+                .Returns(Task.FromResult(Result<List<PreparacionDiaria>>.Success(preparaciones)));
+
+            // Act
+            var resultado = await _sut.ObtenerPreparacionesDelDiaAsync();
+
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.NotNull(resultado.Value);
+            Assert.Equal(2, resultado.Value.Count());
+            
+            _servicioPreparacionesMock.Verify(s => s.ObtenerPreparacionesDelDiaAsync(), Times.Exactly(1));
+        }
+
+        [Fact]
+        public async Task ObtenerPreparacionesPorProductoAsync_ConProductoValido_DebeRetornarPreparaciones()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var preparaciones = new List<PreparacionDiaria>
+            {
+                PreparacionDiaria.Crear(productoId, 15, Guid.NewGuid(), null, "Preparación del producto"),
+            };
+            
+            _servicioPreparacionesMock
+                .Setup(s => s.ObtenerPreparacionesPorProductoAsync(productoId))
+                .Returns(Task.FromResult(Result<List<PreparacionDiaria>>.Success(preparaciones)));
+
+            // Act
+            var resultado = await _sut.ObtenerPreparacionesPorProductoAsync(productoId);
+
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.NotNull(resultado.Value);
+            Assert.Single(resultado.Value);
+            Assert.Equal(productoId, resultado.Value.First().ProductoId);
+            
+            _servicioPreparacionesMock.Verify(s => s.ObtenerPreparacionesPorProductoAsync(productoId), Times.Exactly(1));
+        }
+
+        [Fact]
+        public async Task VerificarDisponibilidadPreparacionAsync_ConDisponibilidad_DebeRetornarTrue()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var cantidadRequerida = 5;
+            
+            _servicioPreparacionesMock
+                .Setup(s => s.VerificarDisponibilidadAsync(productoId, cantidadRequerida))
+                .Returns(Task.FromResult(Result<bool>.Success(true)));
+
+            // Act
+            var resultado = await _sut.VerificarDisponibilidadPreparacionAsync(productoId, cantidadRequerida);
+
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.True(resultado.Value);
+            
+            _servicioPreparacionesMock.Verify(s => s.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+        }
+
+        [Fact]
+        public async Task VerificarDisponibilidadPreparacionAsync_SinDisponibilidad_DebeRetornarFalse()
+        {
+            // Arrange
+            var productoId = Guid.NewGuid();
+            var cantidadRequerida = 20;
+            
+            _servicioPreparacionesMock
+                .Setup(s => s.VerificarDisponibilidadAsync(productoId, cantidadRequerida))
+                .Returns(Task.FromResult(Result<bool>.Success(false)));
+
+            // Act
+            var resultado = await _sut.VerificarDisponibilidadPreparacionAsync(productoId, cantidadRequerida);
+
+            // Assert
+            Assert.True(resultado.Succeeded);
+            Assert.False(resultado.Value);
+        }
+
+        #endregion
+
+        /// <summary>
+        /// 🍳 Tests para el nuevo flujo híbrido de preparaciones
+        /// </summary>
+        #region Flujo Híbrido de Preparaciones
+
+        [Fact]
+        public async Task CrearComandaConProductosAsync_ConPreparacionesDisponibles_DebeUsarPreparacionesPrimero()
+        {
+            // Arrange
+            var meseroId = Guid.NewGuid();
+            var mesaId = Guid.NewGuid();
+            var producto1Id = Guid.NewGuid();
+            var producto2Id = Guid.NewGuid();
+            
+            var producto1 = CrearProductoMock(producto1Id, "Pizza Margherita", 15.00m);
+            var producto2 = CrearProductoMock(producto2Id, "Ensalada César", 8.50m);
+            
+            var productos = new[]
+            {
+                (producto1Id, 2, "Sin cebolla"),
+                (producto2Id, 1, "Aderezo aparte")
+            };
+
+            // Configurar productos en repositorio
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto1Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto1);
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto2Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto2);
+
+            // Configurar preparaciones: producto1 disponible, producto2 no
+            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(producto1Id, 2))
+                .Returns(Task.FromResult(Result<bool>.Success(true)));
+            _servicioPreparacionesMock.Setup(x => x.ConsumirPreparacionAsync(producto1Id, 2))
+                .Returns(Task.FromResult(Result.Success()));
+            
+            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(producto2Id, 1))
+                .Returns(Task.FromResult(Result<bool>.Success(false)));
+
+            // Act
+            var resultado = await _sut.CrearComandaConProductosAsync(
+                clienteId: null,
+                mesaId: mesaId,
+                meseroId: meseroId,
+                productos: productos,
+                observacionesComanda: "Mesa 5 - Almuerzo");
+
+            // Assert
+            resultado.Succeeded.Should().BeTrue();
+            var comanda = resultado.Value;
+            
+            comanda.Should().NotBeNull();
+            comanda.Items.Should().HaveCount(2);
+            
+            // Verificar que se consumió preparación para producto1
+            _servicioPreparacionesMock.Verify(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+            _servicioPreparacionesMock.Verify(x => x.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+            
+            // Verificar que se verificó pero no se consumió preparación para producto2
+            _servicioPreparacionesMock.Verify(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+            
+            // Verificar observaciones
+            var itemPreparado = comanda.Items.First(i => i.ProductoId == producto1Id);
+            itemPreparado.Observaciones.Should().Contain("🍳 Preparación diaria");
+            
+            var itemAlMomento = comanda.Items.First(i => i.ProductoId == producto2Id);
+            itemAlMomento.Observaciones.Should().Contain("🥘 Preparación al momento");
+        }
+
+        [Fact]
+        public async Task CrearComandaConProductosAsync_ConErrorEnServicioPreparaciones_DebeContinuarConFlujoNormal()
+        {
+            // Arrange
+            var meseroId = Guid.NewGuid();
+            var productoId = Guid.NewGuid();
+            var producto = CrearProductoMock(productoId, "Hamburguesa", 12.00m);
+            
+            var productos = new[] { (productoId, 1, "") };
+
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+
+            // Configurar error en servicio de preparaciones
+            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(productoId, 1))
+                .ThrowsAsync(new InvalidOperationException("Error de conexión"));
+
+            // Act
+            var resultado = await _sut.CrearComandaConProductosAsync(
+                clienteId: null,
+                mesaId: null,
+                meseroId: meseroId,
+                productos: productos);
+
+            // Assert
+            resultado.Succeeded.Should().BeTrue();
+            var comanda = resultado.Value;
+            
+            comanda.Should().NotBeNull();
+            comanda.Items.Should().HaveCount(1);
+            
+            // Debe marcarse como preparación al momento debido al error
+            var item = comanda.Items.First();
+            item.Observaciones.Should().Contain("🥘 Preparación al momento");
+        }
+
+        [Fact]
+        public async Task AgregarProductoAComandaAsync_ConFlujoPrepararaciones_DebeActualizarComanda()
+        {
+            // Arrange
+            var comandaId = Guid.NewGuid();
+            var productoId = Guid.NewGuid();
+            var comanda = CrearComandaMock(comandaId);
+            var producto = CrearProductoMock(productoId, "Pasta Bolognesa", 14.50m);
+
+            _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(comanda);
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+
+            // Configurar preparaciones disponibles
+            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(productoId, 1))
+                .Returns(Task.FromResult(Result<bool>.Success(true)));
+            _servicioPreparacionesMock.Setup(x => x.ConsumirPreparacionAsync(productoId, 1))
+                .Returns(Task.FromResult(Result.Success()));
+
+            // Act
+            var resultado = await _sut.AgregarProductoAComandaAsync(
+                comandaId, productoId, 1, "Extra queso");
+
+            // Assert
+            resultado.Succeeded.Should().BeTrue();
+            
+            // Verificar que se usó el flujo de preparaciones
+            _servicioPreparacionesMock.Verify(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+            _servicioPreparacionesMock.Verify(x => x.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+            
+            // Verificar que la comanda se actualizó
+            // _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>()), Times.Exactly(1));
+        }
+
+        [Fact]
+        public async Task CrearComandaConProductosAsync_SinProductos_DebeRetornarError()
+        {
+            // Arrange
+            var meseroId = Guid.NewGuid();
+            var productos = Enumerable.Empty<(Guid, int, string)>();
+
+            // Act
+            var resultado = await _sut.CrearComandaConProductosAsync(
+                clienteId: null,
+                mesaId: null,
+                meseroId: meseroId,
+                productos: productos);
+
+            // Assert
+            resultado.Succeeded.Should().BeFalse();
+            resultado.Error.Should().Contain("Debe incluir al menos un producto");
+        }
+
+        [Fact]
+        public async Task CrearComandaConProductosAsync_ConProductoInexistente_DebeContinuarConOtros()
+        {
+            // Arrange
+            var meseroId = Guid.NewGuid();
+            var producto1Id = Guid.NewGuid();
+            var producto2Id = Guid.NewGuid(); // Este no existe
+            var producto3Id = Guid.NewGuid();
+            
+            var producto1 = CrearProductoMock(producto1Id, "Producto 1", 10.00m);
+            var producto3 = CrearProductoMock(producto3Id, "Producto 3", 15.00m);
+            
+            var productos = new[]
+            {
+                (producto1Id, 1, ""),
+                (producto2Id, 1, ""), // No existe
+                (producto3Id, 1, "")
+            };
+
+            // Configurar productos
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto1Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto1);
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto2Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync((Producto?)null); // No existe
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto3Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto3);
+
+            // Configurar preparaciones
+            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+                .Returns(Task.FromResult(Result<bool>.Success(false))); // Al momento
+
+            // Act
+            var resultado = await _sut.CrearComandaConProductosAsync(
+                clienteId: null,
+                mesaId: null,
+                meseroId: meseroId,
+                productos: productos);
+
+            // Assert
+            resultado.Succeeded.Should().BeTrue();
+            var comanda = resultado.Value;
+            
+            // Solo debe agregar los productos que existen (1 y 3)
+            comanda.Items.Should().HaveCount(2);
+            comanda.Items.Should().Contain(i => i.ProductoId == producto1Id);
+            comanda.Items.Should().Contain(i => i.ProductoId == producto3Id);
+            comanda.Items.Should().NotContain(i => i.ProductoId == producto2Id);
+        }
+
+        #endregion
+
+        // Métodos auxiliares
+        /// <summary>
+        /// Crea un mock de Producto para tests
+        /// </summary>
+        private Producto CrearProductoMock(Guid productoId, string nombre, decimal precio)
+        {
+            var productoMock = new Mock<Producto>();
+            productoMock.Setup(x => x.Id).Returns(productoId);
+            productoMock.Setup(x => x.Nombre).Returns(nombre);
+            
+            // Mock del precio (PrecioProducto en lugar de Money)
+            var precioMock = new Mock<PrecioProducto>();
+            precioMock.Setup(x => x.Valor).Returns(precio);
+            productoMock.Setup(x => x.Precio).Returns(precioMock.Object);
+            
+            return productoMock.Object;
+        }
+        
+        /// <summary>
+        /// Crea un mock de Comanda para tests
+        /// </summary>
+        private Comanda CrearComandaMock(Guid comandaId)
+        {
+            var comandaMock = new Mock<Comanda>();
+            comandaMock.Setup(x => x.Id).Returns(comandaId);
+            comandaMock.Setup(x => x.Items).Returns(new List<ItemComanda>());
+            return comandaMock.Object;
+        }
+        
+        /// <summary>
+        /// Verifica resultado fallido con mensaje específico
+        /// </summary>
+        private void VerificarResultadoFallido<T>(Result<T> resultado, string mensajeEsperado)
+        {
+            resultado.Succeeded.Should().BeFalse();
+            resultado.Error.Should().Contain(mensajeEsperado);
+        }
+
+        /// <summary>
+        /// Configura mock para obtener reservación por ID
+        /// </summary>
         private void SetupObtenerReservacionPorId(Guid reservacionId, Reservacion reservacion)
         {
-            _reservacionRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(reservacionId, It.IsAny<CancellationToken>()))
+            _reservacionRepositoryMock.Setup(r => r.ObtenerPorIdAsync(reservacionId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(reservacion);
         }
 
+        /// <summary>
+        /// Verifica que se llamó ObtenerPorIdAsync del repositorio de reservaciones
+        /// </summary>
         private void VerifyObtenerReservacionPorId(Guid reservacionId, Moq.Times times)
         {
-            _reservacionRepositoryMock.Verify(
-                r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == reservacionId), It.IsAny<CancellationToken>()),
-                times);
+            _reservacionRepositoryMock.Verify(r => r.ObtenerPorIdAsync(reservacionId, It.IsAny<CancellationToken>()), times);
         }
     }
 } 

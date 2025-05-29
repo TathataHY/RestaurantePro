@@ -118,6 +118,12 @@ global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Events;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Builders;
 
+// Domain Operaciones - Preparaciones
+global using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
+global using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
+global using RestaurantePro.Domain.Operaciones.Preparaciones.Events;
+global using RestaurantePro.Domain.Operaciones.Preparaciones.Services;
+
 // Domain Comercial - Clientes
 global using RestaurantePro.Domain.Comercial.Clientes.Entities;
 global using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;

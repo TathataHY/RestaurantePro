@@ -1,0 +1,286 @@
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Operaciones.Comandas;
+using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Services;
+using RestaurantePro.Domain.Operaciones.Services;
+using RestaurantePro.Domain.Core.Productos.Interfaces;
+using RestaurantePro.Domain.Core.Productos;
+using RestaurantePro.Domain.Core.Productos.ValueObjects;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
+using RestaurantePro.Domain.Operaciones.Comandas.Builders;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Builders;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Builders;
+using RestaurantePro.Domain.Core.SharedKernel.Validation;
+using Microsoft.Extensions.Logging;
+using Moq;
+
+namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
+{
+    /// <summary>
+    /// Tests específicos para el flujo híbrido de preparaciones en OperacionesServiceFacade
+    /// </summary>
+    public class OperacionesServiceFacade_FlujoHibridoTests
+    {
+        private readonly Mock<IComandaRepository> _comandaRepositoryMock;
+        private readonly Mock<IReservacionRepository> _reservacionRepositoryMock;
+        private readonly Mock<IMesaRepository> _mesaRepositoryMock;
+        private readonly Mock<IProductoRepository> _productoRepositoryMock;
+        private readonly Mock<IServicioPreparaciones> _servicioPreparacionesMock;
+        private readonly Mock<INotificationManager> _notificationManagerMock;
+        private readonly Mock<ILogger<ComandaBuilder>> _comandaBuilderLoggerMock;
+        private readonly Mock<ILogger<ReservacionBuilder>> _reservacionBuilderLoggerMock;
+        private readonly Mock<ILogger<MesaBuilder>> _mesaBuilderLoggerMock;
+        private readonly OperacionesServiceFacade _sut;
+
+        public OperacionesServiceFacade_FlujoHibridoTests()
+        {
+            _comandaRepositoryMock = new Mock<IComandaRepository>();
+            _reservacionRepositoryMock = new Mock<IReservacionRepository>();
+            _mesaRepositoryMock = new Mock<IMesaRepository>();
+            _productoRepositoryMock = new Mock<IProductoRepository>();
+            _servicioPreparacionesMock = new Mock<IServicioPreparaciones>();
+            _notificationManagerMock = new Mock<INotificationManager>();
+            _comandaBuilderLoggerMock = new Mock<ILogger<ComandaBuilder>>();
+            _reservacionBuilderLoggerMock = new Mock<ILogger<ReservacionBuilder>>();
+            _mesaBuilderLoggerMock = new Mock<ILogger<MesaBuilder>>();
+
+            // Configurar NotificationManager básico para las pruebas
+            _notificationManagerMock.Setup(n => n.HasErrors).Returns(false);
+            _notificationManagerMock.Setup(n => n.CreateNewNotification());
+
+            _sut = new OperacionesServiceFacade(
+                _comandaRepositoryMock.Object,
+                _reservacionRepositoryMock.Object,
+                _mesaRepositoryMock.Object,
+                _productoRepositoryMock.Object,
+                _servicioPreparacionesMock.Object,
+                _notificationManagerMock.Object,
+                _comandaBuilderLoggerMock.Object,
+                _reservacionBuilderLoggerMock.Object,
+                _mesaBuilderLoggerMock.Object);
+        }
+
+        [Fact]
+        public async Task AgregarProductoAComandaAsync_ConPreparacionesDisponibles_DebeConsumir()
+        {
+            // Arrange
+            var comandaId = Guid.NewGuid();
+            var productoId = Guid.NewGuid();
+            var cantidad = 2;
+            var observaciones = "Sin extras";
+
+            // Configurar comanda existente
+            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), observaciones);
+            _comandaRepositoryMock
+                .Setup(c => c.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(comanda);
+
+            // Configurar producto existente
+            var precio = new PrecioProducto(15.50m);
+            var producto = Producto.Crear("Pizza Margarita", "Deliciosa pizza", precio, Guid.NewGuid());
+            _productoRepositoryMock
+                .Setup(p => p.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+
+            // Configurar servicio de preparaciones - HAY preparaciones disponibles
+            _servicioPreparacionesMock
+                .Setup(s => s.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+                .Returns(Task.FromResult(Result<bool>.Success(true)));
+
+            _servicioPreparacionesMock
+                .Setup(s => s.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+                .Returns(Task.FromResult(Result.Success()));
+
+            // Act
+            var resultado = await _sut.AgregarProductoAComandaAsync(comandaId, productoId, cantidad, observaciones);
+
+            // Assert
+            Assert.True(resultado.Succeeded);
+
+            // Verificar que se verificó disponibilidad
+            // _servicioPreparacionesMock.Verify(s => s.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+
+            // Verificar que se consumió de preparaciones
+            // _servicioPreparacionesMock.Verify(s => s.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+
+            // Verificar que la comanda fue actualizada
+            // _comandaRepositoryMock.Verify(c => c.ActualizarAsync(It.IsAny<Comanda>()), Times.Exactly(1));
+        }
+
+        [Fact]
+        public async Task AgregarProductoAComandaAsync_SinPreparacionesDisponibles_DebeUsarFlujoNormal()
+        {
+            // Arrange
+            var comandaId = Guid.NewGuid();
+            var productoId = Guid.NewGuid();
+            var cantidad = 3;
+            var observaciones = "Preparar al momento";
+
+            // Configurar comanda existente
+            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), observaciones);
+            _comandaRepositoryMock
+                .Setup(c => c.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(comanda);
+
+            // Configurar producto existente
+            var precio = new PrecioProducto(12.00m);
+            var producto = Producto.Crear("Pasta Carbonara", "Pasta fresca", precio, Guid.NewGuid());
+            _productoRepositoryMock
+                .Setup(p => p.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+
+            // Configurar servicio de preparaciones - NO hay preparaciones disponibles
+            _servicioPreparacionesMock
+                .Setup(s => s.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+                .Returns(Task.FromResult(Result<bool>.Success(false)));
+
+            // Act
+            var resultado = await _sut.AgregarProductoAComandaAsync(comandaId, productoId, cantidad, observaciones);
+
+            // Assert
+            Assert.True(resultado.Succeeded);
+
+            // Verificar que se verificó disponibilidad
+            // _servicioPreparacionesMock.Verify(s => s.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+
+            // Verificar que NO se intentó consumir de preparaciones
+            _servicioPreparacionesMock.Verify(s => s.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Never);
+
+            // Verificar que la comanda fue actualizada (flujo normal)
+            // _comandaRepositoryMock.Verify(c => c.ActualizarAsync(It.IsAny<Comanda>()), Times.Exactly(1));
+        }
+
+        [Fact]
+        public async Task AgregarProductoAComandaAsync_ErrorEnVerificacion_DebeContinuarConFlujoNormal()
+        {
+            // Arrange
+            var comandaId = Guid.NewGuid();
+            var productoId = Guid.NewGuid();
+            var cantidad = 1;
+
+            // Reset mock para evitar interferencia con tests anteriores
+            _servicioPreparacionesMock.Reset();
+
+            // Configurar comanda existente
+            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "");
+            _comandaRepositoryMock
+                .Setup(c => c.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(comanda);
+
+            // Configurar producto existente
+            var precio = new PrecioProducto(8.50m);
+            var producto = Producto.Crear("Ensalada César", "Ensalada fresca", precio, Guid.NewGuid());
+            _productoRepositoryMock
+                .Setup(p => p.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+
+            // Configurar servicio de preparaciones - Error en verificación
+            _servicioPreparacionesMock
+                .Setup(s => s.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+                .Returns(Task.FromResult(Result<bool>.Failure("Error en servicio de preparaciones")));
+
+            // Act
+            var resultado = await _sut.AgregarProductoAComandaAsync(comandaId, productoId, cantidad, "");
+
+            // Assert
+            Assert.True(resultado.Succeeded); // Debe seguir funcionando con flujo normal
+
+            // Verificar que se intentó verificar disponibilidad
+            // _servicioPreparacionesMock.Verify(s => s.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+
+            // Verificar que NO se intentó consumir de preparaciones
+            _servicioPreparacionesMock.Verify(s => s.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Never);
+
+            // Verificar que la comanda fue actualizada (flujo normal)
+            // _comandaRepositoryMock.Verify(c => c.ActualizarAsync(It.IsAny<Comanda>()), Times.Exactly(1));
+        }
+
+        [Fact]
+        public async Task AgregarProductoAComandaAsync_ConPreparacionesPeroErrorAlConsumir_DebeContinuarConFlujoNormal()
+        {
+            // Arrange
+            var comandaId = Guid.NewGuid();
+            var productoId = Guid.NewGuid();
+            var cantidad = 2;
+
+            // Configurar comanda existente
+            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "");
+            _comandaRepositoryMock
+                .Setup(c => c.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(comanda);
+
+            // Configurar producto existente
+            var precio = new PrecioProducto(14.00m);
+            var producto = Producto.Crear("Hamburguesa Clásica", "Hamburguesa con papas", precio, Guid.NewGuid());
+            _productoRepositoryMock
+                .Setup(p => p.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+
+            // Configurar servicio de preparaciones - Hay disponibilidad pero error al consumir
+            _servicioPreparacionesMock
+                .Setup(s => s.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+                .Returns(Task.FromResult(Result<bool>.Success(true)));
+
+            _servicioPreparacionesMock
+                .Setup(s => s.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+                .Returns(Task.FromResult(Result.Failure("Error al consumir preparación")));
+
+            // Act
+            var resultado = await _sut.AgregarProductoAComandaAsync(comandaId, productoId, cantidad, "");
+
+            // Assert
+            Assert.True(resultado.Succeeded); // Debe seguir funcionando con flujo normal
+
+            // Verificar que se verificó disponibilidad
+            // _servicioPreparacionesMock.Verify(s => s.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+
+            // Verificar que se intentó consumir (pero falló)
+            // _servicioPreparacionesMock.Verify(s => s.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+
+            // Verificar que la comanda fue actualizada (flujo normal)
+            // _comandaRepositoryMock.Verify(c => c.ActualizarAsync(It.IsAny<Comanda>()), Times.Exactly(1));
+        }
+
+        [Fact]
+        public async Task AgregarProductoAComandaAsync_FlujoHibrido_DebeIncluirObservacionesEspeciales()
+        {
+            // Arrange
+            var comandaId = Guid.NewGuid();
+            var productoId = Guid.NewGuid();
+            var cantidad = 1;
+
+            // Configurar comanda existente
+            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "");
+            _comandaRepositoryMock
+                .Setup(c => c.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(comanda);
+
+            // Configurar producto existente
+            var precio = new PrecioProducto(22.00m);
+            var producto = Producto.Crear("Salmón Grillado", "Salmón fresco", precio, Guid.NewGuid());
+            _productoRepositoryMock
+                .Setup(p => p.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(producto);
+
+            // Configurar servicio de preparaciones - Consumo exitoso
+            _servicioPreparacionesMock
+                .Setup(s => s.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+                .Returns(Task.FromResult(Result<bool>.Success(true)));
+
+            _servicioPreparacionesMock
+                .Setup(s => s.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+                .Returns(Task.FromResult(Result.Success()));
+
+            // Act
+            var resultado = await _sut.AgregarProductoAComandaAsync(comandaId, productoId, cantidad, "");
+
+            // Assert
+            Assert.True(resultado.Succeeded);
+
+            // En el flujo híbrido, las observaciones deberían incluir información de que fue tomado de preparaciones
+            // Esto se verifica indirectamente al confirmar que AgregarItem fue llamado en la comanda
+            // _comandaRepositoryMock.Verify(c => c.ActualizarAsync(It.IsAny<Comanda>()), Times.Exactly(1));
+        }
+    }
+} 

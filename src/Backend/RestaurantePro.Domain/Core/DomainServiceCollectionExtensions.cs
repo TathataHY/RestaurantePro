@@ -148,9 +148,15 @@ namespace RestaurantePro.Domain.Core
             // Registro de servicio de integración entre Operaciones e Inventario
             services.AddScoped<Operaciones.Services.IOperacionesInventarioIntegrationService, Operaciones.Services.OperacionesInventarioIntegrationService>();
             
+            // 🍳 Registro del servicio de preparaciones diarias
+            services.AddScoped<Operaciones.Preparaciones.Services.IServicioPreparaciones, Operaciones.Preparaciones.Services.ServicioPreparaciones>();
+            
             // Registrar manejadores de eventos de integración
             services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_NotificacionProveedorHandler>();
             services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_ActualizarEstadisticasProveedorHandler>();
+            
+            // 🍳 Registrar event handler de preparaciones
+            services.AddScoped<IDomainEventHandler<Operaciones.Comandas.Events.Comanda.ComandaCreada>, Operaciones.EventHandlers.ComandaCreada_VerificarPreparacionesHandler>();
             
             // Registrar servicio de notificación
             services.AddScoped<INotification, Notification>();
@@ -281,6 +287,12 @@ namespace RestaurantePro.Domain.Core
             
             // Registro de servicio de integración entre Operaciones e Inventario para pruebas
             services.AddScoped<Operaciones.Services.IOperacionesInventarioIntegrationService, Operaciones.Services.OperacionesInventarioIntegrationService>();
+            
+            // 🍳 Registro del servicio de preparaciones diarias para pruebas
+            services.AddScoped<Operaciones.Preparaciones.Services.IServicioPreparaciones, Operaciones.Preparaciones.Services.ServicioPreparaciones>();
+            
+            // 🍳 Registrar event handler de preparaciones para pruebas
+            services.AddScoped<IDomainEventHandler<Operaciones.Comandas.Events.Comanda.ComandaCreada>, Operaciones.EventHandlers.ComandaCreada_VerificarPreparacionesHandler>();
             
             // Agregar el registro del servicio de usuarios con caché para pruebas
             services.AddScoped<Usuarios.Services.UsuarioService>(); // Implementación original

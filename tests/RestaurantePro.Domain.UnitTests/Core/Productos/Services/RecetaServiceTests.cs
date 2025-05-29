@@ -113,10 +113,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             // Crear un ingrediente de prueba para el test
             var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 10.0m);
 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente1);
 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync((Ingrediente?)null);
 
             // Act
@@ -222,7 +222,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             _recetaRepositoryMock.Setup(r => r.ObtenerPorProductoIdAsync(productoId, _cancellationToken))
                 .ReturnsAsync(receta);
 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync((Ingrediente?)null);
 
             // Act
@@ -296,10 +296,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 5.0m); // Más que suficiente para 5 pizzas (5 * 0.2 = 1.0)
             var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 3.0m); // Más que suficiente para 5 pizzas (5 * 0.3 = 1.5)
 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente1);
                 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente2);
 
             // Act
@@ -354,10 +354,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 5.0m); // Suficiente para 5 pizzas (5 * 0.2 = 1.0)
             var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 1.0m); // Insuficiente para 5 pizzas (5 * 0.3 = 1.5)
 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente1);
                 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente2);
 
             // Act
@@ -408,14 +408,14 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 .ReturnsAsync(receta);
 
             // Configuramos que no exista el primer ingrediente
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync((Ingrediente?)null);
 
             // Y que el segundo tenga stock insuficiente
             var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 5.0m);
             ActualizarNombreIngrediente(ingrediente2, "Queso Mozzarella");
 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente2);
 
             // Agregar errores al notification manager real
@@ -588,11 +588,11 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
                 .ReturnsAsync(receta);
                 
             _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(lechuga);
                 
             _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(pollo);
                 
             // Act
@@ -732,11 +732,11 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             var ingrediente1 = CrearIngredienteSimulado(ingrediente1Id, 10.0m);
             ingrediente1.ActualizarCostoPromedio(12.0m);
 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente1);
             
             // El segundo ingrediente no existe
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync((Ingrediente?)null);
 
             // Act
@@ -791,10 +791,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 10.0m);
             ingrediente2.ActualizarCostoPromedio(10.0m); // 10.0 por kg
 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente1);
             
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente2);
 
             // Act
@@ -860,13 +860,13 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             var ingrediente3 = CrearIngredienteSimulado(ingrediente3Id, 10.0m);
             ingrediente3.ActualizarCostoPromedio(15.0m); // 15.0 por kg
 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente1);
             
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente2);
                 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente3Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente3Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente3);
 
             // Act
@@ -1013,10 +1013,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             var ingrediente2 = CrearIngredienteSimulado(ingrediente2Id, 10.0m);
             ingrediente2.ActualizarCostoPromedio(10.0m); // 10.0 por kg
 
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente1Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente1);
             
-            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, false, _cancellationToken))
+            _ingredienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(ingrediente2Id, It.IsAny<bool>(), _cancellationToken))
                 .ReturnsAsync(ingrediente2);
 
             // Act
@@ -1080,7 +1080,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Productos.Services
             typeof(EntityBase).GetProperty("Id")!.SetValue(ingredienteSustituto, ingredienteSustitutoId);
             
             _ingredienteRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(ingredienteOriginalId, false, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(ingredienteOriginalId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ingredienteOriginal);
                 
             // Configurar búsqueda de sustitutos por categoría/tipo similar

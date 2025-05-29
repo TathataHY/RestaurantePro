@@ -31,6 +31,25 @@ namespace RestaurantePro.Domain.Operaciones.Services
         Task<Result<Comanda>> AgregarProductoAComandaAsync(Guid comandaId, Guid productoId, int cantidad, string observaciones = "", CancellationToken cancellationToken = default);
         
         /// <summary>
+        /// 🍳 Crea una nueva comanda con productos usando flujo híbrido de preparaciones
+        /// Verifica preparaciones diarias primero, luego inventario si es necesario
+        /// </summary>
+        /// <param name="clienteId">ID del cliente (opcional)</param>
+        /// <param name="mesaId">ID de la mesa (opcional)</param>
+        /// <param name="meseroId">ID del mesero</param>
+        /// <param name="productos">Lista de productos con cantidad y observaciones</param>
+        /// <param name="observacionesComanda">Observaciones generales de la comanda</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la comanda creada incluyendo estadísticas del flujo</returns>
+        Task<Result<Comanda>> CrearComandaConProductosAsync(
+            Guid? clienteId,
+            Guid? mesaId,
+            Guid meseroId,
+            IEnumerable<(Guid ProductoId, int Cantidad, string Observaciones)> productos,
+            string observacionesComanda = "",
+            CancellationToken cancellationToken = default);
+        
+        /// <summary>
         /// Agrega una personalización de tipo "agregar extra" a un ítem de comanda
         /// </summary>
         /// <param name="comandaId">ID de la comanda</param>
@@ -214,6 +233,46 @@ namespace RestaurantePro.Domain.Operaciones.Services
         /// <returns>Resultado con la lista de mesas disponibles</returns>
         Task<Result<IEnumerable<Mesa>>> ObtenerMesasDisponiblesAsync(int capacidadMinima = 1, CancellationToken cancellationToken = default);
         
+        #endregion
+
+        #region Preparaciones Diarias
+
+        /// <summary>
+        /// Prepara un producto con una cantidad específica para el día
+        /// </summary>
+        /// <param name="productoId">ID del producto a preparar</param>
+        /// <param name="cantidad">Cantidad a preparar</param>
+        /// <param name="chefId">ID del chef que realiza la preparación</param>
+        /// <param name="fechaVencimiento">Fecha de vencimiento opcional</param>
+        /// <param name="observaciones">Observaciones de la preparación</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la preparación creada</returns>
+        Task<Result<PreparacionDiaria>> PrepararProductoAsync(Guid productoId, int cantidad, Guid chefId, DateTime? fechaVencimiento = null, string? observaciones = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene todas las preparaciones del día actual
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la lista de preparaciones del día</returns>
+        Task<Result<IEnumerable<PreparacionDiaria>>> ObtenerPreparacionesDelDiaAsync(CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene las preparaciones de un producto específico
+        /// </summary>
+        /// <param name="productoId">ID del producto</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con las preparaciones del producto</returns>
+        Task<Result<IEnumerable<PreparacionDiaria>>> ObtenerPreparacionesPorProductoAsync(Guid productoId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Verifica si hay suficiente cantidad preparada de un producto
+        /// </summary>
+        /// <param name="productoId">ID del producto</param>
+        /// <param name="cantidadRequerida">Cantidad requerida</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado indicando si hay disponibilidad</returns>
+        Task<Result<bool>> VerificarDisponibilidadPreparacionAsync(Guid productoId, int cantidadRequerida, CancellationToken cancellationToken = default);
+
         #endregion
     }
 } 
