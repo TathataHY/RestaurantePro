@@ -1,10 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using FluentValidation;
-using MediatR;
-
 namespace RestaurantePro.Application.Common.Behaviors
 {
     public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
@@ -32,9 +25,9 @@ namespace RestaurantePro.Application.Common.Behaviors
                     .Where(f => f != null)
                     .ToList();
 
-                if (failures.Count != 0)
+                if (failures.Any())
                 {
-                    throw new ValidationException(failures);
+                    throw new RestaurantePro.Application.Common.Exceptions.ValidationException(failures);
                 }
             }
 

@@ -1,5 +1,3 @@
-using System;
-
 namespace RestaurantePro.Application.Common.Exceptions
 {
     public class AppException : Exception

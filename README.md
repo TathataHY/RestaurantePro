@@ -27,9 +27,9 @@ RestaurantePro/
 │   ├── RestaurantePro.Api/    # Backend API
 │   │   └── Controllers/       # Controladores REST
 │   ├── RestaurantePro.Application/ # Lógica de aplicación
-│   │   ├── Common/            # Componentes comunes
-│   │   │   ├── Interfaces/    # Interfaces de servicios
-│   │   │   ├── Mappings/      # Configuraciones de AutoMapper
+│   │   ├── Common/            # 🔧 Componentes compartidos entre contextos
+│   │   │   ├── Interfaces/    # Interfaces específicas de Application
+│   │   │   │   └── IUsuarioActualService.cs    ✅ IMPLEMENTADO
 │   │   │   └── Models/        # Modelos comunes
 │   │   └── Features/          # Funcionalidades del sistema
 │   │       ├── Categorias/    # Gestión de categorías
@@ -162,4 +162,29 @@ Este proyecto está bajo licencia privada.
 
 ## Contacto
 
-*En desarrollo* 
+*En desarrollo*
+
+## Common/Interfaces
+
+```
+RestaurantePro/
+├── Common/                   # 🔧 Componentes compartidos entre contextos
+│   ├── Interfaces/           # Interfaces específicas de Application
+│   │   └── IUsuarioActualService.cs    ✅ IMPLEMENTADO
+│   │   # 📝 Nota: Las demás interfaces están en Domain:
+│   │   # - IRepository<T>, IUnitOfWork (SharedKernel/Interfaces)
+│   │   # - IDateTimeService (Base/Services)  
+│   │   # - IProductoRepository, IClienteRepository, etc. (por contexto)
+│   │
+│   ├── DTOs/                 # DTOs base y compartidos
+│   │   ├── PaginatedList.cs
+│   │   ├── FilterRequest.cs
+│   │   ├── BaseDto.cs
+│   │   └── PagedResult.cs
+│   │
+│   ├── Behaviors/            # Comportamientos de MediatR
+│   │   ├── ValidationBehavior.cs      ✅ IMPLEMENTADO
+│   │   ├── LoggingBehavior.cs         ✅ IMPLEMENTADO
+│   │   ├── CachingBehavior.cs         🔄 PENDIENTE
+│   │   └── PerformanceBehavior.cs     🔄 PENDIENTE
+``` 

@@ -1,0 +1,76 @@
+namespace RestaurantePro.Application.Core.Productos.Commands.ActualizarProducto;
+
+public class ActualizarProductoHandler : IRequestHandler<ActualizarProductoCommand, Result<ProductoDto>>
+{
+    private readonly IProductoRepository _repository;
+    private readonly IProductoCategoriaRepository _categoriaRepository;
+    private readonly IMapper _mapper;
+    private readonly ILogger<ActualizarProductoHandler> _logger;
+
+    public ActualizarProductoHandler(
+        IProductoRepository repository,
+        IProductoCategoriaRepository categoriaRepository,
+        IMapper mapper,
+        ILogger<ActualizarProductoHandler> logger)
+    {
+        _repository = repository;
+        _categoriaRepository = categoriaRepository;
+        _mapper = mapper;
+        _logger = logger;
+    }
+
+    public async Task<Result<ProductoDto>> Handle(ActualizarProductoCommand request, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("🔄 Iniciando actualización de producto: {Id}", request.Id);
+
+        try
+        {
+            // Verificar que el producto existe
+            var producto = await _repository.ObtenerPorIdAsync(request.Id, cancellationToken);
+            if (producto == null)
+            {
+                _logger.LogWarning("⚠️ Producto no encontrado: {Id}", request.Id);
+                return Result.Failure<ProductoDto>($"Producto con ID {request.Id} no encontrado");
+            }
+
+            // Verificar que la categoría existe
+            var categoria = await _categoriaRepository.ObtenerPorIdAsync(request.CategoriaId, cancellationToken);
+            if (categoria == null)
+            {
+                _logger.LogWarning("⚠️ Categoría no encontrada: {CategoriaId}", request.CategoriaId);
+                return Result.Failure<ProductoDto>($"Categoría con ID {request.CategoriaId} no encontrada");
+            }
+
+            // Actualizar los datos básicos del producto
+            var nuevoPrecio = new PrecioProducto(request.Precio);
+            producto.Actualizar(request.Nombre, request.Descripcion, nuevoPrecio);
+
+            // Actualizar la categoría si ha cambiado
+            if (producto.CategoriaId != request.CategoriaId)
+            {
+                producto.ActualizarCategoria(request.CategoriaId, categoria.Nombre);
+            }
+
+            // Actualizar el estado del producto
+            if (request.Activo && !producto.EstaActivo)
+            {
+                producto.Activar();
+            }
+            else if (!request.Activo && producto.EstaActivo)
+            {
+                producto.Desactivar();
+            }
+
+            // Persistir los cambios
+            await _repository.ActualizarAsync(producto, cancellationToken);
+
+            _logger.LogInformation("✅ Producto actualizado exitosamente: {Id}", request.Id);
+            return Result.Success(_mapper.Map<ProductoDto>(producto));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al actualizar producto: {Id}", request.Id);
+            return Result.Failure<ProductoDto>($"Error interno al actualizar el producto: {ex.Message}");
+        }
+    }
+} 

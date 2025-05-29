@@ -1,306 +1,507 @@
 # Capa de Aplicación - RestaurantePro
 
-Esta capa organiza la lógica de aplicación siguiendo la misma estructura de contextos de dominio para mantener la consistencia arquitectónica.
+Esta capa implementa la **lógica de aplicación** siguiendo el patrón **Vertical Slices Architecture** para organizar casos de uso de manera cohesiva y escalable.
 
-## 🏗️ **Estructura de Contextos (Alineada con Domain)**
+## 🏗️ **Arquitectura: Vertical Slices + Componentes Compartidos**
+
+En lugar de organizar horizontalmente por tipos (Controllers, Services, DTOs), organizamos **verticalmente por features/casos de uso**, complementado con **componentes compartidos** para cross-cutting concerns:
 
 ```
 Application/
 ├── Core/                     # Contexto Core - Componentes base
-│   ├── Productos/            # Gestión del catálogo de productos
-│   │   ├── Commands/         # Comandos para productos
-│   │   ├── Queries/          # Consultas de productos
-│   │   ├── DTOs/             # DTOs de productos
-│   │   └── Validators/       # Validadores
+│   ├── Productos/            # 🔥 Gestión del catálogo de productos
+│   │   ├── DTOs/             # ✨ DTOs especializados por uso
+│   │   │   ├── ProductoDto.cs              ✅ DTO principal completo
+│   │   │   ├── ProductoCreateDto.cs        ✅ DTO para crear (input)
+│   │   │   ├── ProductoUpdateDto.cs        ✅ DTO para actualizar (input)
+│   │   │   └── ProductoSummaryDto.cs       ✅ DTO resumido para listas
+│   │   ├── Commands/         # Operaciones que modifican datos
+│   │   │   ├── CrearProducto/          ✅ IMPLEMENTADO
+│   │   │   │   ├── CrearProductoCommand.cs
+│   │   │   │   ├── CrearProductoValidator.cs  
+│   │   │   │   └── CrearProductoHandler.cs
+│   │   │   ├── ActualizarProducto/     ✅ IMPLEMENTADO
+│   │   │   │   ├── ActualizarProductoCommand.cs
+│   │   │   │   ├── ActualizarProductoValidator.cs
+│   │   │   │   └── ActualizarProductoHandler.cs
+│   │   │   └── EliminarProducto/       ✅ IMPLEMENTADO
+│   │   │       ├── EliminarProductoCommand.cs
+│   │   │       ├── EliminarProductoValidator.cs
+│   │   │       └── EliminarProductoHandler.cs
+│   │   └── Queries/          # Operaciones de solo lectura
+│   │       ├── ObtenerProductoPorId/   ✅ IMPLEMENTADO
+│   │       │   ├── ObtenerProductoPorIdQuery.cs
+│   │       │   └── ObtenerProductoPorIdHandler.cs
+│   │       ├── ObtenerProductosPaginados/ ✅ IMPLEMENTADO
+│   │       │   ├── ObtenerProductosPaginadosQuery.cs
+│   │       │   ├── ObtenerProductosPaginadosValidator.cs
+│   │       │   └── ObtenerProductosPaginadosHandler.cs
+│   │       └── ObtenerProductosPorCategoria/ ✅ IMPLEMENTADO
+│   │           ├── ObtenerProductosPorCategoriaQuery.cs
+│   │           ├── ObtenerProductosPorCategoriaValidator.cs
+│   │           └── ObtenerProductosPorCategoriaHandler.cs
+│   │
 │   ├── Usuarios/             # Gestión de usuarios del sistema
-│   │   ├── Commands/         # Comandos para usuarios
-│   │   ├── Queries/          # Consultas de usuarios
-│   │   ├── DTOs/             # DTOs de usuarios
-│   │   └── Validators/       # Validadores
+│   │   ├── Commands/         
+│   │   │   ├── CrearUsuario/
+│   │   │   ├── ActualizarUsuario/
+│   │   │   └── CambiarPasswordUsuario/
+│   │   └── Queries/
+│   │       ├── ObtenerUsuarioPorId/
+│   │       ├── ObtenerUsuariosPaginados/
+│   │       └── ValidarCredencialesUsuario/
+│   │
 │   ├── Notificaciones/       # Sistema central de notificaciones
-│   │   ├── Commands/         # Comandos para notificaciones
-│   │   ├── Queries/          # Consultas de notificaciones
-│   │   ├── DTOs/             # DTOs de notificaciones
-│   │   └── Services/         # Servicios de aplicación
+│   │   ├── Commands/
+│   │   │   ├── EnviarNotificacion/
+│   │   │   ├── MarcarComoLeida/
+│   │   │   └── EliminarNotificacion/
+│   │   └── Queries/
+│   │       ├── ObtenerNotificacionesPorUsuario/
+│   │       └── ObtenerNotificacionesNoLeidas/
+│   │
 │   └── Recetas/              # Gestión de recetas e ingredientes
-│       ├── Commands/         # Comandos para recetas
-│       ├── Queries/          # Consultas de recetas
-│       ├── DTOs/             # DTOs de recetas
-│       └── Validators/       # Validadores
+│       ├── Commands/
+│       │   ├── CrearReceta/
+│       │   ├── ActualizarReceta/
+│       │   └── AgregarIngredienteReceta/
+│       └── Queries/
+│           ├── ObtenerRecetaPorId/
+│           ├── ObtenerRecetasPorProducto/
+│           └── CalcularCostoReceta/
 │
 ├── Comercial/                # Contexto Comercial - Clientes y ventas
 │   ├── Clientes/             # Gestión de clientes
-│   │   ├── Commands/         # Crear, actualizar, desactivar clientes
-│   │   ├── Queries/          # Consultas de clientes
-│   │   ├── DTOs/             # DTOs de clientes
-│   │   └── Validators/       # Validadores de clientes
+│   │   ├── Commands/
+│   │   │   ├── CrearCliente/
+│   │   │   ├── ActualizarCliente/
+│   │   │   └── DesactivarCliente/
+│   │   └── Queries/
+│   │       ├── ObtenerClientePorId/
+│   │       ├── BuscarClientesPorEmail/
+│   │       └── ObtenerClientesFrecuentes/
+│   │
 │   ├── Fidelizacion/         # Programa de fidelización
-│   │   ├── Commands/         # Comandos de puntos y descuentos
-│   │   ├── Queries/          # Consultas de fidelización
-│   │   ├── DTOs/             # DTOs de fidelización
-│   │   └── Services/         # Servicios de aplicación
+│   │   ├── Commands/
+│   │   │   ├── AcumularPuntos/
+│   │   │   ├── CanjearPuntos/
+│   │   │   └── CrearTarjetaFidelizacion/
+│   │   └── Queries/
+│   │       ├── ConsultarPuntosCliente/
+│   │       └── ObtenerHistorialPuntos/
+│   │
 │   └── Facturacion/          # Sistema de facturación
-│       ├── Commands/         # Comandos de facturación
-│       ├── Queries/          # Consultas de facturas
-│       ├── DTOs/             # DTOs de facturación
-│       └── Validators/       # Validadores de facturas
+│       ├── Commands/
+│       │   ├── CrearFactura/
+│       │   ├── AplicarDescuento/
+│       │   └── AnularFactura/
+│       └── Queries/
+│           ├── ObtenerFacturaPorId/
+│           ├── ObtenerFacturasPorCliente/
+│           └── GenerarReporteVentas/
 │
 ├── Operaciones/              # Contexto Operaciones - Restaurante diario
 │   ├── Comandas/             # Gestión de comandas y pedidos
-│   │   ├── Commands/         # Crear, modificar, finalizar comandas
-│   │   ├── Queries/          # Consultas de comandas
-│   │   ├── DTOs/             # DTOs de comandas
-│   │   └── Validators/       # Validadores de comandas
+│   │   ├── Commands/
+│   │   │   ├── CrearComanda/
+│   │   │   ├── AgregarItemComanda/
+│   │   │   ├── ActualizarEstadoComanda/
+│   │   │   └── FinalizarComanda/
+│   │   └── Queries/
+│   │       ├── ObtenerComandaPorId/
+│   │       ├── ObtenerComandasActivas/
+│   │       └── ObtenerHistorialComandas/
+│   │
 │   ├── Reservaciones/        # Sistema de reservaciones
-│   │   ├── Commands/         # Comandos de reservaciones
-│   │   ├── Queries/          # Consultas de reservaciones
-│   │   ├── DTOs/             # DTOs de reservaciones
-│   │   └── Validators/       # Validadores de reservaciones
+│   │   ├── Commands/
+│   │   │   ├── CrearReservacion/
+│   │   │   ├── ConfirmarReservacion/
+│   │   │   └── CancelarReservacion/
+│   │   └── Queries/
+│   │       ├── ObtenerReservacionPorId/
+│   │       ├── ConsultarDisponibilidad/
+│   │       └── ObtenerReservacionesDia/
+│   │
 │   ├── Mesas/                # Gestión de mesas
-│   │   ├── Commands/         # Comandos de mesas
-│   │   ├── Queries/          # Consultas de mesas
-│   │   ├── DTOs/             # DTOs de mesas
-│   │   └── Validators/       # Validadores
+│   │   ├── Commands/
+│   │   │   ├── AsignarMesa/
+│   │   │   ├── LiberarMesa/
+│   │   │   └── CambiarEstadoMesa/
+│   │   └── Queries/
+│   │       ├── ObtenerMesasDisponibles/
+│   │       ├── ObtenerEstadoMesas/
+│   │       └── ObtenerMesaPorNumero/
+│   │
 │   └── Preparaciones/        # 🆕 Preparaciones diarias
-│       ├── Commands/         # Comandos de preparaciones
-│       ├── Queries/          # Consultas de preparaciones
-│       ├── DTOs/             # DTOs de preparaciones
-│       └── Services/         # Servicios de aplicación
+│       ├── Commands/
+│       │   ├── CrearPreparacionDiaria/
+│       │   ├── ActualizarCantidadPreparada/
+│       │   └── MarcarPreparacionCompleta/
+│       └── Queries/
+│           ├── ObtenerPreparacionesDia/
+│           ├── ObtenerPreparacionesPendientes/
+│           └── GenerarPlanPreparaciones/
 │
 ├── Inventario/               # Contexto Inventario - Gestión de stock
-│   ├── Ingredientes/         # Gestión de ingredientes
-│   │   ├── Commands/         # Comandos de ingredientes
-│   │   ├── Queries/          # Consultas de ingredientes
-│   │   ├── DTOs/             # DTOs de ingredientes
-│   │   └── Validators/       # Validadores
-│   ├── MovimientosInventario/ # Movimientos de inventario
-│   │   ├── Commands/         # Comandos de movimientos
-│   │   ├── Queries/          # Consultas de movimientos
-│   │   ├── DTOs/             # DTOs de movimientos
-│   │   └── Validators/       # Validadores
-│   └── OrdenesCompra/        # Órdenes de compra
-│       ├── Commands/         # Comandos de órdenes
-│       ├── Queries/          # Consultas de órdenes
-│       ├── DTOs/             # DTOs de órdenes
-│       └── Validators/       # Validadores
+│   ├── Ingredientes/         
+│   │   ├── Commands/
+│   │   │   ├── CrearIngrediente/
+│   │   │   ├── ActualizarStock/
+│   │   │   └── AjustarInventario/
+│   │   └── Queries/
+│   │       ├── ObtenerIngredientePorId/
+│   │       ├── ObtenerIngredientesBajoStock/
+│   │       └── CalcularValorInventario/
+│   │
+│   ├── MovimientosInventario/
+│   │   ├── Commands/
+│   │   │   ├── RegistrarEntrada/
+│   │   │   ├── RegistrarSalida/
+│   │   │   └── RegistrarAjuste/
+│   │   └── Queries/
+│   │       ├── ObtenerHistorialMovimientos/
+│   │       └── GenerarReporteMovimientos/
+│   │
+│   └── OrdenesCompra/        
+│       ├── Commands/
+│       │   ├── CrearOrdenCompra/
+│       │   ├── AprobarOrdenCompra/
+│       │   └── RecebirOrdenCompra/
+│       └── Queries/
+│           ├── ObtenerOrdenCompraPorId/
+│           ├── ObtenerOrdenesPendientes/
+│           └── GenerarOrdenAutomatica/
 │
 ├── Proveedores/              # Contexto Proveedores - Gestión de proveedores
 │   ├── Proveedores/          # Gestión de proveedores
-│   │   ├── Commands/         # Comandos de proveedores
-│   │   ├── Queries/          # Consultas de proveedores
-│   │   ├── DTOs/             # DTOs de proveedores
-│   │   └── Validators/       # Validadores
+│   │   ├── Commands/
+│   │   │   ├── CrearProveedor/
+│   │   │   ├── ActualizarProveedor/
+│   │   │   └── DesactivarProveedor/
+│   │   └── Queries/
+│   │       ├── ObtenerProveedorPorId/
+│   │       ├── BuscarProveedoresPorCategoria/
+│   │       └── EvaluarDesempenoProveedor/
+│   │
 │   └── ContactosProveedor/   # Contactos de proveedores
-│       ├── Commands/         # Comandos de contactos
-│       ├── Queries/          # Consultas de contactos
-│       ├── DTOs/             # DTOs de contactos
-│       └── Validators/       # Validadores
+│       ├── Commands/
+│       │   ├── AgregarContacto/
+│       │   ├── ActualizarContacto/
+│       │   └── EliminarContacto/
+│       └── Queries/
+│           ├── ObtenerContactosPorProveedor/
+│           └── BuscarContactoPorEmail/
 │
-├── Common/                   # Componentes compartidos entre contextos
+├── Common/                   # 🔧 Componentes compartidos entre contextos
 │   ├── Interfaces/           # Interfaces comunes
 │   │   ├── IApplicationService.cs
 │   │   ├── IQueryHandler.cs
-│   │   └── ICommandHandler.cs
+│   │   ├── ICommandHandler.cs
+│   │   ├── ICurrentUserService.cs
+│   │   ├── IDateTime.cs
+│   │   ├── IUnitOfWork.cs
+│   │   └── IUsuarioActualService.cs
+│   │
 │   ├── DTOs/                 # DTOs base y compartidos
-│   │   ├── PaginatedList.cs
-│   │   ├── FilterRequest.cs
-│   │   └── BaseDto.cs
+│   │   ├── PaginatedList.cs              ✅ IMPLEMENTADO
+│   │   ├── FilterRequest.cs              🔄 PENDIENTE
+│   │   ├── BaseDto.cs                    🔄 PENDIENTE
+│   │   └── PagedResult.cs                🔄 PENDIENTE
+│   │
 │   ├── Behaviors/            # Comportamientos de MediatR
-│   │   ├── ValidationBehavior.cs
-│   │   ├── LoggingBehavior.cs
-│   │   └── CachingBehavior.cs
+│   │   ├── ValidationBehavior.cs      ✅ IMPLEMENTADO
+│   │   ├── LoggingBehavior.cs         ✅ IMPLEMENTADO
+│   │   ├── CachingBehavior.cs         🔄 PENDIENTE
+│   │   └── PerformanceBehavior.cs     🔄 PENDIENTE
+│   │
 │   ├── Exceptions/           # Excepciones de aplicación
-│   │   ├── ApplicationException.cs
-│   │   ├── ValidationException.cs
-│   │   └── NotFoundException.cs
+│   │   ├── ApplicationException.cs     🔄 PENDIENTE
+│   │   ├── ValidationException.cs      🔄 PENDIENTE
+│   │   ├── NotFoundException.cs        ✅ IMPLEMENTADO
+│   │   └── AppException.cs             ✅ IMPLEMENTADO
+│   │
 │   └── Extensions/           # Extensiones útiles
-│       ├── MediatorExtensions.cs
-│       └── QueryableExtensions.cs
+│       ├── MediatorExtensions.cs      🔄 PENDIENTE
+│       ├── QueryableExtensions.cs     🔄 PENDIENTE
+│       └── ServiceCollectionExtensions.cs 🔄 PENDIENTE
 │
-└── Config/                   # Configuración de la aplicación
+└── Config/                   # 📋 Configuración de la aplicación
     ├── Mappings/             # AutoMapper profiles por contexto
-    │   ├── CoreMappingProfile.cs
-    │   ├── ComercialMappingProfile.cs
-    │   ├── OperacionesMappingProfile.cs
-    │   ├── InventarioMappingProfile.cs
-    │   └── ProveedoresMappingProfile.cs
+    │   ├── CoreMappingProfile.cs          ✅ IMPLEMENTADO
+    │   ├── ComercialMappingProfile.cs     🔄 PENDIENTE
+    │   ├── OperacionesMappingProfile.cs   🔄 PENDIENTE
+    │   ├── InventarioMappingProfile.cs    🔄 PENDIENTE
+    │   └── ProveedoresMappingProfile.cs   🔄 PENDIENTE
+    │
     ├── DependencyInjection/  # Registro de servicios por contexto
-    │   ├── CoreServiceSetup.cs
-    │   ├── ComercialServiceSetup.cs
-    │   ├── OperacionesServiceSetup.cs
-    │   ├── InventarioServiceSetup.cs
-    │   └── ProveedoresServiceSetup.cs
+    │   ├── ApplicationServiceCollection.cs ✅ IMPLEMENTADO
+    │   ├── CoreServiceSetup.cs            🔄 PENDIENTE
+    │   ├── ComercialServiceSetup.cs       🔄 PENDIENTE
+    │   ├── OperacionesServiceSetup.cs     🔄 PENDIENTE
+    │   ├── InventarioServiceSetup.cs      🔄 PENDIENTE
+    │   └── ProveedoresServiceSetup.cs     🔄 PENDIENTE
+    │
     └── Validation/           # Validadores de FluentValidation
         ├── AbstractValidators/
-        └── ValidationExtensions.cs
+        ├── ValidationExtensions.cs
+        └── FluentValidationExtensions.cs
 ```
 
-## 🔧 **Patrón CQRS con MediatR**
+## 🎯 **Patrones Arquitectónicos Implementados**
 
-Cada contexto sigue el patrón Command Query Responsibility Segregation:
+### **1. Vertical Slices Architecture**
+- **✅ Alta cohesión**: Todo el código para una feature está junto
+- **✅ Bajo acoplamiento**: Cada slice es independiente
+- **✅ Desarrollo paralelo**: Equipos pueden trabajar en slices diferentes
+- **✅ Testing fácil**: Cada slice se prueba aisladamente
 
-### **📝 Commands (Operaciones que modifican estado)**
+### **2. CQRS (Command Query Responsibility Segregation)**
+- **Commands**: Operaciones que modifican estado (`CrearProducto`, `ActualizarCliente`)
+- **Queries**: Operaciones de solo lectura (`ObtenerProductoPorId`, `BuscarClientes`)
+
+### **3. Mediator Pattern con MediatR**
+- Desacopla envío de requests de su ejecución
+- Pipeline de comportamientos (validación, logging, caché)
+- Manejo centralizado de cross-cutting concerns
+
+### **4. Result Pattern**
+- Retorno estandarizado: `Result<T>` para éxito/error
+- No excepciones para flujos de negocio
+- Manejo uniforme de errores
+
+### **5. Validation Pipeline con FluentValidation**
+- Validadores específicos por comando
+- Ejecución automática antes del handler
+- Mensajes de error descriptivos
+
+## 🔧 **Componentes Compartidos (Common)**
+
+### **🌐 Interfaces**
 ```csharp
-// Ejemplo: CrearClienteCommand
-public class CrearClienteCommand : IRequest<Result<ClienteDto>>
+// IApplicationService.cs - Base para servicios de aplicación
+public interface IApplicationService
 {
-    public string Nombre { get; set; }
-    public string Email { get; set; }
-    public string Telefono { get; set; }
+    Task<Result<TResponse>> ExecuteAsync<TResponse>(IRequest<TResponse> request);
 }
 
-public class CrearClienteCommandHandler : IRequestHandler<CrearClienteCommand, Result<ClienteDto>>
+// ICurrentUserService.cs - Información del usuario actual
+public interface ICurrentUserService
 {
-    private readonly IClienteRepository _repository;
-    private readonly IMapper _mapper;
-    
-    public async Task<Result<ClienteDto>> Handle(CrearClienteCommand request, CancellationToken cancellationToken)
+    string? UserId { get; }
+    string? UserName { get; }
+    bool IsAuthenticated { get; }
+}
+```
+
+### **📊 DTOs Base**
+```csharp
+// PaginatedList.cs - Paginación estándar
+public class PaginatedList<T>
+{
+    public List<T> Items { get; set; }
+    public int PageNumber { get; set; }
+    public int TotalPages { get; set; }
+    public int TotalCount { get; set; }
+    public bool HasPreviousPage => PageNumber > 1;
+    public bool HasNextPage => PageNumber < TotalPages;
+}
+
+// BaseDto.cs - DTO base con auditoría
+public abstract class BaseDto
+{
+    public Guid Id { get; set; }
+    public DateTime FechaCreacion { get; set; }
+    public DateTime? FechaModificacion { get; set; }
+    public string CreadoPor { get; set; } = string.Empty;
+    public string? ModificadoPor { get; set; }
+}
+```
+
+### **⚡ Behaviors de MediatR**
+```csharp
+// ValidationBehavior.cs - Validación automática
+public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest<TResponse>
+{
+    private readonly IEnumerable<IValidator<TRequest>> _validators;
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
-        // Lógica de creación...
+        if (_validators.Any())
+        {
+            var context = new ValidationContext<TRequest>(request);
+            var validationResults = await Task.WhenAll(_validators.Select(v => v.ValidateAsync(context, cancellationToken)));
+            var failures = validationResults.SelectMany(r => r.Errors).Where(f => f != null).ToList();
+
+            if (failures.Count != 0)
+                throw new ValidationException(failures);
+        }
+        return await next();
+    }
+}
+
+// LoggingBehavior.cs - Logging automático
+public class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest<TResponse>
+{
+    private readonly ILogger<LoggingBehavior<TRequest, TResponse>> _logger;
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
+    {
+        var requestName = typeof(TRequest).Name;
+        _logger.LogInformation("🚀 Ejecutando {RequestName}", requestName);
+        
+        var stopwatch = Stopwatch.StartNew();
+        var response = await next();
+        stopwatch.Stop();
+        
+        _logger.LogInformation("✅ {RequestName} completado en {ElapsedMilliseconds}ms", requestName, stopwatch.ElapsedMilliseconds);
+        return response;
     }
 }
 ```
 
-### **📊 Queries (Operaciones de consulta)**
-```csharp
-// Ejemplo: ObtenerClientePorIdQuery
-public class ObtenerClientePorIdQuery : IRequest<Result<ClienteDto>>
-{
-    public Guid ClienteId { get; set; }
-}
+## 📋 **Configuración (Config)**
 
-public class ObtenerClientePorIdQueryHandler : IRequestHandler<ObtenerClientePorIdQuery, Result<ClienteDto>>
+### **🗺️ AutoMapper Profiles**
+```csharp
+// CoreMappingProfile.cs - Mapeos para contexto Core
+public class CoreMappingProfile : Profile
 {
-    private readonly IClienteRepository _repository;
-    private readonly IMapper _mapper;
-    
-    public async Task<Result<ClienteDto>> Handle(ObtenerClientePorIdQuery request, CancellationToken cancellationToken)
+    public CoreMappingProfile()
     {
-        // Lógica de consulta...
+        // Producto mappings
+        CreateMap<Producto, ProductoDto>()
+            .ForMember(dest => dest.CategoriaTexto, opt => opt.MapFrom(src => src.Categoria.ToString()))
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre.Valor));
+            
+        CreateMap<CrearProductoCommand, Producto>()
+            .ConstructUsing(src => new ProductoBuilder().ConNombre(src.Nombre).Construir().Value);
     }
 }
 ```
 
-## 🧩 **Integración con Patrones de Domain**
-
-### **🏗️ Uso de Builders desde Application**
+### **🔧 Dependency Injection**
 ```csharp
-public class CrearComandaCommandHandler : IRequestHandler<CrearComandaCommand, Result<ComandaDto>>
-{
-    private readonly IComandaRepository _repository;
-    private readonly ComandaBuilder _comandaBuilder;
-    
-    public async Task<Result<ComandaDto>> Handle(CrearComandaCommand request, CancellationToken cancellationToken)
-    {
-        // Usar el builder del dominio
-        var resultadoComanda = _comandaBuilder
-            .ConMesero(request.MeseroId)
-            .ConCliente(request.ClienteId)
-            .EnMesa(request.MesaId)
-            .ConObservaciones(request.Observaciones)
-            .Construir();
-            
-        if (!resultadoComanda.Succeeded)
-            return Result<ComandaDto>.Failure(resultadoComanda.ErrorMessage);
-            
-        await _repository.AddAsync(resultadoComanda.Value);
-        return Result<ComandaDto>.Success(_mapper.Map<ComandaDto>(resultadoComanda.Value));
-    }
-}
-```
-
-### **🏭 Uso de Factories desde Application**
-```csharp
-public class CrearClienteCommandHandler : IRequestHandler<CrearClienteCommand, Result<ClienteDto>>
-{
-    private readonly IClienteRepository _repository;
-    private readonly ClienteFactory _clienteFactory;
-    
-    public async Task<Result<ClienteDto>> Handle(CrearClienteCommand request, CancellationToken cancellationToken)
-    {
-        // Usar el factory del dominio
-        var resultadoCliente = _clienteFactory.CrearCliente(
-            request.Nombre,
-            request.Email,
-            request.Telefono);
-            
-        if (!resultadoCliente.Succeeded)
-            return Result<ClienteDto>.Failure(resultadoCliente.ErrorMessage);
-            
-        await _repository.AddAsync(resultadoCliente.Value);
-        return Result<ComandaDto>.Success(_mapper.Map<ClienteDto>(resultadoCliente.Value));
-    }
-}
-```
-
-## 🔄 **Flujo de Trabajo por Contexto**
-
-### **📋 Ejemplo: Operaciones - Crear Comanda**
-1. **Controller** → `CrearComandaCommand`
-2. **MediatR** → `CrearComandaCommandHandler`
-3. **Handler** → Domain `ComandaBuilder`
-4. **Builder** → Entidad `Comanda` validada
-5. **Repository** → Persistencia en BD
-6. **Mapper** → `ComandaDto` de respuesta
-
-### **🎯 Beneficios de esta Arquitectura**
-- ✅ **Consistencia** con la estructura de Domain
-- ✅ **Separación clara** de responsabilidades por contexto
-- ✅ **CQRS** para separar lecturas de escrituras
-- ✅ **Validaciones** en múltiples niveles
-- ✅ **Mapeo automático** con AutoMapper
-- ✅ **Manejo de errores** centralizado con Result pattern
-
-## 📦 **Registro de Dependencias por Contexto**
-
-```csharp
-// ApplicationServiceCollectionExtensions.cs
-public static class ApplicationServiceCollectionExtensions
+// ApplicationServiceCollection.cs - Registro principal
+public static class ApplicationServiceCollection
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
-        // MediatR
-        services.AddMediatR(Assembly.GetExecutingAssembly());
+        // MediatR para Vertical Slices
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
         
-        // AutoMapper
+        // AutoMapper para mapeo DTO <-> Entity
         services.AddAutoMapper(Assembly.GetExecutingAssembly());
         
-        // Behaviors
+        // FluentValidation para validaciones
+        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        
+        // Behaviors de MediatR
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         
-        // Contextos específicos
-        services.AddCoreApplicationServices();
-        services.AddComercialApplicationServices();
-        services.AddOperacionesApplicationServices();
-        services.AddInventarioApplicationServices();
-        services.AddProveedoresApplicationServices();
+        // Servicios por contexto
+        services.AddCoreServices();
+        services.AddComercialServices();
+        services.AddOperacionesServices();
         
         return services;
     }
 }
 ```
 
-## 🚀 **Próximos Pasos de Implementación**
+## 🔄 **Flujo de Ejecución Típico**
 
-1. **📁 Reestructurar carpetas** para alinear con Domain
-2. **📝 Implementar Commands/Queries** básicos por contexto
-3. **🗺️ Configurar AutoMapper** profiles
-4. **✅ Implementar validadores** con FluentValidation
-5. **🔧 Configurar MediatR** behaviors
-6. **📊 Desarrollar DTOs** específicos por contexto
+```mermaid
+sequenceDiagram
+    participant API as Controller/API
+    participant M as MediatR
+    participant VB as ValidationBehavior
+    participant LB as LoggingBehavior
+    participant H as Handler
+    participant D as Domain (Builder/Factory)
+    participant R as Repository
+    
+    API->>M: Send(Command/Query)
+    M->>VB: Validate(request)
+    alt Validation Fails
+        VB-->>M: ValidationException
+        M-->>API: Error Response
+    else Validation Success
+        VB->>LB: Log Start
+        LB->>H: Handle(request)
+        H->>D: Use Domain Logic
+        D-->>H: Domain Result
+        H->>R: Persist/Query Data
+        R-->>H: Data Result
+        H-->>LB: Result<DTO>
+        LB->>VB: Log End
+        VB-->>M: Success
+        M-->>API: Success Response
+    end
+```
 
-## Ejemplo de uso
+## ✅ **Estado Actual de Implementación**
 
-Para crear un nuevo cliente:
+### **🔥 Contexto Core - Productos**
+- ✅ **CrearProducto** - Vertical Slice completo
+- ✅ **ObtenerProductoPorId** - Vertical Slice completo
+- ✅ **ActualizarProducto** - Vertical Slice completo
+- ✅ **ObtenerProductosPaginados** - Vertical Slice completo
 
-```csharp
-// Desde un controlador o API endpoint
-await mediator.Send(new CreateClienteCommand 
-{
-    Nombre = "Juan",
-    Apellido = "Pérez",
-    Email = "juan@ejemplo.com",
-    Telefono = "555-1234"
-});
-``` 
+### **🔧 Componentes Compartidos**
+- ✅ **Common/Behaviors** - ValidationBehavior, LoggingBehavior
+- ✅ **Common/Exceptions** - NotFoundException, AppException
+- ✅ **Common/Interfaces** - Interfaces básicas
+- ✅ **Config/Mappings** - CoreMappingProfile implementado
+- ✅ **Config/DependencyInjection** - ApplicationServiceCollection implementado
+
+### **🔄 Otros Contextos**
+- 🔄 **Comercial** (Clientes, Fidelización, Facturación) - Por implementar  
+- 🔄 **Operaciones** (Comandas, Reservaciones, Mesas) - Por implementar
+- 🔄 **Inventario** (Ingredientes, Movimientos, Órdenes) - Por implementar
+- 🔄 **Proveedores** (Proveedores, Contactos) - Por implementar
+
+## 🚀 **Beneficios de esta Arquitectura**
+
+### **✅ Para Desarrollo**
+- **🎯 Feature-focused**: Cada slice es una funcionalidad completa
+- **👥 Team scaling**: Equipos pueden trabajar independientemente
+- **🔧 Easy maintenance**: Cambios localizados por feature
+- **🧪 Simple testing**: Unit tests por slice
+
+### **✅ Para Arquitectura**
+- **🏗️ Domain alignment**: Application refleja estructura de Domain
+- **🔗 Loose coupling**: Slices independientes
+- **📦 High cohesion**: Todo relacionado está junto
+- **🎨 Clean boundaries**: Separación clara de responsabilidades
+
+### **✅ Para Calidad**
+- **⚡ Cross-cutting concerns**: Behaviors automáticos (validación, logging)
+- **📊 Consistent patterns**: Misma estructura en todos los contextos
+- **🔄 Reusable components**: Common components reutilizables
+- **🧪 Testability**: Cada componente es testeable independientemente
+
+---
+
+## 📋 **Próximo Roadmap**
+
+### **Fase 1: Completar Core/Productos** 
+1. ✅ CrearProducto - DONE
+2. ✅ ObtenerProductoPorId - DONE
+3. ✅ ActualizarProducto - DONE
+4. ✅ ObtenerProductosPaginados - DONE
+
+### **Fase 2: Implementar Config**
+1. ✅ Config/Mappings - CoreMappingProfile implementado
+2. ✅ Config/DependencyInjection - ApplicationServiceCollection implementado
+3. 🔄 Common/DTOs - DTOs base completos
+
+### **Fase 3: Expandir a otros contextos**
+1. 🔄 Comercial/Clientes
+2. 🔄 Operaciones/Comandas  
+3. 🔄 Inventario/Ingredientes
+4. 🔄 Proveedores/Proveedores
+
+**¡Vertical Slices + Common Components nos da la arquitectura perfecta! 🚀** 
