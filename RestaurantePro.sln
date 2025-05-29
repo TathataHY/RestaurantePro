@@ -1,4 +1,5 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -13,6 +14,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Backend", "Backend", "{FE360695-3F2B-1049-3887-35FBB5135923}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestaurantePro.Application", "src\Backend\RestaurantePro.Application\RestaurantePro.Application.csproj", "{D0BF1616-0C57-4661-8B23-773FEF08A795}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestaurantePro.Application.UnitTests", "tests\RestaurantePro.Application.UnitTests\RestaurantePro.Application.UnitTests.csproj", "{0A433B46-C32F-4FA6-9BE9-225C8C806A47}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,6 +63,18 @@ Global
 		{D0BF1616-0C57-4661-8B23-773FEF08A795}.Release|x64.Build.0 = Debug|Any CPU
 		{D0BF1616-0C57-4661-8B23-773FEF08A795}.Release|x86.ActiveCfg = Release|Any CPU
 		{D0BF1616-0C57-4661-8B23-773FEF08A795}.Release|x86.Build.0 = Release|Any CPU
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47}.Debug|x64.Build.0 = Debug|Any CPU
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47}.Debug|x86.Build.0 = Debug|Any CPU
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47}.Release|x64.ActiveCfg = Release|Any CPU
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47}.Release|x64.Build.0 = Release|Any CPU
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47}.Release|x86.ActiveCfg = Release|Any CPU
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -69,5 +84,6 @@ Global
 		{A5FC189E-D941-4004-91F8-75B279A0C9E6} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{FE360695-3F2B-1049-3887-35FBB5135923} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{D0BF1616-0C57-4661-8B23-773FEF08A795} = {FE360695-3F2B-1049-3887-35FBB5135923}
+		{0A433B46-C32F-4FA6-9BE9-225C8C806A47} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal

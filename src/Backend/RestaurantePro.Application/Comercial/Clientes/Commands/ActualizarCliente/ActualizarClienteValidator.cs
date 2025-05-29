@@ -9,7 +9,7 @@ public class ActualizarClienteValidator : AbstractValidator<ActualizarClienteCom
     public ActualizarClienteValidator()
     {
         // ID siempre requerido
-        RuleFor(x => x.ClienteId)
+        RuleFor(x => x.Id)
             .NotEmpty().WithMessage("El ID del cliente es obligatorio")
             .NotEqual(Guid.Empty).WithMessage("El ID del cliente no puede ser un GUID vacío");
 
@@ -40,29 +40,20 @@ public class ActualizarClienteValidator : AbstractValidator<ActualizarClienteCom
 
         // Fecha de nacimiento - validar solo si se proporciona
         RuleFor(x => x.FechaNacimiento)
-            .LessThan(DateTime.Now).WithMessage("La fecha de nacimiento debe ser anterior a hoy")
-            .GreaterThan(DateTime.Now.AddYears(-120)).WithMessage("La fecha de nacimiento no puede ser hace más de 120 años")
-            .Must(BeAtLeast18YearsOld).WithMessage("El cliente debe ser mayor de 18 años")
+            .LessThan(DateTime.Now.AddYears(-18)).WithMessage("El cliente debe ser mayor de 18 años")
+            .GreaterThan(DateTime.Now.AddYears(-120)).WithMessage("La fecha de nacimiento no puede ser mayor a 120 años")
             .When(x => x.FechaNacimiento.HasValue);
     }
 
     /// <summary>
-    /// Verifica que al menos un campo esté presente para actualizar
+    /// Valida que al menos un campo esté presente para actualizar
     /// </summary>
-    private static bool HaveAtLeastOneFieldToUpdate(ActualizarClienteCommand command)
+    private bool HaveAtLeastOneFieldToUpdate(ActualizarClienteCommand command)
     {
         return !string.IsNullOrWhiteSpace(command.Nombre) ||
                !string.IsNullOrWhiteSpace(command.Email) ||
                !string.IsNullOrWhiteSpace(command.Telefono) ||
-               command.FechaNacimiento.HasValue;
-    }
-
-    /// <summary>
-    /// Verifica que el cliente sea mayor de 18 años
-    /// </summary>
-    private static bool BeAtLeast18YearsOld(DateTime? fechaNacimiento)
-    {
-        if (!fechaNacimiento.HasValue) return true;
-        return fechaNacimiento.Value <= DateTime.Now.AddYears(-18);
+               command.FechaNacimiento.HasValue ||
+               command.EstaActivo.HasValue;
     }
 } 

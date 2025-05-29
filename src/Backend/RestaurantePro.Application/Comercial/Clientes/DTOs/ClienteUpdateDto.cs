@@ -7,9 +7,19 @@ namespace RestaurantePro.Application.Comercial.Clientes.DTOs;
 public class ClienteUpdateDto
 {
     /// <summary>
+    /// ID del cliente
+    /// </summary>
+    public Guid Id { get; set; }
+
+    /// <summary>
     /// Nombre completo del cliente
     /// </summary>
     public string Nombre { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Apellido del cliente
+    /// </summary>
+    public string Apellido { get; set; } = string.Empty;
 
     /// <summary>
     /// Email del cliente
@@ -19,10 +29,25 @@ public class ClienteUpdateDto
     /// <summary>
     /// Teléfono del cliente
     /// </summary>
-    public string Telefono { get; set; } = string.Empty;
+    public string? Telefono { get; set; }
 
     /// <summary>
     /// Fecha de nacimiento del cliente
     /// </summary>
-    public DateTime FechaNacimiento { get; set; }
+    public DateTime? FechaNacimiento { get; set; }
+
+    /// <summary>
+    /// Dirección del cliente
+    /// </summary>
+    public string? Direccion { get; set; }
+
+    /// <summary>
+    /// Tipo de cliente
+    /// </summary>
+    public TipoCliente Tipo { get; set; }
+
+    /// <summary>
+    /// Notas del cliente
+    /// </summary>
+    public string? Notas { get; set; }
 } 

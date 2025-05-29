@@ -1,98 +1,179 @@
 namespace RestaurantePro.Application.Operaciones.Comandas.DTOs;
 
 /// <summary>
-/// DTO resumido para comandas en listas y reportes
-/// Optimizado para consultas masivas y dashboards
+/// DTO resumido para Comanda - Optimizado para listas y performance
+/// Contiene solo los campos esenciales para mostrar en grids y listas
 /// </summary>
 public class ComandaSummaryDto
 {
     /// <summary>
-    /// ID de la comanda
+    /// Identificador único de la comanda
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Número o código de la comanda para display
+    /// Número de comanda (legible para humanos)
     /// </summary>
     public string NumeroComanda { get; set; } = string.Empty;
 
     /// <summary>
-    /// ID de la mesa
-    /// </summary>
-    public Guid MesaId { get; set; }
-
-    /// <summary>
-    /// Número de la mesa
-    /// </summary>
-    public string? NumeroMesa { get; set; }
-
-    /// <summary>
-    /// Nombre del mesero responsable
-    /// </summary>
-    public string? NombreMesero { get; set; }
-
-    /// <summary>
-    /// Nombre del cliente (si aplica)
-    /// </summary>
-    public string? NombreCliente { get; set; }
-
-    /// <summary>
-    /// Estado actual de la comanda
-    /// </summary>
-    public string Estado { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Estado para mostrar en UI con colores
-    /// </summary>
-    public string EstadoDisplay { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Fecha de creación
+    /// Fecha y hora de creación de la comanda
     /// </summary>
     public DateTime FechaCreacion { get; set; }
 
     /// <summary>
-    /// Total de la comanda
+    /// Estado actual de la comanda (texto legible)
+    /// </summary>
+    public string Estado { get; set; } = string.Empty;
+
+    /// <summary>
+    /// ID del cliente (puede ser null para consumo en sala)
+    /// </summary>
+    public Guid? ClienteId { get; set; }
+
+    /// <summary>
+    /// Nombre del cliente
+    /// </summary>
+    public string NombreCliente { get; set; } = string.Empty;
+
+    /// <summary>
+    /// ID de la mesa asignada (puede ser null para delivery)
+    /// </summary>
+    public Guid? MesaId { get; set; }
+
+    /// <summary>
+    /// Número de mesa
+    /// </summary>
+    public string NumeroMesa { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Tipo de servicio (Mesa, Delivery, Para Llevar)
+    /// </summary>
+    public string TipoServicio { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Total de ítems en la comanda
+    /// </summary>
+    public int TotalItems { get; set; }
+
+    /// <summary>
+    /// Cantidad total de productos
+    /// </summary>
+    public int CantidadTotal { get; set; }
+
+    /// <summary>
+    /// Subtotal de la comanda (sin impuestos ni descuentos)
+    /// </summary>
+    public decimal Subtotal { get; set; }
+
+    /// <summary>
+    /// Total de descuentos aplicados
+    /// </summary>
+    public decimal TotalDescuentos { get; set; }
+
+    /// <summary>
+    /// Total de impuestos
+    /// </summary>
+    public decimal TotalImpuestos { get; set; }
+
+    /// <summary>
+    /// Total final de la comanda
     /// </summary>
     public decimal Total { get; set; }
 
     /// <summary>
-    /// Cantidad de items en la comanda
+    /// Observaciones especiales de la comanda
     /// </summary>
-    public int CantidadItems { get; set; }
+    public string Observaciones { get; set; } = string.Empty;
 
     /// <summary>
-    /// Tiempo transcurrido desde la creación
+    /// Usuario que tomó la orden
     /// </summary>
-    public TimeSpan TiempoTranscurrido { get; set; }
+    public string TomodaPor { get; set; } = string.Empty;
 
     /// <summary>
-    /// Tiempo transcurrido en formato texto (ej: "15 min", "1h 30m")
+    /// Fecha estimada de entrega/preparación
     /// </summary>
-    public string TiempoTranscurridoTexto { get; set; } = string.Empty;
+    public DateTime? FechaEstimadaEntrega { get; set; }
 
     /// <summary>
-    /// Indica si la comanda está atrasada según tiempo estimado
+    /// Fecha real de entrega
     /// </summary>
-    public bool EstaAtrasada { get; set; }
+    public DateTime? FechaEntrega { get; set; }
 
     /// <summary>
-    /// Prioridad de la comanda (basada en tiempo de espera, cliente VIP, etc.)
+    /// Tiempo transcurrido desde creación (en minutos)
+    /// </summary>
+    public int TiempoTranscurrido => (int)(DateTime.UtcNow - FechaCreacion).TotalMinutes;
+
+    /// <summary>
+    /// Tiempo estimado restante (en minutos)
+    /// </summary>
+    public int? TiempoRestante => FechaEstimadaEntrega.HasValue 
+        ? Math.Max(0, (int)(FechaEstimadaEntrega.Value - DateTime.UtcNow).TotalMinutes)
+        : null;
+
+    /// <summary>
+    /// Prioridad de la comanda (Normal, Alta, Urgente)
     /// </summary>
     public string Prioridad { get; set; } = "Normal";
 
     /// <summary>
-    /// Indica si la comanda tiene observaciones especiales
+    /// Indicador de retraso en la entrega
     /// </summary>
-    public bool TieneObservaciones { get; set; }
+    public bool EstaRetrasada => FechaEstimadaEntrega.HasValue && DateTime.UtcNow > FechaEstimadaEntrega;
 
     /// <summary>
-    /// Indica si la comanda tiene descuento aplicado
+    /// Color del estado para UI (Verde, Amarillo, Rojo)
     /// </summary>
-    public bool TieneDescuento { get; set; }
+    public string ColorEstado => Estado switch
+    {
+        "Pendiente" => "yellow",
+        "En Preparación" => "blue",
+        "Lista" => "green",
+        "Entregada" => "gray",
+        "Cancelada" => "red",
+        _ => "gray"
+    };
 
     /// <summary>
-    /// Color de estado para UI (verde, amarillo, rojo, etc.)
+    /// Icono del estado para UI
     /// </summary>
-    public string ColorEstado { get; set; } = "#6B7280"; // Default gray
+    public string IconoEstado => Estado switch
+    {
+        "Pendiente" => "clock",
+        "En Preparación" => "chef-hat",
+        "Lista" => "check-circle",
+        "Entregada" => "truck",
+        "Cancelada" => "x-circle",
+        _ => "help-circle"
+    };
+
+    /// <summary>
+    /// Resumen de productos principales (primeros 3)
+    /// </summary>
+    public string ResumenProductos { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Indicador de comanda con descuentos aplicados
+    /// </summary>
+    public bool TieneDescuentos => TotalDescuentos > 0;
+
+    /// <summary>
+    /// Indicador de comanda con observaciones especiales
+    /// </summary>
+    public bool TieneObservaciones => !string.IsNullOrEmpty(Observaciones);
+
+    /// <summary>
+    /// Porcentaje de progreso de la comanda (0-100)
+    /// </summary>
+    public int PorcentajeProgreso => Estado switch
+    {
+        "Pendiente" => 0,
+        "En Preparación" => 50,
+        "Lista" => 85,
+        "Entregada" => 100,
+        "Cancelada" => 0,
+        _ => 0
+    };
 } 

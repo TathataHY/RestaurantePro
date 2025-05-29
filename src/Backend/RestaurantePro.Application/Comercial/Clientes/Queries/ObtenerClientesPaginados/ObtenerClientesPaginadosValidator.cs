@@ -2,33 +2,101 @@ namespace RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientesP
 
 /// <summary>
 /// Validador para ObtenerClientesPaginadosQuery
+/// Valida parámetros de paginación, filtros y ordenamiento
 /// </summary>
 public class ObtenerClientesPaginadosValidator : AbstractValidator<ObtenerClientesPaginadosQuery>
 {
     public ObtenerClientesPaginadosValidator()
     {
-        RuleFor(x => x.Filtros)
-            .NotNull().WithMessage("Los filtros son obligatorios")
-            .Must(f => f.IsValid).WithMessage("Los filtros no son válidos");
+        ConfigurarValidacionesPaginacion();
+        ConfigurarValidacionesFiltros();
+        ConfigurarValidacionesOrdenamiento();
+        ConfigurarValidacionesFechas();
+    }
 
-        RuleFor(x => x.PuntosMinimos)
-            .GreaterThanOrEqualTo(0).When(x => x.PuntosMinimos.HasValue)
-            .WithMessage("Los puntos mínimos deben ser mayores o iguales a 0");
+    /// <summary>
+    /// Configura validaciones para paginación
+    /// </summary>
+    private void ConfigurarValidacionesPaginacion()
+    {
+        RuleFor(x => x.PageNumber)
+            .GreaterThan(0)
+            .WithMessage("El número de página debe ser mayor a 0")
+            .LessThanOrEqualTo(1000)
+            .WithMessage("El número de página no puede exceder 1000");
 
-        RuleFor(x => x.VisitasMinimas)
-            .GreaterThanOrEqualTo(0).When(x => x.VisitasMinimas.HasValue)
-            .WithMessage("Las visitas mínimas deben ser mayores o iguales a 0");
+        RuleFor(x => x.PageSize)
+            .GreaterThan(0)
+            .WithMessage("El tamaño de página debe ser mayor a 0")
+            .LessThanOrEqualTo(100)
+            .WithMessage("El tamaño de página no puede exceder 100 registros");
+    }
 
-        RuleFor(x => x.EdadMinima)
-            .InclusiveBetween(18, 120).When(x => x.EdadMinima.HasValue)
-            .WithMessage("La edad mínima debe estar entre 18 y 120 años");
+    /// <summary>
+    /// Configura validaciones para filtros
+    /// </summary>
+    private void ConfigurarValidacionesFiltros()
+    {
+        RuleFor(x => x.FiltroTexto)
+            .MaximumLength(100)
+            .WithMessage("El filtro de texto no puede exceder 100 caracteres")
+            .When(x => !string.IsNullOrEmpty(x.FiltroTexto));
 
-        RuleFor(x => x.EdadMaxima)
-            .InclusiveBetween(18, 120).When(x => x.EdadMaxima.HasValue)
-            .WithMessage("La edad máxima debe estar entre 18 y 120 años");
+        RuleFor(x => x.Segmento)
+            .Must(BeValidSegmento)
+            .WithMessage("El segmento debe ser uno de: SinClasificar, Nuevo, Regular, Premium, VIP")
+            .When(x => !string.IsNullOrEmpty(x.Segmento));
+    }
+
+    /// <summary>
+    /// Configura validaciones para ordenamiento
+    /// </summary>
+    private void ConfigurarValidacionesOrdenamiento()
+    {
+        var camposValidos = new[] { "FechaCreacion", "Nombre", "Email", "PuntosAcumulados", "CantidadVisitas", "Segmento" };
+
+        RuleFor(x => x.OrdenarPor)
+            .Must(campo => string.IsNullOrEmpty(campo) || camposValidos.Contains(campo, StringComparer.OrdinalIgnoreCase))
+            .WithMessage($"El campo de ordenamiento debe ser uno de: {string.Join(", ", camposValidos)}");
+
+        RuleFor(x => x.DireccionOrden)
+            .Must(direccion => string.IsNullOrEmpty(direccion) || 
+                              direccion.Equals("asc", StringComparison.OrdinalIgnoreCase) || 
+                              direccion.Equals("desc", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("La dirección de ordenamiento debe ser 'asc' o 'desc'");
+    }
+
+    /// <summary>
+    /// Configura validaciones para fechas
+    /// </summary>
+    private void ConfigurarValidacionesFechas()
+    {
+        RuleFor(x => x.FechaRegistroDesde)
+            .LessThan(DateTime.Now.AddDays(1))
+            .WithMessage("La fecha desde no puede ser futura")
+            .When(x => x.FechaRegistroDesde.HasValue);
+
+        RuleFor(x => x.FechaRegistroHasta)
+            .LessThan(DateTime.Now.AddDays(1))
+            .WithMessage("La fecha hasta no puede ser futura")
+            .When(x => x.FechaRegistroHasta.HasValue);
 
         RuleFor(x => x)
-            .Must(x => !x.EdadMinima.HasValue || !x.EdadMaxima.HasValue || x.EdadMinima <= x.EdadMaxima)
-            .WithMessage("La edad mínima debe ser menor o igual a la edad máxima");
+            .Must(x => !x.FechaRegistroDesde.HasValue || !x.FechaRegistroHasta.HasValue || 
+                      x.FechaRegistroDesde.Value <= x.FechaRegistroHasta.Value)
+            .WithMessage("La fecha desde debe ser menor o igual a la fecha hasta")
+            .When(x => x.FechaRegistroDesde.HasValue && x.FechaRegistroHasta.HasValue);
+    }
+
+    /// <summary>
+    /// Valida si el segmento es válido
+    /// </summary>
+    private bool BeValidSegmento(string? segmento)
+    {
+        if (string.IsNullOrEmpty(segmento))
+            return true;
+
+        var segmentosValidos = new[] { "SinClasificar", "Nuevo", "Regular", "Premium", "VIP" };
+        return segmentosValidos.Contains(segmento, StringComparer.OrdinalIgnoreCase);
     }
 } 

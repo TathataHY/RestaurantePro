@@ -3,12 +3,17 @@ namespace RestaurantePro.Application.Operaciones.Comandas.DTOs;
 /// <summary>
 /// DTO para los items individuales de una comanda
 /// </summary>
-public class ItemComandaDto
+public class ItemComandaDto : BaseDto
 {
     /// <summary>
     /// ID único del item en la comanda
     /// </summary>
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// ID de la comanda
+    /// </summary>
+    public Guid ComandaId { get; set; }
 
     /// <summary>
     /// ID del producto
@@ -21,9 +26,9 @@ public class ItemComandaDto
     public string NombreProducto { get; set; } = string.Empty;
 
     /// <summary>
-    /// Cantidad del producto en el item
+    /// Descripción del producto
     /// </summary>
-    public int Cantidad { get; set; }
+    public string? DescripcionProducto { get; set; }
 
     /// <summary>
     /// Precio unitario del producto al momento de la orden
@@ -31,9 +36,14 @@ public class ItemComandaDto
     public decimal PrecioUnitario { get; set; }
 
     /// <summary>
+    /// Cantidad del producto en el item
+    /// </summary>
+    public int Cantidad { get; set; }
+
+    /// <summary>
     /// Subtotal del item (cantidad x precio unitario)
     /// </summary>
-    public decimal Subtotal { get; set; }
+    public decimal Subtotal => PrecioUnitario * Cantidad;
 
     /// <summary>
     /// Observaciones específicas para este item
@@ -43,7 +53,22 @@ public class ItemComandaDto
     /// <summary>
     /// Estado del item (pendiente, en preparación, listo)
     /// </summary>
-    public string Estado { get; set; } = string.Empty;
+    public EstadoItemComanda Estado { get; set; }
+
+    /// <summary>
+    /// Texto representativo del estado del item
+    /// </summary>
+    public string EstadoTexto => Estado.ToString();
+
+    /// <summary>
+    /// Fecha de preparación del item
+    /// </summary>
+    public DateTime? FechaPreparacion { get; set; }
+
+    /// <summary>
+    /// Fecha de entrega del item
+    /// </summary>
+    public DateTime? FechaEntrega { get; set; }
 
     /// <summary>
     /// Lista de personalizaciones del item

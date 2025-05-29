@@ -56,10 +56,9 @@ public static class ApplicationServiceCollection
             {
                 cfg.AddProfile<CoreMappingProfile>();
                 cfg.AddProfile<ComercialMappingProfile>();
-                // TODO: Agregar otros profiles cuando estén implementados
-                // cfg.AddProfile<OperacionesMappingProfile>();
-                // cfg.AddProfile<InventarioMappingProfile>();
-                // cfg.AddProfile<ProveedoresMappingProfile>();
+                cfg.AddProfile<OperacionesMappingProfile>();
+                cfg.AddProfile<InventarioMappingProfile>();
+                cfg.AddProfile<ProveedoresMappingProfile>();
             });
             return configuration.CreateMapper();
         });
@@ -107,11 +106,10 @@ public static class ApplicationServiceCollection
     private static IServiceCollection AddContextServices(this IServiceCollection services)
     {
         services.AddCoreServices();
-        // TODO: Agregar otros contextos cuando estén implementados
-        // services.AddComercialServices();
-        // services.AddOperacionesServices();
-        // services.AddInventarioServices();
-        // services.AddProveedoresServices();
+        services.AddComercialServices();
+        services.AddOperacionesServices();
+        services.AddInventarioServices();
+        services.AddProveedoresServices();
 
         return services;
     }
@@ -123,6 +121,50 @@ public static class ApplicationServiceCollection
     {
         // TODO: Registrar servicios de aplicación específicos del contexto Core
         // Por ejemplo: servicios de negocio, factories, etc.
+        
+        return services;
+    }
+
+    /// <summary>
+    /// Registra servicios específicos del contexto Comercial
+    /// </summary>
+    private static IServiceCollection AddComercialServices(this IServiceCollection services)
+    {
+        // TODO: Registrar servicios de aplicación específicos del contexto Comercial
+        // Por ejemplo: servicios de fidelización, cálculo de descuentos, etc.
+        
+        return services;
+    }
+
+    /// <summary>
+    /// Registra servicios específicos del contexto Operaciones
+    /// </summary>
+    private static IServiceCollection AddOperacionesServices(this IServiceCollection services)
+    {
+        // TODO: Registrar servicios de aplicación específicos del contexto Operaciones
+        // Por ejemplo: servicios de gestión de comandas, reservaciones, etc.
+        
+        return services;
+    }
+
+    /// <summary>
+    /// Registra servicios específicos del contexto Inventario
+    /// </summary>
+    private static IServiceCollection AddInventarioServices(this IServiceCollection services)
+    {
+        // TODO: Registrar servicios de aplicación específicos del contexto Inventario
+        // Por ejemplo: servicios de cálculo de stock, alertas, etc.
+        
+        return services;
+    }
+
+    /// <summary>
+    /// Registra servicios específicos del contexto Proveedores
+    /// </summary>
+    private static IServiceCollection AddProveedoresServices(this IServiceCollection services)
+    {
+        // TODO: Registrar servicios de aplicación específicos del contexto Proveedores
+        // Por ejemplo: servicios de evaluación de proveedores, gestión de contactos, etc.
         
         return services;
     }

@@ -3,8 +3,8 @@ using RestaurantePro.Application.Comercial.Clientes.DTOs;
 namespace RestaurantePro.Application.Comercial.Clientes.Commands.ActualizarCliente;
 
 /// <summary>
-/// Handler para actualizar datos de un cliente existente
-/// Implementa actualización parcial y validación de duplicados
+/// Handler para el comando ActualizarCliente
+/// Maneja la actualización de la información de un cliente existente
 /// </summary>
 public class ActualizarClienteHandler : IRequestHandler<ActualizarClienteCommand, Result<ClienteDto>>
 {
@@ -23,87 +23,79 @@ public class ActualizarClienteHandler : IRequestHandler<ActualizarClienteCommand
     }
 
     public async Task<Result<ClienteDto>> Handle(
-        ActualizarClienteCommand request, 
+        ActualizarClienteCommand request,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("🔄 Iniciando actualización de cliente: {ClienteId}", request.ClienteId);
+        _logger.LogInformation("🔄 Iniciando actualización de cliente: {ClienteId}", request.Id);
 
         try
         {
             // 1. Buscar el cliente existente
-            var cliente = await _repository.ObtenerPorIdAsync(request.ClienteId, cancellationToken);
+            var cliente = await _repository.ObtenerPorIdAsync(request.Id, cancellationToken);
             if (cliente == null)
             {
-                _logger.LogWarning("⚠️ Cliente no encontrado para actualizar: {ClienteId}", request.ClienteId);
-                return Result.Failure<ClienteDto>($"No se encontró un cliente con el ID {request.ClienteId}");
+                _logger.LogWarning("⚠️ Cliente no encontrado: {ClienteId}", request.Id);
+                return Result.Failure<ClienteDto>($"No se encontró el cliente con ID {request.Id}");
             }
 
-            if (cliente.EstaEliminado)
-            {
-                _logger.LogWarning("🗑️ Intento de actualizar cliente eliminado: {ClienteId}", request.ClienteId);
-                return Result.Failure<ClienteDto>("No se puede actualizar un cliente eliminado");
-            }
-
-            // 2. Verificar duplicado de email si se va a actualizar
-            if (!string.IsNullOrWhiteSpace(request.Email) && 
-                !string.Equals(cliente.Email.Value, request.Email, StringComparison.OrdinalIgnoreCase))
+            // 2. Verificar si el email ya existe en otro cliente
+            if (!string.IsNullOrWhiteSpace(request.Email) && request.Email != cliente.Email.Value)
             {
                 var clienteConEmail = await _repository.ObtenerPorEmailAsync(request.Email, cancellationToken);
-                if (clienteConEmail != null && clienteConEmail.Id != request.ClienteId)
+                if (clienteConEmail != null && clienteConEmail.Id != request.Id)
                 {
-                    _logger.LogWarning("⚠️ Email duplicado al actualizar cliente: {Email}", request.Email);
-                    return Result.Failure<ClienteDto>($"Ya existe otro cliente con el email {request.Email}");
+                    _logger.LogWarning("⚠️ Ya existe otro cliente con el email: {Email}", request.Email);
+                    return Result.Failure<ClienteDto>($"Ya existe otro cliente registrado con el email {request.Email}");
                 }
             }
 
-            // 3. Aplicar actualizaciones usando métodos del dominio
-            var actualizado = false;
-
-            // Actualizar información de contacto si se proporciona email o teléfono
+            // 3. Actualizar información de contacto (email y teléfono)
             var emailActualizado = !string.IsNullOrWhiteSpace(request.Email);
             var telefonoActualizado = !string.IsNullOrWhiteSpace(request.Telefono);
-            
+
             if (emailActualizado || telefonoActualizado)
             {
                 var nuevoEmail = emailActualizado ? Email.Create(request.Email!) : cliente.Email;
                 var nuevoTelefono = telefonoActualizado ? PhoneNumber.Create(request.Telefono!) : cliente.Telefono;
                 
                 cliente.ActualizarInformacionContacto(nuevoEmail, nuevoTelefono);
-                actualizado = true;
                 
-                if (emailActualizado)
-                    _logger.LogInformation("📧 Email actualizado: {NuevoEmail}", request.Email);
-                if (telefonoActualizado)
-                    _logger.LogInformation("📱 Teléfono actualizado: {NuevoTelefono}", request.Telefono);
+                _logger.LogInformation("📧 Información de contacto actualizada para cliente: {ClienteId}", request.Id);
             }
 
-            // Actualizar nombre y fecha de nacimiento requieren recrear el cliente
-            // Por ahora mostramos mensaje informativo ya que la entidad no tiene métodos para esto
+            // 4. Gestionar estado activo/inactivo
+            if (request.EstaActivo.HasValue)
+            {
+                if (request.EstaActivo.Value && !cliente.EstaActivo)
+                {
+                    cliente.Reactivar();
+                    _logger.LogInformation("✅ Cliente reactivado: {ClienteId}", request.Id);
+                }
+                else if (!request.EstaActivo.Value && cliente.EstaActivo)
+                {
+                    cliente.Desactivar();
+                    _logger.LogInformation("🚫 Cliente desactivado: {ClienteId}", request.Id);
+                }
+            }
+
+            // 5. Log para campos que no se pueden actualizar actualmente
             if (!string.IsNullOrWhiteSpace(request.Nombre))
             {
-                _logger.LogWarning("⚠️ Actualización de nombre requiere métodos adicionales en la entidad Cliente");
-                // TODO: Implementar método ActualizarNombre en la entidad Cliente
+                _logger.LogWarning("⚠️ Actualización de nombre no implementada aún para cliente: {ClienteId}", request.Id);
             }
 
             if (request.FechaNacimiento.HasValue)
             {
-                _logger.LogWarning("⚠️ Actualización de fecha de nacimiento requiere métodos adicionales en la entidad Cliente");
-                // TODO: Implementar método ActualizarFechaNacimiento en la entidad Cliente
+                _logger.LogWarning("⚠️ Actualización de fecha de nacimiento no implementada aún para cliente: {ClienteId}", request.Id);
             }
 
-            if (!actualizado)
-            {
-                _logger.LogWarning("⚠️ No se proporcionó ningún campo para actualizar: {ClienteId}", request.ClienteId);
-                return Result.Failure<ClienteDto>("No se proporcionó ningún campo para actualizar");
-            }
-
-            // 4. Persistir los cambios
+            // 6. Guardar cambios
             await _repository.GuardarAsync(cliente, cancellationToken);
 
-            // 5. Mapear a DTO y retornar
+            // 7. Mapear a DTO y retornar
             var clienteDto = _mapper.Map<ClienteDto>(cliente);
 
-            _logger.LogInformation("✅ Cliente actualizado exitosamente: {ClienteId}", request.ClienteId);
+            _logger.LogInformation("✅ Cliente actualizado exitosamente: {ClienteId}", request.Id);
             return Result.Success(clienteDto);
         }
         catch (BusinessRuleViolationException ex)
@@ -113,7 +105,7 @@ public class ActualizarClienteHandler : IRequestHandler<ActualizarClienteCommand
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error inesperado al actualizar cliente: {ClienteId}", request.ClienteId);
+            _logger.LogError(ex, "❌ Error inesperado al actualizar cliente: {ClienteId}", request.Id);
             return Result.Failure<ClienteDto>("Error interno del servidor al actualizar el cliente");
         }
     }

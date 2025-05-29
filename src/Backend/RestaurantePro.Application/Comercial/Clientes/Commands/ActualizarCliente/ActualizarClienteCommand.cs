@@ -11,7 +11,7 @@ public class ActualizarClienteCommand : IRequest<Result<ClienteDto>>
     /// <summary>
     /// ID del cliente a actualizar
     /// </summary>
-    public Guid ClienteId { get; set; }
+    public Guid Id { get; set; }
 
     /// <summary>
     /// Nuevo nombre completo del cliente (opcional)
@@ -34,11 +34,16 @@ public class ActualizarClienteCommand : IRequest<Result<ClienteDto>>
     public DateTime? FechaNacimiento { get; set; }
 
     /// <summary>
+    /// Estado de activación del cliente (opcional)
+    /// </summary>
+    public bool? EstaActivo { get; set; }
+
+    /// <summary>
     /// Constructor para facilitar la creación
     /// </summary>
-    public ActualizarClienteCommand(Guid clienteId)
+    public ActualizarClienteCommand(Guid id)
     {
-        ClienteId = clienteId;
+        Id = id;
     }
 
     /// <summary>

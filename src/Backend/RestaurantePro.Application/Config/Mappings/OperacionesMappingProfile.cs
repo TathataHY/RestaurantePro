@@ -1,5 +1,10 @@
 using RestaurantePro.Application.Operaciones.Comandas.DTOs;
 using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.AgregarItemComanda;
+using RestaurantePro.Application.Operaciones.Mesa.DTOs;
+using RestaurantePro.Application.Operaciones.Mesa.Commands.CrearMesa;
+using RestaurantePro.Application.Operaciones.Reservacion.DTOs;
+using RestaurantePro.Application.Operaciones.Reservacion.Commands.CrearReservacion;
 
 namespace RestaurantePro.Application.Config.Mappings;
 
@@ -13,9 +18,8 @@ public class OperacionesMappingProfile : Profile
     {
         ConfigurarMapeosComanda();
         ConfigurarMapeosItemComanda();
-        // TODO: Agregar otros mapeos cuando estén implementados
-        // ConfigurarMapeosReservacion();
-        // ConfigurarMapeosMesa();
+        ConfigurarMapeosMesa();
+        ConfigurarMapeosReservacion();
     }
 
     /// <summary>
@@ -44,7 +48,8 @@ public class OperacionesMappingProfile : Profile
             // Campos que requieren datos adicionales (se pueden completar en el handler)
             .ForMember(dest => dest.NumeroMesa, opt => opt.Ignore())
             .ForMember(dest => dest.NombreMesero, opt => opt.Ignore())
-            .ForMember(dest => dest.NombreCliente, opt => opt.Ignore());
+            .ForMember(dest => dest.NombreCliente, opt => opt.Ignore())
+            .ForMember(dest => dest.NombreUsuario, opt => opt.MapFrom(src => src.Usuario != null ? src.Usuario.Nombre : string.Empty));
 
         // Comanda → ComandaSummaryDto (mapeo resumido para listas)
         CreateMap<Comanda, ComandaSummaryDto>()
@@ -84,11 +89,41 @@ public class OperacionesMappingProfile : Profile
             .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Subtotal + src.Personalizaciones.Sum(p => p.PrecioAdicional)))
             .ForMember(dest => dest.Personalizaciones, opt => opt.MapFrom(src => src.Personalizaciones))
             // Campos que requieren datos adicionales del catálogo
-            .ForMember(dest => dest.NombreProducto, opt => opt.Ignore());
+            .ForMember(dest => dest.NombreProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Nombre : string.Empty))
+            .ForMember(dest => dest.DescripcionProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Descripcion : null));
 
         // TODO: Mapear personalizaciones cuando estén disponibles en el dominio
         // CreateMap<PersonalizacionItem, PersonalizacionDto>()
         //     .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Tipo.ToString()));
+
+        // ItemComandaCreateDto → AgregarItemComandaCommand (DTO de entrada a comando)
+        CreateMap<ItemComandaCreateDto, AgregarItemComandaCommand>();
+    }
+
+    /// <summary>
+    /// Configura los mapeos para Mesa
+    /// </summary>
+    private void ConfigurarMapeosMesa()
+    {
+        // Mesa → MesaDto
+        CreateMap<Mesa, MesaDto>()
+            .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => src.Estado.ToString()))
+            .ForMember(dest => dest.ZonaTexto, opt => opt.MapFrom(src => src.Zona.ToString()));
+    }
+
+    /// <summary>
+    /// Configura los mapeos para Reservacion
+    /// </summary>
+    private void ConfigurarMapeosReservacion()
+    {
+        // Reservacion → ReservacionDto
+        CreateMap<Reservacion, ReservacionDto>()
+            .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => src.Estado.ToString()))
+            .ForMember(dest => dest.NombreCliente, opt => opt.MapFrom(src => src.Cliente != null ? $"{src.Cliente.Nombre} {src.Cliente.Apellido}".Trim() : src.NombreContacto))
+            .ForMember(dest => dest.NumeroMesa, opt => opt.MapFrom(src => src.Mesa != null ? src.Mesa.Numero : (int?)null));
+
+        // ReservacionCreateDto → CrearReservacionCommand (DTO de entrada a comando)
+        CreateMap<ReservacionCreateDto, CrearReservacionCommand>();
     }
 
     /// <summary>

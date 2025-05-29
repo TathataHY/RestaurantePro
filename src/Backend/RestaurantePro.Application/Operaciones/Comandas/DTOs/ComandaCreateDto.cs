@@ -7,9 +7,9 @@ namespace RestaurantePro.Application.Operaciones.Comandas.DTOs;
 public class ComandaCreateDto
 {
     /// <summary>
-    /// ID del mesero responsable de la comanda
+    /// ID del cliente asociado (opcional)
     /// </summary>
-    public Guid MeseroId { get; set; }
+    public Guid? ClienteId { get; set; }
 
     /// <summary>
     /// ID de la mesa donde se toma la comanda (opcional)

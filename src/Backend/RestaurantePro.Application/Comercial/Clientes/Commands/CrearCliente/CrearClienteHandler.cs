@@ -38,24 +38,24 @@ public class CrearClienteHandler : IRequestHandler<CrearClienteCommand, Result<C
                 return Result.Failure<ClienteDto>($"Ya existe un cliente registrado con el email {request.Email}");
             }
 
-            // 2. Crear Value Objects para la entidad de dominio
-            // Dividir el nombre en nombre y apellido (simple split por espacio)
+            // 2. Crear ClienteNombre a partir del nombre completo
             var partesNombre = request.Nombre.Trim().Split(' ', 2);
             var nombre = partesNombre[0];
-            var apellido = partesNombre.Length > 1 ? partesNombre[1] : string.Empty;
-            
-            var clienteNombre = ClienteNombre.Crear(nombre, apellido);
-            var email = Email.Create(request.Email);
-            var telefono = PhoneNumber.Create(request.Telefono);
+            var apellidos = partesNombre.Length > 1 ? partesNombre[1] : string.Empty;
+            var clienteNombre = ClienteNombre.Crear(nombre, apellidos);
 
             // 3. Crear la entidad usando el factory method del dominio
             var cliente = Cliente.Crear(
-                Guid.NewGuid(),
                 clienteNombre,
-                email,
-                telefono,
-                request.FechaNacimiento,
-                request.EstaActivo);
+                request.Email,
+                request.Telefono,
+                request.FechaNacimiento);
+
+            // Si no debe estar activo, desactivarlo
+            if (!request.EstaActivo)
+            {
+                cliente.Desactivar();
+            }
 
             // 4. Persistir en el repositorio
             await _repository.GuardarAsync(cliente, cancellationToken);

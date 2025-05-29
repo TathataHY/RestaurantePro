@@ -1,8 +1,8 @@
 namespace RestaurantePro.Application.Comercial.Clientes.DTOs;
 
 /// <summary>
-/// DTO resumido para Cliente en listas y búsquedas
-/// Contiene solo la información esencial para mostrar en grids
+/// DTO resumido para Cliente - Optimizado para listas y performance
+/// Contiene solo los campos esenciales para mostrar en grids y listas
 /// </summary>
 public class ClienteSummaryDto
 {
@@ -14,55 +14,124 @@ public class ClienteSummaryDto
     /// <summary>
     /// Nombre completo del cliente
     /// </summary>
-    public string Nombre { get; set; } = string.Empty;
+    public string NombreCompleto { get; set; } = string.Empty;
 
     /// <summary>
-    /// Email del cliente
+    /// Email principal del cliente
     /// </summary>
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Teléfono del cliente
+    /// Teléfono principal del cliente
     /// </summary>
     public string Telefono { get; set; } = string.Empty;
 
     /// <summary>
+    /// Tipo de cliente (texto legible)
+    /// </summary>
+    public string TipoCliente { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Estado activo del cliente
+    /// </summary>
+    public bool Activo { get; set; }
+
+    /// <summary>
+    /// Fecha de registro
+    /// </summary>
+    public DateTime FechaRegistro { get; set; }
+
+    /// <summary>
+    /// Usuario que registró el cliente
+    /// </summary>
+    public string RegistradoPor { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Fecha de nacimiento
+    /// </summary>
+    public DateTime? FechaNacimiento { get; set; }
+
+    /// <summary>
+    /// Ciudad del cliente
+    /// </summary>
+    public string Ciudad { get; set; } = string.Empty;
+
+    /// <summary>
+    /// País del cliente
+    /// </summary>
+    public string Pais { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Puntos de fidelización actuales
+    /// </summary>
+    public int PuntosFidelizacion { get; set; }
+
+    /// <summary>
+    /// Nivel de fidelización (Bronce, Plata, Oro, Platino)
+    /// </summary>
+    public string NivelFidelizacion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Número total de órdenes realizadas
+    /// </summary>
+    public int TotalOrdenes { get; set; }
+
+    /// <summary>
+    /// Monto total de compras históricas
+    /// </summary>
+    public decimal MontoTotalCompras { get; set; }
+
+    /// <summary>
+    /// Fecha de la última orden
+    /// </summary>
+    public DateTime? FechaUltimaOrden { get; set; }
+
+    /// <summary>
+    /// Promedio de compra por orden
+    /// </summary>
+    public decimal PromedioCompra { get; set; }
+
+    /// <summary>
+    /// Indicador de cliente frecuente
+    /// </summary>
+    public bool EsFrecuente { get; set; }
+
+    /// <summary>
+    /// Días desde la última visita
+    /// </summary>
+    public int DiasSinVisitar { get; set; }
+
+    /// <summary>
+    /// Indicador de cliente VIP
+    /// </summary>
+    public bool EsVIP { get; set; }
+
+    /// <summary>
     /// Edad calculada del cliente
     /// </summary>
-    public int Edad { get; set; }
+    public int? Edad => FechaNacimiento.HasValue 
+        ? DateTime.Now.Year - FechaNacimiento.Value.Year 
+        : null;
 
     /// <summary>
-    /// Indica si el cliente está activo
+    /// Estado de actividad (Activo, Inactivo, Nuevo)
     /// </summary>
-    public bool EstaActivo { get; set; }
+    public string EstadoActividad => DiasSinVisitar switch
+    {
+        <= 30 => "Activo",
+        <= 90 => "Regular", 
+        <= 180 => "Inactivo",
+        _ => "Perdido"
+    };
 
     /// <summary>
-    /// Puntos acumulados
+    /// Categoría de valor del cliente
     /// </summary>
-    public int PuntosAcumulados { get; set; }
-
-    /// <summary>
-    /// Cantidad de visitas
-    /// </summary>
-    public int CantidadVisitas { get; set; }
-
-    /// <summary>
-    /// Segmento del cliente
-    /// </summary>
-    public string Segmento { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Indica si es cliente frecuente
-    /// </summary>
-    public bool EsClienteFrecuente { get; set; }
-
-    /// <summary>
-    /// Fecha de última actividad
-    /// </summary>
-    public DateTime UltimaActividad { get; set; }
-
-    /// <summary>
-    /// Fecha de creación del cliente
-    /// </summary>
-    public DateTime FechaCreacion { get; set; }
+    public string CategoriaValor => MontoTotalCompras switch
+    {
+        >= 10000 => "Alto Valor",
+        >= 5000 => "Medio Valor",
+        >= 1000 => "Valor Regular",
+        _ => "Nuevo Cliente"
+    };
 } 

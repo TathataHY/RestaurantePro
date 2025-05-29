@@ -16,17 +16,17 @@ public class ComandaDto : BaseDto
     /// <summary>
     /// Número de la mesa (si está disponible)
     /// </summary>
-    public string? NumeroMesa { get; set; }
+    public int NumeroMesa { get; set; }
 
     /// <summary>
     /// ID del mesero responsable de la comanda
     /// </summary>
-    public Guid MeseroId { get; set; }
+    public Guid UsuarioId { get; set; }
 
     /// <summary>
     /// Nombre del mesero (si está disponible)
     /// </summary>
-    public string? NombreMesero { get; set; }
+    public string NombreUsuario { get; set; } = string.Empty;
 
     /// <summary>
     /// ID del cliente asociado (opcional)
@@ -41,12 +41,22 @@ public class ComandaDto : BaseDto
     /// <summary>
     /// Estado actual de la comanda
     /// </summary>
-    public string Estado { get; set; } = string.Empty;
+    public EstadoComanda Estado { get; set; }
 
     /// <summary>
     /// Estado de la comanda como enum string para facilitar el frontend
     /// </summary>
-    public string EstadoTexto { get; set; } = string.Empty;
+    public string EstadoTexto => Estado.ToString();
+
+    /// <summary>
+    /// Fecha de apertura de la comanda
+    /// </summary>
+    public DateTime FechaApertura { get; set; }
+
+    /// <summary>
+    /// Fecha de cierre de la comanda
+    /// </summary>
+    public DateTime? FechaCierre { get; set; }
 
     /// <summary>
     /// Observaciones de la comanda
@@ -69,9 +79,9 @@ public class ComandaDto : BaseDto
     public decimal Impuestos { get; set; }
 
     /// <summary>
-    /// Descuento por fidelización aplicado
+    /// Descuentos aplicados
     /// </summary>
-    public decimal? DescuentoFidelizacion { get; set; }
+    public decimal Descuentos { get; set; }
 
     /// <summary>
     /// Total final de la comanda
@@ -81,30 +91,17 @@ public class ComandaDto : BaseDto
     /// <summary>
     /// Cantidad total de items en la comanda
     /// </summary>
-    public int CantidadItems { get; set; }
+    public int CantidadItems => Items.Count;
 
     /// <summary>
-    /// Indica si la comanda tiene descuento de fidelización
+    /// Indica si la comanda tiene descuentos
     /// </summary>
-    public bool TieneDescuentoFidelizacion { get; set; }
+    public bool TieneDescuentos => Descuentos > 0;
 
     /// <summary>
-    /// Indica si la comanda se puede modificar (agregar/quitar productos)
+    /// Tiempo transcurrido desde la apertura de la comanda
     /// </summary>
-    public bool PuedeModificar { get; set; }
-
-    /// <summary>
-    /// Indica si la comanda se puede cancelar
-    /// </summary>
-    public bool PuedeCancelar { get; set; }
-
-    /// <summary>
-    /// Tiempo transcurrido desde la creación (para métricas)
-    /// </summary>
-    public TimeSpan TiempoTranscurrido { get; set; }
-
-    /// <summary>
-    /// Tiempo promedio estimado de preparación
-    /// </summary>
-    public TimeSpan? TiempoEstimadoPreparacion { get; set; }
+    public TimeSpan? TiempoAbierta => FechaCierre.HasValue 
+        ? FechaCierre.Value - FechaApertura 
+        : DateTime.Now - FechaApertura;
 } 

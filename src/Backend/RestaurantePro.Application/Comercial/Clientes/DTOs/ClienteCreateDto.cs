@@ -12,6 +12,11 @@ public class ClienteCreateDto
     public string Nombre { get; set; } = string.Empty;
 
     /// <summary>
+    /// Apellido del cliente
+    /// </summary>
+    public string Apellido { get; set; } = string.Empty;
+
+    /// <summary>
     /// Email del cliente
     /// </summary>
     public string Email { get; set; } = string.Empty;
@@ -19,15 +24,30 @@ public class ClienteCreateDto
     /// <summary>
     /// Teléfono del cliente
     /// </summary>
-    public string Telefono { get; set; } = string.Empty;
+    public string? Telefono { get; set; }
 
     /// <summary>
     /// Fecha de nacimiento del cliente
     /// </summary>
-    public DateTime FechaNacimiento { get; set; }
+    public DateTime? FechaNacimiento { get; set; }
 
     /// <summary>
-    /// Indica si el cliente debe estar activo al crearse (por defecto true)
+    /// Dirección del cliente
     /// </summary>
-    public bool EstaActivo { get; set; } = true;
+    public string? Direccion { get; set; }
+
+    /// <summary>
+    /// Tipo de cliente
+    /// </summary>
+    public TipoCliente Tipo { get; set; } = TipoCliente.Regular;
+
+    /// <summary>
+    /// Notas del cliente
+    /// </summary>
+    public string? Notas { get; set; }
+
+    /// <summary>
+    /// Indica si se debe crear una tarjeta de fidelización al crearse (por defecto true)
+    /// </summary>
+    public bool CrearTarjetaFidelizacion { get; set; } = true;
 } 
