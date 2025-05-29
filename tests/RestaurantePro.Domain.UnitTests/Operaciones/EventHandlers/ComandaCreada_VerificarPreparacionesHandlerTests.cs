@@ -1,8 +1,3 @@
-using RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda;
-using RestaurantePro.Domain.Operaciones.EventHandlers;
-using RestaurantePro.Domain.Operaciones.Preparaciones.Services;
-using System.Text.RegularExpressions;
-
 namespace RestaurantePro.Domain.UnitTests.Operaciones.EventHandlers;
 
 /// <summary>
@@ -221,31 +216,28 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
     // Métodos auxiliares
     private Comanda CrearComandaMock(Guid comandaId, Guid mesaId, Guid empleadoId, bool sinItems = false, (Guid ProductoId, int Cantidad)[]? items = null)
     {
-        var mock = new Mock<Comanda>();
-        mock.Setup(x => x.Id).Returns(comandaId);
-        mock.Setup(x => x.MesaId).Returns(mesaId);
-        mock.Setup(x => x.MeseroId).Returns(empleadoId);
-
-        if (sinItems)
+        // Crear comanda real usando factory method
+        var comanda = Comanda.Crear(empleadoId, Guid.NewGuid(), mesaId);
+        
+        // Usar reflexión para establecer el ID
+        var idProperty = typeof(EntityBase).GetProperty("Id", 
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            
+        if (idProperty != null)
         {
-            mock.Setup(x => x.Items).Returns(new List<ItemComanda>());
+            var setMethod = idProperty.GetSetMethod(true);
+            setMethod?.Invoke(comanda, new object[] { comandaId });
         }
-        else if (items != null)
+
+        if (!sinItems && items != null)
         {
-            var itemsMock = items.Select((item, index) => 
+            foreach (var item in items)
             {
-                var itemMock = new Mock<ItemComanda>();
-                itemMock.Setup(x => x.Id).Returns(Guid.NewGuid());
-                itemMock.Setup(x => x.ProductoId).Returns(item.ProductoId);
-                itemMock.Setup(x => x.Cantidad).Returns(item.Cantidad);
-                itemMock.Setup(x => x.ComandaId).Returns(comandaId);
-                return itemMock.Object;
-            }).ToList();
-
-            mock.Setup(x => x.Items).Returns(itemsMock);
+                comanda.AgregarProducto(item.ProductoId, item.Cantidad, 10.0m, "");
+            }
         }
 
-        return mock.Object;
+        return comanda;
     }
 
     private void VerificarLog(string patron, LogLevel nivel = LogLevel.Information)

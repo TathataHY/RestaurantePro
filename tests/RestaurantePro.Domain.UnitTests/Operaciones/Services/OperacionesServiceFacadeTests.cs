@@ -1,20 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Operaciones.Reservaciones;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
-using RestaurantePro.Domain.Operaciones.Services;
-using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
-using RestaurantePro.Domain.Operaciones.Comandas;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
-using RestaurantePro.Domain.Core.Productos.Interfaces;
-using RestaurantePro.Domain.Core.Productos.ValueObjects;
-using RestaurantePro.Domain.Operaciones.Preparaciones.Services;
-using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
-using System.Reflection;
-
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
 {
     /// <summary>
@@ -1199,16 +1182,20 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
         /// </summary>
         private Producto CrearProductoMock(Guid productoId, string nombre, decimal precio)
         {
-            var productoMock = new Mock<Producto>();
-            productoMock.Setup(x => x.Id).Returns(productoId);
-            productoMock.Setup(x => x.Nombre).Returns(nombre);
+            // Crear producto real usando factory method
+            var producto = Producto.Crear(nombre, "Descripción de prueba", new PrecioProducto(precio), Guid.NewGuid());
             
-            // Mock del precio (PrecioProducto en lugar de Money)
-            var precioMock = new Mock<PrecioProducto>();
-            precioMock.Setup(x => x.Valor).Returns(precio);
-            productoMock.Setup(x => x.Precio).Returns(precioMock.Object);
+            // Usar reflexión para establecer el ID
+            var idProperty = typeof(EntityBase).GetProperty("Id", 
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                
+            if (idProperty != null)
+            {
+                var setMethod = idProperty.GetSetMethod(true);
+                setMethod?.Invoke(producto, new object[] { productoId });
+            }
             
-            return productoMock.Object;
+            return producto;
         }
         
         /// <summary>
@@ -1216,10 +1203,20 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
         /// </summary>
         private Comanda CrearComandaMock(Guid comandaId)
         {
-            var comandaMock = new Mock<Comanda>();
-            comandaMock.Setup(x => x.Id).Returns(comandaId);
-            comandaMock.Setup(x => x.Items).Returns(new List<ItemComanda>());
-            return comandaMock.Object;
+            // Crear comanda real usando factory method
+            var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
+            
+            // Usar reflexión para establecer el ID
+            var idProperty = typeof(EntityBase).GetProperty("Id", 
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                
+            if (idProperty != null)
+            {
+                var setMethod = idProperty.GetSetMethod(true);
+                setMethod?.Invoke(comanda, new object[] { comandaId });
+            }
+            
+            return comanda;
         }
         
         /// <summary>

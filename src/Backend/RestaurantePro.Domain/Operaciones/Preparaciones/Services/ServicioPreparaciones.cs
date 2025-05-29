@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
-
 namespace RestaurantePro.Domain.Operaciones.Preparaciones.Services;
 
 /// <summary>
@@ -103,7 +101,7 @@ public class ServicioPreparaciones : IServicioPreparaciones
 
         if (_notificationManager.HasErrors)
         {
-            return _notificationManager.ToResult(false);
+            return _notificationManager.ToResult();
         }
 
         await Task.CompletedTask; // Para evitar warning async

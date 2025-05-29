@@ -1,6 +1,3 @@
-using RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda;
-using RestaurantePro.Domain.Operaciones.Preparaciones.Services;
-
 namespace RestaurantePro.Domain.Operaciones.EventHandlers;
 
 /// <summary>

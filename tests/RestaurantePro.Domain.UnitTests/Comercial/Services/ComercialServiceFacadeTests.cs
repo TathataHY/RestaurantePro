@@ -1,9 +1,3 @@
-using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-using Microsoft.Extensions.Logging;
-
 namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 {
     /// <summary>

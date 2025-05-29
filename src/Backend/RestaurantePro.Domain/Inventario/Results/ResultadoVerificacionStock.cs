@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
-
 namespace RestaurantePro.Domain.Inventario.Results
 {
     /// <summary>

@@ -1,20 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Operaciones.Comandas;
-using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
-using RestaurantePro.Domain.Operaciones.Preparaciones.Services;
-using RestaurantePro.Domain.Operaciones.Services;
-using RestaurantePro.Domain.Core.Productos.Interfaces;
-using RestaurantePro.Domain.Core.Productos;
-using RestaurantePro.Domain.Core.Productos.ValueObjects;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
-using RestaurantePro.Domain.Operaciones.Comandas.Builders;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Builders;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Builders;
-using RestaurantePro.Domain.Core.SharedKernel.Validation;
-using Microsoft.Extensions.Logging;
-using Moq;
-
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
 {
     /// <summary>
@@ -48,6 +31,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Configurar NotificationManager básico para las pruebas
             _notificationManagerMock.Setup(n => n.HasErrors).Returns(false);
             _notificationManagerMock.Setup(n => n.CreateNewNotification());
+            _notificationManagerMock.Setup(n => n.ToResult()).Returns(Result.Success());
 
             _sut = new OperacionesServiceFacade(
                 _comandaRepositoryMock.Object,
@@ -73,14 +57,14 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Configurar comanda existente
             var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), observaciones);
             _comandaRepositoryMock
-                .Setup(c => c.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .Setup(c => c.ObtenerPorIdAsync(comandaId, true, default))
                 .ReturnsAsync(comanda);
 
             // Configurar producto existente
             var precio = new PrecioProducto(15.50m);
             var producto = Producto.Crear("Pizza Margarita", "Deliciosa pizza", precio, Guid.NewGuid());
             _productoRepositoryMock
-                .Setup(p => p.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .Setup(p => p.ObtenerPorIdAsync(productoId, default))
                 .ReturnsAsync(producto);
 
             // Configurar servicio de preparaciones - HAY preparaciones disponibles
@@ -120,14 +104,14 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Configurar comanda existente
             var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), observaciones);
             _comandaRepositoryMock
-                .Setup(c => c.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .Setup(c => c.ObtenerPorIdAsync(comandaId, true, default))
                 .ReturnsAsync(comanda);
 
             // Configurar producto existente
             var precio = new PrecioProducto(12.00m);
             var producto = Producto.Crear("Pasta Carbonara", "Pasta fresca", precio, Guid.NewGuid());
             _productoRepositoryMock
-                .Setup(p => p.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .Setup(p => p.ObtenerPorIdAsync(productoId, default))
                 .ReturnsAsync(producto);
 
             // Configurar servicio de preparaciones - NO hay preparaciones disponibles
@@ -165,20 +149,20 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Configurar comanda existente
             var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "");
             _comandaRepositoryMock
-                .Setup(c => c.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .Setup(c => c.ObtenerPorIdAsync(comandaId, true, default))
                 .ReturnsAsync(comanda);
 
             // Configurar producto existente
             var precio = new PrecioProducto(8.50m);
             var producto = Producto.Crear("Ensalada César", "Ensalada fresca", precio, Guid.NewGuid());
             _productoRepositoryMock
-                .Setup(p => p.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .Setup(p => p.ObtenerPorIdAsync(productoId, default))
                 .ReturnsAsync(producto);
 
             // Configurar servicio de preparaciones - Error en verificación
             _servicioPreparacionesMock
                 .Setup(s => s.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()))
-                .Returns(Task.FromResult(Result<bool>.Failure("Error en servicio de preparaciones")));
+                .Returns(Task.FromResult(Result<bool>.Success(false)));
 
             // Act
             var resultado = await _sut.AgregarProductoAComandaAsync(comandaId, productoId, cantidad, "");
@@ -207,14 +191,14 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Configurar comanda existente
             var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "");
             _comandaRepositoryMock
-                .Setup(c => c.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .Setup(c => c.ObtenerPorIdAsync(comandaId, true, default))
                 .ReturnsAsync(comanda);
 
             // Configurar producto existente
             var precio = new PrecioProducto(14.00m);
             var producto = Producto.Crear("Hamburguesa Clásica", "Hamburguesa con papas", precio, Guid.NewGuid());
             _productoRepositoryMock
-                .Setup(p => p.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .Setup(p => p.ObtenerPorIdAsync(productoId, default))
                 .ReturnsAsync(producto);
 
             // Configurar servicio de preparaciones - Hay disponibilidad pero error al consumir
@@ -253,14 +237,14 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Configurar comanda existente
             var comanda = Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "");
             _comandaRepositoryMock
-                .Setup(c => c.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+                .Setup(c => c.ObtenerPorIdAsync(comandaId, true, default))
                 .ReturnsAsync(comanda);
 
             // Configurar producto existente
             var precio = new PrecioProducto(22.00m);
             var producto = Producto.Crear("Salmón Grillado", "Salmón fresco", precio, Guid.NewGuid());
             _productoRepositoryMock
-                .Setup(p => p.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+                .Setup(p => p.ObtenerPorIdAsync(productoId, default))
                 .ReturnsAsync(producto);
 
             // Configurar servicio de preparaciones - Consumo exitoso

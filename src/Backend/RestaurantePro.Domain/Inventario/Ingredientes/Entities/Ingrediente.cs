@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.Guards;
-
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
 {
     /// <summary>

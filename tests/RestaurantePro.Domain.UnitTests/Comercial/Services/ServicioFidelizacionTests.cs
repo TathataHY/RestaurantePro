@@ -1,7 +1,4 @@
 #nullable disable
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-
 namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 {
     /// <summary>

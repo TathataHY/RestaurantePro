@@ -19,6 +19,18 @@ public class ServicioPreparacionesTests
         
         _dateTimeServiceMock.Setup(x => x.Now).Returns(_fechaActual);
         
+        // Configurar comportamiento por defecto del NotificationManager
+        _notificationManagerMock.Setup(x => x.HasErrors).Returns(false);
+        _notificationManagerMock.Setup(x => x.CreateNewNotification());
+        
+        // Configurar ToResult<PreparacionDiaria> para crear preparaciones exitosas por defecto  
+        _notificationManagerMock.Setup(x => x.ToResult<PreparacionDiaria>(It.IsAny<PreparacionDiaria>()))
+            .Returns<PreparacionDiaria>(preparacion => Result<PreparacionDiaria>.Success(preparacion));
+            
+        // Configurar ToResult<bool> para retornar true por defecto
+        _notificationManagerMock.Setup(x => x.ToResult<bool>(It.IsAny<bool>()))
+            .Returns<bool>(value => Result<bool>.Success(value));
+            
         _servicio = new ServicioPreparaciones(
             _loggerMock.Object,
             _notificationManagerMock.Object,
@@ -110,6 +122,8 @@ public class ServicioPreparacionesTests
         // Arrange
         var chefId = Guid.NewGuid();
         _notificationManagerMock.Setup(x => x.HasErrors).Returns(true);
+        _notificationManagerMock.Setup(x => x.ToResult<PreparacionDiaria>(It.IsAny<PreparacionDiaria>()))
+            .Returns(Result<PreparacionDiaria>.Failure("ProductoId es requerido"));
 
         // Act
         var resultado = await _servicio.PrepararProductoAsync(Guid.Empty, 10, chefId);
@@ -244,6 +258,8 @@ public class ServicioPreparacionesTests
     {
         // Arrange
         _notificationManagerMock.Setup(x => x.HasErrors).Returns(true);
+        _notificationManagerMock.Setup(x => x.ToResult<bool>(It.IsAny<bool>()))
+            .Returns(Result<bool>.Failure("ProductoId es requerido"));
 
         // Act
         var resultado = await _servicio.VerificarDisponibilidadAsync(Guid.Empty, 5);
@@ -258,6 +274,8 @@ public class ServicioPreparacionesTests
         // Arrange
         var productoId = Guid.NewGuid();
         _notificationManagerMock.Setup(x => x.HasErrors).Returns(true);
+        _notificationManagerMock.Setup(x => x.ToResult<bool>(It.IsAny<bool>()))
+            .Returns(Result<bool>.Failure("Cantidad debe ser mayor que cero"));
 
         // Act
         var resultado = await _servicio.VerificarDisponibilidadAsync(productoId, 0);
@@ -272,6 +290,8 @@ public class ServicioPreparacionesTests
         // Arrange
         var productoId = Guid.NewGuid();
         _notificationManagerMock.Setup(x => x.HasErrors).Returns(true);
+        _notificationManagerMock.Setup(x => x.ToResult<bool>(It.IsAny<bool>()))
+            .Returns(Result<bool>.Failure("Cantidad debe ser mayor que cero"));
 
         // Act
         var resultado = await _servicio.VerificarDisponibilidadAsync(productoId, -3);
