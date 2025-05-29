@@ -1,3 +1,6 @@
+using RestaurantePro.Domain.Operaciones.Comandas.Builders;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Builders;
+
 namespace RestaurantePro.Domain.Operaciones.Services
 {
     /// <summary>
@@ -10,19 +13,25 @@ namespace RestaurantePro.Domain.Operaciones.Services
         private readonly IMesaRepository _mesaRepository;
         private readonly IProductoRepository _productoRepository;
         private readonly INotificationManager _notificationManager;
+        private readonly ILogger<ComandaBuilder> _comandaBuilderLogger;
+        private readonly ILogger<ReservacionBuilder> _reservacionBuilderLogger;
         
         public OperacionesServiceFacade(
             IComandaRepository comandaRepository,
             IReservacionRepository reservacionRepository,
             IMesaRepository mesaRepository,
             IProductoRepository productoRepository,
-            INotificationManager notificationManager)
+            INotificationManager notificationManager,
+            ILogger<ComandaBuilder> comandaBuilderLogger,
+            ILogger<ReservacionBuilder> reservacionBuilderLogger)
         {
             _comandaRepository = comandaRepository ?? throw new ArgumentNullException(nameof(comandaRepository));
             _reservacionRepository = reservacionRepository ?? throw new ArgumentNullException(nameof(reservacionRepository));
             _mesaRepository = mesaRepository ?? throw new ArgumentNullException(nameof(mesaRepository));
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
+            _comandaBuilderLogger = comandaBuilderLogger ?? throw new ArgumentNullException(nameof(comandaBuilderLogger));
+            _reservacionBuilderLogger = reservacionBuilderLogger ?? throw new ArgumentNullException(nameof(reservacionBuilderLogger));
         }
         
         #region Comandas
@@ -57,12 +66,34 @@ namespace RestaurantePro.Domain.Operaciones.Services
             
             try
             {
-                // Crear la comanda
-                var comanda = Comanda.Crear(
-                    meseroId,
-                    clienteId, 
-                    mesaId.HasValue ? mesaId.Value : (Guid?)null, 
-                    observaciones);
+                // Usar ComandaBuilder para crear la comanda con validaciones robustas
+                var builder = new ComandaBuilder(_notificationManager, _comandaBuilderLogger);
+                
+                builder.ConMesero(meseroId);
+                
+                if (clienteId.HasValue)
+                {
+                    builder.ConCliente(clienteId.Value);
+                }
+                
+                if (mesaId.HasValue)
+                {
+                    builder.EnMesa(mesaId.Value);
+                }
+                
+                if (!string.IsNullOrWhiteSpace(observaciones))
+                {
+                    builder.ConObservaciones(observaciones);
+                }
+                
+                // Construir la comanda
+                var resultadoComanda = builder.Construir();
+                if (!resultadoComanda.Succeeded)
+                {
+                    return resultadoComanda; // Ya tiene los errores del builder
+                }
+                
+                var comanda = resultadoComanda.Value!;
                 
                 // Persistir la comanda
                 await _comandaRepository.AgregarAsync(comanda);
@@ -453,19 +484,9 @@ namespace RestaurantePro.Domain.Operaciones.Services
         {
             _notificationManager.CreateNewNotification();
             
-            // Validar parámetros
-            _notificationManager.Require(clienteId != Guid.Empty, "El ID del cliente no puede estar vacío", "ClienteId");
-            _notificationManager.Require(fecha > DateTime.Now, "La fecha de reservación debe ser posterior a la fecha actual", "Fecha");
-            _notificationManager.Require(cantidadPersonas > 0, "La cantidad de personas debe ser mayor a cero", "CantidadPersonas");
-            
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<Reservacion>(null);
-            }
-            
             try
             {
-                // Buscar mesa disponible
+                // Buscar mesa disponible primero
                 var mesasDisponibles = await _reservacionRepository.ObtenerMesasDisponiblesAsync(
                     fecha.Date, 
                     fecha.TimeOfDay, 
@@ -482,16 +503,27 @@ namespace RestaurantePro.Domain.Operaciones.Services
                 // Seleccionar la primera mesa disponible
                 var mesaId = mesasDisponibles.First();
                 
-                // Crear la reservación
-                var reservacion = Reservacion.Crear(
-                    mesaId,
-                    clienteId,
-                    fecha,
-                    TimeSpan.FromMinutes(90), // Duración predeterminada
-                    cantidadPersonas,
-                    "", // Teléfono vacío (se debe actualizar después)
-                    "", // Email vacío (se debe actualizar después)
-                    observaciones);
+                // Usar ReservacionBuilder para crear la reservación con validaciones robustas
+                var builder = new ReservacionBuilder(_notificationManager, _reservacionBuilderLogger);
+                
+                var resultadoReservacion = builder
+                    .ParaCliente(clienteId)
+                    .ParaMesa(mesaId)
+                    .ParaFecha(fecha.Date)
+                    .AHora(fecha.TimeOfDay)
+                    .ConDuracion(TimeSpan.FromMinutes(90)) // Duración predeterminada
+                    .ParaPersonas(cantidadPersonas)
+                    .ConTelefono("000-000-0000") // Teléfono temporal (deberá actualizarse)
+                    .ConEmail("temp@restaurant.com") // Email temporal (deberá actualizarse)
+                    .ConObservaciones(observaciones)
+                    .Construir();
+                
+                if (!resultadoReservacion.Succeeded)
+                {
+                    return resultadoReservacion; // Ya tiene los errores del builder
+                }
+                
+                var reservacion = resultadoReservacion.Value!;
                 
                 // Persistir la reservación
                 await _reservacionRepository.AgregarAsync(reservacion);
@@ -770,12 +802,24 @@ namespace RestaurantePro.Domain.Operaciones.Services
                     return _notificationManager.ToResult<Comanda>(null);
                 }
                 
-                // Crear la comanda
-                var comanda = Comanda.Crear(
-                    meseroId,
-                    reservacion.ClienteId,
-                    reservacion.MesaId,
-                    $"Comanda generada desde reservación #{reservacionId}");
+                // Usar ComandaBuilder para crear la comanda con validaciones robustas
+                var builder = new ComandaBuilder(_notificationManager, _comandaBuilderLogger);
+                
+                var observacionesComanda = $"Comanda generada desde reservación #{reservacionId}";
+                
+                var resultadoComanda = builder
+                    .ConMesero(meseroId)
+                    .ConCliente(reservacion.ClienteId)
+                    .EnMesa(reservacion.MesaId)
+                    .ConObservaciones(observacionesComanda)
+                    .Construir();
+                
+                if (!resultadoComanda.Succeeded)
+                {
+                    return resultadoComanda; // Ya tiene los errores del builder
+                }
+                
+                var comanda = resultadoComanda.Value!;
                 
                 // Marcar la reservación como completada
                 reservacion.Completar();

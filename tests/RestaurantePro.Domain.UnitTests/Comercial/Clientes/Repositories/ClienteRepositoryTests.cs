@@ -12,9 +12,24 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
             // Crear datos de prueba
             _clientes = new List<Cliente>
             {
-                Cliente.Crear(ClienteNombre.Crear("Juan", "Pérez"), "juan.perez@example.com", "612345678"),
-                Cliente.Crear(ClienteNombre.Crear("María", "López"), "maria.lopez@example.com", "623456789"),
-                Cliente.Crear(ClienteNombre.Crear("Carlos", "Rodríguez"), "carlos.rodriguez@example.com", "634567890")
+                Cliente.Crear(
+                    Guid.NewGuid(), 
+                    ClienteNombre.Crear("Juan", "Pérez"), 
+                    Email.Create("juan.perez@example.com"), 
+                    PhoneNumber.Create("612345678"),
+                    DateTime.Now.AddYears(-30)),
+                Cliente.Crear(
+                    Guid.NewGuid(), 
+                    ClienteNombre.Crear("María", "López"), 
+                    Email.Create("maria.lopez@example.com"), 
+                    PhoneNumber.Create("623456789"),
+                    DateTime.Now.AddYears(-28)),
+                Cliente.Crear(
+                    Guid.NewGuid(), 
+                    ClienteNombre.Crear("Carlos", "Rodríguez"), 
+                    Email.Create("carlos.rodriguez@example.com"), 
+                    PhoneNumber.Create("634567890"),
+                    DateTime.Now.AddYears(-35))
             };
 
             // Desactivar uno de los clientes para pruebas
@@ -116,9 +131,11 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
         {
             // Arrange
             var nuevoCliente = Cliente.Crear(
+                Guid.NewGuid(),
                 ClienteNombre.Crear("Pedro", "Gómez"),
-                "pedro.gomez@example.com",
-                "645678901");
+                Email.Create("pedro.gomez@example.com"),
+                PhoneNumber.Create("645678901"),
+                DateTime.Now.AddYears(-25));
 
             _mockRepository.Setup(repo => repo.AgregarAsync(nuevoCliente, CancellationToken.None))
                 .Returns(Task.CompletedTask);
@@ -141,7 +158,9 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
         {
             // Arrange
             var cliente = _clientes[0];
-            cliente.ActualizarInformacionContacto("juan.nuevo@example.com", "687654321");
+            cliente.ActualizarInformacionContacto(
+                Email.Create("juan.nuevo@example.com"), 
+                PhoneNumber.Create("687654321"));
 
             _mockRepository.Setup(repo => repo.ActualizarAsync(cliente, CancellationToken.None))
                 .Returns(Task.CompletedTask);

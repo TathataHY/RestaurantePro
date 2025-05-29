@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Comercial.Facturacion.Builders;
+
 namespace RestaurantePro.Domain.Comercial.Facturacion.Services
 {
     /// <summary>
@@ -9,6 +11,7 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         private readonly IComandaRepository _comandaRepository;
         private readonly IDateTimeService _dateTimeService;
         private readonly INotificationManager _notificationManager;
+        private readonly ILogger<FacturaBuilder> _facturaBuilderLogger;
 
         /// <summary>
         /// Constructor del servicio de facturación
@@ -17,16 +20,19 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         /// <param name="comandaRepository">Repositorio de comandas</param>
         /// <param name="dateTimeService">Servicio de fecha/hora</param>
         /// <param name="notificationManager">Gestor de notificaciones para validaciones</param>
+        /// <param name="facturaBuilderLogger">Logger para el FacturaBuilder</param>
         public ServicioFacturacion(
             IFacturaRepository facturaRepository,
             IComandaRepository comandaRepository,
             IDateTimeService dateTimeService,
-            INotificationManager notificationManager)
+            INotificationManager notificationManager,
+            ILogger<FacturaBuilder> facturaBuilderLogger)
         {
             _facturaRepository = facturaRepository ?? throw new ArgumentNullException(nameof(facturaRepository));
             _comandaRepository = comandaRepository ?? throw new ArgumentNullException(nameof(comandaRepository));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
+            _facturaBuilderLogger = facturaBuilderLogger ?? throw new ArgumentNullException(nameof(facturaBuilderLogger));
         }
 
         /// <inheritdoc />
@@ -78,18 +84,25 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                 
                 var numeroFactura = numeroFacturaResult.Value;
 
-                // Crear la factura
-                var factura = Factura.Crear(
-                    numeroFactura,
-                    tipoFactura,
-                    nombreCliente,
-                    clienteId,
-                    identificacionFiscal,
-                    direccionCliente,
-                    new List<Guid> { comandaId },
-                    observaciones,
-                    _dateTimeService.Now,
-                    _dateTimeService);
+                // Usar FacturaBuilder para crear la factura con validaciones robustas
+                var builder = new FacturaBuilder(_notificationManager, _facturaBuilderLogger);
+                
+                var resultadoFactura = builder
+                    .ConNumero(numeroFactura)
+                    .DeTipo(tipoFactura)
+                    .ParaCliente(nombreCliente, clienteId)
+                    .ConInformacionFiscal(identificacionFiscal, direccionCliente)
+                    .ConFechaEmision(_dateTimeService.Now)
+                    .ConObservaciones(observaciones)
+                    .PorComandas(comandaId)
+                    .Construir();
+                
+                if (!resultadoFactura.Succeeded)
+                {
+                    return resultadoFactura; // Ya tiene los errores del builder
+                }
+                
+                var factura = resultadoFactura.Value!;
 
                 // Agregar detalles de la comanda a la factura
                 foreach (var item in comanda.Items)
@@ -199,18 +212,25 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                 
                 var numeroFactura = numeroFacturaResult.Value;
 
-                // Crear la factura
-                var factura = Factura.Crear(
-                    numeroFactura,
-                    tipoFactura,
-                    nombreCliente,
-                    clienteId,
-                    identificacionFiscal,
-                    direccionCliente,
-                    comandas.Select(c => c.Id).ToList(),
-                    observaciones,
-                    _dateTimeService.Now,
-                    _dateTimeService);
+                // Usar FacturaBuilder para crear la factura con validaciones robustas
+                var builder = new FacturaBuilder(_notificationManager, _facturaBuilderLogger);
+                
+                var resultadoFactura = builder
+                    .ConNumero(numeroFactura)
+                    .DeTipo(tipoFactura)
+                    .ParaCliente(nombreCliente, clienteId)
+                    .ConInformacionFiscal(identificacionFiscal, direccionCliente)
+                    .ConFechaEmision(_dateTimeService.Now)
+                    .ConObservaciones(observaciones)
+                    .PorComandas(comandas.Select(c => c.Id).ToArray())
+                    .Construir();
+                
+                if (!resultadoFactura.Succeeded)
+                {
+                    return resultadoFactura; // Ya tiene los errores del builder
+                }
+                
+                var factura = resultadoFactura.Value!;
 
                 // Agregar detalles de todas las comandas a la factura
                 foreach (var comanda in comandas)

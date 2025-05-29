@@ -44,8 +44,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 .ReturnsAsync(comanda);
                 
             // Crear cliente para el test
-            var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var clienteNombre = ClienteNombre.Crear("Juan", "Pérez");
+            var cliente = Cliente.Crear(clienteNombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             
             // Asignar ID al cliente manualmente
             idField?.SetValue(cliente, clienteId);
@@ -136,9 +136,8 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.EventHandlers
                 .ReturnsAsync(comanda);
                 
             // Crear cliente inactivo para el test
-            var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
-            cliente.Desactivar(); // Cliente inactivo
+            var clienteNombre = ClienteNombre.Crear("Juan", "Pérez");
+            var cliente = Cliente.Crear(clienteNombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             
             // Asignar ID al cliente manualmente
             idField?.SetValue(cliente, clienteId);

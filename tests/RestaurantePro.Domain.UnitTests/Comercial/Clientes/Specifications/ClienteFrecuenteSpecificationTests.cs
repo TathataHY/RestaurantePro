@@ -33,7 +33,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Specifications
             var cliente = Cliente.Crear(
                 nombre,
                 "juan@ejemplo.com",
-                "+5491155554444"
+                "+5491155554444",
+                DateTime.Now.AddYears(-30)
             );
             
             // Desactivar cliente mediante método público
@@ -57,7 +58,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Specifications
             var cliente = Cliente.Crear(
                 nombre,
                 "carlos@ejemplo.com",
-                "+5491155557777"
+                "+5491155557777",
+                DateTime.Now.AddYears(-30)
             );
             
             // Act
@@ -65,6 +67,50 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Specifications
             
             // Assert
             Assert.False(result);
+        }
+
+        [Fact]
+        public void IsSatisfiedBy_ClienteConMuchasVisitas_DebeRetornarTrue()
+        {
+            // Arrange
+            var nombre = ClienteNombre.Crear("Juan", "Pérez");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
+            
+            // Simular muchas visitas
+            for (int i = 0; i < 15; i++)
+            {
+                cliente.RegistrarVisita();
+            }
+
+            var specification = new Domain.Comercial.Clientes.Specifications.ClienteFrecuenteSpecification();
+
+            // Act
+            var resultado = specification.IsSatisfiedBy(cliente);
+
+            // Assert
+            resultado.Should().BeTrue();
+        }
+
+        [Fact]
+        public void IsSatisfiedBy_ClienteConPocasVisitas_DebeRetornarFalse()
+        {
+            // Arrange
+            var nombre = ClienteNombre.Crear("Juan", "Pérez");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
+            
+            // Simular pocas visitas
+            for (int i = 0; i < 3; i++)
+            {
+                cliente.RegistrarVisita();
+            }
+
+            var specification = new Domain.Comercial.Clientes.Specifications.ClienteFrecuenteSpecification();
+
+            // Act
+            var resultado = specification.IsSatisfiedBy(cliente);
+
+            // Assert
+            resultado.Should().BeFalse();
         }
     }
 } 

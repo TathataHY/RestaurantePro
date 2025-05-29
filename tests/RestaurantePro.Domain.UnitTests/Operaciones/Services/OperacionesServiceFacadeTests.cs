@@ -328,8 +328,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 .ReturnsAsync(mesa);
             
             // Configurar cliente existente
-            var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var clienteNombre = ClienteNombre.Crear("Juan", "Pérez");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             _clienteRepositoryMock
                 .Setup(c => c.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(cliente);

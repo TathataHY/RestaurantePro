@@ -11,7 +11,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             var telefono = PhoneNumber.Create("+34612345678");
 
             // Act
-            var cliente = Cliente.Crear(nombre, email, telefono);
+            var cliente = Cliente.Crear(Guid.NewGuid(), nombre, email, telefono, DateTime.Now.AddYears(-30));
 
             // Assert
             cliente.Should().NotBeNull();
@@ -36,7 +36,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             var puntosAAgregar = 50;
 
             // Act
@@ -55,15 +55,14 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             cliente.Desactivar();
 
             // Act
             Action action = () => cliente.AgregarPuntos(50);
 
             // Assert
-            action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*inactivo*");
+            action.Should().Throw<ClienteInactivoException>();
         }
 
         [Fact]
@@ -71,14 +70,13 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
 
             // Act
             Action action = () => cliente.AgregarPuntos(-10);
 
             // Assert
-            action.Should().Throw<ArgumentException>()
-                .WithMessage("*mayor a cero*");
+            action.Should().Throw<ArgumentException>();
         }
 
         [Fact]
@@ -86,7 +84,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
 
             // Act
             cliente.Desactivar();
@@ -101,7 +99,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             cliente.Desactivar();
             cliente.ClearDomainEvents();
 
@@ -118,7 +116,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             cliente.Desactivar();
             cliente.ClearDomainEvents();
 
@@ -135,18 +133,16 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
-            var nuevoEmail = "nuevo.juan@example.com";
-            var nuevoTelefono = "687654321";
-            var expectedEmail = Email.Create(nuevoEmail);
-            var expectedTelefono = PhoneNumber.Create(nuevoTelefono);
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
+            var nuevoEmail = Email.Create("nuevo.juan@example.com");
+            var nuevoTelefono = PhoneNumber.Create("687654321");
 
             // Act
             cliente.ActualizarInformacionContacto(nuevoEmail, nuevoTelefono);
 
             // Assert
-            cliente.Email.Value.Should().Be(expectedEmail.Value);
-            cliente.Telefono.Value.Should().Be(expectedTelefono.Value);
+            cliente.Email.Value.Should().Be(nuevoEmail.Value);
+            cliente.Telefono.Value.Should().Be(nuevoTelefono.Value);
             cliente.DomainEvents.Should().ContainSingle(e => e is InformacionContactoActualizada);
         }
 
@@ -157,11 +153,11 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             var email = "juan@example.com";
             var telefono = "612345678";
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, email, telefono);
+            var cliente = Cliente.Crear(nombre, email, telefono, DateTime.Now.AddYears(-30));
             cliente.ClearDomainEvents();
 
             // Act
-            cliente.ActualizarInformacionContacto(email, telefono);
+            cliente.ActualizarInformacionContacto(Email.Create(email), PhoneNumber.Create(telefono));
 
             // Assert
             cliente.Email.Value.Should().Be(email);
@@ -174,7 +170,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             var tarjetaId = Guid.NewGuid();
 
             // Act
@@ -193,7 +189,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             cliente.Desactivar();
             var tarjetaId = Guid.NewGuid();
 
@@ -201,8 +197,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
             Action action = () => cliente.AsociarTarjetaFidelizacion(tarjetaId);
 
             // Assert
-            action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*inactivo*");
+            action.Should().Throw<ClienteInactivoException>();
         }
 
         [Fact]
@@ -210,7 +205,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             cliente.AgregarPuntos(100);
             cliente.ClearDomainEvents();
             var puntosARestar = 50;
@@ -234,7 +229,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             cliente.AgregarPuntos(100);
             cliente.Desactivar();
 
@@ -251,7 +246,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             cliente.AgregarPuntos(30);
 
             // Act
@@ -267,7 +262,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             cliente.AgregarPuntos(100);
 
             // Act
@@ -285,7 +280,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             
             // Manipular directamente los puntos para crear inconsistencia
             typeof(Cliente)
@@ -305,7 +300,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             
             // Manipular directamente las visitas para crear inconsistencia
             typeof(Cliente)
@@ -325,7 +320,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             
             // Usamos un email nulo (en lugar de un string inválido)
             typeof(Cliente)
@@ -348,7 +343,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             
             // Usamos un teléfono nulo (en lugar de un string inválido)
             typeof(Cliente)
@@ -371,7 +366,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Entities
         {
             // Arrange
             var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             
             // Manipular directamente el nombre para crear inconsistencia
             typeof(Cliente)

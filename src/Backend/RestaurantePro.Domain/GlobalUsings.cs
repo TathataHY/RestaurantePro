@@ -14,9 +14,6 @@ global using System.Text.RegularExpressions;
 global using System.Threading;
 global using System.Threading.Tasks;
 
-// Alias para Error
-global using e = RestaurantePro.Domain.Core.SharedKernel.Validation.Error;
-
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
 
@@ -48,6 +45,21 @@ global using RestaurantePro.Domain.Core.SharedKernel.Results;
 // Domain core imports - SharedKernel Validation
 global using RestaurantePro.Domain.Core.SharedKernel.Validation;
 
+// Domain core imports - SharedKernel Exceptions
+global using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
+
+// Domain core imports - SharedKernel Guards
+global using RestaurantePro.Domain.Core.SharedKernel.Guards;
+
+// Domain core imports - SharedKernel Factories
+global using RestaurantePro.Domain.Core.SharedKernel.Factories;
+
+// Domain Comercial - Clientes Exceptions
+global using RestaurantePro.Domain.Comercial.Clientes.Exceptions;
+
+// Domain Inventario - Ingredientes Exceptions  
+global using RestaurantePro.Domain.Inventario.Ingredientes.Exceptions;
+
 // Domain core imports - SharedKernel Services - Cache
 global using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
 global using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators;
@@ -55,8 +67,7 @@ global using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Telemetry;
 global using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Strategy;
 global using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Invalidation;
 
-// Domain core imports - SharedKernel Services
-global using RestaurantePro.Domain.Core.SharedKernel.Services;
+// Domain core imports - SharedKernel Services - Notification
 global using RestaurantePro.Domain.Core.SharedKernel.Services.Notification;
 
 // Domain core imports - Services
@@ -199,3 +210,29 @@ global using RestaurantePro.Domain.Operaciones.EventHandlers;
 
 // Services
 global using RestaurantePro.Domain.Operaciones.Services;
+
+// Builders
+global using RestaurantePro.Domain.Core.Productos.Builders;
+global using RestaurantePro.Domain.Operaciones.Comandas.Builders;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Builders;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Builders;
+global using RestaurantePro.Domain.Comercial.Facturacion.Builders;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Builders;
+global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Builders;
+global using RestaurantePro.Domain.Proveedores.Builders;
+
+// Factories
+global using RestaurantePro.Domain.Comercial.Clientes.Factories;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Factories;
+
+// Domain Operaciones - Comandas Exceptions
+global using RestaurantePro.Domain.Operaciones.Comandas.Exceptions;
+
+// Domain Operaciones - Reservaciones Exceptions
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Exceptions;
+
+// Domain Operaciones - Reservaciones Mesas Exceptions
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Exceptions;
+
+// Domain Proveedores - Exceptions
+global using RestaurantePro.Domain.Proveedores.Exceptions;

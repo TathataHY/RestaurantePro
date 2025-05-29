@@ -45,8 +45,8 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_
             var mesaId = Guid.NewGuid();
             
             // 2. Crear cliente
-            var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var clienteNombre = ClienteNombre.Crear("Juan", "Pérez");
+            var cliente = Cliente.Crear(clienteNombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             
             // Establecer ID del cliente usando reflexión
             typeof(EntityBase).GetProperty("Id").SetValue(cliente, clienteId);
@@ -137,8 +137,8 @@ namespace RestaurantePro.Domain.UnitTests.Integration.BetweenContexts.Comercial_
             var clienteId = Guid.NewGuid();
             
             // 2. Crear cliente
-            var nombre = ClienteNombre.Crear("Juan", "Pérez");
-            var cliente = Cliente.Crear(nombre, "juan@example.com", "612345678");
+            var clienteNombre = ClienteNombre.Crear("Juan", "Pérez");
+            var cliente = Cliente.Crear(clienteNombre, "juan@example.com", "612345678", DateTime.Now.AddYears(-30));
             
             // Establecer ID del cliente usando reflexión
             typeof(EntityBase).GetProperty("Id").SetValue(cliente, clienteId);

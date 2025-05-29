@@ -104,6 +104,7 @@ global using RestaurantePro.Domain.Operaciones.Comandas.Events;
 global using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 global using RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda;
 global using RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda;
+global using RestaurantePro.Domain.Operaciones.Comandas.Builders;
 
 // Domain Operaciones - Reservaciones
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
@@ -115,6 +116,7 @@ global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Events;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Builders;
 
 // Domain Comercial - Clientes
 global using RestaurantePro.Domain.Comercial.Clientes.Entities;
@@ -124,6 +126,7 @@ global using RestaurantePro.Domain.Comercial.Clientes.Events;
 global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 global using RestaurantePro.Domain.Comercial.Clientes.Events.Cliente;
 global using RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion;
+global using RestaurantePro.Domain.Comercial.Clientes.Factories;
 
 // Domain Comercial - Promociones
 global using RestaurantePro.Domain.Comercial.Promociones.Entities;
@@ -139,6 +142,7 @@ global using RestaurantePro.Domain.Comercial.Facturacion.Enums;
 global using RestaurantePro.Domain.Comercial.Facturacion.Events;
 global using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
 global using RestaurantePro.Domain.Comercial.Facturacion.Services;
+global using RestaurantePro.Domain.Comercial.Facturacion.Builders;
 
 // Domain Comercial - Services
 global using RestaurantePro.Domain.Comercial.Services;
@@ -193,3 +197,47 @@ global using RestaurantePro.Domain.Operaciones.EventHandlers;
 global using RestaurantePro.Domain.Operaciones.Services;
 
 // Eliminando importaciones duplicadas de Productos y Recetas que generan advertencias
+
+// Domain core imports - SharedKernel Exceptions
+global using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
+
+// Domain core imports - SharedKernel Factories  
+global using RestaurantePro.Domain.Core.SharedKernel.Factories;
+
+// Domain core imports - SharedKernel Guards
+global using RestaurantePro.Domain.Core.SharedKernel.Guards;
+
+// Domain Comercial - Clientes - Exceptions
+global using RestaurantePro.Domain.Comercial.Clientes.Exceptions;
+
+// Domain Inventario - Ingredientes - Exceptions
+global using RestaurantePro.Domain.Inventario.Ingredientes.Exceptions;
+
+// Domain Inventario - Compras - Builders
+global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Builders;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Builders;
+
+// Domain Core - Productos - Builders
+global using RestaurantePro.Domain.Core.Productos.Builders;
+
+// Domain Proveedores - Builders
+global using RestaurantePro.Domain.Proveedores.Builders;
+
+// Domain Operaciones - Reservaciones Mesas - Builders
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Builders;
+
+// Domain Inventario - Ingredientes - Factories
+global using RestaurantePro.Domain.Inventario.Ingredientes.Factories;
+
+// Domain Operaciones - Comandas Exceptions
+global using RestaurantePro.Domain.Operaciones.Comandas.Exceptions;
+
+// Domain Operaciones - Reservaciones Exceptions
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Exceptions;
+
+// Domain Operaciones - Reservaciones Mesas Exceptions
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Exceptions;
+
+// Domain Proveedores - Exceptions
+global using RestaurantePro.Domain.Proveedores.Exceptions;
+

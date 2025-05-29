@@ -21,6 +21,7 @@ using RestaurantePro.Domain.Core.SharedKernel.Validation;
 using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
 using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
 using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace RestaurantePro.Domain.UnitTests.Inventario.Services
 {
@@ -31,6 +32,7 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
         private readonly Mock<IProveedorRepository> _mockProveedorRepository;
         private readonly Mock<IStockBajoPolicy> _mockStockBajoPolicy;
         private readonly Mock<IDateTimeService> _mockDateTimeService;
+        private readonly Mock<ILogger<OrdenCompraBuilder>> _mockOrdenCompraBuilderLogger;
         private readonly INotificationManager _notificationManager;
         private readonly InventarioServiceFacade _inventarioServiceFacade;
         
@@ -43,17 +45,19 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Services
             _mockProveedorRepository = new Mock<IProveedorRepository>();
             _mockStockBajoPolicy = new Mock<IStockBajoPolicy>();
             _mockDateTimeService = new Mock<IDateTimeService>();
+            _mockOrdenCompraBuilderLogger = new Mock<ILogger<OrdenCompraBuilder>>();
             _notificationManager = new NotificationManager();
             
             _mockDateTimeService.Setup(x => x.Now).Returns(_fechaActual);
             
             _inventarioServiceFacade = new InventarioServiceFacade(
                 _mockIngredienteRepository.Object,
-                _mockOrdenCompraRepository.Object,
                 _mockProveedorRepository.Object,
-                _mockStockBajoPolicy.Object,
+                _mockOrdenCompraRepository.Object,
+                _notificationManager,
                 _mockDateTimeService.Object,
-                _notificationManager);
+                _mockOrdenCompraBuilderLogger.Object,
+                _mockStockBajoPolicy.Object);
         }
         
         [Fact]

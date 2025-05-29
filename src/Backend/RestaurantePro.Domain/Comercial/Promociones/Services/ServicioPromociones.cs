@@ -48,7 +48,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Services
             var promocionesActivas = await _promocionRepository.ObtenerPromocionesActivasAsync(cancellationToken);
             
             // Filtrar por las que son aplicables al cliente y monto
-            var puntosDisponibles = cliente.ObtenerPuntosFidelizacionDisponibles();
+            var puntosDisponibles = cliente.ObtenerPuntosDisponibles();
             var fechaActual = _dateTimeService.Now;
             
             var especificacion = new PromocionValidaParaClienteSpecification(
@@ -100,7 +100,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Services
             {
                 var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId, cancellationToken);
                 if (cliente == null || !cliente.TieneTarjetaFidelizacion() || 
-                    cliente.ObtenerPuntosFidelizacionDisponibles() < promocion.PuntosRequeridos)
+                    cliente.ObtenerPuntosDisponibles() < promocion.PuntosRequeridos)
                 {
                     return 0;
                 }
@@ -140,7 +140,7 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Services
             
             if (promocionesActivas.Any(p => p.PuntosRequeridos > 0))
             {
-                var puntos = cliente.ObtenerPuntosFidelizacionDisponibles();
+                var puntos = cliente.ObtenerPuntosDisponibles();
                 var promos = promocionesActivas.Where(p => p.PuntosRequeridos <= puntos).ToList();
                 return promos;
             }

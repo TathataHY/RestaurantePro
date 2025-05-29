@@ -92,7 +92,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 
             // Cliente sin tarjeta de fidelización
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
 
             _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
@@ -134,7 +134,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Crear cliente con la tarjeta asociada
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
             cliente.AsociarTarjetaFidelizacion(tarjetaId);
             
@@ -186,7 +186,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Cliente sin tarjeta
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
                 
             _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
@@ -210,7 +210,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Crear cliente con tarjeta
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
             
             // Crear tarjeta inactiva
@@ -246,7 +246,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Configurar el mock del cliente
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
             
             // Asignar ID a la tarjeta
@@ -280,7 +280,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Configurar el mock del cliente
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
             
             // Asignar ID a la tarjeta
@@ -314,7 +314,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Configurar el mock del cliente
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
             
             // Asignar ID a la tarjeta
@@ -362,7 +362,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 
             // Crear cliente con la tarjeta asociada
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
             cliente.AsociarTarjetaFidelizacion(tarjetaId);
             
@@ -411,7 +411,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 
             // Crear cliente con la tarjeta asociada
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
             cliente.AsociarTarjetaFidelizacion(tarjetaId);
             
@@ -454,7 +454,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
                 
             // Crear cliente con tarjeta
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
             
             // Crear tarjeta
@@ -526,7 +526,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Crear cliente con la tarjeta asociada
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
             cliente.AsociarTarjetaFidelizacion(tarjetaId);
             
@@ -556,7 +556,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Cliente sin tarjeta
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
-            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789");
+            var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
             
             _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))

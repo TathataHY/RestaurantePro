@@ -6,6 +6,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
         private readonly Mock<IComandaRepository> _comandaRepositoryMock;
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
         private readonly Mock<INotificationManager> _notificationManagerMock;
+        private readonly Mock<ILogger<FacturaBuilder>> _facturaBuilderLoggerMock;
         private readonly INotificationManager _notificationManager;
         private readonly ServicioFacturacion _servicioFacturacion;
         private readonly DateTime _fechaActual = new DateTime(2024, 1, 1, 12, 0, 0);
@@ -16,6 +17,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
             _comandaRepositoryMock = new Mock<IComandaRepository>();
             _dateTimeServiceMock = new Mock<IDateTimeService>();
             _notificationManagerMock = new Mock<INotificationManager>();
+            _facturaBuilderLoggerMock = new Mock<ILogger<FacturaBuilder>>();
             
             _dateTimeServiceMock.Setup(s => s.Now).Returns(_fechaActual);
             
@@ -27,7 +29,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
                 _facturaRepositoryMock.Object,
                 _comandaRepositoryMock.Object,
                 _dateTimeServiceMock.Object,
-                _notificationManager);
+                _notificationManager,
+                _facturaBuilderLoggerMock.Object);
         }
 
         [Fact]
@@ -110,7 +113,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
                 _facturaRepositoryMock.Object,
                 _comandaRepositoryMock.Object,
                 _dateTimeServiceMock.Object,
-                _notificationManager);
+                _notificationManager,
+                _facturaBuilderLoggerMock.Object);
                 
             // Asegurarse de que el notification manager está limpio
             _notificationManager.ClearErrors();
@@ -151,7 +155,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Facturacion.Services
                 _facturaRepositoryMock.Object,
                 _comandaRepositoryMock.Object,
                 _dateTimeServiceMock.Object,
-                _notificationManager);
+                _notificationManager,
+                _facturaBuilderLoggerMock.Object);
                 
             // Asegurarse de que el notification manager está limpio
             _notificationManager.ClearErrors();

@@ -264,11 +264,12 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 
             var email = $"{partes[0].ToLower()}.{randomText}@test.com";
             
-            // Usar CrearParaPruebas en lugar de Crear para evitar validaciones estrictas en tests
-            var cliente = Cliente.CrearParaPruebas(
+            // Usar Crear con todos los parámetros requeridos
+            var cliente = Cliente.Crear(
                 nombreCliente, 
                 email,
-                "123456789");
+                "123456789",
+                DateTime.Now.AddYears(-30)); // Agregar fechaNacimiento
                 
             // Establecer cantidad de visitas
             for (int i = 0; i < cantidadVisitas; i++)

@@ -64,6 +64,16 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
         public string Observaciones { get; private set; }
 
         /// <summary>
+        /// Teléfono de contacto para la reservación
+        /// </summary>
+        public string Telefono { get; private set; }
+
+        /// <summary>
+        /// Email de contacto para la reservación
+        /// </summary>
+        public string Email { get; private set; }
+
+        /// <summary>
         /// Estado actual de la reservación
         /// </summary>
         public EstadoReservacion Estado { get; private set; }
@@ -111,6 +121,8 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
                 Hora = fecha.TimeOfDay,
                 DuracionEstimada = duracionEstimada,
                 CantidadPersonas = cantidadPersonas,
+                Telefono = telefono,
+                Email = email,
                 Observaciones = observaciones,
                 Estado = EstadoReservacion.Pendiente,
                 FechaCreacion = DateTime.Now

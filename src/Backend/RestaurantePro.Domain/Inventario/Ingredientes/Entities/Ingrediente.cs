@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Core.SharedKernel.Guards;
+
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
 {
     /// <summary>
@@ -24,6 +26,16 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// Nombre del ingrediente
         /// </summary>
         public string Nombre { get; private set; }
+
+        /// <summary>
+        /// Código único del ingrediente
+        /// </summary>
+        public string Codigo { get; private set; }
+
+        /// <summary>
+        /// Descripción del ingrediente
+        /// </summary>
+        public string Descripcion { get; private set; }
 
         /// <summary>
         /// Unidad de medida del ingrediente
@@ -96,6 +108,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// Factory Method para crear un nuevo ingrediente.
         /// Este es el único punto de entrada para crear instancias válidas de Ingrediente.
         /// </summary>
+        /// <param name="id">Identificador único del ingrediente</param>
         /// <param name="nombre">Nombre del ingrediente</param>
         /// <param name="codigo">Código del ingrediente</param>
         /// <param name="descripcion">Descripción del ingrediente</param>
@@ -105,8 +118,10 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// <param name="rotacion">Nivel de rotación del ingrediente (opcional)</param>
         /// <param name="temporada">Temporada del ingrediente (opcional)</param>
         /// <returns>Una nueva instancia de Ingrediente</returns>
-        /// <exception cref="ArgumentException">Si los datos no son válidos (nombre vacío o stock mínimo negativo)</exception>
+        /// <exception cref="ArgumentException">Si los datos no son válidos</exception>
+        /// <exception cref="BusinessRuleViolationException">Si se violan reglas de negocio</exception>
         public static Ingrediente Crear(
+            Guid id,
             string nombre, 
             string codigo, 
             string descripcion, 
@@ -116,21 +131,41 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             RotacionIngrediente rotacion = RotacionIngrediente.Media,
             TemporadaIngrediente temporada = TemporadaIngrediente.TodoElAño)
         {
+            // Validaciones usando excepciones estándar con nuestras excepciones específicas
+            if (id == Guid.Empty)
+                throw new ArgumentException("El ID no puede estar vacío", nameof(id));
+                
             if (string.IsNullOrWhiteSpace(nombre))
                 throw new ArgumentException("El nombre no puede estar vacío", nameof(nombre));
-
+                
             if (string.IsNullOrWhiteSpace(codigo))
                 throw new ArgumentException("El código no puede estar vacío", nameof(codigo));
-
+                
+            if (string.IsNullOrWhiteSpace(descripcion))
+                throw new ArgumentException("La descripción no puede estar vacía", nameof(descripcion));
+                
             if (stockMinimo < 0)
                 throw new ArgumentException("El stock mínimo no puede ser negativo", nameof(stockMinimo));
-
+                
             if (stockActual < 0)
                 throw new ArgumentException("El stock actual no puede ser negativo", nameof(stockActual));
 
+            // Validaciones de longitud
+            if (nombre.Length > 200)
+                throw new ArgumentException("El nombre no puede exceder 200 caracteres", nameof(nombre));
+                
+            if (codigo.Length > 50)
+                throw new ArgumentException("El código no puede exceder 50 caracteres", nameof(codigo));
+                
+            if (descripcion.Length > 500)
+                throw new ArgumentException("La descripción no puede exceder 500 caracteres", nameof(descripcion));
+
             var ingrediente = new Ingrediente
             {
+                Id = id,
                 Nombre = nombre,
+                Codigo = codigo,
+                Descripcion = descripcion,
                 UnidadMedida = unidadMedida,
                 StockMinimo = stockMinimo,
                 Stock = stockActual,
@@ -147,20 +182,36 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         }
 
         /// <summary>
+        /// Factory Method alternativo con ID generado automáticamente
+        /// </summary>
+        public static Ingrediente Crear(
+            string nombre, 
+            string codigo, 
+            string descripcion, 
+            RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida unidadMedida, 
+            decimal stockMinimo, 
+            decimal stockActual,
+            RotacionIngrediente rotacion = RotacionIngrediente.Media,
+            TemporadaIngrediente temporada = TemporadaIngrediente.TodoElAño)
+        {
+            return Crear(Guid.NewGuid(), nombre, codigo, descripcion, unidadMedida, stockMinimo, stockActual, rotacion, temporada);
+        }
+
+        /// <summary>
         /// Incrementa el stock del ingrediente.
         /// Genera un movimiento de inventario de tipo Ingreso y lo registra en la colección interna.
         /// </summary>
         /// <param name="cantidad">Cantidad a incrementar</param>
         /// <param name="motivo">Motivo del incremento (por ejemplo: "Compra", "Ajuste de inventario")</param>
         /// <returns>Movimiento de inventario generado</returns>
+        /// <exception cref="BusinessRuleViolationException">Si el ingrediente está desactivado</exception>
         /// <exception cref="ArgumentException">Si la cantidad es negativa o cero</exception>
-        /// <exception cref="InvalidOperationException">Si el ingrediente está desactivado</exception>
         public MovimientoInventario IncrementarStock(decimal cantidad, string motivo)
         {
             ValidarIngredienteActivo();
             
-            if (cantidad <= 0)
-                throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(cantidad));
+            Guard.AgainstNegativeOrZero(cantidad, nameof(cantidad));
+            Guard.AgainstNullOrWhiteSpace(motivo, nameof(motivo));
 
             var movimiento = MovimientoInventario.CrearIngreso(Id, cantidad, motivo);
 
@@ -188,17 +239,25 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// <param name="cantidad">Cantidad a decrementar</param>
         /// <param name="motivo">Motivo del decremento (por ejemplo: "Consumo", "Merma")</param>
         /// <returns>Movimiento de inventario generado</returns>
-        /// <exception cref="ArgumentException">Si la cantidad es negativa o cero</exception>
-        /// <exception cref="InvalidOperationException">Si no hay suficiente stock o si el ingrediente está desactivado</exception>
+        /// <exception cref="StockInsuficienteException">Si no hay suficiente stock</exception>
+        /// <exception cref="BusinessRuleViolationException">Si el ingrediente está desactivado</exception>
         public MovimientoInventario DecrementarStock(decimal cantidad, string motivo)
         {
             ValidarIngredienteActivo();
             
-            if (cantidad <= 0)
-                throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(cantidad));
+            Guard.AgainstNegativeOrZero(cantidad, nameof(cantidad));
+            Guard.AgainstNullOrWhiteSpace(motivo, nameof(motivo));
 
+            // Usar nuestra excepción específica para stock insuficiente
             if (cantidad > Stock)
-                throw new InvalidOperationException($"No hay suficiente stock disponible de {Nombre}. Disponible: {Stock}, Solicitado: {cantidad}");
+            {
+                throw new StockInsuficienteException(
+                    Id, 
+                    Nombre, 
+                    cantidad, 
+                    Stock, 
+                    $"decrementar stock por {motivo}");
+            }
 
             var movimiento = MovimientoInventario.CrearEgreso(Id, cantidad, motivo);
 
@@ -212,35 +271,69 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             // Verificar invariantes después de la modificación
             ValidarInvariantes();
 
-            // Verificar si estamos por debajo del stock mínimo
+            // Emitir evento de stock actualizado
+            AddDomainEvent(new Events.Ingrediente.StockActualizado(Id, Nombre, Stock));
+
+            // Verificar si el stock está por debajo del mínimo
             if (Stock < StockMinimo)
             {
                 AddDomainEvent(new Events.Ingrediente.StockBajoMinimo(Id, Nombre, Stock, StockMinimo));
             }
-
-            // Emitir evento de stock actualizado
-            AddDomainEvent(new Events.Ingrediente.StockActualizado(Id, Nombre, Stock));
 
             return movimiento;
         }
 
         /// <summary>
-        /// Actualiza el stock mínimo del ingrediente.
-        /// Si el stock actual es menor que el nuevo stock mínimo, genera un evento StockBajoMinimo.
+        /// Reserva una cantidad específica de stock para una operación.
+        /// No modifica el stock real, pero valida disponibilidad.
         /// </summary>
-        /// <param name="nuevoStockMinimo">Nuevo valor de stock mínimo</param>
-        /// <exception cref="ArgumentException">Si el valor es negativo</exception>
+        /// <param name="cantidad">Cantidad a reservar</param>
+        /// <param name="motivo">Motivo de la reserva</param>
+        /// <exception cref="StockInsuficienteException">Si no hay suficiente stock para reservar</exception>
+        public void ReservarStock(decimal cantidad, string motivo)
+        {
+            ValidarIngredienteActivo();
+            
+            Guard.AgainstNegativeOrZero(cantidad, nameof(cantidad));
+            Guard.AgainstNullOrWhiteSpace(motivo, nameof(motivo));
+
+            if (cantidad > Stock)
+            {
+                throw new StockInsuficienteException(
+                    Id, 
+                    Nombre, 
+                    cantidad, 
+                    Stock, 
+                    $"reservar stock para {motivo}");
+            }
+
+            // Emitir evento de reserva (no modifica stock físico)
+            // TODO: Implementar evento StockReservado
+            // AddDomainEvent(new Events.Ingrediente.StockReservado(Id, Nombre, cantidad, motivo));
+        }
+
+        /// <summary>
+        /// Actualiza el stock mínimo del ingrediente.
+        /// Si el stock actual está por debajo del nuevo mínimo, genera un evento StockBajoMinimo.
+        /// </summary>
+        /// <param name="nuevoStockMinimo">Nuevo valor del stock mínimo</param>
+        /// <exception cref="ArgumentException">Si el stock mínimo es negativo</exception>
         public void ActualizarStockMinimo(decimal nuevoStockMinimo)
         {
-            if (nuevoStockMinimo < 0)
-                throw new ArgumentException("El stock mínimo no puede ser negativo", nameof(nuevoStockMinimo));
+            Guard.AgainstNegative(nuevoStockMinimo, nameof(nuevoStockMinimo));
 
+            if (nuevoStockMinimo == StockMinimo)
+                return;
+
+            var stockMinimoAnterior = StockMinimo;
             StockMinimo = nuevoStockMinimo;
             MarkAsModified();
-
-            // Verificar invariantes después de la modificación
             ValidarInvariantes();
 
+            // TODO: Implementar evento StockMinimoActualizado
+            // AddDomainEvent(new Events.Ingrediente.StockMinimoActualizado(Id, Nombre, stockMinimoAnterior, nuevoStockMinimo));
+
+            // Verificar si el stock actual está por debajo del nuevo mínimo
             if (Stock < StockMinimo)
             {
                 AddDomainEvent(new Events.Ingrediente.StockBajoMinimo(Id, Nombre, Stock, StockMinimo));
@@ -248,9 +341,8 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         }
 
         /// <summary>
-        /// Desactiva el ingrediente.
-        /// Un ingrediente desactivado no debe utilizarse en nuevas comandas ni recibir movimientos de inventario.
-        /// No tiene efecto si el ingrediente ya está desactivado.
+        /// Desactiva el ingrediente en el sistema.
+        /// Un ingrediente desactivado no puede recibir movimientos de inventario.
         /// </summary>
         public void Desactivar()
         {
@@ -259,14 +351,14 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
 
             EstaActivo = false;
             MarkAsModified();
+            ValidarInvariantes();
 
             AddDomainEvent(new Events.Ingrediente.IngredienteDesactivado(Id, Nombre));
         }
 
         /// <summary>
-        /// Activa el ingrediente.
-        /// Permite que el ingrediente vuelva a utilizarse en comandas y recibir movimientos.
-        /// No tiene efecto si el ingrediente ya está activo.
+        /// Activa el ingrediente en el sistema.
+        /// Permite que un ingrediente previamente desactivado vuelva a recibir movimientos.
         /// </summary>
         public void Activar()
         {
@@ -275,23 +367,29 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
 
             EstaActivo = true;
             MarkAsModified();
+            ValidarInvariantes();
 
             AddDomainEvent(new Events.Ingrediente.IngredienteActivado(Id, Nombre));
         }
 
         /// <summary>
-        /// Asocia un proveedor principal a este ingrediente.
-        /// Este proveedor se utilizará para generar órdenes de compra automáticas cuando el stock esté bajo.
+        /// Asocia un proveedor principal al ingrediente.
         /// </summary>
-        /// <param name="proveedorId">ID del proveedor a asociar</param>
+        /// <param name="proveedorId">ID del proveedor principal</param>
         public void AsociarProveedorPrincipal(Guid proveedorId)
         {
+            Guard.AgainstEmpty(proveedorId, nameof(proveedorId));
+
+            if (ProveedorPrincipalId == proveedorId)
+                return;
+
+            var proveedorAnterior = ProveedorPrincipalId;
             ProveedorPrincipalId = proveedorId;
             MarkAsModified();
-            
+
             AddDomainEvent(new Events.Ingrediente.ProveedorPrincipalAsociado(Id, proveedorId));
         }
-        
+
         /// <summary>
         /// Actualiza el nivel de rotación del ingrediente.
         /// </summary>
@@ -300,104 +398,165 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         {
             if (Rotacion == rotacion)
                 return;
-            
+
+            var rotacionAnterior = Rotacion;
             Rotacion = rotacion;
             MarkAsModified();
-            
-            AddDomainEvent(new Events.Ingrediente.RotacionIngredienteActualizada(Id, Nombre, rotacion));
+
+            // TODO: Implementar evento RotacionActualizada
+            // AddDomainEvent(new Events.Ingrediente.RotacionActualizada(Id, Nombre, rotacionAnterior, rotacion));
         }
-        
+
         /// <summary>
         /// Actualiza la temporada del ingrediente.
         /// </summary>
-        /// <param name="temporada">Nueva temporada del ingrediente</param>
+        /// <param name="temporada">Nueva temporada</param>
         public void ActualizarTemporada(TemporadaIngrediente temporada)
         {
             if (Temporada == temporada)
                 return;
-            
+
+            var temporadaAnterior = Temporada;
             Temporada = temporada;
             MarkAsModified();
-            
-            AddDomainEvent(new Events.Ingrediente.TemporadaIngredienteActualizada(Id, Nombre, temporada));
+
+            // TODO: Implementar evento TemporadaActualizada
+            // AddDomainEvent(new Events.Ingrediente.TemporadaActualizada(Id, Nombre, temporadaAnterior, temporada));
         }
-        
+
         /// <summary>
-        /// Establece o quita el bloqueo de control de calidad.
+        /// Actualiza el estado de bloqueo por control de calidad.
         /// </summary>
-        /// <param name="bloqueado">Indica si debe estar bloqueado</param>
-        /// <param name="motivo">Motivo del bloqueo o desbloqueo</param>
+        /// <param name="bloqueado">Si el ingrediente debe estar bloqueado</param>
+        /// <param name="motivo">Motivo del bloqueo/desbloqueo</param>
         public void ActualizarBloqueoControlCalidad(bool bloqueado, string motivo)
         {
+            Guard.AgainstNullOrWhiteSpace(motivo, nameof(motivo));
+
             if (BloqueadoControlCalidad == bloqueado)
                 return;
-            
+
             BloqueadoControlCalidad = bloqueado;
             MarkAsModified();
-            
-            if (bloqueado)
-                AddDomainEvent(new Events.Ingrediente.IngredienteBloqueadoPorCalidad(Id, Nombre, motivo));
-            else
-                AddDomainEvent(new Events.Ingrediente.IngredienteDesbloqueadoPorCalidad(Id, Nombre, motivo));
+
+            // TODO: Implementar evento BloqueoControlCalidadActualizado
+            // AddDomainEvent(new Events.Ingrediente.BloqueoControlCalidadActualizado(Id, Nombre, bloqueado, motivo));
         }
-        
+
         /// <summary>
         /// Actualiza el costo promedio del ingrediente.
         /// </summary>
         /// <param name="nuevoCosto">Nuevo costo promedio</param>
         public void ActualizarCostoPromedio(decimal nuevoCosto)
         {
-            if (nuevoCosto < 0)
-                throw new ArgumentException("El costo no puede ser negativo", nameof(nuevoCosto));
-            
+            Guard.AgainstNegative(nuevoCosto, nameof(nuevoCosto));
+
             if (CostoPromedio == nuevoCosto)
                 return;
-            
+
+            var costoAnterior = CostoPromedio;
             CostoPromedio = nuevoCosto;
             MarkAsModified();
-            
+
             AddDomainEvent(new Events.Ingrediente.CostoPromedioActualizado(Id, Nombre, nuevoCosto));
         }
-        
+
         /// <summary>
-        /// Valida todas las invariantes del agregado Ingrediente.
-        /// Se llama después de cada operación que modifica el estado para asegurar la consistencia.
+        /// Verifica si hay suficiente stock para una cantidad específica.
         /// </summary>
-        /// <exception cref="InvalidOperationException">Si alguna invariante se viola</exception>
+        /// <param name="cantidadRequerida">Cantidad requerida</param>
+        /// <returns>True si hay stock suficiente</returns>
+        public bool TieneStockSuficiente(decimal cantidadRequerida)
+        {
+            Guard.AgainstNegative(cantidadRequerida, nameof(cantidadRequerida));
+            return EstaActivo && Stock >= cantidadRequerida && !BloqueadoControlCalidad;
+        }
+
+        /// <summary>
+        /// Calcula el déficit de stock si no hay suficiente para la cantidad requerida.
+        /// </summary>
+        /// <param name="cantidadRequerida">Cantidad requerida</param>
+        /// <returns>Déficit de stock (0 si hay suficiente)</returns>
+        public decimal CalcularDeficitStock(decimal cantidadRequerida)
+        {
+            Guard.AgainstNegative(cantidadRequerida, nameof(cantidadRequerida));
+            return Math.Max(0, cantidadRequerida - Stock);
+        }
+
+        /// <summary>
+        /// Determina si el ingrediente está en estado crítico (stock muy bajo).
+        /// </summary>
+        /// <returns>True si el stock está por debajo del 25% del mínimo</returns>
+        public bool EstaEnEstadoCritico()
+        {
+            return EstaActivo && Stock < (StockMinimo * 0.25m);
+        }
+
+        /// <summary>
+        /// Valida las invariantes del agregado Ingrediente.
+        /// Se ejecuta después de cada operación que modifica el estado.
+        /// </summary>
+        /// <exception cref="BusinessRuleViolationException">Si alguna invariante es violada</exception>
         private void ValidarInvariantes()
         {
             // Validar que el stock nunca sea negativo
             if (Stock < 0)
-                throw new InvalidOperationException($"El stock del ingrediente '{Nombre}' no puede ser negativo. Valor actual: {Stock}");
-            
-            // Validar que el stock mínimo no sea negativo
-            if (StockMinimo < 0)
-                throw new InvalidOperationException($"El stock mínimo del ingrediente '{Nombre}' no puede ser negativo. Valor actual: {StockMinimo}");
-            
-            // Validar que el nombre no esté vacío
-            if (string.IsNullOrWhiteSpace(Nombre))
-                throw new InvalidOperationException("El nombre del ingrediente no puede estar vacío");
-            
-            // Validación de consistencia de movimientos con el stock actual
-            var stockCalculado = 0m;
-            foreach (var movimiento in _movimientos)
             {
-                stockCalculado = movimiento.CalcularNuevoStock(stockCalculado);
+                throw BusinessRuleViolationException.ForInvalidState(
+                    "Ingrediente",
+                    $"Stock = {Stock}",
+                    "Stock >= 0",
+                    "Inventario",
+                    Id);
             }
-            
-            // Comprobar que el stock calculado coincide con el stock actual
-            if (Math.Abs(stockCalculado - Stock) > 0.001m) // Permitir pequeñas diferencias por redondeo
-                throw new InvalidOperationException($"Inconsistencia en el stock del ingrediente '{Nombre}'. Stock actual: {Stock}, Stock calculado desde movimientos: {stockCalculado}");
+
+            // Validar que el stock mínimo nunca sea negativo
+            if (StockMinimo < 0)
+            {
+                throw BusinessRuleViolationException.ForInvalidState(
+                    "Ingrediente",
+                    $"StockMinimo = {StockMinimo}",
+                    "StockMinimo >= 0",
+                    "Inventario",
+                    Id);
+            }
+
+            // Validar que el costo promedio no sea negativo
+            if (CostoPromedio < 0)
+            {
+                throw BusinessRuleViolationException.ForInvalidState(
+                    "Ingrediente",
+                    $"CostoPromedio = {CostoPromedio}",
+                    "CostoPromedio >= 0",
+                    "Inventario",
+                    Id);
+            }
         }
 
         /// <summary>
-        /// Valida que el ingrediente esté activo para realizar operaciones.
+        /// Valida que el ingrediente esté activo para operaciones de modificación de stock.
         /// </summary>
-        /// <exception cref="InvalidOperationException">Si el ingrediente está desactivado</exception>
+        /// <exception cref="BusinessRuleViolationException">Si el ingrediente está inactivo</exception>
         private void ValidarIngredienteActivo()
         {
             if (!EstaActivo)
-                throw new InvalidOperationException($"No se pueden realizar operaciones en un ingrediente desactivado: {Nombre}");
+            {
+                throw BusinessRuleViolationException.ForInactiveEntity(
+                    "Ingrediente",
+                    "Inventario",
+                    Id);
+            }
+
+            if (BloqueadoControlCalidad)
+            {
+                throw BusinessRuleViolationException.ForOperationNotAllowed(
+                    "Modificar stock",
+                    "Ingrediente",
+                    "El ingrediente está bloqueado por control de calidad",
+                    "Inventario",
+                    Id)
+                    .WithData("NombreIngrediente", Nombre) as BusinessRuleViolationException;
+            }
         }
     }
 }

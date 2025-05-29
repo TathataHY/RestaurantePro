@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Builders;
+
 namespace RestaurantePro.Domain.Inventario.Services
 {
     /// <summary>
@@ -6,26 +8,32 @@ namespace RestaurantePro.Domain.Inventario.Services
     public class InventarioServiceFacade : IInventarioServiceFacade
     {
         private readonly IIngredienteRepository _ingredienteRepository;
-        private readonly IOrdenCompraRepository _ordenCompraRepository;
         private readonly IProveedorRepository _proveedorRepository;
-        private readonly IStockBajoPolicy _stockBajoPolicy;
-        private readonly IDateTimeService _dateTimeService;
+        private readonly IOrdenCompraRepository _ordenCompraRepository;
         private readonly INotificationManager _notificationManager;
+        private readonly IDateTimeService _dateTimeService;
+        private readonly ILogger<OrdenCompraBuilder> _ordenCompraBuilderLogger;
+        private readonly IStockBajoPolicy _stockBajoPolicy;
         
+        /// <summary>
+        /// Constructor de la fachada de servicios de inventario
+        /// </summary>
         public InventarioServiceFacade(
             IIngredienteRepository ingredienteRepository,
-            IOrdenCompraRepository ordenCompraRepository,
             IProveedorRepository proveedorRepository,
-            IStockBajoPolicy stockBajoPolicy,
+            IOrdenCompraRepository ordenCompraRepository,
+            INotificationManager notificationManager,
             IDateTimeService dateTimeService,
-            INotificationManager notificationManager)
+            ILogger<OrdenCompraBuilder> ordenCompraBuilderLogger,
+            IStockBajoPolicy stockBajoPolicy)
         {
             _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
-            _ordenCompraRepository = ordenCompraRepository ?? throw new ArgumentNullException(nameof(ordenCompraRepository));
             _proveedorRepository = proveedorRepository ?? throw new ArgumentNullException(nameof(proveedorRepository));
-            _stockBajoPolicy = stockBajoPolicy ?? throw new ArgumentNullException(nameof(stockBajoPolicy));
-            _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
+            _ordenCompraRepository = ordenCompraRepository ?? throw new ArgumentNullException(nameof(ordenCompraRepository));
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
+            _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
+            _ordenCompraBuilderLogger = ordenCompraBuilderLogger ?? throw new ArgumentNullException(nameof(ordenCompraBuilderLogger));
+            _stockBajoPolicy = stockBajoPolicy ?? throw new ArgumentNullException(nameof(stockBajoPolicy));
         }
         
         #region Ingredientes
@@ -232,14 +240,22 @@ namespace RestaurantePro.Domain.Inventario.Services
                     return _notificationManager.ToResult<OrdenCompra>(null);
                 }
                 
-                // Crear la orden de compra
-                var ordenCompra = OrdenCompra.Crear(
-                    proveedorId,
-                    observaciones,
-                    _dateTimeService.Now);
-                    
-                // Establecer la fecha de entrega estimada
-                ordenCompra.EstablecerFechaEntrega(fechaEntregaEstimada);
+                // Usar OrdenCompraBuilder para crear con validaciones robustas
+                var builder = new OrdenCompraBuilder(_notificationManager, _ordenCompraBuilderLogger);
+                
+                var resultadoOrden = builder
+                    .ParaProveedor(proveedorId)
+                    .ConFechaEmision(_dateTimeService.Now)
+                    .ConFechaEntregaEstimada(fechaEntregaEstimada)
+                    .ConObservaciones(observaciones)
+                    .Construir();
+                
+                if (!resultadoOrden.Succeeded)
+                {
+                    return resultadoOrden; // Ya tiene los errores del builder
+                }
+                
+                var ordenCompra = resultadoOrden.Value!;
                 
                 // Persistir la orden
                 await _ordenCompraRepository.AgregarAsync(ordenCompra);
@@ -559,16 +575,19 @@ namespace RestaurantePro.Domain.Inventario.Services
                     if (proveedor == null || !proveedor.Activo)
                         continue;
                         
-                    // Crear la orden
-                    var orden = OrdenCompra.Crear(
-                        proveedorId,
-                        $"Orden automática por stock bajo - {_dateTimeService.Now:dd/MM/yyyy}",
-                        _dateTimeService.Now);
-                        
-                    // Establecer fecha de entrega estimada (3 días después)
-                    orden.EstablecerFechaEntrega(_dateTimeService.Now.AddDays(3));
+                    // Usar OrdenCompraBuilder para crear la orden automática con validaciones robustas
+                    var builder = new OrdenCompraBuilder(_notificationManager, _ordenCompraBuilderLogger);
                     
-                    // Agregar items a la orden
+                    var observacionesAutomaticas = $"Orden automática por stock bajo - {_dateTimeService.Now:dd/MM/yyyy}";
+                    var fechaEntregaEstimada = _dateTimeService.Now.AddDays(3);
+                    
+                    var resultadoOrden = builder
+                        .ParaProveedor(proveedorId)
+                        .ConFechaEmision(_dateTimeService.Now)
+                        .ConFechaEntregaEstimada(fechaEntregaEstimada)
+                        .ConObservaciones(observacionesAutomaticas);
+                    
+                    // Agregar items a la orden usando el builder
                     foreach (var item in grupo.OrderByDescending(g => g.Prioridad))
                     {
                         var ingrediente = item.Ingrediente;
@@ -577,13 +596,25 @@ namespace RestaurantePro.Domain.Inventario.Services
                         decimal cantidadFaltante = ingrediente.StockMinimo - ingrediente.Stock;
                         decimal cantidadPedir = Math.Max(1, Math.Ceiling(cantidadFaltante * 1.2m));
                         
-                        // Agregar a la orden
-                        orden.AgregarItem(
+                        // Agregar a la orden usando el builder
+                        resultadoOrden = resultadoOrden.AgregarItem(
                             ingrediente.Id,
                             ingrediente.Nombre,
                             cantidadPedir,
                             ingrediente.UnidadMedida);
                     }
+                    
+                    // Construir la orden final
+                    var resultadoFinal = resultadoOrden.Construir();
+                    
+                    if (!resultadoFinal.Succeeded)
+                    {
+                        // Log del error pero continúa con el siguiente proveedor
+                        _notificationManager.AddError($"Error al crear orden automática para proveedor {proveedorId}: {resultadoFinal.Error}", "OrdenAutomatica");
+                        continue;
+                    }
+                    
+                    var orden = resultadoFinal.Value!;
                     
                     // Persistir la orden
                     await _ordenCompraRepository.AgregarAsync(orden);

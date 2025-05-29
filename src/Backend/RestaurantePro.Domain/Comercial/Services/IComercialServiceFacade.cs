@@ -34,44 +34,79 @@ namespace RestaurantePro.Domain.Comercial.Services
         /// <param name="email">Nuevo email (null para no cambiar)</param>
         /// <param name="telefono">Nuevo teléfono (null para no cambiar)</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Resultado con el cliente actualizado o null si no se encuentra</returns>
+        /// <returns>Resultado con el cliente actualizado</returns>
         Task<Result<Cliente?>> ActualizarDatosClienteAsync(Guid clienteId, string? nombre = null, string? apellidos = null, string? email = null, string? telefono = null, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Asigna puntos a un cliente por una compra
+        /// Asigna puntos a un cliente por una compra/comanda
         /// </summary>
         /// <param name="clienteId">ID del cliente</param>
         /// <param name="puntos">Cantidad de puntos a asignar</param>
-        /// <param name="comandaId">ID de la comanda que generó los puntos</param>
+        /// <param name="comandaId">ID de la comanda asociada</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Resultado de la operación</returns>
+        /// <returns>Resultado indicando si la operación fue exitosa</returns>
         Task<Result<bool>> AsignarPuntosClienteAsync(Guid clienteId, int puntos, Guid comandaId, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Calcula un descuento basado en los puntos del cliente
+        /// Calcula el descuento aplicable para un cliente según su nivel de fidelización
         /// </summary>
         /// <param name="clienteId">ID del cliente</param>
         /// <param name="montoTotal">Monto total de la compra</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Resultado con el monto de descuento calculado</returns>
+        /// <returns>Resultado con el monto del descuento aplicable</returns>
         Task<Result<decimal>> CalcularDescuentoPuntosFidelizacionAsync(Guid clienteId, decimal montoTotal, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Aplica un canje de puntos por un descuento
+        /// Canjea puntos de fidelización por un descuento
         /// </summary>
         /// <param name="clienteId">ID del cliente</param>
         /// <param name="puntosAUtilizar">Cantidad de puntos a utilizar</param>
-        /// <param name="comandaId">ID de la comanda donde se aplica el descuento</param>
+        /// <param name="comandaId">ID de la comanda donde aplicar el descuento</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Resultado con el monto del descuento aplicado</returns>
+        /// <returns>Resultado con el monto del descuento obtenido</returns>
         Task<Result<decimal>> CanjearPuntosPorDescuentoAsync(Guid clienteId, int puntosAUtilizar, Guid comandaId, CancellationToken cancellationToken = default);
         
         /// <summary>
-        /// Ejecuta la política de clientes frecuentes para analizar y clasificar clientes
+        /// Ejecuta la política de clientes frecuentes para determinar segmentos
         /// </summary>
-        /// <param name="clienteIds">Lista opcional de IDs de clientes para procesar (null para procesar todos)</param>
+        /// <param name="clienteIds">IDs específicos de clientes a procesar (null para procesar todos)</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Resultado con el diccionario de resultados de la política por cliente</returns>
+        /// <returns>Resultado con el diccionario de clientes y sus segmentos actualizados</returns>
         Task<Result<Dictionary<Guid, SegmentoCliente>>> EjecutarPoliticaClientesFrecuentesAsync(IEnumerable<Guid>? clienteIds = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Procesa un cliente inactivo para reactivación con validaciones de negocio complejas.
+        /// Incluye verificaciones de historial y elegibilidad.
+        /// </summary>
+        /// <param name="clienteId">ID del cliente a reactivar</param>
+        /// <param name="motivoReactivacion">Motivo de la reactivación</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado de la operación</returns>
+        Task<Result> ProcesarReactivacionClienteAsync(Guid clienteId, string motivoReactivacion, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Transfiere puntos entre clientes con validaciones exhaustivas.
+        /// Incluye verificación de eligibilidad y límites de transferencia.
+        /// </summary>
+        /// <param name="clienteOrigenId">ID del cliente que transfiere puntos</param>
+        /// <param name="clienteDestinoId">ID del cliente que recibe puntos</param>
+        /// <param name="puntos">Cantidad de puntos a transferir</param>
+        /// <param name="motivo">Motivo de la transferencia</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado de la operación con detalles de la transferencia</returns>
+        Task<Result<TransferenciaResult>> TransferirPuntosAsync(
+            Guid clienteOrigenId,
+            Guid clienteDestinoId,
+            int puntos,
+            string motivo,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Valida múltiples clientes en lote y retorna un resumen de resultados.
+        /// </summary>
+        /// <param name="clienteIds">IDs de clientes a validar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con resumen de validaciones</returns>
+        Task<Result<ValidacionLoteResult>> ValidarClientesEnLoteAsync(IEnumerable<Guid> clienteIds, CancellationToken cancellationToken = default);
     }
 } 
