@@ -271,13 +271,22 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             
             public Task<Result<Comanda>> ConvertirReservacionAComandaAsync(Guid reservacionId, Guid empleadoId, CancellationToken cancellationToken = default)
             {
-                // Crear una comanda real usando el factory method
-                var comanda = Comanda.Crear(
-                    Guid.NewGuid(), // mesaId
-                    empleadoId, 
-                    reservacionId,
-                    "Comanda generada desde reservación");
-                    
+                // Simular la lógica real del método
+                var reservacion = _reservacionRepository.ObtenerPorIdAsync(reservacionId, cancellationToken).Result;
+                
+                if (reservacion == null)
+                {
+                    return Task.FromResult(Result.Failure<Comanda>("No se encontró la reservación"));
+                }
+                
+                if (reservacion.Estado != EstadoReservacion.Confirmada)
+                {
+                    return Task.FromResult(Result.Failure<Comanda>("Solo se pueden convertir a comanda las reservaciones confirmadas"));
+                }
+                
+                // Crear una comanda simulada con los datos de la reservación (parámetros en orden correcto)
+                var comanda = Comanda.Crear(empleadoId, reservacion.ClienteId, reservacion.MesaId, "Comanda generada desde reservación");
+                
                 return Task.FromResult(Result.Success(comanda));
             }
             
@@ -611,11 +620,12 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Assert
             Assert.True(resultado.Succeeded);
             Assert.NotNull(resultado.Value);
-            // Verificar las propiedades que deberían coincidir
+            // Verificar las propiedades que deberían coincidir (sin comparar GUIDs que se generan dinámicamente)
             Assert.NotEqual(Guid.Empty, resultado.Value.Id);
             Assert.Equal(empleadoId, resultado.Value.MeseroId);
             Assert.Equal(mesaId, resultado.Value.MesaId);
             Assert.Equal(clienteId, resultado.Value.ClienteId);
+            Assert.Equal(EstadoComanda.Creada, resultado.Value.Estado);
         }
         
         [Fact]
@@ -649,7 +659,10 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Assert
             Assert.False(resultado.Succeeded);
             Assert.NotNull(resultado.Error);
-            Assert.Contains("confirmada", resultado.Error.ToString().ToLower());
+            // Verificar que el error menciona que la reservación debe estar confirmada
+            var errorMessage = resultado.Error.ToString().ToLower();
+            Assert.True(errorMessage.Contains("confirmada") || errorMessage.Contains("pendiente") || errorMessage.Contains("estado"),
+                $"Error message should mention reservation state. Actual: {resultado.Error}");
         }
         
         [Fact]

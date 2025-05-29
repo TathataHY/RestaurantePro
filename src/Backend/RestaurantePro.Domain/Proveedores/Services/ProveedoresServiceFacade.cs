@@ -1,5 +1,3 @@
-
-
 namespace RestaurantePro.Domain.Proveedores.Services
 {
     /// <summary>
@@ -8,10 +6,17 @@ namespace RestaurantePro.Domain.Proveedores.Services
     public class ProveedoresServiceFacade : IProveedoresServiceFacade
     {
         private readonly IProveedorRepository _proveedorRepository;
+        private readonly INotificationManager _notificationManager;
+        private readonly ILogger<ProveedorBuilder> _proveedorBuilderLogger;
         
-        public ProveedoresServiceFacade(IProveedorRepository proveedorRepository)
+        public ProveedoresServiceFacade(
+            IProveedorRepository proveedorRepository,
+            INotificationManager notificationManager,
+            ILogger<ProveedorBuilder> proveedorBuilderLogger)
         {
             _proveedorRepository = proveedorRepository ?? throw new ArgumentNullException(nameof(proveedorRepository));
+            _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
+            _proveedorBuilderLogger = proveedorBuilderLogger ?? throw new ArgumentNullException(nameof(proveedorBuilderLogger));
         }
         
         /// <inheritdoc />
@@ -29,36 +34,38 @@ namespace RestaurantePro.Domain.Proveedores.Services
             var existente = await _proveedorRepository.ObtenerPorRutAsync(rut, cancellationToken);
             if (existente != null)
             {
+                _notificationManager.AddError($"Ya existe un proveedor con el RUT {rut}", "RUT", "rut");
                 throw new InvalidOperationException($"Ya existe un proveedor con el RUT {rut}");
             }
             
-            // Valores predeterminados para los parámetros faltantes
-            string nombreContacto = nombre; // Usamos el nombre del proveedor como contacto principal
-            string ciudad = "Santiago"; // Valor predeterminado
-            string codigoPostal = "0000000"; // Valor predeterminado
-            string pais = "Chile"; // Valor predeterminado requerido
-            string informacionBancaria = string.Empty; // Valor predeterminado
-            int diasCredito = 30; // Valor predeterminado: 30 días
+            // Usar ProveedorBuilder para crear el proveedor con validaciones robustas
+            var builder = new ProveedorBuilder(_notificationManager, _proveedorBuilderLogger);
             
-            // Crear el proveedor
-            var proveedor = Proveedor.Crear(
-                nombre,
-                nombreContacto,
-                email,
-                telefono,
-                direccion,
-                ciudad,
-                codigoPostal,
-                pais,
-                rut, // RFC en México, RUT en Chile
-                informacionBancaria,
-                diasCredito);
+            // Valores predeterminados para una dirección básica
+            string ciudad = "Santiago";
+            string codigoPostal = "0000000";
+            string pais = "Chile";
             
-            // Agregar notas si se proporcionaron
-            if (!string.IsNullOrEmpty(notas))
+            // Construir el proveedor usando el builder
+            var resultado = builder
+                .ConNombre(nombre)
+                .ConContactoPrincipal(nombre) // Usar el nombre del proveedor como contacto principal
+                .ConEmail(email)
+                .ConTelefono(telefono)
+                .ConDireccion(direccion, ciudad, codigoPostal, pais)
+                .ConRFC(rut) // RFC en México, RUT en Chile
+                .ConInformacionBancaria(string.Empty) // Valor predeterminado
+                .ConDiasCredito(30) // Valor predeterminado: 30 días
+                .ConObservaciones(notas ?? string.Empty)
+                .Construir();
+            
+            if (!resultado.Succeeded)
             {
-                proveedor.AgregarObservaciones(notas);
+                var errores = string.Join(", ", _notificationManager.GetErrors().Select(e => e.Message));
+                throw new InvalidOperationException($"Error al crear el proveedor: {errores}");
             }
+            
+            var proveedor = resultado.Value;
             
             // Persistir el proveedor
             await _proveedorRepository.AgregarAsync(proveedor);
@@ -206,6 +213,106 @@ namespace RestaurantePro.Domain.Proveedores.Services
             }
             
             return proveedores;
+        }
+        
+        /// <summary>
+        /// Registra un nuevo proveedor con información avanzada usando ProveedorBuilder
+        /// </summary>
+        /// <param name="nombre">Nombre del proveedor</param>
+        /// <param name="nombreContacto">Nombre del contacto principal</param>
+        /// <param name="email">Email del proveedor</param>
+        /// <param name="telefono">Teléfono del proveedor</param>
+        /// <param name="direccion">Dirección completa</param>
+        /// <param name="ciudad">Ciudad</param>
+        /// <param name="codigoPostal">Código postal</param>
+        /// <param name="pais">País (default: México)</param>
+        /// <param name="rfc">RFC del proveedor</param>
+        /// <param name="informacionBancaria">Información bancaria (opcional)</param>
+        /// <param name="diasCredito">Días de crédito (default: 30)</param>
+        /// <param name="observaciones">Observaciones adicionales (opcional)</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Result con el proveedor registrado o errores de validación</returns>
+        public async Task<Result<Proveedor>> RegistrarProveedorAvanzadoAsync(
+            string nombre,
+            string nombreContacto,
+            string email,
+            string telefono,
+            string direccion,
+            string ciudad,
+            string codigoPostal,
+            string pais = "México",
+            string? rfc = null,
+            string? informacionBancaria = null,
+            int diasCredito = 30,
+            string? observaciones = null,
+            CancellationToken cancellationToken = default)
+        {
+            // Verificar que no exista un proveedor con el mismo RFC/RUT
+            if (!string.IsNullOrEmpty(rfc))
+            {
+                var existente = await _proveedorRepository.ObtenerPorRutAsync(rfc, cancellationToken);
+                if (existente != null)
+                {
+                    _notificationManager.AddError($"Ya existe un proveedor con el RFC/RUT {rfc}", "RFC", "rfc");
+                    return Result.Failure<Proveedor>("Proveedor duplicado");
+                }
+            }
+            
+            // Usar ProveedorBuilder para crear el proveedor con validaciones robustas
+            var builder = new ProveedorBuilder(_notificationManager, _proveedorBuilderLogger);
+            
+            // Construir el proveedor usando el builder
+            var builderResult = builder
+                .ConNombre(nombre)
+                .ConContactoPrincipal(nombreContacto)
+                .ConEmail(email)
+                .ConTelefono(telefono)
+                .ConDireccion(direccion, ciudad, codigoPostal, pais);
+            
+            // Agregar RFC si se proporcionó
+            if (!string.IsNullOrEmpty(rfc))
+            {
+                builderResult = builderResult.ConRFC(rfc);
+            }
+            
+            // Agregar información bancaria si se proporcionó
+            if (!string.IsNullOrEmpty(informacionBancaria))
+            {
+                builderResult = builderResult.ConInformacionBancaria(informacionBancaria);
+            }
+            
+            // Establecer días de crédito
+            builderResult = builderResult.ConDiasCredito(diasCredito);
+            
+            // Agregar observaciones si se proporcionaron
+            if (!string.IsNullOrEmpty(observaciones))
+            {
+                builderResult = builderResult.ConObservaciones(observaciones);
+            }
+            
+            // Construir el proveedor
+            var resultado = builderResult.Construir();
+            
+            if (!resultado.Succeeded)
+            {
+                return Result.Failure<Proveedor>("Error en validaciones de construcción");
+            }
+            
+            var proveedor = resultado.Value;
+            
+            try
+            {
+                // Persistir el proveedor
+                await _proveedorRepository.AgregarAsync(proveedor);
+                await _proveedorRepository.GuardarCambiosAsync(cancellationToken);
+                
+                return Result.Success(proveedor);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al persistir el proveedor: {ex.Message}", "Persistencia", "repository");
+                return Result.Failure<Proveedor>("Error al guardar el proveedor");
+            }
         }
     }
 } 

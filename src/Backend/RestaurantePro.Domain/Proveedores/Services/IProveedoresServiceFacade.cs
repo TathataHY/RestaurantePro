@@ -29,6 +29,38 @@ namespace RestaurantePro.Domain.Proveedores.Services
             CancellationToken cancellationToken = default);
         
         /// <summary>
+        /// Registra un nuevo proveedor con información avanzada usando ProveedorBuilder
+        /// </summary>
+        /// <param name="nombre">Nombre del proveedor</param>
+        /// <param name="nombreContacto">Nombre del contacto principal</param>
+        /// <param name="email">Email del proveedor</param>
+        /// <param name="telefono">Teléfono del proveedor</param>
+        /// <param name="direccion">Dirección completa</param>
+        /// <param name="ciudad">Ciudad</param>
+        /// <param name="codigoPostal">Código postal</param>
+        /// <param name="pais">País (default: México)</param>
+        /// <param name="rfc">RFC del proveedor</param>
+        /// <param name="informacionBancaria">Información bancaria (opcional)</param>
+        /// <param name="diasCredito">Días de crédito (default: 30)</param>
+        /// <param name="observaciones">Observaciones adicionales (opcional)</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Result con el proveedor registrado o errores de validación</returns>
+        Task<Result<Proveedor>> RegistrarProveedorAvanzadoAsync(
+            string nombre,
+            string nombreContacto,
+            string email,
+            string telefono,
+            string direccion,
+            string ciudad,
+            string codigoPostal,
+            string pais = "México",
+            string? rfc = null,
+            string? informacionBancaria = null,
+            int diasCredito = 30,
+            string? observaciones = null,
+            CancellationToken cancellationToken = default);
+        
+        /// <summary>
         /// Actualiza los datos de un proveedor existente
         /// </summary>
         /// <param name="proveedorId">ID del proveedor</param>
