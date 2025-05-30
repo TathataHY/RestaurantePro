@@ -22,6 +22,11 @@ global using MediatR;              // CQRS pattern
 global using FluentValidation;     // Validation
 global using AutoMapper;           // DTO mapping
 
+// Testing Libraries
+global using Xunit;                // xUnit testing framework
+global using FluentAssertions;     // Fluent assertions for tests  
+global using Moq;                  // Mocking framework
+
 // Domain imports - usando todas las referencias del Domain GlobalUsings
 global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;
@@ -79,4 +84,21 @@ global using RestaurantePro.Domain.Proveedores.Entities;
 global using RestaurantePro.Domain.Proveedores.Interfaces;
 
 // Application - Common Interfaces (solo las específicas de Application)
-global using RestaurantePro.Application.Common.Interfaces; 
+global using RestaurantePro.Application.Common.Interfaces;
+
+// Application - Core/Productos
+global using RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
+global using RestaurantePro.Application.Core.Productos.Commands.ActualizarProducto;
+global using RestaurantePro.Application.Core.Productos.Commands.EliminarProducto;
+global using RestaurantePro.Application.Core.Productos.Queries.ObtenerProductoPorId;
+global using RestaurantePro.Application.Core.Productos.Queries.ObtenerProductosPaginados;
+global using RestaurantePro.Application.Core.Productos.Queries.ObtenerProductosPorCategoria;
+global using RestaurantePro.Application.Core.Productos.DTOs;
+
+// Application - Comercial/Clientes
+global using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente;
+global using RestaurantePro.Application.Comercial.Clientes.Commands.ActualizarCliente;
+global using RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarCliente;
+global using RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientePorId;
+global using RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientesPaginados;
+global using RestaurantePro.Application.Comercial.Clientes.DTOs; 
