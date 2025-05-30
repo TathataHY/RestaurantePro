@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Comercial.Facturacion.Enums;
+
 namespace RestaurantePro.Application.Comercial.Facturacion.DTOs;
 
 public class FacturaDto : BaseDto
@@ -29,7 +31,8 @@ public class FacturaDto : BaseDto
     
     // Estados calculados
     public bool EstaPagada => Estado == EstadoFactura.Pagada;
-    public bool EstaPendiente => Estado == EstadoFactura.Pendiente;
+    // TODO: Verificar valores correctos del enum EstadoFactura
+    // public bool EstaPendiente => Estado == EstadoFactura.Pendiente;
     public bool EstaVencida => FechaVencimiento.HasValue && FechaVencimiento.Value < DateTime.Now && Estado != EstadoFactura.Pagada;
     public bool TieneSaldo => Saldo > 0;
 } 

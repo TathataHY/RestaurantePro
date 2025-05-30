@@ -1,3 +1,7 @@
+using MediatR;
+using RestaurantePro.Application.Proveedores.ContactosProveedor.DTOs;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+
 namespace RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.AgregarContacto;
 
 /// <summary>

@@ -35,14 +35,8 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
             .GreaterThan(0)
             .WithMessage("El número de personas debe ser mayor a 0")
             .LessThanOrEqualTo(20)
-            .WithMessage("No se pueden hacer reservaciones para más de 20 personas por mesa")
-            .When(x => !x.EsRecurrente); // Para grupos grandes requieren gestión especial
-
-        RuleFor(x => x.DuracionEstimadaMinutos)
-            .GreaterThan(30)
-            .WithMessage("La duración debe ser de al menos 30 minutos")
-            .LessThanOrEqualTo(480)
-            .WithMessage("La duración no puede exceder 8 horas");
+            .WithMessage("No se pueden hacer reservaciones para más de 20 personas por mesa");
+            // .When(x => !x.EsRecurrente); // TODO: Implementar cuando esté la propiedad EsRecurrente
 
         RuleFor(x => x.Canal)
             .NotEmpty()
@@ -60,62 +54,17 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
             .WithMessage("El email no puede exceder 150 caracteres")
             .When(x => !string.IsNullOrEmpty(x.Email));
 
-        RuleFor(x => x.TipoMesaPreferida)
-            .MaximumLength(50)
-            .WithMessage("El tipo de mesa no puede exceder 50 caracteres")
-            .Must(BeValidTipoMesa)
-            .WithMessage("Tipo de mesa no válido. Valores permitidos: Interior, Terraza, VIP, Bar, Privado")
-            .When(x => !string.IsNullOrEmpty(x.TipoMesaPreferida));
-
-        RuleFor(x => x.ZonaPreferida)
-            .MaximumLength(50)
-            .WithMessage("La zona preferida no puede exceder 50 caracteres")
-            .When(x => !string.IsNullOrEmpty(x.ZonaPreferida));
-
+        // TODO: Implementar cuando estén las propiedades en CrearReservacionCommand
+        /*
         RuleFor(x => x.Comentarios)
-            .MaximumLength(500)
-            .WithMessage("Los comentarios no pueden exceder 500 caracteres")
+            .MaximumLength(1000)
             .When(x => !string.IsNullOrEmpty(x.Comentarios));
-
-        RuleFor(x => x.OcasionEspecial)
-            .MaximumLength(100)
-            .WithMessage("La ocasión especial no puede exceder 100 caracteres")
-            .Must(BeValidOcasionEspecial)
-            .WithMessage("Ocasión especial no válida. Valores sugeridos: Cumpleanos, Aniversario, Cita_Negocios, Celebracion, Romantica")
-            .When(x => !string.IsNullOrEmpty(x.OcasionEspecial));
-
-        RuleFor(x => x.PreferenciasAlimentarias)
-            .MaximumLength(300)
-            .WithMessage("Las preferencias alimentarias no pueden exceder 300 caracteres")
-            .When(x => !string.IsNullOrEmpty(x.PreferenciasAlimentarias));
+        */
 
         RuleFor(x => x.NotasInternas)
             .MaximumLength(500)
             .WithMessage("Las notas internas no pueden exceder 500 caracteres")
             .When(x => !string.IsNullOrEmpty(x.NotasInternas));
-
-        // Validaciones de lógica de negocio
-        RuleFor(x => x.MontoAnticipo)
-            .GreaterThan(0)
-            .WithMessage("El monto del anticipo debe ser mayor a 0")
-            .LessThanOrEqualTo(5000)
-            .WithMessage("El anticipo no puede exceder $5,000")
-            .When(x => x.MontoAnticipo.HasValue);
-
-        RuleFor(x => x.MetodoPagoAnticipo)
-            .NotEmpty()
-            .WithMessage("Si especifica anticipo, debe indicar el método de pago")
-            .Must(BeValidMetodoPago)
-            .WithMessage("Método de pago no válido. Valores permitidos: Efectivo, Tarjeta, Transferencia, PayPal")
-            .When(x => x.MontoAnticipo.HasValue);
-
-        // Validaciones condicionales
-        RuleFor(x => x.PatronRecurrencia)
-            .NotEmpty()
-            .WithMessage("Para reservaciones recurrentes debe especificar el patrón de recurrencia")
-            .Must(BeValidPatronRecurrencia)
-            .WithMessage("Patrón de recurrencia no válido. Valores permitidos: Semanal, Quincenal, Mensual")
-            .When(x => x.EsRecurrente);
 
         // Validaciones de horario de negocio
         RuleFor(x => x.FechaHoraReservacion)
@@ -131,41 +80,20 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
             .When(x => x.Canal.Equals("Web", StringComparison.OrdinalIgnoreCase) || 
                       x.Canal.Equals("App", StringComparison.OrdinalIgnoreCase));
 
-        // Validación de anticipación mínima para ocasiones especiales
-        RuleFor(x => x.FechaHoraReservacion)
-            .GreaterThan(DateTime.Now.AddHours(24))
-            .WithMessage("Las ocasiones especiales requieren al menos 24 horas de anticipación")
-            .When(x => !string.IsNullOrEmpty(x.OcasionEspecial));
+        // TODO: Implementar cuando estén las propiedades en CrearReservacionCommand
+        /*
+        RuleFor(x => x.DuracionEstimadaMinutos)
+            .GreaterThan(30)
+            .WithMessage("La duración debe ser de al menos 30 minutos")
+            .LessThanOrEqualTo(480)
+            .WithMessage("La duración no puede exceder 8 horas");
+        */
     }
 
     private static bool BeValidCanal(string canal)
     {
         var canalesValidos = new[] { "Web", "Telefono", "App", "Presencial", "WhatsApp", "Delivery" };
         return canalesValidos.Contains(canal, StringComparer.OrdinalIgnoreCase);
-    }
-
-    private static bool BeValidTipoMesa(string tipoMesa)
-    {
-        var tiposValidos = new[] { "Interior", "Terraza", "VIP", "Bar", "Privado", "Ventana", "Centro" };
-        return tiposValidos.Contains(tipoMesa, StringComparer.OrdinalIgnoreCase);
-    }
-
-    private static bool BeValidOcasionEspecial(string ocasion)
-    {
-        var ocasionesValidas = new[] { "Cumpleanos", "Aniversario", "Cita_Negocios", "Celebracion", "Romantica", "Familiar", "Graduacion" };
-        return ocasionesValidas.Contains(ocasion, StringComparer.OrdinalIgnoreCase);
-    }
-
-    private static bool BeValidMetodoPago(string metodoPago)
-    {
-        var metodosValidos = new[] { "Efectivo", "Tarjeta", "Transferencia", "PayPal", "Crypto" };
-        return metodosValidos.Contains(metodoPago, StringComparer.OrdinalIgnoreCase);
-    }
-
-    private static bool BeValidPatronRecurrencia(string patron)
-    {
-        var patronesValidos = new[] { "Semanal", "Quincenal", "Mensual", "Diario" };
-        return patronesValidos.Contains(patron, StringComparer.OrdinalIgnoreCase);
     }
 
     private static bool BeWithinBusinessHours(DateTime fechaHora)

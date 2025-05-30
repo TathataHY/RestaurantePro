@@ -32,11 +32,20 @@ public class CoreMappingProfile : Profile
             .ForMember(dest => dest.CreadoPor, opt => opt.MapFrom(src => "Sistema"))
             .ForMember(dest => dest.ModificadoPor, opt => opt.Ignore());
 
-        // 🔄 Entidad → DTO Resumido (Listas)
+        // 🔄 Entidad → DTO Resumido (Listas) - ARREGLADO
         CreateMap<Producto, ProductoSummaryDto>()
             .ForMember(dest => dest.Precio, opt => opt.MapFrom(src => src.Precio != null ? src.Precio.Valor : 0))
             .ForMember(dest => dest.CategoriaNombre, opt => opt.MapFrom(src => src.CategoriaNombre ?? "Sin categoría"))
-            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.EstaActivo));
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.EstaActivo))
+            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => DateTime.UtcNow))
+            .ForMember(dest => dest.CreadoPor, opt => opt.MapFrom(src => "Sistema"))
+            .ForMember(dest => dest.DescripcionCorta, opt => opt.MapFrom(src => 
+                !string.IsNullOrEmpty(src.Descripcion) && src.Descripcion.Length > 100 
+                    ? src.Descripcion.Substring(0, 100) + "..." 
+                    : src.Descripcion ?? "Sin descripción"))
+            .ForMember(dest => dest.Disponible, opt => opt.MapFrom(src => src.EstaActivo))
+            .ForMember(dest => dest.TotalIngredientes, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde recetas cuando esté implementado
+            .ForMember(dest => dest.CostoEstimado, opt => opt.MapFrom(src => (decimal?)null)); // TODO: Calcular desde ingredientes cuando esté implementado
 
         // ➕ DTO Create → Command (Input)
         CreateMap<ProductoCreateDto, CrearProductoCommand>();

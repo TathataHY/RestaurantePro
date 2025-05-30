@@ -1,11 +1,15 @@
+using RestaurantePro.Application.Common.DTOs;
+
 namespace RestaurantePro.Application.Operaciones.Mesas.DTOs;
 
 public class MesaDto : BaseDto
 {
     public int Numero { get; set; }
+    // Comentado temporalmente hasta encontrar el enum correcto
+    // public ZonaMesa Zona { get; set; }
+    public string Zona { get; set; } = string.Empty;
     public int Capacidad { get; set; }
-    public ZonaMesa Zona { get; set; }
-    public string ZonaTexto => Zona.ToString();
+    public bool Disponible { get; set; }
     public EstadoMesa Estado { get; set; }
     public string EstadoTexto => Estado.ToString();
     public string? Descripcion { get; set; }

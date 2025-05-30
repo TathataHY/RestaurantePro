@@ -186,6 +186,8 @@ public class ObtenerClientesPaginadosHandler : IRequestHandler<ObtenerClientesPa
     /// </summary>
     private void EnriquecerClienteDto(ClienteSummaryDto clienteDto)
     {
+        // TODO: Implementar cuando estén disponibles todas las propiedades en ClienteSummaryDto
+        /*
         // Calcular días desde última actividad
         var diasSinActividad = (DateTime.Now - clienteDto.FechaCreacion).Days;
         
@@ -210,6 +212,7 @@ public class ObtenerClientesPaginadosHandler : IRequestHandler<ObtenerClientesPa
 
         // Formatear información adicional para UI
         clienteDto.ResumenActividad = $"{clienteDto.CantidadVisitas} visitas, {clienteDto.PuntosAcumulados} puntos";
+        */
     }
 
     /// <summary>

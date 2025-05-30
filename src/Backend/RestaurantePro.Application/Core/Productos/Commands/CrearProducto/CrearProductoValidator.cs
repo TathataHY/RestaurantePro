@@ -27,9 +27,7 @@ public class CrearProductoValidator : AbstractValidator<CrearProductoCommand>
             .WithMessage("El precio no puede exceder $10,000");
 
         RuleFor(x => x.CategoriaId)
-            .NotEmpty()
-            .WithMessage("Debe seleccionar una categoría válida")
             .NotEqual(Guid.Empty)
-            .WithMessage("El ID de categoría no puede estar vacío");
+            .WithMessage("El ID de categoría es obligatorio");
     }
 } 

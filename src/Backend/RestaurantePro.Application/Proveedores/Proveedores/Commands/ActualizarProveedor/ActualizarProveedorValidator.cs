@@ -37,6 +37,8 @@ public class ActualizarProveedorValidator : AbstractValidator<ActualizarProveedo
             .MaximumLength(200)
             .WithMessage("La dirección no puede exceder 200 caracteres");
 
+        // TODO: Implementar cuando estén disponibles las propiedades en ActualizarProveedorCommand
+        /*
         RuleFor(x => x.PaginaWeb)
             .Must(BeValidUrl)
             .WithMessage("La página web debe tener un formato de URL válido")
@@ -63,6 +65,7 @@ public class ActualizarProveedorValidator : AbstractValidator<ActualizarProveedo
         RuleFor(x => x.Notas)
             .MaximumLength(1000)
             .WithMessage("Las notas no pueden exceder 1000 caracteres");
+        */
     }
 
     private static bool BeValidUrl(string? url)

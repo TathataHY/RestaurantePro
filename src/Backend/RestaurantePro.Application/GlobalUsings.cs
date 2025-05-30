@@ -81,13 +81,27 @@ global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
 global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums;
 global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
 
+// Domain - Proveedores (Estructura real)
+global using RestaurantePro.Domain.Proveedores.Entities;
+global using RestaurantePro.Domain.Proveedores.Interfaces;
+global using RestaurantePro.Domain.Proveedores.Enums;
+global using RestaurantePro.Domain.Proveedores.ValueObjects;
+global using RestaurantePro.Domain.Proveedores.Builders;
+
 // Application - Common (DTOs compartidos y behaviors)
 global using RestaurantePro.Application.Common.DTOs;
 global using RestaurantePro.Application.Common.Behaviors;
 global using RestaurantePro.Application.Common.Exceptions;
+global using RestaurantePro.Application.Common.Interfaces;
 
 // Application - Core DTOs (Por contexto)
 global using RestaurantePro.Application.Core.Productos.DTOs;
+
+// Application - Operaciones DTOs
+global using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
+
+// Application - Proveedores DTOs  
+global using RestaurantePro.Application.Proveedores.ContactosProveedor.DTOs;
 
 // Application - Configuration (AutoMapper y DI)
 global using RestaurantePro.Application.Config.Mappings;

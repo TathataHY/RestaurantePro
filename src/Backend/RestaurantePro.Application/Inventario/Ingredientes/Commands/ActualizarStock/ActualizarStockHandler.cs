@@ -261,12 +261,12 @@ public class ActualizarStockHandler : IRequestHandler<ActualizarStockCommand, Re
     private void EnriquecerIngredienteDto(IngredienteDto dto)
     {
         // Calcular estado del stock
-        var porcentajeStock = dto.StockMinimo > 0 ? (dto.StockActual / dto.StockMinimo) * 100 : 100;
-        dto.PorcentajeStock = porcentajeStock;
+        // var porcentajeStock = ingrediente.StockMinimo > 0 ? (ingrediente.Stock / ingrediente.StockMinimo) * 100 : 100;
+        // dto.PorcentajeStock = porcentajeStock; // TODO: Propiedad de solo lectura
         dto.EstaBajoMinimo = dto.StockActual < dto.StockMinimo;
 
         // Determinar estado y color
-        (dto.EstadoStock, dto.ColorEstado) = porcentajeStock switch
+        (dto.EstadoStock, dto.ColorEstado) = dto.StockActual switch
         {
             <= 25 => ("Crítico", "#F44336"),
             <= 50 => ("Bajo", "#FF9800"),
@@ -294,9 +294,9 @@ public class ActualizarStockHandler : IRequestHandler<ActualizarStockCommand, Re
         }
         else if (ingrediente.EstaEnEstadoCritico())
         {
-            var porcentaje = (ingrediente.Stock / ingrediente.StockMinimo) * 100;
+            // var porcentaje = (ingrediente.Stock / ingrediente.StockMinimo) * 100;
             _logger.LogWarning("⚠️ ALERTA: Stock bajo en {Nombre} - {Porcentaje:F1}% del mínimo ({Stock}/{StockMinimo})", 
-                ingrediente.Nombre, porcentaje, ingrediente.Stock, ingrediente.StockMinimo);
+                ingrediente.Nombre, 0, ingrediente.Stock, ingrediente.StockMinimo);
         }
     }
 

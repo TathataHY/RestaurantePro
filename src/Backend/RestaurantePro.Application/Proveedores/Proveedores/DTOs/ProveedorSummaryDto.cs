@@ -106,6 +106,33 @@ public class ProveedorSummaryDto
     /// </summary>
     public decimal PorcentajeCumplimiento { get; set; }
 
+    // === PROPIEDADES FALTANTES AGREGADAS ===
+    
+    /// <summary>
+    /// Días de crédito del proveedor
+    /// </summary>
+    public int DiasCredito { get; set; }
+    
+    /// <summary>
+    /// Nombre del contacto principal
+    /// </summary>
+    public string NombreContacto { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Email del contacto principal
+    /// </summary>
+    public string Email { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Fecha de registro del proveedor
+    /// </summary>
+    public DateTime FechaRegistro { get; set; }
+    
+    /// <summary>
+    /// Indicador si está activo (copia de Activo para consistencia)
+    /// </summary>
+    public bool EstaActivo => Activo;
+
     // === PROPIEDADES CALCULADAS PARA UI ===
 
     /// <summary>
@@ -172,4 +199,44 @@ public class ProveedorSummaryDto
     /// Prioridad para ordenamiento (activos primero, luego por nombre)
     /// </summary>
     public int Prioridad => Activo ? 1 : 2;
+
+    /// <summary>
+    /// Calcula el color visual del estado crediticio basado en días de crédito
+    /// </summary>
+    public string ColorEstadoCredito => 
+        DiasCredito <= 7 ? "#22c55e" :    // Verde: Excelente 
+        DiasCredito <= 15 ? "#eab308" :   // Amarillo: Bueno
+        "#ef4444";                        // Rojo: Requiere seguimiento
+
+    /// <summary>
+    /// Proporciona un resumen textual del estado crediticio
+    /// </summary>
+    public string ResumenCredito =>
+        DiasCredito <= 7 ? "Excelente" :
+        DiasCredito <= 15 ? "Bueno" :
+        "Requiere seguimiento";
+
+    /// <summary>
+    /// Genera el contacto principal con formato para mostrar
+    /// </summary>
+    public string ContactoPrincipalDisplay =>
+        !string.IsNullOrEmpty(NombreContacto) ? $"{NombreContacto} ({Email})" : "Sin contacto asignado";
+
+    /// <summary>
+    /// Información adicional sobre el proveedor para el resumen
+    /// </summary>
+    public string InformacionAdicional =>
+        $"Registrado: {FechaRegistro:dd/MM/yyyy}";
+
+    /// <summary>
+    /// Determina el color de prioridad de contacto
+    /// </summary>
+    public string ColorPrioridad => EstaActivo ? "#22c55e" : "#ef4444";
+
+    /// <summary>
+    /// Resumen de contacto con validación
+    /// </summary>
+    public string ResumenContacto => 
+        !string.IsNullOrEmpty(NombreContacto) ? $"Contacto: {NombreContacto} ({Email})" :
+        "Sin información de contacto disponible";
 } 

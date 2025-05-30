@@ -1,10 +1,12 @@
+using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
+
 namespace RestaurantePro.Application.Inventario.MovimientosInventario.DTOs;
 
 public class MovimientoInventarioDto : BaseDto
 {
     public Guid IngredienteId { get; set; }
     public string NombreIngrediente { get; set; } = string.Empty;
-    public TipoMovimiento TipoMovimiento { get; set; }
+    public TipoMovimientoInventario TipoMovimiento { get; set; }
     public string TipoMovimientoTexto => TipoMovimiento.ToString();
     public decimal Cantidad { get; set; }
     public decimal CostoUnitario { get; set; }

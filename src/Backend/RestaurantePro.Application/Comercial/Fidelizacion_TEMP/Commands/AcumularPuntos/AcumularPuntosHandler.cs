@@ -1,3 +1,8 @@
+using MediatR;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Comercial.Fidelizacion.DTOs;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+
 namespace RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos;
 
 /// <summary>

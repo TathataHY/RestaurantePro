@@ -17,11 +17,6 @@ public class ComandaCreateDto
     public Guid? MesaId { get; set; }
 
     /// <summary>
-    /// ID del cliente asociado (opcional)
-    /// </summary>
-    public Guid? ClienteId { get; set; }
-
-    /// <summary>
     /// Observaciones iniciales de la comanda
     /// </summary>
     public string? Observaciones { get; set; }

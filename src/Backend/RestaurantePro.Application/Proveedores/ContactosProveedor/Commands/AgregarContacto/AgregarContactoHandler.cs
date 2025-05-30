@@ -1,3 +1,7 @@
+using MediatR;
+using RestaurantePro.Application.Proveedores.ContactosProveedor.DTOs;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+
 namespace RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.AgregarContacto;
 
 /// <summary>
@@ -6,24 +10,18 @@ namespace RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.Agr
 /// </summary>
 public class AgregarContactoHandler : IRequestHandler<AgregarContactoCommand, Result<ContactoProveedorDto>>
 {
-    private readonly IContactoProveedorRepository _contactoRepository;
     private readonly IProveedorRepository _proveedorRepository;
-    private readonly ContactoProveedorBuilder _contactoBuilder;
     private readonly IMapper _mapper;
     private readonly ILogger<AgregarContactoHandler> _logger;
     private readonly ICurrentUserService _currentUser;
 
     public AgregarContactoHandler(
-        IContactoProveedorRepository contactoRepository,
         IProveedorRepository proveedorRepository,
-        ContactoProveedorBuilder contactoBuilder,
         IMapper mapper,
         ILogger<AgregarContactoHandler> logger,
         ICurrentUserService currentUser)
     {
-        _contactoRepository = contactoRepository;
         _proveedorRepository = proveedorRepository;
-        _contactoBuilder = contactoBuilder;
         _mapper = mapper;
         _logger = logger;
         _currentUser = currentUser;
@@ -36,127 +34,87 @@ public class AgregarContactoHandler : IRequestHandler<AgregarContactoCommand, Re
 
         try
         {
-            // 1. Verificar que el proveedor existe
-            var proveedor = await _proveedorRepository.ObtenerPorIdAsync(request.ProveedorId);
+            // 1. Verificar que el proveedor existe y obtener con contactos
+            var proveedor = await _proveedorRepository.ObtenerPorIdAsync(request.ProveedorId, incluirContactos: true, cancellationToken: cancellationToken);
             if (proveedor == null)
             {
                 _logger.LogWarning("Proveedor no encontrado: {ProveedorId}", request.ProveedorId);
-                return Result<ContactoProveedorDto>.Failure("El proveedor especificado no existe");
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>("El proveedor especificado no existe");
             }
 
             // 2. Validar unicidad del email
-            var contactoExistente = await _contactoRepository.BuscarPorEmailAsync(request.Email, request.ProveedorId);
+            var contactoExistente = proveedor.Contactos.FirstOrDefault(c => c.Email.Value.Equals(request.Email, StringComparison.OrdinalIgnoreCase));
             if (contactoExistente != null)
             {
                 _logger.LogWarning("Ya existe un contacto con email {Email} para el proveedor {ProveedorId}", 
                     request.Email, request.ProveedorId);
-                return Result<ContactoProveedorDto>.Failure("Ya existe un contacto con este email para el proveedor");
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>("Ya existe un contacto con este email para el proveedor");
             }
 
-            // 3. Validar contacto principal único
-            if (request.EsPrincipal)
-            {
-                var contactoPrincipalExistente = await _contactoRepository.ObtenerContactoPrincipalAsync(request.ProveedorId);
-                if (contactoPrincipalExistente != null)
-                {
-                    // Marcar el anterior como no principal
-                    var resultadoDesmarcar = contactoPrincipalExistente.MarcarComoNoPrincipal(_currentUser.UserId ?? "Sistema");
-                    if (!resultadoDesmarcar.Succeeded)
-                    {
-                        return Result<ContactoProveedorDto>.Failure($"Error al actualizar contacto principal anterior: {resultadoDesmarcar.ErrorMessage}");
-                    }
-                    
-                    await _contactoRepository.ActualizarAsync(contactoPrincipalExistente);
-                    _logger.LogInformation("Contacto principal anterior desmarcado: {ContactoId}", contactoPrincipalExistente.Id);
-                }
-            }
-
-            // 4. Usar el builder del dominio para crear el contacto
-            var resultadoBuilder = _contactoBuilder
-                .DeProveedor(request.ProveedorId)
-                .ConNombre(request.Nombre, request.Apellidos)
-                .ConCargo(request.Cargo)
-                .ConEmail(request.Email)
-                .ConTelefono(request.Telefono)
-                .ConDepartamento(request.Departamento)
-                .ConEmailSecundario(request.EmailSecundario)
-                .ConTelefonoMovil(request.TelefonoMovil)
-                .ConExtension(request.Extension)
-                .ConHorarioContacto(request.HorarioContacto)
-                .ConNotas(request.Notas)
-                .ComoPrincipal(request.EsPrincipal)
-                .ConPermisosAutorizacion(request.PuedeAutorizarPedidos, request.LimiteAutorizacion)
-                .ConNotificaciones(request.RecibeNotificaciones, request.TiposNotificaciones)
-                .ConDatosAdicionales(request.DatosAdicionales)
-                .CreadoPor(_currentUser.UserId ?? "Sistema")
-                .Construir();
-
-            if (!resultadoBuilder.Succeeded)
-            {
-                _logger.LogWarning("Error al construir contacto: {Error}", resultadoBuilder.ErrorMessage);
-                return Result<ContactoProveedorDto>.Failure(resultadoBuilder.ErrorMessage);
-            }
-
-            var contacto = resultadoBuilder.Value;
-
-            // 5. Validaciones adicionales de negocio
-            var validacionNegocio = await ValidarReglasDeNegocio(contacto, proveedor);
+            // 3. Validaciones adicionales de negocio
+            var validacionNegocio = ValidarReglasDeNegocio(proveedor, request);
             if (!validacionNegocio.Succeeded)
             {
-                return Result<ContactoProveedorDto>.Failure(validacionNegocio.ErrorMessage);
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>(validacionNegocio.Error ?? "Error en validación de reglas de negocio");
             }
 
-            // 6. Agregar el contacto al repositorio
-            await _contactoRepository.AgregarAsync(contacto);
+            // 4. Crear el nombre completo
+            var nombreCompleto = !string.IsNullOrWhiteSpace(request.Apellidos) 
+                ? $"{request.Nombre} {request.Apellidos}" 
+                : request.Nombre;
 
-            // 7. Actualizar estadísticas del proveedor
-            await ActualizarEstadisticasProveedor(proveedor);
+            // 5. Usar el método del dominio para agregar el contacto
+            var contacto = proveedor.AgregarContacto(
+                nombreCompleto,
+                request.Cargo ?? "No especificado",
+                request.Telefono ?? string.Empty,
+                request.Email,
+                request.EsPrincipal,
+                request.Notas);
+
+            // 6. Guardar cambios
+            await _proveedorRepository.ActualizarAsync(proveedor);
+            await _proveedorRepository.GuardarCambiosAsync(cancellationToken);
 
             _logger.LogInformation("Contacto creado exitosamente: {ContactoId} para proveedor {ProveedorId}", 
                 contacto.Id, request.ProveedorId);
 
-            // 8. Mapear y retornar
+            // 7. Mapear y retornar
             var contactoDto = _mapper.Map<ContactoProveedorDto>(contacto);
             return Result<ContactoProveedorDto>.Success(contactoDto);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error inesperado al crear contacto para proveedor {ProveedorId}", request.ProveedorId);
-            return Result<ContactoProveedorDto>.Failure("Error interno del servidor al crear el contacto");
+            return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>("Error interno del servidor al crear el contacto");
         }
     }
 
-    private async Task<Result> ValidarReglasDeNegocio(ContactoProveedor contacto, Proveedor proveedor)
+    private Result ValidarReglasDeNegocio(Proveedor proveedor, AgregarContactoCommand request)
     {
         try
         {
-            // Validar límites de contactos por proveedor
-            var cantidadContactos = await _contactoRepository.ContarContactosActivosAsync(proveedor.Id);
-            if (cantidadContactos >= 10) // Máximo 10 contactos por proveedor
+            // Validar límites de contactos por proveedor (máximo 10)
+            if (proveedor.Contactos.Count >= 10)
             {
                 return Result.Failure("El proveedor ha alcanzado el límite máximo de contactos (10)");
             }
 
-            // Validar que el límite de autorización sea coherente con el tipo de proveedor
-            if (contacto.PuedeAutorizarPedidos && contacto.LimiteAutorizacion.HasValue)
+            // Validar que solo haya un contacto principal
+            if (request.EsPrincipal && proveedor.Contactos.Any())
             {
-                var limiteMaximoProveedor = proveedor.CalcularLimiteMaximoAutorizacion();
-                if (contacto.LimiteAutorizacion > limiteMaximoProveedor)
-                {
-                    return Result.Failure($"El límite de autorización excede el máximo permitido para este proveedor: ${limiteMaximoProveedor:N2}");
-                }
+                _logger.LogInformation("Se establecerá nuevo contacto principal para proveedor {ProveedorId}", proveedor.Id);
             }
 
-            // Validar tipos de notificaciones permitidas según el perfil del proveedor
-            if (contacto.TiposNotificaciones.Any())
+            // Validar datos mínimos requeridos
+            if (string.IsNullOrWhiteSpace(request.Nombre))
             {
-                var tiposPermitidos = proveedor.ObtenerTiposNotificacionesPermitidas();
-                var tiposNoPermitidos = contacto.TiposNotificaciones.Except(tiposPermitidos, StringComparer.OrdinalIgnoreCase);
-                
-                if (tiposNoPermitidos.Any())
-                {
-                    return Result.Failure($"Tipos de notificaciones no permitidos para este proveedor: {string.Join(", ", tiposNoPermitidos)}");
-                }
+                return Result.Failure("El nombre del contacto es obligatorio");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Email))
+            {
+                return Result.Failure("El email del contacto es obligatorio");
             }
 
             return Result.Success();
@@ -165,23 +123,6 @@ public class AgregarContactoHandler : IRequestHandler<AgregarContactoCommand, Re
         {
             _logger.LogError(ex, "Error validando reglas de negocio para contacto");
             return Result.Failure("Error en validación de reglas de negocio");
-        }
-    }
-
-    private async Task ActualizarEstadisticasProveedor(Proveedor proveedor)
-    {
-        try
-        {
-            var resultadoActualizacion = proveedor.ActualizarCantidadContactos(_currentUser.UserId ?? "Sistema");
-            if (resultadoActualizacion.Succeeded)
-            {
-                await _proveedorRepository.ActualizarAsync(proveedor);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error actualizando estadísticas del proveedor {ProveedorId}", proveedor.Id);
-            // No fallar la operación principal por errores en estadísticas
         }
     }
 } 

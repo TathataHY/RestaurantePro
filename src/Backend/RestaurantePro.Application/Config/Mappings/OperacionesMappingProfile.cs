@@ -1,10 +1,14 @@
+using AutoMapper;
 using RestaurantePro.Application.Operaciones.Comandas.DTOs;
 using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
 using RestaurantePro.Application.Operaciones.Comandas.Commands.AgregarItemComanda;
-using RestaurantePro.Application.Operaciones.Mesa.DTOs;
-using RestaurantePro.Application.Operaciones.Mesa.Commands.CrearMesa;
-using RestaurantePro.Application.Operaciones.Reservacion.DTOs;
-using RestaurantePro.Application.Operaciones.Reservacion.Commands.CrearReservacion;
+// TODO: Uncomment when Mesa DTOs are created
+// using RestaurantePro.Application.Operaciones.Mesa.DTOs;
+// using RestaurantePro.Application.Operaciones.Mesa.Commands.CrearMesa;
+// TODO: Uncomment when Reservacion DTOs are created  
+// using RestaurantePro.Application.Operaciones.Reservacion.DTOs;
+// using RestaurantePro.Application.Operaciones.Reservacion.Commands.CrearReservacion;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
 
 namespace RestaurantePro.Application.Config.Mappings;
 
@@ -18,8 +22,9 @@ public class OperacionesMappingProfile : Profile
     {
         ConfigurarMapeosComanda();
         ConfigurarMapeosItemComanda();
-        ConfigurarMapeosMesa();
-        ConfigurarMapeosReservacion();
+        // TODO: Uncomment when Mesa and Reservacion DTOs are created
+        // ConfigurarMapeosMesa();
+        // ConfigurarMapeosReservacion();
     }
 
     /// <summary>
@@ -36,40 +41,44 @@ public class OperacionesMappingProfile : Profile
             .ForMember(dest => dest.Impuestos, opt => opt.MapFrom(src => src.Total != null ? src.Total.Impuestos : 0))
             .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total != null ? src.Total.Total : 0))
             .ForMember(dest => dest.CantidadItems, opt => opt.MapFrom(src => src.Items.Count))
-            .ForMember(dest => dest.TieneDescuentoFidelizacion, opt => opt.MapFrom(src => src.TieneDescuentoFidelizacion()))
-            .ForMember(dest => dest.PuedeModificar, opt => opt.MapFrom(src => PuedeModificarComanda(src.Estado)))
-            .ForMember(dest => dest.PuedeCancelar, opt => opt.MapFrom(src => PuedeCancelarComanda(src.Estado)))
-            .ForMember(dest => dest.TiempoTranscurrido, opt => opt.MapFrom(src => DateTime.Now - src.FechaCreacion))
-            .ForMember(dest => dest.TiempoEstimadoPreparacion, opt => opt.MapFrom(src => CalcularTiempoEstimado(src.Items)))
+            // TODO: Reactivar cuando existan estas propiedades en ComandaDto
+            //.ForMember(dest => dest.TieneDescuentoFidelizacion, opt => opt.MapFrom(src => src.TieneDescuentoFidelizacion()))
+            //.ForMember(dest => dest.PuedeModificar, opt => opt.MapFrom(src => PuedeModificarComanda(src.Estado)))
+            //.ForMember(dest => dest.PuedeCancelar, opt => opt.MapFrom(src => PuedeCancelarComanda(src.Estado)))
+            //.ForMember(dest => dest.TiempoTranscurrido, opt => opt.MapFrom(src => DateTime.Now - src.FechaCreacion))
+            //.ForMember(dest => dest.TiempoEstimadoPreparacion, opt => opt.MapFrom(src => CalcularTiempoEstimado(src.Items)))
             // Propiedades de BaseDto
             .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.Estado != EstadoComanda.Cancelada))
             .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
             .ForMember(dest => dest.FechaModificacion, opt => opt.MapFrom(src => src.FechaActualizacion))
             // Campos que requieren datos adicionales (se pueden completar en el handler)
-            .ForMember(dest => dest.NumeroMesa, opt => opt.Ignore())
-            .ForMember(dest => dest.NombreMesero, opt => opt.Ignore())
-            .ForMember(dest => dest.NombreCliente, opt => opt.Ignore())
-            .ForMember(dest => dest.NombreUsuario, opt => opt.MapFrom(src => src.Usuario != null ? src.Usuario.Nombre : string.Empty));
+            .ForMember(dest => dest.NumeroMesa, opt => opt.Ignore());
+            // TODO: Reactivar cuando existan propiedades Usuario en Domain
+            //.ForMember(dest => dest.NombreMesero, opt => opt.Ignore())
+            //.ForMember(dest => dest.NombreCliente, opt => opt.Ignore())
+            //.ForMember(dest => dest.NombreUsuario, opt => opt.MapFrom(src => src.Usuario != null ? src.Usuario.Nombre : string.Empty));
 
         // Comanda → ComandaSummaryDto (mapeo resumido para listas)
         CreateMap<Comanda, ComandaSummaryDto>()
             .ForMember(dest => dest.NumeroComanda, opt => opt.MapFrom(src => $"C-{src.Id.ToString().Substring(0, 8)}"))
             .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado.ToString()))
-            .ForMember(dest => dest.EstadoDisplay, opt => opt.MapFrom(src => MapearEstadoTexto(src.Estado)))
+            // TODO: Reactivar cuando existan estas propiedades en ComandaSummaryDto
+            //.ForMember(dest => dest.EstadoDisplay, opt => opt.MapFrom(src => MapearEstadoTexto(src.Estado)))
             .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
-            .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total != null ? src.Total.Total : 0))
-            .ForMember(dest => dest.CantidadItems, opt => opt.MapFrom(src => src.Items.Count))
-            .ForMember(dest => dest.TiempoTranscurrido, opt => opt.MapFrom(src => DateTime.Now - src.FechaCreacion))
-            .ForMember(dest => dest.TiempoTranscurridoTexto, opt => opt.MapFrom(src => FormatearTiempoTranscurrido(DateTime.Now - src.FechaCreacion)))
-            .ForMember(dest => dest.EstaAtrasada, opt => opt.MapFrom(src => EstaComandaAtrasada(src)))
-            .ForMember(dest => dest.Prioridad, opt => opt.MapFrom(src => CalcularPrioridad(src)))
-            .ForMember(dest => dest.TieneObservaciones, opt => opt.MapFrom(src => !string.IsNullOrWhiteSpace(src.Observaciones)))
-            .ForMember(dest => dest.TieneDescuento, opt => opt.MapFrom(src => src.TieneDescuentoFidelizacion()))
-            .ForMember(dest => dest.ColorEstado, opt => opt.MapFrom(src => MapearColorEstado(src.Estado)))
+            .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total != null ? src.Total.Total : 0));
+            // TODO: Reactivar cuando existan estas propiedades en ComandaSummaryDto
+            //.ForMember(dest => dest.CantidadItems, opt => opt.MapFrom(src => src.Items.Count))
+            //.ForMember(dest => dest.TiempoTranscurrido, opt => opt.MapFrom(src => DateTime.Now - src.FechaCreacion))
+            //.ForMember(dest => dest.TiempoTranscurridoTexto, opt => opt.MapFrom(src => FormatearTiempoTranscurrido(DateTime.Now - src.FechaCreacion)))
+            //.ForMember(dest => dest.EstaAtrasada, opt => opt.MapFrom(src => EstaComandaAtrasada(src)))
+            //.ForMember(dest => dest.Prioridad, opt => opt.MapFrom(src => CalcularPrioridad(src)))
+            //.ForMember(dest => dest.TieneObservaciones, opt => opt.MapFrom(src => !string.IsNullOrWhiteSpace(src.Observaciones)))
+            //.ForMember(dest => dest.TieneDescuento, opt => opt.MapFrom(src => src.TieneDescuentoFidelizacion()))
+            //.ForMember(dest => dest.ColorEstado, opt => opt.MapFrom(src => MapearColorEstado(src.Estado)))
             // Campos que requieren datos adicionales
-            .ForMember(dest => dest.NumeroMesa, opt => opt.Ignore())
-            .ForMember(dest => dest.NombreMesero, opt => opt.Ignore())
-            .ForMember(dest => dest.NombreCliente, opt => opt.Ignore());
+            //.ForMember(dest => dest.NumeroMesa, opt => opt.Ignore())
+            //.ForMember(dest => dest.NombreMesero, opt => opt.Ignore())
+            //.ForMember(dest => dest.NombreCliente, opt => opt.Ignore());
 
         // ComandaCreateDto → CrearComandaCommand (DTO de entrada a comando)
         CreateMap<ComandaCreateDto, CrearComandaCommand>();
@@ -87,22 +96,24 @@ public class OperacionesMappingProfile : Profile
             .ForMember(dest => dest.TienePersonalizaciones, opt => opt.MapFrom(src => src.Personalizaciones.Any()))
             .ForMember(dest => dest.PrecioPersonalizaciones, opt => opt.MapFrom(src => src.Personalizaciones.Sum(p => p.PrecioAdicional)))
             .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Subtotal + src.Personalizaciones.Sum(p => p.PrecioAdicional)))
-            .ForMember(dest => dest.Personalizaciones, opt => opt.MapFrom(src => src.Personalizaciones))
-            // Campos que requieren datos adicionales del catálogo
-            .ForMember(dest => dest.NombreProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Nombre : string.Empty))
-            .ForMember(dest => dest.DescripcionProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Descripcion : null));
+            .ForMember(dest => dest.Personalizaciones, opt => opt.MapFrom(src => src.Personalizaciones));
+            // TODO: Reactivar cuando existan propiedades Producto en Domain
+            //.ForMember(dest => dest.NombreProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Nombre : string.Empty))
+            //.ForMember(dest => dest.DescripcionProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Descripcion : null));
 
         // TODO: Mapear personalizaciones cuando estén disponibles en el dominio
         // CreateMap<PersonalizacionItem, PersonalizacionDto>()
         //     .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Tipo.ToString()));
 
+        // TODO: Reactivar cuando existan DTOs
         // ItemComandaCreateDto → AgregarItemComandaCommand (DTO de entrada a comando)
-        CreateMap<ItemComandaCreateDto, AgregarItemComandaCommand>();
+        //CreateMap<ItemComandaCreateDto, AgregarItemComandaCommand>();
     }
 
     /// <summary>
     /// Configura los mapeos para Mesa
     /// </summary>
+    /*
     private void ConfigurarMapeosMesa()
     {
         // Mesa → MesaDto
@@ -110,10 +121,12 @@ public class OperacionesMappingProfile : Profile
             .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => src.Estado.ToString()))
             .ForMember(dest => dest.ZonaTexto, opt => opt.MapFrom(src => src.Zona.ToString()));
     }
+    */
 
     /// <summary>
     /// Configura los mapeos para Reservacion
     /// </summary>
+    /*
     private void ConfigurarMapeosReservacion()
     {
         // Reservacion → ReservacionDto
@@ -125,6 +138,7 @@ public class OperacionesMappingProfile : Profile
         // ReservacionCreateDto → CrearReservacionCommand (DTO de entrada a comando)
         CreateMap<ReservacionCreateDto, CrearReservacionCommand>();
     }
+    */
 
     /// <summary>
     /// Mapea el estado de la comanda a texto amigable

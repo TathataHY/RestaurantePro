@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+
 namespace RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.ActualizarContacto;
 
 /// <summary>
@@ -6,20 +8,17 @@ namespace RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.Act
 /// </summary>
 public class ActualizarContactoHandler : IRequestHandler<ActualizarContactoCommand, Result<ContactoProveedorDto>>
 {
-    private readonly IContactoProveedorRepository _contactoRepository;
     private readonly IProveedorRepository _proveedorRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<ActualizarContactoHandler> _logger;
     private readonly ICurrentUserService _currentUser;
 
     public ActualizarContactoHandler(
-        IContactoProveedorRepository contactoRepository,
         IProveedorRepository proveedorRepository,
         IMapper mapper,
         ILogger<ActualizarContactoHandler> logger,
         ICurrentUserService currentUser)
     {
-        _contactoRepository = contactoRepository;
         _proveedorRepository = proveedorRepository;
         _mapper = mapper;
         _logger = logger;
@@ -33,233 +32,103 @@ public class ActualizarContactoHandler : IRequestHandler<ActualizarContactoComma
 
         try
         {
-            // 1. Verificar que el contacto existe
-            var contactoExistente = await _contactoRepository.ObtenerPorIdAsync(request.Id);
+            // 1. Verificar que el proveedor existe y obtener con contactos
+            var proveedor = await _proveedorRepository.ObtenerPorIdAsync(request.ProveedorId, incluirContactos: true, cancellationToken: cancellationToken);
+            if (proveedor == null)
+            {
+                _logger.LogWarning("Proveedor no encontrado: {ProveedorId}", request.ProveedorId);
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>("El proveedor especificado no existe");
+            }
+
+            // 2. Buscar el contacto específico
+            var contactoExistente = proveedor.Contactos.FirstOrDefault(c => c.Id == request.Id);
             if (contactoExistente == null)
             {
                 _logger.LogWarning("Contacto no encontrado: {ContactoId}", request.Id);
-                return Result<ContactoProveedorDto>.Failure("El contacto especificado no existe");
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>("El contacto especificado no existe");
             }
 
-            // 2. Verificar que pertenece al proveedor especificado
+            // 3. Verificar que pertenece al proveedor especificado
             if (contactoExistente.ProveedorId != request.ProveedorId)
             {
                 _logger.LogWarning("Intento de actualizar contacto {ContactoId} con proveedor incorrecto. Actual: {ProveedorActual}, Especificado: {ProveedorEspecificado}", 
                     request.Id, contactoExistente.ProveedorId, request.ProveedorId);
-                return Result<ContactoProveedorDto>.Failure("El contacto no pertenece al proveedor especificado");
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>("El contacto no pertenece al proveedor especificado");
             }
 
-            // 3. Verificar que el proveedor existe
-            var proveedor = await _proveedorRepository.ObtenerPorIdAsync(request.ProveedorId);
-            if (proveedor == null)
+            // 4. Validar unicidad del email (si cambió)
+            if (!contactoExistente.Email.Value.Equals(request.Email, StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Proveedor no encontrado: {ProveedorId}", request.ProveedorId);
-                return Result<ContactoProveedorDto>.Failure("El proveedor especificado no existe");
+                var contactoConEmail = proveedor.Contactos.FirstOrDefault(c => 
+                    c.Id != request.Id && 
+                    c.Email.Value.Equals(request.Email, StringComparison.OrdinalIgnoreCase));
+                
+                if (contactoConEmail != null)
+                {
+                    _logger.LogWarning("Conflicto de email: {Email} ya está en uso por el contacto {ContactoId}", 
+                        request.Email, contactoConEmail.Id);
+                    return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>("Ya existe otro contacto con este email para el proveedor");
+                }
             }
 
-            // 4. Detectar conflictos de email
-            var conflictoEmail = await DetectarConflictoEmail(request);
-            if (!conflictoEmail.Succeeded)
-            {
-                return Result<ContactoProveedorDto>.Failure(conflictoEmail.ErrorMessage);
-            }
-
-            // 5. Gestionar cambios en contacto principal
-            var resultadoPrincipal = await GestionarCambioContactoPrincipal(request, contactoExistente);
-            if (!resultadoPrincipal.Succeeded)
-            {
-                return Result<ContactoProveedorDto>.Failure(resultadoPrincipal.ErrorMessage);
-            }
-
-            // 6. Detectar cambios significativos para auditoría
-            var cambiosDetectados = DetectarCambiosSignificativos(contactoExistente, request);
-
-            // 7. Actualizar el contacto con los nuevos datos
-            var resultadoActualizacion = contactoExistente.Actualizar(
-                request.Nombre,
-                request.Apellidos,
-                request.Cargo,
-                request.Departamento,
-                request.Email,
-                request.EmailSecundario,
-                request.Telefono,
-                request.TelefonoMovil,
-                request.Extension,
-                request.HorarioContacto,
-                request.Notas,
-                request.EsPrincipal,
-                request.PuedeAutorizarPedidos,
-                request.LimiteAutorizacion,
-                request.RecibeNotificaciones,
-                request.TiposNotificaciones,
-                request.Activo,
-                request.DatosAdicionales,
-                _currentUser.UserId ?? "Sistema",
-                request.MotivoActualizacion,
-                cambiosDetectados
-            );
-
-            if (!resultadoActualizacion.Succeeded)
-            {
-                _logger.LogWarning("Error al actualizar contacto: {Error}", resultadoActualizacion.ErrorMessage);
-                return Result<ContactoProveedorDto>.Failure(resultadoActualizacion.ErrorMessage);
-            }
-
-            // 8. Validaciones adicionales de negocio
-            var validacionNegocio = await ValidarReglasDeNegocio(contactoExistente, proveedor);
+            // 5. Validaciones adicionales de negocio
+            var validacionNegocio = ValidarReglasDeNegocio(request);
             if (!validacionNegocio.Succeeded)
             {
-                return Result<ContactoProveedorDto>.Failure(validacionNegocio.ErrorMessage);
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>(validacionNegocio.Error ?? "Error en validación de reglas de negocio");
             }
 
-            // 9. Guardar cambios
-            await _contactoRepository.ActualizarAsync(contactoExistente);
+            // 6. Crear el nombre completo
+            var nombreCompleto = !string.IsNullOrWhiteSpace(request.Apellidos) 
+                ? $"{request.Nombre} {request.Apellidos}" 
+                : request.Nombre;
 
-            // 10. Actualizar estadísticas del proveedor si es necesario
-            if (cambiosDetectados.Any(c => c.Campo == "Activo" || c.Campo == "EsPrincipal"))
-            {
-                await ActualizarEstadisticasProveedor(proveedor);
-            }
+            // 7. Actualizar el contacto usando el método del dominio
+            contactoExistente.ActualizarInformacion(
+                nombreCompleto,
+                request.Cargo ?? "No especificado",
+                request.Telefono ?? string.Empty,
+                request.Email);
 
-            _logger.LogInformation("Contacto actualizado exitosamente: {ContactoId} para proveedor {ProveedorId}. Cambios: {CantidadCambios}", 
-                contactoExistente.Id, request.ProveedorId, cambiosDetectados.Count);
+            // 8. Guardar cambios
+            await _proveedorRepository.ActualizarAsync(proveedor);
+            await _proveedorRepository.GuardarCambiosAsync(cancellationToken);
 
-            // 11. Mapear y retornar
+            _logger.LogInformation("Contacto actualizado exitosamente: {ContactoId} para proveedor {ProveedorId}", 
+                contactoExistente.Id, request.ProveedorId);
+
+            // 9. Mapear y retornar
             var contactoDto = _mapper.Map<ContactoProveedorDto>(contactoExistente);
-            return Result<ContactoProveedorDto>.Success(contactoDto);
+            return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Success(contactoDto);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error inesperado al actualizar contacto {ContactoId}", request.Id);
-            return Result<ContactoProveedorDto>.Failure("Error interno del servidor al actualizar el contacto");
+            return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>("Error interno del servidor al actualizar el contacto");
         }
     }
 
-    private async Task<Result> DetectarConflictoEmail(ActualizarContactoCommand request)
-    {
-        var contactoConEmail = await _contactoRepository.BuscarPorEmailAsync(request.Email, request.ProveedorId);
-        
-        if (contactoConEmail != null && contactoConEmail.Id != request.Id)
-        {
-            _logger.LogWarning("Conflicto de email: {Email} ya está en uso por el contacto {ContactoId}", 
-                request.Email, contactoConEmail.Id);
-            return Result.Failure("Ya existe otro contacto con este email para el proveedor");
-        }
-
-        return Result.Success();
-    }
-
-    private async Task<Result> GestionarCambioContactoPrincipal(ActualizarContactoCommand request, ContactoProveedor contactoActual)
-    {
-        // Si se está marcando como principal y no lo era antes
-        if (request.EsPrincipal && !contactoActual.EsPrincipal)
-        {
-            var contactoPrincipalActual = await _contactoRepository.ObtenerContactoPrincipalAsync(request.ProveedorId);
-            if (contactoPrincipalActual != null)
-            {
-                var resultadoDesmarcar = contactoPrincipalActual.MarcarComoNoPrincipal(_currentUser.UserId ?? "Sistema");
-                if (!resultadoDesmarcar.Succeeded)
-                {
-                    return Result.Failure($"Error al desmarcar contacto principal anterior: {resultadoDesmarcar.ErrorMessage}");
-                }
-                
-                await _contactoRepository.ActualizarAsync(contactoPrincipalActual);
-                _logger.LogInformation("Contacto principal anterior desmarcado: {ContactoId}", contactoPrincipalActual.Id);
-            }
-        }
-        // Si se está desmarcando como principal, validar que haya al menos otro contacto activo
-        else if (!request.EsPrincipal && contactoActual.EsPrincipal)
-        {
-            var cantidadContactosActivos = await _contactoRepository.ContarContactosActivosAsync(request.ProveedorId);
-            if (cantidadContactosActivos <= 1)
-            {
-                return Result.Failure("No se puede desmarcar el contacto principal si es el único contacto activo del proveedor");
-            }
-        }
-
-        return Result.Success();
-    }
-
-    private static List<CambioAuditoria> DetectarCambiosSignificativos(ContactoProveedor contactoActual, ActualizarContactoCommand request)
-    {
-        var cambios = new List<CambioAuditoria>();
-
-        if (contactoActual.Nombre != request.Nombre)
-            cambios.Add(new CambioAuditoria("Nombre", contactoActual.Nombre, request.Nombre));
-            
-        if (contactoActual.Apellidos != request.Apellidos)
-            cambios.Add(new CambioAuditoria("Apellidos", contactoActual.Apellidos, request.Apellidos));
-            
-        if (contactoActual.Email != request.Email)
-            cambios.Add(new CambioAuditoria("Email", contactoActual.Email, request.Email));
-            
-        if (contactoActual.Telefono != request.Telefono)
-            cambios.Add(new CambioAuditoria("Telefono", contactoActual.Telefono, request.Telefono));
-            
-        if (contactoActual.EsPrincipal != request.EsPrincipal)
-            cambios.Add(new CambioAuditoria("EsPrincipal", contactoActual.EsPrincipal.ToString(), request.EsPrincipal.ToString()));
-            
-        if (contactoActual.PuedeAutorizarPedidos != request.PuedeAutorizarPedidos)
-            cambios.Add(new CambioAuditoria("PuedeAutorizarPedidos", contactoActual.PuedeAutorizarPedidos.ToString(), request.PuedeAutorizarPedidos.ToString()));
-            
-        if (contactoActual.LimiteAutorizacion != request.LimiteAutorizacion)
-            cambios.Add(new CambioAuditoria("LimiteAutorizacion", contactoActual.LimiteAutorizacion?.ToString() ?? "null", request.LimiteAutorizacion?.ToString() ?? "null"));
-            
-        if (contactoActual.Activo != request.Activo)
-            cambios.Add(new CambioAuditoria("Activo", contactoActual.Activo.ToString(), request.Activo.ToString()));
-
-        return cambios;
-    }
-
-    private async Task<Result> ValidarReglasDeNegocio(ContactoProveedor contacto, Proveedor proveedor)
+    private Result ValidarReglasDeNegocio(ActualizarContactoCommand request)
     {
         try
         {
-            // Validar límite de autorización según el tipo de proveedor
-            if (contacto.PuedeAutorizarPedidos && contacto.LimiteAutorizacion.HasValue)
+            // Validar datos mínimos requeridos
+            if (string.IsNullOrWhiteSpace(request.Nombre))
             {
-                var limiteMaximoProveedor = proveedor.CalcularLimiteMaximoAutorizacion();
-                if (contacto.LimiteAutorizacion > limiteMaximoProveedor)
-                {
-                    return Result.Failure($"El límite de autorización excede el máximo permitido para este proveedor: ${limiteMaximoProveedor:N2}");
-                }
+                return Result.Failure("El nombre del contacto es obligatorio");
             }
 
-            // Validar tipos de notificaciones permitidas
-            if (contacto.TiposNotificaciones.Any())
+            if (string.IsNullOrWhiteSpace(request.Email))
             {
-                var tiposPermitidos = proveedor.ObtenerTiposNotificacionesPermitidas();
-                var tiposNoPermitidos = contacto.TiposNotificaciones.Except(tiposPermitidos, StringComparer.OrdinalIgnoreCase);
-                
-                if (tiposNoPermitidos.Any())
-                {
-                    return Result.Failure($"Tipos de notificaciones no permitidos para este proveedor: {string.Join(", ", tiposNoPermitidos)}");
-                }
+                return Result.Failure("El email del contacto es obligatorio");
             }
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validando reglas de negocio para contacto {ContactoId}", contacto.Id);
+            _logger.LogError(ex, "Error validando reglas de negocio para contacto");
             return Result.Failure("Error en validación de reglas de negocio");
-        }
-    }
-
-    private async Task ActualizarEstadisticasProveedor(Proveedor proveedor)
-    {
-        try
-        {
-            var resultadoActualizacion = proveedor.ActualizarCantidadContactos(_currentUser.UserId ?? "Sistema");
-            if (resultadoActualizacion.Succeeded)
-            {
-                await _proveedorRepository.ActualizarAsync(proveedor);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error actualizando estadísticas del proveedor {ProveedorId}", proveedor.Id);
-            // No fallar la operación principal por errores en estadísticas
         }
     }
 } 

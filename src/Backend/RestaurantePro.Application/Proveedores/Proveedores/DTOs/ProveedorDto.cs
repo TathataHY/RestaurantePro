@@ -1,10 +1,13 @@
+using RestaurantePro.Application.Common.DTOs;
+using RestaurantePro.Domain.Proveedores.Enums;
+
 namespace RestaurantePro.Application.Proveedores.Proveedores.DTOs;
 
 /// <summary>
 /// DTO principal para Proveedor con información completa
 /// Incluye datos calculados y propiedades para UI
 /// </summary>
-public class ProveedorDto
+public class ProveedorDto : BaseDto
 {
     /// <summary>
     /// ID del proveedor
@@ -17,24 +20,29 @@ public class ProveedorDto
     public string Nombre { get; set; } = string.Empty;
 
     /// <summary>
+    /// Descripción del proveedor
+    /// </summary>
+    public string? Descripcion { get; set; }
+
+    /// <summary>
     /// Nombre del contacto principal
     /// </summary>
     public string NombreContacto { get; set; } = string.Empty;
 
     /// <summary>
-    /// Email del proveedor
+    /// Email principal del proveedor
     /// </summary>
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
-    /// Teléfono del proveedor
+    /// Teléfono principal del proveedor
     /// </summary>
     public string Telefono { get; set; } = string.Empty;
 
     /// <summary>
-    /// Dirección completa del proveedor
+    /// Dirección del proveedor
     /// </summary>
-    public string Direccion { get; set; } = string.Empty;
+    public string? Direccion { get; set; }
 
     /// <summary>
     /// Ciudad del proveedor
@@ -67,9 +75,24 @@ public class ProveedorDto
     public int DiasCredito { get; set; }
 
     /// <summary>
+    /// Categoría del proveedor
+    /// </summary>
+    public CategoriaProveedor Categoria { get; set; }
+
+    /// <summary>
+    /// Categoría como texto
+    /// </summary>
+    public string CategoriaTexto => Categoria.ToString();
+
+    /// <summary>
     /// Indica si el proveedor está activo
     /// </summary>
     public bool Activo { get; set; }
+
+    /// <summary>
+    /// Calificación promedio del proveedor
+    /// </summary>
+    public decimal CalificacionPromedio { get; set; }
 
     /// <summary>
     /// Fecha de registro del proveedor
@@ -85,6 +108,11 @@ public class ProveedorDto
     /// Usuario que creó el registro
     /// </summary>
     public string CreadoPor { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Fecha de la última compra
+    /// </summary>
+    public DateTime? UltimaCompra { get; set; }
 
     // === PROPIEDADES CALCULADAS PARA UI ===
 
@@ -157,7 +185,7 @@ public class ProveedorDto
     public List<ContactoProveedorDto> Contactos { get; set; } = new();
 
     /// <summary>
-    /// Cantidad total de contactos
+    /// Número total de contactos
     /// </summary>
     public int TotalContactos => Contactos?.Count ?? 0;
 

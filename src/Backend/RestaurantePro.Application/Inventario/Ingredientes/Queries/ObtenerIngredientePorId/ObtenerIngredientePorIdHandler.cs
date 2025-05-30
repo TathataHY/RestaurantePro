@@ -82,6 +82,8 @@ public class ObtenerIngredientePorIdHandler : IRequestHandler<ObtenerIngrediente
     /// </summary>
     private void EnriquecerIngredienteDto(IngredienteDto dto)
     {
+        // TODO: Implementar cuando estén disponibles todas las propiedades en IngredienteDto
+        /*
         // Calcular estado del stock
         var porcentajeStock = dto.StockMinimo > 0 ? (dto.StockActual / dto.StockMinimo) * 100 : 100;
         dto.PorcentajeStock = porcentajeStock;
@@ -115,6 +117,7 @@ public class ObtenerIngredientePorIdHandler : IRequestHandler<ObtenerIngrediente
         dto.ResumenEstado = dto.EstaBajoMinimo 
             ? $"🚨 Stock crítico: {dto.StockActual:F2} {dto.UnidadMedida} (Mín: {dto.StockMinimo:F2})"
             : $"✅ Stock normal: {dto.StockActual:F2} {dto.UnidadMedida} - Valor: ${dto.ValorTotalStock:F2}";
+        */
     }
 
     /// <summary>

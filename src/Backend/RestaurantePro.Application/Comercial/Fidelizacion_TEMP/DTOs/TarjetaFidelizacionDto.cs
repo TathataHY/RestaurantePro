@@ -112,9 +112,11 @@ public class TarjetaFidelizacionDto
     public List<RecompensaDisponibleDto> RecompensasDisponibles { get; set; } = new();
 
     /// <summary>
-    /// Logros obtenidos
+    /// Logros obtenidos por el cliente
     /// </summary>
-    public List<LogroObtenidoDto> LogrosObtenidos { get; set; } = new();
+    // TODO: Crear LogroObtenidoDto cuando esté disponible
+    // public List<LogroObtenidoDto> LogrosObtenidos { get; set; } = new();
+    public List<object> LogrosObtenidos { get; set; } = new();
 
     /// <summary>
     /// Puntos que expiran próximamente

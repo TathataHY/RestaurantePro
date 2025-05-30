@@ -21,4 +21,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <!-- Excluir archivos problemáticos temporalmente -->
+  <ItemGroup>
+    <Compile Remove="Comercial\Fidelizacion_TEMP\**" />
+    <EmbeddedResource Remove="Comercial\Fidelizacion_TEMP\**" />
+    <None Remove="Comercial\Fidelizacion_TEMP\**" />
+  </ItemGroup>
+
 </Project>

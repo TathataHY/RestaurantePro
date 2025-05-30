@@ -1,4 +1,5 @@
 using RestaurantePro.Application.Common.DTOs;
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
 
 namespace RestaurantePro.Application.Comercial.Clientes.DTOs;
 
@@ -44,9 +45,9 @@ public class ClienteDto : BaseDto
     public string? Direccion { get; set; }
 
     /// <summary>
-    /// Tipo de cliente
+    /// Segmento de cliente
     /// </summary>
-    public TipoCliente Tipo { get; set; }
+    public SegmentoCliente Tipo { get; set; }
 
     /// <summary>
     /// Tipo de cliente como texto
@@ -56,7 +57,7 @@ public class ClienteDto : BaseDto
     /// <summary>
     /// Indica si el cliente está activo
     /// </summary>
-    public bool Activo { get; set; }
+    public new bool Activo { get; set; }
 
     /// <summary>
     /// Notas del cliente

@@ -1,4 +1,5 @@
 using RestaurantePro.Application.Common.DTOs;
+using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
 
 namespace RestaurantePro.Application.Inventario.Ingredientes.DTOs;
 
@@ -21,12 +22,12 @@ public class IngredienteDto : BaseDto
     /// <summary>
     /// Categoría del ingrediente
     /// </summary>
-    public CategoriaIngrediente Categoria { get; set; }
+    public RotacionIngrediente Rotacion { get; set; }
 
     /// <summary>
     /// Texto de la categoría del ingrediente
     /// </summary>
-    public string CategoriaTexto => Categoria.ToString();
+    public string RotacionTexto => Rotacion.ToString();
 
     /// <summary>
     /// Unidad de medida del ingrediente

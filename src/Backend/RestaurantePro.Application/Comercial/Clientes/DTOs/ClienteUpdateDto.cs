@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+
 namespace RestaurantePro.Application.Comercial.Clientes.DTOs;
 
 /// <summary>
@@ -42,9 +44,9 @@ public class ClienteUpdateDto
     public string? Direccion { get; set; }
 
     /// <summary>
-    /// Tipo de cliente
+    /// Segmento de cliente
     /// </summary>
-    public TipoCliente Tipo { get; set; }
+    public SegmentoCliente Tipo { get; set; }
 
     /// <summary>
     /// Notas del cliente

@@ -138,6 +138,8 @@ public class ObtenerComandasActivasHandler : IRequestHandler<ObtenerComandasActi
     /// </summary>
     private void EnriquecerDatosParaDashboard(List<ComandaSummaryDto> comandas)
     {
+        // TODO: Implementar cuando estén disponibles todas las propiedades en ComandaSummaryDto
+        /*
         foreach (var comanda in comandas)
         {
             // Calcular tiempo transcurrido
@@ -153,6 +155,7 @@ public class ObtenerComandasActivasHandler : IRequestHandler<ObtenerComandasActi
             // Formatear estado para display
             comanda.EstadoDisplay = FormatearEstadoDisplay(comanda.Estado);
         }
+        */
 
         _logger.LogDebug("🎨 Datos de dashboard enriquecidos para {Count} comandas", comandas.Count);
     }
@@ -193,6 +196,8 @@ public class ObtenerComandasActivasHandler : IRequestHandler<ObtenerComandasActi
     /// </summary>
     private static bool DeterminarSiEstaAtrasada(ComandaSummaryDto comanda, TimeSpan tiempoTranscurrido)
     {
+        // TODO: Implementar cuando esté disponible la propiedad Estado en ComandaSummaryDto
+        /*
         return comanda.Estado switch
         {
             "Creada" => tiempoTranscurrido.TotalMinutes > 5,
@@ -200,6 +205,8 @@ public class ObtenerComandasActivasHandler : IRequestHandler<ObtenerComandasActi
             "Lista" => tiempoTranscurrido.TotalMinutes > 45,
             _ => false
         };
+        */
+        return false;
     }
 
     /// <summary>
@@ -221,6 +228,8 @@ public class ObtenerComandasActivasHandler : IRequestHandler<ObtenerComandasActi
     /// </summary>
     private static string AsignarColorEstado(ComandaSummaryDto comanda)
     {
+        // TODO: Implementar cuando estén disponibles las propiedades necesarias
+        /*
         if (comanda.EstaAtrasada)
             return "#FF4444"; // Rojo para atrasadas
 
@@ -233,6 +242,8 @@ public class ObtenerComandasActivasHandler : IRequestHandler<ObtenerComandasActi
             "Finalizada" => "#90EE90", // Verde claro
             _ => "#808080"            // Gris por defecto
         };
+        */
+        return "#808080"; // Gris por defecto
     }
 
     /// <summary>
