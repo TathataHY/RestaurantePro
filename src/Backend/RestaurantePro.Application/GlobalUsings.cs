@@ -41,32 +41,25 @@ global using RestaurantePro.Domain.Core.Notificaciones.Enums;
 global using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
 global using RestaurantePro.Domain.Core.Notificaciones.Services;
 
-// Domain - Comercial (Según estructura real)
+// Domain - Comercial
 global using RestaurantePro.Domain.Comercial.Clientes.Entities;
-global using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-global using RestaurantePro.Domain.Comercial.Clientes.Enums;
 global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-
+global using RestaurantePro.Domain.Comercial.Clientes.Enums;
+global using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
 global using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-global using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+global using RestaurantePro.Domain.Comercial.Facturacion.Enums;
+global using RestaurantePro.Domain.Comercial.Pagos.Entities;
+global using RestaurantePro.Domain.Comercial.Promociones.Entities;
 
-// Domain - Operaciones (Según estructura real)
+// Domain - Operaciones
 global using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-global using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
 global using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-global using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
-
+global using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
-global using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
-
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-
 global using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
-global using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
-global using RestaurantePro.Domain.Operaciones.Preparaciones.Services;
 
 // Domain - Inventario (Según estructura real)
 global using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
@@ -93,6 +86,7 @@ global using RestaurantePro.Application.Common.DTOs;
 global using RestaurantePro.Application.Common.Behaviors;
 global using RestaurantePro.Application.Common.Exceptions;
 global using RestaurantePro.Application.Common.Interfaces;
+global using RestaurantePro.Application.Common.Enums;
 
 // Application - Core DTOs (Por contexto)
 global using RestaurantePro.Application.Core.Productos.DTOs;
@@ -100,9 +94,24 @@ global using RestaurantePro.Application.Core.Productos.DTOs;
 // Application - Operaciones DTOs
 global using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
 
+// Application - Operaciones Commands (para EventHandlers)
+global using RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
+
 // Application - Proveedores DTOs  
 global using RestaurantePro.Application.Proveedores.ContactosProveedor.DTOs;
 
 // Application - Configuration (AutoMapper y DI)
 global using RestaurantePro.Application.Config.Mappings;
-global using RestaurantePro.Application.Config.DependencyInjection; 
+global using RestaurantePro.Application.Config.DependencyInjection;
+
+// 🔥 NUEVO: Domain Services para EventHandlers
+global using RestaurantePro.Domain.Comercial.Services;
+
+// 🚀 NUEVO: Domain Service Facades para Commands Avanzados  
+global using RestaurantePro.Domain.Operaciones.Services;
+
+// 🔧 INTERFACES DE REPOSITORIES (para Commands y EventHandlers)
+global using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+global using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;

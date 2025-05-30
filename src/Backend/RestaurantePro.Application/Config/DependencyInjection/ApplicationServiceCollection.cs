@@ -111,6 +111,9 @@ public static class ApplicationServiceCollection
         services.AddInventarioServices();
         services.AddProveedoresServices();
 
+        // 🔥 ACTIVAR: Registrar todos los Domain Event Handlers
+        RegisterDomainEventHandlers(services);
+
         return services;
     }
 
@@ -167,6 +170,63 @@ public static class ApplicationServiceCollection
         // Por ejemplo: servicios de evaluación de proveedores, gestión de contactos, etc.
         
         return services;
+    }
+
+    /// <summary>
+    /// 🔥 Registra todos los Domain Event Handlers para procesamiento automático de eventos
+    /// </summary>
+    private static void RegisterDomainEventHandlers(IServiceCollection services)
+    {
+        // ========================================================================================
+        // 🍽️ OPERACIONES - COMANDAS EVENT HANDLERS
+        // ========================================================================================
+        
+        // ComandaCreada Event Handlers
+        services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Comandas.Events.Comanda.ComandaCreada>, 
+            Operaciones.Comandas.EventHandlers.ComandaCreada.ComandaCreadaInventarioHandler>();
+        
+        // ComandaFinalizada Event Handlers
+        services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada>, 
+            Operaciones.Comandas.EventHandlers.ComandaFinalizada.ComandaFinalizadaFidelizacionHandler>();
+        
+        services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada>, 
+            Operaciones.Comandas.EventHandlers.ComandaFinalizada.ComandaFinalizadaMesaHandler>();
+        
+        // ========================================================================================
+        // 📅 OPERACIONES - RESERVACIONES EVENT HANDLERS
+        // ========================================================================================
+        
+        // ReservacionCreada Event Handlers
+        services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Reservaciones.Events.Reservacion.ReservacionCreada>, 
+            Operaciones.Reservaciones.EventHandlers.ReservacionCreada.ReservacionCreadaNotificacionHandler>();
+        
+        // ========================================================================================
+        // 💰 COMERCIAL - FACTURACIÓN EVENT HANDLERS
+        // ========================================================================================
+        
+        // FacturaCreada Event Handlers
+        services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Comercial.Facturacion.Events.FacturaCreada>, 
+            Comercial.Facturacion.EventHandlers.FacturaCreada.FacturaCreadaNotificacionHandler>();
+        
+        // ========================================================================================
+        // 🎯 TODO: PRÓXIMOS EVENT HANDLERS A IMPLEMENTAR
+        // ========================================================================================
+        
+        // ProductoAgregadoAComanda → Actualizar stock automáticamente
+        // services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Comandas.Events.Comanda.ProductoAgregadoAComanda>, 
+        //     Operaciones.Comandas.EventHandlers.ProductoAgregadoAComanda.ProductoAgregadoStockHandler>();
+        
+        // FacturaPagada → Confirmar pago + Liberar servicios
+        // services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Comercial.Facturacion.Events.FacturaPagada>, 
+        //     Comercial.Facturacion.EventHandlers.FacturaPagada.FacturaPagadaConfirmacionHandler>();
+        
+        // ReservacionConfirmada → Preparar mesa + Notificar personal
+        // services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Reservaciones.Events.Reservacion.ReservacionConfirmada>, 
+        //     Operaciones.Reservaciones.EventHandlers.ReservacionConfirmada.ReservacionConfirmadaPreparacionHandler>();
+        
+        // MesaAsignada → Notificar mesero + Actualizar disponibilidad
+        // services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Mesas.Events.MesaAsignada>, 
+        //     Operaciones.Mesas.EventHandlers.MesaAsignada.MesaAsignadaNotificacionHandler>();
     }
 }
 

@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-
 namespace RestaurantePro.Application.Comercial.Clientes.DTOs;
 
 /// <summary>
