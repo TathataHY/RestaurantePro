@@ -10,9 +10,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums
         /// </summary>
         Ingreso = 0,
         
-        /// <summary>
+        /// <summary>w
         /// Salida de productos del inventario (consumo, ventas, pérdidas, ajustes negativos)
-        /// </summary>
+        /// </summary>dwad
         Egreso = 1,
         
         /// <summary>
