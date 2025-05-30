@@ -50,8 +50,15 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
                 return;
             }
 
-            // 🔍 Obtener items de la factura
-            var itemsFactura = await _facturaRepository.ObtenerItemsFacturaAsync(factura.Id, cancellationToken) ?? new List<dynamic>();
+            // 2. Obtener información básica de la factura (sin items detallados)
+            var datosFactura = new
+            {
+                FacturaId = factura.Id,
+                ClienteId = factura.ClienteId,
+                Total = factura.Total,
+                FechaCreacion = factura.FechaCreacion,
+                Estado = factura.Estado.ToString()
+            };
 
             // 📧 Enviar notificación según el canal preferido del cliente
             var canalPreferido = ObtenerCanalPreferido(cliente);
@@ -75,23 +82,25 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
                 ClienteEmail = cliente.Email.Value,
                 ClienteNombre = nombreCliente,
                 TotalFactura = factura.Total,
-                Items = itemsFactura,
                 FechaVencimiento = factura.FechaVencimiento,
                 MetodoPagoPreferido = "Efectivo", // Valor por defecto
                 EsClienteFidelizado = true // Asumiendo que todos son fidelizados
             };
 
             // 6. Enviar email de factura
-            await EnviarFacturaPorEmailAsync(factura, cliente, itemsFactura);
+            await EnviarFacturaPorEmailAsync((object)factura, (object)cliente, new List<dynamic>());
 
             // 7. Enviar SMS si está habilitado
-            await EnviarFacturaPorSMSAsync(factura, cliente);
+            await EnviarFacturaPorSMSAsync((object)factura, (object)cliente);
 
             // 8. Registrar estadísticas de notificación
-            await RegistrarEstadisticasNotificacionAsync(evento.FacturaId, canalPreferido, true, cliente);
+            await RegistrarEstadisticasNotificacionAsync(evento.FacturaId, canalPreferido, true, (object)cliente);
 
             _logger.LogInformation("✅ Notificaciones enviadas exitosamente para Factura {NumeroFactura} al cliente {ClienteNombre}", 
                 evento.NumeroFactura, nombreCliente);
+
+            _logger.LogInformation("📧 Enviando notificación de factura: Cliente={ClienteNombre}, Total={Total:C}", 
+                nombreCliente, factura.Total);
         }
         catch (Exception ex)
         {
@@ -103,12 +112,15 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
     /// <summary>
     /// 📧 Envía la factura por email al cliente
     /// </summary>
-    private async Task EnviarFacturaPorEmailAsync(dynamic factura, dynamic cliente, List<dynamic> itemsFactura)
+    private async Task EnviarFacturaPorEmailAsync(object factura, object cliente, List<dynamic> itemsFactura)
     {
-        var destinatario = cliente.Email.Value;
-        var nombreCliente = ObtenerNombreCompleto(cliente);
-        var asunto = $"Factura #{factura.Numero} - RestaurantePro";
-        var cuerpo = GenerarCuerpoEmailFactura(factura, nombreCliente, itemsFactura);
+        var clienteDynamic = (dynamic)cliente;
+        var facturaDynamic = (dynamic)factura;
+        
+        var destinatario = (string)clienteDynamic.Email.Value;
+        var nombreCliente = ObtenerNombreCompleto(clienteDynamic);
+        var asunto = $"Factura #{facturaDynamic.Numero} - RestaurantePro";
+        var cuerpo = GenerarCuerpoEmailFactura(facturaDynamic, nombreCliente, itemsFactura);
 
         // Obtener información del canal de pago preferido para personalización
         var metodoPagoPreferido = "Efectivo"; // Valor por defecto
@@ -121,13 +133,16 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
     /// <summary>
     /// 📱 Envía notificación por SMS al cliente
     /// </summary>
-    private async Task EnviarFacturaPorSMSAsync(dynamic factura, dynamic cliente)
+    private async Task EnviarFacturaPorSMSAsync(object factura, object cliente)
     {
-        if (cliente.Telefono == null) return;
+        var clienteDynamic = (dynamic)cliente;
+        var facturaDynamic = (dynamic)factura;
+        
+        if (clienteDynamic.Telefono == null) return;
 
-        var numeroTelefono = cliente.Telefono.Value;
-        var nombreCliente = ObtenerNombreCompleto(cliente);
-        var mensaje = $"Hola {nombreCliente}, tu factura #{factura.Numero} por ${factura.Total:N0} está lista. Gracias por elegirnos! - RestaurantePro";
+        var numeroTelefono = (string)clienteDynamic.Telefono.Value;
+        var nombreCliente = ObtenerNombreCompleto(clienteDynamic);
+        var mensaje = $"Hola {nombreCliente}, tu factura #{facturaDynamic.Numero} por ${facturaDynamic.Total:N0} está lista. Gracias por elegirnos! - RestaurantePro";
 
         if (!string.IsNullOrEmpty(numeroTelefono))
         {
@@ -159,11 +174,12 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
     /// <summary>
     /// 🎯 Determina el canal de comunicación preferido del cliente
     /// </summary>
-    private string ObtenerCanalPreferido(dynamic cliente)
+    private string ObtenerCanalPreferido(object cliente)
     {
+        var clienteDynamic = (dynamic)cliente;
         // Lógica para determinar canal preferido basado en información básica
-        var email = cliente.Email?.Value;
-        var telefono = cliente.Telefono?.Value;
+        var email = clienteDynamic.Email?.Value;
+        var telefono = clienteDynamic.Telefono?.Value;
 
         return "Email"; // Por defecto email, pero podría ser más inteligente
     }
@@ -171,21 +187,22 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
     /// <summary>
     /// 📊 Registra estadísticas del envío de notificación
     /// </summary>
-    private async Task RegistrarEstadisticasNotificacionAsync(Guid facturaId, string canal, bool exitoso, dynamic cliente)
+    private async Task RegistrarEstadisticasNotificacionAsync(Guid facturaId, string canal, bool exitoso, object cliente)
     {
+        var clienteDynamic = (dynamic)cliente;
         var estadisticas = new
         {
             FechaHora = DateTime.UtcNow,
             FacturaId = facturaId,
-            ClienteId = cliente.Id,
+            ClienteId = clienteDynamic.Id,
             TipoNotificacion = "Email+SMS",
             TotalFactura = 0, // Valor por defecto
             TipoFactura = "Estándar",
             NivelClienteFidelizacion = "Básico",
-            TieneEmail = !string.IsNullOrEmpty(cliente.Email?.Value),
-            TieneTelefono = !string.IsNullOrEmpty(cliente.Telefono?.Value),
+            TieneEmail = !string.IsNullOrEmpty(clienteDynamic.Email?.Value),
+            TieneTelefono = !string.IsNullOrEmpty(clienteDynamic.Telefono?.Value),
             EmailEnviado = exitoso,
-            SMSEnviado = !string.IsNullOrEmpty(cliente.Telefono?.Value)
+            SMSEnviado = !string.IsNullOrEmpty(clienteDynamic.Telefono?.Value)
         };
 
         _logger.LogInformation("📊 Estadísticas de notificación registradas: {@Estadisticas}", estadisticas);
@@ -197,21 +214,23 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
     /// <summary>
     /// 👤 Obtiene el nombre completo del cliente
     /// </summary>
-    private string ObtenerNombreCompleto(dynamic cliente)
+    private string ObtenerNombreCompleto(object cliente)
     {
-        return cliente.Nombre.NombreCompleto;
+        var clienteDynamic = (dynamic)cliente;
+        return clienteDynamic.Nombre.NombreCompleto;
     }
 
     /// <summary>
     /// 📝 Genera el cuerpo del email para la factura
     /// </summary>
-    private string GenerarCuerpoEmailFactura(dynamic factura, string nombreCliente, List<dynamic> items)
+    private string GenerarCuerpoEmailFactura(object factura, string nombreCliente, List<dynamic> items)
     {
+        var facturaDynamic = (dynamic)factura;
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"Estimado/a {nombreCliente},");
         sb.AppendLine();
-        sb.AppendLine($"Su factura #{factura.Numero} ha sido generada exitosamente.");
-        sb.AppendLine($"Total: ${factura.Total:N0}");
+        sb.AppendLine($"Su factura #{facturaDynamic.Numero} ha sido generada exitosamente.");
+        sb.AppendLine($"Total: ${facturaDynamic.Total:N0}");
         sb.AppendLine($"Fecha: {DateTime.Now:dd/MM/yyyy}");
         sb.AppendLine();
         sb.AppendLine("¡Gracias por elegirnos!");

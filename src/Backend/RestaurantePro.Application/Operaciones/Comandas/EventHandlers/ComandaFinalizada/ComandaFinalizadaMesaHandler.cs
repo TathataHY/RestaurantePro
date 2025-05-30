@@ -43,14 +43,14 @@ public class ComandaFinalizadaMesaHandler : Domain.Core.Base.Events.Handlers.IDo
             var comanda = comandaResult;
 
             // 🔍 Verificar si la comanda tiene mesa asignada
-            if (comanda.MesaId == null)
+            if (comanda.MesaId == Guid.Empty)
             {
                 _logger.LogInformation("ℹ️ Comanda {ComandaId} no tiene mesa asignada, omitiendo liberación", evento.ComandaId);
                 return;
             }
 
             // 3. Obtener información de la mesa
-            var mesaResult = await _mesaRepository.ObtenerPorIdAsync(comanda.MesaId.Value, cancellationToken);
+            var mesaResult = await _mesaRepository.ObtenerPorIdAsync(comanda.MesaId, cancellationToken);
             if (mesaResult == null)
             {
                 _logger.LogWarning("⚠️ No se encontró la mesa {MesaId} para liberar", comanda.MesaId);
@@ -66,7 +66,7 @@ public class ComandaFinalizadaMesaHandler : Domain.Core.Base.Events.Handlers.IDo
             // 🪑 Liberar la mesa usando el command existente
             var liberarMesaCommand = new LiberarMesaCommand
             {
-                MesaId = comanda.MesaId.Value,
+                MesaId = comanda.MesaId,
                 Observaciones = "Comanda finalizada automáticamente por el sistema"
             };
 
@@ -204,7 +204,7 @@ public class ComandaFinalizadaMesaHandler : Domain.Core.Base.Events.Handlers.IDo
             DuracionUso = evento.FechaFinalizacion - comanda.FechaCreacion,
             TotalFacturado = evento.Total,
             CantidadItems = evento.Items.Count,
-            IngresosPorHora = evento.Total / Math.Max((evento.FechaFinalizacion - comanda.FechaCreacion).TotalHours, 0.1)
+            IngresosPorHora = evento.Total / Math.Max((decimal)(evento.FechaFinalizacion - comanda.FechaCreacion).TotalHours, 0.1m)
         };
 
         _logger.LogInformation("📊 Registrando estadísticas de uso de mesa: {@Estadisticas}", estadisticas);

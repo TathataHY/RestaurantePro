@@ -70,9 +70,9 @@ public class ComandaFinalizadaFidelizacionHandler : Domain.Core.Base.Events.Hand
 
             // 🎯 Aplicar puntos de fidelización usando el servicio de dominio
             var resultadoAplicacion = await _servicioFidelizacion.AcumularPuntosAsync(
-                cliente.Id, puntosCalculados, $"Comanda #{evento.ComandaId} - {evento.Total:C}");
+                cliente.Id, evento.ComandaId, evento.Total);
 
-            if (resultadoAplicacion.IsSuccess)
+            if (resultadoAplicacion != null && resultadoAplicacion.Value > 0)
             {
                 _logger.LogInformation("✅ Se acumularon {Puntos} puntos al cliente {ClienteNombre} por Comanda {ComandaId}", 
                     puntosCalculados, cliente.Nombre.NombreCompleto, evento.ComandaId);

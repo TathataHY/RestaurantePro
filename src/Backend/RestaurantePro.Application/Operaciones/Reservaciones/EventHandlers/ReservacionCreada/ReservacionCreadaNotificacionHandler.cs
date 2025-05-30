@@ -57,9 +57,9 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
 
             // 3. Obtener información de la mesa si está asignada
             Mesa? mesa = null;
-            if (reservacion.MesaId.HasValue)
+            if (reservacion.MesaId != Guid.Empty)
             {
-                var mesaResult = await _mesaRepository.ObtenerPorIdAsync(reservacion.MesaId.Value, cancellationToken);
+                var mesaResult = await _mesaRepository.ObtenerPorIdAsync(reservacion.MesaId, cancellationToken);
                 if (mesaResult != null)
                 {
                     mesa = mesaResult;
@@ -104,7 +104,7 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
         Domain.Operaciones.Reservaciones.Events.Reservacion.ReservacionCreada evento,
         CancellationToken cancellationToken)
     {
-        var fechaReservacion = evento.FechaReservacion;
+        var fechaReservacion = evento.Fecha.Date + evento.Hora;
         var tiempoRestante = fechaReservacion - DateTime.UtcNow;
 
         var datosConfirmacion = new ConfirmacionReservacionData
@@ -117,7 +117,7 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
             FechaHoraReservacion = fechaReservacion,
             CantidadPersonas = reservacion.CantidadPersonas,
             EstadoReservacion = reservacion.Estado.ToString(),
-            ObservacionesEspeciales = evento.ObservacionesEspeciales,
+            ObservacionesEspeciales = reservacion.Observaciones,
             MesaAsignada = mesa?.Numero,
             CapacidadMesa = mesa?.Capacidad,
             TiempoHastaReservacion = tiempoRestante,
@@ -317,9 +317,10 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
         Domain.Operaciones.Reservaciones.Events.Reservacion.ReservacionCreada evento,
         CancellationToken cancellationToken)
     {
-        var horaReservacion = evento.FechaReservacion.Hour;
-        var diaReservacion = evento.FechaReservacion.DayOfWeek;
-        var tiempoAnticipacion = evento.FechaReservacion - DateTime.UtcNow;
+        var fechaReservacion = evento.Fecha.Date + evento.Hora;
+        var horaReservacion = evento.Hora.Hours;
+        var diaReservacion = evento.Fecha.DayOfWeek;
+        var tiempoAnticipacion = fechaReservacion - DateTime.UtcNow;
         var nivelClienteFidelizacion = NivelFidelizacion.Basico; // Valor por defecto
 
         var estadisticas = new
@@ -327,7 +328,7 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
             FechaHora = DateTime.UtcNow,
             ReservacionId = evento.ReservacionId,
             ClienteId = evento.ClienteId,
-            FechaReservacion = evento.FechaReservacion,
+            FechaReservacion = fechaReservacion,
             DiaSemanaSolicitado = diaReservacion.ToString(),
             HoraSolicitada = horaReservacion,
             CantidadPersonas = evento.CantidadPersonas,
@@ -335,7 +336,7 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
             TieneEmail = !string.IsNullOrEmpty(cliente.Email.Value),
             TieneTelefono = !string.IsNullOrEmpty(cliente.Telefono?.Value),
             ClienteFidelizado = nivelClienteFidelizacion != NivelFidelizacion.Basico,
-            TieneObservaciones = !string.IsNullOrEmpty(evento.ObservacionesEspeciales),
+            TieneObservaciones = !string.IsNullOrEmpty(reservacion.Observaciones),
             MesaId = evento.MesaId,
             FechaReservacionDentroHorarioComercial = horaReservacion >= 11 && horaReservacion <= 22,
             EsReservacionFinDeSemana = diaReservacion == DayOfWeek.Friday || diaReservacion == DayOfWeek.Saturday || diaReservacion == DayOfWeek.Sunday,
