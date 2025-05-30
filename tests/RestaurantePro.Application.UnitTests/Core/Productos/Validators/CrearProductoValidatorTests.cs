@@ -38,24 +38,35 @@ public class CrearProductoValidatorTests
     [InlineData("")]
     [InlineData(" ")]
     [InlineData(null)]
-    public void Validate_ConNombreInvalido_DeberiaRetornarError(string nombre)
+    public async Task Validate_NombreVacio_DeberiaSerInvalido(string? nombre)
     {
         // Arrange
         var command = new CrearProductoCommand
         {
-            Nombre = nombre,
-            Precio = 15.99m,
+            Nombre = nombre!,
+            Descripcion = "Descripción válida",
+            Precio = 100m,
             CategoriaId = Guid.NewGuid()
         };
 
         // Act
-        var resultado = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
-        resultado.IsValid.Should().BeFalse();
-        resultado.Errors.Should().ContainSingle(x => 
-            x.PropertyName == nameof(CrearProductoCommand.Nombre) &&
-            x.ErrorMessage.Contains("obligatorio"));
+        result.Should().NotBeNull();
+        result.IsValid.Should().BeFalse();
+        
+        if (nombre == null)
+        {
+            result.Errors.Should().HaveCount(1); // null solo activa NotEmpty
+            result.Errors.Should().Contain(e => e.ErrorMessage == "El nombre del producto es obligatorio");
+        }
+        else
+        {
+            result.Errors.Should().HaveCount(2); // string vacío activa NotEmpty Y MinimumLength
+            result.Errors.Should().Contain(e => e.ErrorMessage == "El nombre del producto es obligatorio");
+            result.Errors.Should().Contain(e => e.ErrorMessage.Contains("al menos 3 caracteres"));
+        }
     }
 
     [Fact]
@@ -222,7 +233,7 @@ public class CrearProductoValidatorTests
         // Arrange
         var command = new CrearProductoCommand
         {
-            Nombre = "", // Error: vacío
+            Nombre = "", // Error: vacío - ACTIVA 2 REGLAS: NotEmpty + MinimumLength
             Descripcion = new string('a', 501), // Error: muy largo
             Precio = -10m, // Error: negativo
             CategoriaId = Guid.Empty // Error: vacío
@@ -233,12 +244,15 @@ public class CrearProductoValidatorTests
 
         // Assert
         resultado.IsValid.Should().BeFalse();
-        resultado.Errors.Should().HaveCount(4);
+        resultado.Errors.Should().HaveCount(5); // ACTUALIZADO: 5 errores en lugar de 4
         
-        resultado.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProductoCommand.Nombre));
         resultado.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProductoCommand.Descripcion));
         resultado.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProductoCommand.Precio));
         resultado.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProductoCommand.CategoriaId));
+        
+        // El nombre vacío activa DOS reglas, verificamos que ambas estén presentes
+        resultado.Errors.Where(x => x.PropertyName == nameof(CrearProductoCommand.Nombre))
+            .Should().HaveCount(2, "el nombre vacío debe activar NotEmpty y MinimumLength");
     }
 
     [Fact]
