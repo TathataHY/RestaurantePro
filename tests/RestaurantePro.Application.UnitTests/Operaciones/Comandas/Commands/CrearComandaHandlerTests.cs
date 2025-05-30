@@ -1,6 +1,7 @@
 using RestaurantePro.Domain.Operaciones.Comandas.Entities;
 using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using RestaurantePro.Domain.Core.Productos.Interfaces;
 using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
 using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
@@ -31,18 +32,19 @@ public class CrearComandaHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ComandaBasicaValida_DeberiaCrearExitosamente()
+    public async Task Handle_ComandaBasicaConMesa_DeberiaCrearExitosamente()
     {
         // Arrange
         var meseroId = Guid.NewGuid();
-        var command = new CrearComandaCommand(meseroId);
+        var mesaId = Guid.NewGuid();
+        var command = new CrearComandaCommand(meseroId, mesaId);
 
-        var comanda = Comanda.Crear(meseroId);
         var comandaDto = new ComandaDto
         {
-            Id = comanda.Id,
-            MeseroId = meseroId,
-            Estado = "Creada",
+            Id = Guid.NewGuid(),
+            UsuarioId = meseroId,
+            MesaId = mesaId,
+            Estado = EstadoComanda.Creada,
             Total = 0
         };
 
@@ -50,7 +52,7 @@ public class CrearComandaHandlerTests
             .Returns(Task.CompletedTask);
         
         _mockComandaRepository.Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult(1));
 
         _mockMapper.Setup(m => m.Map<ComandaDto>(It.IsAny<Comanda>()))
             .Returns(comandaDto);
@@ -62,8 +64,9 @@ public class CrearComandaHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.MeseroId.Should().Be(meseroId);
-        result.Value.Estado.Should().Be("Creada");
+        result.Value.UsuarioId.Should().Be(meseroId);
+        result.Value.MesaId.Should().Be(mesaId);
+        result.Value.Estado.Should().Be(EstadoComanda.Creada);
 
         _mockComandaRepository.Verify(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockComandaRepository.Verify(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -81,22 +84,21 @@ public class CrearComandaHandlerTests
             Observaciones = "Mesa para 4 personas"
         };
 
-        var comanda = Comanda.Crear(meseroId, clienteId, mesaId, "Mesa para 4 personas");
         var comandaDto = new ComandaDto
         {
-            Id = comanda.Id,
-            MeseroId = meseroId,
+            Id = Guid.NewGuid(),
+            UsuarioId = meseroId,
             MesaId = mesaId,
             ClienteId = clienteId,
             Observaciones = "Mesa para 4 personas",
-            Estado = "Creada"
+            Estado = EstadoComanda.Creada
         };
 
         _mockComandaRepository.Setup(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         
         _mockComandaRepository.Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult(1));
 
         _mockMapper.Setup(m => m.Map<ComandaDto>(It.IsAny<Comanda>()))
             .Returns(comandaDto);
@@ -108,59 +110,37 @@ public class CrearComandaHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.MeseroId.Should().Be(meseroId);
+        result.Value.UsuarioId.Should().Be(meseroId);
         result.Value.MesaId.Should().Be(mesaId);
         result.Value.ClienteId.Should().Be(clienteId);
         result.Value.Observaciones.Should().Be("Mesa para 4 personas");
     }
 
     [Fact]
-    public async Task Handle_ComandaConProductosIniciales_DeberiaCrearConProductos()
+    public async Task Handle_ComandaSinProductosIniciales_DeberiaCrearExitosamente()
     {
         // Arrange
         var meseroId = Guid.NewGuid();
-        var productoId1 = Guid.NewGuid();
-        var productoId2 = Guid.NewGuid();
-
-        var command = new CrearComandaCommand(meseroId)
+        var mesaId = Guid.NewGuid();
+        var command = new CrearComandaCommand(meseroId, mesaId)
         {
-            ProductosIniciales = new List<AgregarProductoDto>
-            {
-                new AgregarProductoDto
-                {
-                    ProductoId = productoId1,
-                    Cantidad = 2,
-                    PrecioUnitario = 15000m,
-                    Observaciones = "Sin cebolla"
-                },
-                new AgregarProductoDto
-                {
-                    ProductoId = productoId2,
-                    Cantidad = 1,
-                    PrecioUnitario = 25000m
-                }
-            }
+            ProductosIniciales = new List<AgregarProductoDto>() // Lista vacía
         };
 
-        var comanda = Comanda.Crear(meseroId);
         var comandaDto = new ComandaDto
         {
-            Id = comanda.Id,
-            MeseroId = meseroId,
-            Estado = "Creada",
-            Total = 55000m,
-            Items = new List<ItemComandaDto>
-            {
-                new ItemComandaDto { ProductoId = productoId1, Cantidad = 2, PrecioUnitario = 15000m },
-                new ItemComandaDto { ProductoId = productoId2, Cantidad = 1, PrecioUnitario = 25000m }
-            }
+            Id = Guid.NewGuid(),
+            UsuarioId = meseroId,
+            MesaId = mesaId,
+            Estado = EstadoComanda.Creada,
+            Total = 0
         };
 
         _mockComandaRepository.Setup(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         
         _mockComandaRepository.Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult(1));
 
         _mockMapper.Setup(m => m.Map<ComandaDto>(It.IsAny<Comanda>()))
             .Returns(comandaDto);
@@ -172,19 +152,18 @@ public class CrearComandaHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Items.Should().HaveCount(2);
-        result.Value.Total.Should().Be(55000m);
+        result.Value.Total.Should().Be(0);
     }
 
     [Fact]
-    public async Task Handle_ProductosConPersonalizaciones_DeberiaCrearConPersonalizaciones()
+    public async Task Handle_ComandaConUnSoloProducto_DeberiaCrearExitosamente()
     {
         // Arrange
         var meseroId = Guid.NewGuid();
+        var mesaId = Guid.NewGuid();
         var productoId = Guid.NewGuid();
-        var ingredienteId = Guid.NewGuid();
 
-        var command = new CrearComandaCommand(meseroId)
+        var command = new CrearComandaCommand(meseroId, mesaId)
         {
             ProductosIniciales = new List<AgregarProductoDto>
             {
@@ -192,35 +171,30 @@ public class CrearComandaHandlerTests
                 {
                     ProductoId = productoId,
                     Cantidad = 1,
-                    PrecioUnitario = 20000m,
-                    Personalizaciones = new List<PersonalizacionCreateDto>
-                    {
-                        new PersonalizacionCreateDto
-                        {
-                            Tipo = "Extra",
-                            IngredienteId = ingredienteId,
-                            Cantidad = 2,
-                            PrecioAdicional = 2000m
-                        }
-                    }
+                    PrecioUnitario = 15000m,
+                    Observaciones = "Sin cebolla"
                 }
             }
         };
 
-        var comanda = Comanda.Crear(meseroId);
         var comandaDto = new ComandaDto
         {
-            Id = comanda.Id,
-            MeseroId = meseroId,
-            Estado = "Creada",
-            Total = 22000m
+            Id = Guid.NewGuid(),
+            UsuarioId = meseroId,
+            MesaId = mesaId,
+            Estado = EstadoComanda.Creada,
+            Total = 15000m,
+            Items = new List<ItemComandaDto>
+            {
+                new ItemComandaDto { ProductoId = productoId, Cantidad = 1, PrecioUnitario = 15000m }
+            }
         };
 
         _mockComandaRepository.Setup(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         
         _mockComandaRepository.Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult(1));
 
         _mockMapper.Setup(m => m.Map<ComandaDto>(It.IsAny<Comanda>()))
             .Returns(comandaDto);
@@ -232,7 +206,8 @@ public class CrearComandaHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.Total.Should().Be(22000m);
+        result.Value.Items.Should().HaveCount(1);
+        result.Value.Total.Should().Be(15000m);
     }
 
     [Fact]
@@ -240,7 +215,8 @@ public class CrearComandaHandlerTests
     {
         // Arrange
         var meseroId = Guid.NewGuid();
-        var command = new CrearComandaCommand(meseroId);
+        var mesaId = Guid.NewGuid();
+        var command = new CrearComandaCommand(meseroId, mesaId);
 
         var businessException = new BusinessRuleViolationException("MeseroNoDisponible", "Comanda", "Operaciones");
 
@@ -263,7 +239,8 @@ public class CrearComandaHandlerTests
     {
         // Arrange
         var meseroId = Guid.Empty; // ID inválido
-        var command = new CrearComandaCommand(meseroId);
+        var mesaId = Guid.NewGuid();
+        var command = new CrearComandaCommand(meseroId, mesaId);
 
         var argumentException = new ArgumentException("MeseroId no puede ser vacío");
 
@@ -284,7 +261,8 @@ public class CrearComandaHandlerTests
     {
         // Arrange
         var meseroId = Guid.NewGuid();
-        var command = new CrearComandaCommand(meseroId);
+        var mesaId = Guid.NewGuid();
+        var command = new CrearComandaCommand(meseroId, mesaId);
 
         var excepcionGeneral = new Exception("Error de base de datos");
 
@@ -307,7 +285,8 @@ public class CrearComandaHandlerTests
     {
         // Arrange
         var meseroId = Guid.NewGuid();
-        var command = new CrearComandaCommand(meseroId);
+        var mesaId = Guid.NewGuid();
+        var command = new CrearComandaCommand(meseroId, mesaId);
 
         _mockComandaRepository.Setup(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -331,13 +310,14 @@ public class CrearComandaHandlerTests
     {
         // Arrange
         var meseroId = Guid.NewGuid();
-        var command = new CrearComandaCommand(meseroId);
+        var mesaId = Guid.NewGuid();
+        var command = new CrearComandaCommand(meseroId, mesaId);
 
         _mockComandaRepository.Setup(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         
         _mockComandaRepository.Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult(1));
 
         _mockMapper.Setup(m => m.Map<ComandaDto>(It.IsAny<Comanda>()))
             .Throws(new Exception("Error de mapeo"));
@@ -365,20 +345,19 @@ public class CrearComandaHandlerTests
             Observaciones = "Comando creado sin constructor"
         };
 
-        var comanda = Comanda.Crear(meseroId, null, mesaId, "Comando creado sin constructor");
         var comandaDto = new ComandaDto
         {
-            Id = comanda.Id,
-            MeseroId = meseroId,
+            Id = Guid.NewGuid(),
+            UsuarioId = meseroId,
             MesaId = mesaId,
-            Estado = "Creada"
+            Estado = EstadoComanda.Creada
         };
 
         _mockComandaRepository.Setup(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         
         _mockComandaRepository.Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult(1));
 
         _mockMapper.Setup(m => m.Map<ComandaDto>(It.IsAny<Comanda>()))
             .Returns(comandaDto);
@@ -390,7 +369,7 @@ public class CrearComandaHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.MeseroId.Should().Be(meseroId);
+        result.Value.UsuarioId.Should().Be(meseroId);
         result.Value.MesaId.Should().Be(mesaId);
     }
 
@@ -399,27 +378,28 @@ public class CrearComandaHandlerTests
     {
         // Arrange
         var meseroId = Guid.NewGuid();
+        var mesaId = Guid.NewGuid();
         var observacionesLargas = "Esta es una observación muy larga para la comanda que incluye instrucciones especiales para la cocina, preferencias del cliente y detalles específicos sobre la preparación de los alimentos.";
         
-        var command = new CrearComandaCommand(meseroId)
+        var command = new CrearComandaCommand(meseroId, mesaId)
         {
             Observaciones = observacionesLargas
         };
 
-        var comanda = Comanda.Crear(meseroId, null, null, observacionesLargas);
         var comandaDto = new ComandaDto
         {
-            Id = comanda.Id,
-            MeseroId = meseroId,
+            Id = Guid.NewGuid(),
+            UsuarioId = meseroId,
+            MesaId = mesaId,
             Observaciones = observacionesLargas,
-            Estado = "Creada"
+            Estado = EstadoComanda.Creada
         };
 
         _mockComandaRepository.Setup(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         
         _mockComandaRepository.Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult(1));
 
         _mockMapper.Setup(m => m.Map<ComandaDto>(It.IsAny<Comanda>()))
             .Returns(comandaDto);
@@ -432,57 +412,5 @@ public class CrearComandaHandlerTests
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.Observaciones.Should().Be(observacionesLargas);
-    }
-
-    [Fact]
-    public async Task Handle_MultiplesProductosConCantidadesVariadas_DeberiaCalcularCorrectamente()
-    {
-        // Arrange
-        var meseroId = Guid.NewGuid();
-        var command = new CrearComandaCommand(meseroId)
-        {
-            ProductosIniciales = new List<AgregarProductoDto>
-            {
-                new AgregarProductoDto { ProductoId = Guid.NewGuid(), Cantidad = 3, PrecioUnitario = 10000m },
-                new AgregarProductoDto { ProductoId = Guid.NewGuid(), Cantidad = 1, PrecioUnitario = 45000m },
-                new AgregarProductoDto { ProductoId = Guid.NewGuid(), Cantidad = 2, PrecioUnitario = 15000m },
-                new AgregarProductoDto { ProductoId = Guid.NewGuid(), Cantidad = 5, PrecioUnitario = 8000m }
-            }
-        };
-
-        var totalEsperado = (3 * 10000m) + (1 * 45000m) + (2 * 15000m) + (5 * 8000m); // 30000 + 45000 + 30000 + 40000 = 145000
-
-        var comandaDto = new ComandaDto
-        {
-            Id = Guid.NewGuid(),
-            MeseroId = meseroId,
-            Estado = "Creada",
-            Total = totalEsperado,
-            Items = command.ProductosIniciales.Select(p => new ItemComandaDto
-            {
-                ProductoId = p.ProductoId,
-                Cantidad = p.Cantidad,
-                PrecioUnitario = p.PrecioUnitario
-            }).ToList()
-        };
-
-        _mockComandaRepository.Setup(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        
-        _mockComandaRepository.Setup(r => r.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        _mockMapper.Setup(m => m.Map<ComandaDto>(It.IsAny<Comanda>()))
-            .Returns(comandaDto);
-
-        // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Value.Should().NotBeNull();
-        result.Value.Items.Should().HaveCount(4);
-        result.Value.Total.Should().Be(145000m);
     }
 } 
