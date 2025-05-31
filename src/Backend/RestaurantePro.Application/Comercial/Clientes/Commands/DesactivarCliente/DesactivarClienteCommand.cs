@@ -1,34 +1,76 @@
+using MediatR;
+using RestaurantePro.Domain.Common;
+
 namespace RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarCliente;
 
 /// <summary>
-/// Comando para desactivar un cliente (eliminación lógica)
-/// Implementa soft delete manteniendo la integridad referencial
+/// Command para desactivar un cliente del sistema
+/// Mantiene el registro pero lo marca como inactivo para auditoría
 /// </summary>
-public class DesactivarClienteCommand : IRequest<Result<bool>>
+public class DesactivarClienteCommand : IRequest<Result>
 {
     /// <summary>
-    /// ID del cliente a desactivar
+    /// ID único del cliente a desactivar
     /// </summary>
     public Guid ClienteId { get; set; }
 
     /// <summary>
-    /// Motivo de la desactivación (opcional)
+    /// Motivo por el cual se desactiva el cliente
     /// </summary>
-    public string? MotivoDesactivacion { get; set; }
+    public string MotivoDesactivacion { get; set; } = string.Empty;
 
     /// <summary>
-    /// Constructor para facilitar la creación
+    /// Usuario que solicita la desactivación
     /// </summary>
-    public DesactivarClienteCommand(Guid clienteId, string? motivo = null)
+    public string DesactivadoPor { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Indica si se debe notificar al cliente sobre la desactivación
+    /// </summary>
+    public bool NotificarCliente { get; set; } = false;
+
+    /// <summary>
+    /// Fecha opcional de reactivación automática
+    /// </summary>
+    public DateTime? FechaReactivacion { get; set; }
+
+    /// <summary>
+    /// Notas adicionales sobre la desactivación
+    /// </summary>
+    public string? NotasAdicionales { get; set; }
+
+    /// <summary>
+    /// Indica si se debe mantener el historial de transacciones
+    /// </summary>
+    public bool MantenerHistorial { get; set; } = true;
+
+    /// <summary>
+    /// Factory method para crear command con datos mínimos
+    /// </summary>
+    public static DesactivarClienteCommand Create(Guid clienteId, string motivo, string usuario)
     {
-        ClienteId = clienteId;
-        MotivoDesactivacion = motivo;
+        return new DesactivarClienteCommand
+        {
+            ClienteId = clienteId,
+            MotivoDesactivacion = motivo,
+            DesactivadoPor = usuario,
+            MantenerHistorial = true
+        };
     }
 
     /// <summary>
-    /// Constructor sin parámetros para model binding
+    /// Factory method para desactivación temporal
     /// </summary>
-    public DesactivarClienteCommand()
+    public static DesactivarClienteCommand CreateTemporal(Guid clienteId, string motivo, string usuario, DateTime fechaReactivacion)
     {
+        return new DesactivarClienteCommand
+        {
+            ClienteId = clienteId,
+            MotivoDesactivacion = motivo,
+            DesactivadoPor = usuario,
+            FechaReactivacion = fechaReactivacion,
+            MantenerHistorial = true,
+            NotificarCliente = true
+        };
     }
 } 
