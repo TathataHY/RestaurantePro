@@ -2,6 +2,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
@@ -15,6 +16,7 @@ using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
+using RestaurantePro.Infrastructure.Services;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
 {
@@ -44,6 +46,9 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
 
             // Registrar repositorios
             services.AddRepositories();
+
+            // Registrar servicios de comunicación
+            services.AddCommunicationServices();
 
             // Registrar servicio de fecha y hora
             services.AddSingleton<IDateTime, DateTimeService>();
@@ -77,6 +82,23 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             // Proveedores
             services.AddScoped<IProveedorRepository, ProveedorRepository>();
             
+            return services;
+        }
+
+        /// <summary>
+        /// Registra servicios de comunicación (Email, SMS)
+        /// </summary>
+        private static IServiceCollection AddCommunicationServices(this IServiceCollection services)
+        {
+            // Servicios de comunicación
+            services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<ISMSService, SMSService>();
+            
+            // 🆕 NUEVOS: Servicios de notificación avanzados
+            services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<ISignalRService, SignalRService>();
+            services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+
             return services;
         }
     }

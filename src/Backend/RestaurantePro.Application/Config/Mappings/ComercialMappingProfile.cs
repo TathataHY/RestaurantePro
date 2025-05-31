@@ -15,9 +15,11 @@ public class ComercialMappingProfile : Profile
     public ComercialMappingProfile()
     {
         ConfigurarMapeosClientes();
-        // TODO: Agregar otros mapeos cuando estén implementados
-        // ConfigurarMapeosTarjetaFidelizacion();
-        // ConfigurarMapeosFactura();
+        ConfigurarMapeosFacturacion();
+        // TODO: Agregar otros mapeos cuando estén implementados:
+        // ConfigurarMapeosFidelizacion();
+        // ConfigurarMapeosPagos();
+        // ConfigurarMapeosPromociones();
     }
 
     /// <summary>
@@ -58,5 +60,41 @@ public class ComercialMappingProfile : Profile
         //    .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => src.Estado.ToString()))
         //    .ForMember(dest => dest.TipoTexto, opt => opt.MapFrom(src => src.Tipo.ToString()))
         //    .ForMember(dest => dest.NombreCliente, opt => opt.MapFrom(src => src.Cliente != null ? $"{src.Cliente.Nombre} {src.Cliente.Apellido}".Trim() : "Cliente Anónimo"));
+    }
+
+    /// <summary>
+    /// Configura los mapeos específicos para Facturación
+    /// </summary>
+    private void ConfigurarMapeosFacturacion()
+    {
+        // Factura Entity -> FacturaDto
+        CreateMap<Factura, FacturaDto>()
+            .ForMember(dest => dest.NumeroFactura, opt => opt.MapFrom(src => src.Numero.Value))
+            .ForMember(dest => dest.FechaEmision, opt => opt.MapFrom(src => src.FechaEmision))
+            .ForMember(dest => dest.FechaVencimiento, opt => opt.MapFrom(src => src.FechaVencimiento))
+            .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => src.Estado.ToString()))
+            .ForMember(dest => dest.TipoFacturaTexto, opt => opt.MapFrom(src => src.TipoFactura.ToString()))
+            .ForMember(dest => dest.SubTotal, opt => opt.MapFrom(src => src.SubTotal.Amount))
+            .ForMember(dest => dest.TotalImpuestos, opt => opt.MapFrom(src => src.TotalImpuestos.Amount))
+            .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total.Amount))
+            .ForMember(dest => dest.EstaPagada, opt => opt.MapFrom(src => src.EstaPagada))
+            .ForMember(dest => dest.EstaPendiente, opt => opt.MapFrom(src => src.EstaPendiente))
+            .ForMember(dest => dest.EstaVencida, opt => opt.MapFrom(src => src.EstaVencida))
+            .ForMember(dest => dest.TieneSaldo, opt => opt.MapFrom(src => src.TieneSaldo))
+            .ForMember(dest => dest.Saldo, opt => opt.MapFrom(src => src.Saldo.Amount));
+
+        // DetalleFactura Entity -> DetalleFacturaDto
+        CreateMap<DetalleFactura, DetalleFacturaDto>()
+            .ForMember(dest => dest.ProductoNombre, opt => opt.MapFrom(src => src.ProductoNombre))
+            .ForMember(dest => dest.Cantidad, opt => opt.MapFrom(src => src.Cantidad))
+            .ForMember(dest => dest.PrecioUnitario, opt => opt.MapFrom(src => src.PrecioUnitario.Amount))
+            .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.Subtotal.Amount));
+
+        // DescuentoFactura Entity -> DescuentoFacturaDto
+        CreateMap<DescuentoFactura, DescuentoFacturaDto>()
+            .ForMember(dest => dest.TipoDescuento, opt => opt.MapFrom(src => src.TipoDescuento.ToString()))
+            .ForMember(dest => dest.Valor, opt => opt.MapFrom(src => src.Valor.Amount))
+            .ForMember(dest => dest.Concepto, opt => opt.MapFrom(src => src.Concepto))
+            .ForMember(dest => dest.FechaAplicacion, opt => opt.MapFrom(src => src.FechaAplicacion));
     }
 } 

@@ -98,8 +98,12 @@ public class OperacionesMappingProfile : Profile
             //.ForMember(dest => dest.DescripcionProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Descripcion : null));
 
         // TODO: Mapear personalizaciones cuando estén disponibles en el dominio
-        // CreateMap<PersonalizacionItem, PersonalizacionDto>()
-        //     .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Tipo.ToString()));
+        // ✅ ACTIVADO: Mapeo de personalizaciones
+        CreateMap<PersonalizacionItem, PersonalizacionDto>()
+            .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Tipo.ToString()))
+            .ForMember(dest => dest.IngredienteEspecial, opt => opt.MapFrom(src => src.IngredienteEspecial))
+            .ForMember(dest => dest.PrecioAdicional, opt => opt.MapFrom(src => src.PrecioAdicional))
+            .ForMember(dest => dest.Instrucciones, opt => opt.MapFrom(src => src.Instrucciones));
 
         // TODO: Reactivar cuando existan DTOs
         // ItemComandaCreateDto → AgregarItemComandaCommand (DTO de entrada a comando)

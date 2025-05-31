@@ -220,34 +220,26 @@ public class AplicarDescuentoHandler : IRequestHandler<AplicarDescuentoCommand, 
         decimal montoDescuento, 
         CancellationToken cancellationToken)
     {
-        // TODO: Usar servicio de dominio cuando tenga el método AplicarDescuentoAsync
-        // Crear el descuento usando el servicio de dominio
-        // var descuentoResult = await _servicioFacturacion.AplicarDescuentoAsync(
-        //     factura.Id,
-        //     request.TipoDescuento,
-        //     montoDescuento,
-        //     request.Concepto,
-        //     request.Motivo,
-        //     request.UsuarioAutorizaId,
-        //     request.AplicarAntesDeImpuestos,
-        //     cancellationToken);
+        // Usar servicio de dominio para aplicar el descuento
+        var descuentoResult = await _servicioFacturacion.AplicarDescuentoAsync(
+            factura.Id,
+            request.TipoDescuento,
+            montoDescuento,
+            request.Concepto,
+            request.Motivo,
+            request.UsuarioAutorizaId,
+            request.AplicarAntesDeImpuestos,
+            request.CodigoAutorizacion,
+            cancellationToken);
 
-        // if (!descuentoResult.IsSuccess)
-        // {
-        //     return Result.Failure<bool>(descuentoResult.Error);
-        // }
+        if (!descuentoResult.Succeeded)
+        {
+            _logger.LogWarning("Error al aplicar descuento usando servicio de dominio para factura {FacturaId}: {Error}", 
+                factura.Id, descuentoResult.Error);
+            return Result.Failure<bool>(descuentoResult.Error);
+        }
 
-        // Temporal: Solo registrar el descuento sin usar el servicio de dominio
-        _logger.LogInformation("TODO: Aplicar descuento usando servicio de dominio pendiente para factura {FacturaId}", factura.Id);
-
-        // TODO: Descomentar cuando tengamos la entidad Descuento
-        // Configurar propiedades adicionales del descuento
-        // var descuento = descuentoResult.Value;
-        // descuento.CodigoAutorizacion = request.CodigoAutorizacion;
-        // descuento.FechaExpiracion = request.FechaExpiracion;
-        // descuento.EsAcumulable = request.EsAcumulable;
-        // descuento.Prioridad = request.Prioridad;
-        // descuento.NotasAdicionales = request.NotasAdicionales;
+        _logger.LogInformation("✅ Descuento aplicado exitosamente usando servicio de dominio para factura {FacturaId}", factura.Id);
 
         // Si hay productos específicos, crear registros de relación
         if (request.ProductosEspecificos.Any())

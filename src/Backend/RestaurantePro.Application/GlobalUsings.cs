@@ -127,3 +127,6 @@ global using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
 global using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
+
+// 🆕 NUEVO: ISignalRService y IBackgroundJobService ya incluidos en IApplicationService
+// Las interfaces están en Common.Interfaces - no necesitan using adicional

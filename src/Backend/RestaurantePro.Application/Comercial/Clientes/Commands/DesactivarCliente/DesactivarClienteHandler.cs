@@ -196,15 +196,15 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
                 emailContent);
             */
 
-            // Notificación en sistema
-            // TODO: Descomentar cuando INotificationService tenga CreateNotificationAsync y NotificationType esté disponible
-            /*
-            await _notificationService.CreateNotificationAsync(
-                "Cuenta Desactivada",
-                $"Su cuenta ha sido desactivada. Motivo: {motivo}",
+            // ✅ ACTIVADO: Notificación en sistema usando INotificationService implementado
+            var tituloNotificacion = "Cuenta Desactivada";
+            var mensajeNotificacion = $"Su cuenta ha sido desactivada. Motivo: {motivo}";
+            
+            await _notificationService.EnviarNotificacionAsync(
                 cliente.Id,
-                NotificationType.CuentaCliente);
-            */
+                tituloNotificacion,
+                mensajeNotificacion,
+                "Warning"); // Tipo de notificación de advertencia
             
             _logger.LogInformation("Notificación de desactivación enviada para cliente {ClienteId}", cliente.Id);
         }

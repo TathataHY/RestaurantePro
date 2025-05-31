@@ -10,19 +10,25 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
     private readonly IMesaRepository _mesaRepository;
     private readonly ILogger<ReservacionCreadaNotificacionHandler> _logger;
     private readonly IMediator _mediator;
+    private readonly IEmailService _emailService;
+    private readonly ISMSService _smsService;
 
     public ReservacionCreadaNotificacionHandler(
         IReservacionRepository reservacionRepository,
         IClienteRepository clienteRepository,
         IMesaRepository mesaRepository,
         ILogger<ReservacionCreadaNotificacionHandler> logger,
-        IMediator mediator)
+        IMediator mediator,
+        IEmailService emailService,
+        ISMSService smsService)
     {
         _reservacionRepository = reservacionRepository;
         _clienteRepository = clienteRepository;
         _mesaRepository = mesaRepository;
         _logger = logger;
         _mediator = mediator;
+        _emailService = emailService;
+        _smsService = smsService;
     }
 
     /// <summary>
@@ -150,39 +156,40 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
             return;
         }
 
-        var emailContent = new
-        {
-            To = datos.ClienteEmail,
-            Subject = $"✅ Confirmación de Reservación - RestaurantePro",
-            Template = "reservacion-confirmada",
-            Data = new
-            {
-                ClienteNombre = datos.ClienteNombre,
-                FechaReservacion = datos.FechaHoraReservacion.ToString("dddd, dd 'de' MMMM 'de' yyyy"),
-                HoraReservacion = datos.FechaHoraReservacion.ToString("HH:mm"),
-                CantidadPersonas = datos.CantidadPersonas,
-                MesaAsignada = datos.MesaAsignada?.ToString() ?? "Por asignar",
-                ObservacionesEspeciales = datos.ObservacionesEspeciales ?? "Ninguna",
-                CodigoConfirmacion = datos.CodigoConfirmacion,
-                TiempoRestante = FormatearTiempoRestante(datos.TiempoHastaReservacion),
-                MensajeFidelizacion = datos.ClienteFidelizado ? "🎉 ¡Gracias por ser nuestro cliente fidelizado!" : "",
-                InstruccionesCancelacion = "Para cancelar o modificar tu reservación, contacta al +1234567890 o responde este email",
-                LogoUrl = "https://restaurantepro.com/logo.png",
-                WebsiteUrl = "https://restaurantepro.com"
-            }
-        };
-
-        _logger.LogInformation("📧 Enviando email de confirmación: {@EmailContent}", new { 
-            emailContent.To, 
-            emailContent.Subject,
-            datos.FechaHoraReservacion,
-            datos.CantidadPersonas
-        });
-
         try
         {
-            // TODO: Implementar servicio real de email
-            // await _emailService.SendAsync(emailContent, cancellationToken);
+            // Crear email HTML para mejor presentación
+            var emailHtml = $@"
+                <html>
+                <body style='font-family: Arial, sans-serif;'>
+                    <h2 style='color: #2c5aa0;'>✅ Reservación Confirmada - RestaurantePro</h2>
+                    <p>Estimado/a <strong>{datos.ClienteNombre}</strong>,</p>
+                    <p>Su reservación ha sido confirmada exitosamente.</p>
+                    
+                    <div style='background-color: #f0f8ff; padding: 15px; border-left: 4px solid #2c5aa0; margin: 20px 0;'>
+                        <h3>📋 Detalles de la Reservación:</h3>
+                        <ul style='list-style: none; padding: 0;'>
+                            <li>📅 <strong>Fecha y Hora:</strong> {datos.FechaHoraReservacion:dddd, dd 'de' MMMM 'del' yyyy 'a las' HH:mm}</li>
+                            <li>👥 <strong>Cantidad de Personas:</strong> {datos.CantidadPersonas}</li>
+                            <li>🏷️ <strong>Código de Confirmación:</strong> <span style='background-color: #ffeb3b; padding: 2px 5px; font-weight: bold;'>{datos.CodigoConfirmacion}</span></li>
+                            {(datos.MesaAsignada.HasValue ? $"<li>🪑 <strong>Mesa Asignada:</strong> Mesa #{datos.MesaAsignada}</li>" : "")}
+                            {(!string.IsNullOrEmpty(datos.ObservacionesEspeciales) ? $"<li>📝 <strong>Observaciones:</strong> {datos.ObservacionesEspeciales}</li>" : "")}
+                        </ul>
+                    </div>
+                    
+                    <p>⏰ Su reservación es en <strong>{FormatearTiempoRestante(datos.TiempoHastaReservacion)}</strong>.</p>
+                    <p>¡Esperamos verle pronto en RestaurantePro!</p>
+                    
+                    <hr style='margin: 30px 0;'>
+                    <p style='color: #666; font-size: 12px;'>
+                        Si necesita modificar o cancelar su reservación, contáctenos con el código {datos.CodigoConfirmacion}.
+                    </p>
+                </body>
+                </html>";
+
+            await _emailService.SendHtmlEmailAsync(datos.ClienteEmail, 
+                $"✅ Reservación Confirmada - {datos.CodigoConfirmacion}", 
+                emailHtml);
             
             _logger.LogInformation("✅ Email de confirmación enviado exitosamente a {Email}", datos.ClienteEmail);
         }
@@ -211,21 +218,14 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
                            $"el {datos.FechaHoraReservacion:dd/MM} a las {datos.FechaHoraReservacion:HH:mm}. " +
                            $"Código: {datos.CodigoConfirmacion}. ¡Te esperamos!";
 
-            var smsData = new
-            {
-                Telefono = datos.ClienteTelefono,
-                Mensaje = mensajeSMS,
-                ClienteId = datos.ClienteId,
-                ReservacionId = datos.ReservacionId
-            };
+            _logger.LogInformation("📱 Enviando SMS de confirmación a {Telefono}: {Mensaje}", 
+                datos.ClienteTelefono, mensajeSMS);
 
-            _logger.LogInformation("📱 Enviando SMS de confirmación: {@SMSData}", new { 
-                smsData.Telefono, 
-                MensajeLength = mensajeSMS.Length 
-            });
-
-            // TODO: Implementar servicio real de SMS
-            // await _smsService.SendAsync(smsData, cancellationToken);
+            await _smsService.SendSMSWithTrackingAsync(
+                datos.ClienteTelefono, 
+                mensajeSMS, 
+                datos.ClienteId, 
+                "ConfirmacionReservacion");
 
             _logger.LogInformation("✅ SMS de confirmación enviado exitosamente a {Telefono}", datos.ClienteTelefono);
         }

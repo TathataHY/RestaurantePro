@@ -13,8 +13,7 @@ public class InventarioMappingProfile : Profile
     {
         ConfigurarMapeosIngredientes();
         ConfigurarMapeosMovimientosInventario();
-        // TODO: Agregar otros mapeos cuando estén implementados
-        // ConfigurarMapeosOrdenesCompra();
+        ConfigurarMapeosOrdenesCompra();
     }
 
     /// <summary>
@@ -85,5 +84,33 @@ public class InventarioMappingProfile : Profile
             //.ForMember(dest => dest.NombreUsuario, opt => opt.MapFrom(src => src.Usuario != null ? src.Usuario.Nombre : string.Empty));
     }
 
-    // TODO: Implementar mapeos para OrdenesCompra y DetallesOrdenCompra
+    /// <summary>
+    /// Configura los mapeos específicos para Órdenes de Compra
+    /// </summary>
+    private void ConfigurarMapeosOrdenesCompra()
+    {
+        // OrdenCompra Entity -> OrdenCompraDto
+        CreateMap<OrdenCompra, OrdenCompraDto>()
+            .ForMember(dest => dest.NumeroOrden, opt => opt.MapFrom(src => src.NumeroOrden.Value))
+            .ForMember(dest => dest.FechaOrden, opt => opt.MapFrom(src => src.FechaOrden))
+            .ForMember(dest => dest.FechaEntregaEsperada, opt => opt.MapFrom(src => src.FechaEntregaEsperada))
+            .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => src.Estado.ToString()))
+            .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total.Amount))
+            .ForMember(dest => dest.ProveedorId, opt => opt.MapFrom(src => src.ProveedorId))
+            .ForMember(dest => dest.ProveedorNombre, opt => opt.MapFrom(src => "")) // TODO: Mapear cuando tengamos navegación
+            .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones))
+            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
+            .ForMember(dest => dest.CantidadItems, opt => opt.MapFrom(src => src.Detalles.Count));
+
+        // DetalleOrdenCompra Entity -> DetalleOrdenCompraDto
+        CreateMap<DetalleOrdenCompra, DetalleOrdenCompraDto>()
+            .ForMember(dest => dest.IngredienteId, opt => opt.MapFrom(src => src.IngredienteId))
+            .ForMember(dest => dest.IngredienteNombre, opt => opt.MapFrom(src => "")) // TODO: Mapear cuando tengamos navegación
+            .ForMember(dest => dest.CantidadSolicitada, opt => opt.MapFrom(src => src.CantidadSolicitada))
+            .ForMember(dest => dest.PrecioUnitario, opt => opt.MapFrom(src => src.PrecioUnitario.Amount))
+            .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.Subtotal.Amount))
+            .ForMember(dest => dest.CantidadRecibida, opt => opt.MapFrom(src => src.CantidadRecibida))
+            .ForMember(dest => dest.EstaPendiente, opt => opt.MapFrom(src => src.CantidadRecibida < src.CantidadSolicitada))
+            .ForMember(dest => dest.EstaCompleto, opt => opt.MapFrom(src => src.CantidadRecibida >= src.CantidadSolicitada));
+    }
 } 

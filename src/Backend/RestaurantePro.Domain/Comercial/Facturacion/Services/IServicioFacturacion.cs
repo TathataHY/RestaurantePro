@@ -96,5 +96,29 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         Task<Result<string>> GenerarSiguienteNumeroFacturaAsync(
             string? prefijo = null,
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Aplica un descuento a una factura con validaciones de negocio
+        /// </summary>
+        /// <param name="facturaId">Identificador de la factura</param>
+        /// <param name="tipoDescuento">Tipo de descuento (Promocional, Empleado, Volumen, Cortesia)</param>
+        /// <param name="montoDescuento">Monto del descuento calculado</param>
+        /// <param name="concepto">Concepto o descripción del descuento</param>
+        /// <param name="motivo">Motivo del descuento</param>
+        /// <param name="usuarioAutorizaId">Usuario que autoriza el descuento</param>
+        /// <param name="aplicarAntesDeImpuestos">Si el descuento se aplica antes de calcular impuestos</param>
+        /// <param name="codigoAutorizacion">Código de autorización (opcional)</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con el descuento aplicado</returns>
+        Task<Result<Factura>> AplicarDescuentoAsync(
+            Guid facturaId,
+            string tipoDescuento,
+            decimal montoDescuento,
+            string concepto,
+            string motivo,
+            Guid usuarioAutorizaId,
+            bool aplicarAntesDeImpuestos = false,
+            string? codigoAutorizacion = null,
+            CancellationToken cancellationToken = default);
     }
 } 
