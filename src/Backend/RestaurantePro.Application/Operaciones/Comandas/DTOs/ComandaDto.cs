@@ -102,4 +102,35 @@ public class ComandaDto : BaseDto
     public TimeSpan? TiempoAbierta => FechaCierre.HasValue 
         ? FechaCierre.Value - FechaApertura 
         : DateTime.Now - FechaApertura;
+
+    // 🔥 PROPIEDADES BÁSICAS AGREGADAS para mejor UX
+    /// <summary>
+    /// Estados calculados para facilitar el frontend
+    /// </summary>
+    public bool EstaCreada => Estado == EstadoComanda.Creada;
+    public bool EstaEnProceso => Estado == EstadoComanda.EnProceso;
+    public bool EstaLista => Estado == EstadoComanda.Lista;
+    public bool EstaEntregada => Estado == EstadoComanda.Entregada;
+    public bool EstaFinalizada => Estado == EstadoComanda.Finalizada;
+    public bool EstaCancelada => Estado == EstadoComanda.Cancelada;
+    
+    /// <summary>
+    /// Tiempo de preparación estimado en minutos
+    /// </summary>
+    public int TiempoPreparacionMinutos => Items.Count > 0 ? Items.Count * 5 : 15; // 5 min por item
+
+    /// <summary>
+    /// Tiempo formateado para mostrar en UI
+    /// </summary>
+    public string TiempoAbiertaTexto => TiempoAbierta?.ToString(@"hh\:mm") ?? "00:00";
+
+    /// <summary>
+    /// Número de comanda formateado
+    /// </summary>
+    public string NumeroComanda => $"C-{Id.ToString().Substring(0, 8).ToUpper()}";
+
+    /// <summary>
+    /// Mesa formateada para mostrar
+    /// </summary>
+    public string MesaTexto => $"Mesa {NumeroMesa}";
 } 

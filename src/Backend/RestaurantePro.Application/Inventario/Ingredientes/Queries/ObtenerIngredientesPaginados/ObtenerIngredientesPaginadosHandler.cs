@@ -56,44 +56,15 @@ public class ObtenerIngredientesPaginadosHandler : IRequestHandler<ObtenerIngred
             // 7. Enriquecer DTOs con información calculada
             foreach (var dto in ingredientesDto)
             {
-                // TODO: Implementar cuando estén disponibles todas las propiedades en IngredienteSummaryDto
-                /*
-                // Calcular estado del stock
-                var porcentajeStock = dto.StockMinimo > 0 ? (dto.StockActual / dto.StockMinimo) * 100 : 100;
-                dto.PorcentajeStock = porcentajeStock;
-                dto.EstaBajoMinimo = dto.StockActual < dto.StockMinimo;
-
-                // Determinar estado y color
-                (dto.EstadoStock, dto.ColorEstado) = porcentajeStock switch
-                {
-                    <= 10 => ("Crítico", "#D32F2F"),
-                    <= 25 => ("Muy Bajo", "#F44336"),
-                    <= 50 => ("Bajo", "#FF9800"),
-                    _ => ("Normal", "#4CAF50")
-                };
-
-                // Calcular valor total del stock
-                dto.ValorTotalStock = dto.StockActual * dto.CostoPromedio;
-
-                // Formatear stock con unidad
-                dto.StockTexto = $"{dto.StockActual:F2} {dto.UnidadMedida}";
-
-                // Determinar prioridad de reposición
-                (dto.PrioridadReposicion, dto.ColorPrioridad) = (porcentajeStock, dto.Rotacion.ToLower()) switch
-                {
-                    (< 10, _) => ("Urgente", "#D32F2F"),
-                    (< 25, "alta") => ("Alta", "#F44336"),
-                    (< 25, _) => ("Media", "#FF9800"),
-                    (< 50, "alta") => ("Media", "#FF9800"),
-                    _ => ("Baja", "#FFC107")
-                };
-
-                // Crear resumen del estado
-                var diasFaltantes = EstimarDiasFaltantes(dto);
-                dto.ResumenEstado = dto.EstaBajoMinimo ? 
-                    $"🚨 CRÍTICO: Solo {dto.ValorTotalStock:C} en stock" :
-                    $"✅ Stock suficiente ({diasFaltantes}d restantes)";
-                */
+                // Las propiedades ya están disponibles como calculadas en IngredienteSummaryDto
+                // No necesitamos calcular manualmente porque el DTO ya tiene:
+                // - EstadoStock (propiedad calculada)
+                // - ColorEstado (propiedad calculada) 
+                // - PorcentajeStock (propiedad calculada)
+                // - ValorStock (propiedad calculada)
+                // - ResumenEstado (propiedad calculada)
+                
+                _logger.LogDebug("Ingrediente procesado: {Nombre} - {Estado}", dto.Nombre, dto.EstadoStock);
             }
 
             // 8. Crear resultado paginado
@@ -370,6 +341,22 @@ public class ObtenerIngredientesPaginadosHandler : IRequestHandler<ObtenerIngred
         */
 
         _logger.LogInformation("📊 Total ingredientes mostrados: {Cantidad}", ingredientes.Count);
+
+        // Usar las propiedades que SÍ existen en IngredienteSummaryDto
+        var estadisticas = ingredientes
+            .GroupBy(i => i.EstadoStock)
+            .ToDictionary(g => g.Key, g => g.Count());
+
+        foreach (var (estado, cantidad) in estadisticas)
+        {
+            _logger.LogInformation("📊 {Estado}: {Cantidad} ingredientes", estado, cantidad);
+        }
+
+        var valorTotal = ingredientes.Sum(i => i.ValorStock);
+        var stockPromedio = ingredientes.Average(i => i.PorcentajeStock);
+
+        _logger.LogInformation("💰 Valor total mostrado: ${ValorTotal:F2} - Stock promedio: {StockPromedio:F1}%", 
+            valorTotal, stockPromedio);
 
         // Log de filtros aplicados
         if (!string.IsNullOrWhiteSpace(request.FiltroTexto))

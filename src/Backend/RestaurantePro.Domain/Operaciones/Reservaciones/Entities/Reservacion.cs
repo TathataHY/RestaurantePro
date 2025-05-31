@@ -83,6 +83,19 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
         /// </summary>
         public string MotivoCancelacion { get; private set; }
 
+        // 🔥 NAVEGACIONES AGREGADAS para queries más eficientes
+        /// <summary>
+        /// Navegación hacia la entidad Mesa reservada
+        /// Facilita acceso a información de la mesa sin queries adicionales
+        /// </summary>
+        public virtual Mesa? Mesa { get; set; }
+
+        /// <summary>
+        /// Navegación hacia la entidad Cliente que realizó la reservación
+        /// Útil para obtener información completa del cliente
+        /// </summary>
+        public virtual Cliente? Cliente { get; set; }
+
         /// <summary>
         /// Constructor privado para EF Core
         /// </summary>

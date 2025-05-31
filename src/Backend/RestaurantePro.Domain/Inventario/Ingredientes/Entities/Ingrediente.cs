@@ -72,6 +72,19 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// </summary>
         public IReadOnlyCollection<MovimientoInventario> Movimientos => _movimientos.AsReadOnly();
 
+        // 🔥 NAVEGACIONES AGREGADAS para queries más eficientes
+        /// <summary>
+        /// Navegación hacia la entidad Proveedor principal del ingrediente
+        /// Facilita acceso a información del proveedor para órdenes de compra automáticas
+        /// </summary>
+        public virtual Proveedor? ProveedorPrincipal { get; set; }
+
+        /// <summary>
+        /// Navegación hacia los movimientos de inventario de este ingrediente.
+        /// Importante para la auditoría y trazabilidad del stock.
+        /// </summary>
+        public virtual ICollection<MovimientoInventario> MovimientosNavegacion { get; set; } = new List<MovimientoInventario>();
+
         /// <summary>
         /// Proveedor principal para este ingrediente.
         /// Este ID se utiliza para generar órdenes de compra automáticas cuando el stock cae por debajo del mínimo.
@@ -282,32 +295,28 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         }
 
         /// <summary>
-        /// Reserva una cantidad específica de stock para una operación.
-        /// No modifica el stock real, pero valida disponibilidad.
+        /// Reserva una cantidad de stock para una operación específica.
+        /// Esta operación no modifica el stock físico, pero valida disponibilidad.
         /// </summary>
         /// <param name="cantidad">Cantidad a reservar</param>
         /// <param name="motivo">Motivo de la reserva</param>
-        /// <exception cref="StockInsuficienteException">Si no hay suficiente stock para reservar</exception>
+        /// <exception cref="InvalidOperationException">Si no hay suficiente stock o el ingrediente está inactivo</exception>
         public void ReservarStock(decimal cantidad, string motivo)
         {
             ValidarIngredienteActivo();
-            
-            Guard.AgainstNegativeOrZero(cantidad, nameof(cantidad));
+            Guard.AgainstNegative(cantidad, nameof(cantidad));
             Guard.AgainstNullOrWhiteSpace(motivo, nameof(motivo));
 
-            if (cantidad > Stock)
+            if (!TieneStockSuficiente(cantidad))
             {
-                throw new StockInsuficienteException(
-                    Id, 
-                    Nombre, 
-                    cantidad, 
-                    Stock, 
-                    $"reservar stock para {motivo}");
+                throw new InvalidOperationException(
+                    $"Stock insuficiente para reservar. Disponible: {Stock}, Requerido: {cantidad}");
             }
 
             // Emitir evento de reserva (no modifica stock físico)
             // TODO: Implementar evento StockReservado
             // AddDomainEvent(new Events.Ingrediente.StockReservado(Id, Nombre, cantidad, motivo));
+            AddDomainEvent(new Events.Ingrediente.StockReservado(Id, Nombre, cantidad, motivo));
         }
 
         /// <summary>
@@ -330,6 +339,8 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
 
             // TODO: Implementar evento StockMinimoActualizado
             // AddDomainEvent(new Events.Ingrediente.StockMinimoActualizado(Id, Nombre, stockMinimoAnterior, nuevoStockMinimo));
+
+            AddDomainEvent(new Events.Ingrediente.StockMinimoActualizado(Id, Nombre, stockMinimoAnterior, nuevoStockMinimo));
 
             // Verificar si el stock actual está por debajo del nuevo mínimo
             if (Stock < StockMinimo)
@@ -403,6 +414,8 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
 
             // TODO: Implementar evento RotacionActualizada
             // AddDomainEvent(new Events.Ingrediente.RotacionActualizada(Id, Nombre, rotacionAnterior, rotacion));
+
+            AddDomainEvent(new Events.Ingrediente.RotacionIngredienteActualizada(Id, Nombre, rotacion));
         }
 
         /// <summary>
@@ -420,6 +433,8 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
 
             // TODO: Implementar evento TemporadaActualizada
             // AddDomainEvent(new Events.Ingrediente.TemporadaActualizada(Id, Nombre, temporadaAnterior, temporada));
+            
+            AddDomainEvent(new Events.Ingrediente.TemporadaIngredienteActualizada(Id, Nombre, temporada));
         }
 
         /// <summary>
@@ -439,6 +454,8 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
 
             // TODO: Implementar evento BloqueoControlCalidadActualizado
             // AddDomainEvent(new Events.Ingrediente.BloqueoControlCalidadActualizado(Id, Nombre, bloqueado, motivo));
+            
+            AddDomainEvent(new Events.Ingrediente.BloqueoControlCalidadActualizado(Id, Nombre, bloqueado, motivo));
         }
 
         /// <summary>

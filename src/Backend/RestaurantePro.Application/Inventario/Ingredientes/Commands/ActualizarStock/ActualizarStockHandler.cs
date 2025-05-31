@@ -258,27 +258,16 @@ public class ActualizarStockHandler : IRequestHandler<ActualizarStockCommand, Re
     /// </summary>
     private void EnriquecerIngredienteDto(IngredienteDto dto)
     {
-        // Calcular estado del stock
-        // var porcentajeStock = ingrediente.StockMinimo > 0 ? (ingrediente.Stock / ingrediente.StockMinimo) * 100 : 100;
-        // dto.PorcentajeStock = porcentajeStock; // TODO: Propiedad de solo lectura
-        dto.EstaBajoMinimo = dto.StockActual < dto.StockMinimo;
-
-        // Determinar estado y color
-        (dto.EstadoStock, dto.ColorEstado) = dto.StockActual switch
-        {
-            <= 25 => ("Crítico", "#F44336"),
-            <= 50 => ("Bajo", "#FF9800"),
-            <= 100 => ("Normal", "#4CAF50"),
-            _ => ("Alto", "#2196F3")
-        };
-
-        // Calcular valor total del stock
-        dto.ValorTotalStock = dto.StockActual * dto.CostoPromedio;
-
-        // Crear resumen del estado
-        dto.ResumenEstado = dto.EstaBajoMinimo 
-            ? $"🚨 Stock crítico: {dto.StockActual:F2} {dto.UnidadMedida} (Mín: {dto.StockMinimo:F2})"
-            : $"✅ Stock normal: {dto.StockActual:F2} {dto.UnidadMedida} - Valor: ${dto.ValorTotalStock:F2}";
+        // Las propiedades ya están disponibles como calculadas en IngredienteDto
+        // No necesitamos calcular manualmente porque el DTO ya tiene:
+        // - EstadoStock (propiedad calculada)
+        // - ColorEstado (propiedad calculada) 
+        // - PorcentajeStock (propiedad calculada)
+        // - ValorTotalStock (propiedad calculada)
+        // - MensajeAlerta (propiedad calculada)
+        
+        _logger.LogDebug("Ingrediente actualizado: {Nombre} - {Estado} - Stock: {Stock}", 
+            dto.Nombre, dto.EstadoStock, dto.StockFormateado);
     }
 
     /// <summary>

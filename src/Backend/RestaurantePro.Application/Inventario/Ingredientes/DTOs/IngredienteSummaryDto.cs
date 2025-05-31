@@ -186,4 +186,54 @@ public class IngredienteSummaryDto
     public int? DiasStockDisponible => ConsumoPromedioMensual > 0 
         ? (int?)Math.Floor(StockActual / (ConsumoPromedioMensual / 30))
         : null;
+
+    // 🔥 PROPIEDADES BÁSICAS FINALES para completar UX
+    /// <summary>
+    /// Stock formateado para mostrar en listas
+    /// </summary>
+    public string StockFormateado => $"{StockActual:N1} {UnidadMedida}";
+
+    /// <summary>
+    /// Costo formateado para mostrar
+    /// </summary>
+    public string CostoFormateado => $"${CostoUnitario:N2}";
+
+    /// <summary>
+    /// Valor de stock formateado
+    /// </summary>
+    public string ValorFormateado => $"${ValorStock:N2}";
+
+    /// <summary>
+    /// Resumen de estado para tooltips
+    /// </summary>
+    public string ResumenEstado => $"{EstadoStock} - {StockFormateado} disponible";
+
+    /// <summary>
+    /// Prioridad de atención (1=Normal, 5=Urgente)
+    /// </summary>
+    public int PrioridadAtencion => EstadoStock switch
+    {
+        "Sin Stock" => 5,
+        "Crítico" => 4,
+        "Bajo" => 3,
+        "Exceso" => 2,
+        _ => 1
+    };
+
+    /// <summary>
+    /// Mensaje de acción recomendada
+    /// </summary>
+    public string AccionRecomendada => EstadoStock switch
+    {
+        "Sin Stock" => "Comprar urgente",
+        "Crítico" => "Revisar stock",
+        "Bajo" => "Planificar compra",
+        "Exceso" => "Revisar rotación",
+        _ => "Mantener"
+    };
+
+    /// <summary>
+    /// Indica si requiere atención inmediata
+    /// </summary>
+    public bool RequiereAtencion => PrioridadAtencion >= 3;
 } 

@@ -111,9 +111,13 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
                     var personalizacion = await CrearPersonalizacion(personalizacionDto);
                     if (personalizacion.Succeeded)
                     {
-                        // TODO: Implementar método para agregar personalizaciones al item
-                        // itemComanda.AgregarPersonalizacion(personalizacion.Value);
-                        _logger.LogDebug("✨ Personalización pendiente de implementación: {Tipo}", personalizacionDto.Tipo);
+                        // Aplicar personalización usando los métodos del dominio
+                        var aplicado = await AplicarPersonalizacion(itemComanda, personalizacionDto);
+                        if (!aplicado.Succeeded)
+                        {
+                            _logger.LogWarning("⚠️ Error al aplicar personalización: {Error}", aplicado.Error);
+                            return Result.Failure(aplicado.Error);
+                        }
                     }
                     else
                     {
@@ -136,23 +140,132 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
     }
 
     /// <summary>
-    /// Crea una personalización desde el DTO
-    /// TODO: Este método debería usar un factory del dominio cuando esté disponible
+    /// Valida los datos de una personalización desde el DTO
     /// </summary>
     private async Task<Result<object>> CrearPersonalizacion(PersonalizacionCreateDto dto)
     {
         try
         {
-            // TODO: Implementar factory de Personalización en el dominio
-            // Por ahora, retornamos éxito simulado
-            await Task.CompletedTask;
+            await Task.CompletedTask; // No necesitamos operaciones async
+
+            // Validaciones básicas
+            if (dto.IngredienteId == Guid.Empty)
+            {
+                return Result.Failure<object>("El ID del ingrediente es requerido para la personalización");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.Tipo))
+            {
+                return Result.Failure<object>("El tipo de personalización es requerido");
+            }
+
+            var tipoUpper = dto.Tipo.ToUpperInvariant();
+            if (tipoUpper != "EXTRA" && tipoUpper != "QUITAR" && tipoUpper != "SUSTITUIR")
+            {
+                return Result.Failure<object>($"Tipo de personalización no válido: {dto.Tipo}");
+            }
+
+            // Validaciones específicas por tipo
+            if (tipoUpper == "EXTRA" && dto.Cantidad <= 0)
+            {
+                return Result.Failure<object>("La cantidad debe ser mayor que cero para personalizaciones de tipo Extra");
+            }
+
+            if (tipoUpper == "SUSTITUIR" && !dto.IngredienteSustitucionId.HasValue)
+            {
+                return Result.Failure<object>("Se requiere especificar el ingrediente de sustitución para personalizaciones de tipo Sustituir");
+            }
+
+            if (dto.PrecioAdicional < 0)
+            {
+                return Result.Failure<object>("El precio adicional no puede ser negativo");
+            }
             
-            _logger.LogDebug("✨ Personalización creada: {Tipo} - {IngredienteId}", dto.Tipo, dto.IngredienteId);
-            return Result.Success<object>(new object()); // Placeholder
+            _logger.LogDebug("✅ Personalización validada: {Tipo} - {IngredienteId}", dto.Tipo, dto.IngredienteId);
+            return Result.Success<object>(new object()); // Solo retornamos éxito, no necesitamos el objeto
         }
         catch (Exception ex)
         {
-            return Result.Failure<object>($"Error al crear personalización: {ex.Message}");
+            _logger.LogError(ex, "💥 Error al validar personalización");
+            return Result.Failure<object>($"Error al validar personalización: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Aplica una personalización a un itemComanda usando los métodos del dominio
+    /// </summary>
+    private async Task<Result> AplicarPersonalizacion(ItemComanda itemComanda, PersonalizacionCreateDto dto)
+    {
+        try
+        {
+            await Task.CompletedTask; // No necesitamos operaciones async aquí
+
+            switch (dto.Tipo.ToUpperInvariant())
+            {
+                case "EXTRA":
+                    // Usar método del dominio para agregar extra
+                    itemComanda.AgregarPersonalizacionExtra(
+                        dto.IngredienteId,
+                        $"Extra ingrediente {dto.IngredienteId}", // TODO: Obtener nombre real del ingrediente
+                        dto.Cantidad,
+                        dto.PrecioAdicional);
+                    
+                    _logger.LogDebug("✨ Extra agregado: Ingrediente {IngredienteId} x{Cantidad} (+${Precio:F2})", 
+                        dto.IngredienteId, dto.Cantidad, dto.PrecioAdicional);
+                    break;
+
+                case "QUITAR":
+                    // Usar método del dominio para quitar ingrediente
+                    itemComanda.AgregarPersonalizacionQuitar(
+                        dto.IngredienteId,
+                        $"Quitar ingrediente {dto.IngredienteId}"); // TODO: Obtener nombre real del ingrediente
+                    
+                    _logger.LogDebug("✨ Ingrediente removido: {IngredienteId}", dto.IngredienteId);
+                    break;
+
+                case "SUSTITUIR":
+                    // Validar que existe ingrediente de sustitución
+                    if (!dto.IngredienteSustitucionId.HasValue)
+                    {
+                        return Result.Failure("Para sustituir un ingrediente se requiere especificar el ingrediente de sustitución");
+                    }
+
+                    // Usar método del dominio para sustituir
+                    itemComanda.AgregarPersonalizacionSustituir(
+                        dto.IngredienteId,
+                        $"Ingrediente {dto.IngredienteId}", // TODO: Obtener nombre real del ingrediente
+                        dto.IngredienteSustitucionId.Value,
+                        $"Ingrediente {dto.IngredienteSustitucionId.Value}", // TODO: Obtener nombre real del ingrediente
+                        dto.Cantidad,
+                        dto.PrecioAdicional);
+                    
+                    _logger.LogDebug("✨ Sustitución aplicada: {IngredienteOriginal} → {IngredienteSustituto} (+${Precio:F2})", 
+                        dto.IngredienteId, dto.IngredienteSustitucionId.Value, dto.PrecioAdicional);
+                    break;
+
+                default:
+                    return Result.Failure($"Tipo de personalización no válido: {dto.Tipo}. Valores válidos: Extra, Quitar, Sustituir");
+            }
+
+            _logger.LogInformation("✅ Personalización {Tipo} aplicada exitosamente al item {ItemId}", 
+                dto.Tipo, itemComanda.Id);
+            
+            return Result.Success();
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning("💼 Error de lógica de negocio al aplicar personalización: {Error}", ex.Message);
+            return Result.Failure(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning("📝 Error de argumentos al aplicar personalización: {Error}", ex.Message);
+            return Result.Failure(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "💥 Error inesperado al aplicar personalización {Tipo}", dto.Tipo);
+            return Result.Failure($"Error interno al aplicar personalización: {ex.Message}");
         }
     }
 } 

@@ -133,42 +133,19 @@ public class ObtenerIngredientesBajoStockHandler : IRequestHandler<ObtenerIngred
     {
         // Calcular estado del stock
         var porcentajeStock = dto.StockMinimo > 0 ? (dto.StockActual / dto.StockMinimo) * 100 : 100;
-        // dto.PorcentajeStock = porcentajeStock; // TODO: Propiedad de solo lectura
-        // dto.EstaBajoMinimo = dto.StockActual < dto.StockMinimo; // TODO: Propiedad no existe
-
-        // Determinar estado y color
-        // (dto.EstadoStock, dto.ColorEstado) = porcentajeStock switch // TODO: Propiedades de solo lectura
-        // {
-        //     <= 10 => ("Crítico", "#D32F2F"),
-        //     <= 25 => ("Muy Bajo", "#F44336"),
-        //     <= 50 => ("Bajo", "#FF9800"),
-        //     _ => ("Normal", "#4CAF50")
-        // };
-
-        // Calcular valor total del stock
-        // dto.ValorTotalStock = dto.StockActual * dto.CostoPromedio; // TODO: Propiedades no existen
-
-        // Formatear stock con unidad
-        // dto.StockTexto = $"{dto.StockActual:F2} {dto.UnidadMedida}"; // TODO: Propiedades no existen
-
-        // Determinar prioridad de reposición
-        // (dto.PrioridadReposicion, dto.ColorPrioridad) = (porcentajeStock, dto.Rotacion.ToLower()) switch // TODO: Propiedades no existen
-        // {
-        //     (< 10, _) => ("Urgente", "#D32F2F"),
-        //     (< 25, "alta") => ("Alta", "#F44336"),
-        //     (< 25, _) => ("Media", "#FF9800"),
-        //     (< 50, "alta") => ("Media", "#FF9800"),
-        //     _ => ("Baja", "#FFC107")
-        // };
+        
+        // Las propiedades están disponibles como calculadas en el DTO
+        // dto.PorcentajeStock - Es una propiedad calculada
+        // dto.EstadoStock - Es una propiedad calculada
+        // dto.ColorEstado - Es una propiedad calculada
 
         // Crear resumen del estado
         var diasFaltantes = EstimarDiasFaltantes(dto);
-        // dto.ResumenEstado = $"🚨 {dto.EstadoStock}: {dto.StockActual:F2}/{dto.StockMinimo:F2} {dto.UnidadMedida}"; // TODO: Propiedades no existen
         
-        // if (diasFaltantes.HasValue)
-        // {
-        //     dto.ResumenEstado += $" - {diasFaltantes}d restantes";
-        // }
+        // El DTO ya tiene ResumenEstado como propiedad calculada
+        // Podemos agregar información adicional si es necesario
+        _logger.LogDebug("Ingrediente {Nombre}: {Estado} - {Stock}", 
+            dto.Nombre, dto.EstadoStock, dto.StockFormateado);
     }
 
     /// <summary>
@@ -176,19 +153,12 @@ public class ObtenerIngredientesBajoStockHandler : IRequestHandler<ObtenerIngred
     /// </summary>
     private int? EstimarDiasFaltantes(IngredienteSummaryDto dto)
     {
-        // TODO: Implementar cuando existan las propiedades necesarias en IngredienteSummaryDto
-        /*
-        var consumoDiario = dto.Rotacion.ToLower() switch
-        {
-            "alta" => dto.StockActual / 7,    // Se agota en 7 días
-            "media" => dto.StockActual / 14,  // Se agota en 14 días
-            "baja" => dto.StockActual / 30,   // Se agota en 30 días
-            _ => dto.StockActual / 14
-        };
+        // Usar ConsumoPromedioMensual que ya existe en el DTO
+        if (dto.ConsumoPromedioMensual <= 0)
+            return null;
 
+        var consumoDiario = dto.ConsumoPromedioMensual / 30; // Convertir mensual a diario
         return consumoDiario > 0 ? (int)(dto.StockActual / consumoDiario) : null;
-        */
-        return null; // Placeholder hasta implementar
     }
 
     /// <summary>
@@ -203,15 +173,11 @@ public class ObtenerIngredientesBajoStockHandler : IRequestHandler<ObtenerIngred
             return ingredientes.OrderBy(i => i.Nombre);
         }
 
-        // TODO: Implementar cuando existan las propiedades necesarias en IngredienteSummaryDto
-        /*
-        // Ordenar por prioridad: más críticos primero
+        // Ordenar por prioridad usando las propiedades que SÍ existen
         return ingredientes
-            .OrderBy(i => i.PorcentajeStock)  // Menor porcentaje primero
-            .ThenByDescending(i => i.Rotacion == "Alta" ? 3 : i.Rotacion == "Media" ? 2 : 1)  // Alta rotación primero
-            .ThenByDescending(i => i.ValorTotalStock);  // Mayor valor primero
-        */
-        return ingredientes.OrderBy(i => i.Nombre); // Placeholder hasta implementar
+            .OrderBy(i => i.PrioridadAtencion)  // Usar PrioridadAtencion que ya existe
+            .ThenBy(i => i.PorcentajeStock)     // Usar PorcentajeStock que ya existe
+            .ThenByDescending(i => i.ValorStock); // Usar ValorStock que ya existe
     }
 
     /// <summary>
@@ -219,8 +185,7 @@ public class ObtenerIngredientesBajoStockHandler : IRequestHandler<ObtenerIngred
     /// </summary>
     private void LogearEstadisticas(List<IngredienteSummaryDto> ingredientes)
     {
-        // TODO: Implementar cuando existan las propiedades necesarias en IngredienteSummaryDto
-        /*
+        // Usar las propiedades que SÍ existen en IngredienteSummaryDto
         var estadisticas = ingredientes
             .GroupBy(i => i.EstadoStock)
             .ToDictionary(g => g.Key, g => g.Count());
@@ -230,9 +195,10 @@ public class ObtenerIngredientesBajoStockHandler : IRequestHandler<ObtenerIngred
             _logger.LogInformation("📊 {Estado}: {Cantidad} ingredientes", estado, cantidad);
         }
 
-        var valorTotal = ingredientes.Sum(i => i.ValorTotalStock);
+        var valorTotal = ingredientes.Sum(i => i.ValorStock);
         _logger.LogInformation("💰 Valor total en riesgo: ${ValorTotal:F2}", valorTotal);
-        */
-        _logger.LogInformation("📊 Total ingredientes bajo stock encontrados: {Cantidad}", ingredientes.Count);
+        
+        var ingredientesCriticos = ingredientes.Count(i => i.RequiereAtencion);
+        _logger.LogInformation("🚨 Ingredientes que requieren atención inmediata: {Cantidad}", ingredientesCriticos);
     }
 } 

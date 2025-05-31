@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
+
 namespace RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarCliente;
 
 /// <summary>
@@ -6,18 +8,18 @@ namespace RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarClien
 /// </summary>
 public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand, Result>
 {
-    private readonly IApplicationDbContext _context;
+    private readonly IClienteRepository _clienteRepository;
     private readonly ILogger<DesactivarClienteHandler> _logger;
     private readonly INotificationService _notificationService;
     private readonly IEmailService _emailService;
 
     public DesactivarClienteHandler(
-        IApplicationDbContext context,
+        IClienteRepository clienteRepository,
         ILogger<DesactivarClienteHandler> logger,
         INotificationService notificationService,
         IEmailService emailService)
     {
-        _context = context;
+        _clienteRepository = clienteRepository;
         _logger = logger;
         _notificationService = notificationService;
         _emailService = emailService;
@@ -29,13 +31,8 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
         {
             _logger.LogInformation("Iniciando desactivación de cliente {ClienteId}", request.ClienteId);
 
-            // 1. Obtener el cliente con sus datos relacionados
-            var cliente = await _context.Clientes
-                // TODO: Descomentar cuando las entidades tengan las relaciones correctas
-                // .Include(c => c.TarjetasFidelizacion)
-                // .Include(c => c.Reservaciones.Where(r => r.FechaHora > DateTime.UtcNow))
-                // .Include(c => c.Facturas.Where(f => f.Estado == EstadoFactura.Pendiente))
-                .FirstOrDefaultAsync(c => c.Id == request.ClienteId, cancellationToken);
+            // 1. Obtener el cliente
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(request.ClienteId, cancellationToken);
 
             if (cliente == null)
             {
@@ -44,14 +41,11 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
             }
 
             // 2. Verificar que el cliente esté activo
-            // TODO: Descomentar cuando Cliente tenga la propiedad Activo
-            /*
-            if (!cliente.Activo)
+            if (!cliente.EstaActivo)
             {
                 _logger.LogWarning("Cliente {ClienteId} ya está desactivado", request.ClienteId);
                 return Result.Failure("El cliente ya está desactivado.");
             }
-            */
 
             // 3. Validaciones de negocio adicionales
             var validacionResult = await ValidarDesactivacion(cliente);
@@ -60,16 +54,8 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
                 return Result.Failure(validacionResult.Error);
             }
 
-            // 4. Desactivar el cliente
-            // TODO: Descomentar cuando Cliente tenga todas las propiedades
-            /*
-            var estadoAnterior = cliente.Activo;
-            cliente.Activo = false;
-            cliente.FechaDesactivacion = DateTime.UtcNow;
-            cliente.MotivoDesactivacion = request.MotivoDesactivacion;
-            cliente.DesactivadoPor = request.DesactivadoPor;
-            cliente.NotasDesactivacion = request.NotasAdicionales;
-            */
+            // 4. Desactivar el cliente usando el método del dominio
+            cliente.Desactivar();
 
             // 5. Manejar reactivación automática si se especifica
             if (request.FechaReactivacion.HasValue)
@@ -80,22 +66,16 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
                     request.ClienteId, request.FechaReactivacion.Value);
             }
 
-            // 6. Desactivar tarjetas de fidelización activas
-            await DesactivarTarjetasFidelizacion(cliente);
+            // 6. Guardar cambios usando el repositorio
+            await _clienteRepository.ActualizarAsync(cliente, cancellationToken);
 
-            // 7. Cancelar reservaciones futuras si corresponde
-            await CancelarReservacionesFuturas(cliente, request.MotivoDesactivacion);
-
-            // 8. Guardar cambios
-            await _context.SaveChangesAsync(cancellationToken);
-
-            // 9. Notificar al cliente si se solicita
+            // 7. Notificar al cliente si se solicita
             if (request.NotificarCliente)
             {
                 await NotificarDesactivacionCliente(cliente, request.MotivoDesactivacion);
             }
 
-            // 10. Registrar auditoría
+            // 8. Registrar auditoría
             await RegistrarAuditoriaDesactivacion(cliente, true, request); // estadoAnterior temporal
 
             _logger.LogInformation("Cliente {ClienteId} desactivado exitosamente", request.ClienteId);

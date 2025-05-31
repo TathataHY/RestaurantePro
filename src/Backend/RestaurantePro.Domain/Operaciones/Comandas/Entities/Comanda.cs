@@ -81,6 +81,31 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// </summary>
         public IReadOnlyCollection<ItemComanda> Items => _items.AsReadOnly();
 
+        // 🔥 NAVEGACIONES AGREGADAS para queries más eficientes
+        /// <summary>
+        /// Navegación hacia la entidad Mesa asociada a la comanda
+        /// Útil para obtener información de la mesa (número, capacidad, ubicación)
+        /// </summary>
+        public virtual Mesa? Mesa { get; set; }
+
+        /// <summary>
+        /// Navegación hacia el Usuario (Mesero) responsable de la comanda
+        /// Facilita acceso a información del mesero sin queries adicionales
+        /// </summary>
+        public virtual Usuario? Mesero { get; set; }
+
+        /// <summary>
+        /// Navegación hacia el Cliente asociado a la comanda (si existe)
+        /// Importante para aplicar descuentos de fidelización y obtener datos del cliente
+        /// </summary>
+        public virtual Cliente? Cliente { get; set; }
+
+        /// <summary>
+        /// Navegación hacia la Factura generada para esta comanda (si existe)
+        /// Útil para verificar el estado de facturación de la comanda
+        /// </summary>
+        public virtual Factura? Factura { get; set; }
+
         /// <summary>
         /// Método para obtener la lista de items.
         /// Facilita el mockeo de la clase.
@@ -723,6 +748,62 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             AddDomainEvent(new DescuentoFidelizacionAplicado(Id, ClienteId.Value, monto));
             
             return true;
+        }
+
+        /// <summary>
+        /// Agrega una observación adicional a la comanda.
+        /// Útil para agregar notas durante el procesamiento de la comanda.
+        /// </summary>
+        /// <param name="observacion">Observación a agregar</param>
+        /// <exception cref="ArgumentException">Si la observación está vacía o es demasiado larga</exception>
+        /// <exception cref="InvalidOperationException">Si la comanda está en un estado que no permite modificaciones</exception>
+        public void AgregarObservacion(string observacion)
+        {
+            Guard.AgainstNullOrWhiteSpace(observacion, nameof(observacion));
+
+            if (observacion.Length > 200)
+                throw new ArgumentException("La observación no puede exceder 200 caracteres", nameof(observacion));
+
+            // Permitir agregar observaciones hasta que esté finalizada o cancelada
+            if (Estado == EstadoComanda.Finalizada)
+                throw new InvalidOperationException("No se pueden agregar observaciones a una comanda finalizada");
+
+            // Si ya hay observaciones, las concatenamos
+            if (!string.IsNullOrWhiteSpace(Observaciones))
+            {
+                // Separar observaciones con "; " para claridad
+                Observaciones = $"{Observaciones}; {observacion}";
+            }
+            else
+            {
+                Observaciones = observacion;
+            }
+
+            // Validar que el total no exceda el límite después de agregar la observación
+            if (Observaciones.Length > 500)
+            {
+                // Si excede, recortar la nueva observación para que quepa
+                var longitudDisponible = 500 - (Observaciones.Length - observacion.Length - 2); // -2 por el "; "
+                if (longitudDisponible > 10) // Mínimo 10 caracteres para que valga la pena
+                {
+                    var observacionRecortada = observacion.Substring(0, longitudDisponible - 3) + "...";
+                    Observaciones = string.IsNullOrWhiteSpace(Observaciones.Replace($"; {observacion}", "")) 
+                        ? observacionRecortada 
+                        : $"{Observaciones.Replace($"; {observacion}", "")}; {observacionRecortada}";
+                }
+                else
+                {
+                    // Si no hay espacio suficiente, revertir
+                    Observaciones = Observaciones.Replace($"; {observacion}", "");
+                    throw new InvalidOperationException("No hay espacio suficiente para agregar la observación completa");
+                }
+            }
+
+            ActualizarFecha();
+            MarkAsModified();
+
+            // Emitir evento de dominio
+            AddDomainEvent(new Events.Comanda.ObservacionAgregada(Id, observacion));
         }
     }
 }

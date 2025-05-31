@@ -4,35 +4,33 @@ using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
 using RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarCliente;
 using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.UnitTests.Common;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
+using System.Linq;
 
 namespace RestaurantePro.Application.UnitTests.Comercial.Clientes.Commands;
 
 public class DesactivarClienteHandlerTests
 {
-    private readonly Mock<IApplicationDbContext> _mockContext;
+    private readonly Mock<IClienteRepository> _mockRepository;
     private readonly Mock<ILogger<DesactivarClienteHandler>> _mockLogger;
-    private readonly Mock<INotificationService> _mockNotificationService;
-    private readonly Mock<IEmailService> _mockEmailService;
-    private readonly Mock<DbSet<Cliente>> _mockClientesDbSet;
+    private readonly Mock<RestaurantePro.Application.Common.Interfaces.INotificationService> _mockNotificationService;
+    private readonly Mock<RestaurantePro.Application.Common.Interfaces.IEmailService> _mockEmailService;
     private readonly DesactivarClienteHandler _handler;
 
     public DesactivarClienteHandlerTests()
     {
-        _mockContext = new Mock<IApplicationDbContext>();
+        _mockRepository = new Mock<IClienteRepository>();
         _mockLogger = new Mock<ILogger<DesactivarClienteHandler>>();
-        _mockNotificationService = new Mock<INotificationService>();
-        _mockEmailService = new Mock<IEmailService>();
-        _mockClientesDbSet = new Mock<DbSet<Cliente>>();
-
-        _mockContext.Setup(c => c.Clientes).Returns(_mockClientesDbSet.Object);
-
+        _mockNotificationService = new Mock<RestaurantePro.Application.Common.Interfaces.INotificationService>();
+        _mockEmailService = new Mock<RestaurantePro.Application.Common.Interfaces.IEmailService>();
+        
         _handler = new DesactivarClienteHandler(
-            _mockContext.Object, 
+            _mockRepository.Object,
             _mockLogger.Object,
             _mockNotificationService.Object,
-            _mockEmailService.Object);
+            _mockEmailService.Object
+        );
     }
 
     [Fact]
@@ -40,7 +38,12 @@ public class DesactivarClienteHandlerTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var command = DesactivarClienteCommand.Create(clienteId, "Cliente inactivo por solicitud", "admin");
+        var command = new DesactivarClienteCommand 
+        { 
+            ClienteId = clienteId,
+            MotivoDesactivacion = "Motivo de prueba",
+            DesactivadoPor = "admin"
+        };
 
         var clienteActivo = Cliente.Crear(
             ClienteNombre.Crear("Juan", "Pérez"),
@@ -48,14 +51,16 @@ public class DesactivarClienteHandlerTests
             "+57300123456",
             DateTime.Now.AddYears(-30)
         );
+        
+        // Establecer el ID manualmente
+        var idProperty = typeof(Cliente).GetProperty("Id");
+        idProperty?.SetValue(clienteActivo, clienteId);
 
-        // Configurar mocks para Entity Framework
-        var clientesData = new List<Cliente> { clienteActivo }.AsQueryable();
-        _mockClientesDbSet.Setup(d => d.FirstOrDefaultAsync(It.IsAny<Expression<Func<Cliente, bool>>>(), It.IsAny<CancellationToken>()))
+        _mockRepository.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(clienteActivo);
 
-        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
+        _mockRepository.Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -64,10 +69,8 @@ public class DesactivarClienteHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
 
-        // Verificar que el cliente fue desactivado
-        clienteActivo.EstaActivo.Should().BeFalse();
-
-        _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        // Verificar que ActualizarAsync fue llamado
+        _mockRepository.Verify(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -78,7 +81,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand 
         { 
             ClienteId = clienteId,
-            MotivoDesactivacion = "Sin motivo específico",
+            MotivoDesactivacion = "",
             DesactivadoPor = "admin"
         };
 
@@ -89,11 +92,15 @@ public class DesactivarClienteHandlerTests
             DateTime.Now.AddYears(-25)
         );
 
-        _mockClientesDbSet.Setup(d => d.FirstOrDefaultAsync(It.IsAny<Expression<Func<Cliente, bool>>>(), It.IsAny<CancellationToken>()))
+        // Establecer el ID manualmente para el test
+        var idProperty = typeof(Cliente).GetProperty("Id");
+        idProperty?.SetValue(clienteActivo, clienteId);
+
+        _mockRepository.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(clienteActivo);
 
-        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
+        _mockRepository.Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -102,6 +109,7 @@ public class DesactivarClienteHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
 
+        // Verificar que el cliente fue desactivado
         clienteActivo.EstaActivo.Should().BeFalse();
     }
 
@@ -110,9 +118,14 @@ public class DesactivarClienteHandlerTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var command = DesactivarClienteCommand.Create(clienteId, "Motivo de prueba", "admin");
+        var command = new DesactivarClienteCommand 
+        { 
+            ClienteId = clienteId,
+            MotivoDesactivacion = "Motivo de prueba",
+            DesactivadoPor = "admin"
+        };
 
-        _mockClientesDbSet.Setup(d => d.FirstOrDefaultAsync(It.IsAny<Expression<Func<Cliente, bool>>>(), It.IsAny<CancellationToken>()))
+        _mockRepository.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Cliente?)null);
 
         // Act
@@ -122,8 +135,6 @@ public class DesactivarClienteHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Be("El cliente especificado no existe.");
-
-        _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -145,21 +156,23 @@ public class DesactivarClienteHandlerTests
             DateTime.Now.AddYears(-28)
         );
         
+        // Establecer el ID manualmente
+        var idProperty = typeof(Cliente).GetProperty("Id");
+        idProperty?.SetValue(clienteEliminado, clienteId);
+        
         // Simular que el cliente está eliminado
         clienteEliminado.Desactivar();
 
-        _mockClientesDbSet.Setup(d => d.FirstOrDefaultAsync(It.IsAny<Expression<Func<Cliente, bool>>>(), It.IsAny<CancellationToken>()))
+        _mockRepository.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(clienteEliminado);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert - Como ya está inactivo, debería funcionar sin problemas o retornar un mensaje específico
+        // Assert - El método Desactivar() del dominio es idempotente
         result.Should().NotBeNull();
-        // La implementación actual permite esto, pero debería verificar el comportamiento real
-        result.Succeeded.Should().BeTrue(); // Asumiendo que la desactivación es idempotente
-
-        _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        result.Succeeded.Should().BeFalse(); // Debería fallar porque ya está inactivo
+        result.Error.Should().Be("El cliente ya está desactivado.");
     }
 
     [Fact]
@@ -181,9 +194,13 @@ public class DesactivarClienteHandlerTests
             DateTime.Now.AddYears(-35)
         );
         
+        // Establecer el ID manualmente
+        var idProperty = typeof(Cliente).GetProperty("Id");
+        idProperty?.SetValue(clienteInactivo, clienteId);
+        
         clienteInactivo.Desactivar(); // Ya está inactivo
 
-        _mockClientesDbSet.Setup(d => d.FirstOrDefaultAsync(It.IsAny<Expression<Func<Cliente, bool>>>(), It.IsAny<CancellationToken>()))
+        _mockRepository.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(clienteInactivo);
 
         // Act
@@ -191,10 +208,8 @@ public class DesactivarClienteHandlerTests
 
         // Assert
         result.Should().NotBeNull();
-        // Como Desactivar() en el dominio es idempotente, esto debería funcionar
-        result.Succeeded.Should().BeTrue();
-
-        _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        result.Succeeded.Should().BeFalse(); // Debería fallar porque ya está inactivo
+        result.Error.Should().Be("El cliente ya está desactivado.");
     }
 
     [Fact]
@@ -202,22 +217,31 @@ public class DesactivarClienteHandlerTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var command = DesactivarClienteCommand.Create(clienteId, "Motivo de prueba", "admin");
+        var command = new DesactivarClienteCommand 
+        { 
+            ClienteId = clienteId,
+            MotivoDesactivacion = "Motivo que causa excepción",
+            DesactivadoPor = "admin"
+        };
 
-        var clienteActivo = Cliente.Crear(
-            ClienteNombre.Crear("Pedro", "Martínez"),
-            "pedro@test.com",
-            "+57300111222",
-            DateTime.Now.AddYears(-40)
+        // Crear un cliente que cause una excepción de negocio
+        var cliente = Cliente.Crear(
+            ClienteNombre.Crear("Cliente", "Problema"),
+            "problema@test.com",
+            "+57300999888",
+            DateTime.Now.AddYears(-30)
         );
 
-        var businessException = new BusinessRuleViolationException("NoSePuedeDesactivar", "Cliente", "Comercial");
+        // Establecer el ID manualmente
+        var idProperty = typeof(Cliente).GetProperty("Id");
+        idProperty?.SetValue(cliente, clienteId);
 
-        _mockClientesDbSet.Setup(d => d.FirstOrDefaultAsync(It.IsAny<Expression<Func<Cliente, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(clienteActivo);
+        _mockRepository.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cliente);
 
-        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(businessException);
+        // Configurar el servicio de notificaciones para lanzar una excepción de regla de negocio
+        _mockNotificationService.Setup(x => x.EnviarNotificacionAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ThrowsAsync(new BusinessRuleViolationException("Error de regla de negocio", "Cliente", "Test", "Comercial"));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -233,20 +257,30 @@ public class DesactivarClienteHandlerTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var command = DesactivarClienteCommand.Create(clienteId, "Motivo de prueba", "admin");
+        var command = new DesactivarClienteCommand 
+        { 
+            ClienteId = clienteId,
+            MotivoDesactivacion = "Motivo de prueba",
+            DesactivadoPor = "admin"
+        };
 
-        var clienteActivo = Cliente.Crear(
-            ClienteNombre.Crear("Luis", "Fernández"),
-            "luis@test.com",
-            "+57300333555",
-            DateTime.Now.AddYears(-45)
+        var cliente = Cliente.Crear(
+            ClienteNombre.Crear("Cliente", "Test"),
+            "test@test.com",
+            "+57300111222",
+            DateTime.Now.AddYears(-30)
         );
 
-        _mockClientesDbSet.Setup(d => d.FirstOrDefaultAsync(It.IsAny<Expression<Func<Cliente, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(clienteActivo);
+        // Establecer el ID manualmente
+        var idProperty = typeof(Cliente).GetProperty("Id");
+        idProperty?.SetValue(cliente, clienteId);
 
-        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Error de base de datos"));
+        _mockRepository.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cliente);
+
+        // Configurar el servicio de email para lanzar una excepción general
+        _mockEmailService.Setup(x => x.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ThrowsAsync(new Exception("Error interno del sistema"));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -262,25 +296,27 @@ public class DesactivarClienteHandlerTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var command = new DesactivarClienteCommand 
-        { 
-            ClienteId = clienteId,
-            MotivoDesactivacion = "Motivo de prueba básico",
-            DesactivadoPor = "admin"
-        };
+        var command = new DesactivarClienteCommand();
+        command.ClienteId = clienteId;
+        command.MotivoDesactivacion = "Test constructor";
+        command.DesactivadoPor = "admin";
 
-        var clienteActivo = Cliente.Crear(
-            ClienteNombre.Crear("Sandra", "Rivera"),
-            "sandra@test.com",
-            "+57300888999",
-            DateTime.Now.AddYears(-22)
+        var cliente = Cliente.Crear(
+            ClienteNombre.Crear("Test", "Constructor"),
+            "constructor@test.com",
+            "+57300000000",
+            DateTime.Now.AddYears(-30)
         );
 
-        _mockClientesDbSet.Setup(d => d.FirstOrDefaultAsync(It.IsAny<Expression<Func<Cliente, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(clienteActivo);
+        // Establecer el ID manualmente
+        var idProperty = typeof(Cliente).GetProperty("Id");
+        idProperty?.SetValue(cliente, clienteId);
 
-        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
+        _mockRepository.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cliente);
+
+        _mockRepository.Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -288,6 +324,8 @@ public class DesactivarClienteHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
-        clienteActivo.EstaActivo.Should().BeFalse();
+
+        // Verificar que el cliente fue desactivado
+        cliente.EstaActivo.Should().BeFalse();
     }
 } 

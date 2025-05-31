@@ -142,4 +142,77 @@ public class IngredienteDto : BaseDto
     /// Lista de movimientos recientes (últimos 5)
     /// </summary>
     public List<MovimientoInventarioDto> MovimientosRecientes { get; set; } = new();
+
+    // 🔥 PROPIEDADES BÁSICAS AGREGADAS para mejor UX
+    /// <summary>
+    /// Código de barras o SKU formateado para mostrar
+    /// </summary>
+    public string CodigoInventario => $"ING-{Id.ToString().Substring(0, 8).ToUpper()}";
+
+    /// <summary>
+    /// Stock formateado para mostrar en UI
+    /// </summary>
+    public string StockFormateado => $"{StockActual:N2} {UnidadMedidaTexto}";
+
+    /// <summary>
+    /// Costo formateado para mostrar
+    /// </summary>
+    public string CostoFormateado => $"${CostoUnitario:N2}";
+
+    /// <summary>
+    /// Valor de inventario formateado
+    /// </summary>
+    public string ValorInventarioFormateado => $"${ValorInventario:N2}";
+
+    /// <summary>
+    /// Nivel de criticidad de stock (1-5)
+    /// </summary>
+    public int NivelCriticidad => SinStock ? 5 : BajoStock ? 4 : PorcentajeStock < 30 ? 3 : PorcentajeStock < 60 ? 2 : 1;
+
+    /// <summary>
+    /// Mensaje de alerta basado en el estado del stock
+    /// </summary>
+    public string MensajeAlerta => NivelCriticidad switch
+    {
+        5 => "¡SIN STOCK! Reponer urgentemente",
+        4 => "Stock bajo - Considerar reposición",
+        3 => "Stock moderado - Monitorear",
+        2 => "Stock normal",
+        1 => "Stock óptimo",
+        _ => "Estado desconocido"
+    };
+
+    /// <summary>
+    /// Icono recomendado para mostrar el estado
+    /// </summary>
+    public string IconoEstado => NivelCriticidad switch
+    {
+        5 => "alert-triangle",
+        4 => "alert-circle", 
+        3 => "clock",
+        2 => "check-circle",
+        1 => "check-circle-2",
+        _ => "help-circle"
+    };
+
+    /// <summary>
+    /// Indica si necesita reposición urgente
+    /// </summary>
+    public bool NecesitaReposicionUrgente => NivelCriticidad >= 4;
+
+    /// <summary>
+    /// Cantidad sugerida para reposición
+    /// </summary>
+    public decimal CantidadSugeridaReposicion => StockMaximo - StockActual;
+
+    /// <summary>
+    /// Días desde el último movimiento
+    /// </summary>
+    public int? DiasSinMovimiento => MovimientosRecientes.Count > 0 ? 
+        (int?)(DateTime.Now - MovimientosRecientes.First().Fecha).TotalDays : null;
+
+    /// <summary>
+    /// Indica si el ingrediente está inactivo por mucho tiempo
+    /// </summary>
+    public bool EstaInactivo => DiasSinMovimiento > 30;
 } 

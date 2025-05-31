@@ -155,7 +155,7 @@ namespace RestaurantePro.Api.Controllers
         [HttpGet("pendientes")]
         public async Task<ActionResult> ObtenerComandasPendientes()
         {
-            var query = new ObtenerComandasQuery { Estado = EstadoComanda.Pendiente };
+            var query = new ObtenerComandasQuery { Estado = EstadoComanda.Creada };
             var comandas = await _mediator.Send(query);
             return Ok(comandas);
         }
@@ -163,7 +163,7 @@ namespace RestaurantePro.Api.Controllers
         [HttpGet("preparacion")]
         public async Task<ActionResult> ObtenerComandasEnPreparacion()
         {
-            var query = new ObtenerComandasQuery { Estado = EstadoComanda.EnPreparacion };
+            var query = new ObtenerComandasQuery { Estado = EstadoComanda.EnProceso };
             var comandas = await _mediator.Send(query);
             return Ok(comandas);
         }

@@ -27,6 +27,31 @@ public class UsuarioDto : BaseDto
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
+    /// Nombre de usuario para login
+    /// </summary>
+    public string NombreUsuario { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Estado actual del usuario
+    /// </summary>
+    public EstadoUsuario Estado { get; set; }
+
+    /// <summary>
+    /// Estado del usuario en texto
+    /// </summary>
+    public string EstadoTexto => Estado.ToString();
+
+    /// <summary>
+    /// Tipo de usuario
+    /// </summary>
+    public TipoUsuario TipoUsuario { get; set; }
+
+    /// <summary>
+    /// Tipo de usuario en texto
+    /// </summary>
+    public string TipoUsuarioTexto => TipoUsuario.ToString();
+
+    /// <summary>
     /// Teléfono del usuario
     /// </summary>
     public string? Telefono { get; set; }
@@ -35,6 +60,11 @@ public class UsuarioDto : BaseDto
     /// Número de identificación (DNI, pasaporte, etc.)
     /// </summary>
     public string? NumeroIdentificacion { get; set; }
+
+    /// <summary>
+    /// Identificación (alias para compatibilidad)
+    /// </summary>
+    public string? Identificacion { get; set; }
 
     /// <summary>
     /// Fecha de nacimiento del usuario
@@ -62,6 +92,16 @@ public class UsuarioDto : BaseDto
     public string Rol { get; set; } = string.Empty;
 
     /// <summary>
+    /// Nivel de acceso del usuario (1-10, donde 10 es máximo)
+    /// </summary>
+    public int NivelAcceso { get; set; } = 1;
+
+    /// <summary>
+    /// Lista de permisos específicos del usuario
+    /// </summary>
+    public List<string> Permisos { get; set; } = new();
+
+    /// <summary>
     /// Departamento al que pertenece el usuario
     /// </summary>
     public string? Departamento { get; set; }
@@ -70,6 +110,11 @@ public class UsuarioDto : BaseDto
     /// Cargo del usuario
     /// </summary>
     public string? Cargo { get; set; }
+
+    /// <summary>
+    /// Posición del usuario (alias para Cargo)
+    /// </summary>
+    public string? Posicion { get; set; }
 
     /// <summary>
     /// ID del supervisor directo (si aplica)
@@ -97,9 +142,19 @@ public class UsuarioDto : BaseDto
     public bool EsTemporal { get; set; }
 
     /// <summary>
+    /// Indica si el usuario es administrador
+    /// </summary>
+    public bool EsAdministrador { get; set; }
+
+    /// <summary>
     /// Fecha de última conexión
     /// </summary>
     public DateTime? FechaUltimaConexion { get; set; }
+
+    /// <summary>
+    /// Fecha de último acceso al sistema
+    /// </summary>
+    public DateTime? UltimoAcceso { get; set; }
 
     /// <summary>
     /// Número de intentos de login fallidos
@@ -112,6 +167,11 @@ public class UsuarioDto : BaseDto
     public DateTime? FechaBloqueado { get; set; }
 
     /// <summary>
+    /// Motivo de bloqueo si está bloqueado
+    /// </summary>
+    public string? MotivoBloqueo { get; set; }
+
+    /// <summary>
     /// Fecha de expiración de la contraseña
     /// </summary>
     public DateTime? FechaExpiracionPassword { get; set; }
@@ -120,11 +180,6 @@ public class UsuarioDto : BaseDto
     /// Indica si debe cambiar la contraseña en el próximo login
     /// </summary>
     public bool DebeResetearPassword { get; set; }
-
-    /// <summary>
-    /// Lista de permisos asignados al usuario
-    /// </summary>
-    public List<string> Permisos { get; set; } = new();
 
     /// <summary>
     /// Lista de sucursales a las que tiene acceso
@@ -172,16 +227,6 @@ public class UsuarioDto : BaseDto
     public string Idioma { get; set; } = "es-MX";
 
     /// <summary>
-    /// Nivel de acceso del usuario (1-5, siendo 5 el máximo)
-    /// </summary>
-    public int NivelAcceso { get; set; } = 1;
-
-    /// <summary>
-    /// Nombre de usuario (alias para compatibilidad)
-    /// </summary>
-    public string NombreUsuario => Email;
-
-    /// <summary>
     /// Roles adicionales del usuario
     /// </summary>
     public List<string> RolesAdicionales { get; set; } = new();
@@ -197,21 +242,6 @@ public class UsuarioDto : BaseDto
     public DateTime? FechaIngreso => FechaContratacion;
 
     /// <summary>
-    /// Último acceso (alias para FechaUltimaConexion)
-    /// </summary>
-    public DateTime? UltimoAcceso => FechaUltimaConexion;
-
-    /// <summary>
-    /// Identificación (alias para NumeroIdentificacion)
-    /// </summary>
-    public string? Identificacion => NumeroIdentificacion;
-
-    /// <summary>
-    /// Posición (alias para Cargo)
-    /// </summary>
-    public string? Posicion => Cargo;
-
-    /// <summary>
     /// Fecha de última actualización
     /// </summary>
     public DateTime? FechaUltimaActualizacion { get; set; }
@@ -222,7 +252,7 @@ public class UsuarioDto : BaseDto
     public string? UsuarioUltimaActualizacion { get; set; }
 
     /// <summary>
-    /// Cantidad de subordinados
+    /// Cantidad de subordinados directos
     /// </summary>
     public int CantidadSubordinados { get; set; }
 

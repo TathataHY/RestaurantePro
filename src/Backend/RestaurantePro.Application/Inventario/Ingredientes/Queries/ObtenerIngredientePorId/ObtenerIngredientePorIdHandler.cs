@@ -80,42 +80,17 @@ public class ObtenerIngredientePorIdHandler : IRequestHandler<ObtenerIngrediente
     /// </summary>
     private void EnriquecerIngredienteDto(IngredienteDto dto)
     {
-        // TODO: Implementar cuando estén disponibles todas las propiedades en IngredienteDto
-        /*
-        // Calcular estado del stock
-        var porcentajeStock = dto.StockMinimo > 0 ? (dto.StockActual / dto.StockMinimo) * 100 : 100;
-        dto.PorcentajeStock = porcentajeStock;
-        dto.EstaBajoMinimo = dto.StockActual < dto.StockMinimo;
-
-        // Determinar estado y color
-        (dto.EstadoStock, dto.ColorEstado) = porcentajeStock switch
-        {
-            <= 25 => ("Crítico", "#F44336"),
-            <= 50 => ("Bajo", "#FF9800"),
-            <= 100 => ("Normal", "#4CAF50"),
-            _ => ("Alto", "#2196F3")
-        };
-
-        // Calcular valor total del stock
-        dto.ValorTotalStock = dto.StockActual * dto.CostoPromedio;
-
-        // Estimar días de duración (simplificado - en producción sería más complejo)
-        // Basado en rotación: Alta = 7 días, Media = 14 días, Baja = 30 días
-        var consumoDiario = dto.Rotacion.ToLower() switch
-        {
-            "alta" => dto.StockActual / 7,
-            "media" => dto.StockActual / 14,
-            "baja" => dto.StockActual / 30,
-            _ => dto.StockActual / 14
-        };
-
-        dto.DiasEstimadosDuracion = consumoDiario > 0 ? (int)(dto.StockActual / consumoDiario) : null;
-
-        // Crear resumen del estado
-        dto.ResumenEstado = dto.EstaBajoMinimo 
-            ? $"🚨 Stock crítico: {dto.StockActual:F2} {dto.UnidadMedida} (Mín: {dto.StockMinimo:F2})"
-            : $"✅ Stock normal: {dto.StockActual:F2} {dto.UnidadMedida} - Valor: ${dto.ValorTotalStock:F2}";
-        */
+        // Las propiedades ya están disponibles como calculadas en IngredienteDto
+        // No necesitamos calcular manualmente porque el DTO ya tiene:
+        // - EstadoStock (propiedad calculada)
+        // - ColorEstado (propiedad calculada) 
+        // - PorcentajeStock (propiedad calculada)
+        // - ValorTotalStock (propiedad calculada)
+        // - MensajeAlerta (propiedad calculada)
+        // - DiasStockDisponible (propiedad calculada)
+        
+        _logger.LogDebug("Ingrediente enriquecido: {Nombre} - {Estado} - {Alerta}", 
+            dto.Nombre, dto.EstadoStock, dto.MensajeAlerta);
     }
 
     /// <summary>

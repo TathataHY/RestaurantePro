@@ -110,6 +110,25 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Entities
         /// </summary>
         public IReadOnlyCollection<DetalleFactura> Detalles => _detalles.AsReadOnly();
 
+        // 🔥 NAVEGACIONES AGREGADAS para queries más eficientes
+        /// <summary>
+        /// Navegación hacia la entidad Cliente (si existe)
+        /// Se carga usando lazy loading para obtener información completa del cliente
+        /// </summary>
+        public virtual Cliente? Cliente { get; set; }
+
+        /// <summary>
+        /// Navegación hacia las Comandas asociadas a esta factura
+        /// Se carga bajo demanda para acceder a los detalles de las comandas
+        /// </summary>
+        public virtual ICollection<Comanda> Comandas { get; set; } = new List<Comanda>();
+
+        /// <summary>
+        /// Navegación hacia los pagos asociados a esta factura
+        /// Útil para obtener el historial completo de pagos
+        /// </summary>
+        public virtual ICollection<Pago> Pagos { get; set; } = new List<Pago>();
+
         // Constructor privado para EF Core
         private Factura() { }
 

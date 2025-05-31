@@ -27,10 +27,25 @@ public class FacturaDto : BaseDto
     public string? MetodoPago { get; set; }
     public string? ReferenciaPago { get; set; }
     
-    // Estados calculados
+    // 🔥 PROPIEDADES BÁSICAS AGREGADAS - Estados calculados completos
     public bool EstaPagada => Estado == EstadoFactura.Pagada;
-    // TODO: Verificar valores correctos del enum EstadoFactura
-    // public bool EstaPendiente => Estado == EstadoFactura.Pendiente;
-    public bool EstaVencida => FechaVencimiento.HasValue && FechaVencimiento.Value < DateTime.Now && Estado != EstadoFactura.Pagada;
+    public bool EstaPendiente => Estado == EstadoFactura.Emitida;
+    public bool EsBorrador => Estado == EstadoFactura.Borrador;
+    public bool EstaAnulada => Estado == EstadoFactura.Anulada;
+    public bool EstaPagadaParcialmente => Estado == EstadoFactura.PagadaParcialmente;
+    public bool EsRectificativa => Estado == EstadoFactura.Rectificativa;
+    public bool EstaVencida => Estado == EstadoFactura.Vencida || (FechaVencimiento.HasValue && FechaVencimiento.Value < DateTime.Now && Estado != EstadoFactura.Pagada);
     public bool TieneSaldo => Saldo > 0;
+    
+    // 🆕 PROPIEDADES BÁSICAS NUEVAS para UI - VALORES CORREGIDOS
+    public string NumeroFactura => $"F-{Numero}";
+    public string TipoFacturaTexto => Tipo switch
+    {
+        TipoFactura.Normal => "Normal",
+        TipoFactura.Fiscal => "Fiscal", 
+        TipoFactura.NotaCredito => "Nota de Crédito",
+        TipoFactura.Simplificada => "Simplificada",
+        TipoFactura.Electronica => "Electrónica",
+        _ => Tipo.ToString()
+    };
 } 
