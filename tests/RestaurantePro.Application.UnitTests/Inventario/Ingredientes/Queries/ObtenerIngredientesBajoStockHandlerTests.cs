@@ -243,7 +243,38 @@ public class ObtenerIngredientesBajoStockHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
         
-        // Con el comportamiento actual (placeholder), debería ordenar por nombre
+        // Cuando OrdenarPorPrioridad es true, debería ordenar por PrioridadAtencion, luego PorcentajeStock, luego ValorStock descendente
+        result.Value.Should().BeInAscendingOrder(i => i.PrioridadAtencion);
+        
+        // Verificar que los elementos con la misma prioridad estén ordenados por porcentaje de stock
+        var gruposPorPrioridad = result.Value.GroupBy(i => i.PrioridadAtencion);
+        foreach (var grupo in gruposPorPrioridad)
+        {
+            grupo.Should().BeInAscendingOrder(i => i.PorcentajeStock);
+        }
+    }
+
+    [Fact]
+    public async Task Handle_SinOrdenamientoPorPrioridad_DeberiaOrdenarPorNombre()
+    {
+        // Arrange
+        var query = new ObtenerIngredientesBajoStockQuery
+        {
+            OrdenarPorPrioridad = false,
+            PorcentajeCritico = 60
+        };
+        
+        _mockRepository.Setup(r => r.ObtenerConStockBajoAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(_ingredientesBase.Where(i => i.Stock < i.StockMinimo));
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeTrue();
+        
+        // Cuando OrdenarPorPrioridad es false, debería ordenar por nombre alfabéticamente
         result.Value.Should().BeInAscendingOrder(i => i.Nombre);
     }
 
@@ -321,8 +352,16 @@ public class ObtenerIngredientesBajoStockHandlerTests
                     Codigo = i.Codigo,
                     StockActual = i.Stock,
                     StockMinimo = i.StockMinimo,
+                    StockMaximo = i.StockMinimo * 2, // Simular stock máximo
                     CostoUnitario = i.CostoPromedio,
-                    Activo = i.EstaActivo
+                    Activo = i.EstaActivo,
+                    FechaRegistro = i.FechaCreacion,
+                    RegistradoPor = "Sistema",
+                    UnidadMedida = i.UnidadMedida.ToString(),
+                    Categoria = "Categoría Test",
+                    TotalRecetas = 5, // Valor por defecto para tests
+                    ConsumoPromedioMensual = 10m // Valor por defecto para tests
+                    // Las propiedades calculadas como PrioridadAtencion, EstadoStock, etc. se calculan automáticamente
                 }).ToList());
     }
 } 

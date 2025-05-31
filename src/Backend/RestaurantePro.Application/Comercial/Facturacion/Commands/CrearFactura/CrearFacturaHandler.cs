@@ -255,23 +255,20 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
     {
         try
         {
-            // TODO: Implementar método AcumularPuntosPorCompraAsync en ComercialServiceFacade
-            // var puntosResult = await _comercialServiceFacade.AcumularPuntosPorCompraAsync(
-            //     clienteId, montoFactura, null, "Compra - Facturación", cancellationToken);
+            // Acumular puntos usando el método del ComercialServiceFacade
+            var puntosResult = await _comercialServiceFacade.AcumularPuntosPorCompraAsync(
+                clienteId, montoFactura, null, "Compra - Facturación", cancellationToken);
 
-            // if (puntosResult.Succeeded)
-            // {
-            //     _logger.LogInformation("Puntos de fidelización registrados para cliente {ClienteId}: {PuntosAcumulados}",
-            //         clienteId, puntosResult.Value);
-            // }
-            // else
-            // {
-            //     _logger.LogWarning("No se pudieron registrar puntos para cliente {ClienteId}: {Error}",
-            //         clienteId, puntosResult.Error);
-            // }
-            
-            _logger.LogInformation("Registro de puntos de fidelización pendiente para cliente {ClienteId} por monto {Monto:C}",
-                clienteId, montoFactura);
+            if (puntosResult.Succeeded)
+            {
+                _logger.LogInformation("Puntos de fidelización registrados para cliente {ClienteId}: {PuntosAcumulados}",
+                    clienteId, puntosResult.Value);
+            }
+            else
+            {
+                _logger.LogWarning("No se pudieron registrar puntos para cliente {ClienteId}: {Error}",
+                    clienteId, puntosResult.Error);
+            }
         }
         catch (Exception ex)
         {

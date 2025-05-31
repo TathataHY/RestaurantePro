@@ -655,6 +655,84 @@ namespace RestaurantePro.Domain.Comercial.Services
                 return Result.Failure<ValidacionLoteResult>(message);
             }
         }
+
+        /// <inheritdoc />
+        public async Task<Result<int>> AcumularPuntosPorCompraAsync(
+            Guid clienteId, 
+            decimal montoCompra, 
+            Guid? comandaId = null, 
+            string concepto = "Compra", 
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _notificationManager.CreateNewNotification();
+                
+                Guard.AgainstEmpty(clienteId, nameof(clienteId));
+                Guard.AgainstNegative(montoCompra, nameof(montoCompra));
+                Guard.AgainstNullOrWhiteSpace(concepto, nameof(concepto));
+
+                // Obtener el cliente
+                var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId, cancellationToken);
+                if (cliente == null)
+                {
+                    _notificationManager.AddError($"No se encontró el cliente con ID {clienteId}", "CLIENTE_NO_ENCONTRADO", "ClienteId");
+                    return _notificationManager.ToResult<int>(0);
+                }
+
+                // Calcular puntos según reglas de negocio
+                // Regla básica: 1 punto por cada $1000 de compra, mínimo 1 punto por compra
+                var puntosCalculados = Math.Max(1, (int)(montoCompra / 1000));
+                
+                // Aplicar multiplicadores según segmento del cliente (simplificado)
+                // Nota: En una implementación real, Cliente debería tener una propiedad SegmentoCliente
+                var multiplicador = 1.0m; // Por defecto para clientes regulares
+                
+                // TODO: Implementar lógica de segmentación cuando Cliente tenga la propiedad SegmentoCliente
+                // var multiplicador = cliente.SegmentoCliente switch
+                // {
+                //     SegmentoCliente.Premium => 1.5m,
+                //     SegmentoCliente.FrecuenciaAlta => 1.2m,
+                //     SegmentoCliente.TicketAlto => 1.3m,
+                //     _ => 1.0m
+                // };
+                
+                var puntosFinales = (int)(puntosCalculados * multiplicador);
+
+                // Usar el servicio de fidelización para acumular los puntos
+                // Crear un ID temporal para la comanda si no se proporcionó
+                var comandaIdParaAcumulacion = comandaId ?? Guid.NewGuid();
+                
+                var resultadoAcumulacion = await _servicioFidelizacion.AcumularPuntosAsync(
+                    clienteId, 
+                    comandaIdParaAcumulacion, 
+                    montoCompra); // Usar el monto original para el cálculo interno del servicio
+
+                if (!resultadoAcumulacion.Succeeded)
+                {
+                    _logger.LogWarning("No se pudieron acumular puntos para cliente {ClienteId}: {Errores}", 
+                        clienteId, string.Join(", ", resultadoAcumulacion.Errors));
+                    return Result.Failure<int>($"Error al acumular puntos: {string.Join(", ", resultadoAcumulacion.Errors)}");
+                }
+
+                _logger.LogInformation(
+                    "Puntos acumulados exitosamente - Cliente: {ClienteId}, Monto: {Monto:C}, Puntos: {Puntos}, Concepto: {Concepto}",
+                    clienteId, montoCompra, puntosFinales, concepto);
+
+                return Result.Success(puntosFinales);
+            }
+            catch (DomainException ex)
+            {
+                _logger.LogWarning(ex, "Error de dominio al acumular puntos para cliente {ClienteId}: {Message}", clienteId, ex.Message);
+                return ex.ToResult<int>();
+            }
+            catch (Exception ex)
+            {
+                var message = $"Error inesperado al acumular puntos para cliente {clienteId}: {ex.Message}";
+                _logger.LogError(ex, message);
+                return Result.Failure<int>(message);
+            }
+        }
     }
 
     /// <summary>

@@ -108,5 +108,22 @@ namespace RestaurantePro.Domain.Comercial.Services
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Resultado con resumen de validaciones</returns>
         Task<Result<ValidacionLoteResult>> ValidarClientesEnLoteAsync(IEnumerable<Guid> clienteIds, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Acumula puntos de fidelización para un cliente basado en el monto de compra.
+        /// Calcula automáticamente los puntos según las reglas de negocio configuradas.
+        /// </summary>
+        /// <param name="clienteId">ID del cliente</param>
+        /// <param name="montoCompra">Monto total de la compra</param>
+        /// <param name="comandaId">ID de la comanda asociada (opcional)</param>
+        /// <param name="concepto">Concepto de la acumulación</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la cantidad de puntos acumulados</returns>
+        Task<Result<int>> AcumularPuntosPorCompraAsync(
+            Guid clienteId, 
+            decimal montoCompra, 
+            Guid? comandaId = null, 
+            string concepto = "Compra", 
+            CancellationToken cancellationToken = default);
     }
 } 

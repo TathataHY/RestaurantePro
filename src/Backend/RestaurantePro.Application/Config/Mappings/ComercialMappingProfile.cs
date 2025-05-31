@@ -1,5 +1,8 @@
+using AutoMapper;
 using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente;
 using RestaurantePro.Application.Comercial.Clientes.Commands.ActualizarCliente;
+using RestaurantePro.Application.Comercial.Clientes.DTOs;
+using RestaurantePro.Domain.Comercial.Clientes;
 
 namespace RestaurantePro.Application.Config.Mappings;
 
@@ -24,14 +27,18 @@ public class ComercialMappingProfile : Profile
     {
         // Cliente Entity -> ClienteDto
         CreateMap<Cliente, ClienteDto>()
-            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre.NombreCompleto))
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre.Nombre))
+            .ForMember(dest => dest.Apellido, opt => opt.MapFrom(src => src.Nombre.Apellido))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.Value))
-            .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono.Value));
+            .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono.Value))
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.EstaActivo));
 
         // Cliente Entity -> ClienteSummaryDto
         CreateMap<Cliente, ClienteSummaryDto>()
+            .ForMember(dest => dest.NombreCompleto, opt => opt.MapFrom(src => $"{src.Nombre.Nombre} {src.Nombre.Apellido}".Trim()))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.Value))
-            .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono.Value));
+            .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono.Value))
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.EstaActivo));
 
         // ClienteCreateDto -> CrearClienteCommand
         CreateMap<ClienteCreateDto, CrearClienteCommand>();

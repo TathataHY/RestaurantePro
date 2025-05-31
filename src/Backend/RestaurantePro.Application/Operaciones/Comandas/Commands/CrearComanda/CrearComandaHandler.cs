@@ -34,9 +34,7 @@ public class CrearComandaHandler : IRequestHandler<CrearComandaCommand, Result<C
         try
         {
             // 1. Validar datos básicos
-            // TODO: Verificar que el mesero existe y está activo
-            // TODO: Verificar que la mesa está disponible (si se especifica)
-            // TODO: Verificar que el cliente existe (si se especifica)
+            await ValidarDatosBasicos(request, cancellationToken);
 
             // 2. Crear la comanda usando el factory method del dominio
             var comanda = Comanda.Crear(
@@ -100,19 +98,30 @@ public class CrearComandaHandler : IRequestHandler<CrearComandaCommand, Result<C
         {
             try
             {
-                // TODO: Validar que el producto existe y está activo
-                // var producto = await _productoRepository.ObtenerPorIdAsync(productoDto.ProductoId, cancellationToken);
-                // if (producto == null || !producto.EstaActivo)
-                // {
-                //     throw new InvalidOperationException($"El producto {productoDto.ProductoId} no está disponible");
-                // }
+                // Validar que el producto existe y está activo
+                var producto = await _productoRepository.ObtenerPorIdAsync(productoDto.ProductoId, cancellationToken);
+                if (producto == null)
+                {
+                    _logger.LogWarning("⚠️ Producto no encontrado: {ProductoId}", productoDto.ProductoId);
+                    throw new InvalidOperationException($"El producto {productoDto.ProductoId} no existe");
+                }
+                
+                if (!producto.EstaActivo)
+                {
+                    _logger.LogWarning("⚠️ Producto inactivo: {ProductoId}", productoDto.ProductoId);
+                    throw new InvalidOperationException($"El producto {productoDto.ProductoId} no está disponible");
+                }
 
-                // TODO: Validar que el precio es correcto
-                // if (Math.Abs(producto.Precio - productoDto.PrecioUnitario) > 0.01m)
-                // {
-                //     _logger.LogWarning("💰 Precio diferente detectado - Producto: {ProductoId}, Esperado: {PrecioEsperado}, Recibido: {PrecioRecibido}", 
-                //         productoDto.ProductoId, producto.Precio, productoDto.PrecioUnitario);
-                // }
+                // Validar que el precio es correcto (tolerancia de $0.01)
+                if (Math.Abs(producto.Precio.Valor - productoDto.PrecioUnitario) > 0.01m)
+                {
+                    _logger.LogWarning("💰 Precio diferente detectado - Producto: {ProductoId}, Esperado: {PrecioEsperado:C}, Recibido: {PrecioRecibido:C}", 
+                        productoDto.ProductoId, producto.Precio.Valor, productoDto.PrecioUnitario);
+                    
+                    // Usar el precio del producto registrado para mantener consistencia
+                    productoDto.PrecioUnitario = producto.Precio.Valor;
+                    _logger.LogInformation("💰 Precio corregido a: {PrecioCorregido:C}", producto.Precio.Valor);
+                }
 
                 // Agregar el producto a la comanda usando el método del dominio
                 comanda.AgregarProducto(
@@ -124,7 +133,7 @@ public class CrearComandaHandler : IRequestHandler<CrearComandaCommand, Result<C
                 // TODO: Agregar personalizaciones si las hay
                 // await AgregarPersonalizaciones(comanda, itemId, productoDto.Personalizaciones, cancellationToken);
 
-                _logger.LogInformation("✅ Producto agregado: {ProductoId} x{Cantidad} = ${Total}", 
+                _logger.LogInformation("✅ Producto agregado: {ProductoId} x{Cantidad} = ${Total:F2}", 
                     productoDto.ProductoId, 
                     productoDto.Cantidad, 
                     productoDto.Cantidad * productoDto.PrecioUnitario);
@@ -138,5 +147,78 @@ public class CrearComandaHandler : IRequestHandler<CrearComandaCommand, Result<C
 
         _logger.LogInformation("🎯 Productos iniciales agregados exitosamente - Total items: {TotalItems}", 
             comanda.Items.Count);
+    }
+
+    /// <summary>
+    /// Valida los datos básicos necesarios para crear una comanda
+    /// </summary>
+    private async Task ValidarDatosBasicos(CrearComandaCommand request, CancellationToken cancellationToken)
+    {
+        // Nota: Por ahora implementamos validaciones básicas sin repositorios adicionales
+        // En una implementación completa se verificarían contra repositorios específicos
+        
+        // Validar ID del mesero
+        if (request.MeseroId == Guid.Empty)
+        {
+            throw new ArgumentException("El ID del mesero es requerido para crear una comanda");
+        }
+        
+        // TODO: Verificar que el mesero existe y está activo cuando tengamos IUsuarioRepository disponible
+        // var mesero = await _usuarioRepository.ObtenerPorIdAsync(request.MeseroId, cancellationToken);
+        // if (mesero == null || !mesero.EstaActivo || !mesero.TieneRol("Mesero"))
+        // {
+        //     throw new InvalidOperationException($"El mesero {request.MeseroId} no está disponible");
+        // }
+        
+        // Validar mesa si se especifica
+        if (request.MesaId.HasValue)
+        {
+            if (request.MesaId.Value == Guid.Empty)
+            {
+                throw new ArgumentException("El ID de la mesa no puede ser un GUID vacío");
+            }
+            
+            // TODO: Verificar que la mesa existe y está disponible cuando tengamos IMesaRepository
+            // var mesa = await _mesaRepository.ObtenerPorIdAsync(request.MesaId.Value, cancellationToken);
+            // if (mesa == null || !mesa.EstaDisponible)
+            // {
+            //     throw new InvalidOperationException($"La mesa {request.MesaId.Value} no está disponible");
+            // }
+        }
+        
+        // Validar cliente si se especifica
+        if (request.ClienteId.HasValue)
+        {
+            if (request.ClienteId.Value == Guid.Empty)
+            {
+                throw new ArgumentException("El ID del cliente no puede ser un GUID vacío");
+            }
+            
+            // TODO: Verificar que el cliente existe y está activo cuando tengamos IClienteRepository
+            // var cliente = await _clienteRepository.ObtenerPorIdAsync(request.ClienteId.Value, cancellationToken);
+            // if (cliente == null || !cliente.EstaActivo)
+            // {
+            //     throw new InvalidOperationException($"El cliente {request.ClienteId.Value} no está activo");
+            // }
+        }
+        
+        // Validar productos iniciales si se proporcionan
+        if (request.ProductosIniciales.Any())
+        {
+            var productosInvalidos = request.ProductosIniciales
+                .Where(p => p.ProductoId == Guid.Empty || p.Cantidad <= 0 || p.PrecioUnitario < 0)
+                .ToList();
+                
+            if (productosInvalidos.Any())
+            {
+                var idsInvalidos = productosInvalidos.Select(p => p.ProductoId).ToList();
+                throw new ArgumentException($"Productos con datos inválidos: {string.Join(", ", idsInvalidos)}");
+            }
+        }
+        
+        _logger.LogDebug("✅ Validaciones básicas completadas para comanda - Mesero: {MeseroId}, Mesa: {MesaId}, Cliente: {ClienteId}", 
+            request.MeseroId, request.MesaId, request.ClienteId);
+        
+        await Task.CompletedTask; // Para mantener la signatura async
     }
 } 

@@ -545,33 +545,32 @@ public class CambiarPasswordUsuarioValidator : AbstractValidator<CambiarPassword
 
     private async Task<bool> ValidarComplejidadSegunRol(CambiarPasswordUsuarioCommand command, CancellationToken cancellationToken)
     {
-        var usuario = await _context.Usuarios
-            .FirstOrDefaultAsync(u => u.Id == command.UsuarioId, cancellationToken);
-
-        if (usuario == null) return false;
-
         var password = command.PasswordNueva;
         
-        // Verificar complejidad según "rol simulado"
+        // Verificar complejidad según rol real del usuario
         var requiresComplexity = password.Length >= 12 &&
                                 password.Any(char.IsUpper) &&
                                 password.Any(char.IsLower) &&
                                 password.Any(char.IsDigit) &&
                                 password.Any(c => "!@#$%^&*()_+-=[]{}|;:,.<>?".Contains(c));
 
-        // TODO: Descomentar cuando Usuario tenga propiedad Rol
-        /*
-        // Complejidad adicional según rol
+        // Complejidad adicional según rol (usando propiedades reales)
+        var usuario = await _context.Usuarios
+            .FirstOrDefaultAsync(u => u.Id == command.UsuarioId, cancellationToken);
+            
+        if (usuario == null) return false;
+        
         return usuario.Rol switch
         {
-            "SuperAdministrador" => requiresComplexity,
-            "Administrador" => requiresComplexity,
-            "Gerente" => requiresComplexity,
+            "Administrador" => requiresComplexity && password.Length >= 14,
+            "Gerente" => requiresComplexity && password.Length >= 12,
+            "Cajero" => requiresComplexity,
+            "Mesero" => password.Length >= 8 && 
+                       password.Any(char.IsUpper) &&
+                       password.Any(char.IsLower) &&
+                       password.Any(char.IsDigit),
             _ => requiresComplexity
         };
-        */
-        
-        return requiresComplexity;
     }
 
     private static bool TieneCaracteresEspecialesAvanzados(string password)
@@ -593,8 +592,13 @@ public class CambiarPasswordUsuarioValidator : AbstractValidator<CambiarPassword
         var usuario = await _context.Usuarios
             .FirstOrDefaultAsync(u => u.Id == usuarioId, cancellationToken);
         
-        // TODO: Implementar validación real cuando Usuario tenga propiedades de roles específicos
-        return usuario != null && (usuario.EsAdministrador || usuario.Roles.Any(r => r == RolUsuario.Gerente));
+        // Validación con propiedades reales del Usuario
+        return usuario != null && 
+               (usuario.EsAdministrador || 
+                usuario.Permisos.Contains("CambiarPassword") ||
+                usuario.Rol == "Administrador" ||
+                usuario.Rol == "Gerente" ||
+                usuario.NivelAcceso >= 8);
     }
 
     private async Task<bool> ValidarUsuarioAdministrativo(Guid usuarioId, CancellationToken cancellationToken)
@@ -602,9 +606,10 @@ public class CambiarPasswordUsuarioValidator : AbstractValidator<CambiarPassword
         var usuario = await _context.Usuarios
             .FirstOrDefaultAsync(u => u.Id == usuarioId, cancellationToken);
         
-        // TODO: Usar propiedades reales de Usuario en lugar de Identificacion
-        // return usuario?.Identificacion != null;
-        return usuario != null; // Temporal: asumir que es válido
+        // Usar propiedades reales de Usuario (Identificacion implementada)
+        return usuario != null && 
+               !string.IsNullOrEmpty(usuario.Identificacion) &&
+               (usuario.EsAdministrador || usuario.NivelAcceso >= 7);
     }
 
     private async Task<bool> ValidarEventosAuditoriaAsync(CambiarPasswordUsuarioCommand command, CancellationToken cancellationToken)
@@ -690,11 +695,12 @@ public class CambiarPasswordUsuarioValidator : AbstractValidator<CambiarPassword
         var autorizador = await _context.Usuarios
             .FirstOrDefaultAsync(u => u.Id == command.UsuarioAutorizaId, cancellationToken);
         
-        // TODO: Implementar validación real cuando Usuario tenga propiedades de permisos y roles
-        // return autorizador?.Permisos?.Contains("CambiarPassword") ?? false ||
-        //        autorizador?.Rol == "Administrador" ||
-        //        autorizador?.NivelAcceso >= 8;
-        return autorizador != null && autorizador.EsAdministrador; // Temporal: solo administradores
+        // Validación con propiedades reales del Usuario
+        return autorizador != null && 
+               (autorizador.Permisos.Contains("CambiarPassword") ||
+                autorizador.Rol == "Administrador" ||
+                autorizador.Rol == "Gerente" ||
+                autorizador.NivelAcceso >= 8);
     }
 
     private async Task<bool> ValidarAutorizacionNivelesAsync(CambiarPasswordUsuarioCommand command, CancellationToken cancellationToken)
@@ -705,9 +711,9 @@ public class CambiarPasswordUsuarioValidator : AbstractValidator<CambiarPassword
         var autorizador = await _context.Usuarios
             .FirstOrDefaultAsync(u => u.Id == command.UsuarioAutorizaId, cancellationToken);
         
-        // TODO: Implementar validación real cuando Usuario tenga NivelAcceso
-        // return autorizador?.NivelAcceso >= usuario?.NivelAcceso;
-        return usuario != null && autorizador != null; // Temporal: asumir que es válido
+        // Validación usando NivelAcceso real
+        return usuario != null && autorizador != null && 
+               autorizador.NivelAcceso >= usuario.NivelAcceso;
     }
 
     private async Task<bool> ValidarContextoNivelesAsync(CambiarPasswordUsuarioCommand command, CancellationToken cancellationToken)
@@ -715,9 +721,8 @@ public class CambiarPasswordUsuarioValidator : AbstractValidator<CambiarPassword
         var autorizador = await _context.Usuarios
             .FirstOrDefaultAsync(u => u.Id == command.UsuarioAutorizaId, cancellationToken);
         
-        // TODO: Implementar validación real cuando Usuario tenga NivelAcceso
-        // return autorizador?.NivelAcceso >= 7;
-        return autorizador != null; // Temporal: asumir que es válido
+        // Validación usando NivelAcceso real (nivel 7+ puede cambiar passwords)
+        return autorizador != null && autorizador.NivelAcceso >= 7;
     }
 
     private async Task<bool> ValidarHorarioLaboralAsync(CambiarPasswordUsuarioCommand command, CancellationToken cancellationToken)
@@ -725,8 +730,12 @@ public class CambiarPasswordUsuarioValidator : AbstractValidator<CambiarPassword
         var usuario = await _context.Usuarios
             .FirstOrDefaultAsync(u => u.Id == command.UsuarioId, cancellationToken);
         
-        // TODO: Implementar validación real cuando Usuario tenga propiedades de rol específico
-        return usuario != null && usuario.EsAdministrador; // Temporal: usar propiedades reales
+        // Validación usando propiedades reales (Departamento, Posicion, Rol)
+        return usuario != null && 
+               (usuario.EsAdministrador || 
+                usuario.Departamento == "Administración" ||
+                usuario.Posicion == "Gerente" ||
+                usuario.Rol == "Administrador");
     }
 
     private async Task<bool> CumplePoliticasEmpresariales(CambiarPasswordUsuarioCommand command, CancellationToken cancellationToken)

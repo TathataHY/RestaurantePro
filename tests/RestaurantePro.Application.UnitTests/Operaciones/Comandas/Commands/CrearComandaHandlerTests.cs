@@ -3,6 +3,8 @@ using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using RestaurantePro.Domain.Core.Productos.Interfaces;
+using RestaurantePro.Domain.Core.Productos.Entities;
+using RestaurantePro.Domain.Core.Productos.ValueObjects;
 using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
 using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
 using RestaurantePro.Application.Operaciones.Comandas.DTOs;
@@ -177,6 +179,14 @@ public class CrearComandaHandlerTests
             }
         };
 
+        var categoriaId = Guid.NewGuid();
+        var producto = Producto.Crear(
+            "Burger Clásica",
+            "Hamburguesa clásica con carne, lechuga y tomate",
+            new PrecioProducto(15000m),
+            categoriaId,
+            "Plato Principal");
+
         var comandaDto = new ComandaDto
         {
             Id = Guid.NewGuid(),
@@ -189,6 +199,9 @@ public class CrearComandaHandlerTests
                 new ItemComandaDto { ProductoId = productoId, Cantidad = 1, PrecioUnitario = 15000m }
             }
         };
+
+        _mockProductoRepository.Setup(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(producto);
 
         _mockComandaRepository.Setup(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -242,18 +255,13 @@ public class CrearComandaHandlerTests
         var mesaId = Guid.NewGuid();
         var command = new CrearComandaCommand(meseroId, mesaId);
 
-        var argumentException = new ArgumentException("MeseroId no puede ser vacío");
-
-        _mockComandaRepository.Setup(r => r.AgregarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(argumentException);
-
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Be(argumentException.Message);
+        result.Error.Should().Be("El ID del mesero es requerido para crear una comanda");
     }
 
     [Fact]

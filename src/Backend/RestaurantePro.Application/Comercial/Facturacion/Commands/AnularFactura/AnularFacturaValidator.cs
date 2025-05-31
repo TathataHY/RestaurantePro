@@ -293,13 +293,11 @@ public class AnularFacturaValidator : AbstractValidator<AnularFacturaCommand>
         
         if (gerente == null) return false;
 
-        // TODO: Implementar cuando se agreguen las propiedades Rol y NivelAcceso al Usuario
-        // return gerente.Rol == "Gerente" && 
-        //        gerente.NivelAcceso >= 8 && 
-        //        gerente.NivelAcceso <= 10;
-        
-        // Por ahora verificar solo que esté activo
-        return gerente.Estado == EstadoUsuario.Activo;
+        // Validación usando propiedades reales del Usuario
+        return gerente.Estado == EstadoUsuario.Activo &&
+               (gerente.Rol == "Gerente" || gerente.Rol == "Administrador") && 
+               gerente.NivelAcceso >= 8 && 
+               gerente.NivelAcceso <= 10;
     }
 
     private async Task<bool> ValidarAutorizacionSegunMonto(AnularFacturaCommand command, CancellationToken cancellationToken)
@@ -314,14 +312,22 @@ public class AnularFacturaValidator : AbstractValidator<AnularFacturaCommand>
 
         if (usuario == null) return false;
 
-        // TODO: Implementar cuando se agreguen las propiedades Rol y NivelAcceso al Usuario
-        // Niveles de autorización según monto
-        // if (factura.Total > 10000) return usuario.Rol == "Administrador";
-        // if (factura.Total > 5000) return usuario.NivelAcceso >= 8;
-        // if (factura.Total > 2000) return usuario.NivelAcceso >= 6;
+        // Niveles de autorización según monto (usando propiedades reales)
+        if (factura.Total > 10000) 
+            return usuario.Estado == EstadoUsuario.Activo && 
+                   usuario.Rol == "Administrador";
+                   
+        if (factura.Total > 5000) 
+            return usuario.Estado == EstadoUsuario.Activo && 
+                   usuario.NivelAcceso >= 8;
+                   
+        if (factura.Total > 2000) 
+            return usuario.Estado == EstadoUsuario.Activo && 
+                   usuario.NivelAcceso >= 6;
         
-        // Por ahora verificar solo que esté activo
-        return usuario.Estado == EstadoUsuario.Activo;
+        // Para montos menores, cualquier usuario activo con nivel >= 4
+        return usuario.Estado == EstadoUsuario.Activo && 
+               usuario.NivelAcceso >= 4;
     }
 
     private async Task<bool> ValidarCapacidadDevolucion(AnularFacturaCommand command, CancellationToken cancellationToken)
