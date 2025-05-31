@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using MediatR;
 
 namespace RestaurantePro.Application.Common.Behaviors;
 

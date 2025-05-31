@@ -1,6 +1,3 @@
-using FluentValidation;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-
 namespace RestaurantePro.Application.Operaciones.Mesas.Commands.CambiarEstadoMesa;
 
 /// <summary>

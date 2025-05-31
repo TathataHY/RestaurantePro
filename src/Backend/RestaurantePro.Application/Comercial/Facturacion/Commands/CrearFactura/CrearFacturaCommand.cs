@@ -1,5 +1,3 @@
-using RestaurantePro.Application.Comercial.Facturacion.DTOs;
-
 namespace RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
 
 /// <summary>

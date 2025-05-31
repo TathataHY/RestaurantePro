@@ -37,76 +37,70 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
             _logger.LogInformation("Iniciando anulación de factura: {FacturaId}, Tipo: {TipoAnulacion}, Usuario: {UsuarioId}",
                 request.FacturaId, request.TipoAnulacion, request.UsuarioAutorizaId);
 
-            // 1. Obtener factura completa
-            var facturaResult = await ObtenerFacturaCompleta(request.FacturaId, cancellationToken);
-            if (!facturaResult.IsSuccess)
+            // 1. Obtener y validar la factura
+            var facturaResult = await ObtenerFactura(request.FacturaId, cancellationToken);
+            if (!facturaResult.Succeeded)
             {
                 return Result.Failure<FacturaDto>(facturaResult.Error);
             }
 
             var factura = facturaResult.Value;
 
-            // 2. Verificar si requiere aprobación previa
-            var aprobacionResult = await ProcesarAprobacionSiEsNecesaria(request, factura);
-            if (!aprobacionResult.IsSuccess)
+            // 2. Validar aprobaciones necesarias
+            var aprobacionResult = await ValidarAprobacionesNecesarias(request, factura);
+            if (!aprobacionResult.Succeeded)
             {
                 return Result.Failure<FacturaDto>(aprobacionResult.Error);
             }
 
-            // 3. Procesar anulación programada
-            if (request.TipoAnulacion == "Programada")
-            {
-                return await ProcesarAnulacionProgramada(request, factura);
-            }
-
-            // 4. Ejecutar pre-validaciones finales
-            var preValidacionResult = await EjecutarPreValidacionesFinales(request, factura);
-            if (!preValidacionResult.IsSuccess)
+            // 3. Pre-validaciones de negocio
+            var preValidacionResult = await ValidarPrecondicionesAnulacion(factura, request);
+            if (!preValidacionResult.Succeeded)
             {
                 return Result.Failure<FacturaDto>(preValidacionResult.Error);
             }
 
-            // 5. Anular factura usando servicio de dominio
-            var anulacionResult = await AnularFacturaConServicioDominio(request, factura, cancellationToken);
-            if (!anulacionResult.IsSuccess)
+            // 4. Ejecutar anulación
+            var anulacionResult = await EjecutarAnulacion(factura, request);
+            if (!anulacionResult.Succeeded)
             {
                 return Result.Failure<FacturaDto>(anulacionResult.Error);
             }
 
-            // 6. Procesar reversión de inventario
+            // 5. Procesar reversión de inventario
             if (request.RevertirInventario)
             {
                 await ProcesarReversionInventario(factura);
             }
 
-            // 7. Procesar cancelación de puntos de fidelización
+            // 6. Procesar cancelación de puntos de fidelización
             if (request.CancelarPuntosFidelizacion)
             {
                 await ProcesarCancelacionPuntosFidelizacion(factura);
             }
 
-            // 8. Procesar devolución de pagos
+            // 7. Procesar devolución de pagos
             if (request.ProcesarDevolucionPago)
             {
                 await ProcesarDevolucionPagos(request, factura);
             }
 
-            // 9. Generar nota de crédito si es necesario
+            // 8. Generar nota de crédito si es necesario
             if (request.GenerarNotaCredito)
             {
                 await GenerarNotaCredito(request, factura);
             }
 
-            // 10. Guardar cambios en base de datos
+            // 9. Guardar cambios en base de datos
             await _context.SaveChangesAsync(cancellationToken);
 
-            // 11. Registrar auditoría completa
+            // 10. Registrar auditoría completa
             await RegistrarAuditoriaAnulacion(request, factura);
 
-            // 12. Procesar notificaciones
+            // 11. Procesar notificaciones
             await ProcesarNotificaciones(request, factura);
 
-            // 13. Mapear resultado a DTO
+            // 12. Mapear resultado a DTO
             var facturaDto = await MapearFacturaADto(factura);
 
             _logger.LogInformation("Factura anulada exitosamente: {NumeroFactura}, Tipo: {TipoAnulacion}",
@@ -122,7 +116,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         }
     }
 
-    private async Task<Result<Factura>> ObtenerFacturaCompleta(Guid facturaId, CancellationToken cancellationToken)
+    private async Task<Result<Factura>> ObtenerFactura(Guid facturaId, CancellationToken cancellationToken)
     {
         var factura = await _context.Facturas
             .Include(f => f.Detalles)
@@ -145,7 +139,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         return Result.Success(factura);
     }
 
-    private async Task<Result<bool>> ProcesarAprobacionSiEsNecesaria(AnularFacturaCommand request, Factura factura)
+    private async Task<Result<bool>> ValidarAprobacionesNecesarias(AnularFacturaCommand request, Factura factura)
     {
         if (!request.RequiereAprobacionGerencia)
         {
@@ -188,35 +182,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         return Result.Success(true);
     }
 
-    private async Task<Result<FacturaDto>> ProcesarAnulacionProgramada(AnularFacturaCommand request, Factura factura)
-    {
-        var anulacionProgramada = new AnulacionProgramada
-        {
-            Id = Guid.NewGuid(),
-            FacturaId = request.FacturaId,
-            FechaProgramada = request.FechaProgramadaAnulacion!.Value,
-            TipoAnulacion = request.TipoAnulacion,
-            Motivo = request.Motivo,
-            UsuarioAutoriza = request.UsuarioAutorizaId,
-            Estado = "Programada",
-            FechaCreacion = DateTime.UtcNow,
-            ConfiguracionAnulacion = SerializarConfiguracionAnulacion(request)
-        };
-
-        await _context.AnulacionesProgramadas.AddAsync(anulacionProgramada);
-        await _context.SaveChangesAsync();
-
-        _logger.LogInformation("Anulación programada creada para factura {NumeroFactura} el {FechaProgramada}",
-            factura.NumeroFactura, request.FechaProgramadaAnulacion);
-
-        // Programar job de anulación (esto sería con Hangfire o similar)
-        // await _backgroundJobClient.Schedule(() => ProcesarAnulacionProgramada(anulacionProgramada.Id), request.FechaProgramadaAnulacion.Value);
-
-        var facturaDto = await MapearFacturaADto(factura);
-        return Result.Success(facturaDto);
-    }
-
-    private async Task<Result<bool>> EjecutarPreValidacionesFinales(AnularFacturaCommand request, Factura factura)
+    private async Task<Result<bool>> ValidarPrecondicionesAnulacion(Factura factura, AnularFacturaCommand request)
     {
         // Verificar que no haya cambios concurrentes
         var facturaActual = await _context.Facturas
@@ -243,10 +209,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         return Result.Success(true);
     }
 
-    private async Task<Result<bool>> AnularFacturaConServicioDominio(
-        AnularFacturaCommand request, 
-        Factura factura, 
-        CancellationToken cancellationToken)
+    private async Task<Result<bool>> EjecutarAnulacion(Factura factura, AnularFacturaCommand request)
     {
         // Usar servicio de dominio para anular
         var anulacionResult = await _servicioFacturacion.AnularFacturaAsync(
@@ -254,9 +217,9 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
             request.Motivo,
             request.UsuarioAutorizaId,
             request.TipoAnulacion,
-            cancellationToken);
+            default);
 
-        if (!anulacionResult.IsSuccess)
+        if (!anulacionResult.Succeeded)
         {
             return Result.Failure<bool>(anulacionResult.Error);
         }

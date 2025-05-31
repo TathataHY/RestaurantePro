@@ -124,6 +124,36 @@ public class ComandaSummaryDto
     public bool EstaRetrasada => FechaEstimadaEntrega.HasValue && DateTime.UtcNow > FechaEstimadaEntrega;
 
     /// <summary>
+    /// Fecha de finalización de la comanda
+    /// </summary>
+    public DateTime? FechaFinalizacion { get; set; }
+
+    /// <summary>
+    /// Duración del servicio en minutos (desde creación hasta finalización)
+    /// </summary>
+    public int? DuracionServicio { get; set; }
+
+    /// <summary>
+    /// Indica si fue un servicio rápido (menos de 30 minutos)
+    /// </summary>
+    public bool ServicioRapido { get; set; }
+
+    /// <summary>
+    /// Indica si es un cliente VIP
+    /// </summary>
+    public bool EsVip { get; set; }
+
+    /// <summary>
+    /// Indica si el cliente es frecuente
+    /// </summary>
+    public bool ClienteEsFrecuente { get; set; }
+
+    /// <summary>
+    /// Eficiencia del servicio (porcentaje basado en tiempo esperado vs real)
+    /// </summary>
+    public decimal? EficienciaServicio { get; set; }
+
+    /// <summary>
     /// Color del estado para UI (Verde, Amarillo, Rojo)
     /// </summary>
     public string ColorEstado => Estado switch

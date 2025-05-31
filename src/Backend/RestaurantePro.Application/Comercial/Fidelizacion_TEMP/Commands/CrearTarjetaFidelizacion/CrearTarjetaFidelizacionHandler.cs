@@ -84,7 +84,7 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
 
                 // 2. Validar elegibilidad y restricciones del cliente
                 var validacionElegibilidad = await ValidarElegibilidadCliente(cliente, request, cancellationToken);
-                if (!validacionElegibilidad.IsSuccess)
+                if (!validacionElegibilidad.Succeeded)
                 {
                     return Result<TarjetaFidelizacionDto>.Failure(validacionElegibilidad.Error);
                 }
@@ -94,7 +94,7 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
                 if (!string.IsNullOrEmpty(request.CodigoPromocion))
                 {
                     var promocionResult = await ProcesarPromocion(request.CodigoPromocion, request, cancellationToken);
-                    if (!promocionResult.IsSuccess)
+                    if (!promocionResult.Succeeded)
                     {
                         return Result<TarjetaFidelizacionDto>.Failure(promocionResult.Error);
                     }
@@ -127,7 +127,7 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
                     .ConDatosAdicionales(request.DatosAdicionales)
                     .Construir();
 
-                if (!tarjetaResult.IsSuccess)
+                if (!tarjetaResult.Succeeded)
                 {
                     _logger.LogWarning("Error al construir tarjeta: {Error}", tarjetaResult.Error);
                     return Result<TarjetaFidelizacionDto>.Failure(tarjetaResult.Error);
@@ -224,9 +224,9 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
 
         // Validar límites por tipo de tarjeta
         var validacionTipo = await ValidarLimiteTipoTarjeta(cliente, request.TipoTarjeta, cancellationToken);
-        if (!validacionTipo.IsSuccess)
+        if (!validacionTipo.Succeeded)
         {
-            return validacionTipo;
+            return Result.Failure<bool>(validacionTipo.Error);
         }
 
         return Result.Success();
@@ -451,7 +451,7 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
             $"Puntos de bienvenida por creación de tarjeta {tarjeta.TipoTarjeta}",
             _currentUser.UserId ?? "Sistema");
 
-        if (resultadoAcumulacion.IsSuccess)
+        if (resultadoAcumulacion.Succeeded)
         {
             // Registrar transacción de puntos
             var transaccion = new TransaccionPuntos

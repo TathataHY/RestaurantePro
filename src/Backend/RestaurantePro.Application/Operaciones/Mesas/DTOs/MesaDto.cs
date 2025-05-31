@@ -1,5 +1,3 @@
-using RestaurantePro.Application.Common.DTOs;
-
 namespace RestaurantePro.Application.Operaciones.Mesas.DTOs;
 
 public class MesaDto : BaseDto

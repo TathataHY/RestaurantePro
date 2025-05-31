@@ -98,9 +98,13 @@ public class AplicarDescuentoValidator : AbstractValidator<AplicarDescuentoComma
             .NotEqual(Guid.Empty)
             .WithMessage("El ID del usuario que autoriza es requerido.")
             .MustAsync(UsuarioAutorizadorExiste)
-            .WithMessage("El usuario autorizador especificado no existe.")
+            .WithMessage("El usuario autorizador especificado no existe.");
+
+        // Validar permisos en el nivel del comando completo
+        RuleFor(v => v)
             .MustAsync(UsuarioTienePermisosParaDescuento)
-            .WithMessage("El usuario no tiene permisos para autorizar este tipo de descuento.");
+            .WithMessage("El usuario no tiene permisos para autorizar este tipo de descuento.")
+            .WithName("PermisosDescuento");
 
         // Para descuentos de cortesía es obligatorio el código de autorización
         RuleFor(v => v.CodigoAutorizacion)
@@ -111,11 +115,12 @@ public class AplicarDescuentoValidator : AbstractValidator<AplicarDescuentoComma
             .When(v => v.TipoDescuento.Equals("Cortesia", StringComparison.OrdinalIgnoreCase));
 
         // Para descuentos promocionales validar código promocional
-        RuleFor(v => v.CodigoAutorizacion)
+        RuleFor(v => v)
             .MustAsync(CodigoPromocionalEsValido)
             .WithMessage("El código promocional no es válido o ha expirado.")
             .When(v => v.TipoDescuento.Equals("Promocional", StringComparison.OrdinalIgnoreCase) && 
-                      !string.IsNullOrEmpty(v.CodigoAutorizacion));
+                      !string.IsNullOrEmpty(v.CodigoAutorizacion))
+            .WithName("CodigoPromocional");
     }
 
     private void ConfigurarValidacionesProductosYCategorias()

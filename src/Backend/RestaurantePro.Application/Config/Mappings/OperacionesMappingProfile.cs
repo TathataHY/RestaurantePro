@@ -1,14 +1,10 @@
-using AutoMapper;
-using RestaurantePro.Application.Operaciones.Comandas.DTOs;
 using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
-using RestaurantePro.Application.Operaciones.Comandas.Commands.AgregarItemComanda;
 // TODO: Uncomment when Mesa DTOs are created
 // using RestaurantePro.Application.Operaciones.Mesa.DTOs;
 // using RestaurantePro.Application.Operaciones.Mesa.Commands.CrearMesa;
 // TODO: Uncomment when Reservacion DTOs are created  
 // using RestaurantePro.Application.Operaciones.Reservacion.DTOs;
 // using RestaurantePro.Application.Operaciones.Reservacion.Commands.CrearReservacion;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
 
 namespace RestaurantePro.Application.Config.Mappings;
 

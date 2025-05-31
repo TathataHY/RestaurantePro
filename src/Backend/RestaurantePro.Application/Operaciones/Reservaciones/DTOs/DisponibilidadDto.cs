@@ -61,6 +61,11 @@ public class DisponibilidadDto
     public MesaDisponibleDto? MesaRecomendada => MesasDisponibles.FirstOrDefault();
 
     /// <summary>
+    /// Motivo por el cual no hay disponibilidad (si aplica)
+    /// </summary>
+    public string? MotivoNoDisponibilidad { get; set; }
+
+    /// <summary>
     /// Tiempo de respuesta de la consulta en milisegundos
     /// </summary>
     public long TiempoRespuestaMs { get; set; }
@@ -145,6 +150,31 @@ public class MesaDisponibleDto
     /// Servicios adicionales disponibles en la mesa
     /// </summary>
     public List<string> ServiciosAdicionales { get; set; } = new();
+
+    /// <summary>
+    /// ID de la mesa (alias para compatibilidad)
+    /// </summary>
+    public Guid MesaId { get; set; }
+
+    /// <summary>
+    /// Indica si la mesa está disponible
+    /// </summary>
+    public bool Disponible { get; set; }
+
+    /// <summary>
+    /// Indica si es mesa VIP
+    /// </summary>
+    public bool EsVIP { get; set; }
+
+    /// <summary>
+    /// Indica si tiene ventana
+    /// </summary>
+    public bool TieneVentana { get; set; }
+
+    /// <summary>
+    /// Próxima disponibilidad si no está disponible en el horario exacto
+    /// </summary>
+    public DateTime? ProximaDisponibilidad { get; set; }
 }
 
 /// <summary>
@@ -196,6 +226,21 @@ public class AlternativaDto
     /// Precio diferencial respecto a la opción original
     /// </summary>
     public decimal? DiferenciaPrecio { get; set; }
+
+    /// <summary>
+    /// Fecha y hora alternativa (alias)
+    /// </summary>
+    public DateTime FechaHora { get; set; }
+
+    /// <summary>
+    /// Cantidad de mesas disponibles
+    /// </summary>
+    public int CantidadMesasDisponibles { get; set; }
+
+    /// <summary>
+    /// Indica si es la mejor opción
+    /// </summary>
+    public bool MejorOpcion { get; set; }
 }
 
 /// <summary>
@@ -272,6 +317,31 @@ public class EstadisticasOcupacionDto
     /// Próxima hora con mayor disponibilidad
     /// </summary>
     public DateTime? ProximaHoraMayorDisponibilidad { get; set; }
+
+    /// <summary>
+    /// Total de mesas (alias)
+    /// </summary>
+    public int TotalMesas { get; set; }
+
+    /// <summary>
+    /// Mesas ocupadas (alias)
+    /// </summary>
+    public int MesasOcupadas { get; set; }
+
+    /// <summary>
+    /// Mesas disponibles (alias)
+    /// </summary>
+    public int MesasDisponibles { get; set; }
+
+    /// <summary>
+    /// Porcentaje de ocupación (alias)
+    /// </summary>
+    public decimal PorcentajeOcupacion { get; set; }
+
+    /// <summary>
+    /// Nivel de ocupación como texto
+    /// </summary>
+    public string NivelOcupacion { get; set; } = string.Empty;
 
     /// <summary>
     /// Estadísticas por zona

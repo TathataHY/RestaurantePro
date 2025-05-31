@@ -1,7 +1,3 @@
-using MediatR;
-using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Queries.ObtenerReservacionPorId;
 
 /// <summary>

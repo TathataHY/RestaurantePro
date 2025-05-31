@@ -1,4 +1,3 @@
-using RestaurantePro.Application.Comercial.Clientes.DTOs;
 using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente;
 using RestaurantePro.Application.Comercial.Clientes.Commands.ActualizarCliente;
 

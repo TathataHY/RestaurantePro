@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
-
 namespace RestaurantePro.Application.Inventario.MovimientosInventario.DTOs;
 
 public class MovimientoInventarioDto : BaseDto

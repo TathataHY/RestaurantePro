@@ -27,8 +27,9 @@ public class ObtenerFacturaPorIdHandler : IRequestHandler<ObtenerFacturaPorIdQue
 
             // 1. Obtener la factura con las relaciones necesarias
             var factura = await _context.Facturas
-                .Include(f => f.Cliente)
-                .Include(f => f.Detalles)
+                // TODO: Descomentar cuando las relaciones estén implementadas
+                // .Include(f => f.Cliente)
+                // .Include(f => f.Detalles)
                 .FirstOrDefaultAsync(f => f.Id == request.FacturaId, cancellationToken);
 
             if (factura == null)
@@ -72,10 +73,10 @@ public class ObtenerFacturaPorIdHandler : IRequestHandler<ObtenerFacturaPorIdQue
             MetodoPago = "Efectivo", // TODO: Obtener de la entidad cuando esté disponible
             ReferenciaPago = "", // TODO: Obtener de la entidad cuando esté disponible
             FechaCreacion = factura.FechaCreacion,
-            CreadoPor = factura.CreadoPor,
-            FechaModificacion = factura.FechaModificacion,
-            ModificadoPor = factura.ModificadoPor,
-            Activo = factura.Activo
+            CreadoPor = "Sistema", // TODO: Obtener de la entidad cuando esté disponible
+            // FechaModificacion = factura.FechaModificacion, // TODO: Descomentar cuando esté disponible
+            // ModificadoPor = factura.ModificadoPor, // TODO: Descomentar cuando esté disponible
+            Activo = true // TODO: Obtener de la entidad cuando esté disponible
         };
     }
 } 

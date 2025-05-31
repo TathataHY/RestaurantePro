@@ -34,7 +34,7 @@ public class CambiarPasswordUsuarioHandler : IRequestHandler<CambiarPasswordUsua
 
             // 1. Obtener usuario completo con validaciones
             var usuarioResult = await ObtenerUsuarioCompleto(request.UsuarioId, cancellationToken);
-            if (!usuarioResult.IsSuccess)
+            if (!usuarioResult.Succeeded)
             {
                 return Result.Failure<bool>(usuarioResult.Error);
             }
@@ -46,7 +46,7 @@ public class CambiarPasswordUsuarioHandler : IRequestHandler<CambiarPasswordUsua
             if (!request.EsCambioAdministrativo() && !request.EsPrimerCambio)
             {
                 var validacionPasswordResult = await ValidarPasswordActual(request, usuario);
-                if (!validacionPasswordResult.IsSuccess)
+                if (!validacionPasswordResult.Succeeded)
                 {
                     await RegistrarIntentoFallido(request, usuario, "Password actual incorrecta");
                     return Result.Failure<bool>(validacionPasswordResult.Error);
@@ -55,7 +55,7 @@ public class CambiarPasswordUsuarioHandler : IRequestHandler<CambiarPasswordUsua
 
             // 3. Verificar límites de seguridad y política
             var validacionLimitesResult = await ValidarLimitesSeguridad(request, usuario);
-            if (!validacionLimitesResult.IsSuccess)
+            if (!validacionLimitesResult.Succeeded)
             {
                 return Result.Failure<bool>(validacionLimitesResult.Error);
             }

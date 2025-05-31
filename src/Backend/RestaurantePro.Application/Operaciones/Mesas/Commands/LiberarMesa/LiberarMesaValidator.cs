@@ -1,5 +1,3 @@
-using FluentValidation;
-
 namespace RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
 
 /// <summary>

@@ -23,61 +23,89 @@ public class ObtenerHistorialComandasHandler : IRequestHandler<ObtenerHistorialC
         ObtenerHistorialComandasQuery request,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("📋 Obteniendo historial de comandas - Página: {PageNumber}, Tamaño: {PageSize}", 
-            request.PageNumber, request.PageSize);
-
         try
         {
-            // 1. Construir filtros base
+            _logger.LogInformation("🔍 Obteniendo historial de comandas - Página: {PageNumber}, Tamaño: {PageSize}", 
+                request.PageNumber, request.PageSize);
+
+            // 1. Construir filtros
             var filtros = ConstruirFiltros(request);
-            _logger.LogDebug("🔍 Filtros aplicados: {@Filtros}", filtros);
 
-            // 2. Obtener comandas filtradas
-            var comandas = await _comandaRepository.ObtenerComandasFiltradas(
-                filtros,
-                request.PageNumber,
-                request.PageSize,
-                ConstruirOrden(request.OrdenarPor));
+            // 2. Obtener comandas usando métodos reales que SÍ existen
+            IEnumerable<Comanda> comandas;
+            int totalRegistros;
 
-            if (!comandas.Any())
+            if (request.FechaDesde.HasValue && request.FechaHasta.HasValue)
             {
-                _logger.LogInformation("📄 No se encontraron comandas con los filtros especificados");
-                return Result<PaginatedList<ComandaSummaryDto>>.Success(
-                    new PaginatedList<ComandaSummaryDto>(
-                        new List<ComandaSummaryDto>(),
-                        0,
-                        request.PageNumber,
-                        request.PageSize));
+                // Usar método real ObtenerPorRangoFechasAsync que SÍ existe
+                comandas = await _comandaRepository.ObtenerPorRangoFechasAsync(
+                    request.FechaDesde.Value, 
+                    request.FechaHasta.Value, 
+                    true, 
+                    cancellationToken);
+                totalRegistros = comandas.Count();
+            }
+            else
+            {
+                // Usar método real ObtenerPaginadoAsync que SÍ existe
+                var resultadoPaginado = await _comandaRepository.ObtenerPaginadoAsync(
+                    request.PageNumber - 1, // Repository usa base 0
+                    request.PageSize, 
+                    true, 
+                    cancellationToken);
+                comandas = resultadoPaginado.Comandas;
+                totalRegistros = resultadoPaginado.Total;
             }
 
-            // 3. Obtener total de registros
-            var totalRegistros = await _comandaRepository.ContarComandasFiltradas(filtros);
+            // 3. Aplicar filtros adicionales en memoria (filtros que no están en repository)
+            comandas = AplicarFiltrosEnMemoria(comandas, request);
 
-            // 4. Mapear a DTOs
-            var comandasDto = _mapper.Map<List<ComandaSummaryDto>>(comandas);
+            // 4. Si usamos filtros, recalcular paginación
+            if (request.FechaDesde.HasValue && request.FechaHasta.HasValue)
+            {
+                totalRegistros = comandas.Count();
+                comandas = comandas
+                    .Skip((request.PageNumber - 1) * request.PageSize)
+                    .Take(request.PageSize);
+            }
 
-            // 5. Enriquecer DTOs con información adicional
+            var comandasList = comandas.ToList();
+
+            if (!comandasList.Any())
+            {
+                _logger.LogInformation("📄 No se encontraron comandas con los filtros especificados");
+                return Result.Success(new PaginatedList<ComandaSummaryDto>(
+                    new List<ComandaSummaryDto>(),
+                    0,
+                    request.PageNumber,
+                    request.PageSize));
+            }
+
+            // 5. Mapear a DTOs
+            var comandasDto = _mapper.Map<List<ComandaSummaryDto>>(comandasList);
+
+            // 6. Enriquecer DTOs con información adicional
             await EnriquecerComandas(comandasDto);
 
-            // 6. Crear resultado paginado
-            var resultado = new PaginatedList<ComandaSummaryDto>(
+            // 7. Crear resultado paginado
+            var resultadoFinal = new PaginatedList<ComandaSummaryDto>(
                 comandasDto,
                 totalRegistros,
                 request.PageNumber,
                 request.PageSize);
 
             _logger.LogInformation("✅ Historial obtenido exitosamente. Total: {Total}, Página: {Pagina}/{TotalPaginas}", 
-                totalRegistros, request.PageNumber, resultado.TotalPages);
+                totalRegistros, request.PageNumber, resultadoFinal.TotalPages);
 
-            // 7. Log de estadísticas
-            LogearEstadisticas(comandas, request);
+            // 8. Log de estadísticas
+            LogearEstadisticas(comandasList, request);
 
-            return Result<PaginatedList<ComandaSummaryDto>>.Success(resultado);
+            return Result.Success(resultadoFinal);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "💥 Error al obtener historial de comandas");
-            return Result<PaginatedList<ComandaSummaryDto>>.Failure(
+            return Result.Failure<PaginatedList<ComandaSummaryDto>>(
                 $"Error interno al obtener historial: {ex.Message}");
         }
     }
@@ -104,22 +132,39 @@ public class ObtenerHistorialComandasHandler : IRequestHandler<ObtenerHistorialC
     }
 
     /// <summary>
-    /// Construye el criterio de ordenamiento
+    /// Aplica filtros adicionales en memoria usando propiedades reales de Comanda
     /// </summary>
-    private static string ConstruirOrden(OrdenHistorial orden)
+    private static IEnumerable<Comanda> AplicarFiltrosEnMemoria(IEnumerable<Comanda> comandas, ObtenerHistorialComandasQuery request)
     {
-        return orden switch
-        {
-            OrdenHistorial.FechaMasReciente => "FechaCreacion DESC",
-            OrdenHistorial.FechaMasAntigua => "FechaCreacion ASC",
-            OrdenHistorial.MontoMayor => "Total DESC",
-            OrdenHistorial.MontoMenor => "Total ASC",
-            OrdenHistorial.MesaNombre => "Mesa.Nombre ASC",
-            OrdenHistorial.MeseroNombre => "Mesero.NombreCompleto ASC",
-            OrdenHistorial.ClienteNombre => "Cliente.NombreCompleto ASC",
-            OrdenHistorial.EstadoComanda => "Estado ASC, FechaCreacion DESC",
-            _ => "FechaCreacion DESC"
-        };
+        // Aplicar filtros usando propiedades reales de la entidad Comanda
+        if (request.MesaId.HasValue)
+            comandas = comandas.Where(c => c.MesaId == request.MesaId.Value);
+            
+        if (request.ClienteId.HasValue)
+            comandas = comandas.Where(c => c.ClienteId == request.ClienteId.Value);
+            
+        if (request.MeseroId.HasValue)
+            comandas = comandas.Where(c => c.MeseroId == request.MeseroId.Value);
+            
+        if (request.Estado.HasValue)
+            comandas = comandas.Where(c => c.Estado == request.Estado.Value);
+            
+        if (request.MontoMinimo.HasValue)
+            comandas = comandas.Where(c => c.Total != null && c.Total.Total >= request.MontoMinimo.Value);
+            
+        if (request.MontoMaximo.HasValue)
+            comandas = comandas.Where(c => c.Total != null && c.Total.Total <= request.MontoMaximo.Value);
+            
+        if (!string.IsNullOrWhiteSpace(request.TerminoBusqueda))
+            comandas = comandas.Where(c => c.Observaciones.Contains(request.TerminoBusqueda, StringComparison.OrdinalIgnoreCase));
+            
+        if (!request.IncluirCanceladas)
+            comandas = comandas.Where(c => c.Estado != EstadoComanda.Cancelada);
+            
+        if (request.SoloFinalizadas)
+            comandas = comandas.Where(c => c.Estado == EstadoComanda.Finalizada);
+
+        return comandas;
     }
 
     /// <summary>
@@ -133,7 +178,7 @@ public class ObtenerHistorialComandasHandler : IRequestHandler<ObtenerHistorialC
             if (comanda.Estado == "Finalizada" && comanda.FechaFinalizacion.HasValue)
             {
                 var duracion = comanda.FechaFinalizacion.Value - comanda.FechaCreacion;
-                comanda.DuracionServicio = duracion;
+                comanda.DuracionServicio = (int)duracion.TotalMinutes;
                 comanda.ServicioRapido = duracion.TotalMinutes <= 30;
             }
 
@@ -141,9 +186,9 @@ public class ObtenerHistorialComandasHandler : IRequestHandler<ObtenerHistorialC
             comanda.EsVip = comanda.Total >= 100 || comanda.ClienteEsFrecuente;
 
             // Calcular eficiencia (items por minuto)
-            if (comanda.DuracionServicio.HasValue && comanda.DuracionServicio.Value.TotalMinutes > 0)
+            if (comanda.DuracionServicio.HasValue && comanda.DuracionServicio.Value > 0)
             {
-                comanda.EficienciaServicio = comanda.TotalItems / (decimal)comanda.DuracionServicio.Value.TotalMinutes;
+                comanda.EficienciaServicio = comanda.TotalItems / (decimal)comanda.DuracionServicio.Value;
             }
         }
 
@@ -157,20 +202,23 @@ public class ObtenerHistorialComandasHandler : IRequestHandler<ObtenerHistorialC
     {
         if (!comandas.Any()) return;
 
+        var comandasList = comandas.ToList();
+        var comandasConTotal = comandasList.Where(c => c.Total != null).ToList();
+
         var stats = new
         {
-            TotalComandas = comandas.Count(),
-            MontoTotal = comandas.Sum(c => c.CalcularTotal()),
-            MontoPromedio = comandas.Average(c => c.CalcularTotal()),
-            ComandaMaxima = comandas.Max(c => c.CalcularTotal()),
-            ComandaMinima = comandas.Min(c => c.CalcularTotal()),
-            MesasMasUsadas = comandas.Where(c => c.MesaId.HasValue)
+            TotalComandas = comandasList.Count,
+            MontoTotal = comandasConTotal.Sum(c => c.Total!.Total),
+            MontoPromedio = comandasConTotal.Any() ? comandasConTotal.Average(c => c.Total!.Total) : 0,
+            ComandaMaxima = comandasConTotal.Any() ? comandasConTotal.Max(c => c.Total!.Total) : 0,
+            ComandaMinima = comandasConTotal.Any() ? comandasConTotal.Min(c => c.Total!.Total) : 0,
+            MesasMasUsadas = comandasList.Where(c => c.MesaId != Guid.Empty)
                 .GroupBy(c => c.MesaId)
                 .OrderByDescending(g => g.Count())
                 .Take(3)
                 .Select(g => new { MesaId = g.Key, Cantidad = g.Count() }),
-            Estados = comandas.GroupBy(c => c.Estado)
-                .Select(g => new { Estado = g.Key, Cantidad = g.Count() })
+            Estados = comandasList.GroupBy(c => c.Estado)
+                .Select(g => new { Estado = g.Key.ToString(), Cantidad = g.Count() })
         };
 
         _logger.LogInformation("📊 Estadísticas del historial: {@Stats}", stats);

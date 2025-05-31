@@ -1,5 +1,3 @@
-using RestaurantePro.Application.Core.Usuarios.DTOs;
-
 namespace RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
 
 /// <summary>

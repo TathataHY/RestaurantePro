@@ -1,9 +1,3 @@
-using MediatR;
-using Microsoft.Extensions.Logging;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
-
 namespace RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
 
 /// <summary>

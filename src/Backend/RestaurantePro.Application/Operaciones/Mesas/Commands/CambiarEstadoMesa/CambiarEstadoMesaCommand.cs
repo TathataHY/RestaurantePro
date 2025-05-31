@@ -1,7 +1,3 @@
-using MediatR;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-
 namespace RestaurantePro.Application.Operaciones.Mesas.Commands.CambiarEstadoMesa;
 
 /// <summary>

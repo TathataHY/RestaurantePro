@@ -1,5 +1,3 @@
-using FluentValidation;
-
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Queries.ConsultarDisponibilidad;
 
 public class ConsultarDisponibilidadValidator : AbstractValidator<ConsultarDisponibilidadQuery>

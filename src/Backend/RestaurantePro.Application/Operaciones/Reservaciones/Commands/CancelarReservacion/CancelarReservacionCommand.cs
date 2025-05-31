@@ -16,6 +16,16 @@ public class CancelarReservacionCommand : IRequest<Result<ReservacionDto>>
     public DateTime? FechaCancelacion { get; init; }
 
     /// <summary>
+    /// Motivo de cancelación como string para el validator
+    /// </summary>
+    public string MotivoTexto => MotivoDetalle ?? Motivo.ToString();
+
+    /// <summary>
+    /// Usuario que realiza la cancelación
+    /// </summary>
+    public string CanceladoPor => UsuarioId.ToString();
+
+    /// <summary>
     /// Factory method para cancelación por cliente
     /// </summary>
     public static CancelarReservacionCommand CancelacionCliente(

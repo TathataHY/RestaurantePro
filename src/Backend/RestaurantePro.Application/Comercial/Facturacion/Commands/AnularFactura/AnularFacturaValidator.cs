@@ -76,9 +76,13 @@ public class AnularFacturaValidator : AbstractValidator<AnularFacturaCommand>
             .NotEqual(Guid.Empty)
             .WithMessage("El ID del usuario que autoriza es requerido.")
             .MustAsync(UsuarioAutorizadorExiste)
-            .WithMessage("El usuario autorizador especificado no existe.")
+            .WithMessage("El usuario autorizador especificado no existe.");
+
+        // Validar permisos en el nivel del comando completo
+        RuleFor(v => v)
             .MustAsync(UsuarioTienePermisosParaAnular)
-            .WithMessage("El usuario no tiene permisos para anular facturas.");
+            .WithMessage("El usuario no tiene permisos para anular facturas.")
+            .WithName("PermisosAnulacion");
 
         // Para anulaciones de emergencia es obligatorio el código
         RuleFor(v => v.CodigoAutorizacion)

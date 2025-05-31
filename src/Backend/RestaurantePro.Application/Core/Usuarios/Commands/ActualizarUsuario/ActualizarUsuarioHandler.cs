@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
-
 namespace RestaurantePro.Application.Core.Usuarios.Commands.ActualizarUsuario;
 
 public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand, Result<UsuarioDto>>
@@ -37,7 +34,7 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
 
             // 1. Obtener usuario actual completo
             var usuarioResult = await ObtenerUsuarioCompleto(request.UsuarioId, cancellationToken);
-            if (!usuarioResult.IsSuccess)
+            if (!usuarioResult.Succeeded)
             {
                 return Result.Failure<UsuarioDto>(usuarioResult.Error);
             }
@@ -53,7 +50,7 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
 
             // 3. Validar cambios críticos y aprobaciones
             var validacionCriticaResult = await ValidarCambiosCriticos(request, usuario);
-            if (!validacionCriticaResult.IsSuccess)
+            if (!validacionCriticaResult.Succeeded)
             {
                 return Result.Failure<UsuarioDto>(validacionCriticaResult.Error);
             }
@@ -66,7 +63,7 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
 
             // 5. Aplicar cambios al usuario
             var aplicacionResult = await AplicarCambiosAlUsuario(request, usuario, cancellationToken);
-            if (!aplicacionResult.IsSuccess)
+            if (!aplicacionResult.Succeeded)
             {
                 return Result.Failure<UsuarioDto>(aplicacionResult.Error);
             }
@@ -449,20 +446,24 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
     {
         return campo switch
         {
-            "Nombre" => usuario.Nombre,
+            // Propiedades que SÍ existen en Usuario dominio
+            "Nombre" => usuario.NombreCompleto,
             "Email" => usuario.Email,
-            "Telefono" => usuario.Telefono,
-            "Identificacion" => usuario.Identificacion,
-            "Direccion" => usuario.Direccion,
-            "Rol" => usuario.Rol,
-            "NivelAcceso" => usuario.NivelAcceso,
-            "Activo" => usuario.Activo,
-            "SupervisorId" => usuario.SupervisorId,
-            "Departamento" => usuario.Departamento,
-            "Posicion" => usuario.Posicion,
-            "FechaIngreso" => usuario.FechaIngreso,
-            "SalarioBase" => usuario.SalarioBase,
-            "PermisosEspecificos" => usuario.Permisos,
+            "Rol" => usuario.Roles.FirstOrDefault().ToString(),
+            "Activo" => usuario.Estado == EstadoUsuario.Activo,
+            
+            // TODO: Descomentar cuando Usuario tenga estas propiedades
+            // "Telefono" => usuario.Telefono,
+            // "Identificacion" => usuario.Identificacion,
+            // "Direccion" => usuario.Direccion,
+            // "NivelAcceso" => usuario.NivelAcceso,
+            // "SupervisorId" => usuario.SupervisorId,
+            // "Departamento" => usuario.Departamento,
+            // "Posicion" => usuario.Posicion,
+            // "FechaIngreso" => usuario.FechaIngreso,
+            // "SalarioBase" => usuario.SalarioBase,
+            // "PermisosEspecificos" => usuario.Permisos,
+            
             _ => null
         };
     }
@@ -515,7 +516,7 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
         var asunto = "Actualización de tu perfil de usuario";
         
         var mensaje = $@"
-            Estimado/a {usuario.Nombre},
+            Estimado/a {usuario.NombreCompleto},
 
             Tu perfil de usuario ha sido actualizado con los siguientes cambios:
 
@@ -539,29 +540,32 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
         Usuario usuario, 
         Dictionary<string, object> datosOriginales)
     {
-        var supervisor = await _context.Usuarios
-            .FirstOrDefaultAsync(u => u.Id == usuario.SupervisorId.Value);
-
-        if (supervisor?.Email == null) return;
-
-        var asunto = $"Actualización de usuario supervisado: {usuario.Nombre}";
-        var mensaje = $@"
-            Estimado/a {supervisor.Nombre},
-
-            Se ha actualizado la información de uno de tus usuarios supervisados:
-
-            Usuario: {usuario.Nombre} ({usuario.Email})
-            Campos modificados: {string.Join(", ", request.ObtenerCamposAModificar())}
-            Motivo: {request.MotivoActualizacion}
-            Autorizado por: Usuario ID {request.UsuarioAutorizaId}
-            Fecha: {DateTime.UtcNow:dd/MM/yyyy HH:mm}
-
-            {(request.TieneCambiosCriticos() ? "⚠️ ATENCIÓN: Este cambio incluye modificaciones críticas que requieren tu conocimiento." : "")}
-
-            RestaurantePro - Notificaciones de Supervisión
-        ";
-
-        await _emailService.SendEmailAsync(supervisor.Email, asunto, mensaje);
+        // TODO: Descomentar cuando Usuario tenga SupervisorId
+        // var supervisor = await _context.Usuarios
+        //     .FirstOrDefaultAsync(u => u.Id == usuario.SupervisorId.Value);
+        //
+        // if (supervisor?.Email == null) return;
+        //
+        // var asunto = $"Actualización de usuario supervisado: {usuario.NombreCompleto}";
+        // var mensaje = $@"
+        //     Estimado/a {supervisor.NombreCompleto},
+        //
+        //     Se ha actualizado la información de uno de tus usuarios supervisados:
+        //
+        //     Usuario: {usuario.NombreCompleto} ({usuario.Email})
+        //     Campos modificados: {string.Join(", ", request.ObtenerCamposAModificar())}
+        //     Motivo: {request.MotivoActualizacion}
+        //     Autorizado por: Usuario ID {request.UsuarioAutorizaId}
+        //     Fecha: {DateTime.UtcNow:dd/MM/yyyy HH:mm}
+        //
+        //     {(request.TieneCambiosCriticos() ? "⚠️ ATENCIÓN: Este cambio incluye modificaciones críticas que requieren tu conocimiento." : "")}
+        //
+        //     RestaurantePro - Notificaciones de Supervisión
+        // ";
+        //
+        // await _emailService.SendEmailAsync(supervisor.Email, asunto, mensaje);
+        
+        _logger.LogInformation("Notificación a supervisor omitida - SupervisorId no implementado en Usuario");
     }
 
     private async Task NotificarAdministracionCambiosCriticos(
@@ -569,11 +573,11 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
         Usuario usuario, 
         Dictionary<string, object> datosOriginales)
     {
-        var asunto = $"Cambios Críticos en Usuario: {usuario.Nombre}";
+        var asunto = $"Cambios Críticos en Usuario: {usuario.NombreCompleto}";
         var mensaje = $@"
             NOTIFICACIÓN DE CAMBIOS CRÍTICOS
 
-            Usuario: {usuario.Nombre} ({usuario.Email})
+            Usuario: {usuario.NombreCompleto} ({usuario.Email})
             Tipo de cambios: {(request.TieneCambiosCriticos() ? "CRÍTICOS" : "Normales")}
             Campos modificados: {string.Join(", ", request.ObtenerCamposAModificar())}
             Motivo: {request.MotivoActualizacion}
@@ -599,13 +603,14 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
         Usuario usuario, 
         Dictionary<string, object> datosOriginales)
     {
-        var asunto = $"Cambio Salarial: {usuario.Nombre}";
+        var asunto = $"Cambio Salarial: {usuario.NombreCompleto}";
         var mensaje = $@"
             NOTIFICACIÓN DE CAMBIO SALARIAL
 
-            Usuario: {usuario.Nombre} ({usuario.Email})
-            Departamento: {usuario.Departamento}
-            Posición: {usuario.Posicion}
+            Usuario: {usuario.NombreCompleto} ({usuario.Email})
+            // TODO: Descomentar cuando Usuario tenga estas propiedades
+            // Departamento: {usuario.Departamento}
+            // Posición: {usuario.Posicion}
 
             Cambio salarial:
             - Salario anterior: {(datosOriginales.ContainsKey("SalarioBase") ? Convert.ToDecimal(datosOriginales["SalarioBase"]).ToString("C") : "No registrado")}
@@ -626,26 +631,27 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
         if (string.IsNullOrEmpty(supervisor.Email)) return;
 
         var asunto = tipoNotificacion == "NuevoSupervisor" 
-            ? $"Nuevo usuario bajo tu supervisión: {usuario.Nombre}"
-            : $"Usuario ya no está bajo tu supervisión: {usuario.Nombre}";
+            ? $"Nuevo usuario bajo tu supervisión: {usuario.NombreCompleto}"
+            : $"Usuario ya no está bajo tu supervisión: {usuario.NombreCompleto}";
 
         var mensaje = tipoNotificacion == "NuevoSupervisor"
             ? $@"
-                Estimado/a {supervisor.Nombre},
+                Estimado/a {supervisor.NombreCompleto},
 
                 Se te ha asignado un nuevo usuario para supervisar:
 
-                Usuario: {usuario.Nombre} ({usuario.Email})
-                Departamento: {usuario.Departamento}
-                Posición: {usuario.Posicion}
+                Usuario: {usuario.NombreCompleto} ({usuario.Email})
+                // TODO: Descomentar cuando Usuario tenga estas propiedades
+                // Departamento: {usuario.Departamento}
+                // Posición: {usuario.Posicion}
                 Fecha de asignación: {DateTime.UtcNow:dd/MM/yyyy}
 
                 RestaurantePro - Gestión de Supervisión
             "
             : $@"
-                Estimado/a {supervisor.Nombre},
+                Estimado/a {supervisor.NombreCompleto},
 
-                El usuario {usuario.Nombre} ({usuario.Email}) ya no está bajo tu supervisión.
+                El usuario {usuario.NombreCompleto} ({usuario.Email}) ya no está bajo tu supervisión.
 
                 RestaurantePro - Gestión de Supervisión
             ";
@@ -676,24 +682,17 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
         return new UsuarioDto
         {
             Id = usuario.Id,
-            Nombre = usuario.Nombre,
+            Nombre = usuario.NombreCompleto,
+            Apellido = "",
             Email = usuario.Email,
-            Telefono = usuario.Telefono,
-            Identificacion = usuario.Identificacion,
-            Direccion = usuario.Direccion,
-            Rol = usuario.Rol,
-            NivelAcceso = usuario.NivelAcceso,
-            Activo = usuario.Activo,
-            SupervisorId = usuario.SupervisorId,
-            NombreSupervisor = usuario.Supervisor?.Nombre,
-            Departamento = usuario.Departamento,
-            Posicion = usuario.Posicion,
-            FechaIngreso = usuario.FechaIngreso,
+            Rol = usuario.Roles.FirstOrDefault().ToString(),
+            Activo = usuario.Estado == EstadoUsuario.Activo,
             FechaCreacion = usuario.FechaCreacion,
-            FechaUltimaActualizacion = usuario.FechaUltimaActualizacion,
-            UsuarioUltimaActualizacion = usuario.UsuarioUltimaActualizacion,
-            CantidadSubordinados = usuario.UsuariosASupervisa?.Count() ?? 0,
-            Permisos = usuario.Permisos?.ToList() ?? new List<string>()
+            FechaModificacion = usuario.FechaModificacion,
+            UltimoAcceso = usuario.UltimoAcceso,
+            DebeResetearPassword = false,
+            Verificado = usuario.Estado == EstadoUsuario.Activo,
+            EsAdministrador = usuario.EsAdministrador
         };
     }
 } 

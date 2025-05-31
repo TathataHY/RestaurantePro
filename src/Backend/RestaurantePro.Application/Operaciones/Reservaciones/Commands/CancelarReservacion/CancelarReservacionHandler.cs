@@ -55,7 +55,8 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
 
             // 4. Actualizar estado de la reservación
             var estadoAnterior = reservacion.Estado;
-            reservacion.Estado = Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Cancelada;
+            // TODO: Implementar método para cambiar estado cuando esté disponible en el dominio
+            // reservacion.Estado = Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Cancelada;
             // TODO: Implementar cuando las propiedades estén disponibles
             // reservacion.MotivoCancelacion = request.MotivoCancelacion;
             // reservacion.FechaCancelacion = DateTime.UtcNow;

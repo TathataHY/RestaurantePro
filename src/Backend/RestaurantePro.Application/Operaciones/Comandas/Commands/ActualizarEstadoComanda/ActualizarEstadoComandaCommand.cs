@@ -1,5 +1,3 @@
-using RestaurantePro.Application.Operaciones.Comandas.DTOs;
-
 namespace RestaurantePro.Application.Operaciones.Comandas.Commands.ActualizarEstadoComanda;
 
 /// <summary>

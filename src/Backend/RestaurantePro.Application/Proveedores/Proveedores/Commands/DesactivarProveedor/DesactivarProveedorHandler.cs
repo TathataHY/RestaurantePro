@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-
 namespace RestaurantePro.Application.Proveedores.Proveedores.Commands.DesactivarProveedor;
 
 public class DesactivarProveedorHandler : IRequestHandler<DesactivarProveedorCommand, Result<bool>>

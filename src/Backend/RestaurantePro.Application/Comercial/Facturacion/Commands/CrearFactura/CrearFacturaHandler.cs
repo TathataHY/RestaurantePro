@@ -1,4 +1,3 @@
-using RestaurantePro.Application.Comercial.Facturacion.DTOs;
 using RestaurantePro.Domain.Comercial.Facturacion.Services;
 
 namespace RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
@@ -40,21 +39,21 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
 
             // 1. Preparar información del cliente
             var informacionCliente = await PrepararInformacionCliente(request, cancellationToken);
-            if (!informacionCliente.IsSuccess)
+            if (!informacionCliente.Succeeded)
             {
                 return Result.Failure<FacturaDto>(informacionCliente.Error);
             }
 
             // 2. Validar y obtener comandas
             var comandasResult = await ValidarYObtenerComandas(request.ComandasIds, cancellationToken);
-            if (!comandasResult.IsSuccess)
+            if (!comandasResult.Succeeded)
             {
                 return Result.Failure<FacturaDto>(comandasResult.Error);
             }
 
             // 3. Crear factura usando el servicio de dominio
             var facturaResult = await CrearFacturaConServicioDominio(request, informacionCliente.Value, cancellationToken);
-            if (!facturaResult.IsSuccess)
+            if (!facturaResult.Succeeded)
             {
                 return Result.Failure<FacturaDto>(facturaResult.Error);
             }
@@ -71,7 +70,7 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
             if (request.EmitirInmediatamente)
             {
                 var emisionResult = await _servicioFacturacion.EmitirFacturaAsync(factura.Id, request.DiasCredito, cancellationToken);
-                if (!emisionResult.IsSuccess)
+                if (!emisionResult.Succeeded)
                 {
                     _logger.LogWarning("No se pudo emitir la factura {FacturaId} automáticamente: {Error}", 
                         factura.Id, emisionResult.Error);
@@ -252,7 +251,7 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
             var puntosResult = await _comercialServiceFacade.AcumularPuntosPorCompraAsync(
                 clienteId, montoFactura, null, "Compra - Facturación", cancellationToken);
 
-            if (puntosResult.IsSuccess)
+            if (puntosResult.Succeeded)
             {
                 _logger.LogInformation("Puntos de fidelización registrados para cliente {ClienteId}: {PuntosAcumulados}",
                     clienteId, puntosResult.Value);

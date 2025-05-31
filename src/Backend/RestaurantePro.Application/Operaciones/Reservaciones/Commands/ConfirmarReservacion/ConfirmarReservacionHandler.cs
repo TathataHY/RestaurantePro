@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Commands.ConfirmarReservacion;
 
 /// <summary>

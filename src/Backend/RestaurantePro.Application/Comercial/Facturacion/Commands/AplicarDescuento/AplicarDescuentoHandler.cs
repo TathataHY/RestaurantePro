@@ -36,7 +36,7 @@ public class AplicarDescuentoHandler : IRequestHandler<AplicarDescuentoCommand, 
 
             // 1. Obtener factura completa
             var facturaResult = await ObtenerFacturaCompleta(request.FacturaId, cancellationToken);
-            if (!facturaResult.IsSuccess)
+            if (!facturaResult.Succeeded)
             {
                 return Result.Failure<FacturaDto>(facturaResult.Error);
             }
@@ -45,7 +45,7 @@ public class AplicarDescuentoHandler : IRequestHandler<AplicarDescuentoCommand, 
 
             // 2. Calcular el monto del descuento
             var montoDescuentoResult = await CalcularMontoDescuento(request, factura);
-            if (!montoDescuentoResult.IsSuccess)
+            if (!montoDescuentoResult.Succeeded)
             {
                 return Result.Failure<FacturaDto>(montoDescuentoResult.Error);
             }
@@ -54,7 +54,7 @@ public class AplicarDescuentoHandler : IRequestHandler<AplicarDescuentoCommand, 
 
             // 3. Verificar límites finales
             var verificacionLimites = await VerificarLimitesFinales(factura, montoDescuento, request);
-            if (!verificacionLimites.IsSuccess)
+            if (!verificacionLimites.Succeeded)
             {
                 return Result.Failure<FacturaDto>(verificacionLimites.Error);
             }
@@ -62,7 +62,7 @@ public class AplicarDescuentoHandler : IRequestHandler<AplicarDescuentoCommand, 
             // 4. Aplicar descuento usando servicio de dominio
             var aplicacionResult = await AplicarDescuentoConServicioDominio(
                 factura, request, montoDescuento, cancellationToken);
-            if (!aplicacionResult.IsSuccess)
+            if (!aplicacionResult.Succeeded)
             {
                 return Result.Failure<FacturaDto>(aplicacionResult.Error);
             }

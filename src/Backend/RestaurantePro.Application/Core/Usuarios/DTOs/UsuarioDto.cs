@@ -177,6 +177,56 @@ public class UsuarioDto : BaseDto
     public int NivelAcceso { get; set; } = 1;
 
     /// <summary>
+    /// Nombre de usuario (alias para compatibilidad)
+    /// </summary>
+    public string NombreUsuario => Email;
+
+    /// <summary>
+    /// Roles adicionales del usuario
+    /// </summary>
+    public List<string> RolesAdicionales { get; set; } = new();
+
+    /// <summary>
+    /// Puesto del usuario (alias para Cargo)
+    /// </summary>
+    public string? Puesto => Cargo;
+
+    /// <summary>
+    /// Fecha de ingreso (alias para FechaContratacion)
+    /// </summary>
+    public DateTime? FechaIngreso => FechaContratacion;
+
+    /// <summary>
+    /// Último acceso (alias para FechaUltimaConexion)
+    /// </summary>
+    public DateTime? UltimoAcceso => FechaUltimaConexion;
+
+    /// <summary>
+    /// Identificación (alias para NumeroIdentificacion)
+    /// </summary>
+    public string? Identificacion => NumeroIdentificacion;
+
+    /// <summary>
+    /// Posición (alias para Cargo)
+    /// </summary>
+    public string? Posicion => Cargo;
+
+    /// <summary>
+    /// Fecha de última actualización
+    /// </summary>
+    public DateTime? FechaUltimaActualizacion { get; set; }
+
+    /// <summary>
+    /// Usuario que realizó la última actualización
+    /// </summary>
+    public string? UsuarioUltimaActualizacion { get; set; }
+
+    /// <summary>
+    /// Cantidad de subordinados
+    /// </summary>
+    public int CantidadSubordinados { get; set; }
+
+    /// <summary>
     /// Constructor por defecto
     /// </summary>
     public UsuarioDto()

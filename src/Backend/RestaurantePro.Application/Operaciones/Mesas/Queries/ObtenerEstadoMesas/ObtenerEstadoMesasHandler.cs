@@ -1,11 +1,4 @@
-using AutoMapper;
-using MediatR;
-using Microsoft.Extensions.Logging;
-using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Operaciones.Mesas.DTOs;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 
 namespace RestaurantePro.Application.Operaciones.Mesas.Queries.ObtenerEstadoMesas;
 
@@ -133,9 +126,9 @@ public class ObtenerEstadoMesasHandler : IRequestHandler<ObtenerEstadoMesasQuery
             .Sum(m => m.Capacidad);
 
         // Estadísticas por zona
-        estadisticas.PorZona = mesas
+        var estadisticasPorZona = mesas
             .GroupBy(m => m.Ubicacion)
-            .Select(g => new EstadisticasZonaDto
+            .Select(g => new Operaciones.Mesas.DTOs.EstadisticasZonaDto
             {
                 Zona = g.Key,
                 TotalMesas = g.Count(),
@@ -148,6 +141,8 @@ public class ObtenerEstadoMesasHandler : IRequestHandler<ObtenerEstadoMesasQuery
             })
             .OrderBy(z => z.Zona)
             .ToList();
+
+        estadisticas.PorZona = estadisticasPorZona;
 
         // Nota: Como la entidad Mesa actual no tiene FechaOcupacion ni ComandaActualId,
         // las estadísticas de tiempo de ocupación no se pueden calcular con la estructura actual

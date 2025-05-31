@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Proveedores.Entities;
-using RestaurantePro.Domain.Proveedores.Interfaces;
 using RestaurantePro.Application.Proveedores.Proveedores.DTOs;
 
 namespace RestaurantePro.Application.Proveedores.Proveedores.Commands.CrearProveedor;

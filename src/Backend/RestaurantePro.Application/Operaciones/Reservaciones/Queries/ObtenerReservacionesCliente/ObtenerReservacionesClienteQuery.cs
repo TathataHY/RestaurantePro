@@ -1,9 +1,3 @@
-using MediatR;
-using RestaurantePro.Application.Common.DTOs;
-using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
-
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Queries.ObtenerReservacionesCliente;
 
 /// <summary>

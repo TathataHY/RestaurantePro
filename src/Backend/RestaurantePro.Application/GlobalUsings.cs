@@ -99,6 +99,8 @@ global using RestaurantePro.Application.Core.Usuarios.DTOs;
 // Application - Comercial DTOs (usando nombres correctos que existen)
 global using RestaurantePro.Application.Comercial.Clientes.DTOs;
 global using RestaurantePro.Application.Comercial.Facturacion.DTOs;
+// TODO: Arreglar namespace de Fidelizacion cuando sea necesario
+// global using RestaurantePro.Application.Comercial.Fidelizacion_TEMP.DTOs;
 
 // Application - Operaciones DTOs
 global using RestaurantePro.Application.Operaciones.Comandas.DTOs;

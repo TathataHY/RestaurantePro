@@ -1,6 +1,4 @@
-using MediatR;
 using RestaurantePro.Application.Operaciones.Mesas.DTOs;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
 
 namespace RestaurantePro.Application.Operaciones.Mesas.Queries.ObtenerMesaPorNumero;
 

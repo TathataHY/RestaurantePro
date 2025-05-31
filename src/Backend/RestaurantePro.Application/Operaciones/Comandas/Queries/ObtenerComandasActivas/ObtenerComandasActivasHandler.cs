@@ -1,6 +1,3 @@
-using RestaurantePro.Application.Operaciones.Comandas.DTOs;
-using RestaurantePro.Application.Common.DTOs;
-
 namespace RestaurantePro.Application.Operaciones.Comandas.Queries.ObtenerComandasActivas;
 
 /// <summary>
