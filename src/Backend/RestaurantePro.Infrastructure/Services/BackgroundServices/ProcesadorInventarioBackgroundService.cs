@@ -56,7 +56,7 @@ namespace RestaurantePro.Infrastructure.Services.BackgroundServices
 
             // Buscar comandas completadas o entregadas que no tengan procesado el inventario
             var comandasPendientes = await dbContext.Comandas
-                .Where(c => (c.Estado == EstadoComanda.Completada || c.Estado == EstadoComanda.Entregada) 
+                .Where(c => (c.Estado == EstadoComanda.Finalizada || c.Estado == EstadoComanda.Entregada) 
                        && !c.InventarioProcesado)
                 .ToListAsync(stoppingToken);
 

@@ -432,11 +432,11 @@ public class CambiarPasswordUsuarioValidator : AbstractValidator<CambiarPassword
         //
         // if (facturasPendientes) return false;
 
-        // TODO: Descomentar cuando Comanda tenga UsuarioAsignadoId y EstadoComanda.Completada
+        // TODO: Descomentar cuando Comanda tenga UsuarioAsignadoId y EstadoComanda.Finalizada
         // Verificar que no tenga comandas activas
         // var comandasActivas = await _context.Comandas
         //     .AnyAsync(c => c.UsuarioAsignadoId == command.UsuarioId && 
-        //               c.Estado != EstadoComanda.Completada && 
+        //               c.Estado != EstadoComanda.Finalizada && 
         //               c.Estado != EstadoComanda.Cancelada, cancellationToken);
 
         // return !comandasActivas;
