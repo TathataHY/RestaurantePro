@@ -111,49 +111,56 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
 
     private async Task<Result<InformacionClienteDto>> PrepararInformacionCliente(CrearFacturaCommand request, CancellationToken cancellationToken)
     {
-        var informacion = new InformacionClienteDto
+        var clienteCompleto = await _context.Clientes
+            .FirstOrDefaultAsync(c => c.Id == request.ClienteId.Value, cancellationToken);
+
+        if (clienteCompleto == null)
         {
-            NombreCliente = request.NombreCliente,
-            IdentificacionFiscal = request.IdentificacionFiscal,
-            DireccionCliente = request.DireccionCliente,
-            EmailCliente = request.EmailCliente,
-            TelefonoCliente = request.TelefonoCliente
-        };
-
-        // Si hay ClienteId, completar información desde la base de datos
-        if (request.ClienteId.HasValue)
-        {
-            var cliente = await _context.Clientes
-                .FirstOrDefaultAsync(c => c.Id == request.ClienteId.Value, cancellationToken);
-
-            if (cliente == null)
-            {
-                return Result.Failure<InformacionClienteDto>("El cliente especificado no existe.");
-            }
-
-            // Usar información del cliente registrado, con posibilidad de override
-            informacion.NombreCliente = string.IsNullOrEmpty(request.NombreCliente) ? cliente.Nombre : request.NombreCliente;
-            informacion.EmailCliente = string.IsNullOrEmpty(request.EmailCliente) ? cliente.Email : request.EmailCliente;
-            informacion.TelefonoCliente = string.IsNullOrEmpty(request.TelefonoCliente) ? cliente.Telefono : request.TelefonoCliente;
-            
-            // Si es factura fiscal y el cliente tiene información fiscal
-            if (request.TipoFactura.Equals("Fiscal", StringComparison.OrdinalIgnoreCase))
-            {
-                informacion.IdentificacionFiscal = string.IsNullOrEmpty(request.IdentificacionFiscal) ? 
-                    cliente.RFC : request.IdentificacionFiscal;
-                informacion.DireccionCliente = string.IsNullOrEmpty(request.DireccionCliente) ? 
-                    cliente.DireccionFiscal : request.DireccionCliente;
-            }
+            return Result.Failure<InformacionClienteDto>("El cliente especificado no existe.");
         }
 
-        return Result.Success(informacion);
+        // Preparar información del cliente para la factura
+        var informacionCliente = new InformacionClienteDto
+        {
+            NombreCliente = clienteCompleto.Nombre.NombreCompleto,
+            // TODO: Descomentar cuando Cliente tenga estas propiedades
+            // IdentificacionFiscal = clienteCompleto.RFC,
+            // DireccionCliente = clienteCompleto.DireccionFiscal,
+            EmailCliente = clienteCompleto.Email.ToString(),
+            TelefonoCliente = clienteCompleto.Telefono?.ToString() // FIX: Convertir ValueObject a string si no es null
+        };
+
+        // Usar información del cliente registrado, con posibilidad de override
+        if (!string.IsNullOrEmpty(request.NombreCliente))
+        {
+            informacionCliente.NombreCliente = request.NombreCliente;
+        }
+        if (!string.IsNullOrEmpty(request.EmailCliente))
+        {
+            informacionCliente.EmailCliente = request.EmailCliente;
+        }
+        if (!string.IsNullOrEmpty(request.TelefonoCliente))
+        {
+            informacionCliente.TelefonoCliente = request.TelefonoCliente;
+        }
+        
+        // Si es factura fiscal y el cliente tiene información fiscal
+        if (request.TipoFactura.Equals("Fiscal", StringComparison.OrdinalIgnoreCase))
+        {
+            // TODO: Implementar la lógica para obtener IdentificacionFiscal y DireccionCliente
+            // informacionCliente.IdentificacionFiscal = string.IsNullOrEmpty(request.IdentificacionFiscal) ? clienteCompleto.RFC : request.IdentificacionFiscal;
+            // informacionCliente.DireccionCliente = string.IsNullOrEmpty(request.DireccionCliente) ? clienteCompleto.DireccionFiscal : request.DireccionCliente;
+        }
+
+        return Result.Success(informacionCliente);
     }
 
     private async Task<Result<List<Comanda>>> ValidarYObtenerComandas(List<Guid> comandasIds, CancellationToken cancellationToken)
     {
         var comandas = await _context.Comandas
             .Include(c => c.Items)
-            .ThenInclude(i => i.Producto)
+            // TODO: ItemComanda no tiene propiedad Producto directa, solo ProductoId
+            // .ThenInclude(i => i.Producto)
             .Where(c => comandasIds.Contains(c.Id))
             .ToListAsync(cancellationToken);
 
@@ -165,10 +172,10 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
         }
 
         // Validar que todas las comandas estén en estado válido para facturar
-        var comandasInvalidas = comandas.Where(c => c.Estado != EstadoComanda.Completada).ToList();
+        var comandasInvalidas = comandas.Where(c => c.Estado != EstadoComanda.Finalizada).ToList();
         if (comandasInvalidas.Any())
         {
-            return Result.Failure<List<Comanda>>($"Las siguientes comandas no están completadas: {string.Join(", ", comandasInvalidas.Select(c => c.Id))}");
+            return Result.Failure<List<Comanda>>($"Las siguientes comandas no están finalizadas: {string.Join(", ", comandasInvalidas.Select(c => c.Id))}");
         }
 
         return Result.Success(comandas);
@@ -248,19 +255,23 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
     {
         try
         {
-            var puntosResult = await _comercialServiceFacade.AcumularPuntosPorCompraAsync(
-                clienteId, montoFactura, null, "Compra - Facturación", cancellationToken);
+            // TODO: Implementar método AcumularPuntosPorCompraAsync en ComercialServiceFacade
+            // var puntosResult = await _comercialServiceFacade.AcumularPuntosPorCompraAsync(
+            //     clienteId, montoFactura, null, "Compra - Facturación", cancellationToken);
 
-            if (puntosResult.Succeeded)
-            {
-                _logger.LogInformation("Puntos de fidelización registrados para cliente {ClienteId}: {PuntosAcumulados}",
-                    clienteId, puntosResult.Value);
-            }
-            else
-            {
-                _logger.LogWarning("No se pudieron registrar puntos para cliente {ClienteId}: {Error}",
-                    clienteId, puntosResult.Error);
-            }
+            // if (puntosResult.Succeeded)
+            // {
+            //     _logger.LogInformation("Puntos de fidelización registrados para cliente {ClienteId}: {PuntosAcumulados}",
+            //         clienteId, puntosResult.Value);
+            // }
+            // else
+            // {
+            //     _logger.LogWarning("No se pudieron registrar puntos para cliente {ClienteId}: {Error}",
+            //         clienteId, puntosResult.Error);
+            // }
+            
+            _logger.LogInformation("Registro de puntos de fidelización pendiente para cliente {ClienteId} por monto {Monto:C}",
+                clienteId, montoFactura);
         }
         catch (Exception ex)
         {
@@ -313,33 +324,18 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
         return new FacturaDto
         {
             Id = factura.Id,
-            NumeroFactura = factura.NumeroFactura,
-            TipoFactura = factura.TipoFactura.ToString(),
-            Estado = factura.Estado.ToString(),
+            Numero = factura.NumeroFactura,
             FechaEmision = factura.FechaEmision,
-            FechaVencimiento = factura.FechaVencimiento,
+            Tipo = factura.TipoFactura,
             NombreCliente = factura.NombreCliente,
-            IdentificacionFiscal = factura.IdentificacionFiscal,
-            DireccionCliente = factura.DireccionCliente,
+            ClienteId = factura.ClienteId,
             Subtotal = factura.Subtotal,
-            TotalImpuestos = factura.TotalImpuestos,
-            TotalDescuentos = factura.TotalDescuentos,
+            Impuestos = factura.TotalImpuestos,
+            Descuentos = factura.TotalDescuentos,
             Total = factura.Total,
-            TotalPagado = factura.TotalPagado,
-            Observaciones = factura.Observaciones,
-            ComandasIds = factura.ComandasIds.ToList(),
-            Detalles = factura.Detalles.Select(d => new DetalleFacturaDto
-            {
-                Id = d.Id,
-                ProductoId = d.ProductoId,
-                Descripcion = d.Descripcion,
-                Cantidad = d.Cantidad,
-                PrecioUnitario = d.PrecioUnitario,
-                Subtotal = d.Subtotal,
-                ImporteImpuesto = d.ImporteImpuesto,
-                ImporteDescuento = d.ImporteDescuento,
-                Total = d.Total
-            }).ToList()
+            Estado = factura.Estado,
+            CreadoPor = _currentUserService.UserId?.ToString() ?? "Sistema",
+            FechaCreacion = DateTime.UtcNow
         };
     }
 }

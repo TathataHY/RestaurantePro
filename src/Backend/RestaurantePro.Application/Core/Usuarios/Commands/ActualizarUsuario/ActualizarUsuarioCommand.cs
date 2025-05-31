@@ -319,7 +319,7 @@ public class ActualizarUsuarioCommand : IRequest<Result<UsuarioDto>>
         string motivo)
     {
         cambiosAProgramar.UsuarioId = usuarioId;
-        cambiosAProgramar.FechaEfectivachangios = fechaEfectiva;
+        cambiosAProgramar.FechaEfectivacambios = fechaEfectiva;
         cambiosAProgramar.UsuarioAutorizaId = usuarioAutoriza;
         cambiosAProgramar.MotivoActualizacion = motivo;
         cambiosAProgramar.Prioridad = 2;

@@ -55,7 +55,7 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
             .MustAsync(TodasLasComandasExisten)
             .WithMessage("Una o más comandas especificadas no existen.")
             .MustAsync(TodasLasComandasEstanCompletas)
-            .WithMessage("Solo se pueden facturar comandas completadas.")
+            .WithMessage("Solo se pueden facturar comandas finalizadas.")
             .MustAsync(NingunaCamandaYaFacturada)
             .WithMessage("Una o más comandas ya han sido facturadas.");
 
@@ -213,7 +213,7 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
     {
         var comandasCompletas = await _context.Comandas
             .Where(c => comandasIds.Contains(c.Id))
-            .AllAsync(c => c.Estado == EstadoComanda.Completada, cancellationToken);
+            .AllAsync(c => c.Estado == EstadoComanda.Finalizada, cancellationToken);
 
         return comandasCompletas;
     }
@@ -267,9 +267,9 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
             if (cliente != null)
             {
                 // Si el cliente tiene email registrado y se especifica uno diferente
-                if (!string.IsNullOrEmpty(cliente.Email) && 
+                if (!string.IsNullOrEmpty(cliente.Email.ToString()) && 
                     !string.IsNullOrEmpty(command.EmailCliente) &&
-                    !cliente.Email.Equals(command.EmailCliente, StringComparison.OrdinalIgnoreCase))
+                    !string.Equals(cliente.Email.ToString(), command.EmailCliente, StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
                 }
