@@ -1,8 +1,3 @@
-using MediatR;
-using RestaurantePro.Application.Comercial.Clientes.DTOs;
-using RestaurantePro.Application.Common.DTOs;
-using RestaurantePro.Domain.Common;
-
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
 
 /// <summary>

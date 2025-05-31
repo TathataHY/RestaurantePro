@@ -1,13 +1,5 @@
-using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using AutoMapper;
-using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Comercial.Facturacion.DTOs;
-using RestaurantePro.Domain.Common;
 using RestaurantePro.Domain.Comercial.Facturacion.Services;
-using RestaurantePro.Domain.Comercial.Services;
-using RestaurantePro.Domain.Common.Services;
 
 namespace RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
 

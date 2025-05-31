@@ -1,10 +1,3 @@
-using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Common;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-
 namespace RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarCliente;
 
 /// <summary>

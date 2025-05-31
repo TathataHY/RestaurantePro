@@ -1,6 +1,4 @@
-using MediatR;
 using RestaurantePro.Application.Core.Usuarios.DTOs;
-using RestaurantePro.Domain.Common;
 
 namespace RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
 

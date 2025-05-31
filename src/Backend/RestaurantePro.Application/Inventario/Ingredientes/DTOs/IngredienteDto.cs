@@ -1,6 +1,3 @@
-using RestaurantePro.Application.Common.DTOs;
-using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
-
 namespace RestaurantePro.Application.Inventario.Ingredientes.DTOs;
 
 /// <summary>

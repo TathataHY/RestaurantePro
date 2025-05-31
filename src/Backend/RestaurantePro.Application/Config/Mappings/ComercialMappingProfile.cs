@@ -1,7 +1,6 @@
 using RestaurantePro.Application.Comercial.Clientes.DTOs;
 using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente;
 using RestaurantePro.Application.Comercial.Clientes.Commands.ActualizarCliente;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
 
 namespace RestaurantePro.Application.Config.Mappings;
 

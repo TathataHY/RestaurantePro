@@ -1,5 +1,3 @@
-using RestaurantePro.Application.Comercial.Clientes.DTOs;
-
 namespace RestaurantePro.Application.Comercial.Clientes.Commands.ActualizarCliente;
 
 /// <summary>

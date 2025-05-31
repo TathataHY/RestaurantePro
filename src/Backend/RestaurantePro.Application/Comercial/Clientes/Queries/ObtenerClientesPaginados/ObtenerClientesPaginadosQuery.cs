@@ -1,6 +1,3 @@
-using RestaurantePro.Application.Comercial.Clientes.DTOs;
-using RestaurantePro.Application.Common.DTOs;
-
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientesPaginados;
 
 /// <summary>

@@ -1,18 +1,10 @@
-using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using AutoMapper;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Comercial.Clientes.DTOs;
-using RestaurantePro.Domain.Common;
-
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientePorId;
 
 /// <summary>
 /// Handler para obtener un cliente por su ID
 /// Implementa búsqueda directa con manejo de casos de no encontrado
 /// </summary>
-public class ObtenerClientePorIdHandler : IRequestHandler<ObtenerClientePorIdQuery, Result<ClienteDetalleDto>>
+public class ObtenerClientePorIdHandler : IRequestHandler<ObtenerClientePorIdQuery, Result<ClienteDto>>
 {
     private readonly IApplicationDbContext _context;
     private readonly IMapper _mapper;
@@ -28,108 +20,66 @@ public class ObtenerClientePorIdHandler : IRequestHandler<ObtenerClientePorIdQue
         _logger = logger;
     }
 
-    public async Task<Result<ClienteDetalleDto>> Handle(ObtenerClientePorIdQuery request, CancellationToken cancellationToken)
+    public async Task<Result<ClienteDto>> Handle(ObtenerClientePorIdQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogInformation("Obteniendo cliente {ClienteId} con opciones: Reservaciones={IncluirReservaciones}, Facturas={IncluirFacturas}, Fidelización={IncluirFidelizacion}", 
-                request.ClienteId, request.IncluirReservaciones, request.IncluirFacturas, request.IncluirFidelizacion);
+            _logger.LogInformation("Consultando cliente por ID: {ClienteId}", request.ClienteId);
 
-            // 1. Construir query base
-            var query = _context.Clientes.AsQueryable();
-
-            // 2. Aplicar filtros de actividad
-            if (request.SoloActivos)
-            {
-                query = query.Where(c => c.Activo);
-            }
-
-            // 3. Incluir datos relacionados según los parámetros
-            if (request.IncluirReservaciones)
-            {
-                query = query.Include(c => c.Reservaciones
-                    .OrderByDescending(r => r.FechaHora)
-                    .Take(request.LimiteHistorial))
-                    .ThenInclude(r => r.Mesa);
-            }
-
-            if (request.IncluirFacturas)
-            {
-                query = query.Include(c => c.Facturas
-                    .OrderByDescending(f => f.FechaCreacion)
-                    .Take(request.LimiteHistorial));
-            }
-
-            if (request.IncluirFidelizacion)
-            {
-                query = query.Include(c => c.TarjetasFidelizacion
-                    .Where(t => t.Activa))
-                    .ThenInclude(t => t.HistorialPuntos
-                        .OrderByDescending(h => h.FechaMovimiento)
-                        .Take(request.LimiteHistorial));
-            }
-
-            // 4. Obtener el cliente
-            var cliente = await query
+            // 1. Obtener el cliente con las relaciones necesarias
+            var cliente = await _context.Clientes
+                .Include(c => c.Reservaciones.Where(r => request.SoloActivos ? r.Activo : true))
+                .Include(c => c.Facturas.Where(f => request.SoloActivos ? f.Activo : true))
+                .Include(c => c.TarjetaFidelizacion)
+                .Include(c => c.Supervisor)
                 .FirstOrDefaultAsync(c => c.Id == request.ClienteId, cancellationToken);
 
             if (cliente == null)
             {
                 _logger.LogWarning("Cliente {ClienteId} no encontrado", request.ClienteId);
-                return Result.Failure<ClienteDetalleDto>("El cliente especificado no existe.");
+                return Result.Failure<ClienteDto>("El cliente especificado no existe.");
             }
 
-            // 5. Crear el DTO completo
-            var clienteDetalle = await CrearClienteDetalleDto(cliente, request);
+            // 2. Crear el DTO completo
+            var clienteDto = await CrearClienteDto(cliente, request);
 
-            _logger.LogInformation("Cliente {ClienteId} obtenido exitosamente con {CantidadReservaciones} reservaciones y {CantidadFacturas} facturas", 
-                request.ClienteId, 
-                clienteDetalle.Reservaciones?.Count ?? 0,
-                clienteDetalle.Facturas?.Count ?? 0);
+            _logger.LogInformation("Cliente {ClienteId} consultado exitosamente", request.ClienteId);
 
-            return Result.Success(clienteDetalle);
+            return Result.Success(clienteDto);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener cliente {ClienteId}", request.ClienteId);
-            return Result.Failure<ClienteDetalleDto>("Error interno al obtener el cliente.");
+            _logger.LogError(ex, "Error al consultar cliente {ClienteId}", request.ClienteId);
+            return Result.Failure<ClienteDto>("Error interno al obtener el cliente.");
         }
     }
 
-    private async Task<ClienteDetalleDto> CrearClienteDetalleDto(Cliente cliente, ObtenerClientePorIdQuery request)
+    private async Task<ClienteDto> CrearClienteDto(Cliente cliente, ObtenerClientePorIdQuery request)
     {
-        var clienteDetalle = new ClienteDetalleDto
+        var clienteDto = new ClienteDto
         {
             Id = cliente.Id,
             Nombre = cliente.Nombre,
+            Apellido = cliente.Apellido,
             Email = cliente.Email,
             Telefono = cliente.Telefono,
             FechaNacimiento = cliente.FechaNacimiento,
+            Direccion = cliente.Direccion,
+            Tipo = cliente.Tipo,
             Activo = cliente.Activo,
+            Notas = cliente.Notas,
+            TarjetaFidelizacionId = cliente.TarjetaFidelizacionId,
+            PuntosFidelizacion = cliente.PuntosFidelizacion,
             FechaCreacion = cliente.FechaCreacion,
-            UltimaActualizacion = cliente.FechaModificacion,
-            
-            // Información de segmentación
-            Segmento = cliente.Segmento.ToString(),
-            PuntosAcumulados = cliente.PuntosAcumulados,
-            CantidadVisitas = cliente.CantidadVisitas,
-            MontoTotalGastado = cliente.MontoTotalGastado,
-            
-            // Información de desactivación si aplica
-            FechaDesactivacion = cliente.FechaDesactivacion,
-            MotivoDesactivacion = cliente.MotivoDesactivacion,
-            DesactivadoPor = cliente.DesactivadoPor,
-            
-            // Estadísticas calculadas
-            PromedioGastoPorVisita = cliente.CantidadVisitas > 0 ? cliente.MontoTotalGastado / cliente.CantidadVisitas : 0,
-            UltimaVisita = await ObtenerUltimaVisita(cliente.Id),
-            ProximaReservacion = await ObtenerProximaReservacion(cliente.Id)
+            CreadoPor = cliente.CreadoPor ?? "",
+            FechaModificacion = cliente.FechaModificacion,
+            ModificadoPor = cliente.ModificadoPor
         };
 
         // 6. Mapear reservaciones si se incluyen
         if (request.IncluirReservaciones && cliente.Reservaciones.Any())
         {
-            clienteDetalle.Reservaciones = cliente.Reservaciones
+            clienteDto.Reservaciones = cliente.Reservaciones
                 .Select(r => new ReservacionSummaryDto
                 {
                     Id = r.Id,
@@ -146,7 +96,7 @@ public class ObtenerClientePorIdHandler : IRequestHandler<ObtenerClientePorIdQue
         // 7. Mapear facturas si se incluyen
         if (request.IncluirFacturas && cliente.Facturas.Any())
         {
-            clienteDetalle.Facturas = cliente.Facturas
+            clienteDto.Facturas = cliente.Facturas
                 .Select(f => new FacturaSummaryDto
                 {
                     Id = f.Id,
@@ -165,7 +115,7 @@ public class ObtenerClientePorIdHandler : IRequestHandler<ObtenerClientePorIdQue
             var tarjetaActiva = cliente.TarjetasFidelizacion.FirstOrDefault(t => t.Activa);
             if (tarjetaActiva != null)
             {
-                clienteDetalle.InformacionFidelizacion = new FidelizacionDto
+                clienteDto.InformacionFidelizacion = new FidelizacionDto
                 {
                     TarjetaId = tarjetaActiva.Id,
                     Numero = tarjetaActiva.Numero,
@@ -181,7 +131,7 @@ public class ObtenerClientePorIdHandler : IRequestHandler<ObtenerClientePorIdQue
                 // Historial de puntos reciente
                 if (tarjetaActiva.HistorialPuntos.Any())
                 {
-                    clienteDetalle.InformacionFidelizacion.HistorialReciente = tarjetaActiva.HistorialPuntos
+                    clienteDto.InformacionFidelizacion.HistorialReciente = tarjetaActiva.HistorialPuntos
                         .Select(h => new MovimientoPuntosDto
                         {
                             Fecha = h.FechaMovimiento,
@@ -195,7 +145,7 @@ public class ObtenerClientePorIdHandler : IRequestHandler<ObtenerClientePorIdQue
             }
         }
 
-        return clienteDetalle;
+        return clienteDto;
     }
 
     private async Task<DateTime?> ObtenerUltimaVisita(Guid clienteId)

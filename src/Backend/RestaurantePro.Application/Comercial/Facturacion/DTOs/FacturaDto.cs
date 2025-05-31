@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-
 namespace RestaurantePro.Application.Comercial.Facturacion.DTOs;
 
 public class FacturaDto : BaseDto

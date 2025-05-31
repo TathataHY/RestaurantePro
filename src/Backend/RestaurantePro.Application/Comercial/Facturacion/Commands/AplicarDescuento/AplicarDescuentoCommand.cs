@@ -1,7 +1,3 @@
-using MediatR;
-using RestaurantePro.Application.Comercial.Facturacion.DTOs;
-using RestaurantePro.Domain.Common;
-
 namespace RestaurantePro.Application.Comercial.Facturacion.Commands.AplicarDescuento;
 
 /// <summary>

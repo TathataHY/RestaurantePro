@@ -1,7 +1,5 @@
 using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
 using RestaurantePro.Application.Inventario.Ingredientes.Commands.CrearIngrediente;
-using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
-using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
 
 namespace RestaurantePro.Application.Config.Mappings;
 

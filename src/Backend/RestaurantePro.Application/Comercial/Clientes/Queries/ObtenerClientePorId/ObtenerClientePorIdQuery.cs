@@ -1,14 +1,10 @@
-using MediatR;
-using RestaurantePro.Application.Comercial.Clientes.DTOs;
-using RestaurantePro.Domain.Common;
-
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientePorId;
 
 /// <summary>
 /// Query para obtener un cliente específico por su ID
 /// Incluye información completa del cliente y datos relacionados
 /// </summary>
-public class ObtenerClientePorIdQuery : IRequest<Result<ClienteDetalleDto>>
+public class ObtenerClientePorIdQuery : IRequest<Result<ClienteDto>>
 {
     /// <summary>
     /// ID único del cliente a consultar

@@ -1,14 +1,10 @@
-using MediatR;
-using RestaurantePro.Application.Comercial.Facturacion.DTOs;
-using RestaurantePro.Domain.Common;
-
 namespace RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturaPorId;
 
 /// <summary>
 /// Query para obtener una factura específica por su ID con detalles completos
 /// Incluye información de cliente, detalles, descuentos, pagos y auditoría
 /// </summary>
-public class ObtenerFacturaPorIdQuery : IRequest<Result<FacturaDetalladaDto>>
+public class ObtenerFacturaPorIdQuery : IRequest<Result<FacturaDto>>
 {
     /// <summary>
     /// ID único de la factura a consultar

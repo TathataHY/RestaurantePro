@@ -1,7 +1,3 @@
-using MediatR;
-using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
-using RestaurantePro.Domain.Common;
-
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Queries.ConsultarDisponibilidad;
 
 /// <summary>

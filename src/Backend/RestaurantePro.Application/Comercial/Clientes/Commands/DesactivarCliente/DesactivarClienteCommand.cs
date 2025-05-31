@@ -1,6 +1,3 @@
-using MediatR;
-using RestaurantePro.Domain.Common;
-
 namespace RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarCliente;
 
 /// <summary>

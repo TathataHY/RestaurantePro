@@ -1,7 +1,3 @@
-using FluentValidation;
-using Microsoft.EntityFrameworkCore;
-using RestaurantePro.Application.Common.Interfaces;
-
 namespace RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
 
 public class CrearUsuarioValidator : AbstractValidator<CrearUsuarioCommand>

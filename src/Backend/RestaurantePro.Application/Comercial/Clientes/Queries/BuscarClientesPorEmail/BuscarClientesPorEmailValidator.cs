@@ -1,5 +1,3 @@
-using FluentValidation;
-
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
 
 public class BuscarClientesPorEmailValidator : AbstractValidator<BuscarClientesPorEmailQuery>

@@ -1,5 +1,4 @@
 using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
-using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
 
 namespace RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesBajoStock;
 

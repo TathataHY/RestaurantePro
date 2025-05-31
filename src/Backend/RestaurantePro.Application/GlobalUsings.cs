@@ -9,6 +9,7 @@ global using System.Reflection;
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
+global using Microsoft.EntityFrameworkCore;
 
 // MediatR para Vertical Slices
 global using MediatR;
@@ -18,6 +19,9 @@ global using AutoMapper;
 
 // FluentValidation para validaciones
 global using FluentValidation;
+
+// 🔥 System.Text.Json para serialización 
+global using System.Text.Json;
 
 // Domain - SharedKernel (Según el Domain actual)
 global using RestaurantePro.Domain.Core.SharedKernel.Results;
@@ -90,8 +94,14 @@ global using RestaurantePro.Application.Common.Enums;
 
 // Application - Core DTOs (Por contexto)
 global using RestaurantePro.Application.Core.Productos.DTOs;
+global using RestaurantePro.Application.Core.Usuarios.DTOs;
+
+// Application - Comercial DTOs (usando nombres correctos que existen)
+global using RestaurantePro.Application.Comercial.Clientes.DTOs;
+global using RestaurantePro.Application.Comercial.Facturacion.DTOs;
 
 // Application - Operaciones DTOs
+global using RestaurantePro.Application.Operaciones.Comandas.DTOs;
 global using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
 
 // Application - Operaciones Commands (para EventHandlers)

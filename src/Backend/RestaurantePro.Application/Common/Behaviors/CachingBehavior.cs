@@ -1,5 +1,3 @@
-using MediatR;
-using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace RestaurantePro.Application.Common.Behaviors;

@@ -1,7 +1,4 @@
 using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
-using RestaurantePro.Application.Common.DTOs;
-
 namespace RestaurantePro.Application.Common.Extensions;
 
 /// <summary>

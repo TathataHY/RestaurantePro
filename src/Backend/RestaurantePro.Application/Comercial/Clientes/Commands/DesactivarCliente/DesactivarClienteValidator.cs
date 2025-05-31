@@ -1,7 +1,3 @@
-using FluentValidation;
-using Microsoft.EntityFrameworkCore;
-using RestaurantePro.Application.Common.Interfaces;
-
 namespace RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarCliente;
 
 /// <summary>

@@ -1,5 +1,3 @@
-using MediatR;
-
 namespace RestaurantePro.Application.Common.Extensions;
 
 /// <summary>

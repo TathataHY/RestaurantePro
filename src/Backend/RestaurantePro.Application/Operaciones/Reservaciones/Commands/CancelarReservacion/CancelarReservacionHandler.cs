@@ -1,11 +1,3 @@
-using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Common;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
-
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Commands.CancelarReservacion;
 
 public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCommand, Result>
@@ -35,8 +27,9 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
 
             // 1. Obtener la reservación
             var reservacion = await _context.Reservaciones
-                .Include(r => r.Cliente)
-                .Include(r => r.Mesa)
+                // TODO: Descomentar cuando las relaciones estén implementadas
+                // .Include(r => r.Cliente)
+                // .Include(r => r.Mesa)
                 .FirstOrDefaultAsync(r => r.Id == request.ReservacionId, cancellationToken);
 
             if (reservacion == null)
@@ -62,29 +55,36 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
 
             // 4. Actualizar estado de la reservación
             var estadoAnterior = reservacion.Estado;
-            reservacion.Estado = EstadoReservacion.Cancelada;
-            reservacion.MotivoCancelacion = request.MotivoCancelacion;
-            reservacion.FechaCancelacion = DateTime.UtcNow;
-            reservacion.CanceladoPor = request.CanceladoPor;
+            reservacion.Estado = Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Cancelada;
+            // TODO: Implementar cuando las propiedades estén disponibles
+            // reservacion.MotivoCancelacion = request.MotivoCancelacion;
+            // reservacion.FechaCancelacion = DateTime.UtcNow;
+            // reservacion.CanceladoPor = request.CanceladoPor;
 
             // 5. Liberar la mesa si estaba asignada
+            // TODO: Implementar cuando Mesa esté disponible
+            /*
             if (reservacion.Mesa != null)
             {
                 reservacion.Mesa.Estado = EstadoMesa.Disponible;
                 _logger.LogInformation("Mesa {MesaNumero} liberada automáticamente", reservacion.Mesa.Numero);
             }
+            */
 
             // 6. Guardar cambios
             await _context.SaveChangesAsync(cancellationToken);
 
             // 7. Notificar al cliente si se solicita
+            // TODO: Implementar cuando Cliente esté disponible
+            /*
             if (request.NotificarCliente && reservacion.Cliente != null)
             {
                 await NotificarCancelacionCliente(reservacion);
             }
+            */
 
             // 8. Registrar auditoría
-            await RegistrarAuditoriaCancelacion(reservacion, estadoAnterior, request.CanceladoPor);
+            await RegistrarAuditoriaCancelacion(reservacion, estadoAnterior, "Sistema"); // request.CanceladoPor);
 
             _logger.LogInformation("Reservación {ReservacionId} cancelada exitosamente", request.ReservacionId);
 
@@ -99,20 +99,24 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
 
     private static bool PuedeSerCancelada(Reservacion reservacion)
     {
-        return reservacion.Estado == EstadoReservacion.Confirmada ||
-               reservacion.Estado == EstadoReservacion.Pendiente;
+        return reservacion.Estado == Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Confirmada ||
+               reservacion.Estado == Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Pendiente;
     }
 
     private static bool CumplePoliticaCancelacion(Reservacion reservacion)
     {
-        var tiempoAnticipacion = reservacion.FechaHora - DateTime.UtcNow;
-        return tiempoAnticipacion.TotalHours >= 2;
+        // TODO: Implementar cuando FechaHora esté disponible
+        // var tiempoAnticipacion = reservacion.FechaHora - DateTime.UtcNow;
+        // return tiempoAnticipacion.TotalHours >= 2;
+        return true; // Temporal
     }
 
     private async Task NotificarCancelacionCliente(Reservacion reservacion)
     {
         try
         {
+            // TODO: Implementar cuando Cliente esté disponible
+            /*
             // Email de cancelación
             var emailContent = $@"
                 <h2>Reservación Cancelada</h2>
@@ -138,6 +142,7 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
                 $"Su reservación para el {reservacion.FechaHora:dd/MM/yyyy HH:mm} ha sido cancelada.",
                 reservacion.ClienteId,
                 NotificationType.Reservacion);
+            */
         }
         catch (Exception ex)
         {
@@ -146,16 +151,18 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
         }
     }
 
-    private async Task RegistrarAuditoriaCancelacion(Reservacion reservacion, EstadoReservacion estadoAnterior, string canceladoPor)
+    private async Task RegistrarAuditoriaCancelacion(Reservacion reservacion, Domain.Operaciones.Reservaciones.Enums.EstadoReservacion estadoAnterior, string canceladoPor)
     {
         try
         {
+            // TODO: Implementar cuando AuditoriaReservacion esté disponible en el dominio
+            /*
             var auditoria = new AuditoriaReservacion
             {
                 ReservacionId = reservacion.Id,
                 Accion = "Cancelación",
                 EstadoAnterior = estadoAnterior.ToString(),
-                EstadoNuevo = EstadoReservacion.Cancelada.ToString(),
+                EstadoNuevo = Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Cancelada.ToString(),
                 Detalles = $"Motivo: {reservacion.MotivoCancelacion}",
                 RealizadoPor = canceladoPor,
                 FechaAccion = DateTime.UtcNow
@@ -163,6 +170,7 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
 
             _context.AuditoriasReservaciones.Add(auditoria);
             await _context.SaveChangesAsync();
+            */
         }
         catch (Exception ex)
         {

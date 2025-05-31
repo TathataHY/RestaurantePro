@@ -1,6 +1,4 @@
 using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
-using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
-using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces;
 
 namespace RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientePorId;
 

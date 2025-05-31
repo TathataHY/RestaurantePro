@@ -1,4 +1,3 @@
-using RestaurantePro.Application.Common.DTOs;
 using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
 
 namespace RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesPaginados;

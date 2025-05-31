@@ -1,11 +1,3 @@
-using MediatR;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using AutoMapper;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Comercial.Clientes.DTOs;
-using RestaurantePro.Application.Common.DTOs;
-using RestaurantePro.Domain.Common;
 using System.Linq.Expressions;
 
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
