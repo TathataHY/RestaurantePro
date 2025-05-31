@@ -1,11 +1,3 @@
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-using RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientesPaginados;
-using RestaurantePro.Application.Comercial.Clientes.DTOs;
-using RestaurantePro.Application.Common.DTOs;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Clientes.Queries;
 
 public class ObtenerClientesPaginadosHandlerTests

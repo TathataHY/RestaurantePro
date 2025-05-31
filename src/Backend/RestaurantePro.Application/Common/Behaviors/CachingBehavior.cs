@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Caching.Memory;
-
 namespace RestaurantePro.Application.Common.Behaviors;
 
 /// <summary>

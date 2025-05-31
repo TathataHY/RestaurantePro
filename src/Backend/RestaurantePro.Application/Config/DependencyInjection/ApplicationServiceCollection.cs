@@ -1,13 +1,3 @@
-using System.Reflection;
-using AutoMapper;
-using FluentValidation;
-using MediatR;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using RestaurantePro.Application.Common.Behaviors;
-using RestaurantePro.Application.Config.Mappings;
-using RestaurantePro.Application.Config.Settings;
-
 namespace RestaurantePro.Application.Config.DependencyInjection;
 
 /// <summary>

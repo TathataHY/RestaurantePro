@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientePorId;
 
 /// <summary>

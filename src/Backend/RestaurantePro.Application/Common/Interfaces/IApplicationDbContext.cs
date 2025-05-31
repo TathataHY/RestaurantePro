@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
-
 namespace RestaurantePro.Application.Common.Interfaces;
 
 /// <summary>

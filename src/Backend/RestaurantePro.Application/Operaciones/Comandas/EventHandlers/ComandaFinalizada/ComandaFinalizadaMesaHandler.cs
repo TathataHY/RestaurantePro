@@ -1,5 +1,4 @@
 namespace RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
-using RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
 
 /// <summary>
 /// 🪑 Handler que procesa el evento ComandaFinalizada para liberar mesa automáticamente

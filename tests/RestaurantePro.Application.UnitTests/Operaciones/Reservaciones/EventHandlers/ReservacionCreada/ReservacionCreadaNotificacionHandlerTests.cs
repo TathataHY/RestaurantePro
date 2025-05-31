@@ -1,11 +1,3 @@
-using RestaurantePro.Application.Operaciones.Reservaciones.EventHandlers.ReservacionCreada;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion;
-using RestaurantePro.Domain.Core.Notificaciones.Services;
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-using RestaurantePro.Domain.Core.Notificaciones.Enums;
 
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.EventHandlers.ReservacionCreada;
 

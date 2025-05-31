@@ -1,11 +1,3 @@
-using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
-// TODO: Uncomment when Mesa DTOs are created
-// using RestaurantePro.Application.Operaciones.Mesa.DTOs;
-// using RestaurantePro.Application.Operaciones.Mesa.Commands.CrearMesa;
-// TODO: Uncomment when Reservacion DTOs are created  
-// using RestaurantePro.Application.Operaciones.Reservacion.DTOs;
-// using RestaurantePro.Application.Operaciones.Reservacion.Commands.CrearReservacion;
-
 namespace RestaurantePro.Application.Config.Mappings;
 
 /// <summary>

@@ -1,10 +1,3 @@
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientePorId;
-using RestaurantePro.Application.Comercial.Clientes.DTOs;
-using RestaurantePro.Application.UnitTests.Common;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Clientes.Queries;
 
 public class ObtenerClientePorIdHandlerTests

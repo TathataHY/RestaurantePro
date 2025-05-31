@@ -1,9 +1,3 @@
-using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
-using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
-using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
-using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesBajoStock;
-using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
-
 namespace RestaurantePro.Application.UnitTests.Inventario.Ingredientes.Queries;
 
 public class ObtenerIngredientesBajoStockHandlerTests

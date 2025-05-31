@@ -1,7 +1,3 @@
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using RestaurantePro.Application.Config.Settings;
-
 namespace RestaurantePro.Application.Common.Behaviors;
 
 /// <summary>

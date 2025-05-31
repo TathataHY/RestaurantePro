@@ -1,9 +1,3 @@
-using AutoMapper;
-using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente;
-using RestaurantePro.Application.Comercial.Clientes.Commands.ActualizarCliente;
-using RestaurantePro.Application.Comercial.Clientes.DTOs;
-using RestaurantePro.Domain.Comercial.Clientes;
-
 namespace RestaurantePro.Application.Config.Mappings;
 
 /// <summary>

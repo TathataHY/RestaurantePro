@@ -1,9 +1,3 @@
-using RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
-using RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda;
-using RestaurantePro.Domain.Comercial.Services;
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
 
 /// <summary>

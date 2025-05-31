@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-
 namespace RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.EliminarContacto;
 
 /// <summary>

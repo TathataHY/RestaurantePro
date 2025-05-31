@@ -1,10 +1,3 @@
-using RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
-using RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda;
-using RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
 
 /// <summary>

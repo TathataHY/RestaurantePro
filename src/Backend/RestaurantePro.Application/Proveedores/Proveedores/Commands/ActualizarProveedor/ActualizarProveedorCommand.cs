@@ -1,5 +1,3 @@
-using RestaurantePro.Application.Proveedores.Proveedores.DTOs;
-
 namespace RestaurantePro.Application.Proveedores.Proveedores.Commands.ActualizarProveedor;
 
 public class ActualizarProveedorCommand : IRequest<Result<ProveedorDto>>

@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using Microsoft.Extensions.Options;
-
 namespace RestaurantePro.Application.Common.Behaviors;
 
 /// <summary>

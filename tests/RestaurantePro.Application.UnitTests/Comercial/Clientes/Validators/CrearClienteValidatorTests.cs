@@ -1,5 +1,3 @@
-using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Clientes.Validators;
 
 public class CrearClienteValidatorTests

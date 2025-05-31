@@ -1,5 +1,3 @@
-using FluentValidation.Results;
-
 namespace RestaurantePro.Application.Common.Exceptions;
 
 /// <summary>

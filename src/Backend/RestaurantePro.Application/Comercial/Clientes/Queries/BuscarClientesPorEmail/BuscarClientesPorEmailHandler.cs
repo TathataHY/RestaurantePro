@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
 
 public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEmailQuery, Result<PaginatedList<ClienteSummaryDto>>>

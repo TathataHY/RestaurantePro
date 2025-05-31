@@ -130,3 +130,77 @@ global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 
 // 🆕 NUEVO: ISignalRService y IBackgroundJobService ya incluidos en IApplicationService
 // Las interfaces están en Common.Interfaces - no necesitan using adicional
+
+// 🔧 Microsoft Extensions Adicionales
+global using Microsoft.EntityFrameworkCore.Storage;
+
+// 🏢 Application - Operaciones Commands
+global using RestaurantePro.Application.Operaciones.Mesas.Commands.AsignarMesa;
+global using RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
+global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.CrearReservacion;
+global using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
+
+// 🏢 Application - Proveedores
+global using RestaurantePro.Application.Proveedores.Proveedores.Commands.CrearProveedor;
+global using RestaurantePro.Application.Proveedores.Proveedores.DTOs;
+global using RestaurantePro.Application.Proveedores.Proveedores.Queries.ObtenerProveedoresPaginados;
+
+// 🏢 Application - Inventario
+global using RestaurantePro.Application.Inventario.Ingredientes.Commands.CrearIngrediente;
+global using RestaurantePro.Application.Inventario.Ingredientes.Commands.ActualizarStock;
+global using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientePorId;
+global using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesPaginados;
+global using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesBajoStock;
+global using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
+
+// 🏢 Application - Event Handlers
+global using RestaurantePro.Application.Operaciones.Reservaciones.EventHandlers.ReservacionCreada;
+
+// 🏢 Domain - Events
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion;
+
+// 🏢 Domain - Services
+global using RestaurantePro.Domain.Inventario.Services;
+
+// 🔧 System Extensions
+global using System.Linq.Expressions;
+global using System.Text.Json;
+global using System.Reflection;
+
+// 🔧 Microsoft Extensions Adicionales
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.Options;
+global using Microsoft.Extensions.Caching.Memory;
+global using Microsoft.Extensions.Logging;
+
+// 🏢 Application - Mesas DTOs
+global using RestaurantePro.Application.Operaciones.Mesas.DTOs;
+
+// 🏢 Application - Clientes
+global using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente;
+global using RestaurantePro.Application.Comercial.Clientes.Commands.ActualizarCliente;
+global using RestaurantePro.Application.Comercial.Clientes.DTOs;
+
+// 🏢 Application - Productos
+global using RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
+global using RestaurantePro.Application.Core.Productos.Commands.ActualizarProducto;
+
+// 🏢 Application - Fidelización
+global using RestaurantePro.Application.Comercial.Fidelizacion.DTOs;
+
+// 🏢 Application - Config
+global using RestaurantePro.Application.Config.Settings;
+global using RestaurantePro.Application.Config.Mappings;
+global using RestaurantePro.Application.Common.Behaviors;
+
+// 🏢 Domain - Facturación Services
+global using RestaurantePro.Domain.Comercial.Facturacion.Services;
+
+// 🏢 Domain - Clientes Interfaces
+global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
+
+// 🏢 Domain - Reservaciones Enums (Alias)
+global using EstadoReservacionDomain = RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion;
+
+// 🔄 FluentValidation
+global using FluentValidation.Results;

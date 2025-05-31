@@ -1,8 +1,3 @@
-using FluentValidation;
-using Microsoft.EntityFrameworkCore;
-using RestaurantePro.Application.Common.Interfaces;
-using System.Text.RegularExpressions;
-
 namespace RestaurantePro.Application.Core.Usuarios.Commands.CambiarPasswordUsuario;
 
 public class CambiarPasswordUsuarioValidator : AbstractValidator<CambiarPasswordUsuarioCommand>

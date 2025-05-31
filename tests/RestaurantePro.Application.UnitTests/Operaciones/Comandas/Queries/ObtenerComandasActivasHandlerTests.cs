@@ -1,442 +1,675 @@
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-using RestaurantePro.Application.Operaciones.Comandas.Queries.ObtenerComandasActivas;
-using RestaurantePro.Application.Operaciones.Comandas.DTOs;
-using RestaurantePro.Application.Common.DTOs;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.Queries;
 
+/// <summary>
+/// Tests unitarios para ObtenerComandasActivasHandler
+/// Valida consultas paginadas con filtros avanzados para dashboard operativo
+/// </summary>
 public class ObtenerComandasActivasHandlerTests
 {
-    private readonly Mock<IComandaRepository> _mockComandaRepository;
-    private readonly Mock<IMapper> _mockMapper;
-    private readonly Mock<ILogger<ObtenerComandasActivasHandler>> _mockLogger;
+    private readonly Mock<IComandaRepository> _comandaRepositoryMock;
+    private readonly Mock<IMapper> _mapperMock;
+    private readonly Mock<ILogger<ObtenerComandasActivasHandler>> _loggerMock;
     private readonly ObtenerComandasActivasHandler _handler;
 
     public ObtenerComandasActivasHandlerTests()
     {
-        _mockComandaRepository = new Mock<IComandaRepository>();
-        _mockMapper = new Mock<IMapper>();
-        _mockLogger = new Mock<ILogger<ObtenerComandasActivasHandler>>();
+        _comandaRepositoryMock = new Mock<IComandaRepository>();
+        _mapperMock = new Mock<IMapper>();
+        _loggerMock = new Mock<ILogger<ObtenerComandasActivasHandler>>();
         
         _handler = new ObtenerComandasActivasHandler(
-            _mockComandaRepository.Object,
-            _mockMapper.Object,
-            _mockLogger.Object);
+            _comandaRepositoryMock.Object,
+            _mapperMock.Object,
+            _loggerMock.Object);
     }
 
-    [Fact]
-    public async Task Handle_SinFiltros_DeberiaRetornarComandasActivasPaginadas()
-    {
-        // Arrange
-        var query = new ObtenerComandasActivasQuery(pageNumber: 1, pageSize: 10);
-        
-        var comandasActivas = CrearListaComandasActivas();
-        var comandasSummary = CrearListaComandaSummaryDto();
-
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandasActivas);
-
-        _mockMapper.Setup(m => m.Map<List<ComandaSummaryDto>>(It.IsAny<List<Comanda>>()))
-            .Returns(comandasSummary);
-
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Value.Should().NotBeNull();
-        result.Value.Items.Should().HaveCount(3);
-        result.Value.PageNumber.Should().Be(1);
-        result.Value.PageSize.Should().Be(10);
-        result.Value.TotalCount.Should().Be(3);
-        result.Value.TotalPages.Should().Be(1);
-
-        _mockComandaRepository.Verify(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
-    }
+    #region Tests de Consultas Básicas
 
     [Fact]
-    public async Task Handle_FiltrosPorMesa_DeberiaAplicarFiltroCorrectamente()
-    {
-        // Arrange
-        var mesaId = Guid.NewGuid();
-        var query = new ObtenerComandasActivasQuery(mesaId);
-        
-        var comandasActivas = CrearListaComandasActivas();
-        // Asignar mesaId solo a la primera comanda
-        comandasActivas[0] = Comanda.Crear(Guid.NewGuid(), null, mesaId, "Comanda mesa específica");
-        
-        var comandasSummary = new List<ComandaSummaryDto>
-        {
-            new ComandaSummaryDto { Id = comandasActivas[0].Id, MesaId = mesaId }
-        };
-
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandasActivas);
-
-        _mockMapper.Setup(m => m.Map<List<ComandaSummaryDto>>(It.IsAny<List<Comanda>>()))
-            .Returns(comandasSummary);
-
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Value.Items.Should().HaveCount(1);
-        result.Value.Items.First().MesaId.Should().Be(mesaId);
-    }
-
-    [Fact]
-    public async Task Handle_FiltrosPorMesero_DeberiaAplicarFiltroCorrectamente()
-    {
-        // Arrange
-        var meseroId = Guid.NewGuid();
-        var query = ObtenerComandasActivasQuery.PorMesero(meseroId);
-        
-        var comandasActivas = CrearListaComandasActivas();
-        // Hacer que la primera comanda sea del mesero específico
-        comandasActivas[0] = Comanda.Crear(meseroId, null, Guid.NewGuid(), "Comanda del mesero");
-        
-        var comandasSummary = new List<ComandaSummaryDto>
-        {
-            new ComandaSummaryDto { Id = comandasActivas[0].Id, TomodaPor = "Mesero Test" }
-        };
-
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandasActivas);
-
-        _mockMapper.Setup(m => m.Map<List<ComandaSummaryDto>>(It.IsAny<List<Comanda>>()))
-            .Returns(comandasSummary);
-
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Value.Items.Should().HaveCount(1);
-        result.Value.Items.First().TomodaPor.Should().Be("Mesero Test");
-    }
-
-    [Fact]
-    public async Task Handle_FiltrosPorEstado_DeberiaAplicarFiltroCorrectamente()
+    public async Task Handle_ConsultaSinFiltros_DeberiaRetornarComandasActivasPaginadas()
     {
         // Arrange
         var query = new ObtenerComandasActivasQuery
         {
-            EstadoFiltro = "En Preparación",
             PageNumber = 1,
             PageSize = 10
         };
-        
-        var comandasActivas = CrearListaComandasActivas();
-        // Cambiar estado de la primera comanda
-        comandasActivas[0].AgregarItem(Guid.NewGuid(), "Item", 1, 10000m);
-        comandasActivas[0].MarcarEnPreparacion();
-        
-        var comandasSummary = new List<ComandaSummaryDto>
-        {
-            new ComandaSummaryDto { Id = comandasActivas[0].Id, Estado = "En Preparación" }
-        };
 
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandasActivas);
+        var comandas = CreateMockComandas();
+        var comandasDto = CreateMockComandaSummaryDtos();
+        
+        var expected = new PaginatedList<ComandaSummaryDto>(comandasDto, 5, 1, 10);
 
-        _mockMapper.Setup(m => m.Map<List<ComandaSummaryDto>>(It.IsAny<List<Comanda>>()))
-            .Returns(comandasSummary);
+        SetupRepositoryQuery(comandas, 5);
+        SetupMapperToSummaryDto(comandas, comandasDto);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Value.Items.Should().HaveCount(1);
-        result.Value.Items.First().Estado.Should().Be("En Preparación");
+        Assert.True(result.Succeeded);
+        Assert.Equal(5, result.Value.TotalCount);
+        Assert.Equal(5, result.Value.Items.Count);
+        Assert.Equal(1, result.Value.PageNumber);
+        Assert.Equal(10, result.Value.PageSize);
+        
+        VerifyRepositoryQueryCalled();
     }
 
     [Fact]
-    public async Task Handle_QueryParaAtrasadas_DeberiaConfigurarCorrectamente()
-    {
-        // Arrange
-        var query = ObtenerComandasActivasQuery.CrearParaAtrasadas();
-        
-        var comandasActivas = CrearListaComandasActivas();
-        var comandasSummary = CrearListaComandaSummaryDto();
-
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandasActivas);
-
-        _mockMapper.Setup(m => m.Map<List<ComandaSummaryDto>>(It.IsAny<List<Comanda>>()))
-            .Returns(comandasSummary);
-
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        
-        // Verificar configuración de la query
-        query.SoloAtrasadas.Should().BeTrue();
-        query.OrdenarPor.Should().Be("TiempoTranscurrido");
-        query.DireccionOrden.Should().Be("Desc");
-    }
-
-    [Fact]
-    public async Task Handle_Paginacion_DeberiaAplicarCorrectamente()
-    {
-        // Arrange
-        var query = new ObtenerComandasActivasQuery(pageNumber: 2, pageSize: 2);
-        
-        var comandasActivas = CrearListaComandasActivas(); // 3 comandas
-        var comandasSummary = new List<ComandaSummaryDto>
-        {
-            new ComandaSummaryDto { Id = comandasActivas[2].Id } // Solo la tercera comanda
-        };
-
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandasActivas);
-
-        _mockMapper.Setup(m => m.Map<List<ComandaSummaryDto>>(It.IsAny<List<Comanda>>()))
-            .Returns(comandasSummary);
-
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Value.PageNumber.Should().Be(2);
-        result.Value.PageSize.Should().Be(2);
-        result.Value.TotalCount.Should().Be(3);
-        result.Value.TotalPages.Should().Be(2);
-        result.Value.Items.Should().HaveCount(1); // Solo un item en la página 2 con pageSize=2
-    }
-
-    [Fact]
-    public async Task Handle_OrdenamientoPorFechaDesc_DeberiaOrdenarCorrectamente()
+    public async Task Handle_ConsultaConPaginacion_DeberiaRetornarPaginaCorrecta()
     {
         // Arrange
         var query = new ObtenerComandasActivasQuery
         {
-            OrdenarPor = "FechaCreacion",
-            DireccionOrden = "Desc"
+            PageNumber = 2,
+            PageSize = 3
         };
+
+        var comandas = CreateMockComandas().Take(3).ToList();
+        var comandasDto = CreateMockComandaSummaryDtos().Take(3).ToList();
         
-        var comandasActivas = CrearListaComandasActivas();
-        var comandasSummary = CrearListaComandaSummaryDto();
-
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandasActivas);
-
-        _mockMapper.Setup(m => m.Map<List<ComandaSummaryDto>>(It.IsAny<List<Comanda>>()))
-            .Returns(comandasSummary);
+        SetupRepositoryQuery(comandas, 8); // 8 total, página 2 con 3 items
+        SetupMapperToSummaryDto(comandas, comandasDto);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Value.Items.Should().NotBeEmpty();
+        Assert.True(result.Succeeded);
+        Assert.Equal(8, result.Value.TotalCount);
+        Assert.Equal(3, result.Value.Items.Count);
+        Assert.Equal(2, result.Value.PageNumber);
+        Assert.Equal(3, result.Value.PageSize);
     }
 
+    #endregion
+
+    #region Tests de Filtros Básicos
+
     [Fact]
-    public async Task Handle_SinComandas_DeberiaRetornarListaVacia()
+    public async Task Handle_FiltrarPorEstado_DeberiaAplicarFiltroCorrectamente()
     {
         // Arrange
-        var query = new ObtenerComandasActivasQuery();
+        var query = new ObtenerComandasActivasQuery
+        {
+            PageNumber = 1,
+            PageSize = 10,
+            EstadoFiltro = "EnProceso"
+        };
+
+        var comandas = CreateMockComandasPorEstado(EstadoComanda.EnProceso);
+        var comandasDto = CreateMockComandaSummaryDtos().Take(2).ToList();
         
-        var comandasVacias = new List<Comanda>();
-        var comandasSummaryVacias = new List<ComandaSummaryDto>();
-
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandasVacias);
-
-        _mockMapper.Setup(m => m.Map<List<ComandaSummaryDto>>(It.IsAny<List<Comanda>>()))
-            .Returns(comandasSummaryVacias);
+        SetupRepositoryQuery(comandas, 2);
+        SetupMapperToSummaryDto(comandas, comandasDto);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Value.Items.Should().BeEmpty();
-        result.Value.TotalCount.Should().Be(0);
-        result.Value.TotalPages.Should().Be(0);
-    }
-
-    [Fact]
-    public async Task Handle_ErrorEnRepositorio_DeberiaRetornarErrorInterno()
-    {
-        // Arrange
-        var query = new ObtenerComandasActivasQuery();
-
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Error de conexión a base de datos"));
-
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeFalse();
-        result.Error.Should().Be("Ocurrió un error interno al consultar las comandas");
-
-        _mockMapper.Verify(m => m.Map<List<ComandaSummaryDto>>(It.IsAny<List<Comanda>>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task Handle_ErrorEnMapper_DeberiaRetornarErrorInterno()
-    {
-        // Arrange
-        var query = new ObtenerComandasActivasQuery();
+        Assert.True(result.Succeeded);
+        Assert.Equal(2, result.Value.Items.Count);
         
-        var comandasActivas = CrearListaComandasActivas();
-
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandasActivas);
-
-        _mockMapper.Setup(m => m.Map<List<ComandaSummaryDto>>(It.IsAny<List<Comanda>>()))
-            .Throws(new Exception("Error de mapeo"));
-
-        // Act
-        var result = await _handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeFalse();
-        result.Error.Should().Be("Ocurrió un error interno al consultar las comandas");
+        // Verify que el filtro fue aplicado en la consulta
+        VerifyRepositoryQueryCalledWithCriteria("Estado", "EnProceso");
     }
 
     [Fact]
-    public async Task Handle_ArgumentException_DeberiaRetornarErrorValidacion()
+    public async Task Handle_FiltrarPorMesa_DeberiaAplicarFiltroCorrectamente()
     {
         // Arrange
-        var query = new ObtenerComandasActivasQuery();
+        var mesaId = Guid.NewGuid();
+        var query = new ObtenerComandasActivasQuery
+        {
+            PageNumber = 1,
+            PageSize = 10,
+            MesaId = mesaId
+        };
 
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new ArgumentException("Parámetro inválido"));
+        var comandas = CreateMockComandasPorMesa(mesaId);
+        var comandasDto = CreateMockComandaSummaryDtos().Take(1).ToList();
+        
+        SetupRepositoryQuery(comandas, 1);
+        SetupMapperToSummaryDto(comandas, comandasDto);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeFalse();
-        result.Error.Should().Be("Parámetro inválido");
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, result.Value.Items.Count);
+        
+        VerifyRepositoryQueryCalledWithCriteria("MesaId", mesaId);
     }
 
     [Fact]
-    public async Task Handle_FiltrosPorCliente_DeberiaAplicarFiltroCorrectamente()
+    public async Task Handle_FiltrarPorMesero_DeberiaAplicarFiltroCorrectamente()
+    {
+        // Arrange
+        var meseroId = Guid.NewGuid();
+        var query = new ObtenerComandasActivasQuery
+        {
+            PageNumber = 1,
+            PageSize = 10,
+            MeseroId = meseroId
+        };
+
+        var comandas = CreateMockComandasPorMesero(meseroId);
+        var comandasDto = CreateMockComandaSummaryDtos().Take(2).ToList();
+        
+        SetupRepositoryQuery(comandas, 2);
+        SetupMapperToSummaryDto(comandas, comandasDto);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.Equal(2, result.Value.Items.Count);
+        
+        VerifyRepositoryQueryCalledWithCriteria("MeseroId", meseroId);
+    }
+
+    [Fact]
+    public async Task Handle_FiltrarPorCliente_DeberiaAplicarFiltroCorrectamente()
     {
         // Arrange
         var clienteId = Guid.NewGuid();
         var query = new ObtenerComandasActivasQuery
         {
+            PageNumber = 1,
+            PageSize = 10,
             ClienteId = clienteId
         };
-        
-        var comandasActivas = CrearListaComandasActivas();
-        // Asignar clienteId a la primera comanda
-        comandasActivas[0] = Comanda.Crear(Guid.NewGuid(), clienteId, Guid.NewGuid(), "Comanda con cliente");
-        
-        var comandasSummary = new List<ComandaSummaryDto>
-        {
-            new ComandaSummaryDto { Id = comandasActivas[0].Id, ClienteId = clienteId }
-        };
 
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandasActivas);
-
-        _mockMapper.Setup(m => m.Map<List<ComandaSummaryDto>>(It.IsAny<List<Comanda>>()))
-            .Returns(comandasSummary);
+        var comandas = CreateMockComandasPorCliente(clienteId);
+        var comandasDto = CreateMockComandaSummaryDtos().Take(1).ToList();
+        
+        SetupRepositoryQuery(comandas, 1);
+        SetupMapperToSummaryDto(comandas, comandasDto);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
-        result.Value.Items.Should().HaveCount(1);
-        result.Value.Items.First().ClienteId.Should().Be(clienteId);
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, result.Value.Items.Count);
+        
+        VerifyRepositoryQueryCalledWithCriteria("ClienteId", clienteId);
     }
 
+    #endregion
+
+    #region Tests de Filtros de Fecha
+
     [Fact]
-    public async Task Handle_FiltroSoloHoy_DeberiaUsarFechaActual()
+    public async Task Handle_SoloHoy_DeberiaFiltrarPorFechaActual()
     {
         // Arrange
         var query = new ObtenerComandasActivasQuery
         {
+            PageNumber = 1,
+            PageSize = 10,
             SoloHoy = true
         };
+
+        var comandas = CreateMockComandasHoy();
+        var comandasDto = CreateMockComandaSummaryDtos().Take(3).ToList();
         
-        var comandasActivas = CrearListaComandasActivas();
-        var comandasSummary = CrearListaComandaSummaryDto();
-
-        _mockComandaRepository.Setup(r => r.ObtenerComandasAbiertas(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandasActivas);
-
-        _mockMapper.Setup(m => m.Map<List<ComandaSummaryDto>>(It.IsAny<List<Comanda>>()))
-            .Returns(comandasSummary);
+        SetupRepositoryQuery(comandas, 3);
+        SetupMapperToSummaryDto(comandas, comandasDto);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Succeeded.Should().BeTrue();
+        Assert.True(result.Succeeded);
+        Assert.Equal(3, result.Value.Items.Count);
         
-        // Verificar que SoloHoy está configurado
-        query.SoloHoy.Should().BeTrue();
-        query.FechaEspecifica.Should().BeNull(); // No debe tener fecha específica cuando es SoloHoy
+        // Verify que se aplicaron los filtros de fecha de hoy
+        VerifyRepositoryQueryCalledWithDateRange(DateTime.Today, DateTime.Today.AddDays(1).AddTicks(-1));
     }
 
-    // Métodos de ayuda para crear datos de prueba
-    private static List<Comanda> CrearListaComandasActivas()
+    [Fact]
+    public async Task Handle_FechaEspecifica_DeberiaFiltrarPorFechaSeleccionada()
     {
-        var usuario1 = Guid.NewGuid();
-        var usuario2 = Guid.NewGuid();
-        var usuario3 = Guid.NewGuid();
-
-        return new List<Comanda>
+        // Arrange
+        var fechaEspecifica = new DateTime(2025, 1, 15);
+        var query = new ObtenerComandasActivasQuery
         {
-            Comanda.Crear(usuario1, null, Guid.NewGuid(), "Comanda 1"),
-            Comanda.Crear(usuario2, null, Guid.NewGuid(), "Comanda 2"),
-            Comanda.Crear(usuario3, null, Guid.NewGuid(), "Comanda 3")
+            PageNumber = 1,
+            PageSize = 10,
+            FechaEspecifica = fechaEspecifica
         };
+
+        var comandas = CreateMockComandasFecha(fechaEspecifica);
+        var comandasDto = CreateMockComandaSummaryDtos().Take(2).ToList();
+        
+        SetupRepositoryQuery(comandas, 2);
+        SetupMapperToSummaryDto(comandas, comandasDto);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.Equal(2, result.Value.Items.Count);
+        
+        var fechaInicio = fechaEspecifica.Date;
+        var fechaFin = fechaInicio.AddDays(1).AddTicks(-1);
+        VerifyRepositoryQueryCalledWithDateRange(fechaInicio, fechaFin);
     }
 
-    private static List<ComandaSummaryDto> CrearListaComandaSummaryDto()
+    #endregion
+
+    #region Tests de Filtros Avanzados
+
+    [Fact]
+    public async Task Handle_SoloAtrasadas_DeberiaFiltrarComandasAtrasadas()
     {
-        return new List<ComandaSummaryDto>
+        // Arrange
+        var query = new ObtenerComandasActivasQuery
         {
-            new ComandaSummaryDto 
-            { 
-                Id = Guid.NewGuid(), 
-                Estado = "Pendiente",
-                Total = 25000m,
-                FechaCreacion = DateTime.Now
-            },
-            new ComandaSummaryDto 
-            { 
-                Id = Guid.NewGuid(), 
-                Estado = "En Preparación",
-                Total = 35000m,
-                FechaCreacion = DateTime.Now.AddMinutes(-10)
-            },
-            new ComandaSummaryDto 
-            { 
-                Id = Guid.NewGuid(), 
-                Estado = "Lista",
-                Total = 18000m,
-                FechaCreacion = DateTime.Now.AddMinutes(-20)
-            }
+            PageNumber = 1,
+            PageSize = 10,
+            SoloAtrasadas = true
         };
+
+        var comandas = CreateMockComandasAtrasadas();
+        var comandasDto = CreateMockComandaSummaryDtos().Take(2).ToList();
+        
+        SetupRepositoryQuery(comandas, 5); // 5 totales en repo
+        SetupMapperToSummaryDto(comandas.Take(2).ToList(), comandasDto); // Solo 2 atrasadas después del filtro
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.Equal(2, result.Value.Items.Count); // Solo las atrasadas
     }
+
+    [Fact]
+    public async Task Handle_SoloConDescuentos_DeberiaFiltrarComandasConDescuento()
+    {
+        // Arrange
+        var query = new ObtenerComandasActivasQuery
+        {
+            PageNumber = 1,
+            PageSize = 10,
+            SoloConDescuentos = true
+        };
+
+        var comandas = CreateMockComandasConDescuentos();
+        var comandasDto = CreateMockComandaSummaryDtos().Take(1).ToList();
+        
+        SetupRepositoryQuery(comandas, 3); // 3 totales en repo
+        SetupMapperToSummaryDto(comandas.Take(1).ToList(), comandasDto); // Solo 1 con descuento después del filtro
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, result.Value.Items.Count); // Solo la con descuento
+    }
+
+    [Fact]
+    public async Task Handle_FiltrosCombinados_DeberiaAplicarTodosLosFiltros()
+    {
+        // Arrange
+        var mesaId = Guid.NewGuid();
+        var query = new ObtenerComandasActivasQuery
+        {
+            PageNumber = 1,
+            PageSize = 10,
+            EstadoFiltro = "EnProceso",
+            MesaId = mesaId,
+            SoloHoy = true,
+            SoloAtrasadas = true
+        };
+
+        var comandas = CreateMockComandasConFiltrosCombinados();
+        var comandasDto = CreateMockComandaSummaryDtos().Take(1).ToList();
+        
+        SetupRepositoryQuery(comandas, 1);
+        SetupMapperToSummaryDto(comandas, comandasDto);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, result.Value.Items.Count);
+        
+        // Verify múltiples criterios aplicados
+        VerifyRepositoryQueryCalledWithCriteria("Estado", "EnProceso");
+        VerifyRepositoryQueryCalledWithCriteria("MesaId", mesaId);
+    }
+
+    #endregion
+
+    #region Tests de Estados por Defecto
+
+    [Fact]
+    public async Task Handle_SinFiltroEstado_DeberiaExcluirFinalizadasYCanceladas()
+    {
+        // Arrange
+        var query = new ObtenerComandasActivasQuery
+        {
+            PageNumber = 1,
+            PageSize = 10
+            // Sin EstadoFiltro - debe excluir Finalizada y Cancelada por defecto
+        };
+
+        var comandas = CreateMockComandasActivasSolamente();
+        var comandasDto = CreateMockComandaSummaryDtos();
+        
+        SetupRepositoryQuery(comandas, 5);
+        SetupMapperToSummaryDto(comandas, comandasDto);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        
+        // Verify que se excluyeron estados no activos
+        VerifyRepositoryQueryCalledWithCriteria("EstadosExcluidos", new[] { "Finalizada", "Cancelada" });
+    }
+
+    #endregion
+
+    #region Tests de Manejo de Errores
+
+    [Fact]
+    public async Task Handle_ErrorEnRepositorio_DeberiaRetornarError()
+    {
+        // Arrange
+        var query = new ObtenerComandasActivasQuery
+        {
+            PageNumber = 1,
+            PageSize = 10
+        };
+
+        _comandaRepositoryMock.Setup(x => x.ObtenerComandasActivasAsync(It.IsAny<Dictionary<string, object>>(), It.IsAny<int>(), It.IsAny<int>()))
+            .ThrowsAsync(new InvalidOperationException("Error de base de datos"));
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("Ocurrió un error interno al consultar las comandas", result.Error);
+    }
+
+    [Fact]
+    public async Task Handle_ParametrosInvalidos_DeberiaRetornarError()
+    {
+        // Arrange
+        var query = new ObtenerComandasActivasQuery
+        {
+            PageNumber = -1, // Página inválida
+            PageSize = 10
+        };
+
+        SetupRepositoryToThrowArgumentException();
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("parámetros", result.Error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Handle_ConsultaVacia_DeberiaRetornarListaVacia()
+    {
+        // Arrange
+        var query = new ObtenerComandasActivasQuery
+        {
+            PageNumber = 1,
+            PageSize = 10
+        };
+
+        SetupRepositoryQuery(new List<Comanda>(), 0);
+        SetupMapperToSummaryDto(new List<Comanda>(), new List<ComandaSummaryDto>());
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.Equal(0, result.Value.TotalCount);
+        Assert.Empty(result.Value.Items);
+    }
+
+    #endregion
+
+    #region Helper Methods - Setup
+
+    private void SetupRepositoryQuery(List<Comanda> comandas, int totalCount)
+    {
+        _comandaRepositoryMock.Setup(x => x.ObtenerComandasActivasAsync(
+                It.IsAny<Dictionary<string, object>>(), 
+                It.IsAny<int>(), 
+                It.IsAny<int>()))
+            .ReturnsAsync((comandas, totalCount));
+    }
+
+    private void SetupMapperToSummaryDto(List<Comanda> comandas, List<ComandaSummaryDto> dto)
+    {
+        _mapperMock.Setup(x => x.Map<List<ComandaSummaryDto>>(comandas))
+            .Returns(dto);
+    }
+
+    private void SetupRepositoryToThrowArgumentException()
+    {
+        _comandaRepositoryMock.Setup(x => x.ObtenerComandasActivasAsync(
+                It.IsAny<Dictionary<string, object>>(), 
+                It.IsAny<int>(), 
+                It.IsAny<int>()))
+            .ThrowsAsync(new ArgumentException("Parámetros de paginación inválidos"));
+    }
+
+    #endregion
+
+    #region Helper Methods - Verification
+
+    private void VerifyRepositoryQueryCalled()
+    {
+        _comandaRepositoryMock.Verify(x => x.ObtenerComandasActivasAsync(
+            It.IsAny<Dictionary<string, object>>(),
+            It.IsAny<int>(),
+            It.IsAny<int>()), Times.Once);
+    }
+
+    private void VerifyRepositoryQueryCalledWithCriteria(string key, object value)
+    {
+        _comandaRepositoryMock.Verify(x => x.ObtenerComandasActivasAsync(
+            It.Is<Dictionary<string, object>>(d => d.ContainsKey(key) && d[key].Equals(value)),
+            It.IsAny<int>(),
+            It.IsAny<int>()), Times.Once);
+    }
+
+    private void VerifyRepositoryQueryCalledWithDateRange(DateTime fechaInicio, DateTime fechaFin)
+    {
+        _comandaRepositoryMock.Verify(x => x.ObtenerComandasActivasAsync(
+            It.Is<Dictionary<string, object>>(d => 
+                d.ContainsKey("FechaInicio") && 
+                d.ContainsKey("FechaFin") &&
+                ((DateTime)d["FechaInicio"]).Date == fechaInicio.Date &&
+                ((DateTime)d["FechaFin"]).Date >= fechaFin.Date),
+            It.IsAny<int>(),
+            It.IsAny<int>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Helper Methods - Data Creation
+
+    private static List<Comanda> CreateMockComandas()
+    {
+        var comandas = new List<Comanda>();
+        for (int i = 1; i <= 5; i++)
+        {
+            var comanda = new Mock<Comanda>();
+            comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
+            comanda.Setup(x => x.NumeroComanda).Returns($"COM-{i:000}");
+            comanda.Setup(x => x.Estado).Returns((EstadoComanda)(i % 3 + 1)); // Rotar entre estados
+            comanda.Setup(x => x.FechaCreacion).Returns(DateTime.Now.AddMinutes(-i * 10));
+            comandas.Add(comanda.Object);
+        }
+        return comandas;
+    }
+
+    private static List<ComandaSummaryDto> CreateMockComandaSummaryDtos()
+    {
+        var dtos = new List<ComandaSummaryDto>();
+        for (int i = 1; i <= 5; i++)
+        {
+            dtos.Add(new ComandaSummaryDto
+            {
+                Id = Guid.NewGuid(),
+                NumeroComanda = $"COM-{i:000}",
+                Estado = ((EstadoComanda)(i % 3 + 1)).ToString(),
+                FechaCreacion = DateTime.Now.AddMinutes(-i * 10),
+                Total = 50.00m + (i * 10),
+                TotalItems = i + 2,
+                NombreMesero = $"Mesero {i}",
+                NumeroMesa = i.ToString()
+            });
+        }
+        return dtos;
+    }
+
+    private static List<Comanda> CreateMockComandasPorEstado(EstadoComanda estado)
+    {
+        var comandas = new List<Comanda>();
+        for (int i = 1; i <= 2; i++)
+        {
+            var comanda = new Mock<Comanda>();
+            comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
+            comanda.Setup(x => x.Estado).Returns(estado);
+            comandas.Add(comanda.Object);
+        }
+        return comandas;
+    }
+
+    private static List<Comanda> CreateMockComandasPorMesa(Guid mesaId)
+    {
+        var comanda = new Mock<Comanda>();
+        comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
+        comanda.Setup(x => x.MesaId).Returns(mesaId);
+        return new List<Comanda> { comanda.Object };
+    }
+
+    private static List<Comanda> CreateMockComandasPorMesero(Guid meseroId)
+    {
+        var comandas = new List<Comanda>();
+        for (int i = 1; i <= 2; i++)
+        {
+            var comanda = new Mock<Comanda>();
+            comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
+            comanda.Setup(x => x.MeseroId).Returns(meseroId);
+            comandas.Add(comanda.Object);
+        }
+        return comandas;
+    }
+
+    private static List<Comanda> CreateMockComandasPorCliente(Guid clienteId)
+    {
+        var comanda = new Mock<Comanda>();
+        comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
+        comanda.Setup(x => x.ClienteId).Returns(clienteId);
+        return new List<Comanda> { comanda.Object };
+    }
+
+    private static List<Comanda> CreateMockComandasHoy()
+    {
+        var comandas = new List<Comanda>();
+        for (int i = 1; i <= 3; i++)
+        {
+            var comanda = new Mock<Comanda>();
+            comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
+            comanda.Setup(x => x.FechaCreacion).Returns(DateTime.Today.AddHours(i * 2));
+            comandas.Add(comanda.Object);
+        }
+        return comandas;
+    }
+
+    private static List<Comanda> CreateMockComandasFecha(DateTime fecha)
+    {
+        var comandas = new List<Comanda>();
+        for (int i = 1; i <= 2; i++)
+        {
+            var comanda = new Mock<Comanda>();
+            comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
+            comanda.Setup(x => x.FechaCreacion).Returns(fecha.AddHours(i));
+            comandas.Add(comanda.Object);
+        }
+        return comandas;
+    }
+
+    private static List<Comanda> CreateMockComandasAtrasadas()
+    {
+        var comandas = new List<Comanda>();
+        
+        // Comanda creada hace 10 minutos (atrasada)
+        var comandaAtrasada1 = new Mock<Comanda>();
+        comandaAtrasada1.Setup(x => x.Id).Returns(Guid.NewGuid());
+        comandaAtrasada1.Setup(x => x.Estado).Returns(EstadoComanda.Creada);
+        comandaAtrasada1.Setup(x => x.FechaCreacion).Returns(DateTime.Now.AddMinutes(-10));
+        comandas.Add(comandaAtrasada1.Object);
+        
+        // Comanda en proceso hace 40 minutos (atrasada)
+        var comandaAtrasada2 = new Mock<Comanda>();
+        comandaAtrasada2.Setup(x => x.Id).Returns(Guid.NewGuid());
+        comandaAtrasada2.Setup(x => x.Estado).Returns(EstadoComanda.EnProceso);
+        comandaAtrasada2.Setup(x => x.FechaCreacion).Returns(DateTime.Now.AddMinutes(-40));
+        comandas.Add(comandaAtrasada2.Object);
+        
+        return comandas;
+    }
+
+    private static List<Comanda> CreateMockComandasConDescuentos()
+    {
+        var comandas = new List<Comanda>();
+        
+        // Comanda con descuento
+        var comandaConDescuento = new Mock<Comanda>();
+        comandaConDescuento.Setup(x => x.Id).Returns(Guid.NewGuid());
+        comandaConDescuento.Setup(x => x.DescuentoFidelizacion).Returns(10.50m);
+        comandas.Add(comandaConDescuento.Object);
+        
+        return comandas;
+    }
+
+    private static List<Comanda> CreateMockComandasConFiltrosCombinados()
+    {
+        var comanda = new Mock<Comanda>();
+        comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
+        comanda.Setup(x => x.Estado).Returns(EstadoComanda.EnProceso);
+        comanda.Setup(x => x.FechaCreacion).Returns(DateTime.Now.AddMinutes(-40)); // Atrasada
+        return new List<Comanda> { comanda.Object };
+    }
+
+    private static List<Comanda> CreateMockComandasActivasSolamente()
+    {
+        var comandas = new List<Comanda>();
+        var estadosActivos = new[] { EstadoComanda.Creada, EstadoComanda.EnProceso, EstadoComanda.Lista };
+        
+        for (int i = 0; i < 5; i++)
+        {
+            var comanda = new Mock<Comanda>();
+            comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
+            comanda.Setup(x => x.Estado).Returns(estadosActivos[i % estadosActivos.Length]);
+            comandas.Add(comanda.Object);
+        }
+        return comandas;
+    }
+
+    #endregion
 } 

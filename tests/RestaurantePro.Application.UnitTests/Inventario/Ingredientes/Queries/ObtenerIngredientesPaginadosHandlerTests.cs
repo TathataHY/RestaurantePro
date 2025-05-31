@@ -1,10 +1,3 @@
-using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
-using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
-using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
-using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesPaginados;
-using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
-using RestaurantePro.Application.Common.DTOs;
-
 namespace RestaurantePro.Application.UnitTests.Inventario.Ingredientes.Queries;
 
 public class ObtenerIngredientesPaginadosHandlerTests

@@ -1,6 +1,3 @@
-using Microsoft.Extensions.Logging;
-using System.Text.Json;
-
 namespace RestaurantePro.Application.Common.Behaviors;
 
 /// <summary>

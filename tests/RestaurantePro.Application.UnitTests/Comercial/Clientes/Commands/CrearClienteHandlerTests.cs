@@ -1,10 +1,3 @@
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
-using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente;
-using RestaurantePro.Application.Comercial.Clientes.DTOs;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Clientes.Commands;
 
 public class CrearClienteHandlerTests

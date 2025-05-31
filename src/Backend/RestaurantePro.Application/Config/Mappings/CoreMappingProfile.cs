@@ -1,6 +1,3 @@
-using RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
-using RestaurantePro.Application.Core.Productos.Commands.ActualizarProducto;
-
 namespace RestaurantePro.Application.Config.Mappings;
 
 /// <summary>

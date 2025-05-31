@@ -1,7 +1,3 @@
-using Microsoft.Extensions.Logging;
-using RestaurantePro.Application.Common.Exceptions;
-using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
-
 namespace RestaurantePro.Application.Common.Behaviors;
 
 /// <summary>

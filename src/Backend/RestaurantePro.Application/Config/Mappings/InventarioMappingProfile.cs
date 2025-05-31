@@ -1,6 +1,3 @@
-using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
-using RestaurantePro.Application.Inventario.Ingredientes.Commands.CrearIngrediente;
-
 namespace RestaurantePro.Application.Config.Mappings;
 
 /// <summary>

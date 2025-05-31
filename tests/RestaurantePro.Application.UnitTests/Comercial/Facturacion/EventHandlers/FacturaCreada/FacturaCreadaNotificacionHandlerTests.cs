@@ -1,10 +1,3 @@
-using RestaurantePro.Application.Comercial.Facturacion.EventHandlers.FacturaCreada;
-using RestaurantePro.Domain.Comercial.Facturacion.Events;
-using RestaurantePro.Domain.Core.Notificaciones.Services;
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Core.Notificaciones.Enums;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.EventHandlers.FacturaCreada;
 
 /// <summary>

@@ -1,11 +1,3 @@
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
-using RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarCliente;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.UnitTests.Common;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Clientes.Commands;
 
 public class DesactivarClienteHandlerTests

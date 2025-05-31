@@ -1,5 +1,3 @@
-using RestaurantePro.Application.Proveedores.Proveedores.DTOs;
-
 namespace RestaurantePro.Application.Proveedores.Proveedores.Queries.ObtenerProveedorPorId;
 
 /// <summary>

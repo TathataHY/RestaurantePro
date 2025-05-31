@@ -1,8 +1,3 @@
-using RestaurantePro.Application.Common.Behaviors;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
-using RestaurantePro.Application.Core.Productos.DTOs;
-
 namespace RestaurantePro.Application.UnitTests.Common.Behaviors;
 
 /// <summary>
