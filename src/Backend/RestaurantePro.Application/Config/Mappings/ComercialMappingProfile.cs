@@ -49,7 +49,7 @@ public class ComercialMappingProfile : Profile
         //    .ForMember(dest => dest.NivelTexto, opt => opt.MapFrom(src => src.Nivel.ToString()))
         //    .ForMember(dest => dest.NombreCliente, opt => opt.MapFrom(src => src.Cliente != null ? $"{src.Cliente.Nombre} {src.Cliente.Apellido}".Trim() : string.Empty));
 
-        // Factura mappings
+        // Factura mappings 
         //CreateMap<Factura, FacturaDto>()
         //    .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => src.Estado.ToString()))
         //    .ForMember(dest => dest.TipoTexto, opt => opt.MapFrom(src => src.Tipo.ToString()))
@@ -63,20 +63,25 @@ public class ComercialMappingProfile : Profile
     {
         // Factura Entity -> FacturaDto
         CreateMap<Factura, FacturaDto>()
-            .ForMember(dest => dest.NumeroFactura, opt => opt.MapFrom(src => src.Numero.Value))
+            .ForMember(dest => dest.Numero, opt => opt.MapFrom(src => src.NumeroFactura))
             .ForMember(dest => dest.FechaEmision, opt => opt.MapFrom(src => src.FechaEmision))
             .ForMember(dest => dest.FechaVencimiento, opt => opt.MapFrom(src => src.FechaVencimiento))
             .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => src.Estado.ToString()))
-            .ForMember(dest => dest.TipoFacturaTexto, opt => opt.MapFrom(src => src.TipoFactura.ToString()))
-            .ForMember(dest => dest.SubTotal, opt => opt.MapFrom(src => src.SubTotal.Amount))
-            .ForMember(dest => dest.TotalImpuestos, opt => opt.MapFrom(src => src.TotalImpuestos.Amount))
-            .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total.Amount))
-            .ForMember(dest => dest.EstaPagada, opt => opt.MapFrom(src => src.EstaPagada))
-            .ForMember(dest => dest.EstaPendiente, opt => opt.MapFrom(src => src.EstaPendiente))
-            .ForMember(dest => dest.EstaVencida, opt => opt.MapFrom(src => src.EstaVencida))
-            .ForMember(dest => dest.TieneSaldo, opt => opt.MapFrom(src => src.TieneSaldo))
-            .ForMember(dest => dest.Saldo, opt => opt.MapFrom(src => src.Saldo.Amount));
+            .ForMember(dest => dest.TipoTexto, opt => opt.MapFrom(src => src.TipoFactura.ToString()))
+            .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.Subtotal))
+            .ForMember(dest => dest.Impuestos, opt => opt.MapFrom(src => src.TotalImpuestos))
+            .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total))
+            .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado))
+            .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.TipoFactura))
+            .ForMember(dest => dest.NombreCliente, opt => opt.MapFrom(src => src.NombreCliente))
+            .ForMember(dest => dest.ClienteId, opt => opt.MapFrom(src => src.ClienteId))
+            .ForMember(dest => dest.MontoPagado, opt => opt.MapFrom(src => src.TotalPagado))
+            .ForMember(dest => dest.FechaPago, opt => opt.MapFrom(src => src.FechaPago));
 
+        // TODO: Implementar cuando los DTOs estén disponibles
+        // DetalleFacturaDto y DescuentoFacturaDto no existen actualmente
+        
+        /*
         // DetalleFactura Entity -> DetalleFacturaDto
         CreateMap<DetalleFactura, DetalleFacturaDto>()
             .ForMember(dest => dest.ProductoNombre, opt => opt.MapFrom(src => src.ProductoNombre))
@@ -90,5 +95,6 @@ public class ComercialMappingProfile : Profile
             .ForMember(dest => dest.Valor, opt => opt.MapFrom(src => src.Valor.Amount))
             .ForMember(dest => dest.Concepto, opt => opt.MapFrom(src => src.Concepto))
             .ForMember(dest => dest.FechaAplicacion, opt => opt.MapFrom(src => src.FechaAplicacion));
+        */
     }
 } 

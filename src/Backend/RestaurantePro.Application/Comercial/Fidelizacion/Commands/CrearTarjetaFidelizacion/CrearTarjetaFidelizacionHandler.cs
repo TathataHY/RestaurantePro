@@ -44,7 +44,7 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
             if (cliente == null)
             {
                 _logger.LogWarning("Cliente {ClienteId} no encontrado", request.ClienteId);
-                return Result<TarjetaFidelizacionDto>.Failure("Cliente no encontrado");
+                return Result.Failure<TarjetaFidelizacionDto>("Cliente no encontrado");
             }
 
             // 2. Validar elegibilidad del cliente
@@ -52,7 +52,7 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
             if (!validacionResult.Succeeded)
             {
                 var errorMessage = validacionResult.Error ?? "Error de validación";
-                return Result<TarjetaFidelizacionDto>.Failure(errorMessage);
+                return Result.Failure<TarjetaFidelizacionDto>(errorMessage);
             }
 
             // 3. Generar código único para la tarjeta
@@ -72,7 +72,7 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
                 }
                 catch (Exception ex)
                 {
-                    return Result<TarjetaFidelizacionDto>.Failure($"Error configurando puntos iniciales: {ex.Message}");
+                    return Result.Failure<TarjetaFidelizacionDto>($"Error configurando puntos iniciales: {ex.Message}");
                 }
             }
 
@@ -86,7 +86,7 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
                 }
                 catch (Exception ex)
                 {
-                    return Result<TarjetaFidelizacionDto>.Failure($"Error activando tarjeta: {ex.Message}");
+                    return Result.Failure<TarjetaFidelizacionDto>($"Error activando tarjeta: {ex.Message}");
                 }
             }
 
@@ -106,12 +106,12 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
             _logger.LogInformation("Tarjeta de fidelización creada exitosamente. TarjetaId: {TarjetaId}, Código: {Codigo}",
                 tarjeta.Id, tarjeta.Codigo);
 
-            return Result<TarjetaFidelizacionDto>.Success(responseDto);
+            return Result.Success<TarjetaFidelizacionDto>(responseDto);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creando tarjeta de fidelización para Cliente {ClienteId}", request.ClienteId);
-            return Result<TarjetaFidelizacionDto>.Failure("Error interno al crear la tarjeta de fidelización");
+            return Result.Failure<TarjetaFidelizacionDto>("Error interno al crear la tarjeta de fidelización");
         }
     }
 

@@ -21,6 +21,13 @@ public interface IApplicationDbContext
     // Comercial - Facturación
     DbSet<Factura> Facturas { get; }
     
+    // Comercial - Promociones  
+    // TODO: Agregar cuando las entidades estén disponibles en el dominio
+    // DbSet<Promocion> Promociones { get; }
+    // DbSet<AplicacionPromocion> AplicacionesPromocion { get; }
+    // DbSet<DescuentoFactura> DescuentosFactura { get; }
+    // DbSet<DescuentoComanda> DescuentosComanda { get; }
+    
     // Operaciones - Comandas
     DbSet<Comanda> Comandas { get; }
     DbSet<ItemComanda> ItemsComanda { get; }
@@ -41,6 +48,10 @@ public interface IApplicationDbContext
     // Proveedores
     DbSet<Proveedor> Proveedores { get; }
     DbSet<ContactoProveedor> ContactosProveedor { get; }
+    
+    // Auditoría
+    // TODO: Agregar cuando la entidad esté disponible en el dominio
+    // DbSet<RegistroAuditoria> RegistrosAuditoria { get; }
     
     // 🆕 Entidades de Auditoría y Seguridad (cuando estén disponibles en el dominio)
     // DbSet<EventoAuditoria> EventosAuditoria { get; }
@@ -75,5 +86,6 @@ public interface IApplicationDbContext
     /// Comienza una transacción de base de datos
     /// </summary>
     /// <returns>Transacción de base de datos</returns>
-    Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
+    // TODO: Agregar cuando IUnitOfWork esté disponible
+    // Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
 } 

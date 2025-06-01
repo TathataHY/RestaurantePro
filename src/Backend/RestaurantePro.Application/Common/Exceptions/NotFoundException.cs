@@ -1,53 +1,92 @@
 namespace RestaurantePro.Application.Common.Exceptions;
 
 /// <summary>
-/// Excepción lanzada cuando una entidad no es encontrada
+/// Excepción lanzada cuando una entidad no se encuentra
+/// Proporciona información detallada sobre la entidad faltante
 /// </summary>
 public class NotFoundException : Exception
 {
     /// <summary>
-    /// Nombre de la entidad que no fue encontrada
+    /// Tipo de entidad que no se encontró
     /// </summary>
-    public string? EntityName { get; }
+    public string EntityType { get; }
 
     /// <summary>
-    /// Clave/ID de la entidad que no fue encontrada
+    /// Identificador de la entidad que no se encontró
     /// </summary>
-    public object? EntityKey { get; }
+    public object EntityId { get; }
 
     /// <summary>
-    /// Contexto adicional sobre la búsqueda
+    /// Constructor principal
     /// </summary>
-    public object? SearchContext { get; }
-
-    public NotFoundException()
-        : base("La entidad solicitada no fue encontrada.")
+    /// <param name="entityType">Tipo de entidad</param>
+    /// <param name="entityId">Identificador de la entidad</param>
+    public NotFoundException(string entityType, object entityId)
+        : base($"La entidad '{entityType}' con ID '{entityId}' no fue encontrada.")
     {
+        EntityType = entityType;
+        EntityId = entityId;
     }
 
+    /// <summary>
+    /// Constructor con mensaje personalizado
+    /// </summary>
+    /// <param name="entityType">Tipo de entidad</param>
+    /// <param name="entityId">Identificador de la entidad</param>
+    /// <param name="message">Mensaje personalizado</param>
+    public NotFoundException(string entityType, object entityId, string message)
+        : base(message)
+    {
+        EntityType = entityType;
+        EntityId = entityId;
+    }
+
+    /// <summary>
+    /// Constructor con excepción interna
+    /// </summary>
+    /// <param name="entityType">Tipo de entidad</param>
+    /// <param name="entityId">Identificador de la entidad</param>
+    /// <param name="message">Mensaje personalizado</param>
+    /// <param name="innerException">Excepción interna</param>
+    public NotFoundException(string entityType, object entityId, string message, Exception innerException)
+        : base(message, innerException)
+    {
+        EntityType = entityType;
+        EntityId = entityId;
+    }
+
+    /// <summary>
+    /// Constructor simple con solo mensaje
+    /// </summary>
+    /// <param name="message">Mensaje de error</param>
     public NotFoundException(string message)
         : base(message)
     {
+        EntityType = "Unknown";
+        EntityId = "Unknown";
     }
 
-    public NotFoundException(string message, Exception innerException)
-        : base(message, innerException)
+    /// <summary>
+    /// Constructor de fábrica para casos comunes
+    /// </summary>
+    /// <typeparam name="T">Tipo de entidad</typeparam>
+    /// <param name="entityId">Identificador de la entidad</param>
+    /// <returns>Nueva instancia de NotFoundException</returns>
+    public static NotFoundException For<T>(object entityId)
     {
+        return new NotFoundException(typeof(T).Name, entityId);
     }
 
-    public NotFoundException(string name, object key)
-        : base($"Entidad \"{name}\" ({key}) no fue encontrada.")
+    /// <summary>
+    /// Constructor de fábrica con mensaje personalizado
+    /// </summary>
+    /// <typeparam name="T">Tipo de entidad</typeparam>
+    /// <param name="entityId">Identificador de la entidad</param>
+    /// <param name="customMessage">Mensaje personalizado</param>
+    /// <returns>Nueva instancia de NotFoundException</returns>
+    public static NotFoundException For<T>(object entityId, string customMessage)
     {
-        EntityName = name;
-        EntityKey = key;
-    }
-
-    public NotFoundException(string name, object key, object? searchContext)
-        : base($"Entidad \"{name}\" ({key}) no fue encontrada.")
-    {
-        EntityName = name;
-        EntityKey = key;
-        SearchContext = searchContext;
+        return new NotFoundException(typeof(T).Name, entityId, customMessage);
     }
 
     /// <summary>
@@ -57,9 +96,9 @@ public class NotFoundException : Exception
     {
         var entityName = typeof(T).Name;
         return new NotFoundException(
-            $"{entityName} con ID {id} no fue encontrado.",
             entityName,
-            id);
+            id,
+            $"{entityName} con ID {id} no fue encontrado.");
     }
 
     /// <summary>
@@ -68,10 +107,9 @@ public class NotFoundException : Exception
     public static NotFoundException ForEntityWithCriteria(string entityName, object criteria)
     {
         return new NotFoundException(
-            $"{entityName} no encontrado con los criterios especificados.",
             entityName,
-            null,
-            criteria);
+            criteria,
+            $"{entityName} no encontrado con los criterios especificados.");
     }
 
     /// <summary>
@@ -80,9 +118,9 @@ public class NotFoundException : Exception
     public static NotFoundException ForCliente(Guid clienteId)
     {
         return new NotFoundException(
-            $"Cliente con ID {clienteId} no fue encontrado.",
             "Cliente",
-            clienteId);
+            clienteId,
+            $"Cliente con ID {clienteId} no fue encontrado.");
     }
 
     /// <summary>
@@ -91,9 +129,9 @@ public class NotFoundException : Exception
     public static NotFoundException ForProducto(Guid productoId)
     {
         return new NotFoundException(
-            $"Producto con ID {productoId} no fue encontrado.",
             "Producto",
-            productoId);
+            productoId,
+            $"Producto con ID {productoId} no fue encontrado.");
     }
 
     /// <summary>
@@ -102,9 +140,9 @@ public class NotFoundException : Exception
     public static NotFoundException ForComanda(Guid comandaId)
     {
         return new NotFoundException(
-            $"Comanda con ID {comandaId} no fue encontrada.",
             "Comanda",
-            comandaId);
+            comandaId,
+            $"Comanda con ID {comandaId} no fue encontrada.");
     }
 
     /// <summary>
@@ -113,9 +151,9 @@ public class NotFoundException : Exception
     public static NotFoundException ForMesa(Guid mesaId)
     {
         return new NotFoundException(
-            $"Mesa con ID {mesaId} no fue encontrada.",
             "Mesa",
-            mesaId);
+            mesaId,
+            $"Mesa con ID {mesaId} no fue encontrada.");
     }
 
     /// <summary>
@@ -124,10 +162,9 @@ public class NotFoundException : Exception
     public static NotFoundException ForMesaPorNumero(int numeroMesa)
     {
         return new NotFoundException(
-            $"Mesa número {numeroMesa} no fue encontrada.",
             "Mesa",
             numeroMesa,
-            new { SearchBy = "Numero", Value = numeroMesa });
+            $"Mesa número {numeroMesa} no fue encontrada.");
     }
 
     /// <summary>
@@ -136,9 +173,9 @@ public class NotFoundException : Exception
     public static NotFoundException ForReservacion(Guid reservacionId)
     {
         return new NotFoundException(
-            $"Reservación con ID {reservacionId} no fue encontrada.",
             "Reservacion",
-            reservacionId);
+            reservacionId,
+            $"Reservación con ID {reservacionId} no fue encontrada.");
     }
 
     /// <summary>
@@ -147,9 +184,9 @@ public class NotFoundException : Exception
     public static NotFoundException ForFactura(Guid facturaId)
     {
         return new NotFoundException(
-            $"Factura con ID {facturaId} no fue encontrada.",
             "Factura",
-            facturaId);
+            facturaId,
+            $"Factura con ID {facturaId} no fue encontrada.");
     }
 
     /// <summary>
@@ -158,9 +195,9 @@ public class NotFoundException : Exception
     public static NotFoundException ForIngrediente(Guid ingredienteId)
     {
         return new NotFoundException(
-            $"Ingrediente con ID {ingredienteId} no fue encontrado.",
             "Ingrediente",
-            ingredienteId);
+            ingredienteId,
+            $"Ingrediente con ID {ingredienteId} no fue encontrado.");
     }
 
     /// <summary>
@@ -169,9 +206,9 @@ public class NotFoundException : Exception
     public static NotFoundException ForProveedor(Guid proveedorId)
     {
         return new NotFoundException(
-            $"Proveedor con ID {proveedorId} no fue encontrado.",
             "Proveedor",
-            proveedorId);
+            proveedorId,
+            $"Proveedor con ID {proveedorId} no fue encontrado.");
     }
 
     /// <summary>
@@ -180,9 +217,9 @@ public class NotFoundException : Exception
     public static NotFoundException ForUsuario(Guid usuarioId)
     {
         return new NotFoundException(
-            $"Usuario con ID {usuarioId} no fue encontrado.",
             "Usuario",
-            usuarioId);
+            usuarioId,
+            $"Usuario con ID {usuarioId} no fue encontrado.");
     }
 
     /// <summary>
@@ -191,9 +228,8 @@ public class NotFoundException : Exception
     public static NotFoundException ForUsuarioPorEmail(string email)
     {
         return new NotFoundException(
-            $"Usuario con email {email} no fue encontrado.",
             "Usuario",
             email,
-            new { SearchBy = "Email", Value = email });
+            $"Usuario con email {email} no fue encontrado.");
     }
 } 

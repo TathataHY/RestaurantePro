@@ -39,29 +39,29 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
 
         try
         {
-            return await _unitOfWork.EjecutarEnTransaccionAsync(async () =>
+            return await _unitOfWork.EjecutarEnTransaccionAsync<Result<DividirComandaDto>>(async () =>
             {
                 // 1. Obtener comanda original completa
                 var comandaOriginalResult = await ObtenerComandaOriginal(request.ComandaOriginalId, cancellationToken);
-                if (!comandaOriginalResult.IsSuccess())
+                if (!comandaOriginalResult.Succeeded)
                 {
-                    return Result<DividirComandaDto>.Failure(comandaOriginalResult.ErrorMessage());
+                    return Result.Failure<DividirComandaDto>(comandaOriginalResult.Error ?? "Error obteniendo comanda original");
                 }
 
                 var comandaOriginal = comandaOriginalResult.Value;
 
                 // 2. Validar distribución de items
                 var validacionResult = await ValidarDistribucionItems(comandaOriginal, request, cancellationToken);
-                if (!validacionResult.IsSuccess())
+                if (!validacionResult.Succeeded)
                 {
-                    return Result<DividirComandaDto>.Failure(validacionResult.ErrorMessage());
+                    return Result.Failure<DividirComandaDto>(validacionResult.Error ?? "Error validando distribución de items");
                 }
 
                 // 3. Crear nuevas comandas
                 var nuevasComandasResult = await CrearNuevasComandas(comandaOriginal, request, cancellationToken);
-                if (!nuevasComandasResult.IsSuccess())
+                if (!nuevasComandasResult.Succeeded)
                 {
-                    return Result<DividirComandaDto>.Failure(nuevasComandasResult.ErrorMessage());
+                    return Result.Failure<DividirComandaDto>(nuevasComandasResult.Error ?? "Error creando nuevas comandas");
                 }
 
                 var nuevasComandas = nuevasComandasResult.Value;
@@ -90,7 +90,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
                 _logger.LogInformation("✅ División completada exitosamente. Comanda original: {ComandaOriginalId}, Nuevas comandas: {NuevasComandasIds}",
                     request.ComandaOriginalId, string.Join(", ", nuevasComandas.Select(c => c.Id)));
 
-                return Result<DividirComandaDto>.Success(response);
+                return Result.Success<DividirComandaDto>(response);
 
             }, cancellationToken);
         }
@@ -98,7 +98,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
         {
             _logger.LogError(ex, "❌ Error al dividir comanda {ComandaOriginalId}: {ErrorMessage}", 
                 request.ComandaOriginalId, ex.Message);
-            return Result<DividirComandaDto>.Failure($"Error interno al dividir la comanda: {ex.Message}");
+            return Result.Failure<DividirComandaDto>($"Error interno al dividir la comanda: {ex.Message}");
         }
     }
 
@@ -113,10 +113,10 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
 
         if (comanda == null)
         {
-            return Result<Comanda>.Failure("La comanda original especificada no existe.");
+            return Result.Failure<Comanda>("La comanda original especificada no existe.");
         }
 
-        return Result<Comanda>.Success(comanda);
+        return Result.Success<Comanda>(comanda);
     }
 
     private async Task<Result<string>> ValidarDistribucionItems(Comanda comandaOriginal, DividirComandaCommand request, CancellationToken cancellationToken)
@@ -134,7 +134,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
             {
                 if (!request.MantenerComandaOriginal)
                 {
-                    return Result<string>.Failure($"El item {itemOriginal.Key} no está distribuido en ninguna nueva comanda.");
+                    return Result.Failure<string>($"El item {itemOriginal.Key} no está distribuido en ninguna nueva comanda.");
                 }
                 continue;
             }
@@ -144,16 +144,16 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
 
             if (cantidadDistribuida > cantidadOriginal)
             {
-                return Result<string>.Failure($"La cantidad distribuida del item {itemOriginal.Key} ({cantidadDistribuida}) excede la cantidad original ({cantidadOriginal}).");
+                return Result.Failure<string>($"La cantidad distribuida del item {itemOriginal.Key} ({cantidadDistribuida}) excede la cantidad original ({cantidadOriginal}).");
             }
 
             if (!request.MantenerComandaOriginal && cantidadDistribuida < cantidadOriginal)
             {
-                return Result<string>.Failure($"La cantidad distribuida del item {itemOriginal.Key} ({cantidadDistribuida}) es menor que la cantidad original ({cantidadOriginal}).");
+                return Result.Failure<string>($"La cantidad distribuida del item {itemOriginal.Key} ({cantidadDistribuida}) es menor que la cantidad original ({cantidadOriginal}).");
             }
         }
 
-        return Result<string>.Success("Validación exitosa");
+        return Result.Success<string>("Validación exitosa");
     }
 
     private async Task<Result<List<Comanda>>> CrearNuevasComandas(Comanda comandaOriginal, DividirComandaCommand request, CancellationToken cancellationToken)
@@ -174,7 +174,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
             await _context.Comandas.AddAsync(nuevaComanda, cancellationToken);
         }
 
-        return Result<List<Comanda>>.Success(nuevasComandas);
+        return Result.Success<List<Comanda>>(nuevasComandas);
     }
 
     private async Task DistribuirItems(Comanda comandaOriginal, List<Comanda> nuevasComandas, DividirComandaCommand request, CancellationToken cancellationToken)
@@ -192,7 +192,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
                 // Agregar item usando el método real disponible
                 nuevaComanda.AgregarItem(
                     itemOriginal.ProductoId,
-                    itemOriginal.NombreProducto,
+                    $"Producto {itemOriginal.ProductoId}", // Nombre temporal ya que ItemComanda no almacena nombres
                     itemDivision.Cantidad,
                     itemOriginal.PrecioUnitario,
                     itemDivision.ObservacionesItem ?? itemOriginal.Observaciones

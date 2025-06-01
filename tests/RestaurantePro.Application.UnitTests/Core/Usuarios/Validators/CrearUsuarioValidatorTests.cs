@@ -574,7 +574,7 @@ public class CrearUsuarioValidatorTests
     }
 
     [Fact]
-    public async Task Validate_ConMuchos RolesAdicionales_DeberiaRetornarError()
+    public async Task Validate_ConMuchosRolesAdicionales_DeberiaRetornarError()
     {
         // Arrange
         var command = CrearCommandValido();

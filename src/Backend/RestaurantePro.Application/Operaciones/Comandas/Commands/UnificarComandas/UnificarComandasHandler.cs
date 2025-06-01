@@ -43,18 +43,18 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
             {
                 // 1. Obtener comandas originales
                 var comandasOriginalesResult = await ObtenerComandasOriginales(request.ComandasIds, cancellationToken);
-                if (!comandasOriginalesResult.IsSuccess)
+                if (!comandasOriginalesResult.Succeeded)
                 {
-                    return Result<UnificarComandasDto>.Failure(comandasOriginalesResult.ErrorMessage);
+                    return Result.Failure<UnificarComandasDto>(comandasOriginalesResult.Error ?? "Error obteniendo comandas originales");
                 }
 
                 var comandasOriginales = comandasOriginalesResult.Value;
 
                 // 2. Determinar comanda principal o crear nueva
                 var comandaUnificadaResult = await ObtenerOCrearComandaUnificada(comandasOriginales, request, cancellationToken);
-                if (!comandaUnificadaResult.IsSuccess)
+                if (!comandaUnificadaResult.Succeeded)
                 {
-                    return Result<UnificarComandasDto>.Failure(comandaUnificadaResult.ErrorMessage);
+                    return Result.Failure<UnificarComandasDto>(comandaUnificadaResult.Error ?? "Error obteniendo o creando comanda unificada");
                 }
 
                 var comandaUnificada = comandaUnificadaResult.Value;
@@ -83,7 +83,7 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
                 _logger.LogInformation("✅ Unificación completada exitosamente. Comandas originales: {ComandasOriginalesIds}, Comanda unificada: {ComandaUnificadaId}",
                     string.Join(", ", request.ComandasIds), comandaUnificada.Id);
 
-                return Result<UnificarComandasDto>.Success(response);
+                return Result.Success<UnificarComandasDto>(response);
 
             }, cancellationToken);
         }
@@ -91,7 +91,7 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
         {
             _logger.LogError(ex, "❌ Error al unificar comandas {ComandasIds}: {ErrorMessage}", 
                 string.Join(", ", request.ComandasIds), ex.Message);
-            return Result<UnificarComandasDto>.Failure($"Error interno al unificar las comandas: {ex.Message}");
+            return Result.Failure<UnificarComandasDto>($"Error interno al unificar las comandas: {ex.Message}");
         }
     }
 
@@ -107,10 +107,10 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
         if (comandas.Count != comandasIds.Count)
         {
             var faltantes = comandasIds.Except(comandas.Select(c => c.Id)).ToList();
-            return Result<List<Comanda>>.Failure($"Las siguientes comandas no fueron encontradas: {string.Join(", ", faltantes)}");
+            return Result.Failure<List<Comanda>>($"Las siguientes comandas no fueron encontradas: {string.Join(", ", faltantes)}");
         }
 
-        return Result<List<Comanda>>.Success(comandas);
+        return Result.Success<List<Comanda>>(comandas);
     }
 
     private async Task<Result<Comanda>> ObtenerOCrearComandaUnificada(List<Comanda> comandasOriginales, UnificarComandasCommand request, CancellationToken cancellationToken)
@@ -123,7 +123,7 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
             comandaUnificada = comandasOriginales.FirstOrDefault(c => c.Id == request.ComandaPrincipalId.Value);
             if (comandaUnificada == null)
             {
-                return Result<Comanda>.Failure("La comanda principal especificada no se encuentra en la lista de comandas a unificar.");
+                return Result.Failure<Comanda>("La comanda principal especificada no se encuentra en la lista de comandas a unificar.");
             }
 
             // Actualizar observaciones de la comanda principal usando método disponible
@@ -144,7 +144,7 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
             await _context.Comandas.AddAsync(comandaUnificada, cancellationToken);
         }
 
-        return Result<Comanda>.Success(comandaUnificada);
+        return Result.Success<Comanda>(comandaUnificada);
     }
 
     private async Task ConsolidarItems(List<Comanda> comandasOriginales, Comanda comandaUnificada, CancellationToken cancellationToken)

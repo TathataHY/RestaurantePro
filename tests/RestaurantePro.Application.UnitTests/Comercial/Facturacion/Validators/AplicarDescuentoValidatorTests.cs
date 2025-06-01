@@ -563,7 +563,7 @@ public class AplicarDescuentoValidatorTests
     #region Validación ProductosEspecificos
 
     [Fact]
-    public async Task Validate_ConMuchos ProductosEspecificos_DeberiaRetornarError()
+    public async Task Validate_ConMuchosProductosEspecificos_DeberiaRetornarError()
     {
         // Arrange
         var command = CrearCommandValido();
@@ -584,7 +584,7 @@ public class AplicarDescuentoValidatorTests
     #region Validación CategoriasAplicables
 
     [Fact]
-    public async Task Validate_ConMuchas CategoriasAplicables_DeberiaRetornarError()
+    public async Task Validate_ConMuchasCategoriasAplicables_DeberiaRetornarError()
     {
         // Arrange
         var command = CrearCommandValido();

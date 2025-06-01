@@ -29,6 +29,10 @@ public class OperacionesMappingProfile : Profile
             .ForMember(dest => dest.Impuestos, opt => opt.MapFrom(src => src.Total != null ? src.Total.Impuestos : 0))
             .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total != null ? src.Total.Total : 0))
             .ForMember(dest => dest.CantidadItems, opt => opt.MapFrom(src => src.Items.Count))
+            // ✅ ACTIVADOS: Propiedades que SÍ existen en ComandaDto
+            .ForMember(dest => dest.FechaApertura, opt => opt.MapFrom(src => src.FechaCreacion))
+            .ForMember(dest => dest.FechaCierre, opt => opt.MapFrom(src => src.FechaActualizacion))
+            .ForMember(dest => dest.Descuentos, opt => opt.MapFrom(src => src.Total != null ? src.Total.Descuento ?? 0 : 0))
             // TODO: Reactivar cuando existan estas propiedades en ComandaDto
             //.ForMember(dest => dest.TieneDescuentoFidelizacion, opt => opt.MapFrom(src => src.TieneDescuentoFidelizacion()))
             //.ForMember(dest => dest.PuedeModificar, opt => opt.MapFrom(src => PuedeModificarComanda(src.Estado)))
@@ -40,7 +44,9 @@ public class OperacionesMappingProfile : Profile
             .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
             .ForMember(dest => dest.FechaModificacion, opt => opt.MapFrom(src => src.FechaActualizacion))
             // Campos que requieren datos adicionales (se pueden completar en el handler)
-            .ForMember(dest => dest.NumeroMesa, opt => opt.Ignore());
+            .ForMember(dest => dest.NumeroMesa, opt => opt.Ignore())
+            .ForMember(dest => dest.NombreUsuario, opt => opt.Ignore()) // Se completa en el handler
+            .ForMember(dest => dest.NombreCliente, opt => opt.Ignore()); // Se completa en el handler
             // TODO: Reactivar cuando existan propiedades Usuario en Domain
             //.ForMember(dest => dest.NombreMesero, opt => opt.Ignore())
             //.ForMember(dest => dest.NombreCliente, opt => opt.Ignore())
@@ -89,13 +95,20 @@ public class OperacionesMappingProfile : Profile
             //.ForMember(dest => dest.NombreProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Nombre : string.Empty))
             //.ForMember(dest => dest.DescripcionProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Descripcion : null));
 
-        // TODO: Mapear personalizaciones cuando estén disponibles en el dominio
-        // ✅ ACTIVADO: Mapeo de personalizaciones
+        // TODO: Resolver ambigüedad entre PersonalizacionItem de diferentes namespaces
+        // PersonalizacionItem existe en:
+        // - RestaurantePro.Application.Operaciones.Comandas.Commands.ProcesarPedidoCompleto.PersonalizacionItem
+        // - RestaurantePro.Domain.Operaciones.Comandas.ValueObjects.PersonalizacionItem
+        
+        /*
         CreateMap<PersonalizacionItem, PersonalizacionDto>()
-            .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Tipo.ToString()))
-            .ForMember(dest => dest.IngredienteEspecial, opt => opt.MapFrom(src => src.IngredienteEspecial))
+            .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Accion.ToString()))
+            .ForMember(dest => dest.IngredienteId, opt => opt.MapFrom(src => src.IngredienteId))
+            .ForMember(dest => dest.NombreIngrediente, opt => opt.MapFrom(src => src.NombreIngrediente))
+            .ForMember(dest => dest.Cantidad, opt => opt.MapFrom(src => src.Cantidad))
             .ForMember(dest => dest.PrecioAdicional, opt => opt.MapFrom(src => src.PrecioAdicional))
-            .ForMember(dest => dest.Instrucciones, opt => opt.MapFrom(src => src.Instrucciones));
+            .ForMember(dest => dest.Detalles, opt => opt.MapFrom(src => src.ObtenerDescripcion()));
+        */
 
         // TODO: Reactivar cuando existan DTOs
         // ItemComandaCreateDto → AgregarItemComandaCommand (DTO de entrada a comando)

@@ -28,6 +28,21 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Enums
         /// <summary>
         /// Factura electrónica
         /// </summary>
-        Electronica = 5
+        Electronica = 5,
+        
+        /// <summary>
+        /// Factura de venta (alias para Normal)
+        /// </summary>
+        Venta = 6,
+        
+        /// <summary>
+        /// Factura de devolución
+        /// </summary>
+        Devolucion = 7,
+        
+        /// <summary>
+        /// Nota de débito
+        /// </summary>
+        NotaDebito = 8
     }
 } 

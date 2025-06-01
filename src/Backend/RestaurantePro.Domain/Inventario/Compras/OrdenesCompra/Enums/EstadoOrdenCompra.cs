@@ -31,6 +31,16 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums
         Cancelada = 4,
         
         /// <summary>
+        /// La orden ha sido confirmada por el proveedor
+        /// </summary>
+        Confirmada = 5,
+        
+        /// <summary>
+        /// La orden está en tránsito hacia el destino
+        /// </summary>
+        EnTransito = 6,
+        
+        /// <summary>
         /// Alias de Pendiente - La orden está en estado borrador
         /// </summary>
         Borrador = Pendiente,

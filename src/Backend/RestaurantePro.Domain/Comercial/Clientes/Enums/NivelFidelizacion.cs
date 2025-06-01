@@ -23,6 +23,11 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Enums
         /// <summary>
         /// Nivel platino para clientes VIP
         /// </summary>
-        Platino = 3
+        Platino = 3,
+        
+        /// <summary>
+        /// Nivel diamante para clientes premium exclusivos
+        /// </summary>
+        Diamante = 4
     }
 }

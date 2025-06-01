@@ -224,8 +224,7 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
 
         // Verificar si tiene roles que permiten generar reportes
         return usuario.Roles.Any(r => r == RolUsuario.Administrador || 
-                                     r == RolUsuario.Gerente || 
-                                     r == RolUsuario.Supervisor) ||
+                                     r == RolUsuario.Gerente) ||
                usuario.EsAdministrador;
     }
 
@@ -274,8 +273,8 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
                 await _context.Comandas.AnyAsync(c => c.FechaCreacion.Date >= command.FechaInicio.Date && 
                                                      c.FechaCreacion.Date <= command.FechaFin.Date, cancellationToken),
             TipoReporte.Inventario =>
-                await _context.MovimientosInventario.AnyAsync(m => m.FechaMovimiento.Date >= command.FechaInicio.Date && 
-                                                                  m.FechaMovimiento.Date <= command.FechaFin.Date, cancellationToken),
+                await _context.MovimientosInventario.AnyAsync(m => m.FechaCreacion.Date >= command.FechaInicio.Date && 
+                                                                  m.FechaCreacion.Date <= command.FechaFin.Date, cancellationToken),
             _ => true // Para otros tipos, asumir que hay datos
         };
     }

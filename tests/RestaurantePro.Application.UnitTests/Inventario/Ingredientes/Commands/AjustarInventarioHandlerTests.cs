@@ -67,7 +67,7 @@ public class AjustarInventarioHandlerTests
         var command = new AjustarInventarioCommand
         {
             IngredienteId = ingredienteId,
-            TipoAjuste = TipoAjusteInventario.Incremento,
+            TipoAjuste = TipoMovimientoInventario.Incremento,
             Cantidad = cantidadAjuste,
             MotivoAjuste = "Recuento físico - encontrado stock adicional",
             Observaciones = "Productos encontrados en almacén auxiliar",
@@ -99,7 +99,7 @@ public class AjustarInventarioHandlerTests
         _dateTimeServiceMock.Setup(x => x.Now).Returns(fechaActual);
         _ingredienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ingrediente);
-        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoAjusteInventario>(), cantidadAjuste))
+        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoMovimientoInventario>(), cantidadAjuste))
             .Returns(Result.Success());
         _ingredienteRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -133,7 +133,7 @@ public class AjustarInventarioHandlerTests
 
         // Verify auditoría registrada
         _auditServiceMock.Verify(x => x.RegistrarAjusteInventarioAsync(
-            ingredienteId, usuarioId, TipoAjusteInventario.Incremento, 
+            ingredienteId, usuarioId, TipoMovimientoInventario.Incremento, 
             cantidadAjuste, It.IsAny<string>(), fechaActual, It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -154,7 +154,7 @@ public class AjustarInventarioHandlerTests
         var command = new AjustarInventarioCommand
         {
             IngredienteId = ingredienteId,
-            TipoAjuste = TipoAjusteInventario.Decremento,
+            TipoAjuste = TipoMovimientoInventario.Decremento,
             Cantidad = cantidadAjuste,
             MotivoAjuste = "Merma por deterioro",
             Observaciones = "Productos vencidos descartados",
@@ -179,7 +179,7 @@ public class AjustarInventarioHandlerTests
         _dateTimeServiceMock.Setup(x => x.Now).Returns(fechaActual);
         _ingredienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ingrediente);
-        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoAjusteInventario>(), cantidadAjuste))
+        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoMovimientoInventario>(), cantidadAjuste))
             .Returns(Result.Success());
         _alertaStockServiceMock.Setup(x => x.VerificarNivelStockAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AlertaStock 
@@ -223,7 +223,7 @@ public class AjustarInventarioHandlerTests
         var command = new AjustarInventarioCommand
         {
             IngredienteId = ingredienteId,
-            TipoAjuste = TipoAjusteInventario.Incremento,
+            TipoAjuste = TipoMovimientoInventario.Incremento,
             Cantidad = 10m,
             MotivoAjuste = "Ajuste de prueba"
         };
@@ -256,7 +256,7 @@ public class AjustarInventarioHandlerTests
         var command = new AjustarInventarioCommand
         {
             IngredienteId = ingredienteId,
-            TipoAjuste = TipoAjusteInventario.Incremento,
+            TipoAjuste = TipoMovimientoInventario.Incremento,
             Cantidad = 10m,
             MotivoAjuste = "Intento sin autorización"
         };
@@ -293,7 +293,7 @@ public class AjustarInventarioHandlerTests
         var command = new AjustarInventarioCommand
         {
             IngredienteId = ingredienteId,
-            TipoAjuste = TipoAjusteInventario.Incremento,
+            TipoAjuste = TipoMovimientoInventario.Incremento,
             Cantidad = cantidad,
             MotivoAjuste = "Prueba cantidad inválida"
         };
@@ -304,7 +304,7 @@ public class AjustarInventarioHandlerTests
         _currentUserMock.Setup(x => x.Rol).Returns(RolUsuario.Administrador.ToString());
         _ingredienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ingrediente);
-        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoAjusteInventario>(), cantidad))
+        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoMovimientoInventario>(), cantidad))
             .Returns(Result.Failure(mensajeEsperado));
 
         // Act
@@ -329,7 +329,7 @@ public class AjustarInventarioHandlerTests
         var command = new AjustarInventarioCommand
         {
             IngredienteId = ingredienteId,
-            TipoAjuste = TipoAjusteInventario.Decremento,
+            TipoAjuste = TipoMovimientoInventario.Decremento,
             Cantidad = cantidadAjuste,
             MotivoAjuste = "Ajuste que causaría stock negativo"
         };
@@ -340,7 +340,7 @@ public class AjustarInventarioHandlerTests
         _currentUserMock.Setup(x => x.Rol).Returns(RolUsuario.Administrador.ToString());
         _ingredienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ingrediente);
-        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), TipoAjusteInventario.Decremento, cantidadAjuste))
+        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), TipoMovimientoInventario.Decremento, cantidadAjuste))
             .Returns(Result.Failure($"El ajuste causaría stock negativo. Stock actual: {stockActual}, Cantidad a reducir: {cantidadAjuste}"));
 
         // Act
@@ -365,7 +365,7 @@ public class AjustarInventarioHandlerTests
         var command = new AjustarInventarioCommand
         {
             IngredienteId = ingredienteId,
-            TipoAjuste = TipoAjusteInventario.Incremento,
+            TipoAjuste = TipoMovimientoInventario.Incremento,
             Cantidad = cantidadAjuste,
             MotivoAjuste = "Compra masiva de emergencia",
             Observaciones = "Ajuste mayor que requiere supervisión",
@@ -381,7 +381,7 @@ public class AjustarInventarioHandlerTests
         _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
         _ingredienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ingrediente);
-        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoAjusteInventario>(), cantidadAjuste))
+        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoMovimientoInventario>(), cantidadAjuste))
             .Returns(Result.Success());
         _validacionServiceMock.Setup(x => x.RequiereAprobacion(cantidadAjuste, It.IsAny<decimal>()))
             .Returns(true);
@@ -406,7 +406,7 @@ public class AjustarInventarioHandlerTests
 
         // Verify auditoría con marca de requerimiento de aprobación
         _auditServiceMock.Verify(x => x.RegistrarAjusteInventarioAsync(
-            It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<TipoAjusteInventario>(), 
+            It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<TipoMovimientoInventario>(), 
             It.IsAny<decimal>(), It.Is<string>(s => s.Contains("REQUIERE APROBACIÓN")), 
             It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -424,7 +424,7 @@ public class AjustarInventarioHandlerTests
         var command = new AjustarInventarioCommand
         {
             IngredienteId = ingredienteId,
-            TipoAjuste = TipoAjusteInventario.Incremento,
+            TipoAjuste = TipoMovimientoInventario.Incremento,
             Cantidad = 50m,
             MotivoAjuste = "Recepción de mercadería",
             DocumentoReferencia = documentoReferencia,
@@ -441,7 +441,7 @@ public class AjustarInventarioHandlerTests
             .ReturnsAsync(ingrediente);
         _proveedorRepositoryMock.Setup(x => x.ObtenerPorIdAsync(command.ProveedorId.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(proveedor);
-        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoAjusteInventario>(), It.IsAny<decimal>()))
+        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoMovimientoInventario>(), It.IsAny<decimal>()))
             .Returns(Result.Success());
         _validacionServiceMock.Setup(x => x.ValidarDocumentoReferencia(documentoReferencia))
             .Returns(Result.Success());
@@ -475,12 +475,12 @@ public class AjustarInventarioHandlerTests
     /// ✅ Test: Diferentes tipos de ajuste con motivos específicos
     /// </summary>
     [Theory]
-    [InlineData(TipoAjusteInventario.Incremento, "Recuento físico - stock adicional encontrado", "Entrada por recuento")]
-    [InlineData(TipoAjusteInventario.Decremento, "Merma por deterioro", "Salida por merma")]
-    [InlineData(TipoAjusteInventario.Incremento, "Devolución de proveedor", "Entrada por devolución")]
-    [InlineData(TipoAjusteInventario.Decremento, "Producto dañado en transporte", "Salida por daño")]
+    [InlineData(TipoMovimientoInventario.Incremento, "Recuento físico - stock adicional encontrado", "Entrada por recuento")]
+    [InlineData(TipoMovimientoInventario.Decremento, "Merma por deterioro", "Salida por merma")]
+    [InlineData(TipoMovimientoInventario.Incremento, "Devolución de proveedor", "Entrada por devolución")]
+    [InlineData(TipoMovimientoInventario.Decremento, "Producto dañado en transporte", "Salida por daño")]
     public async Task Handle_DiferentesTiposDeAjuste_DeberiaCategorizarCorrectamente(
-        TipoAjusteInventario tipoAjuste, string motivo, string categoriaEsperada)
+        TipoMovimientoInventario tipoAjuste, string motivo, string categoriaEsperada)
     {
         // Arrange
         var ingredienteId = Guid.NewGuid();
@@ -537,7 +537,7 @@ public class AjustarInventarioHandlerTests
         var command = new AjustarInventarioCommand
         {
             IngredienteId = ingredienteId,
-            TipoAjuste = TipoAjusteInventario.Decremento,
+            TipoAjuste = TipoMovimientoInventario.Decremento,
             Cantidad = cantidadAjuste,
             MotivoAjuste = "Uso intensivo durante evento especial"
         };
@@ -551,7 +551,7 @@ public class AjustarInventarioHandlerTests
         _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
         _ingredienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ingrediente);
-        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoAjusteInventario>(), cantidadAjuste))
+        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoMovimientoInventario>(), cantidadAjuste))
             .Returns(Result.Success());
         _alertaStockServiceMock.Setup(x => x.VerificarNivelStockAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AlertaStock 
@@ -596,7 +596,7 @@ public class AjustarInventarioHandlerTests
         var command = new AjustarInventarioCommand
         {
             IngredienteId = ingredienteId,
-            TipoAjuste = TipoAjusteInventario.Incremento,
+            TipoAjuste = TipoMovimientoInventario.Incremento,
             Cantidad = 25m,
             MotivoAjuste = "Prueba rollback"
         };
@@ -608,7 +608,7 @@ public class AjustarInventarioHandlerTests
         _currentUserMock.Setup(x => x.Rol).Returns(RolUsuario.Administrador.ToString());
         _ingredienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ingrediente);
-        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoAjusteInventario>(), It.IsAny<decimal>()))
+        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoMovimientoInventario>(), It.IsAny<decimal>()))
             .Returns(Result.Success());
         _ingredienteRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -626,7 +626,7 @@ public class AjustarInventarioHandlerTests
 
         // Verify no se registró auditoría por fallo en transacción
         _auditServiceMock.Verify(x => x.RegistrarAjusteInventarioAsync(
-            It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<TipoAjusteInventario>(), 
+            It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<TipoMovimientoInventario>(), 
             It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -646,7 +646,7 @@ public class AjustarInventarioHandlerTests
         var command = new AjustarInventarioCommand
         {
             IngredienteId = ingredienteId,
-            TipoAjuste = TipoAjusteInventario.Incremento,
+            TipoAjuste = TipoMovimientoInventario.Incremento,
             Cantidad = cantidad,
             MotivoAjuste = "Validación de límites por rol"
         };
@@ -663,7 +663,7 @@ public class AjustarInventarioHandlerTests
         {
             _validacionServiceMock.Setup(x => x.ValidarLimitesAjustePorRol(rol, cantidad))
                 .Returns(Result.Success());
-            _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoAjusteInventario>(), cantidad))
+            _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoMovimientoInventario>(), cantidad))
                 .Returns(Result.Success());
             _ingredienteRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);

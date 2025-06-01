@@ -86,6 +86,10 @@ public class InventarioMappingProfile : Profile
     /// </summary>
     private void ConfigurarMapeosOrdenesCompra()
     {
+        // TODO: Implementar cuando los DTOs estén disponibles
+        // OrdenCompraDto y DetalleOrdenCompraDto no existen actualmente
+        
+        /*
         // OrdenCompra Entity -> OrdenCompraDto
         CreateMap<OrdenCompra, OrdenCompraDto>()
             .ForMember(dest => dest.NumeroOrden, opt => opt.MapFrom(src => src.NumeroOrden.Value))
@@ -109,5 +113,6 @@ public class InventarioMappingProfile : Profile
             .ForMember(dest => dest.CantidadRecibida, opt => opt.MapFrom(src => src.CantidadRecibida))
             .ForMember(dest => dest.EstaPendiente, opt => opt.MapFrom(src => src.CantidadRecibida < src.CantidadSolicitada))
             .ForMember(dest => dest.EstaCompleto, opt => opt.MapFrom(src => src.CantidadRecibida >= src.CantidadSolicitada));
+        */
     }
 } 

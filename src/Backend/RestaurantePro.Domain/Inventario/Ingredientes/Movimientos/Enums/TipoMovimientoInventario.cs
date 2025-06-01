@@ -10,9 +10,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums
         /// </summary>
         Ingreso = 0,
         
-        /// <summary>w
+        /// <summary>
         /// Salida de productos del inventario (consumo, ventas, pérdidas, ajustes negativos)
-        /// </summary>dwad
+        /// </summary>
         Egreso = 1,
         
         /// <summary>
@@ -28,6 +28,41 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums
         /// <summary>
         /// Ajuste de inventario (puede ser positivo o negativo)
         /// </summary>
-        Ajuste = 2
+        Ajuste = 2,
+        
+        /// <summary>
+        /// Transferencia entre ubicaciones o sucursales
+        /// </summary>
+        Transferencia = 3,
+        
+        /// <summary>
+        /// Merma o deterioro de productos
+        /// </summary>
+        Merma = 4,
+        
+        /// <summary>
+        /// Devolución de productos
+        /// </summary>
+        Devolucion = 5,
+        
+        /// <summary>
+        /// Recuento físico de inventario
+        /// </summary>
+        RecuentoFisico = 6,
+        
+        /// <summary>
+        /// Corrección de errores en inventario
+        /// </summary>
+        Correccion = 7,
+        
+        /// <summary>
+        /// Incremento de stock
+        /// </summary>
+        Incremento = 8,
+        
+        /// <summary>
+        /// Decremento de stock
+        /// </summary>
+        Decremento = 9
     }
 } 

@@ -94,6 +94,7 @@ global using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 global using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
 global using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
@@ -164,6 +165,9 @@ global using RestaurantePro.Application.Operaciones.Mesas.Commands.AsignarMesa;
 global using RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
 global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.CrearReservacion;
 global using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
+global using RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
+global using RestaurantePro.Application.Operaciones.Comandas.Commands.ProcesarPedidoCompleto;
+global using RestaurantePro.Application.Operaciones.Comandas.Commands.UnificarComandas;
 
 // Application - Commands (Inventario)
 global using RestaurantePro.Application.Inventario.Ingredientes.Commands.CrearIngrediente;

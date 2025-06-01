@@ -29,7 +29,8 @@ public class ConfirmarReservacionValidator : AbstractValidator<ConfirmarReservac
             .WithMessage("La reservación especificada no existe.")
             .When(v => v.ReservacionId != Guid.Empty);
 
-        // Validación alternativa por código
+        // TODO: Validación alternativa por código cuando la propiedad esté disponible
+        /*
         RuleFor(v => v.CodigoReservacion)
             .NotEmpty()
             .WithMessage("El código de reservación es requerido cuando no se proporciona ID.")
@@ -40,44 +41,35 @@ public class ConfirmarReservacionValidator : AbstractValidator<ConfirmarReservac
             .MustAsync(CodigoReservacionExiste)
             .WithMessage("El código de reservación especificado no existe.")
             .When(v => v.ReservacionId == Guid.Empty);
-
-        // Validación de que se proporcione al menos un identificador
-        RuleFor(v => v)
-            .Must(v => v.ReservacionId != Guid.Empty || !string.IsNullOrEmpty(v.CodigoReservacion))
-            .WithMessage("Debe proporcionar el ID de reservación o el código de reservación.")
-            .WithName("Identificacion");
+        */
 
         // Validación de método de confirmación
         RuleFor(v => v.MetodoConfirmacion)
             .NotEmpty()
             .WithMessage("El método de confirmación es requerido.")
-            .MaximumLength(50)
-            .WithMessage("El método de confirmación no puede exceder 50 caracteres.")
             .Must(BeValidMetodoConfirmacion)
-            .WithMessage("El método de confirmación debe ser válido: Manual, Telefono, Email, SMS, App.");
-    }
+            .WithMessage("El método de confirmación no es válido. Valores permitidos: Manual, Telefono, Email, SMS, App.");
 
-    private void ConfigurarValidacionesCondicionales()
-    {
-        // Validaciones cuando se proporciona el confirmado por
+        // Validación de quien confirma
         RuleFor(v => v.ConfirmadoPor)
-            .NotEmpty()
-            .WithMessage("La persona que confirma es requerida para confirmaciones manuales.")
             .MaximumLength(100)
             .WithMessage("El nombre de quien confirma no puede exceder 100 caracteres.")
-            .When(v => v.MetodoConfirmacion == "Manual");
+            .When(v => !string.IsNullOrEmpty(v.ConfirmadoPor));
 
-        // Validaciones de notas de confirmación
+        // Validación de notas de confirmación
         RuleFor(v => v.NotasConfirmacion)
             .MaximumLength(500)
             .WithMessage("Las notas de confirmación no pueden exceder 500 caracteres.")
             .When(v => !string.IsNullOrEmpty(v.NotasConfirmacion));
+    }
 
-        // Validaciones de datos adicionales
+    private void ConfigurarValidacionesCondicionales()
+    {
+        // Validación de datos adicionales
         RuleFor(v => v.DatosAdicionales)
-            .Must(DatosAdicionalesValidos)
-            .WithMessage("Los datos adicionales contienen información inválida.")
-            .When(v => v.DatosAdicionales != null && v.DatosAdicionales.Any());
+            .Must(DatosAdicionalesValidos!)
+            .WithMessage("Los datos adicionales contienen información inválida o exceden el límite permitido.")
+            .When(v => v.DatosAdicionales != null);
     }
 
     private void ConfigurarValidacionesNegocio()
@@ -109,11 +101,14 @@ public class ConfirmarReservacionValidator : AbstractValidator<ConfirmarReservac
             .AnyAsync(r => r.Id == reservacionId, cancellationToken);
     }
 
+    // TODO: Implementar cuando CodigoReservacion esté disponible en la entidad
+    /*
     private async Task<bool> CodigoReservacionExiste(string codigoReservacion, CancellationToken cancellationToken)
     {
         return await _context.Reservaciones
             .AnyAsync(r => r.CodigoReservacion == codigoReservacion, cancellationToken);
     }
+    */
 
     private static bool BeValidMetodoConfirmacion(string metodo)
     {
@@ -128,9 +123,10 @@ public class ConfirmarReservacionValidator : AbstractValidator<ConfirmarReservac
             return false;
 
         // Validar que las claves no sean muy largas
-        return datosAdicionales.All(kvp => 
-            !string.IsNullOrEmpty(kvp.Key) && 
-            kvp.Key.Length <= 50);
+        if (datosAdicionales.Keys.Any(k => k.Length > 50))
+            return false;
+
+        return true;
     }
 
     private async Task<bool> ReservacionEsConfirmable(Guid reservacionId, CancellationToken cancellationToken)
@@ -141,8 +137,8 @@ public class ConfirmarReservacionValidator : AbstractValidator<ConfirmarReservac
         if (reservacion == null)
             return false;
 
-        // Solo se pueden confirmar reservaciones pendientes
-        return reservacion.Estado == EstadoReservacion.Pendiente;
+        // Solo se pueden confirmar reservaciones en estado Pendiente
+        return reservacion.Estado == RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Pendiente;
     }
 
     private async Task<bool> NoExcedeTiempoLimiteConfirmacion(Guid reservacionId, CancellationToken cancellationToken)
@@ -154,25 +150,27 @@ public class ConfirmarReservacionValidator : AbstractValidator<ConfirmarReservac
             return false;
 
         // Permitir confirmación hasta 2 horas antes de la reservación
-        var tiempoLimite = reservacion.FechaHora.AddHours(-2);
+        var fechaHoraReservacion = reservacion.Fecha.Add(reservacion.Hora);
+        var tiempoLimite = fechaHoraReservacion.AddHours(-2);
+        
         return DateTime.UtcNow <= tiempoLimite;
     }
 
     private async Task<bool> MesaSigueDisponible(Guid reservacionId, CancellationToken cancellationToken)
     {
         var reservacion = await _context.Reservaciones
-            .Include(r => r.Mesa)
             .FirstOrDefaultAsync(r => r.Id == reservacionId, cancellationToken);
 
         if (reservacion == null)
             return false;
 
         // Verificar que no haya conflictos con otras reservaciones confirmadas
+        var fechaHoraReservacion = reservacion.Fecha.Add(reservacion.Hora);
         var conflictos = await _context.Reservaciones
             .Where(r => r.Id != reservacionId &&
                        r.MesaId == reservacion.MesaId &&
-                       r.Estado == EstadoReservacion.Confirmada &&
-                       r.FechaHora.Date == reservacion.FechaHora.Date)
+                       r.Estado == RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Confirmada &&
+                       r.Fecha.Date == reservacion.Fecha.Date)
             .AnyAsync(cancellationToken);
 
         return !conflictos;

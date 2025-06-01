@@ -23,6 +23,11 @@ namespace RestaurantePro.Domain.Core.Usuarios.Enums
         /// <summary>
         /// Usuario pendiente de confirmación de cuenta
         /// </summary>
-        PendienteConfirmacion = 4
+        PendienteConfirmacion = 4,
+        
+        /// <summary>
+        /// Usuario suspendido temporalmente
+        /// </summary>
+        Suspendido = 5
     }
 } 

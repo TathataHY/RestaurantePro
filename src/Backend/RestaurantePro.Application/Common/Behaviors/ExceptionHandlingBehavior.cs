@@ -43,11 +43,11 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
         {
             // Excepciones de dominio específicas
             EntityNotFoundException domainNotFound => new NotFoundException(
-                domainNotFound.EntityName, 
-                domainNotFound.SearchCriteria, 
-                domainNotFound),
+                domainNotFound.EntityName ?? "Unknown", 
+                domainNotFound.SearchCriteria ?? "Unknown", 
+                domainNotFound.Message),
 
-            BusinessRuleViolationException businessRule => new ValidationException(
+            BusinessRuleViolationException businessRule => new RestaurantePro.Application.Common.Exceptions.ValidationException(
                 "BusinessRule", 
                 new[] { businessRule.Message }),
 
@@ -56,15 +56,15 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
                 domain),
 
             // Excepciones de validación de FluentValidation
-            FluentValidation.ValidationException fluentValidation => new ValidationException(
+            FluentValidation.ValidationException fluentValidation => new RestaurantePro.Application.Common.Exceptions.ValidationException(
                 fluentValidation.Errors),
 
             // Excepciones estándar
-            ArgumentNullException argNull => new ValidationException(
+            ArgumentNullException argNull => new RestaurantePro.Application.Common.Exceptions.ValidationException(
                 argNull.ParamName ?? "Unknown", 
                 new[] { "El parámetro no puede ser nulo." }),
 
-            ArgumentException arg => new ValidationException(
+            ArgumentException arg => new RestaurantePro.Application.Common.Exceptions.ValidationException(
                 arg.ParamName ?? "Unknown", 
                 new[] { arg.Message }),
 
@@ -73,8 +73,7 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
                 invalidOp),
 
             UnauthorizedAccessException unauthorized => new ForbiddenAccessException(
-                $"Acceso denegado para {requestName}: {unauthorized.Message}",
-                unauthorized),
+                $"Acceso denegado para {requestName}: {unauthorized.Message}"),
 
             TimeoutException timeout => new AppException(
                 $"Timeout en {requestName} (ID: {requestId}): La operación tardó demasiado tiempo.",

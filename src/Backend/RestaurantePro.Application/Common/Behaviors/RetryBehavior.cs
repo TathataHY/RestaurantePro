@@ -94,6 +94,15 @@ public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
     /// </summary>
     private static bool IsRetriableException(Exception exception)
     {
+        // Primero verificar errores que NO son recuperables
+        if (exception is ArgumentException or ArgumentNullException)
+            return false;
+            
+        if (exception.GetType().Name.Contains("Validation") || 
+            exception.GetType().Name.Contains("BusinessRule"))
+            return false;
+
+        // Luego verificar errores que SÍ son recuperables
         return exception switch
         {
             // Errores de red/conexión
@@ -101,7 +110,10 @@ public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
             TaskCanceledException => true,
             TimeoutException => true,
             
-            // Errores de base de datos transitorios
+            // Errores específicos de la aplicación que son transitorios
+            _ when exception.GetType().Name == "InvalidConcurrencyException" => true,
+            
+            // Errores de base de datos transitorios (por mensaje)
             _ when exception.Message.Contains("timeout", StringComparison.OrdinalIgnoreCase) => true,
             _ when exception.Message.Contains("connection", StringComparison.OrdinalIgnoreCase) => true,
             _ when exception.Message.Contains("deadlock", StringComparison.OrdinalIgnoreCase) => true,
@@ -110,15 +122,6 @@ public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
             // Errores de servicios externos
             _ when exception.GetType().Name.Contains("Service") && 
                    exception.Message.Contains("unavailable", StringComparison.OrdinalIgnoreCase) => true,
-            
-            // Errores específicos de la aplicación que son transitorios
-            _ when exception.GetType().Name == "InvalidConcurrencyException" => true,
-            
-            // No reintentar errores de validación o lógica de negocio
-            ArgumentException => false,
-            ArgumentNullException => false,
-            _ when exception.GetType().Name.Contains("Validation") => false,
-            _ when exception.GetType().Name.Contains("BusinessRule") => false,
             
             // Por defecto, no reintentar
             _ => false

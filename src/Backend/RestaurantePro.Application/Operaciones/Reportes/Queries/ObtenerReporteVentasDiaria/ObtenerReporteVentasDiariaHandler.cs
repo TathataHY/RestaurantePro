@@ -88,8 +88,9 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
     {
         var query = _context.Comandas
             .Where(c => c.FechaCreacion.Date == request.FechaReporte.Date)
-            .Include(c => c.DetalleComandas)
-            .ThenInclude(d => d.Producto)
+            .Include(c => c.Items)
+            // TODO: Agregar navegación a Producto cuando esté disponible en ItemComanda
+            // .ThenInclude(d => d.Producto)
             .Include(c => c.Mesa)
             .Include(c => c.Mesero)
             .AsQueryable();
@@ -114,7 +115,7 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
     private MetricasBasicasDto CalcularMetricasBasicas(List<Comanda> comandas)
     {
         var totalComandas = comandas.Count;
-        var montoTotal = comandas.Sum(c => c.MontoTotal);
+        var montoTotal = comandas.Sum(c => c.Total.Total);
         var promedioComanda = totalComandas > 0 ? montoTotal / totalComandas : 0;
         
         return new MetricasBasicasDto
@@ -170,8 +171,8 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
                 MesaId = g.Key.MesaId,
                 NumeroMesa = g.Key.Numero ?? 0,
                 TotalComandas = g.Count(),
-                MontoTotal = g.Sum(c => c.MontoTotal),
-                PromedioComanda = g.Average(c => c.MontoTotal),
+                MontoTotal = g.Sum(c => c.Total.Total),
+                PromedioComanda = g.Average(c => c.Total.Total),
                 TiempoPromedioOcupacion = CalcularTiempoPromedioMesa(g.ToList())
             })
             .OrderByDescending(m => m.MontoTotal)
@@ -184,14 +185,14 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
     private List<AnalisisMeseroDto> GenerarAnalisisPorMesero(List<Comanda> comandas)
     {
         return comandas
-            .GroupBy(c => new { c.MeseroId, c.Mesero?.Nombre })
+            .GroupBy(c => new { c.MeseroId, MeseroNombre = "Mesero" }) // TODO: Obtener nombre real del mesero
             .Select(g => new AnalisisMeseroDto
             {
                 MeseroId = g.Key.MeseroId,
-                NombreMesero = g.Key.Nombre ?? "Desconocido",
+                NombreMesero = g.Key.MeseroNombre ?? "Desconocido",
                 TotalComandas = g.Count(),
-                MontoTotal = g.Sum(c => c.MontoTotal),
-                PromedioComanda = g.Average(c => c.MontoTotal),
+                MontoTotal = g.Sum(c => c.Total.Total),
+                PromedioComanda = g.Average(c => c.Total.Total),
                 EficienciaVentas = CalcularEficienciaVentas(g.ToList())
             })
             .OrderByDescending(m => m.MontoTotal)
@@ -203,14 +204,14 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
     /// </summary>
     private List<AnalisisProductoDto> GenerarAnalisisProductos(List<Comanda> comandas)
     {
-        var detalles = comandas.SelectMany(c => c.DetalleComandas).ToList();
+        var detalles = comandas.SelectMany(c => c.Items).ToList();
         
         return detalles
-            .GroupBy(d => new { d.ProductoId, d.Producto?.Nombre })
+            .GroupBy(d => new { d.ProductoId, ProductoNombre = "Producto" }) // TODO: Obtener nombre real del producto
             .Select(g => new AnalisisProductoDto
             {
                 ProductoId = g.Key.ProductoId,
-                NombreProducto = g.Key.Nombre ?? "Desconocido",
+                NombreProducto = g.Key.ProductoNombre ?? "Desconocido",
                 CantidadVendida = g.Sum(d => d.Cantidad),
                 MontoTotal = g.Sum(d => d.PrecioUnitario * d.Cantidad),
                 PromedioVenta = g.Average(d => d.PrecioUnitario),
@@ -231,8 +232,8 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
             {
                 Hora = g.Key,
                 TotalComandas = g.Count(),
-                MontoTotal = g.Sum(c => c.MontoTotal),
-                PromedioComanda = g.Average(c => c.MontoTotal)
+                MontoTotal = g.Sum(c => c.Total.Total),
+                PromedioComanda = g.Average(c => c.Total.Total)
             })
             .OrderBy(d => d.Hora)
             .ToList();
@@ -284,7 +285,7 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
             {
                 Fecha = g.Key,
                 TotalComandas = g.Count(),
-                MontoTotal = g.Sum(c => c.MontoTotal)
+                MontoTotal = g.Sum(c => c.Total.Total)
             })
             .OrderBy(t => t.Fecha)
             .ToList();
@@ -319,13 +320,14 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
 
     private string CalcularProductoMasVendido(List<Comanda> comandas)
     {
+        // TODO: Implementar correctamente cuando esté disponible la navegación a Producto
         var producto = comandas
-            .SelectMany(c => c.DetalleComandas)
-            .GroupBy(d => d.Producto?.Nombre)
+            .SelectMany(c => c.Items)
+            .GroupBy(d => d.ProductoId)
             .OrderByDescending(g => g.Sum(d => d.Cantidad))
             .FirstOrDefault();
             
-        return producto?.Key ?? "N/A";
+        return producto?.Key.ToString() ?? "N/A";
     }
 
     private TimeSpan CalcularTiempoPromedioMesa(List<Comanda> comandasMesa)
@@ -337,7 +339,7 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
     private decimal CalcularEficienciaVentas(List<Comanda> comandasMesero)
     {
         // Simulación de cálculo de eficiencia basado en ventas/tiempo
-        return comandasMesero.Average(c => c.MontoTotal) / 100;
+        return comandasMesero.Average(c => c.Total.Total) / 100;
     }
 
     private decimal CalcularVariacionPorcentual(decimal valorActual, decimal valorAnterior)

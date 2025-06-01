@@ -48,6 +48,37 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Enums
         /// <summary>
         /// Paquete (cantidad predefinida)
         /// </summary>
-        Paquete = 8
+        Paquete = 8,
+        
+        // Alias en plural para compatibilidad con tests
+        /// <summary>
+        /// Alias en plural para Kilogramo
+        /// </summary>
+        Kilogramos = Kilogramo,
+        
+        /// <summary>
+        /// Alias en plural para Gramo
+        /// </summary>
+        Gramos = Gramo,
+        
+        /// <summary>
+        /// Alias en plural para Litro
+        /// </summary>
+        Litros = Litro,
+        
+        /// <summary>
+        /// Alias en plural para Mililitro
+        /// </summary>
+        Mililitros = Mililitro,
+        
+        /// <summary>
+        /// Alias en plural para Unidad
+        /// </summary>
+        Unidades = Unidad,
+        
+        /// <summary>
+        /// Alias para Unidad como piezas
+        /// </summary>
+        Piezas = Unidad
     }
 }

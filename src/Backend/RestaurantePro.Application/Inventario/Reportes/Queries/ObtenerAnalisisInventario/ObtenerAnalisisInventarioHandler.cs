@@ -40,7 +40,7 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
             var validacionResult = ValidarParametros(request);
             if (!validacionResult.Succeeded)
             {
-                return Result.Failure<AnalisisInventarioDto>(validacionResult.Error);
+                return Result.Failure<AnalisisInventarioDto>(validacionResult.Error ?? "Error de validación");
             }
 
             // 2. Obtener datos base del inventario
@@ -50,10 +50,10 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
             var metricas = await CalcularMetricas(datosInventario, request, cancellationToken);
 
             // 4. Identificar alertas y problemas
-            var alertas = await IdentificarAlertas(datosInventario, request, cancellationToken);
+            var alertas = IdentificarAlertas(datosInventario, request, cancellationToken);
 
             // 5. Generar recomendaciones
-            var recomendaciones = await GenerarRecomendaciones(datosInventario, metricas, alertas, cancellationToken);
+            var recomendaciones = GenerarRecomendaciones(datosInventario, metricas, alertas, cancellationToken);
 
             // 6. Obtener tendencias
             var tendencias = await CalcularTendencias(request, cancellationToken);
@@ -62,7 +62,7 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
             var analisis = ConstruirAnalisisCompleto(datosInventario, metricas, alertas, recomendaciones, tendencias, request);
 
             _logger.LogInformation("✅ Análisis de inventario completado - {TotalIngredientes} ingredientes analizados, {TotalAlertas} alertas generadas",
-                analisis.TotalIngredientes, analisis.Alertas.Count);
+                analisis.ResumenExecutivo.TotalIngredientes, analisis.Alertas.Count);
 
             return Result.Success(analisis);
         }
@@ -97,41 +97,37 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
     private async Task<DatosInventarioAnalisis> ObtenerDatosInventario(ObtenerAnalisisInventarioQuery request, CancellationToken cancellationToken)
     {
         var ingredientesQuery = _context.Ingredientes
-            .Include(i => i.MovimientosStock)
+            .Include(i => i.Movimientos)
             .AsQueryable();
 
         // Aplicar filtros opcionales
         if (request.CategoriaId.HasValue)
         {
-            ingredientesQuery = ingredientesQuery.Where(i => i.CategoriaId == request.CategoriaId.Value);
+            // TODO: Agregar filtro por categoría cuando exista la propiedad
+            // ingredientesQuery = ingredientesQuery.Where(i => i.CategoriaId == request.CategoriaId.Value);
         }
 
         if (request.SoloAlertaStock)
         {
-            ingredientesQuery = ingredientesQuery.Where(i => i.StockActual <= i.StockMinimo);
+            ingredientesQuery = ingredientesQuery.Where(i => i.Stock <= i.StockMinimo);
         }
 
         if (request.SoloCriticos)
         {
-            ingredientesQuery = ingredientesQuery.Where(i => i.EsCritico);
+            // TODO: Implementar lógica de ingredientes críticos cuando esté disponible
+            // ingredientesQuery = ingredientesQuery.Where(i => i.EsCritico);
         }
 
         var ingredientes = await ingredientesQuery.ToListAsync(cancellationToken);
 
         // Obtener movimientos del período
-        var movimientos = await _context.MovimientosStock
-            .Where(m => m.FechaMovimiento >= request.FechaInicio && 
-                       m.FechaMovimiento <= request.FechaFin)
-            .Include(m => m.Ingrediente)
+        var movimientos = await _context.MovimientosInventario
+            .Where(m => m.Fecha >= request.FechaInicio && 
+                       m.Fecha <= request.FechaFin)
             .ToListAsync(cancellationToken);
 
-        // Obtener órdenes de compra del período
-        var ordenesCompra = await _context.OrdenesCompra
-            .Where(o => o.FechaCreacion >= request.FechaInicio && 
-                       o.FechaCreacion <= request.FechaFin)
-            .Include(o => o.DetallesOrden)
-            .ThenInclude(d => d.Ingrediente)
-            .ToListAsync(cancellationToken);
+        // TODO: Obtener órdenes de compra cuando estén disponibles
+        var ordenesCompra = new List<dynamic>(); // Placeholder temporal
 
         return new DatosInventarioAnalisis
         {
@@ -149,15 +145,13 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
 
         // Métricas básicas
         metricas.TotalIngredientes = datos.Ingredientes.Count;
-        metricas.IngredientesBajoStock = datos.Ingredientes.Count(i => i.StockActual <= i.StockMinimo);
-        metricas.IngredientesCriticos = datos.Ingredientes.Count(i => i.EsCritico);
-        metricas.IngredientesSinStock = datos.Ingredientes.Count(i => i.StockActual <= 0);
+        metricas.IngredientesBajoStock = datos.Ingredientes.Count(i => i.Stock <= i.StockMinimo);
+        metricas.IngredientesCriticos = 0; // TODO: Implementar cuando esté disponible EsCritico
+        metricas.IngredientesSinStock = datos.Ingredientes.Count(i => i.Stock <= 0);
 
         // Valor total del inventario
-        metricas.ValorTotalInventario = datos.Ingredientes.Sum(i => i.StockActual * i.CostoUnitario);
-        metricas.ValorIngredientesCriticos = datos.Ingredientes
-            .Where(i => i.EsCritico)
-            .Sum(i => i.StockActual * i.CostoUnitario);
+        metricas.ValorTotalInventario = datos.Ingredientes.Sum(i => i.Stock * i.CostoPromedio);
+        metricas.ValorIngredientesCriticos = 0; // TODO: Calcular cuando EsCritico esté disponible
 
         // Análisis de movimientos
         var movimientosEntrada = datos.Movimientos.Where(m => m.TipoMovimiento == RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Ingreso);
@@ -174,7 +168,7 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
         {
             var diasPeriodo = (datos.FechaFin - datos.FechaInicio).TotalDays;
             var consumoDiarioPromedio = metricas.CantidadTotalSalida / (decimal)diasPeriodo;
-            var stockPromedio = datos.Ingredientes.Average(i => i.StockActual);
+            var stockPromedio = datos.Ingredientes.Average(i => i.Stock);
             
             if (stockPromedio > 0)
             {
@@ -182,153 +176,86 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
             }
         }
 
-        // Análisis de compras
-        metricas.TotalOrdenesCompra = datos.OrdenesCompra.Count;
-        metricas.ValorTotalCompras = datos.OrdenesCompra.Sum(o => o.Total);
-        metricas.PromedioOrdenCompra = metricas.TotalOrdenesCompra > 0 ? 
-            metricas.ValorTotalCompras / metricas.TotalOrdenesCompra : 0;
+        // TODO: Análisis de compras cuando OrdenesCompra esté disponible
+        metricas.TotalOrdenesCompra = 0;
+        metricas.ValorTotalCompras = 0;
+        metricas.PromedioOrdenCompra = 0;
 
-        // Eficiencia del inventario
+        // Eficiencia del inventario (simplificado)
         metricas.PorcentajeStockOptimo = datos.Ingredientes.Count > 0 ?
-            (decimal)datos.Ingredientes.Count(i => i.StockActual >= i.StockMinimo && i.StockActual <= i.StockMaximo) / datos.Ingredientes.Count * 100 : 0;
+            (decimal)datos.Ingredientes.Count(i => i.Stock >= i.StockMinimo) / datos.Ingredientes.Count * 100 : 0;
 
         return metricas;
     }
 
-    private async Task<List<AlertaInventario>> IdentificarAlertas(DatosInventarioAnalisis datos, ObtenerAnalisisInventarioQuery request, CancellationToken cancellationToken)
+    private List<AlertaInventarioDto> IdentificarAlertas(DatosInventarioAnalisis datos, ObtenerAnalisisInventarioQuery request, CancellationToken cancellationToken)
     {
-        var alertas = new List<AlertaInventario>();
+        var alertas = new List<AlertaInventarioDto>();
 
         // Alertas de stock bajo
-        foreach (var ingrediente in datos.Ingredientes.Where(i => i.StockActual <= i.StockMinimo))
+        foreach (var ingrediente in datos.Ingredientes.Where(i => i.Stock <= i.StockMinimo))
         {
-            var criticidad = ingrediente.EsCritico ? "CRÍTICA" : 
-                           ingrediente.StockActual <= 0 ? "ALTA" : "MEDIA";
+            var tipoAlerta = ingrediente.Stock <= 0 ? "SinStock" :
+                            ingrediente.Stock <= (ingrediente.StockMinimo * 0.5m) ? "StockCritico" :
+                            "StockBajo";
 
-            alertas.Add(new AlertaInventario
+            var prioridad = ingrediente.Stock <= 0 ? "Critica" :
+                           ingrediente.Stock <= (ingrediente.StockMinimo * 0.5m) ? "Alta" :
+                           "Media";
+
+            alertas.Add(new AlertaInventarioDto
             {
-                Tipo = "STOCK_BAJO",
-                Criticidad = criticidad,
+                TipoAlerta = tipoAlerta,
+                Prioridad = prioridad,
                 IngredienteId = ingrediente.Id,
                 NombreIngrediente = ingrediente.Nombre,
-                Mensaje = $"Stock bajo: {ingrediente.StockActual} {ingrediente.UnidadMedida} (Mínimo: {ingrediente.StockMinimo})",
-                ValorActual = ingrediente.StockActual,
+                Titulo = tipoAlerta == "SinStock" ? "Sin Stock" : "Stock Bajo",
+                Descripcion = $"Stock bajo: {ingrediente.Stock} {ingrediente.UnidadMedida} (Mínimo: {ingrediente.StockMinimo})",
+                ValorActual = ingrediente.Stock,
                 ValorEsperado = ingrediente.StockMinimo,
-                FechaDeteccion = _dateTimeService.Now
+                FechaDeteccion = _dateTimeService.Now,
+                AccionRecomendada = "Reabastecer inmediatamente"
             });
         }
 
-        // Alertas de stock excesivo
-        foreach (var ingrediente in datos.Ingredientes.Where(i => i.StockActual > i.StockMaximo))
+        // TODO: Alertas de stock excesivo cuando StockMaximo esté disponible
+        // TODO: Alertas de ingredientes sin movimiento
+        
+        return alertas.OrderByDescending(a => a.Prioridad).ToList();
+    }
+
+    private List<RecomendacionCompraDto> GenerarRecomendaciones(
+        DatosInventarioAnalisis datos, 
+        MetricasInventario metricas, 
+        List<AlertaInventarioDto> alertas, 
+        CancellationToken cancellationToken)
+    {
+        var recomendaciones = new List<RecomendacionCompraDto>();
+
+        // Recomendaciones basadas en alertas críticas
+        var alertasCriticas = alertas.Where(a => a.Prioridad == "Critica").ToList();
+        
+        foreach (var alerta in alertasCriticas.Where(a => a.IngredienteId.HasValue))
         {
-            alertas.Add(new AlertaInventario
+            var ingrediente = datos.Ingredientes.FirstOrDefault(i => i.Id == alerta.IngredienteId);
+            if (ingrediente != null)
             {
-                Tipo = "STOCK_EXCESIVO",
-                Criticidad = "BAJA",
-                IngredienteId = ingrediente.Id,
-                NombreIngrediente = ingrediente.Nombre,
-                Mensaje = $"Stock excesivo: {ingrediente.StockActual} {ingrediente.UnidadMedida} (Máximo: {ingrediente.StockMaximo})",
-                ValorActual = ingrediente.StockActual,
-                ValorEsperado = ingrediente.StockMaximo,
-                FechaDeteccion = _dateTimeService.Now
-            });
-        }
-
-        // Alertas de ingredientes sin movimiento
-        var diasSinMovimiento = 30;
-        var fechaLimite = _dateTimeService.Now.AddDays(-diasSinMovimiento);
-
-        foreach (var ingrediente in datos.Ingredientes)
-        {
-            var ultimoMovimiento = datos.Movimientos
-                .Where(m => m.IngredienteId == ingrediente.Id)
-                .OrderByDescending(m => m.FechaMovimiento)
-                .FirstOrDefault();
-
-            if (ultimoMovimiento == null || ultimoMovimiento.FechaMovimiento < fechaLimite)
-            {
-                alertas.Add(new AlertaInventario
+                recomendaciones.Add(new RecomendacionCompraDto
                 {
-                    Tipo = "SIN_MOVIMIENTO",
-                    Criticidad = "MEDIA",
                     IngredienteId = ingrediente.Id,
                     NombreIngrediente = ingrediente.Nombre,
-                    Mensaje = $"Sin movimiento por {diasSinMovimiento}+ días",
-                    FechaDeteccion = _dateTimeService.Now
+                    CantidadRecomendada = ingrediente.StockMinimo * 2, // Reabastecer al doble del mínimo
+                    UnidadMedida = ingrediente.UnidadMedida.ToString(),
+                    CostoEstimado = (ingrediente.StockMinimo * 2) * ingrediente.CostoPromedio,
+                    PrioridadCompra = "ALTA",
+                    FechaRecomendadaPedido = _dateTimeService.Now.AddDays(1),
+                    Justificacion = "Stock crítico - Reabastecer urgentemente",
+                    ImpactoSinCompra = "Interrupción del servicio"
                 });
             }
         }
 
-        return alertas.OrderByDescending(a => a.Criticidad).ToList();
-    }
-
-    private async Task<List<RecomendacionInventario>> GenerarRecomendaciones(
-        DatosInventarioAnalisis datos, 
-        MetricasInventario metricas, 
-        List<AlertaInventario> alertas, 
-        CancellationToken cancellationToken)
-    {
-        var recomendaciones = new List<RecomendacionInventario>();
-
-        // Recomendaciones basadas en alertas críticas
-        var alertasCriticas = alertas.Where(a => a.Criticidad == "CRÍTICA").ToList();
-        if (alertasCriticas.Any())
-        {
-            recomendaciones.Add(new RecomendacionInventario
-            {
-                Tipo = "URGENTE",
-                Prioridad = "ALTA",
-                Titulo = "Reabastecer ingredientes críticos",
-                Descripcion = $"Se requiere reabastecer {alertasCriticas.Count} ingredientes críticos de forma inmediata",
-                Accion = "Generar órdenes de compra de emergencia",
-                ImpactoEstimado = "Evitar interrupción del servicio"
-            });
-        }
-
-        // Recomendación de optimización de stock
-        if (metricas.PorcentajeStockOptimo < 70)
-        {
-            recomendaciones.Add(new RecomendacionInventario
-            {
-                Tipo = "OPTIMIZACIÓN",
-                Prioridad = "MEDIA",
-                Titulo = "Optimizar niveles de stock",
-                Descripcion = $"Solo el {metricas.PorcentajeStockOptimo:F1}% del inventario está en niveles óptimos",
-                Accion = "Revisar y ajustar niveles mínimos y máximos de stock",
-                ImpactoEstimado = "Reducir costos de almacenamiento y mejorar rotación"
-            });
-        }
-
-        // Recomendación de rotación
-        if (metricas.RotacionInventario < 0.1m)
-        {
-            recomendaciones.Add(new RecomendacionInventario
-            {
-                Tipo = "ROTACIÓN",
-                Prioridad = "MEDIA",
-                Titulo = "Mejorar rotación de inventario",
-                Descripcion = "La rotación de inventario es baja, indicando posible sobrestock",
-                Accion = "Implementar estrategias FIFO y revisar frecuencia de pedidos",
-                ImpactoEstimado = "Reducir desperdicio y liberar capital de trabajo"
-            });
-        }
-
-        // Recomendaciones para ingredientes sin movimiento
-        var ingredientesSinMovimiento = alertas.Where(a => a.Tipo == "SIN_MOVIMIENTO").ToList();
-        if (ingredientesSinMovimiento.Count > 5)
-        {
-            recomendaciones.Add(new RecomendacionInventario
-            {
-                Tipo = "REVISIÓN",
-                Prioridad = "BAJA",
-                Titulo = "Revisar ingredientes sin rotación",
-                Descripcion = $"{ingredientesSinMovimiento.Count} ingredientes sin movimiento reciente",
-                Accion = "Evaluar si estos ingredientes siguen siendo necesarios",
-                ImpactoEstimado = "Optimizar espacio de almacenamiento"
-            });
-        }
-
-        return recomendaciones.OrderByDescending(r => r.Prioridad).ToList();
+        return recomendaciones.OrderByDescending(r => r.PrioridadCompra).ToList();
     }
 
     private async Task<TendenciasInventario> CalcularTendencias(ObtenerAnalisisInventarioQuery request, CancellationToken cancellationToken)
@@ -338,12 +265,12 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
         // Calcular tendencias de los últimos meses para comparar
         var fechaInicioComparacion = request.FechaInicio.AddMonths(-3);
         
-        var movimientosPeriodoComparacion = await _context.MovimientosStock
-            .Where(m => m.FechaMovimiento >= fechaInicioComparacion && m.FechaMovimiento < request.FechaInicio)
+        var movimientosPeriodoComparacion = await _context.MovimientosInventario
+            .Where(m => m.Fecha >= fechaInicioComparacion && m.Fecha < request.FechaInicio)
             .ToListAsync(cancellationToken);
 
-        var movimientosPeriodoActual = await _context.MovimientosStock
-            .Where(m => m.FechaMovimiento >= request.FechaInicio && m.FechaMovimiento <= request.FechaFin)
+        var movimientosPeriodoActual = await _context.MovimientosInventario
+            .Where(m => m.Fecha >= request.FechaInicio && m.Fecha <= request.FechaFin)
             .ToListAsync(cancellationToken);
 
         // Tendencia de consumo
@@ -358,17 +285,8 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
         tendencias.TendenciaConsumo = consumoAnterior > 0 ? 
             ((consumoActual - consumoAnterior) / consumoAnterior) * 100 : 0;
 
-        // Tendencia de compras
-        var comprasAnteriores = await _context.OrdenesCompra
-            .Where(o => o.FechaCreacion >= fechaInicioComparacion && o.FechaCreacion < request.FechaInicio)
-            .SumAsync(o => o.Total, cancellationToken);
-
-        var comprasActuales = await _context.OrdenesCompra
-            .Where(o => o.FechaCreacion >= request.FechaInicio && o.FechaCreacion <= request.FechaFin)
-            .SumAsync(o => o.Total, cancellationToken);
-
-        tendencias.TendenciaCompras = comprasAnteriores > 0 ? 
-            ((comprasActuales - comprasAnteriores) / comprasAnteriores) * 100 : 0;
+        // TODO: Tendencia de compras cuando OrdenesCompra esté disponible
+        tendencias.TendenciaCompras = 0;
 
         return tendencias;
     }
@@ -376,101 +294,94 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
     private AnalisisInventarioDto ConstruirAnalisisCompleto(
         DatosInventarioAnalisis datos,
         MetricasInventario metricas,
-        List<AlertaInventario> alertas,
-        List<RecomendacionInventario> recomendaciones,
+        List<AlertaInventarioDto> alertas,
+        List<RecomendacionCompraDto> recomendaciones,
         TendenciasInventario tendencias,
         ObtenerAnalisisInventarioQuery request)
     {
         return new AnalisisInventarioDto
         {
-            FechaGeneracion = _dateTimeService.Now,
-            FechaInicio = request.FechaInicio,
-            FechaFin = request.FechaFin,
-            UsuarioGeneradorId = _currentUserService.UserId,
-            
-            // Métricas principales
-            TotalIngredientes = metricas.TotalIngredientes,
-            IngredientesBajoStock = metricas.IngredientesBajoStock,
-            IngredientesCriticos = metricas.IngredientesCriticos,
-            IngredientesSinStock = metricas.IngredientesSinStock,
-            ValorTotalInventario = metricas.ValorTotalInventario,
-            PorcentajeStockOptimo = metricas.PorcentajeStockOptimo,
-            RotacionInventario = metricas.RotacionInventario,
-            
-            // Análisis de movimientos
-            TotalMovimientos = metricas.TotalMovimientos,
-            MovimientosEntrada = metricas.MovimientosEntrada,
-            MovimientosSalida = metricas.MovimientosSalida,
-            
-            // Análisis de compras
-            TotalOrdenesCompra = metricas.TotalOrdenesCompra,
-            ValorTotalCompras = metricas.ValorTotalCompras,
-            PromedioOrdenCompra = metricas.PromedioOrdenCompra,
-            
-            // Alertas y recomendaciones
+            InfoAnalisis = new InfoAnalisisDto
+            {
+                FechaInicio = request.FechaInicio,
+                FechaFin = request.FechaFin,
+                FechaGeneracion = _dateTimeService.Now,
+                NivelDetalle = request.NivelDetalle,
+                UsuarioSolicitante = _currentUserService.UserId?.ToString() ?? "Sistema"
+            },
+            ResumenExecutivo = new ResumenInventarioDto
+            {
+                TotalIngredientes = metricas.TotalIngredientes,
+                IngredientesEnStock = metricas.TotalIngredientes - metricas.IngredientesSinStock,
+                IngredientesBajoStock = metricas.IngredientesBajoStock,
+                IngredientesStockCritico = metricas.IngredientesCriticos,
+                IngredientesSinStock = metricas.IngredientesSinStock,
+                ValorTotalInventario = metricas.ValorTotalInventario,
+                ValorPromedioIngrediente = metricas.TotalIngredientes > 0 ? metricas.ValorTotalInventario / metricas.TotalIngredientes : 0,
+                TotalMovimientos = metricas.TotalMovimientos,
+                TasaRotacionInventario = metricas.RotacionInventario,
+                EstadoGeneralInventario = GenerarEstadoGeneral(metricas),
+                AlertasActivas = alertas.Count,
+                TendenciaGeneral = GenerarTendenciaGeneral(tendencias)
+            },
             Alertas = alertas,
             Recomendaciones = recomendaciones,
-            
-            // Tendencias
-            TendenciaConsumo = tendencias.TendenciaConsumo,
-            TendenciaCompras = tendencias.TendenciaCompras,
-            
-            // Resumen ejecutivo
-            ResumenEjecutivo = GenerarResumenEjecutivo(metricas, alertas, recomendaciones, tendencias)
+            MetricasEficiencia = new MetricasEficienciaDto
+            {
+                PorcentajeStockOptimo = metricas.PorcentajeStockOptimo,
+                TasaRotacionGlobal = metricas.RotacionInventario,
+                EficienciaGeneralInventario = CalcularEficienciaGeneral(metricas),
+                ClasificacionEficiencia = GenerarClasificacionEficiencia(metricas.PorcentajeStockOptimo)
+            }
         };
     }
 
-    private string GenerarResumenEjecutivo(
-        MetricasInventario metricas, 
-        List<AlertaInventario> alertas, 
-        List<RecomendacionInventario> recomendaciones, 
-        TendenciasInventario tendencias)
+    private string GenerarEstadoGeneral(MetricasInventario metricas)
     {
-        var resumen = new List<string>();
+        if (metricas.IngredientesSinStock > 0)
+            return "Crítico";
+        if (metricas.PorcentajeStockOptimo < 70)
+            return "Atención";
+        return "Óptimo";
+    }
 
-        // Estado general
-        var alertasCriticas = alertas.Count(a => a.Criticidad == "CRÍTICA");
-        if (alertasCriticas > 0)
+    private string GenerarTendenciaGeneral(TendenciasInventario tendencias)
+    {
+        if (Math.Abs(tendencias.TendenciaConsumo) < 5)
+            return "Estable";
+        return tendencias.TendenciaConsumo > 0 ? "Ascendente" : "Descendente";
+    }
+
+    private decimal CalcularEficienciaGeneral(MetricasInventario metricas)
+    {
+        // Calcular eficiencia basada en múltiples factores
+        decimal eficienciaStock = metricas.PorcentajeStockOptimo;
+        decimal eficienciaRotacion = metricas.RotacionInventario > 0 ? Math.Min(100, metricas.RotacionInventario * 10) : 0;
+        decimal eficienciaSinStock = metricas.TotalIngredientes > 0 ? 
+            (100 - ((decimal)metricas.IngredientesSinStock / metricas.TotalIngredientes * 100)) : 100;
+
+        // Promedio ponderado de las eficiencias
+        return (eficienciaStock * 0.4m + eficienciaRotacion * 0.3m + eficienciaSinStock * 0.3m);
+    }
+
+    private string GenerarClasificacionEficiencia(decimal porcentajeStockOptimo)
+    {
+        return porcentajeStockOptimo switch
         {
-            resumen.Add($"⚠️ ATENCIÓN: {alertasCriticas} alertas críticas requieren acción inmediata.");
-        }
-
-        // Eficiencia del inventario
-        if (metricas.PorcentajeStockOptimo >= 80)
-        {
-            resumen.Add($"✅ Inventario eficiente: {metricas.PorcentajeStockOptimo:F1}% en niveles óptimos.");
-        }
-        else if (metricas.PorcentajeStockOptimo < 70)
-        {
-            resumen.Add($"📊 Oportunidad de mejora: Solo {metricas.PorcentajeStockOptimo:F1}% en niveles óptimos.");
-        }
-
-        // Valor del inventario
-        resumen.Add($"💰 Valor total inventario: ${metricas.ValorTotalInventario:N2}");
-
-        // Tendencias
-        if (Math.Abs(tendencias.TendenciaConsumo) > 10)
-        {
-            var direccion = tendencias.TendenciaConsumo > 0 ? "incremento" : "disminución";
-            resumen.Add($"📈 Tendencia consumo: {direccion} del {Math.Abs(tendencias.TendenciaConsumo):F1}%");
-        }
-
-        // Recomendaciones principales
-        var recomendacionesAltas = recomendaciones.Count(r => r.Prioridad == "ALTA");
-        if (recomendacionesAltas > 0)
-        {
-            resumen.Add($"🎯 {recomendacionesAltas} recomendaciones de alta prioridad pendientes.");
-        }
-
-        return string.Join(" ", resumen);
+            >= 90 => "Excelente",
+            >= 80 => "Buena",
+            >= 70 => "Regular",
+            >= 60 => "Deficiente",
+            _ => "Crítica"
+        };
     }
 
     // DTOs internos para el análisis
     private class DatosInventarioAnalisis
     {
         public List<Ingrediente> Ingredientes { get; set; } = new();
-        public List<MovimientoStock> Movimientos { get; set; } = new();
-        public List<OrdenCompra> OrdenesCompra { get; set; } = new();
+        public List<MovimientoInventario> Movimientos { get; set; } = new();
+        public List<dynamic> OrdenesCompra { get; set; } = new(); // TODO: Cambiar por OrdenCompra cuando esté disponible
         public DateTime FechaInicio { get; set; }
         public DateTime FechaFin { get; set; }
     }

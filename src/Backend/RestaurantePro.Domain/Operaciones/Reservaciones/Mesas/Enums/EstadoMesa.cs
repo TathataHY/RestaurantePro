@@ -23,6 +23,11 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums
         /// <summary>
         /// La mesa está temporalmente fuera de servicio
         /// </summary>
-        FueraDeServicio = 4
+        FueraDeServicio = 4,
+        
+        /// <summary>
+        /// La mesa está en proceso de limpieza
+        /// </summary>
+        EnLimpieza = 5
     }
 }

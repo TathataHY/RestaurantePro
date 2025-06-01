@@ -145,11 +145,10 @@ public class GenerarReporteHandler : IRequestHandler<GenerarReporteCommand, Resu
         var comandas = await _context.Comandas
             .Where(c => c.FechaCreacion.Date >= request.FechaInicio.Date && 
                        c.FechaCreacion.Date <= request.FechaFin.Date)
-            .Include(c => c.DetalleComandas)
-            .ThenInclude(d => d.Producto)
+            .Include(c => c.Items)
             .ToListAsync(cancellationToken);
 
-        var totalVentas = comandas.Sum(c => c.MontoTotal);
+        var totalVentas = comandas.Sum(c => c.Total.Total);
         var totalComandas = comandas.Count;
         var promedioComanda = totalComandas > 0 ? totalVentas / totalComandas : 0;
 
@@ -174,9 +173,10 @@ public class GenerarReporteHandler : IRequestHandler<GenerarReporteCommand, Resu
         CancellationToken cancellationToken)
     {
         var movimientos = await _context.MovimientosInventario
-            .Where(m => m.FechaMovimiento.Date >= request.FechaInicio.Date && 
-                       m.FechaMovimiento.Date <= request.FechaFin.Date)
-            .Include(m => m.Ingrediente)
+            .Where(m => m.FechaCreacion.Date >= request.FechaInicio.Date && 
+                       m.FechaCreacion.Date <= request.FechaFin.Date)
+            // TODO: Agregar navegación a Ingrediente cuando esté disponible en MovimientoInventario
+            // .Include(m => m.Ingrediente)
             .ToListAsync(cancellationToken);
 
         var ingredientes = await _context.Ingredientes

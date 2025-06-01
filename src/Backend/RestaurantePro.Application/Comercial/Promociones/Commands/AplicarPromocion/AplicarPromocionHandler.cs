@@ -11,28 +11,33 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
     private readonly ILogger<AplicarPromocionHandler> _logger;
     private readonly ICurrentUserService _currentUserService;
     private readonly ICommunicationService _notificacionService;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IPromocionRepository _promocionRepository;
-    private readonly RestaurantePro.Domain.Comercial.Promociones.Services.ICalculadoraPromocionesService _calculadoraPromociones;
+    // TODO: Agregar cuando IUnitOfWork esté disponible
+    // private readonly IUnitOfWork _unitOfWork;
+    // TODO: Agregar cuando IPromocionRepository esté disponible  
+    // private readonly IPromocionRepository _promocionRepository;
+    // TODO: Agregar cuando ICalculadoraPromocionesService esté disponible
+    // private readonly RestaurantePro.Domain.Comercial.Promociones.Services.ICalculadoraPromocionesService _calculadoraPromociones;
 
     public AplicarPromocionHandler(
         IApplicationDbContext context,
         IMapper mapper,
         ILogger<AplicarPromocionHandler> logger,
         ICurrentUserService currentUserService,
-        ICommunicationService notificacionService,
-        IUnitOfWork unitOfWork,
-        IPromocionRepository promocionRepository,
-        RestaurantePro.Domain.Comercial.Promociones.Services.ICalculadoraPromocionesService calculadoraPromociones)
+        ICommunicationService notificacionService)
+        // TODO: Agregar parámetros cuando estén disponibles
+        // IUnitOfWork unitOfWork,
+        // IPromocionRepository promocionRepository,
+        // RestaurantePro.Domain.Comercial.Promociones.Services.ICalculadoraPromocionesService calculadoraPromociones)
     {
         _context = context;
         _mapper = mapper;
         _logger = logger;
         _currentUserService = currentUserService;
         _notificacionService = notificacionService;
-        _unitOfWork = unitOfWork;
-        _promocionRepository = promocionRepository;
-        _calculadoraPromociones = calculadoraPromociones;
+        // TODO: Asignar cuando estén disponibles
+        // _unitOfWork = unitOfWork;
+        // _promocionRepository = promocionRepository;
+        // _calculadoraPromociones = calculadoraPromociones;
     }
 
     public async Task<Result<AplicarPromocionDto>> Handle(AplicarPromocionCommand request, CancellationToken cancellationToken)
@@ -42,6 +47,12 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
 
         try
         {
+            // TODO: Implementar lógica completa cuando las entidades del dominio estén disponibles
+            // Por ahora, retornamos un error indicando que la funcionalidad está en desarrollo
+            
+            return Result.Failure<AplicarPromocionDto>("La funcionalidad de promociones está en desarrollo. Las entidades del dominio aún no están disponibles.");
+            
+            /* TODO: Restaurar esta lógica cuando estén disponibles las entidades
             using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
 
             // 1. Obtener promoción
@@ -105,6 +116,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
                 promocion.Id, calculoDescuento.MontoDescuento);
 
             return Result.Success(response);
+            */
         }
         catch (Exception ex)
         {
@@ -114,6 +126,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         }
     }
 
+    /* TODO: Restaurar estos métodos cuando las entidades estén disponibles
     #region Métodos privados
 
     private async Task<Result<Promocion>> ObtenerPromocion(AplicarPromocionCommand request, CancellationToken cancellationToken)
@@ -408,6 +421,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
     }
 
     #endregion
+    */
 }
 
 /// <summary>
@@ -426,9 +440,10 @@ public class CalculoDescuentoDto
 /// </summary>
 public class CalcularDescuentoRequest
 {
-    public Promocion Promocion { get; set; } = null!;
-    public Factura? Factura { get; set; }
-    public Comanda? Comanda { get; set; }
+    // TODO: Definir propiedades cuando las entidades estén disponibles
+    // public Promocion Promocion { get; set; } = null!;
+    // public Factura? Factura { get; set; }
+    // public Comanda? Comanda { get; set; }
     public TipoAplicacionPromocion TipoAplicacion { get; set; }
     public List<Guid>? ProductosIds { get; set; }
     public Guid? ClienteId { get; set; }
