@@ -168,6 +168,16 @@ namespace RestaurantePro.Domain.Core
             // 🍳 Registro del servicio de preparaciones diarias
             services.AddScoped<Operaciones.Preparaciones.Services.IServicioPreparaciones, Operaciones.Preparaciones.Services.ServicioPreparaciones>();
             
+            // ✨ NUEVOS SERVICIOS DE INVENTARIO - Agregados durante resolución de errores de compilación
+            // 11. Servicio de Validación de Inventario (Domain Service)
+            services.AddScoped<Inventario.Services.IValidacionInventarioService, Inventario.Services.ValidacionInventarioService>();
+            
+            // 12. Servicio de Alertas de Stock (Domain Service)
+            services.AddScoped<Inventario.Services.IAlertaStockService, Inventario.Services.AlertaStockService>();
+            
+            // 13. Servicio de Productos (Domain Service)
+            services.AddScoped<Core.Productos.Services.IProductoService, Core.Productos.Services.ProductoService>();
+            
             // Registrar manejadores de eventos de integración
             services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_NotificacionProveedorHandler>();
             services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_ActualizarEstadisticasProveedorHandler>();
@@ -348,6 +358,19 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.UsuarioDesbloqueado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
             services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.RolAsignado>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
             services.AddScoped<IDomainEventHandler<Usuarios.Events.Usuario.RolRemovido>, Usuarios.EventHandlers.CacheInvalidationUsuarioEventHandler>();
+            
+            // 🍳 Registro del servicio de preparaciones diarias para pruebas
+            services.AddScoped<Operaciones.Preparaciones.Services.IServicioPreparaciones, Operaciones.Preparaciones.Services.ServicioPreparaciones>();
+            
+            // ✨ NUEVOS SERVICIOS DE INVENTARIO - Para pruebas
+            // 11. Servicio de Validación de Inventario (Domain Service)
+            services.AddScoped<Inventario.Services.IValidacionInventarioService, Inventario.Services.ValidacionInventarioService>();
+            
+            // 12. Servicio de Alertas de Stock (Domain Service)
+            services.AddScoped<Inventario.Services.IAlertaStockService, Inventario.Services.AlertaStockService>();
+            
+            // 13. Servicio de Productos (Domain Service) - Para pruebas
+            services.AddScoped<Core.Productos.Services.IProductoService, Core.Productos.Services.ProductoService>();
             
             return services;
         }

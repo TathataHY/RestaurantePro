@@ -293,9 +293,8 @@ global using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 // Domain - Core Services
 global using RestaurantePro.Domain.Core.Services;
 
-
-// Domain - Core Services
-global using RestaurantePro.Domain.Core.Services;
+// Domain - Core Productos Services
+global using RestaurantePro.Domain.Core.Productos.Services;
 
 // Application - Common Interfaces
 global using RestaurantePro.Application.Common.Interfaces;
@@ -359,3 +358,22 @@ global using DetalleOrdenCompra = RestaurantePro.Domain.Inventario.Compras.Orden
 // Application - Core Productos DTOs adicionales
 global using DisponibilidadProductoDto = RestaurantePro.Application.Core.Productos.DTOs.DisponibilidadProductoDto;
 global using AnalisisIngredienteDto = RestaurantePro.Application.Core.Productos.DTOs.AnalisisIngredienteDto;
+
+// Alias para servicios faltantes en pruebas
+global using IClienteBusinessService = RestaurantePro.Domain.Comercial.Services.IComercialServiceFacade;
+
+// Domain - Inventario Services
+global using IValidacionInventarioService = RestaurantePro.Domain.Inventario.Services.IValidacionInventarioService;
+global using IAlertaStockService = RestaurantePro.Domain.Inventario.Services.IAlertaStockService;
+
+// Alias para auditoría de inventario usando el servicio general
+global using IInventarioAuditService = RestaurantePro.Application.Common.Interfaces.IAuditService;
+
+// Application - Inventario Commands
+global using RestaurantePro.Application.Inventario.Ingredientes.Commands.AjustarInventario;
+
+// Domain - Inventario Interfaces adicionales
+global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces;
+
+// Domain - Core Productos Services
+global using RestaurantePro.Domain.Core.Productos.Services;

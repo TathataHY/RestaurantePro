@@ -33,6 +33,11 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Enums
         /// <summary>
         /// Comanda cancelada
         /// </summary>
-        Cancelada = 5
+        Cancelada = 5,
+        
+        /// <summary>
+        /// Comanda que ha sido dividida en múltiples comandas
+        /// </summary>
+        Dividida = 6
     }
 }

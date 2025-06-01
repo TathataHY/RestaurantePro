@@ -33,6 +33,11 @@ namespace RestaurantePro.Domain.Core.Usuarios.Enums
         /// <summary>
         /// Responsable del inventario y almacén
         /// </summary>
-        EncargadoInventario = 6
+        EncargadoInventario = 6,
+        
+        /// <summary>
+        /// Alias para EncargadoInventario - Gerente de inventario
+        /// </summary>
+        GerenteInventario = EncargadoInventario
     }
 } 

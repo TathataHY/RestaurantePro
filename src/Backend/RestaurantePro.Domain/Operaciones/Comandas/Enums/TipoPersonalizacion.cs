@@ -43,6 +43,26 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Enums
         /// <summary>
         /// Personalización especial o comentario libre
         /// </summary>
-        Especial = 7
+        Especial = 7,
+        
+        /// <summary>
+        /// Agregar ingrediente adicional
+        /// </summary>
+        AgregarIngrediente = 8,
+        
+        /// <summary>
+        /// Quitar ingrediente específico
+        /// </summary>
+        QuitarIngrediente = 9,
+        
+        /// <summary>
+        /// Cambiar un ingrediente por otro
+        /// </summary>
+        CambiarIngrediente = 10,
+        
+        /// <summary>
+        /// Instrucción especial para el personal de cocina
+        /// </summary>
+        InstruccionEspecial = 11
     }
 } 
