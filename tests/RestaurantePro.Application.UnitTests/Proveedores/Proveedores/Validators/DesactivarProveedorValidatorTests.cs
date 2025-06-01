@@ -307,7 +307,7 @@ public class DesactivarProveedorValidatorTests
 
     [Theory]
     [InlineData(EstadoOrdenCompra.Pendiente)]
-    [InlineData(EstadoOrdenCompra.Aprobada)]
+    [InlineData(EstadoOrdenCompra.Confirmada)]
     [InlineData(EstadoOrdenCompra.EnTransito)]
     public async Task Validate_ConOrdenesCompraActivas_DeberiaRetornarError(EstadoOrdenCompra estadoActivo)
     {
@@ -331,9 +331,8 @@ public class DesactivarProveedorValidatorTests
     }
 
     [Theory]
-    [InlineData(EstadoOrdenCompra.Completada)]
+    [InlineData(EstadoOrdenCompra.Recibida)]
     [InlineData(EstadoOrdenCompra.Cancelada)]
-    [InlineData(EstadoOrdenCompra.Rechazada)]
     public async Task Validate_ConOrdenesCompraNoActivas_NoDeberiaRetornarErrorDeOrdenes(EstadoOrdenCompra estadoInactivo)
     {
         // Arrange
@@ -362,7 +361,7 @@ public class DesactivarProveedorValidatorTests
         
         var ordenes = new[]
         {
-            new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.ProveedorId, Estado = EstadoOrdenCompra.Completada },
+            new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.ProveedorId, Estado = EstadoOrdenCompra.Recibida },
             new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.ProveedorId, Estado = EstadoOrdenCompra.Pendiente }, // ACTIVA
             new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.ProveedorId, Estado = EstadoOrdenCompra.Cancelada }
         };

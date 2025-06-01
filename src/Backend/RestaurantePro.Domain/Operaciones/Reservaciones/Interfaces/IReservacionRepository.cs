@@ -69,6 +69,14 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces
         new Task AgregarAsync(Reservacion reservacion, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Crea una nueva reservación y la retorna con su ID asignado
+        /// </summary>
+        /// <param name="reservacion">Reservación a crear</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>La reservación creada con su ID asignado</returns>
+        Task<Reservacion> CrearAsync(Reservacion reservacion, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Actualiza una reservación existente
         /// </summary>
         /// <param name="reservacion">Reservación a actualizar</param>
@@ -149,6 +157,14 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Diccionario con estadísticas por día</returns>
         Task<Dictionary<DateTime, int>> ObtenerEstadisticasPorDiaAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene una reservación por su código de reservación
+        /// </summary>
+        /// <param name="codigoReservacion">Código de la reservación</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Reservación encontrada o null si no existe</returns>
+        Task<Reservacion?> ObtenerPorCodigoAsync(string codigoReservacion, CancellationToken cancellationToken = default);
     }
 }
 

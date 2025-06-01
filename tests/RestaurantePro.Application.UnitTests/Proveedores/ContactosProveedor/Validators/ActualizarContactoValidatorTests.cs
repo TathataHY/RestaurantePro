@@ -732,15 +732,40 @@ public class ActualizarContactoValidatorTests
             e.ErrorMessage.Contains("Los tipos de notificaciones contienen valores no válidos"));
     }
 
-    [Theory]
-    [InlineData(new string[] { "Pedidos" })]
-    [InlineData(new string[] { "Pagos", "Generales" })]
-    [InlineData(new string[] { "Pedidos", "Pagos", "Generales", "Urgentes", "Promociones", "Facturas", "Emergencias" })]
-    public async Task Validate_ConTiposNotificacionesValidos_NoDeberiaRetornarError(string[] tipos)
+    [Fact]
+    public async Task Validate_ConTiposNotificacionesPedidos_NoDeberiaRetornarError()
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TiposNotificaciones = tipos.ToList();
+        command.TiposNotificaciones = new List<string> { "Pedidos" };
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(ActualizarContactoCommand.TiposNotificaciones));
+    }
+
+    [Fact]
+    public async Task Validate_ConTiposNotificacionesPagosGenerales_NoDeberiaRetornarError()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.TiposNotificaciones = new List<string> { "Pagos", "Generales" };
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(ActualizarContactoCommand.TiposNotificaciones));
+    }
+
+    [Fact]
+    public async Task Validate_ConTiposNotificacionesTodosValidos_NoDeberiaRetornarError()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.TiposNotificaciones = new List<string> { "Pedidos", "Pagos", "Generales", "Urgentes", "Promociones", "Facturas", "Emergencias" };
 
         // Act
         var result = await _validator.ValidateAsync(command);

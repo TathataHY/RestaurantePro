@@ -118,14 +118,14 @@ public class AplicarDescuentoValidatorTests
     }
 
     [Theory]
-    [InlineData("TipoInvalido")]
-    [InlineData("Descuento")]
-    [InlineData("Rebaja")]
-    public async Task Validate_ConTipoDescuentoInvalido_DeberiaRetornarError(string tipoInvalido)
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public async Task Validate_ConTipoDescuentoInvalido_DeberiaRetornarError(int tipoInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoDescuento = tipoInvalido;
+        command.TipoDescuento = tipoInvalido.ToString();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -138,19 +138,19 @@ public class AplicarDescuentoValidatorTests
     }
 
     [Theory]
-    [InlineData("General")]
-    [InlineData("MontoFijo")]
-    [InlineData("Empleado")]
-    [InlineData("Promocional")]
-    [InlineData("Volumen")]
-    [InlineData("ProductosEspecificos")]
-    [InlineData("Categoria")]
-    [InlineData("Cortesia")]
-    public async Task Validate_ConTipoDescuentoValido_NoDeberiaRetornarErrorDeTipo(string tipoValido)
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    public async Task Validate_ConTipoDescuentoValido_NoDeberiaRetornarErrorDeTipo(int tipoValido)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoDescuento = tipoValido;
+        command.TipoDescuento = tipoValido.ToString();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -617,15 +617,40 @@ public class AplicarDescuentoValidatorTests
             e.ErrorMessage.Contains("Las categorías deben ser válidas"));
     }
 
-    [Theory]
-    [InlineData(new string[] { "Comidas" })]
-    [InlineData(new string[] { "Bebidas", "Postres" })]
-    [InlineData(new string[] { "Comidas", "Bebidas", "Postres", "Entradas", "Especialidades" })]
-    public async Task Validate_ConCategoriasValidas_NoDeberiaRetornarErrorDeCategorias(string[] categorias)
+    [Fact]
+    public async Task Validate_ConCategoriasValidasSimple_NoDeberiaRetornarErrorDeCategorias()
     {
         // Arrange
         var command = CrearCommandValido();
-        command.CategoriasAplicables = categorias.ToList();
+        command.CategoriasAplicables = new List<string> { "Comidas" };
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(AplicarDescuentoCommand.CategoriasAplicables));
+    }
+
+    [Fact]
+    public async Task Validate_ConCategoriasValidasMultiples_NoDeberiaRetornarErrorDeCategorias()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.CategoriasAplicables = new List<string> { "Bebidas", "Postres" };
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(AplicarDescuentoCommand.CategoriasAplicables));
+    }
+
+    [Fact]
+    public async Task Validate_ConCategoriasValidasCompletas_NoDeberiaRetornarErrorDeCategorias()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.CategoriasAplicables = new List<string> { "Comidas", "Bebidas", "Postres", "Entradas", "Especialidades" };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -851,15 +876,15 @@ public class AplicarDescuentoValidatorTests
     #region Tests de Escenarios de Negocio
 
     [Theory]
-    [InlineData("General", 10, 0)]
-    [InlineData("MontoFijo", 0, 50)]
-    [InlineData("Empleado", 20, 0)]
-    [InlineData("Promocional", 15, 0)]
-    public async Task Validate_ConDiferentesTiposDescuento_DeberiaSerValido(string tipo, decimal porcentaje, decimal montoFijo)
+    [InlineData(1, 10, 0)]
+    [InlineData(2, 0, 50)]
+    [InlineData(3, 20, 0)]
+    [InlineData(4, 15, 0)]
+    public async Task Validate_ConDiferentesTiposDescuento_DeberiaSerValido(int tipo, decimal porcentaje, decimal montoFijo)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoDescuento = tipo;
+        command.TipoDescuento = tipo.ToString();
         command.Porcentaje = porcentaje;
         command.MontoFijo = montoFijo;
 

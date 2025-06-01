@@ -620,6 +620,48 @@ public class ActualizarUsuarioValidatorTests
     #region Validación PermisosEspecificos
 
     [Fact]
+    public async Task Validate_ConPermisosEspecificosSinPermisos_NoDeberiaRetornarErrorDePermisos()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.PermisosEspecificos = new List<string>();
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(ActualizarUsuarioCommand.PermisosEspecificos));
+    }
+
+    [Fact]
+    public async Task Validate_ConPermisosEspecificosVerReportes_NoDeberiaRetornarErrorDePermisos()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.PermisosEspecificos = new List<string> { "VerReportes" };
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(ActualizarUsuarioCommand.PermisosEspecificos));
+    }
+
+    [Fact]
+    public async Task Validate_ConPermisosEspecificosMultiples_NoDeberiaRetornarErrorDePermisos()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.PermisosEspecificos = new List<string> { "GestionarUsuarios", "VerReportes" };
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(ActualizarUsuarioCommand.PermisosEspecificos));
+    }
+
+    [Fact]
     public async Task Validate_ConMuchosPermisosEspecificos_DeberiaRetornarError()
     {
         // Arrange
@@ -651,23 +693,6 @@ public class ActualizarUsuarioValidatorTests
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(ActualizarUsuarioCommand.PermisosEspecificos) &&
             e.ErrorMessage.Contains("Todos los permisos específicos deben ser válidos"));
-    }
-
-    [Theory]
-    [InlineData(new string[] { })]  // Sin permisos - válido
-    [InlineData(new string[] { "VerReportes" })]
-    [InlineData(new string[] { "GestionarUsuarios", "VerReportes" })]
-    public async Task Validate_ConPermisosEspecificosValidos_NoDeberiaRetornarErrorDePermisos(string[] permisos)
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.PermisosEspecificos = permisos.ToList();
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(ActualizarUsuarioCommand.PermisosEspecificos));
     }
 
     #endregion

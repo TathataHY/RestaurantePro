@@ -312,19 +312,18 @@ public class ConfirmarReservacionHandlerTests
     [InlineData(EstadoReservacion.Pendiente, true)]
     [InlineData(EstadoReservacion.Confirmada, false)]
     [InlineData(EstadoReservacion.Cancelada, false)]
-    [InlineData(EstadoReservacion.EnProgreso, false)]
     [InlineData(EstadoReservacion.Completada, false)]
     public async Task Handle_ConDiferentesEstados_DeberiaValidarCorrectamente(
-        EstadoReservacion estadoInicial, bool deberiaConfirmar)
+        EstadoReservacion estado, bool deberiaConfirmar)
     {
         // Arrange
-        var codigoReservacion = $"RES-ESTADO-{estadoInicial}";
+        var codigoReservacion = $"RES-ESTADO-{estado}";
         var command = new ConfirmarReservacionCommand
         {
             CodigoReservacion = codigoReservacion
         };
 
-        var reservacion = CrearReservacion(Guid.NewGuid(), estadoInicial, codigoReservacion);
+        var reservacion = CrearReservacion(Guid.NewGuid(), estado, codigoReservacion);
         var reservacionDto = CrearReservacionDto(reservacion.Id, EstadoReservacion.Confirmada);
 
         _mockReservacionRepository.Setup(r => r.ObtenerPorCodigoAsync(codigoReservacion, It.IsAny<CancellationToken>()))

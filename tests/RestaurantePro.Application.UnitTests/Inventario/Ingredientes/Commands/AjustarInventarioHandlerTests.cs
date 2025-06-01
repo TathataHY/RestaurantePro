@@ -475,14 +475,15 @@ public class AjustarInventarioHandlerTests
     /// ✅ Test: Diferentes tipos de ajuste con motivos específicos
     /// </summary>
     [Theory]
-    [InlineData(TipoMovimientoInventario.Incremento, "Recuento físico - stock adicional encontrado", "Entrada por recuento")]
-    [InlineData(TipoMovimientoInventario.Decremento, "Merma por deterioro", "Salida por merma")]
-    [InlineData(TipoMovimientoInventario.Incremento, "Devolución de proveedor", "Entrada por devolución")]
-    [InlineData(TipoMovimientoInventario.Decremento, "Producto dañado en transporte", "Salida por daño")]
+    [InlineData(1, "Recuento físico - stock adicional encontrado", "Entrada por recuento")]   // TipoMovimientoInventario.Incremento
+    [InlineData(2, "Merma por deterioro", "Salida por merma")]                                 // TipoMovimientoInventario.Decremento
+    [InlineData(1, "Devolución de proveedor", "Entrada por devolución")]                      // TipoMovimientoInventario.Incremento
+    [InlineData(2, "Producto dañado en transporte", "Salida por daño")]                       // TipoMovimientoInventario.Decremento
     public async Task Handle_DiferentesTiposDeAjuste_DeberiaCategorizarCorrectamente(
-        TipoMovimientoInventario tipoAjuste, string motivo, string categoriaEsperada)
+        int tipoAjusteInt, string motivo, string categoriaEsperada)
     {
         // Arrange
+        var tipoAjuste = (TipoMovimientoInventario)tipoAjusteInt;
         var ingredienteId = Guid.NewGuid();
         var command = new AjustarInventarioCommand
         {
@@ -631,17 +632,15 @@ public class AjustarInventarioHandlerTests
     }
 
     /// <summary>
-    /// ✅ Test: Validación de límites por rol de usuario
+    /// ✅ Test: Validación de límites por rol de usuario - GerenteInventario con cantidad válida
     /// </summary>
-    [Theory]
-    [InlineData(RolUsuario.GerenteInventario, 1000m, true)]
-    [InlineData(RolUsuario.Administrador, 5000m, true)]
-    [InlineData(RolUsuario.Cocinero, 50m, true)]
-    [InlineData(RolUsuario.Cocinero, 500m, false)] // Excede límite para cocinero
-    public async Task Handle_ValidacionLimitesPorRol_DeberiaValidarCorrectamente(
-        RolUsuario rol, decimal cantidad, bool esperarExito)
+    [Fact]
+    public async Task Handle_ValidacionLimitesGerenteInventario_DeberiaValidarCorrectamente()
     {
         // Arrange
+        var rol = RolUsuario.GerenteInventario;
+        var cantidad = 1000m;
+        var esperarExito = true;
         var ingredienteId = Guid.NewGuid();
         var command = new AjustarInventarioCommand
         {
@@ -659,40 +658,162 @@ public class AjustarInventarioHandlerTests
         _ingredienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ingrediente);
         
-        if (esperarExito)
-        {
-            _validacionServiceMock.Setup(x => x.ValidarLimitesAjustePorRol(rol, cantidad))
-                .Returns(Result.Success());
-            _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoMovimientoInventario>(), cantidad))
-                .Returns(Result.Success());
-            _ingredienteRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-            _movimientoRepositoryMock.Setup(x => x.CrearAsync(It.IsAny<MovimientoInventario>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-            _mapperMock.Setup(x => x.Map<IngredienteDto>(It.IsAny<Ingrediente>()))
-                .Returns(new IngredienteDto { Id = ingredienteId });
-            _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(1);
-        }
-        else
-        {
-            _validacionServiceMock.Setup(x => x.ValidarLimitesAjustePorRol(rol, cantidad))
-                .Returns(Result.Failure($"El rol {rol} no puede ajustar cantidades superiores a su límite autorizado"));
-        }
+        _validacionServiceMock.Setup(x => x.ValidarLimitesAjustePorRol(rol, cantidad))
+            .Returns(Result.Success());
+        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoMovimientoInventario>(), cantidad))
+            .Returns(Result.Success());
+        _ingredienteRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _movimientoRepositoryMock.Setup(x => x.CrearAsync(It.IsAny<MovimientoInventario>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _mapperMock.Setup(x => x.Map<IngredienteDto>(It.IsAny<Ingrediente>()))
+            .Returns(new IngredienteDto { Id = ingredienteId });
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        if (esperarExito)
+        result.IsSuccess.Should().BeTrue();
+
+        // Verify validación de límites se ejecutó
+        _validacionServiceMock.Verify(x => x.ValidarLimitesAjustePorRol(rol, cantidad), Times.Once);
+    }
+
+    /// <summary>
+    /// ✅ Test: Validación de límites por rol de usuario - Administrador con cantidad alta
+    /// </summary>
+    [Fact]
+    public async Task Handle_ValidacionLimitesAdministrador_DeberiaValidarCorrectamente()
+    {
+        // Arrange
+        var rol = RolUsuario.Administrador;
+        var cantidad = 5000m;
+        var ingredienteId = Guid.NewGuid();
+        var command = new AjustarInventarioCommand
         {
-            result.IsSuccess.Should().BeTrue();
-        }
-        else
+            IngredienteId = ingredienteId,
+            TipoAjuste = TipoMovimientoInventario.Incremento,
+            Cantidad = cantidad,
+            MotivoAjuste = "Validación de límites por rol"
+        };
+
+        var ingrediente = Ingrediente.Crear("Test", "Test", UnidadMedida.Unidad, CategoriaIngrediente.Otros, 100m, 10m, 1000m, 10000m);
+
+        _currentUserMock.Setup(x => x.UserId).Returns(Guid.NewGuid());
+        _currentUserMock.Setup(x => x.Rol).Returns(rol.ToString());
+        _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
+        _ingredienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ingrediente);
+        
+        _validacionServiceMock.Setup(x => x.ValidarLimitesAjustePorRol(rol, cantidad))
+            .Returns(Result.Success());
+        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoMovimientoInventario>(), cantidad))
+            .Returns(Result.Success());
+        _ingredienteRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _movimientoRepositoryMock.Setup(x => x.CrearAsync(It.IsAny<MovimientoInventario>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _mapperMock.Setup(x => x.Map<IngredienteDto>(It.IsAny<Ingrediente>()))
+            .Returns(new IngredienteDto { Id = ingredienteId });
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+
+        // Verify validación de límites se ejecutó
+        _validacionServiceMock.Verify(x => x.ValidarLimitesAjustePorRol(rol, cantidad), Times.Once);
+    }
+
+    /// <summary>
+    /// ✅ Test: Validación de límites por rol de usuario - Cocinero con cantidad válida
+    /// </summary>
+    [Fact]
+    public async Task Handle_ValidacionLimitesCocineroCantidadValida_DeberiaValidarCorrectamente()
+    {
+        // Arrange
+        var rol = RolUsuario.Cocinero;
+        var cantidad = 50m;
+        var ingredienteId = Guid.NewGuid();
+        var command = new AjustarInventarioCommand
         {
-            result.IsSuccess.Should().BeFalse();
-            result.Error.Should().Contain("límite autorizado");
-        }
+            IngredienteId = ingredienteId,
+            TipoAjuste = TipoMovimientoInventario.Incremento,
+            Cantidad = cantidad,
+            MotivoAjuste = "Validación de límites por rol"
+        };
+
+        var ingrediente = Ingrediente.Crear("Test", "Test", UnidadMedida.Unidad, CategoriaIngrediente.Otros, 100m, 10m, 1000m, 10000m);
+
+        _currentUserMock.Setup(x => x.UserId).Returns(Guid.NewGuid());
+        _currentUserMock.Setup(x => x.Rol).Returns(rol.ToString());
+        _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
+        _ingredienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ingrediente);
+        
+        _validacionServiceMock.Setup(x => x.ValidarLimitesAjustePorRol(rol, cantidad))
+            .Returns(Result.Success());
+        _validacionServiceMock.Setup(x => x.ValidarAjusteInventario(It.IsAny<Ingrediente>(), It.IsAny<TipoMovimientoInventario>(), cantidad))
+            .Returns(Result.Success());
+        _ingredienteRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _movimientoRepositoryMock.Setup(x => x.CrearAsync(It.IsAny<MovimientoInventario>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _mapperMock.Setup(x => x.Map<IngredienteDto>(It.IsAny<Ingrediente>()))
+            .Returns(new IngredienteDto { Id = ingredienteId });
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+
+        // Verify validación de límites se ejecutó
+        _validacionServiceMock.Verify(x => x.ValidarLimitesAjustePorRol(rol, cantidad), Times.Once);
+    }
+
+    /// <summary>
+    /// ❌ Test: Validación de límites por rol de usuario - Cocinero excede límite
+    /// </summary>
+    [Fact]
+    public async Task Handle_ValidacionLimitesCocineroCantidadExcesiva_DeberiaRetornarError()
+    {
+        // Arrange
+        var rol = RolUsuario.Cocinero;
+        var cantidad = 500m; // Excede límite para cocinero
+        var ingredienteId = Guid.NewGuid();
+        var command = new AjustarInventarioCommand
+        {
+            IngredienteId = ingredienteId,
+            TipoAjuste = TipoMovimientoInventario.Incremento,
+            Cantidad = cantidad,
+            MotivoAjuste = "Validación de límites por rol"
+        };
+
+        var ingrediente = Ingrediente.Crear("Test", "Test", UnidadMedida.Unidad, CategoriaIngrediente.Otros, 100m, 10m, 1000m, 10000m);
+
+        _currentUserMock.Setup(x => x.UserId).Returns(Guid.NewGuid());
+        _currentUserMock.Setup(x => x.Rol).Returns(rol.ToString());
+        _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
+        _ingredienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ingrediente);
+        
+        _validacionServiceMock.Setup(x => x.ValidarLimitesAjustePorRol(rol, cantidad))
+            .Returns(Result.Failure($"El rol {rol} no puede ajustar cantidades superiores a su límite autorizado"));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Contain("límite autorizado");
 
         // Verify validación de límites se ejecutó
         _validacionServiceMock.Verify(x => x.ValidarLimitesAjustePorRol(rol, cantidad), Times.Once);

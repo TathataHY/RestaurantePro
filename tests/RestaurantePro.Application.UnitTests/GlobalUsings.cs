@@ -43,10 +43,12 @@ global using FluentValidation.Results;
 global using RestaurantePro.Domain.Core.SharedKernel.Results;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Validation;
+global using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
 global using RestaurantePro.Domain.Core.Productos.Entities;
 global using RestaurantePro.Domain.Core.Productos.ValueObjects;
 global using RestaurantePro.Domain.Core.Productos.Interfaces;
 global using RestaurantePro.Domain.Core.Productos.Builders;
+global using RestaurantePro.Domain.Core.Productos.Services;
 
 // Application - Lo que vamos a testear
 global using RestaurantePro.Application.Config.Mappings;
@@ -62,6 +64,7 @@ global using RestaurantePro.Application.Common.DTOs;
 global using RestaurantePro.Application.Common.Behaviors;
 global using RestaurantePro.Application.Common.Exceptions;
 global using RestaurantePro.Application.Common.Interfaces;
+global using RestaurantePro.Application.Common.Enums;
 
 // Application - Proveedores
 global using RestaurantePro.Application.Proveedores.Proveedores.Commands.CrearProveedor;
@@ -81,19 +84,33 @@ global using RestaurantePro.Application.Proveedores.ContactosProveedor.DTOs;
 global using RestaurantePro.Application.Operaciones.Mesas.Commands.AsignarMesa;
 global using RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
 global using RestaurantePro.Application.Operaciones.Mesas.Commands.CambiarEstadoMesa;
+global using RestaurantePro.Application.Operaciones.Mesas.Commands.TransferirMesa;
+global using RestaurantePro.Application.Operaciones.Mesas.Queries.ObtenerEstadoMesas;
+global using RestaurantePro.Application.Operaciones.Mesas.Queries.ObtenerMesasDisponibles;
 global using RestaurantePro.Application.Operaciones.Mesas.DTOs;
 
 // Application - Operaciones Reservaciones
 global using RestaurantePro.Application.Operaciones.Reservaciones.EventHandlers.ReservacionCreada;
+global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.CancelarReservacion;
+global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ConfirmarReservacion;
+global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.CrearReservacion;
+global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ModificarReservacion;
+global using RestaurantePro.Application.Operaciones.Reservaciones.Queries.ConsultarDisponibilidad;
+global using RestaurantePro.Application.Operaciones.Reservaciones.Queries.ObtenerReservacionesCliente;
+global using RestaurantePro.Application.Operaciones.Reservaciones.Queries.ObtenerReservacionesPorFecha;
+global using RestaurantePro.Application.Operaciones.Reservaciones.Queries.ObtenerReservacionPorId;
+global using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
 
 // Application - Inventario
 global using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientePorId;
 global using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesPaginados;
 global using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesBajoStock;
+global using RestaurantePro.Application.Inventario.Ingredientes.Commands.ActualizarStock;
+global using RestaurantePro.Application.Inventario.Ingredientes.Commands.CrearIngrediente;
+global using RestaurantePro.Application.Inventario.Ingredientes.Commands.AjustarInventario;
 global using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
-
-// Domain - Core
-global using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
+global using RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnalisisInventario;
+global using RestaurantePro.Application.Inventario.Reportes.DTOs;
 
 // Domain - Proveedores
 global using RestaurantePro.Domain.Proveedores.Entities;
@@ -105,37 +122,55 @@ global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 global using RestaurantePro.Domain.Operaciones.Services;
+global using IDisponibilidadService = RestaurantePro.Domain.Operaciones.Services.IDisponibilidadService;
+global using IValidacionReservacionService = RestaurantePro.Domain.Operaciones.Services.IValidacionReservacionService;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
 
 // Domain - Inventario
 global using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
 global using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
 global using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
+global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
+global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums;
+global using RestaurantePro.Domain.Inventario.Services;
 
 // Domain - Notificaciones
 global using RestaurantePro.Domain.Core.Notificaciones.Services;
 global using RestaurantePro.Domain.Core.Notificaciones.Enums;
+global using RestaurantePro.Domain.Core.Notificaciones.Entities;
 
 // Domain - Clientes
 global using RestaurantePro.Domain.Comercial.Clientes.Entities;
 global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 global using RestaurantePro.Domain.Comercial.Clientes.Builders;
 global using RestaurantePro.Domain.Comercial.Clientes.Enums;
+global using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
 
 // Application - Comandas
 global using RestaurantePro.Application.Operaciones.Comandas.DTOs;
 global using RestaurantePro.Application.Operaciones.Comandas.Queries.ObtenerHistorialComandas;
 global using RestaurantePro.Application.Operaciones.Comandas.Queries.ObtenerComandasActivas;
 global using RestaurantePro.Application.Operaciones.Comandas.Queries.ObtenerComandaPorId;
+global using RestaurantePro.Application.Operaciones.Comandas.Commands.ActualizarEstadoComanda;
+global using RestaurantePro.Application.Operaciones.Comandas.Commands.AgregarItemComanda;
+global using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
+global using RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
+global using RestaurantePro.Application.Operaciones.Comandas.Commands.DividirComanda;
+global using RestaurantePro.Application.Operaciones.Comandas.Commands.UnificarComandas;
+global using RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaCreada;
+global using RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
 
 // Domain - Comandas
 global using RestaurantePro.Domain.Operaciones.Comandas.Entities;
 global using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 global using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 global using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
-
-// Domain - Clientes ValueObjects
-global using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
 
 // Application - Common Testing
 global using RestaurantePro.Application.UnitTests.Common;
@@ -146,50 +181,32 @@ global using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente
 global using RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarCliente;
 global using RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientePorId;
 global using RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientesPaginados;
+global using RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
 global using RestaurantePro.Application.Comercial.Clientes.DTOs;
-
-// Application - Core Productos
-global using RestaurantePro.Domain.Core.Productos.Services;
-
-// Application - Comandas Commands
-global using RestaurantePro.Application.Operaciones.Comandas.Commands.ActualizarEstadoComanda;
-global using RestaurantePro.Application.Operaciones.Comandas.Commands.AgregarItemComanda;
-global using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
-global using RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
-
-// Application - Comandas EventHandlers
-global using RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaCreada;
-global using RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
-
-// Application - Inventario
-global using RestaurantePro.Application.Inventario.Ingredientes.Commands.ActualizarStock;
-global using RestaurantePro.Application.Inventario.Ingredientes.Commands.CrearIngrediente;
-global using RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnalisisInventario;
 
 // Application - Facturación
 global using RestaurantePro.Application.Comercial.Facturacion.Commands.AnularFactura;
+global using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
+global using RestaurantePro.Application.Comercial.Facturacion.Commands.AplicarDescuento;
+global using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturaPorId;
 global using RestaurantePro.Application.Comercial.Facturacion.DTOs;
 global using RestaurantePro.Application.Comercial.Facturacion.EventHandlers.FacturaCreada;
-global using RestaurantePro.Application.Operaciones.Reportes.Queries.ObtenerReporteVentasDiaria;
-global using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
 
 // Application - Fidelización
 global using RestaurantePro.Application.Comercial.Fidelizacion.Commands.CanjearPuntos;
 global using RestaurantePro.Application.Comercial.Fidelizacion.Commands.CrearTarjetaFidelizacion;
-global using RestaurantePro.Application.Comercial.Reportes.Queries.ObtenerAnalisisFidelizacion;
 global using RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos;
-
-// Application - Fidelización DTOs
 global using RestaurantePro.Application.Comercial.Fidelizacion.DTOs;
 
-// Application - Promociones DTOs
+// Application - Promociones
 global using RestaurantePro.Application.Comercial.Promociones.DTOs;
+global using RestaurantePro.Application.Comercial.Promociones.Commands.AplicarPromocion;
 
-// Domain - Inventario
-global using RestaurantePro.Domain.Inventario.Services;
-global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
-global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces;
-global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
+// Application - Reportes
+global using RestaurantePro.Application.Operaciones.Reportes.Commands.GenerarReporte;
+global using RestaurantePro.Application.Operaciones.Reportes.Commands.ProcesarPedidoCompleto;
+global using RestaurantePro.Application.Operaciones.Reportes.Queries.ObtenerReporteVentasDiaria;
+global using RestaurantePro.Application.Comercial.Reportes.Queries.ObtenerAnalisisFidelizacion;
 
 // Domain - Facturación
 global using RestaurantePro.Domain.Comercial.Facturacion.Entities;
@@ -200,180 +217,64 @@ global using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
 // Domain - Comercial
 global using RestaurantePro.Domain.Comercial.Services;
 global using RestaurantePro.Domain.Comercial.Promociones.Services;
+global using RestaurantePro.Domain.Comercial.Promociones.Entities;
+global using RestaurantePro.Domain.Comercial.Promociones.Enums;
 
 // Domain - Core
 global using RestaurantePro.Domain.Core.Usuarios.Entities;
-global using RestaurantePro.Domain.Core.Notificaciones.Entities;
-
-// Domain - Operaciones
-global using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
-
-// Domain - Reservaciones Enums
-global using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
-
-// Application - Reportes
-global using RestaurantePro.Application.Operaciones.Reportes.Commands.GenerarReporte;
-
-// Domain - Inventario Enums
-global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
-
-// Application - Reportes DTOs
-global using RestaurantePro.Application.Inventario.Reportes.DTOs;
-
-// Domain - Reservaciones Interfaces  
-global using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
-
-// Application - Facturación Queries
-global using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturaPorId;
-
-// Application - Clientes Queries
-global using RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
-
-// Application - Common Enums
-global using RestaurantePro.Application.Common.Enums;
-
-// Domain - Comercial Promociones
-global using RestaurantePro.Domain.Comercial.Promociones.Entities;
-
-// Application - Promociones Commands
-global using RestaurantePro.Application.Comercial.Promociones.Commands.AplicarPromocion;
-
-// Application - Facturación Commands
-global using RestaurantePro.Application.Comercial.Facturacion.Commands.AplicarDescuento;
-
-// Domain - Core ValueObjects
+global using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 global using RestaurantePro.Domain.Core.Usuarios.Enums;
+global using RestaurantePro.Domain.Core.Services;
 
-// Domain - Inventario Compras
-global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums;
-
-// Domain - Comercial Promociones Enums
-global using RestaurantePro.Domain.Comercial.Promociones.Enums;
-
-// Application - Core Usuarios Commands
+// Application - Core Usuarios
 global using RestaurantePro.Application.Core.Usuarios.Commands.ActualizarUsuario;
 global using RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
 global using RestaurantePro.Application.Core.Usuarios.Commands.CambiarPasswordUsuario;
-
-// Application - Core Usuarios DTOs
 global using RestaurantePro.Application.Core.Usuarios.DTOs;
-
-// Application - Operaciones Comandas Commands
-global using RestaurantePro.Application.Operaciones.Comandas.Commands.DividirComanda;
-global using RestaurantePro.Application.Operaciones.Comandas.Commands.UnificarComandas;
-
-// Application - Operaciones Mesas Commands
-global using RestaurantePro.Application.Operaciones.Mesas.Commands.TransferirMesa;
-
-// Application - Operaciones Mesas Queries
-global using RestaurantePro.Application.Operaciones.Mesas.Queries.ObtenerEstadoMesas;
-global using RestaurantePro.Application.Operaciones.Mesas.Queries.ObtenerMesasDisponibles;
-
-// Application - Operaciones Reservaciones Commands
-global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.CancelarReservacion;
-global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ConfirmarReservacion;
-global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.CrearReservacion;
-global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ModificarReservacion;
-
-// Application - Operaciones Reservaciones Queries
-global using RestaurantePro.Application.Operaciones.Reservaciones.Queries.ConsultarDisponibilidad;
-global using RestaurantePro.Application.Operaciones.Reservaciones.Queries.ObtenerReservacionesCliente;
-global using RestaurantePro.Application.Operaciones.Reservaciones.Queries.ObtenerReservacionesPorFecha;
-global using RestaurantePro.Application.Operaciones.Reservaciones.Queries.ObtenerReservacionPorId;
-
-// Application - Operaciones Reservaciones DTOs
-global using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
-
-// Application - Operaciones Reportes Commands
-global using RestaurantePro.Application.Operaciones.Reportes.Commands.ProcesarPedidoCompleto;
-
-// Domain - Core Usuarios Repositories
-global using RestaurantePro.Domain.Core.Usuarios.Interfaces;
-
-// Domain - Core Services
-global using RestaurantePro.Domain.Core.Services;
-
-// Domain - Core Productos Services
-global using RestaurantePro.Domain.Core.Productos.Services;
-
-// Application - Common Interfaces
-global using RestaurantePro.Application.Common.Interfaces;
-
-// Domain - Core SharedKernel Validation
-global using RestaurantePro.Domain.Core.SharedKernel.Validation;
-
-// Domain - Comercial Services
-global using RestaurantePro.Domain.Comercial.Services;
-
-// References for specific missing types found in tests
-
-// Domain - Comercial Clientes Enums (TipoTarjetaFidelizacion, etc.)
-global using RestaurantePro.Domain.Comercial.Clientes.Enums;
-
-// Domain - Comercial Promociones Enums (TipoDescuento, etc.)
-global using RestaurantePro.Domain.Comercial.Promociones.Enums;
-
-// Domain - Facturación Enums (TipoFactura)
-global using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-
-// Domain - Comercial Fidelizacion Enums
-// global using RestaurantePro.Domain.Comercial.Fidelizacion.Enums; // Este namespace no existe - usar individual
-
-// Application - Common Interfaces (IAuditingService renamed to IAuditService)
-// Note: The interface is actually called IAuditService, not IAuditingService
-
-// Type aliases para compatibilidad con tests que usan nombres incorrectos
-// NOTE: Estos types no existen en el proyecto, los tests los usan incorrectamente
-
-// AcumularPuntosResult -> debe ser Result<AcumulacionPuntosDto>
-global using AcumularPuntosResult = RestaurantePro.Application.Comercial.Fidelizacion.DTOs.AcumulacionPuntosDto;
-
-// CrearTarjetaFidelizacionResult -> debe ser Result<TarjetaFidelizacionDto>  
-global using CrearTarjetaFidelizacionResult = RestaurantePro.Application.Comercial.Fidelizacion.DTOs.TarjetaFidelizacionDto;
-
-// IAuditingService -> should be IAuditService
-global using IAuditingService = RestaurantePro.Application.Common.Interfaces.IAuditService;
-
-// TipoDescuento no existe como enum - los tests usan strings, pero necesitan referencia
-// global using TipoDescuento = System.String; // No funciona bien para tests
-
-// Domain - Comercial Fidelizacion Enums specific
-global using TipoTarjetaFidelizacion = RestaurantePro.Domain.Comercial.Clientes.Enums.TipoTarjetaFidelizacion;
-
-// Additional missing interfaces and services
-global using IDateTimeService = RestaurantePro.Domain.Core.Base.Services.IDateTimeService;
 
 // Resolve ValidationException ambiguity
 global using ValidationException = RestaurantePro.Application.Common.Exceptions.ValidationException;
 
-// Domain - Comercial Facturacion Entities
+// Type aliases and missing types
+global using AcumularPuntosResult = RestaurantePro.Application.Comercial.Fidelizacion.DTOs.AcumulacionPuntosDto;
+global using CrearTarjetaFidelizacionResult = RestaurantePro.Application.Comercial.Fidelizacion.DTOs.TarjetaFidelizacionDto;
+global using IAuditingService = RestaurantePro.Application.Common.Interfaces.IAuditService;
+global using TipoTarjetaFidelizacion = RestaurantePro.Domain.Comercial.Clientes.Enums.TipoTarjetaFidelizacion;
+global using IDateTimeService = RestaurantePro.Domain.Core.Base.Services.IDateTimeService;
 global using DescuentoFactura = RestaurantePro.Domain.Comercial.Facturacion.Entities.DescuentoFactura;
-
-// Domain - Operaciones Comandas Enums
 global using TipoPersonalizacion = RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoPersonalizacion;
-
-// Alias para entidades de órdenes de compra
 global using DetalleOrdenCompra = RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities.ItemOrdenCompra;
-
-// Application - Core Productos DTOs adicionales
 global using DisponibilidadProductoDto = RestaurantePro.Application.Core.Productos.DTOs.DisponibilidadProductoDto;
 global using AnalisisIngredienteDto = RestaurantePro.Application.Core.Productos.DTOs.AnalisisIngredienteDto;
-
-// Alias para servicios faltantes en pruebas
 global using IClienteBusinessService = RestaurantePro.Domain.Comercial.Services.IComercialServiceFacade;
-
-// Domain - Inventario Services
 global using IValidacionInventarioService = RestaurantePro.Domain.Inventario.Services.IValidacionInventarioService;
 global using IAlertaStockService = RestaurantePro.Domain.Inventario.Services.IAlertaStockService;
-
-// Alias para auditoría de inventario usando el servicio general
 global using IInventarioAuditService = RestaurantePro.Application.Common.Interfaces.IAuditService;
 
-// Application - Inventario Commands
-global using RestaurantePro.Application.Inventario.Ingredientes.Commands.AjustarInventario;
+// Missing interfaces and services for tests
+global using ISecurityValidationService = RestaurantePro.Application.Common.Interfaces.IAuditService;
 
-// Domain - Inventario Interfaces adicionales
-global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces;
+// Type aliases for missing services (commented out as they don't exist in the actual project)
+// Note: These types are referenced in tests but don't exist in the actual codebase
+// Tests should be updated to mock these interfaces or use existing ones
 
-// Domain - Core Productos Services
-global using RestaurantePro.Domain.Core.Productos.Services;
+// global using IPagoService = RestaurantePro.Application.Common.Interfaces.IPagoService;
+// global using IFacturacionService = RestaurantePro.Application.Common.Interfaces.IFacturacionService;
+// global using IFidelizacionService = RestaurantePro.Application.Common.Interfaces.IFidelizacionService;
+// global using IDisponibilidadService = RestaurantePro.Application.Common.Interfaces.IDisponibilidadService;
+// global using IValidacionReservacionService = RestaurantePro.Application.Common.Interfaces.IValidacionReservacionService;
+// global using IOrquestadorWorkflowService = RestaurantePro.Application.Common.Interfaces.IOrquestadorWorkflowService;
+
+// global using LiberarMesaResult = RestaurantePro.Application.Operaciones.Mesas.DTOs.LiberarMesaDto;
+// global using ProcesarPedidoCompletoDto = RestaurantePro.Application.Operaciones.Reportes.DTOs.ProcesarPedidoCompletoDto;
+// global using CrearItemComandaDto = RestaurantePro.Application.Operaciones.Comandas.DTOs.CrearItemComandaDto;
+// global using CrearPersonalizacionItemDto = RestaurantePro.Application.Operaciones.Comandas.DTOs.CrearPersonalizacionItemDto;
+// global using ItemPedidoDto = RestaurantePro.Application.Operaciones.Reportes.DTOs.ItemPedidoDto;
+// global using PrediccionSemanal = RestaurantePro.Application.Inventario.Reportes.DTOs.PrediccionSemanal;
+// global using StockOptimoIngrediente = RestaurantePro.Application.Inventario.Reportes.DTOs.StockOptimoIngrediente;
+
+// global using TipoProveedor = RestaurantePro.Domain.Proveedores.Enums.TipoProveedor;
+// global using TipoMesa = RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums.TipoMesa;
+
+// global using VerificarDisponibilidadProductoHandler = RestaurantePro.Application.Core.Productos.Queries.VerificarDisponibilidadProducto.VerificarDisponibilidadProductoHandler;
+// global using CrearTarjetaFidelizacionValidator = RestaurantePro.Application.Comercial.Fidelizacion.Validators.CrearTarjetaFidelizacionValidator;

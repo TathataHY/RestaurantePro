@@ -38,7 +38,7 @@ public class AjustarInventarioHandler : IRequestHandler<AjustarInventarioCommand
             var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(request.IngredienteId);
             if (ingrediente == null)
             {
-                return RestaurantePro.Domain.Core.SharedKernel.Results.Result<bool>.Failure($"Ingrediente con ID {request.IngredienteId} no encontrado");
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<bool>($"Ingrediente con ID {request.IngredienteId} no encontrado");
             }
 
             // Validar el ajuste
@@ -51,7 +51,7 @@ public class AjustarInventarioHandler : IRequestHandler<AjustarInventarioCommand
             if (!resultadoValidacion.EsValido)
             {
                 var errores = string.Join(", ", resultadoValidacion.Errores);
-                return RestaurantePro.Domain.Core.SharedKernel.Results.Result<bool>.Failure($"Validación falló: {errores}");
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<bool>($"Validación falló: {errores}");
             }
 
             // Aplicar el ajuste usando los métodos de dominio
@@ -72,12 +72,12 @@ public class AjustarInventarioHandler : IRequestHandler<AjustarInventarioCommand
             _logger.LogInformation("Ajuste de inventario completado. Movimiento ID: {MovimientoId}, Nuevo stock: {NuevoStock}", 
                 movimiento.Id, ingrediente.Stock);
             
-            return RestaurantePro.Domain.Core.SharedKernel.Results.Result<bool>.Success(true);
+            return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Success<bool>(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al ajustar inventario del ingrediente {IngredienteId}", request.IngredienteId);
-            return RestaurantePro.Domain.Core.SharedKernel.Results.Result<bool>.Failure($"Error interno: {ex.Message}");
+            return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<bool>($"Error interno: {ex.Message}");
         }
     }
 } 

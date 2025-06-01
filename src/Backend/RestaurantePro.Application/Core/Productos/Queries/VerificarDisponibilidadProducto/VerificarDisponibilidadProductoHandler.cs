@@ -31,7 +31,7 @@ public class VerificarDisponibilidadProductoHandler : IRequestHandler<VerificarD
             var producto = await _productoService.ObtenerPorIdAsync(request.ProductoId);
             if (producto == null)
             {
-                return RestaurantePro.Domain.Core.SharedKernel.Results.Result<DisponibilidadProductoDto>.Failure($"Producto con ID {request.ProductoId} no encontrado");
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<DisponibilidadProductoDto>($"Producto con ID {request.ProductoId} no encontrado");
             }
 
             if (!producto.EstaActivo)
@@ -46,7 +46,7 @@ public class VerificarDisponibilidadProductoHandler : IRequestHandler<VerificarD
                     FechaVerificacion = DateTime.UtcNow,
                     AnalisisIngredientes = new List<RestaurantePro.Application.Core.Productos.DTOs.AnalisisIngredienteDto>()
                 };
-                return RestaurantePro.Domain.Core.SharedKernel.Results.Result<DisponibilidadProductoDto>.Success(resultadoInactivo);
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Success<DisponibilidadProductoDto>(resultadoInactivo);
             }
 
             // Verificar disponibilidad de ingredientes
@@ -63,7 +63,7 @@ public class VerificarDisponibilidadProductoHandler : IRequestHandler<VerificarD
                     FechaVerificacion = DateTime.UtcNow,
                     AnalisisIngredientes = new List<RestaurantePro.Application.Core.Productos.DTOs.AnalisisIngredienteDto>()
                 };
-                return RestaurantePro.Domain.Core.SharedKernel.Results.Result<DisponibilidadProductoDto>.Success(resultadoSinReceta);
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Success<DisponibilidadProductoDto>(resultadoSinReceta);
             }
 
             var analisisIngredientes = new List<RestaurantePro.Application.Core.Productos.DTOs.AnalisisIngredienteDto>();
@@ -106,12 +106,12 @@ public class VerificarDisponibilidadProductoHandler : IRequestHandler<VerificarD
                 AnalisisIngredientes = analisisIngredientes
             };
 
-            return RestaurantePro.Domain.Core.SharedKernel.Results.Result<DisponibilidadProductoDto>.Success(resultado);
+            return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Success<DisponibilidadProductoDto>(resultado);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al verificar disponibilidad del producto {ProductoId}", request.ProductoId);
-            return RestaurantePro.Domain.Core.SharedKernel.Results.Result<DisponibilidadProductoDto>.Failure($"Error interno: {ex.Message}");
+            return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<DisponibilidadProductoDto>($"Error interno: {ex.Message}");
         }
     }
-} 
+}

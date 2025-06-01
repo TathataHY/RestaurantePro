@@ -156,16 +156,16 @@ public class CancelarReservacionHandlerTests
     }
 
     [Theory]
-    [InlineData(EstadoReservacion.Confirmada, true)]
     [InlineData(EstadoReservacion.Pendiente, true)]
+    [InlineData(EstadoReservacion.Confirmada, true)]
+    [InlineData(EstadoReservacion.Confirmada, false)]
     [InlineData(EstadoReservacion.Cancelada, false)]
     [InlineData(EstadoReservacion.Completada, false)]
-    [InlineData(EstadoReservacion.EnProgreso, false)]
-    public async Task Handle_ConDiferentesEstados_DeberiaValidarCorrectamente(
-        EstadoReservacion estado, bool deberiaCancelar)
+    public async Task Handle_ValidacionEstadoReservacion_DeberiaValidarCorrectamente(
+        EstadoReservacion estadoActual, bool deberiaPermitirCancelacion)
     {
         // Arrange
-        var reservacion = CrearReservacion(Guid.NewGuid(), estado, DateTime.Now.AddHours(4));
+        var reservacion = CrearReservacion(Guid.NewGuid(), estadoActual, DateTime.Now.AddHours(4));
         var reservacionesTemporales = new List<Reservacion> { reservacion };
         
         ConfigurarMockDbSetConReservaciones(reservacionesTemporales);
@@ -173,7 +173,7 @@ public class CancelarReservacionHandlerTests
         var command = new CancelarReservacionCommand
         {
             ReservacionId = reservacion.Id,
-            MotivoCancelacion = $"Test para estado {estado}",
+            MotivoCancelacion = $"Test para estado {estadoActual}",
             CanceladoPor = "Sistema"
         };
 
@@ -182,9 +182,9 @@ public class CancelarReservacionHandlerTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado.Succeeded.Should().Be(deberiaCancelar);
+        resultado.Succeeded.Should().Be(deberiaPermitirCancelacion);
 
-        if (deberiaCancelar)
+        if (deberiaPermitirCancelacion)
         {
             _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
@@ -512,7 +512,7 @@ public class CancelarReservacionHandlerTests
             CrearReservacion(Guid.NewGuid(), EstadoReservacion.Pendiente, DateTime.Now.AddHours(6)),
             CrearReservacion(Guid.NewGuid(), EstadoReservacion.Cancelada, DateTime.Now.AddHours(3)),
             CrearReservacion(Guid.NewGuid(), EstadoReservacion.Completada, DateTime.Now.AddHours(-2)),
-            CrearReservacion(Guid.NewGuid(), EstadoReservacion.EnProgreso, DateTime.Now.AddMinutes(-30))
+            CrearReservacion(Guid.NewGuid(), EstadoReservacion.Confirmada, DateTime.Now.AddMinutes(-30))
         };
     }
 

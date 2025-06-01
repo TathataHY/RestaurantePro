@@ -178,6 +178,13 @@ namespace RestaurantePro.Domain.Core
             // 13. Servicio de Productos (Domain Service)
             services.AddScoped<Core.Productos.Services.IProductoService, Core.Productos.Services.ProductoService>();
             
+            // ✨ NUEVOS SERVICIOS DE OPERACIONES - Agregados durante resolución de errores de compilación
+            // 14. Servicio de Disponibilidad (Domain Service)
+            services.AddScoped<Operaciones.Services.IDisponibilidadService, Operaciones.Services.DisponibilidadService>();
+            
+            // 15. Servicio de Validación de Reservaciones (Domain Service)
+            services.AddScoped<Operaciones.Services.IValidacionReservacionService, Operaciones.Services.ValidacionReservacionService>();
+            
             // Registrar manejadores de eventos de integración
             services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_NotificacionProveedorHandler>();
             services.AddScoped<IDomainEventHandler<OrdenCompraAprobada>, Comercial.EventHandlers.OrdenCompraAprobada_ActualizarEstadisticasProveedorHandler>();

@@ -639,6 +639,62 @@ public class AgregarContactoValidatorTests
     #region Validación TiposNotificaciones
 
     [Fact]
+    public async Task Validate_ConTiposNotificacionesPedidos_NoDeberiaRetornarErrorDeTipos()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.TiposNotificaciones = new List<string> { "Pedidos" };
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(AgregarContactoCommand.TiposNotificaciones));
+    }
+
+    [Fact]
+    public async Task Validate_ConTiposNotificacionesMultiples_NoDeberiaRetornarErrorDeTipos()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.TiposNotificaciones = new List<string> { "Pedidos", "Pagos", "Generales" };
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(AgregarContactoCommand.TiposNotificaciones));
+    }
+
+    [Fact]
+    public async Task Validate_ConTiposNotificacionesUrgentes_NoDeberiaRetornarErrorDeTipos()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.TiposNotificaciones = new List<string> { "Urgentes", "Promociones", "Facturas" };
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(AgregarContactoCommand.TiposNotificaciones));
+    }
+
+    [Fact]
+    public async Task Validate_ConTiposNotificacionesVacia_NoDeberiaRetornarErrorDeTipos()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.TiposNotificaciones = new List<string>();
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(AgregarContactoCommand.TiposNotificaciones));
+    }
+
+    [Fact]
     public async Task Validate_ConTiposNotificacionesInvalidos_DeberiaRetornarError()
     {
         // Arrange
@@ -653,24 +709,6 @@ public class AgregarContactoValidatorTests
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(AgregarContactoCommand.TiposNotificaciones) &&
             e.ErrorMessage.Contains("Los tipos de notificaciones contienen valores no válidos"));
-    }
-
-    [Theory]
-    [InlineData(new string[] { "Pedidos" })]
-    [InlineData(new string[] { "Pedidos", "Pagos", "Generales" })]
-    [InlineData(new string[] { "Urgentes", "Promociones", "Facturas" })]
-    [InlineData(new string[] { })]  // Lista vacía - válido
-    public async Task Validate_ConTiposNotificacionesValidos_NoDeberiaRetornarErrorDeTipos(string[] tipos)
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.TiposNotificaciones = tipos.ToList();
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(AgregarContactoCommand.TiposNotificaciones));
     }
 
     #endregion

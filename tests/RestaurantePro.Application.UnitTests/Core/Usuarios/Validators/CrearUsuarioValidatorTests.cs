@@ -590,16 +590,54 @@ public class CrearUsuarioValidatorTests
             e.ErrorMessage.Contains("No se pueden asignar más de 3 roles adicionales"));
     }
 
-    [Theory]
-    [InlineData(new string[] { })]  // Sin roles adicionales - válido
-    [InlineData(new string[] { "Supervisor" })]
-    [InlineData(new string[] { "Supervisor", "Gerente" })]
-    [InlineData(new string[] { "Supervisor", "Gerente", "Administrador" })]  // 3 roles - máximo válido
-    public async Task Validate_ConRolesAdicionalesValidos_NoDeberiaRetornarErrorDeRolesAdicionales(string[] roles)
+    [Fact]
+    public async Task Validate_ConRolesAdicionalesSinRoles_NoDeberiaRetornarErrorDeRolesAdicionales()
     {
         // Arrange
         var command = CrearCommandValido();
-        command.RolesAdicionales = roles.ToList();
+        command.RolesAdicionales = new List<string>();
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.RolesAdicionales));
+    }
+
+    [Fact]
+    public async Task Validate_ConRolesAdicionalesSupervisor_NoDeberiaRetornarErrorDeRolesAdicionales()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.RolesAdicionales = new List<string> { "Supervisor" };
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.RolesAdicionales));
+    }
+
+    [Fact]
+    public async Task Validate_ConRolesAdicionalesSupervisorGerente_NoDeberiaRetornarErrorDeRolesAdicionales()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.RolesAdicionales = new List<string> { "Supervisor", "Gerente" };
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.RolesAdicionales));
+    }
+
+    [Fact]
+    public async Task Validate_ConRolesAdicionalesMaximo_NoDeberiaRetornarErrorDeRolesAdicionales()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.RolesAdicionales = new List<string> { "Supervisor", "Gerente", "Administrador" }; // 3 roles - máximo válido
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -711,15 +749,40 @@ public class CrearUsuarioValidatorTests
             e.ErrorMessage.Contains("No se pueden asignar más de 10 permisos específicos"));
     }
 
-    [Theory]
-    [InlineData(new string[] { })]  // Sin permisos - válido
-    [InlineData(new string[] { "VerReportes" })]
-    [InlineData(new string[] { "GestionarUsuarios", "VerReportes", "ConfigurarSistema" })]
-    public async Task Validate_ConPermisosEspecificosValidos_NoDeberiaRetornarErrorDePermisos(string[] permisos)
+    [Fact]
+    public async Task Validate_ConPermisosEspecificosSinPermisos_NoDeberiaRetornarErrorDePermisos()
     {
         // Arrange
         var command = CrearCommandValido();
-        command.PermisosEspecificos = permisos.ToList();
+        command.PermisosEspecificos = new List<string>();
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.PermisosEspecificos));
+    }
+
+    [Fact]
+    public async Task Validate_ConPermisosEspecificosVerReportes_NoDeberiaRetornarErrorDePermisos()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.PermisosEspecificos = new List<string> { "VerReportes" };
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.PermisosEspecificos));
+    }
+
+    [Fact]
+    public async Task Validate_ConPermisosEspecificosMultiples_NoDeberiaRetornarErrorDePermisos()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.PermisosEspecificos = new List<string> { "GestionarUsuarios", "VerReportes", "ConfigurarSistema" };
 
         // Act
         var result = await _validator.ValidateAsync(command);
