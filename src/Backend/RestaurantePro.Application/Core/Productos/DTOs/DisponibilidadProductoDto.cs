@@ -11,29 +11,34 @@ public class DisponibilidadProductoDto
     public Guid ProductoId { get; set; }
     
     /// <summary>
+    /// Nombre del producto verificado
+    /// </summary>
+    public string NombreProducto { get; set; } = string.Empty;
+    
+    /// <summary>
     /// ID de la comanda asociada (opcional)
     /// </summary>
     public Guid? ComandaAsociadaId { get; set; }
     
     /// <summary>
-    /// Indica si el producto está disponible
+    /// Indica si el producto está disponible en la cantidad solicitada
     /// </summary>
     public bool EstaDisponible { get; set; }
     
     /// <summary>
-    /// Cantidad verificada
+    /// Cantidad verificada del producto
     /// </summary>
     public int CantidadVerificada { get; set; }
     
     /// <summary>
-    /// Cantidad disponible total
+    /// Cantidad máxima disponible del producto
     /// </summary>
     public int CantidadDisponible { get; set; }
     
     /// <summary>
-    /// Motivo por el cual no está disponible (si aplica)
+    /// Motivo por el cual el producto no está disponible (si aplica)
     /// </summary>
-    public string? MotivoNoDisponible { get; set; }
+    public string? MotivoNoDisponibilidad { get; set; }
     
     /// <summary>
     /// Fecha de verificación

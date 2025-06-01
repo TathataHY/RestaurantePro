@@ -40,4 +40,22 @@ public interface IProductoService
     /// <param name="cantidad">Cantidad solicitada</param>
     /// <returns>True si hay ingredientes suficientes</returns>
     Task<bool> TieneIngredientesSuficientesAsync(Guid productoId, int cantidad = 1);
+
+    /// <summary>
+    /// Verifica si hay stock suficiente de un producto
+    /// </summary>
+    /// <param name="producto">Producto a verificar</param>
+    /// <param name="cantidad">Cantidad solicitada</param>
+    /// <param name="cancellationToken">Token de cancelación</param>
+    /// <returns>Resultado con la disponibilidad del producto</returns>
+    Task<Result<bool>> VerificarDisponibilidadAsync(Producto producto, int cantidad, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Verifica la disponibilidad de un producto incluyendo análisis detallado de ingredientes
+    /// </summary>
+    /// <param name="producto">Producto a verificar</param>
+    /// <param name="cantidad">Cantidad solicitada</param>
+    /// <param name="cancellationToken">Token de cancelación</param>
+    /// <returns>Resultado con información detallada de disponibilidad</returns>
+    Task<Result<object>> VerificarDisponibilidadConIngredientesAsync(Producto producto, int cantidad, CancellationToken cancellationToken = default);
 } 

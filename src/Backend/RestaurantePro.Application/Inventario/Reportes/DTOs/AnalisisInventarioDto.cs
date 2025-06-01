@@ -971,4 +971,106 @@ public class MovimientoStock
     /// Tipo de documento relacionado
     /// </summary>
     public string? TipoDocumentoRelacionado { get; set; }
+}
+
+/// <summary>
+/// DTO con predicción semanal de consumo
+/// </summary>
+public class PrediccionSemanal
+{
+    /// <summary>
+    /// Semana del año para la predicción
+    /// </summary>
+    public int Semana { get; set; }
+
+    /// <summary>
+    /// Año de la predicción
+    /// </summary>
+    public int Año { get; set; }
+
+    /// <summary>
+    /// Cantidad predicha de consumo
+    /// </summary>
+    public decimal CantidadPredicha { get; set; }
+
+    /// <summary>
+    /// Nivel de confianza de la predicción (0-100)
+    /// </summary>
+    public double NivelConfianza { get; set; }
+
+    /// <summary>
+    /// Factores que influyen en la predicción
+    /// </summary>
+    public List<string> Factores { get; set; } = new();
+
+    /// <summary>
+    /// Fecha de inicio de la semana
+    /// </summary>
+    public DateTime FechaInicio { get; set; }
+
+    /// <summary>
+    /// Fecha de fin de la semana
+    /// </summary>
+    public DateTime FechaFin { get; set; }
+}
+
+/// <summary>
+/// DTO con información del stock óptimo para un ingrediente
+/// </summary>
+public class StockOptimoIngrediente
+{
+    /// <summary>
+    /// ID del ingrediente
+    /// </summary>
+    public Guid IngredienteId { get; set; }
+
+    /// <summary>
+    /// Nombre del ingrediente
+    /// </summary>
+    public string NombreIngrediente { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Cantidad de stock óptimo recomendada
+    /// </summary>
+    public decimal StockOptimo { get; set; }
+
+    /// <summary>
+    /// Cantidad actual en stock
+    /// </summary>
+    public decimal StockActual { get; set; }
+
+    /// <summary>
+    /// Punto de reorden recomendado
+    /// </summary>
+    public decimal PuntoReorden { get; set; }
+
+    /// <summary>
+    /// Stock de seguridad recomendado
+    /// </summary>
+    public decimal StockSeguridad { get; set; }
+
+    /// <summary>
+    /// Diferencia entre stock actual y óptimo
+    /// </summary>
+    public decimal DiferenciaStock { get; set; }
+
+    /// <summary>
+    /// Indica si el stock actual está dentro del rango óptimo
+    /// </summary>
+    public bool EnRangoOptimo { get; set; }
+
+    /// <summary>
+    /// Recomendación de acción (comprar, reducir, mantener)
+    /// </summary>
+    public string RecomendacionAccion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Costo estimado de mantener el stock óptimo
+    /// </summary>
+    public decimal CostoMantenimiento { get; set; }
+
+    /// <summary>
+    /// Prioridad de ajuste (Alta, Media, Baja)
+    /// </summary>
+    public string Prioridad { get; set; } = string.Empty;
 } 

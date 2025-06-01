@@ -11,6 +11,16 @@ public class CrearTarjetaFidelizacionCommand : IRequest<Result<TarjetaFidelizaci
     public Guid ClienteId { get; set; }
 
     /// <summary>
+    /// Código único de la tarjeta
+    /// </summary>
+    public string? CodigoTarjeta { get; set; }
+
+    /// <summary>
+    /// Puntos iniciales de bienvenida
+    /// </summary>
+    public int PuntosIniciales { get; set; } = 0;
+
+    /// <summary>
     /// Tipo de tarjeta a crear
     /// </summary>
     public string TipoTarjeta { get; set; } = string.Empty;

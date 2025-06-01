@@ -69,5 +69,100 @@ namespace RestaurantePro.Application.Comercial.Fidelizacion.DTOs
         /// Motivo de los puntos bonus
         /// </summary>
         public string? MotivoBonus { get; set; }
+
+        /// <summary>
+        /// Total de puntos del cliente después de la acumulación
+        /// </summary>
+        public int PuntosTotalesCliente { get; set; }
+
+        /// <summary>
+        /// Nivel actual del cliente
+        /// </summary>
+        public string NivelActualCliente { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Nivel anterior del cliente (antes de la acumulación)
+        /// </summary>
+        public string? NivelAnterior { get; set; }
+
+        /// <summary>
+        /// Indica si hubo cambio de nivel
+        /// </summary>
+        public bool CambioDeNivel { get; set; }
+
+        /// <summary>
+        /// Mensaje sobre el cambio de nivel
+        /// </summary>
+        public string? MensajeCambioNivel { get; set; }
+
+        /// <summary>
+        /// Multiplicador aplicado en la acumulación
+        /// </summary>
+        public decimal MultiplicadorAplicado { get; set; } = 1.0m;
+
+        /// <summary>
+        /// Indica si se aplicó una promoción
+        /// </summary>
+        public bool PromocionAplicada { get; set; }
+
+        /// <summary>
+        /// Código de promoción usado
+        /// </summary>
+        public string? CodigoPromocionUsado { get; set; }
+
+        /// <summary>
+        /// Descripción de la promoción aplicada
+        /// </summary>
+        public string? DescripcionPromocion { get; set; }
+
+        /// <summary>
+        /// ID de la transacción
+        /// </summary>
+        public Guid TransaccionId { get; set; }
+
+        /// <summary>
+        /// Indica si es una acumulación manual
+        /// </summary>
+        public bool EsAcumulacionManual { get; set; }
+
+        /// <summary>
+        /// Usuario que realizó la acumulación manual
+        /// </summary>
+        public string? UsuarioQueAcumulo { get; set; }
+
+        /// <summary>
+        /// Motivo de la acumulación manual
+        /// </summary>
+        public string? MotivoManual { get; set; }
+
+        /// <summary>
+        /// Indica si se aplicó bonus de upgrade
+        /// </summary>
+        public bool BonusUpgradeAplicado { get; set; }
+
+        /// <summary>
+        /// Puntos bonus por upgrade de nivel
+        /// </summary>
+        public int PuntosBonusUpgrade { get; set; }
+
+        /// <summary>
+        /// Indica si se aplicaron beneficios VIP
+        /// </summary>
+        public bool BeneficiosVIPAplicados { get; set; }
+
+        /// <summary>
+        /// Descripción de los beneficios VIP aplicados
+        /// </summary>
+        public string? DescripcionBeneficiosVIP { get; set; }
+
+        /// <summary>
+        /// Número de eventos disparados
+        /// </summary>
+        public int EventosDisparados { get; set; }
+
+        /// <summary>
+        /// Tipos de eventos disparados
+        /// </summary>
+        public List<string> TiposEventosDisparados { get; set; } = new();
     }
 } 

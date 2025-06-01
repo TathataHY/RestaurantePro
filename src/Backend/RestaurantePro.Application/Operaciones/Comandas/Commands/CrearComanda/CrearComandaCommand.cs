@@ -33,6 +33,15 @@ public class CrearComandaCommand : IRequest<Result<ComandaDto>>
     public List<AgregarProductoDto> ProductosIniciales { get; set; } = new();
 
     /// <summary>
+    /// Alias para ProductosIniciales (compatibilidad con tests)
+    /// </summary>
+    public List<AgregarProductoDto> Items 
+    { 
+        get => ProductosIniciales; 
+        set => ProductosIniciales = value; 
+    }
+
+    /// <summary>
     /// Constructor para facilitar la creación desde controladores
     /// </summary>
     public CrearComandaCommand(Guid meseroId, Guid? mesaId = null, Guid? clienteId = null)

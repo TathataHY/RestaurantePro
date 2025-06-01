@@ -92,6 +92,11 @@ public class ComandaSummaryDto
     public string TomodaPor { get; set; } = string.Empty;
 
     /// <summary>
+    /// Nombre del mesero responsable de la comanda
+    /// </summary>
+    public string NombreMesero { get; set; } = string.Empty;
+
+    /// <summary>
     /// Fecha estimada de entrega/preparación
     /// </summary>
     public DateTime? FechaEstimadaEntrega { get; set; }

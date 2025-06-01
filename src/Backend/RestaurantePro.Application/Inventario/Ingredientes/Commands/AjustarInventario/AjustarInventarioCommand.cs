@@ -26,6 +26,16 @@ public class AjustarInventarioCommand : IRequest<RestaurantePro.Domain.Core.Shar
     public string? Motivo { get; set; }
 
     /// <summary>
+    /// Tipo de ajuste de inventario
+    /// </summary>
+    public string TipoAjuste { get; set; } = "Manual";
+
+    /// <summary>
+    /// Motivo específico del ajuste
+    /// </summary>
+    public string? MotivoAjuste { get; set; }
+
+    /// <summary>
     /// ID del usuario que realiza el ajuste
     /// </summary>
     public Guid UsuarioId { get; set; }

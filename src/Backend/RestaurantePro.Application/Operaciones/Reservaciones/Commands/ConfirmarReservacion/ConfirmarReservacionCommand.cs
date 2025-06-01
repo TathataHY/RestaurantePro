@@ -37,6 +37,11 @@ public class ConfirmarReservacionCommand : IRequest<Result<ConfirmarReservacionD
     public bool NotificarCliente { get; set; } = true;
 
     /// <summary>
+    /// Tiempo límite para la confirmación
+    /// </summary>
+    public TimeSpan? TiempoConfirmacion { get; set; }
+
+    /// <summary>
     /// Datos adicionales de la confirmación
     /// </summary>
     public Dictionary<string, object>? DatosAdicionales { get; set; }

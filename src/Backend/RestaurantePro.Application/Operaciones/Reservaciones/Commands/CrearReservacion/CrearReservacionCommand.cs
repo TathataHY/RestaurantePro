@@ -32,6 +32,42 @@ public class CrearReservacionCommand : IRequest<Result<ReservacionDto>>
     public DateTime FechaHoraReservacion { get; set; }
 
     /// <summary>
+    /// Alias para FechaHoraReservacion (compatibilidad con tests)
+    /// </summary>
+    public DateTime FechaHora 
+    { 
+        get => FechaHoraReservacion; 
+        set => FechaHoraReservacion = value; 
+    }
+
+    /// <summary>
+    /// Alias para Telefono (compatibilidad con tests)
+    /// </summary>
+    public string TelefonoContacto 
+    { 
+        get => Telefono; 
+        set => Telefono = value; 
+    }
+
+    /// <summary>
+    /// Alias para MesaEspecificaId (compatibilidad con tests)
+    /// </summary>
+    public Guid? MesaId 
+    { 
+        get => MesaEspecificaId; 
+        set => MesaEspecificaId = value; 
+    }
+
+    /// <summary>
+    /// Alias para SolicitudesEspeciales (compatibilidad con tests)
+    /// </summary>
+    public string? Observaciones 
+    { 
+        get => SolicitudesEspeciales; 
+        set => SolicitudesEspeciales = value; 
+    }
+
+    /// <summary>
     /// Número de personas para la reservación
     /// </summary>
     public int NumeroPersonas { get; set; }

@@ -47,6 +47,20 @@ public class ReservacionDto
     public DateTime FechaHoraReservacion { get; set; }
 
     /// <summary>
+    /// Alias para FechaHoraReservacion (compatibilidad)
+    /// </summary>
+    public DateTime FechaHora 
+    { 
+        get => FechaHoraReservacion; 
+        set => FechaHoraReservacion = value; 
+    }
+
+    /// <summary>
+    /// Observaciones de la reservación (compatibilidad)
+    /// </summary>
+    public string? Observaciones => SolicitudesEspeciales;
+
+    /// <summary>
     /// Número de personas para la reservación
     /// </summary>
     public int NumeroPersonas { get; set; }
@@ -210,6 +224,35 @@ public class ReservacionDto
     /// Datos adicionales
     /// </summary>
     public Dictionary<string, object>? DatosAdicionales { get; set; }
+
+    /// <summary>
+    /// Puntos de fidelización acumulados con esta reservación
+    /// </summary>
+    public int PuntosFidelizacionAcumulados { get; set; } = 0;
+
+    /// <summary>
+    /// Alias para PuntosFidelizacionAcumulados (compatibilidad con tests)
+    /// </summary>
+    public int PuntosAcumulados => PuntosFidelizacionAcumulados;
+
+    /// <summary>
+    /// Código único de la reservación
+    /// </summary>
+    public string CodigoReservacion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// ID de la mesa asignada (compatibilidad con tests)
+    /// </summary>
+    public Guid? MesaId { get; set; }
+
+    /// <summary>
+    /// Teléfono de contacto (alias para Telefono)
+    /// </summary>
+    public string TelefonoContacto 
+    { 
+        get => Telefono; 
+        set => Telefono = value; 
+    }
 }
 
 /// <summary>

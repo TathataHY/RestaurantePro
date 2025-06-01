@@ -37,6 +37,11 @@ public class ContactoProveedorDto
     public string Email { get; set; } = string.Empty;
 
     /// <summary>
+    /// Indica si es el contacto principal del proveedor
+    /// </summary>
+    public bool EsPrincipal { get; set; }
+
+    /// <summary>
     /// Fecha de creación del contacto
     /// </summary>
     public DateTime FechaCreacion { get; set; }
