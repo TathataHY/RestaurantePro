@@ -10,7 +10,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
     private readonly IMapper _mapper;
     private readonly ILogger<DividirComandaHandler> _logger;
     private readonly ICurrentUserService _currentUserService;
-    private readonly INotificacionService _notificacionService;
+    private readonly ICommunicationService _notificacionService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IGeneradorNumeroComandaService _generadorNumero;
 
@@ -19,7 +19,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
         IMapper mapper,
         ILogger<DividirComandaHandler> logger,
         ICurrentUserService currentUserService,
-        INotificacionService notificacionService,
+        ICommunicationService notificacionService,
         IUnitOfWork unitOfWork,
         IGeneradorNumeroComandaService generadorNumero)
     {

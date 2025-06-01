@@ -10,7 +10,7 @@ public class UnificarComandasHandlerTests
     private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<ILogger<UnificarComandasHandler>> _mockLogger;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
-    private readonly Mock<INotificacionService> _mockNotificacionService;
+    private readonly Mock<ICommunicationService> _mockNotificacionService;
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<IGeneradorNumeroComandaService> _mockGeneradorNumero;
     private readonly UnificarComandasHandler _handler;
@@ -21,7 +21,7 @@ public class UnificarComandasHandlerTests
         _mockMapper = new Mock<IMapper>();
         _mockLogger = new Mock<ILogger<UnificarComandasHandler>>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
-        _mockNotificacionService = new Mock<INotificacionService>();
+        _mockNotificacionService = new Mock<ICommunicationService>();
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockGeneradorNumero = new Mock<IGeneradorNumeroComandaService>();
 

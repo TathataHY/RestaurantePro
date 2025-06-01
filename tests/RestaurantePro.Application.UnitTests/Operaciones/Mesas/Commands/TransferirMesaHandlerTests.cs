@@ -10,7 +10,7 @@ public class TransferirMesaHandlerTests
     private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<ILogger<TransferirMesaHandler>> _mockLogger;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
-    private readonly Mock<INotificacionService> _mockNotificacionService;
+    private readonly Mock<ICommunicationService> _mockNotificacionService;
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly TransferirMesaHandler _handler;
 
@@ -20,7 +20,7 @@ public class TransferirMesaHandlerTests
         _mockMapper = new Mock<IMapper>();
         _mockLogger = new Mock<ILogger<TransferirMesaHandler>>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
-        _mockNotificacionService = new Mock<INotificacionService>();
+        _mockNotificacionService = new Mock<ICommunicationService>();
         _mockUnitOfWork = new Mock<IUnitOfWork>();
 
         _handler = new TransferirMesaHandler(

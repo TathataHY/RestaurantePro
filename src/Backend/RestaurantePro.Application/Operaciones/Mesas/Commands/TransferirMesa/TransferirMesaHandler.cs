@@ -10,7 +10,7 @@ public class TransferirMesaHandler : IRequestHandler<TransferirMesaCommand, Resu
     private readonly IMapper _mapper;
     private readonly ILogger<TransferirMesaHandler> _logger;
     private readonly ICurrentUserService _currentUserService;
-    private readonly INotificacionService _notificacionService;
+    private readonly ICommunicationService _notificacionService;
     private readonly IUnitOfWork _unitOfWork;
 
     public TransferirMesaHandler(
@@ -18,7 +18,7 @@ public class TransferirMesaHandler : IRequestHandler<TransferirMesaCommand, Resu
         IMapper mapper,
         ILogger<TransferirMesaHandler> logger,
         ICurrentUserService currentUserService,
-        INotificacionService notificacionService,
+        ICommunicationService notificacionService,
         IUnitOfWork unitOfWork)
     {
         _context = context;

@@ -10,7 +10,7 @@ public class DesactivarClienteHandlerTests
     private readonly Mock<IReservacionRepository> _reservacionRepositoryMock;
     private readonly Mock<ITarjetaFidelizacionRepository> _tarjetaRepositoryMock;
     private readonly Mock<IComandaRepository> _comandaRepositoryMock;
-    private readonly Mock<INotificacionService> _notificacionServiceMock;
+    private readonly Mock<ICommunicationService> _notificacionServiceMock;
     private readonly Mock<IAuditingService> _auditingServiceMock;
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
     private readonly Mock<ILogger<DesactivarClienteHandler>> _loggerMock;
@@ -25,7 +25,7 @@ public class DesactivarClienteHandlerTests
         _reservacionRepositoryMock = new Mock<IReservacionRepository>();
         _tarjetaRepositoryMock = new Mock<ITarjetaFidelizacionRepository>();
         _comandaRepositoryMock = new Mock<IComandaRepository>();
-        _notificacionServiceMock = new Mock<INotificacionService>();
+        _notificacionServiceMock = new Mock<ICommunicationService>();
         _auditingServiceMock = new Mock<IAuditingService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _loggerMock = new Mock<ILogger<DesactivarClienteHandler>>();

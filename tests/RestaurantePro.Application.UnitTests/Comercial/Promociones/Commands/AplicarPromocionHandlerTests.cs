@@ -10,7 +10,7 @@ public class AplicarPromocionHandlerTests
     private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<ILogger<AplicarPromocionHandler>> _mockLogger;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
-    private readonly Mock<INotificacionService> _mockNotificacionService;
+    private readonly Mock<ICommunicationService> _mockNotificacionService;
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<ICalculadoraPromocionesService> _mockCalculadoraPromociones;
     private readonly AplicarPromocionHandler _handler;
@@ -21,7 +21,7 @@ public class AplicarPromocionHandlerTests
         _mockMapper = new Mock<IMapper>();
         _mockLogger = new Mock<ILogger<AplicarPromocionHandler>>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
-        _mockNotificacionService = new Mock<INotificacionService>();
+        _mockNotificacionService = new Mock<ICommunicationService>();
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockCalculadoraPromociones = new Mock<ICalculadoraPromocionesService>();
 

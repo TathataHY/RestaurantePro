@@ -10,7 +10,7 @@ public class CrearReservacionHandlerTests
     private readonly Mock<IMesaRepository> _mesaRepositoryMock;
     private readonly Mock<IClienteRepository> _clienteRepositoryMock;
     private readonly Mock<IDisponibilidadService> _disponibilidadServiceMock;
-    private readonly Mock<INotificacionService> _notificacionServiceMock;
+    private readonly Mock<ICommunicationService> _notificacionServiceMock;
     private readonly Mock<IValidacionReservacionService> _validacionServiceMock;
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
     private readonly Mock<IMapper> _mapperMock;
@@ -25,7 +25,7 @@ public class CrearReservacionHandlerTests
         _mesaRepositoryMock = new Mock<IMesaRepository>();
         _clienteRepositoryMock = new Mock<IClienteRepository>();
         _disponibilidadServiceMock = new Mock<IDisponibilidadService>();
-        _notificacionServiceMock = new Mock<INotificacionService>();
+        _notificacionServiceMock = new Mock<ICommunicationService>();
         _validacionServiceMock = new Mock<IValidacionReservacionService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
         _mapperMock = new Mock<IMapper>();

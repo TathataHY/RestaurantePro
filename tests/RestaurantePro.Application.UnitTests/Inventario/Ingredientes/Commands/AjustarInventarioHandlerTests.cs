@@ -10,7 +10,7 @@ public class AjustarInventarioHandlerTests
     private readonly Mock<IMovimientoInventarioRepository> _movimientoRepositoryMock;
     private readonly Mock<IProveedorRepository> _proveedorRepositoryMock;
     private readonly Mock<IInventarioAuditService> _auditServiceMock;
-    private readonly Mock<INotificacionService> _notificacionServiceMock;
+    private readonly Mock<ICommunicationService> _notificacionServiceMock;
     private readonly Mock<IAlertaStockService> _alertaStockServiceMock;
     private readonly Mock<IValidacionInventarioService> _validacionServiceMock;
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
@@ -26,7 +26,7 @@ public class AjustarInventarioHandlerTests
         _movimientoRepositoryMock = new Mock<IMovimientoInventarioRepository>();
         _proveedorRepositoryMock = new Mock<IProveedorRepository>();
         _auditServiceMock = new Mock<IInventarioAuditService>();
-        _notificacionServiceMock = new Mock<INotificacionService>();
+        _notificacionServiceMock = new Mock<ICommunicationService>();
         _alertaStockServiceMock = new Mock<IAlertaStockService>();
         _validacionServiceMock = new Mock<IValidacionInventarioService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();

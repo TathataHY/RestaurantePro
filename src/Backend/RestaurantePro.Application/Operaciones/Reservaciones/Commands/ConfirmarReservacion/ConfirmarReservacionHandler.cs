@@ -10,7 +10,7 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
     private readonly IMapper _mapper;
     private readonly ILogger<ConfirmarReservacionHandler> _logger;
     private readonly ICurrentUserService _currentUserService;
-    private readonly INotificacionService _notificacionService;
+    private readonly ICommunicationService _notificacionService;
     private readonly IUnitOfWork _unitOfWork;
 
     public ConfirmarReservacionHandler(
@@ -18,7 +18,7 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
         IMapper mapper,
         ILogger<ConfirmarReservacionHandler> logger,
         ICurrentUserService currentUserService,
-        INotificacionService notificacionService,
+        ICommunicationService notificacionService,
         IUnitOfWork unitOfWork)
     {
         _context = context;

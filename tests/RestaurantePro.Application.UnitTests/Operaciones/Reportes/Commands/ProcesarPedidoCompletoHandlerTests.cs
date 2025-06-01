@@ -12,7 +12,7 @@ public class ProcesarPedidoCompletoHandlerTests
     private readonly Mock<IFidelizacionService> _fidelizacionServiceMock;
     private readonly Mock<IMesaRepository> _mesaRepositoryMock;
     private readonly Mock<IClienteRepository> _clienteRepositoryMock;
-    private readonly Mock<INotificacionService> _notificacionServiceMock;
+    private readonly Mock<ICommunicationService> _notificacionServiceMock;
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<ILogger<ProcesarPedidoCompletoHandler>> _loggerMock;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
@@ -28,7 +28,7 @@ public class ProcesarPedidoCompletoHandlerTests
         _fidelizacionServiceMock = new Mock<IFidelizacionService>();
         _mesaRepositoryMock = new Mock<IMesaRepository>();
         _clienteRepositoryMock = new Mock<IClienteRepository>();
-        _notificacionServiceMock = new Mock<INotificacionService>();
+        _notificacionServiceMock = new Mock<ICommunicationService>();
         _mapperMock = new Mock<IMapper>();
         _loggerMock = new Mock<ILogger<ProcesarPedidoCompletoHandler>>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();

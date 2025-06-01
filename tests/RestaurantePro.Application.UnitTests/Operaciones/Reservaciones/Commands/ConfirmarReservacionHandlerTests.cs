@@ -10,7 +10,7 @@ public class ConfirmarReservacionHandlerTests
     private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<ILogger<ConfirmarReservacionHandler>> _mockLogger;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
-    private readonly Mock<INotificacionService> _mockNotificacionService;
+    private readonly Mock<ICommunicationService> _mockNotificacionService;
     private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly Mock<IDateTimeService> _mockDateTimeService;
     private readonly ConfirmarReservacionHandler _handler;
@@ -21,7 +21,7 @@ public class ConfirmarReservacionHandlerTests
         _mockMapper = new Mock<IMapper>();
         _mockLogger = new Mock<ILogger<ConfirmarReservacionHandler>>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
-        _mockNotificacionService = new Mock<INotificacionService>();
+        _mockNotificacionService = new Mock<ICommunicationService>();
         _mockUnitOfWork = new Mock<IUnitOfWork>();
         _mockDateTimeService = new Mock<IDateTimeService>();
         

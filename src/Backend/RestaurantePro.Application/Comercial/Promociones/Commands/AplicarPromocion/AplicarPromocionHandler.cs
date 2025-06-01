@@ -10,7 +10,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
     private readonly IMapper _mapper;
     private readonly ILogger<AplicarPromocionHandler> _logger;
     private readonly ICurrentUserService _currentUserService;
-    private readonly INotificacionService _notificacionService;
+    private readonly ICommunicationService _notificacionService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICalculadoraPromocionesService _calculadoraPromociones;
 
@@ -19,7 +19,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         IMapper mapper,
         ILogger<AplicarPromocionHandler> logger,
         ICurrentUserService currentUserService,
-        INotificacionService notificacionService,
+        ICommunicationService notificacionService,
         IUnitOfWork unitOfWork,
         ICalculadoraPromocionesService calculadoraPromociones)
     {

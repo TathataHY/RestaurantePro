@@ -9,7 +9,7 @@ public class CambiarPasswordUsuarioHandlerTests
     private readonly Mock<IUsuarioRepository> _usuarioRepositoryMock;
     private readonly Mock<IPasswordHashingService> _passwordHashingMock;
     private readonly Mock<ISecurityValidationService> _securityValidationMock;
-    private readonly Mock<INotificacionService> _notificacionMock;
+    private readonly Mock<ICommunicationService> _notificacionMock;
     private readonly Mock<IAuditingService> _auditingMock;
     private readonly Mock<ICurrentUserService> _currentUserMock;
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
@@ -21,7 +21,7 @@ public class CambiarPasswordUsuarioHandlerTests
         _usuarioRepositoryMock = new Mock<IUsuarioRepository>();
         _passwordHashingMock = new Mock<IPasswordHashingService>();
         _securityValidationMock = new Mock<ISecurityValidationService>();
-        _notificacionMock = new Mock<INotificacionService>();
+        _notificacionMock = new Mock<ICommunicationService>();
         _auditingMock = new Mock<IAuditingService>();
         _currentUserMock = new Mock<ICurrentUserService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();

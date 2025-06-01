@@ -10,7 +10,7 @@ public class ModificarReservacionHandlerTests
     private readonly Mock<IMesaRepository> _mesaRepositoryMock;
     private readonly Mock<IClienteRepository> _clienteRepositoryMock;
     private readonly Mock<IDisponibilidadService> _disponibilidadServiceMock;
-    private readonly Mock<INotificacionService> _notificacionServiceMock;
+    private readonly Mock<ICommunicationService> _notificacionServiceMock;
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<ILogger<ModificarReservacionHandler>> _loggerMock;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
@@ -23,7 +23,7 @@ public class ModificarReservacionHandlerTests
         _mesaRepositoryMock = new Mock<IMesaRepository>();
         _clienteRepositoryMock = new Mock<IClienteRepository>();
         _disponibilidadServiceMock = new Mock<IDisponibilidadService>();
-        _notificacionServiceMock = new Mock<INotificacionService>();
+        _notificacionServiceMock = new Mock<ICommunicationService>();
         _mapperMock = new Mock<IMapper>();
         _loggerMock = new Mock<ILogger<ModificarReservacionHandler>>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
