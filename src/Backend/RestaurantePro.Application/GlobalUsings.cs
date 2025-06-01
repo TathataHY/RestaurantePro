@@ -12,6 +12,7 @@ global using System.ComponentModel.DataAnnotations;
 global using System.Security.Claims;
 global using System.Text;
 global using System.Collections.ObjectModel;
+global using System.Diagnostics;
 
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
@@ -32,11 +33,20 @@ global using AutoMapper;
 global using FluentValidation;
 global using FluentValidation.Results;
 
+// Domain - Base Services (para IDateTimeService)
+global using RestaurantePro.Domain.Core.Base.Services;
+
 // Domain - SharedKernel (Según el Domain actual)
 global using RestaurantePro.Domain.Core.SharedKernel.Results;
 global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 global using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+
+// Alias para resolver ambigüedad de IUnitOfWork - usar la del Domain que es más completa
+global using IUnitOfWork = RestaurantePro.Domain.Core.SharedKernel.Interfaces.IUnitOfWork;
+
+// Alias para EstadoReservacion - usar solo el del Domain
+global using EstadoReservacionDomain = RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion;
 
 // Application - Common (DTOs compartidos y behaviors) - PRIMERO para priorizar sobre Domain
 global using RestaurantePro.Application.Common.DTOs;

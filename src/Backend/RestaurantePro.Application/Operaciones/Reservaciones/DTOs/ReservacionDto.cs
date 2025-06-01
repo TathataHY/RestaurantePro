@@ -52,9 +52,9 @@ public class ReservacionDto
     public int NumeroPersonas { get; set; }
 
     /// <summary>
-    /// Estado actual de la reservación
+    /// Estado de la reservación
     /// </summary>
-    public EstadoReservacion Estado { get; set; }
+    public EstadoReservacionDomain Estado { get; set; }
 
     /// <summary>
     /// Tipo de ocasión especial
@@ -210,67 +210,6 @@ public class ReservacionDto
     /// Datos adicionales
     /// </summary>
     public Dictionary<string, object>? DatosAdicionales { get; set; }
-}
-
-/// <summary>
-/// Estados posibles de una reservación
-/// </summary>
-public enum EstadoReservacion
-{
-    /// <summary>
-    /// Reservación solicitada
-    /// </summary>
-    Solicitada = 1,
-
-    /// <summary>
-    /// Reservación confirmada
-    /// </summary>
-    Confirmada = 2,
-
-    /// <summary>
-    /// Cliente llegó al restaurante
-    /// </summary>
-    Presente = 3,
-
-    /// <summary>
-    /// Mesa asignada
-    /// </summary>
-    MesaAsignada = 4,
-
-    /// <summary>
-    /// En progreso
-    /// </summary>
-    EnProgreso = 5,
-
-    /// <summary>
-    /// Completada
-    /// </summary>
-    Completada = 6,
-
-    /// <summary>
-    /// Cancelada por el cliente
-    /// </summary>
-    CanceladaCliente = 7,
-
-    /// <summary>
-    /// Cancelada por el restaurante
-    /// </summary>
-    CanceladaRestaurante = 8,
-
-    /// <summary>
-    /// No show - cliente no apareció
-    /// </summary>
-    NoShow = 9,
-
-    /// <summary>
-    /// En lista de espera
-    /// </summary>
-    ListaEspera = 10,
-
-    /// <summary>
-    /// Reprogramada
-    /// </summary>
-    Reprogramada = 11
 }
 
 /// <summary>

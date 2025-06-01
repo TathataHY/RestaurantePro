@@ -134,5 +134,41 @@ namespace RestaurantePro.Infrastructure.Persistence.Base
             }
             _disposed = true;
         }
+
+        // ============================================
+        // ALIAS EN INGLÉS PARA COMPATIBILIDAD
+        // ============================================
+
+        /// <summary>
+        /// Alias en inglés para IniciarTransaccionAsync
+        /// </summary>
+        public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            await IniciarTransaccionAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Alias en inglés para ConfirmarTransaccionAsync
+        /// </summary>
+        public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            await ConfirmarTransaccionAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Alias en inglés para RevertirTransaccionAsync
+        /// </summary>
+        public async Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            await RevertirTransaccionAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Alias en inglés para GuardarCambiosAsync
+        /// </summary>
+        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            return await GuardarCambiosAsync(cancellationToken);
+        }
     }
 } 

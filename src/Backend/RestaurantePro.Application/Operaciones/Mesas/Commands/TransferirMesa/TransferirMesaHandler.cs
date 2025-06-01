@@ -250,7 +250,7 @@ public class TransferirMesaHandler : IRequestHandler<TransferirMesaCommand, Resu
                 destinatarios: new[] { comanda.MeseroId.ToString() },
                 titulo: "Transferencia de Mesa",
                 mensaje: mensaje,
-                tipo: TipoNotificacion.TransferenciaMesa,
+                tipo: TipoComunicacion.TransferenciaMesa,
                 cancellationToken: cancellationToken
             );
         }

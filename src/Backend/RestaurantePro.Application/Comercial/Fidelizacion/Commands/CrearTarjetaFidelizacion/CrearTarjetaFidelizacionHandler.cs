@@ -69,9 +69,7 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
             _logger.LogInformation("Iniciando creación de tarjeta de fidelización para Cliente {ClienteId}, Tipo: {TipoTarjeta}",
                 request.ClienteId, request.TipoTarjeta);
 
-            using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
-            try
+            return await _unitOfWork.EjecutarEnTransaccionAsync(async () =>
             {
                 // 1. Obtener y validar el cliente
                 var cliente = await _clienteRepository.GetByIdAsync(request.ClienteId, cancellationToken);
@@ -169,8 +167,8 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
                     await ProgramarEnvioTarjetaFisica(tarjeta, request.DireccionEnvio, cancellationToken);
                 }
 
-                // 15. Confirmar transacción
-                await transaction.CommitAsync(cancellationToken);
+                // 15. Guardar cambios
+                await _unitOfWork.GuardarCambiosAsync(cancellationToken);
 
                 // 16. Construir y retornar DTO de respuesta
                 var responseDto = await CrearResponseDto(tarjeta, cliente, cancellationToken);
@@ -179,12 +177,8 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
                     tarjeta.Id, tarjeta.NumeroTarjeta);
 
                 return Result<TarjetaFidelizacionDto>.Success(responseDto);
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                throw;
-            }
+
+            }, cancellationToken);
         }
         catch (Exception ex)
         {

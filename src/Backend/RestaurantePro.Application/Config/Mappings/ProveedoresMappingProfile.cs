@@ -20,7 +20,7 @@ public class ProveedoresMappingProfile : Profile
         //CreateMap<ProveedorUpdateDto, ActualizarProveedorCommand>();
 
         // ContactoProveedor mappings  
-        CreateMap<ContactoProveedor, RestaurantePro.Application.Proveedores.ContactosProveedor.DTOs.ContactoProveedorDto>();
+        CreateMap<ContactoProveedor, RestaurantePro.Application.Proveedores.Proveedores.DTOs.ContactoProveedorDto>();
             // TODO: Reactivar cuando exista la navegación Proveedor en ContactoProveedor
             //.ForMember(dest => dest.NombreProveedor, opt => opt.MapFrom(src => src.Proveedor != null ? src.Proveedor.Nombre : string.Empty));
 

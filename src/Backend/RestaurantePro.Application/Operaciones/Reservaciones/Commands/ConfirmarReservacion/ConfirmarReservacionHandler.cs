@@ -119,7 +119,7 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
     private async Task<Result> ValidarReglasNegocio(Reservacion reservacion, CancellationToken cancellationToken)
     {
         // Validar que esté en estado pendiente
-        if (reservacion.Estado != EstadoReservacion.Pendiente)
+        if (reservacion.Estado != EstadoReservacionDomain.Pendiente)
         {
             return Result.Failure($"La reservación no puede ser confirmada. Estado actual: {reservacion.Estado}");
         }
@@ -135,7 +135,7 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
         var conflictos = await _context.Reservaciones
             .Where(r => r.Id != reservacion.Id &&
                        r.MesaId == reservacion.MesaId &&
-                       r.Estado == EstadoReservacion.Confirmada &&
+                       r.Estado == EstadoReservacionDomain.Confirmada &&
                        r.FechaHora.Date == reservacion.FechaHora.Date &&
                        // Verificar solapamiento de horarios (asumiendo 2 horas por reservación)
                        ((r.FechaHora <= reservacion.FechaHora && r.FechaHora.AddHours(2) > reservacion.FechaHora) ||
@@ -153,7 +153,7 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
     private async Task ConfirmarReservacion(Reservacion reservacion, ConfirmarReservacionCommand request, CancellationToken cancellationToken)
     {
         // Actualizar estado y datos de confirmación
-        reservacion.Estado = EstadoReservacion.Confirmada;
+        reservacion.Estado = EstadoReservacionDomain.Confirmada;
         reservacion.FechaConfirmacion = DateTime.UtcNow;
         reservacion.MetodoConfirmacion = request.MetodoConfirmacion;
         reservacion.ConfirmadoPor = request.ConfirmadoPor;
@@ -275,7 +275,7 @@ public class ConfirmarReservacionDto
 {
     public Guid ReservacionId { get; set; }
     public string CodigoReservacion { get; set; } = string.Empty;
-    public EstadoReservacion Estado { get; set; }
+    public EstadoReservacionDomain Estado { get; set; }
     public DateTime FechaConfirmacion { get; set; }
     public string MetodoConfirmacion { get; set; } = string.Empty;
     public string? ConfirmadoPor { get; set; }

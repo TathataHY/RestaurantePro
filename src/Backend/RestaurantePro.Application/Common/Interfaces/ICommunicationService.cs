@@ -41,10 +41,10 @@ public interface ICommunicationService
     /// <param name="destinatarios">Array de destinatarios</param>
     /// <param name="titulo">Título de la notificación</param>
     /// <param name="mensaje">Contenido del mensaje</param>
-    /// <param name="tipo">Tipo de notificación</param>
+    /// <param name="tipo">Tipo de comunicación</param>
     /// <param name="cancellationToken">Token de cancelación</param>
     /// <returns>True si se envió correctamente</returns>
-    Task<bool> EnviarNotificacionAsync(string[] destinatarios, string titulo, string mensaje, TipoNotificacion tipo, CancellationToken cancellationToken = default);
+    Task<bool> EnviarNotificacionAsync(string[] destinatarios, string titulo, string mensaje, TipoComunicacion tipo, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Envía confirmación de reservación
@@ -77,9 +77,9 @@ public interface ICommunicationService
 }
 
 /// <summary>
-/// Tipos de notificación para comunicaciones
+/// Tipos de comunicación para mensajes externos (Email, SMS, Push)
 /// </summary>
-public enum TipoNotificacion
+public enum TipoComunicacion
 {
     Informacion,
     Advertencia,
