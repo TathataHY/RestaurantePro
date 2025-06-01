@@ -44,7 +44,7 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
             // Excepciones de dominio específicas
             EntityNotFoundException domainNotFound => new NotFoundException(
                 domainNotFound.EntityName, 
-                domainNotFound.EntityId, 
+                domainNotFound.SearchCriteria, 
                 domainNotFound),
 
             BusinessRuleViolationException businessRule => new ValidationException(

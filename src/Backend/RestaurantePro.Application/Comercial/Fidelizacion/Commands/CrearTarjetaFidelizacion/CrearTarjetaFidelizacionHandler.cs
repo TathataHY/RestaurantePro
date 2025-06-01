@@ -8,57 +8,27 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
 {
     private readonly IClienteRepository _clienteRepository;
     private readonly ITarjetaFidelizacionRepository _tarjetaRepository;
-    private readonly ITransaccionPuntosRepository _transaccionRepository;
-    private readonly IPromocionRepository _promocionRepository;
-    private readonly IBeneficioRepository _beneficioRepository;
-    private readonly TarjetaFidelizacionBuilder _tarjetaBuilder;
-    private readonly IGeneradorNumeroTarjetaService _generadorNumero;
-    private readonly IQrCodeService _qrCodeService;
-    private readonly INotificationService _notificationService;
-    private readonly ICommunicationService _communicationService;
-    private readonly IEnvioTarjetaService _envioTarjetaService;
     private readonly IMapper _mapper;
     private readonly ILogger<CrearTarjetaFidelizacionHandler> _logger;
     private readonly ICurrentUserService _currentUser;
     private readonly IDateTimeService _dateTimeService;
-    private readonly IAuditService _auditService;
     private readonly IUnitOfWork _unitOfWork;
 
     public CrearTarjetaFidelizacionHandler(
         IClienteRepository clienteRepository,
         ITarjetaFidelizacionRepository tarjetaRepository,
-        ITransaccionPuntosRepository transaccionRepository,
-        IPromocionRepository promocionRepository,
-        IBeneficioRepository beneficioRepository,
-        TarjetaFidelizacionBuilder tarjetaBuilder,
-        IGeneradorNumeroTarjetaService generadorNumero,
-        IQrCodeService qrCodeService,
-        INotificationService notificationService,
-        ICommunicationService communicationService,
-        IEnvioTarjetaService envioTarjetaService,
         IMapper mapper,
         ILogger<CrearTarjetaFidelizacionHandler> logger,
         ICurrentUserService currentUser,
         IDateTimeService dateTimeService,
-        IAuditService auditService,
         IUnitOfWork unitOfWork)
     {
         _clienteRepository = clienteRepository;
         _tarjetaRepository = tarjetaRepository;
-        _transaccionRepository = transaccionRepository;
-        _promocionRepository = promocionRepository;
-        _beneficioRepository = beneficioRepository;
-        _tarjetaBuilder = tarjetaBuilder;
-        _generadorNumero = generadorNumero;
-        _qrCodeService = qrCodeService;
-        _notificationService = notificationService;
-        _communicationService = communicationService;
-        _envioTarjetaService = envioTarjetaService;
         _mapper = mapper;
         _logger = logger;
         _currentUser = currentUser;
         _dateTimeService = dateTimeService;
-        _auditService = auditService;
         _unitOfWork = unitOfWork;
     }
 
@@ -69,116 +39,74 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
             _logger.LogInformation("Iniciando creación de tarjeta de fidelización para Cliente {ClienteId}, Tipo: {TipoTarjeta}",
                 request.ClienteId, request.TipoTarjeta);
 
-            return await _unitOfWork.EjecutarEnTransaccionAsync(async () =>
+            // 1. Obtener y validar el cliente
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(request.ClienteId, cancellationToken);
+            if (cliente == null)
             {
-                // 1. Obtener y validar el cliente
-                var cliente = await _clienteRepository.GetByIdAsync(request.ClienteId, cancellationToken);
-                if (cliente == null)
+                _logger.LogWarning("Cliente {ClienteId} no encontrado", request.ClienteId);
+                return Result<TarjetaFidelizacionDto>.Failure("Cliente no encontrado");
+            }
+
+            // 2. Validar elegibilidad del cliente
+            var validacionResult = ValidarElegibilidadCliente(cliente);
+            if (!validacionResult.Succeeded)
+            {
+                var errorMessage = validacionResult.Error ?? "Error de validación";
+                return Result<TarjetaFidelizacionDto>.Failure(errorMessage);
+            }
+
+            // 3. Generar código único para la tarjeta
+            var codigoTarjeta = await GenerarCodigoTarjeta(request.TipoTarjeta, cancellationToken);
+
+            // 4. Crear la tarjeta de fidelización
+            var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, codigoTarjeta);
+
+            // 5. Configurar puntos iniciales si se especificaron
+            var puntosIniciales = request.Configuracion?.PuntosIniciales ?? 0;
+            if (puntosIniciales > 0)
+            {
+                try
                 {
-                    _logger.LogWarning("Cliente {ClienteId} no encontrado", request.ClienteId);
-                    return Result<TarjetaFidelizacionDto>.Failure("Cliente no encontrado");
+                    var historial = tarjeta.AgregarPuntos(puntosIniciales, "Puntos de bienvenida al crear tarjeta");
+                    _logger.LogInformation("Puntos iniciales agregados: {Puntos}", puntosIniciales);
                 }
-
-                // 2. Validar elegibilidad y restricciones del cliente
-                var validacionElegibilidad = await ValidarElegibilidadCliente(cliente, request, cancellationToken);
-                if (!validacionElegibilidad.Succeeded)
+                catch (Exception ex)
                 {
-                    return Result<TarjetaFidelizacionDto>.Failure(validacionElegibilidad.Error);
+                    return Result<TarjetaFidelizacionDto>.Failure($"Error configurando puntos iniciales: {ex.Message}");
                 }
+            }
 
-                // 3. Procesar promoción si existe
-                Promocion? promocion = null;
-                if (!string.IsNullOrEmpty(request.CodigoPromocion))
+            // 6. Activar la tarjeta si se solicita activación inmediata
+            if (request.ActivarInmediatamente)
+            {
+                try
                 {
-                    var promocionResult = await ProcesarPromocion(request.CodigoPromocion, request, cancellationToken);
-                    if (!promocionResult.Succeeded)
-                    {
-                        return Result<TarjetaFidelizacionDto>.Failure(promocionResult.Error);
-                    }
-                    promocion = promocionResult.Value;
+                    tarjeta.Activar();
+                    _logger.LogInformation("Tarjeta activada inmediatamente");
                 }
-
-                // 4. Generar número de tarjeta único
-                var numeroTarjeta = await GenerarNumeroTarjeta(request, cancellationToken);
-
-                // 5. Configurar fechas de activación y vencimiento
-                var fechas = ConfigurarFechasTarjeta(request);
-
-                // 6. Determinar puntos iniciales (incluyendo bonificaciones)
-                var puntosIniciales = CalcularPuntosIniciales(request, promocion);
-
-                // 7. Construir la tarjeta usando el builder del dominio
-                var tarjetaResult = await _tarjetaBuilder
-                    .ParaCliente(cliente.Id)
-                    .ConNumero(numeroTarjeta)
-                    .ConTipo(request.TipoTarjeta)
-                    .ConNivel(request.NivelInicial)
-                    .ConVencimiento(fechas.FechaVencimiento)
-                    .ConPuntosIniciales(puntosIniciales)
-                    .ConObservaciones(request.MotivoEmision)
-                    .ConDatosAdicionales(request.DatosAdicionales)
-                    .ConCodigoQR()
-                    .ConstruirAsync(cancellationToken);
-
-                if (!tarjetaResult.IsSuccess)
+                catch (Exception ex)
                 {
-                    _logger.LogWarning("Error al construir tarjeta: {Error}", tarjetaResult.ErrorMessage);
-                    return Result<TarjetaFidelizacionDto>.Failure(tarjetaResult.ErrorMessage);
+                    return Result<TarjetaFidelizacionDto>.Failure($"Error activando tarjeta: {ex.Message}");
                 }
+            }
 
-                var tarjeta = tarjetaResult.Value;
+            // 7. Guardar la tarjeta
+            await _tarjetaRepository.AgregarAsync(tarjeta, cancellationToken);
 
-                // 8. Generar códigos QR y de barras
-                await GenerarCodigosIdentificacion(tarjeta, cancellationToken);
+            // 8. Actualizar cliente con referencia a la tarjeta
+            cliente.AsociarTarjetaFidelizacion(tarjeta.Id);
+            await _clienteRepository.ActualizarAsync(cliente, cancellationToken);
 
-                // 9. Si es tarjeta principal, desactivar otras tarjetas principales
-                if (request.EsPrincipal)
-                {
-                    await DesactivarTarjetasPrincipalesExistentes(cliente.Id, cancellationToken);
-                }
+            // 9. Guardar cambios
+            await _unitOfWork.GuardarCambiosAsync(cancellationToken);
 
-                // 10. Guardar la tarjeta
-                await _tarjetaRepository.AddAsync(tarjeta, cancellationToken);
+            // 10. Crear y retornar DTO de respuesta
+            var responseDto = CrearResponseDto(tarjeta, cliente);
 
-                // 11. Activar beneficios especiales
-                if (request.BeneficiosEspeciales?.Any() == true)
-                {
-                    await ActivarBeneficiosEspeciales(tarjeta.Id, request.BeneficiosEspeciales, cancellationToken);
-                }
+            _logger.LogInformation("Tarjeta de fidelización creada exitosamente. TarjetaId: {TarjetaId}, Código: {Codigo}",
+                tarjeta.Id, tarjeta.Codigo);
 
-                // 12. Registrar auditoría
-                await _auditService.RegistrarEventoAsync(
-                    "TarjetaFidelizacionCreada",
-                    $"Tarjeta {tarjeta.NumeroTarjeta} creada para cliente {cliente.NombreCompleto}",
-                    cliente.Id,
-                    _currentUser.UserId,
-                    new { TipoTarjeta = request.TipoTarjeta, NivelInicial = request.NivelInicial },
-                    cancellationToken);
-
-                // 13. Enviar notificación al cliente
-                if (request.NotificarCliente)
-                {
-                    await EnviarNotificacionCreacion(cliente, tarjeta, cancellationToken);
-                }
-
-                // 14. Procesar envío de tarjeta física si corresponde
-                if (request.EnviarTarjetaFisica)
-                {
-                    await ProgramarEnvioTarjetaFisica(tarjeta, request.DireccionEnvio, cancellationToken);
-                }
-
-                // 15. Guardar cambios
-                await _unitOfWork.GuardarCambiosAsync(cancellationToken);
-
-                // 16. Construir y retornar DTO de respuesta
-                var responseDto = await CrearResponseDto(tarjeta, cliente, cancellationToken);
-
-                _logger.LogInformation("Tarjeta de fidelización creada exitosamente. TarjetaId: {TarjetaId}, Número: {NumeroTarjeta}",
-                    tarjeta.Id, tarjeta.NumeroTarjeta);
-
-                return Result<TarjetaFidelizacionDto>.Success(responseDto);
-
-            }, cancellationToken);
+            return Result<TarjetaFidelizacionDto>.Success(responseDto);
         }
         catch (Exception ex)
         {
@@ -187,282 +115,60 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
         }
     }
 
-    private async Task<Result> ValidarElegibilidadCliente(Cliente cliente, CrearTarjetaFidelizacionCommand request, CancellationToken cancellationToken)
+    private Result ValidarElegibilidadCliente(Cliente cliente)
     {
         // Validar que el cliente esté activo
-        if (!cliente.Activo)
+        if (!cliente.EstaActivo)
         {
             return Result.Failure("El cliente no está activo y no puede tener tarjeta de fidelización");
         }
 
-        // Validar que no tenga tarjeta principal si se quiere crear una principal
-        if (request.EsPrincipal)
+        // Validar que no tenga ya una tarjeta principal
+        if (cliente.TarjetaFidelizacionPrincipalId.HasValue)
         {
-            var tarjetaPrincipalExistente = await _tarjetaRepository.GetPrincipalByClienteIdAsync(cliente.Id, cancellationToken);
-            if (tarjetaPrincipalExistente != null && tarjetaPrincipalExistente.EstaActiva())
-            {
-                return Result.Failure("El cliente ya tiene una tarjeta principal activa");
-            }
-        }
-
-        // Validar límites por tipo de tarjeta
-        var validacionTipo = await ValidarLimiteTipoTarjeta(cliente, request.TipoTarjeta, cancellationToken);
-        if (!validacionTipo.Succeeded)
-        {
-            return Result.Failure<bool>(validacionTipo.Error);
+            return Result.Failure("El cliente ya tiene una tarjeta de fidelización principal");
         }
 
         return Result.Success();
     }
 
-    private async Task<Result> ValidarLimiteTipoTarjeta(Cliente cliente, NivelFidelizacion nivelFidelizacion, CancellationToken cancellationToken)
+    private async Task<string> GenerarCodigoTarjeta(string tipoTarjeta, CancellationToken cancellationToken)
     {
-        var tarjetasExistentes = await _tarjetaRepository.GetByClienteIdAsync(cliente.Id, cancellationToken);
-        var tarjetasActivas = tarjetasExistentes.Where(t => t.EstaActiva()).ToList();
+        // Generar un código basado en el tipo y timestamp
+        var timestamp = _dateTimeService.Now.ToString("yyyyMMddHHmmss");
+        var prefijo = tipoTarjeta.ToUpper().Take(3).Aggregate("", (current, c) => current + c);
+        var codigo = $"{prefijo}-{timestamp}-{Random.Shared.Next(1000, 9999)}";
 
-        return nivelFidelizacion switch
+        // Verificar que el código sea único
+        var existente = await _tarjetaRepository.ObtenerPorCodigoAsync(codigo, cancellationToken);
+        if (existente != null)
         {
-            NivelFidelizacion.Bronce => tarjetasActivas.Count >= 3 
-                ? Result.Failure("El cliente no puede tener más de 3 tarjetas Bronce activas") 
-                : Result.Success(),
-            
-            NivelFidelizacion.Plata => tarjetasActivas.Any(t => t.NivelFidelizacion == NivelFidelizacion.Plata) 
-                ? Result.Failure("El cliente ya tiene una tarjeta Plata") 
-                : Result.Success(),
-            
-            NivelFidelizacion.Oro => tarjetasActivas.Any(t => t.NivelFidelizacion == NivelFidelizacion.Oro) 
-                ? Result.Failure("El cliente ya tiene una tarjeta Oro") 
-                : Result.Success(),
-            
-            _ => Result.Success()
-        };
+            // Si existe, agregar un sufijo adicional
+            codigo += $"-{Random.Shared.Next(100, 999)}";
+        }
+
+        return codigo;
     }
 
-    private async Task<Result<Promocion>> ProcesarPromocion(string codigoPromocion, CrearTarjetaFidelizacionCommand request, CancellationToken cancellationToken)
+    private TarjetaFidelizacionDto CrearResponseDto(TarjetaFidelizacion tarjeta, Cliente cliente)
     {
-        var promocion = await _promocionRepository.GetActiveByCodigo(codigoPromocion, cancellationToken);
-        
-        if (promocion == null)
-        {
-            return Result<Promocion>.Failure($"Código de promoción '{codigoPromocion}' no encontrado o expirado");
-        }
-
-        if (!promocion.EsAplicableACreacionTarjeta(request.TipoTarjeta))
-        {
-            return Result<Promocion>.Failure($"Promoción '{codigoPromocion}' no es aplicable a tarjetas tipo {request.TipoTarjeta}");
-        }
-
-        return Result<Promocion>.Success(promocion);
-    }
-
-    private async Task<string> GenerarNumeroTarjeta(CrearTarjetaFidelizacionCommand request, CancellationToken cancellationToken)
-    {
-        if (!string.IsNullOrEmpty(request.NumeroTarjeta))
-        {
-            // Verificar que el número personalizado sea único
-            var existeNumero = await _tarjetaRepository.ExisteNumeroTarjetaAsync(request.NumeroTarjeta, cancellationToken);
-            if (existeNumero)
-            {
-                throw new InvalidOperationException($"El número de tarjeta '{request.NumeroTarjeta}' ya existe");
-            }
-            return request.NumeroTarjeta;
-        }
-
-        // Generar número automático según el tipo de tarjeta
-        return await _generadorNumero.GenerarNumeroAsync(request.TipoTarjeta, request.ClienteId, cancellationToken);
-    }
-
-    private (DateTime FechaActivacion, DateTime FechaVencimiento) ConfigurarFechasTarjeta(CrearTarjetaFidelizacionCommand request)
-    {
-        var fechaActivacion = request.FechaActivacion ?? _dateTimeService.Now;
-        
-        var fechaVencimiento = request.FechaVencimiento ?? request.TipoTarjeta switch
-        {
-            NivelFidelizacion.Bronce => fechaActivacion.AddYears(2),
-            NivelFidelizacion.Plata => fechaActivacion.AddYears(3),
-            NivelFidelizacion.Oro => fechaActivacion.AddYears(5),
-            NivelFidelizacion.Diamante => fechaActivacion.AddYears(3),
-            _ => fechaActivacion.AddYears(2)
-        };
-
-        return (fechaActivacion, fechaVencimiento);
-    }
-
-    private decimal CalcularPuntosIniciales(CrearTarjetaFidelizacionCommand request, Promocion? promocion)
-    {
-        decimal puntosIniciales = request.PuntosIniciales;
-        
-        if (promocion != null)
-        {
-            puntosIniciales += promocion.PuntosAdicionales ?? 0;
-        }
-
-        return puntosIniciales;
-    }
-
-    private async Task GenerarCodigosIdentificacion(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken)
-    {
-        try
-        {
-            // Generar QR Code
-            var qrData = $"TARJETA|{tarjeta.Id}|{tarjeta.NumeroTarjeta}|{tarjeta.ClienteId}";
-            tarjeta.QrCode = await _qrCodeService.GenerarQrCodeAsync(qrData);
-
-            // Generar código de barras
-            tarjeta.CodigoBarras = GenerarCodigoBarras(tarjeta.NumeroTarjeta);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error generando códigos de identificación para tarjeta {TarjetaId}", tarjeta.Id);
-        }
-    }
-
-    private string GenerarCodigoBarras(string numeroTarjeta)
-    {
-        // Generar código de barras tipo Code128
-        return $"RPG{numeroTarjeta.Replace("-", "")}";
-    }
-
-    private async Task DesactivarTarjetasPrincipalesExistentes(Guid clienteId, CancellationToken cancellationToken)
-    {
-        var tarjetasPrincipales = await _tarjetaRepository.GetTarjetasPrincipalesByClienteIdAsync(clienteId, cancellationToken);
-        
-        foreach (var tarjeta in tarjetasPrincipales.Where(t => t.EstaActiva()))
-        {
-            tarjeta.CambiarAPrincipal(false);
-            await _tarjetaRepository.UpdateAsync(tarjeta, cancellationToken);
-        }
-    }
-
-    private async Task ActivarBeneficiosEspeciales(Guid tarjetaId, List<string> beneficiosEspeciales, CancellationToken cancellationToken)
-    {
-        foreach (var beneficioNombre in beneficiosEspeciales)
-        {
-            var beneficio = await _beneficioRepository.GetByNombreAsync(beneficioNombre, cancellationToken);
-            if (beneficio != null)
-            {
-                await _beneficioRepository.ActivarBeneficioParaTarjetaAsync(tarjetaId, beneficio.Id, cancellationToken);
-            }
-        }
-    }
-
-    private async Task EnviarNotificacionCreacion(Cliente cliente, TarjetaFidelizacion tarjeta, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var mensaje = $"¡Bienvenido al programa de fidelización! Tu tarjeta {tarjeta.TipoTarjeta} #{tarjeta.NumeroTarjeta} está lista. " +
-                         $"Saldo inicial: {tarjeta.SaldoPuntos} puntos.";
-
-            await _notificationService.EnviarNotificacionTarjetaAsync(
-                cliente.Id,
-                "Tarjeta de Fidelización Creada",
-                mensaje,
-                tarjeta,
-                cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error enviando notificación de creación de tarjeta para Cliente {ClienteId}", cliente.Id);
-        }
-    }
-
-    private async Task ProgramarEnvioTarjetaFisica(TarjetaFidelizacion tarjeta, string? direccionEnvio, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrEmpty(direccionEnvio))
-        {
-            _logger.LogWarning("No se puede enviar tarjeta física sin dirección para TarjetaId {TarjetaId}", tarjeta.Id);
-            return;
-        }
-
-        try
-        {
-            await _envioTarjetaService.ProgramarEnvioAsync(
-                tarjeta.Id,
-                direccionEnvio,
-                _dateTimeService.Now.AddBusinessDays(3), // 3 días hábiles
-                cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error programando envío de tarjeta física para TarjetaId {TarjetaId}", tarjeta.Id);
-        }
-    }
-
-    private async Task<TarjetaFidelizacionDto> CrearResponseDto(TarjetaFidelizacion tarjeta, Cliente cliente, CancellationToken cancellationToken)
-    {
-        // Obtener información adicional para el DTO
-        var transaccionesRecientes = await _transaccionRepository.GetRecientesByTarjetaIdAsync(tarjeta.Id, 5, cancellationToken);
-        var recompensasDisponibles = await _tarjetaRepository.GetRecompensasDisponiblesAsync(tarjeta.Id, 10, cancellationToken);
-        var siguienteNivel = await _tarjetaRepository.GetSiguienteNivelAsync(tarjeta.NivelFidelizacion, cancellationToken);
-        var estadisticas = await _tarjetaRepository.GetEstadisticasAsync(tarjeta.Id, cancellationToken);
-
         return new TarjetaFidelizacionDto
         {
             Id = tarjeta.Id,
+            NumeroTarjeta = tarjeta.Codigo,
             ClienteId = cliente.Id,
-            Cliente = _mapper.Map<ClienteBasicoDto>(cliente),
-            NumeroTarjeta = tarjeta.NumeroTarjeta,
-            TipoTarjeta = tarjeta.TipoTarjeta.ToString(),
-            NivelFidelizacion = tarjeta.NivelFidelizacion.ToString(),
-            SaldoPuntos = tarjeta.SaldoPuntos,
-            TotalPuntosAcumulados = tarjeta.TotalPuntosAcumulados,
-            TotalPuntosCanjeados = tarjeta.TotalPuntosCanjeados,
-            Estado = (EstadoTarjeta)tarjeta.Estado,
-            EsPrincipal = tarjeta.EsPrincipal,
+            NombreCliente = cliente.Nombre.NombreCompleto,
+            Nivel = tarjeta.NivelFidelizacion,
+            PuntosActuales = tarjeta.PuntosDisponibles,
+            TotalPuntosGanados = tarjeta.PuntosAcumulados,
+            TotalPuntosCanjeados = tarjeta.PuntosAcumulados - tarjeta.PuntosDisponibles,
             FechaEmision = tarjeta.FechaEmision,
-            FechaActivacion = tarjeta.FechaActivacion,
-            FechaVencimiento = tarjeta.FechaVencimiento,
-            UltimaTransaccion = tarjeta.UltimaTransaccion,
-            Configuracion = _mapper.Map<ConfiguracionTarjetaDto>(tarjeta.Configuracion),
-            Personalizacion = _mapper.Map<PersonalizacionTarjetaDto>(tarjeta.Personalizacion),
-            BeneficiosActivos = _mapper.Map<List<BeneficioTarjetaDto>>(tarjeta.BeneficiosActivos),
-            SiguienteNivel = _mapper.Map<SiguienteNivelDto>(siguienteNivel),
-            TransaccionesRecientes = _mapper.Map<List<TransaccionRecienteDto>>(transaccionesRecientes),
-            RecompensasDisponibles = _mapper.Map<List<RecompensaDisponibleDto>>(recompensasDisponibles),
-            Estadisticas = _mapper.Map<EstadisticasTarjetaDto>(estadisticas),
-            SucursalEmision = tarjeta.SucursalEmision,
-            Canal = tarjeta.Canal,
-            MotivoEmision = tarjeta.MotivoEmision,
-            QrCode = tarjeta.QrCode,
-            CodigoBarras = tarjeta.CodigoBarras,
-            UrlTarjetaDigital = GenerarUrlTarjetaDigital(tarjeta),
-            DatosAdicionales = tarjeta.DatosAdicionales,
-            PreferenciasCliente = tarjeta.PreferenciasCliente
+            FechaVencimiento = tarjeta.FechaExpiracion,
+            Estado = tarjeta.Estado.ToString(),
+            Activa = tarjeta.Estado == EstadoTarjeta.Activa,
+            Observaciones = "Tarjeta creada automáticamente",
+            BeneficiosDisponibles = new List<BeneficioDto>(),
+            TransaccionesRecientes = new List<TransaccionPuntosDto>()
         };
-    }
-
-    private string GenerarUrlTarjetaDigital(TarjetaFidelizacion tarjeta)
-    {
-        return $"https://restaurantepro.com/mi-tarjeta/{tarjeta.Id}?token={GenerarTokenSeguro(tarjeta)}";
-    }
-
-    private string GenerarTokenSeguro(TarjetaFidelizacion tarjeta)
-    {
-        // Generar token seguro para acceso a tarjeta digital
-        var data = $"{tarjeta.Id}|{tarjeta.NumeroTarjeta}|{_dateTimeService.Now:yyyyMMdd}";
-        return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(data)).Replace("=", "").Replace("+", "-").Replace("/", "_");
-    }
-}
-
-/// <summary>
-/// Extensiones para cálculos de fechas de negocio
-/// </summary>
-public static class DateTimeExtensions
-{
-    public static DateTime AddBusinessDays(this DateTime startDate, int businessDays)
-    {
-        var direction = Math.Sign(businessDays);
-        var currentDate = startDate;
-        
-        while (businessDays != 0)
-        {
-            currentDate = currentDate.AddDays(direction);
-            if (currentDate.DayOfWeek != DayOfWeek.Saturday && currentDate.DayOfWeek != DayOfWeek.Sunday)
-            {
-                businessDays -= direction;
-            }
-        }
-        
-        return currentDate;
     }
 } 

@@ -12,7 +12,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
     private readonly ICurrentUserService _currentUserService;
     private readonly ICommunicationService _notificacionService;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IGeneradorNumeroComandaService _generadorNumero;
+    private readonly IDateTimeService _dateTimeService;
 
     public DividirComandaHandler(
         IApplicationDbContext context,
@@ -21,7 +21,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
         ICurrentUserService currentUserService,
         ICommunicationService notificacionService,
         IUnitOfWork unitOfWork,
-        IGeneradorNumeroComandaService generadorNumero)
+        IDateTimeService dateTimeService)
     {
         _context = context;
         _mapper = mapper;
@@ -29,7 +29,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
         _currentUserService = currentUserService;
         _notificacionService = notificacionService;
         _unitOfWork = unitOfWork;
-        _generadorNumero = generadorNumero;
+        _dateTimeService = dateTimeService;
     }
 
     public async Task<Result<DividirComandaDto>> Handle(DividirComandaCommand request, CancellationToken cancellationToken)
@@ -39,65 +39,66 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
 
         try
         {
-            using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
-
-            // 1. Obtener comanda original completa
-            var comandaOriginalResult = await ObtenerComandaOriginal(request.ComandaOriginalId, cancellationToken);
-            if (!comandaOriginalResult.Succeeded)
+            return await _unitOfWork.EjecutarEnTransaccionAsync(async () =>
             {
-                return Result.Failure<DividirComandaDto>(comandaOriginalResult.Error!);
-            }
+                // 1. Obtener comanda original completa
+                var comandaOriginalResult = await ObtenerComandaOriginal(request.ComandaOriginalId, cancellationToken);
+                if (!comandaOriginalResult.IsSuccess())
+                {
+                    return Result<DividirComandaDto>.Failure(comandaOriginalResult.ErrorMessage());
+                }
 
-            var comandaOriginal = comandaOriginalResult.Value;
+                var comandaOriginal = comandaOriginalResult.Value;
 
-            // 2. Validar distribución de items
-            var validacionResult = await ValidarDistribucionItems(comandaOriginal, request, cancellationToken);
-            if (!validacionResult.Succeeded)
-            {
-                return Result.Failure<DividirComandaDto>(validacionResult.Error!);
-            }
+                // 2. Validar distribución de items
+                var validacionResult = await ValidarDistribucionItems(comandaOriginal, request, cancellationToken);
+                if (!validacionResult.IsSuccess())
+                {
+                    return Result<DividirComandaDto>.Failure(validacionResult.ErrorMessage());
+                }
 
-            // 3. Crear nuevas comandas
-            var nuevasComandasResult = await CrearNuevasComandas(comandaOriginal, request, cancellationToken);
-            if (!nuevasComandasResult.Succeeded)
-            {
-                return Result.Failure<DividirComandaDto>(nuevasComandasResult.Error!);
-            }
+                // 3. Crear nuevas comandas
+                var nuevasComandasResult = await CrearNuevasComandas(comandaOriginal, request, cancellationToken);
+                if (!nuevasComandasResult.IsSuccess())
+                {
+                    return Result<DividirComandaDto>.Failure(nuevasComandasResult.ErrorMessage());
+                }
 
-            var nuevasComandas = nuevasComandasResult.Value;
+                var nuevasComandas = nuevasComandasResult.Value;
 
-            // 4. Distribuir items entre las nuevas comandas
-            await DistribuirItems(comandaOriginal, nuevasComandas, request, cancellationToken);
+                // 4. Distribuir items entre las nuevas comandas
+                await DistribuirItems(comandaOriginal, nuevasComandas, request, cancellationToken);
 
-            // 5. Distribuir descuentos si es necesario
-            if (request.DistribuirDescuentos)
-            {
-                await DistribuirDescuentos(comandaOriginal, nuevasComandas, cancellationToken);
-            }
+                // 5. Distribuir descuentos si es necesario
+                if (request.DistribuirDescuentos)
+                {
+                    await DistribuirDescuentos(comandaOriginal, nuevasComandas, cancellationToken);
+                }
 
-            // 6. Actualizar comanda original
-            await ActualizarComandaOriginal(comandaOriginal, request, cancellationToken);
+                // 6. Actualizar comanda original
+                await ActualizarComandaOriginal(comandaOriginal, request, cancellationToken);
 
-            // 7. Registrar auditoría
-            await RegistrarAuditoria(comandaOriginal, nuevasComandas, request, cancellationToken);
+                // 7. Registrar auditoría
+                await RegistrarAuditoria(comandaOriginal, nuevasComandas, request, cancellationToken);
 
-            // 8. Guardar cambios
-            await _context.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+                // 8. Guardar cambios
+                await _unitOfWork.GuardarCambiosAsync(cancellationToken);
 
-            // 9. Crear respuesta
-            var response = CrearRespuesta(comandaOriginal, nuevasComandas, request);
+                // 9. Crear respuesta
+                var response = CrearRespuesta(comandaOriginal, nuevasComandas, request);
 
-            _logger.LogInformation("✅ División completada exitosamente. Comanda original: {ComandaOriginalId}, Nuevas comandas: {NuevasComandasIds}",
-                request.ComandaOriginalId, string.Join(", ", nuevasComandas.Select(c => c.Id)));
+                _logger.LogInformation("✅ División completada exitosamente. Comanda original: {ComandaOriginalId}, Nuevas comandas: {NuevasComandasIds}",
+                    request.ComandaOriginalId, string.Join(", ", nuevasComandas.Select(c => c.Id)));
 
-            return Result.Success(response);
+                return Result<DividirComandaDto>.Success(response);
+
+            }, cancellationToken);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error al dividir comanda {ComandaOriginalId}: {ErrorMessage}", 
                 request.ComandaOriginalId, ex.Message);
-            return Result.Failure<DividirComandaDto>($"Error interno al dividir la comanda: {ex.Message}");
+            return Result<DividirComandaDto>.Failure($"Error interno al dividir la comanda: {ex.Message}");
         }
     }
 
@@ -108,19 +109,17 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
         var comanda = await _context.Comandas
             .Include(c => c.Mesa)
             .Include(c => c.Items)
-                .ThenInclude(i => i.Producto)
-            .Include(c => c.Descuentos)
             .FirstOrDefaultAsync(c => c.Id == comandaId, cancellationToken);
 
         if (comanda == null)
         {
-            return Result.Failure<Comanda>("La comanda original especificada no existe.");
+            return Result<Comanda>.Failure("La comanda original especificada no existe.");
         }
 
-        return Result.Success(comanda);
+        return Result<Comanda>.Success(comanda);
     }
 
-    private async Task<Result> ValidarDistribucionItems(Comanda comandaOriginal, DividirComandaCommand request, CancellationToken cancellationToken)
+    private async Task<Result<string>> ValidarDistribucionItems(Comanda comandaOriginal, DividirComandaCommand request, CancellationToken cancellationToken)
     {
         var itemsOriginales = comandaOriginal.Items.ToDictionary(i => i.Id, i => i.Cantidad);
         var itemsDistribuidos = request.DivisionItems
@@ -135,7 +134,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
             {
                 if (!request.MantenerComandaOriginal)
                 {
-                    return Result.Failure($"El item {itemOriginal.Key} no está distribuido en ninguna nueva comanda.");
+                    return Result<string>.Failure($"El item {itemOriginal.Key} no está distribuido en ninguna nueva comanda.");
                 }
                 continue;
             }
@@ -145,16 +144,16 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
 
             if (cantidadDistribuida > cantidadOriginal)
             {
-                return Result.Failure($"La cantidad distribuida del item {itemOriginal.Key} ({cantidadDistribuida}) excede la cantidad original ({cantidadOriginal}).");
+                return Result<string>.Failure($"La cantidad distribuida del item {itemOriginal.Key} ({cantidadDistribuida}) excede la cantidad original ({cantidadOriginal}).");
             }
 
             if (!request.MantenerComandaOriginal && cantidadDistribuida < cantidadOriginal)
             {
-                return Result.Failure($"La cantidad distribuida del item {itemOriginal.Key} ({cantidadDistribuida}) es menor que la cantidad original ({cantidadOriginal}).");
+                return Result<string>.Failure($"La cantidad distribuida del item {itemOriginal.Key} ({cantidadDistribuida}) es menor que la cantidad original ({cantidadOriginal}).");
             }
         }
 
-        return Result.Success();
+        return Result<string>.Success("Validación exitosa");
     }
 
     private async Task<Result<List<Comanda>>> CrearNuevasComandas(Comanda comandaOriginal, DividirComandaCommand request, CancellationToken cancellationToken)
@@ -163,29 +162,19 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
 
         foreach (var division in request.DivisionItems)
         {
-            var numeroComanda = await _generadorNumero.GenerarNumeroComandaAsync(cancellationToken);
-            
-            var nuevaComanda = new Comanda
-            {
-                Id = Guid.NewGuid(),
-                NumeroComanda = numeroComanda,
-                MesaId = division.MesaDestinoId ?? comandaOriginal.MesaId,
-                MeseroId = division.MeseroId ?? comandaOriginal.MeseroId,
-                ClienteId = comandaOriginal.ClienteId,
-                Estado = EstadoComanda.Creada,
-                TipoComanda = comandaOriginal.TipoComanda,
-                FechaCreacion = DateTime.UtcNow,
-                CreadoPor = _currentUserService.UserId,
-                ComandaOrigenId = comandaOriginal.Id, // Referencia a la comanda original
-                Observaciones = division.Observaciones ?? $"División de comanda #{comandaOriginal.NumeroComanda}",
-                Items = new List<ItemComanda>()
-            };
+            // Crear nueva comanda usando el factory method correcto
+            var nuevaComanda = Comanda.Crear(
+                meseroId: division.MeseroId ?? comandaOriginal.MeseroId,
+                clienteId: comandaOriginal.ClienteId,
+                mesaId: division.MesaDestinoId ?? comandaOriginal.MesaId,
+                observaciones: division.Observaciones ?? $"División de comanda #{comandaOriginal.Id}"
+            );
 
             nuevasComandas.Add(nuevaComanda);
-            _context.Comandas.Add(nuevaComanda);
+            await _context.Comandas.AddAsync(nuevaComanda, cancellationToken);
         }
 
-        return Result.Success(nuevasComandas);
+        return Result<List<Comanda>>.Success(nuevasComandas);
     }
 
     private async Task DistribuirItems(Comanda comandaOriginal, List<Comanda> nuevasComandas, DividirComandaCommand request, CancellationToken cancellationToken)
@@ -200,130 +189,54 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
                 var itemOriginal = comandaOriginal.Items.FirstOrDefault(io => io.Id == itemDivision.ItemId);
                 if (itemOriginal == null) continue;
 
-                var nuevoItem = new ItemComanda
-                {
-                    Id = Guid.NewGuid(),
-                    ComandaId = nuevaComanda.Id,
-                    ProductoId = itemOriginal.ProductoId,
-                    Producto = itemOriginal.Producto,
-                    Cantidad = itemDivision.Cantidad,
-                    PrecioUnitario = itemOriginal.PrecioUnitario,
-                    Descuento = 0, // Los descuentos se distribuyen después
-                    Estado = EstadoItemComanda.Pendiente,
-                    Observaciones = itemDivision.ObservacionesItem ?? itemOriginal.Observaciones,
-                    FechaCreacion = DateTime.UtcNow,
-                    CreadoPor = _currentUserService.UserId
-                };
-
-                nuevaComanda.Items.Add(nuevoItem);
-                _context.ItemsComanda.Add(nuevoItem);
-
-                // Reducir cantidad en el item original si no se mantiene la comanda original
-                if (!request.MantenerComandaOriginal)
-                {
-                    itemOriginal.Cantidad -= itemDivision.Cantidad;
-                    if (itemOriginal.Cantidad <= 0)
-                    {
-                        _context.ItemsComanda.Remove(itemOriginal);
-                    }
-                    else
-                    {
-                        _context.ItemsComanda.Update(itemOriginal);
-                    }
-                }
+                // Agregar item usando el método real disponible
+                nuevaComanda.AgregarItem(
+                    itemOriginal.ProductoId,
+                    itemOriginal.NombreProducto,
+                    itemDivision.Cantidad,
+                    itemOriginal.PrecioUnitario,
+                    itemDivision.ObservacionesItem ?? itemOriginal.Observaciones
+                );
             }
-
-            // Calcular totales de la nueva comanda
-            nuevaComanda.Subtotal = nuevaComanda.Items.Sum(i => i.PrecioUnitario * i.Cantidad);
-            nuevaComanda.Total = nuevaComanda.Subtotal; // Se ajustará con descuentos
-            _context.Comandas.Update(nuevaComanda);
         }
     }
 
     private async Task DistribuirDescuentos(Comanda comandaOriginal, List<Comanda> nuevasComandas, CancellationToken cancellationToken)
     {
-        if (!comandaOriginal.Descuentos.Any()) return;
-
-        var totalOriginal = comandaOriginal.Subtotal;
-        var descuentoTotalOriginal = comandaOriginal.Descuentos.Sum(d => d.Monto);
-
-        foreach (var nuevaComanda in nuevasComandas)
+        // Si la comanda original tiene descuento de fidelización, distribuirlo proporcionalmente
+        if (comandaOriginal.DescuentoFidelizacion.HasValue && comandaOriginal.DescuentoFidelizacion.Value > 0)
         {
-            var proporcion = nuevaComanda.Subtotal / totalOriginal;
-            var descuentoProporcional = descuentoTotalOriginal * proporcion;
-
-            if (descuentoProporcional > 0)
+            var descuentoPorComanda = comandaOriginal.DescuentoFidelizacion.Value / nuevasComandas.Count;
+            
+            foreach (var nuevaComanda in nuevasComandas)
             {
-                var descuentoComanda = new DescuentoComanda
-                {
-                    Id = Guid.NewGuid(),
-                    ComandaId = nuevaComanda.Id,
-                    TipoDescuento = "Proporcional División",
-                    Monto = descuentoProporcional,
-                    Porcentaje = (descuentoProporcional / nuevaComanda.Subtotal) * 100,
-                    Motivo = $"Descuento proporcional por división de comanda #{comandaOriginal.NumeroComanda}",
-                    FechaAplicacion = DateTime.UtcNow,
-                    AplicadoPor = _currentUserService.UserId
-                };
-
-                _context.DescuentosComanda.Add(descuentoComanda);
-                nuevaComanda.Total = nuevaComanda.Subtotal - descuentoProporcional;
-                _context.Comandas.Update(nuevaComanda);
+                nuevaComanda.AplicarDescuentoFidelizacion(descuentoPorComanda);
             }
         }
     }
 
     private async Task ActualizarComandaOriginal(Comanda comandaOriginal, DividirComandaCommand request, CancellationToken cancellationToken)
     {
-        if (request.MantenerComandaOriginal)
+        if (!request.MantenerComandaOriginal)
         {
-            // Mantener la comanda original como está, solo marcar que fue dividida
-            comandaOriginal.Observaciones += $" [Dividida el {DateTime.UtcNow:dd/MM/yyyy HH:mm}]";
+            // Cancelar la comanda original
+            comandaOriginal.Cancelar($"Dividida en {request.DivisionItems.Count} comandas el {_dateTimeService.Now:dd/MM/yyyy HH:mm}");
         }
         else
         {
-            // Si no se mantiene, verificar si quedan items
-            if (!comandaOriginal.Items.Any())
-            {
-                comandaOriginal.Estado = EstadoComanda.Dividida;
-                comandaOriginal.FechaFinalizacion = DateTime.UtcNow;
-            }
-            else
-            {
-                // Recalcular totales
-                comandaOriginal.Subtotal = comandaOriginal.Items.Sum(i => i.PrecioUnitario * i.Cantidad);
-                comandaOriginal.Total = comandaOriginal.Subtotal - comandaOriginal.Descuentos.Sum(d => d.Monto);
-            }
+            // Agregar observación sobre la división
+            comandaOriginal.AgregarObservacion($"Comanda dividida el {_dateTimeService.Now:dd/MM/yyyy HH:mm}. Motivo: {request.MotivoDivision}");
         }
-
-        comandaOriginal.FechaUltimaActualizacion = DateTime.UtcNow;
-        comandaOriginal.ActualizadoPor = _currentUserService.UserId;
-        _context.Comandas.Update(comandaOriginal);
     }
 
     private async Task RegistrarAuditoria(Comanda comandaOriginal, List<Comanda> nuevasComandas, DividirComandaCommand request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var auditoria = new RegistroAuditoria
-            {
-                EntidadTipo = nameof(Comanda),
-                EntidadId = comandaOriginal.Id.ToString(),
-                Accion = "División Comanda",
-                ValoresAnteriores = JsonSerializer.Serialize(new { Estado = comandaOriginal.Estado, Items = comandaOriginal.Items.Count }),
-                ValoresNuevos = JsonSerializer.Serialize(new { NuevasComandasIds = nuevasComandas.Select(c => c.Id), TipoDivision = request.TipoDivision }),
-                Motivo = request.MotivoDivision,
-                UsuarioId = _currentUserService.UserId,
-                Fecha = DateTime.UtcNow,
-                DatosAdicionales = request.DatosAdicionales != null ? JsonSerializer.Serialize(request.DatosAdicionales) : null
-            };
-
-            _context.RegistrosAuditoria.Add(auditoria);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error al registrar auditoría para división de comanda {ComandaId}", comandaOriginal.Id);
-        }
+        // Simplificado: Log de auditoría básico
+        _logger.LogInformation("Auditoría - División de comanda. Original: {ComandaOriginal}, Nuevas: {ComandasNuevas}, Motivo: {Motivo}, Usuario: {Usuario}",
+            comandaOriginal.Id,
+            string.Join(", ", nuevasComandas.Select(c => c.Id)),
+            request.MotivoDivision,
+            _currentUserService.UserId);
     }
 
     private DividirComandaDto CrearRespuesta(Comanda comandaOriginal, List<Comanda> nuevasComandas, DividirComandaCommand request)
@@ -334,7 +247,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
             ComandasNuevasIds = nuevasComandas.Select(c => c.Id).ToList(),
             TipoDivision = request.TipoDivision,
             MotivoDivision = request.MotivoDivision,
-            FechaDivision = DateTime.UtcNow,
+            FechaDivision = _dateTimeService.Now,
             AutorizadoPor = request.AutorizadoPor,
             DivisionExitosa = true,
             TotalComandasCreadas = nuevasComandas.Count

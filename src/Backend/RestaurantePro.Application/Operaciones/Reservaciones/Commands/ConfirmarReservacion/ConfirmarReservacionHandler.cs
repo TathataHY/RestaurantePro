@@ -229,7 +229,7 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
                     destinatarios: new[] { reservacion.Cliente.Email },
                     titulo: "Reservación Confirmada",
                     mensaje: mensaje,
-                    tipo: TipoNotificacion.ConfirmacionReservacion,
+                    tipo: TipoComunicacion.ReservacionConfirmada,
                     cancellationToken: cancellationToken
                 );
             }
@@ -239,7 +239,7 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
                 destinatarios: new[] { "recepcion@restaurante.com" },
                 titulo: "Reservación Confirmada",
                 mensaje: $"Reservación {reservacion.CodigoReservacion} confirmada vía {request.MetodoConfirmacion}",
-                tipo: TipoNotificacion.NotificacionInterna,
+                tipo: TipoComunicacion.Informacion,
                 cancellationToken: cancellationToken
             );
         }

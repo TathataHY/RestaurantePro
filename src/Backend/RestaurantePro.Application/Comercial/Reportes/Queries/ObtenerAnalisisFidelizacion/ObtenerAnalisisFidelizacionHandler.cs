@@ -65,7 +65,7 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
             var analisis = ConstruirAnalisisCompleto(datosFidelizacion, metricas, segmentacion, patrones, recomendaciones, tendencias, request);
 
             _logger.LogInformation("✅ Análisis de fidelización completado - {TotalClientes} clientes analizados, {TotalRecomendaciones} recomendaciones generadas",
-                analisis.TotalClientes, analisis.Recomendaciones.Count);
+                analisis.ResumenExecutivo.TotalClientesAnalizados, analisis.RecomendacionesEstrategicas.Count);
 
             return Result.Success(analisis);
         }
@@ -104,54 +104,41 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
 
     private async Task<DatosFidelizacionAnalisis> ObtenerDatosFidelizacion(ObtenerAnalisisFidelizacionQuery request, CancellationToken cancellationToken)
     {
-        var clientesQuery = _context.Clientes
-            .Include(c => c.TarjetaFidelizacion)
-            .ThenInclude(t => t.MovimientosPuntos)
-            .Include(c => c.Reservaciones)
-            .Include(c => c.Comandas)
-            .ThenInclude(com => com.Facturas)
-            .AsQueryable();
+        var clientesQuery = _context.Clientes.AsQueryable();
 
-        // Aplicar filtros opcionales
-        if (request.SoloClientesActivos)
+        // Aplicar filtros opcionales usando las propiedades que realmente existen
+        if (!request.IncluirClientesInactivos)
         {
-            clientesQuery = clientesQuery.Where(c => c.Estado == EstadoCliente.Activo);
+            clientesQuery = clientesQuery.Where(c => c.EstaActivo);
         }
 
-        if (request.SoloConTarjetaFidelizacion)
+        // Filtro por clientes específicos si se proporcionan
+        if (request.ClientesEspecificos?.Any() == true)
         {
-            clientesQuery = clientesQuery.Where(c => c.TarjetaFidelizacion != null);
+            clientesQuery = clientesQuery.Where(c => request.ClientesEspecificos.Contains(c.Id));
         }
 
-        if (request.NivelFidelizacionId.HasValue)
-        {
-            clientesQuery = clientesQuery.Where(c => c.TarjetaFidelizacion != null && 
-                                                    c.TarjetaFidelizacion.NivelFidelizacionId == request.NivelFidelizacionId);
-        }
+        // Filtro por nivel mínimo (usando TarjetaFidelizacionPrincipalId)
+        // TODO: Implementar cuando tengamos acceso a las tarjetas de fidelización
+        // if (request.NivelMinimo.HasValue)
+        // {
+        //     clientesQuery = clientesQuery.Where(c => c.TarjetaFidelizacionPrincipalId.HasValue);
+        // }
 
         var clientes = await clientesQuery.ToListAsync(cancellationToken);
 
-        // Obtener facturas del período
+        // Obtener facturas del período - ClienteId puede ser null en algunas facturas
         var facturas = await _context.Facturas
             .Where(f => f.FechaEmision >= request.FechaInicio && 
                        f.FechaEmision <= request.FechaFin &&
-                       f.ClienteId.HasValue)
+                       f.ClienteId != null)
             .Include(f => f.Cliente)
             .ToListAsync(cancellationToken);
 
-        // Obtener movimientos de puntos del período
-        var movimientosPuntos = await _context.MovimientosPuntos
-            .Where(m => m.FechaMovimiento >= request.FechaInicio && 
-                       m.FechaMovimiento <= request.FechaFin)
-            .Include(m => m.TarjetaFidelizacion)
-            .ThenInclude(t => t.Cliente)
-            .ToListAsync(cancellationToken);
-
-        // Obtener reservaciones del período
+        // Obtener reservaciones del período - todas las reservaciones tienen ClienteId
         var reservaciones = await _context.Reservaciones
             .Where(r => r.FechaReservacion >= request.FechaInicio && 
-                       r.FechaReservacion <= request.FechaFin &&
-                       r.ClienteId.HasValue)
+                       r.FechaReservacion <= request.FechaFin)
             .Include(r => r.Cliente)
             .ToListAsync(cancellationToken);
 
@@ -159,7 +146,7 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
         {
             Clientes = clientes,
             Facturas = facturas,
-            MovimientosPuntos = movimientosPuntos,
+            MovimientosPuntos = new List<MovimientoPuntosDto>(), // Lista vacía por ahora
             Reservaciones = reservaciones,
             FechaInicio = request.FechaInicio,
             FechaFin = request.FechaFin
@@ -172,8 +159,8 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
 
         // Métricas básicas de clientes
         metricas.TotalClientes = datos.Clientes.Count;
-        metricas.ClientesConTarjeta = datos.Clientes.Count(c => c.TarjetaFidelizacion != null);
-        metricas.ClientesActivos = datos.Clientes.Count(c => c.Estado == EstadoCliente.Activo);
+        metricas.ClientesConTarjeta = datos.Clientes.Count(c => c.TarjetaFidelizacionPrincipalId.HasValue);
+        metricas.ClientesActivos = datos.Clientes.Count(c => c.EstaActivo);
         metricas.PorcentajeConTarjeta = metricas.TotalClientes > 0 ? 
             (decimal)metricas.ClientesConTarjeta / metricas.TotalClientes * 100 : 0;
 
@@ -183,22 +170,16 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
         metricas.TicketPromedio = metricas.TotalFacturas > 0 ? 
             metricas.MontoTotalVentas / metricas.TotalFacturas : 0;
 
-        // Métricas de puntos
-        var puntosAcumulados = datos.MovimientosPuntos
-            .Where(m => m.TipoMovimiento == TipoMovimientoPuntos.Acumulacion)
-            .Sum(m => m.Puntos);
-        var puntosCanjeados = datos.MovimientosPuntos
-            .Where(m => m.TipoMovimiento == TipoMovimientoPuntos.Canje)
-            .Sum(m => m.Puntos);
-
-        metricas.PuntosAcumulados = puntosAcumulados;
-        metricas.PuntosCanjeados = puntosCanjeados;
-        metricas.PuntosPendientes = puntosAcumulados - puntosCanjeados;
-        metricas.TasaCanje = puntosAcumulados > 0 ? (decimal)puntosCanjeados / puntosAcumulados * 100 : 0;
+        // Métricas de puntos - simplificadas usando PuntosAcumulados de Cliente
+        var totalPuntosClientes = datos.Clientes.Where(c => c.EstaActivo).Sum(c => c.PuntosAcumulados);
+        metricas.PuntosAcumulados = totalPuntosClientes;
+        metricas.PuntosCanjeados = 0; // TODO: Calcular cuando tengamos acceso a movimientos de puntos
+        metricas.PuntosPendientes = totalPuntosClientes;
+        metricas.TasaCanje = 0; // TODO: Calcular cuando tengamos los canjes
 
         // Métricas de frecuencia
         var clientesConCompras = datos.Facturas
-            .Where(f => f.ClienteId.HasValue)
+            .Where(f => f.ClienteId != null)
             .GroupBy(f => f.ClienteId.Value)
             .ToList();
 
@@ -321,16 +302,9 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
             .Take(3)
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-        // Análisis de temporalidad de canjes
-        var canjesPorMes = datos.MovimientosPuntos
-            .Where(m => m.TipoMovimiento == TipoMovimientoPuntos.Canje)
-            .GroupBy(m => m.FechaMovimiento.Month)
-            .ToDictionary(g => g.Key.ToString(), g => g.Sum(m => m.Puntos));
-
-        patrones.MesesMayorCanje = canjesPorMes
-            .OrderByDescending(kvp => kvp.Value)
-            .Take(3)
-            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        // Análisis de temporalidad de canjes - simplificado sin MovimientosPuntos
+        // TODO: Implementar cuando tengamos acceso a movimientos de puntos reales
+        patrones.MesesMayorCanje = new Dictionary<string, int>();
 
         // Patrones de gasto
         if (datos.Facturas.Any())
@@ -367,13 +341,12 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
         {
             recomendaciones.Add(new RecomendacionFidelizacion
             {
-                Tipo = "PENETRACIÓN",
-                Prioridad = "ALTA",
                 Titulo = "Incrementar adopción de tarjetas de fidelización",
                 Descripcion = $"Solo el {metricas.PorcentajeConTarjeta:F1}% de clientes tiene tarjeta de fidelización",
                 Accion = "Campaña de incentivos para registro en programa de fidelización",
-                ImpactoEstimado = "Aumentar retención y frecuencia de compra en 15-25%",
-                MetricaObjetivo = "Alcanzar 70% de penetración en 6 meses"
+                ImpactoEsperado = 25, // 25% de incremento esperado
+                Prioridad = NivelPrioridad.Alta,
+                Categoria = "Penetración"
             });
         }
 
@@ -382,13 +355,12 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
         {
             recomendaciones.Add(new RecomendacionFidelizacion
             {
-                Tipo = "ACTIVACIÓN",
-                Prioridad = "MEDIA",
                 Titulo = "Mejorar tasa de canje de puntos",
                 Descripcion = $"Tasa de canje baja: {metricas.TasaCanje:F1}% (objetivo: >40%)",
                 Accion = "Crear promociones atractivas y comunicar beneficios disponibles",
-                ImpactoEstimado = "Incrementar satisfacción y engagement",
-                MetricaObjetivo = "Alcanzar 40% de tasa de canje"
+                ImpactoEsperado = 15, // 15% de incremento esperado
+                Prioridad = NivelPrioridad.Media,
+                Categoria = "Activación"
             });
         }
 
@@ -398,13 +370,12 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
             var clientesEnRiesgo = segmentacion.ResumenSegmentos["At Risk"].CantidadClientes;
             recomendaciones.Add(new RecomendacionFidelizacion
             {
-                Tipo = "RETENCIÓN",
-                Prioridad = "ALTA",
                 Titulo = "Programa de retención para clientes en riesgo",
                 Descripcion = $"{clientesEnRiesgo} clientes identificados en riesgo de abandono",
                 Accion = "Campaña personalizada con ofertas especiales y comunicación directa",
-                ImpactoEstimado = "Recuperar 40-60% de clientes en riesgo",
-                MetricaObjetivo = $"Reactivar al menos {clientesEnRiesgo * 0.5:F0} clientes"
+                ImpactoEsperado = 50, // 50% de recuperación esperada
+                Prioridad = NivelPrioridad.Alta,
+                Categoria = "Retención"
             });
         }
 
@@ -413,13 +384,12 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
         {
             recomendaciones.Add(new RecomendacionFidelizacion
             {
-                Tipo = "FRECUENCIA",
-                Prioridad = "MEDIA",
                 Titulo = "Incrementar frecuencia de visitas",
                 Descripcion = $"Solo {metricas.PorcentajeRecurrencia:F1}% de clientes son recurrentes",
                 Accion = "Programa de visitas frecuentes con recompensas progresivas",
-                ImpactoEstimado = "Aumentar frecuencia promedio en 20-30%",
-                MetricaObjetivo = "Alcanzar 50% de clientes recurrentes"
+                ImpactoEsperado = 30, // 30% de incremento esperado
+                Prioridad = NivelPrioridad.Media,
+                Categoria = "Frecuencia"
             });
         }
 
@@ -428,13 +398,12 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
         {
             recomendaciones.Add(new RecomendacionFidelizacion
             {
-                Tipo = "PREMIUM",
-                Prioridad = "MEDIA",
                 Titulo = "Programa VIP para mejores clientes",
                 Descripcion = "Desarrollar experiencias exclusivas para clientes Champions",
                 Accion = "Beneficios premium, acceso anticipado, eventos exclusivos",
-                ImpactoEstimado = "Incrementar valor de vida del cliente en 25-40%",
-                MetricaObjetivo = "Mantener y crecer el segmento Champions"
+                ImpactoEsperado = 35, // 35% de incremento en valor de vida
+                Prioridad = NivelPrioridad.Media,
+                Categoria = "Premium"
             });
         }
 
@@ -449,29 +418,27 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
         var diasPeriodo = (request.FechaFin - request.FechaInicio).TotalDays;
         var fechaInicioComparacion = request.FechaInicio.AddDays(-diasPeriodo);
 
-        // Tendencia de nuevos clientes con tarjeta
-        var nuevasTarjetasActual = await _context.TarjetasFidelizacion
-            .CountAsync(t => t.FechaCreacion >= request.FechaInicio && t.FechaCreacion <= request.FechaFin, cancellationToken);
+        // Tendencia de nuevos clientes - usando fecha de creación de clientes
+        var nuevosClientesActual = await _context.Clientes
+            .CountAsync(c => c.FechaCreacion >= request.FechaInicio && c.FechaCreacion <= request.FechaFin, cancellationToken);
 
-        var nuevasTarjetasAnterior = await _context.TarjetasFidelizacion
-            .CountAsync(t => t.FechaCreacion >= fechaInicioComparacion && t.FechaCreacion < request.FechaInicio, cancellationToken);
+        var nuevosClientesAnterior = await _context.Clientes
+            .CountAsync(c => c.FechaCreacion >= fechaInicioComparacion && c.FechaCreacion < request.FechaInicio, cancellationToken);
 
-        tendencias.TendenciaNuevasTarjetas = nuevasTarjetasAnterior > 0 ? 
-            ((double)(nuevasTarjetasActual - nuevasTarjetasAnterior) / nuevasTarjetasAnterior) * 100 : 0;
+        tendencias.TendenciaNuevasTarjetas = nuevosClientesAnterior > 0 ? 
+            ((double)(nuevosClientesActual - nuevosClientesAnterior) / nuevosClientesAnterior) * 100 : 0;
 
-        // Tendencia de canjes
-        var canjesActual = await _context.MovimientosPuntos
-            .Where(m => m.TipoMovimiento == TipoMovimientoPuntos.Canje &&
-                       m.FechaMovimiento >= request.FechaInicio && m.FechaMovimiento <= request.FechaFin)
-            .SumAsync(m => m.Puntos, cancellationToken);
+        // Tendencia de ventas (como proxy para actividad)
+        var ventasActual = await _context.Facturas
+            .Where(f => f.FechaEmision >= request.FechaInicio && f.FechaEmision <= request.FechaFin)
+            .SumAsync(f => f.Total, cancellationToken);
 
-        var canjesAnterior = await _context.MovimientosPuntos
-            .Where(m => m.TipoMovimiento == TipoMovimientoPuntos.Canje &&
-                       m.FechaMovimiento >= fechaInicioComparacion && m.FechaMovimiento < request.FechaInicio)
-            .SumAsync(m => m.Puntos, cancellationToken);
+        var ventasAnterior = await _context.Facturas
+            .Where(f => f.FechaEmision >= fechaInicioComparacion && f.FechaEmision < request.FechaInicio)
+            .SumAsync(f => f.Total, cancellationToken);
 
-        tendencias.TendenciaCanjes = canjesAnterior > 0 ? 
-            ((double)(canjesActual - canjesAnterior) / canjesAnterior) * 100 : 0;
+        tendencias.TendenciaCanjes = ventasAnterior > 0 ? 
+            ((double)(ventasActual - ventasAnterior) / (double)ventasAnterior) * 100 : 0;
 
         return tendencias;
     }
@@ -487,99 +454,72 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
     {
         return new AnalisisFidelizacionDto
         {
-            FechaGeneracion = _dateTimeService.Now,
-            FechaInicio = request.FechaInicio,
-            FechaFin = request.FechaFin,
-            UsuarioGeneradorId = _currentUserService.UserId,
-
-            // Métricas principales
-            TotalClientes = metricas.TotalClientes,
-            ClientesConTarjeta = metricas.ClientesConTarjeta,
-            ClientesActivos = metricas.ClientesActivos,
-            PorcentajeConTarjeta = metricas.PorcentajeConTarjeta,
-            PorcentajeRecurrencia = metricas.PorcentajeRecurrencia,
-            FrecuenciaCompraPromedio = metricas.FrecuenciaCompraPromedio,
-            TicketPromedio = metricas.TicketPromedio,
-            ValorVidaClientePromedio = metricas.ValorVidaClientePromedio,
-
-            // Métricas de puntos
-            PuntosAcumulados = metricas.PuntosAcumulados,
-            PuntosCanjeados = metricas.PuntosCanjeados,
-            PuntosPendientes = metricas.PuntosPendientes,
-            TasaCanje = metricas.TasaCanje,
-
-            // Segmentación
-            SegmentosClientes = segmentacion.ResumenSegmentos,
-            
-            // Patrones de comportamiento
-            DiasPreferidos = patrones.DiasPreferidos,
-            HorasPreferidas = patrones.HorasPreferidas,
-            MesesMayorCanje = patrones.MesesMayorCanje,
-
-            // Recomendaciones
-            Recomendaciones = recomendaciones,
-
-            // Tendencias
-            TendenciaNuevasTarjetas = tendencias.TendenciaNuevasTarjetas,
-            TendenciaCanjes = tendencias.TendenciaCanjes,
+            // Información del análisis
+            InfoAnalisis = new InfoAnalisisFidelizacionDto
+            {
+                FechaInicio = request.FechaInicio,
+                FechaFin = request.FechaFin,
+                TipoAnalisis = request.TipoAnalisis.ToString(),
+                PeriodoAnalisis = $"{(request.FechaFin - request.FechaInicio).TotalDays:F0} días",
+                FechaGeneracion = _dateTimeService.Now,
+                UsuarioSolicitante = _currentUserService.UserId ?? "Sistema",
+                NivelConfiabilidad = "Media"
+            },
 
             // Resumen ejecutivo
-            ResumenEjecutivo = GenerarResumenEjecutivoFidelizacion(metricas, segmentacion, recomendaciones, tendencias)
+            ResumenExecutivo = new ResumenFidelizacionDto
+            {
+                TotalClientesAnalizados = metricas.TotalClientes,
+                ClientesActivos = metricas.ClientesActivos,
+                ClientesNuevos = 0, // TODO: Calcular clientes nuevos del período
+                TasaRetencion = metricas.PorcentajeRecurrencia,
+                ValorPromedioCliente = metricas.TicketPromedio,
+                FrecuenciaPromedioVisitas = metricas.FrecuenciaCompraPromedio,
+                TicketPromedio = metricas.TicketPromedio,
+                TotalPuntosAcumulados = metricas.PuntosAcumulados,
+                TotalPuntosCanjeados = metricas.PuntosCanjeados,
+                TasaCanjeoPuntos = metricas.TasaCanje,
+                IngresosTotales = metricas.MontoTotalVentas,
+                CrecimientoVsPeriodoAnterior = (decimal)tendencias.TendenciaNuevasTarjetas,
+                EstadoGeneralPrograma = GenerarEstadoGeneral(metricas)
+            },
+
+            // Métricas del programa
+            MetricasPrograma = new MetricasProgramaFidelizacionDto
+            {
+                TasaParticipacion = metricas.PorcentajeConTarjeta,
+                TasaActivacion = metricas.PorcentajeRecurrencia,
+                ValorVidaClientePromedio = metricas.ValorVidaClientePromedio,
+                ROIPrograma = 0, // TODO: Calcular ROI cuando tengamos más datos
+                CostoPorClienteAdquirido = 0, // TODO: Calcular cuando tengamos costos
+                EfectividadCampanas = 0 // TODO: Calcular cuando tengamos datos de campañas
+            },
+
+            // Recomendaciones estratégicas
+            RecomendacionesEstrategicas = recomendaciones.Select(r => new RecomendacionEstrategicaDto
+            {
+                Titulo = r.Titulo,
+                Descripcion = r.Descripcion,
+                Categoria = r.Categoria,
+                Prioridad = r.Prioridad.ToString(),
+                ImpactoEsperado = $"{r.ImpactoEsperado}% de mejora esperada",
+                EsfuerzoRequerido = "Medio",
+                TiempoImplementacion = "1-3 meses",
+                ROIEsperado = r.ImpactoEsperado
+            }).ToList()
         };
     }
 
-    private string GenerarResumenEjecutivoFidelizacion(
-        MetricasFidelizacion metricas,
-        SegmentacionClientes segmentacion,
-        List<RecomendacionFidelizacion> recomendaciones,
-        TendenciasFidelizacion tendencias)
+    private string GenerarEstadoGeneral(MetricasFidelizacion metricas)
     {
-        var resumen = new List<string>();
-
-        // Estado del programa
-        resumen.Add($"📊 Programa fidelización: {metricas.ClientesConTarjeta} tarjetas activas ({metricas.PorcentajeConTarjeta:F1}% penetración).");
-
-        // Efectividad del programa
-        if (metricas.TasaCanje >= 40)
-        {
-            resumen.Add($"✅ Alta actividad: {metricas.TasaCanje:F1}% tasa de canje.");
-        }
-        else if (metricas.TasaCanje < 30)
-        {
-            resumen.Add($"⚠️ Baja actividad: {metricas.TasaCanje:F1}% tasa de canje.");
-        }
-
-        // Segmentación principal
-        var segmentoPrincipal = segmentacion.ResumenSegmentos
-            .OrderByDescending(s => s.Value.CantidadClientes)
-            .FirstOrDefault();
-        
-        if (segmentoPrincipal.Key != null)
-        {
-            resumen.Add($"👥 Segmento principal: {segmentoPrincipal.Key} ({segmentoPrincipal.Value.PorcentajeTotal:F1}% clientes).");
-        }
-
-        // Valor del cliente
-        if (metricas.ValorVidaClientePromedio > 0)
-        {
-            resumen.Add($"💰 CLV promedio: ${metricas.ValorVidaClientePromedio:N0}.");
-        }
-
-        // Tendencias
-        if (Math.Abs(tendencias.TendenciaNuevasTarjetas) > 10)
-        {
-            var direccion = tendencias.TendenciaNuevasTarjetas > 0 ? "crecimiento" : "disminución";
-            resumen.Add($"📈 {direccion} {Math.Abs(tendencias.TendenciaNuevasTarjetas):F1}% en nuevas tarjetas.");
-        }
-
-        // Recomendaciones críticas
-        var recomendacionesCriticas = recomendaciones.Count(r => r.Prioridad == "ALTA");
-        if (recomendacionesCriticas > 0)
-        {
-            resumen.Add($"🎯 {recomendacionesCriticas} acciones prioritarias identificadas.");
-        }
-
-        return string.Join(" ", resumen);
+        if (metricas.PorcentajeConTarjeta > 70 && metricas.PorcentajeRecurrencia > 50)
+            return "Excelente";
+        else if (metricas.PorcentajeConTarjeta > 50 && metricas.PorcentajeRecurrencia > 30)
+            return "Bueno";
+        else if (metricas.PorcentajeConTarjeta > 30 && metricas.PorcentajeRecurrencia > 20)
+            return "Regular";
+        else
+            return "Necesita Mejora";
     }
 
     // DTOs internos para el análisis

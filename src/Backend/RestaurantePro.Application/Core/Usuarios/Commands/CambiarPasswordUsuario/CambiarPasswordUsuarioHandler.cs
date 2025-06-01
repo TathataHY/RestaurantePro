@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Text;
+
 namespace RestaurantePro.Application.Core.Usuarios.Commands.CambiarPasswordUsuario;
 
 public class CambiarPasswordUsuarioHandler : IRequestHandler<CambiarPasswordUsuarioCommand, Result<bool>>

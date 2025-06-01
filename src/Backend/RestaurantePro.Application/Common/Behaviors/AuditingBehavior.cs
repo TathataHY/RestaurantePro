@@ -146,7 +146,7 @@ public class AuditingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest,
         {
             if (_currentUserService != null)
             {
-                return _currentUserService.GetUserId() ?? "Sistema";
+                return _currentUserService.UserId ?? "Sistema";
             }
             return "Sistema";
         }

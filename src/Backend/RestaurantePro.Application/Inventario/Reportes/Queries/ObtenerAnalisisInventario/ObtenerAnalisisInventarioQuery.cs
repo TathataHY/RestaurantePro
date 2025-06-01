@@ -65,12 +65,11 @@ public class ObtenerAnalisisInventarioQuery : IRequest<Result<AnalisisInventario
         {
             FechaInicio = fechaAnalisis,
             FechaFin = fechaAnalisis,
-            IncluirPrediccionesStock = incluirPredicciones,
-            IncluirAnalisisCostos = true,
-            IncluirMovimientosDetallados = false,
-            IncluirAlertasAvanzadas = true,
-            IncluirRecomendacionesCompra = incluirRecomendaciones,
-            NivelAnalisis = NivelAnalisisInventario.Diario
+            IncluirTendencias = true,
+            IncluirRecomendaciones = incluirRecomendaciones,
+            NivelDetalle = "Completo",
+            SoloAlertaStock = false,
+            SoloCriticos = false
         };
     }
 
@@ -79,7 +78,7 @@ public class ObtenerAnalisisInventarioQuery : IRequest<Result<AnalisisInventario
     /// </summary>
     public static ObtenerAnalisisInventarioQuery CrearAnalisisSemanal(
         DateTime? fechaInicio = null,
-        NivelAnalisisInventario nivel = NivelAnalisisInventario.Completo)
+        string nivelDetalle = "Completo")
     {
         var inicio = fechaInicio ?? DateTime.Today.AddDays(-7);
         var fin = inicio.AddDays(7);
@@ -88,12 +87,11 @@ public class ObtenerAnalisisInventarioQuery : IRequest<Result<AnalisisInventario
         {
             FechaInicio = inicio,
             FechaFin = fin,
-            IncluirPrediccionesStock = true,
-            IncluirAnalisisCostos = true,
-            IncluirMovimientosDetallados = true,
-            IncluirAlertasAvanzadas = true,
-            IncluirRecomendacionesCompra = true,
-            NivelAnalisis = nivel
+            IncluirTendencias = true,
+            IncluirRecomendaciones = true,
+            NivelDetalle = nivelDetalle,
+            SoloAlertaStock = false,
+            SoloCriticos = false
         };
     }
 
@@ -101,22 +99,19 @@ public class ObtenerAnalisisInventarioQuery : IRequest<Result<AnalisisInventario
     /// Factory method para análisis específico de ingredientes críticos
     /// </summary>
     public static ObtenerAnalisisInventarioQuery CrearAnalisisCriticos(
-        List<Guid> ingredientesIds,
-        decimal umbralCritico = 10,
+        Guid? categoriaId = null,
         bool incluirMovimientos = true)
     {
         return new ObtenerAnalisisInventarioQuery
         {
             FechaInicio = DateTime.Today.AddDays(-30),
             FechaFin = DateTime.Today,
-            IngredientesEspecificos = ingredientesIds,
-            UmbralStockCritico = umbralCritico,
-            IncluirPrediccionesStock = true,
-            IncluirAnalisisCostos = false,
-            IncluirMovimientosDetallados = incluirMovimientos,
-            IncluirAlertasAvanzadas = true,
-            IncluirRecomendacionesCompra = true,
-            NivelAnalisis = NivelAnalisisInventario.Criticos
+            CategoriaId = categoriaId,
+            SoloCriticos = true,
+            SoloAlertaStock = true,
+            IncluirTendencias = incluirMovimientos,
+            IncluirRecomendaciones = true,
+            NivelDetalle = "Completo"
         };
     }
 }
