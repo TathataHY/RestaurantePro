@@ -730,7 +730,7 @@ public class OportunidadAhorroDto
 }
 
 /// <summary>
-/// DTO con métricas de eficiencia
+/// DTO con métricas de eficiencia del inventario
 /// </summary>
 public class MetricasEficienciaDto
 {
@@ -750,7 +750,7 @@ public class MetricasEficienciaDto
     public decimal TiempoPromedioReposicion { get; set; }
 
     /// <summary>
-    /// Tasa de rotación global
+    /// Tasa de rotación global del inventario
     /// </summary>
     public decimal TasaRotacionGlobal { get; set; }
 
@@ -760,7 +760,7 @@ public class MetricasEficienciaDto
     public decimal PorcentajeStockOptimo { get; set; }
 
     /// <summary>
-    /// Reducción de desperdicios lograda
+    /// Reducción de desperdicios comparado con período anterior
     /// </summary>
     public decimal ReduccionDesperdicios { get; set; }
 
@@ -770,12 +770,12 @@ public class MetricasEficienciaDto
     public string ClasificacionEficiencia { get; set; } = string.Empty;
 
     /// <summary>
-    /// Métricas detalladas
+    /// Métricas detalladas individuales
     /// </summary>
     public List<MetricaIndividualDto> MetricasDetalladas { get; set; } = new();
 
     /// <summary>
-    /// Recomendaciones para mejorar eficiencia
+    /// Recomendaciones de mejora
     /// </summary>
     public List<string> RecomendacionesMejora { get; set; } = new();
 }
@@ -814,4 +814,161 @@ public class MetricaIndividualDto
     /// Descripción de la métrica
     /// </summary>
     public string Descripcion { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// DTO para recomendaciones de inventario
+/// </summary>
+public class RecomendacionInventario
+{
+    /// <summary>
+    /// ID único de la recomendación
+    /// </summary>
+    public Guid Id { get; set; } = Guid.NewGuid();
+
+    /// <summary>
+    /// Tipo de recomendación
+    /// </summary>
+    public string Tipo { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Prioridad de la recomendación
+    /// </summary>
+    public string Prioridad { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Descripción de la recomendación
+    /// </summary>
+    public string Descripcion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Acción recomendada
+    /// </summary>
+    public string AccionRecomendada { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Impacto estimado si no se toma la acción
+    /// </summary>
+    public string ImpactoSinAccion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Tiempo estimado para implementar la recomendación
+    /// </summary>
+    public int TiempoImplementacionDias { get; set; }
+
+    /// <summary>
+    /// Costo estimado de implementación
+    /// </summary>
+    public decimal? CostoImplementacion { get; set; }
+
+    /// <summary>
+    /// Beneficio estimado
+    /// </summary>
+    public decimal? BeneficioEstimado { get; set; }
+
+    /// <summary>
+    /// Fecha en que se generó la recomendación
+    /// </summary>
+    public DateTime FechaGeneracion { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Estado de la recomendación
+    /// </summary>
+    public string Estado { get; set; } = "Pendiente";
+
+    /// <summary>
+    /// Ingredientes afectados por la recomendación
+    /// </summary>
+    public List<Guid> IngredientesAfectados { get; set; } = new();
+
+    /// <summary>
+    /// Categorías afectadas por la recomendación
+    /// </summary>
+    public List<string> CategoriasAfectadas { get; set; } = new();
+}
+
+/// <summary>
+/// DTO para movimientos de stock
+/// </summary>
+public class MovimientoStock
+{
+    /// <summary>
+    /// ID único del movimiento
+    /// </summary>
+    public Guid Id { get; set; }
+
+    /// <summary>
+    /// ID del ingrediente
+    /// </summary>
+    public Guid IngredienteId { get; set; }
+
+    /// <summary>
+    /// Nombre del ingrediente
+    /// </summary>
+    public string NombreIngrediente { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Tipo de movimiento
+    /// </summary>
+    public TipoMovimientoInventario TipoMovimiento { get; set; }
+
+    /// <summary>
+    /// Cantidad del movimiento
+    /// </summary>
+    public decimal Cantidad { get; set; }
+
+    /// <summary>
+    /// Unidad de medida
+    /// </summary>
+    public string UnidadMedida { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Costo unitario del movimiento
+    /// </summary>
+    public decimal CostoUnitario { get; set; }
+
+    /// <summary>
+    /// Costo total del movimiento
+    /// </summary>
+    public decimal CostoTotal { get; set; }
+
+    /// <summary>
+    /// Fecha del movimiento
+    /// </summary>
+    public DateTime FechaMovimiento { get; set; }
+
+    /// <summary>
+    /// Motivo del movimiento
+    /// </summary>
+    public string Motivo { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Usuario que registró el movimiento
+    /// </summary>
+    public string UsuarioRegistro { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Stock anterior al movimiento
+    /// </summary>
+    public decimal StockAnterior { get; set; }
+
+    /// <summary>
+    /// Stock después del movimiento
+    /// </summary>
+    public decimal StockPosterior { get; set; }
+
+    /// <summary>
+    /// Comentarios adicionales
+    /// </summary>
+    public string? Comentarios { get; set; }
+
+    /// <summary>
+    /// ID del documento relacionado (factura, orden de compra, etc.)
+    /// </summary>
+    public Guid? DocumentoRelacionadoId { get; set; }
+
+    /// <summary>
+    /// Tipo de documento relacionado
+    /// </summary>
+    public string? TipoDocumentoRelacionado { get; set; }
 } 

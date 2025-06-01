@@ -221,23 +221,23 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
         return Result.Success();
     }
 
-    private async Task<Result> ValidarLimiteTipoTarjeta(Cliente cliente, TipoTarjetaFidelizacion tipoTarjeta, CancellationToken cancellationToken)
+    private async Task<Result> ValidarLimiteTipoTarjeta(Cliente cliente, NivelFidelizacion nivelFidelizacion, CancellationToken cancellationToken)
     {
         var tarjetasExistentes = await _tarjetaRepository.GetByClienteIdAsync(cliente.Id, cancellationToken);
         var tarjetasActivas = tarjetasExistentes.Where(t => t.EstaActiva()).ToList();
 
-        return tipoTarjeta switch
+        return nivelFidelizacion switch
         {
-            TipoTarjetaFidelizacion.Estandar => tarjetasActivas.Count >= 3 
-                ? Result.Failure("El cliente no puede tener más de 3 tarjetas estándar activas") 
+            NivelFidelizacion.Bronce => tarjetasActivas.Count >= 3 
+                ? Result.Failure("El cliente no puede tener más de 3 tarjetas Bronce activas") 
                 : Result.Success(),
             
-            TipoTarjetaFidelizacion.Premium => tarjetasActivas.Any(t => t.TipoTarjeta == TipoTarjetaFidelizacion.Premium) 
-                ? Result.Failure("El cliente ya tiene una tarjeta Premium") 
+            NivelFidelizacion.Plata => tarjetasActivas.Any(t => t.NivelFidelizacion == NivelFidelizacion.Plata) 
+                ? Result.Failure("El cliente ya tiene una tarjeta Plata") 
                 : Result.Success(),
             
-            TipoTarjetaFidelizacion.Vip => tarjetasActivas.Any(t => t.TipoTarjeta == TipoTarjetaFidelizacion.Vip) 
-                ? Result.Failure("El cliente ya tiene una tarjeta VIP") 
+            NivelFidelizacion.Oro => tarjetasActivas.Any(t => t.NivelFidelizacion == NivelFidelizacion.Oro) 
+                ? Result.Failure("El cliente ya tiene una tarjeta Oro") 
                 : Result.Success(),
             
             _ => Result.Success()
@@ -284,12 +284,10 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
         
         var fechaVencimiento = request.FechaVencimiento ?? request.TipoTarjeta switch
         {
-            TipoTarjetaFidelizacion.Estandar => fechaActivacion.AddYears(2),
-            TipoTarjetaFidelizacion.Premium => fechaActivacion.AddYears(3),
-            TipoTarjetaFidelizacion.Vip => fechaActivacion.AddYears(5),
-            TipoTarjetaFidelizacion.Corporativa => fechaActivacion.AddYears(3),
-            TipoTarjetaFidelizacion.Empleado => fechaActivacion.AddYears(1),
-            TipoTarjetaFidelizacion.Promocional => fechaActivacion.AddMonths(6),
+            NivelFidelizacion.Bronce => fechaActivacion.AddYears(2),
+            NivelFidelizacion.Plata => fechaActivacion.AddYears(3),
+            NivelFidelizacion.Oro => fechaActivacion.AddYears(5),
+            NivelFidelizacion.Diamante => fechaActivacion.AddYears(3),
             _ => fechaActivacion.AddYears(2)
         };
 

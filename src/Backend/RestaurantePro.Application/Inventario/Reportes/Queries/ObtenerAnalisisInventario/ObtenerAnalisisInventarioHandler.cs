@@ -10,7 +10,7 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
     private readonly IMapper _mapper;
     private readonly ILogger<ObtenerAnalisisInventarioHandler> _logger;
     private readonly IDateTimeService _dateTimeService;
-    private readonly IInventarioService _inventarioService;
+    private readonly IInventarioServiceFacade _inventarioService;
     private readonly ICurrentUserService _currentUserService;
 
     public ObtenerAnalisisInventarioHandler(
@@ -18,7 +18,7 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
         IMapper mapper,
         ILogger<ObtenerAnalisisInventarioHandler> logger,
         IDateTimeService dateTimeService,
-        IInventarioService inventarioService,
+        IInventarioServiceFacade inventarioService,
         ICurrentUserService currentUserService)
     {
         _context = context;
@@ -160,8 +160,8 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
             .Sum(i => i.StockActual * i.CostoUnitario);
 
         // Análisis de movimientos
-        var movimientosEntrada = datos.Movimientos.Where(m => m.TipoMovimiento == TipoMovimientoStock.Entrada);
-        var movimientosSalida = datos.Movimientos.Where(m => m.TipoMovimiento == TipoMovimientoStock.Salida);
+        var movimientosEntrada = datos.Movimientos.Where(m => m.TipoMovimiento == RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Ingreso);
+        var movimientosSalida = datos.Movimientos.Where(m => m.TipoMovimiento == RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Egreso);
 
         metricas.TotalMovimientos = datos.Movimientos.Count;
         metricas.MovimientosEntrada = movimientosEntrada.Count();
@@ -348,11 +348,11 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
 
         // Tendencia de consumo
         var consumoAnterior = movimientosPeriodoComparacion
-            .Where(m => m.TipoMovimiento == TipoMovimientoStock.Salida)
+            .Where(m => m.TipoMovimiento == RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Egreso)
             .Sum(m => m.Cantidad);
 
         var consumoActual = movimientosPeriodoActual
-            .Where(m => m.TipoMovimiento == TipoMovimientoStock.Salida)
+            .Where(m => m.TipoMovimiento == RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Egreso)
             .Sum(m => m.Cantidad);
 
         tendencias.TendenciaConsumo = consumoAnterior > 0 ? 

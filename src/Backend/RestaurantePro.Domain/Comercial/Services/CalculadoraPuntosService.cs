@@ -30,23 +30,23 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
         try
         {
             if (montoCompra <= 0)
-                return Result<CalculoResultadoPuntos>.Failure("El monto de compra debe ser mayor a cero");
+                return Result.Failure<CalculoResultadoPuntos>("El monto de compra debe ser mayor que cero");
 
             var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken);
             if (tarjeta == null)
-                return Result<CalculoResultadoPuntos>.Failure("Tarjeta de fidelización no encontrada");
+                return Result.Failure<CalculoResultadoPuntos>("Tarjeta de fidelización no encontrada");
 
-            if (!tarjeta.Activa)
-                return Result<CalculoResultadoPuntos>.Failure("La tarjeta de fidelización está inactiva");
+            if (tarjeta.Estado != EstadoTarjeta.Activa)
+                return Result.Failure<CalculoResultadoPuntos>("La tarjeta de fidelización está inactiva");
 
             // Obtener tasa de conversión según el nivel de la tarjeta
-            var tasaConversion = ObtenerTasaConversionPorNivel(tarjeta.Nivel);
+            var tasaConversion = ObtenerTasaConversionPorNivel(tarjeta.NivelFidelizacion);
             
             // Calcular puntos base
             var puntosBase = (int)Math.Floor(montoCompra * tasaConversion);
             
             // Calcular bonificación por nivel
-            var bonificacion = CalcularBonificacionPorNivel(tarjeta.Nivel, puntosBase);
+            var bonificacion = CalcularBonificacionPorNivel(tarjeta.NivelFidelizacion, puntosBase);
             
             var detalleCalculo = $"Monto: ${montoCompra:F2} x Tasa: {tasaConversion:F4} = {puntosBase} puntos base + {bonificacion} bonificación";
 
@@ -55,12 +55,12 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
             _logger.LogInformation("Puntos calculados para tarjeta {TarjetaId}: {TotalPuntos} puntos", 
                 tarjetaId, resultado.TotalPuntos);
 
-            return Result<CalculoResultadoPuntos>.Success(resultado);
+            return Result.Success(resultado);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calculando puntos para tarjeta {TarjetaId}", tarjetaId);
-            return Result<CalculoResultadoPuntos>.Failure($"Error calculando puntos: {ex.Message}");
+            return Result.Failure<CalculoResultadoPuntos>($"Error calculando puntos: {ex.Message}");
         }
     }
 
@@ -77,7 +77,7 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
         {
             var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken);
             if (tarjeta == null)
-                return Result<CalculoResultadoPuntos>.Failure("Tarjeta de fidelización no encontrada");
+                return Result.Failure<CalculoResultadoPuntos>("Tarjeta de fidelización no encontrada");
 
             // TODO: Implementar lógica específica de promociones
             // Por ahora retornamos puntos fijos como ejemplo
@@ -86,13 +86,13 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
 
             var resultado = new CalculoResultadoPuntos(puntosPromocion, 0, 0, detalleCalculo);
 
-            return Result<CalculoResultadoPuntos>.Success(resultado);
+            return Result.Success(resultado);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calculando puntos por promoción {PromocionId} para tarjeta {TarjetaId}", 
                 promocionId, tarjetaId);
-            return Result<CalculoResultadoPuntos>.Failure($"Error calculando puntos por promoción: {ex.Message}");
+            return Result.Failure<CalculoResultadoPuntos>($"Error calculando puntos por promoción: {ex.Message}");
         }
     }
 
@@ -107,22 +107,22 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
         try
         {
             if (puntos <= 0)
-                return Result<decimal>.Failure("La cantidad de puntos debe ser mayor a cero");
+                return Result.Failure<decimal>("La cantidad de puntos debe ser mayor a cero");
 
             var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken);
             if (tarjeta == null)
-                return Result<decimal>.Failure("Tarjeta de fidelización no encontrada");
+                return Result.Failure<decimal>("Tarjeta de fidelización no encontrada");
 
             // Valor por punto según el nivel (ejemplo: 1 punto = $0.50 para nivel básico)
-            var valorPorPunto = ObtenerValorPorPuntoPorNivel(tarjeta.Nivel);
+            var valorPorPunto = ObtenerValorPorPuntoPorNivel(tarjeta.NivelFidelizacion);
             var valorTotal = puntos * valorPorPunto;
 
-            return Result<decimal>.Success(valorTotal);
+            return Result.Success(valorTotal);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calculando valor de puntos para tarjeta {TarjetaId}", tarjetaId);
-            return Result<decimal>.Failure($"Error calculando valor de puntos: {ex.Message}");
+            return Result.Failure<decimal>($"Error calculando valor de puntos: {ex.Message}");
         }
     }
 
@@ -137,15 +137,15 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
         {
             var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken);
             if (tarjeta == null)
-                return Result<decimal>.Failure("Tarjeta de fidelización no encontrada");
+                return Result.Failure<decimal>("Tarjeta de fidelización no encontrada");
 
-            var tasa = ObtenerTasaConversionPorNivel(tarjeta.Nivel);
-            return Result<decimal>.Success(tasa);
+            var tasa = ObtenerTasaConversionPorNivel(tarjeta.NivelFidelizacion);
+            return Result.Success(tasa);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error obteniendo tasa de conversión para tarjeta {TarjetaId}", tarjetaId);
-            return Result<decimal>.Failure($"Error obteniendo tasa de conversión: {ex.Message}");
+            return Result.Failure<decimal>($"Error obteniendo tasa de conversión: {ex.Message}");
         }
     }
 
@@ -160,26 +160,26 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
         try
         {
             if (puntos <= 0)
-                return Result<bool>.Failure("La cantidad de puntos debe ser mayor a cero");
+                return Result.Failure<bool>("La cantidad de puntos debe ser mayor a cero");
 
             var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken);
             if (tarjeta == null)
-                return Result<bool>.Failure("Tarjeta de fidelización no encontrada");
+                return Result.Failure<bool>("Tarjeta de fidelización no encontrada");
 
-            if (!tarjeta.Activa)
-                return Result<bool>.Failure("La tarjeta está inactiva");
+            if (tarjeta.Estado != EstadoTarjeta.Activa)
+                return Result.Failure<bool>("La tarjeta está inactiva");
 
             var puedeCanear = tarjeta.PuntosDisponibles >= puntos;
             
             if (!puedeCanear)
-                return Result<bool>.Failure($"Puntos insuficientes. Disponibles: {tarjeta.PuntosDisponibles}, Requeridos: {puntos}");
+                return Result.Failure<bool>($"Puntos insuficientes. Disponibles: {tarjeta.PuntosDisponibles}, Requeridos: {puntos}");
 
-            return Result<bool>.Success(true);
+            return Result.Success(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validando canje de puntos para tarjeta {TarjetaId}", tarjetaId);
-            return Result<bool>.Failure($"Error validando canje: {ex.Message}");
+            return Result.Failure<bool>($"Error validando canje: {ex.Message}");
         }
     }
 
@@ -195,15 +195,15 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
         {
             var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken);
             if (tarjeta == null)
-                return Result<int>.Failure("Tarjeta de fidelización no encontrada");
+                return Result.Failure<int>("Tarjeta de fidelización no encontrada");
 
-            var bonificacion = CalcularBonificacionPorNivel(tarjeta.Nivel, puntosBase);
-            return Result<int>.Success(bonificacion);
+            var bonificacion = CalcularBonificacionPorNivel(tarjeta.NivelFidelizacion, puntosBase);
+            return Result.Success(bonificacion);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calculando bonificación para tarjeta {TarjetaId}", tarjetaId);
-            return Result<int>.Failure($"Error calculando bonificación: {ex.Message}");
+            return Result.Failure<int>($"Error calculando bonificación: {ex.Message}");
         }
     }
 
@@ -216,7 +216,7 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
     {
         return nivel switch
         {
-            NivelFidelizacion.Bronce => 0.01m,   // 1 punto por cada $100
+            NivelFidelizacion.Basico => 0.01m,   // 1 punto por cada $100
             NivelFidelizacion.Plata => 0.015m,   // 1.5 puntos por cada $100
             NivelFidelizacion.Oro => 0.02m,      // 2 puntos por cada $100
             NivelFidelizacion.Platino => 0.025m, // 2.5 puntos por cada $100
@@ -231,7 +231,7 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
     {
         var porcentajeBonificacion = nivel switch
         {
-            NivelFidelizacion.Bronce => 0.0m,   // Sin bonificación
+            NivelFidelizacion.Basico => 0.0m,   // Sin bonificación
             NivelFidelizacion.Plata => 0.05m,   // 5% extra
             NivelFidelizacion.Oro => 0.10m,     // 10% extra
             NivelFidelizacion.Platino => 0.15m, // 15% extra
@@ -248,7 +248,7 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
     {
         return nivel switch
         {
-            NivelFidelizacion.Bronce => 0.50m,   // $0.50 por punto
+            NivelFidelizacion.Basico => 0.50m,   // $0.50 por punto
             NivelFidelizacion.Plata => 0.60m,    // $0.60 por punto
             NivelFidelizacion.Oro => 0.70m,      // $0.70 por punto
             NivelFidelizacion.Platino => 0.80m,  // $0.80 por punto

@@ -109,19 +109,4 @@ namespace RestaurantePro.Application.Comercial.Fidelizacion.DTOs
         public decimal? ValorDescuento { get; set; }
         public bool Activo { get; set; }
     }
-
-    /// <summary>
-    /// DTO para representar una transacción de puntos
-    /// </summary>
-    public class TransaccionPuntosDto
-    {
-        public Guid Id { get; set; }
-        public TipoMovimientoPuntos TipoTransaccion { get; set; }
-        public int Puntos { get; set; }
-        public string Concepto { get; set; } = string.Empty;
-        public DateTime Fecha { get; set; }
-        public Guid? FacturaId { get; set; }
-        public string? NumeroFactura { get; set; }
-        public EstadoTransaccionPuntos Estado { get; set; }
-    }
 } 

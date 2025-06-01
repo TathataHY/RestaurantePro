@@ -223,10 +223,10 @@ public class CalculadoraPromocionesServiceTests
     #region CalcularAhorroEstimadoAsync Tests
 
     [Theory]
-    [InlineData(TipoPromocion.PorcentajeDescuento, 10, 100.00, 10.00)]
-    [InlineData(TipoPromocion.PorcentajeDescuento, 25, 200.00, 50.00)]
-    [InlineData(TipoPromocion.MontoDescuento, 15, 100.00, 15.00)]
-    [InlineData(TipoPromocion.MontoDescuento, 50, 30.00, 30.00)] // No puede ser mayor al total
+    [InlineData(TipoPromocion.PorcentajeTotal, 10, 100.00, 10.00)]
+    [InlineData(TipoPromocion.PorcentajeTotal, 25, 200.00, 50.00)]
+    [InlineData(TipoPromocion.MontoFijoTotal, 15, 100.00, 15.00)]
+    [InlineData(TipoPromocion.MontoFijoTotal, 50, 30.00, 30.00)] // No puede ser mayor al total
     public async Task CalcularAhorroEstimadoAsync_ConDiferentesTipos_DeberiaCalcularCorrectamente(
         TipoPromocion tipo, decimal valor, decimal montoCompra, decimal ahorroEsperado)
     {
@@ -447,4 +447,35 @@ public class CalculadoraPromocionesServiceTests
     }
 
     #endregion
+}
+
+/// <summary>
+/// DTO para test de productos en compra
+/// </summary>
+public class ProductoCompraDto
+{
+    public Guid ProductoId { get; set; }
+    public int Cantidad { get; set; }
+    public decimal PrecioUnitario { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// DTO para test de reglas de combo
+/// </summary>
+public class ReglaComboDto
+{
+    public string[] CategoriasRequeridas { get; set; } = Array.Empty<string>();
+    public decimal? DescuentoPorcentaje { get; set; }
+    public decimal? PrecioFijo { get; set; }
+}
+
+/// <summary>
+/// DTO para test de historial de compras
+/// </summary>
+public class HistorialCompraDto
+{
+    public Guid ProductoId { get; set; }
+    public int Cantidad { get; set; }
+    public decimal MontoTotal { get; set; }
 } 

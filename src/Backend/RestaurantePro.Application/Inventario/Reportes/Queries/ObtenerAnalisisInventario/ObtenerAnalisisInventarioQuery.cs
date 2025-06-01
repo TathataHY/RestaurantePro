@@ -396,7 +396,7 @@ public class MovimientoInventarioDetalle
 {
     public Guid MovimientoId { get; set; }
     public DateTime FechaMovimiento { get; set; }
-    public TipoMovimientoInventario TipoMovimiento { get; set; }
+    public RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario TipoMovimiento { get; set; }
     public Guid IngredienteId { get; set; }
     public string NombreIngrediente { get; set; } = string.Empty;
     public decimal Cantidad { get; set; }
@@ -460,16 +460,4 @@ public enum TipoAlertaInventario
     CostoElevado = 6,
     ConsumoAnormal = 7,
     DesviacionPrediccion = 8
-}
-
-/// <summary>
-/// 🔄 Tipos de movimiento de inventario
-/// </summary>
-public enum TipoMovimientoInventario
-{
-    Entrada = 1,
-    Salida = 2,
-    Ajuste = 3,
-    Transferencia = 4,
-    Desperdicios = 5
 } 

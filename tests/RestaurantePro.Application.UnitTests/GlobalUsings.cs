@@ -170,6 +170,12 @@ global using RestaurantePro.Application.Comercial.Fidelizacion.Commands.CrearTar
 global using RestaurantePro.Application.Comercial.Reportes.Queries.ObtenerAnalisisFidelizacion;
 global using RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos;
 
+// Application - Fidelización DTOs
+global using RestaurantePro.Application.Comercial.Fidelizacion.DTOs;
+
+// Application - Promociones DTOs
+global using RestaurantePro.Application.Comercial.Promociones.DTOs;
+
 // Domain - Inventario
 global using RestaurantePro.Domain.Inventario.Services;
 global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
@@ -196,4 +202,17 @@ global using RestaurantePro.Domain.Core.SharedKernel.Enums;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
 
 // Application - ICommunicationService
-global using RestaurantePro.Application.Common.Interfaces; 
+global using RestaurantePro.Application.Common.Interfaces;
+
+// Interfaces y servicios del dominio que faltan
+global using RestaurantePro.Domain.Comercial.Services.IServicioFidelizacion;
+global using RestaurantePro.Domain.Comercial.Promociones.Services.ICalculadoraPromocionesService;
+global using RestaurantePro.Domain.Inventario.Services.IInventarioServiceFacade;
+
+// Nuevas clases DTOs de inventario
+global using RestaurantePro.Application.Inventario.Reportes.DTOs.RecomendacionInventario;
+global using RestaurantePro.Application.Inventario.Reportes.DTOs.MovimientoStock;
+
+// Domain - Builders y Services que faltan
+global using RestaurantePro.Domain.Comercial.Clientes.Builders;
+global using RestaurantePro.Domain.Comercial.Promociones.Services;

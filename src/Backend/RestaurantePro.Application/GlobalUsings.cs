@@ -12,7 +12,7 @@ global using System.Text.RegularExpressions;
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
-// global using Microsoft.Extensions.Configuration; // TODO: Agregar PackageReference para Microsoft.Extensions.Configuration
+global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.Options;
 global using Microsoft.Extensions.Caching.Memory;
 global using Microsoft.EntityFrameworkCore;
@@ -58,6 +58,7 @@ global using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
 global using RestaurantePro.Domain.Core.Notificaciones.Services;
 
 // Domain - Comercial
+global using RestaurantePro.Domain.Comercial.Clientes.Builders;
 global using RestaurantePro.Domain.Comercial.Clientes.Entities;
 global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 global using RestaurantePro.Domain.Comercial.Clientes.Enums;

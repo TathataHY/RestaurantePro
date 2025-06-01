@@ -11,7 +11,7 @@ public class AcumularPuntosHandler : IRequestHandler<AcumularPuntosCommand, Resu
     private readonly ITransaccionPuntosRepository _transaccionRepository;
     private readonly IPromocionRepository _promocionRepository;
     private readonly ICalculadoraPuntosService _calculadoraPuntos;
-    private readonly IServicioFidelizacionService _servicioFidelizacion;
+    private readonly IServicioFidelizacion _servicioFidelizacion;
     private readonly IMapper _mapper;
     private readonly ILogger<AcumularPuntosHandler> _logger;
     private readonly ICurrentUserService _currentUser;
@@ -22,7 +22,7 @@ public class AcumularPuntosHandler : IRequestHandler<AcumularPuntosCommand, Resu
         ITransaccionPuntosRepository transaccionRepository,
         IPromocionRepository promocionRepository,
         ICalculadoraPuntosService calculadoraPuntos,
-        IServicioFidelizacionService servicioFidelizacion,
+        IServicioFidelizacion servicioFidelizacion,
         IMapper mapper,
         ILogger<AcumularPuntosHandler> logger,
         ICurrentUserService currentUser)

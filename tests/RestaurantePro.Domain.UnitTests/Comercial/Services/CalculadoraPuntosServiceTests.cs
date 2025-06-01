@@ -111,7 +111,7 @@ public class CalculadoraPuntosServiceTests
         var tarjetaId = Guid.NewGuid();
         var tarjeta = TarjetaFidelizacionBuilder.Crear()
             .ConId(tarjetaId)
-            .ConNivel(NivelFidelizacion.Bronce)
+            .ConNivel(NivelFidelizacion.Basico)
             .ConEstadoInactivo()
             .Build();
 
@@ -188,7 +188,7 @@ public class CalculadoraPuntosServiceTests
     #region ObtenerTasaConversionAsync Tests
 
     [Theory]
-    [InlineData(NivelFidelizacion.Bronce, 0.01)]
+    [InlineData(NivelFidelizacion.Basico, 0.01)]
     [InlineData(NivelFidelizacion.Plata, 0.015)]
     [InlineData(NivelFidelizacion.Oro, 0.02)]
     [InlineData(NivelFidelizacion.Platino, 0.025)]
@@ -220,7 +220,7 @@ public class CalculadoraPuntosServiceTests
     #region CalcularValorPuntosAsync Tests
 
     [Theory]
-    [InlineData(NivelFidelizacion.Bronce, 100, 50.0)] // 100 * $0.50
+    [InlineData(NivelFidelizacion.Basico, 100, 50.0)] // 100 * $0.50
     [InlineData(NivelFidelizacion.Plata, 100, 60.0)]  // 100 * $0.60
     [InlineData(NivelFidelizacion.Oro, 100, 70.0)]    // 100 * $0.70
     [InlineData(NivelFidelizacion.Platino, 100, 80.0)] // 100 * $0.80
@@ -252,7 +252,7 @@ public class CalculadoraPuntosServiceTests
     #region CalcularBonificacionPorNivelAsync Tests
 
     [Theory]
-    [InlineData(NivelFidelizacion.Bronce, 100, 0)]   // Sin bonificación
+    [InlineData(NivelFidelizacion.Basico, 100, 0)]   // Sin bonificación
     [InlineData(NivelFidelizacion.Plata, 100, 5)]   // 5% = 5 puntos
     [InlineData(NivelFidelizacion.Oro, 100, 10)]    // 10% = 10 puntos
     [InlineData(NivelFidelizacion.Platino, 100, 15)] // 15% = 15 puntos

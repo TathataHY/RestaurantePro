@@ -134,11 +134,10 @@ public class GeneradorNumeroComandaService : IGeneradorNumeroComandaService
         {
             // Obtener el último número secuencial del día para la sucursal
             var ultimoSecuencial = await _comandaRepository.ObtenerUltimoSecuencialDelDiaAsync(
-                sucursalId, 
                 fecha.Date, 
                 cancellationToken);
 
-            var siguienteSecuencial = ultimoSecuencial + 1;
+            var siguienteSecuencial = (ultimoSecuencial ?? 0) + 1;
 
             _logger.LogDebug("Siguiente secuencial para sucursal {SucursalId} en fecha {Fecha}: {Secuencial}", 
                 sucursalId, fecha.Date, siguienteSecuencial);

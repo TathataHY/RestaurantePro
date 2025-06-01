@@ -220,7 +220,7 @@ public class ObtenerAnalisisFidelizacionValidatorTests
     }
 
     [Theory]
-    [InlineData(NivelFidelizacion.Bronce)]
+    [InlineData(NivelFidelizacion.Basico)]
     [InlineData(NivelFidelizacion.Plata)]
     [InlineData(NivelFidelizacion.Oro)]
     [InlineData(NivelFidelizacion.Platino)]

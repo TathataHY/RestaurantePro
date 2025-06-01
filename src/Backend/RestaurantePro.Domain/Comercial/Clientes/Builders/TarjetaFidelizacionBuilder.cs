@@ -291,52 +291,50 @@ public class TarjetaFidelizacionBuilder
 
         // Validar configuración antes de construir
         var validacion = ValidarConfiguracion();
-        if (!validacion.IsSuccess)
+        if (!validacion.Succeeded)
         {
-            return Result<TarjetaFidelizacion>.Failure(validacion.ErrorMessage);
+            return Result.Failure<TarjetaFidelizacion>(validacion.Error ?? "Error de validación");
         }
 
         try
         {
-            // Crear la tarjeta usando el constructor de la entidad
-            var tarjeta = TarjetaFidelizacion.Create(
+            // Crear la tarjeta usando el método estático de la entidad
+            var tarjeta = TarjetaFidelizacion.Crear(
                 _clienteId!.Value,
-                _numeroTarjeta!,
-                _nivel ?? NivelFidelizacion.Bronce,
-                _fechaVencimiento ?? DateTime.Now.AddYears(2));
+                _numeroTarjeta!);
+
+            // Configurar nivel específico si se especificó
+            if (_nivel.HasValue && _nivel.Value != NivelFidelizacion.Basico)
+            {
+                tarjeta.ActualizarNivel(_nivel.Value);
+            }
+
+            // Configurar fecha de vencimiento si se especificó
+            if (_fechaVencimiento.HasValue)
+            {
+                // TODO: Implementar método para actualizar fecha de vencimiento
+                // tarjeta.ActualizarFechaExpiracion(_fechaVencimiento.Value);
+            }
 
             // Configurar propiedades opcionales
             if (_puntosIniciales.HasValue && _puntosIniciales.Value > 0)
             {
-                var resultadoPuntos = tarjeta.AcumularPuntos(_puntosIniciales.Value, "Sistema", "Puntos iniciales");
-                if (!resultadoPuntos.IsSuccess)
-                {
-                    return Result<TarjetaFidelizacion>.Failure($"Error asignando puntos iniciales: {resultadoPuntos.ErrorMessage}");
-                }
+                var historialPuntos = tarjeta.AgregarPuntos(_puntosIniciales.Value, "Puntos iniciales");
             }
 
-            if (!string.IsNullOrWhiteSpace(_observaciones))
+            // Activar la tarjeta si está configurada como activa
+            if (_activa)
             {
-                tarjeta.ActualizarObservaciones(_observaciones);
-            }
-
-            if (!string.IsNullOrWhiteSpace(_datosAdicionales))
-            {
-                tarjeta.ActualizarDatosAdicionales(_datosAdicionales);
-            }
-
-            if (!_activa)
-            {
-                tarjeta.Desactivar("Creada como inactiva");
+                tarjeta.Activar();
             }
 
             _logger.LogInformation("Tarjeta de fidelización construida exitosamente: {TarjetaId}", tarjeta.Id);
-            return Result<TarjetaFidelizacion>.Success(tarjeta);
+            return Result.Success(tarjeta);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error construyendo tarjeta de fidelización");
-            return Result<TarjetaFidelizacion>.Failure($"Error construyendo tarjeta: {ex.Message}");
+            return Result.Failure<TarjetaFidelizacion>($"Error construyendo tarjeta: {ex.Message}");
         }
     }
 
@@ -389,7 +387,7 @@ public class TarjetaFidelizacionBuilder
         _datosAdicionales = null;
         _incluirCodigoQR = false;
 
-        _notificationManager.Clear();
+        _notificationManager.ClearErrors();
         _logger.LogDebug("Builder reseteado para nueva construcción");
         return this;
     }

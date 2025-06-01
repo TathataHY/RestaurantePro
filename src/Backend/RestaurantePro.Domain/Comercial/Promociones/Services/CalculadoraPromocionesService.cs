@@ -95,12 +95,12 @@ public class CalculadoraPromocionesService : ICalculadoraPromocionesService
         try
         {
             if (parametros == null)
-                return Result<ResultadoAplicacionPromocion>.Failure("Los parámetros de compra son requeridos");
+                return Result.Failure<ResultadoAplicacionPromocion>("Los parámetros de compra son requeridos");
 
             // Validar aplicabilidad
             var esAplicable = await ValidarAplicabilidadAsync(promocionId, parametros, cancellationToken);
-            if (!esAplicable.IsSuccess || !esAplicable.Value)
-                return Result<ResultadoAplicacionPromocion>.Failure("La promoción no es aplicable a esta compra");
+            if (!esAplicable.Succeeded || !esAplicable.Value)
+                return Result.Failure<ResultadoAplicacionPromocion>("La promoción no es aplicable a esta compra");
 
             // TODO: Obtener promoción desde repositorio
             // Por ahora simulamos la aplicación
@@ -124,12 +124,12 @@ public class CalculadoraPromocionesService : ICalculadoraPromocionesService
             _logger.LogInformation("Promoción {PromocionId} aplicada exitosamente. Descuento: ${Descuento:F2}", 
                 promocionId, descuentoAplicado);
 
-            return Result<ResultadoAplicacionPromocion>.Success(resultado);
+            return Result.Success(resultado);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error aplicando promoción {PromocionId}", promocionId);
-            return Result<ResultadoAplicacionPromocion>.Failure($"Error aplicando promoción: {ex.Message}");
+            return Result.Failure<ResultadoAplicacionPromocion>($"Error aplicando promoción: {ex.Message}");
         }
     }
 
@@ -144,14 +144,14 @@ public class CalculadoraPromocionesService : ICalculadoraPromocionesService
         try
         {
             if (parametros == null)
-                return Result<bool>.Failure("Los parámetros de compra son requeridos");
+                return Result.Failure<bool>("Los parámetros de compra son requeridos");
 
             // Validaciones básicas
             if (parametros.MontoTotal <= 0)
-                return Result<bool>.Failure("El monto total debe ser mayor a cero");
+                return Result.Failure<bool>("El monto total debe ser mayor a cero");
 
             if (!parametros.Items.Any())
-                return Result<bool>.Failure("La compra debe tener al menos un item");
+                return Result.Failure<bool>("La compra debe tener al menos un item");
 
             // TODO: Implementar validaciones específicas de promoción
             // Por ahora retornamos true para promociones válidas
@@ -159,17 +159,17 @@ public class CalculadoraPromocionesService : ICalculadoraPromocionesService
             // Validar monto mínimo (ejemplo)
             var montoMinimo = 50m; // Esto debería venir de la configuración de la promoción
             if (parametros.MontoTotal < montoMinimo)
-                return Result<bool>.Failure($"El monto mínimo requerido es ${montoMinimo:F2}");
+                return Result.Failure<bool>($"El monto mínimo requerido es ${montoMinimo:F2}");
 
             _logger.LogDebug("Promoción {PromocionId} es aplicable para monto ${Monto:F2}", 
                 promocionId, parametros.MontoTotal);
 
-            return Result<bool>.Success(true);
+            return Result.Success(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validando aplicabilidad de promoción {PromocionId}", promocionId);
-            return Result<bool>.Failure($"Error validando promoción: {ex.Message}");
+            return Result.Failure<bool>($"Error validando promoción: {ex.Message}");
         }
     }
 
@@ -185,7 +185,7 @@ public class CalculadoraPromocionesService : ICalculadoraPromocionesService
             var promocionesAplicables = await CalcularPromocionesAplicablesAsync(parametros, cancellationToken);
             
             if (!promocionesAplicables.Any())
-                return Result<ComboPromociones>.Failure("No hay promociones aplicables");
+                return Result.Failure<ComboPromociones>("No hay promociones aplicables");
 
             // Algoritmo simple: seleccionar promociones compatibles con mayor ahorro
             var mejorCombo = await CalcularMejorComboSimple(promocionesAplicables, parametros, cancellationToken);
@@ -193,12 +193,12 @@ public class CalculadoraPromocionesService : ICalculadoraPromocionesService
             _logger.LogInformation("Mejor combo calculado con {Cantidad} promociones y ahorro total de ${Ahorro:F2}", 
                 mejorCombo.Promociones.Count, mejorCombo.AhorroTotal);
 
-            return Result<ComboPromociones>.Success(mejorCombo);
+            return Result.Success(mejorCombo);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calculando mejor combo de promociones");
-            return Result<ComboPromociones>.Failure($"Error calculando combo: {ex.Message}");
+            return Result.Failure<ComboPromociones>($"Error calculando combo: {ex.Message}");
         }
     }
 
@@ -228,10 +228,10 @@ public class CalculadoraPromocionesService : ICalculadoraPromocionesService
                 Codigo = promocion.Codigo ?? $"PROMO-{promocion.Id.ToString()[..8].ToUpper()}",
                 Nombre = promocion.Nombre,
                 Descripcion = promocion.Descripcion ?? string.Empty,
-                Tipo = promocion.TipoPromocion?.ToString() ?? "General",
-                DescuentoPesos = promocion.TipoPromocion == TipoPromocion.DescuentoPesos ? promocion.ValorDescuento : 0,
-                DescuentoPorcentaje = promocion.TipoPromocion == TipoPromocion.DescuentoPorcentaje ? promocion.ValorDescuento : 0,
-                PuntosOtorgados = promocion.TipoPromocion == TipoPromocion.PuntosExtra ? (int)promocion.ValorDescuento : 0,
+                Tipo = promocion.Tipo.ToString(),
+                DescuentoPesos = promocion.Tipo == TipoPromocion.MontoFijoTotal ? promocion.ValorDescuento : 0,
+                DescuentoPorcentaje = promocion.Tipo == TipoPromocion.PorcentajeTotal ? promocion.ValorDescuento : 0,
+                PuntosOtorgados = promocion.Tipo == TipoPromocion.CanjePuntos ? (int)promocion.ValorDescuento : 0,
                 Prioridad = promocion.Prioridad,
                 Condiciones = promocion.Condiciones ?? string.Empty,
                 FechaVencimiento = promocion.FechaFin,
@@ -250,11 +250,11 @@ public class CalculadoraPromocionesService : ICalculadoraPromocionesService
     /// </summary>
     private decimal CalcularAhorroEstimado(Promocion promocion, decimal montoTotal)
     {
-        return promocion.TipoPromocion switch
+        return promocion.Tipo switch
         {
-            TipoPromocion.DescuentoPesos => Math.Min(promocion.ValorDescuento, montoTotal),
-            TipoPromocion.DescuentoPorcentaje => montoTotal * (promocion.ValorDescuento / 100),
-            TipoPromocion.PuntosExtra => promocion.ValorDescuento * 0.5m, // Valor estimado de puntos
+            TipoPromocion.MontoFijoTotal => Math.Min(promocion.ValorDescuento, montoTotal),
+            TipoPromocion.PorcentajeTotal => montoTotal * (promocion.ValorDescuento / 100),
+            TipoPromocion.CanjePuntos => promocion.ValorDescuento * 0.5m, // Valor estimado de puntos
             _ => 0m
         };
     }

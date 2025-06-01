@@ -264,15 +264,11 @@ global using System.Reflection;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 
-// MediatR
-global using MediatR;
-
 // Domain - Core SharedKernel
 global using RestaurantePro.Domain.Core.SharedKernel.Results;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Validation;
 global using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
-global using RestaurantePro.Domain.Core.SharedKernel.Enums;
 
 // Domain - Core Notificaciones
 global using RestaurantePro.Domain.Core.Notificaciones.Services;
@@ -334,4 +330,8 @@ global using RestaurantePro.Domain.Comercial.Facturacion.Entities;
 global using RestaurantePro.Domain.Comercial.Facturacion.Enums;
 global using RestaurantePro.Domain.Comercial.Facturacion.Services;
 global using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+
+// Domain - Operaciones - Comandas - Enums específicos  
+global using static RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda;
+global using static RestaurantePro.Domain.Operaciones.Comandas.Enums.CanalOrden;
 

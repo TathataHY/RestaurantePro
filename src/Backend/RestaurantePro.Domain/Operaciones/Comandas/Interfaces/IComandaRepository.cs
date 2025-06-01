@@ -109,5 +109,21 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de comandas abiertas</returns>
         Task<IEnumerable<Comanda>> ObtenerComandasAbiertas(bool incluirItems = false, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Verifica si existe una comanda con el número especificado
+        /// </summary>
+        /// <param name="numeroComanda">Número de comanda a verificar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>True si existe, false en caso contrario</returns>
+        Task<bool> ExisteNumeroComandaAsync(string numeroComanda, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene el último secuencial usado en el día especificado
+        /// </summary>
+        /// <param name="fecha">Fecha para buscar el último secuencial</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Último secuencial usado o null si no hay comandas en esa fecha</returns>
+        Task<int?> ObtenerUltimoSecuencialDelDiaAsync(DateTime fecha, CancellationToken cancellationToken = default);
     }
 }

@@ -587,7 +587,7 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
     {
         public List<Cliente> Clientes { get; set; } = new();
         public List<Factura> Facturas { get; set; } = new();
-        public List<MovimientoPuntos> MovimientosPuntos { get; set; } = new();
+        public List<MovimientoPuntosDto> MovimientosPuntos { get; set; } = new();
         public List<Reservacion> Reservaciones { get; set; } = new();
         public DateTime FechaInicio { get; set; }
         public DateTime FechaFin { get; set; }

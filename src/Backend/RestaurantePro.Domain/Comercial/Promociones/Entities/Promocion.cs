@@ -77,6 +77,16 @@ namespace RestaurantePro.Domain.Comercial.Promociones.Entities
         public int? DiasValidos { get; private set; }
 
         /// <summary>
+        /// Prioridad de la promoción (menor número = mayor prioridad)
+        /// </summary>
+        public int Prioridad { get; private set; } = 0;
+
+        /// <summary>
+        /// Condiciones específicas de la promoción
+        /// </summary>
+        public string Condiciones { get; private set; } = string.Empty;
+
+        /// <summary>
         /// IDs de los productos a los que aplica la promoción
         /// </summary>
         private readonly List<Guid> _productosAplicablesIds = new();

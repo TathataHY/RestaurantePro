@@ -19,7 +19,7 @@ public class GeneradorNumeroTarjetaServiceTests
     #region GenerarNumeroAsync Tests
 
     [Theory]
-    [InlineData(NivelFidelizacion.Bronce, "4001")]
+    [InlineData(NivelFidelizacion.Basico, "4001")]
     [InlineData(NivelFidelizacion.Plata, "4002")]
     [InlineData(NivelFidelizacion.Oro, "4003")]
     [InlineData(NivelFidelizacion.Platino, "4004")]
@@ -95,7 +95,7 @@ public class GeneradorNumeroTarjetaServiceTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var nivel = NivelFidelizacion.Bronce;
+        var nivel = NivelFidelizacion.Basico;
         
         _tarjetaRepositoryMock
             .Setup(x => x.ExisteNumeroTarjetaAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -153,7 +153,7 @@ public class GeneradorNumeroTarjetaServiceTests
     #region ObtenerPrefijoByNivelAsync Tests
 
     [Theory]
-    [InlineData(NivelFidelizacion.Bronce, "4001")]
+    [InlineData(NivelFidelizacion.Basico, "4001")]
     [InlineData(NivelFidelizacion.Plata, "4002")]
     [InlineData(NivelFidelizacion.Oro, "4003")]
     [InlineData(NivelFidelizacion.Platino, "4004")]

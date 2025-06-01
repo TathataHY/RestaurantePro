@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
 {
     /// <summary>
@@ -21,6 +20,14 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarjeta encontrada o null si no existe</returns>
         Task<TarjetaFidelizacion> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene una tarjeta de fidelización por su número
+        /// </summary>
+        /// <param name="numero">Número de la tarjeta</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tarjeta encontrada o null si no existe</returns>
+        Task<TarjetaFidelizacion?> ObtenerPorNumeroAsync(string numero, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Obtiene todas las tarjetas de un cliente
