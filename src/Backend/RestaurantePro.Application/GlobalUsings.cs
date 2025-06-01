@@ -8,6 +8,10 @@ global using System.Reflection;
 global using System.Linq.Expressions;
 global using System.Text.Json;
 global using System.Text.RegularExpressions;
+global using System.ComponentModel.DataAnnotations;
+global using System.Security.Claims;
+global using System.Text;
+global using System.Collections.ObjectModel;
 
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +36,7 @@ global using FluentValidation.Results;
 global using RestaurantePro.Domain.Core.SharedKernel.Results;
 global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 global using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
+global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 
 // Application - Common (DTOs compartidos y behaviors) - PRIMERO para priorizar sobre Domain
 global using RestaurantePro.Application.Common.DTOs;
@@ -115,6 +120,7 @@ global using RestaurantePro.Application.Core.Usuarios.DTOs;
 global using RestaurantePro.Application.Comercial.Clientes.DTOs;
 global using RestaurantePro.Application.Comercial.Facturacion.DTOs;
 global using RestaurantePro.Application.Comercial.Fidelizacion.DTOs;
+global using RestaurantePro.Application.Comercial.Promociones.DTOs;
 
 // Application - Operaciones DTOs
 global using RestaurantePro.Application.Operaciones.Comandas.DTOs;

@@ -1,12 +1,10 @@
-using RestaurantePro.Application.Comercial.Promociones.DTOs;
-
 namespace RestaurantePro.Application.Comercial.Promociones.Commands.AplicarPromocion;
 
 /// <summary>
 /// Handler para aplicar promociones a facturas o comandas
 /// Gestiona validaciones de elegibilidad, cálculo de descuentos y registro de aplicaciones
 /// </summary>
-public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, Result<PromocionAplicadaDto>>
+public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, Result<AplicarPromocionDto>>
 {
     private readonly IApplicationDbContext _context;
     private readonly IMapper _mapper;
@@ -37,7 +35,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         _calculadoraPromociones = calculadoraPromociones;
     }
 
-    public async Task<Result<PromocionAplicadaDto>> Handle(AplicarPromocionCommand request, CancellationToken cancellationToken)
+    public async Task<Result<AplicarPromocionDto>> Handle(AplicarPromocionCommand request, CancellationToken cancellationToken)
     {
         _logger.LogInformation("🎁 Iniciando aplicación de promoción {PromocionId} - Tipo: {TipoAplicacion}",
             request.PromocionId, request.TipoAplicacion);
@@ -50,7 +48,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
             var promocionResult = await ObtenerPromocion(request, cancellationToken);
             if (!promocionResult.Succeeded)
             {
-                return Result.Failure<PromocionAplicadaDto>(promocionResult.Error!);
+                return Result.Failure<AplicarPromocionDto>(promocionResult.Error!);
             }
 
             var promocion = promocionResult.Value;
@@ -59,7 +57,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
             var entidadDestinoResult = await ObtenerEntidadDestino(request, cancellationToken);
             if (!entidadDestinoResult.Succeeded)
             {
-                return Result.Failure<PromocionAplicadaDto>(entidadDestinoResult.Error!);
+                return Result.Failure<AplicarPromocionDto>(entidadDestinoResult.Error!);
             }
 
             var (factura, comanda) = entidadDestinoResult.Value;
@@ -68,14 +66,14 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
             var elegibilidadResult = await ValidarElegibilidad(promocion, factura, comanda, request, cancellationToken);
             if (!elegibilidadResult.Succeeded)
             {
-                return Result.Failure<PromocionAplicadaDto>(elegibilidadResult.Error!);
+                return Result.Failure<AplicarPromocionDto>(elegibilidadResult.Error!);
             }
 
             // 4. Calcular descuento
             var calculoResult = await CalcularDescuento(promocion, factura, comanda, request, cancellationToken);
             if (!calculoResult.Succeeded)
             {
-                return Result.Failure<PromocionAplicadaDto>(calculoResult.Error!);
+                return Result.Failure<AplicarPromocionDto>(calculoResult.Error!);
             }
 
             var calculoDescuento = calculoResult.Value;
@@ -84,7 +82,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
             var aplicacionResult = await AplicarDescuento(promocion, factura, comanda, calculoDescuento, request, cancellationToken);
             if (!aplicacionResult.Succeeded)
             {
-                return Result.Failure<PromocionAplicadaDto>(aplicacionResult.Error!);
+                return Result.Failure<AplicarPromocionDto>(aplicacionResult.Error!);
             }
 
             // 6. Registrar aplicación de promoción
@@ -112,7 +110,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         {
             _logger.LogError(ex, "❌ Error al aplicar promoción {PromocionId}: {ErrorMessage}", 
                 request.PromocionId, ex.Message);
-            return Result.Failure<PromocionAplicadaDto>($"Error interno al aplicar la promoción: {ex.Message}");
+            return Result.Failure<AplicarPromocionDto>($"Error interno al aplicar la promoción: {ex.Message}");
         }
     }
 
@@ -389,9 +387,9 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         }
     }
 
-    private PromocionAplicadaDto CrearRespuesta(Promocion promocion, Factura? factura, Comanda? comanda, CalculoDescuentoDto calculo, AplicarPromocionCommand request)
+    private AplicarPromocionDto CrearRespuesta(Promocion promocion, Factura? factura, Comanda? comanda, CalculoDescuentoDto calculo, AplicarPromocionCommand request)
     {
-        return new PromocionAplicadaDto
+        return new AplicarPromocionDto
         {
             PromocionId = promocion.Id,
             CodigoPromocion = promocion.Codigo,

@@ -3,20 +3,20 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Reposi
     public class MesaRepositoryTests
     {
         private readonly Mock<IMesaRepository> _mockRepository;
-        private readonly List<Mesa> _mesas;
+        private readonly List<RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa> _mesas;
 
         public MesaRepositoryTests()
         {
             _mockRepository = new Mock<IMesaRepository>();
 
             // Crear datos de prueba
-            _mesas = new List<Mesa>
+            _mesas = new List<RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa>
             {
-                Mesa.Crear(1, 2, "Terraza"),
-                Mesa.Crear(2, 4, "Interior"),
-                Mesa.Crear(3, 6, "Salón VIP"),
-                Mesa.Crear(4, 2, "Terraza"),
-                Mesa.Crear(5, 8, "Interior")
+                RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(1, 2, "Terraza"),
+                RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(2, 4, "Interior"),
+                RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(3, 6, "Salón VIP"),
+                RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(4, 2, "Terraza"),
+                RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(5, 8, "Interior")
             };
 
             // Marcar algunas mesas con diferentes estados para pruebas
@@ -138,7 +138,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Reposi
         public async Task AgregarAsync_MesaValida_DebeAgregarCorrectamente()
         {
             // Arrange
-            var nuevaMesa = Mesa.Crear(6, 4, "Jardín");
+            var nuevaMesa = RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(6, 4, "Jardín");
 
             _mockRepository.Setup(repo => repo.AgregarAsync(nuevaMesa))
                 .Returns(Task.CompletedTask);

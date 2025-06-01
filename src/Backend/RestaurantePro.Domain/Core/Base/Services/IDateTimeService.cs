@@ -1,4 +1,4 @@
-namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+namespace RestaurantePro.Domain.Core.Base.Services;
 
 /// <summary>
 /// Interfaz para servicios de fecha y hora en el dominio

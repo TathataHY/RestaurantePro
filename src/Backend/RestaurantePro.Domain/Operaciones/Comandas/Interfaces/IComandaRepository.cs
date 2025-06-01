@@ -125,5 +125,21 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Último secuencial usado o null si no hay comandas en esa fecha</returns>
         Task<int?> ObtenerUltimoSecuencialDelDiaAsync(DateTime fecha, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene el último secuencial usado
+        /// </summary>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Último secuencial usado o 0 si no hay comandas</returns>
+        Task<int> ObtenerUltimoSecuencialAsync(CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene el último secuencial usado para una sucursal en una fecha específica
+        /// </summary>
+        /// <param name="sucursalId">ID de la sucursal</param>
+        /// <param name="fecha">Fecha para buscar el último secuencial</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Último secuencial usado o 0 si no hay comandas</returns>
+        Task<int> ObtenerUltimoSecuencialAsync(Guid sucursalId, DateTime fecha, CancellationToken cancellationToken = default);
     }
 }

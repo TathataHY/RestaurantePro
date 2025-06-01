@@ -90,35 +90,112 @@ public class GeneradorNumeroComandaService : IGeneradorNumeroComandaService
     /// <summary>
     /// Valida si un número de comanda es válido según las reglas de negocio
     /// </summary>
-    public async Task<bool> ValidarNumeroComandaAsync(string numeroComanda, CancellationToken cancellationToken = default)
+    public async Task<Result<bool>> ValidarNumeroComandaAsync(string numeroComanda, CancellationToken cancellationToken = default)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(numeroComanda))
-                return false;
+                return Result.Success(false);
 
             // Validar longitud mínima
             if (numeroComanda.Length < 8)
-                return false;
+                return Result.Success(false);
 
             // Validar formato general: debe contener al menos fecha y secuencial
             if (!ValidarFormatoGeneral(numeroComanda))
-                return false;
+                return Result.Success(false);
 
             // Validar que no sea un número duplicado
             var existe = await _comandaRepository.ExisteNumeroComandaAsync(numeroComanda, cancellationToken);
             if (existe)
             {
                 _logger.LogWarning("Número de comanda {NumeroComanda} ya existe en el sistema", numeroComanda);
-                return false;
+                return Result.Success(false);
             }
 
-            return true;
+            return Result.Success(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validando número de comanda {NumeroComanda}", numeroComanda);
-            return false;
+            return Result.Failure<bool>($"Error validando número de comanda: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Extrae información de un número de comanda
+    /// </summary>
+    public async Task<Result<InformacionComanda>> ExtraerInformacionNumeroAsync(string numeroComanda, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(numeroComanda))
+                return Result.Failure<InformacionComanda>("Número de comanda no puede estar vacío");
+
+            var partes = numeroComanda.Split('-');
+            if (partes.Length < 2)
+                return Result.Failure<InformacionComanda>("Formato de número de comanda inválido");
+
+            var informacion = new InformacionComanda();
+
+            // Extraer información de la primera parte
+            var partePrincipal = partes[0];
+            
+            // Verificar longitud mínima
+            if (partePrincipal.Length < 16) // código(8) + fecha(8) + tipo(3) + canal(1) = 20 mínimo sin mesa
+                return Result.Failure<InformacionComanda>("Formato de número de comanda inválido - longitud insuficiente");
+
+            var posicion = 0;
+            
+            // Extraer código de sucursal (primeros 8 caracteres)
+            informacion.SucursalId = partePrincipal.Substring(posicion, 8);
+            posicion += 8;
+
+            // Extraer fecha (siguiente 8 caracteres - YYYYMMDD)
+            var fechaStr = partePrincipal.Substring(posicion, 8);
+            if (DateTime.TryParseExact(fechaStr, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out var fecha))
+            {
+                informacion.Fecha = fecha;
+            }
+            else
+            {
+                return Result.Failure<InformacionComanda>("Formato de fecha inválido en número de comanda");
+            }
+            posicion += 8;
+
+            // Extraer tipo de comanda (siguiente 3 caracteres)
+            informacion.TipoComanda = partePrincipal.Substring(posicion, 3);
+            posicion += 3;
+
+            // El resto incluye número de mesa (opcional) y canal (último carácter)
+            var restoString = partePrincipal.Substring(posicion);
+            
+            // El último carácter es siempre el canal
+            if (restoString.Length >= 1)
+            {
+                informacion.CanalOrden = restoString.Substring(restoString.Length - 1);
+                
+                // Si hay más caracteres antes del canal, es el número de mesa
+                var parteMesa = restoString.Substring(0, restoString.Length - 1);
+                if (!string.IsNullOrEmpty(parteMesa) && int.TryParse(parteMesa, out var numeroMesa))
+                {
+                    informacion.NumeroMesa = numeroMesa;
+                }
+            }
+
+            // Extraer secuencial (última parte)
+            var ultimaParte = partes[^1];
+            if (int.TryParse(ultimaParte, out var secuencial))
+            {
+                informacion.Secuencial = secuencial;
+            }
+
+            return Result.Success(informacion);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error extrayendo información del número de comanda {NumeroComanda}", numeroComanda);
+            return Result.Failure<InformacionComanda>($"Error extrayendo información: {ex.Message}");
         }
     }
 
@@ -148,6 +225,95 @@ public class GeneradorNumeroComandaService : IGeneradorNumeroComandaService
         {
             _logger.LogError(ex, "Error obteniendo siguiente secuencial para sucursal {SucursalId}", sucursalId);
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Genera un número de comanda con tipo y canal específicos
+    /// </summary>
+    public async Task<Result<string>> GenerarNumeroAsync(
+        Guid sucursalId, 
+        DateTime fecha, 
+        TipoComanda tipoComanda, 
+        CanalOrden canalOrden, 
+        int? numeroMesa = null, 
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var ultimoSecuencial = await _comandaRepository.ObtenerUltimoSecuencialAsync(sucursalId, fecha, cancellationToken);
+            var secuencial = ultimoSecuencial + 1;
+
+            var numeroComanda = ConstruirNumeroComanda(sucursalId, fecha, tipoComanda, canalOrden, numeroMesa, secuencial);
+
+            _logger.LogInformation("Número de comanda generado: {NumeroComanda} para sucursal {SucursalId}", 
+                numeroComanda, sucursalId);
+
+            return Result<string>.Success(numeroComanda);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generando número de comanda para sucursal {SucursalId}", sucursalId);
+            return Result.Failure<string>($"Error generando número de comanda: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Genera un número de comanda con prefijo personalizado
+    /// </summary>
+    public async Task<Result<string>> GenerarNumeroConPrefijoAsync(
+        string prefijo, 
+        Guid sucursalId, 
+        DateTime fecha, 
+        TipoComanda tipoComanda, 
+        CanalOrden canalOrden, 
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(prefijo))
+            {
+                return Result.Failure<string>("Prefijo no puede estar vacío");
+            }
+
+            var ultimoSecuencial = await _comandaRepository.ObtenerUltimoSecuencialAsync(sucursalId, fecha, cancellationToken);
+            var secuencial = ultimoSecuencial + 1;
+
+            var numeroComanda = ConstruirNumeroComandaConPrefijo(prefijo, sucursalId, fecha, tipoComanda, canalOrden, secuencial);
+
+            _logger.LogInformation("Número de comanda con prefijo generado: {NumeroComanda} para sucursal {SucursalId}", 
+                numeroComanda, sucursalId);
+
+            return Result<string>.Success(numeroComanda);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generando número de comanda con prefijo para sucursal {SucursalId}", sucursalId);
+            return Result.Failure<string>($"Error generando número de comanda: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el formato de número de comanda para parámetros específicos
+    /// </summary>
+    public async Task<Result<string>> ObtenerFormatoNumeroAsync(
+        Guid sucursalId, 
+        DateTime fecha, 
+        TipoComanda tipoComanda, 
+        CanalOrden canalOrden, 
+        int? numeroMesa, 
+        int secuencial, 
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var numeroComanda = ConstruirNumeroComanda(sucursalId, fecha, tipoComanda, canalOrden, numeroMesa, secuencial);
+            return Result<string>.Success(numeroComanda);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error obteniendo formato de número de comanda");
+            return Result.Failure<string>($"Error obteniendo formato: {ex.Message}");
         }
     }
 
@@ -205,6 +371,136 @@ public class GeneradorNumeroComandaService : IGeneradorNumeroComandaService
     }
 
     /// <summary>
+    /// Construye el número de comanda usando enums
+    /// </summary>
+    private string ConstruirNumeroComanda(
+        Guid sucursalId, 
+        DateTime fecha, 
+        TipoComanda tipoComanda, 
+        CanalOrden canalOrden, 
+        int? numeroMesa, 
+        int secuencial)
+    {
+        var builder = new StringBuilder();
+
+        // Agregar código de sucursal (primeros 8 caracteres del GUID)
+        var codigoSucursal = sucursalId.ToString("N")[..8].ToUpperInvariant();
+        builder.Append(codigoSucursal);
+
+        // Separador
+        builder.Append("-");
+
+        // Agregar fecha en formato YYYYMMDD  
+        builder.Append(fecha.ToString("yyyyMMdd"));
+
+        // Separador
+        builder.Append("-");
+
+        // Agregar tipo de comanda
+        var tipoAbreviado = ObtenerAbreviaturaTipoComanda(tipoComanda);
+        builder.Append(tipoAbreviado);
+
+        // Agregar número de mesa si existe
+        if (numeroMesa.HasValue)
+        {
+            builder.Append("-");
+            if (numeroMesa.Value < 100)
+            {
+                builder.Append($"{numeroMesa.Value:D3}");
+            }
+            else
+            {
+                builder.Append(numeroMesa.Value.ToString().PadLeft(3, '0'));
+            }
+        }
+
+        // Separador
+        builder.Append("-");
+
+        // Agregar canal
+        var canalAbreviado = ObtenerAbreviaturaCanal(canalOrden);
+        builder.Append(canalAbreviado);
+
+        // Separador
+        builder.Append("-");
+
+        // Agregar secuencial con padding de 4 dígitos
+        builder.Append(secuencial.ToString("D4"));
+
+        return builder.ToString();
+    }
+
+    /// <summary>
+    /// Construye el número de comanda con prefijo personalizado
+    /// </summary>
+    private string ConstruirNumeroComandaConPrefijo(
+        string prefijo,
+        Guid sucursalId, 
+        DateTime fecha, 
+        TipoComanda tipoComanda, 
+        CanalOrden canalOrden, 
+        int secuencial)
+    {
+        var builder = new StringBuilder();
+
+        // Agregar prefijo
+        builder.Append(prefijo.ToUpperInvariant());
+        builder.Append("-");
+
+        // Agregar código de sucursal (primeros 8 caracteres del GUID)
+        var codigoSucursal = sucursalId.ToString("N")[..8].ToUpperInvariant();
+        builder.Append(codigoSucursal);
+
+        // Agregar fecha en formato YYYYMMDD
+        builder.Append(fecha.ToString("yyyyMMdd"));
+
+        // Agregar tipo de comanda
+        var tipoAbreviado = ObtenerAbreviaturaTipoComanda(tipoComanda);
+        builder.Append(tipoAbreviado);
+
+        // Agregar canal
+        var canalAbreviado = ObtenerAbreviaturaCanal(canalOrden);
+        builder.Append(canalAbreviado);
+
+        // Agregar separador
+        builder.Append("-");
+
+        // Agregar secuencial con padding de 4 dígitos
+        builder.Append(secuencial.ToString("D4"));
+
+        return builder.ToString();
+    }
+
+    /// <summary>
+    /// Obtiene la abreviatura del tipo de comanda (enum)
+    /// </summary>
+    private string ObtenerAbreviaturaTipoComanda(TipoComanda tipoComanda)
+    {
+        return tipoComanda switch
+        {
+            TipoComanda.Delivery => "DLV",
+            TipoComanda.TakeAway => "TKW", 
+            TipoComanda.Mesa => "MSA",
+            _ => "GEN"
+        };
+    }
+
+    /// <summary>
+    /// Obtiene la abreviatura del canal (enum)
+    /// </summary>
+    private string ObtenerAbreviaturaCanal(CanalOrden canalOrden)
+    {
+        return canalOrden switch
+        {
+            CanalOrden.Web => "W",
+            CanalOrden.Movil => "M",
+            CanalOrden.Telefono => "T",
+            CanalOrden.Presencial => "P",
+            _ => "O"
+        };
+    }
+
+    /// <summary>
     /// Obtiene la abreviatura del tipo de comanda
     /// </summary>
     private string ObtenerAbreviaturaTipoComanda(string tipoComanda)
@@ -249,18 +545,50 @@ public class GeneradorNumeroComandaService : IGeneradorNumeroComandaService
 
             var partes = numeroComanda.Split('-');
             
-            // Debe tener al menos 2 partes (identificador y secuencial)
-            if (partes.Length < 2)
+            // Debe tener entre 5 y 6 partes: código-fecha-tipo-[mesa]-canal-secuencial
+            if (partes.Length < 5 || partes.Length > 6)
                 return false;
 
-            // La última parte debe ser numérica (secuencial)
-            var secuencialParte = partes[^1];
-            if (!int.TryParse(secuencialParte, out _))
+            // Validar código de sucursal (8 caracteres hexadecimales)
+            var codigoSucursal = partes[0];
+            if (codigoSucursal.Length != 8 || !codigoSucursal.All(c => char.IsLetterOrDigit(c)))
                 return false;
 
-            // La parte principal debe contener fecha válida
-            var parteIdentificador = partes[0];
-            if (parteIdentificador.Length < 8) // Mínimo para código sucursal + fecha
+            // Validar fecha (8 caracteres YYYYMMDD)
+            var fechaStr = partes[1];
+            if (fechaStr.Length != 8 || !DateTime.TryParseExact(fechaStr, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out _))
+                return false;
+
+            // Validar tipo de comanda (3 caracteres)
+            var tipoComanda = partes[2];
+            if (!EsTipoComandaValido(tipoComanda))
+                return false;
+
+            // Determinar si tiene mesa o no
+            string canal, secuencial;
+            if (partes.Length == 6)
+            {
+                // Formato: código-fecha-tipo-mesa-canal-secuencial
+                var mesa = partes[3];
+                if (!int.TryParse(mesa, out _))
+                    return false;
+                
+                canal = partes[4];
+                secuencial = partes[5];
+            }
+            else
+            {
+                // Formato: código-fecha-tipo-canal-secuencial
+                canal = partes[3];
+                secuencial = partes[4];
+            }
+
+            // Validar canal
+            if (!EsCanalValido(canal))
+                return false;
+
+            // Validar secuencial (debe ser numérico)
+            if (!int.TryParse(secuencial, out _))
                 return false;
 
             return true;
@@ -269,6 +597,37 @@ public class GeneradorNumeroComandaService : IGeneradorNumeroComandaService
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Valida si el tipo de comanda es válido
+    /// </summary>
+    private bool EsTipoComandaValido(string tipoComanda)
+    {
+        return tipoComanda switch
+        {
+            "DLV" => true,  // Delivery
+            "TKW" => true,  // TakeAway  
+            "MSA" => true,  // Mesa
+            "GEN" => true,  // General
+            _ => false
+        };
+    }
+
+    /// <summary>
+    /// Valida si el canal es válido
+    /// </summary>
+    private bool EsCanalValido(string canal)
+    {
+        return canal switch
+        {
+            "W" => true,   // Web
+            "M" => true,   // Móvil
+            "T" => true,   // Teléfono
+            "P" => true,   // Presencial
+            "O" => true,   // Otros
+            _ => false
+        };
     }
 
     /// <summary>

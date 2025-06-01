@@ -30,6 +30,14 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         Task<TarjetaFidelizacion?> ObtenerPorNumeroAsync(string numero, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Verifica si existe una tarjeta con el número especificado
+        /// </summary>
+        /// <param name="numero">Número de la tarjeta a verificar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>True si existe una tarjeta con ese número, false en caso contrario</returns>
+        Task<bool> ExisteNumeroTarjetaAsync(string numero, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Obtiene todas las tarjetas de un cliente
         /// </summary>
         /// <param name="clienteId">ID del cliente</param>

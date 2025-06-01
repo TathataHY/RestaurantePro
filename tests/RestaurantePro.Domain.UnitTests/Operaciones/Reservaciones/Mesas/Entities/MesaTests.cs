@@ -1,5 +1,7 @@
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Entities
 {
+    using MesaEntity = RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa;
+    
     public class MesaTests
     {
         [Fact]
@@ -11,7 +13,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Entiti
             var ubicacion = "Terraza";
 
             // Act
-            var mesa = Mesa.Crear(numero, capacidad, ubicacion);
+            var mesa = MesaEntity.Crear(numero, capacidad, ubicacion);
 
             // Assert
             mesa.Should().NotBeNull();
@@ -33,7 +35,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Entiti
         public void MarcarComoOcupada_CuandoMesaEstaDisponible_DebeCambiarEstadoAOcupada()
         {
             // Arrange
-            var mesa = Mesa.Crear(1, 4, "Interior");
+            var mesa = MesaEntity.Crear(1, 4, "Interior");
 
             // Act
             mesa.MarcarComoOcupada();
@@ -51,7 +53,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Entiti
         public void MarcarComoReservada_CuandoMesaEstaDisponible_DebeCambiarEstadoAReservada()
         {
             // Arrange
-            var mesa = Mesa.Crear(1, 4, "Interior");
+            var mesa = MesaEntity.Crear(1, 4, "Interior");
 
             // Act
             mesa.MarcarComoReservada();
@@ -69,7 +71,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Entiti
         public void MarcarComoDisponible_CuandoMesaEstaOcupada_DebeCambiarEstadoADisponible()
         {
             // Arrange
-            var mesa = Mesa.Crear(1, 4, "Interior");
+            var mesa = MesaEntity.Crear(1, 4, "Interior");
             mesa.MarcarComoOcupada();
 
             // Act
@@ -88,7 +90,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Entiti
         public void MarcarComoOcupada_CuandoMesaNoEstaDisponible_DebeLanzarExcepcion()
         {
             // Arrange
-            var mesa = Mesa.Crear(1, 4, "Interior");
+            var mesa = MesaEntity.Crear(1, 4, "Interior");
             mesa.MarcarComoReservada(); // Primero la marcamos como reservada
 
             // Act & Assert
@@ -106,7 +108,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Entiti
             var ubicacion = "Terraza";
 
             // Act & Assert
-            Action action = () => Mesa.Crear(numero, capacidad, ubicacion);
+            Action action = () => MesaEntity.Crear(numero, capacidad, ubicacion);
             action.Should().Throw<ArgumentException>()
                 .WithMessage("*número de mesa no puede ser negativo*");
         }
@@ -120,7 +122,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Entiti
             var ubicacion = "Terraza";
 
             // Act & Assert
-            Action action = () => Mesa.Crear(numero, capacidad, ubicacion);
+            Action action = () => MesaEntity.Crear(numero, capacidad, ubicacion);
             action.Should().Throw<ArgumentException>()
                 .WithMessage("*capacidad debe ser mayor que cero*");
         }

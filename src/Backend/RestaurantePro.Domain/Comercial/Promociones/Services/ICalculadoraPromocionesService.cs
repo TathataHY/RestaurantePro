@@ -14,6 +14,24 @@ public interface ICalculadoraPromocionesService
     Task<List<PromocionAplicable>> CalcularPromocionesAplicablesAsync(ParametrosCompra parametros, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Evalúa promociones para un cliente específico y lista de productos
+    /// </summary>
+    /// <param name="clienteId">ID del cliente</param>
+    /// <param name="productos">Lista de productos de la compra</param>
+    /// <param name="cancellationToken">Token de cancelación</param>
+    /// <returns>Resultado con promociones aplicables</returns>
+    Task<Result<List<PromocionAplicable>>> EvaluarPromocionesAsync(Guid clienteId, IEnumerable<ProductoCompraDto> productos, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Calcula el mejor combo de promociones basado en productos y reglas
+    /// </summary>
+    /// <param name="productos">Lista de productos</param>
+    /// <param name="reglasCombo">Reglas de combinación</param>
+    /// <param name="cancellationToken">Token de cancelación</param>
+    /// <returns>Resultado con el mejor combo</returns>
+    Task<Result<ComboPromociones>> CalcularMejorComboAsync(IEnumerable<ProductoCompraDto> productos, IEnumerable<ReglaComboDto> reglasCombo, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Aplica una promoción específica
     /// </summary>
     /// <param name="promocionId">ID de la promoción</param>
@@ -273,4 +291,35 @@ public class ComboPromociones
     /// Descripción del combo
     /// </summary>
     public string DescripcionCombo { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// DTO para representar un producto en una compra (usado en tests)
+/// </summary>
+public class ProductoCompraDto
+{
+    public Guid ProductoId { get; set; }
+    public int Cantidad { get; set; }
+    public decimal PrecioUnitario { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// DTO para representar reglas de combo (usado en tests)
+/// </summary>
+public class ReglaComboDto
+{
+    public string[] CategoriasRequeridas { get; set; } = Array.Empty<string>();
+    public decimal? DescuentoPorcentaje { get; set; }
+    public decimal? PrecioFijo { get; set; }
+}
+
+/// <summary>
+/// DTO para representar el historial de compras (usado en tests)
+/// </summary>
+public class HistorialCompraDto
+{
+    public Guid ProductoId { get; set; }
+    public int Cantidad { get; set; }
+    public decimal MontoTotal { get; set; }
 } 

@@ -14,12 +14,29 @@ public interface IGeneradorNumeroTarjetaService
     Task<string> GenerarNumeroTarjetaAsync(string tipoTarjeta, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Genera un número único para tarjeta de fidelización basado en el nivel
+    /// </summary>
+    /// <param name="nivel">Nivel de fidelización</param>
+    /// <param name="clienteId">ID del cliente</param>
+    /// <param name="cancellationToken">Token de cancelación</param>
+    /// <returns>Resultado con el número generado</returns>
+    Task<Result<string>> GenerarNumeroAsync(NivelFidelizacion nivel, Guid clienteId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Valida si un número de tarjeta es válido según las reglas de negocio
     /// </summary>
     /// <param name="numeroTarjeta">Número a validar</param>
     /// <param name="cancellationToken">Token de cancelación</param>
     /// <returns>True si es válido</returns>
     Task<bool> ValidarNumeroTarjetaAsync(string numeroTarjeta, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Valida un número de tarjeta usando el algoritmo de Luhn
+    /// </summary>
+    /// <param name="numeroTarjeta">Número de tarjeta a validar</param>
+    /// <param name="cancellationToken">Token de cancelación</param>
+    /// <returns>Resultado con true si es válido según Luhn</returns>
+    Task<Result<bool>> ValidarNumeroLuhnAsync(string numeroTarjeta, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Verifica si un número ya existe
@@ -30,6 +47,14 @@ public interface IGeneradorNumeroTarjetaService
     Task<bool> ExisteNumeroTarjetaAsync(string numeroTarjeta, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Obtiene el prefijo correspondiente a un nivel de fidelización
+    /// </summary>
+    /// <param name="nivel">Nivel de fidelización</param>
+    /// <param name="cancellationToken">Token de cancelación</param>
+    /// <returns>Resultado con el prefijo</returns>
+    Task<Result<string>> ObtenerPrefijoByNivelAsync(NivelFidelizacion nivel, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Genera un número de tarjeta con formato específico
     /// </summary>
     /// <param name="tipoTarjeta">Tipo de tarjeta</param>
@@ -37,4 +62,14 @@ public interface IGeneradorNumeroTarjetaService
     /// <param name="cancellationToken">Token de cancelación</param>
     /// <returns>Número generado con formato específico</returns>
     Task<string> GenerarNumeroTarjetaConFormatoAsync(string tipoTarjeta, Guid clienteId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Genera un número de tarjeta personalizado con prefijo y sufijo específicos
+    /// </summary>
+    /// <param name="clienteId">ID del cliente</param>
+    /// <param name="prefijo">Prefijo personalizado</param>
+    /// <param name="sufijo">Sufijo personalizado</param>
+    /// <param name="cancellationToken">Token de cancelación</param>
+    /// <returns>Resultado con el número personalizado generado</returns>
+    Task<Result<string>> GenerarNumeroPersonalizadoAsync(Guid clienteId, string prefijo, string sufijo, CancellationToken cancellationToken = default);
 } 

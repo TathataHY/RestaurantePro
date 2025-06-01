@@ -48,10 +48,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
                 _productoCategoriaServiceMock.Object,
                 _recetaServiceMock.Object,
                 _notificationServiceMock.Object,
-                _dateTimeServiceMock.Object,
                 _notificationManager,
                 _productoBuilderLoggerMock.Object,
-                _coreServiceFacadeLoggerMock.Object);
+                _coreServiceFacadeLoggerMock.Object,
+                _dateTimeServiceMock.Object);
         }
         
         #region Productos Tests
@@ -186,10 +186,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
                 _productoCategoriaServiceMock.Object,
                 _recetaServiceMock.Object,
                 _notificationServiceMock.Object,
-                _dateTimeServiceMock.Object,
                 notificationManager,
                 _productoBuilderLoggerMock.Object,
-                _coreServiceFacadeLoggerMock.Object);
+                _coreServiceFacadeLoggerMock.Object,
+                _dateTimeServiceMock.Object);
             
             // Act
             var resultado = await sut.ActualizarProductoAsync(productoId, nuevoNombre);
@@ -566,10 +566,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
                 _productoCategoriaServiceMock.Object,
                 _recetaServiceMock.Object,
                 _notificationServiceMock.Object,
-                _dateTimeServiceMock.Object,
                 notificationManager,
                 _productoBuilderLoggerMock.Object,
-                _coreServiceFacadeLoggerMock.Object);
+                _coreServiceFacadeLoggerMock.Object,
+                _dateTimeServiceMock.Object);
             
             // Act
             var resultado = await sut.RegistrarRecetaProductoAsync(
@@ -644,10 +644,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
                 _productoCategoriaServiceMock.Object,
                 _recetaServiceMock.Object,
                 _notificationServiceMock.Object,
-                _dateTimeServiceMock.Object,
                 notificationManager,
                 _productoBuilderLoggerMock.Object,
-                _coreServiceFacadeLoggerMock.Object);
+                _coreServiceFacadeLoggerMock.Object,
+                _dateTimeServiceMock.Object);
                 
             // Act
             var resultado = await sut.RegistrarRecetaProductoAsync(
@@ -744,10 +744,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
                 _productoCategoriaServiceMock.Object,
                 _recetaServiceMock.Object,
                 _notificationServiceMock.Object,
-                _dateTimeServiceMock.Object,
                 _notificationManagerMock.Object,
                 _productoBuilderLoggerMock.Object,
-                _coreServiceFacadeLoggerMock.Object);
+                _coreServiceFacadeLoggerMock.Object,
+                _dateTimeServiceMock.Object);
             
             // Act
             var resultado = await sutForTest.BuscarSustitutoIngredienteAsync(ingredienteOriginalId);
@@ -833,10 +833,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
                 _productoCategoriaServiceMock.Object,
                 _recetaServiceMock.Object,
                 _notificationServiceMock.Object,
-                _dateTimeServiceMock.Object,
                 notificationManager,
                 _productoBuilderLoggerMock.Object,
-                _coreServiceFacadeLoggerMock.Object);
+                _coreServiceFacadeLoggerMock.Object,
+                _dateTimeServiceMock.Object);
             
             // Act
             var resultado = await sut.CrearUsuarioAsync(nombreUsuario, nombre, emailString, "Cajero");
@@ -958,10 +958,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
                 _productoCategoriaServiceMock.Object,
                 _recetaServiceMock.Object,
                 _notificationServiceMock.Object,
-                _dateTimeServiceMock.Object,
                 notificationManager,
                 _productoBuilderLoggerMock.Object,
-                _coreServiceFacadeLoggerMock.Object);
+                _coreServiceFacadeLoggerMock.Object,
+                _dateTimeServiceMock.Object);
             
             // Act
             var resultado = await sut.AsignarRolUsuarioAsync(usuarioId, rol);
@@ -1044,10 +1044,10 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
                 _productoCategoriaServiceMock.Object,
                 _recetaServiceMock.Object,
                 _notificationServiceMock.Object,
-                _dateTimeServiceMock.Object,
                 notificationManager,
                 _productoBuilderLoggerMock.Object,
-                _coreServiceFacadeLoggerMock.Object);
+                _coreServiceFacadeLoggerMock.Object,
+                _dateTimeServiceMock.Object);
             
             // Act
             var resultado = await sut.ActualizarEmailUsuarioAsync(usuarioId, nuevoEmail);

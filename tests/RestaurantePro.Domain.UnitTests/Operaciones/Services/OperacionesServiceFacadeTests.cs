@@ -359,7 +359,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 }
                 
                 // Crear una mesa real usando el factory method
-                var mesa = Mesa.Crear(numero, capacidad, ubicacion);
+                var mesa = RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(numero, capacidad, ubicacion);
                 return Task.FromResult(Result.Success(mesa));
             }
             
@@ -407,9 +407,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 // Crear algunas mesas de ejemplo para las pruebas
                 var mesas = new List<Mesa>
                 {
-                    Mesa.Crear(1, 4, "Interior"),
-                    Mesa.Crear(2, 6, "Terraza"),
-                    Mesa.Crear(3, 2, "Interior")
+                    RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(1, 4, "Interior"),
+                    RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(2, 6, "Terraza"),
+                    RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(3, 2, "Interior")
                 }.Where(m => m.Capacidad >= capacidadMinima);
                 
                 return Task.FromResult(Result.Success(mesas));
@@ -583,7 +583,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 .ReturnsAsync(mesas);
             
             // Configurar mesa existente
-            var mesa = Mesa.Crear(1, 4, "Terraza");
+            var mesa = RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(1, 4, "Terraza");
             _mesaRepositoryMock
                 .Setup(m => m.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mesa);
@@ -677,7 +677,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 "test@example.com", // Agregar email
                 "Observaciones");
 
-            var mesa = Mesa.Crear(1, 4, "Terraza");
+            var mesa = RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(1, 4, "Terraza");
 
             // Configuramos correctamente los mocks
             _reservacionRepositoryMock

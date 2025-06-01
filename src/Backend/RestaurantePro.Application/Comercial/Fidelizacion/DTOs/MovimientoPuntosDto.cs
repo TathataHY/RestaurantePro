@@ -1,7 +1,5 @@
 namespace RestaurantePro.Application.Comercial.Fidelizacion.DTOs;
 
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-
 /// <summary>
 /// Representa un movimiento de puntos para reportes
 /// </summary>

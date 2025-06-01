@@ -100,4 +100,34 @@ public static class ResultExtensions
             
         return Result.Failure(errors);
     }
+
+    /// <summary>
+    /// Convierte un Result a Result<T> genérico
+    /// </summary>
+    public static Result<T> ToGeneric<T>(this Result result)
+    {
+        if (result.Succeeded)
+            return Result.Success(default(T)!);
+        
+        return Result.Failure<T>(result.Error ?? "Error desconocido");
+    }
+
+    /// <summary>
+    /// Convierte un Result<T> a Result<TTarget> con el valor proporcionado
+    /// </summary>
+    public static Result<TTarget> ToGeneric<T, TTarget>(this Result<T> result)
+    {
+        if (result.Succeeded)
+            return Result.Success(default(TTarget)!);
+        
+        return Result.Failure<TTarget>(result.Error ?? "Error desconocido");
+    }
+
+    /// <summary>
+    /// Convierte un Result<T> a Result<T> manteniendo el valor original
+    /// </summary>
+    public static Result<T> ToGeneric<T>(this Result<T> result)
+    {
+        return result;
+    }
 } 

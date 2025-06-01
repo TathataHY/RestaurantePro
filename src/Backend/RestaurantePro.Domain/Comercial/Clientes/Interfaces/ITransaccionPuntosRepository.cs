@@ -1,6 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-
 namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 
 /// <summary>

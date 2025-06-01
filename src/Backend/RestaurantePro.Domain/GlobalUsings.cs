@@ -14,11 +14,10 @@ global using System.Text.RegularExpressions;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using System.ComponentModel.DataAnnotations;
+global using System.Security.Claims;
 
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
-
-// Microsoft
 global using Microsoft.Extensions.Logging;
 
 // Domain Base
@@ -242,3 +241,10 @@ global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Exceptions;
 
 // Domain Proveedores - Exceptions
 global using RestaurantePro.Domain.Proveedores.Exceptions;
+
+// Domain core imports - SharedKernel Services
+global using RestaurantePro.Domain.Core.SharedKernel.Services;
+global using RestaurantePro.Domain.Core.SharedKernel.Services.Notification;
+
+// Domain core imports - SharedKernel Base Services
+global using RestaurantePro.Domain.Core.Base.Services;

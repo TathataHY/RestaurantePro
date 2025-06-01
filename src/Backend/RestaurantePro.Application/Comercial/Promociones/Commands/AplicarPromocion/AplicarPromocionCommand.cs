@@ -1,5 +1,3 @@
-using RestaurantePro.Application.Comercial.Promociones.DTOs;
-
 namespace RestaurantePro.Application.Comercial.Promociones.Commands.AplicarPromocion;
 
 /// <summary>

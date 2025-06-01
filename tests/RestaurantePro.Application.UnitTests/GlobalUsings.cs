@@ -2,6 +2,8 @@
 global using Xunit;
 global using FluentAssertions;
 global using Moq;
+global using Moq.Language;
+global using Moq.Language.Flow;
 
 // .NET Base
 global using System;
@@ -10,12 +12,24 @@ global using System.Linq;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using System.Reflection;
+global using System.Text.Json;
+global using System.Text.RegularExpressions;
+global using System.ComponentModel.DataAnnotations;
+global using System.Security.Claims;
+global using System.Text;
+global using System.Collections.ObjectModel;
 
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.EntityFrameworkCore.Storage;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.Options;
+global using Microsoft.Extensions.Caching.Memory;
 
 // MediatR para tests de handlers
 global using MediatR;
@@ -25,9 +39,11 @@ global using AutoMapper;
 
 // FluentValidation para tests de validadores
 global using FluentValidation;
+global using FluentValidation.Results;
 
 // Domain - Referencias para testing
 global using RestaurantePro.Domain.Core.SharedKernel.Results;
+global using RestaurantePro.Domain.Core.SharedKernel.Results.ResultCompatibilityExtensions;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Validation;
 global using RestaurantePro.Domain.Core.Productos.Entities;

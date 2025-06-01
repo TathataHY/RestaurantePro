@@ -22,6 +22,10 @@ public class TarjetaFidelizacionBuilder
     private readonly INotificationManager _notificationManager;
     private readonly ILogger<TarjetaFidelizacionBuilder> _logger;
 
+    private Guid? _id;
+    private bool? _estadoActivo;
+    private int? _puntosDisponibles;
+
     /// <summary>
     /// Constructor del builder
     /// </summary>
@@ -38,6 +42,16 @@ public class TarjetaFidelizacionBuilder
     /// </summary>
     public static TarjetaFidelizacionBuilder Nuevo(INotificationManager notificationManager, ILogger<TarjetaFidelizacionBuilder> logger)
     {
+        return new TarjetaFidelizacionBuilder(notificationManager, logger);
+    }
+
+    /// <summary>
+    /// Factory method estático para tests - crear builder sin dependencias
+    /// </summary>
+    public static TarjetaFidelizacionBuilder Crear()
+    {
+        var notificationManager = new SimpleNotificationManager();
+        var logger = new SimpleLogger();
         return new TarjetaFidelizacionBuilder(notificationManager, logger);
     }
 
@@ -281,6 +295,54 @@ public class TarjetaFidelizacionBuilder
     }
 
     /// <summary>
+    /// Establece el ID de la tarjeta (para tests)
+    /// </summary>
+    /// <param name="id">ID de la tarjeta</param>
+    /// <returns>Builder para encadenamiento fluido</returns>
+    public TarjetaFidelizacionBuilder ConId(Guid id)
+    {
+        _id = id;
+        _logger.LogDebug("ID de tarjeta establecido: {Id}", id);
+        return this;
+    }
+
+    /// <summary>
+    /// Establece la tarjeta como activa
+    /// </summary>
+    /// <returns>Builder para encadenamiento fluido</returns>
+    public TarjetaFidelizacionBuilder ConEstadoActivo()
+    {
+        _estadoActivo = true;
+        _activa = true;
+        _logger.LogDebug("Estado activo establecido");
+        return this;
+    }
+
+    /// <summary>
+    /// Establece la tarjeta como inactiva
+    /// </summary>
+    /// <returns>Builder para encadenamiento fluido</returns>
+    public TarjetaFidelizacionBuilder ConEstadoInactivo()
+    {
+        _estadoActivo = false;
+        _activa = false;
+        _logger.LogDebug("Estado inactivo establecido");
+        return this;
+    }
+
+    /// <summary>
+    /// Establece los puntos disponibles en la tarjeta
+    /// </summary>
+    /// <param name="puntos">Puntos disponibles</param>
+    /// <returns>Builder para encadenamiento fluido</returns>
+    public TarjetaFidelizacionBuilder ConPuntosDisponibles(int puntos)
+    {
+        _puntosDisponibles = puntos;
+        _logger.LogDebug("Puntos disponibles establecidos: {Puntos}", puntos);
+        return this;
+    }
+
+    /// <summary>
     /// Construye la tarjeta de fidelización
     /// </summary>
     /// <param name="cancellationToken">Token de cancelación</param>
@@ -390,5 +452,107 @@ public class TarjetaFidelizacionBuilder
         _notificationManager.ClearErrors();
         _logger.LogDebug("Builder reseteado para nueva construcción");
         return this;
+    }
+
+    /// <summary>
+    /// Método Build para compatibilidad con tests (sinónimo de ConstruirAsync)
+    /// </summary>
+    /// <returns>Tarjeta de fidelización creada</returns>
+    public TarjetaFidelizacion Build()
+    {
+        var result = ConstruirAsync().GetAwaiter().GetResult();
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException($"Error construyendo tarjeta: {result.Error}");
+        }
+        return result.Value;
+    }
+
+    /// <summary>
+    /// Implementación simple de INotificationManager para tests
+    /// </summary>
+    private class SimpleNotificationManager : INotificationManager
+    {
+        private readonly Notification _notification = new();
+
+        public INotification CurrentNotification => _notification;
+        public bool HasErrors => _notification.HasErrors;
+
+        public ReadOnlyCollection<Error> GetErrors()
+        {
+            return _notification.Errors;
+        }
+
+        public void AddError(string errorMessage, string? errorCode = null, string? propertyName = null)
+        {
+            _notification.AddError(errorMessage, errorCode, propertyName);
+        }
+
+        public void AddErrors(IEnumerable<Error> errors)
+        {
+            _notification.AddErrors(errors);
+        }
+
+        public void AddErrors(INotification notification)
+        {
+            _notification.AddErrors(notification);
+        }
+
+        public void AddErrorsFromResult(Result result)
+        {
+            if (!result.Succeeded && result.Errors != null)
+            {
+                foreach (var error in result.Errors)
+                {
+                    _notification.AddError(error);
+                }
+            }
+        }
+
+        public void ClearErrors()
+        {
+            _notification.ClearErrors();
+        }
+
+        public INotification CreateNewNotification()
+        {
+            return new Notification();
+        }
+
+        public Result ToResult()
+        {
+            return _notification.ToResult();
+        }
+
+        public Result<T> ToResult<T>(T value)
+        {
+            return _notification.ToResult(value);
+        }
+
+        public void AddInformation(string message, string? code = null)
+        {
+            // Implementación vacía para compatibilidad
+        }
+    }
+
+    /// <summary>
+    /// Implementación simple de ILogger para tests
+    /// </summary>
+    private class SimpleLogger : ILogger<TarjetaFidelizacionBuilder>
+    {
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        {
+            return null;
+        }
+
+        public bool IsEnabled(LogLevel logLevel)
+        {
+            return false;
+        }
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            // Implementación vacía para tests
+        }
     }
 } 

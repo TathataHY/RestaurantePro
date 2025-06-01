@@ -36,7 +36,7 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.GenerarNumeroAsync(sucursalId, fecha, tipoComanda, canalOrden, numeroMesa);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         resultado.Value.Should().NotBeNullOrEmpty();
         // Formato esperado: SUCURSAL_ID + 20240115 + MSA + 005 + W + 0001
         resultado.Value.Should().Contain("20240115"); // Fecha
@@ -66,7 +66,7 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.GenerarNumeroAsync(sucursalId, fecha, tipo, canalOrden);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         resultado.Value.Should().Contain(abreviaturaEsperada);
     }
 
@@ -91,7 +91,7 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.GenerarNumeroAsync(sucursalId, fecha, tipoComanda, canal);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         resultado.Value.Should().Contain(abreviaturaEsperada);
     }
 
@@ -112,7 +112,7 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.GenerarNumeroAsync(sucursalId, fecha, tipoComanda, canalOrden);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         resultado.Value.Should().EndWith("0043"); // Secuencial 43
     }
 
@@ -134,7 +134,7 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.GenerarNumeroAsync(sucursalId, fecha, tipoComanda, canalOrden, numeroMesa);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         resultado.Value.Should().Contain("125"); // Mesa sin padding extra si >100
     }
 
@@ -160,7 +160,7 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.GenerarNumeroConPrefijoAsync(prefijo, sucursalId, fecha, tipoComanda, canalOrden);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         resultado.Value.Should().StartWith("VIP-");
         resultado.Value.Should().Contain("20241225");
         resultado.Value.Should().EndWith("0008");
@@ -182,8 +182,8 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.GenerarNumeroConPrefijoAsync(prefijoInvalido, sucursalId, fecha, tipoComanda, canalOrden);
 
         // Assert
-        resultado.IsSuccess.Should().BeFalse();
-        resultado.ErrorMessage.Should().Contain("Prefijo no puede estar vacío");
+        resultado.IsSuccess().Should().BeFalse();
+        resultado.ErrorMessage().Should().Contain("Prefijo no puede estar vacío");
     }
 
     #endregion
@@ -206,7 +206,7 @@ public class GeneradorNumeroComandaServiceTests
             sucursalId, fecha, tipoComanda, canalOrden, numeroMesa, secuencial);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         var formato = resultado.Value;
         formato.Should().Contain(sucursalId.ToString("N")[..8]); // Primeros 8 caracteres del GUID
         formato.Should().Contain("20240610"); // Fecha
@@ -231,7 +231,7 @@ public class GeneradorNumeroComandaServiceTests
             sucursalId, fecha, tipoComanda, canalOrden, null, secuencial);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         resultado.Value.Should().NotContain("000"); // No debería tener número de mesa
         resultado.Value.Should().Contain("TKW");
         resultado.Value.Should().Contain("M");
@@ -251,7 +251,7 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.ValidarNumeroComandaAsync(numeroComanda);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         resultado.Value.Should().BeTrue();
     }
 
@@ -267,7 +267,7 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.ValidarNumeroComandaAsync(numeroInvalido);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         resultado.Value.Should().BeFalse();
     }
 
@@ -285,7 +285,7 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.ExtraerInformacionNumeroAsync(numeroComanda);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         var info = resultado.Value;
         info.Should().NotBeNull();
         info.SucursalId.Should().Be("ABCD1234");
@@ -306,7 +306,7 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.ExtraerInformacionNumeroAsync(numeroComanda);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         var info = resultado.Value;
         info.NumeroMesa.Should().BeNull();
         info.TipoComanda.Should().Be("TKW");
@@ -341,7 +341,7 @@ public class GeneradorNumeroComandaServiceTests
         var resultados = await Task.WhenAll(tareas);
 
         // Assert
-        resultados.Should().AllSatisfy(r => r.IsSuccess.Should().BeTrue());
+        resultados.Should().AllSatisfy(r => r.IsSuccess().Should().BeTrue());
         var numeros = resultados.Select(r => r.Value).ToList();
         numeros.Should().OnlyHaveUniqueItems("todos los números generados deben ser únicos");
     }
@@ -367,8 +367,8 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.GenerarNumeroAsync(sucursalId, fecha, tipoComanda, canalOrden);
 
         // Assert
-        resultado.IsSuccess.Should().BeFalse();
-        resultado.ErrorMessage.Should().Contain("Error generando número de comanda");
+        resultado.IsSuccess().Should().BeFalse();
+        resultado.ErrorMessage().Should().Contain("Error generando número de comanda");
         _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Error,
@@ -405,7 +405,7 @@ public class GeneradorNumeroComandaServiceTests
         var resultado = await _service.GenerarNumeroAsync(sucursalId, fecha, tipoComanda, canalOrden);
 
         // Assert
-        resultado.IsSuccess.Should().BeTrue();
+        resultado.IsSuccess().Should().BeTrue();
         resultado.Value.Should().EndWith(esperado);
     }
 

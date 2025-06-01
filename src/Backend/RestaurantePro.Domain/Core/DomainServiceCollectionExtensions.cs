@@ -19,8 +19,8 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<IDomainEventHandler<DomainEvent>, CacheInvalidationEventHandler>();
             
             // Registrar servicios compartidos
-            // IDateTimeService se implementará en Infrastructure
-            // services.AddTransient<IDateTimeService, DateTimeService>();
+            // IDateTimeService para producción - se registra aquí como fallback
+            services.AddScoped<Core.Base.Services.IDateTimeService, Core.Base.Services.DateTimeService>();
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
             
             // Registrar servicios de caché con telemetría y TTL dinámico
@@ -204,8 +204,8 @@ namespace RestaurantePro.Domain.Core
             // Registrar manejador de eventos para invalidación automática de caché en pruebas
             services.AddScoped<IDomainEventHandler<DomainEvent>, CacheInvalidationEventHandler>();
             
-            // Usar directamente el MockDateTimeService de Core/SharedKernel/Services
-            // services.AddSingleton<IDateTimeService>(new MockDateTimeService(DateTime.Now));
+            // Usar MockDateTimeService para tests con fecha fija
+            services.AddSingleton<IDateTimeService>(new Base.Services.MockDateTimeService(new DateTime(2024, 1, 15, 10, 0, 0)));
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
             
             // Registrar servicios de caché con telemetría y TTL dinámico para pruebas

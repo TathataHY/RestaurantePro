@@ -8,7 +8,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
         private readonly Mock<RestaurantePro.Domain.Core.Productos.Interfaces.IProductoRepository> _productoRepositoryMock;
         private readonly Mock<RestaurantePro.Domain.Core.Productos.Interfaces.IRecetaRepository> _recetaRepositoryMock;
         private readonly Mock<RestaurantePro.Domain.Core.Productos.Services.IRecetaService> _recetaServiceMock;
-        private readonly Mock<RestaurantePro.Domain.Core.SharedKernel.Interfaces.IDateTimeService> _dateTimeServiceMock;
+        private readonly Mock<RestaurantePro.Domain.Core.Base.Services.IDateTimeService> _dateTimeServiceMock;
         private readonly NotificationManager _notificationManager;
         private readonly RestaurantePro.Domain.Core.Services.CoreOperacionesIntegrationService _sut;
         
@@ -17,7 +17,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             _productoRepositoryMock = new Mock<RestaurantePro.Domain.Core.Productos.Interfaces.IProductoRepository>();
             _recetaRepositoryMock = new Mock<RestaurantePro.Domain.Core.Productos.Interfaces.IRecetaRepository>();
             _recetaServiceMock = new Mock<RestaurantePro.Domain.Core.Productos.Services.IRecetaService>();
-            _dateTimeServiceMock = new Mock<RestaurantePro.Domain.Core.SharedKernel.Interfaces.IDateTimeService>();
+            _dateTimeServiceMock = new Mock<RestaurantePro.Domain.Core.Base.Services.IDateTimeService>();
             _notificationManager = new NotificationManager();
             
             _sut = new RestaurantePro.Domain.Core.Services.CoreOperacionesIntegrationService(
