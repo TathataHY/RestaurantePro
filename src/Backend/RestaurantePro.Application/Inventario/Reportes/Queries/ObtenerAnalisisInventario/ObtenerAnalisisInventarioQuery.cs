@@ -4,19 +4,52 @@ namespace RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnalisis
 /// 🎯 Query avanzada para análisis completo de inventario con alertas y predicciones
 /// Integra datos de múltiples contextos para análisis inteligente
 /// </summary>
-public class ObtenerAnalisisInventarioQuery : IRequest<Result<AnalisisInventarioResult>>
+public class ObtenerAnalisisInventarioQuery : IRequest<Result<AnalisisInventarioDto>>
 {
-    public DateTime FechaInicio { get; init; }
-    public DateTime FechaFin { get; init; }
-    public List<Guid>? IngredientesEspecificos { get; init; }
-    public List<string>? CategoriasEspecificas { get; init; }
-    public bool IncluirPrediccionesStock { get; init; } = true;
-    public bool IncluirAnalisisCostos { get; init; } = true;
-    public bool IncluirMovimientosDetallados { get; init; } = false;
-    public bool IncluirAlertasAvanzadas { get; init; } = true;
-    public bool IncluirRecomendacionesCompra { get; init; } = true;
-    public NivelAnalisisInventario NivelAnalisis { get; init; } = NivelAnalisisInventario.Completo;
-    public decimal? UmbralStockCritico { get; init; }
+    /// <summary>
+    /// Fecha de inicio del período de análisis
+    /// </summary>
+    public DateTime FechaInicio { get; set; }
+
+    /// <summary>
+    /// Fecha de fin del período de análisis
+    /// </summary>
+    public DateTime FechaFin { get; set; }
+
+    /// <summary>
+    /// ID de categoría específica (opcional)
+    /// </summary>
+    public Guid? CategoriaId { get; set; }
+
+    /// <summary>
+    /// Solo incluir ingredientes con alerta de stock
+    /// </summary>
+    public bool SoloAlertaStock { get; set; } = false;
+
+    /// <summary>
+    /// Solo incluir ingredientes críticos
+    /// </summary>
+    public bool SoloCriticos { get; set; } = false;
+
+    /// <summary>
+    /// Incluir análisis de tendencias
+    /// </summary>
+    public bool IncluirTendencias { get; set; } = true;
+
+    /// <summary>
+    /// Incluir recomendaciones automáticas
+    /// </summary>
+    public bool IncluirRecomendaciones { get; set; } = true;
+
+    /// <summary>
+    /// Nivel de detalle del análisis
+    /// </summary>
+    public string NivelDetalle { get; set; } = "Completo"; // Completo, Básico, Resumen
+
+    /// <summary>
+    /// ID del usuario que solicita el análisis
+    /// </summary>
+    public Guid UsuarioId { get; set; }
 
     /// <summary>
     /// Factory method para análisis diario estándar
