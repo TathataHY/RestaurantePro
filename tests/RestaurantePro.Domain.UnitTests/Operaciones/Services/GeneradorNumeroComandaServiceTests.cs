@@ -232,9 +232,14 @@ public class GeneradorNumeroComandaServiceTests
 
         // Assert
         resultado.IsSuccess().Should().BeTrue();
-        resultado.Value.Should().NotContain("000"); // No debería tener número de mesa
+        
+        // Verificar que el formato tenga 5 partes (sin mesa) en lugar de 6 (con mesa)
+        var partes = resultado.Value.Split('-');
+        partes.Should().HaveCount(5, "el formato sin mesa debe tener 5 partes: código-fecha-tipo-canal-secuencial");
+        
         resultado.Value.Should().Contain("TKW");
         resultado.Value.Should().Contain("M");
+        resultado.Value.Should().EndWith("0001");
     }
 
     #endregion

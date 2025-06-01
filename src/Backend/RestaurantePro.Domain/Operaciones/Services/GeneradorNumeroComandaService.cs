@@ -133,26 +133,16 @@ public class GeneradorNumeroComandaService : IGeneradorNumeroComandaService
                 return Result.Failure<InformacionComanda>("Número de comanda no puede estar vacío");
 
             var partes = numeroComanda.Split('-');
-            if (partes.Length < 2)
+            if (partes.Length < 5 || partes.Length > 6)
                 return Result.Failure<InformacionComanda>("Formato de número de comanda inválido");
 
             var informacion = new InformacionComanda();
 
-            // Extraer información de la primera parte
-            var partePrincipal = partes[0];
-            
-            // Verificar longitud mínima
-            if (partePrincipal.Length < 16) // código(8) + fecha(8) + tipo(3) + canal(1) = 20 mínimo sin mesa
-                return Result.Failure<InformacionComanda>("Formato de número de comanda inválido - longitud insuficiente");
+            // Extraer código de sucursal (primera parte)
+            informacion.SucursalId = partes[0];
 
-            var posicion = 0;
-            
-            // Extraer código de sucursal (primeros 8 caracteres)
-            informacion.SucursalId = partePrincipal.Substring(posicion, 8);
-            posicion += 8;
-
-            // Extraer fecha (siguiente 8 caracteres - YYYYMMDD)
-            var fechaStr = partePrincipal.Substring(posicion, 8);
+            // Extraer fecha (segunda parte - YYYYMMDD)
+            var fechaStr = partes[1];
             if (DateTime.TryParseExact(fechaStr, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out var fecha))
             {
                 informacion.Fecha = fecha;
@@ -161,33 +151,33 @@ public class GeneradorNumeroComandaService : IGeneradorNumeroComandaService
             {
                 return Result.Failure<InformacionComanda>("Formato de fecha inválido en número de comanda");
             }
-            posicion += 8;
 
-            // Extraer tipo de comanda (siguiente 3 caracteres)
-            informacion.TipoComanda = partePrincipal.Substring(posicion, 3);
-            posicion += 3;
+            // Extraer tipo de comanda (tercera parte)
+            informacion.TipoComanda = partes[2];
 
-            // El resto incluye número de mesa (opcional) y canal (último carácter)
-            var restoString = partePrincipal.Substring(posicion);
-            
-            // El último carácter es siempre el canal
-            if (restoString.Length >= 1)
+            // Determinar si tiene mesa o no según la cantidad de partes
+            if (partes.Length == 6)
             {
-                informacion.CanalOrden = restoString.Substring(restoString.Length - 1);
-                
-                // Si hay más caracteres antes del canal, es el número de mesa
-                var parteMesa = restoString.Substring(0, restoString.Length - 1);
-                if (!string.IsNullOrEmpty(parteMesa) && int.TryParse(parteMesa, out var numeroMesa))
+                // Formato: código-fecha-tipo-mesa-canal-secuencial
+                if (int.TryParse(partes[3], out var numeroMesa))
                 {
                     informacion.NumeroMesa = numeroMesa;
                 }
+                informacion.CanalOrden = partes[4];
+                if (int.TryParse(partes[5], out var secuencial))
+                {
+                    informacion.Secuencial = secuencial;
+                }
             }
-
-            // Extraer secuencial (última parte)
-            var ultimaParte = partes[^1];
-            if (int.TryParse(ultimaParte, out var secuencial))
+            else
             {
-                informacion.Secuencial = secuencial;
+                // Formato: código-fecha-tipo-canal-secuencial
+                informacion.NumeroMesa = null;
+                informacion.CanalOrden = partes[3];
+                if (int.TryParse(partes[4], out var secuencial))
+                {
+                    informacion.Secuencial = secuencial;
+                }
             }
 
             return Result.Success(informacion);
