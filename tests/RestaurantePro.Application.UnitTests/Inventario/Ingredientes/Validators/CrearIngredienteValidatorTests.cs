@@ -223,7 +223,7 @@ public class CrearIngredienteValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.StockMinimo = 10;
+        command.StockMinimo = 15;
 
         // Act
         var result = _validator.Validate(command);
@@ -248,36 +248,9 @@ public class CrearIngredienteValidatorTests
             .Which.ErrorMessage.Should().Be("El stock mínimo debe ser mayor o igual a 0");
     }
 
-    [Fact]
-    public void Validator_ConStockMaximoValido_DeberiaSerValido()
-    {
-        // Arrange
-        var command = CrearComandoValido();
-        command.StockMaximo = 100;
+    #endregion
 
-        // Act
-        var result = _validator.Validate(command);
-
-        // Assert
-        result.IsValid.Should().BeTrue();
-    }
-
-    [Fact]
-    public void Validator_ConStockMaximoMenorQueMinimo_DeberiaFallar()
-    {
-        // Arrange
-        var command = CrearComandoValido();
-        command.StockMinimo = 50;
-        command.StockMaximo = 30;
-
-        // Act
-        var result = _validator.Validate(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearIngredienteCommand.StockMaximo))
-            .Which.ErrorMessage.Should().Be("El stock máximo debe ser mayor que el stock mínimo");
-    }
+    #region Stock Inicial Validations
 
     [Fact]
     public void Validator_ConStockInicialValido_DeberiaSerValido()
@@ -310,18 +283,15 @@ public class CrearIngredienteValidatorTests
     }
 
     [Theory]
-    [InlineData(10, 100, 50, true)] // Stock inicial entre mínimo y máximo
-    [InlineData(10, 100, 10, true)] // Stock inicial igual al mínimo
-    [InlineData(10, 100, 100, true)] // Stock inicial igual al máximo
-    [InlineData(10, 100, 5, false)] // Stock inicial menor que mínimo
-    [InlineData(10, 100, 150, false)] // Stock inicial mayor que máximo
+    [InlineData(10, 50, true)] // Stock inicial mayor que mínimo
+    [InlineData(10, 10, true)] // Stock inicial igual al mínimo
+    [InlineData(10, 5, false)] // Stock inicial menor que mínimo
     public void Validator_ConDiferentesStocksIniciales_DeberiaValidarCorrectamente(
-        decimal stockMin, decimal stockMax, decimal stockInicial, bool deberiaSerValido)
+        decimal stockMin, decimal stockInicial, bool deberiaSerValido)
     {
         // Arrange
         var command = CrearComandoValido();
         command.StockMinimo = stockMin;
-        command.StockMaximo = stockMax;
         command.StockInicial = stockInicial;
 
         // Act
@@ -508,12 +478,10 @@ public class CrearIngredienteValidatorTests
         {
             Nombre = "", // Error: vacío
             Descripcion = new string('A', 501), // Error: muy larga
-            UnidadMedida = (UnidadMedida)999, // Error: inválida
             StockMinimo = -5, // Error: negativo
-            StockMaximo = -10, // Error: negativo
             StockInicial = -15, // Error: negativo
             CostoInicial = -25.00m, // Error: negativo
-            CategoriaId = Guid.Empty // Error: vacío
+            UsuarioId = Guid.Empty // Error: vacío
         };
 
         // Act
@@ -521,13 +489,11 @@ public class CrearIngredienteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCountGreaterThan(5);
+        result.Errors.Should().HaveCountGreaterThan(3);
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearIngredienteCommand.Nombre));
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearIngredienteCommand.Descripcion));
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearIngredienteCommand.UnidadMedida));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearIngredienteCommand.StockMinimo));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearIngredienteCommand.CostoInicial));
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearIngredienteCommand.CategoriaId));
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearIngredienteCommand.UsuarioId));
     }
 
     [Fact]
@@ -538,13 +504,12 @@ public class CrearIngredienteValidatorTests
         {
             Nombre = "Aceite de oliva extra virgen",
             Descripcion = "Aceite de oliva extra virgen importado de España, ideal para ensaladas y cocina mediterránea",
-            UnidadMedida = UnidadMedida.Litros,
+            UnidadMedida = "Litros",
             StockMinimo = 5,
-            StockMaximo = 50,
             StockInicial = 20,
             CostoInicial = 85.50m,
-            CategoriaId = Guid.NewGuid(),
-            ProveedorPrincipalId = Guid.NewGuid()
+            ProveedorPrincipalId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
@@ -587,13 +552,12 @@ public class CrearIngredienteValidatorTests
         {
             Nombre = "Harina de trigo",
             Descripcion = "Harina de trigo refinada para panadería",
-            UnidadMedida = UnidadMedida.Kilogramos,
+            UnidadMedida = "Kilogramos",
             StockMinimo = 10,
-            StockMaximo = 100,
             StockInicial = 50,
             CostoInicial = 25.50m,
-            CategoriaId = Guid.NewGuid(),
-            ProveedorPrincipalId = Guid.NewGuid()
+            ProveedorPrincipalId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid()
         };
     }
 

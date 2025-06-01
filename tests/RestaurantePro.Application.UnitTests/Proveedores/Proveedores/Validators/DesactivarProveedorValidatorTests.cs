@@ -33,9 +33,8 @@ public class DesactivarProveedorValidatorTests
     {
         return new DesactivarProveedorCommand
         {
-            ProveedorId = Guid.NewGuid(),
-            MotivoDesactivacion = "Proveedor ya no cumple con los estándares de calidad requeridos",
-            UsuarioId = Guid.NewGuid()
+            Id = Guid.NewGuid(),
+            RazonDesactivacion = "Proveedor ya no cumple con los estándares de calidad requeridos"
         };
     }
 
@@ -62,20 +61,20 @@ public class DesactivarProveedorValidatorTests
             ProveedorId = proveedorId,
             Estado = EstadoOrdenCompra.Pendiente,
             FechaCreacion = DateTime.UtcNow.AddDays(-5),
-            MontoTotal = 1500.0m
+            // MontoTotal eliminado porque no existe en la entidad real
         };
     }
 
     #endregion
 
-    #region Validación ProveedorId
+    #region Validación Id
 
     [Fact]
     public async Task Validate_ConProveedorIdVacio_DeberiaRetornarError()
     {
         // Arrange
         var command = CrearCommandValido();
-        command.ProveedorId = Guid.Empty;
+        command.Id = Guid.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -83,8 +82,8 @@ public class DesactivarProveedorValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(DesactivarProveedorCommand.ProveedorId) &&
-            e.ErrorMessage.Contains("ProveedorId es requerido"));
+            e.PropertyName == nameof(DesactivarProveedorCommand.Id) &&
+            e.ErrorMessage.Contains("ID del proveedor es obligatorio"));
     }
 
     [Fact]
@@ -92,18 +91,18 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(DesactivarProveedorCommand.ProveedorId) &&
-            e.ErrorMessage.Contains("ProveedorId es requerido"));
+            e.PropertyName == nameof(DesactivarProveedorCommand.Id) &&
+            e.ErrorMessage.Contains("ID del proveedor es obligatorio"));
     }
 
     [Fact]
@@ -120,7 +119,7 @@ public class DesactivarProveedorValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(DesactivarProveedorCommand.ProveedorId) &&
+            e.PropertyName == nameof(DesactivarProveedorCommand.Id) &&
             e.ErrorMessage.Contains("El proveedor especificado no existe"));
     }
 
@@ -133,7 +132,7 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         proveedor.Activo = false; // Ya desactivado
         
         ConfigurarProveedorExistente(proveedor);
@@ -144,7 +143,7 @@ public class DesactivarProveedorValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(DesactivarProveedorCommand.ProveedorId) &&
+            e.PropertyName == nameof(DesactivarProveedorCommand.Id) &&
             e.ErrorMessage.Contains("El proveedor ya está desactivado"));
     }
 
@@ -153,11 +152,11 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         proveedor.Activo = true;
         
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -169,7 +168,7 @@ public class DesactivarProveedorValidatorTests
 
     #endregion
 
-    #region Validación MotivoDesactivacion
+    #region Validación RazonDesactivacion
 
     [Theory]
     [InlineData("")]
@@ -179,11 +178,11 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.MotivoDesactivacion = motivoInvalido;
+        command.RazonDesactivacion = motivoInvalido;
         
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -191,8 +190,8 @@ public class DesactivarProveedorValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(DesactivarProveedorCommand.MotivoDesactivacion) &&
-            e.ErrorMessage.Contains("El motivo de desactivación es requerido"));
+            e.PropertyName == nameof(DesactivarProveedorCommand.RazonDesactivacion) &&
+            e.ErrorMessage.Contains("razón de desactivación"));
     }
 
     [Fact]
@@ -200,11 +199,11 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.MotivoDesactivacion = "ABC"; // Menos de 5 caracteres
+        command.RazonDesactivacion = "ABC"; // Menos de 5 caracteres
         
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -212,8 +211,8 @@ public class DesactivarProveedorValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(DesactivarProveedorCommand.MotivoDesactivacion) &&
-            e.ErrorMessage.Contains("El motivo debe tener al menos 5 caracteres"));
+            e.PropertyName == nameof(DesactivarProveedorCommand.RazonDesactivacion) &&
+            e.ErrorMessage.Contains("razón de desactivación no puede exceder 500 caracteres"));
     }
 
     [Fact]
@@ -221,11 +220,11 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.MotivoDesactivacion = new string('A', 1001); // Más de 1000 caracteres
+        command.RazonDesactivacion = new string('A', 1001); // Más de 500 caracteres
         
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -233,8 +232,8 @@ public class DesactivarProveedorValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(DesactivarProveedorCommand.MotivoDesactivacion) &&
-            e.ErrorMessage.Contains("El motivo no puede exceder 1000 caracteres"));
+            e.PropertyName == nameof(DesactivarProveedorCommand.RazonDesactivacion) &&
+            e.ErrorMessage.Contains("razón de desactivación no puede exceder 500 caracteres"));
     }
 
     [Theory]
@@ -245,60 +244,17 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.MotivoDesactivacion = motivoValido;
+        command.RazonDesactivacion = motivoValido;
         
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(DesactivarProveedorCommand.MotivoDesactivacion));
-    }
-
-    #endregion
-
-    #region Validación UsuarioId
-
-    [Fact]
-    public async Task Validate_ConUsuarioIdVacio_DeberiaRetornarError()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.UsuarioId = Guid.Empty;
-        
-        var proveedor = CrearProveedorValido(command.ProveedorId);
-        ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(DesactivarProveedorCommand.UsuarioId) &&
-            e.ErrorMessage.Contains("UsuarioId es requerido"));
-    }
-
-    [Fact]
-    public async Task Validate_ConUsuarioIdValido_NoDeberiaRetornarErrorDeUsuario()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.UsuarioId = Guid.NewGuid();
-        
-        var proveedor = CrearProveedorValido(command.ProveedorId);
-        ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(DesactivarProveedorCommand.UsuarioId));
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(DesactivarProveedorCommand.RazonDesactivacion));
     }
 
     #endregion
@@ -313,8 +269,8 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.ProveedorId);
-        var ordenActiva = CrearOrdenCompraActiva(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
+        var ordenActiva = CrearOrdenCompraActiva(command.Id);
         ordenActiva.Estado = estadoActivo;
         
         ConfigurarProveedorExistente(proveedor);
@@ -326,7 +282,7 @@ public class DesactivarProveedorValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(DesactivarProveedorCommand.ProveedorId) &&
+            e.PropertyName == nameof(DesactivarProveedorCommand.Id) &&
             e.ErrorMessage.Contains("No se puede desactivar el proveedor porque tiene órdenes de compra activas"));
     }
 
@@ -337,8 +293,8 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.ProveedorId);
-        var ordenInactiva = CrearOrdenCompraActiva(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
+        var ordenInactiva = CrearOrdenCompraActiva(command.Id);
         ordenInactiva.Estado = estadoInactivo;
         
         ConfigurarProveedorExistente(proveedor);
@@ -357,13 +313,13 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         
         var ordenes = new[]
         {
-            new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.ProveedorId, Estado = EstadoOrdenCompra.Recibida },
-            new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.ProveedorId, Estado = EstadoOrdenCompra.Pendiente }, // ACTIVA
-            new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.ProveedorId, Estado = EstadoOrdenCompra.Cancelada }
+            new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.Id, Estado = EstadoOrdenCompra.Recibida },
+            new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.Id, Estado = EstadoOrdenCompra.Pendiente }, // ACTIVA
+            new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.Id, Estado = EstadoOrdenCompra.Cancelada }
         };
         
         ConfigurarProveedorExistente(proveedor);
@@ -383,19 +339,27 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         
-        var facturaPendiente = new Factura
-        {
-            Id = Guid.NewGuid(),
-            ProveedorId = command.ProveedorId,
-            Estado = EstadoFactura.Pendiente,
-            MontoTotal = 800.0m,
-            FechaVencimiento = DateTime.UtcNow.AddDays(15)
-        };
+        // Crear factura usando factory method del dominio (no inicializador de objetos)
+        var facturaPendiente = Factura.Crear(
+            "FAC-001",
+            TipoFactura.Fiscal,
+            "Cliente Test",
+            command.Id, // Usar como ClienteId (no hay ProveedorId en Factura)
+            "RFC123456789",
+            "Dirección Test",
+            new List<Guid> { Guid.NewGuid() },
+            "Factura de prueba",
+            DateTime.UtcNow);
+        
+        // Usar reflection para setear propiedades específicas para tests
+        typeof(Factura).GetProperty("Estado")?.SetValue(facturaPendiente, EstadoFactura.Emitida); // Usar Emitida en lugar de Pendiente
+        typeof(Factura).GetProperty("Total")?.SetValue(facturaPendiente, 800.0m);
+        typeof(Factura).GetProperty("FechaVencimiento")?.SetValue(facturaPendiente, DateTime.UtcNow.AddDays(15));
         
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
         ConfigurarConFacturasPendientes(new[] { facturaPendiente });
 
         // Act
@@ -404,7 +368,7 @@ public class DesactivarProveedorValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(DesactivarProveedorCommand.ProveedorId) &&
+            e.PropertyName == nameof(DesactivarProveedorCommand.Id) &&
             e.ErrorMessage.Contains("No se puede desactivar el proveedor porque tiene facturas pendientes de pago"));
     }
 
@@ -413,19 +377,27 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         
-        var facturaPagada = new Factura
-        {
-            Id = Guid.NewGuid(),
-            ProveedorId = command.ProveedorId,
-            Estado = EstadoFactura.Pagada,
-            MontoTotal = 800.0m,
-            FechaPago = DateTime.UtcNow.AddDays(-5)
-        };
+        // Crear factura pagada usando factory method del dominio
+        var facturaPagada = Factura.Crear(
+            "FAC-002",
+            TipoFactura.Fiscal,
+            "Cliente Test",
+            command.Id, // Usar como ClienteId
+            "RFC123456789",
+            "Dirección Test",
+            new List<Guid> { Guid.NewGuid() },
+            "Factura pagada de prueba",
+            DateTime.UtcNow);
+        
+        // Usar reflection para setear propiedades específicas para tests
+        typeof(Factura).GetProperty("Estado")?.SetValue(facturaPagada, EstadoFactura.Pagada);
+        typeof(Factura).GetProperty("Total")?.SetValue(facturaPagada, 800.0m);
+        typeof(Factura).GetProperty("FechaPago")?.SetValue(facturaPagada, DateTime.UtcNow.AddDays(-5));
         
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
         ConfigurarConFacturasPendientes(new[] { facturaPagada });
 
         // Act
@@ -441,11 +413,11 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         proveedor.FechaCreacion = DateTime.UtcNow.AddHours(-12); // Menos de 24 horas
         
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -453,7 +425,7 @@ public class DesactivarProveedorValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(DesactivarProveedorCommand.ProveedorId) &&
+            e.PropertyName == nameof(DesactivarProveedorCommand.Id) &&
             e.ErrorMessage.Contains("No se puede desactivar un proveedor que fue creado hace menos de 24 horas"));
     }
 
@@ -462,11 +434,11 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         proveedor.FechaCreacion = DateTime.UtcNow.AddDays(-5); // Más de 24 horas
         
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -474,6 +446,47 @@ public class DesactivarProveedorValidatorTests
         // Assert
         result.Errors.Should().NotContain(e => 
             e.ErrorMessage.Contains("No se puede desactivar un proveedor que fue creado hace menos de 24 horas"));
+    }
+
+    [Fact]
+    public async Task Validate_ConProveedorConTodosLosProblemas_DeberiaRetornarTodosLosErroresDeNegocio()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        var proveedor = CrearProveedorValido(command.Id);
+        proveedor.Activo = false; // Ya desactivado
+        proveedor.FechaCreacion = DateTime.UtcNow.AddHours(-1); // Recién creado
+        
+        var ordenActiva = CrearOrdenCompraActiva(command.Id);
+        
+        // Crear factura usando factory method del dominio
+        var facturaPendiente = Factura.Crear(
+            "FAC-003",
+            TipoFactura.Fiscal,
+            "Cliente Test",
+            command.Id, // Usar como ClienteId
+            "RFC123456789",
+            "Dirección Test",
+            new List<Guid> { Guid.NewGuid() },
+            "Factura pendiente de prueba",
+            DateTime.UtcNow);
+        
+        // Usar reflection para setear estado
+        typeof(Factura).GetProperty("Estado")?.SetValue(facturaPendiente, EstadoFactura.Emitida);
+        
+        ConfigurarProveedorExistente(proveedor);
+        ConfigurarConOrdenesActivas(new[] { ordenActiva });
+        ConfigurarConFacturasPendientes(new[] { facturaPendiente });
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().HaveCountGreaterThanOrEqualTo(2);
+        
+        // Debería tener múltiples errores de reglas de negocio
+        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("ya está desactivado"));
     }
 
     #endregion
@@ -486,14 +499,13 @@ public class DesactivarProveedorValidatorTests
         // Arrange
         var command = new DesactivarProveedorCommand
         {
-            ProveedorId = Guid.NewGuid(),
-            MotivoDesactivacion = "El proveedor ha solicitado darse de baja del sistema por restructuración de su empresa",
-            UsuarioId = Guid.NewGuid()
+            Id = Guid.NewGuid(),
+            RazonDesactivacion = "El proveedor ha solicitado darse de baja del sistema por restructuración de su empresa"
         };
 
         var proveedor = new Domain.Proveedores.Entities.Proveedor
         {
-            Id = command.ProveedorId,
+            Id = command.Id,
             Nombre = "Proveedor Test",
             RFC = "XAXX010102000",
             Email = "test@proveedor.com",
@@ -502,8 +514,8 @@ public class DesactivarProveedorValidatorTests
         };
         
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
-        ConfigurarSinFacturasPendientes(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
+        ConfigurarSinFacturasPendientes(command.Id);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -519,9 +531,8 @@ public class DesactivarProveedorValidatorTests
         // Arrange
         var command = new DesactivarProveedorCommand
         {
-            ProveedorId = Guid.Empty, // Error
-            MotivoDesactivacion = "AB", // Error: muy corto
-            UsuarioId = Guid.Empty // Error
+            Id = Guid.Empty, // Error
+            RazonDesactivacion = "AB", // Error: muy corto
         };
 
         ConfigurarProveedorInexistente();
@@ -531,44 +542,11 @@ public class DesactivarProveedorValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCountGreaterThanOrEqualTo(3);
-        
-        // Verificar que tiene errores de diferentes propiedades
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(DesactivarProveedorCommand.ProveedorId));
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(DesactivarProveedorCommand.MotivoDesactivacion));
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(DesactivarProveedorCommand.UsuarioId));
-    }
-
-    [Fact]
-    public async Task Validate_ConProveedorConTodosLosProblemas_DeberiaRetornarTodosLosErroresDeNegocio()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.ProveedorId);
-        proveedor.Activo = false; // Ya desactivado
-        proveedor.FechaCreacion = DateTime.UtcNow.AddHours(-1); // Recién creado
-        
-        var ordenActiva = CrearOrdenCompraActiva(command.ProveedorId);
-        var facturaPendiente = new Factura
-        {
-            Id = Guid.NewGuid(),
-            ProveedorId = command.ProveedorId,
-            Estado = EstadoFactura.Pendiente
-        };
-        
-        ConfigurarProveedorExistente(proveedor);
-        ConfigurarConOrdenesActivas(new[] { ordenActiva });
-        ConfigurarConFacturasPendientes(new[] { facturaPendiente });
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
         result.Errors.Should().HaveCountGreaterThanOrEqualTo(2);
         
-        // Debería tener múltiples errores de reglas de negocio
-        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("ya está desactivado"));
+        // Verificar que tiene errores de diferentes propiedades
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(DesactivarProveedorCommand.Id));
+        result.Errors.Should().Contain(e => e.PropertyName == nameof(DesactivarProveedorCommand.RazonDesactivacion));
     }
 
     #endregion

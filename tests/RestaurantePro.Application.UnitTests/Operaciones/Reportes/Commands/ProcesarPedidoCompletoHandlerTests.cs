@@ -712,15 +712,23 @@ public class ProcesarPedidoCompletoHandlerTests
         return new ProcesarPedidoCompletoDto
         {
             ComandaId = comandaId,
-            PagoExitoso = pagoExitoso,
-            TransaccionPagoId = pagoExitoso ? "12345" : null,
-            FacturaGenerada = true,
-            FacturaNumero = "FAC-001",
-            PuntosFidelizacionAcumulados = true,
-            PuntosAcumulados = 15,
-            MesaLiberada = true,
-            TiempoProcesamientoMs = 1250,
-            FechaProcesamiento = DateTime.UtcNow
+            FechaProcesamiento = DateTime.UtcNow,
+            TiempoProcesamiento = TimeSpan.FromMilliseconds(1250),
+            ProcesamientoExitoso = true,
+            Pago = pagoExitoso ? new PagoProcesadoDto
+            {
+                PagoId = Guid.NewGuid(),
+                EstadoPago = "Aprobado",
+                TipoPago = "Tarjeta",
+                MontoPago = 150.00m
+            } : null,
+            Factura = new FacturaProcesadaDto
+            {
+                FacturaId = Guid.NewGuid(),
+                NumeroFactura = "FAC-001",
+                MontoTotal = 150.00m,
+                EstadoFactura = "Emitida"
+            }
         };
     }
 

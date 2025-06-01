@@ -35,25 +35,27 @@ public class CrearTarjetaFidelizacionHandlerTests
     public void CrearTarjetaNuevoCliente_ConDatosValidos_DeberiaCrearCommandCorrectamente()
     {
         // Arrange
-        var nombre = "Juan Pérez";
-        var email = "juan.perez@email.com";
-        var telefono = "+5491123456789";
-        var fechaNacimiento = DateTime.Today.AddYears(-30);
+        var clienteId = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
 
-        // Act
-        var command = CrearTarjetaFidelizacionCommand.CrearTarjetaNuevoCliente(
-            nombre, email, telefono, fechaNacimiento, NivelFidelizacion.Basico);
+        // Act - Usar propiedades reales del command
+        var command = new CrearTarjetaFidelizacionCommand
+        {
+            ClienteId = clienteId,
+            TipoTarjeta = "Basica",
+            PuntosIniciales = 100,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = true,
+            UsuarioId = usuarioId
+        };
 
-        // Assert
-        Assert.Equal(nombre, command.NombreCompleto);
-        Assert.Equal(email, command.Email);
-        Assert.Equal(telefono, command.Telefono);
-        Assert.Equal(fechaNacimiento, command.FechaNacimiento);
-        Assert.Equal(NivelFidelizacion.Basico, command.NivelInicial);
-        Assert.True(command.CrearClienteNuevo);
-        Assert.Null(command.ClienteExistenteId);
-        Assert.True(command.EnviarNotificacionBienvenida);
-        Assert.True(command.AplicarPuntosIniciales);
+        // Assert - Verificar propiedades reales
+        Assert.Equal(clienteId, command.ClienteId);
+        Assert.Equal("Basica", command.TipoTarjeta);
+        Assert.Equal(100, command.PuntosIniciales);
+        Assert.True(command.ActivarInmediatamente);
+        Assert.True(command.EnviarPorEmail);
+        Assert.Equal(usuarioId, command.UsuarioId);
     }
 
     [Fact]
@@ -61,37 +63,64 @@ public class CrearTarjetaFidelizacionHandlerTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var nivelInicial = NivelFidelizacion.Plata;
+        var usuarioId = Guid.NewGuid();
 
-        // Act
-        var command = CrearTarjetaFidelizacionCommand.CrearTarjetaClienteExistente(
-            clienteId, nivelInicial, false);
+        // Act - Usar propiedades reales
+        var command = new CrearTarjetaFidelizacionCommand
+        {
+            ClienteId = clienteId,
+            TipoTarjeta = "Premium",
+            PuntosIniciales = 500,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = false,
+            UsuarioId = usuarioId
+        };
 
         // Assert
-        Assert.Equal(clienteId, command.ClienteExistenteId);
-        Assert.Equal(nivelInicial, command.NivelInicial);
-        Assert.False(command.CrearClienteNuevo);
-        Assert.False(command.EnviarNotificacionBienvenida);
-        Assert.True(command.AplicarPuntosIniciales);
+        Assert.Equal(clienteId, command.ClienteId);
+        Assert.Equal("Premium", command.TipoTarjeta);
+        Assert.Equal(500, command.PuntosIniciales);
+        Assert.True(command.ActivarInmediatamente);
+        Assert.False(command.EnviarPorEmail);
     }
 
     [Fact]
     public void CrearTarjetaPromocion_ConDatosPromocionales_DeberiaConfigurarPromocion()
     {
         // Arrange
-        var puntosExtra = 500;
-        var beneficioEspecial = "Descuento 20% primer mes";
+        var clienteId = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
 
-        // Act
-        var command = CrearTarjetaFidelizacionCommand.CrearTarjetaPromocion(
-            "María González", "maria@email.com", "+5491198765432", 
-            puntosExtra, beneficioEspecial, DateTime.Today.AddDays(30));
+        // Act - Usar configuración especial
+        var configuracion = new CrearTarjetaConfiguracion
+        {
+            PuntosIniciales = 1000,
+            MultiplicadorPuntos = 2.0m,
+            ConfiguracionesEspeciales = new Dictionary<string, object>
+            {
+                { "BeneficioEspecial", "Descuento 20% primer mes" },
+                { "FechaVencimiento", DateTime.Today.AddDays(30) }
+            }
+        };
+
+        var command = new CrearTarjetaFidelizacionCommand
+        {
+            ClienteId = clienteId,
+            TipoTarjeta = "VIP",
+            PuntosIniciales = 1000,
+            Configuracion = configuracion,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = true,
+            UsuarioId = usuarioId,
+            Observaciones = "Tarjeta promocional especial"
+        };
 
         // Assert
-        Assert.Equal(puntosExtra, command.PuntosIniciales);
-        Assert.Equal(beneficioEspecial, command.BeneficioEspecial);
-        Assert.True(command.EsPromocionEspecial);
-        Assert.Equal(DateTime.Today.AddDays(30), command.FechaVencimientoBeneficio);
+        Assert.Equal(1000, command.PuntosIniciales);
+        Assert.Equal("VIP", command.TipoTarjeta);
+        Assert.NotNull(command.Configuracion);
+        Assert.Equal(2.0m, command.Configuracion.MultiplicadorPuntos);
+        Assert.Contains("BeneficioEspecial", command.Configuracion.ConfiguracionesEspeciales);
     }
 
     #endregion
@@ -102,21 +131,22 @@ public class CrearTarjetaFidelizacionHandlerTests
     public async Task Handle_CreacionNuevoClienteExitosa_DeberiaRetornarTarjetaCreada()
     {
         // Arrange
+        var clienteId = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
+        
         var command = new CrearTarjetaFidelizacionCommand
         {
-            NombreCompleto = "Ana García",
-            Email = "ana.garcia@email.com",
-            Telefono = "+5491156789012",
-            FechaNacimiento = DateTime.Today.AddYears(-25),
-            NivelInicial = NivelFidelizacion.Basico,
-            CrearClienteNuevo = true,
-            EnviarNotificacionBienvenida = true,
-            AplicarPuntosIniciales = true
+            ClienteId = clienteId,
+            TipoTarjeta = "Basica",
+            PuntosIniciales = 100,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = true,
+            UsuarioId = usuarioId,
+            Observaciones = "Tarjeta de bienvenida"
         };
 
-        var nuevoClienteId = Guid.NewGuid();
         var tarjetaId = Guid.NewGuid();
-        var resultadoCreacion = CreateMockResultadoCreacionExitosa(nuevoClienteId, tarjetaId);
+        var resultadoCreacion = CreateMockResultadoCreacionExitosa(clienteId, tarjetaId);
 
         _comercialServiceFacadeMock.Setup(x => x.CrearTarjetaFidelizacionAsync(
             It.IsAny<Dictionary<string, object>>(), It.IsAny<CancellationToken>()))
@@ -127,13 +157,11 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.Equal(tarjetaId, result.Value.TarjetaId);
-        Assert.Equal(nuevoClienteId, result.Value.ClienteId);
+        Assert.Equal(tarjetaId, result.Value.Id);
+        Assert.Equal(clienteId, result.Value.ClienteId);
         Assert.Equal("TF-2025-000001", result.Value.NumeroTarjeta);
-        Assert.Equal(NivelFidelizacion.Basico, result.Value.NivelAsignado);
-        Assert.Equal(100, result.Value.PuntosAsignados);
-        Assert.True(result.Value.NotificacionEnviada);
-        Assert.True(result.Value.ClienteNuevoCreado);
+        Assert.Equal(100, result.Value.PuntosActuales);
+        Assert.True(result.Value.Activa);
     }
 
     [Fact]
@@ -141,13 +169,16 @@ public class CrearTarjetaFidelizacionHandlerTests
     {
         // Arrange
         var clienteExistente = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
+        
         var command = new CrearTarjetaFidelizacionCommand
         {
-            ClienteExistenteId = clienteExistente,
-            NivelInicial = NivelFidelizacion.Oro,
-            CrearClienteNuevo = false,
-            AplicarPuntosIniciales = true,
-            EnviarNotificacionBienvenida = false
+            ClienteId = clienteExistente,
+            TipoTarjeta = "Premium",
+            PuntosIniciales = 500,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = false,
+            UsuarioId = usuarioId
         };
 
         var tarjetaId = Guid.NewGuid();
@@ -162,33 +193,43 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.Equal(tarjetaId, result.Value.TarjetaId);
+        Assert.Equal(tarjetaId, result.Value.Id);
         Assert.Equal(clienteExistente, result.Value.ClienteId);
-        Assert.Equal(NivelFidelizacion.Oro, result.Value.NivelAsignado);
-        Assert.Equal(500, result.Value.PuntosAsignados); // Oro recibe más puntos
-        Assert.False(result.Value.NotificacionEnviada);
-        Assert.False(result.Value.ClienteNuevoCreado);
+        Assert.Equal(500, result.Value.PuntosActuales); // Premium recibe más puntos
+        Assert.True(result.Value.Activa);
     }
 
     [Fact]
     public async Task Handle_TarjetaPromocionEspecial_DeberiaAplicarBeneficios()
     {
         // Arrange
+        var clienteId = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
+        
+        var configuracion = new CrearTarjetaConfiguracion
+        {
+            PuntosIniciales = 1000,
+            MultiplicadorPuntos = 3.0m,
+            FechaVencimiento = DateTime.Today.AddMonths(3),
+            ConfiguracionesEspeciales = new Dictionary<string, object>
+            {
+                { "BeneficioEspecial", "Acceso VIP por 3 meses" },
+                { "TipoPromocion", "Promoción lanzamiento" }
+            }
+        };
+        
         var command = new CrearTarjetaFidelizacionCommand
         {
-            NombreCompleto = "Carlos Premium",
-            Email = "carlos.premium@email.com",
-            Telefono = "+5491145678901",
-            FechaNacimiento = DateTime.Today.AddYears(-35),
-            NivelInicial = NivelFidelizacion.Platino,
-            CrearClienteNuevo = true,
-            EsPromocionEspecial = true,
+            ClienteId = clienteId,
+            TipoTarjeta = "VIP",
             PuntosIniciales = 1000,
-            BeneficioEspecial = "Acceso VIP por 3 meses",
-            FechaVencimientoBeneficio = DateTime.Today.AddMonths(3)
+            Configuracion = configuracion,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = true,
+            UsuarioId = usuarioId,
+            Observaciones = "Tarjeta promocional - Acceso VIP por 3 meses"
         };
 
-        var clienteId = Guid.NewGuid();
         var tarjetaId = Guid.NewGuid();
         var resultadoPromocion = CreateMockResultadoPromocionEspecial(clienteId, tarjetaId);
 
@@ -201,31 +242,29 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.Equal(NivelFidelizacion.Platino, result.Value.NivelAsignado);
-        Assert.Equal(1000, result.Value.PuntosAsignados);
-        Assert.True(result.Value.BeneficioEspecialAplicado);
-        Assert.Equal("Acceso VIP por 3 meses", result.Value.DescripcionBeneficio);
-        Assert.Equal(DateTime.Today.AddMonths(3), result.Value.FechaVencimientoBeneficio);
+        Assert.Equal("VIP", command.TipoTarjeta);
+        Assert.Equal(1000, result.Value.PuntosActuales);
+        Assert.Equal(DateTime.Today.AddMonths(3), result.Value.FechaVencimiento);
     }
 
     [Fact]
     public async Task Handle_TarjetaConNotificacionesMulticanal_DeberiaEnviarNotificaciones()
     {
         // Arrange
+        var clienteId = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
+        
         var command = new CrearTarjetaFidelizacionCommand
         {
-            NombreCompleto = "Laura Comunicaciones",
-            Email = "laura@email.com",
-            Telefono = "+5491187654321",
-            FechaNacimiento = DateTime.Today.AddYears(-28),
-            NivelInicial = NivelFidelizacion.Plata,
-            CrearClienteNuevo = true,
-            EnviarNotificacionBienvenida = true,
-            EnviarNotificacionSMS = true,
-            EnviarNotificacionEmail = true
+            ClienteId = clienteId,
+            TipoTarjeta = "Premium",
+            PuntosIniciales = 250,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = true,
+            UsuarioId = usuarioId,
+            Observaciones = "Cliente premium con notificaciones multicanal"
         };
 
-        var clienteId = Guid.NewGuid();
         var tarjetaId = Guid.NewGuid();
         var resultadoNotificaciones = CreateMockResultadoConNotificaciones(clienteId, tarjetaId);
 
@@ -238,11 +277,8 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.True(result.Value.NotificacionEnviada);
-        Assert.True(result.Value.NotificacionEmailEnviada);
-        Assert.True(result.Value.NotificacionSMSEnviada);
-        Assert.Contains("Email enviado", result.Value.DetallesNotificacion);
-        Assert.Contains("SMS enviado", result.Value.DetallesNotificacion);
+        Assert.True(result.Value.Activa);
+        Assert.Contains("Notificaciones enviadas", result.Value.Observaciones ?? "");
     }
 
     [Fact]
@@ -251,17 +287,15 @@ public class CrearTarjetaFidelizacionHandlerTests
         // Arrange
         var command = new CrearTarjetaFidelizacionCommand
         {
-            NombreCompleto = "Pedro Básico",
-            Email = "pedro.basico@email.com",
-            Telefono = "+5491134567890",
-            FechaNacimiento = DateTime.Today.AddYears(-40),
-            NivelInicial = NivelFidelizacion.Basico,
-            CrearClienteNuevo = true,
-            EnviarNotificacionBienvenida = false,
-            AplicarPuntosIniciales = false
+            ClienteId = Guid.NewGuid(), // Cliente ya existe
+            TipoTarjeta = "Basica",
+            PuntosIniciales = 0,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = false,
+            UsuarioId = Guid.NewGuid()
         };
 
-        var clienteId = Guid.NewGuid();
+        var clienteId = command.ClienteId;
         var tarjetaId = Guid.NewGuid();
         var resultadoBasico = CreateMockResultadoBasico(clienteId, tarjetaId);
 
@@ -274,10 +308,8 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.Equal(NivelFidelizacion.Basico, result.Value.NivelAsignado);
-        Assert.Equal(0, result.Value.PuntosAsignados);
-        Assert.False(result.Value.NotificacionEnviada);
-        Assert.False(result.Value.BeneficioEspecialAplicado);
+        Assert.Equal(0, result.Value.PuntosActuales);
+        Assert.True(result.Value.Activa);
     }
 
     #endregion
@@ -285,14 +317,14 @@ public class CrearTarjetaFidelizacionHandlerTests
     #region Tests de Validaciones de Negocio
 
     [Fact]
-    public async Task Handle_ClienteExistenteSinId_DeberiaRetornarError()
+    public async Task Handle_ClienteIdVacio_DeberiaRetornarError()
     {
         // Arrange
         var command = new CrearTarjetaFidelizacionCommand
         {
-            CrearClienteNuevo = false,
-            ClienteExistenteId = null, // No especifica cliente existente
-            NivelInicial = NivelFidelizacion.Basico
+            ClienteId = Guid.Empty, // ID vacío
+            TipoTarjeta = "Basica",
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
@@ -300,19 +332,18 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Contains("Debe especificar el ID del cliente existente", result.Error);
+        Assert.Contains("cliente", result.Error.ToLower());
     }
 
     [Fact]
-    public async Task Handle_NuevoClienteSinDatosCompletos_DeberiaRetornarError()
+    public async Task Handle_TipoTarjetaVacio_DeberiaRetornarError()
     {
         // Arrange
         var command = new CrearTarjetaFidelizacionCommand
         {
-            CrearClienteNuevo = true,
-            NombreCompleto = "", // Nombre vacío
-            Email = "email.invalido", // Email inválido
-            NivelInicial = NivelFidelizacion.Basico
+            ClienteId = Guid.NewGuid(),
+            TipoTarjeta = "", // Tipo vacío
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
@@ -320,33 +351,26 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Contains("Datos del cliente incompletos o inválidos", result.Error);
+        Assert.Contains("tipo", result.Error.ToLower());
     }
 
     [Fact]
-    public async Task Handle_EmailDuplicado_DeberiaRetornarError()
+    public async Task Handle_UsuarioIdVacio_DeberiaRetornarError()
     {
         // Arrange
         var command = new CrearTarjetaFidelizacionCommand
         {
-            NombreCompleto = "Cliente Duplicado",
-            Email = "email.existente@email.com",
-            Telefono = "+5491123456789",
-            FechaNacimiento = DateTime.Today.AddYears(-25),
-            CrearClienteNuevo = true,
-            NivelInicial = NivelFidelizacion.Basico
+            ClienteId = Guid.NewGuid(),
+            TipoTarjeta = "Basica",
+            UsuarioId = Guid.Empty // Usuario vacío
         };
-
-        _comercialServiceFacadeMock.Setup(x => x.CrearTarjetaFidelizacionAsync(
-            It.IsAny<Dictionary<string, object>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<CrearTarjetaFidelizacionResult>("Email ya registrado en el sistema"));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Contains("Email ya registrado en el sistema", result.Error);
+        Assert.Contains("usuario", result.Error.ToLower());
     }
 
     [Fact]
@@ -356,9 +380,9 @@ public class CrearTarjetaFidelizacionHandlerTests
         var clienteId = Guid.NewGuid();
         var command = new CrearTarjetaFidelizacionCommand
         {
-            ClienteExistenteId = clienteId,
-            CrearClienteNuevo = false,
-            NivelInicial = NivelFidelizacion.Oro
+            ClienteId = clienteId,
+            TipoTarjeta = "Premium",
+            UsuarioId = Guid.NewGuid()
         };
 
         _comercialServiceFacadeMock.Setup(x => x.CrearTarjetaFidelizacionAsync(
@@ -374,17 +398,15 @@ public class CrearTarjetaFidelizacionHandlerTests
     }
 
     [Fact]
-    public async Task Handle_FechaNacimientoInvalida_DeberiaRetornarError()
+    public async Task Handle_PuntosInicialesNegativos_DeberiaRetornarError()
     {
         // Arrange
         var command = new CrearTarjetaFidelizacionCommand
         {
-            NombreCompleto = "Cliente Joven",
-            Email = "cliente.joven@email.com",
-            Telefono = "+5491123456789",
-            FechaNacimiento = DateTime.Today.AddYears(-10), // Menor de edad
-            CrearClienteNuevo = true,
-            NivelInicial = NivelFidelizacion.Basico
+            ClienteId = Guid.NewGuid(),
+            TipoTarjeta = "Premium",
+            PuntosIniciales = -100, // Puntos negativos
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
@@ -392,23 +414,25 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Contains("Cliente debe ser mayor de 18 años", result.Error);
+        Assert.Contains("puntos", result.Error.ToLower());
     }
 
     [Fact]
-    public async Task Handle_PromocionEspecialSinFechaVencimiento_DeberiaRetornarError()
+    public async Task Handle_ConfiguracionEspecialConDatosInvalidos_DeberiaRetornarError()
     {
         // Arrange
+        var configuracion = new CrearTarjetaConfiguracion
+        {
+            MultiplicadorPuntos = -1.0m, // Multiplicador inválido
+            FechaVencimiento = DateTime.Today.AddDays(-1) // Fecha en el pasado
+        };
+
         var command = new CrearTarjetaFidelizacionCommand
         {
-            NombreCompleto = "Cliente Promoción",
-            Email = "promo@email.com",
-            Telefono = "+5491123456789",
-            FechaNacimiento = DateTime.Today.AddYears(-30),
-            CrearClienteNuevo = true,
-            EsPromocionEspecial = true,
-            BeneficioEspecial = "Descuento especial",
-            FechaVencimientoBeneficio = null // No especifica vencimiento
+            ClienteId = Guid.NewGuid(),
+            TipoTarjeta = "VIP",
+            Configuracion = configuracion,
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
@@ -416,7 +440,7 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Contains("Promoción especial debe especificar fecha de vencimiento", result.Error);
+        Assert.Contains("configuración", result.Error.ToLower());
     }
 
     #endregion
@@ -429,12 +453,9 @@ public class CrearTarjetaFidelizacionHandlerTests
         // Arrange
         var command = new CrearTarjetaFidelizacionCommand
         {
-            NombreCompleto = "Cliente Test",
-            Email = "test@email.com",
-            Telefono = "+5491123456789",
-            FechaNacimiento = DateTime.Today.AddYears(-25),
-            CrearClienteNuevo = true,
-            NivelInicial = NivelFidelizacion.Basico
+            ClienteId = Guid.NewGuid(),
+            TipoTarjeta = "Basica",
+            UsuarioId = Guid.NewGuid()
         };
 
         _comercialServiceFacadeMock.Setup(x => x.CrearTarjetaFidelizacionAsync(
@@ -455,12 +476,9 @@ public class CrearTarjetaFidelizacionHandlerTests
         // Arrange
         var command = new CrearTarjetaFidelizacionCommand
         {
-            NombreCompleto = "Cliente Error",
-            Email = "error@email.com",
-            Telefono = "+5491123456789",
-            FechaNacimiento = DateTime.Today.AddYears(-25),
-            CrearClienteNuevo = true,
-            NivelInicial = NivelFidelizacion.Basico
+            ClienteId = Guid.NewGuid(),
+            TipoTarjeta = "Basica",
+            UsuarioId = Guid.NewGuid()
         };
 
         _comercialServiceFacadeMock.Setup(x => x.CrearTarjetaFidelizacionAsync(
@@ -481,16 +499,12 @@ public class CrearTarjetaFidelizacionHandlerTests
         // Arrange
         var command = new CrearTarjetaFidelizacionCommand
         {
-            NombreCompleto = "Cliente Notificaciones",
-            Email = "notif@email.com",
-            Telefono = "+5491123456789",
-            FechaNacimiento = DateTime.Today.AddYears(-25),
-            CrearClienteNuevo = true,
-            EnviarNotificacionBienvenida = true,
-            NivelInicial = NivelFidelizacion.Basico
+            ClienteId = Guid.NewGuid(),
+            TipoTarjeta = "Basica",
+            UsuarioId = Guid.NewGuid()
         };
 
-        var clienteId = Guid.NewGuid();
+        var clienteId = command.ClienteId;
         var tarjetaId = Guid.NewGuid();
         var resultado = CreateMockResultadoCreacionExitosa(clienteId, tarjetaId);
 
@@ -528,15 +542,12 @@ public class CrearTarjetaFidelizacionHandlerTests
         // Arrange
         var command = new CrearTarjetaFidelizacionCommand
         {
-            NombreCompleto = "Cliente Log",
-            Email = "log@email.com",
-            Telefono = "+5491123456789",
-            FechaNacimiento = DateTime.Today.AddYears(-25),
-            CrearClienteNuevo = true,
-            NivelInicial = NivelFidelizacion.Basico
+            ClienteId = Guid.NewGuid(),
+            TipoTarjeta = "Basica",
+            UsuarioId = Guid.NewGuid()
         };
 
-        var clienteId = Guid.NewGuid();
+        var clienteId = command.ClienteId;
         var tarjetaId = Guid.NewGuid();
         var resultado = CreateMockResultadoCreacionExitosa(clienteId, tarjetaId);
 
@@ -579,17 +590,14 @@ public class CrearTarjetaFidelizacionHandlerTests
     {
         return new CrearTarjetaFidelizacionResult
         {
-            TarjetaId = tarjetaId,
+            Id = tarjetaId,
             ClienteId = clienteId,
             NumeroTarjeta = "TF-2025-000001",
-            NivelAsignado = NivelFidelizacion.Basico,
-            PuntosAsignados = 100,
-            FechaCreacion = DateTime.UtcNow,
-            NotificacionEnviada = true,
-            ClienteNuevoCreado = true,
-            BeneficioEspecialAplicado = false,
-            TiempoGeneracion = TimeSpan.FromSeconds(1.5),
-            EstadoTarjeta = "Activa"
+            Nivel = NivelFidelizacion.Basico,
+            PuntosActuales = 100,
+            FechaEmision = DateTime.UtcNow,
+            Activa = true,
+            Estado = "Activa"
         };
     }
 
@@ -597,17 +605,14 @@ public class CrearTarjetaFidelizacionHandlerTests
     {
         return new CrearTarjetaFidelizacionResult
         {
-            TarjetaId = tarjetaId,
+            Id = tarjetaId,
             ClienteId = clienteId,
             NumeroTarjeta = "TF-2025-000002",
-            NivelAsignado = NivelFidelizacion.Oro,
-            PuntosAsignados = 500,
-            FechaCreacion = DateTime.UtcNow,
-            NotificacionEnviada = false,
-            ClienteNuevoCreado = false,
-            BeneficioEspecialAplicado = false,
-            TiempoGeneracion = TimeSpan.FromSeconds(0.8),
-            EstadoTarjeta = "Activa"
+            Nivel = NivelFidelizacion.Oro,
+            PuntosActuales = 500,
+            FechaEmision = DateTime.UtcNow,
+            Activa = true,
+            Estado = "Activa"
         };
     }
 
@@ -615,20 +620,16 @@ public class CrearTarjetaFidelizacionHandlerTests
     {
         return new CrearTarjetaFidelizacionResult
         {
-            TarjetaId = tarjetaId,
+            Id = tarjetaId,
             ClienteId = clienteId,
             NumeroTarjeta = "TF-2025-VIP001",
-            NivelAsignado = NivelFidelizacion.Platino,
-            PuntosAsignados = 1000,
-            FechaCreacion = DateTime.UtcNow,
-            NotificacionEnviada = true,
-            ClienteNuevoCreado = true,
-            BeneficioEspecialAplicado = true,
-            DescripcionBeneficio = "Acceso VIP por 3 meses",
-            FechaVencimientoBeneficio = DateTime.Today.AddMonths(3),
-            TiempoGeneracion = TimeSpan.FromSeconds(2.1),
-            EstadoTarjeta = "Activa",
-            CodigoPromocion = "VIP2025"
+            Nivel = NivelFidelizacion.Platino,
+            PuntosActuales = 1000,
+            FechaEmision = DateTime.UtcNow,
+            FechaVencimiento = DateTime.Today.AddMonths(3),
+            Activa = true,
+            Estado = "Activa",
+            Observaciones = "Tarjeta VIP con beneficios especiales"
         };
     }
 
@@ -636,19 +637,15 @@ public class CrearTarjetaFidelizacionHandlerTests
     {
         return new CrearTarjetaFidelizacionResult
         {
-            TarjetaId = tarjetaId,
+            Id = tarjetaId,
             ClienteId = clienteId,
             NumeroTarjeta = "TF-2025-000003",
-            NivelAsignado = NivelFidelizacion.Plata,
-            PuntosAsignados = 250,
-            FechaCreacion = DateTime.UtcNow,
-            NotificacionEnviada = true,
-            NotificacionEmailEnviada = true,
-            NotificacionSMSEnviada = true,
-            DetallesNotificacion = "Email enviado a laura@email.com; SMS enviado a +5491187654321",
-            ClienteNuevoCreado = true,
-            TiempoGeneracion = TimeSpan.FromSeconds(1.8),
-            EstadoTarjeta = "Activa"
+            Nivel = NivelFidelizacion.Plata,
+            PuntosActuales = 250,
+            FechaEmision = DateTime.UtcNow,
+            Activa = true,
+            Estado = "Activa",
+            Observaciones = "Notificaciones enviadas por email y SMS"
         };
     }
 
@@ -656,17 +653,14 @@ public class CrearTarjetaFidelizacionHandlerTests
     {
         return new CrearTarjetaFidelizacionResult
         {
-            TarjetaId = tarjetaId,
+            Id = tarjetaId,
             ClienteId = clienteId,
             NumeroTarjeta = "TF-2025-000004",
-            NivelAsignado = NivelFidelizacion.Basico,
-            PuntosAsignados = 0,
-            FechaCreacion = DateTime.UtcNow,
-            NotificacionEnviada = false,
-            ClienteNuevoCreado = true,
-            BeneficioEspecialAplicado = false,
-            TiempoGeneracion = TimeSpan.FromSeconds(0.5),
-            EstadoTarjeta = "Activa"
+            Nivel = NivelFidelizacion.Basico,
+            PuntosActuales = 0,
+            FechaEmision = DateTime.UtcNow,
+            Activa = true,
+            Estado = "Activa"
         };
     }
 

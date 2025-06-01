@@ -107,8 +107,8 @@ public class ComercialMappingProfileTests
             Telefono = "555-1234",
             FechaNacimiento = DateTime.Now.AddYears(-30),
             Direccion = "Calle 123",
-            Ciudad = "Ciudad de México",
-            CodigoPostal = "12345"
+            Tipo = SegmentoCliente.Regular,
+            Notas = "Cliente nuevo"
         };
 
         // Act
@@ -116,14 +116,10 @@ public class ComercialMappingProfileTests
 
         // Assert
         command.Should().NotBeNull();
-        command.Nombre.Should().Be(createDto.Nombre);
-        command.Apellido.Should().Be(createDto.Apellido);
+        command.Nombre.Should().Be($"{createDto.Nombre} {createDto.Apellido}".Trim());
         command.Email.Should().Be(createDto.Email);
         command.Telefono.Should().Be(createDto.Telefono);
-        command.FechaNacimiento.Should().Be(createDto.FechaNacimiento);
-        command.Direccion.Should().Be(createDto.Direccion);
-        command.Ciudad.Should().Be(createDto.Ciudad);
-        command.CodigoPostal.Should().Be(createDto.CodigoPostal);
+        command.FechaNacimiento.Should().Be(createDto.FechaNacimiento.Value);
     }
 
     [Fact]
@@ -139,8 +135,8 @@ public class ComercialMappingProfileTests
             Telefono = "555-5678",
             FechaNacimiento = DateTime.Now.AddYears(-35),
             Direccion = "Avenida 456",
-            Ciudad = "Guadalajara",
-            CodigoPostal = "54321"
+            Tipo = SegmentoCliente.Premium,
+            Notas = "Cliente actualizado"
         };
 
         // Act
@@ -148,15 +144,11 @@ public class ComercialMappingProfileTests
 
         // Assert
         command.Should().NotBeNull();
-        command.Nombre.Should().Be(updateDto.Nombre);
-        command.Apellido.Should().Be(updateDto.Apellido);
+        command.Id.Should().Be(updateDto.Id);
+        command.Nombre.Should().Be($"{updateDto.Nombre} {updateDto.Apellido}".Trim());
         command.Email.Should().Be(updateDto.Email);
         command.Telefono.Should().Be(updateDto.Telefono);
         command.FechaNacimiento.Should().Be(updateDto.FechaNacimiento);
-        command.Direccion.Should().Be(updateDto.Direccion);
-        command.Ciudad.Should().Be(updateDto.Ciudad);
-        command.CodigoPostal.Should().Be(updateDto.CodigoPostal);
-        // El ID se ignora en el mapeo según configuración
     }
 
     [Theory]

@@ -54,5 +54,25 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces
         /// Guarda los cambios en la base de datos
         /// </summary>
         Task GuardarCambiosAsync();
+
+        /// <summary>
+        /// Busca la mejor mesa disponible para los criterios especificados
+        /// </summary>
+        Task<Mesa?> BuscarMejorMesaAsync(int numeroPersonas, string? areaPreferida = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Busca mesas con criterios específicos
+        /// </summary>
+        Task<IEnumerable<Mesa>> BuscarMesasAsync(int? capacidadMinima = null, string? area = null, bool? disponible = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene mesas por capacidad específica
+        /// </summary>
+        Task<IEnumerable<Mesa>> ObtenerMesasPorCapacidadAsync(int capacidad, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Verifica si una mesa específica está disponible
+        /// </summary>
+        Task<bool> VerificarDisponibilidadAsync(Guid mesaId, CancellationToken cancellationToken = default);
     }
 }

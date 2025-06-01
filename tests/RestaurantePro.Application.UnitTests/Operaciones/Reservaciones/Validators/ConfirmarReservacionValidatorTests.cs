@@ -338,8 +338,8 @@ public class ConfirmarReservacionValidatorTests
         reservacionesMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        // Mock para ReservacionEsConfirmable
-        var reservacion = new Reservacion { Id = reservacionId, Estado = EstadoReservacion.Pendiente };
+        // Mock para ReservacionEsConfirmable - usar factory method
+        var reservacion = CrearReservacionParaTest(reservacionId, EstadoReservacion.Pendiente);
         reservacionesMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(reservacion);
 
@@ -353,7 +353,10 @@ public class ConfirmarReservacionValidatorTests
         reservacionesMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var reservacion = new Reservacion { CodigoReservacion = codigoReservacion, Estado = EstadoReservacion.Pendiente };
+        var reservacion = CrearReservacionParaTest(Guid.NewGuid(), EstadoReservacion.Pendiente);
+        // Usar reflection para setear el código de reservación
+        typeof(Reservacion).GetProperty("CodigoReservacion")?.SetValue(reservacion, codigoReservacion);
+        
         reservacionesMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(reservacion);
 
@@ -377,7 +380,7 @@ public class ConfirmarReservacionValidatorTests
         reservacionesMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var reservacion = new Reservacion { Id = reservacionId, Estado = EstadoReservacion.Confirmada };
+        var reservacion = CrearReservacionParaTest(reservacionId, EstadoReservacion.Confirmada);
         reservacionesMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(reservacion);
 
@@ -391,12 +394,19 @@ public class ConfirmarReservacionValidatorTests
         reservacionesMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var reservacion = new Reservacion 
-        { 
-            Id = reservacionId, 
-            Estado = EstadoReservacion.Pendiente,
-            FechaHora = DateTime.UtcNow.AddHours(1) // Solo 1 hora antes, límite es 2 horas
-        };
+        // Crear reservación con fecha/hora específica usando factory method
+        var fechaReservacion = DateTime.UtcNow.AddHours(1); // Solo 1 hora antes, límite es 2 horas
+        var reservacion = Reservacion.Crear(
+            mesaId: Guid.NewGuid(),
+            clienteId: Guid.NewGuid(),
+            fecha: fechaReservacion,
+            duracionEstimada: TimeSpan.FromHours(2),
+            cantidadPersonas: 4,
+            telefono: "123456789",
+            email: "test@test.com");
+
+        // Usar reflection para setear el ID específico
+        typeof(EntityBase).GetProperty("Id")?.SetValue(reservacion, reservacionId);
         
         reservacionesMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(reservacion);
@@ -411,13 +421,20 @@ public class ConfirmarReservacionValidatorTests
         reservacionesMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var reservacion = new Reservacion 
-        { 
-            Id = reservacionId, 
-            Estado = EstadoReservacion.Pendiente,
-            FechaHora = DateTime.UtcNow.AddDays(1),
-            MesaId = Guid.NewGuid()
-        };
+        // Crear reservación para mañana usando factory method
+        var fechaReservacion = DateTime.UtcNow.AddDays(1);
+        var mesaId = Guid.NewGuid();
+        var reservacion = Reservacion.Crear(
+            mesaId: mesaId,
+            clienteId: Guid.NewGuid(),
+            fecha: fechaReservacion,
+            duracionEstimada: TimeSpan.FromHours(2),
+            cantidadPersonas: 4,
+            telefono: "123456789",
+            email: "test@test.com");
+
+        // Usar reflection para setear el ID específico
+        typeof(EntityBase).GetProperty("Id")?.SetValue(reservacion, reservacionId);
         
         reservacionesMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(reservacion);
@@ -427,6 +444,44 @@ public class ConfirmarReservacionValidatorTests
             .ReturnsAsync(true);
 
         _contextMock.Setup(x => x.Reservaciones).Returns(reservacionesMock.Object);
+    }
+
+    /// <summary>
+    /// Método helper para crear reservaciones de test usando el factory method
+    /// </summary>
+    private Reservacion CrearReservacionParaTest(Guid id, EstadoReservacion estado)
+    {
+        var reservacion = Reservacion.Crear(
+            mesaId: Guid.NewGuid(),
+            clienteId: Guid.NewGuid(),
+            fecha: DateTime.UtcNow.AddDays(1),
+            duracionEstimada: TimeSpan.FromHours(2),
+            cantidadPersonas: 4,
+            telefono: "123456789",
+            email: "test@test.com");
+
+        // Usar reflection para setear el ID específico
+        typeof(EntityBase).GetProperty("Id")?.SetValue(reservacion, id);
+
+        // Cambiar estado si es necesario
+        if (estado == EstadoReservacion.Confirmada)
+        {
+            reservacion.Confirmar();
+        }
+        else if (estado == EstadoReservacion.Cancelada)
+        {
+            reservacion.Cancelar("Test cancelación");
+        }
+        else if (estado == EstadoReservacion.Completada)
+        {
+            if (reservacion.Estado == EstadoReservacion.Pendiente)
+            {
+                reservacion.Confirmar();
+            }
+            reservacion.Completar();
+        }
+
+        return reservacion;
     }
 
     #endregion

@@ -36,17 +36,15 @@ public class ObtenerProveedoresPaginadosHandlerTests
         var tamanoPagina = 10;
 
         // Act
-        var query = ObtenerProveedoresPaginadosQuery.CrearConsultaPaginada(pagina, tamanoPagina);
+        var query = ObtenerProveedoresPaginadosQuery.ConsultaBasica(pagina, tamanoPagina);
 
         // Assert
-        Assert.Equal(pagina, query.Pagina);
-        Assert.Equal(tamanoPagina, query.TamanoPagina);
-        Assert.True(query.IncluirActivos);
-        Assert.False(query.IncluirInactivos);
-        Assert.Null(query.FiltroNombre);
-        Assert.Null(query.FiltroCategoria);
-        Assert.Equal("Nombre", query.OrdenarPor);
-        Assert.True(query.OrdenAscendente);
+        Assert.Equal(pagina, query.PageNumber);
+        Assert.Equal(tamanoPagina, query.PageSize);
+        Assert.True(query.SoloActivos);
+        Assert.Null(query.TerminoBusqueda);
+        Assert.Equal("Nombre", query.CampoOrden);
+        Assert.Equal("asc", query.DireccionOrden);
     }
 
     [Fact]
@@ -54,18 +52,15 @@ public class ObtenerProveedoresPaginadosHandlerTests
     {
         // Arrange
         var filtroNombre = "Distribuidora";
-        var categoria = CategoriaProveedor.Bebidas;
-        var incluirInactivos = true;
+        var incluirInactivos = false;
 
         // Act
-        var query = ObtenerProveedoresPaginadosQuery.CrearConsultaConFiltros(
-            1, 20, filtroNombre, categoria, incluirInactivos);
+        var query = ObtenerProveedoresPaginadosQuery.BuscarPorTermino(
+            filtroNombre, 1, 20);
 
         // Assert
-        Assert.Equal(filtroNombre, query.FiltroNombre);
-        Assert.Equal(categoria, query.FiltroCategoria);
-        Assert.True(query.IncluirInactivos);
-        Assert.True(query.IncluirActivos);
+        Assert.Equal(filtroNombre, query.TerminoBusqueda);
+        Assert.True(query.SoloActivos);
     }
 
     [Fact]
@@ -76,12 +71,17 @@ public class ObtenerProveedoresPaginadosHandlerTests
         var ascendente = false;
 
         // Act
-        var query = ObtenerProveedoresPaginadosQuery.CrearConsultaOrdenada(
-            1, 15, ordenarPor, ascendente);
+        var query = new ObtenerProveedoresPaginadosQuery
+        {
+            PageNumber = 1,
+            PageSize = 15,
+            CampoOrden = ordenarPor,
+            DireccionOrden = ascendente ? "asc" : "desc"
+        };
 
         // Assert
-        Assert.Equal(ordenarPor, query.OrdenarPor);
-        Assert.False(query.OrdenAscendente);
+        Assert.Equal(ordenarPor, query.CampoOrden);
+        Assert.Equal("desc", query.DireccionOrden);
     }
 
     #endregion
@@ -94,12 +94,11 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 1,
-            TamanoPagina = 10,
-            IncluirActivos = true,
-            IncluirInactivos = false,
-            OrdenarPor = "Nombre",
-            OrdenAscendente = true
+            PageNumber = 1,
+            PageSize = 10,
+            SoloActivos = true,
+            CampoOrden = "Nombre",
+            DireccionOrden = "asc"
         };
 
         var proveedoresEntidades = CreateMockProveedoresEntidades();
@@ -140,11 +139,10 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 1,
-            TamanoPagina = 10,
-            FiltroNombre = "Distribuidora",
-            IncluirActivos = true,
-            IncluirInactivos = false
+            PageNumber = 1,
+            PageSize = 10,
+            TerminoBusqueda = "Distribuidora",
+            SoloActivos = true
         };
 
         var proveedoresFiltrados = CreateMockProveedoresFiltrados();
@@ -188,11 +186,12 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 1,
-            TamanoPagina = 10,
-            FiltroCategoria = CategoriaProveedor.Bebidas,
-            IncluirActivos = true,
-            IncluirInactivos = false
+            PageNumber = 1,
+            PageSize = 10,
+            SoloActivos = true,
+            TerminoBusqueda = CategoriaProveedor.Bebidas.ToString(),
+            CampoOrden = "Categoria",
+            DireccionOrden = "asc"
         };
 
         var proveedoresBebidas = CreateMockProveedoresBebidas();
@@ -229,10 +228,11 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 1,
-            TamanoPagina = 10,
-            IncluirActivos = true,
-            IncluirInactivos = true
+            PageNumber = 1,
+            PageSize = 10,
+            SoloActivos = true,
+            CampoOrden = "Nombre",
+            DireccionOrden = "asc"
         };
 
         var proveedoresMixtos = CreateMockProveedoresMixtos();
@@ -271,11 +271,11 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 1,
-            TamanoPagina = 10,
-            OrdenarPor = "FechaCreacion",
-            OrdenAscendente = false,
-            IncluirActivos = true
+            PageNumber = 1,
+            PageSize = 10,
+            SoloActivos = true,
+            CampoOrden = "FechaCreacion",
+            DireccionOrden = "desc"
         };
 
         var proveedoresOrdenados = CreateMockProveedoresOrdenadosPorFecha();
@@ -312,9 +312,9 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 10, // Página que no existe
-            TamanoPagina = 10,
-            IncluirActivos = true
+            PageNumber = 10, // Página que no existe
+            PageSize = 10,
+            SoloActivos = true
         };
 
         _proveedorRepositoryMock.Setup(x => x.ObtenerProveedoresPaginadosAsync(
@@ -351,8 +351,8 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 0, // Página inválida
-            TamanoPagina = 10
+            PageNumber = 0, // Página inválida
+            PageSize = 10
         };
 
         // Act
@@ -369,8 +369,8 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 1,
-            TamanoPagina = 0 // Tamaño inválido
+            PageNumber = 1,
+            PageSize = 0 // Tamaño inválido
         };
 
         // Act
@@ -387,8 +387,8 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 1,
-            TamanoPagina = 1000 // Tamaño excesivo
+            PageNumber = 1,
+            PageSize = 1000 // Tamaño excesivo
         };
 
         // Act
@@ -405,9 +405,9 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 1,
-            TamanoPagina = 10,
-            OrdenarPor = "CampoInexistente"
+            PageNumber = 1,
+            PageSize = 10,
+            CampoOrden = "CampoInexistente"
         };
 
         // Act
@@ -424,10 +424,11 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 1,
-            TamanoPagina = 10,
-            IncluirActivos = false,
-            IncluirInactivos = false
+            PageNumber = 1,
+            PageSize = 10,
+            SoloActivos = false,
+            CampoOrden = "Nombre",
+            DireccionOrden = "asc"
         };
 
         // Act
@@ -448,9 +449,9 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 1,
-            TamanoPagina = 10,
-            IncluirActivos = true
+            PageNumber = 1,
+            PageSize = 10,
+            SoloActivos = true
         };
 
         _proveedorRepositoryMock.Setup(x => x.ObtenerProveedoresPaginadosAsync(
@@ -473,9 +474,9 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 1,
-            TamanoPagina = 10,
-            IncluirActivos = true
+            PageNumber = 1,
+            PageSize = 10,
+            SoloActivos = true
         };
 
         var proveedores = CreateMockProveedoresEntidades();
@@ -512,9 +513,9 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
-            Pagina = 1,
-            TamanoPagina = 10,
-            IncluirActivos = true
+            PageNumber = 1,
+            PageSize = 10,
+            SoloActivos = true
         };
 
         var proveedores = CreateMockProveedoresEntidades();

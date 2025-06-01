@@ -214,11 +214,9 @@ public class DividirComandaValidatorTests
         comandasMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var comanda = new Comanda 
-        { 
-            Id = command.ComandaOriginalId, 
-            Estado = EstadoComanda.Creada 
-        };
+        var comanda = CrearComandaValidaParaDivision();
+        typeof(EntityBase).GetProperty("Id")?.SetValue(comanda, command.ComandaOriginalId);
+        
         comandasMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
@@ -229,20 +227,21 @@ public class DividirComandaValidatorTests
 
         var itemsComanda = new List<ItemComanda>
         {
-            new ItemComanda { Id = Guid.NewGuid(), ComandaId = command.ComandaOriginalId, Cantidad = 2 },
-            new ItemComanda { Id = Guid.NewGuid(), ComandaId = command.ComandaOriginalId, Cantidad = 1 }
+            CrearItemComanda(Guid.NewGuid(), 2),
+            CrearItemComanda(Guid.NewGuid(), 1)
         };
         itemsComandaMock.Setup(x => x.Where(It.IsAny<Expression<Func<ItemComanda, bool>>>()).ToListAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(itemsComanda);
 
+        // TODO: Descomentar cuando FacturaItems esté disponible en el contexto
         // Mock para factura items (no facturada)
-        var facturaItemsMock = new Mock<DbSet<FacturaItem>>();
-        facturaItemsMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<FacturaItem, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
+        // var facturaItemsMock = new Mock<DbSet<FacturaItem>>();
+        // facturaItemsMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<FacturaItem, bool>>>(), It.IsAny<CancellationToken>()))
+        //     .ReturnsAsync(false);
 
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
         _contextMock.Setup(x => x.ItemsComanda).Returns(itemsComandaMock.Object);
-        _contextMock.Setup(x => x.FacturaItems).Returns(facturaItemsMock.Object);
+        // _contextMock.Setup(x => x.FacturaItems).Returns(facturaItemsMock.Object);
     }
 
     private void ConfigurarMockComandaNoExiste()
@@ -260,11 +259,11 @@ public class DividirComandaValidatorTests
         comandasMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var comanda = new Comanda 
-        { 
-            Id = command.ComandaOriginalId, 
-            Estado = EstadoComanda.Finalizada // Estado no divisible
-        };
+        var comanda = CrearComandaValidaParaDivision();
+        typeof(EntityBase).GetProperty("Id")?.SetValue(comanda, command.ComandaOriginalId);
+        // Marcar como finalizada usando método del dominio 
+        comanda.ActualizarEstado(EstadoComanda.Finalizada);
+
         comandasMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
@@ -314,5 +313,39 @@ public class DividirComandaValidatorTests
             MantenerComandaOriginal = false,
             DistribuirDescuentos = true
         };
+    }
+
+    private Comanda CrearComandaValidaParaDivision()
+    {
+        // Usar factory method en lugar de inicializador de objetos
+        var comanda = Comanda.Crear(
+            mesaId: Guid.NewGuid(),
+            meseroId: Guid.NewGuid(), 
+            clienteId: null,
+            observaciones: "Comanda para división");
+
+        // Usar reflection para setear el ID específico requerido para tests
+        typeof(EntityBase).GetProperty("Id")?.SetValue(comanda, Guid.NewGuid());
+
+        // Agregar items usando métodos del dominio
+        comanda.AgregarItem(Guid.NewGuid(), "Producto Test 1", 2, 25.00m);
+        comanda.AgregarItem(Guid.NewGuid(), "Producto Test 2", 3, 15.00m);
+
+        return comanda;
+    }
+
+    private ItemComanda CrearItemComanda(Guid id, int cantidad)
+    {
+        var item = new ItemComanda(
+            comandaId: Guid.NewGuid(),
+            productoId: Guid.NewGuid(),
+            cantidad: cantidad,
+            precioUnitario: 25.00m,
+            observaciones: "Item de prueba");
+
+        // Usar reflection para setear el ID específico requerido para tests
+        typeof(EntityBase).GetProperty("Id")?.SetValue(item, id);
+
+        return item;
     }
 } 

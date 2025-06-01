@@ -193,7 +193,7 @@ public class ExceptionHandlingBehaviorTests
     {
         // Arrange
         var command = new CrearProductoCommand { Nombre = "Test" };
-        var conflictException = ConflictException.ForDuplicate("Producto", "Test", "Ya existe un producto con este nombre");
+        var conflictException = new ConflictException("Ya existe un usuario con ese email", ConflictType.DuplicateEntity);
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
         mockNext.Setup(x => x()).ThrowsAsync(conflictException);
@@ -203,7 +203,7 @@ public class ExceptionHandlingBehaviorTests
             _behavior.Handle(command, mockNext.Object, CancellationToken.None));
 
         exception.Should().Be(conflictException);
-        exception.ConflictType.Should().Be(ConflictType.Duplicate);
+        exception.ConflictType.Should().Be(ConflictType.DuplicateEntity);
     }
 
     [Fact]

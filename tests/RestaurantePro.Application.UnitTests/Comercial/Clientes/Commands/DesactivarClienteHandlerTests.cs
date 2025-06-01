@@ -61,7 +61,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand
         {
             ClienteId = clienteId,
-            Motivo = motivo,
+            MotivoDesactivacion = motivo,
             NotificarCliente = true
         };
 
@@ -118,7 +118,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand
         {
             ClienteId = clienteId,
-            Motivo = "Cliente solicitó baja"
+            MotivoDesactivacion = "Cliente solicitó baja"
         };
 
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
@@ -148,7 +148,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand
         {
             ClienteId = clienteId,
-            Motivo = "Cliente solicitó baja"
+            MotivoDesactivacion = "Cliente solicitó baja"
         };
 
         var cliente = Cliente.Crear("Juan Pérez", "juan@email.com", "+1234567890");
@@ -183,7 +183,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand
         {
             ClienteId = clienteId,
-            Motivo = motivo,
+            MotivoDesactivacion = motivo,
             CancelarReservacionesPendientes = true,
             NotificarCliente = true
         };
@@ -255,7 +255,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand
         {
             ClienteId = clienteId,
-            Motivo = "Prueba de desactivación",
+            MotivoDesactivacion = "Prueba de desactivación",
             CancelarReservacionesPendientes = false // No autorizado a cancelar
         };
 
@@ -297,7 +297,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand
         {
             ClienteId = clienteId,
-            Motivo = motivo,
+            MotivoDesactivacion = motivo,
             CerrarComandasActivas = true,
             NotificarCliente = false // No notificar por comportamiento
         };
@@ -356,7 +356,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand
         {
             ClienteId = clienteId,
-            Motivo = motivo,
+            MotivoDesactivacion = motivo,
             SuspenderTarjetaFidelizacion = true,
             NotificarCliente = true
         };
@@ -414,7 +414,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand
         {
             ClienteId = clienteId,
-            Motivo = "Intento de desactivación sin autorización"
+            MotivoDesactivacion = "Intento de desactivación sin autorización"
         };
 
         var cliente = Cliente.Crear("Juan Pérez", "juan@email.com", "+1234567890");
@@ -449,7 +449,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand
         {
             ClienteId = clienteId,
-            Motivo = motivo,
+            MotivoDesactivacion = motivo,
             NotificarCliente = true
         };
 
@@ -497,7 +497,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand
         {
             ClienteId = clienteId,
-            Motivo = "Desactivación de prueba"
+            MotivoDesactivacion = "Desactivación de prueba"
         };
 
         var cliente = Cliente.Crear("Juan Pérez", "juan@email.com", "+1234567890");
@@ -539,7 +539,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand
         {
             ClienteId = clienteId,
-            Motivo = motivo,
+            MotivoDesactivacion = motivo,
             NotificarCliente = notificarCliente
         };
 
@@ -596,7 +596,7 @@ public class DesactivarClienteHandlerTests
         var command = new DesactivarClienteCommand
         {
             ClienteId = clienteId,
-            Motivo = "Prueba de rollback",
+            MotivoDesactivacion = "Prueba de rollback",
             CancelarReservacionesPendientes = true
         };
 

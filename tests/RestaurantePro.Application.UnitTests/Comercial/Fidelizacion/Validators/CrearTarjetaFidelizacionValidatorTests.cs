@@ -690,17 +690,24 @@ public class CrearTarjetaFidelizacionValidatorTests
         var clienteId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
 
-        // Act
-        var command = CrearTarjetaFidelizacionCommand.CrearEstandar(clienteId, usuarioId);
+        // Act - Usar propiedades reales en lugar de método factory inexistente
+        var command = new CrearTarjetaFidelizacionCommand
+        {
+            ClienteId = clienteId,
+            TipoTarjeta = "Estandar",
+            PuntosIniciales = 0,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = false,
+            UsuarioId = usuarioId
+        };
 
         // Assert
         command.ClienteId.Should().Be(clienteId);
-        command.UsuarioCreadorId.Should().Be(usuarioId);
-        command.TipoTarjeta.Should().Be(TipoTarjetaFidelizacion.Estandar);
-        command.MultiplicadorPuntos.Should().Be(1);
-        command.PorcentajeBonificacion.Should().Be(1);
-        command.EsPrincipal.Should().BeTrue();
-        command.EstaActiva.Should().BeTrue();
+        command.TipoTarjeta.Should().Be("Estandar");
+        command.PuntosIniciales.Should().Be(0);
+        command.ActivarInmediatamente.Should().BeTrue();
+        command.EnviarPorEmail.Should().BeFalse();
+        command.UsuarioId.Should().Be(usuarioId);
     }
 
     [Fact]
@@ -710,17 +717,24 @@ public class CrearTarjetaFidelizacionValidatorTests
         var clienteId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
 
-        // Act
-        var command = CrearTarjetaFidelizacionCommand.CrearPremium(clienteId, usuarioId);
+        // Act - Usar propiedades reales en lugar de método factory inexistente
+        var command = new CrearTarjetaFidelizacionCommand
+        {
+            ClienteId = clienteId,
+            TipoTarjeta = "Premium",
+            PuntosIniciales = 250,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = true,
+            UsuarioId = usuarioId
+        };
 
         // Assert
         command.ClienteId.Should().Be(clienteId);
-        command.UsuarioCreadorId.Should().Be(usuarioId);
-        command.TipoTarjeta.Should().Be(TipoTarjetaFidelizacion.Premium);
-        command.MultiplicadorPuntos.Should().Be(2);
-        command.PorcentajeBonificacion.Should().Be(5);
-        command.EsPrincipal.Should().BeTrue();
-        command.EstaActiva.Should().BeTrue();
+        command.TipoTarjeta.Should().Be("Premium");
+        command.PuntosIniciales.Should().Be(250);
+        command.ActivarInmediatamente.Should().BeTrue();
+        command.EnviarPorEmail.Should().BeTrue();
+        command.UsuarioId.Should().Be(usuarioId);
     }
 
     [Fact]
@@ -730,17 +744,26 @@ public class CrearTarjetaFidelizacionValidatorTests
         var clienteId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
 
-        // Act
-        var command = CrearTarjetaFidelizacionCommand.CrearVip(clienteId, usuarioId);
+        // Act - Usar propiedades reales en lugar de método factory inexistente
+        var command = new CrearTarjetaFidelizacionCommand
+        {
+            ClienteId = clienteId,
+            TipoTarjeta = "VIP",
+            PuntosIniciales = 500,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = true,
+            UsuarioId = usuarioId,
+            Observaciones = "Tarjeta VIP con beneficios especiales"
+        };
 
         // Assert
         command.ClienteId.Should().Be(clienteId);
-        command.UsuarioCreadorId.Should().Be(usuarioId);
-        command.TipoTarjeta.Should().Be(TipoTarjetaFidelizacion.Vip);
-        command.MultiplicadorPuntos.Should().Be(3);
-        command.PorcentajeBonificacion.Should().Be(10);
-        command.EsPrincipal.Should().BeTrue();
-        command.EstaActiva.Should().BeTrue();
+        command.TipoTarjeta.Should().Be("VIP");
+        command.PuntosIniciales.Should().Be(500);
+        command.ActivarInmediatamente.Should().BeTrue();
+        command.EnviarPorEmail.Should().BeTrue();
+        command.UsuarioId.Should().Be(usuarioId);
+        command.Observaciones.Should().Be("Tarjeta VIP con beneficios especiales");
     }
 
     #endregion
@@ -811,18 +834,11 @@ public class CrearTarjetaFidelizacionValidatorTests
         return new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.NewGuid(),
-            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
-            UsuarioCreadorId = Guid.NewGuid(),
-            NumeroTarjeta = "FIEL12345678",
-            FechaActivacion = DateTime.Now,
-            FechaVencimiento = DateTime.Now.AddYears(2),
-            EsPrincipal = true,
-            EstaActiva = true,
-            PorcentajeBonificacion = 5,
-            MultiplicadorPuntos = 1.5m,
-            LimitePuntosMinimo = 100,
-            LimitePuntosMaximo = 50000,
-            ObservacionesCreacion = "Tarjeta creada automáticamente"
+            TipoTarjeta = "Basica",
+            PuntosIniciales = 0,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = false,
+            UsuarioId = Guid.NewGuid()
         };
     }
 
@@ -831,19 +847,13 @@ public class CrearTarjetaFidelizacionValidatorTests
         return new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.NewGuid(),
-            TipoTarjeta = TipoTarjetaFidelizacion.Premium,
-            UsuarioCreadorId = Guid.NewGuid(),
-            NumeroTarjeta = "PREM-2025-001234",
-            FechaActivacion = DateTime.Now.AddDays(1),
-            FechaVencimiento = DateTime.Now.AddYears(3),
-            EsPrincipal = true,
-            EstaActiva = true,
-            PorcentajeBonificacion = 10,
-            MultiplicadorPuntos = 2.5m,
-            LimitePuntosMinimo = 500,
-            LimitePuntosMaximo = 100000,
-            ObservacionesCreacion = "Tarjeta Premium creada con promoción especial de bienvenida",
-            CodigoPromocion = "WELCOME_PREMIUM_2025"
+            CodigoTarjeta = "TF-TEST-001",
+            PuntosIniciales = 150,
+            TipoTarjeta = "Premium",
+            ActivarInmediatamente = true,
+            EnviarPorEmail = true,
+            Observaciones = "Tarjeta de prueba completa",
+            UsuarioId = Guid.NewGuid()
         };
     }
 

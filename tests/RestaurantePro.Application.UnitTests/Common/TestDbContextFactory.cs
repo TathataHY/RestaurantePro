@@ -14,6 +14,7 @@ public class TestDbContext : DbContext, IApplicationDbContext
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Notificacion> Notificaciones { get; set; }
     public DbSet<Cliente> Clientes { get; set; }
+    public DbSet<TarjetaFidelizacion> TarjetasFidelizacion { get; set; }
     public DbSet<Factura> Facturas { get; set; }
     public DbSet<Comanda> Comandas { get; set; }
     public DbSet<ItemComanda> ItemsComanda { get; set; }
@@ -42,6 +43,7 @@ public class TestDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<Producto>().HasKey(p => p.Id);
         modelBuilder.Entity<Usuario>().HasKey(u => u.Id);
         modelBuilder.Entity<Notificacion>().HasKey(n => n.Id);
+        modelBuilder.Entity<TarjetaFidelizacion>().HasKey(t => t.Id);
         modelBuilder.Entity<Factura>().HasKey(f => f.Id);
         modelBuilder.Entity<Comanda>().HasKey(c => c.Id);
         modelBuilder.Entity<ItemComanda>().HasKey(i => i.Id);

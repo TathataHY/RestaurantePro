@@ -18,6 +18,9 @@ public interface IApplicationDbContext
     // Comercial - Clientes
     DbSet<Cliente> Clientes { get; }
     
+    // Comercial - Fidelización
+    DbSet<TarjetaFidelizacion> TarjetasFidelizacion { get; }
+    
     // Comercial - Facturación
     DbSet<Factura> Facturas { get; }
     

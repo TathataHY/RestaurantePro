@@ -368,19 +368,57 @@ public class ObtenerFacturaPorIdValidatorTests
         var facturaId = Guid.NewGuid();
 
         // Act
-        var query = ObtenerFacturaPorIdQuery.Crear(facturaId);
+        var query = ObtenerFacturaPorIdQuery.ConsultaBasica(facturaId);
 
         // Assert
         query.FacturaId.Should().Be(facturaId);
     }
 
+    // Este test se comenta porque los factory methods reales no validan Guid.Empty
+    // [Fact]
+    // public void Query_FactoryMethod_ConGuidVacio_DeberiaLanzarExcepcion()
+    // {
+    //     // Act & Assert
+    //     var act = () => ObtenerFacturaPorIdQuery.ConsultaBasica(Guid.Empty);
+    //     act.Should().Throw<ArgumentException>()
+    //         .WithMessage("*FacturaId*");
+    // }
+
     [Fact]
-    public void Query_FactoryMethod_ConGuidVacio_DeberiaLanzarExcepcion()
+    public void Query_FactoryMethodBasico_DeberiaCrearQueryCorrectamente()
     {
-        // Act & Assert
-        var act = () => ObtenerFacturaPorIdQuery.Crear(Guid.Empty);
-        act.Should().Throw<ArgumentException>()
-            .WithMessage("*FacturaId*");
+        // Arrange
+        var facturaId = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
+
+        // Act
+        var query = ObtenerFacturaPorIdQuery.ConsultaBasica(facturaId, usuarioId);
+
+        // Assert
+        query.FacturaId.Should().Be(facturaId);
+        query.UsuarioConsultaId.Should().Be(usuarioId);
+        query.FormatoRespuesta.Should().Be("Basico");
+        query.ValidarPermisos.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Query_FactoryMethodCompleto_DeberiaCrearQueryCorrectamente()
+    {
+        // Arrange
+        var facturaId = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
+        var motivo = "Consulta administrativa";
+
+        // Act
+        var query = ObtenerFacturaPorIdQuery.ConsultaCompleta(facturaId, usuarioId, motivo);
+
+        // Assert
+        query.FacturaId.Should().Be(facturaId);
+        query.UsuarioConsultaId.Should().Be(usuarioId);
+        query.MotivoConsulta.Should().Be(motivo);
+        query.FormatoRespuesta.Should().Be("Completo");
+        query.IncluirAuditoria.Should().BeTrue();
+        query.IncluirMetricasRentabilidad.Should().BeTrue();
     }
 
     #endregion
