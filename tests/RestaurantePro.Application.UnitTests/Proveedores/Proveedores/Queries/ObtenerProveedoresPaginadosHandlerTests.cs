@@ -1,15 +1,3 @@
-using AutoMapper;
-using Microsoft.Extensions.Logging;
-using Moq;
-using RestaurantePro.Application.Common.DTOs;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Proveedores.Proveedores.Queries.ObtenerProveedoresPaginados;
-using RestaurantePro.Application.Proveedores.Proveedores.DTOs;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Proveedores.Entities;
-using RestaurantePro.Domain.Proveedores.Enums;
-using RestaurantePro.Domain.Proveedores.Interfaces;
-
 namespace RestaurantePro.Application.UnitTests.Proveedores.Proveedores.Queries;
 
 /// <summary>
