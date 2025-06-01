@@ -107,6 +107,7 @@ global using RestaurantePro.Domain.Core.Notificaciones.Enums;
 global using RestaurantePro.Domain.Comercial.Clientes.Entities;
 global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 global using RestaurantePro.Domain.Comercial.Clientes.Builders;
+global using RestaurantePro.Domain.Comercial.Clientes.Enums;
 
 // Application - Comandas
 global using RestaurantePro.Application.Operaciones.Comandas.DTOs;

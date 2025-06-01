@@ -6,43 +6,58 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Enums
     public enum TipoMovimientoPuntos
     {
         /// <summary>
-        /// Puntos ganados por consumo
+        /// Acumulación por compra regular
         /// </summary>
-        Acumulacion = 0,
-        
+        AcumulacionCompra = 1,
+
         /// <summary>
-        /// Puntos usados para canjear una promoción
+        /// Acumulación por promoción especial
         /// </summary>
-        Canje = 1,
-        
+        AcumulacionPromocion = 2,
+
         /// <summary>
-        /// Puntos expirados por tiempo
+        /// Acumulación manual por administrador
         /// </summary>
-        Expiracion = 2,
-        
+        AcumulacionManual = 3,
+
         /// <summary>
-        /// Puntos ajustados manualmente por la administración
+        /// Canje de puntos por beneficios
         /// </summary>
-        AjusteManual = 3,
-        
+        Canje = 4,
+
         /// <summary>
-        /// Puntos otorgados como bono de bienvenida
+        /// Ajuste positivo de puntos
         /// </summary>
-        BonoInicial = 4,
-        
+        AjustePositivo = 5,
+
         /// <summary>
-        /// Puntos otorgados en el cumpleaños del cliente
+        /// Ajuste negativo de puntos
         /// </summary>
-        BonoCumpleaños = 5,
-        
+        AjusteNegativo = 6,
+
         /// <summary>
-        /// Puntos otorgados por una promoción especial
+        /// Vencimiento automático de puntos
         /// </summary>
-        BonoPromocion = 6,
-        
+        Vencimiento = 7,
+
         /// <summary>
-        /// Puntos otorgados por registro en línea
+        /// Transferencia entre tarjetas
         /// </summary>
-        BonoRegistro = 7
+        Transferencia = 8,
+
+        /// <summary>
+        /// Bono de bienvenida
+        /// </summary>
+        BonoInicial = 9,
+
+        /// <summary>
+        /// Bono por cumpleaños
+        /// </summary>
+        BonoCumpleanos = 10,
+
+        /// <summary>
+        /// Bono por registro online
+        /// </summary>
+        BonoRegistro = 11
     }
 } 
