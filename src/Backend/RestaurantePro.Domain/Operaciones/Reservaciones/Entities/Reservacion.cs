@@ -104,7 +104,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
         /// <summary>
         /// Método de fábrica para crear una nueva reservación
         /// </summary>
-        public static Reservacion Crear(Guid mesaId, Guid clienteId, DateTime fecha, TimeSpan duracionEstimada, int cantidadPersonas, string telefono, string email, string observaciones = null)
+        public static Reservacion Crear(Guid mesaId, Guid clienteId, DateTime fecha, TimeSpan duracionEstimada, int cantidadPersonas, string telefono, string email, string? observaciones = null)
         {
             // Validar que la fecha sea futura
             if (fecha.Date < DateTime.Now.Date)
@@ -136,7 +136,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
                 CantidadPersonas = cantidadPersonas,
                 Telefono = telefono,
                 Email = email,
-                Observaciones = observaciones,
+                Observaciones = observaciones ?? string.Empty,
                 Estado = EstadoReservacion.Pendiente,
                 FechaCreacion = DateTime.Now
             };

@@ -19,7 +19,8 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<IDomainEventHandler<DomainEvent>, CacheInvalidationEventHandler>();
             
             // Registrar servicios compartidos
-            services.AddTransient<IDateTimeService, DateTimeService>();
+            // IDateTimeService se implementará en Infrastructure
+            // services.AddTransient<IDateTimeService, DateTimeService>();
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
             
             // Registrar servicios de caché con telemetría y TTL dinámico
@@ -88,6 +89,22 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<IServicioFidelizacionCached>(sp => 
                 (IServicioFidelizacionCached)sp.GetRequiredService<IServicioFidelizacion>());
                 
+            // ✨ Nuevos servicios de dominio agregados durante reorganización de arquitectura
+            // 6. Calculadora de Puntos
+            services.AddScoped<Comercial.Services.ICalculadoraPuntosService, Comercial.Services.CalculadoraPuntosService>();
+            
+            // 7. Calculadora de Promociones
+            services.AddScoped<Comercial.Promociones.Services.ICalculadoraPromocionesService, Comercial.Promociones.Services.CalculadoraPromocionesService>();
+            
+            // 8. Generador de Número de Tarjeta
+            services.AddScoped<Comercial.Services.IGeneradorNumeroTarjetaService, Comercial.Services.GeneradorNumeroTarjetaService>();
+            
+            // 9. Generador de Número de Comanda
+            services.AddScoped<Operaciones.Services.IGeneradorNumeroComandaService, Operaciones.Services.GeneradorNumeroComandaService>();
+            
+            // 10. Builder de Tarjeta de Fidelización (Domain Builder Pattern)
+            services.AddScoped<Comercial.Clientes.Builders.TarjetaFidelizacionBuilder>();
+            
             // 3. Servicio de Recetas
             services.AddScoped<RecetaService>(); // Implementación original
             services.AddScoped<IRecetaService>(sp => 
@@ -162,7 +179,8 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<INotification, Notification>();
             
             // Core services
-            services.AddScoped<IDateTimeService, DateTimeService>();
+            // IDateTimeService se implementará en Infrastructure
+            // services.AddTransient<IDateTimeService, DateTimeService>();
             services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
             services.AddScoped<IEventSubscriptionManager, EventSubscriptionManager>();
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
@@ -187,7 +205,7 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<IDomainEventHandler<DomainEvent>, CacheInvalidationEventHandler>();
             
             // Usar directamente el MockDateTimeService de Core/SharedKernel/Services
-            services.AddSingleton<IDateTimeService>(new MockDateTimeService(DateTime.Now));
+            // services.AddSingleton<IDateTimeService>(new MockDateTimeService(DateTime.Now));
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
             
             // Registrar servicios de caché con telemetría y TTL dinámico para pruebas
@@ -235,6 +253,22 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<IServicioFidelizacionCached>(sp => 
                 (IServicioFidelizacionCached)sp.GetRequiredService<IServicioFidelizacion>());
                 
+            // ✨ Nuevos servicios de dominio agregados durante reorganización de arquitectura
+            // 6. Calculadora de Puntos
+            services.AddScoped<Comercial.Services.ICalculadoraPuntosService, Comercial.Services.CalculadoraPuntosService>();
+            
+            // 7. Calculadora de Promociones
+            services.AddScoped<Comercial.Promociones.Services.ICalculadoraPromocionesService, Comercial.Promociones.Services.CalculadoraPromocionesService>();
+            
+            // 8. Generador de Número de Tarjeta
+            services.AddScoped<Comercial.Services.IGeneradorNumeroTarjetaService, Comercial.Services.GeneradorNumeroTarjetaService>();
+            
+            // 9. Generador de Número de Comanda
+            services.AddScoped<Operaciones.Services.IGeneradorNumeroComandaService, Operaciones.Services.GeneradorNumeroComandaService>();
+            
+            // 10. Builder de Tarjeta de Fidelización (Domain Builder Pattern)
+            services.AddScoped<Comercial.Clientes.Builders.TarjetaFidelizacionBuilder>();
+            
             // 3. Servicio de Recetas
             services.AddScoped<RecetaService>(); // Implementación original
             services.AddScoped<IRecetaService>(sp => 

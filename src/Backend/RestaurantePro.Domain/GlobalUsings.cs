@@ -13,6 +13,7 @@ global using System.Text.Json;
 global using System.Text.RegularExpressions;
 global using System.Threading;
 global using System.Threading.Tasks;
+global using System.ComponentModel.DataAnnotations;
 
 // Microsoft Extensions
 global using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +24,6 @@ global using Microsoft.Extensions.Logging;
 // Domain Base
 global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;
-global using RestaurantePro.Domain.Core.Base.Services;
 
 // Domain Base - Events
 global using RestaurantePro.Domain.Core.Base.Events;

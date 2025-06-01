@@ -10,7 +10,7 @@ public class ModificarReservacionHandler : IRequestHandler<ModificarReservacionC
     private readonly IMapper _mapper;
     private readonly ILogger<ModificarReservacionHandler> _logger;
     private readonly ICurrentUserService _currentUserService;
-    private readonly INotificacionService _notificacionService;
+    private readonly ICommunicationService _communicationService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDateTimeService _dateTimeService;
 
@@ -19,7 +19,7 @@ public class ModificarReservacionHandler : IRequestHandler<ModificarReservacionC
         IMapper mapper,
         ILogger<ModificarReservacionHandler> logger,
         ICurrentUserService currentUserService,
-        INotificacionService notificacionService,
+        ICommunicationService communicationService,
         IUnitOfWork unitOfWork,
         IDateTimeService dateTimeService)
     {
@@ -27,7 +27,7 @@ public class ModificarReservacionHandler : IRequestHandler<ModificarReservacionC
         _mapper = mapper;
         _logger = logger;
         _currentUserService = currentUserService;
-        _notificacionService = notificacionService;
+        _communicationService = communicationService;
         _unitOfWork = unitOfWork;
         _dateTimeService = dateTimeService;
     }
@@ -263,14 +263,14 @@ public class ModificarReservacionHandler : IRequestHandler<ModificarReservacionC
         try
         {
             // Notificar al cliente
-            await _notificacionService.EnviarNotificacionModificacionReservacionAsync(
+            await _communicationService.EnviarNotificacionModificacionReservacionAsync(
                 reservacion.ClienteId,
                 reservacion.Id,
                 request.MotivoModificacion,
                 cancellationToken);
 
             // Notificar al personal del restaurante
-            await _notificacionService.EnviarNotificacionInternaModificacionAsync(
+            await _communicationService.EnviarNotificacionInternaModificacionAsync(
                 reservacion.Id,
                 request.MotivoModificacion,
                 _currentUserService.UserId,

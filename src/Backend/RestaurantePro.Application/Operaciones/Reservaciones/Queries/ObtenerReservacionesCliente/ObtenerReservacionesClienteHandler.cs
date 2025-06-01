@@ -1,5 +1,3 @@
-using EstadoReservacionDomain = RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion;
-
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Queries.ObtenerReservacionesCliente;
 
 /// <summary>
@@ -86,8 +84,8 @@ public class ObtenerReservacionesClienteHandler : IRequestHandler<ObtenerReserva
             if (request.SoloActivas)
             {
                 reservacionesFiltradas = reservacionesFiltradas.Where(r => 
-                    r.Estado == EstadoReservacionDomain.Pendiente ||
-                    r.Estado == EstadoReservacionDomain.Confirmada);
+                    r.Estado == RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Pendiente ||
+                    r.Estado == RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Confirmada);
                 _logger.LogDebug("🔍 Filtro aplicado - Solo reservaciones activas");
             }
 
@@ -97,9 +95,9 @@ public class ObtenerReservacionesClienteHandler : IRequestHandler<ObtenerReserva
                 var fechaActual = DateTime.Today;
                 reservacionesFiltradas = reservacionesFiltradas.Where(r => 
                     r.Fecha.Date < fechaActual ||
-                    r.Estado == EstadoReservacionDomain.Completada ||
-                    r.Estado == EstadoReservacionDomain.Cancelada ||
-                    r.Estado == EstadoReservacionDomain.NoShow);
+                    r.Estado == RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Completada ||
+                    r.Estado == RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Cancelada ||
+                    r.Estado == RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.NoShow);
                 _logger.LogDebug("🔍 Filtro aplicado - Solo historial (reservaciones pasadas o finalizadas)");
             }
 
@@ -158,10 +156,10 @@ public class ObtenerReservacionesClienteHandler : IRequestHandler<ObtenerReserva
                 }
 
                 // Estadísticas de fidelidad del cliente
-                var reservacionesCompletadas = listaReservaciones.Count(r => r.Estado == EstadoReservacionDomain.Completada);
+                var reservacionesCompletadas = listaReservaciones.Count(r => r.Estado == RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Completada);
                 var reservacionesCanceladas = listaReservaciones.Count(r => 
-                    r.Estado == EstadoReservacionDomain.Cancelada || 
-                    r.Estado == EstadoReservacionDomain.NoShow);
+                    r.Estado == RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Cancelada || 
+                    r.Estado == RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.NoShow);
 
                 if (listaReservaciones.Count > 0)
                 {

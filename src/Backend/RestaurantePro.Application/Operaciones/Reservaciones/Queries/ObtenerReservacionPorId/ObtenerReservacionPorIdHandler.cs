@@ -1,5 +1,3 @@
-using EstadoReservacionDomain = RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion;
-
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Queries.ObtenerReservacionPorId;
 
 /// <summary>

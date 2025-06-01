@@ -399,6 +399,86 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Entities
         }
 
         /// <summary>
+        /// Aplica un descuento a la factura
+        /// </summary>
+        /// <param name="tipoDescuento">Tipo de descuento (Promocional, Empleado, Volumen, Cortesia)</param>
+        /// <param name="montoDescuento">Monto del descuento a aplicar</param>
+        /// <param name="concepto">Concepto o descripción del descuento</param>
+        /// <param name="motivo">Motivo del descuento</param>
+        /// <param name="usuarioAutorizaId">Usuario que autoriza el descuento</param>
+        /// <param name="aplicarAntesDeImpuestos">Si el descuento se aplica antes de calcular impuestos</param>
+        /// <param name="codigoAutorizacion">Código de autorización (opcional)</param>
+        /// <returns>Resultado de la operación</returns>
+        public Result AplicarDescuento(
+            string tipoDescuento,
+            decimal montoDescuento,
+            string concepto,
+            string motivo,
+            Guid usuarioAutorizaId,
+            bool aplicarAntesDeImpuestos = false,
+            string? codigoAutorizacion = null)
+        {
+            // Validar que la factura esté en estado borrador
+            if (Estado != EstadoFactura.Borrador)
+            {
+                return Result.Failure("Solo se pueden aplicar descuentos a facturas en estado borrador");
+            }
+
+            // Validar parámetros básicos
+            if (string.IsNullOrWhiteSpace(tipoDescuento))
+            {
+                return Result.Failure("El tipo de descuento no puede estar vacío");
+            }
+
+            if (montoDescuento <= 0)
+            {
+                return Result.Failure("El monto del descuento debe ser mayor que cero");
+            }
+
+            if (string.IsNullOrWhiteSpace(concepto))
+            {
+                return Result.Failure("El concepto del descuento no puede estar vacío");
+            }
+
+            if (string.IsNullOrWhiteSpace(motivo))
+            {
+                return Result.Failure("El motivo del descuento no puede estar vacío");
+            }
+
+            if (usuarioAutorizaId == Guid.Empty)
+            {
+                return Result.Failure("Debe especificar el usuario que autoriza el descuento");
+            }
+
+            // Validar que el descuento no supere el subtotal actual
+            var subtotalActual = _detalles.Sum(d => d.Subtotal);
+            if (montoDescuento > subtotalActual)
+            {
+                return Result.Failure($"El descuento ({montoDescuento:C}) no puede ser mayor al subtotal de la factura ({subtotalActual:C})");
+            }
+
+            // Aplicar el descuento agregando un detalle con valor negativo
+            var detalleDescuento = DetalleFactura.Crear(
+                Id, // facturaId
+                Guid.Empty, // Sin producto asociado para descuentos
+                $"DESCUENTO - {concepto}",
+                1, // cantidad 1
+                -montoDescuento, // precio unitario negativo
+                aplicarAntesDeImpuestos ? 0 : 16.0m, // impuesto solo si no se aplica antes de impuestos
+                0); // sin descuento adicional
+
+            _detalles.Add(detalleDescuento);
+
+            // Recalcular totales
+            RecalcularTotales();
+
+            // Registrar evento de dominio
+            AddDomainEvent(new DescuentoAplicado(Id, NumeroFactura, tipoDescuento, montoDescuento, concepto, motivo, usuarioAutorizaId, codigoAutorizacion, DateTime.Now));
+
+            return Result.Success();
+        }
+
+        /// <summary>
         /// Marca la factura como vencida
         /// </summary>
         /// <param name="dateTimeService">Servicio de fecha/hora (opcional)</param>

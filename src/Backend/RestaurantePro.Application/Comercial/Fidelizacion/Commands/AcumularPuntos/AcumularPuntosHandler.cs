@@ -259,33 +259,48 @@ public class AcumularPuntosHandler : IRequestHandler<AcumularPuntosCommand, Resu
         return Result.Success();
     }
 
-    private async Task<TransaccionPuntos> CrearTransaccionPuntos(
+    private async Task<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos> CrearTransaccionPuntos(
         AcumularPuntosCommand request, 
         TarjetaFidelizacion tarjeta, 
         int puntosOtorgados, 
         Promocion? promocion)
     {
-        var transaccion = new TransaccionPuntos
-        {
-            Id = Guid.NewGuid(),
-            TarjetaFidelizacionId = tarjeta.Id,
-            TipoTransaccion = request.TipoTransaccion.ToString(),
-            MontoCompra = request.MontoCompra,
-            PuntosOtorgados = puntosOtorgados,
-            FacturaId = request.FacturaId,
-            ComandaId = request.ComandaId,
-            PromocionId = promocion?.Id,
-            Canal = request.Canal,
-            Sucursal = request.Sucursal,
-            EmpleadoId = request.EmpleadoId,
-            ReferenciaExterna = request.ReferenciaExterna,
-            Comentarios = request.Comentarios,
-            DatosAdicionales = request.DatosAdicionales,
-            FechaTransaccion = DateTime.UtcNow,
-            CreadoPor = _currentUser.UserId ?? "Sistema"
-        };
+        // Convertir TipoTransaccionPuntos de Application a Domain
+        var tipoTransaccionDomain = ConvertirTipoTransaccion(request.TipoTransaccion);
+        
+        // Usar el constructor de la entidad Domain
+        var transaccion = new RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos(
+            tarjetaFidelizacionId: tarjeta.Id,
+            clienteId: tarjeta.ClienteId,
+            tipo: tipoTransaccionDomain,
+            puntos: puntosOtorgados,
+            saldoResultante: tarjeta.SaldoPuntos + puntosOtorgados,
+            descripcion: $"Acumulación por {request.TipoTransaccion} - Monto: {request.MontoCompra:C}",
+            usuarioId: Guid.Parse(_currentUser.UserId ?? Guid.Empty.ToString()),
+            montoAsociado: request.MontoCompra,
+            referenciaExterna: request.ReferenciaExterna,
+            promocionId: promocion?.Id,
+            facturaId: request.FacturaId,
+            observaciones: request.Comentarios
+        );
 
         return transaccion;
+    }
+
+    private RestaurantePro.Domain.Comercial.Clientes.Enums.TipoTransaccionPuntos ConvertirTipoTransaccion(RestaurantePro.Application.Comercial.Fidelizacion.DTOs.TipoTransaccionPuntos tipoApplication)
+    {
+        return tipoApplication switch
+        {
+            RestaurantePro.Application.Comercial.Fidelizacion.DTOs.TipoTransaccionPuntos.AcumulacionCompra => RestaurantePro.Domain.Comercial.Clientes.Enums.TipoTransaccionPuntos.AcumulacionCompra,
+            RestaurantePro.Application.Comercial.Fidelizacion.DTOs.TipoTransaccionPuntos.AcumulacionPromocion => RestaurantePro.Domain.Comercial.Clientes.Enums.TipoTransaccionPuntos.AcumulacionPromocion,
+            RestaurantePro.Application.Comercial.Fidelizacion.DTOs.TipoTransaccionPuntos.AcumulacionManual => RestaurantePro.Domain.Comercial.Clientes.Enums.TipoTransaccionPuntos.AcumulacionManual,
+            RestaurantePro.Application.Comercial.Fidelizacion.DTOs.TipoTransaccionPuntos.Canje => RestaurantePro.Domain.Comercial.Clientes.Enums.TipoTransaccionPuntos.Canje,
+            RestaurantePro.Application.Comercial.Fidelizacion.DTOs.TipoTransaccionPuntos.AjustePositivo => RestaurantePro.Domain.Comercial.Clientes.Enums.TipoTransaccionPuntos.AjustePositivo,
+            RestaurantePro.Application.Comercial.Fidelizacion.DTOs.TipoTransaccionPuntos.AjusteNegativo => RestaurantePro.Domain.Comercial.Clientes.Enums.TipoTransaccionPuntos.AjusteNegativo,
+            RestaurantePro.Application.Comercial.Fidelizacion.DTOs.TipoTransaccionPuntos.Vencimiento => RestaurantePro.Domain.Comercial.Clientes.Enums.TipoTransaccionPuntos.Vencimiento,
+            RestaurantePro.Application.Comercial.Fidelizacion.DTOs.TipoTransaccionPuntos.Transferencia => RestaurantePro.Domain.Comercial.Clientes.Enums.TipoTransaccionPuntos.Transferencia,
+            _ => RestaurantePro.Domain.Comercial.Clientes.Enums.TipoTransaccionPuntos.AcumulacionCompra
+        };
     }
 
     private async Task VerificarAscensoNivel(Cliente cliente, TarjetaFidelizacion tarjeta)

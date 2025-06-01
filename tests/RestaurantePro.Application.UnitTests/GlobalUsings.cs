@@ -106,6 +106,7 @@ global using RestaurantePro.Domain.Core.Notificaciones.Enums;
 // Domain - Clientes
 global using RestaurantePro.Domain.Comercial.Clientes.Entities;
 global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
+global using RestaurantePro.Domain.Comercial.Clientes.Builders;
 
 // Application - Comandas
 global using RestaurantePro.Application.Operaciones.Comandas.DTOs;
@@ -183,6 +184,7 @@ global using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
 // Domain - Comercial
 global using RestaurantePro.Domain.Comercial.Services;
 global using RestaurantePro.Domain.Comercial.Clientes.Enums;
+global using RestaurantePro.Domain.Comercial.Promociones.Services;
 
 // Domain - Core
 global using RestaurantePro.Domain.Core.Usuarios.Entities;
@@ -190,4 +192,7 @@ global using RestaurantePro.Domain.Core.Notificaciones.Entities;
 global using RestaurantePro.Domain.Core.SharedKernel.Enums;
 
 // Domain - Operaciones
-global using RestaurantePro.Domain.Operaciones.Reservaciones.Entities; 
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+
+// Application - ICommunicationService
+global using RestaurantePro.Application.Common.Interfaces; 

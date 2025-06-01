@@ -10,7 +10,7 @@ namespace RestaurantePro.Domain.Core.Services
         private readonly Productos.Interfaces.IRecetaRepository _recetaRepository;
         private readonly Productos.Services.IRecetaService _recetaService;
         private readonly SharedKernel.Validation.INotificationManager _notificationManager;
-        private readonly Core.Base.Services.IDateTimeService _dateTimeService;
+        private readonly IDateTimeService _dateTimeService;
         
         /// <summary>
         /// Constructor con inyección de dependencias
@@ -20,7 +20,7 @@ namespace RestaurantePro.Domain.Core.Services
             Productos.Interfaces.IRecetaRepository recetaRepository,
             Productos.Services.IRecetaService recetaService,
             SharedKernel.Validation.INotificationManager notificationManager,
-            Core.Base.Services.IDateTimeService dateTimeService)
+            IDateTimeService dateTimeService)
         {
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
             _recetaRepository = recetaRepository ?? throw new ArgumentNullException(nameof(recetaRepository));

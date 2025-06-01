@@ -4,8 +4,11 @@ public class MovimientoInventarioDto : BaseDto
 {
     public Guid IngredienteId { get; set; }
     public string NombreIngrediente { get; set; } = string.Empty;
-    public TipoMovimientoInventario TipoMovimiento { get; set; }
-    public string TipoMovimientoTexto => TipoMovimiento.ToString();
+    /// <summary>
+    /// Tipo de movimiento del inventario
+    /// </summary>
+    public RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario Tipo { get; set; }
+    public string TipoMovimientoTexto => Tipo.ToString();
     public decimal Cantidad { get; set; }
     public decimal CostoUnitario { get; set; }
     public decimal CostoTotal => Cantidad * CostoUnitario;

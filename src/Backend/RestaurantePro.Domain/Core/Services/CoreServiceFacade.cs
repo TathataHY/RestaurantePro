@@ -14,10 +14,10 @@ namespace RestaurantePro.Domain.Core.Services
         private readonly Productos.Services.IProductoCategoriaService _productoCategoriaService;
         private readonly Productos.Services.IRecetaService _recetaService;
         private readonly SharedKernel.Services.Notification.IEventBasedNotificationService _notificationService;
-        private readonly Core.Base.Services.IDateTimeService _dateTimeService;
         private readonly SharedKernel.Validation.INotificationManager _notificationManager;
         private readonly ILogger<ProductoBuilder> _productoBuilderLogger;
         private readonly ILogger<CoreServiceFacade> _logger;
+        private readonly IDateTimeService _dateTimeService;
 
         /// <summary>
         /// Constructor con inyección de dependencias
@@ -32,10 +32,10 @@ namespace RestaurantePro.Domain.Core.Services
             Productos.Services.IProductoCategoriaService productoCategoriaService,
             Productos.Services.IRecetaService recetaService,
             SharedKernel.Services.Notification.IEventBasedNotificationService notificationService,
-            Core.Base.Services.IDateTimeService dateTimeService,
             SharedKernel.Validation.INotificationManager notificationManager,
             ILogger<ProductoBuilder> productoBuilderLogger,
-            ILogger<CoreServiceFacade> logger)
+            ILogger<CoreServiceFacade> logger,
+            IDateTimeService dateTimeService)
         {
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
             _productoCategoriaRepository = productoCategoriaRepository ?? throw new ArgumentNullException(nameof(productoCategoriaRepository));
@@ -46,10 +46,10 @@ namespace RestaurantePro.Domain.Core.Services
             _productoCategoriaService = productoCategoriaService ?? throw new ArgumentNullException(nameof(productoCategoriaService));
             _recetaService = recetaService ?? throw new ArgumentNullException(nameof(recetaService));
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
-            _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
             _productoBuilderLogger = productoBuilderLogger ?? throw new ArgumentNullException(nameof(productoBuilderLogger));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
         }
 
         #region Productos

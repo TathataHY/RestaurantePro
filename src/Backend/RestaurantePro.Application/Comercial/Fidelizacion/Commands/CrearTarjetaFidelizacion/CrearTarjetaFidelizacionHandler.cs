@@ -11,10 +11,11 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
     private readonly ITransaccionPuntosRepository _transaccionRepository;
     private readonly IPromocionRepository _promocionRepository;
     private readonly IBeneficioRepository _beneficioRepository;
-    private readonly ITarjetaFidelizacionBuilder _tarjetaBuilder;
+    private readonly TarjetaFidelizacionBuilder _tarjetaBuilder;
     private readonly IGeneradorNumeroTarjetaService _generadorNumero;
     private readonly IQrCodeService _qrCodeService;
-    private readonly INotificacionService _notificacionService;
+    private readonly INotificationService _notificationService;
+    private readonly ICommunicationService _communicationService;
     private readonly IEnvioTarjetaService _envioTarjetaService;
     private readonly IMapper _mapper;
     private readonly ILogger<CrearTarjetaFidelizacionHandler> _logger;
@@ -29,10 +30,11 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
         ITransaccionPuntosRepository transaccionRepository,
         IPromocionRepository promocionRepository,
         IBeneficioRepository beneficioRepository,
-        ITarjetaFidelizacionBuilder tarjetaBuilder,
+        TarjetaFidelizacionBuilder tarjetaBuilder,
         IGeneradorNumeroTarjetaService generadorNumero,
         IQrCodeService qrCodeService,
-        INotificacionService notificacionService,
+        INotificationService notificationService,
+        ICommunicationService communicationService,
         IEnvioTarjetaService envioTarjetaService,
         IMapper mapper,
         ILogger<CrearTarjetaFidelizacionHandler> logger,
@@ -49,7 +51,8 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
         _tarjetaBuilder = tarjetaBuilder;
         _generadorNumero = generadorNumero;
         _qrCodeService = qrCodeService;
-        _notificacionService = notificacionService;
+        _notificationService = notificationService;
+        _communicationService = communicationService;
         _envioTarjetaService = envioTarjetaService;
         _mapper = mapper;
         _logger = logger;
@@ -103,30 +106,26 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
                 // 5. Configurar fechas de activación y vencimiento
                 var fechas = ConfigurarFechasTarjeta(request);
 
-                // 6. Crear configuración de tarjeta
-                var configuracion = CrearConfiguracionTarjeta(request, promocion);
+                // 6. Determinar puntos iniciales (incluyendo bonificaciones)
+                var puntosIniciales = CalcularPuntosIniciales(request, promocion);
 
                 // 7. Construir la tarjeta usando el builder del dominio
-                var tarjetaResult = _tarjetaBuilder
+                var tarjetaResult = await _tarjetaBuilder
                     .ParaCliente(cliente.Id)
                     .ConNumero(numeroTarjeta)
-                    .DeTipo(request.TipoTarjeta)
+                    .ConTipo(request.TipoTarjeta)
                     .ConNivel(request.NivelInicial)
-                    .ConFechaActivacion(fechas.FechaActivacion)
-                    .ConFechaVencimiento(fechas.FechaVencimiento)
-                    .ConConfiguracion(configuracion)
-                    .EsPrincipal(request.EsPrincipal)
-                    .ConSucursalEmision(request.SucursalEmision)
-                    .ConCanal(request.Canal)
-                    .ConMotivoEmision(request.MotivoEmision)
-                    .ConPersonalizacion(request.Personalizacion)
+                    .ConVencimiento(fechas.FechaVencimiento)
+                    .ConPuntosIniciales(puntosIniciales)
+                    .ConObservaciones(request.MotivoEmision)
                     .ConDatosAdicionales(request.DatosAdicionales)
-                    .Construir();
+                    .ConCodigoQR()
+                    .ConstruirAsync(cancellationToken);
 
-                if (!tarjetaResult.Succeeded)
+                if (!tarjetaResult.IsSuccess)
                 {
-                    _logger.LogWarning("Error al construir tarjeta: {Error}", tarjetaResult.Error);
-                    return Result<TarjetaFidelizacionDto>.Failure(tarjetaResult.Error);
+                    _logger.LogWarning("Error al construir tarjeta: {Error}", tarjetaResult.ErrorMessage);
+                    return Result<TarjetaFidelizacionDto>.Failure(tarjetaResult.ErrorMessage);
                 }
 
                 var tarjeta = tarjetaResult.Value;
@@ -143,19 +142,13 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
                 // 10. Guardar la tarjeta
                 await _tarjetaRepository.AddAsync(tarjeta, cancellationToken);
 
-                // 11. Procesar puntos iniciales si los hay
-                if (request.PuntosIniciales > 0)
-                {
-                    await ProcesarPuntosIniciales(tarjeta, request.PuntosIniciales, promocion, cancellationToken);
-                }
-
-                // 12. Activar beneficios especiales
+                // 11. Activar beneficios especiales
                 if (request.BeneficiosEspeciales?.Any() == true)
                 {
                     await ActivarBeneficiosEspeciales(tarjeta.Id, request.BeneficiosEspeciales, cancellationToken);
                 }
 
-                // 13. Registrar auditoría
+                // 12. Registrar auditoría
                 await _auditService.RegistrarEventoAsync(
                     "TarjetaFidelizacionCreada",
                     $"Tarjeta {tarjeta.NumeroTarjeta} creada para cliente {cliente.NombreCompleto}",
@@ -164,22 +157,22 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
                     new { TipoTarjeta = request.TipoTarjeta, NivelInicial = request.NivelInicial },
                     cancellationToken);
 
-                // 14. Enviar notificación al cliente
+                // 13. Enviar notificación al cliente
                 if (request.NotificarCliente)
                 {
                     await EnviarNotificacionCreacion(cliente, tarjeta, cancellationToken);
                 }
 
-                // 15. Procesar envío de tarjeta física si corresponde
+                // 14. Procesar envío de tarjeta física si corresponde
                 if (request.EnviarTarjetaFisica)
                 {
                     await ProgramarEnvioTarjetaFisica(tarjeta, request.DireccionEnvio, cancellationToken);
                 }
 
-                // 16. Confirmar transacción
+                // 15. Confirmar transacción
                 await transaction.CommitAsync(cancellationToken);
 
-                // 17. Construir y retornar DTO de respuesta
+                // 16. Construir y retornar DTO de respuesta
                 var responseDto = await CrearResponseDto(tarjeta, cliente, cancellationToken);
 
                 _logger.LogInformation("Tarjeta de fidelización creada exitosamente. TarjetaId: {TarjetaId}, Número: {NumeroTarjeta}",
@@ -303,105 +296,16 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
         return (fechaActivacion, fechaVencimiento);
     }
 
-    private ConfiguracionTarjeta CrearConfiguracionTarjeta(CrearTarjetaFidelizacionCommand request, Promocion? promocion)
+    private decimal CalcularPuntosIniciales(CrearTarjetaFidelizacionCommand request, Promocion? promocion)
     {
-        var configuracionBase = ObtenerConfiguracionBasePorTipo(request.TipoTarjeta);
+        decimal puntosIniciales = request.PuntosIniciales;
         
-        // Aplicar configuración personalizada si se proporciona
-        if (request.Configuracion != null)
-        {
-            configuracionBase.MultiplicadorPuntos = request.Configuracion.MultiplicadorPuntos;
-            configuracionBase.DescuentoBase = request.Configuracion.DescuentoBase;
-            configuracionBase.LimitePuntosDiario = request.Configuracion.LimitePuntosDiario;
-            configuracionBase.LimitePuntosMensual = request.Configuracion.LimitePuntosMensual;
-            configuracionBase.DiasExpiracionPuntos = request.Configuracion.DiasExpiracionPuntos;
-            configuracionBase.AcumularEnPromociones = request.Configuracion.AcumularEnPromociones;
-            configuracionBase.PermiteCanjearDescuentos = request.Configuracion.PermiteCanjearDescuentos;
-            configuracionBase.AccesoEventosExclusivos = request.Configuracion.AccesoEventosExclusivos;
-            configuracionBase.NotificacionesActivas = request.Configuracion.NotificacionesActivas;
-        }
-
-        // Aplicar bonificaciones de promoción
         if (promocion != null)
         {
-            configuracionBase.MultiplicadorPuntos *= promocion.MultiplicadorBonificacion ?? 1.0m;
-            configuracionBase.DescuentoBase += promocion.DescuentoAdicional ?? 0m;
+            puntosIniciales += promocion.PuntosAdicionales ?? 0;
         }
 
-        return configuracionBase;
-    }
-
-    private ConfiguracionTarjeta ObtenerConfiguracionBasePorTipo(TipoTarjetaFidelizacion tipoTarjeta)
-    {
-        return tipoTarjeta switch
-        {
-            TipoTarjetaFidelizacion.Estandar => new ConfiguracionTarjeta
-            {
-                MultiplicadorPuntos = 1.0m,
-                DescuentoBase = 0m,
-                LimitePuntosDiario = 1000,
-                LimitePuntosMensual = 20000,
-                DiasExpiracionPuntos = 365,
-                AcumularEnPromociones = true,
-                PermiteCanjearDescuentos = true,
-                AccesoEventosExclusivos = false,
-                NotificacionesActivas = true
-            },
-            
-            TipoTarjetaFidelizacion.Premium => new ConfiguracionTarjeta
-            {
-                MultiplicadorPuntos = 1.5m,
-                DescuentoBase = 5m,
-                LimitePuntosDiario = 2500,
-                LimitePuntosMensual = 60000,
-                DiasExpiracionPuntos = 540,
-                AcumularEnPromociones = true,
-                PermiteCanjearDescuentos = true,
-                AccesoEventosExclusivos = true,
-                NotificacionesActivas = true
-            },
-            
-            TipoTarjetaFidelizacion.Vip => new ConfiguracionTarjeta
-            {
-                MultiplicadorPuntos = 2.0m,
-                DescuentoBase = 10m,
-                LimitePuntosDiario = 5000,
-                LimitePuntosMensual = 120000,
-                DiasExpiracionPuntos = 730,
-                AcumularEnPromociones = true,
-                PermiteCanjearDescuentos = true,
-                AccesoEventosExclusivos = true,
-                NotificacionesActivas = true
-            },
-            
-            TipoTarjetaFidelizacion.Corporativa => new ConfiguracionTarjeta
-            {
-                MultiplicadorPuntos = 1.2m,
-                DescuentoBase = 3m,
-                LimitePuntosDiario = 3000,
-                LimitePuntosMensual = 80000,
-                DiasExpiracionPuntos = 365,
-                AcumularEnPromociones = false,
-                PermiteCanjearDescuentos = true,
-                AccesoEventosExclusivos = false,
-                NotificacionesActivas = true
-            },
-            
-            TipoTarjetaFidelizacion.Empleado => new ConfiguracionTarjeta
-            {
-                MultiplicadorPuntos = 2.5m,
-                DescuentoBase = 20m,
-                LimitePuntosDiario = 2000,
-                LimitePuntosMensual = 40000,
-                DiasExpiracionPuntos = 180,
-                AcumularEnPromociones = true,
-                PermiteCanjearDescuentos = true,
-                AccesoEventosExclusivos = true,
-                NotificacionesActivas = true
-            },
-            
-            _ => new ConfiguracionTarjeta() // Configuración por defecto
-        };
+        return puntosIniciales;
     }
 
     private async Task GenerarCodigosIdentificacion(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken)
@@ -438,37 +342,6 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
         }
     }
 
-    private async Task ProcesarPuntosIniciales(TarjetaFidelizacion tarjeta, int puntosIniciales, Promocion? promocion, CancellationToken cancellationToken)
-    {
-        // Acumular puntos iniciales
-        var resultadoAcumulacion = tarjeta.AcumularPuntos(
-            puntosIniciales,
-            "Bienvenida",
-            $"Puntos de bienvenida por creación de tarjeta {tarjeta.TipoTarjeta}",
-            _currentUser.UserId ?? "Sistema");
-
-        if (resultadoAcumulacion.Succeeded)
-        {
-            // Registrar transacción de puntos
-            var transaccion = new TransaccionPuntos
-            {
-                Id = Guid.NewGuid(),
-                TarjetaFidelizacionId = tarjeta.Id,
-                TipoTransaccion = TipoTransaccionPuntos.Bienvenida,
-                PuntosMovimiento = puntosIniciales,
-                SaldoAnterior = 0,
-                SaldoNuevo = puntosIniciales,
-                PromocionId = promocion?.Id,
-                FechaTransaccion = _dateTimeService.Now,
-                Descripcion = "Puntos de bienvenida por creación de tarjeta",
-                Canal = "Sistema",
-                CreadoPor = _currentUser.UserId ?? "Sistema"
-            };
-
-            await _transaccionRepository.AddAsync(transaccion, cancellationToken);
-        }
-    }
-
     private async Task ActivarBeneficiosEspeciales(Guid tarjetaId, List<string> beneficiosEspeciales, CancellationToken cancellationToken)
     {
         foreach (var beneficioNombre in beneficiosEspeciales)
@@ -488,7 +361,7 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
             var mensaje = $"¡Bienvenido al programa de fidelización! Tu tarjeta {tarjeta.TipoTarjeta} #{tarjeta.NumeroTarjeta} está lista. " +
                          $"Saldo inicial: {tarjeta.SaldoPuntos} puntos.";
 
-            await _notificacionService.EnviarNotificacionTarjetaAsync(
+            await _notificationService.EnviarNotificacionTarjetaAsync(
                 cliente.Id,
                 "Tarjeta de Fidelización Creada",
                 mensaje,

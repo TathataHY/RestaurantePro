@@ -1,12 +1,13 @@
 namespace RestaurantePro.Application.Common.Interfaces;
 
 /// <summary>
-/// Servicio para envío de notificaciones
+/// Servicio para comunicaciones externas (Email, SMS, Push)
+/// Diferente de INotificationService que maneja notificaciones internas del sistema
 /// </summary>
-public interface INotificacionService
+public interface ICommunicationService
 {
     /// <summary>
-    /// Envía una notificación por email
+    /// Envía una comunicación por email
     /// </summary>
     /// <param name="destinatario">Email del destinatario</param>
     /// <param name="asunto">Asunto del email</param>
@@ -16,7 +17,7 @@ public interface INotificacionService
     Task<bool> EnviarEmailAsync(string destinatario, string asunto, string mensaje, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Envía una notificación SMS
+    /// Envía una comunicación SMS
     /// </summary>
     /// <param name="telefono">Número de teléfono</param>
     /// <param name="mensaje">Contenido del mensaje</param>
@@ -25,7 +26,7 @@ public interface INotificacionService
     Task<bool> EnviarSmsAsync(string telefono, string mensaje, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Envía una notificación push
+    /// Envía una comunicación push
     /// </summary>
     /// <param name="usuarioId">ID del usuario</param>
     /// <param name="titulo">Título de la notificación</param>

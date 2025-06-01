@@ -55,7 +55,7 @@ public class ActualizarStockHandler : IRequestHandler<ActualizarStockCommand, Re
             }
 
             // 4. Parsear tipo de movimiento
-            if (!Enum.TryParse<TipoMovimientoInventario>(request.TipoMovimiento, true, out var tipoMovimiento))
+            if (!Enum.TryParse<RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario>(request.TipoMovimiento, true, out var tipoMovimiento))
             {
                 return Result.Failure<IngredienteDto>($"Tipo de movimiento no válido: {request.TipoMovimiento}");
             }
@@ -69,7 +69,7 @@ public class ActualizarStockHandler : IRequestHandler<ActualizarStockCommand, Re
             }
 
             // 6. Actualizar costo promedio si se proporcionó nuevo costo
-            if (request.NuevoCosto.HasValue && tipoMovimiento == TipoMovimientoInventario.Ingreso)
+            if (request.NuevoCosto.HasValue && tipoMovimiento == RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Ingreso)
             {
                 try
                 {
@@ -118,7 +118,7 @@ public class ActualizarStockHandler : IRequestHandler<ActualizarStockCommand, Re
     private Result<MovimientoResult> ProcesarMovimiento(
         Domain.Inventario.Ingredientes.Entities.Ingrediente ingrediente,
         ActualizarStockCommand request,
-        TipoMovimientoInventario tipoMovimiento)
+        RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario tipoMovimiento)
     {
         var stockAnterior = ingrediente.Stock;
 
@@ -129,9 +129,9 @@ public class ActualizarStockHandler : IRequestHandler<ActualizarStockCommand, Re
         {
             return tipoMovimiento switch
             {
-                TipoMovimientoInventario.Ingreso => ProcesarIngreso(ingrediente, request, stockAnterior),
-                TipoMovimientoInventario.Egreso => ProcesarEgreso(ingrediente, request, stockAnterior),
-                TipoMovimientoInventario.Ajuste => ProcesarAjuste(ingrediente, request, stockAnterior),
+                RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Ingreso => ProcesarIngreso(ingrediente, request, stockAnterior),
+                RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Egreso => ProcesarEgreso(ingrediente, request, stockAnterior),
+                RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Ajuste => ProcesarAjuste(ingrediente, request, stockAnterior),
                 _ => Result.Failure<MovimientoResult>($"Tipo de movimiento no soportado: {tipoMovimiento}")
             };
         }

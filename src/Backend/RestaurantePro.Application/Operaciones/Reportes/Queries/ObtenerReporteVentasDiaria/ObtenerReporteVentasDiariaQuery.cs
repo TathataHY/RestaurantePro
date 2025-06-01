@@ -4,7 +4,7 @@ namespace RestaurantePro.Application.Operaciones.Reportes.Queries.ObtenerReporte
 /// 🎯 Query avanzada para reporte de ventas diarias con análisis operacional
 /// Usa OperacionesServiceFacade para métricas complejas
 /// </summary>
-public class ObtenerReporteVentasDiariaQuery : IRequest<Result<ReporteVentasDiariaResult>>
+public class ObtenerReporteVentasDiariaQuery : IRequest<Result<ReporteVentasDiariaDto>>
 {
     public DateTime FechaReporte { get; init; }
     public bool IncluirComparativoPeriodoAnterior { get; init; } = true;

@@ -4,7 +4,7 @@ namespace RestaurantePro.Application.Operaciones.Reservaciones.Commands.Confirma
 /// Command para confirmar una reservación pendiente
 /// Permite confirmar reservaciones que requieren validación previa
 /// </summary>
-public class ConfirmarReservacionCommand : IRequest<Result<ReservacionDto>>
+public class ConfirmarReservacionCommand : IRequest<Result<ConfirmarReservacionDto>>
 {
     /// <summary>
     /// ID de la reservación a confirmar

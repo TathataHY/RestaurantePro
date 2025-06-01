@@ -427,5 +427,94 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                 return _notificationManager.ToResult<string>(string.Empty);
             }
         }
+
+        /// <inheritdoc />
+        public async Task<Result<Factura>> AplicarDescuentoAsync(
+            Guid facturaId,
+            string tipoDescuento,
+            decimal montoDescuento,
+            string concepto,
+            string motivo,
+            Guid usuarioAutorizaId,
+            bool aplicarAntesDeImpuestos = false,
+            string? codigoAutorizacion = null,
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.Require(facturaId != Guid.Empty, "El ID de la factura no puede estar vacío", "FacturaId");
+            _notificationManager.Require(!string.IsNullOrWhiteSpace(tipoDescuento), "El tipo de descuento no puede estar vacío", "TipoDescuento");
+            _notificationManager.Require(montoDescuento > 0, "El monto del descuento debe ser mayor a cero", "MontoDescuento");
+            _notificationManager.Require(!string.IsNullOrWhiteSpace(concepto), "El concepto del descuento no puede estar vacío", "Concepto");
+            _notificationManager.Require(!string.IsNullOrWhiteSpace(motivo), "El motivo del descuento no puede estar vacío", "Motivo");
+            _notificationManager.Require(usuarioAutorizaId != Guid.Empty, "El ID del usuario que autoriza no puede estar vacío", "UsuarioAutorizaId");
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<Factura>(null);
+            }
+            
+            try
+            {
+                // Obtener la factura
+                var factura = await _facturaRepository.ObtenerPorIdAsync(facturaId, cancellationToken);
+                if (factura == null)
+                {
+                    _notificationManager.AddError($"No se encontró la factura con ID {facturaId}", "FacturaId");
+                    return _notificationManager.ToResult<Factura>(null);
+                }
+
+                // Verificar que la factura esté en estado borrador
+                if (factura.Estado != EstadoFactura.Borrador)
+                {
+                    _notificationManager.AddError("Solo se pueden aplicar descuentos a facturas en estado borrador", "FacturaEstado");
+                    return _notificationManager.ToResult<Factura>(null);
+                }
+
+                // Validar que el monto del descuento no supere el subtotal de la factura
+                var subtotal = factura.Detalles.Sum(d => d.Subtotal);
+                if (montoDescuento > subtotal)
+                {
+                    _notificationManager.AddError($"El monto del descuento ({montoDescuento:C}) no puede ser mayor al subtotal de la factura ({subtotal:C})", "MontoDescuento");
+                    return _notificationManager.ToResult<Factura>(null);
+                }
+
+                // Validar tipos de descuento permitidos
+                var tiposPermitidos = new[] { "Promocional", "Empleado", "Volumen", "Cortesia" };
+                if (!tiposPermitidos.Contains(tipoDescuento, StringComparer.OrdinalIgnoreCase))
+                {
+                    _notificationManager.AddError($"El tipo de descuento '{tipoDescuento}' no es válido. Tipos permitidos: {string.Join(", ", tiposPermitidos)}", "TipoDescuento");
+                    return _notificationManager.ToResult<Factura>(null);
+                }
+
+                // Aplicar el descuento usando el método de la entidad
+                var resultadoDescuento = factura.AplicarDescuento(
+                    tipoDescuento,
+                    montoDescuento,
+                    concepto,
+                    motivo,
+                    usuarioAutorizaId,
+                    aplicarAntesDeImpuestos,
+                    codigoAutorizacion);
+
+                if (!resultadoDescuento.Succeeded)
+                {
+                    _notificationManager.AddError(resultadoDescuento.Error ?? "Error al aplicar descuento", "AplicarDescuento");
+                    return _notificationManager.ToResult<Factura>(null);
+                }
+
+                // Actualizar la factura en el repositorio
+                await _facturaRepository.ActualizarAsync(factura, cancellationToken);
+                await _facturaRepository.GuardarCambiosAsync(cancellationToken);
+
+                return Result.Success(factura);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al aplicar descuento: {ex.Message}", "AplicarDescuento");
+                return _notificationManager.ToResult<Factura>(null);
+            }
+        }
     }
 } 

@@ -144,7 +144,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cliente">Cliente a actualizar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarea completada cuando finaliza la operación</returns>
-        Task ActualizarAsync(Cliente cliente, CancellationToken cancellationToken = default);
+        new Task ActualizarAsync(Cliente cliente, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Guarda un cliente

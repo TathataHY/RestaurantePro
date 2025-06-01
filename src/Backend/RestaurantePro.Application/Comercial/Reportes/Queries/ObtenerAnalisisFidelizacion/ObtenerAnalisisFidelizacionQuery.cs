@@ -4,7 +4,7 @@ namespace RestaurantePro.Application.Comercial.Reportes.Queries.ObtenerAnalisisF
 /// 🎯 Query avanzada para análisis completo de fidelización de clientes
 /// Usa ComercialServiceFacade para análisis de negocio complejos
 /// </summary>
-public class ObtenerAnalisisFidelizacionQuery : IRequest<Result<AnalisisFidelizacionResult>>
+public class ObtenerAnalisisFidelizacionQuery : IRequest<Result<AnalisisFidelizacionDto>>
 {
     public DateTime FechaInicio { get; init; }
     public DateTime FechaFin { get; init; }

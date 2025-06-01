@@ -235,12 +235,12 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         }
         
         /// <summary>
-        /// Registra la recepción de la orden de compra
+        /// Recibe la orden de compra
         /// </summary>
         /// <param name="fechaRecepcion">Fecha de recepción</param>
         /// <param name="observaciones">Observaciones de la recepción</param>
         /// <exception cref="InvalidOperationException">Si la orden no está en estado Enviada</exception>
-        public void Recibir(DateTime fechaRecepcion, string observaciones = null)
+        public void Recibir(DateTime fechaRecepcion, string? observaciones = null)
         {
             if (Estado != EstadoOrdenCompra.Enviada)
                 throw new InvalidOperationException("No se puede recibir una orden que no está en estado enviada");

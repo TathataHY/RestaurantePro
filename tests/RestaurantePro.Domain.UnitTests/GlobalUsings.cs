@@ -247,3 +247,91 @@ global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Exceptions;
 // Domain Proveedores - Exceptions
 global using RestaurantePro.Domain.Proveedores.Exceptions;
 
+// Testing Frameworks
+global using Xunit;
+global using FluentAssertions;
+global using Moq;
+
+// .NET Base
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using System.Reflection;
+
+// Microsoft Extensions
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+
+// MediatR
+global using MediatR;
+
+// Domain - Core SharedKernel
+global using RestaurantePro.Domain.Core.SharedKernel.Results;
+global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+global using RestaurantePro.Domain.Core.SharedKernel.Validation;
+global using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
+global using RestaurantePro.Domain.Core.SharedKernel.Enums;
+
+// Domain - Core Notificaciones
+global using RestaurantePro.Domain.Core.Notificaciones.Services;
+global using RestaurantePro.Domain.Core.Notificaciones.Enums;
+global using RestaurantePro.Domain.Core.Notificaciones.Entities;
+
+// Domain - Core Productos
+global using RestaurantePro.Domain.Core.Productos.Entities;
+global using RestaurantePro.Domain.Core.Productos.ValueObjects;
+global using RestaurantePro.Domain.Core.Productos.Interfaces;
+global using RestaurantePro.Domain.Core.Productos.Builders;
+global using RestaurantePro.Domain.Core.Productos.Services;
+
+// Domain - Core Usuarios
+global using RestaurantePro.Domain.Core.Usuarios.Entities;
+
+// Domain - Proveedores
+global using RestaurantePro.Domain.Proveedores.Entities;
+global using RestaurantePro.Domain.Proveedores.Interfaces;
+global using RestaurantePro.Domain.Proveedores.Enums;
+global using RestaurantePro.Domain.Proveedores.Builders;
+
+// Domain - Operaciones
+global using RestaurantePro.Domain.Operaciones.Services;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion;
+global using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+global using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+global using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+global using RestaurantePro.Domain.Operaciones.Comandas.Enums;
+global using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
+
+// Domain - Inventario
+global using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces;
+global using RestaurantePro.Domain.Inventario.Services;
+global using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
+
+// Domain - Comercial - Clientes
+global using RestaurantePro.Domain.Comercial.Clientes.Entities;
+global using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
+global using RestaurantePro.Domain.Comercial.Clientes.Enums;
+global using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+global using RestaurantePro.Domain.Comercial.Clientes.Builders;
+
+// Domain - Comercial - Servicios
+global using RestaurantePro.Domain.Comercial.Services;
+
+// Domain - Comercial - Promociones
+global using RestaurantePro.Domain.Comercial.Promociones.Services;
+
+// Domain - Comercial - Facturación
+global using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+global using RestaurantePro.Domain.Comercial.Facturacion.Enums;
+global using RestaurantePro.Domain.Comercial.Facturacion.Services;
+global using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+
