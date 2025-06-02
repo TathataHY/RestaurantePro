@@ -342,7 +342,7 @@ public class AplicarPromocionHandlerTests
 
         var mockTransaction = new Mock<IDbContextTransaction>();
         _mockUnitOfWork.Setup(u => u.BeginTransactionAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult(mockTransaction.Object));
+            .ReturnsAsync(mockTransaction.Object);
     }
 
     #endregion

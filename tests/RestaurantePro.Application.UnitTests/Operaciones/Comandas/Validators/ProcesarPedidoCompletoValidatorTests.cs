@@ -294,12 +294,8 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPuntosAUtilizarMenorOIgualACero_DeberiaRetornarError(int puntosInvalidos)
     {
         // Arrange
-        var command = new ComandasProcesarPedidoCommand
-        {
-            MeseroId = Guid.NewGuid(),
-            Items = new List<ItemPedido> { CrearItemValido() },
-            PuntosAUtilizar = puntosInvalidos
-        };
+        var command = CrearCommandValido();
+        command.PuntosAUtilizar = puntosInvalidos;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -315,12 +311,8 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPuntosAUtilizarExcesivos_DeberiaRetornarError()
     {
         // Arrange
-        var command = new ComandasProcesarPedidoCommand
-        {
-            MeseroId = Guid.NewGuid(),
-            Items = new List<ItemPedido> { CrearItemValido() },
-            PuntosAUtilizar = 10001 // Más de 10,000 puntos
-        };
+        var command = CrearCommandValido();
+        command.PuntosAUtilizar = 10001; // Más de 10,000 puntos
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -339,13 +331,9 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPuntosAUtilizarValidos_NoDeberiaRetornarErrorDePuntos(int puntosValidos)
     {
         // Arrange
-        var command = new ComandasProcesarPedidoCommand
-        {
-            MeseroId = Guid.NewGuid(),
-            Items = new List<ItemPedido> { CrearItemValido() },
-            PuntosAUtilizar = puntosValidos,
-            ClienteId = Guid.NewGuid() // Necesario cuando se usan puntos
-        };
+        var command = CrearCommandValido();
+        command.PuntosAUtilizar = puntosValidos;
+        command.ClienteId = Guid.NewGuid(); // Necesario cuando se usan puntos
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -359,12 +347,8 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPuntosAUtilizarNull_NoDeberiaValidar()
     {
         // Arrange
-        var command = new ComandasProcesarPedidoCommand
-        {
-            MeseroId = Guid.NewGuid(),
-            Items = new List<ItemPedido> { CrearItemValido() },
-            PuntosAUtilizar = null
-        };
+        var command = CrearCommandValido();
+        command.PuntosAUtilizar = null;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -382,13 +366,9 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPuntosSinCliente_DeberiaRetornarError()
     {
         // Arrange
-        var command = new ComandasProcesarPedidoCommand
-        {
-            MeseroId = Guid.NewGuid(),
-            Items = new List<ItemPedido> { CrearItemValido() },
-            PuntosAUtilizar = 500,
-            ClienteId = Guid.Empty // Sin cliente
-        };
+        var command = CrearCommandValido();
+        command.PuntosAUtilizar = 500;
+        command.ClienteId = Guid.Empty; // Sin cliente
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -404,13 +384,9 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPuntosYClienteValido_NoDeberiaRetornarError()
     {
         // Arrange
-        var command = new ComandasProcesarPedidoCommand
-        {
-            MeseroId = Guid.NewGuid(),
-            Items = new List<ItemPedido> { CrearItemValido() },
-            PuntosAUtilizar = 500,
-            ClienteId = Guid.NewGuid()
-        };
+        var command = CrearCommandValido();
+        command.PuntosAUtilizar = 500;
+        command.ClienteId = Guid.NewGuid();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -424,13 +400,9 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_SinPuntosYSinCliente_NoDeberiaRetornarError()
     {
         // Arrange
-        var command = new ComandasProcesarPedidoCommand
-        {
-            MeseroId = Guid.NewGuid(),
-            Items = new List<ItemPedido> { CrearItemValido() },
-            PuntosAUtilizar = null,
-            ClienteId = Guid.Empty
-        };
+        var command = CrearCommandValido();
+        command.PuntosAUtilizar = null;
+        command.ClienteId = Guid.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);
