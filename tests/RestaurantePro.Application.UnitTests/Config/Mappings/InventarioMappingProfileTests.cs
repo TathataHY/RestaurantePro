@@ -85,14 +85,12 @@ public class InventarioMappingProfileTests
         // Arrange
         var createDto = new IngredienteCreateDto
         {
-            Nombre = "Harina de trigo",
-            Descripcion = "Harina de trigo para panadería",
+            Nombre = "Sal de grano",
+            Descripcion = "Sal de grano marina",
             UnidadMedida = UnidadMedida.Kilogramos,
             StockMinimo = 10,
-            StockMaximo = 100,
             StockInicial = 50,
             CostoInicial = 25.50m,
-            CategoriaId = Guid.NewGuid(),
             ProveedorPrincipalId = Guid.NewGuid()
         };
 
@@ -105,10 +103,8 @@ public class InventarioMappingProfileTests
         command.Descripcion.Should().Be(createDto.Descripcion);
         command.UnidadMedida.Should().Be(createDto.UnidadMedida);
         command.StockMinimo.Should().Be(createDto.StockMinimo);
-        command.StockMaximo.Should().Be(createDto.StockMaximo);
         command.StockInicial.Should().Be(createDto.StockInicial);
         command.CostoInicial.Should().Be(createDto.CostoInicial);
-        command.CategoriaId.Should().Be(createDto.CategoriaId);
         command.ProveedorPrincipalId.Should().Be(createDto.ProveedorPrincipalId);
         command.MotivoStockInicial.Should().Be("Stock inicial al crear ingrediente");
     }

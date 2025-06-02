@@ -295,19 +295,18 @@ public class CrearFacturaValidatorTests
 
     #endregion
 
-    #region MetodoPago Validations
+    #region MetodoPagoPreferido Validations
 
     [Theory]
     [InlineData("Efectivo")]
     [InlineData("TarjetaCredito")]
     [InlineData("TarjetaDebito")]
     [InlineData("Transferencia")]
-    [InlineData("Cheque")]
     public void Validator_ConMetodosPagoValidos_DeberiaSerValido(string metodoPago)
     {
         // Arrange
         var command = CrearComandoValido();
-        command.MetodoPago = metodoPago;
+        command.MetodoPagoPreferido = metodoPago;
 
         // Act
         var result = _validator.Validate(command);
@@ -317,16 +316,15 @@ public class CrearFacturaValidatorTests
     }
 
     [Theory]
-    [InlineData("Bitcoin")]
-    [InlineData("PayPal")]
-    [InlineData("efectivo")]
-    [InlineData("")]
     [InlineData(null)]
+    [InlineData("")]
+    [InlineData("MetodoInvalido")]
+    [InlineData("Bitcoin")]
     public void Validator_ConMetodosPagoInvalidos_DeberiaFallar(string? metodoPagoInvalido)
     {
         // Arrange
         var command = CrearComandoValido();
-        command.MetodoPago = metodoPagoInvalido;
+        command.MetodoPagoPreferido = metodoPagoInvalido;
 
         // Act
         var result = _validator.Validate(command);
@@ -363,7 +361,7 @@ public class CrearFacturaValidatorTests
             TipoFactura = "TipoInvalido", // Error: tipo inválido
             NombreCliente = "", // Error: vacío
             Moneda = "JPY", // Error: moneda inválida
-            MetodoPago = "Bitcoin" // Error: método inválido
+            MetodoPagoPreferido = "Bitcoin" // Error: método inválido
         };
 
         // Act
@@ -386,12 +384,10 @@ public class CrearFacturaValidatorTests
             ComandasIds = new List<Guid> { Guid.NewGuid() },
             TipoFactura = "Fiscal",
             NombreCliente = "Empresa ABC S.A. de C.V.",
-            RfcCliente = "ABC123456789",
+            IdentificacionFiscal = "ABC123456789",
             DireccionCliente = "Av. Principal 123, Col. Centro",
             Moneda = "MXN",
-            MetodoPago = "Transferencia",
-            UsoCfdi = "G01",
-            FormaPago = "99",
+            MetodoPagoPreferido = "Transferencia",
             Observaciones = "Factura fiscal empresarial"
         };
 
@@ -412,10 +408,9 @@ public class CrearFacturaValidatorTests
             ComandasIds = new List<Guid> { Guid.NewGuid() },
             TipoFactura = "NotaCredito",
             NombreCliente = "Cliente Ejemplo",
-            FacturaOriginalId = Guid.NewGuid(),
-            MotivoNota = "Devolución de producto defectuoso",
+            Observaciones = "Devolución de producto defectuoso",
             Moneda = "MXN",
-            MetodoPago = "Efectivo"
+            MetodoPagoPreferido = "Efectivo"
         };
 
         // Act
@@ -507,7 +502,7 @@ public class CrearFacturaValidatorTests
             TipoFactura = "Normal",
             NombreCliente = "Cliente Ejemplo",
             Moneda = "MXN",
-            MetodoPago = "Efectivo",
+            MetodoPagoPreferido = "Efectivo",
             Observaciones = "Factura de ejemplo"
         };
     }

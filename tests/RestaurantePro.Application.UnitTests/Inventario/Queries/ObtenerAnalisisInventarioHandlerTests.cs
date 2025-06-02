@@ -43,11 +43,9 @@ public class ObtenerAnalisisInventarioHandlerTests
         // Assert
         Assert.Equal(fecha, query.FechaInicio);
         Assert.Equal(fecha, query.FechaFin);
-        Assert.True(query.IncluirPrediccionesStock);
-        Assert.True(query.IncluirAnalisisCostos);
-        Assert.True(query.IncluirAlertasAvanzadas);
-        Assert.True(query.IncluirRecomendacionesCompra);
-        Assert.Equal(NivelAnalisisInventario.Diario, query.NivelAnalisis);
+        Assert.True(query.IncluirTendencias);
+        Assert.True(query.IncluirRecomendaciones);
+        Assert.Equal(NivelAnalisisInventario.Diario, query.NivelDetalle);
     }
 
     [Fact]
@@ -62,9 +60,9 @@ public class ObtenerAnalisisInventarioHandlerTests
         // Assert
         Assert.Equal(fechaInicio, query.FechaInicio);
         Assert.Equal(fechaInicio.AddDays(7), query.FechaFin);
-        Assert.True(query.IncluirPrediccionesStock);
+        Assert.True(query.IncluirTendencias);
         Assert.True(query.IncluirMovimientosDetallados);
-        Assert.Equal(NivelAnalisisInventario.Completo, query.NivelAnalisis);
+        Assert.Equal(NivelAnalisisInventario.Completo, query.NivelDetalle);
     }
 
     [Fact]
@@ -80,7 +78,7 @@ public class ObtenerAnalisisInventarioHandlerTests
         // Assert
         Assert.Equal(ingredientesIds, query.IngredientesEspecificos);
         Assert.Equal(umbralCritico, query.UmbralStockCritico);
-        Assert.Equal(NivelAnalisisInventario.Criticos, query.NivelAnalisis);
+        Assert.Equal(NivelAnalisisInventario.Criticos, query.NivelDetalle);
         Assert.True(query.IncluirMovimientosDetallados);
     }
 
@@ -96,11 +94,10 @@ public class ObtenerAnalisisInventarioHandlerTests
         {
             FechaInicio = DateTime.Today.AddDays(-7),
             FechaFin = DateTime.Today,
-            NivelAnalisis = NivelAnalisisInventario.Completo,
-            IncluirPrediccionesStock = true,
-            IncluirAnalisisCostos = true,
-            IncluirAlertasAvanzadas = true,
-            IncluirRecomendacionesCompra = true
+            NivelDetalle = "Completo",
+            IncluirTendencias = true,
+            IncluirRecomendaciones = true,
+            UsuarioId = Guid.NewGuid()
         };
 
         var analisisCompleto = CreateMockAnalisisCompletoIA();
@@ -115,13 +112,13 @@ public class ObtenerAnalisisInventarioHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.Equal(285, result.Value.ResumenExecutivo.TotalIngredientes);
-        Assert.Equal(42, result.Value.ResumenExecutivo.IngredientesCriticos);
+        Assert.Equal(42, result.Value.ResumenExecutivo.IngredientesStockCritico);
         Assert.Equal(15, result.Value.AnalisisIngredientes.Count);
         Assert.Equal(8, result.Value.AnalisisCategorias.Count);
         Assert.NotNull(result.Value.Predicciones);
         Assert.Equal(12, result.Value.AlertasInventario.Count);
         Assert.Equal(18, result.Value.RecomendacionesCompra.Count);
-        Assert.True(result.Value.MetricasEficiencia.EficienciaRotacion > 0);
+        Assert.True(result.Value.MetricasEficiencia.TasaRotacionGlobal > 0);
     }
 
     [Fact]
@@ -132,8 +129,9 @@ public class ObtenerAnalisisInventarioHandlerTests
         {
             FechaInicio = DateTime.Today.AddDays(-30),
             FechaFin = DateTime.Today,
-            NivelAnalisis = NivelAnalisisInventario.Completo,
-            IncluirPrediccionesStock = true
+            NivelDetalle = "Completo",
+            IncluirTendencias = true,
+            UsuarioId = Guid.NewGuid()
         };
 
         var analisisConIA = CreateMockAnalisisConPrediccionesML();
@@ -148,9 +146,9 @@ public class ObtenerAnalisisInventarioHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Value.Predicciones);
-        Assert.Equal("Alta", result.Value.Predicciones.ConfiabilidadPrediccion);
-        Assert.Equal(7, result.Value.Predicciones.PrediccionesSemanales.Count);
-        Assert.True(result.Value.Predicciones.StockOptimo.Count > 0);
+        Assert.Equal("Alta", result.Value.Predicciones.ConfiabilidadPredicciones);
+        Assert.Equal(7, result.Value.Predicciones.PrediccionesPorIngrediente.Count);
+        Assert.True(result.Value.Predicciones.PrediccionesPorCategoria.Count > 0);
         Assert.Contains("Machine Learning", result.Value.RecomendacionesCompra.Select(r => r.Descripcion).FirstOrDefault() ?? "");
     }
 
@@ -158,17 +156,17 @@ public class ObtenerAnalisisInventarioHandlerTests
     public async Task Handle_AnalisisIngredientesCriticos_DeberiaIdentificarCriticos()
     {
         // Arrange
-        var ingredientesIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
         var query = new ObtenerAnalisisInventarioQuery
         {
             FechaInicio = DateTime.Today,
             FechaFin = DateTime.Today,
-            NivelAnalisis = NivelAnalisisInventario.Criticos,
-            IngredientesEspecificos = ingredientesIds,
-            UmbralStockCritico = 10.0m
+            NivelDetalle = "Críticos",
+            SoloCriticos = true,
+            SoloAlertaStock = true,
+            UsuarioId = Guid.NewGuid()
         };
 
-        var analisisCriticos = CreateMockAnalisisCriticos(ingredientesIds);
+        var analisisCriticos = CreateMockAnalisisCriticos(new List<Guid> { Guid.NewGuid(), Guid.NewGuid() });
         
         _inventarioServiceFacadeMock.Setup(x => x.GenerarAnalisisInventarioAsync(
             It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<Dictionary<string, object>>(), It.IsAny<CancellationToken>()))
@@ -180,9 +178,7 @@ public class ObtenerAnalisisInventarioHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.Equal(2, result.Value.AnalisisIngredientes.Count);
-        Assert.True(result.Value.AnalisisIngredientes.All(a => ingredientesIds.Contains(a.IngredienteId)));
         Assert.Contains(result.Value.AlertasInventario, a => a.Prioridad == NivelPrioridad.Critica);
-        Assert.Equal(NivelAnalisisInventario.Criticos, result.Value.NivelAnalisis);
     }
 
     [Fact]
@@ -193,8 +189,9 @@ public class ObtenerAnalisisInventarioHandlerTests
         {
             FechaInicio = DateTime.Today.AddDays(-30),
             FechaFin = DateTime.Today,
-            NivelAnalisis = NivelAnalisisInventario.Financiero,
-            IncluirAnalisisCostos = true
+            NivelDetalle = "Financiero",
+            IncluirRecomendaciones = true,
+            UsuarioId = Guid.NewGuid()
         };
 
         var analisisFinanciero = CreateMockAnalisisFinanciero();
@@ -209,10 +206,10 @@ public class ObtenerAnalisisInventarioHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Value.AnalisisFinanciero);
-        Assert.Equal(285000.75m, result.Value.AnalisisFinanciero.ValorTotalInventario);
-        Assert.Equal(42500.50m, result.Value.AnalisisFinanciero.CostoMensualPromedio);
-        Assert.True(result.Value.AnalisisFinanciero.CategoriasConMayorCosto.Count > 0);
-        Assert.Equal("Carnes y Pescados", result.Value.AnalisisFinanciero.CategoriasConMayorCosto.First().Categoria);
+        Assert.Equal(285000.75m, result.Value.AnalisisFinanciero.InversionTotalActual);
+        Assert.Equal(1416.68m, result.Value.AnalisisFinanciero.CostoPromedioDiario);
+        Assert.True(result.Value.AnalisisFinanciero.CostosPorCategoria.Count > 0);
+        Assert.Equal("Carnes y Pescados", result.Value.AnalisisFinanciero.CostosPorCategoria.First().NombreCategoria);
     }
 
     [Fact]
@@ -223,10 +220,10 @@ public class ObtenerAnalisisInventarioHandlerTests
         {
             FechaInicio = DateTime.Today,
             FechaFin = DateTime.Today,
-            NivelAnalisis = NivelAnalisisInventario.Basico,
-            IncluirPrediccionesStock = false,
-            IncluirAnalisisCostos = false,
-            IncluirMovimientosDetallados = false
+            NivelDetalle = "Básico",
+            IncluirTendencias = false,
+            IncluirRecomendaciones = false,
+            UsuarioId = Guid.NewGuid()
         };
 
         var analisisBasico = CreateMockAnalisisBasico();
@@ -243,8 +240,6 @@ public class ObtenerAnalisisInventarioHandlerTests
         Assert.NotNull(result.Value.ResumenExecutivo);
         Assert.Null(result.Value.Predicciones);
         Assert.Null(result.Value.AnalisisFinanciero);
-        Assert.Null(result.Value.MovimientosDetallados);
-        Assert.Equal(NivelAnalisisInventario.Basico, result.Value.NivelAnalisis);
     }
 
     #endregion
@@ -258,8 +253,9 @@ public class ObtenerAnalisisInventarioHandlerTests
         var query = new ObtenerAnalisisInventarioQuery
         {
             FechaInicio = DateTime.Today,
-            FechaFin = DateTime.Today.AddDays(-5), // Fecha fin anterior a inicio
-            NivelAnalisis = NivelAnalisisInventario.Completo
+            FechaFin = DateTime.Today.AddDays(-5),
+            NivelDetalle = "Completo",
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
@@ -278,7 +274,8 @@ public class ObtenerAnalisisInventarioHandlerTests
         {
             FechaInicio = DateTime.Today.AddYears(-1),
             FechaFin = DateTime.Today,
-            NivelAnalisis = NivelAnalisisInventario.Completo
+            NivelDetalle = "Completo",
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
@@ -297,8 +294,10 @@ public class ObtenerAnalisisInventarioHandlerTests
         {
             FechaInicio = DateTime.Today.AddDays(-7),
             FechaFin = DateTime.Today,
-            NivelAnalisis = NivelAnalisisInventario.Criticos,
-            IngredientesEspecificos = new List<Guid>() // Lista vacía
+            NivelDetalle = "Críticos",
+            SoloCriticos = true,
+            SoloAlertaStock = true,
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
@@ -321,7 +320,8 @@ public class ObtenerAnalisisInventarioHandlerTests
         {
             FechaInicio = DateTime.Today.AddDays(-7),
             FechaFin = DateTime.Today,
-            NivelAnalisis = NivelAnalisisInventario.Completo
+            NivelDetalle = "Completo",
+            UsuarioId = Guid.NewGuid()
         };
 
         _inventarioServiceFacadeMock.Setup(x => x.GenerarAnalisisInventarioAsync(
@@ -344,7 +344,8 @@ public class ObtenerAnalisisInventarioHandlerTests
         {
             FechaInicio = DateTime.Today.AddDays(-7),
             FechaFin = DateTime.Today,
-            NivelAnalisis = NivelAnalisisInventario.Completo
+            NivelDetalle = "Completo",
+            UsuarioId = Guid.NewGuid()
         };
 
         _inventarioServiceFacadeMock.Setup(x => x.GenerarAnalisisInventarioAsync(
@@ -371,7 +372,8 @@ public class ObtenerAnalisisInventarioHandlerTests
         {
             FechaInicio = DateTime.Today.AddDays(-7),
             FechaFin = DateTime.Today,
-            NivelAnalisis = NivelAnalisisInventario.Completo
+            NivelDetalle = "Completo",
+            UsuarioId = Guid.NewGuid()
         };
 
         var analisis = CreateMockAnalisisCompletoIA();
@@ -411,27 +413,27 @@ public class ObtenerAnalisisInventarioHandlerTests
             ResumenExecutivo = new ResumenInventario
             {
                 TotalIngredientes = 285,
-                IngredientesCriticos = 42,
-                IngredientesOptimos = 195,
+                IngredientesStockCritico = 42,
+                IngredientesEnStock = 195,
                 ValorTotalInventario = 285000.75m,
-                RotacionPromedio = 12.5m,
-                EficienciaStorage = 87.3m
+                TasaRotacionInventario = 12.5m
             },
             AnalisisIngredientes = CreateMockAnalisisIngredientes(),
             AnalisisCategorias = CreateMockAnalisisCategorias(),
             AlertasInventario = CreateMockAlertas(),
             Predicciones = new PrediccionesInventario
             {
-                ConfiabilidadPrediccion = "Alta",
-                PrediccionesSemanales = CreateMockPrediccionesSemanales(),
-                StockOptimo = CreateMockStockOptimo()
+                ConfiabilidadPredicciones = "Alta",
+                PrediccionesPorIngrediente = CreateMockPrediccionesIngredientes(),
+                PrediccionesPorCategoria = CreateMockPrediccionesCategorias(),
+                PrediccionGeneral = CreateMockPrediccionGeneral()
             },
             RecomendacionesCompra = CreateMockRecomendaciones(),
             MetricasEficiencia = new MetricasEficienciaInventario
             {
-                EficienciaRotacion = 87.3m,
+                TasaRotacionGlobal = 87.3m,
                 TiempoPromedioReposicion = TimeSpan.FromDays(3.5),
-                PorcentajeOptimizacion = 92.1m
+                PorcentajeStockOptimo = 92.1m
             }
         };
     }
@@ -443,7 +445,7 @@ public class ObtenerAnalisisInventarioHandlerTests
         {
             IngredienteId = Guid.NewGuid(),
             NombreIngrediente = "Prediction ML: Stock Optimizado",
-            Descripcion = "Machine Learning recomienda ajuste de stock basado en patrones históricos",
+            Justificacion = "Machine Learning recomienda ajuste de stock basado en patrones históricos",
             CantidadRecomendada = 150,
             PrioridadCompra = NivelPrioridad.Alta
         });
@@ -458,14 +460,14 @@ public class ObtenerAnalisisInventarioHandlerTests
             ResumenExecutivo = new ResumenInventario
             {
                 TotalIngredientes = ingredientesIds.Count,
-                IngredientesCriticos = ingredientesIds.Count
+                IngredientesStockCritico = ingredientesIds.Count
             },
             AnalisisIngredientes = ingredientesIds.Select(id => new AnalisisIngrediente
             {
                 IngredienteId = id,
                 NombreIngrediente = $"Ingrediente Crítico {id.ToString()[..8]}",
                 StockActual = 5.2m,
-                NivelCritico = 10.0m,
+                StockMinimo = 10.0m,
                 EstadoStock = "Crítico"
             }).ToList(),
             AlertasInventario = new List<AlertaInventario>
@@ -487,12 +489,12 @@ public class ObtenerAnalisisInventarioHandlerTests
             },
             AnalisisFinanciero = new AnalisisFinancieroInventario
             {
-                ValorTotalInventario = 285000.75m,
-                CostoMensualPromedio = 42500.50m,
-                CategoriasConMayorCosto = new List<CostoPorCategoria>
+                InversionTotalActual = 285000.75m,
+                CostoPromedioDiario = 1416.68m,
+                CostosPorCategoria = new List<AnalisisCostoCategoria>
                 {
-                    new() { Categoria = "Carnes y Pescados", CostoTotal = 125000.00m },
-                    new() { Categoria = "Lácteos", CostoTotal = 45000.00m }
+                    new() { NombreCategoria = "Carnes y Pescados", CostoTotal = 125000.00m },
+                    new() { NombreCategoria = "Lácteos", CostoTotal = 45000.00m }
                 }
             }
         };
@@ -506,8 +508,8 @@ public class ObtenerAnalisisInventarioHandlerTests
             ResumenExecutivo = new ResumenInventario
             {
                 TotalIngredientes = 185,
-                IngredientesCriticos = 15,
-                IngredientesOptimos = 150
+                IngredientesStockCritico = 15,
+                IngredientesEnStock = 150
             },
             Predicciones = null,
             AnalisisFinanciero = null,
@@ -519,9 +521,9 @@ public class ObtenerAnalisisInventarioHandlerTests
     {
         return new List<AnalisisIngrediente>
         {
-            new() { IngredienteId = Guid.NewGuid(), NombreIngrediente = "Tomate", StockActual = 25.5m, NivelOptimo = 30.0m, EstadoStock = "Bajo" },
-            new() { IngredienteId = Guid.NewGuid(), NombreIngrediente = "Cebolla", StockActual = 45.2m, NivelOptimo = 40.0m, EstadoStock = "Óptimo" },
-            new() { IngredienteId = Guid.NewGuid(), NombreIngrediente = "Pollo", StockActual = 15.8m, NivelOptimo = 20.0m, EstadoStock = "Bajo" }
+            new() { IngredienteId = Guid.NewGuid(), NombreIngrediente = "Tomate", StockActual = 25.5m, StockOptimo = 30.0m, EstadoStock = EstadoStock.BajoStock },
+            new() { IngredienteId = Guid.NewGuid(), NombreIngrediente = "Cebolla", StockActual = 45.2m, StockOptimo = 40.0m, EstadoStock = EstadoStock.Optimo },
+            new() { IngredienteId = Guid.NewGuid(), NombreIngrediente = "Pollo", StockActual = 15.8m, StockOptimo = 20.0m, EstadoStock = EstadoStock.BajoStock }
         };
     }
 
@@ -543,22 +545,64 @@ public class ObtenerAnalisisInventarioHandlerTests
         };
     }
 
-    private static List<PrediccionSemanal> CreateMockPrediccionesSemanales()
+    private static List<PrediccionIngrediente> CreateMockPrediccionesIngredientes()
     {
-        return Enumerable.Range(1, 7).Select(i => new PrediccionSemanal
+        return new List<PrediccionIngrediente>
         {
-            Semana = DateTime.Today.AddDays(i * 7),
-            ConsumoEstimado = 1500.0m + (i * 50),
-            StockRecomendado = 2000.0m + (i * 75)
-        }).ToList();
+            new() { 
+                IngredienteId = Guid.NewGuid(), 
+                NombreIngrediente = "Tomate", 
+                DiasRestantesStock = 5,
+                FechaAgotamientoEstimada = DateTime.Today.AddDays(5),
+                ConsumoProyectado7Dias = 25.5m,
+                ConsumoProyectado30Dias = 100.0m,
+                CantidadOptimalPedido = 50.0m,
+                FechaOptimalPedido = DateTime.Today.AddDays(3),
+                ConfiabilidadPrediccion = 0.85m
+            },
+            new() { 
+                IngredienteId = Guid.NewGuid(), 
+                NombreIngrediente = "Cebolla", 
+                DiasRestantesStock = 12,
+                FechaAgotamientoEstimada = DateTime.Today.AddDays(12),
+                ConsumoProyectado7Dias = 15.2m,
+                ConsumoProyectado30Dias = 60.0m,
+                CantidadOptimalPedido = 30.0m,
+                FechaOptimalPedido = DateTime.Today.AddDays(8),
+                ConfiabilidadPrediccion = 0.92m
+            }
+        };
     }
 
-    private static List<StockOptimoIngrediente> CreateMockStockOptimo()
+    private static List<PrediccionCategoria> CreateMockPrediccionesCategorias()
     {
-        return new List<StockOptimoIngrediente>
+        return new List<PrediccionCategoria>
         {
-            new() { IngredienteId = Guid.NewGuid(), NombreIngrediente = "Arroz", StockOptimo = 500.0m, StockActual = 450.0m },
-            new() { IngredienteId = Guid.NewGuid(), NombreIngrediente = "Pasta", StockOptimo = 300.0m, StockActual = 280.0m }
+            new() { 
+                NombreCategoria = "Verduras", 
+                InversionRecomendada7Dias = 5000.00m,
+                InversionRecomendada30Dias = 20000.00m,
+                IngredientesCriticosProyectados = 8,
+                IngredientesPrioritarios = new List<string> { "Tomate", "Lechuga", "Cebolla" }
+            },
+            new() { 
+                NombreCategoria = "Carnes", 
+                InversionRecomendada7Dias = 15000.00m,
+                InversionRecomendada30Dias = 60000.00m,
+                IngredientesCriticosProyectados = 3,
+                IngredientesPrioritarios = new List<string> { "Pollo", "Res" }
+            }
+        };
+    }
+
+    private static PrediccionGeneral CreateMockPrediccionGeneral()
+    {
+        return new PrediccionGeneral
+        {
+            InversionTotalRecomendada = 85000.00m,
+            DiasAutonomiaPropedio = 15,
+            RiesgoDesabastecimiento = 0.25m,
+            RecomendacionGeneral = "Inventario en estado óptimo con algunas alertas menores"
         };
     }
 

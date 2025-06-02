@@ -517,12 +517,12 @@ public class ObtenerReservacionPorIdValidatorTests
         var reservacionId = Guid.NewGuid();
 
         // Act
-        var query = ObtenerReservacionPorIdQuery.Basica(reservacionId, incluirDetalles: true, incluirHistorial: true);
+        var query = ObtenerReservacionPorIdQuery.Basica(reservacionId);
 
         // Assert
         query.Id.Should().Be(reservacionId);
         query.IncluirDetalles.Should().BeTrue();
-        query.IncluirHistorial.Should().BeTrue();
+        query.IncluirHistorial.Should().BeFalse();
     }
 
     [Fact]
@@ -543,7 +543,7 @@ public class ObtenerReservacionPorIdValidatorTests
     {
         // Arrange
         var query1 = new ObtenerReservacionPorIdQuery { Id = Guid.NewGuid() };
-        var query2 = query1 with { };
+        var query2 = new ObtenerReservacionPorIdQuery { Id = query1.Id, IncluirDetalles = query1.IncluirDetalles, IncluirHistorial = query1.IncluirHistorial, IncluirServicios = query1.IncluirServicios };
 
         // Act & Assert
         query1.Should().BeEquivalentTo(query2);
@@ -569,7 +569,13 @@ public class ObtenerReservacionPorIdValidatorTests
         var originalIncluirMesa = query.IncluirDetalles;
 
         // Act
-        var queryModificada = query with { IncluirDetalles = !originalIncluirMesa };
+        var queryModificada = new ObtenerReservacionPorIdQuery 
+        { 
+            Id = query.Id,
+            IncluirDetalles = !originalIncluirMesa,
+            IncluirHistorial = query.IncluirHistorial,
+            IncluirServicios = query.IncluirServicios
+        };
 
         // Assert
         queryModificada.IncluirDetalles.Should().Be(!originalIncluirMesa);

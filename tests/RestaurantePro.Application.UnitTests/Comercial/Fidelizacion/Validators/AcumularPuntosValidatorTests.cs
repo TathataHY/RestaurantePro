@@ -513,7 +513,7 @@ public class AcumularPuntosValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoAcumulacion = TipoAcumulacion.PorBono;
+        command.TipoAcumulacion = TipoAcumulacion.PorPromocion;
         command.MontoCompra = 1000.00m;
         command.MultiplicadorEspecial = 1;
         command.Comentarios = "Bono de 1000 puntos por registro completado";

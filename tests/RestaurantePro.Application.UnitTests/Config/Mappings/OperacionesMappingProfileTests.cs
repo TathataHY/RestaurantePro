@@ -60,7 +60,7 @@ public class OperacionesMappingProfileTests
     {
         // Arrange
         var comanda = CrearComandaEjemplo();
-        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, estado);
+        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, (EstadoComanda)estado);
 
         // Act
         var dto = _mapper.Map<ComandaDto>(comanda);
@@ -81,7 +81,7 @@ public class OperacionesMappingProfileTests
     {
         // Arrange
         var comanda = CrearComandaEjemplo();
-        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, estado);
+        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, (EstadoComanda)estado);
 
         // Act
         var dto = _mapper.Map<ComandaDto>(comanda);
@@ -270,7 +270,7 @@ public class OperacionesMappingProfileTests
     {
         // Arrange
         var item = CrearItemComandaEjemplo();
-        typeof(ItemComanda).GetProperty("Estado")?.SetValue(item, estado);
+        typeof(ItemComanda).GetProperty("Estado")?.SetValue(item, (EstadoItemComanda)estado);
 
         // Act
         var dto = _mapper.Map<ItemComandaDto>(item);
@@ -310,7 +310,7 @@ public class OperacionesMappingProfileTests
     {
         // Arrange
         var personalizacion = CrearPersonalizacionEjemplo(5.00m);
-        typeof(PersonalizacionItem).GetProperty("Tipo")?.SetValue(personalizacion, tipo);
+        typeof(PersonalizacionItem).GetProperty("Tipo")?.SetValue(personalizacion, (TipoPersonalizacion)tipo);
 
         // Act
         var dto = _mapper.Map<PersonalizacionDto>(personalizacion);

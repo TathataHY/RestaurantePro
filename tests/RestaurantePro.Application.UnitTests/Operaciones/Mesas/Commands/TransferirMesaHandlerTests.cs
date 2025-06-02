@@ -45,7 +45,7 @@ public class TransferirMesaHandlerTests
             MesaDestinoId = Guid.NewGuid(),
             MotivoTransferencia = "Solicitud del cliente",
             NotificarMesero = true,
-            AutorizadoPor = "Supervisor"
+            AutorizadoPor = Guid.NewGuid()
         };
 
         var comanda = CrearComanda(command.ComandaId, command.MesaOrigenId, EstadoComanda.EnProceso);

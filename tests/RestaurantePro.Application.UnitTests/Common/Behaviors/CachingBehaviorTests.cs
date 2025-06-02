@@ -27,7 +27,7 @@ public class CachingBehaviorTests
     {
         // Arrange
         var query = new ObtenerProductoPorIdQuery(Guid.NewGuid());
-        var expectedResult = Result.Success(new ProductoDto { Id = query.Id, Nombre = "Pizza Test" });
+        var expectedResult = Result.Success(new ProductoDto { Id = query.ProductoId, Nombre = "Pizza Test" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
         mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
@@ -74,7 +74,7 @@ public class CachingBehaviorTests
     {
         // Arrange
         var query = new ObtenerProductoPorIdQuery(Guid.NewGuid());
-        var cachedResult = Result.Success(new ProductoDto { Id = query.Id, Nombre = "Pizza Cached" });
+        var cachedResult = Result.Success(new ProductoDto { Id = query.ProductoId, Nombre = "Pizza Cached" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
         

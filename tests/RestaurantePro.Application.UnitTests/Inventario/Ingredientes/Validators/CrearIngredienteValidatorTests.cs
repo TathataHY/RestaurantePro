@@ -379,36 +379,6 @@ public class CrearIngredienteValidatorTests
     #region IDs Validations
 
     [Fact]
-    public void Validator_ConCategoriaIdValido_DeberiaSerValido()
-    {
-        // Arrange
-        var command = CrearComandoValido();
-        command.CategoriaId = Guid.NewGuid();
-
-        // Act
-        var result = _validator.Validate(command);
-
-        // Assert
-        result.IsValid.Should().BeTrue();
-    }
-
-    [Fact]
-    public void Validator_ConCategoriaIdVacio_DeberiaFallar()
-    {
-        // Arrange
-        var command = CrearComandoValido();
-        command.CategoriaId = Guid.Empty;
-
-        // Act
-        var result = _validator.Validate(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearIngredienteCommand.CategoriaId))
-            .Which.ErrorMessage.Should().Be("El ID de categoría es obligatorio");
-    }
-
-    [Fact]
     public void Validator_ConProveedorPrincipalIdValido_DeberiaSerValido()
     {
         // Arrange

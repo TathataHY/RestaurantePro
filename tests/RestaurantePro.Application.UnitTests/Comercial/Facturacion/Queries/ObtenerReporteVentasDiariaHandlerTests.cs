@@ -572,9 +572,12 @@ public class ObtenerReporteVentasDiariaHandlerTests
             },
             MetricasRendimiento = new MetricasRendimiento
             {
-                EficienciaGlobal = 87.3m,
-                TiempoPromedioAtencion = TimeSpan.FromMinutes(8.2),
-                SatisfaccionClientes = 4.6m
+                UtilizacionMesas = 92.5m,
+                EficienciaMeseros = 87.3m,
+                VelocidadServicio = 8.2m,
+                SatisfaccionGeneral = 4.6m,
+                RotacionInventario = 15.3m,
+                ClasificacionDia = "Excelente"
             }
         };
     }
@@ -623,19 +626,31 @@ public class ObtenerReporteVentasDiariaHandlerTests
         var reporte = CreateMockReporteCompletoBI();
         reporte.TendenciasSemana = new TendenciasSemana
         {
-            VentasPorDia = new List<VentaDiaria>
+            VentasPorDia = new List<PuntoTendenciaDia>
             {
-                new() { Fecha = DateTime.Today.AddDays(-6), VentasTotal = 38200.00m, DiaSemana = "Lunes" },
-                new() { Fecha = DateTime.Today.AddDays(-5), VentasTotal = 41500.00m, DiaSemana = "Martes" },
-                new() { Fecha = DateTime.Today.AddDays(-4), VentasTotal = 43800.00m, DiaSemana = "Miércoles" },
-                new() { Fecha = DateTime.Today.AddDays(-3), VentasTotal = 46200.00m, DiaSemana = "Jueves" },
-                new() { Fecha = DateTime.Today.AddDays(-2), VentasTotal = 52300.00m, DiaSemana = "Viernes" },
-                new() { Fecha = DateTime.Today.AddDays(-1), VentasTotal = 48900.00m, DiaSemana = "Sábado" },
-                new() { Fecha = DateTime.Today, VentasTotal = 45850.75m, DiaSemana = "Domingo" }
+                new() { Fecha = DateTime.Today.AddDays(-6), Valor = 38200.00m, DiaSemana = "Lunes" },
+                new() { Fecha = DateTime.Today.AddDays(-5), Valor = 41500.00m, DiaSemana = "Martes" },
+                new() { Fecha = DateTime.Today.AddDays(-4), Valor = 43800.00m, DiaSemana = "Miércoles" },
+                new() { Fecha = DateTime.Today.AddDays(-3), Valor = 46200.00m, DiaSemana = "Jueves" },
+                new() { Fecha = DateTime.Today.AddDays(-2), Valor = 52300.00m, DiaSemana = "Viernes" },
+                new() { Fecha = DateTime.Today.AddDays(-1), Valor = 48900.00m, DiaSemana = "Sábado" },
+                new() { Fecha = DateTime.Today, Valor = 45850.75m, DiaSemana = "Domingo" }
             },
-            TendenciaGeneral = 5.2m,
-            MejorDiaSemana = "Lunes",
-            PromedioSemanal = 45250.11m
+            ComandasPorDia = new List<PuntoTendenciaDia>
+            {
+                new() { Fecha = DateTime.Today.AddDays(-6), Valor = 98, DiaSemana = "Lunes" },
+                new() { Fecha = DateTime.Today.AddDays(-5), Valor = 105, DiaSemana = "Martes" },
+                new() { Fecha = DateTime.Today.AddDays(-4), Valor = 112, DiaSemana = "Miércoles" },
+                new() { Fecha = DateTime.Today.AddDays(-3), Valor = 118, DiaSemana = "Jueves" },
+                new() { Fecha = DateTime.Today.AddDays(-2), Valor = 132, DiaSemana = "Viernes" },
+                new() { Fecha = DateTime.Today.AddDays(-1), Valor = 125, DiaSemana = "Sábado" },
+                new() { Fecha = DateTime.Today, Valor = 120, DiaSemana = "Domingo" }
+            },
+            DiaMasVentas = "Viernes",
+            DiaMenosVentas = "Lunes",
+            PromedioSemana = 45250.11m,
+            DesviacionEstandar = 4850.25m,
+            PatronSemana = "Fin de semana más fuerte"
         };
         return reporte;
     }

@@ -73,7 +73,7 @@ public class AnularFacturaValidatorTests
         {
             Id = Guid.NewGuid(),
             Estado = EstadoUsuario.Activo,
-            Nombre = "Usuario Test",
+            NombreCompleto = "Usuario Test",
             Email = "test@example.com"
         };
     }

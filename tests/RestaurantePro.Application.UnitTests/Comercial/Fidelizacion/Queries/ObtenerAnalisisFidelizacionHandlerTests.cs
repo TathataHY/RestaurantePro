@@ -520,25 +520,42 @@ public class ObtenerAnalisisFidelizacionHandlerTests
             },
             AnalisisPorNivel = new List<AnalisisNivel>
             {
-                new() { Nivel = NivelFidelizacion.Basico, CantidadClientes = 650, PorcentajeTotal = 52.0m },
-                new() { Nivel = NivelFidelizacion.Plata, CantidadClientes = 380, PorcentajeTotal = 30.4m },
-                new() { Nivel = NivelFidelizacion.Oro, CantidadClientes = 180, PorcentajeTotal = 14.4m },
-                new() { Nivel = NivelFidelizacion.Platino, CantidadClientes = 40, PorcentajeTotal = 3.2m }
+                new() { Nivel = NivelFidelizacion.Basico, CantidadClientes = 650, PorcentajeTotalClientes = 52.0m },
+                new() { Nivel = NivelFidelizacion.Plata, CantidadClientes = 380, PorcentajeTotalClientes = 30.4m },
+                new() { Nivel = NivelFidelizacion.Oro, CantidadClientes = 180, PorcentajeTotalClientes = 14.4m },
+                new() { Nivel = NivelFidelizacion.Platino, CantidadClientes = 40, PorcentajeTotalClientes = 3.2m }
             },
             ClientesTop = new List<ClienteTop>
             {
-                new() { ClienteId = Guid.NewGuid(), NombreCompleto = "Juan Pérez", PuntosAcumulados = 15800, GastoTotal = 4250.00m },
-                new() { ClienteId = Guid.NewGuid(), NombreCompleto = "María González", PuntosAcumulados = 12400, GastoTotal = 3675.50m }
+                new() { ClienteId = Guid.NewGuid(), NombreCompleto = "Juan Pérez", PuntosAcumulados = 15800, VentasTotales = 4250.00m },
+                new() { ClienteId = Guid.NewGuid(), NombreCompleto = "María González", PuntosAcumulados = 12400, VentasTotales = 3675.50m }
             },
             Tendencias = new TendenciasFidelizacion
             {
-                TendenciaClientesNuevos = 8.5m,
-                TendenciaRetencion = -2.1m,
-                TendenciaCanje = 15.3m,
-                CambiosNivel = new List<CambioNivel>
+                EvolucionClientes = new List<PuntoTendencia>
+                {
+                    new() { Fecha = DateTime.Today.AddDays(-30), Valor = 1200, Etiqueta = "Hace 30 días" },
+                    new() { Fecha = DateTime.Today.AddDays(-15), Valor = 1250, Etiqueta = "Hace 15 días" },
+                    new() { Fecha = DateTime.Today, Valor = 1068, Etiqueta = "Hoy" }
+                },
+                EvolucionPuntos = new List<PuntoTendencia>
+                {
+                    new() { Fecha = DateTime.Today.AddDays(-30), Valor = 420000, Etiqueta = "Hace 30 días" },
+                    new() { Fecha = DateTime.Today.AddDays(-15), Valor = 440000, Etiqueta = "Hace 15 días" },
+                    new() { Fecha = DateTime.Today, Valor = 458900, Etiqueta = "Hoy" }
+                },
+                EvolucionCanjes = new List<PuntoTendencia>
+                {
+                    new() { Fecha = DateTime.Today.AddDays(-30), Valor = 110000, Etiqueta = "Hace 30 días" },
+                    new() { Fecha = DateTime.Today.AddDays(-15), Valor = 120000, Etiqueta = "Hace 15 días" },
+                    new() { Fecha = DateTime.Today, Valor = 127650, Etiqueta = "Hoy" }
+                },
+                CambiosNiveles = new List<CambioNivel>
                 {
                     new() { Fecha = DateTime.Today.AddDays(-15), NivelAnterior = NivelFidelizacion.Plata, NivelNuevo = NivelFidelizacion.Oro, CantidadClientes = 25 }
-                }
+                },
+                CrecimientoMensual = 8.5m,
+                TendenciaGeneral = "Positiva"
             },
             Proyecciones = new ProyeccionesFidelizacion
             {
@@ -584,7 +601,7 @@ public class ObtenerAnalisisFidelizacionHandlerTests
                 ClienteId = id, 
                 NombreCompleto = $"Cliente {id.ToString()[..8]}", 
                 PuntosAcumulados = Random.Shared.Next(5000, 20000),
-                GastoTotal = Random.Shared.Next(2000, 8000)
+                VentasTotales = Random.Shared.Next(2000, 8000)
             }).ToList(),
             TipoAnalisis = TipoAnalisis.ClientesEspecificos,
             Alertas = new List<AlertaFidelizacion>(),
@@ -643,8 +660,8 @@ public class ObtenerAnalisisFidelizacionHandlerTests
             },
             AnalisisPorNivel = new List<AnalisisNivel>
             {
-                new() { Nivel = NivelFidelizacion.Basico, CantidadClientes = 280, PorcentajeTotal = 62.2m },
-                new() { Nivel = NivelFidelizacion.Plata, CantidadClientes = 120, PorcentajeTotal = 26.7m }
+                new() { Nivel = NivelFidelizacion.Basico, CantidadClientes = 280, PorcentajeTotalClientes = 62.2m },
+                new() { Nivel = NivelFidelizacion.Plata, CantidadClientes = 120, PorcentajeTotalClientes = 26.7m }
             },
             ClientesTop = new List<ClienteTop>(),
             Tendencias = null,
