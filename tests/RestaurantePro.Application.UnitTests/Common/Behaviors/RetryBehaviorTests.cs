@@ -35,11 +35,7 @@ public class RetryBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
-        {
-            callCount++;
-            return Task.FromResult(expectedResult);
-        };
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -57,7 +53,7 @@ public class RetryBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
         {
             callCount++;
             if (callCount == 1)
@@ -80,7 +76,7 @@ public class RetryBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
         {
             callCount++;
             throw new ArgumentException("Parámetro inválido");
@@ -101,7 +97,7 @@ public class RetryBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
         {
             callCount++;
             throw new TimeoutException("Timeout persistente");
@@ -131,7 +127,7 @@ public class RetryBehaviorTests
         var transitoryException = (Exception)Activator.CreateInstance(exceptionType, "Error transitorio")!;
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
         {
             callCount++;
             if (callCount == 1)
@@ -157,7 +153,7 @@ public class RetryBehaviorTests
         var tiemposEjecucion = new List<DateTime>();
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
         {
             callCount++;
             tiemposEjecucion.Add(DateTime.UtcNow);
@@ -189,7 +185,7 @@ public class RetryBehaviorTests
         var cancellationTokenSource = new CancellationTokenSource();
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
         {
             callCount++;
             cancellationTokenSource.Cancel(); // Cancelar en primera ejecución
@@ -221,7 +217,7 @@ public class RetryBehaviorTests
         {
             var inicio = DateTime.UtcNow;
             int callCount = 0;
-            RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+            RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
             {
                 callCount++;
                 if (callCount == 1)
@@ -267,7 +263,7 @@ public class RetryBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
         {
             callCount++;
             throw new TimeoutException("Timeout persistente");
@@ -288,7 +284,7 @@ public class RetryBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
         {
             callCount++;
             throw new TimeoutException("Timeout persistente");
@@ -317,7 +313,7 @@ public class RetryBehaviorTests
         var excepcionCompleja = new InvalidOperationException("Operación compleja falló");
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
         {
             callCount++;
             if (callCount == 1)
@@ -353,7 +349,7 @@ public class RetryBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
         {
             callCount++;
             if (callCount <= numeroReintento)

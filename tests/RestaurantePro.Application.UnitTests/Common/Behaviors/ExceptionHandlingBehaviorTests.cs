@@ -32,7 +32,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -48,7 +48,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var domainException = new BusinessRuleViolationException("REGLA_VIOLADA", "Error de dominio", "Detalle del error");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw domainException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw domainException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() => 
@@ -64,7 +64,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var businessException = new BusinessRuleViolationException("REGLA_VIOLADA", "Regla de negocio violada", "Detalle adicional");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw businessException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw businessException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() => 
@@ -80,7 +80,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var entityException = new EntityNotFoundException("Producto", Guid.NewGuid());
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw entityException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw entityException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<NotFoundException>(() => 
@@ -96,7 +96,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var argumentException = new ArgumentException("Parámetro inválido");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw argumentException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw argumentException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() => 
@@ -112,7 +112,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var unauthorizedException = new UnauthorizedAccessException("Acceso denegado");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw unauthorizedException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw unauthorizedException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ForbiddenAccessException>(() => 
@@ -128,7 +128,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var genericException = new Exception("Error genérico");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw genericException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw genericException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppException>(() => 
@@ -144,7 +144,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var testException = new Exception("Error de test");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw testException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw testException;
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() => 
@@ -168,7 +168,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var testException = new Exception("Error de test");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw testException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw testException;
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() => 
@@ -192,7 +192,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var conflictException = new ConflictException("Ya existe un usuario con ese email", ConflictType.DuplicateEntity);
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw conflictException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw conflictException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ConflictException>(() => 
@@ -209,7 +209,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var validationException = new ValidationException("Campo", new[] { "Error de validación" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw validationException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw validationException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() => 
@@ -225,7 +225,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var operationCanceledException = new OperationCanceledException("Operación cancelada");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw operationCanceledException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw operationCanceledException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<OperationCanceledException>(() => 
@@ -244,7 +244,7 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var exception = (Exception)Activator.CreateInstance(exceptionType, "Error específico")!;
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw exception;
 
         // Act & Assert
         var resultException = await Assert.ThrowsAsync<AppException>(() => 

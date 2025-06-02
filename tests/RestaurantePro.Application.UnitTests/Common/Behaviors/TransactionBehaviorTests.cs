@@ -31,7 +31,7 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -57,7 +57,7 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var exception = new Exception("Error en procesamiento");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw exception;
 
         // Act & Assert
         var thrownException = await Assert.ThrowsAsync<Exception>(() => 
@@ -86,7 +86,7 @@ public class TransactionBehaviorTests
         var query = new ObtenerProductoPorIdQuery(Guid.NewGuid());
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
         var result = await queryBehavior.Handle(query, nextDelegate, CancellationToken.None);
@@ -106,7 +106,7 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -127,7 +127,7 @@ public class TransactionBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         var cancellationToken = new CancellationToken();
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, cancellationToken);
@@ -152,7 +152,7 @@ public class TransactionBehaviorTests
         _mockTransaction.Setup(x => x.CommitAsync(anyToken))
             .ThrowsAsync(commitException);
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act & Assert
         var thrownException = await Assert.ThrowsAsync<Exception>(() => 
@@ -185,7 +185,7 @@ public class TransactionBehaviorTests
         _mockTransaction.Setup(x => x.RollbackAsync(anyToken))
             .ThrowsAsync(rollbackException);
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw processingException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw processingException;
 
         // Act & Assert
         var thrownException = await Assert.ThrowsAsync<Exception>(() => 
@@ -212,7 +212,7 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
         var result = await behaviorSinDb.Handle(command, nextDelegate, CancellationToken.None);
@@ -232,7 +232,7 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -257,7 +257,7 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -282,7 +282,7 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var exception = new Exception("Error de test");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw exception;
 
         // Act & Assert
         await Assert.ThrowsAsync<Exception>(() => 
@@ -305,7 +305,7 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -330,7 +330,7 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Especial Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Especial Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -355,7 +355,7 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var cancellationException = new OperationCanceledException("Operación cancelada");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw cancellationException;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw cancellationException;
 
         // Act & Assert
         await Assert.ThrowsAsync<OperationCanceledException>(() => 
@@ -381,7 +381,7 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" }; // Simplificado para el test
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
