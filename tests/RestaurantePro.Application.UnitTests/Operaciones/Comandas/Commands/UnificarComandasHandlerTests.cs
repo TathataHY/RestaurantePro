@@ -1,3 +1,21 @@
+using RestaurantePro.Application.UnitTests.Common;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.UnificarComandas;
+using RestaurantePro.Application.Operaciones.Comandas.DTOs;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
+using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Logging;
+using AutoMapper;
+using FluentAssertions;
+using Moq;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.Commands;
 
 /// <summary>
@@ -460,7 +478,7 @@ public class UnificarComandasHandlerTests
             .Returns(DateTime.UtcNow);
 
         _mockUnitOfWork.Setup(u => u.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(1);
 
         // Configurar DbSets mockeados
         var comandasMock = MockDbSetHelper.CreateMockDbSet(new List<Comanda>().AsQueryable());
@@ -479,7 +497,7 @@ public class UnificarComandasHandlerTests
             .Returns(DateTime.UtcNow);
 
         _mockUnitOfWork.Setup(u => u.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(1);
     }
 
     private void ConfigurarMockComandas(IEnumerable<Comanda> comandas)

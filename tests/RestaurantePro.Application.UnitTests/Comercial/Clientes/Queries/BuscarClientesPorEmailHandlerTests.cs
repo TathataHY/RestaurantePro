@@ -1,3 +1,15 @@
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+using FluentAssertions;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Clientes.Queries;
 
 /// <summary>
@@ -488,7 +500,7 @@ public class BuscarClientesPorEmailHandlerTests
         var cliente = (Cliente)Activator.CreateInstance(typeof(Cliente), true)!;
         
         typeof(Cliente).GetProperty("Id")?.SetValue(cliente, id);
-        typeof(Cliente).GetProperty("Email")?.SetValue(cliente, Email.Crear(email).Value);
+        typeof(Cliente).GetProperty("Email")?.SetValue(cliente, Email.Create(email));
         typeof(Cliente).GetProperty("Telefono")?.SetValue(cliente, telefono);
         typeof(Cliente).GetProperty("FechaCreacion")?.SetValue(cliente, fechaCreacion);
         typeof(Cliente).GetProperty("PuntosAcumulados")?.SetValue(cliente, 100);

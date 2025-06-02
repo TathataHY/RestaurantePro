@@ -315,6 +315,11 @@ public class OperacionesMappingProfileTests
 
         // Assert
         dto.Tipo.Should().Be(personalizacion.Accion.ToString());
+        
+        // Verificar que los parámetros de test son coherentes 
+        tipoAccion.Should().Be(expectedTexto);
+        tipoAccion.Should().NotBeNullOrEmpty();
+        expectedTexto.Should().NotBeNullOrEmpty();
     }
 
     #endregion

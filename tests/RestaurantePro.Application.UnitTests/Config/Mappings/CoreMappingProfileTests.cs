@@ -548,7 +548,7 @@ public class CoreMappingProfileTests
         typeof(Usuario).GetProperty("Estado")?.SetValue(usuario, EstadoUsuario.Activo);
         typeof(Usuario).GetProperty("TipoUsuario")?.SetValue(usuario, TipoUsuario.Empleado);
         typeof(Usuario).GetProperty("Rol")?.SetValue(usuario, "Mesero");
-        typeof(Usuario).GetProperty("NivelAcceso")?.SetValue(usuario, NivelAcceso.Operativo);
+        typeof(Usuario).GetProperty("NivelAcceso")?.SetValue(usuario, 5);
         typeof(Usuario).GetProperty("Permisos")?.SetValue(usuario, new List<string> { "LEER_MENU", "CREAR_ORDEN" });
         typeof(Usuario).GetProperty("SupervisorId")?.SetValue(usuario, Guid.NewGuid());
         typeof(Usuario).GetProperty("Departamento")?.SetValue(usuario, "Servicio");

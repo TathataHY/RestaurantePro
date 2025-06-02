@@ -1,3 +1,21 @@
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+using RestaurantePro.Domain.Comercial.Facturacion.Enums;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
+using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
+using RestaurantePro.Application.Comercial.Facturacion.DTOs;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Comercial.Services;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Commands;
 
 /// <summary>
@@ -656,13 +674,13 @@ public class CrearFacturaHandlerTests
         var clienteMock = new Mock<Cliente>();
         clienteMock.Setup(x => x.Id).Returns(id);
         
-        var nombreCompleto = new Mock<NombreCompleto>();
-        nombreCompleto.Setup(x => x.NombreCompleto).Returns(nombre);
-        clienteMock.Setup(x => x.Nombre).Returns(nombreCompleto.Object);
+        // Crear ClienteNombre usando el método Crear que acepta nombre y apellido
+        var nombreCompleto = ClienteNombre.Crear(nombre, "Apellido");
+        clienteMock.Setup(x => x.Nombre).Returns(nombreCompleto);
         
-        var emailVO = new Mock<Email>();
-        emailVO.Setup(x => x.ToString()).Returns(email);
-        clienteMock.Setup(x => x.Email).Returns(emailVO.Object);
+        // Crear Email usando el método Create
+        var emailVO = Email.Create(email);
+        clienteMock.Setup(x => x.Email).Returns(emailVO);
         
         return clienteMock.Object;
     }

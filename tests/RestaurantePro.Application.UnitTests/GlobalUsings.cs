@@ -193,6 +193,7 @@ global using RestaurantePro.Application.Comercial.Facturacion.Commands.AplicarDe
 global using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturaPorId;
 global using RestaurantePro.Application.Comercial.Facturacion.DTOs;
 global using RestaurantePro.Application.Comercial.Facturacion.EventHandlers.FacturaCreada;
+global using RestaurantePro.Application.Comercial.Facturacion.Events;
 
 // Application - Fidelización
 global using RestaurantePro.Application.Comercial.Fidelizacion.Commands.CanjearPuntos;
@@ -228,11 +229,16 @@ global using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 global using RestaurantePro.Domain.Core.Usuarios.Enums;
 global using RestaurantePro.Domain.Core.Services;
 
-// Application - Core Usuarios
-global using RestaurantePro.Application.Core.Usuarios.Commands.ActualizarUsuario;
+// Application - Core Usuarios (Commands, Queries, DTOs)
 global using RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
+global using RestaurantePro.Application.Core.Usuarios.Commands.ActualizarUsuario;
 global using RestaurantePro.Application.Core.Usuarios.Commands.CambiarPasswordUsuario;
 global using RestaurantePro.Application.Core.Usuarios.DTOs;
+
+// Domain - Core Usuarios
+global using RestaurantePro.Domain.Core.Usuarios.Entities;
+global using RestaurantePro.Domain.Core.Usuarios.Interfaces;
+global using RestaurantePro.Domain.Core.Usuarios.Enums;
 
 // Resolve ValidationException ambiguity
 global using ValidationException = RestaurantePro.Application.Common.Exceptions.ValidationException;

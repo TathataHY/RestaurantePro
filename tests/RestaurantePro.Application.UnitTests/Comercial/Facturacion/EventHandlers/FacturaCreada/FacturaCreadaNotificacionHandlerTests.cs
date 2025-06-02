@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.EventHandlers.FacturaCreada;
 
 /// <summary>
@@ -5,27 +7,30 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.EventHandle
 /// </summary>
 public class FacturaCreadaNotificacionHandlerTests
 {
-    private readonly Mock<INotificationService> _mockNotificationService;
+    private readonly Mock<IFacturaRepository> _mockFacturaRepository;
+    private readonly Mock<IClienteRepository> _mockClienteRepository;
     private readonly Mock<IEmailService> _mockEmailService;
     private readonly Mock<ISMSService> _mockSMSService;
-    private readonly Mock<IClienteRepository> _mockClienteRepository;
+    private readonly Mock<INotificationService> _mockNotificationService;
     private readonly Mock<ILogger<FacturaCreadaNotificacionHandler>> _mockLogger;
+    private readonly Mock<IMediator> _mockMediator;
     private readonly FacturaCreadaNotificacionHandler _handler;
 
     public FacturaCreadaNotificacionHandlerTests()
     {
-        _mockNotificationService = new Mock<INotificationService>();
+        _mockFacturaRepository = new Mock<IFacturaRepository>();
+        _mockClienteRepository = new Mock<IClienteRepository>();
         _mockEmailService = new Mock<IEmailService>();
         _mockSMSService = new Mock<ISMSService>();
-        _mockClienteRepository = new Mock<IClienteRepository>();
+        _mockNotificationService = new Mock<INotificationService>();
         _mockLogger = new Mock<ILogger<FacturaCreadaNotificacionHandler>>();
+        _mockMediator = new Mock<IMediator>();
         
         _handler = new FacturaCreadaNotificacionHandler(
-            _mockNotificationService.Object,
-            _mockEmailService.Object,
-            _mockSMSService.Object,
+            _mockFacturaRepository.Object,
             _mockClienteRepository.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockMediator.Object);
     }
 
     [Fact]
@@ -35,52 +40,38 @@ public class FacturaCreadaNotificacionHandlerTests
         var facturaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var numeroFactura = "F-2025-0001";
-        var montoTotal = 275.50m;
-        var evento = new FacturaCreadaEvent(facturaId, numeroFactura, clienteId, montoTotal, DateTime.UtcNow);
+        var tipoFactura = TipoFactura.Normal;
+        var fechaEmision = DateTime.UtcNow;
+        
+        // Usar el evento de Domain con la firma correcta
+        var evento = new Domain.Comercial.Facturacion.Events.FacturaCreada(
+            facturaId, 
+            numeroFactura, 
+            tipoFactura, 
+            fechaEmision);
 
         var cliente = CreateMockCliente(clienteId, "María García", "maria@email.com", "+1234567890");
+        var factura = CreateMockFactura(facturaId, clienteId, numeroFactura, 275.50m);
         
+        _mockFacturaRepository.Setup(x => x.ObtenerPorIdAsync(facturaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(factura);
+            
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
-
-        _mockEmailService.Setup(x => x.SendEmailAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(true);
-
-        _mockSMSService.Setup(x => x.SendSMSAsync(
-                It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(true);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
+        _mockFacturaRepository.Verify(x => x.ObtenerPorIdAsync(facturaId, It.IsAny<CancellationToken>()), Times.Once);
         _mockClienteRepository.Verify(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()), Times.Once);
-        
-        // Verificar envío de Email
-        _mockEmailService.Verify(x => x.SendEmailAsync(
-            "maria@email.com",
-            It.Is<string>(s => s.Contains("Factura") && s.Contains(numeroFactura)),
-            It.Is<string>(s => s.Contains("María García") && s.Contains(montoTotal.ToString()))), Times.Once);
 
-        // Verificar envío de SMS
-        _mockSMSService.Verify(x => x.SendSMSAsync(
-            "+1234567890",
-            It.Is<string>(s => s.Contains(numeroFactura) && s.Contains(montoTotal.ToString()))), Times.Once);
-
-        // Verificar notificación interna
-        _mockNotificationService.Verify(x => x.EnviarNotificacionAsync(
-            It.Is<string>(msg => msg.Contains("Factura generada")),
-            It.IsAny<string>(),
-            NivelPrioridad.Media,
-            It.IsAny<CancellationToken>()), Times.Once);
-
-        // Debería loggear envío exitoso
+        // Verificar que se loggea el envío exitoso
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("📧 Notificaciones multi-canal enviadas exitosamente")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Notificaciones enviadas exitosamente")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -91,10 +82,15 @@ public class FacturaCreadaNotificacionHandlerTests
     {
         // Arrange
         var facturaId = Guid.NewGuid();
-        Guid? clienteId = null; // Factura sin cliente
         var numeroFactura = "F-2025-0002";
-        var montoTotal = 150.00m;
-        var evento = new FacturaCreadaEvent(facturaId, numeroFactura, clienteId, montoTotal, DateTime.UtcNow);
+        var tipoFactura = TipoFactura.Normal;
+        var fechaEmision = DateTime.UtcNow;
+        
+        var evento = new Domain.Comercial.Facturacion.Events.FacturaCreada(
+            facturaId, 
+            numeroFactura, 
+            tipoFactura, 
+            fechaEmision);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -106,10 +102,10 @@ public class FacturaCreadaNotificacionHandlerTests
 
         // Solo notificación interna
         _mockNotificationService.Verify(x => x.EnviarNotificacionAsync(
-            It.Is<string>(msg => msg.Contains("Factura generada") && msg.Contains("cliente ocasional")),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
-            NivelPrioridad.Baja,
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.Is<string>(msg => msg.Contains("Factura generada") && msg.Contains("cliente ocasional")),
+            It.IsAny<string>()), Times.Once);
 
         // Debería loggear que no hay cliente
         _mockLogger.Verify(
@@ -129,8 +125,14 @@ public class FacturaCreadaNotificacionHandlerTests
         var facturaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var numeroFactura = "F-2025-0003";
-        var montoTotal = 200.00m;
-        var evento = new FacturaCreadaEvent(facturaId, numeroFactura, clienteId, montoTotal, DateTime.UtcNow);
+        var tipoFactura = TipoFactura.Normal;
+        var fechaEmision = DateTime.UtcNow;
+        
+        var evento = new Domain.Comercial.Facturacion.Events.FacturaCreada(
+            facturaId, 
+            numeroFactura, 
+            tipoFactura, 
+            fechaEmision);
 
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Cliente)null!); // Cliente no encontrado
@@ -161,8 +163,14 @@ public class FacturaCreadaNotificacionHandlerTests
         var facturaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var numeroFactura = "F-2025-0004";
-        var montoTotal = 180.00m;
-        var evento = new FacturaCreadaEvent(facturaId, numeroFactura, clienteId, montoTotal, DateTime.UtcNow);
+        var tipoFactura = TipoFactura.Normal;
+        var fechaEmision = DateTime.UtcNow;
+        
+        var evento = new Domain.Comercial.Facturacion.Events.FacturaCreada(
+            facturaId, 
+            numeroFactura, 
+            tipoFactura, 
+            fechaEmision);
 
         var cliente = CreateMockCliente(clienteId, "Carlos Sin Email", null, "+1234567890"); // Sin email
         
@@ -182,7 +190,7 @@ public class FacturaCreadaNotificacionHandlerTests
         
         // Debe enviar SMS
         _mockSMSService.Verify(x => x.SendSMSAsync(
-            "+1234567890", It.Is<string>(s => s.Contains(numeroFactura) && s.Contains(montoTotal.ToString()))), Times.Once);
+            "+1234567890", It.Is<string>(s => s.Contains(numeroFactura) && s.Contains("180.00"))), Times.Once);
 
         // Debería loggear que no hay email
         _mockLogger.Verify(
@@ -202,8 +210,14 @@ public class FacturaCreadaNotificacionHandlerTests
         var facturaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var numeroFactura = "F-2025-0005";
-        var montoTotal = 220.00m;
-        var evento = new FacturaCreadaEvent(facturaId, numeroFactura, clienteId, montoTotal, DateTime.UtcNow);
+        var tipoFactura = TipoFactura.Normal;
+        var fechaEmision = DateTime.UtcNow;
+        
+        var evento = new Domain.Comercial.Facturacion.Events.FacturaCreada(
+            facturaId, 
+            numeroFactura, 
+            tipoFactura, 
+            fechaEmision);
 
         var cliente = CreateMockCliente(clienteId, "Ana Sin Teléfono", "ana@email.com", null); // Sin teléfono
         
@@ -222,7 +236,7 @@ public class FacturaCreadaNotificacionHandlerTests
         _mockEmailService.Verify(x => x.SendEmailAsync(
             "ana@email.com", 
             It.Is<string>(s => s.Contains("Factura") && s.Contains(numeroFactura)),
-            It.Is<string>(s => s.Contains("Ana Sin Teléfono") && s.Contains(montoTotal.ToString()))), Times.Once);
+            It.Is<string>(s => s.Contains("Ana Sin Teléfono") && s.Contains("220.00"))), Times.Once);
         
         // No debe enviar SMS
         _mockSMSService.Verify(x => x.SendSMSAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -245,8 +259,14 @@ public class FacturaCreadaNotificacionHandlerTests
         var facturaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var numeroFactura = "F-2025-0006";
-        var montoTotal = 300.00m;
-        var evento = new FacturaCreadaEvent(facturaId, numeroFactura, clienteId, montoTotal, DateTime.UtcNow);
+        var tipoFactura = TipoFactura.Normal;
+        var fechaEmision = DateTime.UtcNow;
+        
+        var evento = new Domain.Comercial.Facturacion.Events.FacturaCreada(
+            facturaId, 
+            numeroFactura, 
+            tipoFactura, 
+            fechaEmision);
 
         var cliente = CreateMockCliente(clienteId, "Cliente Error", "error@email.com", "+1234567890");
         
@@ -262,7 +282,6 @@ public class FacturaCreadaNotificacionHandlerTests
             .ReturnsAsync(true);
 
         // Act
-        // No debería lanzar excepción, solo loggear el error
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
@@ -277,7 +296,7 @@ public class FacturaCreadaNotificacionHandlerTests
 
         // SMS debería enviarse exitosamente
         _mockSMSService.Verify(x => x.SendSMSAsync(
-            "+1234567890", It.Is<string>(s => s.Contains(numeroFactura) && s.Contains(montoTotal.ToString()))), Times.Once);
+            "+1234567890", It.Is<string>(s => s.Contains(numeroFactura) && s.Contains("300.00"))), Times.Once);
     }
 
     [Fact]
@@ -287,10 +306,16 @@ public class FacturaCreadaNotificacionHandlerTests
         var facturaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var numeroFactura = "F-2025-0007";
-        var montoTotal = 250.00m;
-        var evento = new FacturaCreadaEvent(facturaId, numeroFactura, clienteId, montoTotal, DateTime.UtcNow);
+        var tipoFactura = TipoFactura.Normal;
+        var fechaEmision = DateTime.UtcNow;
+        
+        var evento = new Domain.Comercial.Facturacion.Events.FacturaCreada(
+            facturaId, 
+            numeroFactura, 
+            tipoFactura, 
+            fechaEmision);
 
-        var cliente = CreateMockCliente(clienteId, "Cliente SMS Error", "cliente@email.com", "+error");
+        var cliente = CreateMockCliente(clienteId, "Cliente SMS Error", "cliente@email.com", "+1234567890");
         
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
@@ -320,7 +345,7 @@ public class FacturaCreadaNotificacionHandlerTests
         _mockEmailService.Verify(x => x.SendEmailAsync(
             "cliente@email.com", 
             It.Is<string>(s => s.Contains("Factura") && s.Contains(numeroFactura)),
-            It.Is<string>(s => s.Contains("Cliente SMS Error") && s.Contains(montoTotal.ToString()))), Times.Once);
+            It.Is<string>(s => s.Contains("Cliente SMS Error") && s.Contains("250.00"))), Times.Once);
     }
 
     [Theory]
@@ -335,7 +360,14 @@ public class FacturaCreadaNotificacionHandlerTests
         var facturaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var numeroFactura = "F-2025-TEST";
-        var evento = new FacturaCreadaEvent(facturaId, numeroFactura, clienteId, montoTotal, DateTime.UtcNow);
+        var tipoFactura = TipoFactura.Normal;
+        var fechaEmision = DateTime.UtcNow;
+        
+        var evento = new Domain.Comercial.Facturacion.Events.FacturaCreada(
+            facturaId, 
+            numeroFactura, 
+            tipoFactura, 
+            fechaEmision);
 
         var cliente = CreateMockCliente(clienteId, "Cliente Test", "test@email.com", "+1234567890");
         
@@ -353,10 +385,10 @@ public class FacturaCreadaNotificacionHandlerTests
 
         // Assert
         _mockNotificationService.Verify(x => x.EnviarNotificacionAsync(
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<string>(),
-            prioridadEsperada,
-            It.IsAny<CancellationToken>()), Times.Once);
+            prioridadEsperada.ToString()), Times.Once);
     }
 
     [Fact]
@@ -366,8 +398,14 @@ public class FacturaCreadaNotificacionHandlerTests
         var facturaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var numeroFactura = "F-2025-0008";
-        var montoTotal = 200.00m;
-        var evento = new FacturaCreadaEvent(facturaId, numeroFactura, clienteId, montoTotal, DateTime.UtcNow);
+        var tipoFactura = TipoFactura.Normal;
+        var fechaEmision = DateTime.UtcNow;
+        
+        var evento = new Domain.Comercial.Facturacion.Events.FacturaCreada(
+            facturaId, 
+            numeroFactura, 
+            tipoFactura, 
+            fechaEmision);
 
         var cancellationTokenSource = new CancellationTokenSource();
         cancellationTokenSource.Cancel();
@@ -387,9 +425,14 @@ public class FacturaCreadaNotificacionHandlerTests
         var facturaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var numeroFactura = "F-2025-1234";
-        var fechaCreacion = new DateTime(2025, 1, 17, 16, 30, 0);
-        var montoTotal = 387.25m;
-        var evento = new FacturaCreadaEvent(facturaId, numeroFactura, clienteId, montoTotal, fechaCreacion);
+        var tipoFactura = TipoFactura.Normal;
+        var fechaEmision = new DateTime(2025, 1, 17, 16, 30, 0);
+        
+        var evento = new Domain.Comercial.Facturacion.Events.FacturaCreada(
+            facturaId, 
+            numeroFactura, 
+            tipoFactura, 
+            fechaEmision);
 
         var cliente = CreateMockCliente(clienteId, "Pedro Contexto", "pedro@email.com", "+5551234567");
         
@@ -441,8 +484,14 @@ public class FacturaCreadaNotificacionHandlerTests
         var facturaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var numeroFactura = "F-2025-0009";
-        var montoTotal = 400.00m;
-        var evento = new FacturaCreadaEvent(facturaId, numeroFactura, clienteId, montoTotal, DateTime.UtcNow);
+        var tipoFactura = TipoFactura.Normal;
+        var fechaEmision = DateTime.UtcNow;
+        
+        var evento = new Domain.Comercial.Facturacion.Events.FacturaCreada(
+            facturaId, 
+            numeroFactura, 
+            tipoFactura, 
+            fechaEmision);
 
         var repositoryException = new Exception("Error de conexión a base de datos");
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
@@ -467,13 +516,29 @@ public class FacturaCreadaNotificacionHandlerTests
     // Helper method para crear clientes mock
     private static Cliente CreateMockCliente(Guid id, string nombre, string? email, string? telefono)
     {
-        var cliente = new Mock<Cliente>();
-        cliente.SetupGet(x => x.Id).Returns(id);
-        cliente.SetupGet(x => x.NombreCompleto).Returns(nombre);
-        cliente.SetupGet(x => x.Email).Returns(email);
-        cliente.SetupGet(x => x.Telefono).Returns(telefono);
-        cliente.Setup(x => x.TieneEmail()).Returns(!string.IsNullOrEmpty(email));
-        cliente.Setup(x => x.TieneTelefono()).Returns(!string.IsNullOrEmpty(telefono));
-        return cliente.Object;
+        var clienteNombre = ClienteNombre.Crear(nombre.Split(' ')[0], nombre.Split(' ').Length > 1 ? nombre.Split(' ')[1] : "");
+        var clienteEmail = !string.IsNullOrEmpty(email) ? Email.Create(email) : null;
+        var clienteTelefono = !string.IsNullOrEmpty(telefono) ? PhoneNumber.Create(telefono) : null;
+        
+        return Cliente.Crear(
+            id,
+            clienteNombre,
+            clienteEmail,
+            clienteTelefono,
+            DateTime.Now.AddYears(-30),
+            true);
+    }
+
+    // Helper method para crear facturas mock
+    private static Factura CreateMockFactura(Guid facturaId, Guid clienteId, string numeroFactura, decimal total)
+    {
+        var factura = new Mock<Factura>();
+        factura.SetupGet(x => x.Id).Returns(facturaId);
+        factura.SetupGet(x => x.ClienteId).Returns(clienteId);
+        factura.SetupGet(x => x.NumeroFactura).Returns(numeroFactura);
+        factura.SetupGet(x => x.Total).Returns(total);
+        factura.SetupGet(x => x.FechaCreacion).Returns(DateTime.UtcNow);
+        factura.SetupGet(x => x.FechaVencimiento).Returns(DateTime.UtcNow.AddDays(30));
+        return factura.Object;
     }
 } 

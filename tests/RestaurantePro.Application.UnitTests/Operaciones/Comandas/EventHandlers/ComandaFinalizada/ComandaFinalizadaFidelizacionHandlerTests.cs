@@ -1,3 +1,17 @@
+using RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Operaciones.Comandas.Events;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+using Microsoft.Extensions.Logging;
+using FluentAssertions;
+using Moq;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
 
 /// <summary>
@@ -36,8 +50,8 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
-        _mockComercialServiceFacade.Setup(x => x.AcumularPuntosPorComandaAsync(
-                clienteId, montoTotal, It.IsAny<CancellationToken>()))
+        _mockComercialServiceFacade.Setup(x => x.AcumularPuntosPorCompraAsync(
+                clienteId, montoTotal, comandaId, "Comanda finalizada", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(15)); // 15 puntos acumulados
 
         // Act
@@ -46,8 +60,8 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         // Assert
         _mockClienteRepository.Verify(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()), Times.Once);
         
-        _mockComercialServiceFacade.Verify(x => x.AcumularPuntosPorComandaAsync(
-            clienteId, montoTotal, It.IsAny<CancellationToken>()), Times.Once);
+        _mockComercialServiceFacade.Verify(x => x.AcumularPuntosPorCompraAsync(
+            clienteId, montoTotal, comandaId, "Comanda finalizada", It.IsAny<CancellationToken>()), Times.Once);
 
         // Debería loggear acumulación exitosa
         _mockLogger.Verify(
@@ -74,7 +88,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
 
         // Assert
         _mockClienteRepository.Verify(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
-        _mockComercialServiceFacade.Verify(x => x.AcumularPuntosPorComandaAsync(It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockComercialServiceFacade.Verify(x => x.AcumularPuntosPorCompraAsync(It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
 
         // Debería loggear que no hay cliente
         _mockLogger.Verify(
@@ -104,7 +118,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
 
         // Assert
         _mockClienteRepository.Verify(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()), Times.Once);
-        _mockComercialServiceFacade.Verify(x => x.AcumularPuntosPorComandaAsync(It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockComercialServiceFacade.Verify(x => x.AcumularPuntosPorCompraAsync(It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
 
         // Debería loggear advertencia
         _mockLogger.Verify(
@@ -131,8 +145,8 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
-        _mockComercialServiceFacade.Setup(x => x.AcumularPuntosPorComandaAsync(
-                clienteId, montoTotal, It.IsAny<CancellationToken>()))
+        _mockComercialServiceFacade.Setup(x => x.AcumularPuntosPorCompraAsync(
+                clienteId, montoTotal, comandaId, "Comanda finalizada", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure<int>("Error procesando puntos"));
 
         // Act
@@ -168,7 +182,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
 
         // Assert
         // No debería llamar al servicio de acumulación para montos bajos
-        _mockComercialServiceFacade.Verify(x => x.AcumularPuntosPorComandaAsync(It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockComercialServiceFacade.Verify(x => x.AcumularPuntosPorCompraAsync(It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
 
         // Debería loggear que el monto es insuficiente
         _mockLogger.Verify(
@@ -199,17 +213,18 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
-        _mockComercialServiceFacade.Setup(x => x.AcumularPuntosPorComandaAsync(
-                clienteId, montoTotal, It.IsAny<CancellationToken>()))
+        _mockComercialServiceFacade.Setup(x => x.AcumularPuntosPorCompraAsync(
+                clienteId, montoTotal, comandaId, "Comanda finalizada", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(puntosEsperados));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
-        _mockComercialServiceFacade.Verify(x => x.AcumularPuntosPorComandaAsync(
-            clienteId, montoTotal, It.IsAny<CancellationToken>()), Times.Once);
+        _mockComercialServiceFacade.Verify(x => x.AcumularPuntosPorCompraAsync(
+            clienteId, montoTotal, comandaId, "Comanda finalizada", It.IsAny<CancellationToken>()), Times.Once);
 
+        // Debería loggear los puntos calculados
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Information,
@@ -283,8 +298,8 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(clienteVIP);
 
-        _mockComercialServiceFacade.Setup(x => x.AcumularPuntosPorComandaAsync(
-                clienteId, montoTotal, It.IsAny<CancellationToken>()))
+        _mockComercialServiceFacade.Setup(x => x.AcumularPuntosPorCompraAsync(
+                clienteId, montoTotal, comandaId, "Comanda finalizada", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(15)); // 10 puntos base + 5 bonificación VIP
 
         // Act
@@ -316,8 +331,8 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
-        _mockComercialServiceFacade.Setup(x => x.AcumularPuntosPorComandaAsync(
-                clienteId, montoTotal, It.IsAny<CancellationToken>()))
+        _mockComercialServiceFacade.Setup(x => x.AcumularPuntosPorCompraAsync(
+                clienteId, montoTotal, comandaId, "Comanda finalizada", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(27));
 
         // Act
@@ -353,12 +368,12 @@ public class ComandaFinalizadaFidelizacionHandlerTests
     }
 
     [Fact]
-    public async Task Handle_AcumulacionExitosa_DeberiaVerificarActualizacionNivel()
+    public async Task Handle_AcumulacionExitosa_DeberiaEjecutarPoliticaClientesFrecuentes()
     {
         // Arrange
         var comandaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var montoTotal = 500.00m; // Monto alto que podría cambiar nivel
+        var montoTotal = 500.00m; // Monto alto que podría cambiar segmento
         var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, montoTotal);
 
         var cliente = CreateMockCliente(clienteId, "Ana Ascenso", "ana@email.com");
@@ -366,26 +381,29 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
-        _mockComercialServiceFacade.Setup(x => x.AcumularPuntosPorComandaAsync(
-                clienteId, montoTotal, It.IsAny<CancellationToken>()))
+        _mockComercialServiceFacade.Setup(x => x.AcumularPuntosPorCompraAsync(
+                clienteId, montoTotal, comandaId, "Comanda finalizada", It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(50));
 
-        _mockComercialServiceFacade.Setup(x => x.VerificarYActualizarNivelFidelizacionAsync(
-                clienteId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(true)); // Nivel actualizado
+        _mockComercialServiceFacade.Setup(x => x.EjecutarPoliticaClientesFrecuentesAsync(
+                It.Is<IEnumerable<Guid>>(ids => ids.Contains(clienteId)), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(new Dictionary<Guid, SegmentoCliente> 
+            { 
+                { clienteId, SegmentoCliente.Frecuente } 
+            }));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
-        _mockComercialServiceFacade.Verify(x => x.VerificarYActualizarNivelFidelizacionAsync(
-            clienteId, It.IsAny<CancellationToken>()), Times.Once);
+        _mockComercialServiceFacade.Verify(x => x.EjecutarPoliticaClientesFrecuentesAsync(
+            It.Is<IEnumerable<Guid>>(ids => ids.Contains(clienteId)), It.IsAny<CancellationToken>()), Times.Once);
 
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("🎊 ¡Nivel de fidelización actualizado!")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("🎊 Segmento de cliente actualizado")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -396,9 +414,9 @@ public class ComandaFinalizadaFidelizacionHandlerTests
     {
         var cliente = new Mock<Cliente>();
         cliente.SetupGet(x => x.Id).Returns(id);
-        cliente.SetupGet(x => x.NombreCompleto).Returns(nombre);
-        cliente.SetupGet(x => x.Email).Returns(email);
-        cliente.SetupGet(x => x.EsVIP).Returns(false);
+        cliente.SetupGet(x => x.Nombre).Returns(ClienteNombre.Create(nombre));
+        cliente.SetupGet(x => x.Email).Returns(Email.Create(email));
+        cliente.SetupGet(x => x.Segmento).Returns(SegmentoCliente.Regular);
         return cliente.Object;
     }
 
@@ -406,9 +424,9 @@ public class ComandaFinalizadaFidelizacionHandlerTests
     {
         var cliente = new Mock<Cliente>();
         cliente.SetupGet(x => x.Id).Returns(id);
-        cliente.SetupGet(x => x.NombreCompleto).Returns(nombre);
-        cliente.SetupGet(x => x.Email).Returns(email);
-        cliente.SetupGet(x => x.EsVIP).Returns(true);
+        cliente.SetupGet(x => x.Nombre).Returns(ClienteNombre.Create(nombre));
+        cliente.SetupGet(x => x.Email).Returns(Email.Create(email));
+        cliente.SetupGet(x => x.Segmento).Returns(SegmentoCliente.VIP);
         return cliente.Object;
     }
 } 

@@ -20,7 +20,7 @@ public class CrearReservacionValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.FechaReservacion = DateTime.Now.AddDays(1); // Mañana
+        command.FechaHoraReservacion = DateTime.Now.AddDays(1); // Mañana
 
         // Act
         var result = _validator.Validate(command);
@@ -34,14 +34,14 @@ public class CrearReservacionValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.FechaReservacion = DateTime.Now.AddDays(-1); // Ayer
+        command.FechaHoraReservacion = DateTime.Now.AddDays(-1); // Ayer
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearReservacionCommand.FechaReservacion))
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearReservacionCommand.FechaHoraReservacion))
             .Which.ErrorMessage.Should().Be("La fecha de reservación debe ser futura");
     }
 
@@ -50,7 +50,7 @@ public class CrearReservacionValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.FechaReservacion = DateTime.Now.AddHours(2); // Hoy, 2 horas después
+        command.FechaHoraReservacion = DateTime.Now.AddHours(2); // Hoy, 2 horas después
 
         // Act
         var result = _validator.Validate(command);
@@ -64,14 +64,14 @@ public class CrearReservacionValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.FechaReservacion = DateTime.Now.AddDays(91); // Más de 3 meses
+        command.FechaHoraReservacion = DateTime.Now.AddDays(91); // Más de 3 meses
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearReservacionCommand.FechaReservacion))
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearReservacionCommand.FechaHoraReservacion))
             .Which.ErrorMessage.Should().Be("No se pueden hacer reservaciones con más de 90 días de anticipación");
     }
 
@@ -84,7 +84,7 @@ public class CrearReservacionValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.FechaReservacion = DateTime.Now.AddDays(diasAdelante);
+        command.FechaHoraReservacion = DateTime.Now.AddDays(diasAdelante);
 
         // Act
         var result = _validator.Validate(command);
@@ -107,7 +107,7 @@ public class CrearReservacionValidatorTests
         // Arrange
         var command = CrearComandoValido();
         var fechaBase = DateTime.Now.AddDays(1).Date; // Mañana a medianoche
-        command.FechaReservacion = fechaBase.AddHours(hora).AddMinutes(minuto);
+        command.FechaHoraReservacion = fechaBase.AddHours(hora).AddMinutes(minuto);
 
         // Act
         var result = _validator.Validate(command);
@@ -126,14 +126,14 @@ public class CrearReservacionValidatorTests
         // Arrange
         var command = CrearComandoValido();
         var fechaBase = DateTime.Now.AddDays(1).Date; // Mañana a medianoche
-        command.FechaReservacion = fechaBase.AddHours(hora).AddMinutes(minuto);
+        command.FechaHoraReservacion = fechaBase.AddHours(hora).AddMinutes(minuto);
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearReservacionCommand.FechaReservacion))
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearReservacionCommand.FechaHoraReservacion))
             .Which.ErrorMessage.Should().Be("La hora de reservación debe estar entre las 12:00 PM y 10:00 PM");
     }
 
@@ -434,11 +434,11 @@ public class CrearReservacionValidatorTests
         // Arrange
         var command = new CrearReservacionCommand
         {
-            FechaReservacion = DateTime.Now.AddDays(3).Date.AddHours(19), // 3 días, 7:00 PM
+            FechaHoraReservacion = DateTime.Now.AddDays(3).Date.AddHours(19), // 3 días, 7:00 PM
             NumeroPersonas = 4,
             NombreCliente = "María José González Hernández",
             TelefonoContacto = "+52-55-9876-5432",
-            EmailContacto = "maria.gonzalez@email.com",
+            Email = "maria.gonzalez@email.com",
             Observaciones = "Celebración de aniversario, mesa romántica si es posible"
         };
 
@@ -456,7 +456,7 @@ public class CrearReservacionValidatorTests
         // Arrange
         var command = new CrearReservacionCommand
         {
-            FechaReservacion = DateTime.Now.AddDays(-1), // Error: fecha pasada
+            FechaHoraReservacion = DateTime.Now.AddDays(-1), // Error: fecha pasada
             NumeroPersonas = 0, // Error: número inválido
             NombreCliente = "", // Error: nombre vacío
             TelefonoContacto = "123", // Error: teléfono inválido
@@ -469,7 +469,7 @@ public class CrearReservacionValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().HaveCount(5);
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.FechaReservacion));
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.FechaHoraReservacion));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.NumeroPersonas));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.NombreCliente));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.TelefonoContacto));
@@ -481,7 +481,7 @@ public class CrearReservacionValidatorTests
     {
         // Arrange - Reservación para hoy, pero con al menos 2 horas de anticipación
         var command = CrearComandoValido();
-        command.FechaReservacion = DateTime.Now.AddHours(3); // 3 horas después
+        command.FechaHoraReservacion = DateTime.Now.AddHours(3); // 3 horas después
 
         // Act
         var result = _validator.Validate(command);
@@ -495,14 +495,14 @@ public class CrearReservacionValidatorTests
     {
         // Arrange - Reservación para hoy, pero muy próxima
         var command = CrearComandoValido();
-        command.FechaReservacion = DateTime.Now.AddMinutes(30); // Solo 30 minutos
+        command.FechaHoraReservacion = DateTime.Now.AddMinutes(30); // Solo 30 minutos
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearReservacionCommand.FechaReservacion))
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearReservacionCommand.FechaHoraReservacion))
             .Which.ErrorMessage.Should().Be("Las reservaciones deben hacerse con al menos 2 horas de anticipación");
     }
 
@@ -516,7 +516,7 @@ public class CrearReservacionValidatorTests
         // Arrange
         var command = CrearComandoValido();
         var proximoDomingo = DateTime.Now.AddDays(7 - (int)DateTime.Now.DayOfWeek).Date.AddHours(14); // Próximo domingo 2:00 PM
-        command.FechaReservacion = proximoDomingo;
+        command.FechaHoraReservacion = proximoDomingo;
 
         // Act
         var result = _validator.Validate(command);
@@ -544,7 +544,7 @@ public class CrearReservacionValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.EmailContacto = null; // Email opcional
+        command.Email = null; // Email opcional
 
         // Act
         var result = _validator.Validate(command);
@@ -583,11 +583,11 @@ public class CrearReservacionValidatorTests
     {
         return new CrearReservacionCommand
         {
-            FechaReservacion = DateTime.Now.AddDays(2).Date.AddHours(19), // Pasado mañana 7:00 PM
+            FechaHoraReservacion = DateTime.Now.AddDays(2).Date.AddHours(19), // Pasado mañana 7:00 PM
             NumeroPersonas = 4,
             NombreCliente = "Juan Pérez García",
             TelefonoContacto = "+52-55-1234-5678",
-            EmailContacto = "juan.perez@email.com",
+            Email = "juan.perez@email.com",
             Observaciones = "Reservación para cena familiar"
         };
     }

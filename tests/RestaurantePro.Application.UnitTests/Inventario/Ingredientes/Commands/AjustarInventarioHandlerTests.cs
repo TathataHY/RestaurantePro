@@ -682,7 +682,7 @@ public class AjustarInventarioHandlerTests
         result.Error.Should().Contain("Error");
 
         // Verify rollback se ejecutó
-        _unitOfWorkMock.Verify(x => x.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(x => x.RollbackTransactionAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     /// <summary>

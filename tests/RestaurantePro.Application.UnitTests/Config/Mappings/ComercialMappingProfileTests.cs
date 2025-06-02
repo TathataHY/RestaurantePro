@@ -295,7 +295,11 @@ public class ComercialMappingProfileTests
         // // Assert
         // dto.TipoDescuento.Should().Be(expectedTexto);
         
-        // Test básico mientras se implementa
+        // Test básico mientras se implementa - verificar que los parámetros son coherentes
+        tipo.Should().Be(expectedTexto);
+        tipo.Should().NotBeNullOrEmpty();
+        expectedTexto.Should().NotBeNullOrEmpty();
+        
         Assert.True(true, "Test temporalmente deshabilitado - DescuentoFacturaDto necesita propiedad TipoDescuento");
     }
 

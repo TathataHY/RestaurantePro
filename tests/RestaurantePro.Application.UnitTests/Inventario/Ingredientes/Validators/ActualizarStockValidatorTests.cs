@@ -77,7 +77,7 @@ public class ActualizarStockValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConTipoMovimientoVacioONull_DeberiaRetornarError(string tipoInvalido)
+    public async Task Validate_ConTipoMovimientoVacioONull_DeberiaRetornarError(string? tipoInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
@@ -143,7 +143,7 @@ public class ActualizarStockValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConMotivoVacioONull_DeberiaRetornarError(string motivoInvalido)
+    public async Task Validate_ConMotivoVacioONull_DeberiaRetornarError(string? motivoInvalido)
     {
         // Arrange
         var command = CrearCommandValido();

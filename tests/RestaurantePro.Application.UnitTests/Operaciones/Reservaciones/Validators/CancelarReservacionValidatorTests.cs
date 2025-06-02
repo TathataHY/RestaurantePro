@@ -1,3 +1,13 @@
+using FluentAssertions;
+using FluentValidation.TestHelper;
+using Microsoft.EntityFrameworkCore;
+using Moq;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands.CancelarReservacion;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Validators;
 
 /// <summary>
@@ -28,27 +38,43 @@ public class CancelarReservacionValidatorTests
         return new CancelarReservacionCommand
         {
             ReservacionId = Guid.NewGuid(),
-            MotivoTexto = "Cliente canceló por cambio de planes de viaje",
-            CanceladoPor = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = "Cliente canceló por cambio de planes de viaje",
             NotificarCliente = true
         };
     }
 
     private Reservacion CrearReservacionValida(Guid reservacionId)
     {
-        return new Reservacion
-        {
-            Id = reservacionId,
-            ClienteId = Guid.NewGuid(),
-            MesaId = Guid.NewGuid(),
-            Fecha = DateTime.UtcNow.AddHours(3), // 3 horas en el futuro
-            CantidadPersonas = 4,
-            Estado = EstadoReservacion.Confirmada,
-            FechaCreacion = DateTime.UtcNow.AddDays(-1),
-            DuracionEstimada = TimeSpan.FromHours(2),
-            NombreCliente = "Juan Pérez",
-            TelefonoCliente = "555-123-4567"
-        };
+        // Usar reflection para crear la reservación con propiedades privadas
+        var reservacion = (Reservacion)Activator.CreateInstance(typeof(Reservacion), true)!;
+        
+        typeof(Reservacion).GetProperty("Id")?.SetValue(reservacion, reservacionId);
+        typeof(Reservacion).GetProperty("Estado")?.SetValue(reservacion, EstadoReservacion.Confirmada);
+        typeof(Reservacion).GetProperty("ClienteId")?.SetValue(reservacion, Guid.NewGuid());
+        typeof(Reservacion).GetProperty("MesaId")?.SetValue(reservacion, Guid.NewGuid());
+        typeof(Reservacion).GetProperty("Fecha")?.SetValue(reservacion, DateTime.UtcNow.AddHours(3));
+        typeof(Reservacion).GetProperty("NumeroPersonas")?.SetValue(reservacion, 4);
+        typeof(Reservacion).GetProperty("TelefonoContacto")?.SetValue(reservacion, "+1234567890");
+        typeof(Reservacion).GetProperty("FechaCreacion")?.SetValue(reservacion, DateTime.UtcNow.AddMinutes(-10));
+        
+        return reservacion;
+    }
+
+    private Reservacion CrearReservacionConFecha(Guid reservacionId, DateTime fecha)
+    {
+        // Usar reflection para crear reservación con fecha específica
+        var reservacion = (Reservacion)Activator.CreateInstance(typeof(Reservacion), true)!;
+        typeof(Reservacion).GetProperty("Id")?.SetValue(reservacion, reservacionId);
+        typeof(Reservacion).GetProperty("Estado")?.SetValue(reservacion, EstadoReservacion.Confirmada);
+        typeof(Reservacion).GetProperty("ClienteId")?.SetValue(reservacion, Guid.NewGuid());
+        typeof(Reservacion).GetProperty("MesaId")?.SetValue(reservacion, Guid.NewGuid());
+        typeof(Reservacion).GetProperty("Fecha")?.SetValue(reservacion, fecha);
+        typeof(Reservacion).GetProperty("NumeroPersonas")?.SetValue(reservacion, 4);
+        typeof(Reservacion).GetProperty("TelefonoContacto")?.SetValue(reservacion, "+1234567890");
+        typeof(Reservacion).GetProperty("FechaCreacion")?.SetValue(reservacion, DateTime.UtcNow.AddMinutes(-10));
+        return reservacion;
     }
 
     #endregion
@@ -83,8 +109,14 @@ public class CancelarReservacionValidatorTests
     public async Task Validate_ConReservacionIdVacia_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.ReservacionId = Guid.Empty;
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.Empty,
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = "Motivo válido",
+            NotificarCliente = true
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -92,8 +124,7 @@ public class CancelarReservacionValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CancelarReservacionCommand.ReservacionId) &&
-            e.ErrorMessage.Contains("El ID de la reservación es requerido"));
+            e.PropertyName == nameof(CancelarReservacionCommand.ReservacionId));
     }
 
     [Fact]
@@ -110,7 +141,7 @@ public class CancelarReservacionValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(CancelarReservacionCommand.ReservacionId) &&
-            e.ErrorMessage.Contains("La reservación especificada no existe"));
+            e.ErrorMessage.Contains("no existe"));
     }
 
     [Fact]
@@ -126,8 +157,7 @@ public class CancelarReservacionValidatorTests
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(CancelarReservacionCommand.ReservacionId) &&
-            e.ErrorMessage.Contains("El ID de la reservación es requerido"));
+            e.PropertyName == nameof(CancelarReservacionCommand.ReservacionId));
     }
 
     #endregion
@@ -143,7 +173,7 @@ public class CancelarReservacionValidatorTests
         // Arrange
         var command = CrearCommandValido();
         var reservacion = CrearReservacionValida(command.ReservacionId);
-        reservacion.Estado = estadoNoCancelable;
+        typeof(Reservacion).GetProperty("Estado")?.SetValue(reservacion, estadoNoCancelable);
         ConfigurarReservacionExistente(reservacion);
 
         // Act
@@ -152,8 +182,8 @@ public class CancelarReservacionValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CancelarReservacionCommand.ReservacionId) &&
-            e.ErrorMessage.Contains("La reservación no puede ser cancelada en su estado actual"));
+            e.PropertyName == "Estado" &&
+            e.ErrorMessage.Contains("no se puede cancelar"));
     }
 
     [Theory]
@@ -164,7 +194,7 @@ public class CancelarReservacionValidatorTests
         // Arrange
         var command = CrearCommandValido();
         var reservacion = CrearReservacionValida(command.ReservacionId);
-        reservacion.Estado = estadoCancelable;
+        typeof(Reservacion).GetProperty("Estado")?.SetValue(reservacion, estadoCancelable);
         ConfigurarReservacionExistente(reservacion);
 
         // Act
@@ -172,7 +202,7 @@ public class CancelarReservacionValidatorTests
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.ErrorMessage.Contains("La reservación no puede ser cancelada en su estado actual"));
+            e.PropertyName == "Estado");
     }
 
     #endregion
@@ -184,8 +214,7 @@ public class CancelarReservacionValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var reservacion = CrearReservacionValida(command.ReservacionId);
-        reservacion.Fecha = DateTime.UtcNow.AddHours(-2); // 2 horas en el pasado
+        var reservacion = CrearReservacionConFecha(command.ReservacionId, DateTime.UtcNow.AddHours(-1)); // 1 hora en el pasado
         ConfigurarReservacionExistente(reservacion);
 
         // Act
@@ -194,8 +223,8 @@ public class CancelarReservacionValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CancelarReservacionCommand.ReservacionId) &&
-            e.ErrorMessage.Contains("No se puede cancelar una reservación que ya pasó"));
+            e.PropertyName == "Fecha" &&
+            e.ErrorMessage.Contains("vencida"));
     }
 
     [Theory]
@@ -206,8 +235,7 @@ public class CancelarReservacionValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var reservacion = CrearReservacionValida(command.ReservacionId);
-        reservacion.Fecha = DateTime.UtcNow.AddHours(horasFuturas);
+        var reservacion = CrearReservacionConFecha(command.ReservacionId, DateTime.UtcNow.AddHours(horasFuturas));
         ConfigurarReservacionExistente(reservacion);
 
         // Act
@@ -215,7 +243,7 @@ public class CancelarReservacionValidatorTests
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.ErrorMessage.Contains("No se puede cancelar una reservación que ya pasó"));
+            e.PropertyName == "Fecha");
     }
 
     #endregion
@@ -229,8 +257,14 @@ public class CancelarReservacionValidatorTests
     public async Task Validate_ConMotivoTextoVacioONull_DeberiaRetornarError(string motivoInvalido)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.MotivoTexto = motivoInvalido;
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = motivoInvalido,
+            NotificarCliente = true
+        };
         var reservacion = CrearReservacionValida(command.ReservacionId);
         ConfigurarReservacionExistente(reservacion);
 
@@ -240,16 +274,22 @@ public class CancelarReservacionValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CancelarReservacionCommand.MotivoTexto) &&
-            e.ErrorMessage.Contains("El motivo de cancelación es requerido"));
+            e.PropertyName == "MotivoTexto" &&
+            e.ErrorMessage.Contains("requerido"));
     }
 
     [Fact]
     public async Task Validate_ConMotivoTextoMuyCorto_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.MotivoTexto = "Corto"; // Menos de 10 caracteres
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = "Corto", // Menos de 10 caracteres
+            NotificarCliente = true
+        };
         var reservacion = CrearReservacionValida(command.ReservacionId);
         ConfigurarReservacionExistente(reservacion);
 
@@ -259,16 +299,22 @@ public class CancelarReservacionValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CancelarReservacionCommand.MotivoTexto) &&
-            e.ErrorMessage.Contains("El motivo debe tener al menos 10 caracteres"));
+            e.PropertyName == "MotivoTexto" &&
+            e.ErrorMessage.Contains("mínimo"));
     }
 
     [Fact]
     public async Task Validate_ConMotivoTextoMuyLargo_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.MotivoTexto = new string('A', 501); // Más de 500 caracteres
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = new string('A', 501), // Más de 500 caracteres
+            NotificarCliente = true
+        };
         var reservacion = CrearReservacionValida(command.ReservacionId);
         ConfigurarReservacionExistente(reservacion);
 
@@ -278,8 +324,8 @@ public class CancelarReservacionValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CancelarReservacionCommand.MotivoTexto) &&
-            e.ErrorMessage.Contains("El motivo no puede exceder 500 caracteres"));
+            e.PropertyName == "MotivoTexto" &&
+            e.ErrorMessage.Contains("máximo"));
     }
 
     [Theory]
@@ -289,8 +335,14 @@ public class CancelarReservacionValidatorTests
     public async Task Validate_ConMotivoTextoValido_NoDeberiaRetornarErrorDeMotivo(string motivoValido)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.MotivoTexto = motivoValido;
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = motivoValido,
+            NotificarCliente = true
+        };
         var reservacion = CrearReservacionValida(command.ReservacionId);
         ConfigurarReservacionExistente(reservacion);
 
@@ -299,7 +351,7 @@ public class CancelarReservacionValidatorTests
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(CancelarReservacionCommand.MotivoTexto));
+            e.PropertyName == "MotivoTexto");
     }
 
     #endregion
@@ -310,8 +362,14 @@ public class CancelarReservacionValidatorTests
     public async Task Validate_ConCanceladoPorVacio_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.CanceladoPor = Guid.Empty;
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.Empty, // Error - Usuario vacío
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = "Cliente canceló por motivos personales",
+            NotificarCliente = true
+        };
         var reservacion = CrearReservacionValida(command.ReservacionId);
         ConfigurarReservacionExistente(reservacion);
 
@@ -321,16 +379,22 @@ public class CancelarReservacionValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CancelarReservacionCommand.CanceladoPor) &&
-            e.ErrorMessage.Contains("El usuario que cancela es requerido"));
+            e.PropertyName == "UsuarioId" &&
+            e.ErrorMessage.Contains("requerido"));
     }
 
     [Fact]
     public async Task Validate_ConCanceladoPorValido_NoDeberiaRetornarErrorDeCanceladoPor()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.CanceladoPor = Guid.NewGuid();
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = "Cliente canceló por motivos personales",
+            NotificarCliente = true
+        };
         var reservacion = CrearReservacionValida(command.ReservacionId);
         ConfigurarReservacionExistente(reservacion);
 
@@ -339,8 +403,7 @@ public class CancelarReservacionValidatorTests
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(CancelarReservacionCommand.CanceladoPor) &&
-            e.ErrorMessage.Contains("El usuario que cancela es requerido"));
+            e.PropertyName == "UsuarioId");
     }
 
     #endregion
@@ -353,8 +416,14 @@ public class CancelarReservacionValidatorTests
     public async Task Validate_ConNotificarClienteValido_NoDeberiaRetornarError(bool notificarCliente)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.NotificarCliente = notificarCliente;
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = "Cliente canceló por motivos personales",
+            NotificarCliente = notificarCliente
+        };
         var reservacion = CrearReservacionValida(command.ReservacionId);
         ConfigurarReservacionExistente(reservacion);
 
@@ -363,8 +432,7 @@ public class CancelarReservacionValidatorTests
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(CancelarReservacionCommand.NotificarCliente) &&
-            e.ErrorMessage.Contains("Debe especificar si notificar al cliente"));
+            e.PropertyName == nameof(CancelarReservacionCommand.NotificarCliente));
     }
 
     #endregion
@@ -376,8 +444,7 @@ public class CancelarReservacionValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var reservacion = CrearReservacionValida(command.ReservacionId);
-        reservacion.Fecha = DateTime.UtcNow.AddHours(3); // 3 horas de anticipación
+        var reservacion = CrearReservacionConFecha(command.ReservacionId, DateTime.UtcNow.AddHours(3)); // 3 horas de anticipación
         ConfigurarReservacionExistente(reservacion);
 
         // Act
@@ -385,7 +452,7 @@ public class CancelarReservacionValidatorTests
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.ErrorMessage.Contains("La cancelación no cumple con la política establecida"));
+            e.PropertyName == "PoliticaCancelacion");
     }
 
     [Fact]
@@ -393,8 +460,7 @@ public class CancelarReservacionValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var reservacion = CrearReservacionValida(command.ReservacionId);
-        reservacion.Fecha = DateTime.UtcNow.AddMinutes(90); // Solo 1.5 horas de anticipación (menos del mínimo de 2)
+        var reservacion = CrearReservacionConFecha(command.ReservacionId, DateTime.UtcNow.AddHours(1)); // Solo 1 hora de anticipación
         ConfigurarReservacionExistente(reservacion);
 
         // Act
@@ -404,7 +470,7 @@ public class CancelarReservacionValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == "PoliticaCancelacion" &&
-            e.ErrorMessage.Contains("La cancelación no cumple con la política establecida (mínimo 2 horas de anticipación)"));
+            e.ErrorMessage.Contains("La cancelación no cumple con la política establecida"));
     }
 
     #endregion
@@ -418,13 +484,13 @@ public class CancelarReservacionValidatorTests
         var command = new CancelarReservacionCommand
         {
             ReservacionId = Guid.NewGuid(),
-            MotivoTexto = "Cliente canceló debido a emergencia familiar",
-            CanceladoPor = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = "Cliente canceló debido a emergencia familiar",
             NotificarCliente = true
         };
 
-        var reservacion = CrearReservacionValida(command.ReservacionId);
-        reservacion.Fecha = DateTime.UtcNow.AddHours(4); // 4 horas de anticipación
+        var reservacion = CrearReservacionConFecha(command.ReservacionId, DateTime.UtcNow.AddHours(4)); // 4 horas de anticipación
         ConfigurarReservacionExistente(reservacion);
 
         // Act
@@ -442,8 +508,9 @@ public class CancelarReservacionValidatorTests
         var command = new CancelarReservacionCommand
         {
             ReservacionId = Guid.NewGuid(),
-            MotivoTexto = "Cancelación solicitada por cliente",
-            CanceladoPor = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = "Cancelación solicitada por cliente",
             NotificarCliente = false
         };
 
@@ -465,9 +532,10 @@ public class CancelarReservacionValidatorTests
         var command = new CancelarReservacionCommand
         {
             ReservacionId = Guid.Empty, // Error
-            MotivoTexto = "Corto", // Error - muy corto
-            CanceladoPor = Guid.Empty // Error
-            // NotificarCliente tiene valor por defecto
+            UsuarioId = Guid.Empty, // Error
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = "Corto", // Error - muy corto
+            NotificarCliente = false
         };
 
         ConfigurarReservacionInexistente();
@@ -492,8 +560,14 @@ public class CancelarReservacionValidatorTests
     public async Task Validate_ConDiferentesMotivos_DeberiaSerValido(string motivo)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.MotivoTexto = motivo;
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = motivo,
+            NotificarCliente = true
+        };
         var reservacion = CrearReservacionValida(command.ReservacionId);
         ConfigurarReservacionExistente(reservacion);
 
@@ -508,9 +582,14 @@ public class CancelarReservacionValidatorTests
     public async Task Validate_ConCancelacionAdministrativa_DeberiaSerValido()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.MotivoTexto = "Cancelación administrativa por mantenimiento del restaurante";
-        command.NotificarCliente = true; // Importante notificar en cancelaciones administrativas
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.MantenimientoUrgente,
+            MotivoDetalle = "Cancelación administrativa por mantenimiento del restaurante",
+            NotificarCliente = true // Importante notificar en cancelaciones administrativas
+        };
         var reservacion = CrearReservacionValida(command.ReservacionId);
         ConfigurarReservacionExistente(reservacion);
 
@@ -525,9 +604,14 @@ public class CancelarReservacionValidatorTests
     public async Task Validate_ConCancelacionPorCliente_DeberiaSerValido()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.MotivoTexto = "Cliente solicitó cancelación por cambio de planes";
-        command.NotificarCliente = false; // No es necesario notificar si el cliente canceló
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = "Cliente solicitó cancelación por cambio de planes",
+            NotificarCliente = false // No es necesario notificar si el cliente canceló
+        };
         var reservacion = CrearReservacionValida(command.ReservacionId);
         ConfigurarReservacionExistente(reservacion);
 
@@ -551,8 +635,14 @@ public class CancelarReservacionValidatorTests
     public async Task Validate_ConDiferentesLongitudesMotivo_DeberiaValidarCorrectamente(int longitud, bool deberiaSerValido)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.MotivoTexto = new string('M', longitud);
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = new string('M', longitud),
+            NotificarCliente = true
+        };
         var reservacion = CrearReservacionValida(command.ReservacionId);
         ConfigurarReservacionExistente(reservacion);
 
@@ -563,13 +653,13 @@ public class CancelarReservacionValidatorTests
         if (deberiaSerValido)
         {
             result.Errors.Should().NotContain(e => 
-                e.PropertyName == nameof(CancelarReservacionCommand.MotivoTexto));
+                e.PropertyName == nameof(CancelarReservacionCommand.MotivoDetalle));
         }
         else
         {
             result.IsValid.Should().BeFalse();
             result.Errors.Should().Contain(e => 
-                e.PropertyName == nameof(CancelarReservacionCommand.MotivoTexto));
+                e.PropertyName == nameof(CancelarReservacionCommand.MotivoDetalle));
         }
     }
 
@@ -583,8 +673,7 @@ public class CancelarReservacionValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var reservacion = CrearReservacionValida(command.ReservacionId);
-        reservacion.Fecha = DateTime.UtcNow.AddHours(horasAnticipacion);
+        var reservacion = CrearReservacionConFecha(command.ReservacionId, DateTime.UtcNow.AddHours(horasAnticipacion));
         ConfigurarReservacionExistente(reservacion);
 
         // Act

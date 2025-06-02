@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Core.Usuarios.Validators;
+using CrearUsuarioHorarioDto = RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario.HorarioTrabajoDto;
 
 /// <summary>
 /// 🔥 TESTS EXHAUSTIVOS PARA CREAR USUARIO VALIDATOR - IMPLEMENTACIÓN COMPLETA
@@ -35,9 +36,9 @@ public class CrearUsuarioValidatorTests
             Departamento = "Cocina",
             Puesto = "Cocinero Junior",
             UsuarioCreadorId = Guid.NewGuid(),
-            HorariosTrabajo = new List<HorarioTrabajoDto>
+            HorariosTrabajo = new List<CrearUsuarioHorarioDto>
             {
-                new HorarioTrabajoDto
+                new CrearUsuarioHorarioDto
                 {
                     DiaSemana = "Lunes",
                     HoraInicio = TimeSpan.FromHours(8),
@@ -948,7 +949,9 @@ public class CrearUsuarioValidatorTests
         var usuarioCreadorId = Guid.NewGuid();
         command.UsuarioCreadorId = usuarioCreadorId;
 
-        var usuarioCreador = new Usuario { Id = usuarioCreadorId, Estado = EstadoUsuario.Activo };
+        var usuarioCreador = Usuario.Crear("admin.test", "Admin Test", "admin@test.com", RolUsuario.Administrador);
+        usuarioCreador.GetType().GetProperty("Id")?.SetValue(usuarioCreador, usuarioCreadorId);
+
         _mockContext.Setup(c => c.Usuarios
             .AnyAsync(It.IsAny<Expression<Func<Usuario, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -988,16 +991,16 @@ public class CrearUsuarioValidatorTests
             Departamento = "Servicio",
             Puesto = "Supervisor de Meseros",
             UsuarioCreadorId = usuarioCreadorId,
-            HorariosTrabajo = new List<HorarioTrabajoDto>
+            HorariosTrabajo = new List<CrearUsuarioHorarioDto>
             {
-                new HorarioTrabajoDto
+                new CrearUsuarioHorarioDto
                 {
                     DiaSemana = "Lunes",
                     HoraInicio = TimeSpan.FromHours(8),
                     HoraFin = TimeSpan.FromHours(16),
                     EsDiaLibre = false
                 },
-                new HorarioTrabajoDto
+                new CrearUsuarioHorarioDto
                 {
                     DiaSemana = "Martes",
                     HoraInicio = TimeSpan.FromHours(9),
@@ -1036,7 +1039,7 @@ public class CrearUsuarioValidatorTests
             NivelAcceso = 1,
             PermisosEspecificos = new List<string>(),
             UsuarioCreadorId = usuarioCreadorId,
-            HorariosTrabajo = new List<HorarioTrabajoDto>()
+            HorariosTrabajo = new List<CrearUsuarioHorarioDto>()
         };
 
         // Act

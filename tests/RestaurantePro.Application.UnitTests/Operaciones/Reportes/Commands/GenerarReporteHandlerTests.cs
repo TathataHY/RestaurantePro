@@ -1,3 +1,26 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using Moq;
+using Xunit;
+using FluentAssertions;
+using MediatR;
+using RestaurantePro.Application.Operaciones.Reportes.Commands.GenerarReporte;
+using RestaurantePro.Application.Common.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using Moq;
+using Xunit;
+using FluentAssertions;
+using MediatR;
+using RestaurantePro.Application.Common.Enums;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
+using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reportes.Commands;
 
 /// <summary>
@@ -96,8 +119,8 @@ public class GenerarReporteHandlerTests
         var command = CrearCommandValido();
         var comandas = new List<Comanda>
         {
-            new() { Id = Guid.NewGuid(), FechaCreacion = DateTime.Today.AddHours(-12), MontoTotal = 1500m },
-            new() { Id = Guid.NewGuid(), FechaCreacion = DateTime.Today.AddHours(-10), MontoTotal = 2000m }
+            Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Comanda de prueba 1", "COM-001"),
+            Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Comanda de prueba 2", "COM-002")
         };
 
         ConfigurarComandasMock(comandas);
@@ -128,18 +151,23 @@ public class GenerarReporteHandlerTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoReporte = tipoReporte;
+        // Crear command usando inicializador de objeto para propiedades de solo inicialización
+        command = new GenerarReporteCommand
+        {
+            TipoReporte = tipoReporte,
+            Formato = command.Formato,
+            FechaInicio = command.FechaInicio,
+            FechaFin = command.FechaFin,
+            UsuarioSolicitanteId = command.UsuarioSolicitanteId
+        };
 
         var comandas = new List<Comanda>
         {
-            new() { Id = Guid.NewGuid(), FechaCreacion = DateTime.Today.AddHours(-12), MontoTotal = 1500m }
+            Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Comanda de prueba", "COM-001")
         };
 
-        var movimientos = new List<MovimientoInventario>
-        {
-            new() { Id = Guid.NewGuid(), FechaMovimiento = DateTime.Today.AddHours(-6) }
-        };
-
+        // Nota: MovimientoInventario e Ingrediente necesitan factory methods o mocks apropiados
+        var movimientos = new List<MovimientoInventario>();
         var ingredientes = new List<Ingrediente>();
 
         ConfigurarComandasMock(comandas);
@@ -165,11 +193,19 @@ public class GenerarReporteHandlerTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.Formato = formato;
+        // Crear command usando inicializador de objeto para propiedades de solo inicialización
+        command = new GenerarReporteCommand
+        {
+            TipoReporte = command.TipoReporte,
+            Formato = formato,
+            FechaInicio = command.FechaInicio,
+            FechaFin = command.FechaFin,
+            UsuarioSolicitanteId = command.UsuarioSolicitanteId
+        };
 
         ConfigurarComandasMock(new List<Comanda>
         {
-            new() { Id = Guid.NewGuid(), FechaCreacion = DateTime.Today, MontoTotal = 1000m }
+            Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Comanda de prueba", "COM-001")
         });
 
         // Act
@@ -191,20 +227,20 @@ public class GenerarReporteHandlerTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoReporte = TipoReporte.Inventario;
-        command.FiltrosEspecificos = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
-
-        var movimientos = new List<MovimientoInventario>
+        // Crear command usando inicializador de objeto para propiedades de solo inicialización
+        command = new GenerarReporteCommand
         {
-            new() { Id = Guid.NewGuid(), FechaMovimiento = DateTime.Today.AddHours(-6) },
-            new() { Id = Guid.NewGuid(), FechaMovimiento = DateTime.Today.AddHours(-3) }
+            TipoReporte = TipoReporte.Inventario,
+            Formato = command.Formato,
+            FechaInicio = command.FechaInicio,
+            FechaFin = command.FechaFin,
+            UsuarioSolicitanteId = command.UsuarioSolicitanteId,
+            FiltrosEspecificos = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() }
         };
 
-        var ingredientes = new List<Ingrediente>
-        {
-            new() { Id = command.FiltrosEspecificos[0], Nombre = "Ingrediente 1" },
-            new() { Id = command.FiltrosEspecificos[1], Nombre = "Ingrediente 2" }
-        };
+        // Nota: MovimientoInventario e Ingrediente necesitan factory methods o mocks apropiados
+        var movimientos = new List<MovimientoInventario>();
+        var ingredientes = new List<Ingrediente>();
 
         ConfigurarComandasMock(new List<Comanda>());
         ConfigurarMovimientosMock(movimientos);
@@ -224,8 +260,16 @@ public class GenerarReporteHandlerTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoReporte = TipoReporte.Personalizado;
-        command.NombrePersonalizado = "Mi Reporte Especial";
+        // Crear command usando inicializador de objeto para propiedades de solo inicialización
+        command = new GenerarReporteCommand
+        {
+            TipoReporte = TipoReporte.Personalizado,
+            Formato = command.Formato,
+            FechaInicio = command.FechaInicio,
+            FechaFin = command.FechaFin,
+            UsuarioSolicitanteId = command.UsuarioSolicitanteId,
+            NombrePersonalizado = "Mi Reporte Especial"
+        };
 
         ConfigurarComandasMock(new List<Comanda>());
 
@@ -246,12 +290,21 @@ public class GenerarReporteHandlerTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.EnviarPorEmail = true;
-        command.EmailDestino = "test@example.com";
+        // Crear command usando inicializador de objeto para propiedades de solo inicialización
+        command = new GenerarReporteCommand
+        {
+            TipoReporte = command.TipoReporte,
+            Formato = command.Formato,
+            FechaInicio = command.FechaInicio,
+            FechaFin = command.FechaFin,
+            UsuarioSolicitanteId = command.UsuarioSolicitanteId,
+            EnviarPorEmail = true,
+            EmailDestino = "test@example.com"
+        };
 
         ConfigurarComandasMock(new List<Comanda>
         {
-            new() { Id = Guid.NewGuid(), FechaCreacion = DateTime.Today, MontoTotal = 1000m }
+            Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Comanda de prueba", "COM-001")
         });
 
         // Act
@@ -268,8 +321,8 @@ public class GenerarReporteHandlerTests
                 LogLevel.Information,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Reporte enviado por email")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
@@ -278,11 +331,20 @@ public class GenerarReporteHandlerTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.EnviarPorEmail = false;
+        // Crear command usando inicializador de objeto para propiedades de solo inicialización
+        command = new GenerarReporteCommand
+        {
+            TipoReporte = command.TipoReporte,
+            Formato = command.Formato,
+            FechaInicio = command.FechaInicio,
+            FechaFin = command.FechaFin,
+            UsuarioSolicitanteId = command.UsuarioSolicitanteId,
+            EnviarPorEmail = false
+        };
 
         ConfigurarComandasMock(new List<Comanda>
         {
-            new() { Id = Guid.NewGuid(), FechaCreacion = DateTime.Today, MontoTotal = 1000m }
+            Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Comanda de prueba", "COM-001")
         });
 
         // Act
@@ -299,8 +361,8 @@ public class GenerarReporteHandlerTests
                 LogLevel.Information,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Reporte enviado por email")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Never);
     }
 
@@ -313,11 +375,20 @@ public class GenerarReporteHandlerTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.Prioridad = NivelPrioridad.Alta;
+        // Crear command usando inicializador de objeto para propiedades de solo inicialización
+        command = new GenerarReporteCommand
+        {
+            TipoReporte = command.TipoReporte,
+            Formato = command.Formato,
+            FechaInicio = command.FechaInicio,
+            FechaFin = command.FechaFin,
+            UsuarioSolicitanteId = command.UsuarioSolicitanteId,
+            Prioridad = NivelPrioridad.Alta
+        };
 
         ConfigurarComandasMock(new List<Comanda>
         {
-            new() { Id = Guid.NewGuid(), FechaCreacion = DateTime.Today, MontoTotal = 1000m }
+            Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Comanda de prueba", "COM-001")
         });
 
         // Act
@@ -347,7 +418,7 @@ public class GenerarReporteHandlerTests
 
         ConfigurarComandasMock(new List<Comanda>
         {
-            new() { Id = Guid.NewGuid(), FechaCreacion = DateTime.Today, MontoTotal = 1000m }
+            Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Comanda de prueba", "COM-001")
         });
 
         // Act
@@ -386,8 +457,8 @@ public class GenerarReporteHandlerTests
                 LogLevel.Error,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Error generando reporte")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
@@ -396,7 +467,15 @@ public class GenerarReporteHandlerTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoReporte = (TipoReporte)999; // Tipo inválido
+        // Crear command usando inicializador de objeto para propiedades de solo inicialización
+        command = new GenerarReporteCommand
+        {
+            TipoReporte = (TipoReporte)999, // Tipo inválido
+            Formato = command.Formato,
+            FechaInicio = command.FechaInicio,
+            FechaFin = command.FechaFin,
+            UsuarioSolicitanteId = command.UsuarioSolicitanteId
+        };
 
         ConfigurarComandasMock(new List<Comanda>());
 
@@ -443,7 +522,7 @@ public class GenerarReporteHandlerTests
 
         ConfigurarComandasMock(new List<Comanda>
         {
-            new() { Id = Guid.NewGuid(), FechaCreacion = DateTime.Today, MontoTotal = 1000m }
+            Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Comanda de prueba", "COM-001")
         });
 
         // Act
@@ -459,8 +538,8 @@ public class GenerarReporteHandlerTests
                 LogLevel.Information,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Iniciando generación de reporte")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
 
         // Verificar log de éxito
@@ -469,8 +548,8 @@ public class GenerarReporteHandlerTests
                 LogLevel.Information,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Reporte generado exitosamente")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
@@ -486,7 +565,7 @@ public class GenerarReporteHandlerTests
 
         ConfigurarComandasMock(new List<Comanda>
         {
-            new() { Id = Guid.NewGuid(), FechaCreacion = DateTime.Today, MontoTotal = 1000m }
+            Comanda.Crear(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Comanda de prueba", "COM-001")
         });
 
         var stopwatch = Stopwatch.StartNew();

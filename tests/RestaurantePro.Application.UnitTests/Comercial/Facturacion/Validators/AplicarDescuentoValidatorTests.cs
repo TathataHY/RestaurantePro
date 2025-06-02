@@ -101,11 +101,11 @@ public class AplicarDescuentoValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConTipoDescuentoVacioONull_DeberiaRetornarError(string tipoInvalido)
+    public async Task Validate_ConTipoDescuentoVacioONull_DeberiaRetornarError(string? tipoInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoDescuento = tipoInvalido;
+        command.TipoDescuento = tipoInvalido!;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -167,11 +167,11 @@ public class AplicarDescuentoValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConConceptoVacioONull_DeberiaRetornarError(string conceptoInvalido)
+    public async Task Validate_ConConceptoVacioONull_DeberiaRetornarError(string? conceptoInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.Concepto = conceptoInvalido;
+        command.Concepto = conceptoInvalido!;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -225,11 +225,11 @@ public class AplicarDescuentoValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConMotivoVacioONull_DeberiaRetornarError(string motivoInvalido)
+    public async Task Validate_ConMotivoVacioONull_DeberiaRetornarError(string? motivoInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.Motivo = motivoInvalido;
+        command.Motivo = motivoInvalido!;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -238,7 +238,7 @@ public class AplicarDescuentoValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(AplicarDescuentoCommand.Motivo) &&
-            e.ErrorMessage.Contains("El motivo del descuento es requerido"));
+            e.ErrorMessage.Contains("El motivo es requerido"));
     }
 
     [Fact]
@@ -808,9 +808,10 @@ public class AplicarDescuentoValidatorTests
         // Arrange
         var facturaId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
-        
-        var factura = new Factura { Id = facturaId, Estado = EstadoFactura.Borrador };
-        var usuario = new Usuario { Id = usuarioId, Estado = EstadoUsuario.Activo };
+
+        // Crear entidades usando factorías correctas
+        var factura = Factura.Crear("FAC-001", TipoFactura.Normal, "Cliente Test");
+        var usuario = Usuario.Crear("testuser", "Usuario Test", "test@test.com", RolUsuario.Administrador);
 
         _mockFacturas.Setup(f => f.FindAsync(facturaId))
             .ReturnsAsync(factura);

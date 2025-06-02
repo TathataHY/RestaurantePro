@@ -120,5 +120,61 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
             bool aplicarAntesDeImpuestos = false,
             string? codigoAutorizacion = null,
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Procesa un pago para una factura
+        /// </summary>
+        /// <param name="facturaId">Identificador de la factura</param>
+        /// <param name="monto">Monto del pago</param>
+        /// <param name="metodoPago">Método de pago utilizado</param>
+        /// <param name="referencia">Referencia del pago (opcional)</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la factura actualizada</returns>
+        Task<Result<Factura>> ProcesarPagoAsync(
+            Guid facturaId,
+            decimal monto,
+            string metodoPago,
+            string? referencia = null,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Acumula puntos por compra para un cliente
+        /// </summary>
+        /// <param name="clienteId">Identificador del cliente</param>
+        /// <param name="montoCompra">Monto de la compra</param>
+        /// <param name="facturaId">Identificador de la factura</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con los puntos acumulados</returns>
+        Task<Result<int>> AcumularPuntosPorCompraAsync(
+            Guid clienteId,
+            decimal montoCompra,
+            Guid facturaId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Genera una factura (método simplificado)
+        /// </summary>
+        /// <param name="comandaId">Identificador de la comanda</param>
+        /// <param name="clienteId">Identificador del cliente (opcional)</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la factura generada</returns>
+        Task<Result<Factura>> GenerarFacturaAsync(
+            Guid comandaId,
+            Guid? clienteId = null,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Revierte un pago previamente procesado
+        /// </summary>
+        /// <param name="facturaId">Identificador de la factura</param>
+        /// <param name="pagoId">Identificador del pago a revertir</param>
+        /// <param name="motivo">Motivo de la reversión</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Resultado con la factura actualizada</returns>
+        Task<Result<Factura>> RevertirPagoAsync(
+            Guid facturaId,
+            Guid pagoId,
+            string motivo,
+            CancellationToken cancellationToken = default);
     }
 } 

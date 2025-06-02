@@ -91,7 +91,7 @@ public class DesactivarClienteValidatorTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task Validate_ConMotivoDesactivacionVacio_DeberiaRetornarError(string motivoVacio)
+    public async Task Validate_ConMotivoDesactivacionVacio_DeberiaRetornarError(string? motivoVacio)
     {
         // Arrange
         var command = CrearCommandValido();
@@ -152,7 +152,7 @@ public class DesactivarClienteValidatorTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task Validate_ConDesactivadoPorVacio_DeberiaRetornarError(string desactivadoPorVacio)
+    public async Task Validate_ConDesactivadoPorVacio_DeberiaRetornarError(string? desactivadoPorVacio)
     {
         // Arrange
         var command = CrearCommandValido();
@@ -191,7 +191,7 @@ public class DesactivarClienteValidatorTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task Validate_ConNotasVacias_NoDeberiaValidarNotas(string notasVacias)
+    public async Task Validate_ConNotasVacias_NoDeberiaValidarNotas(string? notasVacias)
     {
         // Arrange
         var command = CrearCommandValido();

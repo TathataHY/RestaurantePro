@@ -1,3 +1,17 @@
+using RestaurantePro.Application.Core.Productos.Queries.VerificarDisponibilidadProducto;
+using RestaurantePro.Domain.Core.Productos.Entities;
+using RestaurantePro.Domain.Core.Productos.Interfaces;
+using RestaurantePro.Domain.Core.Productos.Services;
+using RestaurantePro.Domain.Core.Productos.ValueObjects;
+using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
+using RestaurantePro.Application.Core.Productos.DTOs;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Core.Productos.Queries;
 
 /// <summary>
@@ -171,7 +185,7 @@ public class VerificarDisponibilidadProductoHandlerTests
             .ReturnsAsync(producto);
         _productoServiceMock.Setup(x => x.VerificarDisponibilidadConIngredientesAsync(
             producto, 2, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(new { Disponible = true, IngredientesVerificados = 4 }));
+            .ReturnsAsync(Result.Success<object>(new { Disponible = true, IngredientesVerificados = 4 }));
         _mapperMock.Setup(x => x.Map<DisponibilidadProductoDto>(It.IsAny<object>()))
             .Returns(resultadoDto);
 
@@ -206,8 +220,8 @@ public class VerificarDisponibilidadProductoHandlerTests
             .ReturnsAsync(producto);
         _productoServiceMock.Setup(x => x.VerificarDisponibilidadAsync(producto, 5, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(false));
-        _productoServiceMock.Setup(x => x.ObtenerAlternativasDisponiblesAsync(producto, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(new List<Producto> { CreateMockProductoActivo(Guid.NewGuid(), "Pasta Bolognesa", true) }));
+        _productoRepositoryMock.Setup(x => x.ObtenerPorCategoriaAsync(It.IsAny<Guid>(), true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Producto> { CreateMockProductoActivo(Guid.NewGuid(), "Pasta Bolognesa", true) });
         _mapperMock.Setup(x => x.Map<DisponibilidadProductoDto>(It.IsAny<object>()))
             .Returns(resultadoDto);
 
@@ -242,7 +256,7 @@ public class VerificarDisponibilidadProductoHandlerTests
 
         _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(producto);
-        _productoServiceMock.Setup(x => x.VerificarDisponibilidadRapidaAsync(producto, 1, It.IsAny<CancellationToken>()))
+        _productoServiceMock.Setup(x => x.VerificarDisponibilidadAsync(producto, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(true));
         _mapperMock.Setup(x => x.Map<DisponibilidadProductoDto>(It.IsAny<object>()))
             .Returns(resultadoDto);
@@ -385,7 +399,7 @@ public class VerificarDisponibilidadProductoHandlerTests
             .ReturnsAsync(producto);
         _productoServiceMock.Setup(x => x.VerificarDisponibilidadConIngredientesAsync(
             producto, 3, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(new { Disponible = false, IngredientesFaltantes = new[] { "Salami", "Champiñones" } }));
+            .ReturnsAsync(Result.Success<object>(new { Disponible = false, IngredientesFaltantes = new[] { "Salami", "Champiñones" } }));
         _mapperMock.Setup(x => x.Map<DisponibilidadProductoDto>(It.IsAny<object>()))
             .Returns(resultadoDto);
 
@@ -551,21 +565,29 @@ public class VerificarDisponibilidadProductoHandlerTests
 
     private static Producto CreateMockProductoActivo(Guid id, string nombre, bool activo)
     {
-        var producto = new Producto();
+        var precio = new PrecioProducto(15.50m);
+        var producto = Producto.Crear(nombre, "Descripción de " + nombre, precio, Guid.NewGuid(), "Categoría Test");
+        
+        // Usar reflexión para establecer el ID y otras propiedades
         typeof(Producto).GetProperty("Id")?.SetValue(producto, id);
-        typeof(Producto).GetProperty("Nombre")?.SetValue(producto, nombre);
-        typeof(Producto).GetProperty("Activo")?.SetValue(producto, activo);
-        typeof(Producto).GetProperty("Disponible")?.SetValue(producto, activo);
+        
+        if (!activo)
+        {
+            producto.Desactivar();
+        }
+        
         return producto;
     }
 
     private static Producto CreateMockProductoInactivo(Guid id, string nombre)
     {
-        var producto = new Producto();
+        var precio = new PrecioProducto(15.50m);
+        var producto = Producto.Crear(nombre, "Descripción de " + nombre, precio, Guid.NewGuid(), "Categoría Test");
+        
+        // Usar reflexión para establecer el ID
         typeof(Producto).GetProperty("Id")?.SetValue(producto, id);
-        typeof(Producto).GetProperty("Nombre")?.SetValue(producto, nombre);
-        typeof(Producto).GetProperty("Activo")?.SetValue(producto, false);
-        typeof(Producto).GetProperty("Disponible")?.SetValue(producto, false);
+        producto.Desactivar();
+        
         return producto;
     }
 
@@ -579,7 +601,7 @@ public class VerificarDisponibilidadProductoHandlerTests
     private static Producto CreateMockProductoRapido(Guid id, string nombre)
     {
         var producto = CreateMockProductoActivo(id, nombre, true);
-        typeof(Producto).GetProperty("TiempoPreparacionMinutos")?.SetValue(producto, 5);
+        // Los productos rápidos tendrán tiempo de preparación corto por defecto
         return producto;
     }
 

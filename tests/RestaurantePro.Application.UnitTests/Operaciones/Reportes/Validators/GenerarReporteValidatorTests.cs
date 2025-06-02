@@ -68,7 +68,7 @@ public class GenerarReporteValidatorTests
         {
             var comandas = new List<Comanda>
             {
-                new() { Id = Guid.NewGuid(), FechaCreacion = fechaInicio.AddHours(12) }
+                Comanda.Crear(Guid.NewGuid(), null, Guid.NewGuid(), "Test comanda", $"COM-{DateTime.Now:yyyyMMdd}-TEST")
             }.AsQueryable();
 
             _comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(comandas.Provider);
@@ -81,7 +81,7 @@ public class GenerarReporteValidatorTests
         {
             var movimientos = new List<MovimientoInventario>
             {
-                new() { Id = Guid.NewGuid(), FechaMovimiento = fechaInicio.AddHours(12) }
+                MovimientoInventario.CrearIngreso(Guid.NewGuid(), 10.0m, "Test movimiento", fechaInicio.AddHours(12))
             }.AsQueryable();
 
             _movimientosMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.Provider).Returns(movimientos.Provider);
@@ -119,23 +119,20 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConTiposReporteValidos_DeberiaSerValido(TipoReporte tipoReporte)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.TipoReporte = tipoReporte;
-        
-        if (tipoReporte == TipoReporte.Personalizado)
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
         {
-            command.NombrePersonalizado = "Reporte Personalizado Test";
-        }
-        
-        if (tipoReporte == TipoReporte.Financiero)
-        {
-            command.Prioridad = NivelPrioridad.Alta;
-            ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
-        }
-        else
-        {
-            ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
-        }
+            TipoReporte = tipoReporte,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            NombrePersonalizado = tipoReporte == TipoReporte.Personalizado ? "Reporte Personalizado Test" : null,
+            Prioridad = tipoReporte == TipoReporte.Financiero ? NivelPrioridad.Alta : baseCommand.Prioridad
+        };
+
+        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador }, true);
+        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -153,9 +150,18 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConFormatosValidos_DeberiaSerValido(FormatoReporte formato)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.Formato = formato;
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -168,8 +174,15 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConUsuarioIdVacio_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.UsuarioSolicitanteId = Guid.Empty;
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = Guid.Empty
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -210,8 +223,16 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConFechaInicioVacia_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.FechaInicio = default;
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = default,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -228,9 +249,16 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConFechaInicioFutura_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.FechaInicio = DateTime.Today.AddDays(2);
-        command.FechaFin = DateTime.Today.AddDays(3);
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = DateTime.Today.AddDays(2),
+            FechaFin = DateTime.Today.AddDays(3),
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -247,9 +275,16 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConFechaInicioMuyAntigua_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.FechaInicio = DateTime.Today.AddYears(-6);
-        command.FechaFin = DateTime.Today.AddYears(-6).AddDays(1);
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = DateTime.Today.AddYears(-6),
+            FechaFin = DateTime.Today.AddYears(-6).AddDays(1),
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -266,9 +301,16 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConFechaFinAnteriorAInicio_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.FechaInicio = DateTime.Today.AddDays(-1);
-        command.FechaFin = DateTime.Today.AddDays(-2);
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = DateTime.Today.AddDays(-1),
+            FechaFin = DateTime.Today.AddDays(-2),
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -285,9 +327,16 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConRangoFechasMayorAUnAno_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.FechaInicio = DateTime.Today.AddDays(-400);
-        command.FechaFin = DateTime.Today;
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = DateTime.Today.AddDays(-400),
+            FechaFin = DateTime.Today,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -307,8 +356,17 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConMuchosFiltrosEspecificos_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.FiltrosEspecificos = Enumerable.Range(1, 101).Select(_ => Guid.NewGuid()).ToList();
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            FiltrosEspecificos = Enumerable.Range(1, 101).Select(_ => Guid.NewGuid()).ToList()
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -325,8 +383,17 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConFiltrosEspecificosConGuidVacio_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.FiltrosEspecificos = new List<Guid> { Guid.NewGuid(), Guid.Empty, Guid.NewGuid() };
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            FiltrosEspecificos = new List<Guid> { Guid.NewGuid(), Guid.Empty, Guid.NewGuid() }
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -343,9 +410,18 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConMuchosParametrosAdicionales_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.ParametrosAdicionales = Enumerable.Range(1, 51)
-            .ToDictionary(i => $"param{i}", i => (object)$"value{i}");
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            ParametrosAdicionales = Enumerable.Range(1, 51)
+                .ToDictionary(i => $"param{i}", i => (object)$"value{i}")
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -362,10 +438,19 @@ public class GenerarReporteValidatorTests
     public async Task Validate_SinContenidoIncluido_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.IncluirGraficos = false;
-        command.IncluirDetalles = false;
-        command.IncluirResumenEjecutivo = false;
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            IncluirGraficos = false,
+            IncluirDetalles = false,
+            IncluirResumenEjecutivo = false
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -381,8 +466,17 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConNombrePersonalizadoMuyLargo_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.NombrePersonalizado = new string('A', 201);
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            NombrePersonalizado = new string('A', 201)
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -420,9 +514,17 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConReporteFinancieroSinPermisosAdministrador_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.TipoReporte = TipoReporte.Financiero;
-        command.Prioridad = NivelPrioridad.Alta;
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = TipoReporte.Financiero,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            Prioridad = NivelPrioridad.Alta
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -438,8 +540,16 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConReporteInventarioSinPermisos_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.TipoReporte = TipoReporte.Inventario;
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = TipoReporte.Inventario,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Mesero });
 
         // Act
@@ -455,10 +565,19 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConAdministradorParaReporteFinanciero_DeberiaSerValido()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.TipoReporte = TipoReporte.Financiero;
-        command.Prioridad = NivelPrioridad.Alta;
-        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = TipoReporte.Financiero,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            Prioridad = NivelPrioridad.Alta
+        };
+
+        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador }, true);
+        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -467,17 +586,22 @@ public class GenerarReporteValidatorTests
         result.IsValid.Should().BeTrue();
     }
 
-    #endregion
-
-    #region Validaciones de Email
-
     [Fact]
     public async Task Validate_ConEnvioEmailSinEmailDestino_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.EnviarPorEmail = true;
-        command.EmailDestino = null;
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            EnviarPorEmail = true,
+            EmailDestino = null
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -494,9 +618,18 @@ public class GenerarReporteValidatorTests
     public async Task Validate_ConEmailDestinoInvalido_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.EnviarPorEmail = true;
-        command.EmailDestino = "email-invalido";
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            EnviarPorEmail = true,
+            EmailDestino = "email-invalido"
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -506,18 +639,25 @@ public class GenerarReporteValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(GenerarReporteCommand.EmailDestino) &&
-            e.ErrorMessage.Contains("El email de destino debe tener un formato válido"));
+            e.ErrorMessage.Contains("El formato del email de destino no es válido"));
     }
 
     [Fact]
     public async Task Validate_ConEnvioEmailYRangoMayorA30Dias_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.FechaInicio = DateTime.Today.AddDays(-35);
-        command.FechaFin = DateTime.Today;
-        command.EnviarPorEmail = true;
-        command.EmailDestino = "test@example.com";
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = DateTime.Today.AddDays(-35),
+            FechaFin = DateTime.Today,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            EnviarPorEmail = true,
+            EmailDestino = "test@example.com"
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -526,18 +666,27 @@ public class GenerarReporteValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.EnviarPorEmail) &&
-            e.ErrorMessage.Contains("No se puede enviar por email reportes de más de 30 días de rango"));
+            e.ErrorMessage.Contains("Los reportes enviados por email no pueden exceder 30 días de rango"));
     }
 
     [Fact]
     public async Task Validate_ConEmailValidoYRangoCorto_DeberiaSerValido()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.EnviarPorEmail = true;
-        command.EmailDestino = "test@example.com";
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            EnviarPorEmail = true,
+            EmailDestino = "test@example.com"
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -546,18 +695,22 @@ public class GenerarReporteValidatorTests
         result.IsValid.Should().BeTrue();
     }
 
-    #endregion
-
-    #region Validaciones de Negocio
-
     [Fact]
     public async Task Validate_ConReporteFinancieroSinPrioridadAlta_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.TipoReporte = TipoReporte.Financiero;
-        command.Prioridad = NivelPrioridad.Baja;
-        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = TipoReporte.Financiero,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            Prioridad = NivelPrioridad.Baja
+        };
+
+        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador }, true);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -565,17 +718,24 @@ public class GenerarReporteValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.Prioridad) &&
-            e.ErrorMessage.Contains("Los reportes financieros requieren prioridad alta o crítica"));
+            e.ErrorMessage.Contains("Los reportes financieros deben tener prioridad alta"));
     }
 
     [Fact]
     public async Task Validate_ConReportePersonalizadoSinNombre_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.TipoReporte = TipoReporte.Personalizado;
-        command.NombrePersonalizado = null;
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = TipoReporte.Personalizado,
+            FechaInicio = baseCommand.FechaInicio,
+            FechaFin = baseCommand.FechaFin,
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
+            NombrePersonalizado = null
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
 
         // Act
@@ -585,18 +745,25 @@ public class GenerarReporteValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(GenerarReporteCommand.NombrePersonalizado) &&
-            e.ErrorMessage.Contains("Los reportes personalizados requieren un nombre personalizado"));
+            e.ErrorMessage.Contains("El nombre personalizado es requerido para reportes personalizados"));
     }
 
     [Fact]
     public async Task Validate_ConPeriodoSinDatos_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.FechaInicio = DateTime.Today.AddDays(-100);
-        command.FechaFin = DateTime.Today.AddDays(-95);
+        var baseCommand = CrearCommandValido();
+        var command = new GenerarReporteCommand
+        {
+            TipoReporte = baseCommand.TipoReporte,
+            FechaInicio = DateTime.Today.AddDays(-100),
+            FechaFin = DateTime.Today.AddDays(-95),
+            Formato = baseCommand.Formato,
+            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
+        };
+
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
-        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin, tieneComandas: false);
+        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin, false, false);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -604,7 +771,7 @@ public class GenerarReporteValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.ErrorMessage.Contains("El período seleccionado no tiene datos suficientes para generar el reporte"));
+            e.ErrorMessage.Contains("No hay datos disponibles para el período especificado"));
     }
 
     #endregion

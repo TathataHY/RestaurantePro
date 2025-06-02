@@ -1,3 +1,9 @@
+using RestaurantePro.Application.Operaciones.Reportes.DTOs;
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reportes.Commands;
 
 /// <summary>
@@ -7,47 +13,47 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Reportes.Commands;
 public class ProcesarPedidoCompletoHandlerTests
 {
     private readonly Mock<IComandaRepository> _comandaRepositoryMock;
-    private readonly Mock<IPagoService> _pagoServiceMock;
-    private readonly Mock<IFacturacionService> _facturacionServiceMock;
-    private readonly Mock<IFidelizacionService> _fidelizacionServiceMock;
-    private readonly Mock<IMesaRepository> _mesaRepositoryMock;
+    private readonly Mock<IFacturaRepository> _facturaRepositoryMock;
     private readonly Mock<IClienteRepository> _clienteRepositoryMock;
-    private readonly Mock<ICommunicationService> _notificacionServiceMock;
+    private readonly Mock<IMesaRepository> _mesaRepositoryMock;
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<ILogger<ProcesarPedidoCompletoHandler>> _loggerMock;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
     private readonly Mock<IUnitOfWork> _unitOfWorkMock;
-    private readonly Mock<IOrquestadorWorkflowService> _orquestadorMock;
+    private readonly Mock<IDateTimeService> _dateTimeServiceMock;
+    private readonly Mock<IMediator> _mediatorMock;
+    private readonly Mock<IServicioFacturacion> _servicioFacturacionMock;
+    private readonly Mock<IComercialServiceFacade> _comercialServiceFacadeMock;
     private readonly ProcesarPedidoCompletoHandler _handler;
 
     public ProcesarPedidoCompletoHandlerTests()
     {
         _comandaRepositoryMock = new Mock<IComandaRepository>();
-        _pagoServiceMock = new Mock<IPagoService>();
-        _facturacionServiceMock = new Mock<IFacturacionService>();
-        _fidelizacionServiceMock = new Mock<IFidelizacionService>();
-        _mesaRepositoryMock = new Mock<IMesaRepository>();
+        _facturaRepositoryMock = new Mock<IFacturaRepository>();
         _clienteRepositoryMock = new Mock<IClienteRepository>();
-        _notificacionServiceMock = new Mock<ICommunicationService>();
+        _mesaRepositoryMock = new Mock<IMesaRepository>();
         _mapperMock = new Mock<IMapper>();
         _loggerMock = new Mock<ILogger<ProcesarPedidoCompletoHandler>>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
         _unitOfWorkMock = new Mock<IUnitOfWork>();
-        _orquestadorMock = new Mock<IOrquestadorWorkflowService>();
+        _dateTimeServiceMock = new Mock<IDateTimeService>();
+        _mediatorMock = new Mock<IMediator>();
+        _servicioFacturacionMock = new Mock<IServicioFacturacion>();
+        _comercialServiceFacadeMock = new Mock<IComercialServiceFacade>();
 
         _handler = new ProcesarPedidoCompletoHandler(
             _comandaRepositoryMock.Object,
-            _pagoServiceMock.Object,
-            _facturacionServiceMock.Object,
-            _fidelizacionServiceMock.Object,
-            _mesaRepositoryMock.Object,
+            _facturaRepositoryMock.Object,
             _clienteRepositoryMock.Object,
-            _notificacionServiceMock.Object,
+            _mesaRepositoryMock.Object,
             _mapperMock.Object,
             _loggerMock.Object,
             _currentUserServiceMock.Object,
             _unitOfWorkMock.Object,
-            _orquestadorMock.Object);
+            _dateTimeServiceMock.Object,
+            _mediatorMock.Object,
+            _servicioFacturacionMock.Object,
+            _comercialServiceFacadeMock.Object);
     }
 
     #region Tests de Escenarios Exitosos
@@ -129,7 +135,7 @@ public class ProcesarPedidoCompletoHandlerTests
         Assert.True(result.Value.MesaLiberada);
 
         // Verificar que NO se llamó al servicio de pagos
-        _pagoServiceMock.Verify(x => x.ProcesarPagoAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Never);
+        _servicioFacturacionMock.Verify(x => x.ProcesarPagoAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -152,8 +158,8 @@ public class ProcesarPedidoCompletoHandlerTests
 
         SetupMocksConFidelizacion(comanda, cliente, resultadoDto);
 
-        _fidelizacionServiceMock.Setup(x => x.AcumularPuntosPorCompraAsync(
-            clienteId, 200.00m, It.IsAny<CancellationToken>()))
+        _servicioFacturacionMock.Setup(x => x.AcumularPuntosPorCompraAsync(
+            clienteId, 200.00m, It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(20)); // 20 puntos acumulados
 
         // Act
@@ -164,8 +170,8 @@ public class ProcesarPedidoCompletoHandlerTests
         Assert.True(result.Value.PuntosFidelizacionAcumulados);
         Assert.Equal(20, result.Value.PuntosAcumulados);
 
-        _fidelizacionServiceMock.Verify(x => x.AcumularPuntosPorCompraAsync(
-            clienteId, 200.00m, It.IsAny<CancellationToken>()), Times.Once);
+        _servicioFacturacionMock.Verify(x => x.AcumularPuntosPorCompraAsync(
+            clienteId, 200.00m, It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -203,7 +209,7 @@ public class ProcesarPedidoCompletoHandlerTests
         Assert.True(result.Value.PagoExitoso);
         Assert.Equal("67890", result.Value.TransaccionPagoId);
 
-        _pagoServiceMock.Verify(x => x.ProcesarPagoAsync(
+        _servicioFacturacionMock.Verify(x => x.ProcesarPagoAsync(
             It.Is<object>(p => ((dynamic)p).NumeroTarjeta == "5555555555554444"), 
             It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -241,7 +247,7 @@ public class ProcesarPedidoCompletoHandlerTests
         Assert.True(result.Value.FacturaGenerada);
         Assert.NotNull(result.Value.FacturaNumero);
 
-        _facturacionServiceMock.Verify(x => x.GenerarFacturaAsync(
+        _servicioFacturacionMock.Verify(x => x.GenerarFacturaAsync(
             It.Is<object>(f => 
                 ((dynamic)f).TipoFactura == "Crédito Fiscal" &&
                 ((dynamic)f).NombreCliente == "Empresa XYZ S.A."),
@@ -324,7 +330,7 @@ public class ProcesarPedidoCompletoHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
-        _pagoServiceMock.Setup(x => x.ProcesarPagoAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
+        _servicioFacturacionMock.Setup(x => x.ProcesarPagoAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure<object>("Error en el procesamiento del pago"));
 
         // Act
@@ -335,7 +341,7 @@ public class ProcesarPedidoCompletoHandlerTests
         Assert.Contains("Error en el procesamiento del pago", result.Error);
 
         // No debe continuar con facturación si falla el pago
-        _facturacionServiceMock.Verify(x => x.GenerarFacturaAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Never);
+        _servicioFacturacionMock.Verify(x => x.GenerarFacturaAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -364,13 +370,13 @@ public class ProcesarPedidoCompletoHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
-        _pagoServiceMock.Setup(x => x.ProcesarPagoAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
+        _servicioFacturacionMock.Setup(x => x.ProcesarPagoAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(resultadoPago));
 
-        _facturacionServiceMock.Setup(x => x.GenerarFacturaAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
+        _servicioFacturacionMock.Setup(x => x.GenerarFacturaAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure<object>("Error al generar factura"));
 
-        _pagoServiceMock.Setup(x => x.RevertirPagoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _servicioFacturacionMock.Setup(x => x.RevertirPagoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success());
 
         // Act
@@ -381,7 +387,7 @@ public class ProcesarPedidoCompletoHandlerTests
         Assert.Contains("Error al generar factura", result.Error);
 
         // Debe revertir el pago
-        _pagoServiceMock.Verify(x => x.RevertirPagoAsync("12345", It.IsAny<CancellationToken>()), Times.Once);
+        _servicioFacturacionMock.Verify(x => x.RevertirPagoAsync("12345", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -513,20 +519,23 @@ public class ProcesarPedidoCompletoHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comanda.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
-        _pagoServiceMock.Setup(x => x.ProcesarPagoAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(resultadoPago));
+        _servicioFacturacionMock.Setup(x => x.ProcesarPagoAsync(
+            It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<string>(), 
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(factura as Factura ?? new Factura()));
 
-        _facturacionServiceMock.Setup(x => x.GenerarFacturaAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(factura));
+        _servicioFacturacionMock.Setup(x => x.GenerarFacturaAsync(
+            It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(factura as Factura ?? new Factura()));
 
-        if (comanda.ClienteId.HasValue)
+        if (comanda.ClienteId != null && comanda.ClienteId != Guid.Empty)
         {
-            _fidelizacionServiceMock.Setup(x => x.AcumularPuntosPorCompraAsync(
-                comanda.ClienteId.Value, comanda.Total, It.IsAny<CancellationToken>()))
+            _servicioFacturacionMock.Setup(x => x.AcumularPuntosPorCompraAsync(
+                comanda.ClienteId.Value, It.IsAny<decimal>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Result.Success(15));
         }
 
-        if (comanda.MesaId.HasValue)
+        if (comanda.MesaId != null && comanda.MesaId != Guid.Empty)
         {
             var mesa = CreateMockMesa(comanda.MesaId.Value);
             _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comanda.MesaId.Value, It.IsAny<CancellationToken>()))
@@ -548,10 +557,11 @@ public class ProcesarPedidoCompletoHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comanda.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
-        _facturacionServiceMock.Setup(x => x.GenerarFacturaAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(factura));
+        _servicioFacturacionMock.Setup(x => x.GenerarFacturaAsync(
+            It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(factura as Factura ?? new Factura()));
 
-        if (comanda.MesaId.HasValue)
+        if (comanda.MesaId != null && comanda.MesaId != Guid.Empty)
         {
             var mesa = CreateMockMesa(comanda.MesaId.Value);
             _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comanda.MesaId.Value, It.IsAny<CancellationToken>()))
@@ -591,8 +601,10 @@ public class ProcesarPedidoCompletoHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comanda.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
-        _pagoServiceMock.Setup(x => x.ProcesarPagoAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(resultadoPago));
+        _servicioFacturacionMock.Setup(x => x.ProcesarPagoAsync(
+            It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<string>(), 
+            It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(resultadoPago as Factura ?? new Factura()));
 
         _comandaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -609,8 +621,9 @@ public class ProcesarPedidoCompletoHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comanda.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
-        _facturacionServiceMock.Setup(x => x.GenerarFacturaAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(factura));
+        _servicioFacturacionMock.Setup(x => x.GenerarFacturaAsync(
+            It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(factura as Factura ?? new Factura()));
 
         _comandaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -640,9 +653,13 @@ public class ProcesarPedidoCompletoHandlerTests
     private void VerifyWorkflowCompleto(Guid comandaId, Guid clienteId, Guid mesaId)
     {
         _comandaRepositoryMock.Verify(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()), Times.Once);
-        _pagoServiceMock.Verify(x => x.ProcesarPagoAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Once);
-        _facturacionServiceMock.Verify(x => x.GenerarFacturaAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Once);
-        _fidelizacionServiceMock.Verify(x => x.AcumularPuntosPorCompraAsync(clienteId, It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Once);
+        _servicioFacturacionMock.Verify(x => x.ProcesarPagoAsync(
+            It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<string>(), 
+            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _servicioFacturacionMock.Verify(x => x.GenerarFacturaAsync(
+            It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()), Times.Once);
+        _servicioFacturacionMock.Verify(x => x.AcumularPuntosPorCompraAsync(
+            clienteId, It.IsAny<decimal>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Once);
         _mesaRepositoryMock.Verify(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()), Times.Once);
         _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
         _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -663,12 +680,15 @@ public class ProcesarPedidoCompletoHandlerTests
 
     private static Cliente CreateMockCliente(Guid id)
     {
+        var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
+        var email = Email.Create("cliente@test.com");
+        var telefono = PhoneNumber.Create("612345678");
+        
         var cliente = Cliente.Crear(
-            "Cliente Test",
-            "cliente@test.com",
-            "612345678",
-            DateTime.Today.AddYears(-30),
-            "Masculino");
+            clienteNombre,
+            email.Value,
+            telefono.Value,
+            DateTime.Today.AddYears(-30));
         
         typeof(EntityBase).GetProperty("Id")?.SetValue(cliente, id);
         

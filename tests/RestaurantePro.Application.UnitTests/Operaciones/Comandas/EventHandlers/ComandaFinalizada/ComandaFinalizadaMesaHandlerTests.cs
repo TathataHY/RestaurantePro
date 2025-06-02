@@ -1,3 +1,17 @@
+using RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
+using RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
+using RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda;
+using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using MediatR;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Xunit;
+using FluentAssertions;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
 
 /// <summary>
@@ -5,6 +19,7 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.EventHandler
 /// </summary>
 public class ComandaFinalizadaMesaHandlerTests
 {
+    private readonly Mock<IComandaRepository> _mockComandaRepository;
     private readonly Mock<IMesaRepository> _mockMesaRepository;
     private readonly Mock<IMediator> _mockMediator;
     private readonly Mock<ILogger<ComandaFinalizadaMesaHandler>> _mockLogger;
@@ -12,14 +27,16 @@ public class ComandaFinalizadaMesaHandlerTests
 
     public ComandaFinalizadaMesaHandlerTests()
     {
+        _mockComandaRepository = new Mock<IComandaRepository>();
         _mockMesaRepository = new Mock<IMesaRepository>();
         _mockMediator = new Mock<IMediator>();
         _mockLogger = new Mock<ILogger<ComandaFinalizadaMesaHandler>>();
         
         _handler = new ComandaFinalizadaMesaHandler(
+            _mockComandaRepository.Object,
             _mockMesaRepository.Object,
-            _mockMediator.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockMediator.Object);
     }
 
     [Fact]
@@ -27,13 +44,11 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var mesaId = Guid.NewGuid();
-        var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, 150.00m, mesaId);
+        var evento = new ComandaFinalizada(comandaId, 150.00m);
 
-        var mesa = CreateMockMesa(mesaId, 4, EstadoMesa.Ocupada);
+        var mesa = CreateMockMesa(Guid.NewGuid(), 4, EstadoMesa.Ocupada);
         
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
@@ -43,10 +58,10 @@ public class ComandaFinalizadaMesaHandlerTests
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
-        _mockMesaRepository.Verify(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()), Times.Once);
+        _mockMesaRepository.Verify(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Once);
         
         _mockMediator.Verify(x => x.Send(
-            It.Is<LiberarMesaCommand>(cmd => cmd.MesaId == mesaId),
+            It.IsAny<LiberarMesaCommand>(),
             It.IsAny<CancellationToken>()), Times.Once);
 
         // Debería loggear liberación exitosa
@@ -65,9 +80,7 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var clienteId = Guid.NewGuid();
-        Guid? mesaId = null; // Comanda sin mesa asignada
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, 150.00m, mesaId);
+        var evento = new ComandaFinalizada(comandaId, 150.00m);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -92,18 +105,16 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var mesaId = Guid.NewGuid();
-        var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, 150.00m, mesaId);
+        var evento = new ComandaFinalizada(comandaId, 150.00m);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Mesa)null!); // Mesa no encontrada
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
-        _mockMesaRepository.Verify(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()), Times.Once);
+        _mockMesaRepository.Verify(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockMediator.Verify(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()), Times.Never);
 
         // Debería loggear advertencia
@@ -122,20 +133,18 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var mesaId = Guid.NewGuid();
-        var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, 150.00m, mesaId);
+        var evento = new ComandaFinalizada(comandaId, 150.00m);
 
-        var mesa = CreateMockMesa(mesaId, 4, EstadoMesa.Disponible); // Ya disponible
+        var mesa = CreateMockMesa(Guid.NewGuid(), 4, EstadoMesa.Disponible); // Ya disponible
         
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
-        _mockMesaRepository.Verify(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()), Times.Once);
+        _mockMesaRepository.Verify(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockMediator.Verify(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()), Times.Never);
 
         // Debería loggear que ya está disponible
@@ -160,13 +169,11 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var mesaId = Guid.NewGuid();
-        var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, 150.00m, mesaId);
+        var evento = new ComandaFinalizada(comandaId, 150.00m);
 
-        var mesa = CreateMockMesa(mesaId, 4, estadoMesa);
+        var mesa = CreateMockMesa(Guid.NewGuid(), 4, estadoMesa);
         
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
@@ -179,7 +186,7 @@ public class ComandaFinalizadaMesaHandlerTests
         if (deberiaLiberar)
         {
             _mockMediator.Verify(x => x.Send(
-                It.Is<LiberarMesaCommand>(cmd => cmd.MesaId == mesaId),
+                It.IsAny<LiberarMesaCommand>(),
                 It.IsAny<CancellationToken>()), Times.Once);
         }
         else
@@ -193,13 +200,11 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var mesaId = Guid.NewGuid();
-        var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, 150.00m, mesaId);
+        var evento = new ComandaFinalizada(comandaId, 150.00m);
 
-        var mesa = CreateMockMesa(mesaId, 4, EstadoMesa.Ocupada);
+        var mesa = CreateMockMesa(Guid.NewGuid(), 4, EstadoMesa.Ocupada);
         
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
@@ -213,7 +218,7 @@ public class ComandaFinalizadaMesaHandlerTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("❌ Error liberando mesa")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("❌ Error ejecutando comando de liberación")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);

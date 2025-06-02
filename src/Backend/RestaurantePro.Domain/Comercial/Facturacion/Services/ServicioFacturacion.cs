@@ -516,5 +516,177 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                 return _notificationManager.ToResult<Factura>(null);
             }
         }
+
+        /// <inheritdoc />
+        public async Task<Result<Factura>> ProcesarPagoAsync(
+            Guid facturaId,
+            decimal monto,
+            string metodoPago,
+            string? referencia = null,
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.Require(facturaId != Guid.Empty, "El ID de la factura no puede estar vacío", "FacturaId");
+            _notificationManager.Require(monto > 0, "El monto debe ser mayor a cero", "Monto");
+            _notificationManager.Require(!string.IsNullOrWhiteSpace(metodoPago), "El método de pago no puede estar vacío", "MetodoPago");
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<Factura>(null);
+            }
+            
+            try
+            {
+                // Obtener la factura
+                var factura = await _facturaRepository.ObtenerPorIdAsync(facturaId, cancellationToken);
+                if (factura == null)
+                {
+                    _notificationManager.AddError($"No se encontró la factura con ID {facturaId}", "FacturaId");
+                    return _notificationManager.ToResult<Factura>(null);
+                }
+
+                try
+                {
+                    // Generar un ID único para el pago
+                    var pagoId = Guid.NewGuid();
+                    
+                    // Registrar el pago usando el método existente
+                    factura.RegistrarPago(monto, pagoId, _dateTimeService);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _notificationManager.AddError(ex.Message, "ProcesarPago");
+                    return _notificationManager.ToResult<Factura>(null);
+                }
+
+                // Guardar cambios
+                await _facturaRepository.GuardarCambiosAsync(cancellationToken);
+
+                return Result.Success(factura);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al procesar pago: {ex.Message}", "ProcesarPago");
+                return _notificationManager.ToResult<Factura>(null);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<int>> AcumularPuntosPorCompraAsync(
+            Guid clienteId,
+            decimal montoCompra,
+            Guid facturaId,
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.Require(clienteId != Guid.Empty, "El ID del cliente no puede estar vacío", "ClienteId");
+            _notificationManager.Require(montoCompra > 0, "El monto de compra debe ser mayor a cero", "MontoCompra");
+            _notificationManager.Require(facturaId != Guid.Empty, "El ID de la factura no puede estar vacío", "FacturaId");
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<int>(0);
+            }
+            
+            try
+            {
+                // Verificar que la factura exista
+                var factura = await _facturaRepository.ObtenerPorIdAsync(facturaId, cancellationToken);
+                if (factura == null)
+                {
+                    _notificationManager.AddError($"No se encontró la factura con ID {facturaId}", "FacturaId");
+                    return _notificationManager.ToResult<int>(0);
+                }
+
+                // Calcular puntos (1 punto por cada $10 de compra)
+                var puntosAcumulados = (int)(montoCompra / 10);
+                
+                // En una implementación real, aquí se llamaría al servicio de fidelización
+                // Por ahora, simplemente retornamos los puntos calculados
+                
+                return Result.Success(puntosAcumulados);
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al acumular puntos: {ex.Message}", "AcumularPuntos");
+                return _notificationManager.ToResult<int>(0);
+            }
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<Factura>> GenerarFacturaAsync(
+            Guid comandaId,
+            Guid? clienteId = null,
+            CancellationToken cancellationToken = default)
+        {
+            // Usar el método completo con valores por defecto
+            return await GenerarFacturaParaComandaAsync(
+                comandaId,
+                TipoFactura.Normal, // Tipo por defecto
+                clienteId.HasValue ? $"Cliente {clienteId}" : "Cliente General", // Nombre por defecto
+                clienteId,
+                null, // Sin identificación fiscal
+                null, // Sin dirección
+                null, // Sin observaciones
+                cancellationToken);
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<Factura>> RevertirPagoAsync(
+            Guid facturaId,
+            Guid pagoId,
+            string motivo,
+            CancellationToken cancellationToken = default)
+        {
+            _notificationManager.CreateNewNotification();
+            
+            // Validar parámetros
+            _notificationManager.Require(facturaId != Guid.Empty, "El ID de la factura no puede estar vacío", "FacturaId");
+            _notificationManager.Require(pagoId != Guid.Empty, "El ID del pago no puede estar vacío", "PagoId");
+            _notificationManager.Require(!string.IsNullOrWhiteSpace(motivo), "El motivo de la reversión no puede estar vacío", "Motivo");
+            
+            if (_notificationManager.HasErrors)
+            {
+                return _notificationManager.ToResult<Factura>(null);
+            }
+            
+            try
+            {
+                // Obtener la factura
+                var factura = await _facturaRepository.ObtenerPorIdAsync(facturaId, cancellationToken);
+                if (factura == null)
+                {
+                    _notificationManager.AddError($"No se encontró la factura con ID {facturaId}", "FacturaId");
+                    return _notificationManager.ToResult<Factura>(null);
+                }
+
+                try
+                {
+                    // En una implementación real, aquí se revertiría el pago específico
+                    // Por ahora, simplemente agregamos una nota sobre la reversión
+                    // Esto requeriría extender la entidad Factura para manejar reversiones de pagos específicos
+                    
+                    // Como workaround temporal, podemos usar el método de anulación si es necesario
+                    // o implementar lógica específica de reversión de pagos
+                    
+                    _notificationManager.AddError("La reversión de pagos específicos requiere implementación adicional en la entidad Factura", "RevertirPago");
+                    return _notificationManager.ToResult<Factura>(null);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _notificationManager.AddError(ex.Message, "RevertirPago");
+                    return _notificationManager.ToResult<Factura>(null);
+                }
+            }
+            catch (Exception ex)
+            {
+                _notificationManager.AddError($"Error al revertir pago: {ex.Message}", "RevertirPago");
+                return _notificationManager.ToResult<Factura>(null);
+            }
+        }
     }
 } 

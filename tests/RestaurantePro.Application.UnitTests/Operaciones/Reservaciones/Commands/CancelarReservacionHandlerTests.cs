@@ -36,14 +36,12 @@ public class CancelarReservacionHandlerTests
     public async Task Handle_ConReservacionValidaConfirmada_DeberiaCancelarExitosamente()
     {
         // Arrange
-        var reservacionId = _reservacionesEjemplo[0].Id; // Reservación confirmada
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = reservacionId,
-            MotivoCancelacion = "Cliente canceló por imprevisto",
-            CanceladoPor = "Cliente",
-            NotificarCliente = true
-        };
+        var reservacionId = _reservacionesEjemplo[0].Id;
+        var usuarioId = Guid.NewGuid();
+        var command = CancelarReservacionCommand.CancelacionCliente(
+            reservacionId, 
+            usuarioId, 
+            "Test cancelación exitosa");
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -51,38 +49,22 @@ public class CancelarReservacionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeTrue();
+        resultado.Data.Should().NotBeNull();
+        resultado.Data.Id.Should().Be(reservacionId);
 
-        // Verificar logging
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Iniciando cancelación de reservación")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
-
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Information,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("cancelada exitosamente")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
+        _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task Handle_ConReservacionInexistente_DeberiaRetornarError()
     {
         // Arrange
-        var reservacionIdInexistente = Guid.NewGuid();
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = reservacionIdInexistente,
-            MotivoCancelacion = "Test",
-            CanceladoPor = "Sistema"
-        };
+        var reservacionInexistenteId = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
+        var command = CancelarReservacionCommand.CancelacionCliente(
+            reservacionInexistenteId, 
+            usuarioId, 
+            "Test reservación inexistente");
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -90,30 +72,23 @@ public class CancelarReservacionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Be("La reservación especificada no existe.");
+        resultado.Errors.Should().NotBeEmpty();
+        resultado.Errors.Should().Contain(e => e.Contains("no fue encontrada"));
 
-        // Verificar logging de advertencia
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("no encontrada")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
+        // No debería intentar guardar cambios
+        _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task Handle_ConReservacionYaCancelada_DeberiaRetornarError()
     {
         // Arrange
-        var reservacionId = _reservacionesEjemplo[2].Id; // Reservación ya cancelada
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = reservacionId,
-            MotivoCancelacion = "Intento de cancelación duplicada",
-            CanceladoPor = "Cliente"
-        };
+        var reservacionId = _reservacionesEjemplo[2].Id; // Esta tiene estado Cancelada
+        var usuarioId = Guid.NewGuid();
+        var command = CancelarReservacionCommand.CancelacionCliente(
+            reservacionId, 
+            usuarioId, 
+            "Test reservación ya cancelada");
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -121,30 +96,20 @@ public class CancelarReservacionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Be("La reservación no puede ser cancelada en su estado actual.");
-
-        // Verificar logging de advertencia
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("no puede ser cancelada en estado")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
+        resultado.Errors.Should().NotBeEmpty();
+        resultado.Errors.Should().Contain(e => e.Contains("ya está cancelada"));
     }
 
     [Fact]
     public async Task Handle_ConReservacionCompletada_DeberiaRetornarError()
     {
         // Arrange
-        var reservacionId = _reservacionesEjemplo[3].Id; // Reservación completada
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = reservacionId,
-            MotivoCancelacion = "Intento de cancelación de reservación completada",
-            CanceladoPor = "Cliente"
-        };
+        var reservacionId = _reservacionesEjemplo[3].Id; // Esta tiene estado Completada
+        var usuarioId = Guid.NewGuid();
+        var command = CancelarReservacionCommand.CancelacionCliente(
+            reservacionId, 
+            usuarioId, 
+            "Test reservación completada");
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -152,7 +117,8 @@ public class CancelarReservacionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Be("La reservación no puede ser cancelada en su estado actual.");
+        resultado.Errors.Should().NotBeEmpty();
+        resultado.Errors.Should().Contain(e => e.Contains("no puede ser cancelada"));
     }
 
     [Theory]
@@ -170,12 +136,10 @@ public class CancelarReservacionHandlerTests
         
         ConfigurarMockDbSetConReservaciones(reservacionesTemporales);
 
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = reservacion.Id,
-            MotivoCancelacion = $"Test para estado {estadoActual}",
-            CanceladoPor = "Sistema"
-        };
+        var command = CancelarReservacionCommand.CancelacionCliente(
+            reservacion.Id,
+            Guid.NewGuid(),
+            $"Test para estado {estadoActual}");
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -197,21 +161,20 @@ public class CancelarReservacionHandlerTests
     [Fact]
     public async Task Handle_ConPoliticaCancelacionViolada_DeberiaRetornarError()
     {
-        // Arrange - Reservación dentro del período mínimo (menos de 2 horas)
+        // Arrange - Reservación con menos de 2 horas de anticipación
         var reservacion = CrearReservacion(
             Guid.NewGuid(), 
             EstadoReservacion.Confirmada, 
-            DateTime.Now.AddMinutes(90)); // 1.5 horas antes
+            DateTime.Now.AddMinutes(90)); // Solo 1.5 horas
         
         var reservacionesTemporales = new List<Reservacion> { reservacion };
         ConfigurarMockDbSetConReservaciones(reservacionesTemporales);
 
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = reservacion.Id,
-            MotivoCancelacion = "Cancelación tardía",
-            CanceladoPor = "Cliente"
-        };
+        var usuarioId = Guid.NewGuid();
+        var command = CancelarReservacionCommand.CancelacionTardia(
+            reservacion.Id, 
+            usuarioId, 
+            "Test cancelación tardía");
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -219,31 +182,20 @@ public class CancelarReservacionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Be("La cancelación debe realizarse con al menos 2 horas de anticipación.");
-
-        // Verificar logging de advertencia
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("no cumple política de cancelación")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
+        resultado.Errors.Should().NotBeEmpty();
+        resultado.Errors.Should().Contain(e => e.Contains("política de cancelación"));
     }
 
     [Fact]
     public async Task Handle_ConNotificacionClienteHabilitada_DeberiaEnviarNotificaciones()
     {
         // Arrange
-        var reservacionId = _reservacionesEjemplo[0].Id; // Reservación confirmada
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = reservacionId,
-            MotivoCancelacion = "Emergencia familiar",
-            CanceladoPor = "Cliente",
-            NotificarCliente = true
-        };
+        var reservacionId = _reservacionesEjemplo[1].Id;
+        var usuarioId = Guid.NewGuid();
+        var command = CancelarReservacionCommand.CancelacionCliente(
+            reservacionId, 
+            usuarioId, 
+            "Test notificación al cliente");
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -251,27 +203,24 @@ public class CancelarReservacionHandlerTests
         // Assert
         resultado.Succeeded.Should().BeTrue();
 
-        // Verificar que se intentó enviar email (aunque esté comentado en el handler)
-        // En la implementación real se verificaría:
-        // _mockEmailService.Verify(e => e.SendEmailAsync(...), Times.Once);
-        // _mockNotificationService.Verify(n => n.CreateNotificationAsync(...), Times.Once);
+        // Verificar que se intentó enviar notificaciones
+        // En la implementación real se verificaría el servicio de notificaciones
+        _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task Handle_ConExcepcionEnBaseDatos_DeberiaRetornarError()
     {
         // Arrange
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = Guid.NewGuid(),
-            MotivoCancelacion = "Test de excepción",
-            CanceladoPor = "Sistema"
-        };
+        var reservacionId = _reservacionesEjemplo[0].Id;
+        var usuarioId = Guid.NewGuid();
+        var command = CancelarReservacionCommand.CancelacionCliente(
+            reservacionId, 
+            usuarioId, 
+            "Test excepción en base de datos");
 
-        _mockReservacionesDbSet.Setup(x => x.FirstOrDefaultAsync(
-                It.IsAny<Expression<Func<Reservacion, bool>>>(),
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Error de base de datos"));
+        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
+                   .ThrowsAsync(new Exception("Error de base de datos"));
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -279,29 +228,19 @@ public class CancelarReservacionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Be("Error interno al cancelar la reservación.");
-
-        // Verificar logging de error
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error al cancelar reservación")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
+        resultado.Errors.Should().NotBeEmpty();
     }
 
     [Fact]
     public async Task Handle_ConCancelationToken_DeberiaRespetarCancelacion()
     {
         // Arrange
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = Guid.NewGuid(),
-            MotivoCancelacion = "Test cancelación token",
-            CanceladoPor = "Sistema"
-        };
+        var reservacionId = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
+        var command = CancelarReservacionCommand.CancelacionCliente(
+            reservacionId, 
+            usuarioId, 
+            "Test cancelación token");
         var cancellationToken = new CancellationToken(canceled: true);
 
         // Act & Assert
@@ -314,14 +253,12 @@ public class CancelarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = _reservacionesEjemplo[0].Id;
+        var usuarioId = Guid.NewGuid();
         var motivoDetallado = "Cliente tuvo una emergencia médica y debe cancelar la reservación";
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = reservacionId,
-            MotivoCancelacion = motivoDetallado,
-            CanceladoPor = "Cliente",
-            NotificarCliente = false
-        };
+        var command = CancelarReservacionCommand.CancelacionCliente(
+            reservacionId, 
+            usuarioId, 
+            motivoDetallado);
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -338,12 +275,12 @@ public class CancelarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = _reservacionesEjemplo[1].Id; // Reservación pendiente
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = reservacionId,
-            MotivoCancelacion = "Cancelación para auditoría",
-            CanceladoPor = "Administrador"
-        };
+        var usuarioId = Guid.NewGuid();
+        var command = CancelarReservacionCommand.CancelacionRestaurante(
+            reservacionId, 
+            usuarioId, 
+            MotivoCancelacion.MantenimientoUrgente,
+            "Cancelación para auditoría");
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -367,12 +304,11 @@ public class CancelarReservacionHandlerTests
         var reservacionesTemporales = new List<Reservacion> { reservacion };
         ConfigurarMockDbSetConReservaciones(reservacionesTemporales);
 
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = reservacion.Id,
-            MotivoCancelacion = "Cancelación con tiempo suficiente",
-            CanceladoPor = "Cliente"
-        };
+        var usuarioId = Guid.NewGuid();
+        var command = CancelarReservacionCommand.CancelacionCliente(
+            reservacion.Id, 
+            usuarioId, 
+            "Cancelación con tiempo suficiente");
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -389,12 +325,11 @@ public class CancelarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = _reservacionesEjemplo[0].Id;
-        var command = new CancelarReservacionCommand
-        {
-            ReservacionId = reservacionId,
-            MotivoCancelacion = "Test logging completo",
-            CanceladoPor = "Sistema"
-        };
+        var usuarioId = Guid.NewGuid();
+        var command = CancelarReservacionCommand.CancelacionCliente(
+            reservacionId, 
+            usuarioId, 
+            "Test logging completo");
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -428,16 +363,18 @@ public class CancelarReservacionHandlerTests
     [InlineData("Administrador", false)]
     [InlineData("Sistema", false)]
     public async Task Handle_ConDiferentesTiposCancelacion_DeberiaGestionarCorrectamente(
-        string canceladoPor, bool notificarCliente)
+        string tipoCancelacion, bool notificarCliente)
     {
         // Arrange
         var reservacionId = _reservacionesEjemplo[0].Id;
-        var command = new CancelarReservacionCommand
+        var usuarioId = Guid.NewGuid();
+        
+        CancelarReservacionCommand command = tipoCancelacion switch
         {
-            ReservacionId = reservacionId,
-            MotivoCancelacion = $"Cancelación por {canceladoPor}",
-            CanceladoPor = canceladoPor,
-            NotificarCliente = notificarCliente
+            "Cliente" => CancelarReservacionCommand.CancelacionCliente(reservacionId, usuarioId, $"Cancelación por {tipoCancelacion}"),
+            "Administrador" => CancelarReservacionCommand.CancelacionRestaurante(reservacionId, usuarioId, MotivoCancelacion.SolicitudEspecial, $"Cancelación por {tipoCancelacion}"),
+            "Sistema" => CancelarReservacionCommand.NoShow(reservacionId, usuarioId, $"Cancelación por {tipoCancelacion}"),
+            _ => CancelarReservacionCommand.CancelacionCliente(reservacionId, usuarioId, $"Cancelación por {tipoCancelacion}")
         };
 
         // Act

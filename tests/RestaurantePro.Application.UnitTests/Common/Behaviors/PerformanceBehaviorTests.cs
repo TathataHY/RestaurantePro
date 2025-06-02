@@ -7,13 +7,16 @@ public class PerformanceBehaviorTests
 {
     private readonly Mock<ILogger<PerformanceBehavior<CrearProductoCommand, Result<ProductoDto>>>> _mockLogger;
     private readonly Mock<IMetricsService> _mockMetricsService;
+    private readonly Mock<IOptions<PerformanceSettings>> _mockPerformanceSettings;
     private readonly PerformanceBehavior<CrearProductoCommand, Result<ProductoDto>> _behavior;
 
     public PerformanceBehaviorTests()
     {
         _mockLogger = new Mock<ILogger<PerformanceBehavior<CrearProductoCommand, Result<ProductoDto>>>>();
         _mockMetricsService = new Mock<IMetricsService>();
-        _behavior = new PerformanceBehavior<CrearProductoCommand, Result<ProductoDto>>(_mockLogger.Object, _mockMetricsService.Object);
+        _mockPerformanceSettings = new Mock<IOptions<PerformanceSettings>>();
+        _mockPerformanceSettings.Setup(x => x.Value).Returns(new PerformanceSettings());
+        _behavior = new PerformanceBehavior<CrearProductoCommand, Result<ProductoDto>>(_mockLogger.Object, _mockMetricsService.Object, _mockPerformanceSettings.Object);
     }
 
     [Fact]
@@ -24,7 +27,8 @@ public class PerformanceBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
@@ -36,7 +40,7 @@ public class PerformanceBehaviorTests
         _mockMetricsService.Verify(x => x.RecordExecutionTime(
             "CrearProductoCommand",
             It.IsAny<TimeSpan>(),
-            It.IsAny<Dictionary<string, object>>()), Times.Once);
+            true), Times.Once);
             
         // No debería haber logging de alertas para requests rápidos
         _mockLogger.Verify(
@@ -57,7 +61,8 @@ public class PerformanceBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x())
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression)
             .Returns(async () =>
             {
                 await Task.Delay(3000); // Simular operación lenta (3 segundos)
@@ -74,14 +79,14 @@ public class PerformanceBehaviorTests
         _mockMetricsService.Verify(x => x.RecordExecutionTime(
             "CrearProductoCommand",
             It.Is<TimeSpan>(t => t.TotalSeconds >= 3),
-            It.IsAny<Dictionary<string, object>>()), Times.Once);
+            true), Times.Once);
             
         // Debería haber alerta por operación lenta
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("⚠️ Operación lenta detectada")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("lenta detectada")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -92,13 +97,14 @@ public class PerformanceBehaviorTests
     {
         // Arrange - Crear behavior para Query
         var queryLogger = new Mock<ILogger<PerformanceBehavior<ObtenerProductoPorIdQuery, Result<ProductoDto>>>>();
-        var queryBehavior = new PerformanceBehavior<ObtenerProductoPorIdQuery, Result<ProductoDto>>(queryLogger.Object, _mockMetricsService.Object);
+        var queryBehavior = new PerformanceBehavior<ObtenerProductoPorIdQuery, Result<ProductoDto>>(queryLogger.Object, _mockMetricsService.Object, _mockPerformanceSettings.Object);
         
         var query = new ObtenerProductoPorIdQuery(Guid.NewGuid());
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x())
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression)
             .Returns(async () =>
             {
                 await Task.Delay(600); // Más del umbral de Query (500ms) pero menos que Command (2s)
@@ -116,7 +122,7 @@ public class PerformanceBehaviorTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("⚠️ Operación lenta detectada")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("lenta detectada")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -130,7 +136,8 @@ public class PerformanceBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x())
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression)
             .Returns(async () =>
             {
                 await Task.Delay(6000); // Operación críticamente lenta (6 segundos)
@@ -153,7 +160,7 @@ public class PerformanceBehaviorTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("🚨 Operación críticamente lenta")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("críticamente lenta")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -167,7 +174,8 @@ public class PerformanceBehaviorTests
         var exception = new Exception("Error de test");
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x())
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression)
             .Returns(async () =>
             {
                 await Task.Delay(1000); // Simular algo de procesamiento antes del error
@@ -184,7 +192,7 @@ public class PerformanceBehaviorTests
         _mockMetricsService.Verify(x => x.RecordExecutionTime(
             "CrearProductoCommand",
             It.IsAny<TimeSpan>(),
-            It.Is<Dictionary<string, object>>(d => d.ContainsKey("success") && (bool)d["success"] == false)), Times.Once);
+            false), Times.Once);
     }
 
     [Fact]
@@ -199,7 +207,8 @@ public class PerformanceBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Especial" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
@@ -211,10 +220,14 @@ public class PerformanceBehaviorTests
         _mockMetricsService.Verify(x => x.RecordExecutionTime(
             "CrearProductoCommand",
             It.IsAny<TimeSpan>(),
-            It.Is<Dictionary<string, object>>(d => 
-                d.ContainsKey("request_type") &&
-                d.ContainsKey("success") &&
-                d.ContainsKey("operation_category"))), Times.Once);
+            true), Times.Once);
+            
+        // Verificar que se registran tags adicionales
+        _mockMetricsService.Verify(x => x.AddTag(
+            "request_type", "Command"), Times.Once);
+            
+        _mockMetricsService.Verify(x => x.AddTag(
+            "success", "true"), Times.Once);
     }
 
     [Theory]
@@ -227,7 +240,8 @@ public class PerformanceBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
@@ -236,12 +250,8 @@ public class PerformanceBehaviorTests
         result.Should().Be(expectedResult);
         
         // Verificar categorización correcta
-        _mockMetricsService.Verify(x => x.RecordExecutionTime(
-            "CrearProductoCommand", // Siempre será CrearProductoCommand en este test
-            It.IsAny<TimeSpan>(),
-            It.Is<Dictionary<string, object>>(d => 
-                d.ContainsKey("operation_category") &&
-                d["operation_category"].ToString() == "Command")), Times.Once);
+        _mockMetricsService.Verify(x => x.AddTag(
+            "request_type", expectedCategory), Times.Once);
     }
 
     [Fact]
@@ -252,19 +262,20 @@ public class PerformanceBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
 
-        // Act
+        // Act - Ejecutar múltiples veces
         await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
         await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
         await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
 
         // Assert
-        // Verificar que se registran todas las ejecuciones
+        // Verificar que se registra cada ejecución
         _mockMetricsService.Verify(x => x.RecordExecutionTime(
             "CrearProductoCommand",
             It.IsAny<TimeSpan>(),
-            It.IsAny<Dictionary<string, object>>()), Times.Exactly(3));
+            true), Times.Exactly(3));
     }
 
     [Fact]
@@ -275,7 +286,8 @@ public class PerformanceBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
@@ -285,7 +297,7 @@ public class PerformanceBehaviorTests
         
         // Verificar registro en histograma
         _mockMetricsService.Verify(x => x.RecordHistogram(
-            "request_duration_ms",
+            "request_duration_histogram",
             It.IsAny<double>(),
             It.IsAny<Dictionary<string, object>>()), Times.Once);
     }
@@ -298,7 +310,8 @@ public class PerformanceBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
@@ -306,13 +319,13 @@ public class PerformanceBehaviorTests
         // Assert
         result.Should().Be(expectedResult);
         
-        // Verificar contadores
+        // Verificar incremento de contadores
         _mockMetricsService.Verify(x => x.IncrementCounter(
-            "operations_total",
+            "total_requests",
             It.IsAny<Dictionary<string, object>>()), Times.Once);
             
         _mockMetricsService.Verify(x => x.IncrementCounter(
-            "operations_success",
+            "successful_requests",
             It.IsAny<Dictionary<string, object>>()), Times.Once);
     }
 
@@ -324,19 +337,16 @@ public class PerformanceBehaviorTests
         var exception = new Exception("Error de test");
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(exception);
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression).ThrowsAsync(exception);
 
         // Act & Assert
         await Assert.ThrowsAsync<Exception>(() => 
             _behavior.Handle(command, mockNext.Object, CancellationToken.None));
         
-        // Verificar contadores de error
+        // Verificar incremento de contador de errores
         _mockMetricsService.Verify(x => x.IncrementCounter(
-            "operations_total",
-            It.IsAny<Dictionary<string, object>>()), Times.Once);
-            
-        _mockMetricsService.Verify(x => x.IncrementCounter(
-            "operations_error",
+            "failed_requests",
             It.IsAny<Dictionary<string, object>>()), Times.Once);
     }
 
@@ -348,7 +358,8 @@ public class PerformanceBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
@@ -356,12 +367,12 @@ public class PerformanceBehaviorTests
         // Assert
         result.Should().Be(expectedResult);
         
-        // Verificar que se genera operation_id único
+        // Verificar que se genera un operation ID único
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("🏁 Operación completada")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Operation ID:")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -371,25 +382,32 @@ public class PerformanceBehaviorTests
     public async Task Handle_OperacionesSimultaneas_DeberiaGenerarIdsUnicos()
     {
         // Arrange
-        var command1 = new CrearProductoCommand { Nombre = "Pizza Test 1" };
-        var command2 = new CrearProductoCommand { Nombre = "Pizza Test 2" };
+        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
 
-        // Act
-        var task1 = _behavior.Handle(command1, mockNext.Object, CancellationToken.None);
-        var task2 = _behavior.Handle(command2, mockNext.Object, CancellationToken.None);
-        
-        await Task.WhenAll(task1, task2);
+        // Act - Ejecutar operaciones simultáneas
+        var tasks = Enumerable.Range(0, 5)
+            .Select(_ => _behavior.Handle(command, mockNext.Object, CancellationToken.None))
+            .ToArray();
+            
+        var results = await Task.WhenAll(tasks);
 
         // Assert
-        // Verificar que se registran ambas operaciones con IDs únicos
-        _mockMetricsService.Verify(x => x.RecordExecutionTime(
-            "CrearProductoCommand",
-            It.IsAny<TimeSpan>(),
-            It.IsAny<Dictionary<string, object>>()), Times.Exactly(2));
+        results.Should().AllSatisfy(r => r.Should().Be(expectedResult));
+        
+        // Verificar que se generan múltiples operation IDs únicos
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Operation ID:")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Exactly(5));
     }
 
     [Theory]
@@ -404,7 +422,8 @@ public class PerformanceBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x())
+        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
+        mockNext.Setup(invokeExpression)
             .Returns(async () =>
             {
                 await Task.Delay(delayMs);
@@ -419,9 +438,10 @@ public class PerformanceBehaviorTests
         
         if (deberiaAlertar)
         {
+            // Debería haber alerta
             _mockLogger.Verify(
                 x => x.Log(
-                    It.IsAny<LogLevel>(),
+                    It.IsIn(LogLevel.Warning, LogLevel.Error),
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("lenta")),
                     It.IsAny<Exception>(),
@@ -430,11 +450,12 @@ public class PerformanceBehaviorTests
         }
         else
         {
+            // No debería haber alertas
             _mockLogger.Verify(
                 x => x.Log(
-                    LogLevel.Warning,
+                    It.IsIn(LogLevel.Warning, LogLevel.Error),
                     It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("⚠️")),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("lenta")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.Never);

@@ -293,9 +293,7 @@ public class ConsultarDisponibilidadValidatorTests
 
     [Theory]
     [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public async Task Validate_ConMesaPreferidaVacio_NoDeberiaValidarMesa(string mesaVacio)
+    public async Task Validate_ConMesaPreferidaVacio_NoDeberiaValidarMesa(Guid? mesaVacio)
     {
         // Arrange
         var query = CrearQueryValida();
@@ -310,39 +308,31 @@ public class ConsultarDisponibilidadValidatorTests
     }
 
     [Fact]
-    public async Task Validate_ConMesaPreferidaMuyLargo_DeberiaRetornarError()
+    public async Task Validate_ConMesaPreferidaValida_NoDeberiaRetornarError()
     {
         // Arrange
         var query = CrearQueryValida();
-        query.MesaPreferida = new string('A', 101); // Más de 100 caracteres
+        query.MesaPreferida = Guid.NewGuid(); // Mesa válida con GUID
 
         // Act
         var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.MesaPreferida) &&
-            e.ErrorMessage.Contains("La mesa preferida no puede exceder 100 caracteres") &&
-            e.ErrorCode == "MESA_PREFERIDA_LONGITUD");
+        result.Errors.Should().NotContain(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.MesaPreferida));
     }
 
     [Theory]
-    [InlineData("Mesa 1")]
-    [InlineData("Mesa 2")]
-    [InlineData("Mesa 3")]
-    [InlineData("Mesa 4")]
-    [InlineData("Mesa 5")]
-    [InlineData("Mesa 6")]
-    [InlineData("Mesa 7")]
-    [InlineData("Mesa 8")]
-    [InlineData("Mesa 9")]
-    [InlineData("Mesa 10")]
-    public async Task Validate_ConMesaPreferidaValida_NoDeberiaRetornarErrorDeMesa(string mesaValida)
+    [InlineData("00000000-0000-0000-0000-000000000001")]
+    [InlineData("00000000-0000-0000-0000-000000000002")]
+    [InlineData("00000000-0000-0000-0000-000000000003")]
+    [InlineData("00000000-0000-0000-0000-000000000004")]
+    [InlineData("00000000-0000-0000-0000-000000000005")]
+    public async Task Validate_ConMesaPreferidaValidaGuid_NoDeberiaRetornarErrorDeMesa(string guidString)
     {
         // Arrange
         var query = CrearQueryValida();
-        query.MesaPreferida = mesaValida;
+        query.MesaPreferida = Guid.Parse(guidString);
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -608,7 +598,7 @@ public class ConsultarDisponibilidadValidatorTests
             NumeroPersonas = 6,
             DuracionEstimadaMinutos = 120,
             ZonaPreferida = "Centro",
-            MesaPreferida = "Mesa 1",
+            MesaPreferida = Guid.NewGuid(),
             MostrarAlternativas = true,
             RangoAlternativasMinutos = 60,
             PermitirCapacidadMayor = true,
@@ -632,15 +622,15 @@ public class ConsultarDisponibilidadValidatorTests
         var query = new ConsultarDisponibilidadQuery
         {
             FechaHora = DateTime.UtcNow.AddHours(6),
-            NumeroPersonas = 1,
-            DuracionEstimadaMinutos = 30,
-            ZonaPreferida = null,
-            MesaPreferida = null,
-            MostrarAlternativas = false,
-            RangoAlternativasMinutos = 0,
-            PermitirCapacidadMayor = false,
-            MargenToleranciaPersonas = 0,
-            IncluirDetallesMesas = false,
+            NumeroPersonas = 4,
+            DuracionEstimadaMinutos = 120,
+            ZonaPreferida = "Centro",
+            MesaPreferida = Guid.NewGuid(),
+            MostrarAlternativas = true,
+            RangoAlternativasMinutos = 60,
+            PermitirCapacidadMayor = true,
+            MargenToleranciaPersonas = 2,
+            IncluirDetallesMesas = true,
             EsEventoEspecial = false
         };
 

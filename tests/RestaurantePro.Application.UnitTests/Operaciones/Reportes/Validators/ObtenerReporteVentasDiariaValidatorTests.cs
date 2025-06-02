@@ -31,21 +31,23 @@ public class ObtenerReporteVentasDiariaValidatorTests
 
     private ObtenerReporteVentasDiariaQuery CrearQueryValida()
     {
-        return new ObtenerReporteVentasDiariaQuery
-        {
-            FechaReporte = DateTime.Today.AddDays(-1),
-            IncluirComparativoPeriodoAnterior = true,
-            IncluirAnalisisPorMesa = true,
-            IncluirAnalisisPorMesero = true,
-            IncluirAnalisisProductos = true,
-            IncluirTendenciasSemana = false,
-            NivelDetalle = NivelDetalle.Completo
-        };
+        return ObtenerReporteVentasDiariaQuery.CrearReporteHoy(
+            incluirComparativo: true,
+            incluirTendencias: false,
+            nivel: NivelDetalle.Completo
+        );
     }
 
     private void ConfigurarMesasExistentes(List<Guid> mesaIds)
     {
-        var mesas = mesaIds.Select(id => new Mesa { Id = id }).ToList().AsQueryable();
+        var mesas = mesaIds.Select(id => 
+        {
+            var mesa = Mesa.Crear(1, 4, "Interior");
+            // Usar reflection para establecer el ID ya que es necesario para los tests
+            typeof(Mesa).GetProperty("Id")?.SetValue(mesa, id);
+            return mesa;
+        }).ToList().AsQueryable();
+        
         _mesasMock.As<IQueryable<Mesa>>().Setup(m => m.Provider).Returns(mesas.Provider);
         _mesasMock.As<IQueryable<Mesa>>().Setup(m => m.Expression).Returns(mesas.Expression);
         _mesasMock.As<IQueryable<Mesa>>().Setup(m => m.ElementType).Returns(mesas.ElementType);
@@ -54,10 +56,12 @@ public class ObtenerReporteVentasDiariaValidatorTests
 
     private void ConfigurarMeserosExistentes(List<Guid> meseroIds)
     {
-        var meseros = meseroIds.Select(id => new Usuario 
-        { 
-            Id = id, 
-            Roles = new List<RolUsuario> { RolUsuario.Mesero } 
+        var meseros = meseroIds.Select(id => 
+        {
+            var usuario = Usuario.Crear($"mesero{id}", "Mesero Test", $"mesero{id}@test.com", RolUsuario.Mesero);
+            // Usar reflection para establecer el ID ya que es necesario para los tests
+            typeof(Usuario).GetProperty("Id")?.SetValue(usuario, id);
+            return usuario;
         }).ToList().AsQueryable();
         
         _usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(meseros.Provider);
@@ -69,7 +73,10 @@ public class ObtenerReporteVentasDiariaValidatorTests
     private void ConfigurarComandasExistentes(DateTime fecha, bool tieneComandas = true)
     {
         var comandas = tieneComandas 
-            ? new List<Comanda> { new() { Id = Guid.NewGuid(), FechaCreacion = fecha } }
+            ? new List<Comanda> 
+            { 
+                Comanda.Crear(Guid.NewGuid(), null, null, "Test comanda", $"COM-{DateTime.Now:yyyyMMdd}-TEST")
+            }
             : new List<Comanda>();
         
         var comandasQueryable = comandas.AsQueryable();
@@ -101,8 +108,7 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConFechaReporteVacia_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.FechaReporte = default;
+        var query = ObtenerReporteVentasDiariaQuery.CrearReporteFecha(default);
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -118,8 +124,7 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConFechaReporteFutura_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.FechaReporte = DateTime.Today.AddDays(2);
+        var query = ObtenerReporteVentasDiariaQuery.CrearReporteFecha(DateTime.Today.AddDays(2));
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -135,8 +140,7 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConFechaReporteMuyAntigua_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.FechaReporte = DateTime.Today.AddYears(-3);
+        var query = ObtenerReporteVentasDiariaQuery.CrearReporteFecha(DateTime.Today.AddYears(-3));
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -152,8 +156,7 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConFechaReporteHoy_DeberiaSerValido()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.FechaReporte = DateTime.Today;
+        var query = ObtenerReporteVentasDiariaQuery.CrearReporteFecha(DateTime.Today);
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -175,22 +178,11 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConNivelesDetalleValidos_DeberiaSerValido(NivelDetalle nivel)
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.NivelDetalle = nivel;
-        
-        // Ajustar configuración según el nivel
-        if (nivel == NivelDetalle.Meseros)
+        var query = nivel switch
         {
-            query.IncluirAnalisisPorMesero = true;
-        }
-        else if (nivel == NivelDetalle.Mesas)
-        {
-            query.IncluirAnalisisPorMesa = true;
-        }
-        else if (nivel == NivelDetalle.Basico)
-        {
-            query.IncluirTendenciasSemana = false;
-        }
+            NivelDetalle.Meseros => ObtenerReporteVentasDiariaQuery.CrearReporteMeseros(DateTime.Today, new List<Guid>()),
+            _ => ObtenerReporteVentasDiariaQuery.CrearReporteFecha(DateTime.Today, nivel: nivel)
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -207,8 +199,12 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConMuchasMesasEspecificas_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.MesesEspecificos = Enumerable.Range(1, 51).Select(_ => Guid.NewGuid()).ToList();
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MesesEspecificos = Enumerable.Range(1, 51).Select(_ => Guid.NewGuid()).ToList(),
+            NivelDetalle = NivelDetalle.Completo
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -224,8 +220,12 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConMesasEspecificasConGuidVacio_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.MesesEspecificos = new List<Guid> { Guid.NewGuid(), Guid.Empty, Guid.NewGuid() };
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MesesEspecificos = new List<Guid> { Guid.NewGuid(), Guid.Empty, Guid.NewGuid() },
+            NivelDetalle = NivelDetalle.Completo
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -241,8 +241,12 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConMeserosEspecificosConGuidVacio_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.MeserosEspecificos = new List<Guid> { Guid.NewGuid(), Guid.Empty, Guid.NewGuid() };
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MeserosEspecificos = new List<Guid> { Guid.NewGuid(), Guid.Empty, Guid.NewGuid() },
+            NivelDetalle = NivelDetalle.Completo
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -258,8 +262,12 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConMuchosMeserosEspecificos_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.MeserosEspecificos = Enumerable.Range(1, 21).Select(_ => Guid.NewGuid()).ToList();
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MeserosEspecificos = Enumerable.Range(1, 21).Select(_ => Guid.NewGuid()).ToList(),
+            NivelDetalle = NivelDetalle.Completo
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -276,9 +284,13 @@ public class ObtenerReporteVentasDiariaValidatorTests
     {
         // Arrange
         var mesaIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
-        var query = CrearQueryValida();
-        query.MesesEspecificos = mesaIds;
-        query.IncluirAnalisisPorMesa = true;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MesesEspecificos = mesaIds,
+            IncluirAnalisisPorMesa = true,
+            NivelDetalle = NivelDetalle.Completo
+        };
         
         ConfigurarMesasExistentes(mesaIds);
 
@@ -293,9 +305,13 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConMesasEspecificasInexistentes_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.MesesEspecificos = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
-        query.IncluirAnalisisPorMesa = true;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MesesEspecificos = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() },
+            IncluirAnalisisPorMesa = true,
+            NivelDetalle = NivelDetalle.Completo
+        };
         
         ConfigurarMesasExistentes(new List<Guid>()); // Sin mesas
 
@@ -314,9 +330,13 @@ public class ObtenerReporteVentasDiariaValidatorTests
     {
         // Arrange
         var meseroIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
-        var query = CrearQueryValida();
-        query.MeserosEspecificos = meseroIds;
-        query.IncluirAnalisisPorMesero = true;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MeserosEspecificos = meseroIds,
+            IncluirAnalisisPorMesero = true,
+            NivelDetalle = NivelDetalle.Completo
+        };
         
         ConfigurarMeserosExistentes(meseroIds);
 
@@ -331,9 +351,13 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConMeserosEspecificosInexistentes_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.MeserosEspecificos = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
-        query.IncluirAnalisisPorMesero = true;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MeserosEspecificos = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() },
+            IncluirAnalisisPorMesero = true,
+            NivelDetalle = NivelDetalle.Completo
+        };
         
         ConfigurarMeserosExistentes(new List<Guid>()); // Sin meseros
 
@@ -355,9 +379,12 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConNivelMeserosSinAnalisisPorMesero_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.NivelDetalle = NivelDetalle.Meseros;
-        query.IncluirAnalisisPorMesero = false;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            NivelDetalle = NivelDetalle.Meseros,
+            IncluirAnalisisPorMesero = false
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -373,9 +400,12 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConNivelMesasSinAnalisisPorMesa_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.NivelDetalle = NivelDetalle.Mesas;
-        query.IncluirAnalisisPorMesa = false;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            NivelDetalle = NivelDetalle.Mesas,
+            IncluirAnalisisPorMesa = false
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -391,9 +421,13 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConMeserosEspecificosSinAnalisisPorMesero_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.MeserosEspecificos = new List<Guid> { Guid.NewGuid() };
-        query.IncluirAnalisisPorMesero = false;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MeserosEspecificos = new List<Guid> { Guid.NewGuid() },
+            IncluirAnalisisPorMesero = false,
+            NivelDetalle = NivelDetalle.Completo
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -409,9 +443,13 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConMesasEspecificasSinAnalisisPorMesa_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.MesesEspecificos = new List<Guid> { Guid.NewGuid() };
-        query.IncluirAnalisisPorMesa = false;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MesesEspecificos = new List<Guid> { Guid.NewGuid() },
+            IncluirAnalisisPorMesa = false,
+            NivelDetalle = NivelDetalle.Completo
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -427,9 +465,12 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConNivelBasicoYTendenciasSemana_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.NivelDetalle = NivelDetalle.Basico;
-        query.IncluirTendenciasSemana = true;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            NivelDetalle = NivelDetalle.Basico,
+            IncluirTendenciasSemana = true
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -438,7 +479,7 @@ public class ObtenerReporteVentasDiariaValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(ObtenerReporteVentasDiariaQuery.IncluirTendenciasSemana) &&
-            e.ErrorMessage.Contains("El nivel básico no puede incluir tendencias semanales"));
+            e.ErrorMessage.Contains("El nivel 'Básico' no permite incluir tendencias de semana"));
     }
 
     #endregion
@@ -449,10 +490,10 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConFechaAntiguaSinDatos_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.FechaReporte = DateTime.Today.AddDays(-35);
+        var fechaAntigua = DateTime.Today.AddDays(-35);
+        var query = ObtenerReporteVentasDiariaQuery.CrearReporteFecha(fechaAntigua);
         
-        ConfigurarComandasExistentes(query.FechaReporte, tieneComandas: false);
+        ConfigurarComandasExistentes(fechaAntigua, tieneComandas: false);
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -468,10 +509,10 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConFechaAntiguaConDatos_DeberiaSerValido()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.FechaReporte = DateTime.Today.AddDays(-35);
+        var fechaAntigua = DateTime.Today.AddDays(-35);
+        var query = ObtenerReporteVentasDiariaQuery.CrearReporteFecha(fechaAntigua);
         
-        ConfigurarComandasExistentes(query.FechaReporte, tieneComandas: true);
+        ConfigurarComandasExistentes(fechaAntigua, tieneComandas: true);
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -484,12 +525,16 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConTodosLosAnalisisSimultaneos_DeberiaRetornarError()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.IncluirAnalisisPorMesa = true;
-        query.IncluirAnalisisPorMesero = true;
-        query.IncluirAnalisisProductos = true;
-        query.IncluirTendenciasSemana = true;
-        query.IncluirComparativoPeriodoAnterior = true;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            IncluirAnalisisPorMesa = true,
+            IncluirAnalisisPorMesero = true,
+            IncluirAnalisisProductos = true,
+            IncluirTendenciasSemana = true,
+            IncluirComparativoPeriodoAnterior = true,
+            NivelDetalle = NivelDetalle.Completo
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -504,12 +549,16 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConAlgunosAnalisisSimultaneos_DeberiaSerValido()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.IncluirAnalisisPorMesa = true;
-        query.IncluirAnalisisPorMesero = true;
-        query.IncluirAnalisisProductos = true;
-        query.IncluirTendenciasSemana = false; // No todos
-        query.IncluirComparativoPeriodoAnterior = true;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            IncluirAnalisisPorMesa = true,
+            IncluirAnalisisPorMesero = true,
+            IncluirAnalisisProductos = true,
+            IncluirTendenciasSemana = false, // No todos
+            IncluirComparativoPeriodoAnterior = true,
+            NivelDetalle = NivelDetalle.Completo
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -663,11 +712,15 @@ public class ObtenerReporteVentasDiariaValidatorTests
         var mesaIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
         var meseroIds = new List<Guid> { Guid.NewGuid() };
         
-        var query = CrearQueryValida();
-        query.MesesEspecificos = mesaIds;
-        query.MeserosEspecificos = meseroIds;
-        query.IncluirAnalisisPorMesa = true;
-        query.IncluirAnalisisPorMesero = true;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MesesEspecificos = mesaIds,
+            MeserosEspecificos = meseroIds,
+            IncluirAnalisisPorMesa = true,
+            IncluirAnalisisPorMesero = true,
+            NivelDetalle = NivelDetalle.Completo
+        };
         
         ConfigurarMesasExistentes(mesaIds);
         ConfigurarMeserosExistentes(meseroIds);
@@ -691,9 +744,13 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConListasVacias_DeberiaSerValido()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.MesesEspecificos = new List<Guid>();
-        query.MeserosEspecificos = new List<Guid>();
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MesesEspecificos = new List<Guid>(),
+            MeserosEspecificos = new List<Guid>(),
+            NivelDetalle = NivelDetalle.Completo
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -706,9 +763,13 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConListasNull_DeberiaSerValido()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.MesesEspecificos = null;
-        query.MeserosEspecificos = null;
+        var query = new ObtenerReporteVentasDiariaQuery
+        {
+            FechaReporte = DateTime.Today,
+            MesesEspecificos = null,
+            MeserosEspecificos = null,
+            NivelDetalle = NivelDetalle.Completo
+        };
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -721,8 +782,7 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConFechaLimiteAnterior_DeberiaSerValido()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.FechaReporte = DateTime.Today.AddYears(-2); // Exactamente en el límite
+        var query = ObtenerReporteVentasDiariaQuery.CrearReporteFecha(DateTime.Today.AddYears(-2)); // Exactamente en el límite
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -735,8 +795,7 @@ public class ObtenerReporteVentasDiariaValidatorTests
     public async Task Validate_ConFechaLimitePosterior_DeberiaSerValido()
     {
         // Arrange
-        var query = CrearQueryValida();
-        query.FechaReporte = DateTime.Today.AddDays(1); // Exactamente en el límite futuro
+        var query = ObtenerReporteVentasDiariaQuery.CrearReporteFecha(DateTime.Today.AddDays(1)); // Exactamente en el límite futuro
 
         // Act
         var result = await _validator.ValidateAsync(query);

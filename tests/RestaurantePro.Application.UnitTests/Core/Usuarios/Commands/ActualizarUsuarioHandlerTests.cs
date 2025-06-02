@@ -48,13 +48,12 @@ public class ActualizarUsuarioHandlerTests
     public async Task Handle_ConActualizacionBasica_DeberiaActualizarCorrectamente()
     {
         // Arrange
-        var command = ActualizarUsuarioCommand.ActualizacionBasica(
+        var command = ActualizarUsuarioCommand.ActualizacionInformacionBasica(
             _usuarioExistente.Id,
             "Juan Carlos Pérez",
-            "juancarlos@restaurantepro.com",
             "555-999-8888",
-            _usuarioAutorizador.Id,
-            "Actualización de datos de contacto");
+            "Calle Nueva 123",
+            _usuarioAutorizador.Id);
 
         _mockUsuarios.Setup(u => u.FirstOrDefaultAsync(
                        It.IsAny<System.Linq.Expressions.Expression<Func<Usuario, bool>>>(),
@@ -85,13 +84,12 @@ public class ActualizarUsuarioHandlerTests
     {
         // Arrange
         var usuarioInexistenteId = Guid.NewGuid();
-        var command = ActualizarUsuarioCommand.ActualizacionBasica(
+        var command = ActualizarUsuarioCommand.ActualizacionInformacionBasica(
             usuarioInexistenteId,
             "Usuario Inexistente",
-            "inexistente@test.com",
             "555-000-0000",
-            _usuarioAutorizador.Id,
-            "Actualización fallida");
+            "Dirección inexistente",
+            _usuarioAutorizador.Id);
 
         _mockUsuarios.Setup(u => u.FirstOrDefaultAsync(
                        It.IsAny<System.Linq.Expressions.Expression<Func<Usuario, bool>>>(),
@@ -113,13 +111,13 @@ public class ActualizarUsuarioHandlerTests
     public async Task Handle_ConCambiosCriticos_DeberiaCreaBackupYValidar()
     {
         // Arrange
-        var command = ActualizarUsuarioCommand.ActualizacionCritica(
+        var command = ActualizarUsuarioCommand.ActualizacionRolPermisos(
             _usuarioExistente.Id,
             "Gerente", // Cambio de rol es crítico
-            true, // Es administrador
+            8, // Nivel de acceso alto
+            new List<string> { "GestionarUsuarios", "VerReportes" },
             _usuarioAutorizador.Id,
-            "Promoción a gerente",
-            true); // Requiere aprobación
+            "Promoción a gerente por buen desempeño");
 
         _mockUsuarios.Setup(u => u.FirstOrDefaultAsync(
                        It.IsAny<System.Linq.Expressions.Expression<Func<Usuario, bool>>>(),
@@ -150,16 +148,17 @@ public class ActualizarUsuarioHandlerTests
     {
         // Arrange
         var fechaFutura = DateTime.UtcNow.AddDays(7);
+        var cambiosBase = ActualizarUsuarioCommand.ActualizacionInformacionBasica(
+            _usuarioExistente.Id,
+            "Nombre Futuro",
+            "555-777-9999",
+            "Dirección futura",
+            _usuarioAutorizador.Id);
+
         var command = ActualizarUsuarioCommand.ActualizacionProgramada(
             _usuarioExistente.Id,
             fechaFutura,
-            ActualizarUsuarioCommand.ActualizacionBasica(
-                _usuarioExistente.Id,
-                "Nombre Futuro",
-                "futuro@restaurantepro.com",
-                "555-777-9999",
-                _usuarioAutorizador.Id,
-                "Actualización básica"),
+            cambiosBase,
             _usuarioAutorizador.Id,
             "Actualización programada de datos");
 
@@ -197,11 +196,11 @@ public class ActualizarUsuarioHandlerTests
     {
         // Arrange
         var nuevoSupervisor = Guid.NewGuid();
-        var command = ActualizarUsuarioCommand.ActualizacionJerarquica(
+        var command = ActualizarUsuarioCommand.CambioJerarquico(
             _usuarioExistente.Id,
+            nuevoSupervisor,
             "Nuevo Departamento",
             "Supervisor Junior",
-            nuevoSupervisor,
             _usuarioAutorizador.Id,
             "Reestructuración organizacional");
 
@@ -235,8 +234,8 @@ public class ActualizarUsuarioHandlerTests
         var notificaciones = new ConfiguracionNotificacionesDto
         {
             EmailHabilitado = true,
-            SMSHabilitado = false,
-            NotificacionesPush = true
+            PushHabilitado = true,
+            SmsHabilitado = false
         };
 
         var preferencias = new Dictionary<string, object>
@@ -269,7 +268,8 @@ public class ActualizarUsuarioHandlerTests
 
         command.ConfiguracionNotificaciones.Should().NotBeNull();
         command.ConfiguracionNotificaciones!.EmailHabilitado.Should().BeTrue();
-        command.ConfiguracionNotificaciones.SMSHabilitado.Should().BeFalse();
+        command.ConfiguracionNotificaciones.PushHabilitado.Should().BeTrue();
+        command.ConfiguracionNotificaciones.SmsHabilitado.Should().BeFalse();
         
         command.Preferencias.Should().ContainKey("idioma");
         command.Preferencias.Should().ContainKey("tema");
@@ -285,12 +285,11 @@ public class ActualizarUsuarioHandlerTests
     public async Task Handle_ConCambioEstado_DeberiaInvalidarSesiones()
     {
         // Arrange
-        var command = ActualizarUsuarioCommand.ActualizacionEstado(
+        var command = ActualizarUsuarioCommand.CambioEstadoActivacion(
             _usuarioExistente.Id,
-            EstadoUsuario.Suspendido,
+            false, // Desactivar (suspender)
             _usuarioAutorizador.Id,
-            "Suspensión por violación de políticas",
-            true); // Invalidar sesiones
+            "Suspensión por violación de políticas");
 
         _mockUsuarios.Setup(u => u.FirstOrDefaultAsync(
                        It.IsAny<System.Linq.Expressions.Expression<Func<Usuario, bool>>>(),
@@ -307,14 +306,14 @@ public class ActualizarUsuarioHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
 
-        command.Estado.Should().Be(EstadoUsuario.Suspendido);
+        command.Activo.Should().BeFalse(); // Usar Activo en lugar de Estado
         command.InvalidarSesionesActivas.Should().BeTrue();
         command.NotificarUsuario.Should().BeTrue();
         command.NotificarSupervisor.Should().BeTrue();
 
         // Cambio de estado es crítico
         command.TieneCambiosCriticos().Should().BeTrue();
-        command.Prioridad.Should().Be(3);
+        command.Prioridad.Should().Be(4); // CambioEstadoActivacion usa prioridad 4 para desactivar
 
         _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -323,13 +322,12 @@ public class ActualizarUsuarioHandlerTests
     public async Task Handle_ConErrorEnBaseDatos_DeberiaRetornarErrorGenerico()
     {
         // Arrange
-        var command = ActualizarUsuarioCommand.ActualizacionBasica(
+        var command = ActualizarUsuarioCommand.ActualizacionInformacionBasica(
             _usuarioExistente.Id,
             "Nombre Error",
-            "error@test.com",
             "555-000-0000",
-            _usuarioAutorizador.Id,
-            "Actualización que fallará");
+            "Dirección Error",
+            _usuarioAutorizador.Id);
 
         _mockUsuarios.Setup(u => u.FirstOrDefaultAsync(
                        It.IsAny<System.Linq.Expressions.Expression<Func<Usuario, bool>>>(),
@@ -354,13 +352,12 @@ public class ActualizarUsuarioHandlerTests
     public async Task Handle_DeberiaLoggearInformacionCompleta()
     {
         // Arrange
-        var command = ActualizarUsuarioCommand.ActualizacionBasica(
+        var command = ActualizarUsuarioCommand.ActualizacionInformacionBasica(
             _usuarioExistente.Id,
             "Nombre para Logging",
-            "logging@test.com",
             "555-777-8888",
-            _usuarioAutorizador.Id,
-            "Test de logging");
+            "Dirección para Logging",
+            _usuarioAutorizador.Id);
 
         _mockUsuarios.Setup(u => u.FirstOrDefaultAsync(
                        It.IsAny<System.Linq.Expressions.Expression<Func<Usuario, bool>>>(),
@@ -402,13 +399,13 @@ public class ActualizarUsuarioHandlerTests
     public async Task Handle_ConNotificaciones_DeberiaEnviarCorrectamente()
     {
         // Arrange
-        var command = ActualizarUsuarioCommand.ActualizacionCritica(
+        var command = ActualizarUsuarioCommand.ActualizacionRolPermisos(
             _usuarioExistente.Id,
             "Administrador",
-            true,
+            9, // Nivel de acceso alto
+            new List<string> { "GestionarUsuarios", "ConfigurarSistema" },
             _usuarioAutorizador.Id,
-            "Promoción a administrador",
-            true);
+            "Promoción a administrador");
 
         command.NotificarUsuario = true;
         command.NotificarSupervisor = true;
@@ -430,7 +427,7 @@ public class ActualizarUsuarioHandlerTests
 
         // Verificar que se envían notificaciones por email
         _mockEmailService.Verify(
-            e => e.EnviarEmailAsync(
+            e => e.SendEmailAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<string>()),
@@ -438,11 +435,11 @@ public class ActualizarUsuarioHandlerTests
 
         // Verificar que se envían notificaciones del sistema
         _mockNotificationService.Verify(
-            n => n.CrearNotificacionAsync(
+            n => n.EnviarNotificacionAsync(
                 It.IsAny<Guid>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<NivelPrioridad>()),
+                It.IsAny<string>()),
             Times.AtLeastOnce);
     }
 
@@ -456,7 +453,7 @@ public class ActualizarUsuarioHandlerTests
         {
             UsuarioId = _usuarioExistente.Id,
             Rol = rolEsperado,
-            EsAdministrador = esAdmin,
+            NivelAcceso = esAdmin ? 9 : 1, // Usar NivelAcceso en lugar de EsAdministrador
             UsuarioAutorizaId = _usuarioAutorizador.Id,
             MotivoActualizacion = $"Cambio a {rolEsperado}"
         };
@@ -477,7 +474,7 @@ public class ActualizarUsuarioHandlerTests
         result.Succeeded.Should().BeTrue();
 
         command.Rol.Should().Be(rolEsperado);
-        command.EsAdministrador.Should().Be(esAdmin);
+        command.NivelAcceso.Should().Be(esAdmin ? 9 : 1); // Verificar NivelAcceso en lugar de EsAdministrador
 
         _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -486,13 +483,16 @@ public class ActualizarUsuarioHandlerTests
     public async Task Handle_ConValidacionDeCampos_DeberiaValidarCorrectamente()
     {
         // Arrange
-        var command = ActualizarUsuarioCommand.ActualizacionBasica(
+        var command = ActualizarUsuarioCommand.ActualizacionInformacionBasica(
             _usuarioExistente.Id,
             "Nombre Test",
-            "test@restaurantepro.com",
             "555-123-4567",
-            _usuarioAutorizador.Id,
-            "Test de validación");
+            "Dirección Test",
+            _usuarioAutorizador.Id);
+
+        // Agregar email manualmente ya que no está en ActualizacionInformacionBasica
+        command.Email = "test@restaurantepro.com";
+        command.MotivoActualizacion = "Test de validación";
 
         _mockUsuarios.Setup(u => u.FirstOrDefaultAsync(
                        It.IsAny<System.Linq.Expressions.Expression<Func<Usuario, bool>>>(),
@@ -514,7 +514,7 @@ public class ActualizarUsuarioHandlerTests
         command.TieneAlMenosUnCambio().Should().BeTrue();
 
         var camposModificados = command.ObtenerCamposAModificar();
-        camposModificados.Should().Contain("NombreCompleto");
+        camposModificados.Should().Contain("Nombre"); // Usar "Nombre" en lugar de "NombreCompleto"
         camposModificados.Should().Contain("Email");
         camposModificados.Should().Contain("Telefono");
 
@@ -531,7 +531,7 @@ public class ActualizarUsuarioHandlerTests
         var command = new ActualizarUsuarioCommand
         {
             UsuarioId = _usuarioExistente.Id,
-            NombreCompleto = "Test Prioridad",
+            Nombre = "Test Prioridad", // Usar Nombre en lugar de NombreCompleto
             Rol = esCriticoEsperado ? "Administrador" : "Empleado", // Rol crítico vs no crítico
             UsuarioAutorizaId = _usuarioAutorizador.Id,
             MotivoActualizacion = $"Test prioridad {prioridad}",
@@ -583,12 +583,13 @@ public class ActualizarUsuarioHandlerTests
         {
             Id = _usuarioExistente?.Id ?? Guid.NewGuid(),
             NombreUsuario = "usuario.actualizado",
-            NombreCompleto = "Usuario Actualizado",
+            Nombre = "Usuario",
+            Apellido = "Actualizado",
             Email = "actualizado@restaurantepro.com",
             Rol = "Empleado",
             Activo = true,
             FechaCreacion = DateTime.UtcNow.AddMonths(-3),
-            UltimaActualizacion = DateTime.UtcNow
+            FechaUltimaActualizacion = DateTime.UtcNow
         };
     }
 

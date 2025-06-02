@@ -67,7 +67,8 @@ public class ActualizarUsuarioValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var usuario = new Usuario { Id = command.UsuarioId, Estado = EstadoUsuario.Activo };
+        var usuario = Usuario.Crear("test.user", "Test User", "test@test.com", RolUsuario.Mesero);
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, command.UsuarioId);
 
         _mockContext.Setup(c => c.Usuarios.FindAsync(command.UsuarioId))
             .ReturnsAsync(usuario);
@@ -937,8 +938,12 @@ public class ActualizarUsuarioValidatorTests
         var usuarioId = Guid.NewGuid();
         var autorizadorId = Guid.NewGuid();
         
-        var usuario = new Usuario { Id = usuarioId, Estado = EstadoUsuario.Activo };
-        var autorizador = new Usuario { Id = autorizadorId, Estado = EstadoUsuario.Activo };
+        // Usar factory method en lugar de constructor directo
+        var usuario = Usuario.Crear("test.user", "Test User", "test@test.com", RolUsuario.Mesero);
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
+        
+        var autorizador = Usuario.Crear("admin.user", "Admin User", "admin@test.com", RolUsuario.Administrador);
+        autorizador.GetType().GetProperty("Id")?.SetValue(autorizador, autorizadorId);
 
         _mockContext.Setup(c => c.Usuarios.FindAsync(usuarioId))
             .ReturnsAsync(usuario);
@@ -980,8 +985,12 @@ public class ActualizarUsuarioValidatorTests
         var usuarioId = Guid.NewGuid();
         var autorizadorId = Guid.NewGuid();
         
-        var usuario = new Usuario { Id = usuarioId, Estado = EstadoUsuario.Activo };
-        var autorizador = new Usuario { Id = autorizadorId, Estado = EstadoUsuario.Activo };
+        // Usar factory method en lugar de constructor directo
+        var usuario = Usuario.Crear("test.user", "Test User", "test@test.com", RolUsuario.Mesero);
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
+        
+        var autorizador = Usuario.Crear("admin.user", "Admin User", "admin@test.com", RolUsuario.Administrador);
+        autorizador.GetType().GetProperty("Id")?.SetValue(autorizador, autorizadorId);
 
         _mockContext.Setup(c => c.Usuarios.FindAsync(usuarioId))
             .ReturnsAsync(usuario);

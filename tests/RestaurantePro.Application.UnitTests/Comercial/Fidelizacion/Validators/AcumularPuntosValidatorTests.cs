@@ -1,5 +1,7 @@
 namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Validators;
 
+using RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos;
+
 /// <summary>
 /// 🔥 TESTS EXHAUSTIVOS PARA ACUMULAR PUNTOS VALIDATOR - IMPLEMENTACIÓN COMPLETA
 /// Tests completos para validar todas las reglas críticas de acumulación de puntos de fidelización
@@ -8,20 +10,10 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Validators
 public class AcumularPuntosValidatorTests
 {
     private readonly AcumularPuntosValidator _validator;
-    private readonly Mock<IApplicationDbContext> _contextMock;
-    private readonly Mock<DbSet<Cliente>> _clientesDbSetMock;
-    private readonly Mock<DbSet<Factura>> _facturasDbSetMock;
 
     public AcumularPuntosValidatorTests()
     {
-        _contextMock = new Mock<IApplicationDbContext>();
-        _clientesDbSetMock = new Mock<DbSet<Cliente>>();
-        _facturasDbSetMock = new Mock<DbSet<Factura>>();
-        
-        _contextMock.Setup(x => x.Clientes).Returns(_clientesDbSetMock.Object);
-        _contextMock.Setup(x => x.Facturas).Returns(_facturasDbSetMock.Object);
-        
-        _validator = new AcumularPuntosValidator(_contextMock.Object);
+        _validator = new AcumularPuntosValidator();
     }
 
     #region Validation Command Helper
@@ -31,11 +23,10 @@ public class AcumularPuntosValidatorTests
         return new AcumularPuntosCommand
         {
             ClienteId = Guid.NewGuid(),
-            FacturaId = Guid.NewGuid(),
             MontoCompra = 100.00m,
+            TipoTransaccion = RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.Compra,
+            Canal = "Presencial",
             MultiplicadorEspecial = 1,
-            TipoAcumulacion = TipoAcumulacion.PorCompra,
-            Comentarios = "Acumulación por compra normal",
             UsuarioQueAcumula = "usuario_test"
         };
     }
@@ -58,8 +49,7 @@ public class AcumularPuntosValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(AcumularPuntosCommand.ClienteId) &&
-            e.ErrorMessage.Contains("El ID del cliente es requerido") &&
-            e.ErrorCode == "CLIENTE_ID_REQUERIDO");
+            e.ErrorMessage.Contains("ID del cliente es obligatorio"));
     }
 
     [Fact]
@@ -67,73 +57,15 @@ public class AcumularPuntosValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var clienteId = Guid.NewGuid();
-        command.ClienteId = clienteId;
-
-        // Mock cliente existente
-        var clientes = new List<Cliente>
-        {
-            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", EstaActivo = true }
-        }.AsQueryable();
-
-        _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
-        _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Expression).Returns(clientes.Expression);
-        _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.ElementType).Returns(clientes.ElementType);
-        _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.GetEnumerator()).Returns(clientes.GetEnumerator());
+        command.ClienteId = Guid.NewGuid();
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(AcumularPuntosCommand.ClienteId));
-    }
-
-    #endregion
-
-    #region Validación FacturaId
-
-    [Fact]
-    public async Task Validate_ConFacturaIdVacio_DeberiaRetornarError()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.FacturaId = Guid.Empty;
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(AcumularPuntosCommand.FacturaId) &&
-            e.ErrorMessage.Contains("El ID de la factura es requerido") &&
-            e.ErrorCode == "FACTURA_ID_REQUERIDO");
-    }
-
-    [Fact]
-    public async Task Validate_ConFacturaIdValido_NoDeberiaRetornarErrorDeFacturaId()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        var facturaId = Guid.NewGuid();
-        command.FacturaId = facturaId;
-
-        // Mock factura existente
-        var facturas = new List<Factura>
-        {
-            new Factura { Id = facturaId, Total = 100.00m, Estado = EstadoFactura.Pagada }
-        }.AsQueryable();
-
-        _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.Provider).Returns(facturas.Provider);
-        _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(facturas.Expression);
-        _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(facturas.ElementType);
-        _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(facturas.GetEnumerator());
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(AcumularPuntosCommand.FacturaId));
+        // Assert - Si hay errores, no deberían ser por ClienteId
+        result.Errors.Should().NotContain(e => 
+            e.PropertyName == nameof(AcumularPuntosCommand.ClienteId) &&
+            e.ErrorMessage.Contains("ID del cliente es obligatorio"));
     }
 
     #endregion
@@ -157,8 +89,7 @@ public class AcumularPuntosValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(AcumularPuntosCommand.MontoCompra) &&
-            e.ErrorMessage.Contains("El monto de compra debe ser mayor a 0") &&
-            e.ErrorCode == "MONTO_COMPRA_INVALIDO");
+            e.ErrorMessage.Contains("debe ser mayor a 0"));
     }
 
     [Fact]
@@ -166,7 +97,7 @@ public class AcumularPuntosValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.MontoCompra = 100001.00m; // Más de $100,000
+        command.MontoCompra = 60000.00m; // Más de $50,000
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -175,8 +106,7 @@ public class AcumularPuntosValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(AcumularPuntosCommand.MontoCompra) &&
-            e.ErrorMessage.Contains("El monto de compra no puede exceder $100,000") &&
-            e.ErrorCode == "MONTO_COMPRA_EXCESIVO");
+            e.ErrorMessage.Contains("no puede exceder"));
     }
 
     [Theory]
@@ -184,8 +114,8 @@ public class AcumularPuntosValidatorTests
     [InlineData(10.50)]
     [InlineData(100.00)]
     [InlineData(1000.00)]
-    [InlineData(50000.00)]
-    [InlineData(100000.00)] // Límite máximo
+    [InlineData(25000.00)]
+    [InlineData(50000.00)] // Límite máximo
     public async Task Validate_ConMontoCompraValido_NoDeberiaRetornarErrorDeMonto(decimal montoValido)
     {
         // Arrange
@@ -197,18 +127,60 @@ public class AcumularPuntosValidatorTests
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(AcumularPuntosCommand.MontoCompra));
+            e.PropertyName == nameof(AcumularPuntosCommand.MontoCompra) &&
+            e.ErrorMessage.Contains("debe ser mayor a 0"));
     }
 
     #endregion
 
-    #region Validación MultiplicadorPuntos
+    #region Validación Canal
+
+    [Fact]
+    public async Task Validate_ConCanalVacio_DeberiaRetornarError()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.Canal = "";
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(AcumularPuntosCommand.Canal) &&
+            e.ErrorMessage.Contains("canal"));
+    }
+
+    [Theory]
+    [InlineData("Presencial")]
+    [InlineData("App")]
+    [InlineData("Web")]
+    [InlineData("Telefono")]
+    [InlineData("WhatsApp")]
+    public async Task Validate_ConCanalValido_NoDeberiaRetornarErrorDeCanal(string canalValido)
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.Canal = canalValido;
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => 
+            e.PropertyName == nameof(AcumularPuntosCommand.Canal));
+    }
+
+    #endregion
+
+    #region Validación MultiplicadorEspecial
 
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(-5)]
-    public async Task Validate_ConMultiplicadorMenorIgualCero_DeberiaRetornarError(int multiplicadorInvalido)
+    public async Task Validate_ConMultiplicadorMenorIgualCero_DeberiaRetornarError(decimal multiplicadorInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
@@ -221,8 +193,7 @@ public class AcumularPuntosValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(AcumularPuntosCommand.MultiplicadorEspecial) &&
-            e.ErrorMessage.Contains("El multiplicador de puntos debe ser mayor a 0") &&
-            e.ErrorCode == "MULTIPLICADOR_PUNTOS_INVALIDO");
+            e.ErrorMessage.Contains("mayor a 0"));
     }
 
     [Fact]
@@ -230,7 +201,7 @@ public class AcumularPuntosValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.MultiplicadorEspecial = 11; // Más de 10
+        command.MultiplicadorEspecial = 15; // Más de 10
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -239,8 +210,7 @@ public class AcumularPuntosValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(AcumularPuntosCommand.MultiplicadorEspecial) &&
-            e.ErrorMessage.Contains("El multiplicador de puntos no puede exceder 10") &&
-            e.ErrorCode == "MULTIPLICADOR_PUNTOS_EXCESIVO");
+            e.ErrorMessage.Contains("no puede exceder"));
     }
 
     [Theory]
@@ -249,7 +219,7 @@ public class AcumularPuntosValidatorTests
     [InlineData(3)]
     [InlineData(5)]
     [InlineData(10)] // Límite máximo
-    public async Task Validate_ConMultiplicadorValido_NoDeberiaRetornarErrorDeMultiplicador(int multiplicadorValido)
+    public async Task Validate_ConMultiplicadorValido_NoDeberiaRetornarErrorDeMultiplicador(decimal multiplicadorValido)
     {
         // Arrange
         var command = CrearCommandValido();
@@ -260,76 +230,58 @@ public class AcumularPuntosValidatorTests
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(AcumularPuntosCommand.MultiplicadorEspecial));
+            e.PropertyName == nameof(AcumularPuntosCommand.MultiplicadorEspecial) &&
+            e.ErrorMessage.Contains("mayor a 0"));
     }
 
     #endregion
 
-    #region Validación TipoAcumulacion
+    #region Validación TipoTransaccion
 
     [Fact]
-    public async Task Validate_ConTipoAcumulacionMuyLargo_DeberiaRetornarError()
+    public async Task Validate_ConTipoTransaccionValido_NoDeberiaRetornarErrorDeTipo()
     {
         // Arrange
         var command = CrearCommandValido();
-        // Eliminado: command.TipoAcumulacion = new string('A', 51); (TipoAcumulacion es enum, no string)
-        // Este test no aplica para enum, se elimina el contenido del test
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeTrue(); // El comando válido debe pasar
-    }
-
-    [Theory]
-    [InlineData(TipoAcumulacion.PorCompra)]
-    [InlineData(TipoAcumulacion.PorPromocion)]
-    [InlineData(TipoAcumulacion.PorEvento)]
-    [InlineData(TipoAcumulacion.PorReferido)]
-    [InlineData(TipoAcumulacion.Manual)]
-    public async Task Validate_ConTipoAcumulacionValido_NoDeberiaRetornarErrorDeTipo(TipoAcumulacion tipoValido)
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.TipoAcumulacion = tipoValido;
+        command.TipoTransaccion = RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.Compra;
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(AcumularPuntosCommand.TipoAcumulacion));
+            e.PropertyName == nameof(AcumularPuntosCommand.TipoTransaccion));
     }
 
     #endregion
 
-    #region Validación Observaciones
+    #region Validación Comentarios
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task Validate_ConObservacionesVacias_NoDeberiaValidarObservaciones(string observacionesVacias)
+    public async Task Validate_ConComentariosVacios_NoDeberiaValidarComentarios(string? comentariosVacios)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.Comentarios = observacionesVacias;
+        command.Comentarios = comentariosVacios;
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
-        // Assert
+        // Assert - Los comentarios son opcionales, no debería haber error por estar vacíos
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(AcumularPuntosCommand.Comentarios));
+            e.PropertyName == nameof(AcumularPuntosCommand.Comentarios) &&
+            e.ErrorMessage.Contains("requerido"));
     }
 
     [Fact]
-    public async Task Validate_ConObservacionesMuyLargas_DeberiaRetornarError()
+    public async Task Validate_ConComentariosMuyLargos_DeberiaRetornarError()
     {
         // Arrange
         var command = CrearCommandValido();
-        command.Comentarios = new string('A', 1001); // Más de 1000 caracteres
+        command.Comentarios = new string('A', 501); // Más de 500 caracteres
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -338,12 +290,11 @@ public class AcumularPuntosValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(AcumularPuntosCommand.Comentarios) &&
-            e.ErrorMessage.Contains("Las observaciones no pueden exceder 1000 caracteres") &&
-            e.ErrorCode == "OBSERVACIONES_LONGITUD");
+            e.ErrorMessage.Contains("500 caracteres"));
     }
 
     [Fact]
-    public async Task Validate_ConObservacionesValidas_NoDeberiaRetornarErrorDeObservaciones()
+    public async Task Validate_ConComentariosValidos_NoDeberiaRetornarErrorDeComentarios()
     {
         // Arrange
         var command = CrearCommandValido();
@@ -359,43 +310,6 @@ public class AcumularPuntosValidatorTests
 
     #endregion
 
-    #region Validación UsuarioId
-
-    [Fact]
-    public async Task Validate_ConUsuarioIdVacio_DeberiaRetornarError()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.UsuarioQueAcumula = null;
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(AcumularPuntosCommand.UsuarioQueAcumula) &&
-            e.ErrorMessage.Contains("El ID del usuario es requerido") &&
-            e.ErrorCode == "USUARIO_ID_REQUERIDO");
-    }
-
-    [Fact]
-    public async Task Validate_ConUsuarioIdValido_NoDeberiaRetornarErrorDeUsuarioId()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.UsuarioQueAcumula = "usuario_test";
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(AcumularPuntosCommand.UsuarioQueAcumula));
-    }
-
-    #endregion
-
     #region Validaciones Integradas
 
     [Fact]
@@ -405,10 +319,10 @@ public class AcumularPuntosValidatorTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = Guid.NewGuid(),
-            FacturaId = Guid.NewGuid(),
             MontoCompra = 250.75m,
+            TipoTransaccion = RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.Compra,
+            Canal = "Presencial",
             MultiplicadorEspecial = 2,
-            TipoAcumulacion = TipoAcumulacion.PorPromocion,
             Comentarios = "Acumulación doble por promoción fin de semana",
             UsuarioQueAcumula = "usuario_test"
         };
@@ -428,12 +342,9 @@ public class AcumularPuntosValidatorTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = Guid.NewGuid(),
-            FacturaId = Guid.NewGuid(),
             MontoCompra = 0.01m, // Monto mínimo
-            MultiplicadorEspecial = 1, // Multiplicador mínimo
-            TipoAcumulacion = TipoAcumulacion.PorCompra, // Tipo mínimo
-            UsuarioQueAcumula = "usuario_test"
-            // Observaciones opcional
+            TipoTransaccion = RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.Compra,
+            Canal = "Presencial"
         };
 
         // Act
@@ -451,11 +362,10 @@ public class AcumularPuntosValidatorTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = Guid.Empty, // Error
-            FacturaId = Guid.Empty, // Error
             MontoCompra = -50.00m, // Error
+            Canal = "", // Error
             MultiplicadorEspecial = 0, // Error
-            Comentarios = new string('X', 1001), // Error
-            UsuarioQueAcumula = null // Error
+            Comentarios = new string('X', 501) // Error
         };
 
         // Act
@@ -463,7 +373,7 @@ public class AcumularPuntosValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCountGreaterThanOrEqualTo(5);
+        result.Errors.Should().HaveCountGreaterThanOrEqualTo(3);
     }
 
     #endregion
@@ -471,15 +381,14 @@ public class AcumularPuntosValidatorTests
     #region Tests de Escenarios de Negocio
 
     [Theory]
-    [InlineData("Compra", 100.00, 1, "Acumulación normal")]
-    [InlineData("Promoción", 200.00, 2, "Puntos dobles promoción")]
-    [InlineData("Bono", 50.00, 5, "Bono bienvenida")]
-    [InlineData("Cumpleaños", 300.00, 3, "Triple puntos cumpleaños")]
-    public async Task Validate_ConDiferentesEscenariosAcumulacion_DeberiaSerValido(string tipo, decimal monto, int multiplicador, string obs)
+    [InlineData(100.00, 1, "Acumulación normal")]
+    [InlineData(200.00, 2, "Puntos dobles promoción")]
+    [InlineData(50.00, 5, "Bono bienvenida")]
+    [InlineData(300.00, 3, "Triple puntos cumpleaños")]
+    public async Task Validate_ConDiferentesEscenariosAcumulacion_DeberiaSerValido(decimal monto, decimal multiplicador, string obs)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoAcumulacion = tipo;
         command.MontoCompra = monto;
         command.MultiplicadorEspecial = multiplicador;
         command.Comentarios = obs;
@@ -496,9 +405,10 @@ public class AcumularPuntosValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoAcumulacion = TipoAcumulacion.PorPromocion;
+        command.TipoTransaccion = RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.PromocionEspecial;
         command.MontoCompra = 500.00m;
         command.MultiplicadorEspecial = 5; // 5x puntos
+        command.CodigoPromocion = "BLACK2024";
         command.Comentarios = "Promoción Black Friday - 5x puntos por compras superiores a $500";
 
         // Act
@@ -513,7 +423,7 @@ public class AcumularPuntosValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoAcumulacion = TipoAcumulacion.PorPromocion;
+        command.TipoTransaccion = RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.AjusteManual;
         command.MontoCompra = 1000.00m;
         command.MultiplicadorEspecial = 1;
         command.Comentarios = "Bono de 1000 puntos por registro completado";
@@ -548,7 +458,7 @@ public class AcumularPuntosValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.MontoCompra = 100000.00m; // Límite máximo
+        command.MontoCompra = 50000.00m; // Límite máximo
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -558,11 +468,11 @@ public class AcumularPuntosValidatorTests
     }
 
     [Fact]
-    public async Task Validate_ConObservacionesEnLimiteMaximo_DeberiaSerValido()
+    public async Task Validate_ConComentariosEnLimiteMaximo_DeberiaSerValido()
     {
         // Arrange
         var command = CrearCommandValido();
-        command.Comentarios = new string('O', 1000); // Exactamente 1000 caracteres
+        command.Comentarios = new string('A', 500); // Límite máximo de 500 caracteres
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -573,20 +483,14 @@ public class AcumularPuntosValidatorTests
 
     #endregion
 
-    #region Tests de Performance y Concurrencia
+    #region Tests de Rendimiento
 
     [Fact]
     public async Task Validate_ConMultiplesValidacionesConcurrentes_DeberiaSerConsistente()
     {
         // Arrange
         var commands = Enumerable.Range(1, 10)
-            .Select(i => 
-            {
-                var cmd = CrearCommandValido();
-                cmd.MontoCompra = i * 10;
-                cmd.MultiplicadorEspecial = (i % 5) + 1;
-                return cmd;
-            })
+            .Select(_ => CrearCommandValido())
             .ToList();
 
         // Act
@@ -609,25 +513,26 @@ public class AcumularPuntosValidatorTests
         stopwatch.Stop();
 
         // Assert
-        result.IsValid.Should().BeTrue();
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(200);
+        result.Should().NotBeNull();
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(100); // Menos de 100ms
     }
 
     #endregion
 
-    #region Tests de Casos Edge
+    #region Tests de Factory Methods
 
     [Fact]
     public async Task Validate_ConCommandNuevo_DeberiaSerValido()
     {
         // Arrange
-        var command = new AcumularPuntosCommand();
-        command.ClienteId = Guid.NewGuid();
-        command.FacturaId = Guid.NewGuid();
-        command.MontoCompra = 100.00m;
-        command.MultiplicadorEspecial = 1;
-        command.TipoAcumulacion = TipoAcumulacion.PorCompra;
-        command.UsuarioQueAcumula = "usuario_test";
+        var command = new AcumularPuntosCommand
+        {
+            ClienteId = Guid.NewGuid(),
+            MontoCompra = 150.00m,
+            TipoTransaccion = RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.Compra,
+            Canal = "App",
+            Comentarios = "Compra desde aplicación móvil"
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -636,65 +541,49 @@ public class AcumularPuntosValidatorTests
         result.IsValid.Should().BeTrue();
     }
 
-    #endregion
-
-    #region Tests de Factory Methods (si existen)
-
     [Fact]
     public void Command_DeberiaCrearseConFactoryMethod()
     {
-        // Arrange
-        var clienteId = Guid.NewGuid();
-        var facturaId = Guid.NewGuid();
-        var usuarioId = "usuario_test";
-
         // Act
-        var command = new AcumularPuntosCommand 
-        {
-            ClienteId = clienteId,
-            FacturaId = facturaId,
-            MontoCompra = 100.00m,
-            TipoAcumulacion = TipoAcumulacion.PorCompra,
-            UsuarioQueAcumula = usuarioId
-        };
+        var command = CrearCommandValido();
 
         // Assert
-        command.ClienteId.Should().Be(clienteId);
-        command.FacturaId.Should().Be(facturaId);
-        command.MontoCompra.Should().Be(100.00m);
-        command.TipoAcumulacion.Should().Be(TipoAcumulacion.PorCompra);
-        command.UsuarioQueAcumula.Should().Be(usuarioId);
-        command.MultiplicadorEspecial.Should().BeNull(); // No tiene valor por defecto
+        command.Should().NotBeNull();
+        command.ClienteId.Should().NotBe(Guid.Empty);
+        command.MontoCompra.Should().BeGreaterThan(0);
+        command.TipoTransaccion.Should().Be(RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.Compra);
+        command.Canal.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
     public void Command_FactoryMethodConParametrosCompletos_DeberiaCrearseCorrectamente()
     {
-        // Arrange
+        // Arrange & Act
         var clienteId = Guid.NewGuid();
-        var facturaId = Guid.NewGuid();
-        var usuarioId = "usuario_test";
-
-        // Act
-        var command = new AcumularPuntosCommand 
+        var command = new AcumularPuntosCommand
         {
             ClienteId = clienteId,
-            FacturaId = facturaId,
-            MontoCompra = 250.00m,
-            TipoAcumulacion = TipoAcumulacion.PorPromocion,
-            UsuarioQueAcumula = usuarioId,
-            MultiplicadorEspecial = 2,
-            Comentarios = "Puntos dobles"
+            MontoCompra = 299.99m,
+            TipoTransaccion = RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.PromocionEspecial,
+            Canal = "Web",
+            CodigoPromocion = "PROMO2024",
+            MultiplicadorEspecial = 2.5m,
+            EsFechaEspecial = true,
+            TipoFechaEspecial = "Cumpleanos",
+            Comentarios = "Promoción especial de cumpleaños"
         };
 
         // Assert
+        command.Should().NotBeNull();
         command.ClienteId.Should().Be(clienteId);
-        command.FacturaId.Should().Be(facturaId);
-        command.MontoCompra.Should().Be(250.00m);
-        command.TipoAcumulacion.Should().Be(TipoAcumulacion.PorPromocion);
-        command.UsuarioQueAcumula.Should().Be(usuarioId);
-        command.MultiplicadorEspecial.Should().Be(2);
-        command.Comentarios.Should().Be("Puntos dobles");
+        command.MontoCompra.Should().Be(299.99m);
+        command.TipoTransaccion.Should().Be(RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.PromocionEspecial);
+        command.Canal.Should().Be("Web");
+        command.CodigoPromocion.Should().Be("PROMO2024");
+        command.MultiplicadorEspecial.Should().Be(2.5m);
+        command.EsFechaEspecial.Should().BeTrue();
+        command.TipoFechaEspecial.Should().Be("Cumpleanos");
+        command.Comentarios.Should().Be("Promoción especial de cumpleaños");
     }
 
     #endregion

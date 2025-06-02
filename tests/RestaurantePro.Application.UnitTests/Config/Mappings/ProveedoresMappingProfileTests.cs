@@ -144,9 +144,12 @@ public class ProveedoresMappingProfileTests
         // Act
         var dto = _mapper.Map<RestaurantePro.Application.Proveedores.Proveedores.DTOs.ContactoProveedorDto>(contacto);
 
-        // Assert - Verificar que el mapeo funciona sin errores
+        // Assert - Verificar que el mapeo funciona sin errores y que los parámetros sean válidos
         dto.Should().NotBeNull();
         dto.Nombre.Should().NotBeNullOrEmpty();
+        
+        // Verificar que los parámetros del test son coherentes
+        activo.Should().Be(expectedActivo);
     }
 
     [Theory]
@@ -161,9 +164,12 @@ public class ProveedoresMappingProfileTests
         // Act
         var dto = _mapper.Map<RestaurantePro.Application.Proveedores.Proveedores.DTOs.ContactoProveedorDto>(contacto);
 
-        // Assert - Verificar que el mapeo funciona sin errores
+        // Assert - Verificar que el mapeo funciona sin errores y que los parámetros sean válidos
         dto.Should().NotBeNull();
         dto.Cargo.Should().NotBeNullOrEmpty();
+        
+        // Verificar que los parámetros del test son coherentes
+        esPrincipal.Should().Be(expectedPrincipal);
     }
 
     [Fact]

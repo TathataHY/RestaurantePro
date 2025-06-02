@@ -71,7 +71,7 @@ public class InventarioMappingProfileTests
     {
         // Arrange
         var ingrediente = CrearIngredienteEjemplo();
-        // Usar reflection para establecer el enum usando campo privado
+        // Usar reflection para establecer la unidad de medida usando campo privado
         var unidadField = typeof(Ingrediente).GetField("_unidadMedida", BindingFlags.NonPublic | BindingFlags.Instance);
         unidadField?.SetValue(ingrediente, unidad);
 
@@ -79,7 +79,7 @@ public class InventarioMappingProfileTests
         var dto = _mapper.Map<IngredienteDto>(ingrediente);
 
         // Assert
-        dto.UnidadMedidaTexto.Should().Be(expectedTexto);
+        dto.UnidadMedida.Should().Be(expectedTexto);
     }
 
     [Fact]

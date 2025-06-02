@@ -56,26 +56,26 @@ public class AnularFacturaValidatorTests
 
     private Factura CrearFacturaValida()
     {
-        return new Factura
-        {
-            Id = Guid.NewGuid(),
-            Estado = EstadoFactura.Emitida,
-            FechaEmision = DateTime.UtcNow.AddDays(-1),
-            FechaVencimiento = DateTime.UtcNow.AddDays(30),
-            Total = 150.50m,
-            ClienteId = Guid.NewGuid()
-        };
+        return Factura.Crear(
+            "FAC-001",
+            TipoFactura.Normal,
+            "Cliente Test",
+            Guid.NewGuid(),
+            "RFC-123",
+            "Dirección Test",
+            new List<Guid> { Guid.NewGuid() },
+            "Observaciones test"
+        );
     }
 
     private Usuario CrearUsuarioValido()
     {
-        return new Usuario
-        {
-            Id = Guid.NewGuid(),
-            Estado = EstadoUsuario.Activo,
-            NombreCompleto = "Usuario Test",
-            Email = "test@example.com"
-        };
+        return Usuario.Crear(
+            "testuser",
+            "Usuario Test",
+            "test@example.com",
+            RolUsuario.Administrador
+        );
     }
 
     #endregion
@@ -127,9 +127,7 @@ public class AnularFacturaValidatorTests
         // Arrange
         var command = CrearCommandValido();
         var factura = CrearFacturaValida();
-        factura.Id = command.FacturaId;
         var usuario = CrearUsuarioValido();
-        usuario.Id = command.UsuarioAutorizaId;
 
         var facturas = new List<Factura> { factura }.AsQueryable();
         var usuarios = new List<Usuario> { usuario }.AsQueryable();
@@ -161,11 +159,11 @@ public class AnularFacturaValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConMotivoVacioONull_DeberiaRetornarError(string motivoInvalido)
+    public async Task Validate_ConMotivoVacioONull_DeberiaRetornarError(string? motivoInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.Motivo = motivoInvalido;
+        command.Motivo = motivoInvalido!;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -254,7 +252,7 @@ public class AnularFacturaValidatorTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task Validate_ConDescripcionDetalladaVacia_NoDeberiaValidarLongitud(string descripcionVacia)
+    public async Task Validate_ConDescripcionDetalladaVacia_NoDeberiaValidarLongitud(string? descripcionVacia)
     {
         // Arrange
         var command = CrearCommandValido();
@@ -291,7 +289,7 @@ public class AnularFacturaValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConTipoAnulacionVacioONull_DeberiaRetornarError(string tipoInvalido)
+    public async Task Validate_ConTipoAnulacionVacioONull_DeberiaRetornarError(string? tipoInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
@@ -591,25 +589,23 @@ public class AnularFacturaValidatorTests
     public async Task Validate_ConCommandCompletoValido_DeberiaSerValido()
     {
         // Arrange
+        var factura = CrearFacturaValida();
+        var usuario = CrearUsuarioValido();
+
         var command = new AnularFacturaCommand
         {
-            FacturaId = Guid.NewGuid(),
-            Motivo = "Anulación solicitada por error en facturación - producto incorrecto",
-            DescripcionDetallada = "El cliente indica que se facturó un producto diferente al solicitado",
-            TipoAnulacion = "SolicitudCliente",
-            Prioridad = 3,
-            UsuarioAutorizaId = Guid.NewGuid(),
+            FacturaId = factura.Id,
+            Motivo = "Anulación solicitada por el cliente debido a error en el pedido",
+            DescripcionDetallada = "El cliente reportó que el pedido no correspondía con lo solicitado. Producto incorrecto entregado.",
+            TipoAnulacion = "Normal",
+            Prioridad = 2,
+            UsuarioAutorizaId = usuario.Id,
             ProcesarDevolucionPago = true,
-            MetodoDevolucion = "Tarjeta",
-            CancelarPuntosFidelizacion = true,
+            MetodoDevolucion = "Efectivo",
+            CancelarPuntosFidelizacion = false,
             NotificarCliente = true,
-            DocumentosAdjuntos = new List<string> { "recibo_original.pdf", "solicitud_cliente.pdf" }
+            DocumentosAdjuntos = new List<string> { "recibo_original.pdf", "foto_producto.jpg" }
         };
-
-        var factura = CrearFacturaValida();
-        factura.Id = command.FacturaId;
-        var usuario = CrearUsuarioValido();
-        usuario.Id = command.UsuarioAutorizaId;
 
         var facturas = new List<Factura> { factura }.AsQueryable();
         var usuarios = new List<Usuario> { usuario }.AsQueryable();
@@ -636,22 +632,20 @@ public class AnularFacturaValidatorTests
     public async Task Validate_ConCommandMinimoValido_DeberiaSerValido()
     {
         // Arrange
+        var factura = CrearFacturaValida();
+        var usuario = CrearUsuarioValido();
+
         var command = new AnularFacturaCommand
         {
-            FacturaId = Guid.NewGuid(),
-            Motivo = "Anulación administrativa requerida",
-            TipoAnulacion = "Administrativa",
+            FacturaId = factura.Id,
+            Motivo = "Error en el pedido del cliente",
+            TipoAnulacion = "Normal",
             Prioridad = 1,
-            UsuarioAutorizaId = Guid.NewGuid(),
+            UsuarioAutorizaId = usuario.Id,
             ProcesarDevolucionPago = false,
             CancelarPuntosFidelizacion = false,
             NotificarCliente = false
         };
-
-        var factura = CrearFacturaValida();
-        factura.Id = command.FacturaId;
-        var usuario = CrearUsuarioValido();
-        usuario.Id = command.UsuarioAutorizaId;
 
         var facturas = new List<Factura> { factura }.AsQueryable();
         var usuarios = new List<Usuario> { usuario }.AsQueryable();

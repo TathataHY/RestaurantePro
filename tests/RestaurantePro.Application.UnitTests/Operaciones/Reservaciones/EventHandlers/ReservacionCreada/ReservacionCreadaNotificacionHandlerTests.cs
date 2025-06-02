@@ -1,35 +1,41 @@
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.EventHandlers.ReservacionCreada;
+
+using ReservacionCreadaEvent = RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion.ReservacionCreada;
 
 /// <summary>
 /// Tests para ReservacionCreadaNotificacionHandler - Confirmaciones automáticas de reservaciones
 /// </summary>
 public class ReservacionCreadaNotificacionHandlerTests
 {
+    private readonly Mock<IReservacionRepository> _mockReservacionRepository;
     private readonly Mock<INotificationService> _mockNotificationService;
     private readonly Mock<IEmailService> _mockEmailService;
     private readonly Mock<ISMSService> _mockSMSService;
     private readonly Mock<IClienteRepository> _mockClienteRepository;
     private readonly Mock<IMesaRepository> _mockMesaRepository;
     private readonly Mock<ILogger<ReservacionCreadaNotificacionHandler>> _mockLogger;
+    private readonly Mock<IMediator> _mockMediator;
     private readonly ReservacionCreadaNotificacionHandler _handler;
 
     public ReservacionCreadaNotificacionHandlerTests()
     {
+        _mockReservacionRepository = new Mock<IReservacionRepository>();
         _mockNotificationService = new Mock<INotificationService>();
         _mockEmailService = new Mock<IEmailService>();
         _mockSMSService = new Mock<ISMSService>();
         _mockClienteRepository = new Mock<IClienteRepository>();
         _mockMesaRepository = new Mock<IMesaRepository>();
         _mockLogger = new Mock<ILogger<ReservacionCreadaNotificacionHandler>>();
+        _mockMediator = new Mock<IMediator>();
         
         _handler = new ReservacionCreadaNotificacionHandler(
-            _mockNotificationService.Object,
-            _mockEmailService.Object,
-            _mockSMSService.Object,
+            _mockReservacionRepository.Object,
             _mockClienteRepository.Object,
             _mockMesaRepository.Object,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockMediator.Object,
+            _mockEmailService.Object,
+            _mockSMSService.Object);
     }
 
     [Fact]
@@ -41,7 +47,7 @@ public class ReservacionCreadaNotificacionHandlerTests
         var mesaId = Guid.NewGuid();
         var fechaReservacion = DateTime.Today.AddDays(1).AddHours(19); // Mañana a las 7 PM
         var numeroPersonas = 4;
-        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion, numeroPersonas);
+        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion.Date, fechaReservacion.TimeOfDay, numeroPersonas);
 
         var cliente = CreateMockCliente(clienteId, "Luis Reservador", "luis@email.com", "+1234567890");
         var mesa = CreateMockMesa(mesaId, 4, 15); // Mesa 15 para 4 personas
@@ -52,15 +58,13 @@ public class ReservacionCreadaNotificacionHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
-        _mockEmailService.Setup(x => x.EnviarConfirmacionReservacionAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockEmailService.Setup(x => x.SendHtmlEmailAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
-        _mockSMSService.Setup(x => x.EnviarRecordatorioReservacionAsync(
-                It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockSMSService.Setup(x => x.SendSMSWithTrackingAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -70,28 +74,19 @@ public class ReservacionCreadaNotificacionHandlerTests
         _mockMesaRepository.Verify(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()), Times.Once);
         
         // Verificar envío de Email de confirmación
-        _mockEmailService.Verify(x => x.EnviarConfirmacionReservacionAsync(
-            "luis@email.com",
-            "Luis Reservador",
-            fechaReservacion,
-            numeroPersonas,
-            15, // número de mesa
-            It.IsAny<CancellationToken>()), Times.Once);
+        _mockEmailService.Verify(x => x.SendHtmlEmailAsync(
+            "luis@email.com", It.IsAny<string>(), It.IsAny<string>()), Times.Once);
 
         // Verificar envío de SMS recordatorio
-        _mockSMSService.Verify(x => x.EnviarRecordatorioReservacionAsync(
-            "+1234567890",
-            fechaReservacion,
-            numeroPersonas,
-            15, // número de mesa
-            It.IsAny<CancellationToken>()), Times.Once);
+        _mockSMSService.Verify(x => x.SendSMSWithTrackingAsync(
+            "+1234567890", It.IsAny<string>(), clienteId, "ConfirmacionReservacion"), Times.Once);
 
         // Verificar notificación interna al personal
         _mockNotificationService.Verify(x => x.EnviarNotificacionAsync(
-            It.Is<string>(msg => msg.Contains("Nueva reservación confirmada")),
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
-            NivelPrioridad.Media,
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<string>(),
+            It.IsAny<string>()), Times.Once);
 
         // Debería loggear confirmación exitosa
         _mockLogger.Verify(
@@ -113,7 +108,7 @@ public class ReservacionCreadaNotificacionHandlerTests
         var mesaId = Guid.NewGuid();
         var fechaReservacion = DateTime.Today.AddDays(1).AddHours(20);
         var numeroPersonas = 2;
-        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion, numeroPersonas);
+        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion.Date, fechaReservacion.TimeOfDay, numeroPersonas);
 
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Cliente)null!); // Cliente no encontrado
@@ -123,8 +118,8 @@ public class ReservacionCreadaNotificacionHandlerTests
 
         // Assert
         _mockClienteRepository.Verify(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()), Times.Once);
-        _mockEmailService.Verify(x => x.EnviarConfirmacionReservacionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
-        _mockSMSService.Verify(x => x.EnviarRecordatorioReservacionAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockEmailService.Verify(x => x.SendHtmlEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockSMSService.Verify(x => x.SendSMSWithTrackingAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>()), Times.Never);
 
         // Debería loggear advertencia
         _mockLogger.Verify(
@@ -146,7 +141,7 @@ public class ReservacionCreadaNotificacionHandlerTests
         var mesaId = Guid.NewGuid();
         var fechaReservacion = DateTime.Today.AddDays(1).AddHours(18);
         var numeroPersonas = 6;
-        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion, numeroPersonas);
+        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion.Date, fechaReservacion.TimeOfDay, numeroPersonas);
 
         var cliente = CreateMockCliente(clienteId, "María Mesa", "maria@email.com", "+9876543210");
         
@@ -163,13 +158,8 @@ public class ReservacionCreadaNotificacionHandlerTests
         _mockMesaRepository.Verify(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()), Times.Once);
 
         // Debería enviar notificaciones pero sin número de mesa específico
-        _mockEmailService.Verify(x => x.EnviarConfirmacionReservacionAsync(
-            "maria@email.com",
-            "María Mesa",
-            fechaReservacion,
-            numeroPersonas,
-            0, // Sin número de mesa
-            It.IsAny<CancellationToken>()), Times.Once);
+        _mockEmailService.Verify(x => x.SendHtmlEmailAsync(
+            "maria@email.com", It.IsAny<string>(), It.IsAny<string>()), Times.Once);
 
         // Debería loggear advertencia sobre mesa no encontrada
         _mockLogger.Verify(
@@ -191,7 +181,7 @@ public class ReservacionCreadaNotificacionHandlerTests
         var mesaId = Guid.NewGuid();
         var fechaReservacion = DateTime.Today.AddDays(2).AddHours(21);
         var numeroPersonas = 3;
-        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion, numeroPersonas);
+        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion.Date, fechaReservacion.TimeOfDay, numeroPersonas);
 
         var cliente = CreateMockCliente(clienteId, "Carlos Sin Email", null, "+1234567890"); // Sin email
         var mesa = CreateMockMesa(mesaId, 4, 8);
@@ -202,21 +192,20 @@ public class ReservacionCreadaNotificacionHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
-        _mockSMSService.Setup(x => x.EnviarRecordatorioReservacionAsync(
-                It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockSMSService.Setup(x => x.SendSMSWithTrackingAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
         // No debe enviar email
-        _mockEmailService.Verify(x => x.EnviarConfirmacionReservacionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockEmailService.Verify(x => x.SendHtmlEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         
         // Debe enviar SMS
-        _mockSMSService.Verify(x => x.EnviarRecordatorioReservacionAsync(
-            "+1234567890", fechaReservacion, numeroPersonas, 8, It.IsAny<CancellationToken>()), Times.Once);
+        _mockSMSService.Verify(x => x.SendSMSWithTrackingAsync(
+            "+1234567890", It.IsAny<string>(), clienteId, "ConfirmacionReservacion"), Times.Once);
 
         // Debería loggear que no hay email
         _mockLogger.Verify(
@@ -238,7 +227,7 @@ public class ReservacionCreadaNotificacionHandlerTests
         var mesaId = Guid.NewGuid();
         var fechaReservacion = DateTime.Today.AddDays(3).AddHours(19);
         var numeroPersonas = 5;
-        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion, numeroPersonas);
+        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion.Date, fechaReservacion.TimeOfDay, numeroPersonas);
 
         var cliente = CreateMockCliente(clienteId, "Ana Sin Teléfono", "ana@email.com", null); // Sin teléfono
         var mesa = CreateMockMesa(mesaId, 6, 12);
@@ -249,21 +238,23 @@ public class ReservacionCreadaNotificacionHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
-        _mockEmailService.Setup(x => x.EnviarConfirmacionReservacionAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockEmailService.Setup(x => x.SendHtmlEmailAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+
+        _mockSMSService.Setup(x => x.SendSMSWithTrackingAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
         // Debe enviar email
-        _mockEmailService.Verify(x => x.EnviarConfirmacionReservacionAsync(
-            "ana@email.com", "Ana Sin Teléfono", fechaReservacion, numeroPersonas, 12, It.IsAny<CancellationToken>()), Times.Once);
+        _mockEmailService.Verify(x => x.SendHtmlEmailAsync(
+            "ana@email.com", It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         
         // No debe enviar SMS
-        _mockSMSService.Verify(x => x.EnviarRecordatorioReservacionAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockSMSService.Verify(x => x.SendSMSWithTrackingAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>()), Times.Never);
 
         // Debería loggear que no hay teléfono
         _mockLogger.Verify(
@@ -289,7 +280,7 @@ public class ReservacionCreadaNotificacionHandlerTests
         var clienteId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var fechaReservacion = DateTime.Today.AddDays(1).AddHours(20);
-        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion, numeroPersonas);
+        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion.Date, fechaReservacion.TimeOfDay, numeroPersonas);
 
         var cliente = CreateMockCliente(clienteId, "Cliente Test", "test@email.com", "+1234567890");
         var mesa = CreateMockMesa(mesaId, numeroPersonas, 1);
@@ -300,21 +291,21 @@ public class ReservacionCreadaNotificacionHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
-        _mockEmailService.Setup(x => x.EnviarConfirmacionReservacionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockEmailService.Setup(x => x.SendHtmlEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
-        _mockSMSService.Setup(x => x.EnviarRecordatorioReservacionAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockSMSService.Setup(x => x.SendSMSWithTrackingAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
         _mockNotificationService.Verify(x => x.EnviarNotificacionAsync(
+            It.IsAny<Guid>(),
             It.IsAny<string>(),
             It.IsAny<string>(),
-            prioridadEsperada,
-            It.IsAny<CancellationToken>()), Times.Once);
+            prioridadEsperada.ToString()), Times.Once);
     }
 
     [Fact]
@@ -326,7 +317,7 @@ public class ReservacionCreadaNotificacionHandlerTests
         var mesaId = Guid.NewGuid();
         var fechaReservacion = DateTime.Today.AddHours(20); // Hoy mismo - urgente
         var numeroPersonas = 4;
-        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion, numeroPersonas);
+        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion.Date, fechaReservacion.TimeOfDay, numeroPersonas);
 
         var cliente = CreateMockCliente(clienteId, "Cliente Urgente", "urgente@email.com", "+9999999999");
         var mesa = CreateMockMesa(mesaId, 4, 5);
@@ -337,11 +328,11 @@ public class ReservacionCreadaNotificacionHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
-        _mockEmailService.Setup(x => x.EnviarConfirmacionReservacionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockEmailService.Setup(x => x.SendHtmlEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
-        _mockSMSService.Setup(x => x.EnviarRecordatorioReservacionAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockSMSService.Setup(x => x.SendSMSWithTrackingAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -349,10 +340,10 @@ public class ReservacionCreadaNotificacionHandlerTests
         // Assert
         // Debería enviar notificación de prioridad alta para reservaciones del mismo día
         _mockNotificationService.Verify(x => x.EnviarNotificacionAsync(
+            It.IsAny<Guid>(),
             It.Is<string>(msg => msg.Contains("URGENTE") || msg.Contains("mismo día")),
             It.IsAny<string>(),
-            NivelPrioridad.Alta,
-            It.IsAny<CancellationToken>()), Times.Once);
+            "Alta"), Times.Once);
 
         _mockLogger.Verify(
             x => x.Log(
@@ -373,7 +364,7 @@ public class ReservacionCreadaNotificacionHandlerTests
         var mesaId = Guid.NewGuid();
         var fechaReservacion = DateTime.Today.AddDays(1).AddHours(19);
         var numeroPersonas = 4;
-        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion, numeroPersonas);
+        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion.Date, fechaReservacion.TimeOfDay, numeroPersonas);
 
         var cliente = CreateMockCliente(clienteId, "Cliente Error", "error@email.com", "+1234567890");
         var mesa = CreateMockMesa(mesaId, 4, 10);
@@ -384,15 +375,13 @@ public class ReservacionCreadaNotificacionHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
-        _mockEmailService.Setup(x => x.EnviarConfirmacionReservacionAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure("Error enviando email"));
+        _mockEmailService.Setup(x => x.SendHtmlEmailAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
 
-        _mockSMSService.Setup(x => x.EnviarRecordatorioReservacionAsync(
-                It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockSMSService.Setup(x => x.SendSMSWithTrackingAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         // No debería lanzar excepción, solo loggear el error
@@ -409,8 +398,8 @@ public class ReservacionCreadaNotificacionHandlerTests
             Times.Once);
 
         // SMS debería enviarse exitosamente
-        _mockSMSService.Verify(x => x.EnviarRecordatorioReservacionAsync(
-            "+1234567890", fechaReservacion, numeroPersonas, 10, It.IsAny<CancellationToken>()), Times.Once);
+        _mockSMSService.Verify(x => x.SendSMSWithTrackingAsync(
+            "+1234567890", It.IsAny<string>(), clienteId, "ConfirmacionReservacion"), Times.Once);
     }
 
     [Fact]
@@ -422,7 +411,7 @@ public class ReservacionCreadaNotificacionHandlerTests
         var mesaId = Guid.NewGuid();
         var fechaReservacion = DateTime.Today.AddDays(1).AddHours(19);
         var numeroPersonas = 4;
-        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion, numeroPersonas);
+        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion.Date, fechaReservacion.TimeOfDay, numeroPersonas);
 
         var cancellationTokenSource = new CancellationTokenSource();
         cancellationTokenSource.Cancel();
@@ -444,7 +433,7 @@ public class ReservacionCreadaNotificacionHandlerTests
         var mesaId = Guid.NewGuid();
         var fechaReservacion = new DateTime(2025, 1, 18, 20, 0, 0); // 18 Enero 2025, 8 PM
         var numeroPersonas = 6;
-        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion, numeroPersonas);
+        var evento = new ReservacionCreadaEvent(reservacionId, clienteId, mesaId, fechaReservacion.Date, fechaReservacion.TimeOfDay, numeroPersonas);
 
         var cliente = CreateMockCliente(clienteId, "Roberto Contexto", "roberto@email.com", "+5554433221");
         var mesa = CreateMockMesa(mesaId, 6, 22);
@@ -455,11 +444,13 @@ public class ReservacionCreadaNotificacionHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
-        _mockEmailService.Setup(x => x.EnviarConfirmacionReservacionAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockEmailService.Setup(x => x.SendHtmlEmailAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
-        _mockSMSService.Setup(x => x.EnviarRecordatorioReservacionAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockSMSService.Setup(x => x.SendSMSWithTrackingAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -496,22 +487,25 @@ public class ReservacionCreadaNotificacionHandlerTests
     // Helper methods para crear mocks
     private static Cliente CreateMockCliente(Guid id, string nombre, string? email, string? telefono)
     {
-        var cliente = new Mock<Cliente>();
-        cliente.SetupGet(x => x.Id).Returns(id);
-        cliente.SetupGet(x => x.NombreCompleto).Returns(nombre);
-        cliente.SetupGet(x => x.Email).Returns(email);
-        cliente.SetupGet(x => x.Telefono).Returns(telefono);
-        cliente.Setup(x => x.TieneEmail()).Returns(!string.IsNullOrEmpty(email));
-        cliente.Setup(x => x.TieneTelefono()).Returns(!string.IsNullOrEmpty(telefono));
-        return cliente.Object;
+        var cliente = Cliente.Crear(
+            ClienteNombre.Crear("Juan", "Pérez"), 
+            email ?? "test@email.com", 
+            telefono ?? "+1234567890",
+            new DateTime(1990, 1, 1)); // Usar el método de fábrica real
+        
+        // Configurar el ID usando reflexión si es necesario
+        typeof(EntityBase).GetProperty("Id")?.SetValue(cliente, id);
+        
+        return cliente;
     }
 
     private static Mesa CreateMockMesa(Guid id, int capacidad, int numero)
     {
-        var mesa = new Mock<Mesa>();
-        mesa.SetupGet(x => x.Id).Returns(id);
-        mesa.SetupGet(x => x.Capacidad).Returns(capacidad);
-        mesa.SetupGet(x => x.Numero).Returns(numero);
-        return mesa.Object;
+        var mesa = Mesa.Crear(numero, capacidad, "Interior"); // Usar la firma correcta con 3 parámetros
+        
+        // Configurar el ID usando reflexión si es necesario  
+        typeof(EntityBase).GetProperty("Id")?.SetValue(mesa, id);
+        
+        return mesa;
     }
 } 

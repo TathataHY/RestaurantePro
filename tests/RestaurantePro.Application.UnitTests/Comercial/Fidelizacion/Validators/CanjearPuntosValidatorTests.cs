@@ -305,7 +305,7 @@ public class CanjearPuntosValidatorTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task Validate_ConMotivoVacio_NoDeberiaValidarLongitud(string motivoVacio)
+    public async Task Validate_ConMotivoVacio_NoDeberiaValidarLongitud(string? motivoVacio)
     {
         // Arrange
         var commandBase = CrearCommandValido();

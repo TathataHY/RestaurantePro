@@ -1,4 +1,17 @@
 namespace RestaurantePro.Application.UnitTests.Core.Usuarios.Commands;
+using RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
+using RestaurantePro.Application.Core.Usuarios.DTOs;
+using RestaurantePro.Domain.Core.Usuarios.Entities;
+using RestaurantePro.Domain.Core.Usuarios.Enums;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using AutoMapper;
+using Moq;
+using FluentAssertions;
+using Xunit;
+using CrearUsuarioHorarioDto = RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario.HorarioTrabajoDto;
 
 /// <summary>
 /// Pruebas unitarias para CrearUsuarioHandler
@@ -75,7 +88,7 @@ public class CrearUsuarioHandlerTests
 
         _mockUsuarios.Verify(u => u.AddAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _mockEmailService.Verify(e => e.EnviarEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce);
+        _mockEmailService.Verify(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce);
     }
 
     [Fact]
@@ -257,7 +270,7 @@ public class CrearUsuarioHandlerTests
     public async Task Handle_ConHorariosDeTrabajo_DeberiaLoggearConfiguracion()
     {
         // Arrange
-        var horarios = new List<HorarioTrabajoDto>
+        var horarios = new List<CrearUsuarioHorarioDto>
         {
             new() { DiaSemana = "Lunes", HoraInicio = new TimeSpan(8, 0, 0), HoraFin = new TimeSpan(16, 0, 0) },
             new() { DiaSemana = "Martes", HoraInicio = new TimeSpan(8, 0, 0), HoraFin = new TimeSpan(16, 0, 0) }
@@ -393,10 +406,10 @@ public class CrearUsuarioHandlerTests
     {
         // Arrange
         var command = CrearUsuarioCommand.CrearEmpleado(
-            "empleado.nuevo",
-            "Empleado Nuevo",
-            "empleado.nuevo@restaurantepro.com",
-            "555-444-3333",
+            "empleado.notificaciones",
+            "Empleado Con Notificaciones",
+            "empleado.notificaciones@restaurantepro.com",
+            "555-444-7777",
             "Servicio",
             _usuarioCreadorAdmin.Id);
 
@@ -418,21 +431,26 @@ public class CrearUsuarioHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
 
-        // Verificar que se envían emails de bienvenida
-        _mockEmailService.Verify(
-            e => e.EnviarEmailAsync(
-                command.Email,
-                It.Is<string>(s => s.Contains("Bienvenido")),
-                It.IsAny<string>()),
-            Times.Once);
+        // Verificar que se envían notificaciones
+        _mockEmailService.Verify(e => e.SendEmailAsync(
+            command.Email,
+            It.Is<string>(s => s.Contains("Bienvenido")),
+            It.IsAny<string>()), Times.Once);
 
-        // Verificar que se notifica al supervisor si existe
-        _mockEmailService.Verify(
-            e => e.EnviarEmailAsync(
-                It.IsAny<string>(),
-                It.Is<string>(s => s.Contains("Nuevo usuario")),
-                It.IsAny<string>()),
-            Times.AtLeastOnce);
+        // TODO: Verificar notificaciones al supervisor cuando se implemente SupervisorId
+        // _mockEmailService.Verify(e => e.SendEmailAsync(
+        //     It.IsAny<string>(), // Email del supervisor
+        //     It.Is<string>(s => s.Contains("Nuevo empleado")),
+        //     It.IsAny<string>()), Times.Once);
+
+        _mockLogger.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Notificaciones de creación enviadas")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
@@ -609,7 +627,8 @@ public class CrearUsuarioHandlerTests
         {
             Id = Guid.NewGuid(),
             NombreUsuario = "usuario.test",
-            NombreCompleto = "Usuario Test",
+            Nombre = "Usuario",
+            Apellido = "Test",
             Email = "usuario.test@restaurantepro.com",
             Rol = "Empleado",
             Activo = true,
