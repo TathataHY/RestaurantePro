@@ -252,8 +252,11 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConObservacionesEnLimiteMaximo_NoDeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.ObservacionesComanda = new string('A', 1000); // Exactamente 1000 caracteres
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            observaciones: new string('A', 1000) // Exactamente 1000 caracteres
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -271,8 +274,11 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConObservacionesVacias_NoDeberiaValidarLongitud(string observacionesVacias)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.ObservacionesComanda = observacionesVacias;
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            observaciones: observacionesVacias
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -294,8 +300,11 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPuntosAUtilizarMenorOIgualACero_DeberiaRetornarError(int puntosInvalidos)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = puntosInvalidos;
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            puntosAUtilizar: puntosInvalidos
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -311,8 +320,11 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPuntosAUtilizarExcesivos_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = 10001; // Más de 10,000 puntos
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            puntosAUtilizar: 10001 // Más de 10,000 puntos
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -331,9 +343,12 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPuntosAUtilizarValidos_NoDeberiaRetornarErrorDePuntos(int puntosValidos)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = puntosValidos;
-        command.ClienteId = Guid.NewGuid(); // Necesario cuando se usan puntos
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            clienteId: Guid.NewGuid(),
+            puntosAUtilizar: puntosValidos
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -347,8 +362,11 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPuntosAUtilizarNull_NoDeberiaValidar()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = null;
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            puntosAUtilizar: null
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -366,9 +384,12 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPuntosSinCliente_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = 500;
-        command.ClienteId = Guid.Empty; // Sin cliente
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            clienteId: null,
+            puntosAUtilizar: 500
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -384,9 +405,12 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPuntosYClienteValido_NoDeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = 500;
-        command.ClienteId = Guid.NewGuid();
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            clienteId: Guid.NewGuid(),
+            puntosAUtilizar: 500
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -400,9 +424,12 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_SinPuntosYSinCliente_NoDeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = null;
-        command.ClienteId = Guid.Empty;
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            clienteId: null,
+            puntosAUtilizar: null
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -514,8 +541,11 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConDiferentesObservaciones_DeberiaSerValido(string observaciones)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.ObservacionesComanda = observaciones;
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            observaciones: observaciones
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -528,8 +558,7 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPedidoGrande_DeberiaSerValido()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.Items = Enumerable.Range(1, 30) // 30 items (dentro del límite)
+        var items = Enumerable.Range(1, 30) // 30 items (dentro del límite)
             .Select(i => new ItemPedido
             {
                 ProductoId = Guid.NewGuid(),
@@ -538,6 +567,11 @@ public class ProcesarPedidoCompletoValidatorTests
                 PrecioUnitario = 15.00m + i
             })
             .ToList();
+
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: items
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -550,10 +584,13 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConClienteFrecuente_DeberiaSerValido()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.ClienteId = Guid.NewGuid();
-        command.PuntosAUtilizar = 2500; // Cliente frecuente con muchos puntos
-        command.ObservacionesComanda = "Cliente VIP - descuento por fidelidad";
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            clienteId: Guid.NewGuid(),
+            observaciones: "Cliente VIP - descuento por fidelidad",
+            puntosAUtilizar: 2500
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -566,9 +603,12 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConPedidoSinPuntos_DeberiaSerValido()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = null;
-        command.ClienteId = null;
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            clienteId: null,
+            puntosAUtilizar: null
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -589,8 +629,12 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConDiferentesLongitudesObservaciones_DeberiaValidarCorrectamente(int longitud, bool deberiaSerValido)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.ObservacionesComanda = new string('O', longitud);
+        var observaciones = new string('O', longitud);
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            observaciones: observaciones
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -619,9 +663,12 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConDiferentesCantidadesPuntos_DeberiaValidarCorrectamente(int puntos, bool deberiaSerValido)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = puntos;
-        command.ClienteId = Guid.NewGuid(); // Necesario para usar puntos
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            clienteId: Guid.NewGuid(),
+            puntosAUtilizar: puntos
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -646,8 +693,11 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConObservacionesCaracteresEspeciales_DeberiaSerValido()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.ObservacionesComanda = "Mesa #15 - Cliente: Pérez & Co. - Descuento: 10% - Nota: ¡Excelente servicio!";
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            observaciones: "Mesa #15 - Cliente: Pérez & Co. - Descuento: 10% - Nota: ¡Excelente servicio!"
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -660,8 +710,11 @@ public class ProcesarPedidoCompletoValidatorTests
     public async Task Validate_ConObservacionesEmojis_DeberiaSerValido()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.ObservacionesComanda = "Pedido especial 🍕 Cliente feliz 😊 Servicio premium ⭐";
+        var command = ComandasProcesarPedidoCommand.Crear(
+            meseroId: Guid.NewGuid(),
+            items: new List<ItemPedido> { CrearItemValido() },
+            observaciones: "Pedido especial 🍕 Cliente feliz 😊 Servicio premium ⭐"
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);

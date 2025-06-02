@@ -11,6 +11,7 @@ public class CachingBehaviorTests
     private readonly CachingBehavior<ObtenerProductoPorIdQuery, Result<ProductoDto>> _queryBehavior;
     private readonly Mock<ILogger<CachingBehavior<CrearProductoCommand, Result<ProductoDto>>>> _mockCommandLogger;
     private readonly CachingBehavior<CrearProductoCommand, Result<ProductoDto>> _commandBehavior;
+    private readonly Mock<ILogger<CachingBehavior<ObtenerProductosPaginadosQuery, Result<PaginatedList<ProductoDto>>>>> _mockPaginatedLogger;
 
     public CachingBehaviorTests()
     {
@@ -20,6 +21,8 @@ public class CachingBehaviorTests
 
         _mockCommandLogger = new Mock<ILogger<CachingBehavior<CrearProductoCommand, Result<ProductoDto>>>>();
         _commandBehavior = new CachingBehavior<CrearProductoCommand, Result<ProductoDto>>(_mockCommandLogger.Object, _mockMemoryCache.Object);
+        
+        _mockPaginatedLogger = new Mock<ILogger<CachingBehavior<ObtenerProductosPaginadosQuery, Result<PaginatedList<ProductoDto>>>>>();
     }
 
     [Fact]
@@ -52,7 +55,7 @@ public class CachingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("📝 Cache MISS")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
             Times.Once);
 
         // Verificar logging de guardado en cache
@@ -62,7 +65,7 @@ public class CachingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("💾 Guardado en caché")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
             Times.Once);
     }
 
@@ -104,7 +107,7 @@ public class CachingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("📚 Cache HIT")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
             Times.Once);
     }
 
@@ -141,7 +144,7 @@ public class CachingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cache")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
             Times.Never);
     }
 
@@ -302,7 +305,7 @@ public class CachingBehaviorTests
         };
 
         var expectedResult = Result.Success(new PaginatedList<ProductoDto>(new List<ProductoDto>(), 0, 1, 20));
-        var queryBehaviorPaginado = new CachingBehavior<ObtenerProductosPaginadosQuery, Result<PaginatedList<ProductoDto>>>(_mockLogger.Object, _mockMemoryCache.Object);
+        var queryBehaviorPaginado = new CachingBehavior<ObtenerProductosPaginadosQuery, Result<PaginatedList<ProductoDto>>>(_mockPaginatedLogger.Object, _mockMemoryCache.Object);
         
         RequestHandlerDelegate<Result<PaginatedList<ProductoDto>>> nextDelegate = _ => Task.FromResult(expectedResult);
 
@@ -368,7 +371,7 @@ public class CachingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("📝 Cache MISS")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
             Times.Once);
 
         _mockLogger.Verify(
@@ -377,7 +380,7 @@ public class CachingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("📚 Cache HIT")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
             Times.Exactly(2));
     }
 

@@ -37,8 +37,16 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConComandaIdVacia_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { ComandaId = Guid.Empty };
+        // No podemos usar el factory con ComandaId vacío porque lanza excepción
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.Empty,
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = "Test observaciones",
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = DateTime.UtcNow
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -73,8 +81,16 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConUsuarioIdVacio_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { UsuarioId = Guid.Empty };
+        // No podemos usar el factory con UsuarioId vacío porque lanza excepción
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.Empty,
+            ObservacionesFinalizacion = "Test observaciones",
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = DateTime.UtcNow
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -109,8 +125,16 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConObservacionesMuyLargas_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { ObservacionesFinalizacion = new string('A', 501) }; // Más de 500 caracteres
+        var observacionesLargas = new string('A', 501); // Más de 500 caracteres
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = observacionesLargas,
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = DateTime.UtcNow
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -130,8 +154,11 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConObservacionesValidas_NoDeberiaRetornarErrorDeObservaciones(string observacionesValidas)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { ObservacionesFinalizacion = observacionesValidas };
+        var command = FinalizarComandaCommand.Crear(
+            comandaId: Guid.NewGuid(),
+            usuarioId: Guid.NewGuid(),
+            observaciones: observacionesValidas
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -148,8 +175,11 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConObservacionesVacias_NoDeberiaValidarLongitud(string observacionesVacias)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { ObservacionesFinalizacion = observacionesVacias };
+        var command = FinalizarComandaCommand.Crear(
+            comandaId: Guid.NewGuid(),
+            usuarioId: Guid.NewGuid(),
+            observaciones: observacionesVacias
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -163,8 +193,16 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConObservacionesEnLimiteMaximo_NoDeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { ObservacionesFinalizacion = new string('A', 500) }; // Exactamente 500 caracteres
+        var observacionesEnLimite = new string('A', 500); // Exactamente 500 caracteres
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = observacionesEnLimite,
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = DateTime.UtcNow
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -182,8 +220,16 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConFechaEnFuturo_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { FechaFinalizacion = DateTime.UtcNow.AddHours(1) }; // 1 hora en el futuro
+        var fechaFutura = DateTime.UtcNow.AddHours(1); // 1 hora en el futuro
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = "Test observaciones",
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = fechaFutura
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -200,8 +246,16 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConFechaEnFuturoLimite_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { FechaFinalizacion = DateTime.UtcNow.AddMinutes(10) }; // Más de 5 minutos en el futuro
+        var fechaFuturaLimite = DateTime.UtcNow.AddMinutes(10); // Más de 5 minutos en el futuro
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = "Test observaciones",
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = fechaFuturaLimite
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -221,8 +275,16 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConFechaValida_NoDeberiaRetornarErrorDeFechaFutura(int minutosDesdeAhora)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { FechaFinalizacion = DateTime.UtcNow.AddMinutes(minutosDesdeAhora) };
+        var fechaValida = DateTime.UtcNow.AddMinutes(minutosDesdeAhora);
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = "Test observaciones",
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = fechaValida
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -240,8 +302,16 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConFechaMuyAntigua_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { FechaFinalizacion = DateTime.UtcNow.AddHours(-25) }; // Más de 24 horas atrás
+        var fechaAntigua = DateTime.UtcNow.AddHours(-25); // Más de 24 horas atrás
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = "Test observaciones",
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = fechaAntigua
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -262,8 +332,16 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConFechaEnRangoValido_NoDeberiaRetornarErrorDeFechaPasada(int horasDesdeAhora)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { FechaFinalizacion = DateTime.UtcNow.AddHours(horasDesdeAhora) };
+        var fechaEnRango = DateTime.UtcNow.AddHours(horasDesdeAhora);
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = "Test observaciones",
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = fechaEnRango
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -281,8 +359,15 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConFechaNull_NoDeberiaValidarFecha()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { FechaFinalizacion = null };
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = "Test observaciones",
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = null
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -375,8 +460,11 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConDiferentesObservaciones_DeberiaSerValido(string observaciones)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { ObservacionesFinalizacion = observaciones };
+        var command = FinalizarComandaCommand.Crear(
+            comandaId: Guid.NewGuid(),
+            usuarioId: Guid.NewGuid(),
+            observaciones: observaciones
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -389,12 +477,15 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConFinalizacionInmediata_DeberiaSerValido()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with 
-        { 
-            FechaFinalizacion = DateTime.UtcNow,
+        var fechaInmediata = DateTime.UtcNow;
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = "Finalización inmediata",
             ValidarTodosItemsListos = true,
-            NotificarMesero = true
+            NotificarMesero = true,
+            FechaFinalizacion = fechaInmediata
         };
 
         // Act
@@ -408,12 +499,14 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConFinalizacionSinValidaciones_DeberiaSerValido()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with 
-        { 
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = "Finalización rápida",
             ValidarTodosItemsListos = false,
             NotificarMesero = false,
-            ObservacionesFinalizacion = "Finalización rápida"
+            FechaFinalizacion = DateTime.UtcNow
         };
 
         // Act
@@ -435,8 +528,16 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConDiferentesLongitudesObservaciones_DeberiaValidarCorrectamente(int longitud, bool deberiaSerValido)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { ObservacionesFinalizacion = new string('O', longitud) };
+        var observaciones = new string('O', longitud);
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = observaciones,
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = DateTime.UtcNow
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -459,8 +560,16 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConFechaExactamenteEn5Minutos_NoDeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { FechaFinalizacion = DateTime.UtcNow.AddMinutes(5) }; // Exactamente en el límite
+        var fechaLimite = DateTime.UtcNow.AddMinutes(5); // Exactamente en el límite
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = "Test en límite",
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = fechaLimite
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -474,8 +583,16 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConFechaExactamenteEn24Horas_NoDeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command = command with { FechaFinalizacion = DateTime.UtcNow.AddHours(-24) }; // Exactamente en el límite
+        var fechaLimitePasado = DateTime.UtcNow.AddHours(-24); // Exactamente en el límite
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = "Test en límite pasado",
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true,
+            FechaFinalizacion = fechaLimitePasado
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);

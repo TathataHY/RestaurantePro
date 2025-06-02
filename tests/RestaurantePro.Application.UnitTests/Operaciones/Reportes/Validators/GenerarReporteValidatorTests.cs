@@ -48,12 +48,22 @@ public class GenerarReporteValidatorTests
 
     private void ConfigurarUsuarioExistente(Guid usuarioId, List<RolUsuario> roles, bool esAdministrador = false)
     {
-        var usuario = new Usuario
+        // Crear usuario con el primer rol de la lista o con un rol por defecto
+        var rolPrincipal = roles.FirstOrDefault();
+        if (rolPrincipal == default)
+            rolPrincipal = RolUsuario.Cajero;
+            
+        var usuario = Usuario.Crear("testuser", "Test User", "test@test.com", rolPrincipal);
+        
+        // Usar reflexión para asignar el Id ya que es de solo lectura
+        var idProperty = typeof(Usuario).BaseType.GetProperty("Id");
+        idProperty?.SetValue(usuario, usuarioId);
+        
+        // Asignar roles adicionales si hay más de uno
+        foreach (var rol in roles.Skip(1))
         {
-            Id = usuarioId,
-            Roles = roles,
-            EsAdministrador = esAdministrador
-        };
+            usuario.AsignarRol(rol);
+        }
 
         var usuarios = new List<Usuario> { usuario }.AsQueryable();
         _usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);

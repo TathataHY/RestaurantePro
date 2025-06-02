@@ -16,11 +16,10 @@ public class RetryBehaviorTests
         
         var retrySettings = new RetrySettings
         {
-            MaxRetryAttempts = 3,
-            BaseDelayMilliseconds = 100,
-            MaxDelayMilliseconds = 30000,
-            UseExponentialBackoff = true,
-            UseJitter = true
+            MaxAttempts = 3,
+            BaseDelayMs = 100,
+            MaxDelayMs = 30000,
+            Enabled = true
         };
         
         _mockRetrySettings.Setup(x => x.Value).Returns(retrySettings);
@@ -249,10 +248,9 @@ public class RetryBehaviorTests
         // Arrange
         var customSettings = new RetrySettings
         {
-            MaxRetryAttempts = 2, // Solo 2 reintentos
-            BaseDelayMilliseconds = 50,
-            UseExponentialBackoff = false,
-            UseJitter = false
+            MaxAttempts = 2, // Solo 2 reintentos
+            BaseDelayMs = 50,
+            Enabled = true
         };
         
         var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
@@ -299,9 +297,9 @@ public class RetryBehaviorTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Reintento")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Reintentando")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
             Times.AtLeastOnce);
     }
 
@@ -334,7 +332,7 @@ public class RetryBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Pizza Compleja")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
             Times.AtLeastOnce);
     }
 
@@ -373,7 +371,7 @@ public class RetryBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains($"Reintento {numeroReintento}")),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
             Times.Once);
     }
 } 

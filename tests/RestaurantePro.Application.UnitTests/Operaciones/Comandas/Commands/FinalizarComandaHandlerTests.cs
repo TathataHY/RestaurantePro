@@ -74,7 +74,14 @@ public class FinalizarComandaHandlerTests
         var comandaId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
         
-        var command = FinalizarComandaCommand.Crear(comandaId, usuarioId, "Finalización directa");
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = usuarioId,
+            ObservacionesFinalizacion = "Finalización directa",
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true
+        };
 
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.Creada);
         var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 42.75m);
@@ -105,11 +112,14 @@ public class FinalizarComandaHandlerTests
         var comandaId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
         
-        var command = FinalizarComandaCommand.FinalizarSinValidacion(
-            comandaId, 
-            usuarioId, 
-            "Cierre de turno",
-            "Items parcialmente completados");
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = usuarioId,
+            ObservacionesFinalizacion = "Finalizada sin validación: Cierre de turno - Items parcialmente completados",
+            ValidarTodosItemsListos = false,
+            NotificarMesero = true
+        };
 
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.EnProceso);
         var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 67.25m);
@@ -141,10 +151,14 @@ public class FinalizarComandaHandlerTests
         var comandaId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
         
-        var command = FinalizarComandaCommand.FinalizarSilencioso(
-            comandaId, 
-            usuarioId, 
-            "Finalización automática del sistema");
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = usuarioId,
+            ObservacionesFinalizacion = "Finalización automática del sistema",
+            ValidarTodosItemsListos = true,
+            NotificarMesero = false
+        };
 
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.EnProceso);
         var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 91.00m);
@@ -181,7 +195,8 @@ public class FinalizarComandaHandlerTests
             ComandaId = comandaId,
             UsuarioId = usuarioId,
             ObservacionesFinalizacion = observaciones,
-            NotificarMesero = false
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true
         };
 
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.EnProceso);
@@ -213,7 +228,14 @@ public class FinalizarComandaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var command = FinalizarComandaCommand.Crear(comandaId, Guid.NewGuid());
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = null,
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true
+        };
 
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
             .ReturnsAsync((Comanda)null);
@@ -234,7 +256,14 @@ public class FinalizarComandaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var command = FinalizarComandaCommand.Crear(comandaId, Guid.NewGuid());
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = null,
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true
+        };
 
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.Finalizada);
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
@@ -256,7 +285,14 @@ public class FinalizarComandaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var command = FinalizarComandaCommand.Crear(comandaId, Guid.NewGuid());
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = null,
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true
+        };
 
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.Cancelada);
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
@@ -277,7 +313,14 @@ public class FinalizarComandaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var command = FinalizarComandaCommand.Crear(comandaId, Guid.NewGuid());
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = null,
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true
+        };
 
         var comanda = CreateMockComandaSinItems(comandaId, EstadoComanda.Creada);
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
@@ -298,7 +341,14 @@ public class FinalizarComandaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var command = FinalizarComandaCommand.Crear(comandaId, Guid.NewGuid());
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = null,
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true
+        };
 
         var comanda = new Mock<Comanda>();
         comanda.Setup(x => x.Id).Returns(comandaId);
@@ -321,7 +371,14 @@ public class FinalizarComandaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var command = FinalizarComandaCommand.Crear(comandaId, Guid.NewGuid());
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = null,
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true
+        };
 
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.EnProceso);
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
@@ -343,7 +400,14 @@ public class FinalizarComandaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var command = FinalizarComandaCommand.Crear(comandaId, Guid.NewGuid());
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = Guid.NewGuid(),
+            ObservacionesFinalizacion = null,
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true
+        };
 
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
             .ThrowsAsync(new InvalidOperationException("Error de base de datos"));
@@ -369,7 +433,14 @@ public class FinalizarComandaHandlerTests
         var observaciones = "Test observaciones";
 
         // Act
-        var command = FinalizarComandaCommand.Crear(comandaId, usuarioId, observaciones);
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = usuarioId,
+            ObservacionesFinalizacion = observaciones,
+            ValidarTodosItemsListos = true,
+            NotificarMesero = true
+        };
 
         // Assert
         Assert.Equal(comandaId, command.ComandaId);
@@ -393,13 +464,13 @@ public class FinalizarComandaHandlerTests
         if (expectedMessage.Contains("ComandaId"))
         {
             var ex = Assert.Throws<ArgumentException>(() => 
-                FinalizarComandaCommand.Crear(invalidGuid, validGuid));
+                new FinalizarComandaCommand { ComandaId = invalidGuid, UsuarioId = validGuid });
             Assert.Contains(expectedMessage, ex.Message);
         }
         else
         {
             var ex = Assert.Throws<ArgumentException>(() => 
-                FinalizarComandaCommand.Crear(validGuid, invalidGuid));
+                new FinalizarComandaCommand { ComandaId = validGuid, UsuarioId = invalidGuid });
             Assert.Contains(expectedMessage, ex.Message);
         }
     }
@@ -414,7 +485,14 @@ public class FinalizarComandaHandlerTests
         var observaciones = "Observaciones adicionales";
 
         // Act
-        var command = FinalizarComandaCommand.FinalizarSinValidacion(comandaId, usuarioId, motivo, observaciones);
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = usuarioId,
+            ObservacionesFinalizacion = $"Finalizada sin validación: {motivo}",
+            ValidarTodosItemsListos = false,
+            NotificarMesero = true
+        };
 
         // Assert
         Assert.Equal(comandaId, command.ComandaId);
@@ -434,7 +512,14 @@ public class FinalizarComandaHandlerTests
         var observaciones = "Finalización automática";
 
         // Act
-        var command = FinalizarComandaCommand.FinalizarSilencioso(comandaId, usuarioId, observaciones);
+        var command = new FinalizarComandaCommand
+        {
+            ComandaId = comandaId,
+            UsuarioId = usuarioId,
+            ObservacionesFinalizacion = observaciones,
+            ValidarTodosItemsListos = true,
+            NotificarMesero = false
+        };
 
         // Assert
         Assert.Equal(comandaId, command.ComandaId);
@@ -503,8 +588,8 @@ public class FinalizarComandaHandlerTests
                 level,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(message)),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Exception?>(),
+                (Func<It.IsAnyType, Exception?, string>)It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.AtLeastOnce);
     }
 

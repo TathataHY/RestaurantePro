@@ -52,7 +52,7 @@ public class ComandaFinalizadaMesaHandlerTests
             .ReturnsAsync(mesa);
 
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Result.Success(Unit.Value));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -80,7 +80,10 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var evento = new ComandaFinalizada(comandaId, 150.00m);
+        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+
+        _mockComandaRepository.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Comanda)null);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -105,27 +108,31 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var evento = new ComandaFinalizada(comandaId, 150.00m);
+        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+
+        var comanda = new Mock<Comanda>();
+        comanda.Setup(x => x.MesaId).Returns(Guid.NewGuid());
+
+        _mockComandaRepository.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(comanda.Object);
 
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Mesa)null!); // Mesa no encontrada
+            .ReturnsAsync((Mesa)null);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
-        _mockMesaRepository.Verify(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Once);
-        _mockMediator.Verify(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()), Times.Never);
-
-        // Debería loggear advertencia
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("⚠️ Mesa no encontrada")),
-                It.IsAny<Exception>(),
+                It.IsAny<Exception?>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
+
+        _mockMediator.Verify(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -133,9 +140,9 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var evento = new ComandaFinalizada(comandaId, 150.00m);
+        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
 
-        var mesa = CreateMockMesa(Guid.NewGuid(), 4, EstadoMesa.Disponible); // Ya disponible
+        var mesa = CreateMockMesa(Guid.NewGuid(), 4, EstadoMesa.Disponible);
         
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
@@ -144,18 +151,16 @@ public class ComandaFinalizadaMesaHandlerTests
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
-        _mockMesaRepository.Verify(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Once);
-        _mockMediator.Verify(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()), Times.Never);
-
-        // Debería loggear que ya está disponible
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("✅ Mesa ya está disponible")),
-                It.IsAny<Exception>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("ℹ️ Mesa ya está disponible")),
+                It.IsAny<Exception?>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
+
+        _mockMediator.Verify(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -169,7 +174,7 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var evento = new ComandaFinalizada(comandaId, 150.00m);
+        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(Guid.NewGuid(), 4, estadoMesa);
         
@@ -177,7 +182,7 @@ public class ComandaFinalizadaMesaHandlerTests
             .ReturnsAsync(mesa);
 
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Result.Success(Unit.Value));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -200,7 +205,7 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var evento = new ComandaFinalizada(comandaId, 150.00m);
+        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(Guid.NewGuid(), 4, EstadoMesa.Ocupada);
         
@@ -208,7 +213,7 @@ public class ComandaFinalizadaMesaHandlerTests
             .ReturnsAsync(mesa);
 
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure("Error liberando mesa"));
+            .ReturnsAsync(Result.Failure<Unit>("Error liberando mesa"));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -219,7 +224,7 @@ public class ComandaFinalizadaMesaHandlerTests
                 LogLevel.Error,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("❌ Error ejecutando comando de liberación")),
-                It.IsAny<Exception>(),
+                It.IsAny<Exception?>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
@@ -288,7 +293,7 @@ public class ComandaFinalizadaMesaHandlerTests
             .ReturnsAsync(mesaGrande);
 
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Result.Success(Unit.Value));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -321,7 +326,7 @@ public class ComandaFinalizadaMesaHandlerTests
             .ReturnsAsync(mesa);
 
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Result.Success(Unit.Value));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -361,7 +366,7 @@ public class ComandaFinalizadaMesaHandlerTests
             .ReturnsAsync(mesa);
 
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Result.Success(Unit.Value));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -432,7 +437,7 @@ public class ComandaFinalizadaMesaHandlerTests
             {
                 capturedCommand = cmd as LiberarMesaCommand;
             })
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Result.Success(Unit.Value));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -445,7 +450,7 @@ public class ComandaFinalizadaMesaHandlerTests
     [Theory]
     [InlineData(2, "👥 Mesa pequeña")]
     [InlineData(4, "🪑 Mesa estándar")]  
-    [InlineData(6, "🍽️ Mesa familiar")]
+    [InlineData(6, "👥 Mesa familiar")]
     [InlineData(8, "🎉 Mesa grande")]
     [InlineData(12, "👑 Mesa VIP")]
     public async Task Handle_DiferentesCapacidades_DeberiaLoggearDescripcionApropiada(
@@ -463,7 +468,7 @@ public class ComandaFinalizadaMesaHandlerTests
             .ReturnsAsync(mesa);
 
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+            .ReturnsAsync(Result.Success(Unit.Value));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);

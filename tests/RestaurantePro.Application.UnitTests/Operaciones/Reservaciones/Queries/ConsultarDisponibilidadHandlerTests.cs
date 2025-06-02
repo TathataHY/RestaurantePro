@@ -281,7 +281,7 @@ public class ConsultarDisponibilidadHandlerTests
             FechaHora = DateTime.Now.AddDays(1).Date.AddHours(20),
             NumeroPersonas = 4,
             DuracionEstimadaMinutos = 120,
-            IncluirEstadisticas = true
+            IncluirDetallesMesas = true
         };
 
         // Act
