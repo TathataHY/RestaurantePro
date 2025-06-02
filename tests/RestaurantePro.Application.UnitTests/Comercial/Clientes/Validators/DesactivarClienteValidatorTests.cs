@@ -487,7 +487,7 @@ public class DesactivarClienteValidatorTests
         // Mock cliente activo
         var clientes = new List<Cliente>
         {
-            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", Activo = true }
+            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", EstaActivo = true }
         }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
@@ -515,7 +515,7 @@ public class DesactivarClienteValidatorTests
         // Mock cliente activo
         var clientes = new List<Cliente>
         {
-            new Cliente { Id = clienteId, Nombre = "Cliente Corporativo", Email = "corp@email.com", Activo = true }
+            new Cliente { Id = clienteId, Nombre = "Cliente Corporativo", Email = "corp@email.com", EstaActivo = true }
         }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
@@ -546,7 +546,7 @@ public class DesactivarClienteValidatorTests
         // Mock cliente activo
         var clientes = new List<Cliente>
         {
-            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", Activo = true }
+            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", EstaActivo = true }
         }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
@@ -573,7 +573,7 @@ public class DesactivarClienteValidatorTests
         // Mock cliente activo
         var clientes = new List<Cliente>
         {
-            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", Activo = true }
+            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", EstaActivo = true }
         }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
@@ -609,7 +609,7 @@ public class DesactivarClienteValidatorTests
 
         // Mock múltiples clientes activos
         var clientes = commands.Select(cmd => 
-            new Cliente { Id = cmd.ClienteId, Nombre = $"Cliente {cmd.ClienteId}", Email = "test@email.com", Activo = true }
+            new Cliente { Id = cmd.ClienteId, Nombre = $"Cliente {cmd.ClienteId}", Email = "test@email.com", EstaActivo = true }
         ).AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
@@ -636,7 +636,7 @@ public class DesactivarClienteValidatorTests
         // Mock cliente activo
         var clientes = new List<Cliente>
         {
-            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", Activo = true }
+            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", EstaActivo = true }
         }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);

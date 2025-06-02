@@ -189,7 +189,7 @@ public class ObtenerProveedoresPaginadosHandlerTests
             PageNumber = 1,
             PageSize = 10,
             SoloActivos = true,
-            TerminoBusqueda = CategoriaProveedor.Bebidas.ToString(),
+            TerminoBusqueda = CategoriaProveedor.BebidasNoAlcoholicas.ToString(),
             CampoOrden = "Categoria",
             DireccionOrden = "asc"
         };
@@ -199,14 +199,14 @@ public class ObtenerProveedoresPaginadosHandlerTests
 
         _proveedorRepositoryMock.Setup(x => x.ObtenerProveedoresPaginadosAsync(
             It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(),
-            It.Is<CategoriaProveedor?>(c => c == CategoriaProveedor.Bebidas),
+            It.Is<CategoriaProveedor?>(c => c == CategoriaProveedor.BebidasNoAlcoholicas),
             It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(proveedoresBebidas);
 
         _proveedorRepositoryMock.Setup(x => x.ContarProveedoresAsync(
             It.IsAny<string>(),
-            It.Is<CategoriaProveedor?>(c => c == CategoriaProveedor.Bebidas),
+            It.Is<CategoriaProveedor?>(c => c == CategoriaProveedor.BebidasNoAlcoholicas),
             It.IsAny<bool>(), It.IsAny<bool>(),
             It.IsAny<CancellationToken>()))
             .ReturnsAsync(8);
@@ -219,7 +219,7 @@ public class ObtenerProveedoresPaginadosHandlerTests
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.All(result.Value.Items, p => Assert.Equal(CategoriaProveedor.Bebidas, p.Categoria));
+        Assert.All(result.Value.Items, p => Assert.Equal(CategoriaProveedor.BebidasNoAlcoholicas, p.Categoria));
     }
 
     [Fact]
@@ -261,8 +261,8 @@ public class ObtenerProveedoresPaginadosHandlerTests
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.Contains(result.Value.Items, p => p.EstaActivo);
-        Assert.Contains(result.Value.Items, p => !p.EstaActivo);
+        Assert.Contains(result.Value.Items, p => p.Activo);
+        Assert.Contains(result.Value.Items, p => !p.Activo);
     }
 
     [Fact]
@@ -561,14 +561,14 @@ public class ObtenerProveedoresPaginadosHandlerTests
         return new List<Proveedor>
         {
             CreateMockProveedor(Guid.NewGuid(), "Proveedor A", CategoriaProveedor.Carnes, true),
-            CreateMockProveedor(Guid.NewGuid(), "Proveedor B", CategoriaProveedor.Verduras, true),
-            CreateMockProveedor(Guid.NewGuid(), "Proveedor C", CategoriaProveedor.Bebidas, true),
+            CreateMockProveedor(Guid.NewGuid(), "Proveedor B", CategoriaProveedor.FrutasVerduras, true),
+            CreateMockProveedor(Guid.NewGuid(), "Proveedor C", CategoriaProveedor.BebidasNoAlcoholicas, true),
             CreateMockProveedor(Guid.NewGuid(), "Proveedor D", CategoriaProveedor.Lacteos, true),
-            CreateMockProveedor(Guid.NewGuid(), "Proveedor E", CategoriaProveedor.Panaderia, true),
-            CreateMockProveedor(Guid.NewGuid(), "Proveedor F", CategoriaProveedor.Condimentos, true),
+            CreateMockProveedor(Guid.NewGuid(), "Proveedor E", CategoriaProveedor.AlimentosBasicos, true),
+            CreateMockProveedor(Guid.NewGuid(), "Proveedor F", CategoriaProveedor.Especias, true),
             CreateMockProveedor(Guid.NewGuid(), "Proveedor G", CategoriaProveedor.Carnes, true),
-            CreateMockProveedor(Guid.NewGuid(), "Proveedor H", CategoriaProveedor.Verduras, true),
-            CreateMockProveedor(Guid.NewGuid(), "Proveedor I", CategoriaProveedor.Bebidas, true),
+            CreateMockProveedor(Guid.NewGuid(), "Proveedor H", CategoriaProveedor.FrutasVerduras, true),
+            CreateMockProveedor(Guid.NewGuid(), "Proveedor I", CategoriaProveedor.BebidasAlcoholicas, true),
             CreateMockProveedor(Guid.NewGuid(), "Proveedor J", CategoriaProveedor.Lacteos, true)
         };
     }
@@ -578,14 +578,14 @@ public class ObtenerProveedoresPaginadosHandlerTests
         return new List<ProveedorDto>
         {
             CreateMockProveedorDto(Guid.NewGuid(), "Proveedor A", CategoriaProveedor.Carnes, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor B", CategoriaProveedor.Verduras, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor C", CategoriaProveedor.Bebidas, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor B", CategoriaProveedor.FrutasVerduras, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor C", CategoriaProveedor.BebidasNoAlcoholicas, true),
             CreateMockProveedorDto(Guid.NewGuid(), "Proveedor D", CategoriaProveedor.Lacteos, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor E", CategoriaProveedor.Panaderia, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor F", CategoriaProveedor.Condimentos, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor E", CategoriaProveedor.AlimentosBasicos, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor F", CategoriaProveedor.Especias, true),
             CreateMockProveedorDto(Guid.NewGuid(), "Proveedor G", CategoriaProveedor.Carnes, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor H", CategoriaProveedor.Verduras, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor I", CategoriaProveedor.Bebidas, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor H", CategoriaProveedor.FrutasVerduras, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor I", CategoriaProveedor.BebidasAlcoholicas, true),
             CreateMockProveedorDto(Guid.NewGuid(), "Proveedor J", CategoriaProveedor.Lacteos, true)
         };
     }
@@ -595,10 +595,10 @@ public class ObtenerProveedoresPaginadosHandlerTests
         return new List<Proveedor>
         {
             CreateMockProveedor(Guid.NewGuid(), "Distribuidora Norte", CategoriaProveedor.Carnes, true),
-            CreateMockProveedor(Guid.NewGuid(), "Distribuidora Sur", CategoriaProveedor.Verduras, true),
-            CreateMockProveedor(Guid.NewGuid(), "Distribuidora Central", CategoriaProveedor.Bebidas, true),
+            CreateMockProveedor(Guid.NewGuid(), "Distribuidora Sur", CategoriaProveedor.FrutasVerduras, true),
+            CreateMockProveedor(Guid.NewGuid(), "Distribuidora Central", CategoriaProveedor.BebidasNoAlcoholicas, true),
             CreateMockProveedor(Guid.NewGuid(), "Distribuidora Este", CategoriaProveedor.Lacteos, true),
-            CreateMockProveedor(Guid.NewGuid(), "Distribuidora Oeste", CategoriaProveedor.Panaderia, true)
+            CreateMockProveedor(Guid.NewGuid(), "Distribuidora Oeste", CategoriaProveedor.AlimentosBasicos, true)
         };
     }
 
@@ -607,10 +607,10 @@ public class ObtenerProveedoresPaginadosHandlerTests
         return new List<ProveedorDto>
         {
             CreateMockProveedorDto(Guid.NewGuid(), "Distribuidora Norte", CategoriaProveedor.Carnes, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Distribuidora Sur", CategoriaProveedor.Verduras, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Distribuidora Central", CategoriaProveedor.Bebidas, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Distribuidora Sur", CategoriaProveedor.FrutasVerduras, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Distribuidora Central", CategoriaProveedor.BebidasNoAlcoholicas, true),
             CreateMockProveedorDto(Guid.NewGuid(), "Distribuidora Este", CategoriaProveedor.Lacteos, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Distribuidora Oeste", CategoriaProveedor.Panaderia, true)
+            CreateMockProveedorDto(Guid.NewGuid(), "Distribuidora Oeste", CategoriaProveedor.AlimentosBasicos, true)
         };
     }
 
@@ -618,14 +618,14 @@ public class ObtenerProveedoresPaginadosHandlerTests
     {
         return new List<Proveedor>
         {
-            CreateMockProveedor(Guid.NewGuid(), "Bebidas Premium", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedor(Guid.NewGuid(), "Refrescos SA", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedor(Guid.NewGuid(), "Aguas Minerales", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedor(Guid.NewGuid(), "Jugos Naturales", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedor(Guid.NewGuid(), "Cervezas Artesanales", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedor(Guid.NewGuid(), "Vinos Selectos", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedor(Guid.NewGuid(), "Licores Finos", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedor(Guid.NewGuid(), "Café Gourmet", CategoriaProveedor.Bebidas, true)
+            CreateMockProveedor(Guid.NewGuid(), "Bebidas Premium", CategoriaProveedor.BebidasNoAlcoholicas, true),
+            CreateMockProveedor(Guid.NewGuid(), "Refrescos SA", CategoriaProveedor.BebidasNoAlcoholicas, true),
+            CreateMockProveedor(Guid.NewGuid(), "Aguas Minerales", CategoriaProveedor.BebidasNoAlcoholicas, true),
+            CreateMockProveedor(Guid.NewGuid(), "Jugos Naturales", CategoriaProveedor.BebidasNoAlcoholicas, true),
+            CreateMockProveedor(Guid.NewGuid(), "Cervezas Artesanales", CategoriaProveedor.BebidasAlcoholicas, true),
+            CreateMockProveedor(Guid.NewGuid(), "Vinos Selectos", CategoriaProveedor.BebidasAlcoholicas, true),
+            CreateMockProveedor(Guid.NewGuid(), "Licores Finos", CategoriaProveedor.BebidasAlcoholicas, true),
+            CreateMockProveedor(Guid.NewGuid(), "Café Gourmet", CategoriaProveedor.BebidasNoAlcoholicas, true)
         };
     }
 
@@ -633,14 +633,14 @@ public class ObtenerProveedoresPaginadosHandlerTests
     {
         return new List<ProveedorDto>
         {
-            CreateMockProveedorDto(Guid.NewGuid(), "Bebidas Premium", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Refrescos SA", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Aguas Minerales", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Jugos Naturales", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Cervezas Artesanales", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Vinos Selectos", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Licores Finos", CategoriaProveedor.Bebidas, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Café Gourmet", CategoriaProveedor.Bebidas, true)
+            CreateMockProveedorDto(Guid.NewGuid(), "Bebidas Premium", CategoriaProveedor.BebidasNoAlcoholicas, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Refrescos SA", CategoriaProveedor.BebidasNoAlcoholicas, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Aguas Minerales", CategoriaProveedor.BebidasNoAlcoholicas, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Jugos Naturales", CategoriaProveedor.BebidasNoAlcoholicas, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Cervezas Artesanales", CategoriaProveedor.BebidasAlcoholicas, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Vinos Selectos", CategoriaProveedor.BebidasAlcoholicas, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Licores Finos", CategoriaProveedor.BebidasAlcoholicas, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Café Gourmet", CategoriaProveedor.BebidasNoAlcoholicas, true)
         };
     }
 
@@ -649,10 +649,10 @@ public class ObtenerProveedoresPaginadosHandlerTests
         return new List<Proveedor>
         {
             CreateMockProveedor(Guid.NewGuid(), "Proveedor Activo 1", CategoriaProveedor.Carnes, true),
-            CreateMockProveedor(Guid.NewGuid(), "Proveedor Activo 2", CategoriaProveedor.Verduras, true),
-            CreateMockProveedor(Guid.NewGuid(), "Proveedor Inactivo 1", CategoriaProveedor.Bebidas, false),
+            CreateMockProveedor(Guid.NewGuid(), "Proveedor Activo 2", CategoriaProveedor.FrutasVerduras, true),
+            CreateMockProveedor(Guid.NewGuid(), "Proveedor Inactivo 1", CategoriaProveedor.BebidasNoAlcoholicas, false),
             CreateMockProveedor(Guid.NewGuid(), "Proveedor Activo 3", CategoriaProveedor.Lacteos, true),
-            CreateMockProveedor(Guid.NewGuid(), "Proveedor Inactivo 2", CategoriaProveedor.Panaderia, false)
+            CreateMockProveedor(Guid.NewGuid(), "Proveedor Inactivo 2", CategoriaProveedor.AlimentosBasicos, false)
         };
     }
 
@@ -661,10 +661,10 @@ public class ObtenerProveedoresPaginadosHandlerTests
         return new List<ProveedorDto>
         {
             CreateMockProveedorDto(Guid.NewGuid(), "Proveedor Activo 1", CategoriaProveedor.Carnes, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor Activo 2", CategoriaProveedor.Verduras, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor Inactivo 1", CategoriaProveedor.Bebidas, false),
+            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor Activo 2", CategoriaProveedor.FrutasVerduras, true),
+            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor Inactivo 1", CategoriaProveedor.BebidasNoAlcoholicas, false),
             CreateMockProveedorDto(Guid.NewGuid(), "Proveedor Activo 3", CategoriaProveedor.Lacteos, true),
-            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor Inactivo 2", CategoriaProveedor.Panaderia, false)
+            CreateMockProveedorDto(Guid.NewGuid(), "Proveedor Inactivo 2", CategoriaProveedor.AlimentosBasicos, false)
         };
     }
 
@@ -696,8 +696,7 @@ public class ObtenerProveedoresPaginadosHandlerTests
         {
             Id = id,
             Nombre = nombre,
-            Categoria = categoria,
-            EstaActivo = activo,
+            Activo = activo,
             FechaCreacion = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 30))
         };
     }
@@ -709,7 +708,7 @@ public class ObtenerProveedoresPaginadosHandlerTests
             Id = id,
             Nombre = nombre,
             Categoria = categoria,
-            EstaActivo = activo,
+            Activo = activo,
             FechaCreacion = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 30))
         };
     }
@@ -720,8 +719,7 @@ public class ObtenerProveedoresPaginadosHandlerTests
         {
             Id = id,
             Nombre = nombre,
-            Categoria = CategoriaProveedor.Carnes,
-            EstaActivo = true,
+            Activo = true,
             FechaCreacion = fecha
         };
     }
@@ -733,7 +731,7 @@ public class ObtenerProveedoresPaginadosHandlerTests
             Id = id,
             Nombre = nombre,
             Categoria = CategoriaProveedor.Carnes,
-            EstaActivo = true,
+            Activo = true,
             FechaCreacion = fecha
         };
     }

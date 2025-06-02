@@ -504,7 +504,7 @@ public class ObtenerReservacionPorIdValidatorTests
         var reservacionId = Guid.NewGuid();
 
         // Act
-        var query = ObtenerReservacionPorIdQuery.Crear(reservacionId);
+        var query = ObtenerReservacionPorIdQuery.Completa(reservacionId);
 
         // Assert
         query.Id.Should().Be(reservacionId);
@@ -517,7 +517,7 @@ public class ObtenerReservacionPorIdValidatorTests
         var reservacionId = Guid.NewGuid();
 
         // Act
-        var query = ObtenerReservacionPorIdQuery.Crear(reservacionId, incluirDetalles: true, incluirHistorial: true);
+        var query = ObtenerReservacionPorIdQuery.Basica(reservacionId, incluirDetalles: true, incluirHistorial: true);
 
         // Assert
         query.Id.Should().Be(reservacionId);
@@ -529,7 +529,7 @@ public class ObtenerReservacionPorIdValidatorTests
     public void Query_FactoryMethod_ConGuidVacio_DeberiaLanzarExcepcion()
     {
         // Act & Assert
-        var act = () => ObtenerReservacionPorIdQuery.Crear(Guid.Empty);
+        var act = () => ObtenerReservacionPorIdQuery.Basica(Guid.Empty);
         act.Should().Throw<ArgumentException>()
             .WithMessage("*Id*");
     }

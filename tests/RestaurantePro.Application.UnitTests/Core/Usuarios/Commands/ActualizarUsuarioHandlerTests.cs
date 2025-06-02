@@ -569,7 +569,7 @@ public class ActualizarUsuarioHandlerTests
 
     private Usuario CrearUsuarioExistente()
     {
-        return Usuario.Crear("usuario.existente", "Usuario Existente", "existente@restaurantepro.com", RolUsuario.Empleado);
+        return Usuario.Crear("usuario.existente", "Usuario Existente", "existente@restaurantepro.com", RolUsuario.Mesero);
     }
 
     private Usuario CrearUsuarioAutorizador()
@@ -586,7 +586,7 @@ public class ActualizarUsuarioHandlerTests
             NombreCompleto = "Usuario Actualizado",
             Email = "actualizado@restaurantepro.com",
             Rol = "Empleado",
-            EstaActivo = true,
+            Activo = true,
             FechaCreacion = DateTime.UtcNow.AddMonths(-3),
             UltimaActualizacion = DateTime.UtcNow
         };

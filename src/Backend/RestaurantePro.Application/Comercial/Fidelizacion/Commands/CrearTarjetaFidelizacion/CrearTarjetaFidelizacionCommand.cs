@@ -1,5 +1,7 @@
 namespace RestaurantePro.Application.Comercial.Fidelizacion.Commands.CrearTarjetaFidelizacion;
 
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+
 /// <summary>
 /// Command para crear una nueva tarjeta de fidelización
 /// </summary>
@@ -23,7 +25,7 @@ public class CrearTarjetaFidelizacionCommand : IRequest<Result<TarjetaFidelizaci
     /// <summary>
     /// Tipo de tarjeta a crear
     /// </summary>
-    public string TipoTarjeta { get; set; } = string.Empty;
+    public TipoTarjetaFidelizacion TipoTarjeta { get; set; } = TipoTarjetaFidelizacion.Estandar;
 
     /// <summary>
     /// Configuración específica de la tarjeta

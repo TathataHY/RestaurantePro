@@ -40,17 +40,21 @@ public class AcumularPuntosHandlerTests
         var montoVenta = 150.75m;
 
         // Act
-        var command = AcumularPuntosCommand.CrearAcumulacionVenta(
-            clienteId, facturaId, montoVenta, "Compra restaurante");
+        var command = new AcumularPuntosCommand
+        {
+            ClienteId = clienteId,
+            FacturaId = facturaId,
+            MontoCompra = montoVenta,
+            TipoAcumulacion = TipoAcumulacion.PorCompra,
+            Comentarios = "Compra restaurante"
+        };
 
         // Assert
         Assert.Equal(clienteId, command.ClienteId);
         Assert.Equal(facturaId, command.FacturaId);
-        Assert.Equal(montoVenta, command.MontoVenta);
-        Assert.Equal("Compra restaurante", command.DescripcionTransaccion);
-        Assert.Equal(TipoAcumulacion.Venta, command.TipoAcumulacion);
-        Assert.True(command.AplicarMultiplicadores);
-        Assert.True(command.VerificarPromociones);
+        Assert.Equal(montoVenta, command.MontoCompra);
+        Assert.Equal("Compra restaurante", command.Comentarios);
+        Assert.Equal(TipoAcumulacion.PorCompra, command.TipoAcumulacion);
         Assert.False(command.EsAcumulacionManual);
     }
 
@@ -63,8 +67,15 @@ public class AcumularPuntosHandlerTests
         var motivo = "Compensación por error";
 
         // Act
-        var command = AcumularPuntosCommand.CrearAcumulacionManual(
-            clienteId, puntosDirectos, motivo, "ADMIN001");
+        var command = new AcumularPuntosCommand
+        {
+            ClienteId = clienteId,
+            PuntosDirectos = puntosDirectos,
+            MotivoAcumulacionManual = motivo,
+            UsuarioQueAcumula = "ADMIN001",
+            TipoAcumulacion = TipoAcumulacion.Manual,
+            EsAcumulacionManual = true
+        };
 
         // Assert
         Assert.Equal(clienteId, command.ClienteId);
@@ -73,8 +84,6 @@ public class AcumularPuntosHandlerTests
         Assert.Equal("ADMIN001", command.UsuarioQueAcumula);
         Assert.Equal(TipoAcumulacion.Manual, command.TipoAcumulacion);
         Assert.True(command.EsAcumulacionManual);
-        Assert.False(command.AplicarMultiplicadores);
-        Assert.False(command.VerificarPromociones);
     }
 
     [Fact]
@@ -86,15 +95,19 @@ public class AcumularPuntosHandlerTests
         var montoVenta = 200.00m;
 
         // Act
-        var command = AcumularPuntosCommand.CrearAcumulacionPromocion(
-            clienteId, codigoPromocion, montoVenta, "Promoción fin de año");
+        var command = new AcumularPuntosCommand
+        {
+            ClienteId = clienteId,
+            CodigoPromocion = codigoPromocion,
+            MontoCompra = montoVenta,
+            TipoAcumulacion = TipoAcumulacion.PorPromocion,
+            Comentarios = "Promoción fin de año"
+        };
 
         // Assert
         Assert.Equal(codigoPromocion, command.CodigoPromocion);
-        Assert.Equal(TipoAcumulacion.Promocion, command.TipoAcumulacion);
-        Assert.True(command.AplicarMultiplicadores);
-        Assert.True(command.VerificarPromociones);
-        Assert.True(command.EsPromocionEspecial);
+        Assert.Equal(TipoAcumulacion.PorPromocion, command.TipoAcumulacion);
+        Assert.Equal("Promoción fin de año", command.Comentarios);
     }
 
     #endregion
@@ -111,11 +124,9 @@ public class AcumularPuntosHandlerTests
         {
             ClienteId = clienteId,
             FacturaId = facturaId,
-            MontoVenta = 120.50m,
-            TipoAcumulacion = TipoAcumulacion.Venta,
-            DescripcionTransaccion = "Almuerzo familiar",
-            AplicarMultiplicadores = true,
-            VerificarPromociones = true
+            MontoCompra = 120.50m,
+            TipoAcumulacion = TipoAcumulacion.PorCompra,
+            Comentarios = "Almuerzo familiar"
         };
 
         var resultadoAcumulacion = CreateMockResultadoVentaBasica(clienteId);
@@ -145,10 +156,8 @@ public class AcumularPuntosHandlerTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = clienteId,
-            MontoVenta = 450.75m, // Compra grande que provoca upgrade
-            TipoAcumulacion = TipoAcumulacion.Venta,
-            AplicarMultiplicadores = true,
-            VerificarPromociones = true
+            MontoCompra = 450.75m, // Compra grande que provoca upgrade
+            TipoAcumulacion = TipoAcumulacion.PorCompra
         };
 
         var resultadoConUpgrade = CreateMockResultadoConCambioNivel(clienteId);
@@ -179,11 +188,9 @@ public class AcumularPuntosHandlerTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = clienteId,
-            MontoVenta = 180.00m,
+            MontoCompra = 180.00m,
             CodigoPromocion = "DOUBLE2025",
-            TipoAcumulacion = TipoAcumulacion.Promocion,
-            VerificarPromociones = true,
-            EsPromocionEspecial = true
+            TipoAcumulacion = TipoAcumulacion.PorPromocion
         };
 
         var resultadoConPromocion = CreateMockResultadoConPromocion(clienteId);
@@ -216,8 +223,7 @@ public class AcumularPuntosHandlerTests
             TipoAcumulacion = TipoAcumulacion.Manual,
             MotivoAcumulacionManual = "Compensación por mal servicio",
             UsuarioQueAcumula = "MANAGER_001",
-            EsAcumulacionManual = true,
-            AplicarMultiplicadores = false
+            EsAcumulacionManual = true
         };
 
         var resultadoManual = CreateMockResultadoManual(clienteId);
@@ -247,10 +253,9 @@ public class AcumularPuntosHandlerTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = clienteId,
-            MontoVenta = 300.00m,
-            TipoAcumulacion = TipoAcumulacion.Venta,
-            AplicarMultiplicadores = true,
-            VerificarPromociones = true
+            MontoCompra = 300.00m,
+            TipoAcumulacion = TipoAcumulacion.PorCompra,
+            Comentarios = "Compra restaurante"
         };
 
         var resultadoVIP = CreateMockResultadoClienteVIP(clienteId);
@@ -279,9 +284,9 @@ public class AcumularPuntosHandlerTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = clienteId,
-            MontoVenta = 500.00m,
-            TipoAcumulacion = TipoAcumulacion.Venta,
-            VerificarPromociones = true
+            MontoCompra = 500.00m,
+            TipoAcumulacion = TipoAcumulacion.PorCompra,
+            Comentarios = "Compra restaurante"
         };
 
         var resultadoConEventos = CreateMockResultadoConEventos(clienteId);
@@ -319,8 +324,8 @@ public class AcumularPuntosHandlerTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = clienteInexistente,
-            MontoVenta = 100.00m,
-            TipoAcumulacion = TipoAcumulacion.Venta
+            MontoCompra = 100.00m,
+            TipoAcumulacion = TipoAcumulacion.PorCompra
         };
 
         _comercialServiceFacadeMock.Setup(x => x.AcumularPuntosAsync(
@@ -342,8 +347,8 @@ public class AcumularPuntosHandlerTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = Guid.NewGuid(),
-            MontoVenta = -50.00m, // Monto negativo
-            TipoAcumulacion = TipoAcumulacion.Venta
+            MontoCompra = -50.00m, // Monto negativo
+            TipoAcumulacion = TipoAcumulacion.PorCompra
         };
 
         // Act
@@ -351,7 +356,7 @@ public class AcumularPuntosHandlerTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Contains("El monto de venta debe ser mayor a cero", result.Error);
+        Assert.Contains("El monto de compra debe ser mayor a cero", result.Error);
     }
 
     [Fact]
@@ -383,9 +388,9 @@ public class AcumularPuntosHandlerTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = Guid.NewGuid(),
-            MontoVenta = 200.00m,
+            MontoCompra = 200.00m,
             CodigoPromocion = "EXPIRED2024",
-            TipoAcumulacion = TipoAcumulacion.Promocion
+            TipoAcumulacion = TipoAcumulacion.PorPromocion
         };
 
         _comercialServiceFacadeMock.Setup(x => x.AcumularPuntosAsync(
@@ -407,8 +412,8 @@ public class AcumularPuntosHandlerTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = Guid.NewGuid(),
-            MontoVenta = 150.00m,
-            TipoAcumulacion = TipoAcumulacion.Venta
+            MontoCompra = 150.00m,
+            TipoAcumulacion = TipoAcumulacion.PorCompra
         };
 
         _comercialServiceFacadeMock.Setup(x => x.AcumularPuntosAsync(
@@ -456,8 +461,8 @@ public class AcumularPuntosHandlerTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = Guid.NewGuid(),
-            MontoVenta = 100.00m,
-            TipoAcumulacion = TipoAcumulacion.Venta
+            MontoCompra = 100.00m,
+            TipoAcumulacion = TipoAcumulacion.PorCompra
         };
 
         _comercialServiceFacadeMock.Setup(x => x.AcumularPuntosAsync(
@@ -479,8 +484,8 @@ public class AcumularPuntosHandlerTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = Guid.NewGuid(),
-            MontoVenta = 100.00m,
-            TipoAcumulacion = TipoAcumulacion.Venta
+            MontoCompra = 100.00m,
+            TipoAcumulacion = TipoAcumulacion.PorCompra
         };
 
         _comercialServiceFacadeMock.Setup(x => x.AcumularPuntosAsync(
@@ -506,8 +511,8 @@ public class AcumularPuntosHandlerTests
         var command = new AcumularPuntosCommand
         {
             ClienteId = Guid.NewGuid(),
-            MontoVenta = 100.00m,
-            TipoAcumulacion = TipoAcumulacion.Venta
+            MontoCompra = 100.00m,
+            TipoAcumulacion = TipoAcumulacion.PorCompra
         };
 
         var resultado = CreateMockResultadoVentaBasica(command.ClienteId);

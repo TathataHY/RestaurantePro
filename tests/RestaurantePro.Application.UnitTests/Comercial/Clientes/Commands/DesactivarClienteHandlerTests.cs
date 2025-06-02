@@ -184,7 +184,6 @@ public class DesactivarClienteHandlerTests
         {
             ClienteId = clienteId,
             MotivoDesactivacion = motivo,
-            CancelarReservacionesPendientes = true,
             NotificarCliente = true
         };
 
@@ -256,7 +255,6 @@ public class DesactivarClienteHandlerTests
         {
             ClienteId = clienteId,
             MotivoDesactivacion = "Prueba de desactivación",
-            CancelarReservacionesPendientes = false // No autorizado a cancelar
         };
 
         var cliente = Cliente.Crear("Juan Pérez", "juan@email.com", "+1234567890");
@@ -298,7 +296,6 @@ public class DesactivarClienteHandlerTests
         {
             ClienteId = clienteId,
             MotivoDesactivacion = motivo,
-            CerrarComandasActivas = true,
             NotificarCliente = false // No notificar por comportamiento
         };
 
@@ -334,7 +331,7 @@ public class DesactivarClienteHandlerTests
 
         // Verify comandas fueron cerradas
         _comandaRepositoryMock.Verify(x => x.ActualizarAsync(
-            It.Is<Comanda>(c => c.Estado == EstadoComanda.Cerrada), 
+            It.Is<Comanda>(c => c.Estado == EstadoComanda.Finalizada), 
             It.IsAny<CancellationToken>()), Times.Exactly(2));
 
         // Verify no se envió notificación al cliente
@@ -357,7 +354,6 @@ public class DesactivarClienteHandlerTests
         {
             ClienteId = clienteId,
             MotivoDesactivacion = motivo,
-            SuspenderTarjetaFidelizacion = true,
             NotificarCliente = true
         };
 
@@ -597,7 +593,6 @@ public class DesactivarClienteHandlerTests
         {
             ClienteId = clienteId,
             MotivoDesactivacion = "Prueba de rollback",
-            CancelarReservacionesPendientes = true
         };
 
         var cliente = Cliente.Crear("Cliente Rollback", "rollback@email.com", "+1234567890");

@@ -46,12 +46,11 @@ public class AnularFacturaValidatorTests
             TipoAnulacion = "Normal",
             Prioridad = 2,
             UsuarioAutorizaId = Guid.NewGuid(),
-            RequiereDevolucion = true,
+            ProcesarDevolucionPago = true,
             MetodoDevolucion = "Efectivo",
-            MontoDevolucion = 150.50m,
             CancelarPuntosFidelizacion = false,
             NotificarCliente = true,
-            DocumentosSoporte = new List<string> { "recibo_original.pdf" }
+            DocumentosAdjuntos = new List<string> { "recibo_original.pdf" }
         };
     }
 
@@ -470,7 +469,7 @@ public class AnularFacturaValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.RequiereDevolucion = true;
+        command.ProcesarDevolucionPago = true;
         command.MetodoDevolucion = metodoInvalido;
 
         // Act
@@ -492,7 +491,7 @@ public class AnularFacturaValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.RequiereDevolucion = true;
+        command.ProcesarDevolucionPago = true;
         command.MetodoDevolucion = metodoValido;
 
         // Act
@@ -508,7 +507,7 @@ public class AnularFacturaValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.RequiereDevolucion = false;
+        command.ProcesarDevolucionPago = false;
         command.MetodoDevolucion = "MetodoInvalido";
 
         // Act
@@ -521,90 +520,34 @@ public class AnularFacturaValidatorTests
 
     #endregion
 
-    #region Validación MontoDevolucion
+    #region Validación ProcesarDevolucionPago
 
     [Fact]
-    public async Task Validate_ConMontoDevolucionNegativoCuandoRequiereDevolucion_DeberiaRetornarError()
+    public async Task Validate_ConProcesarDevolucionPagoCuandoNoRequiereDevolucion_NoDeberiaValidarProcesamiento()
     {
         // Arrange
         var command = CrearCommandValido();
-        command.RequiereDevolucion = true;
-        command.MontoDevolucion = -50.00m;
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(AnularFacturaCommand.MontoDevolucion) &&
-            e.ErrorMessage.Contains("El monto de devolución debe ser mayor a 0"));
-    }
-
-    [Fact]
-    public async Task Validate_ConMontoDevolucionExcesivoCuandoRequiereDevolucion_DeberiaRetornarError()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.RequiereDevolucion = true;
-        command.MontoDevolucion = 100001m; // Más de $100,000
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(AnularFacturaCommand.MontoDevolucion) &&
-            e.ErrorMessage.Contains("El monto de devolución no puede exceder $100,000"));
-    }
-
-    [Theory]
-    [InlineData(0.01)]
-    [InlineData(50.00)]
-    [InlineData(1500.75)]
-    [InlineData(100000.00)]
-    public async Task Validate_ConMontoDevolucionValidoCuandoRequiereDevolucion_NoDeberiaRetornarErrorDeMonto(decimal montoValido)
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.RequiereDevolucion = true;
-        command.MontoDevolucion = montoValido;
+        command.ProcesarDevolucionPago = false;
+        // No se establece MetodoDevolucion
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(AnularFacturaCommand.MontoDevolucion));
-    }
-
-    [Fact]
-    public async Task Validate_ConMontoDevolucionCuandoNoRequiereDevolucion_NoDeberiaValidarMonto()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.RequiereDevolucion = false;
-        command.MontoDevolucion = -100m; // Negativo pero no se valida
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(AnularFacturaCommand.MontoDevolucion));
+            e.PropertyName == nameof(AnularFacturaCommand.ProcesarDevolucionPago));
     }
 
     #endregion
 
-    #region Validación DocumentosSoporte
+    #region Validación DocumentosAdjuntos
 
     [Fact]
-    public async Task Validate_ConDemasiadosDocumentosSoporte_DeberiaRetornarError()
+    public async Task Validate_ConDemasiadosDocumentosAdjuntos_DeberiaRetornarError()
     {
         // Arrange
         var command = CrearCommandValido();
-        command.DocumentosSoporte = Enumerable.Range(1, 21) // 21 documentos (más de 20)
+        command.DocumentosAdjuntos = Enumerable.Range(1, 21) // 21 documentos (más de 20)
             .Select(i => $"documento_{i}.pdf")
             .ToList();
 
@@ -614,7 +557,7 @@ public class AnularFacturaValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(AnularFacturaCommand.DocumentosSoporte) &&
+            e.PropertyName == nameof(AnularFacturaCommand.DocumentosAdjuntos) &&
             e.ErrorMessage.Contains("Máximo 20 documentos de soporte"));
     }
 
@@ -623,11 +566,11 @@ public class AnularFacturaValidatorTests
     [InlineData(1)]
     [InlineData(10)]
     [InlineData(20)]
-    public async Task Validate_ConCantidadValidaDeDocumentosSoporte_NoDeberiaRetornarErrorDeCantidad(int cantidadDocumentos)
+    public async Task Validate_ConCantidadValidaDeDocumentosAdjuntos_NoDeberiaRetornarErrorDeCantidad(int cantidadDocumentos)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.DocumentosSoporte = Enumerable.Range(1, cantidadDocumentos)
+        command.DocumentosAdjuntos = Enumerable.Range(1, cantidadDocumentos)
             .Select(i => $"documento_{i}.pdf")
             .ToList();
 
@@ -636,7 +579,7 @@ public class AnularFacturaValidatorTests
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(AnularFacturaCommand.DocumentosSoporte) &&
+            e.PropertyName == nameof(AnularFacturaCommand.DocumentosAdjuntos) &&
             e.ErrorMessage.Contains("Máximo 20 documentos de soporte"));
     }
 
@@ -656,12 +599,11 @@ public class AnularFacturaValidatorTests
             TipoAnulacion = "SolicitudCliente",
             Prioridad = 3,
             UsuarioAutorizaId = Guid.NewGuid(),
-            RequiereDevolucion = true,
+            ProcesarDevolucionPago = true,
             MetodoDevolucion = "Tarjeta",
-            MontoDevolucion = 250.75m,
             CancelarPuntosFidelizacion = true,
             NotificarCliente = true,
-            DocumentosSoporte = new List<string> { "recibo_original.pdf", "solicitud_cliente.pdf" }
+            DocumentosAdjuntos = new List<string> { "recibo_original.pdf", "solicitud_cliente.pdf" }
         };
 
         var factura = CrearFacturaValida();
@@ -701,7 +643,7 @@ public class AnularFacturaValidatorTests
             TipoAnulacion = "Administrativa",
             Prioridad = 1,
             UsuarioAutorizaId = Guid.NewGuid(),
-            RequiereDevolucion = false,
+            ProcesarDevolucionPago = false,
             CancelarPuntosFidelizacion = false,
             NotificarCliente = false
         };
@@ -743,10 +685,11 @@ public class AnularFacturaValidatorTests
             TipoAnulacion = "Invalido", // Error
             Prioridad = 0, // Error
             UsuarioAutorizaId = Guid.Empty, // Error
-            RequiereDevolucion = true,
+            ProcesarDevolucionPago = true,
             MetodoDevolucion = "MetodoInvalido", // Error
-            MontoDevolucion = -50m, // Error
-            DocumentosSoporte = Enumerable.Range(1, 25).Select(i => $"doc_{i}.pdf").ToList() // Error
+            CancelarPuntosFidelizacion = true,
+            NotificarCliente = true,
+            DocumentosAdjuntos = Enumerable.Range(1, 25).Select(i => $"doc_{i}.pdf").ToList() // Error
         };
 
         // Act
@@ -773,9 +716,8 @@ public class AnularFacturaValidatorTests
         // Arrange
         var command = CrearCommandValido();
         command.TipoAnulacion = tipoAnulacion;
-        command.RequiereDevolucion = true;
+        command.ProcesarDevolucionPago = true;
         command.MetodoDevolucion = metodoDevolucion;
-        command.MontoDevolucion = 100.00m;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -794,8 +736,7 @@ public class AnularFacturaValidatorTests
         command.TipoAnulacion = "Emergencia";
         command.Prioridad = 4; // Máxima prioridad
         command.Motivo = "EMERGENCIA: Contaminación detectada en producto - anulación inmediata";
-        command.RequiereDevolucion = true;
-        command.MontoDevolucion = 500.00m;
+        command.ProcesarDevolucionPago = true;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -803,8 +744,7 @@ public class AnularFacturaValidatorTests
         // Assert
         result.Errors.Should().NotContain(e => 
             e.PropertyName == nameof(AnularFacturaCommand.TipoAnulacion) ||
-            e.PropertyName == nameof(AnularFacturaCommand.Prioridad) ||
-            e.PropertyName == nameof(AnularFacturaCommand.MontoDevolucion));
+            e.PropertyName == nameof(AnularFacturaCommand.Prioridad));
     }
 
     [Fact]
@@ -812,9 +752,8 @@ public class AnularFacturaValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.RequiereDevolucion = false;
+        command.ProcesarDevolucionPago = false;
         command.MetodoDevolucion = null;
-        command.MontoDevolucion = null;
         command.Motivo = "Anulación administrativa - corrección contable";
 
         // Act
@@ -823,7 +762,7 @@ public class AnularFacturaValidatorTests
         // Assert
         result.Errors.Should().NotContain(e => 
             e.PropertyName == nameof(AnularFacturaCommand.MetodoDevolucion) ||
-            e.PropertyName == nameof(AnularFacturaCommand.MontoDevolucion));
+            e.PropertyName == nameof(AnularFacturaCommand.ProcesarDevolucionPago));
     }
 
     #endregion
@@ -876,11 +815,11 @@ public class AnularFacturaValidatorTests
     }
 
     [Fact]
-    public async Task Validate_ConDocumentosSoporteConExtensionesVariadas_DeberiaSerValido()
+    public async Task Validate_ConDocumentosAdjuntosConExtensionesVariadas_DeberiaSerValido()
     {
         // Arrange
         var command = CrearCommandValido();
-        command.DocumentosSoporte = new List<string>
+        command.DocumentosAdjuntos = new List<string>
         {
             "recibo.pdf",
             "foto_producto.jpg",
@@ -894,7 +833,7 @@ public class AnularFacturaValidatorTests
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(AnularFacturaCommand.DocumentosSoporte));
+            e.PropertyName == nameof(AnularFacturaCommand.DocumentosAdjuntos));
     }
 
     #endregion

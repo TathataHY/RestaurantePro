@@ -111,7 +111,7 @@ public class ObtenerFacturaPorIdHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeTrue();
-        resultado.Value.Estado.Should().Be(EstadoFactura.Pendiente);
+        resultado.Value.Estado.Should().Be(EstadoFactura.Emitida);
         resultado.Value.MontoPagado.Should().Be(0);
         resultado.Value.FechaPago.Should().BeNull();
         resultado.Value.Total.Should().Be(850.00m);
@@ -383,7 +383,7 @@ public class ObtenerFacturaPorIdHandlerTests
             Guid.NewGuid(),
             "FAC-PARCIAL-001",
             TipoFactura.Venta,
-            EstadoFactura.PagoParcial,
+            EstadoFactura.PagadaParcialmente,
             1000m,
             montoPagado: 600m);
 
@@ -400,7 +400,7 @@ public class ObtenerFacturaPorIdHandlerTests
         resultado.Succeeded.Should().BeTrue();
         resultado.Value.Total.Should().Be(1000m);
         resultado.Value.MontoPagado.Should().Be(600m);
-        resultado.Value.Estado.Should().Be(EstadoFactura.PagoParcial);
+        resultado.Value.Estado.Should().Be(EstadoFactura.PagadaParcialmente);
     }
 
     #region Métodos de Apoyo
@@ -460,7 +460,7 @@ public class ObtenerFacturaPorIdHandlerTests
         return new List<Factura>
         {
             CrearFactura(Guid.NewGuid(), "FAC-2024-001", TipoFactura.Venta, EstadoFactura.Pagada, 1500.00m, montoPagado: 1500.00m),
-            CrearFactura(Guid.NewGuid(), "FAC-2024-002", TipoFactura.Venta, EstadoFactura.Pendiente, 850.00m),
+            CrearFactura(Guid.NewGuid(), "FAC-2024-002", TipoFactura.Venta, EstadoFactura.Emitida, 850.00m),
             CrearFactura(Guid.NewGuid(), "FAC-2024-003", TipoFactura.Venta, EstadoFactura.Anulada, 0m),
             CrearFactura(Guid.NewGuid(), "FAC-2024-004", TipoFactura.Venta, EstadoFactura.Vencida, 1200.00m)
         };

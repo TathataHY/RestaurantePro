@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands;
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
 
 /// <summary>
 /// Tests unitarios para CrearTarjetaFidelizacionHandler
@@ -42,7 +43,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
-            TipoTarjeta = "Basica",
+            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
             PuntosIniciales = 100,
             ActivarInmediatamente = true,
             EnviarPorEmail = true,
@@ -51,7 +52,7 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert - Verificar propiedades reales
         Assert.Equal(clienteId, command.ClienteId);
-        Assert.Equal("Basica", command.TipoTarjeta);
+        Assert.Equal(TipoTarjetaFidelizacion.Estandar, command.TipoTarjeta);
         Assert.Equal(100, command.PuntosIniciales);
         Assert.True(command.ActivarInmediatamente);
         Assert.True(command.EnviarPorEmail);
@@ -69,7 +70,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
-            TipoTarjeta = "Premium",
+            TipoTarjeta = TipoTarjetaFidelizacion.Premium,
             PuntosIniciales = 500,
             ActivarInmediatamente = true,
             EnviarPorEmail = false,
@@ -78,7 +79,7 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert
         Assert.Equal(clienteId, command.ClienteId);
-        Assert.Equal("Premium", command.TipoTarjeta);
+        Assert.Equal(TipoTarjetaFidelizacion.Premium, command.TipoTarjeta);
         Assert.Equal(500, command.PuntosIniciales);
         Assert.True(command.ActivarInmediatamente);
         Assert.False(command.EnviarPorEmail);
@@ -106,7 +107,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
-            TipoTarjeta = "VIP",
+            TipoTarjeta = TipoTarjetaFidelizacion.Vip,
             PuntosIniciales = 1000,
             Configuracion = configuracion,
             ActivarInmediatamente = true,
@@ -117,7 +118,7 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert
         Assert.Equal(1000, command.PuntosIniciales);
-        Assert.Equal("VIP", command.TipoTarjeta);
+        Assert.Equal(TipoTarjetaFidelizacion.Vip, command.TipoTarjeta);
         Assert.NotNull(command.Configuracion);
         Assert.Equal(2.0m, command.Configuracion.MultiplicadorPuntos);
         Assert.Contains("BeneficioEspecial", command.Configuracion.ConfiguracionesEspeciales);
@@ -137,7 +138,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
-            TipoTarjeta = "Basica",
+            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
             PuntosIniciales = 100,
             ActivarInmediatamente = true,
             EnviarPorEmail = true,
@@ -174,7 +175,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteExistente,
-            TipoTarjeta = "Premium",
+            TipoTarjeta = TipoTarjetaFidelizacion.Premium,
             PuntosIniciales = 500,
             ActivarInmediatamente = true,
             EnviarPorEmail = false,
@@ -221,7 +222,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
-            TipoTarjeta = "VIP",
+            TipoTarjeta = TipoTarjetaFidelizacion.Vip,
             PuntosIniciales = 1000,
             Configuracion = configuracion,
             ActivarInmediatamente = true,
@@ -242,7 +243,7 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.Equal("VIP", command.TipoTarjeta);
+        Assert.Equal(TipoTarjetaFidelizacion.Vip, command.TipoTarjeta);
         Assert.Equal(1000, result.Value.PuntosActuales);
         Assert.Equal(DateTime.Today.AddMonths(3), result.Value.FechaVencimiento);
     }
@@ -257,7 +258,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
-            TipoTarjeta = "Premium",
+            TipoTarjeta = TipoTarjetaFidelizacion.Premium,
             PuntosIniciales = 250,
             ActivarInmediatamente = true,
             EnviarPorEmail = true,
@@ -288,7 +289,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.NewGuid(), // Cliente ya existe
-            TipoTarjeta = "Basica",
+            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
             PuntosIniciales = 0,
             ActivarInmediatamente = true,
             EnviarPorEmail = false,
@@ -323,7 +324,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.Empty, // ID vacío
-            TipoTarjeta = "Basica",
+            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
             UsuarioId = Guid.NewGuid()
         };
 
@@ -342,7 +343,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.NewGuid(),
-            TipoTarjeta = "", // Tipo vacío
+            TipoTarjeta = (TipoTarjetaFidelizacion)999, // Tipo inválido
             UsuarioId = Guid.NewGuid()
         };
 
@@ -361,7 +362,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.NewGuid(),
-            TipoTarjeta = "Basica",
+            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
             UsuarioId = Guid.Empty // Usuario vacío
         };
 
@@ -381,7 +382,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
-            TipoTarjeta = "Premium",
+            TipoTarjeta = TipoTarjetaFidelizacion.Premium,
             UsuarioId = Guid.NewGuid()
         };
 
@@ -404,7 +405,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.NewGuid(),
-            TipoTarjeta = "Premium",
+            TipoTarjeta = TipoTarjetaFidelizacion.Premium,
             PuntosIniciales = -100, // Puntos negativos
             UsuarioId = Guid.NewGuid()
         };
@@ -430,7 +431,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.NewGuid(),
-            TipoTarjeta = "VIP",
+            TipoTarjeta = TipoTarjetaFidelizacion.Vip,
             Configuracion = configuracion,
             UsuarioId = Guid.NewGuid()
         };
@@ -454,7 +455,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.NewGuid(),
-            TipoTarjeta = "Basica",
+            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
             UsuarioId = Guid.NewGuid()
         };
 
@@ -477,7 +478,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.NewGuid(),
-            TipoTarjeta = "Basica",
+            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
             UsuarioId = Guid.NewGuid()
         };
 
@@ -500,7 +501,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.NewGuid(),
-            TipoTarjeta = "Basica",
+            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
             UsuarioId = Guid.NewGuid()
         };
 
@@ -543,7 +544,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.NewGuid(),
-            TipoTarjeta = "Basica",
+            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
             UsuarioId = Guid.NewGuid()
         };
 

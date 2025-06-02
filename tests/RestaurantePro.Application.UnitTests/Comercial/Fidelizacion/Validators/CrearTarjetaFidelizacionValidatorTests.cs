@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Validators;
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
 
 /// <summary>
 /// Tests para CrearTarjetaFidelizacionValidator
@@ -694,7 +695,7 @@ public class CrearTarjetaFidelizacionValidatorTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
-            TipoTarjeta = "Estandar",
+            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
             PuntosIniciales = 0,
             ActivarInmediatamente = true,
             EnviarPorEmail = false,
@@ -703,7 +704,7 @@ public class CrearTarjetaFidelizacionValidatorTests
 
         // Assert
         command.ClienteId.Should().Be(clienteId);
-        command.TipoTarjeta.Should().Be("Estandar");
+        command.TipoTarjeta.Should().Be(TipoTarjetaFidelizacion.Estandar);
         command.PuntosIniciales.Should().Be(0);
         command.ActivarInmediatamente.Should().BeTrue();
         command.EnviarPorEmail.Should().BeFalse();
@@ -721,7 +722,7 @@ public class CrearTarjetaFidelizacionValidatorTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
-            TipoTarjeta = "Premium",
+            TipoTarjeta = TipoTarjetaFidelizacion.Premium,
             PuntosIniciales = 250,
             ActivarInmediatamente = true,
             EnviarPorEmail = true,
@@ -730,7 +731,7 @@ public class CrearTarjetaFidelizacionValidatorTests
 
         // Assert
         command.ClienteId.Should().Be(clienteId);
-        command.TipoTarjeta.Should().Be("Premium");
+        command.TipoTarjeta.Should().Be(TipoTarjetaFidelizacion.Premium);
         command.PuntosIniciales.Should().Be(250);
         command.ActivarInmediatamente.Should().BeTrue();
         command.EnviarPorEmail.Should().BeTrue();
@@ -748,7 +749,7 @@ public class CrearTarjetaFidelizacionValidatorTests
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
-            TipoTarjeta = "VIP",
+            TipoTarjeta = TipoTarjetaFidelizacion.Vip,
             PuntosIniciales = 500,
             ActivarInmediatamente = true,
             EnviarPorEmail = true,
@@ -758,7 +759,7 @@ public class CrearTarjetaFidelizacionValidatorTests
 
         // Assert
         command.ClienteId.Should().Be(clienteId);
-        command.TipoTarjeta.Should().Be("VIP");
+        command.TipoTarjeta.Should().Be(TipoTarjetaFidelizacion.Vip);
         command.PuntosIniciales.Should().Be(500);
         command.ActivarInmediatamente.Should().BeTrue();
         command.EnviarPorEmail.Should().BeTrue();
@@ -834,7 +835,7 @@ public class CrearTarjetaFidelizacionValidatorTests
         return new CrearTarjetaFidelizacionCommand
         {
             ClienteId = Guid.NewGuid(),
-            TipoTarjeta = "Basica",
+            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
             PuntosIniciales = 0,
             ActivarInmediatamente = true,
             EnviarPorEmail = false,
@@ -849,7 +850,7 @@ public class CrearTarjetaFidelizacionValidatorTests
             ClienteId = Guid.NewGuid(),
             CodigoTarjeta = "TF-TEST-001",
             PuntosIniciales = 150,
-            TipoTarjeta = "Premium",
+            TipoTarjeta = TipoTarjetaFidelizacion.Premium,
             ActivarInmediatamente = true,
             EnviarPorEmail = true,
             Observaciones = "Tarjeta de prueba completa",

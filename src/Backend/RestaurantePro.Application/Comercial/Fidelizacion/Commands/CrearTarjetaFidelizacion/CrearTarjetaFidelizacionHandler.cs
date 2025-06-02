@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+
 namespace RestaurantePro.Application.Comercial.Fidelizacion.Commands.CrearTarjetaFidelizacion;
 
 /// <summary>
@@ -132,11 +134,11 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
         return Result.Success();
     }
 
-    private async Task<string> GenerarCodigoTarjeta(string tipoTarjeta, CancellationToken cancellationToken)
+    private async Task<string> GenerarCodigoTarjeta(TipoTarjetaFidelizacion tipoTarjeta, CancellationToken cancellationToken)
     {
         // Generar un código basado en el tipo y timestamp
         var timestamp = _dateTimeService.Now.ToString("yyyyMMddHHmmss");
-        var prefijo = tipoTarjeta.ToUpper().Take(3).Aggregate("", (current, c) => current + c);
+        var prefijo = tipoTarjeta.ToString().ToUpper().Take(3).Aggregate("", (current, c) => current + c);
         var codigo = $"{prefijo}-{timestamp}-{Random.Shared.Next(1000, 9999)}";
 
         // Verificar que el código sea único

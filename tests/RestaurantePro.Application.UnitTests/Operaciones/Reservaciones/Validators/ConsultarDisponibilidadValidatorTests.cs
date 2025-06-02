@@ -20,26 +20,30 @@ public class ConsultarDisponibilidadValidatorTests
     {
         return new ConsultarDisponibilidadQuery
         {
-            FechaReservacion = DateTime.UtcNow.AddHours(2),
-            HoraInicio = TimeSpan.FromHours(12), // 12:00 PM
-            HoraFin = TimeSpan.FromHours(14), // 2:00 PM
-            CantidadPersonas = 4,
-            TipoReservacion = "Estándar",
-            RequiereConfirmacion = false,
-            IncluirMesasReservadas = false
+            FechaHora = DateTime.UtcNow.AddHours(2),
+            NumeroPersonas = 4,
+            DuracionEstimadaMinutos = 120,
+            ZonaPreferida = null,
+            MesaPreferida = null,
+            MostrarAlternativas = true,
+            RangoAlternativasMinutos = 60,
+            PermitirCapacidadMayor = true,
+            MargenToleranciaPersonas = 2,
+            IncluirDetallesMesas = true,
+            EsEventoEspecial = false
         };
     }
 
     #endregion
 
-    #region Validación FechaReservacion
+    #region Validación FechaHora
 
     [Fact]
-    public async Task Validate_ConFechaReservacionEnPasado_DeberiaRetornarError()
+    public async Task Validate_ConFechaHoraEnPasado_DeberiaRetornarError()
     {
         // Arrange
         var query = CrearQueryValida();
-        query.FechaReservacion = DateTime.UtcNow.AddDays(-1);
+        query.FechaHora = DateTime.UtcNow.AddDays(-1);
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -47,17 +51,17 @@ public class ConsultarDisponibilidadValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.FechaReservacion) &&
-            e.ErrorMessage.Contains("La fecha de reservación no puede ser en el pasado") &&
-            e.ErrorCode == "FECHA_RESERVACION_PASADO");
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.FechaHora) &&
+            e.ErrorMessage.Contains("La fecha y hora no puede ser en el pasado") &&
+            e.ErrorCode == "FECHA_HORA_PASADO");
     }
 
     [Fact]
-    public async Task Validate_ConFechaReservacionMuyLejana_DeberiaRetornarError()
+    public async Task Validate_ConFechaHoraMuyLejana_DeberiaRetornarError()
     {
         // Arrange
         var query = CrearQueryValida();
-        query.FechaReservacion = DateTime.UtcNow.AddDays(181); // Más de 180 días
+        query.FechaHora = DateTime.UtcNow.AddDays(181); // Más de 180 días
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -65,9 +69,9 @@ public class ConsultarDisponibilidadValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.FechaReservacion) &&
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.FechaHora) &&
             e.ErrorMessage.Contains("No se pueden hacer reservaciones con más de 180 días de anticipación") &&
-            e.ErrorCode == "FECHA_RESERVACION_MUY_FUTURA");
+            e.ErrorCode == "FECHA_HORA_MUY_FUTURA");
     }
 
     [Theory]
@@ -76,184 +80,33 @@ public class ConsultarDisponibilidadValidatorTests
     [InlineData(30)]  // 1 mes
     [InlineData(90)]  // 3 meses
     [InlineData(180)] // 6 meses (límite)
-    public async Task Validate_ConFechaReservacionValida_NoDeberiaRetornarErrorDeFecha(int diasAdelante)
+    public async Task Validate_ConFechaHoraValida_NoDeberiaRetornarErrorDeFecha(int diasAdelante)
     {
         // Arrange
         var query = CrearQueryValida();
-        query.FechaReservacion = DateTime.UtcNow.AddDays(diasAdelante);
+        query.FechaHora = DateTime.UtcNow.AddDays(diasAdelante);
 
         // Act
         var result = await _validator.ValidateAsync(query);
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.FechaReservacion));
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.FechaHora));
     }
 
     #endregion
 
-    #region Validación HoraInicio
-
-    [Theory]
-    [InlineData(5, 0)]   // 5:00 AM - muy temprano
-    [InlineData(2, 30)]  // 2:30 AM - madrugada
-    public async Task Validate_ConHoraInicioMuyTemprana_DeberiaRetornarError(int horas, int minutos)
-    {
-        // Arrange
-        var query = CrearQueryValida();
-        query.HoraInicio = new TimeSpan(horas, minutos, 0);
-
-        // Act
-        var result = await _validator.ValidateAsync(query);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.HoraInicio) &&
-            e.ErrorMessage.Contains("La hora de inicio debe estar entre las 6:00 AM y las 11:00 PM") &&
-            e.ErrorCode == "HORA_INICIO_FUERA_HORARIO");
-    }
-
-    [Theory]
-    [InlineData(23, 30)] // 11:30 PM - muy tarde
-    [InlineData(23, 59)] // 11:59 PM - límite
-    public async Task Validate_ConHoraInicioMuyTarde_DeberiaRetornarError(int horas, int minutos)
-    {
-        // Arrange
-        var query = CrearQueryValida();
-        query.HoraInicio = new TimeSpan(horas, minutos, 0);
-
-        // Act
-        var result = await _validator.ValidateAsync(query);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.HoraInicio) &&
-            e.ErrorCode == "HORA_INICIO_FUERA_HORARIO");
-    }
-
-    [Theory]
-    [InlineData(6, 0)]   // 6:00 AM - límite inferior
-    [InlineData(8, 30)]  // 8:30 AM - desayuno
-    [InlineData(12, 0)]  // 12:00 PM - almuerzo
-    [InlineData(18, 30)] // 6:30 PM - cena
-    [InlineData(22, 30)] // 10:30 PM - cena tardía
-    [InlineData(23, 0)]  // 11:00 PM - límite superior
-    public async Task Validate_ConHoraInicioValida_NoDeberiaRetornarErrorDeHora(int horas, int minutos)
-    {
-        // Arrange
-        var query = CrearQueryValida();
-        query.HoraInicio = new TimeSpan(horas, minutos, 0);
-        query.HoraFin = query.HoraInicio.Add(TimeSpan.FromHours(2));
-        if (query.HoraFin.TotalHours >= 24)
-            query.HoraFin = new TimeSpan(23, 0, 0);
-
-        // Act
-        var result = await _validator.ValidateAsync(query);
-
-        // Assert
-        result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.HoraInicio) &&
-            e.ErrorCode == "HORA_INICIO_FUERA_HORARIO");
-    }
-
-    #endregion
-
-    #region Validación HoraFin
-
-    [Fact]
-    public async Task Validate_ConHoraFinAnteriorAInicio_DeberiaRetornarError()
-    {
-        // Arrange
-        var query = CrearQueryValida();
-        query.HoraInicio = TimeSpan.FromHours(14); // 2:00 PM
-        query.HoraFin = TimeSpan.FromHours(12); // 12:00 PM - anterior
-
-        // Act
-        var result = await _validator.ValidateAsync(query);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.HoraFin) &&
-            e.ErrorMessage.Contains("La hora de fin debe ser posterior a la hora de inicio") &&
-            e.ErrorCode == "HORA_FIN_ANTERIOR");
-    }
-
-    [Fact]
-    public async Task Validate_ConDuracionMuyCorta_DeberiaRetornarError()
-    {
-        // Arrange
-        var query = CrearQueryValida();
-        query.HoraInicio = TimeSpan.FromHours(12); // 12:00 PM
-        query.HoraFin = TimeSpan.FromMinutes(720 + 20); // 12:20 PM - solo 20 minutos
-
-        // Act
-        var result = await _validator.ValidateAsync(query);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.HoraFin) &&
-            e.ErrorMessage.Contains("La reservación debe tener una duración mínima de 30 minutos") &&
-            e.ErrorCode == "DURACION_RESERVACION_CORTA");
-    }
-
-    [Fact]
-    public async Task Validate_ConDuracionMuyLarga_DeberiaRetornarError()
-    {
-        // Arrange
-        var query = CrearQueryValida();
-        query.HoraInicio = TimeSpan.FromHours(10); // 10:00 AM
-        query.HoraFin = TimeSpan.FromHours(18); // 6:00 PM - 8 horas
-
-        // Act
-        var result = await _validator.ValidateAsync(query);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.HoraFin) &&
-            e.ErrorMessage.Contains("La reservación no puede exceder 6 horas de duración") &&
-            e.ErrorCode == "DURACION_RESERVACION_LARGA");
-    }
-
-    [Theory]
-    [InlineData(12, 0, 12, 30)] // 30 minutos - mínimo
-    [InlineData(12, 0, 13, 0)]  // 1 hora
-    [InlineData(12, 0, 14, 0)]  // 2 horas
-    [InlineData(12, 0, 15, 0)]  // 3 horas
-    [InlineData(12, 0, 18, 0)]  // 6 horas - máximo
-    public async Task Validate_ConDuracionValida_NoDeberiaRetornarErrorDeDuracion(int horaIni, int minIni, int horaFin, int minFin)
-    {
-        // Arrange
-        var query = CrearQueryValida();
-        query.HoraInicio = new TimeSpan(horaIni, minIni, 0);
-        query.HoraFin = new TimeSpan(horaFin, minFin, 0);
-
-        // Act
-        var result = await _validator.ValidateAsync(query);
-
-        // Assert
-        result.Errors.Should().NotContain(e => 
-            e.ErrorCode == "DURACION_RESERVACION_CORTA" ||
-            e.ErrorCode == "DURACION_RESERVACION_LARGA");
-    }
-
-    #endregion
-
-    #region Validación CantidadPersonas
+    #region Validación NumeroPersonas
 
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
     [InlineData(-5)]
-    public async Task Validate_ConCantidadPersonasMenorIgualCero_DeberiaRetornarError(int cantidadInvalida)
+    public async Task Validate_ConNumeroPersonasMenorIgualCero_DeberiaRetornarError(int numeroInvalido)
     {
         // Arrange
         var query = CrearQueryValida();
-        query.CantidadPersonas = cantidadInvalida;
+        query.NumeroPersonas = numeroInvalido;
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -261,17 +114,17 @@ public class ConsultarDisponibilidadValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.CantidadPersonas) &&
-            e.ErrorMessage.Contains("La cantidad de personas debe ser mayor a 0") &&
-            e.ErrorCode == "CANTIDAD_PERSONAS_INVALIDA");
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.NumeroPersonas) &&
+            e.ErrorMessage.Contains("El número de personas debe ser mayor a 0") &&
+            e.ErrorCode == "NUMERO_PERSONAS_INVALIDO");
     }
 
     [Fact]
-    public async Task Validate_ConCantidadPersonasExcesiva_DeberiaRetornarError()
+    public async Task Validate_ConNumeroPersonasExcesivo_DeberiaRetornarError()
     {
         // Arrange
         var query = CrearQueryValida();
-        query.CantidadPersonas = 101; // Más de 100 personas
+        query.NumeroPersonas = 101; // Más de 100 personas
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -279,9 +132,9 @@ public class ConsultarDisponibilidadValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.CantidadPersonas) &&
-            e.ErrorMessage.Contains("La cantidad de personas no puede exceder 100") &&
-            e.ErrorCode == "CANTIDAD_PERSONAS_EXCESIVA");
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.NumeroPersonas) &&
+            e.ErrorMessage.Contains("El número máximo de personas por reservación es 100") &&
+            e.ErrorCode == "NUMERO_PERSONAS_EXCESIVO");
     }
 
     [Theory]
@@ -294,48 +147,32 @@ public class ConsultarDisponibilidadValidatorTests
     [InlineData(25)]
     [InlineData(50)]
     [InlineData(100)]
-    public async Task Validate_ConCantidadPersonasValida_NoDeberiaRetornarErrorDeCantidad(int cantidadValida)
+    public async Task Validate_ConNumeroPersonasValido_NoDeberiaRetornarErrorDeNumero(int numeroValido)
     {
         // Arrange
         var query = CrearQueryValida();
-        query.CantidadPersonas = cantidadValida;
+        query.NumeroPersonas = numeroValido;
 
         // Act
         var result = await _validator.ValidateAsync(query);
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.CantidadPersonas));
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.NumeroPersonas));
     }
 
     #endregion
 
-    #region Validación TipoReservacion
+    #region Validación DuracionEstimadaMinutos
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public async Task Validate_ConTipoReservacionVacio_NoDeberiaValidarTipo(string tipoVacio)
+    [InlineData(15)]  // Muy corto
+    [InlineData(20)]  // Muy corto
+    public async Task Validate_ConDuracionMuyCorta_DeberiaRetornarError(int duracionCorta)
     {
         // Arrange
         var query = CrearQueryValida();
-        query.TipoReservacion = tipoVacio;
-
-        // Act
-        var result = await _validator.ValidateAsync(query);
-
-        // Assert
-        result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.TipoReservacion));
-    }
-
-    [Fact]
-    public async Task Validate_ConTipoReservacionMuyLargo_DeberiaRetornarError()
-    {
-        // Arrange
-        var query = CrearQueryValida();
-        query.TipoReservacion = new string('A', 101); // Más de 100 caracteres
+        query.DuracionEstimadaMinutos = duracionCorta;
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -343,31 +180,418 @@ public class ConsultarDisponibilidadValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.TipoReservacion) &&
-            e.ErrorMessage.Contains("El tipo de reservación no puede exceder 100 caracteres") &&
-            e.ErrorCode == "TIPO_RESERVACION_LONGITUD");
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.DuracionEstimadaMinutos) &&
+            e.ErrorMessage.Contains("La duración mínima de una reservación es 30 minutos") &&
+            e.ErrorCode == "DURACION_MUY_CORTA");
     }
 
     [Theory]
-    [InlineData("Estándar")]
-    [InlineData("VIP")]
-    [InlineData("Evento Especial")]
-    [InlineData("Cumpleaños")]
-    [InlineData("Aniversario")]
-    [InlineData("Corporativo")]
-    [InlineData("Familiar")]
-    public async Task Validate_ConTipoReservacionValido_NoDeberiaRetornarErrorDeTipo(string tipoValido)
+    [InlineData(480)] // 8 horas - muy largo
+    [InlineData(600)] // 10 horas - muy largo
+    public async Task Validate_ConDuracionMuyLarga_DeberiaRetornarError(int duracionLarga)
     {
         // Arrange
         var query = CrearQueryValida();
-        query.TipoReservacion = tipoValido;
+        query.DuracionEstimadaMinutos = duracionLarga;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.DuracionEstimadaMinutos) &&
+            e.ErrorMessage.Contains("La duración máxima de una reservación es 6 horas") &&
+            e.ErrorCode == "DURACION_MUY_LARGA");
+    }
+
+    [Theory]
+    [InlineData(30)]   // 30 minutos - mínimo
+    [InlineData(60)]   // 1 hora
+    [InlineData(120)]  // 2 horas
+    [InlineData(180)]  // 3 horas
+    [InlineData(360)]  // 6 horas - máximo
+    public async Task Validate_ConDuracionValida_NoDeberiaRetornarErrorDeDuracion(int duracionValida)
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.DuracionEstimadaMinutos = duracionValida;
 
         // Act
         var result = await _validator.ValidateAsync(query);
 
         // Assert
         result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.TipoReservacion));
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.DuracionEstimadaMinutos));
+    }
+
+    #endregion
+
+    #region Validación ZonaPreferida
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task Validate_ConZonaPreferidaVacio_NoDeberiaValidarZona(string zonaVacio)
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.ZonaPreferida = zonaVacio;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.Errors.Should().NotContain(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.ZonaPreferida));
+    }
+
+    [Fact]
+    public async Task Validate_ConZonaPreferidaMuyLargo_DeberiaRetornarError()
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.ZonaPreferida = new string('A', 101); // Más de 100 caracteres
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.ZonaPreferida) &&
+            e.ErrorMessage.Contains("La zona preferida no puede exceder 100 caracteres") &&
+            e.ErrorCode == "ZONA_PREFERIDA_LONGITUD");
+    }
+
+    [Theory]
+    [InlineData("Centro")]
+    [InlineData("Sur")]
+    [InlineData("Norte")]
+    [InlineData("Este")]
+    [InlineData("Oeste")]
+    [InlineData("Sur Este")]
+    [InlineData("Sur Oeste")]
+    public async Task Validate_ConZonaPreferidaValido_NoDeberiaRetornarErrorDeZona(string zonaValido)
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.ZonaPreferida = zonaValido;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.Errors.Should().NotContain(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.ZonaPreferida));
+    }
+
+    #endregion
+
+    #region Validación MesaPreferida
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task Validate_ConMesaPreferidaVacio_NoDeberiaValidarMesa(string mesaVacio)
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.MesaPreferida = mesaVacio;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.Errors.Should().NotContain(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.MesaPreferida));
+    }
+
+    [Fact]
+    public async Task Validate_ConMesaPreferidaMuyLargo_DeberiaRetornarError()
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.MesaPreferida = new string('A', 101); // Más de 100 caracteres
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.MesaPreferida) &&
+            e.ErrorMessage.Contains("La mesa preferida no puede exceder 100 caracteres") &&
+            e.ErrorCode == "MESA_PREFERIDA_LONGITUD");
+    }
+
+    [Theory]
+    [InlineData("Mesa 1")]
+    [InlineData("Mesa 2")]
+    [InlineData("Mesa 3")]
+    [InlineData("Mesa 4")]
+    [InlineData("Mesa 5")]
+    [InlineData("Mesa 6")]
+    [InlineData("Mesa 7")]
+    [InlineData("Mesa 8")]
+    [InlineData("Mesa 9")]
+    [InlineData("Mesa 10")]
+    public async Task Validate_ConMesaPreferidaValida_NoDeberiaRetornarErrorDeMesa(string mesaValida)
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.MesaPreferida = mesaValida;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.Errors.Should().NotContain(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.MesaPreferida));
+    }
+
+    #endregion
+
+    #region Validación MostrarAlternativas
+
+    [Fact]
+    public async Task Validate_ConMostrarAlternativasFalse_DeberiaRetornarError()
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.MostrarAlternativas = false;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.MostrarAlternativas) &&
+            e.ErrorMessage.Contains("La opción de mostrar alternativas debe ser verdadera") &&
+            e.ErrorCode == "MOSTRAR_ALTERNATIVAS_FALSO");
+    }
+
+    [Fact]
+    public async Task Validate_ConMostrarAlternativasTrue_NoDeberiaRetornarError()
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.MostrarAlternativas = true;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Validación RangoAlternativasMinutos
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-5)]
+    public async Task Validate_ConRangoAlternativasMenorIgualCero_DeberiaRetornarError(int rangoInvalido)
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.RangoAlternativasMinutos = rangoInvalido;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.RangoAlternativasMinutos) &&
+            e.ErrorMessage.Contains("El rango de alternativas debe ser mayor a 0") &&
+            e.ErrorCode == "RANGO_ALTERNATIVAS_INVALIDO");
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(4)]
+    [InlineData(6)]
+    [InlineData(8)]
+    [InlineData(15)]
+    [InlineData(25)]
+    [InlineData(50)]
+    [InlineData(100)]
+    public async Task Validate_ConRangoAlternativasValido_NoDeberiaRetornarErrorDeRango(int rangoValido)
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.RangoAlternativasMinutos = rangoValido;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.Errors.Should().NotContain(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.RangoAlternativasMinutos));
+    }
+
+    #endregion
+
+    #region Validación PermitirCapacidadMayor
+
+    [Fact]
+    public async Task Validate_ConPermitirCapacidadMayorFalse_DeberiaRetornarError()
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.PermitirCapacidadMayor = false;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.PermitirCapacidadMayor) &&
+            e.ErrorMessage.Contains("La opción de permitir capacidad mayor debe ser verdadera") &&
+            e.ErrorCode == "PERMITIR_CAPACIDAD_MAYOR_FALSO");
+    }
+
+    [Fact]
+    public async Task Validate_ConPermitirCapacidadMayorTrue_NoDeberiaRetornarError()
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.PermitirCapacidadMayor = true;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Validación MargenToleranciaPersonas
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-5)]
+    public async Task Validate_ConMargenToleranciaMenorIgualCero_DeberiaRetornarError(int margenInvalido)
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.MargenToleranciaPersonas = margenInvalido;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.MargenToleranciaPersonas) &&
+            e.ErrorMessage.Contains("El margen de tolerancia debe ser mayor a 0") &&
+            e.ErrorCode == "MARGEN_TOLERANCIA_INVALIDO");
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(4)]
+    [InlineData(6)]
+    [InlineData(8)]
+    [InlineData(15)]
+    [InlineData(25)]
+    [InlineData(50)]
+    [InlineData(100)]
+    public async Task Validate_ConMargenToleranciaValido_NoDeberiaRetornarErrorDeMargen(int margenValido)
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.MargenToleranciaPersonas = margenValido;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.Errors.Should().NotContain(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.MargenToleranciaPersonas));
+    }
+
+    #endregion
+
+    #region Validación IncluirDetallesMesas
+
+    [Fact]
+    public async Task Validate_ConIncluirDetallesMesasFalse_DeberiaRetornarError()
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.IncluirDetallesMesas = false;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.IncluirDetallesMesas) &&
+            e.ErrorMessage.Contains("La opción de incluir detalles de mesas debe ser verdadera") &&
+            e.ErrorCode == "INCLUIR_DETALLES_MESAS_FALSO");
+    }
+
+    [Fact]
+    public async Task Validate_ConIncluirDetallesMesasTrue_NoDeberiaRetornarError()
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.IncluirDetallesMesas = true;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Validación EsEventoEspecial
+
+    [Fact]
+    public async Task Validate_ConEsEventoEspecialFalse_DeberiaRetornarError()
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.EsEventoEspecial = false;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ConsultarDisponibilidadQuery.EsEventoEspecial) &&
+            e.ErrorMessage.Contains("La opción de evento especial debe ser verdadera") &&
+            e.ErrorCode == "ES_EVENTO_ESPECIAL_FALSO");
+    }
+
+    [Fact]
+    public async Task Validate_ConEsEventoEspecialTrue_NoDeberiaRetornarError()
+    {
+        // Arrange
+        var query = CrearQueryValida();
+        query.EsEventoEspecial = true;
+
+        // Act
+        var result = await _validator.ValidateAsync(query);
+
+        // Assert
+        result.IsValid.Should().BeTrue();
     }
 
     #endregion
@@ -380,13 +604,17 @@ public class ConsultarDisponibilidadValidatorTests
         // Arrange
         var query = new ConsultarDisponibilidadQuery
         {
-            FechaReservacion = DateTime.UtcNow.AddDays(7),
-            HoraInicio = TimeSpan.FromHours(19), // 7:00 PM
-            HoraFin = TimeSpan.FromHours(21), // 9:00 PM
-            CantidadPersonas = 6,
-            TipoReservacion = "Cena Especial",
-            RequiereConfirmacion = true,
-            IncluirMesasReservadas = false
+            FechaHora = DateTime.UtcNow.AddDays(7),
+            NumeroPersonas = 6,
+            DuracionEstimadaMinutos = 120,
+            ZonaPreferida = "Centro",
+            MesaPreferida = "Mesa 1",
+            MostrarAlternativas = true,
+            RangoAlternativasMinutos = 60,
+            PermitirCapacidadMayor = true,
+            MargenToleranciaPersonas = 2,
+            IncluirDetallesMesas = true,
+            EsEventoEspecial = false
         };
 
         // Act
@@ -403,11 +631,17 @@ public class ConsultarDisponibilidadValidatorTests
         // Arrange
         var query = new ConsultarDisponibilidadQuery
         {
-            FechaReservacion = DateTime.UtcNow.AddHours(6),
-            HoraInicio = TimeSpan.FromHours(12), // 12:00 PM
-            HoraFin = TimeSpan.FromMinutes(12 * 60 + 30), // 12:30 PM
-            CantidadPersonas = 1
-            // Campos opcionales omitidos
+            FechaHora = DateTime.UtcNow.AddHours(6),
+            NumeroPersonas = 1,
+            DuracionEstimadaMinutos = 30,
+            ZonaPreferida = null,
+            MesaPreferida = null,
+            MostrarAlternativas = false,
+            RangoAlternativasMinutos = 0,
+            PermitirCapacidadMayor = false,
+            MargenToleranciaPersonas = 0,
+            IncluirDetallesMesas = false,
+            EsEventoEspecial = false
         };
 
         // Act
@@ -424,11 +658,17 @@ public class ConsultarDisponibilidadValidatorTests
         // Arrange
         var query = new ConsultarDisponibilidadQuery
         {
-            FechaReservacion = DateTime.UtcNow.AddDays(-1), // Error - pasado
-            HoraInicio = TimeSpan.FromHours(2), // Error - muy temprano
-            HoraFin = TimeSpan.FromHours(1), // Error - anterior a inicio
-            CantidadPersonas = 0, // Error - cero
-            TipoReservacion = new string('X', 101) // Error - muy largo
+            FechaHora = DateTime.UtcNow.AddDays(-1), // Error - pasado
+            NumeroPersonas = 0, // Error - cero
+            DuracionEstimadaMinutos = 15, // Error - muy corto
+            ZonaPreferida = null,
+            MesaPreferida = null,
+            MostrarAlternativas = false,
+            RangoAlternativasMinutos = 0,
+            PermitirCapacidadMayor = false,
+            MargenToleranciaPersonas = 0,
+            IncluirDetallesMesas = false,
+            EsEventoEspecial = false
         };
 
         // Act
@@ -452,10 +692,9 @@ public class ConsultarDisponibilidadValidatorTests
     {
         // Arrange
         var query = CrearQueryValida();
-        query.TipoReservacion = tipo;
-        query.HoraInicio = new TimeSpan(hIni, mIni, 0);
-        query.HoraFin = new TimeSpan(hFin, mFin, 0);
-        query.CantidadPersonas = personas;
+        query.EsEventoEspecial = tipo == "Cena Tardía";
+        query.NumeroPersonas = personas;
+        query.DuracionEstimadaMinutos = (hFin - hIni) * 60 + (mFin - mIni);
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -469,12 +708,9 @@ public class ConsultarDisponibilidadValidatorTests
     {
         // Arrange
         var query = CrearQueryValida();
-        query.FechaReservacion = DateTime.UtcNow.AddDays(30);
-        query.HoraInicio = TimeSpan.FromHours(18); // 6:00 PM
-        query.HoraFin = TimeSpan.FromHours(23); // 11:00 PM - 5 horas
-        query.CantidadPersonas = 25;
-        query.TipoReservacion = "Evento Corporativo";
-        query.RequiereConfirmacion = true;
+        query.EsEventoEspecial = true;
+        query.NumeroPersonas = 25;
+        query.DuracionEstimadaMinutos = 300; // 5 horas
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -488,11 +724,9 @@ public class ConsultarDisponibilidadValidatorTests
     {
         // Arrange
         var query = CrearQueryValida();
-        query.FechaReservacion = DateTime.UtcNow.AddHours(2);
-        query.HoraInicio = TimeSpan.FromHours(DateTime.UtcNow.Hour + 3);
-        query.HoraFin = query.HoraInicio.Add(TimeSpan.FromMinutes(90));
-        query.CantidadPersonas = 2;
-        query.RequiereConfirmacion = false;
+        query.EsEventoEspecial = false;
+        query.NumeroPersonas = 2;
+        query.DuracionEstimadaMinutos = 90; // 1.5 horas
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -506,13 +740,12 @@ public class ConsultarDisponibilidadValidatorTests
     #region Tests de Límites y Casos Especiales
 
     [Fact]
-    public async Task Validate_ConFechaReservacionHoy_DeberiaSerValido()
+    public async Task Validate_ConFechaHoraHoy_DeberiaSerValido()
     {
         // Arrange
         var query = CrearQueryValida();
-        query.FechaReservacion = DateTime.UtcNow.Date;
-        query.HoraInicio = TimeSpan.FromHours(DateTime.UtcNow.Hour + 3);
-        query.HoraFin = query.HoraInicio.Add(TimeSpan.FromHours(1));
+        query.FechaHora = DateTime.UtcNow.Date;
+        query.DuracionEstimadaMinutos = 30; // 30 minutos
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -526,8 +759,7 @@ public class ConsultarDisponibilidadValidatorTests
     {
         // Arrange
         var query = CrearQueryValida();
-        query.HoraInicio = TimeSpan.FromHours(12);
-        query.HoraFin = TimeSpan.FromMinutes(12 * 60 + 30); // Exactamente 30 minutos
+        query.DuracionEstimadaMinutos = 30; // Exactamente 30 minutos
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -541,8 +773,7 @@ public class ConsultarDisponibilidadValidatorTests
     {
         // Arrange
         var query = CrearQueryValida();
-        query.HoraInicio = TimeSpan.FromHours(12);
-        query.HoraFin = TimeSpan.FromHours(18); // Exactamente 6 horas
+        query.DuracionEstimadaMinutos = 360; // Exactamente 6 horas
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -556,7 +787,9 @@ public class ConsultarDisponibilidadValidatorTests
     {
         // Arrange
         var query = CrearQueryValida();
-        query.TipoReservacion = new string('R', 100); // Exactamente 100 caracteres
+        query.EsEventoEspecial = true;
+        query.NumeroPersonas = 100;
+        query.DuracionEstimadaMinutos = 360; // Exactamente 100 caracteres
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -577,8 +810,9 @@ public class ConsultarDisponibilidadValidatorTests
             .Select(i => 
             {
                 var q = CrearQueryValida();
-                q.FechaReservacion = DateTime.UtcNow.AddDays(i);
-                q.CantidadPersonas = i;
+                q.FechaHora = DateTime.UtcNow.AddDays(i);
+                q.NumeroPersonas = i;
+                q.DuracionEstimadaMinutos = i * 60;
                 return q;
             })
             .ToList();
@@ -616,7 +850,7 @@ public class ConsultarDisponibilidadValidatorTests
     {
         // Arrange
         var query = CrearQueryValida();
-        query.RequiereConfirmacion = true;
+        query.EsEventoEspecial = true;
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -630,7 +864,7 @@ public class ConsultarDisponibilidadValidatorTests
     {
         // Arrange
         var query = CrearQueryValida();
-        query.IncluirMesasReservadas = true;
+        query.IncluirDetallesMesas = true;
 
         // Act
         var result = await _validator.ValidateAsync(query);

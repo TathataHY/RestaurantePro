@@ -128,257 +128,136 @@ public class ObtenerAnalisisInventarioValidatorTests
 
     #endregion
 
-    #region Tests de Validaciones de Ingredientes Específicos
+    #region Tests de Validaciones de Categorías
 
     [Fact]
-    public async Task IngredientesEspecificos_NoDebeExcederLimite()
+    public async Task CategoriaId_DebeSerValidaCuandoSeEspecifica()
     {
         // Arrange
         var query = CrearQueryBase();
-        query.IngredientesEspecificos = CrearListaIngredientes(101);
+        query.CategoriaId = Guid.NewGuid();
 
         // Act
         var result = await _validator.TestValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.IngredientesEspecificos)
-            .WithErrorCode("ANALISIS_INVENTARIO_INGREDIENTES_LIMITE")
-            .WithErrorMessage("No se pueden especificar más de 100 ingredientes específicos");
+        result.ShouldNotHaveValidationErrorFor(x => x.CategoriaId);
     }
 
     [Fact]
-    public async Task IngredientesEspecificos_DebenTenerIdsValidos()
+    public async Task CategoriaId_PuedeSerNula()
     {
         // Arrange
         var query = CrearQueryBase();
-        query.IngredientesEspecificos = new List<Guid> { Guid.Empty };
+        query.CategoriaId = null;
 
         // Act
         var result = await _validator.TestValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.IngredientesEspecificos)
-            .WithErrorCode("ANALISIS_INVENTARIO_INGREDIENTES_IDS_INVALIDOS")
-            .WithErrorMessage("Todos los IDs de ingredientes deben ser válidos");
+        result.ShouldNotHaveValidationErrorFor(x => x.CategoriaId);
     }
 
     [Fact]
-    public async Task IngredientesEspecificos_NoDebenTenerDuplicados()
+    public async Task CategoriaId_NoDebeSerGuidVacio()
     {
         // Arrange
         var query = CrearQueryBase();
-        var ingredienteId = Guid.NewGuid();
-        query.IngredientesEspecificos = new List<Guid> { ingredienteId, ingredienteId };
+        query.CategoriaId = Guid.Empty;
 
         // Act
         var result = await _validator.TestValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.IngredientesEspecificos)
-            .WithErrorCode("ANALISIS_INVENTARIO_INGREDIENTES_DUPLICADOS")
-            .WithErrorMessage("No se pueden especificar ingredientes duplicados");
+        result.ShouldHaveValidationErrorFor(x => x.CategoriaId)
+            .WithErrorCode("CATEGORIA_ID_INVALIDO");
+    }
+
+    #endregion
+
+    #region Tests de Validaciones de Nivel de Detalle
+
+    [Theory]
+    [InlineData("Basico")]
+    [InlineData("Completo")]
+    [InlineData("Resumen")]
+    public async Task NivelDetalle_DebeAceptarNivelesValidos(string nivel)
+    {
+        // Arrange
+        var query = CrearQueryBase();
+        query.NivelDetalle = nivel;
+
+        // Act
+        var result = await _validator.TestValidateAsync(query);
+
+        // Assert
+        result.ShouldNotHaveValidationErrorFor(x => x.NivelDetalle);
+    }
+
+    [Fact]
+    public async Task NivelDetalle_DebeRechazarNivelesInvalidos()
+    {
+        // Arrange
+        var query = CrearQueryBase();
+        query.NivelDetalle = "NivelInexistente";
+
+        // Act
+        var result = await _validator.TestValidateAsync(query);
+
+        // Assert
+        result.ShouldHaveValidationErrorFor(x => x.NivelDetalle)
+            .WithErrorCode("NIVEL_DETALLE_INVALIDO");
     }
 
     [Theory]
     [InlineData(null)]
-    [InlineData(0)]
-    public async Task IngredientesEspecificos_PuedeSerVacioONulo(object ingredientes)
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task NivelDetalle_DebeSerObligatorio(string nivel)
     {
         // Arrange
         var query = CrearQueryBase();
-        query.IngredientesEspecificos = ingredientes as List<Guid>;
+        query.NivelDetalle = nivel;
 
         // Act
         var result = await _validator.TestValidateAsync(query);
 
         // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.IngredientesEspecificos);
+        result.ShouldHaveValidationErrorFor(x => x.NivelDetalle)
+            .WithErrorCode("NIVEL_DETALLE_REQUERIDO");
     }
 
     #endregion
 
-    #region Tests de Validaciones de Categorías Específicas
+    #region Tests de Validaciones de Usuario
 
     [Fact]
-    public async Task CategoriasEspecificas_NoDebeExcederLimite()
+    public async Task UsuarioId_DebeSerObligatorio()
     {
         // Arrange
         var query = CrearQueryBase();
-        query.CategoriasEspecificas = CrearListaCategorias(21);
+        query.UsuarioId = Guid.Empty;
 
         // Act
         var result = await _validator.TestValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.CategoriasEspecificas)
-            .WithErrorCode("ANALISIS_INVENTARIO_CATEGORIAS_LIMITE")
-            .WithErrorMessage("No se pueden especificar más de 20 categorías específicas");
-    }
-
-    [Theory]
-    [InlineData("Carnes")]
-    [InlineData("Verduras")]
-    [InlineData("Lacteos")]
-    [InlineData("Cereales")]
-    [InlineData("Especias")]
-    [InlineData("Bebidas")]
-    [InlineData("Condimentos")]
-    public async Task CategoriasEspecificas_DebeValidarCategoriasValidas(string categoria)
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        query.CategoriasEspecificas = new List<string> { categoria };
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.CategoriasEspecificas);
+        result.ShouldHaveValidationErrorFor(x => x.UsuarioId)
+            .WithErrorCode("USUARIO_ID_REQUERIDO");
     }
 
     [Fact]
-    public async Task CategoriasEspecificas_DebeRechazarCategoriasInvalidas()
+    public async Task UsuarioId_DebeSerValido()
     {
         // Arrange
         var query = CrearQueryBase();
-        query.CategoriasEspecificas = new List<string> { "CategoriaInvalida" };
+        query.UsuarioId = Guid.NewGuid();
 
         // Act
         var result = await _validator.TestValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.CategoriasEspecificas)
-            .WithErrorCode("ANALISIS_INVENTARIO_CATEGORIAS_INVALIDAS")
-            .WithErrorMessage("Las categorías deben ser válidas: Carnes, Verduras, Lacteos, Cereales, Especias, Bebidas, Condimentos");
-    }
-
-    [Fact]
-    public async Task CategoriasEspecificas_NoDebenTenerDuplicadas()
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        query.CategoriasEspecificas = new List<string> { "Carnes", "Carnes" };
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.CategoriasEspecificas)
-            .WithErrorCode("ANALISIS_INVENTARIO_CATEGORIAS_DUPLICADAS")
-            .WithErrorMessage("No se pueden especificar categorías duplicadas");
-    }
-
-    #endregion
-
-    #region Tests de Validaciones de Nivel de Análisis
-
-    [Fact]
-    public async Task NivelAnalisis_DebeSerValido()
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        query.NivelAnalisis = (NivelAnalisisInventario)999;
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.NivelAnalisis)
-            .WithErrorCode("ANALISIS_INVENTARIO_NIVEL_INVALIDO")
-            .WithErrorMessage("El nivel de análisis debe ser válido");
-    }
-
-    [Theory]
-    [InlineData(NivelAnalisisInventario.Basico)]
-    [InlineData(NivelAnalisisInventario.Diario)]
-    [InlineData(NivelAnalisisInventario.Semanal)]
-    [InlineData(NivelAnalisisInventario.Completo)]
-    [InlineData(NivelAnalisisInventario.Criticos)]
-    [InlineData(NivelAnalisisInventario.Financiero)]
-    public async Task NivelAnalisis_DebeAceptarNivelesValidos(NivelAnalisisInventario nivel)
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        query.NivelAnalisis = nivel;
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.NivelAnalisis);
-    }
-
-    #endregion
-
-    #region Tests de Validaciones de Umbral Stock Crítico
-
-    [Theory]
-    [InlineData(0)]
-    [InlineData(-1)]
-    [InlineData(-100)]
-    public async Task UmbralStockCritico_DebeSerPositivo(decimal umbral)
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        query.UmbralStockCritico = umbral;
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.UmbralStockCritico)
-            .WithErrorCode("ANALISIS_INVENTARIO_UMBRAL_STOCK_POSITIVO")
-            .WithErrorMessage("El umbral de stock crítico debe ser mayor a 0");
-    }
-
-    [Fact]
-    public async Task UmbralStockCritico_NoDebeExcederMaximo()
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        query.UmbralStockCritico = 10001;
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.UmbralStockCritico)
-            .WithErrorCode("ANALISIS_INVENTARIO_UMBRAL_STOCK_MAXIMO")
-            .WithErrorMessage("El umbral de stock crítico no puede exceder 10,000 unidades");
-    }
-
-    [Theory]
-    [InlineData(null)]
-    public async Task UmbralStockCritico_PuedeSerOpcional(decimal? umbral)
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        query.UmbralStockCritico = umbral;
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.UmbralStockCritico);
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(10)]
-    [InlineData(100)]
-    [InlineData(1000)]
-    [InlineData(10000)]
-    public async Task UmbralStockCritico_DebeAceptarValoresValidos(decimal umbral)
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        query.UmbralStockCritico = umbral;
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.UmbralStockCritico);
+        result.ShouldNotHaveValidationErrorFor(x => x.UsuarioId);
     }
 
     #endregion
@@ -386,37 +265,19 @@ public class ObtenerAnalisisInventarioValidatorTests
     #region Tests de Validaciones Condicionales
 
     [Fact]
-    public async Task AnalisisCriticos_RequiereIngredientesEspecificos()
+    public async Task AnalisisCriticos_DeberiaConfigurarseSoloCriticos()
     {
         // Arrange
         var query = CrearQueryBase();
-        query.NivelAnalisis = NivelAnalisisInventario.Criticos;
-        query.IngredientesEspecificos = null;
+        query.SoloCriticos = true;
+        query.SoloAlertaStock = true;
 
         // Act
         var result = await _validator.TestValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.IngredientesEspecificos)
-            .WithErrorCode("ANALISIS_INVENTARIO_CRITICOS_REQUIERE_INGREDIENTES")
-            .WithErrorMessage("El análisis de críticos requiere especificar ingredientes específicos");
-    }
-
-    [Fact]
-    public async Task AnalisisFinanciero_RequiereCalculosCostos()
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        query.NivelAnalisis = NivelAnalisisInventario.Financiero;
-        query.IncluirAnalisisCostos = false;
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.IncluirAnalisisCostos)
-            .WithErrorCode("ANALISIS_INVENTARIO_FINANCIERO_REQUIERE_COSTOS")
-            .WithErrorMessage("El análisis financiero requiere incluir análisis de costos");
+        result.ShouldNotHaveValidationErrorFor(x => x.SoloCriticos);
+        result.ShouldNotHaveValidationErrorFor(x => x.SoloAlertaStock);
     }
 
     [Fact]
@@ -424,216 +285,33 @@ public class ObtenerAnalisisInventarioValidatorTests
     {
         // Arrange
         var query = CrearQueryBase();
-        query.NivelAnalisis = NivelAnalisisInventario.Completo;
-        query.IncluirPrediccionesStock = false;
-        query.IncluirAnalisisCostos = false;
-        query.IncluirAlertasAvanzadas = false;
+        query.NivelDetalle = "Completo";
+        query.IncluirTendencias = true;
+        query.IncluirRecomendaciones = true;
 
         // Act
         var result = await _validator.TestValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x)
-            .WithErrorCode("ANALISIS_INVENTARIO_COMPLETO_REQUIERE_OPCIONES")
-            .WithErrorMessage("El análisis completo requiere incluir predicciones, costos y alertas avanzadas");
+        result.ShouldNotHaveValidationErrorFor(x => x.NivelDetalle);
+        result.ShouldNotHaveValidationErrorFor(x => x.IncluirTendencias);
+        result.ShouldNotHaveValidationErrorFor(x => x.IncluirRecomendaciones);
     }
 
     [Fact]
-    public async Task MovimientosDetallados_RequiereRangoLimitado()
+    public async Task AnalisisBasico_RequiereConfiguracionMinima()
     {
         // Arrange
         var query = CrearQueryBase();
-        query.IncluirMovimientosDetallados = true;
-        query.FechaInicio = DateTime.Now.AddDays(-91);
-        query.FechaFin = DateTime.Now;
+        query.NivelDetalle = "Basico";
+        query.IncluirTendencias = false;
+        query.IncluirRecomendaciones = false;
 
         // Act
         var result = await _validator.TestValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x)
-            .WithErrorCode("ANALISIS_INVENTARIO_MOVIMIENTOS_RANGO_LIMITADO")
-            .WithErrorMessage("Los movimientos detallados requieren un rango máximo de 90 días");
-    }
-
-    #endregion
-
-    #region Tests de Validaciones de Combinaciones Lógicas
-
-    [Fact]
-    public async Task IngredientesYCategorias_NoDebenEspecificarseSimultaneamente()
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        query.IngredientesEspecificos = CrearListaIngredientes(5);
-        query.CategoriasEspecificas = new List<string> { "Carnes", "Verduras" };
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x)
-            .WithErrorCode("ANALISIS_INVENTARIO_INGREDIENTES_CATEGORIAS_EXCLUSIVOS")
-            .WithErrorMessage("No se pueden especificar ingredientes específicos y categorías al mismo tiempo");
-    }
-
-    [Fact]
-    public async Task PrediccionesConRangoCorto_DebeAdvertir()
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        query.IncluirPrediccionesStock = true;
-        query.FechaInicio = DateTime.Now.AddDays(-6);
-        query.FechaFin = DateTime.Now;
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x)
-            .WithErrorCode("ANALISIS_INVENTARIO_PREDICCIONES_RANGO_MINIMO")
-            .WithErrorMessage("Las predicciones requieren un rango mínimo de 7 días para ser precisas");
-    }
-
-    #endregion
-
-    #region Tests de Validaciones Async (Integridad Referencial)
-
-    [Fact]
-    public async Task IngredientesEspecificos_DebenExistir()
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        var ingredienteId = Guid.NewGuid();
-        query.IngredientesEspecificos = new List<Guid> { ingredienteId };
-        ConfigurarIngredienteNoExiste(ingredienteId);
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.IngredientesEspecificos)
-            .WithErrorCode("ANALISIS_INVENTARIO_INGREDIENTES_NO_EXISTEN")
-            .WithErrorMessage("Uno o más ingredientes especificados no existen");
-    }
-
-    [Fact]
-    public async Task IngredientesEspecificos_DebenEstarActivos()
-    {
-        // Arrange
-        var query = CrearQueryBase();
-        var ingredienteId = Guid.NewGuid();
-        query.IngredientesEspecificos = new List<Guid> { ingredienteId };
-        var ingredienteInactivo = CrearIngredienteInactivo();
-        ConfigurarIngredienteExiste(ingredienteId, ingredienteInactivo);
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.IngredientesEspecificos)
-            .WithErrorCode("ANALISIS_INVENTARIO_INGREDIENTES_INACTIVOS")
-            .WithErrorMessage("Uno o más ingredientes especificados están inactivos");
-    }
-
-    #endregion
-
-    #region Tests de Factory Methods
-
-    [Fact]
-    public void ObtenerAnalisisInventarioQuery_CrearAnalisisDiario_DebeConfigurarCorrectamente()
-    {
-        // Arrange
-        var fecha = DateTime.Today.AddDays(-1);
-
-        // Act
-        var query = ObtenerAnalisisInventarioQuery.CrearAnalisisDiario(fecha, true, true);
-
-        // Assert
-        query.FechaInicio.Should().Be(fecha);
-        query.FechaFin.Should().Be(fecha);
-        query.IncluirPrediccionesStock.Should().BeTrue();
-        query.IncluirAnalisisCostos.Should().BeTrue();
-        query.IncluirMovimientosDetallados.Should().BeFalse();
-        query.IncluirAlertasAvanzadas.Should().BeTrue();
-        query.IncluirRecomendacionesCompra.Should().BeTrue();
-        query.NivelAnalisis.Should().Be(NivelAnalisisInventario.Diario);
-    }
-
-    [Fact]
-    public void ObtenerAnalisisInventarioQuery_CrearAnalisisSemanal_DebeConfigurarCorrectamente()
-    {
-        // Arrange
-        var fechaInicio = DateTime.Today.AddDays(-7);
-
-        // Act
-        var query = ObtenerAnalisisInventarioQuery.CrearAnalisisSemanal(fechaInicio, NivelAnalisisInventario.Completo);
-
-        // Assert
-        query.FechaInicio.Should().Be(fechaInicio);
-        query.FechaFin.Should().Be(fechaInicio.AddDays(7));
-        query.IncluirPrediccionesStock.Should().BeTrue();
-        query.IncluirAnalisisCostos.Should().BeTrue();
-        query.IncluirMovimientosDetallados.Should().BeTrue();
-        query.IncluirAlertasAvanzadas.Should().BeTrue();
-        query.IncluirRecomendacionesCompra.Should().BeTrue();
-        query.NivelAnalisis.Should().Be(NivelAnalisisInventario.Completo);
-    }
-
-    [Fact]
-    public void ObtenerAnalisisInventarioQuery_CrearAnalisisCriticos_DebeConfigurarCorrectamente()
-    {
-        // Arrange
-        var ingredientes = CrearListaIngredientes(10);
-        var umbral = 5m;
-
-        // Act
-        var query = ObtenerAnalisisInventarioQuery.CrearAnalisisCriticos(ingredientes, umbral, true);
-
-        // Assert
-        query.IngredientesEspecificos.Should().BeEquivalentTo(ingredientes);
-        query.UmbralStockCritico.Should().Be(umbral);
-        query.IncluirPrediccionesStock.Should().BeTrue();
-        query.IncluirAnalisisCostos.Should().BeFalse();
-        query.IncluirMovimientosDetallados.Should().BeTrue();
-        query.IncluirAlertasAvanzadas.Should().BeTrue();
-        query.IncluirRecomendacionesCompra.Should().BeTrue();
-        query.NivelAnalisis.Should().Be(NivelAnalisisInventario.Criticos);
-    }
-
-    #endregion
-
-    #region Tests de Casos Límite
-
-    [Fact]
-    public async Task ValidarAnalisis_ConConfiguracionCompleta_DebeSerValido()
-    {
-        // Arrange
-        var query = CrearQueryCompleto();
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.FechaInicio);
-        result.ShouldNotHaveValidationErrorFor(x => x.FechaFin);
-        result.ShouldNotHaveValidationErrorFor(x => x.NivelAnalisis);
-        result.ShouldNotHaveValidationErrorFor(x => x.UmbralStockCritico);
-    }
-
-    [Fact]
-    public async Task ValidarAnalisis_ConMinimaConfiguracion_DebeSerValido()
-    {
-        // Arrange
-        var query = CrearQueryMinimo();
-
-        // Act
-        var result = await _validator.TestValidateAsync(query);
-
-        // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.FechaInicio);
-        result.ShouldNotHaveValidationErrorFor(x => x.FechaFin);
-        result.ShouldNotHaveValidationErrorFor(x => x.NivelAnalisis);
+        result.ShouldNotHaveValidationErrorFor(x => x.NivelDetalle);
     }
 
     #endregion
@@ -645,8 +323,7 @@ public class ObtenerAnalisisInventarioValidatorTests
     {
         // Arrange
         var query = CrearQueryBase();
-        query.IngredientesEspecificos = CrearListaIngredientes(100);
-        query.CategoriasEspecificas = null; // Para evitar conflicto
+        query.CategoriaId = Guid.NewGuid();
         
         var stopwatch = Stopwatch.StartNew();
 
@@ -686,15 +363,13 @@ public class ObtenerAnalisisInventarioValidatorTests
         {
             FechaInicio = DateTime.Now.AddDays(-30),
             FechaFin = DateTime.Now,
-            IngredientesEspecificos = null,
-            CategoriasEspecificas = null,
-            IncluirPrediccionesStock = true,
-            IncluirAnalisisCostos = true,
-            IncluirMovimientosDetallados = false,
-            IncluirAlertasAvanzadas = true,
-            IncluirRecomendacionesCompra = true,
-            NivelAnalisis = NivelAnalisisInventario.Completo,
-            UmbralStockCritico = 10
+            CategoriaId = null,
+            SoloAlertaStock = false,
+            SoloCriticos = false,
+            IncluirTendencias = true,
+            IncluirRecomendaciones = true,
+            NivelDetalle = "Completo",
+            UsuarioId = Guid.NewGuid()
         };
     }
 
@@ -704,15 +379,13 @@ public class ObtenerAnalisisInventarioValidatorTests
         {
             FechaInicio = DateTime.Now.AddDays(-90),
             FechaFin = DateTime.Now,
-            IngredientesEspecificos = CrearListaIngredientes(50),
-            CategoriasEspecificas = null, // Exclusivo con ingredientes específicos
-            IncluirPrediccionesStock = true,
-            IncluirAnalisisCostos = true,
-            IncluirMovimientosDetallados = true,
-            IncluirAlertasAvanzadas = true,
-            IncluirRecomendacionesCompra = true,
-            NivelAnalisis = NivelAnalisisInventario.Completo,
-            UmbralStockCritico = 5
+            CategoriaId = Guid.NewGuid(),
+            SoloAlertaStock = false,
+            SoloCriticos = false,
+            IncluirTendencias = true,
+            IncluirRecomendaciones = true,
+            NivelDetalle = "Completo",
+            UsuarioId = Guid.NewGuid()
         };
     }
 
@@ -722,15 +395,13 @@ public class ObtenerAnalisisInventarioValidatorTests
         {
             FechaInicio = DateTime.Now.AddDays(-7),
             FechaFin = DateTime.Now,
-            IngredientesEspecificos = null,
-            CategoriasEspecificas = null,
-            IncluirPrediccionesStock = false,
-            IncluirAnalisisCostos = false,
-            IncluirMovimientosDetallados = false,
-            IncluirAlertasAvanzadas = false,
-            IncluirRecomendacionesCompra = false,
-            NivelAnalisis = NivelAnalisisInventario.Basico,
-            UmbralStockCritico = null
+            CategoriaId = null,
+            SoloAlertaStock = false,
+            SoloCriticos = false,
+            IncluirTendencias = false,
+            IncluirRecomendaciones = false,
+            NivelDetalle = "Basico",
+            UsuarioId = Guid.NewGuid()
         };
     }
 

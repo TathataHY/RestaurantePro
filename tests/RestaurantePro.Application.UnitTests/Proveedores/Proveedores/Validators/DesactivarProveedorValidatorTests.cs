@@ -561,11 +561,11 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         proveedor.FechaCreacion = DateTime.UtcNow.AddHours(-horasAntiguedad);
         
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -593,11 +593,11 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.MotivoDesactivacion = new string('A', longitud);
+        command.RazonDesactivacion = new string('A', longitud);
         
-        var proveedor = CrearProveedorValido(command.ProveedorId);
+        var proveedor = CrearProveedorValido(command.Id);
         ConfigurarProveedorExistente(proveedor);
-        ConfigurarSinOrdenesActivas(command.ProveedorId);
+        ConfigurarSinOrdenesActivas(command.Id);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -605,11 +605,11 @@ public class DesactivarProveedorValidatorTests
         // Assert
         if (deberiaSerValido)
         {
-            result.Errors.Should().NotContain(e => e.PropertyName == nameof(DesactivarProveedorCommand.MotivoDesactivacion));
+            result.Errors.Should().NotContain(e => e.PropertyName == nameof(DesactivarProveedorCommand.RazonDesactivacion));
         }
         else
         {
-            result.Errors.Should().Contain(e => e.PropertyName == nameof(DesactivarProveedorCommand.MotivoDesactivacion));
+            result.Errors.Should().Contain(e => e.PropertyName == nameof(DesactivarProveedorCommand.RazonDesactivacion));
         }
     }
 

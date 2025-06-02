@@ -95,67 +95,67 @@ public class CrearProveedorValidatorTests
 
     #endregion
 
-    #region RazonSocial Validations
+    // #region RazonSocial Validations - COMENTADO: La propiedad RazonSocial no existe en CrearProveedorCommand
 
-    [Fact]
-    public void Validator_ConRazonSocialValida_DeberiaSerValido()
-    {
-        // Arrange
-        var command = CrearComandoValido();
-        command.RazonSocial = "Distribuidora ABC Sociedad Anónima de Capital Variable";
+    // [Fact]
+    // public void Validator_ConRazonSocialValida_DeberiaSerValido()
+    // {
+    //     // Arrange
+    //     var command = CrearComandoValido();
+    //     command.RazonSocial = "Distribuidora ABC Sociedad Anónima de Capital Variable";
 
-        // Act
-        var result = _validator.Validate(command);
+    //     // Act
+    //     var result = _validator.Validate(command);
 
-        // Assert
-        result.IsValid.Should().BeTrue();
-    }
+    //     // Assert
+    //     result.IsValid.Should().BeTrue();
+    // }
 
-    [Fact]
-    public void Validator_ConRazonSocialVacia_DeberiaSerValido()
-    {
-        // Arrange
-        var command = CrearComandoValido();
-        command.RazonSocial = "";
+    // [Fact]
+    // public void Validator_ConRazonSocialVacia_DeberiaSerValido()
+    // {
+    //     // Arrange
+    //     var command = CrearComandoValido();
+    //     command.RazonSocial = "";
 
-        // Act
-        var result = _validator.Validate(command);
+    //     // Act
+    //     var result = _validator.Validate(command);
 
-        // Assert
-        result.IsValid.Should().BeTrue(); // Razón social es opcional
-    }
+    //     // Assert
+    //     result.IsValid.Should().BeTrue(); // Razón social es opcional
+    // }
 
-    [Fact]
-    public void Validator_ConRazonSocialNull_DeberiaSerValido()
-    {
-        // Arrange
-        var command = CrearComandoValido();
-        command.RazonSocial = null;
+    // [Fact]
+    // public void Validator_ConRazonSocialNull_DeberiaSerValido()
+    // {
+    //     // Arrange
+    //     var command = CrearComandoValido();
+    //     command.RazonSocial = null;
 
-        // Act
-        var result = _validator.Validate(command);
+    //     // Act
+    //     var result = _validator.Validate(command);
 
-        // Assert
-        result.IsValid.Should().BeTrue(); // Razón social es opcional
-    }
+    //     // Assert
+    //     result.IsValid.Should().BeTrue(); // Razón social es opcional
+    // }
 
-    [Fact]
-    public void Validator_ConRazonSocialMuyLarga_DeberiaFallar()
-    {
-        // Arrange
-        var command = CrearComandoValido();
-        command.RazonSocial = new string('A', 301);
+    // [Fact]
+    // public void Validator_ConRazonSocialMuyLarga_DeberiaFallar()
+    // {
+    //     // Arrange
+    //     var command = CrearComandoValido();
+    //     command.RazonSocial = new string('A', 301);
 
-        // Act
-        var result = _validator.Validate(command);
+    //     // Act
+    //     var result = _validator.Validate(command);
 
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProveedorCommand.RazonSocial))
-            .Which.ErrorMessage.Should().Be("La razón social no puede exceder 300 caracteres");
-    }
+    //     // Assert
+    //     result.IsValid.Should().BeFalse();
+    //     result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProveedorCommand.RazonSocial))
+    //         .Which.ErrorMessage.Should().Be("La razón social no puede exceder 300 caracteres");
+    // }
 
-    #endregion
+    // #endregion
 
     #region RFC Validations
 
@@ -164,7 +164,7 @@ public class CrearProveedorValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.Rfc = "ABC123456789";
+        command.RFC = "ABC123456789";
 
         // Act
         var result = _validator.Validate(command);
@@ -178,7 +178,7 @@ public class CrearProveedorValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.Rfc = "";
+        command.RFC = "";
 
         // Act
         var result = _validator.Validate(command);
@@ -192,7 +192,7 @@ public class CrearProveedorValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.Rfc = null;
+        command.RFC = null;
 
         // Act
         var result = _validator.Validate(command);
@@ -209,7 +209,7 @@ public class CrearProveedorValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.Rfc = rfc;
+        command.RFC = rfc;
 
         // Act
         var result = _validator.Validate(command);
@@ -227,14 +227,14 @@ public class CrearProveedorValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.Rfc = rfcInvalido;
+        command.RFC = rfcInvalido;
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProveedorCommand.Rfc));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProveedorCommand.RFC));
     }
 
     #endregion
@@ -410,42 +410,42 @@ public class CrearProveedorValidatorTests
 
     #endregion
 
-    #region TipoProveedor Validations
+    // #region TipoProveedor Validations - COMENTADO: La propiedad TipoProveedor no existe en CrearProveedorCommand
 
-    [Theory]
-    [InlineData(TipoProveedor.Nacional)]
-    [InlineData(TipoProveedor.Internacional)]
-    [InlineData(TipoProveedor.Local)]
-    public void Validator_ConTiposProveedorValidos_DeberiaSerValido(TipoProveedor tipo)
-    {
-        // Arrange
-        var command = CrearComandoValido();
-        command.TipoProveedor = tipo;
+    // [Theory]
+    // [InlineData(TipoProveedor.Nacional)]
+    // [InlineData(TipoProveedor.Internacional)]
+    // [InlineData(TipoProveedor.Local)]
+    // public void Validator_ConTiposProveedorValidos_DeberiaSerValido(TipoProveedor tipo)
+    // {
+    //     // Arrange
+    //     var command = CrearComandoValido();
+    //     command.TipoProveedor = tipo;
 
-        // Act
-        var result = _validator.Validate(command);
+    //     // Act
+    //     var result = _validator.Validate(command);
 
-        // Assert
-        result.IsValid.Should().BeTrue();
-    }
+    //     // Assert
+    //     result.IsValid.Should().BeTrue();
+    // }
 
-    [Fact]
-    public void Validator_ConTipoProveedorInvalido_DeberiaFallar()
-    {
-        // Arrange
-        var command = CrearComandoValido();
-        command.TipoProveedor = (TipoProveedor)999;
+    // [Fact]
+    // public void Validator_ConTipoProveedorInvalido_DeberiaFallar()
+    // {
+    //     // Arrange
+    //     var command = CrearComandoValido();
+    //     command.TipoProveedor = (TipoProveedor)999;
 
-        // Act
-        var result = _validator.Validate(command);
+    //     // Act
+    //     var result = _validator.Validate(command);
 
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProveedorCommand.TipoProveedor))
-            .Which.ErrorMessage.Should().Be("El tipo de proveedor no es válido");
-    }
+    //     // Assert
+    //     result.IsValid.Should().BeFalse();
+    //     result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProveedorCommand.TipoProveedor))
+    //         .Which.ErrorMessage.Should().Be("El tipo de proveedor no es válido");
+    // }
 
-    #endregion
+    // #endregion
 
     #region Integration Tests
 
@@ -470,13 +470,10 @@ public class CrearProveedorValidatorTests
         var command = new CrearProveedorCommand
         {
             Nombre = "Distribuidora de Alimentos del Bajío S.A. de C.V.",
-            RazonSocial = "Distribuidora de Alimentos del Bajío Sociedad Anónima de Capital Variable",
-            Rfc = "DAB123456789",
+            RFC = "DAB123456789",
             Email = "ventas@distribuidorabajio.com.mx",
             Telefono = "+52-462-123-4567",
-            Direccion = "Carretera Panamericana Km 15.5, Parque Industrial, León, Guanajuato, México",
-            TipoProveedor = TipoProveedor.Nacional,
-            EstaActivo = true
+            Direccion = "Carretera Panamericana Km 15.5, Parque Industrial, León, Guanajuato, México"
         };
 
         // Act
@@ -494,12 +491,10 @@ public class CrearProveedorValidatorTests
         var command = new CrearProveedorCommand
         {
             Nombre = "", // Error: vacío
-            RazonSocial = new string('A', 301), // Error: muy larga
-            Rfc = "abc123", // Error: formato inválido
+            RFC = "abc123", // Error: formato inválido
             Email = "email_invalido", // Error: formato inválido
             Telefono = "", // Error: vacío
-            Direccion = new string('A', 501), // Error: muy larga
-            TipoProveedor = (TipoProveedor)999 // Error: inválido
+            Direccion = new string('A', 501) // Error: muy larga
         };
 
         // Act
@@ -507,14 +502,12 @@ public class CrearProveedorValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCountGreaterThan(5);
+        result.Errors.Should().HaveCountGreaterThan(3);
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.Nombre));
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.RazonSocial));
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.Rfc));
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.RFC));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.Email));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.Telefono));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.Direccion));
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.TipoProveedor));
     }
 
     #endregion
@@ -548,13 +541,10 @@ public class CrearProveedorValidatorTests
         return new CrearProveedorCommand
         {
             Nombre = "Distribuidora ABC S.A.",
-            RazonSocial = "Distribuidora ABC Sociedad Anónima",
-            Rfc = "ABC123456789",
+            RFC = "ABC123456789",
             Email = "ventas@distribuidoraabc.com",
             Telefono = "+52-55-1234-5678",
-            Direccion = "Av. Insurgentes Sur 1234, Col. Del Valle, CDMX",
-            TipoProveedor = TipoProveedor.Nacional,
-            EstaActivo = true
+            Direccion = "Av. Insurgentes Sur 1234, Col. Del Valle, CDMX"
         };
     }
 

@@ -311,7 +311,7 @@ public class VerificarDisponibilidadProductoHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.False(result.Value.EstaDisponible);
-        Assert.Contains("inactivo", result.Value.MotivoNoDisponible);
+        Assert.Contains("inactivo", result.Value.MotivoNoDisponibilidad);
     }
 
     [Fact]
@@ -362,7 +362,7 @@ public class VerificarDisponibilidadProductoHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.False(result.Value.EstaDisponible);
-        Assert.Contains("stock insuficiente", result.Value.MotivoNoDisponible);
+        Assert.Contains("stock insuficiente", result.Value.MotivoNoDisponibilidad);
     }
 
     [Fact]
@@ -591,7 +591,7 @@ public class VerificarDisponibilidadProductoHandlerTests
             EstaDisponible = disponible,
             CantidadVerificada = cantidad,
             CantidadDisponible = disponible ? cantidad : 0,
-            MotivoNoDisponible = disponible ? null : "Stock insuficiente",
+            MotivoNoDisponibilidad = disponible ? null : "Stock insuficiente",
             FechaVerificacion = DateTime.UtcNow,
             AnalisisIngredientes = new List<AnalisisIngredienteDto>(),
             AlternativasDisponibles = new List<ProductoSummaryDto>()
@@ -653,7 +653,7 @@ public class VerificarDisponibilidadProductoHandlerTests
             ProductoId = productoId,
             EstaDisponible = disponible,
             CantidadVerificada = cantidad,
-            MotivoNoDisponible = "Ingredientes insuficientes",
+            MotivoNoDisponibilidad = "Ingredientes insuficientes",
             AnalisisIngredientes = new List<AnalisisIngredienteDto>
             {
                 new() { NombreIngrediente = "Salami", EstaDisponible = false, CantidadNecesaria = 150, UnidadMedida = "gr" },

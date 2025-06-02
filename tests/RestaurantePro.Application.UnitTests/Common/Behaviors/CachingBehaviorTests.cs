@@ -292,10 +292,10 @@ public class CachingBehaviorTests
         // Arrange - Query con múltiples propiedades
         var query = new ObtenerProductosPaginadosQuery
         {
-            Pagina = 2,
-            TamanoPagina = 20,
-            FiltroNombre = "Pizza",
-            FiltroCategoria = "Italiana"
+            PageNumber = 2,
+            PageSize = 20,
+            Filtro = "Pizza",
+            CategoriaId = Guid.NewGuid()
         };
 
         var expectedResult = Result.Success(new PaginatedList<ProductoDto>(new List<ProductoDto>(), 0, 1, 20));

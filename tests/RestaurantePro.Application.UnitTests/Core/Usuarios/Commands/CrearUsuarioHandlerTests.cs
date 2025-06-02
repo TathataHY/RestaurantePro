@@ -114,7 +114,7 @@ public class CrearUsuarioHandlerTests
     public async Task Handle_ConUsuarioSinPermisos_DeberiaRetornarError()
     {
         // Arrange
-        var usuarioSinPermisos = Usuario.Crear("empleado.simple", "Empleado Simple", "empleado@test.com", RolUsuario.Empleado);
+        var usuarioSinPermisos = Usuario.Crear("empleado.simple", "Empleado Simple", "empleado@test.com", RolUsuario.Mesero);
         
         var command = CrearUsuarioCommand.CrearEmpleado(
             "juan.perez",
@@ -612,7 +612,7 @@ public class CrearUsuarioHandlerTests
             NombreCompleto = "Usuario Test",
             Email = "usuario.test@restaurantepro.com",
             Rol = "Empleado",
-            EstaActivo = true,
+            Activo = true,
             FechaCreacion = DateTime.UtcNow
         };
     }

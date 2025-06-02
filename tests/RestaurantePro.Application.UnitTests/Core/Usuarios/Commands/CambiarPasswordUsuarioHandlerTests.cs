@@ -56,8 +56,8 @@ public class CambiarPasswordUsuarioHandlerTests
         {
             UsuarioId = usuarioId,
             PasswordActual = passwordActual,
-            NuevaPassword = nuevaPassword,
-            ConfirmarPassword = nuevaPassword
+            PasswordNueva = nuevaPassword,
+            ConfirmarPasswordNueva = nuevaPassword
         };
 
         var usuario = Usuario.Crear(
@@ -108,8 +108,8 @@ public class CambiarPasswordUsuarioHandlerTests
         {
             UsuarioId = usuarioId,
             PasswordActual = "password123",
-            NuevaPassword = "NuevaPassword123!",
-            ConfirmarPassword = "NuevaPassword123!"
+            PasswordNueva = "NuevaPassword123!",
+            ConfirmarPasswordNueva = "NuevaPassword123!"
         };
 
         _usuarioRepositoryMock.Setup(x => x.ObtenerPorIdAsync(usuarioId, It.IsAny<CancellationToken>()))
@@ -141,8 +141,8 @@ public class CambiarPasswordUsuarioHandlerTests
         {
             UsuarioId = usuarioId,
             PasswordActual = passwordActual,
-            NuevaPassword = "NuevaPassword123!",
-            ConfirmarPassword = "NuevaPassword123!"
+            PasswordNueva = "NuevaPassword123!",
+            ConfirmarPasswordNueva = "NuevaPassword123!"
         };
 
         var usuario = Usuario.Crear(
@@ -187,8 +187,8 @@ public class CambiarPasswordUsuarioHandlerTests
         {
             UsuarioId = usuarioId,
             PasswordActual = passwordActual,
-            NuevaPassword = nuevaPassword,
-            ConfirmarPassword = nuevaPassword
+            PasswordNueva = nuevaPassword,
+            ConfirmarPasswordNueva = nuevaPassword
         };
 
         var usuario = Usuario.Crear(
@@ -224,8 +224,8 @@ public class CambiarPasswordUsuarioHandlerTests
         {
             UsuarioId = Guid.NewGuid(),
             PasswordActual = "password123",
-            NuevaPassword = "NuevaPassword123!",
-            ConfirmarPassword = "PasswordDiferente123!"
+            PasswordNueva = "NuevaPassword123!",
+            ConfirmarPasswordNueva = "PasswordDiferente123!"
         };
 
         // Act
@@ -250,8 +250,8 @@ public class CambiarPasswordUsuarioHandlerTests
         {
             UsuarioId = usuarioId,
             PasswordActual = "password123",
-            NuevaPassword = "NuevaPassword123!",
-            ConfirmarPassword = "NuevaPassword123!"
+            PasswordNueva = "NuevaPassword123!",
+            ConfirmarPasswordNueva = "NuevaPassword123!"
         };
 
         var usuario = Usuario.Crear(
@@ -290,8 +290,8 @@ public class CambiarPasswordUsuarioHandlerTests
         {
             UsuarioId = usuarioId,
             PasswordActual = "", // Administrador no necesita password actual
-            NuevaPassword = nuevaPassword,
-            ConfirmarPassword = nuevaPassword,
+            PasswordNueva = nuevaPassword,
+            ConfirmarPasswordNueva = nuevaPassword,
             EsResetPorAdmin = true
         };
 
@@ -345,8 +345,8 @@ public class CambiarPasswordUsuarioHandlerTests
         {
             UsuarioId = usuarioId,
             PasswordActual = passwordActual,
-            NuevaPassword = nuevaPassword,
-            ConfirmarPassword = nuevaPassword
+            PasswordNueva = nuevaPassword,
+            ConfirmarPasswordNueva = nuevaPassword
         };
 
         var usuario = Usuario.Crear(
@@ -399,8 +399,8 @@ public class CambiarPasswordUsuarioHandlerTests
         {
             UsuarioId = usuarioId,
             PasswordActual = passwordActual,
-            NuevaPassword = nuevaPassword,
-            ConfirmarPassword = nuevaPassword
+            PasswordNueva = nuevaPassword,
+            ConfirmarPasswordNueva = nuevaPassword
         };
 
         var usuario = Usuario.Crear(
@@ -445,8 +445,8 @@ public class CambiarPasswordUsuarioHandlerTests
         {
             UsuarioId = usuarioId,
             PasswordActual = "password123",
-            NuevaPassword = "NuevaPassword123!",
-            ConfirmarPassword = "NuevaPassword123!"
+            PasswordNueva = "NuevaPassword123!",
+            ConfirmarPasswordNueva = "NuevaPassword123!"
         };
 
         var usuario = Usuario.Crear(
@@ -490,8 +490,8 @@ public class CambiarPasswordUsuarioHandlerTests
         {
             UsuarioId = usuarioId,
             PasswordActual = "password123",
-            NuevaPassword = nuevaPassword,
-            ConfirmarPassword = nuevaPassword
+            PasswordNueva = nuevaPassword,
+            ConfirmarPasswordNueva = nuevaPassword
         };
 
         var usuario = Usuario.Crear(
