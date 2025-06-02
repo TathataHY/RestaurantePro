@@ -60,13 +60,13 @@ public class OperacionesMappingProfileTests
     {
         // Arrange
         var comanda = CrearComandaEjemplo();
-        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, (EstadoComanda)estado);
+        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, estado);
 
         // Act
         var dto = _mapper.Map<ComandaDto>(comanda);
 
         // Assert
-        dto.Estado.Should().Be(estado.ToString());
+        dto.Estado.Should().Be(estado);
         dto.EstadoTexto.Should().Be(expectedTexto);
     }
 
@@ -81,7 +81,7 @@ public class OperacionesMappingProfileTests
     {
         // Arrange
         var comanda = CrearComandaEjemplo();
-        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, (EstadoComanda)estado);
+        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, estado);
 
         // Act
         var dto = _mapper.Map<ComandaDto>(comanda);
@@ -179,7 +179,7 @@ public class OperacionesMappingProfileTests
             MesaId = Guid.NewGuid(),
             ClienteId = Guid.NewGuid(),
             Observaciones = "Sin cebolla",
-            Items = new List<ItemComandaCreateDto>
+            ProductosIniciales = new List<AgregarProductoDto>
             {
                 new() { ProductoId = Guid.NewGuid(), Cantidad = 2, PrecioUnitario = 25.00m }
             }
@@ -193,7 +193,7 @@ public class OperacionesMappingProfileTests
         command.MesaId.Should().Be(createDto.MesaId);
         command.ClienteId.Should().Be(createDto.ClienteId);
         command.Observaciones.Should().Be(createDto.Observaciones);
-        command.Items.Should().HaveCount(createDto.Items.Count);
+        command.Items.Should().HaveCount(createDto.ProductosIniciales.Count);
     }
 
     #endregion
@@ -270,13 +270,14 @@ public class OperacionesMappingProfileTests
     {
         // Arrange
         var item = CrearItemComandaEjemplo();
-        typeof(ItemComanda).GetProperty("Estado")?.SetValue(item, (EstadoItemComanda)estado);
+        typeof(ItemComanda).GetProperty("Estado")?.SetValue(item, estado);
 
         // Act
         var dto = _mapper.Map<ItemComandaDto>(item);
 
         // Assert
-        dto.Estado.Should().Be(expectedTexto);
+        dto.Estado.Should().Be(estado.ToString());
+        dto.EstadoTexto.Should().Be(expectedTexto);
     }
 
     #endregion
@@ -294,29 +295,26 @@ public class OperacionesMappingProfileTests
 
         // Assert
         dto.Should().NotBeNull();
-        dto.Id.Should().Be(personalizacion.Id);
-        dto.Tipo.Should().Be(personalizacion.Tipo.ToString());
-        dto.IngredienteEspecial.Should().Be(personalizacion.IngredienteEspecial);
+        dto.IngredienteId.Should().Be(personalizacion.IngredienteId);
+        dto.NombreIngrediente.Should().Be(personalizacion.NombreIngrediente);
+        dto.Cantidad.Should().Be(personalizacion.Cantidad);
         dto.PrecioAdicional.Should().Be(personalizacion.PrecioAdicional);
-        dto.Instrucciones.Should().Be(personalizacion.Instrucciones);
     }
 
     [Theory]
-    [InlineData(TipoPersonalizacion.AgregarIngrediente, "AgregarIngrediente")]
-    [InlineData(TipoPersonalizacion.QuitarIngrediente, "QuitarIngrediente")]
-    [InlineData(TipoPersonalizacion.CambiarIngrediente, "CambiarIngrediente")]
-    [InlineData(TipoPersonalizacion.InstruccionEspecial, "InstruccionEspecial")]
-    public void Map_PersonalizacionToDto_ConDiferentesTipos_DeberiaMapearTextoCorrectamente(TipoPersonalizacion tipo, string expectedTexto)
+    [InlineData("Agregar", "Agregar")]
+    [InlineData("Quitar", "Quitar")]
+    [InlineData("Sustituir", "Sustituir")]
+    public void Map_PersonalizacionToDto_ConDiferentesTipos_DeberiaMapearTextoCorrectamente(string tipoAccion, string expectedTexto)
     {
         // Arrange
         var personalizacion = CrearPersonalizacionEjemplo(5.00m);
-        typeof(PersonalizacionItem).GetProperty("Tipo")?.SetValue(personalizacion, (TipoPersonalizacion)tipo);
 
         // Act
         var dto = _mapper.Map<PersonalizacionDto>(personalizacion);
 
         // Assert
-        dto.Tipo.Should().Be(expectedTexto);
+        dto.Tipo.Should().Be(personalizacion.Accion.ToString());
     }
 
     #endregion
@@ -552,16 +550,12 @@ public class OperacionesMappingProfileTests
 
     private PersonalizacionItem CrearPersonalizacionEjemplo(decimal precioAdicional)
     {
-        // Usar reflection para crear personalización con propiedades privadas
-        var personalizacion = (PersonalizacionItem)Activator.CreateInstance(typeof(PersonalizacionItem), true)!;
-        
-        typeof(PersonalizacionItem).GetProperty("Id")?.SetValue(personalizacion, Guid.NewGuid());
-        typeof(PersonalizacionItem).GetProperty("Tipo")?.SetValue(personalizacion, TipoPersonalizacion.AgregarIngrediente);
-        typeof(PersonalizacionItem).GetProperty("IngredienteEspecial")?.SetValue(personalizacion, "Extra queso");
-        typeof(PersonalizacionItem).GetProperty("PrecioAdicional")?.SetValue(personalizacion, precioAdicional);
-        typeof(PersonalizacionItem).GetProperty("Instrucciones")?.SetValue(personalizacion, "Agregar extra queso mozzarella");
-        
-        return personalizacion;
+        // Usar el método estático público para crear PersonalizacionItem
+        return PersonalizacionItem.CrearAgregar(
+            Guid.NewGuid(),
+            "Queso extra",
+            1m,
+            precioAdicional);
     }
 
     private object CrearTotalComandaMock(decimal subtotal, decimal impuestos, decimal total)

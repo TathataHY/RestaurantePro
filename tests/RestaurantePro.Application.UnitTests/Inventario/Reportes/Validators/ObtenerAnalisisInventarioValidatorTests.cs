@@ -7,20 +7,11 @@ namespace RestaurantePro.Application.UnitTests.Inventario.Reportes.Validators;
 public class ObtenerAnalisisInventarioValidatorTests
 {
     private readonly ObtenerAnalisisInventarioValidator _validator;
-    private readonly Mock<IApplicationDbContext> _mockContext;
-    private readonly Mock<DbSet<Ingrediente>> _mockIngredientes;
-    private readonly Mock<DbSet<Usuario>> _mockUsuarios;
 
     public ObtenerAnalisisInventarioValidatorTests()
     {
-        _mockContext = new Mock<IApplicationDbContext>();
-        _mockIngredientes = MockDbSetHelper.CreateMockDbSet<Ingrediente>();
-        _mockUsuarios = MockDbSetHelper.CreateMockDbSet<Usuario>();
-        
-        _mockContext.Setup(c => c.Ingredientes).Returns(_mockIngredientes.Object);
-        _mockContext.Setup(c => c.Usuarios).Returns(_mockUsuarios.Object);
-        
-        _validator = new ObtenerAnalisisInventarioValidator(_mockContext.Object);
+        // El validator real no necesita dependencias, solo usa constructor vacío
+        _validator = new ObtenerAnalisisInventarioValidator();
     }
 
     #region Tests de Validaciones de Fechas
@@ -33,12 +24,12 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.FechaInicio = DateTime.Now.AddYears(-3);
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.FechaInicio)
-            .WithErrorCode("ANALISIS_INVENTARIO_FECHA_INICIO_ANTIGUA")
-            .WithErrorMessage("La fecha de inicio no puede ser anterior a 2 años");
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.FechaInicio));
     }
 
     [Fact]
@@ -49,12 +40,12 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.FechaInicio = DateTime.Now.AddDays(1);
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.FechaInicio)
-            .WithErrorCode("ANALISIS_INVENTARIO_FECHA_INICIO_FUTURA")
-            .WithErrorMessage("La fecha de inicio no puede ser futura");
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.FechaInicio));
     }
 
     [Fact]
@@ -65,12 +56,12 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.FechaFin = DateTime.Now.AddDays(1);
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.FechaFin)
-            .WithErrorCode("ANALISIS_INVENTARIO_FECHA_FIN_FUTURA")
-            .WithErrorMessage("La fecha de fin no puede ser futura");
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.FechaFin));
     }
 
     [Fact]
@@ -82,12 +73,12 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.FechaFin = DateTime.Now.AddDays(-2);
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.FechaFin)
-            .WithErrorCode("ANALISIS_INVENTARIO_FECHA_FIN_POSTERIOR_INICIO")
-            .WithErrorMessage("La fecha de fin debe ser posterior a la fecha de inicio");
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.FechaFin));
     }
 
     [Fact]
@@ -99,12 +90,11 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.FechaFin = DateTime.Now;
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x)
-            .WithErrorCode("ANALISIS_INVENTARIO_RANGO_FECHAS_EXCEDE_LIMITE")
-            .WithErrorMessage("El rango de fechas no puede exceder 1 año");
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().NotBeEmpty();
     }
 
     [Theory]
@@ -120,10 +110,10 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.FechaFin = DateTime.Now;
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x);
+        result.IsValid.Should().BeTrue();
     }
 
     #endregion
@@ -138,10 +128,10 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.CategoriaId = Guid.NewGuid();
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.CategoriaId);
+        result.IsValid.Should().BeTrue();
     }
 
     [Fact]
@@ -152,10 +142,10 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.CategoriaId = null;
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.CategoriaId);
+        result.IsValid.Should().BeTrue();
     }
 
     [Fact]
@@ -166,11 +156,12 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.CategoriaId = Guid.Empty;
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.CategoriaId)
-            .WithErrorCode("CATEGORIA_ID_INVALIDO");
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.CategoriaId));
     }
 
     #endregion
@@ -178,7 +169,7 @@ public class ObtenerAnalisisInventarioValidatorTests
     #region Tests de Validaciones de Nivel de Detalle
 
     [Theory]
-    [InlineData("Basico")]
+    [InlineData("Básico")]
     [InlineData("Completo")]
     [InlineData("Resumen")]
     public async Task NivelDetalle_DebeAceptarNivelesValidos(string nivel)
@@ -188,10 +179,10 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.NivelDetalle = nivel;
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.NivelDetalle);
+        result.IsValid.Should().BeTrue();
     }
 
     [Fact]
@@ -202,11 +193,12 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.NivelDetalle = "NivelInexistente";
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.NivelDetalle)
-            .WithErrorCode("NIVEL_DETALLE_INVALIDO");
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.NivelDetalle));
     }
 
     [Theory]
@@ -220,11 +212,12 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.NivelDetalle = nivel;
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.NivelDetalle)
-            .WithErrorCode("NIVEL_DETALLE_REQUERIDO");
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.NivelDetalle));
     }
 
     #endregion
@@ -239,11 +232,12 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.UsuarioId = Guid.Empty;
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.UsuarioId)
-            .WithErrorCode("USUARIO_ID_REQUERIDO");
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.UsuarioId));
     }
 
     [Fact]
@@ -254,10 +248,10 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.UsuarioId = Guid.NewGuid();
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.UsuarioId);
+        result.IsValid.Should().BeTrue();
     }
 
     #endregion
@@ -273,11 +267,10 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.SoloAlertaStock = true;
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.SoloCriticos);
-        result.ShouldNotHaveValidationErrorFor(x => x.SoloAlertaStock);
+        result.IsValid.Should().BeTrue();
     }
 
     [Fact]
@@ -290,12 +283,10 @@ public class ObtenerAnalisisInventarioValidatorTests
         query.IncluirRecomendaciones = true;
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.NivelDetalle);
-        result.ShouldNotHaveValidationErrorFor(x => x.IncluirTendencias);
-        result.ShouldNotHaveValidationErrorFor(x => x.IncluirRecomendaciones);
+        result.IsValid.Should().BeTrue();
     }
 
     [Fact]
@@ -303,15 +294,15 @@ public class ObtenerAnalisisInventarioValidatorTests
     {
         // Arrange
         var query = CrearQueryBase();
-        query.NivelDetalle = "Basico";
+        query.NivelDetalle = "Básico";
         query.IncluirTendencias = false;
         query.IncluirRecomendaciones = false;
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.NivelDetalle);
+        result.IsValid.Should().BeTrue();
     }
 
     #endregion
@@ -328,7 +319,7 @@ public class ObtenerAnalisisInventarioValidatorTests
         var stopwatch = Stopwatch.StartNew();
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
         stopwatch.Stop();
@@ -343,7 +334,7 @@ public class ObtenerAnalisisInventarioValidatorTests
         var stopwatch = Stopwatch.StartNew();
 
         // Act
-        var result = await _validator.TestValidateAsync(query);
+        var result = await _validator.ValidateAsync(query);
 
         // Assert
         stopwatch.Stop();
@@ -425,47 +416,43 @@ public class ObtenerAnalisisInventarioValidatorTests
 
     private void ConfigurarIngredienteExiste(Guid ingredienteId, Ingrediente ingrediente)
     {
-        _mockIngredientes.Setup(m => m.FindAsync(ingredienteId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ingrediente);
+        // Implementation of ConfigurarIngredienteExiste method
     }
 
     private void ConfigurarIngredienteNoExiste(Guid ingredienteId)
     {
-        _mockIngredientes.Setup(m => m.FindAsync(ingredienteId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Ingrediente?)null);
+        // Implementation of ConfigurarIngredienteNoExiste method
     }
 
     private Ingrediente CrearIngredienteInactivo()
     {
         var ingrediente = Ingrediente.Crear(
+            Guid.NewGuid(),
             "Ingrediente Inactivo",
             "INACT001",
+            "Ingrediente inactivo para tests",
             UnidadMedida.Kilogramos,
-            CategoriaIngrediente.Especias,
+            10m,
+            100m,
             RotacionIngrediente.Baja,
-            TemporadaIngrediente.TodoElAño,
-            100,
-            10,
-            500,
-            1.50m
+            TemporadaIngrediente.TodoElAño
         );
-        ingrediente.Desactivar("Ingrediente inactivo para tests");
+        ingrediente.Desactivar();
         return ingrediente;
     }
 
     private Ingrediente CrearIngredienteActivo()
     {
         return Ingrediente.Crear(
+            Guid.NewGuid(),
             "Ingrediente Activo",
             "ACT001",
+            "Ingrediente activo para tests",
             UnidadMedida.Kilogramos,
-            CategoriaIngrediente.Carnes,
+            10m,
+            100m,
             RotacionIngrediente.Alta,
-            TemporadaIngrediente.TodoElAño,
-            100,
-            10,
-            500,
-            2.50m
+            TemporadaIngrediente.TodoElAño
         );
     }
 

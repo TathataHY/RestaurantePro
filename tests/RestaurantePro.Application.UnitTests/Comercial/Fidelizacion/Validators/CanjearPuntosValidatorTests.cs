@@ -34,9 +34,14 @@ public class CanjearPuntosValidatorTests
     [Fact]
     public async Task Validate_ConClienteIdVacio_DeberiaRetornarError()
     {
-        // Arrange
-        var command = CrearCommandValido();
-        command.ClienteId = Guid.Empty;
+        // Arrange - Usar inicializador de objeto para propiedades init-only
+        var command = new CanjearPuntosCommand
+        {
+            ClienteId = Guid.Empty,
+            PuntosAUtilizar = 100,
+            ComandaId = Guid.NewGuid(),
+            Motivo = "Canje de puntos por descuento en comanda"
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -51,9 +56,14 @@ public class CanjearPuntosValidatorTests
     [Fact]
     public async Task Validate_ConClienteIdValido_NoDeberiaRetornarErrorDeClienteId()
     {
-        // Arrange
-        var command = CrearCommandValido();
-        command.ClienteId = Guid.NewGuid();
+        // Arrange - Usar inicializador de objeto para propiedades init-only
+        var command = new CanjearPuntosCommand
+        {
+            ClienteId = Guid.NewGuid(),
+            PuntosAUtilizar = 100,
+            ComandaId = Guid.NewGuid(),
+            Motivo = "Canje de puntos por descuento en comanda"
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -74,9 +84,14 @@ public class CanjearPuntosValidatorTests
     [InlineData(-100)]
     public async Task Validate_ConPuntosAUtilizarMenorOIgualACero_DeberiaRetornarError(int puntosInvalidos)
     {
-        // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = puntosInvalidos;
+        // Arrange - Usar inicializador de objeto para propiedades init-only
+        var command = new CanjearPuntosCommand
+        {
+            ClienteId = Guid.NewGuid(),
+            PuntosAUtilizar = puntosInvalidos,
+            ComandaId = Guid.NewGuid(),
+            Motivo = "Canje de puntos por descuento en comanda"
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -91,9 +106,14 @@ public class CanjearPuntosValidatorTests
     [Fact]
     public async Task Validate_ConPuntosAUtilizarExcesivos_DeberiaRetornarError()
     {
-        // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = 10001; // Más de 10,000 puntos
+        // Arrange - Usar inicializador de objeto para propiedades init-only
+        var command = new CanjearPuntosCommand
+        {
+            ClienteId = Guid.NewGuid(),
+            PuntosAUtilizar = 10001, // Más de 10,000 puntos
+            ComandaId = Guid.NewGuid(),
+            Motivo = "Canje de puntos por descuento en comanda"
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -114,9 +134,14 @@ public class CanjearPuntosValidatorTests
     [InlineData(10000)]
     public async Task Validate_ConPuntosAUtilizarValidos_NoDeberiaRetornarErrorDePuntos(int puntosValidos)
     {
-        // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = puntosValidos;
+        // Arrange - Usar inicializador de objeto para propiedades init-only
+        var command = new CanjearPuntosCommand
+        {
+            ClienteId = Guid.NewGuid(),
+            PuntosAUtilizar = puntosValidos,
+            ComandaId = Guid.NewGuid(),
+            Motivo = "Canje de puntos por descuento en comanda"
+        };
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -140,8 +165,7 @@ public class CanjearPuntosValidatorTests
     public async Task Validate_ConPuntosNoMultiplosDeDiez_DeberiaRetornarError(int puntosNoMultiplos)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = puntosNoMultiplos;
+        var command = CanjearPuntosCommand.Crear(Guid.NewGuid(), puntosNoMultiplos);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -164,8 +188,7 @@ public class CanjearPuntosValidatorTests
     public async Task Validate_ConPuntosMultiplosDeDiez_NoDeberiaRetornarErrorDeMultiplos(int puntosMultiplos)
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.PuntosAUtilizar = puntosMultiplos;
+        var command = CanjearPuntosCommand.Crear(Guid.NewGuid(), puntosMultiplos);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -184,8 +207,7 @@ public class CanjearPuntosValidatorTests
     public async Task Validate_ConComandaIdVaciaCuandoSeEspecifica_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.ComandaId = Guid.Empty;
+        var command = CanjearPuntosCommand.Crear(Guid.NewGuid(), 100, Guid.Empty);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -201,8 +223,7 @@ public class CanjearPuntosValidatorTests
     public async Task Validate_ConComandaIdValidaCuandoSeEspecifica_NoDeberiaRetornarErrorDeComandaId()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.ComandaId = Guid.NewGuid();
+        var command = CanjearPuntosCommand.Crear(Guid.NewGuid(), 100, Guid.NewGuid());
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -216,8 +237,7 @@ public class CanjearPuntosValidatorTests
     public async Task Validate_ConComandaIdNull_NoDeberiaValidarComandaId()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.ComandaId = null;
+        var command = CanjearPuntosCommand.Crear(Guid.NewGuid(), 100, null);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -235,8 +255,8 @@ public class CanjearPuntosValidatorTests
     public async Task Validate_ConMotivoMuyLargo_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        command.Motivo = new string('A', 501); // Más de 500 caracteres
+        var motivoLargo = new string('A', 501); // Más de 500 caracteres
+        var command = CanjearPuntosCommand.Crear(Guid.NewGuid(), 100, null, motivoLargo);
 
         // Act
         var result = await _validator.ValidateAsync(command);

@@ -32,7 +32,7 @@ public class CrearFacturaHandlerTests
         // Setup DbContext
         _contextMock.Setup(x => x.Clientes).Returns(_clientesDbSetMock.Object);
         _contextMock.Setup(x => x.Comandas).Returns(_comandasDbSetMock.Object);
-        _currentUserServiceMock.Setup(x => x.UserId).Returns(Guid.NewGuid());
+        _currentUserServiceMock.Setup(x => x.UserId).Returns(Guid.NewGuid().ToString());
 
         _handler = new CrearFacturaHandler(
             _contextMock.Object,

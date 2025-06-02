@@ -77,12 +77,13 @@ public class CrearReservacionHandlerTests
         var mesa = Mesa.Crear(1, 4, TipoMesa.Interior);
 
         var reservacion = Reservacion.Crear(
-            clienteId,
             mesaId,
+            clienteId,
             fechaReservacion,
-            4,
-            "Celebración de cumpleaños",
-            "+1234567890");
+            TimeSpan.FromHours(2), // duracionEstimada
+            4, // cantidadPersonas
+            "+1234567890", // telefono
+            "juan.perez@email.com"); // email (sin observaciones)
         reservacion.GetType().GetProperty("Id")?.SetValue(reservacion, reservacionId);
 
         var reservacionDto = new ReservacionDto
@@ -119,7 +120,7 @@ public class CrearReservacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess().Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.Id.Should().Be(reservacionId);
         result.Value.Estado.Should().Be(EstadoReservacion.Pendiente);
@@ -152,7 +153,7 @@ public class CrearReservacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeFalse();
+        result.IsSuccess().Should().BeFalse();
         result.Error.Should().Contain("Cliente no encontrado");
 
         // Verify no se creó reservación
@@ -187,38 +188,48 @@ public class CrearReservacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeFalse();
+        result.IsSuccess().Should().BeFalse();
         result.Error.Should().Contain("Mesa no encontrada");
+
+        // Verify no se creó reservación
+        _reservacionRepositoryMock.Verify(x => x.CrearAsync(It.IsAny<Reservacion>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>
-    /// ❌ Test: Fecha de reservación en el pasado
+    /// ❌ Test: Fecha en el pasado
     /// </summary>
     [Fact]
     public async Task Handle_FechaEnElPasado_DeberiaRetornarFailure()
     {
         // Arrange
+        var clienteId = Guid.NewGuid();
+        var mesaId = Guid.NewGuid();
         var fechaPasada = DateTime.Now.AddDays(-1);
+
         var command = new CrearReservacionCommand
         {
-            ClienteId = Guid.NewGuid(),
-            MesaId = Guid.NewGuid(),
+            ClienteId = clienteId,
+            MesaId = mesaId,
             FechaHora = fechaPasada,
             NumeroPersonas = 4
         };
 
-        _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
+        var cliente = Cliente.Crear("Juan Pérez", "juan@email.com", "+123456789");
+        var mesa = Mesa.Crear(1, 4, TipoMesa.Interior);
 
-        // Act
+        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(cliente);
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mesa);
+
+        // Act & Assert - El factory method de Reservacion ya valida que la fecha no esté en el pasado
         var result = await _handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("pasado");
+        result.IsSuccess().Should().BeFalse();
+        result.Error.Should().Contain("fecha");
     }
 
     /// <summary>
-    /// ❌ Test: Mesa no disponible en la fecha solicitada
+    /// ❌ Test: Mesa no disponible en el horario solicitado
     /// </summary>
     [Fact]
     public async Task Handle_MesaNoDisponible_DeberiaRetornarFailure()
@@ -249,14 +260,14 @@ public class CrearReservacionHandlerTests
         _validacionServiceMock.Setup(x => x.ValidarCapacidadMesa(mesa, 4))
             .Returns(Result.Success());
         _disponibilidadServiceMock.Setup(x => x.VerificarDisponibilidadAsync(mesaId, fechaReservacion, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure("Mesa no disponible en el horario solicitado"));
+            .ReturnsAsync(Result.Failure("La mesa no está disponible en el horario solicitado"));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("no disponible");
+        result.IsSuccess().Should().BeFalse();
+        result.Error.Should().Contain("disponible");
     }
 
     /// <summary>
@@ -295,7 +306,7 @@ public class CrearReservacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeFalse();
+        result.IsSuccess().Should().BeFalse();
         result.Error.Should().Contain("capacidad");
     }
 
@@ -333,7 +344,7 @@ public class CrearReservacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeFalse();
+        result.IsSuccess().Should().BeFalse();
         result.Error.Should().Contain("horario");
     }
 
@@ -360,7 +371,15 @@ public class CrearReservacionHandlerTests
 
         var cliente = Cliente.Crear("Juan Pérez", "juan.perez@email.com", "+1234567890");
         var mesa = Mesa.Crear(1, 4, TipoMesa.Interior);
-        var reservacion = Reservacion.Crear(clienteId, mesaId, fechaReservacion, 4, "", "+1234567890");
+        var reservacion = Reservacion.Crear(
+            mesaId,
+            clienteId,
+            fechaReservacion,
+            TimeSpan.FromHours(2), // duracionEstimada
+            4, // cantidadPersonas
+            "+1234567890", // telefono
+            "juan.perez@email.com", // email
+            "Celebración de cumpleaños"); // observaciones
         reservacion.GetType().GetProperty("Id")?.SetValue(reservacion, reservacionId);
 
         // Setup successful creation
@@ -384,7 +403,7 @@ public class CrearReservacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess().Should().BeTrue();
 
         // Verify notificación enviada
         _notificacionServiceMock.Verify(x => x.EnviarConfirmacionReservacionAsync(
@@ -429,7 +448,7 @@ public class CrearReservacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeFalse();
+        result.IsSuccess().Should().BeFalse();
         result.Error.Should().Contain("límite");
 
         // Verify se validó el límite
@@ -476,7 +495,15 @@ public class CrearReservacionHandlerTests
         _validacionServiceMock.Setup(x => x.ValidarLimiteReservacionesPorCliente(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success());
 
-        var reservacion = Reservacion.Crear(clienteId, mesaId, fechaReservacion, 2, observacionesEspeciales, "+1234567890");
+        var reservacion = Reservacion.Crear(
+            mesaId,
+            clienteId,
+            fechaReservacion,
+            TimeSpan.FromHours(2), // duracionEstimada
+            2, // cantidadPersonas - corregido para este test específico
+            "+1234567890", // telefono
+            "maria@email.com", // email
+            observacionesEspeciales); // observaciones
         reservacion.GetType().GetProperty("Id")?.SetValue(reservacion, reservacionId);
 
         _reservacionRepositoryMock.Setup(x => x.CrearAsync(It.IsAny<Reservacion>(), It.IsAny<CancellationToken>()))
@@ -495,7 +522,7 @@ public class CrearReservacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeTrue();
+        result.IsSuccess().Should().BeTrue();
         result.Value.Observaciones.Should().Be(observacionesEspeciales);
 
         // Verify se creó con las observaciones correctas
@@ -543,7 +570,7 @@ public class CrearReservacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        result.IsSuccess.Should().BeFalse();
+        result.IsSuccess().Should().BeFalse();
         result.Error.Should().Contain("Error");
     }
 
@@ -589,7 +616,15 @@ public class CrearReservacionHandlerTests
 
         if (esperarExito)
         {
-            var reservacion = Reservacion.Crear(clienteId, mesaId, fechaReservacion, capacidad - 1, "", "+123456789");
+            var reservacion = Reservacion.Crear(
+                mesaId,
+                clienteId,
+                fechaReservacion,
+                TimeSpan.FromHours(2), // duracionEstimada
+                4, // cantidadPersonas
+                "+1234567890", // telefono
+                "juan.perez@email.com", // email
+                "Celebración de cumpleaños"); // observaciones
             _reservacionRepositoryMock.Setup(x => x.CrearAsync(It.IsAny<Reservacion>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(reservacion);
             _mapperMock.Setup(x => x.Map<ReservacionDto>(It.IsAny<Reservacion>()))
@@ -604,11 +639,11 @@ public class CrearReservacionHandlerTests
         // Assert
         if (esperarExito)
         {
-            result.IsSuccess.Should().BeTrue();
+            result.IsSuccess().Should().BeTrue();
         }
         else
         {
-            result.IsSuccess.Should().BeFalse();
+            result.IsSuccess().Should().BeFalse();
         }
     }
 } 

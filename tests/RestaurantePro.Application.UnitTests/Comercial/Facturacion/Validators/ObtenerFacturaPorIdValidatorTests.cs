@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Validators;
+using Moq;
 
 /// <summary>
 /// 🔥 TESTS EXHAUSTIVOS PARA OBTENER FACTURA POR ID VALIDATOR - IMPLEMENTACIÓN COMPLETA
@@ -8,10 +9,12 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Validators;
 public class ObtenerFacturaPorIdValidatorTests
 {
     private readonly ObtenerFacturaPorIdValidator _validator;
+    private readonly Mock<IApplicationDbContext> _mockContext;
 
     public ObtenerFacturaPorIdValidatorTests()
     {
-        _validator = new ObtenerFacturaPorIdValidator();
+        _mockContext = new Mock<IApplicationDbContext>();
+        _validator = new ObtenerFacturaPorIdValidator(_mockContext.Object);
     }
 
     #region Validation Query Helper
@@ -338,7 +341,7 @@ public class ObtenerFacturaPorIdValidatorTests
     public void Validator_DeberiaInicializarseCorrectamente()
     {
         // Arrange & Act
-        var validator = new ObtenerFacturaPorIdValidator();
+        var validator = new ObtenerFacturaPorIdValidator(_mockContext.Object);
 
         // Assert
         validator.Should().NotBeNull();
@@ -430,7 +433,7 @@ public class ObtenerFacturaPorIdValidatorTests
     {
         // Arrange
         var query1 = new ObtenerFacturaPorIdQuery { FacturaId = Guid.NewGuid() };
-        var query2 = query1 with { };
+        var query2 = new ObtenerFacturaPorIdQuery { FacturaId = query1.FacturaId };
 
         // Act & Assert
         query1.Should().BeEquivalentTo(query2);

@@ -289,13 +289,11 @@ public class DesactivarClienteValidatorTests
 
         // Mock cliente ya desactivado usando factory method
         var nombre = ClienteNombre.Crear("Cliente", "Test");
-        var cliente = Cliente.Crear(nombre, "test@email.com", "612345678", DateTime.Now.AddYears(-30));
-        
-        // Usar reflection para setear el ID y desactivar el cliente
-        typeof(EntityBase).GetProperty("Id")?.SetValue(cliente, clienteId);
-        cliente.Desactivar("Cliente desactivado para test");
+        var clienteDesactivado = Cliente.Crear(nombre, "test@email.com", "601234567", DateTime.Now.AddYears(-25));
+        typeof(EntityBase).GetProperty("Id")?.SetValue(clienteDesactivado, clienteId);
+        clienteDesactivado.Desactivar(); // Sin parámetros como lo requiere la implementación real
 
-        var clientes = new List<Cliente> { cliente }.AsQueryable();
+        var clientes = new List<Cliente> { clienteDesactivado }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Expression).Returns(clientes.Expression);

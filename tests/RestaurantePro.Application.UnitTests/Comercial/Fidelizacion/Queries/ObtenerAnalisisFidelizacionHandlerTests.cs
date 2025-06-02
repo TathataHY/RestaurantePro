@@ -6,27 +6,30 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Queries;
 /// </summary>
 public class ObtenerAnalisisFidelizacionHandlerTests
 {
-    private readonly Mock<IComercialServiceFacade> _comercialServiceFacadeMock;
-    private readonly Mock<IClienteRepository> _clienteRepositoryMock;
+    private readonly Mock<IApplicationDbContext> _contextMock;
+    private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<ILogger<ObtenerAnalisisFidelizacionHandler>> _loggerMock;
+    private readonly Mock<IDateTimeService> _dateTimeServiceMock;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
-    private readonly Mock<IBackgroundJobService> _backgroundJobServiceMock;
+    private readonly Mock<IComercialServiceFacade> _comercialServiceFacadeMock;
     private readonly ObtenerAnalisisFidelizacionHandler _handler;
 
     public ObtenerAnalisisFidelizacionHandlerTests()
     {
-        _comercialServiceFacadeMock = new Mock<IComercialServiceFacade>();
-        _clienteRepositoryMock = new Mock<IClienteRepository>();
+        _contextMock = new Mock<IApplicationDbContext>();
+        _mapperMock = new Mock<IMapper>();
         _loggerMock = new Mock<ILogger<ObtenerAnalisisFidelizacionHandler>>();
+        _dateTimeServiceMock = new Mock<IDateTimeService>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
-        _backgroundJobServiceMock = new Mock<IBackgroundJobService>();
+        _comercialServiceFacadeMock = new Mock<IComercialServiceFacade>();
 
         _handler = new ObtenerAnalisisFidelizacionHandler(
-            _comercialServiceFacadeMock.Object,
-            _clienteRepositoryMock.Object,
+            _contextMock.Object,
+            _mapperMock.Object,
             _loggerMock.Object,
+            _dateTimeServiceMock.Object,
             _currentUserServiceMock.Object,
-            _backgroundJobServiceMock.Object);
+            _comercialServiceFacadeMock.Object);
     }
 
     #region Tests de Factory Methods del Query
@@ -393,7 +396,8 @@ public class ObtenerAnalisisFidelizacionHandlerTests
             It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<Dictionary<string, object>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(analisisCompleto));
         
-        _backgroundJobServiceMock.Setup(x => x.EnqueueBackgroundJob(It.IsAny<string>(), It.IsAny<object>()))
+        _comercialServiceFacadeMock.Setup(x => x.GenerarAnalisisFidelizacionAsync(
+            It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<Dictionary<string, object>>(), It.IsAny<CancellationToken>()))
             .Throws(new Exception("Error en job ML"));
 
         // Act

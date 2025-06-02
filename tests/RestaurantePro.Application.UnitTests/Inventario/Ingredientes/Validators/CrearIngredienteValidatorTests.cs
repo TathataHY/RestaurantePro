@@ -189,7 +189,7 @@ public class CrearIngredienteValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.UnidadMedida = unidad;
+        command.UnidadMedida = unidad.ToString();
 
         // Act
         var result = _validator.Validate(command);
@@ -203,7 +203,7 @@ public class CrearIngredienteValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.UnidadMedida = (UnidadMedida)999; // Valor inválido
+        command.UnidadMedida = ((UnidadMedida)999).ToString();
 
         // Act
         var result = _validator.Validate(command);

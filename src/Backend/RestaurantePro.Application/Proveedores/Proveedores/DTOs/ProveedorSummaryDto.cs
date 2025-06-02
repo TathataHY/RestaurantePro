@@ -97,6 +97,11 @@ public class ProveedorSummaryDto
     public bool EsPreferido { get; set; }
 
     /// <summary>
+    /// Categoría del proveedor
+    /// </summary>
+    public CategoriaProveedor Categoria { get; set; }
+
+    /// <summary>
     /// Días promedio de entrega
     /// </summary>
     public int DiasPromedioEntrega { get; set; }

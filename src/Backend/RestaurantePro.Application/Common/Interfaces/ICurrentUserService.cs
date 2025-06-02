@@ -31,6 +31,11 @@ public interface ICurrentUserService
     IEnumerable<string> Roles { get; }
 
     /// <summary>
+    /// Rol principal del usuario actual (primer rol o null si no tiene roles)
+    /// </summary>
+    string? Rol { get; }
+
+    /// <summary>
     /// Verifica si el usuario tiene un rol específico
     /// </summary>
     /// <param name="role">Rol a verificar</param>

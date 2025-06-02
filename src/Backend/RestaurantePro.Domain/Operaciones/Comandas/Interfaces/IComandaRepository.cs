@@ -141,5 +141,15 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Último secuencial usado o 0 si no hay comandas</returns>
         Task<int> ObtenerUltimoSecuencialAsync(Guid sucursalId, DateTime fecha, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene comandas activas con filtros y paginación
+        /// </summary>
+        /// <param name="criterios">Diccionario de criterios de filtro</param>
+        /// <param name="pagina">Número de página (base 0)</param>
+        /// <param name="elementosPorPagina">Elementos por página</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tupla con comandas activas y total de elementos</returns>
+        Task<(IEnumerable<Comanda> Comandas, int Total)> ObtenerComandasActivasAsync(Dictionary<string, object> criterios, int pagina, int elementosPorPagina, CancellationToken cancellationToken = default);
     }
 }

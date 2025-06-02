@@ -123,6 +123,46 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces
             CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Obtiene proveedores paginados con filtros avanzados
+        /// </summary>
+        /// <param name="pagina">Número de página (base 1)</param>
+        /// <param name="elementosPorPagina">Elementos por página</param>
+        /// <param name="termino">Término de búsqueda</param>
+        /// <param name="categoria">Categoría de proveedor</param>
+        /// <param name="soloActivos">Incluir solo proveedores activos</param>
+        /// <param name="incluirInactivos">Incluir proveedores inactivos</param>
+        /// <param name="campoOrden">Campo para ordenar</param>
+        /// <param name="ordenAscendente">Dirección del orden</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de proveedores paginados</returns>
+        Task<IEnumerable<Proveedor>> ObtenerProveedoresPaginadosAsync(
+            int pagina, 
+            int elementosPorPagina, 
+            string? termino = null,
+            Enums.CategoriaProveedor? categoria = null,
+            bool soloActivos = true,
+            bool incluirInactivos = false,
+            string? campoOrden = null,
+            bool ordenAscendente = true,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Cuenta el total de proveedores con filtros
+        /// </summary>
+        /// <param name="termino">Término de búsqueda</param>
+        /// <param name="categoria">Categoría de proveedor</param>
+        /// <param name="soloActivos">Incluir solo proveedores activos</param>
+        /// <param name="incluirInactivos">Incluir proveedores inactivos</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Total de proveedores que cumplen los criterios</returns>
+        Task<int> ContarProveedoresAsync(
+            string? termino = null,
+            Enums.CategoriaProveedor? categoria = null,
+            bool soloActivos = true,
+            bool incluirInactivos = false,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Obtiene estadísticas de proveedores
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>

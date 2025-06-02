@@ -1,3 +1,22 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using Moq;
+using RestaurantePro.Application.Common.DTOs;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Proveedores.Proveedores.DTOs;
+using RestaurantePro.Application.Proveedores.Proveedores.Queries.ObtenerProveedoresPaginados;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Domain.Proveedores.Entities;
+using RestaurantePro.Domain.Proveedores.Enums;
+using RestaurantePro.Domain.Proveedores.Interfaces;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Proveedores.Proveedores.Queries;
 
 /// <summary>
@@ -9,7 +28,6 @@ public class ObtenerProveedoresPaginadosHandlerTests
     private readonly Mock<IProveedorRepository> _proveedorRepositoryMock;
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<ILogger<ObtenerProveedoresPaginadosHandler>> _loggerMock;
-    private readonly Mock<ICurrentUserService> _currentUserServiceMock;
     private readonly ObtenerProveedoresPaginadosHandler _handler;
 
     public ObtenerProveedoresPaginadosHandlerTests()
@@ -17,13 +35,11 @@ public class ObtenerProveedoresPaginadosHandlerTests
         _proveedorRepositoryMock = new Mock<IProveedorRepository>();
         _mapperMock = new Mock<IMapper>();
         _loggerMock = new Mock<ILogger<ObtenerProveedoresPaginadosHandler>>();
-        _currentUserServiceMock = new Mock<ICurrentUserService>();
 
         _handler = new ObtenerProveedoresPaginadosHandler(
             _proveedorRepositoryMock.Object,
             _mapperMock.Object,
-            _loggerMock.Object,
-            _currentUserServiceMock.Object);
+            _loggerMock.Object);
     }
 
     #region Tests de Factory Methods del Query
@@ -125,12 +141,12 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.Equal(10, result.Value.Items.Count());
-        Assert.Equal(1, result.Value.PaginaActual);
-        Assert.Equal(10, result.Value.TamanoPagina);
-        Assert.Equal(25, result.Value.TotalElementos);
-        Assert.Equal(3, result.Value.TotalPaginas);
-        Assert.True(result.Value.TienePaginaAnterior == false);
-        Assert.True(result.Value.TienePaginaSiguiente);
+        Assert.Equal(1, result.Value.PageNumber);
+        Assert.Equal(10, result.Value.PageSize);
+        Assert.Equal(25, result.Value.TotalCount);
+        Assert.Equal(3, result.Value.TotalPages);
+        Assert.True(result.Value.HasPreviousPage == false);
+        Assert.True(result.Value.HasNextPage);
     }
 
     [Fact]
@@ -337,8 +353,8 @@ public class ObtenerProveedoresPaginadosHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.Empty(result.Value.Items);
-        Assert.Equal(10, result.Value.PaginaActual);
-        Assert.Equal(25, result.Value.TotalElementos);
+        Assert.Equal(10, result.Value.PageNumber);
+        Assert.Equal(25, result.Value.TotalCount);
     }
 
     #endregion
@@ -692,13 +708,33 @@ public class ObtenerProveedoresPaginadosHandlerTests
 
     private static Proveedor CreateMockProveedor(Guid id, string nombre, CategoriaProveedor categoria, bool activo)
     {
-        return new Proveedor
+        // Usar el método factory para crear un proveedor válido
+        var proveedor = Proveedor.Crear(
+            nombre: nombre,
+            nombreContacto: "Contacto Test",
+            email: "test@test.com",
+            telefono: "+1234567890",
+            direccion: "Dirección Test",
+            ciudad: "Ciudad Test",
+            codigoPostal: "12345",
+            pais: "País Test",
+            rfc: "ABCD123456",
+            informacionBancaria: "Banco Test",
+            diasCredito: 30
+        );
+
+        // Usar reflection para establecer el ID y estado activo si es necesario
+        var idProperty = typeof(Proveedor).BaseType.GetProperty("Id");
+        idProperty?.SetValue(proveedor, id);
+
+        if (!activo)
         {
-            Id = id,
-            Nombre = nombre,
-            Activo = activo,
-            FechaCreacion = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 30))
-        };
+            proveedor.Desactivar("Proveedor de prueba desactivado");
+        }
+
+        proveedor.AgregarCategoria(categoria);
+
+        return proveedor;
     }
 
     private static ProveedorDto CreateMockProveedorDto(Guid id, string nombre, CategoriaProveedor categoria, bool activo)
@@ -715,13 +751,29 @@ public class ObtenerProveedoresPaginadosHandlerTests
 
     private static Proveedor CreateMockProveedorConFecha(Guid id, string nombre, DateTime fecha)
     {
-        return new Proveedor
-        {
-            Id = id,
-            Nombre = nombre,
-            Activo = true,
-            FechaCreacion = fecha
-        };
+        // Usar el método factory para crear un proveedor válido
+        var proveedor = Proveedor.Crear(
+            nombre: nombre,
+            nombreContacto: "Contacto Test",
+            email: "test@test.com",
+            telefono: "+1234567890",
+            direccion: "Dirección Test",
+            ciudad: "Ciudad Test",
+            codigoPostal: "12345",
+            pais: "País Test",
+            rfc: "ABCD123456",
+            informacionBancaria: "Banco Test",
+            diasCredito: 30
+        );
+
+        // Usar reflection para establecer el ID y fecha de creación
+        var idProperty = typeof(Proveedor).BaseType.GetProperty("Id");
+        idProperty?.SetValue(proveedor, id);
+
+        var fechaProperty = typeof(Proveedor).BaseType.GetProperty("FechaCreacion");
+        fechaProperty?.SetValue(proveedor, fecha);
+
+        return proveedor;
     }
 
     private static ProveedorDto CreateMockProveedorDtoConFecha(Guid id, string nombre, DateTime fecha)

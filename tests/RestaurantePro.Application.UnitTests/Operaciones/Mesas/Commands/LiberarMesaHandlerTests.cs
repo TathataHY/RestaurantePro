@@ -273,7 +273,7 @@ public class LiberarMesaHandlerTests
 
         // Assert
         Assert.True(result.Succeeded);
-        
+
         // Verificar que se loggeó el inicio del proceso
         _loggerMock.Verify(
             x => x.Log(

@@ -183,19 +183,19 @@ public class ComercialMappingProfileTests
         // Assert
         dto.Should().NotBeNull();
         dto.Id.Should().Be(factura.Id);
-        dto.NumeroFactura.Should().Be(factura.Numero.Value);
+        dto.Numero.Should().Be(factura.NumeroFactura);
         dto.FechaEmision.Should().Be(factura.FechaEmision);
         dto.FechaVencimiento.Should().Be(factura.FechaVencimiento);
         dto.EstadoTexto.Should().Be(factura.Estado.ToString());
-        dto.TipoFacturaTexto.Should().Be(factura.TipoFactura.ToString());
-        dto.SubTotal.Should().Be(factura.SubTotal.Amount);
-        dto.TotalImpuestos.Should().Be(factura.TotalImpuestos.Amount);
-        dto.Total.Should().Be(factura.Total.Amount);
-        dto.EstaPagada.Should().Be(factura.EstaPagada);
-        dto.EstaPendiente.Should().Be(factura.EstaPendiente);
-        dto.EstaVencida.Should().Be(factura.EstaVencida);
-        dto.TieneSaldo.Should().Be(factura.TieneSaldo);
-        dto.Saldo.Should().Be(factura.Saldo.Amount);
+        dto.TipoTexto.Should().Be(factura.TipoFactura.ToString());
+        dto.Subtotal.Should().Be(factura.Subtotal);
+        dto.Impuestos.Should().Be(factura.TotalImpuestos);
+        dto.Total.Should().Be(factura.Total);
+        dto.EstaPagada.Should().Be(factura.Estado == EstadoFactura.Pagada);
+        dto.EstaPendiente.Should().Be(factura.Estado == EstadoFactura.Emitida);
+        dto.EstaVencida.Should().Be(factura.Estado == EstadoFactura.Vencida || (factura.FechaVencimiento.HasValue && factura.FechaVencimiento.Value < DateTime.Now && factura.Estado != EstadoFactura.Pagada));
+        dto.TieneSaldo.Should().Be((factura.Total - factura.TotalPagado) > 0);
+        dto.Saldo.Should().Be(factura.Total - factura.TotalPagado);
     }
 
     [Theory]
@@ -218,8 +218,8 @@ public class ComercialMappingProfileTests
     }
 
     [Theory]
-    [InlineData(TipoFactura.Venta, "Venta")]
-    [InlineData(TipoFactura.Devolucion, "Devolucion")]
+    [InlineData(TipoFactura.Normal, "Normal")]
+    [InlineData(TipoFactura.Fiscal, "Fiscal")]
     [InlineData(TipoFactura.NotaCredito, "NotaCredito")]
     [InlineData(TipoFactura.NotaDebito, "NotaDebito")]
     public void Map_FacturaToDto_ConDiferentesTipos_DeberiaMapearTextoCorrectamente(TipoFactura tipo, string expectedTexto)
@@ -232,7 +232,7 @@ public class ComercialMappingProfileTests
         var dto = _mapper.Map<FacturaDto>(factura);
 
         // Assert
-        dto.TipoFacturaTexto.Should().Be(expectedTexto);
+        dto.TipoTexto.Should().Be(expectedTexto);
     }
 
     [Fact]
@@ -247,10 +247,10 @@ public class ComercialMappingProfileTests
         // Assert
         dto.Should().NotBeNull();
         dto.Id.Should().Be(detalle.Id);
-        dto.ProductoNombre.Should().Be(detalle.ProductoNombre);
+        dto.ProductoNombre.Should().Be(detalle.Descripcion);
         dto.Cantidad.Should().Be(detalle.Cantidad);
-        dto.PrecioUnitario.Should().Be(detalle.PrecioUnitario.Amount);
-        dto.Subtotal.Should().Be(detalle.Subtotal.Amount);
+        dto.PrecioUnitario.Should().Be(detalle.PrecioUnitario);
+        dto.Subtotal.Should().Be(detalle.Subtotal);
     }
 
     [Fact]
@@ -265,17 +265,16 @@ public class ComercialMappingProfileTests
         // Assert
         dto.Should().NotBeNull();
         dto.Id.Should().Be(descuento.Id);
-        dto.TipoDescuento.Should().Be(descuento.TipoDescuento.ToString());
-        dto.Valor.Should().Be(descuento.Valor.Amount);
+        dto.TipoDescuento.Should().Be(descuento.TipoDescuento);
         dto.Concepto.Should().Be(descuento.Concepto);
         dto.FechaAplicacion.Should().Be(descuento.FechaAplicacion);
     }
 
     [Theory]
-    [InlineData(TipoDescuento.Porcentaje, "Porcentaje")]
-    [InlineData(TipoDescuento.MontoFijo, "MontoFijo")]
-    [InlineData(TipoDescuento.Promocional, "Promocional")]
-    public void Map_DescuentoFacturaToDto_ConDiferentesTipos_DeberiaMapearTextoCorrectamente(TipoDescuento tipo, string expectedTexto)
+    [InlineData("Porcentaje", "Porcentaje")]
+    [InlineData("MontoFijo", "MontoFijo")]
+    [InlineData("Promocional", "Promocional")]
+    public void Map_DescuentoFacturaToDto_ConDiferentesTipos_DeberiaMapearTextoCorrectamente(string tipo, string expectedTexto)
     {
         // Arrange
         var descuento = CrearDescuentoFacturaEjemplo();
@@ -439,27 +438,16 @@ public class ComercialMappingProfileTests
         var factura = (Factura)Activator.CreateInstance(typeof(Factura), true)!;
         
         typeof(Factura).GetProperty("Id")?.SetValue(factura, Guid.NewGuid());
+        typeof(Factura).GetProperty("NumeroFactura")?.SetValue(factura, "FAC-001");
         typeof(Factura).GetProperty("FechaEmision")?.SetValue(factura, DateTime.UtcNow);
         typeof(Factura).GetProperty("FechaVencimiento")?.SetValue(factura, DateTime.UtcNow.AddDays(30));
         typeof(Factura).GetProperty("Estado")?.SetValue(factura, EstadoFactura.Emitida);
-        typeof(Factura).GetProperty("TipoFactura")?.SetValue(factura, TipoFactura.Venta);
-        typeof(Factura).GetProperty("EstaPagada")?.SetValue(factura, false);
-        typeof(Factura).GetProperty("EstaPendiente")?.SetValue(factura, true);
-        typeof(Factura).GetProperty("EstaVencida")?.SetValue(factura, false);
-        typeof(Factura).GetProperty("TieneSaldo")?.SetValue(factura, true);
-        
-        // Crear value objects mock
-        var numero = CrearNumeroFacturaMock("FAC-001");
-        var subtotal = CrearMoneyMock(100.00m);
-        var impuestos = CrearMoneyMock(16.00m);
-        var total = CrearMoneyMock(116.00m);
-        var saldo = CrearMoneyMock(116.00m);
-        
-        typeof(Factura).GetProperty("Numero")?.SetValue(factura, numero);
-        typeof(Factura).GetProperty("SubTotal")?.SetValue(factura, subtotal);
-        typeof(Factura).GetProperty("TotalImpuestos")?.SetValue(factura, impuestos);
-        typeof(Factura).GetProperty("Total")?.SetValue(factura, total);
-        typeof(Factura).GetProperty("Saldo")?.SetValue(factura, saldo);
+        typeof(Factura).GetProperty("TipoFactura")?.SetValue(factura, TipoFactura.Normal);
+        typeof(Factura).GetProperty("Subtotal")?.SetValue(factura, 100.00m);
+        typeof(Factura).GetProperty("TotalImpuestos")?.SetValue(factura, 16.00m);
+        typeof(Factura).GetProperty("Total")?.SetValue(factura, 116.00m);
+        typeof(Factura).GetProperty("TotalPagado")?.SetValue(factura, 0.00m);
+        typeof(Factura).GetProperty("NombreCliente")?.SetValue(factura, "Cliente Ejemplo");
         
         return factura;
     }
@@ -470,15 +458,10 @@ public class ComercialMappingProfileTests
         var detalle = (DetalleFactura)Activator.CreateInstance(typeof(DetalleFactura), true)!;
         
         typeof(DetalleFactura).GetProperty("Id")?.SetValue(detalle, Guid.NewGuid());
-        typeof(DetalleFactura).GetProperty("ProductoNombre")?.SetValue(detalle, "Pizza Margherita");
-        typeof(DetalleFactura).GetProperty("Cantidad")?.SetValue(detalle, 2);
-        
-        // Crear value objects mock
-        var precioUnitario = CrearMoneyMock(50.00m);
-        var subtotal = CrearMoneyMock(100.00m);
-        
-        typeof(DetalleFactura).GetProperty("PrecioUnitario")?.SetValue(detalle, precioUnitario);
-        typeof(DetalleFactura).GetProperty("Subtotal")?.SetValue(detalle, subtotal);
+        typeof(DetalleFactura).GetProperty("Descripcion")?.SetValue(detalle, "Pizza Margherita");
+        typeof(DetalleFactura).GetProperty("Cantidad")?.SetValue(detalle, 2m);
+        typeof(DetalleFactura).GetProperty("PrecioUnitario")?.SetValue(detalle, 50.00m);
+        typeof(DetalleFactura).GetProperty("Subtotal")?.SetValue(detalle, 100.00m);
         
         return detalle;
     }
@@ -489,13 +472,12 @@ public class ComercialMappingProfileTests
         var descuento = (DescuentoFactura)Activator.CreateInstance(typeof(DescuentoFactura), true)!;
         
         typeof(DescuentoFactura).GetProperty("Id")?.SetValue(descuento, Guid.NewGuid());
-        typeof(DescuentoFactura).GetProperty("TipoDescuento")?.SetValue(descuento, TipoDescuento.Porcentaje);
+        typeof(DescuentoFactura).GetProperty("TipoDescuento")?.SetValue(descuento, "Porcentaje");
         typeof(DescuentoFactura).GetProperty("Concepto")?.SetValue(descuento, "Descuento cliente frecuente");
         typeof(DescuentoFactura).GetProperty("FechaAplicacion")?.SetValue(descuento, DateTime.UtcNow);
-        
-        // Crear value object mock
-        var valor = CrearMoneyMock(10.00m);
-        typeof(DescuentoFactura).GetProperty("Valor")?.SetValue(descuento, valor);
+        typeof(DescuentoFactura).GetProperty("Monto")?.SetValue(descuento, 10.00m);
+        typeof(DescuentoFactura).GetProperty("Motivo")?.SetValue(descuento, "Cliente frecuente");
+        typeof(DescuentoFactura).GetProperty("UsuarioAutorizaId")?.SetValue(descuento, Guid.NewGuid());
         
         return descuento;
     }

@@ -54,7 +54,7 @@ public class CrearComandaValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.Items = new List<CrearItemComandaDto>
+        command.Items = new List<AgregarProductoDto>
         {
             CrearItemValido(),
             CrearItemValido()
@@ -72,7 +72,7 @@ public class CrearComandaValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.Items = new List<CrearItemComandaDto>();
+        command.Items = new List<AgregarProductoDto>();
 
         // Act
         var result = _validator.Validate(command);
@@ -110,7 +110,7 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         item.ProductoId = Guid.NewGuid();
-        command.Items = new List<CrearItemComandaDto> { item };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -126,7 +126,7 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         item.ProductoId = Guid.Empty;
-        command.Items = new List<CrearItemComandaDto> { item };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -151,7 +151,7 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         item.Cantidad = cantidad;
-        command.Items = new List<CrearItemComandaDto> { item };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -170,7 +170,7 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         item.Cantidad = cantidadInvalida;
-        command.Items = new List<CrearItemComandaDto> { item };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -188,7 +188,7 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         item.Cantidad = 101; // Máximo 100
-        command.Items = new List<CrearItemComandaDto> { item };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -209,8 +209,8 @@ public class CrearComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         var item = CrearItemValido();
-        item.ObservacionesEspeciales = "Sin cebolla, con extra queso";
-        command.Items = new List<CrearItemComandaDto> { item };
+        item.Observaciones = "Sin cebolla, con extra queso";
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -225,8 +225,8 @@ public class CrearComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         var item = CrearItemValido();
-        item.ObservacionesEspeciales = "";
-        command.Items = new List<CrearItemComandaDto> { item };
+        item.Observaciones = "";
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -241,8 +241,8 @@ public class CrearComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         var item = CrearItemValido();
-        item.ObservacionesEspeciales = null;
-        command.Items = new List<CrearItemComandaDto> { item };
+        item.Observaciones = null;
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -257,15 +257,15 @@ public class CrearComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         var item = CrearItemValido();
-        item.ObservacionesEspeciales = new string('A', 501); // Máximo 500
-        command.Items = new List<CrearItemComandaDto> { item };
+        item.Observaciones = new string('A', 501); // Máximo 500
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(x => x.PropertyName.Contains("ObservacionesEspeciales"));
+        result.Errors.Should().Contain(x => x.PropertyName.Contains("Observaciones"));
     }
 
     #endregion
@@ -278,12 +278,12 @@ public class CrearComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         var item = CrearItemValido();
-        item.Personalizaciones = new List<CrearPersonalizacionItemDto>
+        item.Personalizaciones = new List<PersonalizacionCreateDto>
         {
             CrearPersonalizacionValida(),
             CrearPersonalizacionValida()
         };
-        command.Items = new List<CrearItemComandaDto> { item };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -298,8 +298,8 @@ public class CrearComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         var item = CrearItemValido();
-        item.Personalizaciones = new List<CrearPersonalizacionItemDto>();
-        command.Items = new List<CrearItemComandaDto> { item };
+        item.Personalizaciones = new List<PersonalizacionCreateDto>();
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -315,7 +315,7 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         item.Personalizaciones = null;
-        command.Items = new List<CrearItemComandaDto> { item };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -335,9 +335,9 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         var personalizacion = CrearPersonalizacionValida();
-        personalizacion.Nombre = "Extra queso";
-        item.Personalizaciones = new List<CrearPersonalizacionItemDto> { personalizacion };
-        command.Items = new List<CrearItemComandaDto> { item };
+        personalizacion.Tipo = "Extra queso";
+        item.Personalizaciones = new List<PersonalizacionCreateDto> { personalizacion };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -353,16 +353,16 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         var personalizacion = CrearPersonalizacionValida();
-        personalizacion.Nombre = "";
-        item.Personalizaciones = new List<CrearPersonalizacionItemDto> { personalizacion };
-        command.Items = new List<CrearItemComandaDto> { item };
+        personalizacion.Tipo = "";
+        item.Personalizaciones = new List<PersonalizacionCreateDto> { personalizacion };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(x => x.PropertyName.Contains("Nombre"));
+        result.Errors.Should().Contain(x => x.PropertyName.Contains("Tipo"));
     }
 
     #endregion
@@ -380,9 +380,9 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         var personalizacion = CrearPersonalizacionValida();
-        personalizacion.CostoAdicional = costo;
-        item.Personalizaciones = new List<CrearPersonalizacionItemDto> { personalizacion };
-        command.Items = new List<CrearItemComandaDto> { item };
+        personalizacion.PrecioAdicional = costo;
+        item.Personalizaciones = new List<PersonalizacionCreateDto> { personalizacion };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -398,16 +398,16 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         var personalizacion = CrearPersonalizacionValida();
-        personalizacion.CostoAdicional = -5.00m;
-        item.Personalizaciones = new List<CrearPersonalizacionItemDto> { personalizacion };
-        command.Items = new List<CrearItemComandaDto> { item };
+        personalizacion.PrecioAdicional = -5.00m;
+        item.Personalizaciones = new List<PersonalizacionCreateDto> { personalizacion };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(x => x.PropertyName.Contains("CostoAdicional"));
+        result.Errors.Should().Contain(x => x.PropertyName.Contains("PrecioAdicional"));
     }
 
     #endregion
@@ -421,28 +421,28 @@ public class CrearComandaValidatorTests
         var command = new CrearComandaCommand
         {
             MesaId = Guid.NewGuid(),
-            Items = new List<CrearItemComandaDto>
+            Items = new List<AgregarProductoDto>
             {
-                new CrearItemComandaDto
+                new AgregarProductoDto
                 {
                     ProductoId = Guid.NewGuid(),
                     Cantidad = 2,
-                    ObservacionesEspeciales = "Término medio",
-                    Personalizaciones = new List<CrearPersonalizacionItemDto>
+                    Observaciones = "Término medio",
+                    Personalizaciones = new List<PersonalizacionCreateDto>
                     {
-                        new CrearPersonalizacionItemDto
+                        new PersonalizacionCreateDto
                         {
-                            Nombre = "Extra salsa",
-                            Descripcion = "Salsa BBQ extra",
-                            CostoAdicional = 3.50m
+                            Tipo = "Extra salsa",
+                            Detalles = "Salsa BBQ extra",
+                            PrecioAdicional = 3.50m
                         }
                     }
                 },
-                new CrearItemComandaDto
+                new AgregarProductoDto
                 {
                     ProductoId = Guid.NewGuid(),
                     Cantidad = 1,
-                    ObservacionesEspeciales = "Sin cebolla",
+                    Observaciones = "Sin cebolla",
                     Personalizaciones = null
                 }
             }
@@ -463,19 +463,19 @@ public class CrearComandaValidatorTests
         var command = new CrearComandaCommand
         {
             MesaId = Guid.Empty, // Error: mesa vacía
-            Items = new List<CrearItemComandaDto>
+            Items = new List<AgregarProductoDto>
             {
-                new CrearItemComandaDto
+                new AgregarProductoDto
                 {
                     ProductoId = Guid.Empty, // Error: producto vacío
                     Cantidad = 0, // Error: cantidad inválida
-                    ObservacionesEspeciales = new string('A', 501), // Error: muy largo
-                    Personalizaciones = new List<CrearPersonalizacionItemDto>
+                    Observaciones = new string('A', 501), // Error: muy largo
+                    Personalizaciones = new List<PersonalizacionCreateDto>
                     {
-                        new CrearPersonalizacionItemDto
+                        new PersonalizacionCreateDto
                         {
-                            Nombre = "", // Error: nombre vacío
-                            CostoAdicional = -5.00m // Error: costo negativo
+                            Tipo = "", // Error: nombre vacío
+                            PrecioAdicional = -5.00m // Error: costo negativo
                         }
                     }
                 }
@@ -491,9 +491,9 @@ public class CrearComandaValidatorTests
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearComandaCommand.MesaId));
         result.Errors.Should().Contain(x => x.PropertyName.Contains("ProductoId"));
         result.Errors.Should().Contain(x => x.PropertyName.Contains("Cantidad"));
-        result.Errors.Should().Contain(x => x.PropertyName.Contains("ObservacionesEspeciales"));
-        result.Errors.Should().Contain(x => x.PropertyName.Contains("Nombre"));
-        result.Errors.Should().Contain(x => x.PropertyName.Contains("CostoAdicional"));
+        result.Errors.Should().Contain(x => x.PropertyName.Contains("Observaciones"));
+        result.Errors.Should().Contain(x => x.PropertyName.Contains("Tipo"));
+        result.Errors.Should().Contain(x => x.PropertyName.Contains("PrecioAdicional"));
     }
 
     [Fact]
@@ -517,13 +517,13 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         item.Personalizaciones = Enumerable.Range(1, 10)
-            .Select(i => new CrearPersonalizacionItemDto
+            .Select(i => new PersonalizacionCreateDto
             {
-                Nombre = $"Personalización {i}",
-                Descripcion = $"Descripción {i}",
-                CostoAdicional = i * 2.50m
+                Tipo = $"Personalización {i}",
+                Detalles = $"Descripción {i}",
+                PrecioAdicional = i * 2.50m
             }).ToList();
-        command.Items = new List<CrearItemComandaDto> { item };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -565,16 +565,16 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         var personalizacion = CrearPersonalizacionValida();
-        personalizacion.Descripcion = new string('A', 1001); // Máximo 1000
-        item.Personalizaciones = new List<CrearPersonalizacionItemDto> { personalizacion };
-        command.Items = new List<CrearItemComandaDto> { item };
+        personalizacion.Detalles = new string('A', 1001); // Máximo 1000
+        item.Personalizaciones = new List<PersonalizacionCreateDto> { personalizacion };
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(x => x.PropertyName.Contains("Descripcion"));
+        result.Errors.Should().Contain(x => x.PropertyName.Contains("Detalles"));
     }
 
     [Fact]
@@ -583,8 +583,8 @@ public class CrearComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         var item = CrearItemValido();
-        item.ObservacionesEspeciales = "Sin cebolla, extra queso & salsa BBQ (muy picante) - término 3/4";
-        command.Items = new List<CrearItemComandaDto> { item };
+        item.Observaciones = "Sin cebolla, extra queso & salsa BBQ (muy picante) - término 3/4";
+        command.Items = new List<AgregarProductoDto> { item };
 
         // Act
         var result = _validator.Validate(command);
@@ -602,34 +602,34 @@ public class CrearComandaValidatorTests
         return new CrearComandaCommand
         {
             MesaId = Guid.NewGuid(),
-            Items = new List<CrearItemComandaDto>
+            Items = new List<AgregarProductoDto>
             {
                 CrearItemValido()
             }
         };
     }
 
-    private CrearItemComandaDto CrearItemValido()
+    private AgregarProductoDto CrearItemValido()
     {
-        return new CrearItemComandaDto
+        return new AgregarProductoDto
         {
             ProductoId = Guid.NewGuid(),
             Cantidad = 1,
-            ObservacionesEspeciales = "Observaciones test",
-            Personalizaciones = new List<CrearPersonalizacionItemDto>
+            Observaciones = "Observaciones test",
+            Personalizaciones = new List<PersonalizacionCreateDto>
             {
                 CrearPersonalizacionValida()
             }
         };
     }
 
-    private CrearPersonalizacionItemDto CrearPersonalizacionValida()
+    private PersonalizacionCreateDto CrearPersonalizacionValida()
     {
-        return new CrearPersonalizacionItemDto
+        return new PersonalizacionCreateDto
         {
-            Nombre = "Extra queso",
-            Descripcion = "Queso extra mozzarella",
-            CostoAdicional = 5.50m
+            Tipo = "Extra",
+            Detalles = "Queso extra mozzarella",
+            PrecioAdicional = 5.50m
         };
     }
 
@@ -638,16 +638,16 @@ public class CrearComandaValidatorTests
         return new CrearComandaCommand
         {
             MesaId = Guid.NewGuid(),
-            Items = Enumerable.Range(1, 5).Select(i => new CrearItemComandaDto
+            Items = Enumerable.Range(1, 5).Select(i => new AgregarProductoDto
             {
                 ProductoId = Guid.NewGuid(),
                 Cantidad = i,
-                ObservacionesEspeciales = $"Observaciones para item {i}",
-                Personalizaciones = Enumerable.Range(1, 3).Select(j => new CrearPersonalizacionItemDto
+                Observaciones = $"Observaciones para item {i}",
+                Personalizaciones = Enumerable.Range(1, 3).Select(j => new PersonalizacionCreateDto
                 {
-                    Nombre = $"Personalización {j}",
-                    Descripcion = $"Descripción detallada {j}",
-                    CostoAdicional = j * 2.5m
+                    Tipo = $"Personalización {j}",
+                    Detalles = $"Descripción detallada {j}",
+                    PrecioAdicional = j * 2.5m
                 }).ToList()
             }).ToList()
         };

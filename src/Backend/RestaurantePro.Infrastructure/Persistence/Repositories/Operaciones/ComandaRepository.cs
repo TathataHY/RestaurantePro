@@ -147,5 +147,60 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         {
             return await _context.SaveChangesAsync(cancellationToken);
         }
+        
+        public async Task<(IEnumerable<Comanda> Comandas, int Total)> ObtenerComandasActivasAsync(Dictionary<string, object> criterios, int pagina, int elementosPorPagina, CancellationToken cancellationToken = default)
+        {
+            var query = _context.Set<Comanda>()
+                .Include(c => c.Items)
+                .AsQueryable();
+
+            // Filtrar solo comandas activas (no finalizadas ni canceladas)
+            query = query.Where(c => c.Estado != EstadoComanda.Finalizada && c.Estado != EstadoComanda.Cancelada);
+
+            // Aplicar criterios de filtro
+            if (criterios.ContainsKey("EstadoFiltro") && criterios["EstadoFiltro"] is string estadoFiltro)
+            {
+                if (Enum.TryParse<EstadoComanda>(estadoFiltro, out var estado))
+                {
+                    query = query.Where(c => c.Estado == estado);
+                }
+            }
+
+            if (criterios.ContainsKey("MesaId") && criterios["MesaId"] is Guid mesaId)
+            {
+                query = query.Where(c => c.MesaId == mesaId);
+            }
+
+            if (criterios.ContainsKey("MeseroId") && criterios["MeseroId"] is Guid meseroId)
+            {
+                query = query.Where(c => c.MeseroId == meseroId);
+            }
+
+            if (criterios.ContainsKey("ClienteId") && criterios["ClienteId"] is Guid clienteId)
+            {
+                query = query.Where(c => c.ClienteId == clienteId);
+            }
+
+            if (criterios.ContainsKey("FechaInicio") && criterios["FechaInicio"] is DateTime fechaInicio)
+            {
+                query = query.Where(c => c.FechaCreacion >= fechaInicio);
+            }
+
+            if (criterios.ContainsKey("FechaFin") && criterios["FechaFin"] is DateTime fechaFin)
+            {
+                query = query.Where(c => c.FechaCreacion <= fechaFin);
+            }
+
+            // Obtener total antes de paginación
+            var total = await query.CountAsync(cancellationToken);
+
+            // Aplicar paginación
+            var comandas = await query
+                .Skip(pagina * elementosPorPagina)
+                .Take(elementosPorPagina)
+                .ToListAsync(cancellationToken);
+
+            return (comandas, total);
+        }
     }
 } 

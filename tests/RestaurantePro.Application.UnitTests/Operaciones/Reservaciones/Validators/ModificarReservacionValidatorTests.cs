@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Validators;
 
 /// <summary>
@@ -24,7 +26,7 @@ public class ModificarReservacionValidatorTests
         _contextMock.Setup(x => x.Mesas).Returns(_mesasDbSetMock.Object);
         _contextMock.Setup(x => x.Clientes).Returns(_clientesDbSetMock.Object);
         
-        _validator = new ModificarReservacionValidator(_contextMock.Object);
+        _validator = new ModificarReservacionValidator();
     }
 
     #region Validation Command Helper
@@ -78,7 +80,7 @@ public class ModificarReservacionValidatorTests
         // Mock reservación existente
         var reservaciones = new List<Reservacion>
         {
-            new Reservacion { Id = reservacionId, Estado = EstadoReservacion.Confirmada }
+            CrearReservacionMock(reservacionId, EstadoReservacion.Confirmada)
         }.AsQueryable();
 
         _reservacionesDbSetMock.As<IQueryable<Reservacion>>().Setup(m => m.Provider).Returns(reservaciones.Provider);
@@ -306,7 +308,7 @@ public class ModificarReservacionValidatorTests
         // Mock mesa existente y disponible
         var mesas = new List<Mesa>
         {
-            new Mesa { Id = mesaId, NumeroMesa = 1, Capacidad = 4, Estado = EstadoMesa.Disponible }
+            CrearMesaMock(mesaId, 1, 4, EstadoMesa.Disponible)
         }.AsQueryable();
 
         _mesasDbSetMock.As<IQueryable<Mesa>>().Setup(m => m.Provider).Returns(mesas.Provider);
@@ -354,7 +356,7 @@ public class ModificarReservacionValidatorTests
         // Mock cliente existente y activo
         var clientes = new List<Cliente>
         {
-            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", Activo = true }
+            CrearClienteMock(clienteId, "Cliente Test", "test@email.com", true)
         }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
@@ -508,7 +510,7 @@ public class ModificarReservacionValidatorTests
         // Mock reservación cancelada
         var reservaciones = new List<Reservacion>
         {
-            new Reservacion { Id = reservacionId, Estado = EstadoReservacion.Cancelada }
+            CrearReservacionMock(reservacionId, EstadoReservacion.Cancelada)
         }.AsQueryable();
 
         _reservacionesDbSetMock.As<IQueryable<Reservacion>>().Setup(m => m.Provider).Returns(reservaciones.Provider);
@@ -538,7 +540,7 @@ public class ModificarReservacionValidatorTests
         // Mock reservación completada
         var reservaciones = new List<Reservacion>
         {
-            new Reservacion { Id = reservacionId, Estado = EstadoReservacion.Completada }
+            CrearReservacionMock(reservacionId, EstadoReservacion.Completada)
         }.AsQueryable();
 
         _reservacionesDbSetMock.As<IQueryable<Reservacion>>().Setup(m => m.Provider).Returns(reservaciones.Provider);
@@ -585,17 +587,17 @@ public class ModificarReservacionValidatorTests
         // Mock entidades relacionadas
         var reservaciones = new List<Reservacion>
         {
-            new Reservacion { Id = reservacionId, Estado = EstadoReservacion.Confirmada }
+            CrearReservacionMock(reservacionId, EstadoReservacion.Confirmada)
         }.AsQueryable();
 
         var mesas = new List<Mesa>
         {
-            new Mesa { Id = mesaId, NumeroMesa = 1, Capacidad = 8, Estado = EstadoMesa.Disponible }
+            CrearMesaMock(mesaId, 1, 8, EstadoMesa.Disponible)
         }.AsQueryable();
 
         var clientes = new List<Cliente>
         {
-            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", Activo = true }
+            CrearClienteMock(clienteId, "Cliente Test", "test@email.com", true)
         }.AsQueryable();
 
         SetupMockDbSets(reservaciones, mesas, clientes);
@@ -739,20 +741,137 @@ public class ModificarReservacionValidatorTests
     {
         var reservaciones = new List<Reservacion>
         {
-            new Reservacion { Id = reservacionId, Estado = EstadoReservacion.Confirmada }
+            CrearReservacionMock(reservacionId, EstadoReservacion.Confirmada)
         }.AsQueryable();
 
         var mesas = new List<Mesa>
         {
-            new Mesa { Id = mesaId, NumeroMesa = 1, Capacidad = 8, Estado = EstadoMesa.Disponible }
+            CrearMesaMock(mesaId, 1, 8, EstadoMesa.Disponible)
         }.AsQueryable();
 
         var clientes = new List<Cliente>
         {
-            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", Activo = true }
+            CrearClienteMock(clienteId, "Cliente Test", "test@email.com", true)
         }.AsQueryable();
 
         SetupMockDbSets(reservaciones, mesas, clientes);
+    }
+
+    #endregion
+
+    #region Helper Methods para crear Mocks de Entidades
+
+    private Reservacion CrearReservacionMock(Guid id, EstadoReservacion estado)
+    {
+        // Usar reflection para crear la entidad con constructor privado
+        var reservacion = (Reservacion)Activator.CreateInstance(typeof(Reservacion), true)!;
+        
+        typeof(Reservacion).GetProperty("Id")?.SetValue(reservacion, id);
+        typeof(Reservacion).GetProperty("Estado")?.SetValue(reservacion, estado);
+        typeof(Reservacion).GetProperty("ClienteId")?.SetValue(reservacion, Guid.NewGuid());
+        typeof(Reservacion).GetProperty("MesaId")?.SetValue(reservacion, Guid.NewGuid());
+        typeof(Reservacion).GetProperty("Fecha")?.SetValue(reservacion, DateTime.Today.AddDays(1));
+        typeof(Reservacion).GetProperty("Hora")?.SetValue(reservacion, TimeSpan.FromHours(19));
+        typeof(Reservacion).GetProperty("CantidadPersonas")?.SetValue(reservacion, 4);
+        typeof(Reservacion).GetProperty("Telefono")?.SetValue(reservacion, "555-1234");
+        typeof(Reservacion).GetProperty("Email")?.SetValue(reservacion, "test@email.com");
+        typeof(Reservacion).GetProperty("Observaciones")?.SetValue(reservacion, "Test");
+        typeof(Reservacion).GetProperty("FechaCreacion")?.SetValue(reservacion, DateTime.Now);
+        
+        return reservacion;
+    }
+
+    private Mesa CrearMesaMock(Guid id, int numero, int capacidad, EstadoMesa estado)
+    {
+        // Usar reflection para crear la entidad con constructor privado
+        var mesa = (Mesa)Activator.CreateInstance(typeof(Mesa), true)!;
+        
+        typeof(Mesa).GetProperty("Id")?.SetValue(mesa, id);
+        typeof(Mesa).GetProperty("Numero")?.SetValue(mesa, numero);
+        typeof(Mesa).GetProperty("Capacidad")?.SetValue(mesa, capacidad);
+        typeof(Mesa).GetProperty("Estado")?.SetValue(mesa, estado);
+        typeof(Mesa).GetProperty("Ubicacion")?.SetValue(mesa, "Interior");
+        typeof(Mesa).GetProperty("FechaCreacion")?.SetValue(mesa, DateTime.Now);
+        
+        return mesa;
+    }
+
+    private Cliente CrearClienteMock(Guid id, string nombre, string email, bool activo)
+    {
+        // Usar reflection para crear la entidad con constructor privado
+        var cliente = (Cliente)Activator.CreateInstance(typeof(Cliente), true)!;
+        
+        // Crear ValueObjects básicos usando reflection
+        var clienteNombre = CrearClienteNombreMock(nombre, "Test");
+        var emailVO = CrearEmailMock(email);
+        var telefonoVO = CrearPhoneNumberMock("555-1234");
+        
+        typeof(Cliente).GetProperty("Id")?.SetValue(cliente, id);
+        typeof(Cliente).GetProperty("Nombre")?.SetValue(cliente, clienteNombre);
+        typeof(Cliente).GetProperty("Email")?.SetValue(cliente, emailVO);
+        typeof(Cliente).GetProperty("Telefono")?.SetValue(cliente, telefonoVO);
+        typeof(Cliente).GetProperty("EstaActivo")?.SetValue(cliente, activo);
+        typeof(Cliente).GetProperty("FechaNacimiento")?.SetValue(cliente, DateTime.Now.AddYears(-25));
+        typeof(Cliente).GetProperty("FechaCreacion")?.SetValue(cliente, DateTime.Now);
+        
+        return cliente;
+    }
+
+    private object CrearClienteNombreMock(string nombre, string apellido)
+    {
+        // Usar reflection para crear el ValueObject con constructor privado
+        var clienteNombreType = typeof(Cliente).Assembly.GetTypes()
+            .FirstOrDefault(t => t.Name == "ClienteNombre");
+        
+        if (clienteNombreType != null)
+        {
+            var constructor = clienteNombreType.GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance).FirstOrDefault();
+            if (constructor != null)
+            {
+                return constructor.Invoke(new object[] { nombre, apellido });
+            }
+        }
+        
+        // Fallback: crear objeto dinámico
+        return new { Nombre = nombre, Apellido = apellido, NombreCompleto = $"{nombre} {apellido}" };
+    }
+
+    private object CrearEmailMock(string email)
+    {
+        // Usar reflection para crear el ValueObject Email con constructor privado
+        var emailType = typeof(Cliente).Assembly.GetTypes()
+            .FirstOrDefault(t => t.Name == "Email");
+        
+        if (emailType != null)
+        {
+            var constructor = emailType.GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance).FirstOrDefault();
+            if (constructor != null)
+            {
+                return constructor.Invoke(new object[] { email });
+            }
+        }
+        
+        // Fallback: crear objeto dinámico
+        return new { Value = email };
+    }
+
+    private object CrearPhoneNumberMock(string telefono)
+    {
+        // Usar reflection para crear el ValueObject PhoneNumber con constructor privado
+        var phoneType = typeof(Cliente).Assembly.GetTypes()
+            .FirstOrDefault(t => t.Name == "PhoneNumber");
+        
+        if (phoneType != null)
+        {
+            var constructor = phoneType.GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance).FirstOrDefault();
+            if (constructor != null)
+            {
+                return constructor.Invoke(new object[] { telefono });
+            }
+        }
+        
+        // Fallback: crear objeto dinámico
+        return new { Value = telefono };
     }
 
     #endregion

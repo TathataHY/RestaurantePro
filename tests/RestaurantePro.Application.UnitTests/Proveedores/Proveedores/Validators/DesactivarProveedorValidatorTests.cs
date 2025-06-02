@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Proveedores.Proveedores.Validators;
+using System.Reflection;
 
 /// <summary>
 /// 🔥 TESTS EXHAUSTIVOS PARA DESACTIVAR PROVEEDOR VALIDATOR - IMPLEMENTACIÓN COMPLETA
@@ -24,7 +25,7 @@ public class DesactivarProveedorValidatorTests
         _mockContext.Setup(c => c.OrdenesCompra).Returns(_mockOrdenesCompraDbSet.Object);
         _mockContext.Setup(c => c.Facturas).Returns(_mockFacturasDbSet.Object);
         
-        _validator = new DesactivarProveedorValidator(_mockContext.Object);
+        _validator = new DesactivarProveedorValidator();
     }
 
     #region Validation Command Helper
@@ -40,29 +41,40 @@ public class DesactivarProveedorValidatorTests
 
     private Domain.Proveedores.Entities.Proveedor CrearProveedorValido(Guid proveedorId)
     {
-        return new Domain.Proveedores.Entities.Proveedor
-        {
-            Id = proveedorId,
-            Nombre = "Proveedor Test S.A.",
-            RFC = "XAXX010102000",
-            Email = "contacto@proveedor.com",
-            Telefono = "555-123-4567",
-            Activo = true,
-            FechaCreacion = DateTime.UtcNow.AddMonths(-6),
-            FechaActualizacion = DateTime.UtcNow.AddDays(-1)
-        };
+        // Usar factory method para crear proveedor válido
+        var proveedor = Domain.Proveedores.Entities.Proveedor.Crear(
+            "Proveedor Test S.A.",
+            "Juan Pérez",
+            "contacto@proveedor.com",
+            "555-123-4567",
+            "Calle Test 123",
+            "Ciudad Test",
+            "12345",
+            "México",
+            "XAXX010102000",
+            "Cuenta bancaria test",
+            30);
+        
+        // Usar reflexión para establecer el ID y las fechas
+        typeof(RestaurantePro.Domain.Core.Base.EntityBase).GetProperty("Id")?.SetValue(proveedor, proveedorId);
+        typeof(RestaurantePro.Domain.Core.Base.EntityBase).GetProperty("FechaCreacion")?.SetValue(proveedor, DateTime.UtcNow.AddMonths(-6));
+        typeof(RestaurantePro.Domain.Core.Base.EntityBase).GetProperty("FechaActualizacion")?.SetValue(proveedor, DateTime.UtcNow.AddDays(-1));
+        
+        return proveedor;
     }
 
     private OrdenCompra CrearOrdenCompraActiva(Guid proveedorId)
     {
-        return new OrdenCompra
-        {
-            Id = Guid.NewGuid(),
-            ProveedorId = proveedorId,
-            Estado = EstadoOrdenCompra.Pendiente,
-            FechaCreacion = DateTime.UtcNow.AddDays(-5),
-            // MontoTotal eliminado porque no existe en la entidad real
-        };
+        // Usar factory method para crear orden de compra válida
+        var orden = OrdenCompra.Crear(
+            proveedorId,
+            "Orden de compra de prueba",
+            DateTime.UtcNow.AddDays(-5));
+        
+        // Usar reflexión para establecer el estado después de la creación
+        typeof(OrdenCompra).GetProperty("Estado")?.SetValue(orden, EstadoOrdenCompra.Pendiente);
+        
+        return orden;
     }
 
     #endregion
@@ -133,7 +145,7 @@ public class DesactivarProveedorValidatorTests
         // Arrange
         var command = CrearCommandValido();
         var proveedor = CrearProveedorValido(command.Id);
-        proveedor.Activo = false; // Ya desactivado
+        proveedor.Desactivar("Proveedor desactivado para prueba"); // Ya desactivado
         
         ConfigurarProveedorExistente(proveedor);
 
@@ -153,7 +165,7 @@ public class DesactivarProveedorValidatorTests
         // Arrange
         var command = CrearCommandValido();
         var proveedor = CrearProveedorValido(command.Id);
-        proveedor.Activo = true;
+        proveedor.Activar(); // Asegurar que está activo
         
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
@@ -270,8 +282,7 @@ public class DesactivarProveedorValidatorTests
         // Arrange
         var command = CrearCommandValido();
         var proveedor = CrearProveedorValido(command.Id);
-        var ordenActiva = CrearOrdenCompraActiva(command.Id);
-        ordenActiva.Estado = estadoActivo;
+        var ordenActiva = CrearOrdenCompraConEstado(command.Id, estadoActivo);
         
         ConfigurarProveedorExistente(proveedor);
         ConfigurarConOrdenesActivas(new[] { ordenActiva });
@@ -294,8 +305,7 @@ public class DesactivarProveedorValidatorTests
         // Arrange
         var command = CrearCommandValido();
         var proveedor = CrearProveedorValido(command.Id);
-        var ordenInactiva = CrearOrdenCompraActiva(command.Id);
-        ordenInactiva.Estado = estadoInactivo;
+        var ordenInactiva = CrearOrdenCompraConEstado(command.Id, estadoInactivo);
         
         ConfigurarProveedorExistente(proveedor);
         ConfigurarConOrdenesActivas(new[] { ordenInactiva });
@@ -317,9 +327,9 @@ public class DesactivarProveedorValidatorTests
         
         var ordenes = new[]
         {
-            new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.Id, Estado = EstadoOrdenCompra.Recibida },
-            new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.Id, Estado = EstadoOrdenCompra.Pendiente }, // ACTIVA
-            new OrdenCompra { Id = Guid.NewGuid(), ProveedorId = command.Id, Estado = EstadoOrdenCompra.Cancelada }
+            CrearOrdenCompraConEstado(command.Id, EstadoOrdenCompra.Recibida),
+            CrearOrdenCompraConEstado(command.Id, EstadoOrdenCompra.Pendiente), // ACTIVA
+            CrearOrdenCompraConEstado(command.Id, EstadoOrdenCompra.Cancelada)
         };
         
         ConfigurarProveedorExistente(proveedor);
@@ -414,7 +424,10 @@ public class DesactivarProveedorValidatorTests
         // Arrange
         var command = CrearCommandValido();
         var proveedor = CrearProveedorValido(command.Id);
-        proveedor.FechaCreacion = DateTime.UtcNow.AddHours(-12); // Menos de 24 horas
+        
+        // Usar reflection para establecer FechaCreacion (menos de 24 horas)
+        var fechaCreacionField = typeof(EntityBase).GetField("_fechaCreacion", BindingFlags.NonPublic | BindingFlags.Instance);
+        fechaCreacionField?.SetValue(proveedor, DateTime.UtcNow.AddHours(-12));
         
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
@@ -435,7 +448,10 @@ public class DesactivarProveedorValidatorTests
         // Arrange
         var command = CrearCommandValido();
         var proveedor = CrearProveedorValido(command.Id);
-        proveedor.FechaCreacion = DateTime.UtcNow.AddDays(-5); // Más de 24 horas
+        
+        // Usar reflection para establecer FechaCreacion (más de 24 horas)
+        var fechaCreacionField = typeof(EntityBase).GetField("_fechaCreacion", BindingFlags.NonPublic | BindingFlags.Instance);
+        fechaCreacionField?.SetValue(proveedor, DateTime.UtcNow.AddDays(-5));
         
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
@@ -454,8 +470,11 @@ public class DesactivarProveedorValidatorTests
         // Arrange
         var command = CrearCommandValido();
         var proveedor = CrearProveedorValido(command.Id);
-        proveedor.Activo = false; // Ya desactivado
-        proveedor.FechaCreacion = DateTime.UtcNow.AddHours(-1); // Recién creado
+        proveedor.Desactivar("Ya desactivado"); // Ya desactivado
+        
+        // Usar reflection para establecer FechaCreacion (recién creado)
+        var fechaCreacionField = typeof(EntityBase).GetField("_fechaCreacion", BindingFlags.NonPublic | BindingFlags.Instance);
+        fechaCreacionField?.SetValue(proveedor, DateTime.UtcNow.AddHours(-1));
         
         var ordenActiva = CrearOrdenCompraActiva(command.Id);
         
@@ -503,15 +522,27 @@ public class DesactivarProveedorValidatorTests
             RazonDesactivacion = "El proveedor ha solicitado darse de baja del sistema por restructuración de su empresa"
         };
 
-        var proveedor = new Domain.Proveedores.Entities.Proveedor
-        {
-            Id = command.Id,
-            Nombre = "Proveedor Test",
-            RFC = "XAXX010102000",
-            Email = "test@proveedor.com",
-            Activo = true,
-            FechaCreacion = DateTime.UtcNow.AddDays(-30) // Suficiente antigüedad
-        };
+        // Crear proveedor usando factory method
+        var proveedor = Domain.Proveedores.Entities.Proveedor.Crear(
+            "Proveedor Test",
+            "Contacto Test",
+            "test@proveedor.com",
+            "+1234567890",
+            "Dirección Test",
+            "Ciudad Test",
+            "12345",
+            "País Test",
+            "XAXX010102000",
+            "Banco Test",
+            30
+        );
+        
+        // Usar reflection para establecer ID y fecha usando campos privados
+        var idField = typeof(EntityBase).GetField("_id", BindingFlags.NonPublic | BindingFlags.Instance);
+        idField?.SetValue(proveedor, command.Id);
+        
+        var fechaCreacionField = typeof(EntityBase).GetField("_fechaCreacion", BindingFlags.NonPublic | BindingFlags.Instance);
+        fechaCreacionField?.SetValue(proveedor, DateTime.UtcNow.AddDays(-30));
         
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
@@ -562,7 +593,10 @@ public class DesactivarProveedorValidatorTests
         // Arrange
         var command = CrearCommandValido();
         var proveedor = CrearProveedorValido(command.Id);
-        proveedor.FechaCreacion = DateTime.UtcNow.AddHours(-horasAntiguedad);
+        
+        // Usar reflection para establecer FechaCreacion
+        var fechaCreacionField = typeof(EntityBase).GetField("_fechaCreacion", BindingFlags.NonPublic | BindingFlags.Instance);
+        fechaCreacionField?.SetValue(proveedor, DateTime.UtcNow.AddHours(-horasAntiguedad));
         
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
@@ -669,6 +703,28 @@ public class DesactivarProveedorValidatorTests
         _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(facturasQueryable.Expression);
         _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(facturasQueryable.ElementType);
         _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(facturasQueryable.GetEnumerator());
+    }
+
+    /// <summary>
+    /// Crea una OrdenCompra con el estado especificado usando factory method y reflection
+    /// </summary>
+    private OrdenCompra CrearOrdenCompraConEstado(Guid proveedorId, EstadoOrdenCompra estado)
+    {
+        // Usar factory method para crear orden de compra válida
+        var orden = OrdenCompra.Crear(
+            proveedorId,
+            "Orden de compra de prueba",
+            DateTime.UtcNow.AddDays(-5));
+        
+        // Usar reflexión para establecer el estado después de la creación
+        var estadoField = typeof(OrdenCompra).GetField("_estado", BindingFlags.NonPublic | BindingFlags.Instance);
+        estadoField?.SetValue(orden, estado);
+        
+        // Usar reflexión para establecer un ID específico
+        var idField = typeof(EntityBase).GetField("_id", BindingFlags.NonPublic | BindingFlags.Instance);
+        idField?.SetValue(orden, Guid.NewGuid());
+        
+        return orden;
     }
 
     #endregion

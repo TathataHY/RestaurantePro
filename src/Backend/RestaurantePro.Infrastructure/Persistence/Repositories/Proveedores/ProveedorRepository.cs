@@ -18,17 +18,16 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores
         {
         }
 
-        public async Task<Proveedor?> ObtenerPorIdAsync(Guid id, bool incluirContactos = true, CancellationToken cancellationToken = default)
+        public async Task<Proveedor?> ObtenerPorIdAsync(Guid id, bool incluirContactos = true, bool incluirCategorias = true, CancellationToken cancellationToken = default)
         {
+            var query = _context.Set<Proveedor>().AsQueryable();
+
             if (incluirContactos)
             {
-                return await _context.Set<Proveedor>()
-                    .Include(p => p.Contactos)
-                    .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+                query = query.Include(p => p.Contactos);
             }
-            
-            return await _context.Set<Proveedor>()
-                .FindAsync(new object[] { id }, cancellationToken);
+
+            return await query.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
         }
 
         public async Task<Proveedor?> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default)
@@ -44,23 +43,28 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<Proveedor>> ObtenerTodosAsync(bool incluirContactos = false, CancellationToken cancellationToken = default)
+        public async Task<Proveedor?> ObtenerPorRutAsync(string rut, CancellationToken cancellationToken = default)
         {
-            if (incluirContactos)
-            {
-                return await _context.Set<Proveedor>()
-                    .Include(p => p.Contactos)
-                    .ToListAsync(cancellationToken);
-            }
-            
             return await _context.Set<Proveedor>()
-                .ToListAsync(cancellationToken);
+                .FirstOrDefaultAsync(p => p.RUT == rut, cancellationToken);
         }
 
-        public async Task<IEnumerable<Proveedor>> ObtenerActivosAsync(bool incluirContactos = false, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Proveedor>> ObtenerTodosAsync(bool incluirContactos = false, bool incluirCategorias = false, CancellationToken cancellationToken = default)
+        {
+            var query = _context.Set<Proveedor>().AsQueryable();
+            
+            if (incluirContactos)
+            {
+                query = query.Include(p => p.Contactos);
+            }
+            
+            return await query.ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<Proveedor>> ObtenerActivosAsync(bool incluirContactos = false, bool incluirCategorias = false, CancellationToken cancellationToken = default)
         {
             var query = _context.Set<Proveedor>()
-                .Where(p => p.EstaActivo);
+                .Where(p => p.Activo);
                 
             if (incluirContactos)
             {
@@ -79,17 +83,22 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores
 
         public async Task<IEnumerable<Proveedor>> ObtenerPorIngredienteAsync(Guid ingredienteId, bool soloActivos = true, CancellationToken cancellationToken = default)
         {
-            // Asumimos que existe una relación entre Proveedor e Ingrediente a través de una tabla intermedia
-            // Esto es una implementación simplificada
             var query = _context.Set<Proveedor>()
                 .Where(p => p.IngredientesProveidos.Any(i => i.IngredienteId == ingredienteId));
                 
             if (soloActivos)
             {
-                query = query.Where(p => p.EstaActivo);
+                query = query.Where(p => p.Activo);
             }
             
             return await query.ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<Proveedor>> ObtenerPorTipoProductoAsync(string tipoProducto, CancellationToken cancellationToken = default)
+        {
+            return await _context.Set<Proveedor>()
+                .Where(p => p.TiposProducto.Contains(tipoProducto))
+                .ToListAsync(cancellationToken);
         }
 
         public async Task<ContactoProveedor?> ObtenerContactoPorIdAsync(Guid contactoId, CancellationToken cancellationToken = default)
@@ -115,7 +124,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<(IEnumerable<Proveedor> Proveedores, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, bool incluirContactos = false, CancellationToken cancellationToken = default)
+        public async Task<(IEnumerable<Proveedor> Proveedores, int Total)> ObtenerPaginadoAsync(
+            int pagina, 
+            int elementosPorPagina, 
+            bool incluirContactos = false, 
+            bool incluirCategorias = false, 
+            CancellationToken cancellationToken = default)
         {
             var query = _context.Set<Proveedor>().AsQueryable();
             
@@ -134,79 +148,189 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores
             return (proveedores, total);
         }
 
+        public async Task<IEnumerable<Proveedor>> ObtenerProveedoresPaginadosAsync(
+            int pagina, 
+            int elementosPorPagina, 
+            string? termino = null,
+            Domain.Proveedores.Enums.CategoriaProveedor? categoria = null,
+            bool soloActivos = true,
+            bool incluirInactivos = false,
+            string? campoOrden = null,
+            bool ordenAscendente = true,
+            CancellationToken cancellationToken = default)
+        {
+            var query = _context.Set<Proveedor>().AsQueryable();
+
+            // Aplicar filtros de estado
+            if (soloActivos && !incluirInactivos)
+            {
+                query = query.Where(p => p.Activo);
+            }
+            else if (!soloActivos && !incluirInactivos)
+            {
+                query = query.Where(p => !p.Activo);
+            }
+
+            // Aplicar filtro de término de búsqueda
+            if (!string.IsNullOrWhiteSpace(termino))
+            {
+                query = query.Where(p => 
+                    p.Nombre.Contains(termino) || 
+                    p.Descripcion.Contains(termino) ||
+                    p.Email.Contains(termino) ||
+                    p.Telefono.Contains(termino) ||
+                    p.Direccion.Contains(termino) ||
+                    p.Ciudad.Contains(termino));
+            }
+
+            // Aplicar filtro de categoría
+            if (categoria.HasValue)
+            {
+                query = query.Where(p => p.Categoria == categoria.Value);
+            }
+
+            // Aplicar ordenamiento
+            if (!string.IsNullOrWhiteSpace(campoOrden))
+            {
+                query = campoOrden.ToLower() switch
+                {
+                    "nombre" => ordenAscendente 
+                        ? query.OrderBy(p => p.Nombre) 
+                        : query.OrderByDescending(p => p.Nombre),
+                    "fechacreacion" => ordenAscendente 
+                        ? query.OrderBy(p => p.FechaCreacion) 
+                        : query.OrderByDescending(p => p.FechaCreacion),
+                    "categoria" => ordenAscendente 
+                        ? query.OrderBy(p => p.Categoria) 
+                        : query.OrderByDescending(p => p.Categoria),
+                    "activo" => ordenAscendente 
+                        ? query.OrderBy(p => p.Activo) 
+                        : query.OrderByDescending(p => p.Activo),
+                    _ => query.OrderBy(p => p.Nombre)
+                };
+            }
+            else
+            {
+                query = query.OrderBy(p => p.Nombre);
+            }
+
+            // Aplicar paginación (páginas basadas en 1)
+            var skip = (pagina - 1) * elementosPorPagina;
+            query = query.Skip(skip).Take(elementosPorPagina);
+
+            return await query.ToListAsync(cancellationToken);
+        }
+
+        public async Task<int> ContarProveedoresAsync(
+            string? termino = null,
+            Domain.Proveedores.Enums.CategoriaProveedor? categoria = null,
+            bool soloActivos = true,
+            bool incluirInactivos = false,
+            CancellationToken cancellationToken = default)
+        {
+            var query = _context.Set<Proveedor>().AsQueryable();
+
+            // Aplicar filtros de estado
+            if (soloActivos && !incluirInactivos)
+            {
+                query = query.Where(p => p.Activo);
+            }
+            else if (!soloActivos && !incluirInactivos)
+            {
+                query = query.Where(p => !p.Activo);
+            }
+
+            // Aplicar filtro de término de búsqueda
+            if (!string.IsNullOrWhiteSpace(termino))
+            {
+                query = query.Where(p => 
+                    p.Nombre.Contains(termino) || 
+                    p.Descripcion.Contains(termino) ||
+                    p.Email.Contains(termino) ||
+                    p.Telefono.Contains(termino) ||
+                    p.Direccion.Contains(termino) ||
+                    p.Ciudad.Contains(termino));
+            }
+
+            // Aplicar filtro de categoría
+            if (categoria.HasValue)
+            {
+                query = query.Where(p => p.Categoria == categoria.Value);
+            }
+
+            return await query.CountAsync(cancellationToken);
+        }
+
         public async Task<ResultadoEstadisticasProveedores> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default)
         {
-            // Calcular estadísticas básicas
+            // Implementación simplificada por ahora
             var totalProveedores = await _context.Set<Proveedor>().CountAsync(cancellationToken);
-            var proveedoresActivos = await _context.Set<Proveedor>().CountAsync(p => p.EstaActivo, cancellationToken);
+            var proveedoresActivos = await _context.Set<Proveedor>().CountAsync(p => p.Activo, cancellationToken);
             
-            // Obtener las órdenes de compra para estadísticas
-            var fechaInicio = DateTime.Now.AddDays(-30); // último mes
-            var ordenesCompra = await _context.Set<OrdenCompra>()
-                .Where(o => o.FechaCreacion >= fechaInicio)
-                .ToListAsync(cancellationToken);
-                
-            // Calcular estadísticas de órdenes
-            var ordenesEnPeriodo = ordenesCompra.Count;
-            var valorTotalOrdenes = ordenesCompra.Sum(o => o.ValorTotal);
-            
-            // Calcular tiempo promedio de entrega
-            var tiempoPromedioEntrega = 0m;
-            var ordenesEntregadas = ordenesCompra.Where(o => o.FechaEntregaReal.HasValue && o.FechaEntrega.HasValue).ToList();
-            if (ordenesEntregadas.Any())
-            {
-                tiempoPromedioEntrega = ordenesEntregadas.Average(o => 
-                    (decimal)(o.FechaEntregaReal!.Value - o.FechaEntrega!.Value).TotalDays);
-            }
-            
-            // Obtener órdenes pendientes por proveedor
-            var proveedoresConOrdenesPendientes = await _context.Set<Proveedor>()
-                .CountAsync(p => p.OrdenesCompra.Any(o => o.Estado == Core.Inventario.Compras.OrdenesCompra.Enums.EstadoOrdenCompra.EnProceso), 
-                    cancellationToken);
-            
-            // Obtener top proveedores por volumen
-            var proveedoresTop = await _context.Set<Proveedor>()
-                .Where(p => p.OrdenesCompra.Any(o => o.FechaCreacion >= fechaInicio))
-                .Select(p => new 
-                {
-                    Proveedor = p,
-                    TotalOrdenes = p.OrdenesCompra.Count(o => o.FechaCreacion >= fechaInicio),
-                    ValorTotalOrdenes = p.OrdenesCompra.Where(o => o.FechaCreacion >= fechaInicio).Sum(o => o.ValorTotal),
-                    TiempoPromedio = p.OrdenesCompra
-                        .Where(o => o.FechaCreacion >= fechaInicio && o.FechaEntregaReal.HasValue && o.FechaEntrega.HasValue)
-                        .Select(o => (decimal)(o.FechaEntregaReal!.Value - o.FechaEntrega!.Value).TotalDays)
-                        .DefaultIfEmpty(0)
-                        .Average()
-                })
-                .OrderByDescending(x => x.ValorTotalOrdenes)
-                .Take(5)
-                .ToListAsync(cancellationToken);
-                
-            // Mapear a estadísticas de proveedor
-            var topProveedores = proveedoresTop.Select(p => new EstadisticaProveedor(
-                p.Proveedor.Id,
-                p.Proveedor.Nombre,
-                p.TotalOrdenes,
-                p.ValorTotalOrdenes,
-                p.TiempoPromedio
-            )).ToList();
-            
-            // Crear y devolver el resultado
             return new ResultadoEstadisticasProveedores(
                 totalProveedores,
                 proveedoresActivos,
-                ordenesEnPeriodo,
-                valorTotalOrdenes,
-                tiempoPromedioEntrega,
-                topProveedores,
-                proveedoresConOrdenesPendientes,
+                0,
+                0m,
+                0m,
+                new List<EstadisticaProveedor>(),
+                0,
                 DateTime.Now
             );
         }
 
-        public async Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Proveedor>> ObtenerPorCategoriaAsync(
+            Domain.Proveedores.Enums.CategoriaProveedor categoria, 
+            bool soloProveedoresPrincipales = false, 
+            bool incluirContactos = false, 
+            CancellationToken cancellationToken = default)
         {
-            return await _context.SaveChangesAsync(cancellationToken);
+            var query = _context.Set<Proveedor>()
+                .Where(p => p.Categoria == categoria);
+
+            if (soloProveedoresPrincipales)
+            {
+                query = query.Where(p => p.EsPrincipal);
+            }
+
+            if (incluirContactos)
+            {
+                query = query.Include(p => p.Contactos);
+            }
+
+            return await query.ToListAsync(cancellationToken);
+        }
+
+        public async Task<Proveedor?> ObtenerProveedorPrincipalPorCategoriaAsync(
+            Domain.Proveedores.Enums.CategoriaProveedor categoria, 
+            bool incluirContactos = false, 
+            CancellationToken cancellationToken = default)
+        {
+            var query = _context.Set<Proveedor>()
+                .Where(p => p.Categoria == categoria && p.EsPrincipal);
+
+            if (incluirContactos)
+            {
+                query = query.Include(p => p.Contactos);
+            }
+
+            return await query.FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<Proveedor>> ObtenerPorMultiplesCategoriaAsync(
+            IEnumerable<Domain.Proveedores.Enums.CategoriaProveedor> categorias, 
+            bool incluirContactos = false, 
+            CancellationToken cancellationToken = default)
+        {
+            var query = _context.Set<Proveedor>()
+                .Where(p => categorias.Contains(p.Categoria));
+
+            if (incluirContactos)
+            {
+                query = query.Include(p => p.Contactos);
+            }
+
+            return await query.ToListAsync(cancellationToken);
         }
     }
 } 

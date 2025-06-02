@@ -41,6 +41,11 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         public Guid? ClienteId { get; private set; }
 
         /// <summary>
+        /// Número único de la comanda para identificación
+        /// </summary>
+        public string NumeroComanda { get; private set; } = string.Empty;
+
+        /// <summary>
         /// Fecha de creación de la comanda
         /// </summary>
         public new DateTime FechaCreacion { get; private set; }
@@ -138,8 +143,9 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// <param name="clienteId">ID del cliente (opcional)</param>
         /// <param name="mesaId">ID de la mesa donde se crea la comanda (opcional)</param>
         /// <param name="observaciones">Observaciones iniciales (opcional)</param>
+        /// <param name="numeroComanda">Número único de la comanda</param>
         /// <returns>Una nueva instancia de Comanda en estado Creada</returns>
-        public static Comanda Crear(Guid meseroId, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null)
+        public static Comanda Crear(Guid meseroId, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null, string? numeroComanda = null)
         {
             var comanda = new Comanda
             {
@@ -150,7 +156,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 FechaCreacion = DateTime.Now,
                 Estado = EstadoComanda.Creada,
                 Observaciones = observaciones ?? string.Empty,
-                Total = TotalComanda.Crear(0, 0)
+                Total = TotalComanda.Crear(0, 0),
+                NumeroComanda = numeroComanda ?? $"COM-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}"
             };
 
             comanda.AddDomainEvent(new ComandaCreada(comanda.Id, comanda.MesaId, meseroId));

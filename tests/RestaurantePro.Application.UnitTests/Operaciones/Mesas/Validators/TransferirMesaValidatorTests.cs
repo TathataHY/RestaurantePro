@@ -144,12 +144,16 @@ public class TransferirMesaValidatorTests
         comandasMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var comanda = new Comanda 
-        { 
-            Id = command.ComandaId, 
-            MesaId = command.MesaOrigenId,
-            Estado = EstadoComanda.Creada 
-        };
+        var comanda = Comanda.Crear(
+            meseroId: Guid.NewGuid(),
+            clienteId: null,
+            mesaId: command.MesaOrigenId,
+            observaciones: "Test comanda",
+            numeroComanda: "TEST-001");
+        // Usar reflection para establecer el ID y estado si es necesario
+        typeof(Comanda).GetProperty("Id")?.SetValue(comanda, command.ComandaId);
+        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, EstadoComanda.Creada);
+        
         comandasMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
@@ -158,7 +162,11 @@ public class TransferirMesaValidatorTests
         mesasMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Mesa, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var mesa = new Mesa { Id = command.MesaDestinoId, Estado = EstadoMesa.Disponible, Capacidad = 4 };
+        var mesa = Mesa.Crear(numero: 1, capacidad: 4, ubicacion: "Interior");
+        // Usar reflection para establecer el ID y estado si es necesario
+        typeof(Mesa).GetProperty("Id")?.SetValue(mesa, command.MesaDestinoId);
+        typeof(Mesa).GetProperty("Estado")?.SetValue(mesa, EstadoMesa.Disponible);
+        
         mesasMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Mesa, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
@@ -181,12 +189,16 @@ public class TransferirMesaValidatorTests
         comandasMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var comanda = new Comanda 
-        { 
-            Id = command.ComandaId, 
-            MesaId = command.MesaOrigenId,
-            Estado = EstadoComanda.Finalizada // Estado no transferible
-        };
+        var comanda = Comanda.Crear(
+            meseroId: Guid.NewGuid(),
+            clienteId: null,
+            mesaId: command.MesaOrigenId,
+            observaciones: "Test comanda",
+            numeroComanda: "TEST-002");
+        // Usar reflection para establecer el ID y estado finalizado
+        typeof(Comanda).GetProperty("Id")?.SetValue(comanda, command.ComandaId);
+        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, EstadoComanda.Finalizada);
+        
         comandasMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
@@ -203,7 +215,11 @@ public class TransferirMesaValidatorTests
         mesasMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Mesa, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var mesa = new Mesa { Id = command.MesaDestinoId, Estado = EstadoMesa.Disponible };
+        var mesa = Mesa.Crear(numero: 2, capacidad: 6, ubicacion: "Terraza");
+        // Usar reflection para establecer el ID
+        typeof(Mesa).GetProperty("Id")?.SetValue(mesa, command.MesaDestinoId);
+        typeof(Mesa).GetProperty("Estado")?.SetValue(mesa, EstadoMesa.Disponible);
+        
         mesasMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Mesa, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
