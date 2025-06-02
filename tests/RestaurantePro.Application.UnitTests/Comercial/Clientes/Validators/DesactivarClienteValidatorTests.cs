@@ -64,13 +64,11 @@ public class DesactivarClienteValidatorTests
         var clienteId = Guid.NewGuid();
         command.ClienteId = clienteId;
 
-        // Mock usando el factory method del dominio (no inicializador de objetos)
-        var nombre = ClienteNombre.Crear("Cliente", "Test");
-        var cliente = Cliente.Crear(nombre, "test@email.com", "612345678", DateTime.Now.AddYears(-30));
+        // Mock cliente activo
+        var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
+        var cliente = Cliente.Crear(clienteNombre, "test@email.com", "+1234567890", DateTime.Now.AddYears(-25));
+        cliente.GetType().GetProperty("Id")?.SetValue(cliente, clienteId);
         
-        // Usar reflection para setear el ID (para tests)
-        typeof(EntityBase).GetProperty("Id")?.SetValue(cliente, clienteId);
-
         var clientes = new List<Cliente> { cliente }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
@@ -288,9 +286,9 @@ public class DesactivarClienteValidatorTests
         command.ClienteId = clienteId;
 
         // Mock cliente ya desactivado usando factory method
-        var nombre = ClienteNombre.Crear("Cliente", "Test");
-        var clienteDesactivado = Cliente.Crear(nombre, "test@email.com", "601234567", DateTime.Now.AddYears(-25));
-        typeof(EntityBase).GetProperty("Id")?.SetValue(clienteDesactivado, clienteId);
+        var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
+        var clienteDesactivado = Cliente.Crear(clienteNombre, "test@email.com", "+601234567", DateTime.Now.AddYears(-25));
+        clienteDesactivado.GetType().GetProperty("Id")?.SetValue(clienteDesactivado, clienteId);
         clienteDesactivado.Desactivar(); // Sin parámetros como lo requiere la implementación real
 
         var clientes = new List<Cliente> { clienteDesactivado }.AsQueryable();
@@ -391,10 +389,10 @@ public class DesactivarClienteValidatorTests
             DesactivadoPor = "admin@test.com"
         };
 
-        // Mock cliente activo usando factory method
-        var nombre = ClienteNombre.Crear("Cliente", "Test");
-        var cliente = Cliente.Crear(nombre, "test@email.com", "612345678", DateTime.Now.AddYears(-30));
-        typeof(EntityBase).GetProperty("Id")?.SetValue(cliente, clienteId);
+        // Mock cliente activo
+        var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
+        var cliente = Cliente.Crear(clienteNombre, "test@email.com", "+612345678", DateTime.Now.AddYears(-30));
+        cliente.GetType().GetProperty("Id")?.SetValue(cliente, clienteId);
 
         var clientes = new List<Cliente> { cliente }.AsQueryable();
 
@@ -424,10 +422,10 @@ public class DesactivarClienteValidatorTests
             // NotasAdicionales opcional
         };
 
-        // Mock cliente activo usando factory method
-        var nombre = ClienteNombre.Crear("Cliente", "Test");
-        var cliente = Cliente.Crear(nombre, "test@email.com", "612345678", DateTime.Now.AddYears(-30));
-        typeof(EntityBase).GetProperty("Id")?.SetValue(cliente, clienteId);
+        // Mock cliente activo
+        var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
+        var cliente = Cliente.Crear(clienteNombre, "test@email.com", "+612345678", DateTime.Now.AddYears(-30));
+        cliente.GetType().GetProperty("Id")?.SetValue(cliente, clienteId);
 
         var clientes = new List<Cliente> { cliente }.AsQueryable();
 
@@ -483,10 +481,11 @@ public class DesactivarClienteValidatorTests
         command.NotasAdicionales = notas;
 
         // Mock cliente activo
-        var clientes = new List<Cliente>
-        {
-            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", EstaActivo = true }
-        }.AsQueryable();
+        var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
+        var cliente = Cliente.Crear(clienteNombre, "test@email.com", "+612345678", DateTime.Now.AddYears(-25));
+        cliente.GetType().GetProperty("Id")?.SetValue(cliente, clienteId);
+        
+        var clientes = new List<Cliente> { cliente }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Expression).Returns(clientes.Expression);
@@ -511,10 +510,11 @@ public class DesactivarClienteValidatorTests
         command.NotasAdicionales = "Cliente no cumple con nuevos requisitos regulatorios implementados";
 
         // Mock cliente activo
-        var clientes = new List<Cliente>
-        {
-            new Cliente { Id = clienteId, Nombre = "Cliente Corporativo", Email = "corp@email.com", EstaActivo = true }
-        }.AsQueryable();
+        var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
+        var cliente = Cliente.Crear(clienteNombre, "corp@email.com", "+601234567", DateTime.Now.AddYears(-25));
+        cliente.GetType().GetProperty("Id")?.SetValue(cliente, clienteId);
+        
+        var clientes = new List<Cliente> { cliente }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Expression).Returns(clientes.Expression);
@@ -542,10 +542,11 @@ public class DesactivarClienteValidatorTests
         command.MotivoDesactivacion = new string('R', 250); // Exactamente 250 caracteres
 
         // Mock cliente activo
-        var clientes = new List<Cliente>
-        {
-            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", EstaActivo = true }
-        }.AsQueryable();
+        var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
+        var cliente = Cliente.Crear(clienteNombre, "test@email.com", "+612345678", DateTime.Now.AddYears(-25));
+        cliente.GetType().GetProperty("Id")?.SetValue(cliente, clienteId);
+        
+        var clientes = new List<Cliente> { cliente }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Expression).Returns(clientes.Expression);
@@ -569,10 +570,11 @@ public class DesactivarClienteValidatorTests
         command.NotasAdicionales = new string('O', 1000); // Exactamente 1000 caracteres
 
         // Mock cliente activo
-        var clientes = new List<Cliente>
-        {
-            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", EstaActivo = true }
-        }.AsQueryable();
+        var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
+        var cliente = Cliente.Crear(clienteNombre, "test@email.com", "+612345678", DateTime.Now.AddYears(-25));
+        cliente.GetType().GetProperty("Id")?.SetValue(cliente, clienteId);
+        
+        var clientes = new List<Cliente> { cliente }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Expression).Returns(clientes.Expression);
@@ -607,8 +609,12 @@ public class DesactivarClienteValidatorTests
 
         // Mock múltiples clientes activos
         var clientes = commands.Select(cmd => 
-            new Cliente { Id = cmd.ClienteId, Nombre = $"Cliente {cmd.ClienteId}", Email = "test@email.com", EstaActivo = true }
-        ).AsQueryable();
+        {
+            var clienteNombre = ClienteNombre.Crear($"Cliente", $"{cmd.ClienteId}");
+            var cliente = Cliente.Crear(clienteNombre, "test@email.com", "+612345678", DateTime.Now.AddYears(-25));
+            cliente.GetType().GetProperty("Id")?.SetValue(cliente, cmd.ClienteId);
+            return cliente;
+        }).AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Expression).Returns(clientes.Expression);
@@ -632,10 +638,11 @@ public class DesactivarClienteValidatorTests
         command.ClienteId = clienteId;
 
         // Mock cliente activo
-        var clientes = new List<Cliente>
-        {
-            new Cliente { Id = clienteId, Nombre = "Cliente Test", Email = "test@email.com", EstaActivo = true }
-        }.AsQueryable();
+        var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
+        var cliente = Cliente.Crear(clienteNombre, "test@email.com", "+612345678", DateTime.Now.AddYears(-25));
+        cliente.GetType().GetProperty("Id")?.SetValue(cliente, clienteId);
+        
+        var clientes = new List<Cliente> { cliente }.AsQueryable();
 
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientes.Provider);
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Expression).Returns(clientes.Expression);

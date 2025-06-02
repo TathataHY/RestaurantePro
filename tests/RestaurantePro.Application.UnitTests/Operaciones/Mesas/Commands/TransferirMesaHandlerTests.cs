@@ -328,7 +328,7 @@ public class TransferirMesaHandlerTests
                 It.Is<string[]>(dest => dest.Contains(comanda.MeseroId.ToString())),
                 "Transferencia de Mesa",
                 It.Is<string>(msg => msg.Contains("M01") && msg.Contains("M05")),
-                TipoNotificacion.TransferenciaMesa,
+                TipoComunicacion.TransferenciaMesa,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -365,7 +365,7 @@ public class TransferirMesaHandlerTests
                 It.IsAny<string[]>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<TipoNotificacion>(),
+                It.IsAny<TipoComunicacion>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
     }
@@ -451,7 +451,7 @@ public class TransferirMesaHandlerTests
 
         var mockTransaction = new Mock<IDbContextTransaction>();
         _mockUnitOfWork.Setup(u => u.BeginTransactionAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(mockTransaction.Object);
+            .Returns(Task.FromResult(mockTransaction.Object));
     }
 
     private void ConfigurarMocksParaTransferenciaExitosa(Comanda comanda, Mesa mesaOrigen, Mesa mesaDestino)
@@ -465,52 +465,63 @@ public class TransferirMesaHandlerTests
 
     private void ConfigurarMockComandas(IEnumerable<Comanda> comandas)
     {
-        var mockSet = MockDbSetHelper.CreateMockDbSet(comandas.AsQueryable());
+        var mockSet = CrearMockDbSet(comandas.AsQueryable());
         _mockContext.Setup(c => c.Comandas).Returns(mockSet.Object);
     }
 
     private void ConfigurarMockComandasVacio()
     {
-        var mockSet = MockDbSetHelper.CreateMockDbSet(new List<Comanda>().AsQueryable());
+        var mockSet = CrearMockDbSet(new List<Comanda>().AsQueryable());
         _mockContext.Setup(c => c.Comandas).Returns(mockSet.Object);
     }
 
     private void ConfigurarMockMesas(IEnumerable<Mesa> mesas)
     {
-        var mockSet = MockDbSetHelper.CreateMockDbSet(mesas.AsQueryable());
+        var mockSet = CrearMockDbSet(mesas.AsQueryable());
         _mockContext.Setup(c => c.Mesas).Returns(mockSet.Object);
     }
 
     private void ConfigurarMockMesasVacio()
     {
-        var mockSet = MockDbSetHelper.CreateMockDbSet(new List<Mesa>().AsQueryable());
+        var mockSet = CrearMockDbSet(new List<Mesa>().AsQueryable());
         _mockContext.Setup(c => c.Mesas).Returns(mockSet.Object);
+    }
+
+    private Mock<DbSet<T>> CrearMockDbSet<T>(IQueryable<T> data) where T : class
+    {
+        var mockSet = new Mock<DbSet<T>>();
+        mockSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(data.Provider);
+        mockSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(data.Expression);
+        mockSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(data.ElementType);
+        mockSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(data.GetEnumerator());
+        return mockSet;
     }
 
     private Comanda CrearComanda(Guid id, Guid mesaId, EstadoComanda estado, int numeroPersonas = 4)
     {
-        return new Comanda
-        {
-            Id = id,
-            MesaId = mesaId,
-            Estado = estado,
-            NumeroPersonas = numeroPersonas,
-            MeseroId = Guid.NewGuid(),
-            NumeroComanda = "CMD-001",
-            Items = new List<ItemComanda>(),
-            Mesa = new Mesa { Id = mesaId }
-        };
+        // Usar reflection para crear comanda con propiedades privadas
+        var comanda = (Comanda)Activator.CreateInstance(typeof(Comanda), true)!;
+        
+        typeof(Comanda).GetProperty("Id")?.SetValue(comanda, id);
+        typeof(Comanda).GetProperty("MesaId")?.SetValue(comanda, mesaId);
+        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, estado);
+        typeof(Comanda).GetProperty("MeseroId")?.SetValue(comanda, Guid.NewGuid());
+        typeof(Comanda).GetProperty("Items")?.SetValue(comanda, new List<ItemComanda>());
+        
+        return comanda;
     }
 
     private Mesa CrearMesa(Guid id, EstadoMesa estado, int capacidad = 6, string numero = "M01")
     {
-        return new Mesa
-        {
-            Id = id,
-            Estado = estado,
-            Capacidad = capacidad,
-            Numero = numero
-        };
+        // Usar reflection para crear mesa con propiedades privadas
+        var mesa = (Mesa)Activator.CreateInstance(typeof(Mesa), true)!;
+        
+        typeof(Mesa).GetProperty("Id")?.SetValue(mesa, id);
+        typeof(Mesa).GetProperty("Estado")?.SetValue(mesa, estado);
+        typeof(Mesa).GetProperty("Capacidad")?.SetValue(mesa, capacidad);
+        typeof(Mesa).GetProperty("Numero")?.SetValue(mesa, numero);
+        
+        return mesa;
     }
 
     private void VerificarActualizacionComanda(Guid mesaDestinoId)

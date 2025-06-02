@@ -695,7 +695,7 @@ public class ModificarReservacionValidatorTests
     #region Tests de Factory Methods
 
     [Fact]
-    public void Command_DeberiaCrearseConFactoryMethod()
+    public void Command_DeberiaCrearseConConstructorDirecto()
     {
         // Arrange
         var reservacionId = Guid.NewGuid();
@@ -704,7 +704,15 @@ public class ModificarReservacionValidatorTests
         var usuarioId = Guid.NewGuid();
 
         // Act
-        var command = ModificarReservacionCommand.Crear(reservacionId, fechaNueva, horaNueva, 4, "Cambio de horario", usuarioId);
+        var command = new ModificarReservacionCommand
+        {
+            ReservacionId = reservacionId,
+            NuevaFechaReservacion = fechaNueva,
+            NuevaHoraReservacion = horaNueva,
+            NuevoNumeroPersonas = 4,
+            MotivoModificacion = "Cambio de horario",
+            UsuarioId = usuarioId
+        };
 
         // Assert
         command.ReservacionId.Should().Be(reservacionId);
@@ -737,24 +745,26 @@ public class ModificarReservacionValidatorTests
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.GetEnumerator()).Returns(clientes.GetEnumerator());
     }
 
-    private void SetupValidEntities(Guid reservacionId, Guid mesaId, Guid clienteId)
+    private void SetupValidEntities(Guid reservacionId, Guid? mesaId, Guid? clienteId)
     {
         var reservaciones = new List<Reservacion>
         {
             CrearReservacionMock(reservacionId, EstadoReservacion.Confirmada)
         }.AsQueryable();
 
-        var mesas = new List<Mesa>
+        var mesas = new List<Mesa>();
+        if (mesaId.HasValue)
         {
-            CrearMesaMock(mesaId, 1, 8, EstadoMesa.Disponible)
-        }.AsQueryable();
+            mesas.Add(CrearMesaMock(mesaId.Value, 1, 8, EstadoMesa.Disponible));
+        }
 
-        var clientes = new List<Cliente>
+        var clientes = new List<Cliente>();
+        if (clienteId.HasValue)
         {
-            CrearClienteMock(clienteId, "Cliente Test", "test@email.com", true)
-        }.AsQueryable();
+            clientes.Add(CrearClienteMock(clienteId.Value, "Cliente Test", "test@email.com", true));
+        }
 
-        SetupMockDbSets(reservaciones, mesas, clientes);
+        SetupMockDbSets(reservaciones, mesas.AsQueryable(), clientes.AsQueryable());
     }
 
     #endregion

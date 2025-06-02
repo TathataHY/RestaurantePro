@@ -43,15 +43,13 @@ public class FacturaCreadaNotificacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
-        _mockEmailService.Setup(x => x.EnviarFacturaAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockEmailService.Setup(x => x.SendEmailAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
-        _mockSMSService.Setup(x => x.EnviarConfirmacionFacturaAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockSMSService.Setup(x => x.SendSMSAsync(
+                It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -60,19 +58,15 @@ public class FacturaCreadaNotificacionHandlerTests
         _mockClienteRepository.Verify(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()), Times.Once);
         
         // Verificar envío de Email
-        _mockEmailService.Verify(x => x.EnviarFacturaAsync(
+        _mockEmailService.Verify(x => x.SendEmailAsync(
             "maria@email.com",
-            "María García",
-            numeroFactura,
-            montoTotal,
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.Is<string>(s => s.Contains("Factura") && s.Contains(numeroFactura)),
+            It.Is<string>(s => s.Contains("María García") && s.Contains(montoTotal.ToString()))), Times.Once);
 
         // Verificar envío de SMS
-        _mockSMSService.Verify(x => x.EnviarConfirmacionFacturaAsync(
+        _mockSMSService.Verify(x => x.SendSMSAsync(
             "+1234567890",
-            numeroFactura,
-            montoTotal,
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.Is<string>(s => s.Contains(numeroFactura) && s.Contains(montoTotal.ToString()))), Times.Once);
 
         // Verificar notificación interna
         _mockNotificationService.Verify(x => x.EnviarNotificacionAsync(
@@ -107,8 +101,8 @@ public class FacturaCreadaNotificacionHandlerTests
 
         // Assert
         _mockClienteRepository.Verify(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
-        _mockEmailService.Verify(x => x.EnviarFacturaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
-        _mockSMSService.Verify(x => x.EnviarConfirmacionFacturaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockEmailService.Verify(x => x.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockSMSService.Verify(x => x.SendSMSAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
 
         // Solo notificación interna
         _mockNotificationService.Verify(x => x.EnviarNotificacionAsync(
@@ -146,8 +140,8 @@ public class FacturaCreadaNotificacionHandlerTests
 
         // Assert
         _mockClienteRepository.Verify(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()), Times.Once);
-        _mockEmailService.Verify(x => x.EnviarFacturaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
-        _mockSMSService.Verify(x => x.EnviarConfirmacionFacturaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockEmailService.Verify(x => x.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockSMSService.Verify(x => x.SendSMSAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
 
         // Debería loggear advertencia
         _mockLogger.Verify(
@@ -175,21 +169,20 @@ public class FacturaCreadaNotificacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
-        _mockSMSService.Setup(x => x.EnviarConfirmacionFacturaAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockSMSService.Setup(x => x.SendSMSAsync(
+                It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
         // No debe enviar email
-        _mockEmailService.Verify(x => x.EnviarFacturaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockEmailService.Verify(x => x.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         
         // Debe enviar SMS
-        _mockSMSService.Verify(x => x.EnviarConfirmacionFacturaAsync(
-            "+1234567890", numeroFactura, montoTotal, It.IsAny<CancellationToken>()), Times.Once);
+        _mockSMSService.Verify(x => x.SendSMSAsync(
+            "+1234567890", It.Is<string>(s => s.Contains(numeroFactura) && s.Contains(montoTotal.ToString()))), Times.Once);
 
         // Debería loggear que no hay email
         _mockLogger.Verify(
@@ -217,21 +210,22 @@ public class FacturaCreadaNotificacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
-        _mockEmailService.Setup(x => x.EnviarFacturaAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockEmailService.Setup(x => x.SendEmailAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
         // Debe enviar email
-        _mockEmailService.Verify(x => x.EnviarFacturaAsync(
-            "ana@email.com", "Ana Sin Teléfono", numeroFactura, montoTotal, It.IsAny<CancellationToken>()), Times.Once);
+        _mockEmailService.Verify(x => x.SendEmailAsync(
+            "ana@email.com", 
+            It.Is<string>(s => s.Contains("Factura") && s.Contains(numeroFactura)),
+            It.Is<string>(s => s.Contains("Ana Sin Teléfono") && s.Contains(montoTotal.ToString()))), Times.Once);
         
         // No debe enviar SMS
-        _mockSMSService.Verify(x => x.EnviarConfirmacionFacturaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockSMSService.Verify(x => x.SendSMSAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
 
         // Debería loggear que no hay teléfono
         _mockLogger.Verify(
@@ -259,15 +253,13 @@ public class FacturaCreadaNotificacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
-        _mockEmailService.Setup(x => x.EnviarFacturaAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure("Error enviando email"));
+        _mockEmailService.Setup(x => x.SendEmailAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
 
-        _mockSMSService.Setup(x => x.EnviarConfirmacionFacturaAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockSMSService.Setup(x => x.SendSMSAsync(
+                It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         // No debería lanzar excepción, solo loggear el error
@@ -284,8 +276,8 @@ public class FacturaCreadaNotificacionHandlerTests
             Times.Once);
 
         // SMS debería enviarse exitosamente
-        _mockSMSService.Verify(x => x.EnviarConfirmacionFacturaAsync(
-            "+1234567890", numeroFactura, montoTotal, It.IsAny<CancellationToken>()), Times.Once);
+        _mockSMSService.Verify(x => x.SendSMSAsync(
+            "+1234567890", It.Is<string>(s => s.Contains(numeroFactura) && s.Contains(montoTotal.ToString()))), Times.Once);
     }
 
     [Fact]
@@ -303,15 +295,13 @@ public class FacturaCreadaNotificacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
-        _mockEmailService.Setup(x => x.EnviarFacturaAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockEmailService.Setup(x => x.SendEmailAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
-        _mockSMSService.Setup(x => x.EnviarConfirmacionFacturaAsync(
-                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure("Número de teléfono inválido"));
+        _mockSMSService.Setup(x => x.SendSMSAsync(
+                It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -327,8 +317,10 @@ public class FacturaCreadaNotificacionHandlerTests
             Times.Once);
 
         // Email debería enviarse exitosamente
-        _mockEmailService.Verify(x => x.EnviarFacturaAsync(
-            "cliente@email.com", "Cliente SMS Error", numeroFactura, montoTotal, It.IsAny<CancellationToken>()), Times.Once);
+        _mockEmailService.Verify(x => x.SendEmailAsync(
+            "cliente@email.com", 
+            It.Is<string>(s => s.Contains("Factura") && s.Contains(numeroFactura)),
+            It.Is<string>(s => s.Contains("Cliente SMS Error") && s.Contains(montoTotal.ToString()))), Times.Once);
     }
 
     [Theory]
@@ -350,11 +342,11 @@ public class FacturaCreadaNotificacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
-        _mockEmailService.Setup(x => x.EnviarFacturaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockEmailService.Setup(x => x.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
-        _mockSMSService.Setup(x => x.EnviarConfirmacionFacturaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockSMSService.Setup(x => x.SendSMSAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -404,11 +396,11 @@ public class FacturaCreadaNotificacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
-        _mockEmailService.Setup(x => x.EnviarFacturaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockEmailService.Setup(x => x.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
-        _mockSMSService.Setup(x => x.EnviarConfirmacionFacturaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success());
+        _mockSMSService.Setup(x => x.SendSMSAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);

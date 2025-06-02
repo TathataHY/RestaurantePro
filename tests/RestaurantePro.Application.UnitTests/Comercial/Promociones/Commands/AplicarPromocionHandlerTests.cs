@@ -30,7 +30,9 @@ public class AplicarPromocionHandlerTests
             _mockMapper.Object,
             _mockLogger.Object,
             _mockCurrentUserService.Object,
-            _mockNotificacionService.Object);
+            _mockNotificacionService.Object,
+            _mockUnitOfWork.Object,
+            _mockCalculadoraPromociones.Object);
 
         ConfigurarMocksBase();
     }

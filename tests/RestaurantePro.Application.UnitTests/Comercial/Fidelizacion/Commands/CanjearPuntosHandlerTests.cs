@@ -461,22 +461,26 @@ public class CanjearPuntosHandlerTests
 
     private static Cliente CreateMockCliente(Guid id, string nombre, string apellido, int puntosAcumulados)
     {
-        // TODO: Ajustar según la implementación real de Cliente
-        var cliente = new Cliente();
-        typeof(Cliente).GetProperty("Id")?.SetValue(cliente, id);
-        typeof(Cliente).GetProperty("Nombre")?.SetValue(cliente, nombre);
-        typeof(Cliente).GetProperty("Apellido")?.SetValue(cliente, apellido);
-        typeof(Cliente).GetProperty("PuntosAcumulados")?.SetValue(cliente, puntosAcumulados);
+        // Usar el factory method Cliente.Crear con los parámetros correctos
+        var clienteNombre = ClienteNombre.Crear(nombre, apellido);
+        var cliente = Cliente.Crear(clienteNombre, "cliente@email.com", "+1234567890", DateTime.Now.AddYears(-25));
+        
+        // Establecer el ID usando reflection ya que es read-only
+        cliente.GetType().GetProperty("Id")?.SetValue(cliente, id);
+        
+        // Establecer puntos acumulados usando reflection
+        cliente.GetType().GetProperty("PuntosAcumulados")?.SetValue(cliente, puntosAcumulados);
         
         return cliente;
     }
 
     private static Comanda CreateMockComanda(Guid id, Guid clienteId)
     {
-        // TODO: Ajustar según la implementación real de Comanda
-        var comanda = new Comanda();
-        typeof(Comanda).GetProperty("Id")?.SetValue(comanda, id);
-        typeof(Comanda).GetProperty("ClienteId")?.SetValue(comanda, clienteId);
+        // Usar el factory method Comanda.Crear con los parámetros correctos
+        var comanda = Comanda.Crear(Guid.NewGuid(), clienteId, Guid.NewGuid(), "Observaciones de test");
+        
+        // Establecer el ID usando reflection ya que es read-only
+        comanda.GetType().GetProperty("Id")?.SetValue(comanda, id);
         
         return comanda;
     }

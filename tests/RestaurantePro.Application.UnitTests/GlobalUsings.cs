@@ -321,7 +321,10 @@ global using ParametrosGeneracionComanda = System.Object;
 // Tipos faltantes simples
 global using ComandaCreadaEvent = RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaCreada;
 global using FacturaItem = System.Object;
-global using AgregarProductoDto = RestaurantePro.Application.Operaciones.Comandas.DTOs.CrearItemComandaDto;
+global using AgregarProductoDto = RestaurantePro.Application.Operaciones.Comandas.DTOs.AgregarProductoDto;
 
 // Servicios faltantes
 global using IGeneradorNumeroComandaService = RestaurantePro.Domain.Operaciones.Services.IGeneradorNumeroComandaService;
+
+// DTOs correctos para comandas
+global using PersonalizacionCreateDto = RestaurantePro.Application.Operaciones.Comandas.DTOs.PersonalizacionCreateDto;

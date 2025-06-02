@@ -40,7 +40,7 @@ public class OperacionesMappingProfileTests
         // Assert
         dto.Should().NotBeNull();
         dto.Id.Should().Be(comanda.Id);
-        dto.Estado.Should().Be(comanda.Estado.ToString());
+        dto.Estado.Should().Be(comanda.Estado);
         dto.EstadoTexto.Should().NotBeNullOrEmpty();
         dto.Items.Should().HaveCount(comanda.Items.Count);
         dto.CantidadItems.Should().Be(comanda.Items.Count);
@@ -216,7 +216,7 @@ public class OperacionesMappingProfileTests
         dto.Cantidad.Should().Be(item.Cantidad);
         dto.PrecioUnitario.Should().Be(item.PrecioUnitario);
         dto.Subtotal.Should().Be(item.Subtotal);
-        dto.Estado.Should().Be(item.Estado.ToString());
+        dto.Estado.Should().Be(item.Estado);
         dto.TienePersonalizaciones.Should().Be(item.Personalizaciones.Any());
         dto.Personalizaciones.Should().HaveCount(item.Personalizaciones.Count);
     }
@@ -276,7 +276,7 @@ public class OperacionesMappingProfileTests
         var dto = _mapper.Map<ItemComandaDto>(item);
 
         // Assert
-        dto.Estado.Should().Be(estado.ToString());
+        dto.Estado.Should().Be(estado);
         dto.EstadoTexto.Should().Be(expectedTexto);
     }
 
