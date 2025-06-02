@@ -370,9 +370,13 @@ public class FacturaCreadaNotificacionHandlerTests
             fechaEmision);
 
         var cliente = CreateMockCliente(clienteId, "Cliente Test", "test@email.com", "+1234567890");
+        var factura = CreateMockFactura(facturaId, clienteId, numeroFactura, montoTotal);
         
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
+            
+        _mockFacturaRepository.Setup(x => x.ObtenerPorIdAsync(facturaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(factura);
 
         _mockEmailService.Setup(x => x.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(true);
@@ -386,7 +390,7 @@ public class FacturaCreadaNotificacionHandlerTests
         // Assert
         _mockNotificationService.Verify(x => x.EnviarNotificacionAsync(
             It.IsAny<Guid>(),
-            It.IsAny<string>(),
+            It.Is<string>(msg => msg.Contains(montoTotal.ToString("C"))),
             It.IsAny<string>(),
             prioridadEsperada.ToString()), Times.Once);
     }
@@ -523,8 +527,8 @@ public class FacturaCreadaNotificacionHandlerTests
         return Cliente.Crear(
             id,
             clienteNombre,
-            clienteEmail,
-            clienteTelefono,
+            clienteEmail!,
+            clienteTelefono!,
             DateTime.Now.AddYears(-30),
             true);
     }

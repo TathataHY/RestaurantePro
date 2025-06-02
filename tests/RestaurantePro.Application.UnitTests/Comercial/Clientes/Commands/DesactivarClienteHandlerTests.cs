@@ -269,6 +269,16 @@ public class DesactivarClienteHandlerTests
         _clienteRepositoryMock.Verify(x => x.ActualizarAsync(
             It.Is<Cliente>(c => !c.EstaActivo), It.IsAny<CancellationToken>()), Times.Once);
 
+        // Verify categoría esperada en logs
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains(categoriaEsperada)),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.AtLeastOnce);
+
         // Verify notificación según configuración
         if (notificarCliente)
         {

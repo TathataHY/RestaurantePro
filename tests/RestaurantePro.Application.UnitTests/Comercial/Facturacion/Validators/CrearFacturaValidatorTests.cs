@@ -284,7 +284,7 @@ public class CrearFacturaValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.Moneda = monedaInvalida;
+        command.Moneda = monedaInvalida!;
 
         // Act
         var result = _validator.Validate(command);

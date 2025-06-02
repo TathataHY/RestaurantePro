@@ -34,15 +34,19 @@ public class RetryBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        int callCount = 0;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            callCount++;
+            return Task.FromResult(expectedResult);
+        };
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
-        mockNext.Verify(x => x(), Times.Once); // Solo una ejecución, sin reintentos
+        callCount.Should().Be(1); // Solo una ejecución, sin reintentos
     }
 
     [Fact]
@@ -52,20 +56,21 @@ public class RetryBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        
-        // Primera llamada: falla con excepción transitoria
-        // Segunda llamada: exitosa
-        mockNext.SetupSequence(x => x())
-            .ThrowsAsync(new TimeoutException("Timeout transitorio"))
-            .ReturnsAsync(expectedResult);
+        int callCount = 0;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            callCount++;
+            if (callCount == 1)
+                throw new TimeoutException("Timeout transitorio");
+            return Task.FromResult(expectedResult);
+        };
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
-        mockNext.Verify(x => x(), Times.Exactly(2)); // Primera falla + reintento exitoso
+        callCount.Should().Be(2); // Primera falla + reintento exitoso
     }
 
     [Fact]
@@ -74,15 +79,19 @@ public class RetryBehaviorTests
         // Arrange
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(new ArgumentException("Parámetro inválido"));
+        int callCount = 0;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            callCount++;
+            throw new ArgumentException("Parámetro inválido");
+        };
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         // No debe reintentar para excepciones no transitorias
-        mockNext.Verify(x => x(), Times.Once);
+        callCount.Should().Be(1);
     }
 
     [Fact]
@@ -91,17 +100,21 @@ public class RetryBehaviorTests
         // Arrange
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(new TimeoutException("Timeout persistente"));
+        int callCount = 0;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            callCount++;
+            throw new TimeoutException("Timeout persistente");
+        };
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<TimeoutException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         exception.Message.Should().Contain("Timeout persistente");
         
         // Debería haber intentado el máximo de reintentos (3 por defecto + 1 intento inicial = 4)
-        mockNext.Verify(x => x(), Times.Exactly(4));
+        callCount.Should().Be(4);
     }
 
     [Theory]
@@ -117,17 +130,21 @@ public class RetryBehaviorTests
         
         var transitoryException = (Exception)Activator.CreateInstance(exceptionType, "Error transitorio")!;
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.SetupSequence(x => x())
-            .ThrowsAsync(transitoryException)
-            .ReturnsAsync(expectedResult);
+        int callCount = 0;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            callCount++;
+            if (callCount == 1)
+                throw transitoryException;
+            return Task.FromResult(expectedResult);
+        };
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
-        mockNext.Verify(x => x(), Times.Exactly(2));
+        callCount.Should().Be(2);
     }
 
     [Fact]
@@ -139,17 +156,18 @@ public class RetryBehaviorTests
         
         var tiemposEjecucion = new List<DateTime>();
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x())
-            .Callback(() => tiemposEjecucion.Add(DateTime.UtcNow))
-            .ThrowsAsync(new TimeoutException("Timeout"))
-            .Callback(() => tiemposEjecucion.Add(DateTime.UtcNow))
-            .ThrowsAsync(new TimeoutException("Timeout"))
-            .Callback(() => tiemposEjecucion.Add(DateTime.UtcNow))
-            .ReturnsAsync(expectedResult);
+        int callCount = 0;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            callCount++;
+            tiemposEjecucion.Add(DateTime.UtcNow);
+            if (callCount <= 2)
+                throw new TimeoutException("Timeout");
+            return Task.FromResult(expectedResult);
+        };
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -170,17 +188,20 @@ public class RetryBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var cancellationTokenSource = new CancellationTokenSource();
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x())
-            .Callback(() => cancellationTokenSource.Cancel()) // Cancelar en primera ejecución
-            .ThrowsAsync(new TimeoutException("Timeout"));
+        int callCount = 0;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            callCount++;
+            cancellationTokenSource.Cancel(); // Cancelar en primera ejecución
+            throw new TimeoutException("Timeout");
+        };
 
         // Act & Assert
         await Assert.ThrowsAsync<OperationCanceledException>(() => 
-            _behavior.Handle(command, mockNext.Object, cancellationTokenSource.Token));
+            _behavior.Handle(command, nextDelegate, cancellationTokenSource.Token));
 
         // No debería continuar reintentando después de cancelación
-        mockNext.Verify(x => x(), Times.Once);
+        callCount.Should().Be(1);
     }
 
     [Fact]
@@ -199,14 +220,18 @@ public class RetryBehaviorTests
         foreach (var behaviorTest in behaviors)
         {
             var inicio = DateTime.UtcNow;
-            var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-            mockNext.SetupSequence(x => x())
-                .ThrowsAsync(new TimeoutException("Test"))
-                .ReturnsAsync(Result.Success(new ProductoDto()));
+            int callCount = 0;
+            RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+            {
+                callCount++;
+                if (callCount == 1)
+                    throw new TimeoutException("Test");
+                return Task.FromResult(Result.Success(new ProductoDto()));
+            };
 
             try
             {
-                await behaviorTest.Handle(command, mockNext.Object, CancellationToken.None);
+                await behaviorTest.Handle(command, nextDelegate, CancellationToken.None);
                 var tiempoTotal = DateTime.UtcNow - inicio;
                 tiemposDelay.Add(tiempoTotal);
             }
@@ -241,15 +266,19 @@ public class RetryBehaviorTests
         
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(new TimeoutException("Timeout persistente"));
+        int callCount = 0;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            callCount++;
+            throw new TimeoutException("Timeout persistente");
+        };
 
         // Act & Assert
         await Assert.ThrowsAsync<TimeoutException>(() => 
-            customBehavior.Handle(command, mockNext.Object, CancellationToken.None));
+            customBehavior.Handle(command, nextDelegate, CancellationToken.None));
 
         // Debería haber intentado solo 3 veces total (1 inicial + 2 reintentos)
-        mockNext.Verify(x => x(), Times.Exactly(3));
+        callCount.Should().Be(3);
     }
 
     [Fact]
@@ -258,12 +287,16 @@ public class RetryBehaviorTests
         // Arrange
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(new TimeoutException("Timeout persistente"));
+        int callCount = 0;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            callCount++;
+            throw new TimeoutException("Timeout persistente");
+        };
 
         // Act & Assert
         await Assert.ThrowsAsync<TimeoutException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         // Verificar que se loggea cada reintento
         _mockLogger.Verify(
@@ -283,13 +316,17 @@ public class RetryBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Compleja" };
         var excepcionCompleja = new InvalidOperationException("Operación compleja falló");
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.SetupSequence(x => x())
-            .ThrowsAsync(excepcionCompleja)
-            .ReturnsAsync(Result.Success(new ProductoDto { Nombre = "Pizza Compleja" }));
+        int callCount = 0;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            callCount++;
+            if (callCount == 1)
+                throw excepcionCompleja;
+            return Task.FromResult(Result.Success(new ProductoDto { Nombre = "Pizza Compleja" }));
+        };
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -315,24 +352,23 @@ public class RetryBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        
-        // Configurar fallos según el número de reintento específico
-        var sequence = mockNext.SetupSequence(x => x());
-        for (int i = 0; i < numeroReintento; i++)
+        int callCount = 0;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
         {
-            sequence = sequence.ThrowsAsync(new TimeoutException($"Fallo {i + 1}"));
-        }
-        sequence.ReturnsAsync(expectedResult);
+            callCount++;
+            if (callCount <= numeroReintento)
+                throw new TimeoutException($"Fallo {callCount}");
+            return Task.FromResult(expectedResult);
+        };
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
         
         // Verificar que se ejecutó el número correcto de veces
-        mockNext.Verify(x => x(), Times.Exactly(numeroReintento + 1));
+        callCount.Should().Be(numeroReintento + 1);
         
         // Verificar que se loggeó el número específico de reintento
         _mockLogger.Verify(

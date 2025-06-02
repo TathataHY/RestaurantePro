@@ -95,7 +95,7 @@ public class LiberarMesaHandlerTests
             .ReturnsAsync(mesa);
 
         _currentUserServiceMock.Setup(x => x.UserId)
-            .Returns(Guid.NewGuid());
+            .Returns(Guid.NewGuid().ToString());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -124,7 +124,7 @@ public class LiberarMesaHandlerTests
             .ReturnsAsync(mesa);
 
         _currentUserServiceMock.Setup(x => x.UserId)
-            .Returns(Guid.NewGuid());
+            .Returns(Guid.NewGuid().ToString());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -153,7 +153,7 @@ public class LiberarMesaHandlerTests
             .ReturnsAsync(mesa);
 
         _currentUserServiceMock.Setup(x => x.UserId)
-            .Returns(Guid.NewGuid());
+            .Returns(Guid.NewGuid().ToString());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -184,7 +184,7 @@ public class LiberarMesaHandlerTests
             .ReturnsAsync((Mesa?)null);
 
         _currentUserServiceMock.Setup(x => x.UserId)
-            .Returns(Guid.NewGuid());
+            .Returns(Guid.NewGuid().ToString());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -208,7 +208,7 @@ public class LiberarMesaHandlerTests
         };
 
         _currentUserServiceMock.Setup(x => x.UserId)
-            .Returns(Guid.NewGuid());
+            .Returns(Guid.NewGuid().ToString());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -234,7 +234,7 @@ public class LiberarMesaHandlerTests
             .ThrowsAsync(new Exception("Error de base de datos"));
 
         _currentUserServiceMock.Setup(x => x.UserId)
-            .Returns(Guid.NewGuid());
+            .Returns(Guid.NewGuid().ToString());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -266,7 +266,7 @@ public class LiberarMesaHandlerTests
             .ReturnsAsync(mesa);
 
         _currentUserServiceMock.Setup(x => x.UserId)
-            .Returns(userId);
+            .Returns(Guid.NewGuid().ToString());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -292,7 +292,7 @@ public class LiberarMesaHandlerTests
     private static Mesa CreateMockMesa(Guid mesaId, EstadoMesa estado)
     {
         // Crear mesa usando el constructor que requiere parámetros
-        var mesa = Mesa.Crear(1, 4, "Salón principal", "Mesa estándar");
+        var mesa = Mesa.Crear(1, 4, "Salón principal");
         
         // Usar reflexión para establecer el ID y estado si es necesario
         var idProperty = typeof(Mesa).GetProperty("Id");

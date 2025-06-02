@@ -2,6 +2,8 @@ using RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaFinal
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
 using RestaurantePro.Domain.Operaciones.Comandas.Events;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Domain.Comercial.Clientes.Entities;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Domain.Comercial.Clientes.Enums;
@@ -20,6 +22,7 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.EventHandler
 public class ComandaFinalizadaFidelizacionHandlerTests
 {
     private readonly Mock<IComercialServiceFacade> _mockComercialServiceFacade;
+    private readonly Mock<IComandaRepository> _mockComandaRepository;
     private readonly Mock<IClienteRepository> _mockClienteRepository;
     private readonly Mock<ILogger<ComandaFinalizadaFidelizacionHandler>> _mockLogger;
     private readonly ComandaFinalizadaFidelizacionHandler _handler;
@@ -27,11 +30,13 @@ public class ComandaFinalizadaFidelizacionHandlerTests
     public ComandaFinalizadaFidelizacionHandlerTests()
     {
         _mockComercialServiceFacade = new Mock<IComercialServiceFacade>();
+        _mockComandaRepository = new Mock<IComandaRepository>();
         _mockClienteRepository = new Mock<IClienteRepository>();
         _mockLogger = new Mock<ILogger<ComandaFinalizadaFidelizacionHandler>>();
         
         _handler = new ComandaFinalizadaFidelizacionHandler(
             _mockComercialServiceFacade.Object,
+            _mockComandaRepository.Object,
             _mockClienteRepository.Object,
             _mockLogger.Object);
     }
@@ -43,9 +48,13 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         var comandaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var montoTotal = 150.00m;
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, montoTotal);
+        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
 
+        var comanda = CreateMockComanda(comandaId, clienteId);
         var cliente = CreateMockCliente(clienteId, "Juan Pérez", "juan@email.com");
+        
+        _mockComandaRepository.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(comanda);
         
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
@@ -58,6 +67,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
+        _mockComandaRepository.Verify(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()), Times.Once);
         _mockClienteRepository.Verify(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()), Times.Once);
         
         _mockComercialServiceFacade.Verify(x => x.AcumularPuntosPorCompraAsync(
@@ -79,14 +89,19 @@ public class ComandaFinalizadaFidelizacionHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        Guid? clienteId = null; // Comanda sin cliente
         var montoTotal = 150.00m;
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, montoTotal);
+        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
+
+        var comanda = CreateMockComandaSinCliente(comandaId);
+        
+        _mockComandaRepository.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(comanda);
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
+        _mockComandaRepository.Verify(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()), Times.Once);
         _mockClienteRepository.Verify(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         _mockComercialServiceFacade.Verify(x => x.AcumularPuntosPorCompraAsync(It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<Guid?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
 
@@ -108,7 +123,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         var comandaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var montoTotal = 150.00m;
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, montoTotal);
+        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
 
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Cliente)null!); // Cliente no encontrado
@@ -138,7 +153,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         var comandaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var montoTotal = 150.00m;
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, montoTotal);
+        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
 
         var cliente = CreateMockCliente(clienteId, "Juan Pérez", "juan@email.com");
         
@@ -170,7 +185,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         var comandaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var montoTotal = 5.00m; // Monto muy bajo
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, montoTotal);
+        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
 
         var cliente = CreateMockCliente(clienteId, "Juan Pérez", "juan@email.com");
         
@@ -206,7 +221,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         // Arrange
         var comandaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, montoTotal);
+        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
 
         var cliente = CreateMockCliente(clienteId, "Juan Pérez", "juan@email.com");
         
@@ -242,7 +257,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         var comandaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var montoTotal = 150.00m;
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, montoTotal);
+        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
 
         var repositoryException = new Exception("Error de conexión a base de datos");
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
@@ -271,7 +286,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         var comandaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var montoTotal = 150.00m;
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, montoTotal);
+        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
 
         var cancellationTokenSource = new CancellationTokenSource();
         cancellationTokenSource.Cancel();
@@ -291,7 +306,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         var comandaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var montoTotal = 100.00m;
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, montoTotal);
+        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
 
         var clienteVIP = CreateMockClienteVIP(clienteId, "María VIP", "maria@vip.com");
         
@@ -324,7 +339,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         var clienteId = Guid.NewGuid();
         var fechaFinalizacion = new DateTime(2025, 1, 17, 14, 30, 0);
         var montoTotal = 275.50m;
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, fechaFinalizacion, montoTotal);
+        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
 
         var cliente = CreateMockCliente(clienteId, "Carlos Cliente", "carlos@email.com");
         
@@ -374,7 +389,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         var comandaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var montoTotal = 500.00m; // Monto alto que podría cambiar segmento
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, montoTotal);
+        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
 
         var cliente = CreateMockCliente(clienteId, "Ana Ascenso", "ana@email.com");
         
@@ -389,7 +404,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
                 It.Is<IEnumerable<Guid>>(ids => ids.Contains(clienteId)), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(new Dictionary<Guid, SegmentoCliente> 
             { 
-                { clienteId, SegmentoCliente.Frecuente } 
+                { clienteId, SegmentoCliente.FrecuenciaAlta } 
             }));
 
         // Act
@@ -414,7 +429,7 @@ public class ComandaFinalizadaFidelizacionHandlerTests
     {
         var cliente = new Mock<Cliente>();
         cliente.SetupGet(x => x.Id).Returns(id);
-        cliente.SetupGet(x => x.Nombre).Returns(ClienteNombre.Create(nombre));
+        cliente.SetupGet(x => x.Nombre).Returns(ClienteNombre.Crear(nombre, "Apellido"));
         cliente.SetupGet(x => x.Email).Returns(Email.Create(email));
         cliente.SetupGet(x => x.Segmento).Returns(SegmentoCliente.Regular);
         return cliente.Object;
@@ -424,9 +439,25 @@ public class ComandaFinalizadaFidelizacionHandlerTests
     {
         var cliente = new Mock<Cliente>();
         cliente.SetupGet(x => x.Id).Returns(id);
-        cliente.SetupGet(x => x.Nombre).Returns(ClienteNombre.Create(nombre));
+        cliente.SetupGet(x => x.Nombre).Returns(ClienteNombre.Crear(nombre, "Apellido"));
         cliente.SetupGet(x => x.Email).Returns(Email.Create(email));
-        cliente.SetupGet(x => x.Segmento).Returns(SegmentoCliente.VIP);
+        cliente.SetupGet(x => x.Segmento).Returns(SegmentoCliente.Premium);
         return cliente.Object;
+    }
+
+    private static Comanda CreateMockComanda(Guid id, Guid clienteId)
+    {
+        var comanda = new Mock<Comanda>();
+        comanda.SetupGet(x => x.Id).Returns(id);
+        comanda.SetupGet(x => x.ClienteId).Returns(clienteId);
+        return comanda.Object;
+    }
+
+    private static Comanda CreateMockComandaSinCliente(Guid id)
+    {
+        var comanda = new Mock<Comanda>();
+        comanda.SetupGet(x => x.Id).Returns(id);
+        comanda.SetupGet(x => x.ClienteId).Returns((Guid?)null);
+        return comanda.Object;
     }
 } 

@@ -56,7 +56,7 @@ public class AgregarItemComandaHandlerTests
                 It.IsAny<string>(),
                 It.IsAny<int>(),
                 It.IsAny<decimal>(),
-                It.IsAny<string>()))
+                ""))
             .Returns(itemComanda.Object);
 
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda.Object))
@@ -76,7 +76,7 @@ public class AgregarItemComandaHandlerTests
             "Pizza Margarita",
             2,
             25.50m,
-            "Sin cebolla"), Times.Once);
+            ""), Times.Once);
 
         _comandaRepositoryMock.Verify(x => x.ActualizarAsync(comanda.Object), Times.Once);
         _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(), Times.Once);
@@ -117,7 +117,7 @@ public class AgregarItemComandaHandlerTests
             "Hamburguesa Clásica",
             1,
             35.00m,
-            null), Times.Once);
+            ""), Times.Once);
     }
 
     [Fact]
@@ -167,12 +167,12 @@ public class AgregarItemComandaHandlerTests
             "Pizza Especial",
             1,
             28.00m,
-            null), Times.Once);
+            ""), Times.Once);
 
         // Verify personalization was applied
         itemComanda.Verify(x => x.AgregarPersonalizacionExtra(
             ingredienteId,
-            It.IsAny<string>(),
+            "",
             1,
             3.50m), Times.Once);
     }
@@ -220,7 +220,7 @@ public class AgregarItemComandaHandlerTests
         // Verify personalization was applied
         itemComanda.Verify(x => x.AgregarPersonalizacionQuitar(
             ingredienteId,
-            It.IsAny<string>()), Times.Once);
+            ""), Times.Once);
     }
 
     [Fact]
@@ -268,9 +268,9 @@ public class AgregarItemComandaHandlerTests
         // Verify personalization was applied
         itemComanda.Verify(x => x.AgregarPersonalizacionSustituir(
             ingredienteOriginalId,
-            It.IsAny<string>(),
+            "",
             ingredienteSustitutoId,
-            It.IsAny<string>(),
+            "",
             1,
             2.00m), Times.Once);
     }
@@ -741,14 +741,14 @@ public class AgregarItemComandaHandlerTests
             .Returns(Task.CompletedTask);
 
         _comandaRepositoryMock.Setup(x => x.GuardarCambiosAsync())
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(1);
 
         comanda.Setup(x => x.AgregarItem(
                 It.IsAny<Guid>(),
                 It.IsAny<string>(),
                 It.IsAny<int>(),
                 It.IsAny<decimal>(),
-                It.IsAny<string>()))
+                ""))
             .Returns(itemComanda.Object);
 
         if (comandaDto != null)

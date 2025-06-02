@@ -95,7 +95,7 @@ public class DesactivarClienteValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.MotivoDesactivacion = motivoVacio;
+        command.MotivoDesactivacion = motivoVacio!;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -156,7 +156,7 @@ public class DesactivarClienteValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.DesactivadoPor = desactivadoPorVacio;
+        command.DesactivadoPor = desactivadoPorVacio!;
 
         // Act
         var result = await _validator.ValidateAsync(command);

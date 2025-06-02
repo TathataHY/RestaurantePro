@@ -1,5 +1,6 @@
 using RestaurantePro.Application.Operaciones.Reportes.DTOs;
 using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+using RestaurantePro.Domain.Comercial.Facturacion.Enums;
 using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 using RestaurantePro.Domain.Operaciones.Comandas.Enums;
@@ -522,11 +523,11 @@ public class ProcesarPedidoCompletoHandlerTests
         _servicioFacturacionMock.Setup(x => x.ProcesarPagoAsync(
             It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<string>(), 
             It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(factura as Factura ?? new Factura()));
+            .ReturnsAsync(Result.Success(factura as Factura ?? CreateMockFactura()));
 
         _servicioFacturacionMock.Setup(x => x.GenerarFacturaAsync(
             It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(factura as Factura ?? new Factura()));
+            .ReturnsAsync(Result.Success(factura as Factura ?? CreateMockFactura()));
 
         if (comanda.ClienteId != null && comanda.ClienteId != Guid.Empty)
         {
@@ -559,7 +560,7 @@ public class ProcesarPedidoCompletoHandlerTests
 
         _servicioFacturacionMock.Setup(x => x.GenerarFacturaAsync(
             It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(factura as Factura ?? new Factura()));
+            .ReturnsAsync(Result.Success(factura as Factura ?? CreateMockFactura()));
 
         if (comanda.MesaId != null && comanda.MesaId != Guid.Empty)
         {
@@ -604,7 +605,7 @@ public class ProcesarPedidoCompletoHandlerTests
         _servicioFacturacionMock.Setup(x => x.ProcesarPagoAsync(
             It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<string>(), 
             It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(resultadoPago as Factura ?? new Factura()));
+            .ReturnsAsync(Result.Success(resultadoPago as Factura ?? CreateMockFactura()));
 
         _comandaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -623,7 +624,7 @@ public class ProcesarPedidoCompletoHandlerTests
 
         _servicioFacturacionMock.Setup(x => x.GenerarFacturaAsync(
             It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(factura as Factura ?? new Factura()));
+            .ReturnsAsync(Result.Success(factura as Factura ?? CreateMockFactura()));
 
         _comandaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -720,11 +721,26 @@ public class ProcesarPedidoCompletoHandlerTests
         return new
         {
             Id = facturaId,
-            Numero = $"FAC-{DateTime.Now:yyyyMMdd}-001",
+            NumeroFactura = $"FAC-{facturaId.ToString("N")[^8..].ToUpper()}",
             ComandaId = comandaId,
             Total = total,
+            Estado = "Emitida",
             FechaEmision = DateTime.UtcNow
         };
+    }
+
+    private static Factura CreateMockFactura()
+    {
+        return Factura.Crear(
+            numeroFactura: $"FAC-{Guid.NewGuid().ToString("N")[^8..].ToUpper()}",
+            tipoFactura: TipoFactura.Normal,
+            nombreCliente: "Cliente Test",
+            clienteId: null,
+            identificacionFiscal: null,
+            direccionCliente: null,
+            comandasIds: new[] { Guid.NewGuid() },
+            observaciones: "Factura de prueba",
+            fechaEmision: DateTime.UtcNow);
     }
 
     private static ProcesarPedidoCompletoDto CreateMockProcesarPedidoCompletoDto(Guid comandaId, bool pagoExitoso)

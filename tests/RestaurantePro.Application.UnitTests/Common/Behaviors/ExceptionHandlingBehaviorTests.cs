@@ -12,7 +12,7 @@ using MediatR;
 namespace RestaurantePro.Application.UnitTests.Common.Behaviors;
 
 /// <summary>
-/// Tests para ExceptionHandlingBehavior - Comportamiento crítico que maneja todas las excepciones
+/// Tests para ExceptionHandlingBehavior - Manejo centralizado de excepciones con conversión a errores de aplicación
 /// </summary>
 public class ExceptionHandlingBehaviorTests
 {
@@ -32,16 +32,13 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Test" });
         
-        var anyToken = It.IsAny<CancellationToken>();
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
-        mockNext.Verify(x => x(), Times.Once);
     }
 
     [Fact]
@@ -51,12 +48,11 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var domainException = new BusinessRuleViolationException("REGLA_VIOLADA", "Error de dominio", "Detalle del error");
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(domainException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw domainException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         exception.Message.Should().Contain("Error de dominio");
     }
@@ -68,12 +64,11 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var businessException = new BusinessRuleViolationException("REGLA_VIOLADA", "Regla de negocio violada", "Detalle adicional");
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(businessException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw businessException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         exception.Message.Should().Contain("Regla de negocio violada");
     }
@@ -85,12 +80,11 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var entityException = new EntityNotFoundException("Producto", Guid.NewGuid());
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(entityException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw entityException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<NotFoundException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         exception.Message.Should().Contain("Producto");
     }
@@ -102,12 +96,11 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var argumentException = new ArgumentException("Parámetro inválido");
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(argumentException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw argumentException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         exception.Message.Should().Contain("Parámetro inválido");
     }
@@ -119,12 +112,11 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var unauthorizedException = new UnauthorizedAccessException("Acceso denegado");
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(unauthorizedException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw unauthorizedException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ForbiddenAccessException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         exception.Message.Should().Contain("Acceso denegado");
     }
@@ -136,12 +128,11 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var genericException = new Exception("Error genérico");
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(genericException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw genericException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<AppException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         exception.Message.Should().Contain("Error genérico");
     }
@@ -153,12 +144,11 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var testException = new Exception("Error de test");
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(testException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw testException;
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         // Verificar que se loggea el error
         _mockLogger.Verify(
@@ -178,12 +168,11 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var testException = new Exception("Error de test");
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(testException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw testException;
 
         // Act & Assert
         await Assert.ThrowsAsync<AppException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         // Verificar que se loggea con RequestId
         _mockLogger.Verify(
@@ -203,12 +192,11 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var conflictException = new ConflictException("Ya existe un usuario con ese email", ConflictType.DuplicateEntity);
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(conflictException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw conflictException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ConflictException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         exception.Message.Should().Contain("Ya existe un usuario");
         exception.ConflictType.Should().Be(ConflictType.DuplicateEntity);
@@ -221,12 +209,11 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var validationException = new ValidationException("Campo", new[] { "Error de validación" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(validationException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw validationException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         exception.Message.Should().Contain("Error de validación");
     }
@@ -238,12 +225,11 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var operationCanceledException = new OperationCanceledException("Operación cancelada");
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(operationCanceledException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw operationCanceledException;
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<OperationCanceledException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         exception.Message.Should().Contain("Operación cancelada");
     }
@@ -258,12 +244,11 @@ public class ExceptionHandlingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var exception = (Exception)Activator.CreateInstance(exceptionType, "Error específico")!;
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(exception);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
 
         // Act & Assert
         var resultException = await Assert.ThrowsAsync<AppException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         resultException.Message.Should().Contain("Error específico");
     }

@@ -48,7 +48,7 @@ public class FinalizarComandaHandlerTests
             .ReturnsAsync(comanda.Object);
 
         _comandaRepositoryMock.Setup(x => x.ActualizarAsync(comanda.Object))
-            .Returns(Task.CompletedTask);
+            .ReturnsAsync(1);
 
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda.Object))
             .Returns(comandaDto);

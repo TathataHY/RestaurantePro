@@ -308,15 +308,13 @@ public class ComandaCreadaInventarioHandlerTests
     // Helper method para crear ingredientes con stock
     private static Ingrediente CreateIngredienteWithStock(string nombre, decimal stockMinimo, decimal stockActual)
     {
-        // TODO: Implementar cuando la estructura del Ingrediente esté finalizada
-        return new Ingrediente();
+        // Usar factory method para crear ingrediente
+        return Ingrediente.Crear(nombre, "Unidad", stockMinimo, stockActual);
     }
 
     private static Comanda CreateMockComanda(Guid comandaId, Guid mesaId)
     {
-        // Crear una comanda con algunos items para testing
-        var comanda = new Comanda();
-        // TODO: Configurar comanda con items cuando la estructura esté disponible
-        return comanda;
+        // Crear una comanda usando factory method
+        return Comanda.Crear(mesaId, Guid.NewGuid(), null, "Comanda de prueba");
     }
 } 

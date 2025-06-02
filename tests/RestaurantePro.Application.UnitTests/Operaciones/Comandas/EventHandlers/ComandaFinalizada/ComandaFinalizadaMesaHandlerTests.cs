@@ -231,7 +231,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, 150.00m, mesaId);
+        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
 
         var repositoryException = new Exception("Error de conexión a base de datos");
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
@@ -260,7 +260,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, 150.00m, mesaId);
+        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
 
         var cancellationTokenSource = new CancellationTokenSource();
         cancellationTokenSource.Cancel();
@@ -280,7 +280,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, 350.00m, mesaId);
+        var evento = new ComandaFinalizadaEvent(comandaId, 350.00m);
 
         var mesaGrande = CreateMockMesa(mesaId, 8, EstadoMesa.Ocupada); // Mesa grande
         
@@ -313,7 +313,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var clienteId = Guid.NewGuid();
         var fechaFinalizacion = new DateTime(2025, 1, 17, 15, 45, 0);
         var montoTotal = 425.75m;
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, fechaFinalizacion, montoTotal, mesaId);
+        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
 
         var mesa = CreateMockMesa(mesaId, 6, EstadoMesa.Ocupada);
         
@@ -353,7 +353,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, 150.00m, mesaId);
+        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(mesaId, 4, EstadoMesa.Ocupada);
         
@@ -384,7 +384,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, 150.00m, mesaId);
+        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(mesaId, 4, EstadoMesa.Ocupada);
         
@@ -419,7 +419,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var fechaFinalizacion = DateTime.UtcNow;
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, fechaFinalizacion, 150.00m, mesaId);
+        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(mesaId, 4, EstadoMesa.Ocupada);
         
@@ -455,7 +455,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, clienteId, DateTime.UtcNow, 150.00m, mesaId);
+        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(mesaId, capacidad, EstadoMesa.Ocupada);
         

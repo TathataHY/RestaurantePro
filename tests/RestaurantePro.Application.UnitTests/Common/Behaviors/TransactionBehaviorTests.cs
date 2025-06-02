@@ -31,11 +31,10 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -58,12 +57,11 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var exception = new Exception("Error en procesamiento");
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(exception);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
 
         // Act & Assert
         var thrownException = await Assert.ThrowsAsync<Exception>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         thrownException.Should().Be(exception);
         
@@ -88,11 +86,10 @@ public class TransactionBehaviorTests
         var query = new ObtenerProductoPorIdQuery(Guid.NewGuid());
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await queryBehavior.Handle(query, mockNext.Object, CancellationToken.None);
+        var result = await queryBehavior.Handle(query, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -109,11 +106,10 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -131,11 +127,10 @@ public class TransactionBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         var cancellationToken = new CancellationToken();
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, cancellationToken);
+        var result = await _behavior.Handle(command, nextDelegate, cancellationToken);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -157,12 +152,11 @@ public class TransactionBehaviorTests
         _mockTransaction.Setup(x => x.CommitAsync(anyToken))
             .ThrowsAsync(commitException);
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act & Assert
         var thrownException = await Assert.ThrowsAsync<Exception>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         thrownException.Should().Be(commitException);
         
@@ -191,12 +185,11 @@ public class TransactionBehaviorTests
         _mockTransaction.Setup(x => x.RollbackAsync(anyToken))
             .ThrowsAsync(rollbackException);
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(processingException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw processingException;
 
         // Act & Assert
         var thrownException = await Assert.ThrowsAsync<Exception>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         // Debería propagar la excepción original, no la de rollback
         thrownException.Should().Be(processingException);
@@ -219,11 +212,10 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await behaviorSinDb.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await behaviorSinDb.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -240,11 +232,10 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -266,11 +257,10 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -292,12 +282,11 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var exception = new Exception("Error de test");
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(exception);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
 
         // Act & Assert
         await Assert.ThrowsAsync<Exception>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
         
         // Verificar logging de rollback
         var anyEventId = It.IsAny<EventId>();
@@ -316,11 +305,10 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -342,11 +330,10 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Especial Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Especial Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -368,12 +355,11 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var cancellationException = new OperationCanceledException("Operación cancelada");
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ThrowsAsync(cancellationException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw cancellationException;
 
         // Act & Assert
         await Assert.ThrowsAsync<OperationCanceledException>(() => 
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
         
         // No debería loggear como error, solo como información/warning
         var anyEventId = It.IsAny<EventId>();
@@ -395,11 +381,10 @@ public class TransactionBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" }; // Simplificado para el test
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);

@@ -67,11 +67,10 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
         
         // Act
-        var result = await _behavior.Handle(command, _mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         _mockLogger.Verify(
@@ -95,11 +94,10 @@ public class LoggingBehaviorTests
         var command = new CrearFacturaCommand();
         var expectedResult = Result.Success(new FacturaDto());
         
-        var invokeExpression = (RequestHandlerDelegate<Result<FacturaDto>> x) => x.Invoke();
-        mockNextFactura.Setup(invokeExpression).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        await behaviorFactura.Handle(command, mockNextFactura.Object, CancellationToken.None);
+        await behaviorFactura.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         mockLoggerFactura.Verify(
@@ -122,15 +120,14 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Simulamos diferentes tipos de request modificando el behavior para esta prueba
-        var mockLoggerGeneric = new Mock<ILogger<LoggingBehavior<CrearProductoCommand, Result<ProductoDto>>>>();
+        var mockLoggerGeneric = new Mock<ILogger<LoggingBehavior<CrearProductoCommand, Result<ProductoDto>>>>>();
         var behaviorGeneric = new LoggingBehavior<CrearProductoCommand, Result<ProductoDto>>(mockLoggerGeneric.Object);
 
         // Act
-        await behaviorGeneric.Handle(command, _mockNext.Object, CancellationToken.None);
+        await behaviorGeneric.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert - Verificamos que se llamó al logger y el tipo de request esperado
         mockLoggerGeneric.Verify(
@@ -158,11 +155,10 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, _mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         _mockLogger.Verify(
@@ -182,11 +178,10 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, _mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         // Verificar logging de inicio
@@ -221,11 +216,10 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var exception = new Exception("Error de test");
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ThrowsAsync(exception);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
 
         // Act & Assert
-        await Assert.ThrowsAsync<Exception>(() => _behavior.Handle(command, _mockNext.Object, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         // Assert
         _mockLogger.Verify(
@@ -245,11 +239,10 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var exception = new Exception("Error específico de test");
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ThrowsAsync(exception);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
 
         // Act & Assert
-        await Assert.ThrowsAsync<Exception>(() => _behavior.Handle(command, _mockNext.Object, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         // Assert
         _mockLogger.Verify(
@@ -273,11 +266,10 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var exception = (Exception)Activator.CreateInstance(exceptionType, message)!;
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ThrowsAsync(exception);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
 
         // Act & Assert
-        await Assert.ThrowsAsync(exceptionType, () => _behavior.Handle(command, _mockNext.Object, CancellationToken.None));
+        await Assert.ThrowsAsync(exceptionType, () => _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         // Assert
         _mockLogger.Verify(
@@ -301,8 +293,7 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         var logCalls = new List<string>();
         _mockLogger.Setup(x => x.Log(
@@ -317,7 +308,7 @@ public class LoggingBehaviorTests
             });
 
         // Act
-        await _behavior.Handle(command, _mockNext.Object, CancellationToken.None);
+        await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         logCalls.Should().HaveCount(2);
@@ -332,8 +323,7 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var exception = new Exception("Error de test");
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ThrowsAsync(exception);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
 
         var logCalls = new List<string>();
         _mockLogger.Setup(x => x.Log(
@@ -348,7 +338,7 @@ public class LoggingBehaviorTests
             });
 
         // Act & Assert
-        await Assert.ThrowsAsync<Exception>(() => _behavior.Handle(command, _mockNext.Object, CancellationToken.None));
+        await Assert.ThrowsAsync<Exception>(() => _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         // Assert
         logCalls.Should().HaveCount(2);
@@ -367,15 +357,14 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).Returns(async () =>
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = async () =>
         {
             await Task.Delay(100); // Simular operación lenta
             return expectedResult;
-        });
+        };
 
         // Act
-        var result = await _behavior.Handle(command, _mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -412,11 +401,10 @@ public class LoggingBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         var cancellationToken = new CancellationToken();
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, _mockNext.Object, cancellationToken);
+        var result = await _behavior.Handle(command, nextDelegate, cancellationToken);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -429,12 +417,11 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var operationCanceledException = new OperationCanceledException("Operación cancelada");
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ThrowsAsync(operationCanceledException);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw operationCanceledException;
 
         // Act & Assert
         await Assert.ThrowsAsync<OperationCanceledException>(() => 
-            _behavior.Handle(command, _mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         // Assert
         _mockLogger.Verify(
@@ -458,11 +445,10 @@ public class LoggingBehaviorTests
         CrearProductoCommand? command = null;
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command!, _mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command!, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -485,11 +471,10 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         Result<ProductoDto> nullResult = null!;
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ReturnsAsync(nullResult!);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(nullResult!);
 
         // Act
-        var result = await _behavior.Handle(command, _mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().BeNull();
@@ -515,17 +500,20 @@ public class LoggingBehaviorTests
         // Arrange
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
+        bool nextCalled = false;
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () =>
+        {
+            nextCalled = true;
+            return Task.FromResult(expectedResult);
+        };
 
         // Act
-        var result = await _behavior.Handle(command, _mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
-        var verifyExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Verify(verifyExpression, Times.Once);
+        nextCalled.Should().BeTrue();
     }
 
     [Fact]
@@ -535,11 +523,10 @@ public class LoggingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var originalResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        var invokeExpression = (RequestHandlerDelegate<Result<ProductoDto>> x) => x.Invoke();
-        _mockNext.Setup(invokeExpression).ReturnsAsync(originalResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(originalResult);
 
         // Act
-        var result = await _behavior.Handle(command, _mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().BeSameAs(originalResult);

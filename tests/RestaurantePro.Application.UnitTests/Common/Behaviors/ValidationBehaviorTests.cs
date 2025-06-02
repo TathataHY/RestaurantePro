@@ -23,15 +23,13 @@ public class ValidationBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Test" });
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await behaviorSinValidadores.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await behaviorSinValidadores.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
-        mockNext.Verify(x => x(), Times.Once);
     }
 
     [Fact]
@@ -42,20 +40,22 @@ public class ValidationBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         var validationResult = new FluentValidation.Results.ValidationResult();
-        var anyContext = It.IsAny<ValidationContext<CrearProductoCommand>>();
-        var anyToken = It.IsAny<CancellationToken>();
-        _mockValidator.Setup(v => v.ValidateAsync(anyContext, anyToken))
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(validationResult);
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        var nextCalled = false;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            nextCalled = true;
+            return Task.FromResult(expectedResult);
+        };
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
-        mockNext.Verify(x => x(), Times.Once);
+        nextCalled.Should().BeTrue();
         _mockValidator.VerifyAll();
     }
 
@@ -72,16 +72,19 @@ public class ValidationBehaviorTests
         };
         
         var validationResult = new FluentValidation.Results.ValidationResult(validationFailures);
-        var anyContext = It.IsAny<ValidationContext<CrearProductoCommand>>();
-        var anyToken = It.IsAny<CancellationToken>();
-        _mockValidator.Setup(v => v.ValidateAsync(anyContext, anyToken))
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(validationResult);
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
+        var nextCalled = false;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            nextCalled = true;
+            return Task.FromResult(Result.Success(new ProductoDto()));
+        };
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
         exception.Errors.Should().ContainKey("Nombre");
         exception.Errors.Should().ContainKey("Precio");
@@ -89,7 +92,7 @@ public class ValidationBehaviorTests
         exception.Errors["Precio"].Should().Contain("El precio debe ser mayor a 0");
         
         // Next no debería ejecutarse
-        mockNext.Verify(x => x(), Times.Never);
+        nextCalled.Should().BeFalse();
     }
 
     [Fact]
@@ -108,19 +111,16 @@ public class ValidationBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Test" });
         
         var validationResult = new FluentValidation.Results.ValidationResult();
-        var anyContext = It.IsAny<ValidationContext<CrearProductoCommand>>();
-        var anyToken = It.IsAny<CancellationToken>();
-        _mockValidator.Setup(v => v.ValidateAsync(anyContext, anyToken))
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(validationResult);
             
-        mockValidator2.Setup(v => v.ValidateAsync(anyContext, anyToken))
+        mockValidator2.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(validationResult);
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await behaviorMultiple.Handle(command, mockNext.Object, CancellationToken.None);
+        var result = await behaviorMultiple.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -157,19 +157,17 @@ public class ValidationBehaviorTests
         };
         var validationResult2 = new FluentValidation.Results.ValidationResult(validationFailures2);
         
-        var anyContext = It.IsAny<ValidationContext<CrearProductoCommand>>();
-        var anyToken = It.IsAny<CancellationToken>();
-        _mockValidator.Setup(v => v.ValidateAsync(anyContext, anyToken))
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(validationResult1);
             
-        mockValidator2.Setup(v => v.ValidateAsync(anyContext, anyToken))
+        mockValidator2.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(validationResult2);
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(Result.Success(new ProductoDto()));
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
-            behaviorMultiple.Handle(command, mockNext.Object, CancellationToken.None));
+            behaviorMultiple.Handle(command, nextDelegate, CancellationToken.None));
 
         // Debe contener errores de ambos validadores
         exception.Errors.Should().ContainKey("Nombre");
@@ -187,19 +185,17 @@ public class ValidationBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Test" });
         
         var validationResult = new FluentValidation.Results.ValidationResult();
-        var anyContext = It.IsAny<ValidationContext<CrearProductoCommand>>();
-        _mockValidator.Setup(v => v.ValidateAsync(anyContext, cancellationToken))
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), cancellationToken))
             .ReturnsAsync(validationResult);
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, mockNext.Object, cancellationToken);
+        var result = await _behavior.Handle(command, nextDelegate, cancellationToken);
 
         // Assert
         result.Should().Be(expectedResult);
-        _mockValidator.Verify(v => v.ValidateAsync(anyContext, cancellationToken), Times.Once);
+        _mockValidator.Verify(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), cancellationToken), Times.Once);
     }
 
     [Fact]
@@ -208,48 +204,51 @@ public class ValidationBehaviorTests
         // Arrange
         var command = new CrearProductoCommand { Nombre = "Test" };
         
-        var anyContext = It.IsAny<ValidationContext<CrearProductoCommand>>();
-        var anyToken = It.IsAny<CancellationToken>();
-        _mockValidator.Setup(v => v.ValidateAsync(anyContext, anyToken))
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Error en validador"));
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
+        var nextCalled = false;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
+        {
+            nextCalled = true;
+            return Task.FromResult(Result.Success(new ProductoDto()));
+        };
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
         
-        mockNext.Verify(x => x(), Times.Never);
+        nextCalled.Should().BeFalse();
     }
 
     [Fact]
     public async Task Handle_ErroresConPropiedadesVacias_DeberiaFiltrarErroresNull()
     {
         // Arrange
-        var command = new CrearProductoCommand { Nombre = "" };
+        var command = new CrearProductoCommand { Nombre = "Test" };
         
         var validationFailures = new List<FluentValidation.Results.ValidationFailure>
         {
             new("Nombre", "El nombre es requerido"),
-            new("", "Error sin propiedad"), // Error con propiedad vacía
-            new(null, "Error con propiedad null") // Error con propiedad null
+            new(null, "Error sin propiedad"),
+            new("", "Error con propiedad vacía"),
+            new("Precio", "")
         };
         
         var validationResult = new FluentValidation.Results.ValidationResult(validationFailures);
-        var anyContext = It.IsAny<ValidationContext<CrearProductoCommand>>();
-        var anyToken = It.IsAny<CancellationToken>();
-        _mockValidator.Setup(v => v.ValidateAsync(anyContext, anyToken))
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(validationResult);
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(Result.Success(new ProductoDto()));
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
-            _behavior.Handle(command, mockNext.Object, CancellationToken.None));
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
-        // Solo debe contener el error con nombre de propiedad válido
+        // Debe filtrar errores con propiedades nulas o vacías
         exception.Errors.Should().ContainKey("Nombre");
         exception.Errors.Should().HaveCount(1);
+        exception.Errors["Nombre"].Should().Contain("El nombre es requerido");
     }
 
     [Fact]
@@ -259,21 +258,18 @@ public class ValidationBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Test" };
         ValidationContext<CrearProductoCommand> capturedContext = null;
         
-        var anyContext = It.IsAny<ValidationContext<CrearProductoCommand>>();
-        var anyToken = It.IsAny<CancellationToken>();
-        _mockValidator.Setup(v => v.ValidateAsync(anyContext, anyToken))
+        var validationResult = new FluentValidation.Results.ValidationResult();
+        _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
             .Callback<ValidationContext<CrearProductoCommand>, CancellationToken>((context, ct) => 
             {
                 capturedContext = context;
             })
-            .ReturnsAsync(new FluentValidation.Results.ValidationResult());
+            .ReturnsAsync(validationResult);
         
-        var mockNext = new Mock<RequestHandlerDelegate<Result<ProductoDto>>>();
-        var expectedResult = Result.Success(new ProductoDto { Nombre = "Test" });
-        mockNext.Setup(x => x()).ReturnsAsync(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(Result.Success(new ProductoDto { Nombre = "Test" }));
 
         // Act
-        await _behavior.Handle(command, mockNext.Object, CancellationToken.None);
+        await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         capturedContext.Should().NotBeNull();

@@ -293,7 +293,7 @@ public class AnularFacturaValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoAnulacion = tipoInvalido;
+        command.TipoAnulacion = tipoInvalido!;
 
         // Act
         var result = await _validator.ValidateAsync(command);

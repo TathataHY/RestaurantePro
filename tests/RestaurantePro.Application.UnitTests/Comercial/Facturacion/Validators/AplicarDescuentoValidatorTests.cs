@@ -81,7 +81,7 @@ public class AplicarDescuentoValidatorTests
         command.FacturaId = facturaIdInexistente;
 
         _mockFacturas.Setup(f => f.FindAsync(facturaIdInexistente))
-            .ReturnsAsync((Factura)null);
+            .ReturnsAsync((Factura?)null);
 
         // Act
         var result = await _validator.ValidateAsync(command);

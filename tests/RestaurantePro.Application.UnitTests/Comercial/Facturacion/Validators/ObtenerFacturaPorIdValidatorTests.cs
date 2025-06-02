@@ -351,10 +351,10 @@ public class ObtenerFacturaPorIdValidatorTests
     public async Task Validator_ConQueryNull_NoDeberiaLanzarExcepcion()
     {
         // Arrange
-        ObtenerFacturaPorIdQuery query = null;
+        ObtenerFacturaPorIdQuery query = null!;
 
         // Act
-        Func<Task> act = async () => await _validator.ValidateAsync(query);
+        Func<Task> act = async () => await _validator.ValidateAsync(query!);
 
         // Assert
         await act.Should().NotThrowAsync();
