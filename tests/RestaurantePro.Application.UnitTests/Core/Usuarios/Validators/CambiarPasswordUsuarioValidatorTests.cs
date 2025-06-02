@@ -146,11 +146,11 @@ public class CambiarPasswordUsuarioValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConMotivosCambioVacioONull_DeberiaRetornarError(string motivoInvalido)
+    public async Task Validate_ConMotivosCambioVacioONull_DeberiaRetornarError(string? motivoInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.MotivosCambio = motivoInvalido;
+        command.MotivosCambio = motivoInvalido ?? string.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -281,11 +281,11 @@ public class CambiarPasswordUsuarioValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConPasswordNuevaVaciaONull_DeberiaRetornarError(string passwordInvalida)
+    public async Task Validate_ConPasswordNuevaVaciaONull_DeberiaRetornarError(string? passwordInvalida)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.PasswordNueva = passwordInvalida;
+        command.PasswordNueva = passwordInvalida ?? string.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -403,11 +403,11 @@ public class CambiarPasswordUsuarioValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConPasswordActualVaciaONull_DeberiaRetornarError(string passwordInvalida)
+    public async Task Validate_ConPasswordActualVaciaONull_DeberiaRetornarError(string? passwordInvalida)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.PasswordActual = passwordInvalida;
+        command.PasswordActual = passwordInvalida ?? string.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -532,7 +532,7 @@ public class CambiarPasswordUsuarioValidatorTests
     [InlineData("")]
     [InlineData("Observaciones cortas")]
     [InlineData("Esta es una observación de longitud normal para el cambio de contraseña")]
-    public async Task Validate_ConObservacionesAdicionalesValidas_NoDeberiaRetornarErrorDeObservaciones(string observaciones)
+    public async Task Validate_ConObservacionesAdicionalesValidas_NoDeberiaRetornarErrorDeObservaciones(string? observaciones)
     {
         // Arrange
         var command = CrearCommandValido();

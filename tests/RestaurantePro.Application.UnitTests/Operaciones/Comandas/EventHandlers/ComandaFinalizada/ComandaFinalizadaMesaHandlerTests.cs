@@ -44,7 +44,7 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var evento = new ComandaFinalizada(comandaId, 150.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(Guid.NewGuid(), 4, EstadoMesa.Ocupada);
         
@@ -80,7 +80,7 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
         _mockComandaRepository.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Comanda)null);
@@ -108,7 +108,7 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
         var comanda = new Mock<Comanda>();
         comanda.Setup(x => x.MesaId).Returns(Guid.NewGuid());
@@ -140,7 +140,7 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(Guid.NewGuid(), 4, EstadoMesa.Disponible);
         
@@ -174,7 +174,7 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(Guid.NewGuid(), 4, estadoMesa);
         
@@ -205,7 +205,7 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(Guid.NewGuid(), 4, EstadoMesa.Ocupada);
         
@@ -236,7 +236,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
         var repositoryException = new Exception("Error de conexión a base de datos");
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
@@ -265,7 +265,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
         var cancellationTokenSource = new CancellationTokenSource();
         cancellationTokenSource.Cancel();
@@ -285,7 +285,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, 350.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 350.00m);
 
         var mesaGrande = CreateMockMesa(mesaId, 8, EstadoMesa.Ocupada); // Mesa grande
         
@@ -318,7 +318,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var clienteId = Guid.NewGuid();
         var fechaFinalizacion = new DateTime(2025, 1, 17, 15, 45, 0);
         var montoTotal = 425.75m;
-        var evento = new ComandaFinalizadaEvent(comandaId, montoTotal);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, montoTotal);
 
         var mesa = CreateMockMesa(mesaId, 6, EstadoMesa.Ocupada);
         
@@ -358,7 +358,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(mesaId, 4, EstadoMesa.Ocupada);
         
@@ -389,7 +389,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(mesaId, 4, EstadoMesa.Ocupada);
         
@@ -424,7 +424,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var fechaFinalizacion = DateTime.UtcNow;
-        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(mesaId, 4, EstadoMesa.Ocupada);
         
@@ -460,7 +460,7 @@ public class ComandaFinalizadaMesaHandlerTests
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var evento = new ComandaFinalizadaEvent(comandaId, 150.00m);
+        var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
         var mesa = CreateMockMesa(mesaId, capacidad, EstadoMesa.Ocupada);
         
@@ -487,16 +487,13 @@ public class ComandaFinalizadaMesaHandlerTests
     // Helper method para crear mesas mock
     private static Mesa CreateMockMesa(Guid id, int capacidad, EstadoMesa estado)
     {
-        var mesa = new Mock<Mesa>();
-        mesa.SetupGet(x => x.Id).Returns(id);
-        mesa.SetupGet(x => x.Capacidad).Returns(capacidad);
-        mesa.SetupGet(x => x.Estado).Returns(estado);
-        mesa.SetupGet(x => x.Numero).Returns(Random.Shared.Next(1, 50));
-        mesa.Setup(x => x.EstaDisponible()).Returns(estado == EstadoMesa.Disponible);
-        mesa.Setup(x => x.RequiereLiberacion()).Returns(
-            estado == EstadoMesa.Ocupada || 
-            estado == EstadoMesa.Reservada || 
-            estado == EstadoMesa.EnLimpieza);
-        return mesa.Object;
+        // Crear mesa real usando factory method
+        var mesa = Mesa.Crear(Random.Shared.Next(1, 50), capacidad, "Interior");
+        
+        // Usar reflexión para establecer el ID y estado
+        typeof(Mesa).GetProperty("Id")?.SetValue(mesa, id);
+        typeof(Mesa).GetProperty("Estado")?.SetValue(mesa, estado);
+        
+        return mesa;
     }
 } 

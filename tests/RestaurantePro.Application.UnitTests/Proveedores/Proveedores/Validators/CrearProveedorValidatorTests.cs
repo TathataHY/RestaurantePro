@@ -192,7 +192,7 @@ public class CrearProveedorValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.RFC = null;
+        command.RFC = null!;
 
         // Act
         var result = _validator.Validate(command);

@@ -55,7 +55,7 @@ public class CachingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("📝 Cache MISS")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
 
         // Verificar logging de guardado en cache
@@ -65,7 +65,7 @@ public class CachingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("💾 Guardado en caché")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
@@ -107,7 +107,7 @@ public class CachingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("📚 Cache HIT")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
@@ -144,7 +144,7 @@ public class CachingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cache")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Never);
     }
 
@@ -371,7 +371,7 @@ public class CachingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("📝 Cache MISS")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
 
         _mockLogger.Verify(
@@ -380,7 +380,7 @@ public class CachingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("📚 Cache HIT")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Exactly(2));
     }
 

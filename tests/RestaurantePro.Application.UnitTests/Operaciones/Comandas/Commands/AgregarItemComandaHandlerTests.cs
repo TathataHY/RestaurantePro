@@ -48,7 +48,7 @@ public class AgregarItemComandaHandlerTests
         var itemComanda = CreateMockItemComanda(productoId, 2, 25.50m);
         var comandaDto = CreateMockComandaDto(comandaId, 51.00m);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         comanda.Setup(x => x.AgregarItem(
@@ -341,7 +341,7 @@ public class AgregarItemComandaHandlerTests
         var comandaId = Guid.NewGuid();
         var command = CreateBasicCommand(comandaId, Guid.NewGuid());
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Comanda)null);
 
         // Act
@@ -352,7 +352,7 @@ public class AgregarItemComandaHandlerTests
         Assert.Contains("La comanda especificada no existe", result.Error);
         
         // Verify no se intenta actualizar
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>()), Times.Never);
+        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -363,7 +363,7 @@ public class AgregarItemComandaHandlerTests
         var command = CreateBasicCommand(comandaId, Guid.NewGuid());
 
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Finalizada);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         // Act
@@ -390,7 +390,7 @@ public class AgregarItemComandaHandlerTests
         var command = CreateBasicCommand(comandaId, Guid.NewGuid());
 
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Cancelada);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         // Act
@@ -409,7 +409,7 @@ public class AgregarItemComandaHandlerTests
         var command = CreateBasicCommand(comandaId, Guid.NewGuid());
 
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Lista);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         // Act
@@ -428,7 +428,7 @@ public class AgregarItemComandaHandlerTests
         var command = CreateBasicCommand(comandaId, Guid.NewGuid());
 
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Creada);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         comanda.Setup(x => x.AgregarItem(
@@ -455,7 +455,7 @@ public class AgregarItemComandaHandlerTests
         var command = CreateBasicCommand(comandaId, Guid.NewGuid());
 
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Creada);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         comanda.Setup(x => x.AgregarItem(
@@ -493,7 +493,7 @@ public class AgregarItemComandaHandlerTests
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Creada);
         var itemComanda = CreateMockItemComanda(Guid.NewGuid(), 1, 25.00m);
         
-        SetupRepositoryAndMapper(comanda, itemComanda, null);
+        SetupRepositoryAndMapper(comanda, itemComanda, new ComandaDto());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -517,7 +517,7 @@ public class AgregarItemComandaHandlerTests
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Creada);
         var itemComanda = CreateMockItemComanda(Guid.NewGuid(), 1, 25.00m);
         
-        SetupRepositoryAndMapper(comanda, itemComanda, null);
+        SetupRepositoryAndMapper(comanda, itemComanda, new ComandaDto());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -542,7 +542,7 @@ public class AgregarItemComandaHandlerTests
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Creada);
         var itemComanda = CreateMockItemComanda(Guid.NewGuid(), 1, 25.00m);
         
-        SetupRepositoryAndMapper(comanda, itemComanda, null);
+        SetupRepositoryAndMapper(comanda, itemComanda, new ComandaDto());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -561,13 +561,13 @@ public class AgregarItemComandaHandlerTests
         {
             personalizacion.Tipo = "Sustituir";
             personalizacion.IngredienteId = Guid.NewGuid();
-            personalizacion.IngredienteSustitucionId = null;
+            personalizacion.IngredienteSustitucionId = Guid.Empty;
         });
 
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Creada);
         var itemComanda = CreateMockItemComanda(Guid.NewGuid(), 1, 25.00m);
         
-        SetupRepositoryAndMapper(comanda, itemComanda, null);
+        SetupRepositoryAndMapper(comanda, itemComanda, new ComandaDto());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -593,7 +593,7 @@ public class AgregarItemComandaHandlerTests
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Creada);
         var itemComanda = CreateMockItemComanda(Guid.NewGuid(), 1, 25.00m);
         
-        SetupRepositoryAndMapper(comanda, itemComanda, null);
+        SetupRepositoryAndMapper(comanda, itemComanda, new ComandaDto());
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -619,7 +619,7 @@ public class AgregarItemComandaHandlerTests
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Creada);
         var itemComanda = CreateMockItemComanda(Guid.NewGuid(), 1, 25.00m);
         
-        SetupRepositoryAndMapper(comanda, itemComanda, null);
+        SetupRepositoryAndMapper(comanda, itemComanda, new ComandaDto());
 
         itemComanda.Setup(x => x.AgregarPersonalizacionExtra(
                 It.IsAny<Guid>(),
@@ -643,7 +643,7 @@ public class AgregarItemComandaHandlerTests
         var comandaId = Guid.NewGuid();
         var command = CreateBasicCommand(comandaId, Guid.NewGuid());
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Error de base de datos"));
 
         // Act
@@ -714,10 +714,9 @@ public class AgregarItemComandaHandlerTests
         return new ComandaDto
         {
             Id = id,
-            Estado = "EnProceso",
+            Estado = EstadoComanda.EnProceso,
             Total = total,
             FechaCreacion = DateTime.UtcNow,
-            NumeroComanda = "COM-001",
             Items = new List<ItemComandaDto>
             {
                 new ItemComandaDto 
@@ -725,8 +724,7 @@ public class AgregarItemComandaHandlerTests
                     Id = Guid.NewGuid(), 
                     NombreProducto = "Test Product", 
                     Cantidad = 1, 
-                    PrecioUnitario = total,
-                    Subtotal = total
+                    PrecioUnitario = total
                 }
             }
         };
@@ -734,13 +732,13 @@ public class AgregarItemComandaHandlerTests
 
     private void SetupRepositoryAndMapper(Mock<Comanda> comanda, Mock<ItemComanda> itemComanda, ComandaDto comandaDto)
     {
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
-        _comandaRepositoryMock.Setup(x => x.ActualizarAsync(comanda.Object))
+        _comandaRepositoryMock.Setup(x => x.ActualizarAsync(comanda.Object, CancellationToken.None))
             .Returns(Task.CompletedTask);
 
-        _comandaRepositoryMock.Setup(x => x.GuardarCambiosAsync())
+        _comandaRepositoryMock.Setup(x => x.GuardarCambiosAsync(CancellationToken.None))
             .ReturnsAsync(1);
 
         comanda.Setup(x => x.AgregarItem(

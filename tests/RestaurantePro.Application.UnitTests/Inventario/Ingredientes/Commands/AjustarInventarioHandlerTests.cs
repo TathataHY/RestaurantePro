@@ -298,7 +298,7 @@ public class AjustarInventarioHandlerTests
             It.IsAny<TipoMovimientoInventario>(), 
             cantidad, 
             It.IsAny<decimal>()))
-            .ReturnsAsync(ResultadoValidacionInventario.ConError(mensajeEsperado));
+            .ReturnsAsync(ResultadoValidacionInventario.ConErrores(mensajeEsperado));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -346,7 +346,7 @@ public class AjustarInventarioHandlerTests
             TipoMovimientoInventario.Decremento, 
             cantidadAjuste, 
             stockActual))
-            .ReturnsAsync(ResultadoValidacionInventario.ConError($"El ajuste causaría stock negativo. Stock actual: {stockActual}, Cantidad a reducir: {cantidadAjuste}"));
+            .ReturnsAsync(ResultadoValidacionInventario.ConErrores($"El ajuste causaría stock negativo. Stock actual: {stockActual}, Cantidad a reducir: {cantidadAjuste}"));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -493,9 +493,8 @@ public class AjustarInventarioHandlerTests
         // _validacionServiceMock.Verify(x => x.ValidarDocumentoReferencia(documentoReferencia), Times.Once);
 
         // Verify movimiento creado con información correcta
-        _movimientoRepositoryMock.Verify(x => x.CrearAsync(
-            It.IsAny<MovimientoInventario>(), 
-            It.IsAny<CancellationToken>()), Times.Once);
+        _movimientoRepositoryMock.Verify(x => x.AgregarAsync(
+            It.IsAny<MovimientoInventario>()), Times.Once);
     }
 
     /// <summary>
@@ -553,6 +552,10 @@ public class AjustarInventarioHandlerTests
         // Assert
         result.IsSuccess().Should().BeTrue();
 
+        // Verificar que la categoría esperada es válida y descriptiva
+        categoriaEsperada.Should().NotBeNullOrEmpty();
+        categoriaEsperada.Should().BeOneOf("Entrada por recuento", "Salida por merma", "Entrada por devolución", "Salida por daño");
+
         // Verify categorización del motivo
         // _validacionServiceMock.Verify(x => x.CategorizarMotivoAjuste(motivo), Times.Once);
     }
@@ -599,10 +602,15 @@ public class AjustarInventarioHandlerTests
             cantidadAjuste, 
             stockAnterior))
             .ReturnsAsync(ResultadoValidacionInventario.Exitoso());
-        _alertaStockServiceMock.Setup(x => x.VerificarNivelStockAsync(It.IsAny<Ingrediente>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AlertaStock 
+        _alertaStockServiceMock.Setup(x => x.EvaluarNecesidadAlertaAsync(
+            It.IsAny<Guid>(),
+            It.IsAny<decimal>(),
+            It.IsAny<decimal>(),
+            It.IsAny<decimal?>()))
+            .ReturnsAsync(new InfoAlertaStock 
             { 
-                Nivel = NivelAlerta.Critico, 
+                TipoAlerta = TipoAlertaStock.StockCritico, 
+                NivelPrioridad = NivelPrioridadAlerta.Critica,
                 Mensaje = "Stock crítico - requiere reposición inmediata",
                 RequiereAccionInmediata = true
             });

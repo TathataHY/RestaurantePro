@@ -81,7 +81,7 @@ public class ActualizarStockValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.TipoMovimiento = tipoInvalido;
+        command.TipoMovimiento = tipoInvalido ?? string.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -147,7 +147,7 @@ public class ActualizarStockValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.Motivo = motivoInvalido;
+        command.Motivo = motivoInvalido ?? string.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);

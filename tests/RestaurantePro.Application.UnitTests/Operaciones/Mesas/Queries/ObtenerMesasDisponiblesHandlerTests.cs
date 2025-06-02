@@ -206,7 +206,7 @@ public class ObtenerMesasDisponiblesHandlerTests
         result.Value.Should().NotBeNull();
         result.Value.PageNumber.Should().Be(2);
         result.Value.PageSize.Should().Be(5);
-        result.Value.Items.Should().HaveCountLessOrEqualTo(5);
+        result.Value.Items.Should().HaveCount(c => c <= 5);
         result.Value.TotalCount.Should().Be(_mesasDisponiblesEjemplo.Count);
 
         _mockRepository.Verify(r => r.ObtenerMesasDisponiblesAsync(), Times.Once);
@@ -431,7 +431,7 @@ public class ObtenerMesasDisponiblesHandlerTests
         result.Succeeded.Should().BeTrue();
         result.Value.PageNumber.Should().Be(pagina);
         result.Value.PageSize.Should().Be(tamanoPagina);
-        result.Value.Items.Should().HaveCountLessOrEqualTo(tamanoPagina);
+        result.Value.Items.Should().HaveCount(c => c <= tamanoPagina);
         result.Value.TotalCount.Should().Be(_mesasDisponiblesEjemplo.Count);
     }
 

@@ -299,7 +299,7 @@ public class RetryBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Reintentando")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
             Times.AtLeastOnce);
     }
 
@@ -332,7 +332,7 @@ public class RetryBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Pizza Compleja")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
             Times.AtLeastOnce);
     }
 
@@ -371,7 +371,7 @@ public class RetryBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains($"Reintento {numeroReintento}")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
             Times.Once);
     }
 } 

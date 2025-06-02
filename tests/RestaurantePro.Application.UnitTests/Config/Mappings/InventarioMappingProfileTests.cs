@@ -61,11 +61,11 @@ public class InventarioMappingProfileTests
     }
 
     [Theory]
-    [InlineData(UnidadMedida.Kilogramos, "Kilogramos")]
-    [InlineData(UnidadMedida.Gramos, "Gramos")]
-    [InlineData(UnidadMedida.Litros, "Litros")]
-    [InlineData(UnidadMedida.Mililitros, "Mililitros")]
-    [InlineData(UnidadMedida.Unidades, "Unidades")]
+    [InlineData(UnidadMedida.Kilogramo, "Kilogramo")]
+    [InlineData(UnidadMedida.Gramo, "Gramo")]
+    [InlineData(UnidadMedida.Litro, "Litro")]
+    [InlineData(UnidadMedida.Mililitro, "Mililitro")]
+    [InlineData(UnidadMedida.Unidad, "Unidad")]
     [InlineData(UnidadMedida.Piezas, "Piezas")]
     public void Map_IngredienteToDto_ConDiferentesUnidadesMedida_DeberiaMapearTextoCorrectamente(UnidadMedida unidad, string expectedTexto)
     {
@@ -79,7 +79,7 @@ public class InventarioMappingProfileTests
         var dto = _mapper.Map<IngredienteDto>(ingrediente);
 
         // Assert
-        dto.UnidadMedida.Should().Be(expectedTexto);
+        dto.UnidadMedidaTexto.Should().Be(expectedTexto);
     }
 
     [Fact]
@@ -105,7 +105,7 @@ public class InventarioMappingProfileTests
         {
             Nombre = "Sal de grano",
             Descripcion = "Sal de grano marina",
-            UnidadMedida = UnidadMedida.Kilogramos,
+            UnidadMedida = "Kilogramo",
             StockMinimo = 10,
             StockInicial = 50,
             CostoInicial = 25.50m,
@@ -135,7 +135,7 @@ public class InventarioMappingProfileTests
         {
             Nombre = "Azúcar",
             Descripcion = "Azúcar refinada",
-            UnidadMedida = UnidadMedida.Kilogramos,
+            UnidadMedida = "Kilogramo",
             StockInicial = 25,
             CostoInicial = 15.00m
         };
@@ -371,7 +371,7 @@ public class InventarioMappingProfileTests
         typeof(Ingrediente).GetProperty("Id")?.SetValue(ingrediente, Guid.NewGuid());
         typeof(Ingrediente).GetProperty("Nombre")?.SetValue(ingrediente, "Harina de trigo");
         typeof(Ingrediente).GetProperty("Descripcion")?.SetValue(ingrediente, "Harina de trigo para panadería");
-        typeof(Ingrediente).GetProperty("UnidadMedida")?.SetValue(ingrediente, UnidadMedida.Kilogramos);
+        typeof(Ingrediente).GetProperty("UnidadMedida")?.SetValue(ingrediente, UnidadMedida.Kilogramo);
         typeof(Ingrediente).GetProperty("FechaCreacion")?.SetValue(ingrediente, DateTime.UtcNow.AddDays(-10));
         typeof(Ingrediente).GetProperty("Activo")?.SetValue(ingrediente, true);
         

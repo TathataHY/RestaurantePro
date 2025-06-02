@@ -393,7 +393,7 @@ public class ObtenerComandasActivasHandlerTests
             PageSize = 10
         };
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerComandasActivasAsync(It.IsAny<Dictionary<string, object>>(), It.IsAny<int>(), It.IsAny<int>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerComandasActivasAsync(It.IsAny<Dictionary<string, object>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Error de base de datos"));
 
         // Act
@@ -455,7 +455,8 @@ public class ObtenerComandasActivasHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerComandasActivasAsync(
                 It.IsAny<Dictionary<string, object>>(), 
                 It.IsAny<int>(), 
-                It.IsAny<int>()))
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync((comandas, totalCount));
     }
 
@@ -470,7 +471,8 @@ public class ObtenerComandasActivasHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerComandasActivasAsync(
                 It.IsAny<Dictionary<string, object>>(), 
                 It.IsAny<int>(), 
-                It.IsAny<int>()))
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ArgumentException("Parámetros de paginación inválidos"));
     }
 
@@ -483,7 +485,8 @@ public class ObtenerComandasActivasHandlerTests
         _comandaRepositoryMock.Verify(x => x.ObtenerComandasActivasAsync(
             It.IsAny<Dictionary<string, object>>(),
             It.IsAny<int>(),
-            It.IsAny<int>()), Times.Once);
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private void VerifyRepositoryQueryCalledWithCriteria(string key, object value)
@@ -491,7 +494,8 @@ public class ObtenerComandasActivasHandlerTests
         _comandaRepositoryMock.Verify(x => x.ObtenerComandasActivasAsync(
             It.Is<Dictionary<string, object>>(d => d.ContainsKey(key) && d[key].Equals(value)),
             It.IsAny<int>(),
-            It.IsAny<int>()), Times.Once);
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private void VerifyRepositoryQueryCalledWithDateRange(DateTime fechaInicio, DateTime fechaFin)
@@ -503,7 +507,8 @@ public class ObtenerComandasActivasHandlerTests
                 ((DateTime)d["FechaInicio"]).Date == fechaInicio.Date &&
                 ((DateTime)d["FechaFin"]).Date >= fechaFin.Date),
             It.IsAny<int>(),
-            It.IsAny<int>()), Times.Once);
+            It.IsAny<int>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

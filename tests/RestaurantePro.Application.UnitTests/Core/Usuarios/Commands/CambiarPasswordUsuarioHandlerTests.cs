@@ -522,5 +522,11 @@ public class CambiarPasswordUsuarioHandlerTests
 
         // Assert
         Assert.False(result.IsSuccess());
+        
+        // Verificar que el motivo de fallo es válido y descriptivo
+        motivoFallo.Should().NotBeNullOrEmpty();
+        // Verificar que el motivo es uno de los valores esperados
+        var motivosValidos = new[] { "muy corta", "sin números ni símbolos", "sin minúsculas", "sin mayúsculas ni símbolos" };
+        motivosValidos.Should().Contain(motivoFallo);
     }
 } 

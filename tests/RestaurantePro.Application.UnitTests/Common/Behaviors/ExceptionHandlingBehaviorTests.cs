@@ -155,9 +155,9 @@ public class ExceptionHandlingBehaviorTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error no manejado")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error no controlado")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
@@ -181,7 +181,7 @@ public class ExceptionHandlingBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Excepción de dominio")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 

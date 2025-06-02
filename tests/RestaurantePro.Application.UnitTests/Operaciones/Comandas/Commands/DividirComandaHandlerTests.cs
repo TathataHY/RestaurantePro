@@ -12,6 +12,7 @@ using AutoMapper;
 using FluentAssertions;
 using Moq;
 using Xunit;
+using System.Reflection;
 
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.Commands;
 
@@ -60,23 +61,25 @@ public class DividirComandaHandlerTests
         var command = new DividirComandaCommand
         {
             ComandaOriginalId = comandaOriginalId,
-            TipoDivision = TipoDivision.PorItems,
-            MotivoDivision = "Solicitud del cliente",
+            TipoDivision = TipoDivisionComanda.PorItems,
+            MotivoDivision = "Cliente solicita cuentas separadas",
             DistribuirDescuentos = true,
             MantenerComandaOriginal = false,
-            AutorizadoPor = "Supervisor",
-            DivisionItems = new List<DivisionItemsDto>
+            AutorizadoPor = Guid.NewGuid(),
+            DivisionItems = new List<DivisionComandaDto>
             {
-                new DivisionItemsDto
+                new DivisionComandaDto
                 {
+                    NumeroComandaNueva = 1,
                     MesaDestinoId = Guid.NewGuid(),
                     Items = new List<ItemDivisionDto>
                     {
                         new ItemDivisionDto { ItemId = Guid.NewGuid(), Cantidad = 2 }
                     }
                 },
-                new DivisionItemsDto
+                new DivisionComandaDto
                 {
+                    NumeroComandaNueva = 2,
                     MesaDestinoId = Guid.NewGuid(),
                     Items = new List<ItemDivisionDto>
                     {
@@ -114,9 +117,9 @@ public class DividirComandaHandlerTests
         var command = new DividirComandaCommand
         {
             ComandaOriginalId = Guid.NewGuid(),
-            TipoDivision = TipoDivision.PorItems,
+            TipoDivision = TipoDivisionComanda.PorItems,
             MotivoDivision = "Test",
-            DivisionItems = new List<DivisionItemsDto>()
+            DivisionItems = new List<DivisionComandaDto>()
         };
 
         ConfigurarMockComandasVacio();
@@ -142,13 +145,14 @@ public class DividirComandaHandlerTests
         var command = new DividirComandaCommand
         {
             ComandaOriginalId = comandaOriginalId,
-            TipoDivision = TipoDivision.PorItems,
+            TipoDivision = TipoDivisionComanda.PorItems,
             MotivoDivision = "Test",
             MantenerComandaOriginal = false,
-            DivisionItems = new List<DivisionItemsDto>
+            DivisionItems = new List<DivisionComandaDto>
             {
-                new DivisionItemsDto
+                new DivisionComandaDto
                 {
+                    NumeroComandaNueva = 1,
                     Items = new List<ItemDivisionDto>
                     {
                         new ItemDivisionDto { ItemId = itemId, Cantidad = 5 } // Más cantidad que la original
@@ -187,13 +191,14 @@ public class DividirComandaHandlerTests
         var command = new DividirComandaCommand
         {
             ComandaOriginalId = comandaOriginalId,
-            TipoDivision = TipoDivision.PorItems,
+            TipoDivision = TipoDivisionComanda.PorItems,
             MotivoDivision = "Test",
             MantenerComandaOriginal = false,
-            DivisionItems = new List<DivisionItemsDto>
+            DivisionItems = new List<DivisionComandaDto>
             {
-                new DivisionItemsDto
+                new DivisionComandaDto
                 {
+                    NumeroComandaNueva = 1,
                     Items = new List<ItemDivisionDto>
                     {
                         new ItemDivisionDto { ItemId = itemId1, Cantidad = 2 }
@@ -236,16 +241,23 @@ public class DividirComandaHandlerTests
         var command = new DividirComandaCommand
         {
             ComandaOriginalId = comandaOriginalId,
-            TipoDivision = TipoDivision.PorItems,
+            TipoDivision = TipoDivisionComanda.PorItems,
             MotivoDivision = "Test estado",
-            DivisionItems = new List<DivisionItemsDto>
+            DivisionItems = new List<DivisionComandaDto>
             {
-                new DivisionItemsDto { Items = new List<ItemDivisionDto>() }
+                new DivisionComandaDto 
+                { 
+                    NumeroComandaNueva = 1,
+                    Items = new List<ItemDivisionDto>() 
+                }
             }
         };
 
         var comandaOriginal = CrearComandaConItems(comandaOriginalId);
-        comandaOriginal.Estado = estadoComanda;
+        
+        // Usar reflection para modificar el estado (solo en tests)
+        var propEstado = typeof(Comanda).GetProperty("Estado", BindingFlags.Public | BindingFlags.Instance);
+        propEstado?.SetValue(comandaOriginal, estadoComanda);
 
         if (deberiaDividir)
         {
@@ -281,13 +293,14 @@ public class DividirComandaHandlerTests
         var command = new DividirComandaCommand
         {
             ComandaOriginalId = comandaOriginalId,
-            TipoDivision = TipoDivision.PorItems,
+            TipoDivision = TipoDivisionComanda.PorItems,
             MotivoDivision = "Mantener original",
             MantenerComandaOriginal = true, // Mantener comanda original
-            DivisionItems = new List<DivisionItemsDto>
+            DivisionItems = new List<DivisionComandaDto>
             {
-                new DivisionItemsDto
+                new DivisionComandaDto
                 {
+                    NumeroComandaNueva = 1,
                     Items = new List<ItemDivisionDto>
                     {
                         new ItemDivisionDto { ItemId = itemId, Cantidad = 2 }
@@ -323,14 +336,22 @@ public class DividirComandaHandlerTests
         var command = new DividirComandaCommand
         {
             ComandaOriginalId = comandaOriginalId,
-            TipoDivision = TipoDivision.PorItems,
+            TipoDivision = TipoDivisionComanda.PorItems,
             MotivoDivision = "Con descuentos",
             DistribuirDescuentos = true,
             MantenerComandaOriginal = false,
-            DivisionItems = new List<DivisionItemsDto>
+            DivisionItems = new List<DivisionComandaDto>
             {
-                new DivisionItemsDto { Items = new List<ItemDivisionDto>() },
-                new DivisionItemsDto { Items = new List<ItemDivisionDto>() }
+                new DivisionComandaDto 
+                { 
+                    NumeroComandaNueva = 1,
+                    Items = new List<ItemDivisionDto>() 
+                },
+                new DivisionComandaDto 
+                { 
+                    NumeroComandaNueva = 2,
+                    Items = new List<ItemDivisionDto>() 
+                }
             }
         };
 
@@ -365,13 +386,14 @@ public class DividirComandaHandlerTests
         var command = new DividirComandaCommand
         {
             ComandaOriginalId = comandaOriginalId,
-            TipoDivision = TipoDivision.PorItems,
+            TipoDivision = TipoDivisionComanda.PorItems,
             MotivoDivision = "División completa",
             MantenerComandaOriginal = false,
-            DivisionItems = new List<DivisionItemsDto>
+            DivisionItems = new List<DivisionComandaDto>
             {
-                new DivisionItemsDto
+                new DivisionComandaDto
                 {
+                    NumeroComandaNueva = 1,
                     Items = new List<ItemDivisionDto>
                     {
                         new ItemDivisionDto { ItemId = itemId, Cantidad = 3 } // Todos los items
@@ -407,9 +429,9 @@ public class DividirComandaHandlerTests
         var command = new DividirComandaCommand
         {
             ComandaOriginalId = Guid.NewGuid(),
-            TipoDivision = TipoDivision.PorItems,
+            TipoDivision = TipoDivisionComanda.PorItems,
             MotivoDivision = "Test error",
-            DivisionItems = new List<DivisionItemsDto>()
+            DivisionItems = new List<DivisionComandaDto>()
         };
 
         var comandaOriginal = CrearComandaConItems(command.ComandaOriginalId);

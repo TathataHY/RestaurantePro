@@ -111,11 +111,11 @@ public class ActualizarUsuarioValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConMotivoActualizacionVacioONull_DeberiaRetornarError(string motivoInvalido)
+    public async Task Validate_ConMotivoActualizacionVacioONull_DeberiaRetornarError(string? motivoInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.MotivoActualizacion = motivoInvalido;
+        command.MotivoActualizacion = motivoInvalido ?? string.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);

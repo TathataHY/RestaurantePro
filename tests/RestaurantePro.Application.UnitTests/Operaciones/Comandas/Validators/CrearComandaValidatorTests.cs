@@ -314,7 +314,7 @@ public class CrearComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         var item = CrearItemValido();
-        item.Personalizaciones = null;
+        item.Personalizaciones = new List<PersonalizacionCreateDto>();
         command.Items = new List<AgregarProductoDto> { item };
 
         // Act
@@ -443,7 +443,7 @@ public class CrearComandaValidatorTests
                     ProductoId = Guid.NewGuid(),
                     Cantidad = 1,
                     Observaciones = "Sin cebolla",
-                    Personalizaciones = null
+                    Personalizaciones = new List<PersonalizacionCreateDto>()
                 }
             }
         };

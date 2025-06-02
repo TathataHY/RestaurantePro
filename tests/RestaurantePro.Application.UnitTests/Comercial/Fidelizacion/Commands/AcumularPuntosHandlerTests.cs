@@ -148,7 +148,7 @@ public class AcumularPuntosHandlerTests
 
         // Setup mocks básicos
         var clienteMock = CreateMockCliente(clienteId);
-        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId))
+        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
             .ReturnsAsync(clienteMock);
 
         _currentUserServiceMock.Setup(x => x.UserId)
@@ -177,7 +177,7 @@ public class AcumularPuntosHandlerTests
 
         // Setup mocks básicos
         var clienteMock = CreateMockCliente(clienteId);
-        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId))
+        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
             .ReturnsAsync(clienteMock);
 
         _currentUserServiceMock.Setup(x => x.UserId)
@@ -207,7 +207,7 @@ public class AcumularPuntosHandlerTests
 
         // Setup mocks básicos
         var clienteMock = CreateMockCliente(clienteId);
-        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId))
+        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
             .ReturnsAsync(clienteMock);
 
         _currentUserServiceMock.Setup(x => x.UserId)
@@ -237,7 +237,7 @@ public class AcumularPuntosHandlerTests
             MontoCompra = 100.00m
         };
 
-        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId))
+        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
             .ReturnsAsync((Cliente?)null);
 
         // Act
@@ -260,7 +260,7 @@ public class AcumularPuntosHandlerTests
         };
 
         var clienteInactivo = CreateMockCliente(clienteId, activo: false);
-        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId))
+        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
             .ReturnsAsync(clienteInactivo);
 
         // Act

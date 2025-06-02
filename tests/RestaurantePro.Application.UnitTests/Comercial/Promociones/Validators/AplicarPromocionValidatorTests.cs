@@ -40,7 +40,7 @@ public class AplicarPromocionValidatorTests
         // Arrange
         var command = CrearCommandoBase();
         command.PromocionId = Guid.Empty;
-        command.CodigoPromocion = null;
+        command.CodigoPromocion = null!;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -56,8 +56,8 @@ public class AplicarPromocionValidatorTests
     {
         // Arrange
         var command = CrearCommandoBase();
-        command.FacturaId = null;
-        command.ComandaId = null;
+        command.FacturaId = null!;
+        command.ComandaId = null!;
 
         // Act
         var result = await _validator.ValidateAsync(command);

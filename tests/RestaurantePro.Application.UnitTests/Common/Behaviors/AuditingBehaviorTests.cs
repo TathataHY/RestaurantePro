@@ -39,7 +39,7 @@ public class AuditingBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(anyLogLevel, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -67,7 +67,7 @@ public class AuditingBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -93,7 +93,7 @@ public class AuditingBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Warning, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -122,7 +122,7 @@ public class AuditingBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         queryLogger.Verify(
             x => x.Log(anyLogLevel, anyEventId, anyState, anyException, anyFormatter),
             Times.Never);
@@ -149,7 +149,7 @@ public class AuditingBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -178,7 +178,7 @@ public class AuditingBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -205,7 +205,7 @@ public class AuditingBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -236,7 +236,7 @@ public class AuditingBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -266,7 +266,7 @@ public class AuditingBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -296,10 +296,14 @@ public class AuditingBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
+        
+        // Verificar que el nombre del comando es válido
+        commandName.Should().NotBeNullOrEmpty();
+        commandName.Should().EndWith("Command");
     }
 
     [Fact]
@@ -323,7 +327,7 @@ public class AuditingBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeast(4)); // 2 comandos x 2 logs mínimo cada uno

@@ -545,6 +545,25 @@ public class CrearUsuarioHandlerTests
             It.Is<Usuario>(usuario => 
                 usuario.Roles.Any(r => r.ToString() == rol)),
             It.IsAny<CancellationToken>()), Times.Once);
+        
+        // Verificar que el nivel esperado es correcto para el rol
+        nivelEsperado.Should().BeGreaterThan(0);
+        
+        switch (rol)
+        {
+            case "Empleado":
+                nivelEsperado.Should().Be(1);
+                break;
+            case "Supervisor":
+                nivelEsperado.Should().Be(5);
+                break;
+            case "Gerente":
+                nivelEsperado.Should().Be(7);
+                break;
+            case "Administrador":
+                nivelEsperado.Should().Be(10);
+                break;
+        }
     }
 
     [Fact]

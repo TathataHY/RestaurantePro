@@ -484,10 +484,10 @@ public class ObtenerReservacionPorIdValidatorTests
     public async Task Validator_ConQueryNull_NoDeberiaLanzarExcepcion()
     {
         // Arrange
-        ObtenerReservacionPorIdQuery query = null;
+        ObtenerReservacionPorIdQuery? query = null;
 
         // Act
-        Func<Task> act = async () => await _validator.ValidateAsync(query);
+        Func<Task> act = async () => await _validator.ValidateAsync(query!);
 
         // Assert
         await act.Should().NotThrowAsync();

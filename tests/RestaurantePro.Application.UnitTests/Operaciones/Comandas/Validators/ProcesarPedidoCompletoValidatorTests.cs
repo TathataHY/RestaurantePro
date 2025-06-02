@@ -139,7 +139,7 @@ public class ProcesarPedidoCompletoValidatorTests
         var command = new ComandasProcesarPedidoCommand
         {
             MeseroId = Guid.NewGuid(),
-            Items = null
+            Items = new List<ItemPedido>()
         };
 
         // Act

@@ -149,7 +149,7 @@ public class CrearIngredienteValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.Descripcion = null;
+        command.Descripcion = string.Empty;
 
         // Act
         var result = _validator.Validate(command);

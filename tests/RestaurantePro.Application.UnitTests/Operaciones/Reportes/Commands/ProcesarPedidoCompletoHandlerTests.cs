@@ -98,8 +98,8 @@ public class ProcesarPedidoCompletoHandlerTests
         Assert.Equal(comandaId, result.Value.ComandaId);
         Assert.True(result.Value.PagoExitoso);
         Assert.True(result.Value.FacturaGenerada);
-        Assert.True(result.Value.PuntosFidelizacionAcumulados);
-        Assert.True(result.Value.MesaLiberada);
+        Assert.True(result.Value.PuntosFidelizacionAcumulados > 0);
+        Assert.NotNull(result.Value.Mesa);
 
         // Verificar que se ejecutó todo el workflow
         VerifyWorkflowCompleto(comandaId, clienteId, mesaId);
@@ -131,9 +131,9 @@ public class ProcesarPedidoCompletoHandlerTests
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.False(result.Value.PagoExitoso); // No se procesó pago
+        Assert.False(result.Value.PagoExitoso);
         Assert.True(result.Value.FacturaGenerada);
-        Assert.True(result.Value.MesaLiberada);
+        Assert.NotNull(result.Value.Mesa);
 
         // Verificar que NO se llamó al servicio de pagos
         _servicioFacturacionMock.Verify(x => x.ProcesarPagoAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -168,7 +168,7 @@ public class ProcesarPedidoCompletoHandlerTests
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.True(result.Value.PuntosFidelizacionAcumulados);
+        Assert.True(result.Value.PuntosFidelizacionAcumulados > 0);
         Assert.Equal(20, result.Value.PuntosAcumulados);
 
         _servicioFacturacionMock.Verify(x => x.AcumularPuntosPorCompraAsync(
@@ -295,7 +295,7 @@ public class ProcesarPedidoCompletoHandlerTests
         };
 
         var comandaFinalizada = CreateMockComanda(comandaId, null, Guid.NewGuid(), 100.00m);
-        comandaFinalizada.Finalizar(); // Ya finalizada
+        comandaFinalizada.ActualizarEstado(EstadoComanda.Finalizada);
 
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comandaFinalizada);
@@ -422,7 +422,7 @@ public class ProcesarPedidoCompletoHandlerTests
 
         // Assert
         Assert.True(result.Succeeded); // El proceso debe continuar
-        Assert.False(result.Value.MesaLiberada); // Pero la mesa no se libera
+        Assert.Null(result.Value.Mesa); // Mesa no se libera cuando no existe
 
         _loggerMock.Verify(
             x => x.Log(
@@ -698,7 +698,7 @@ public class ProcesarPedidoCompletoHandlerTests
 
     private static Mesa CreateMockMesa(Guid id)
     {
-        var mesa = Mesa.Crear(1, 4, TipoMesa.Interior, EstadoMesa.Ocupada);
+        var mesa = Mesa.Crear(1, 4, "Interior");
         
         typeof(EntityBase).GetProperty("Id")?.SetValue(mesa, id);
         
@@ -764,6 +764,22 @@ public class ProcesarPedidoCompletoHandlerTests
                 NumeroFactura = "FAC-001",
                 MontoTotal = 150.00m,
                 EstadoFactura = "Emitida"
+            },
+            Fidelizacion = new FidelizacionProcesadaDto
+            {
+                ClienteId = Guid.NewGuid(),
+                PuntosAcumulados = 20,
+                TotalPuntosCliente = 100,
+                NivelFidelizacion = "Bronce",
+                CambioNivel = false
+            },
+            Mesa = new MesaLiberadaDto
+            {
+                MesaId = Guid.NewGuid(),
+                NumeroMesa = "5",
+                EstadoMesa = "Disponible",
+                HoraLiberacion = DateTime.UtcNow,
+                TiempoOcupacion = TimeSpan.FromHours(1.5)
             }
         };
     }

@@ -164,7 +164,7 @@ public class TransactionBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Error, anyEventId, anyState, anyException, anyFormatter),
             Times.Once);
@@ -194,7 +194,7 @@ public class TransactionBehaviorTests
         // Verificar logging de error en rollback
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Error, anyEventId, anyState, rollbackException, anyFormatter),
             Times.Once);
@@ -241,7 +241,7 @@ public class TransactionBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Debug, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -266,7 +266,7 @@ public class TransactionBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Debug, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -289,7 +289,7 @@ public class TransactionBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Warning, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -314,7 +314,7 @@ public class TransactionBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Debug, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -339,7 +339,7 @@ public class TransactionBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Debug, anyEventId, anyState, anyException, anyFormatter),
             Times.AtLeastOnce);
@@ -362,7 +362,7 @@ public class TransactionBehaviorTests
         var anyEventId = It.IsAny<EventId>();
         var anyState = It.IsAny<It.IsAnyType>();
         var anyException = It.IsAny<Exception>();
-        var anyFormatter = (Func<It.IsAnyType, Exception, string>)It.IsAny<object>();
+        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
             x => x.Log(LogLevel.Error, anyEventId, anyState, anyException, anyFormatter),
             Times.Never);
@@ -390,5 +390,9 @@ public class TransactionBehaviorTests
         var anyToken = It.IsAny<CancellationToken>();
         _mockDbContext.Verify(x => x.Database.BeginTransactionAsync(anyToken), Times.Once);
         _mockTransaction.Verify(x => x.CommitAsync(anyToken), Times.Once);
+        
+        // Verificar que el tipo de comando es correcto
+        commandType.Should().NotBeNull();
+        commandType.Name.Should().EndWith("Command");
     }
 } 

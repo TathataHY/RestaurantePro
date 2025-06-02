@@ -47,7 +47,7 @@ public class PerformanceBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("⚠️")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Never);
     }
 
@@ -83,7 +83,7 @@ public class PerformanceBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("lenta detectada")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
@@ -116,7 +116,7 @@ public class PerformanceBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("lenta detectada")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
@@ -141,7 +141,7 @@ public class PerformanceBehaviorTests
         
         // Verificar métricas de severidad crítica
         _mockMetricsService.Verify(x => x.IncrementCounter(
-            "slow_operations_critical"), Times.Once);
+            "slow_operations_critical", null), Times.Once);
             
         // Debería haber alerta crítica
         _mockLogger.Verify(
@@ -150,7 +150,7 @@ public class PerformanceBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("críticamente lenta")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
@@ -228,6 +228,19 @@ public class PerformanceBehaviorTests
             "CrearProductoCommand",
             (TimeSpan)It.IsAny<object>(),
             true), Times.Once);
+        
+        // Verificar que los parámetros de categorización son correctos
+        requestType.Should().NotBeNullOrEmpty();
+        expectedCategory.Should().NotBeNullOrEmpty();
+        
+        if (requestType.EndsWith("Command"))
+        {
+            expectedCategory.Should().Be("Command");
+        }
+        else if (requestType.EndsWith("Query"))
+        {
+            expectedCategory.Should().Be("Query");
+        }
     }
 
     [Fact]
@@ -270,7 +283,7 @@ public class PerformanceBehaviorTests
         // Verificar registro en histograma
         _mockMetricsService.Verify(x => x.RecordHistogram(
             "request_duration_histogram",
-            (double)It.IsAny<object>()), Times.Once);
+            (double)It.IsAny<object>(), null), Times.Once);
     }
 
     [Fact]
@@ -290,10 +303,10 @@ public class PerformanceBehaviorTests
         
         // Verificar incremento de contadores
         _mockMetricsService.Verify(x => x.IncrementCounter(
-            "total_requests"), Times.Once);
+            "total_requests", null), Times.Once);
             
         _mockMetricsService.Verify(x => x.IncrementCounter(
-            "successful_requests"), Times.Once);
+            "successful_requests", null), Times.Once);
     }
 
     [Fact]
@@ -311,7 +324,7 @@ public class PerformanceBehaviorTests
         
         // Verificar incremento de contador de errores
         _mockMetricsService.Verify(x => x.IncrementCounter(
-            "failed_requests"), Times.Once);
+            "failed_requests", null), Times.Once);
     }
 
     [Fact]
@@ -336,7 +349,7 @@ public class PerformanceBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Operation ID:")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
@@ -366,7 +379,7 @@ public class PerformanceBehaviorTests
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Operation ID:")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Exactly(5));
     }
 
@@ -402,7 +415,7 @@ public class PerformanceBehaviorTests
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("lenta")),
                     It.IsAny<Exception>(),
-                    (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
                 Times.AtLeastOnce);
         }
     }

@@ -44,11 +44,11 @@ public class FinalizarComandaHandlerTests
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.EnProceso);
         var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 85.50m);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
-        _comandaRepositoryMock.Setup(x => x.ActualizarAsync(comanda.Object))
-            .ReturnsAsync(1);
+        _comandaRepositoryMock.Setup(x => x.ActualizarAsync(comanda.Object, CancellationToken.None))
+            .Returns(Task.CompletedTask);
 
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda.Object))
             .Returns(comandaDto);
@@ -64,7 +64,7 @@ public class FinalizarComandaHandlerTests
 
         // Verify transición de estado
         comanda.Verify(x => x.ActualizarEstado(EstadoComanda.Finalizada), Times.Once);
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(comanda.Object), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(comanda.Object, CancellationToken.None), Times.Once);
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public class FinalizarComandaHandlerTests
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.Creada);
         var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 42.75m);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda.Object))
@@ -124,7 +124,7 @@ public class FinalizarComandaHandlerTests
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.EnProceso);
         var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 67.25m);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda.Object))
@@ -163,7 +163,7 @@ public class FinalizarComandaHandlerTests
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.EnProceso);
         var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 91.00m);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda.Object))
@@ -202,7 +202,7 @@ public class FinalizarComandaHandlerTests
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.EnProceso);
         var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 55.80m);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda.Object))
@@ -237,7 +237,7 @@ public class FinalizarComandaHandlerTests
             NotificarMesero = true
         };
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Comanda)null);
 
         // Act
@@ -248,7 +248,7 @@ public class FinalizarComandaHandlerTests
         Assert.Contains("Comanda no encontrada", result.Error);
         
         // Verify no se intenta actualizar
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>()), Times.Never);
+        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -266,7 +266,7 @@ public class FinalizarComandaHandlerTests
         };
 
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.Finalizada);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         // Act
@@ -295,7 +295,7 @@ public class FinalizarComandaHandlerTests
         };
 
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.Cancelada);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         // Act
@@ -323,7 +323,7 @@ public class FinalizarComandaHandlerTests
         };
 
         var comanda = CreateMockComandaSinItems(comandaId, EstadoComanda.Creada);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         // Act
@@ -355,7 +355,7 @@ public class FinalizarComandaHandlerTests
         comanda.Setup(x => x.Estado).Returns(EstadoComanda.Creada);
         comanda.Setup(x => x.Items).Returns((ICollection<ItemComanda>)null);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         // Act
@@ -381,7 +381,7 @@ public class FinalizarComandaHandlerTests
         };
 
         var comanda = CreateMockComandaConItems(comandaId, EstadoComanda.EnProceso);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);
 
         comanda.Setup(x => x.ActualizarEstado(EstadoComanda.Finalizada))
@@ -409,7 +409,7 @@ public class FinalizarComandaHandlerTests
             NotificarMesero = true
         };
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Error de base de datos"));
 
         // Act
@@ -566,13 +566,24 @@ public class FinalizarComandaHandlerTests
 
     private static ComandaDto CreateMockComandaDto(Guid id, string estado, decimal total)
     {
+        var estadoEnum = estado switch
+        {
+            "Creada" => EstadoComanda.Creada,
+            "EnProceso" => EstadoComanda.EnProceso,
+            "Lista" => EstadoComanda.Lista,
+            "Entregada" => EstadoComanda.Entregada,
+            "Finalizada" => EstadoComanda.Finalizada,
+            "Cancelada" => EstadoComanda.Cancelada,
+            "Dividida" => EstadoComanda.Dividida,
+            _ => EstadoComanda.Creada
+        };
+        
         return new ComandaDto
         {
             Id = id,
-            Estado = estado,
+            Estado = estadoEnum,
             Total = total,
             FechaCreacion = DateTime.UtcNow,
-            NumeroComanda = "COM-001",
             Items = new List<ItemComandaDto>
             {
                 new ItemComandaDto { Id = Guid.NewGuid(), NombreProducto = "Item 1", Cantidad = 1, PrecioUnitario = 25.00m },

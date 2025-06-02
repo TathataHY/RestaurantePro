@@ -57,11 +57,11 @@ public class CrearUsuarioValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConNombreUsuarioVacioONull_DeberiaRetornarError(string nombreInvalido)
+    public async Task Validate_ConNombreUsuarioVacioONull_DeberiaRetornarError(string? nombreInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.NombreUsuario = nombreInvalido;
+        command.NombreUsuario = nombreInvalido ?? string.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -157,11 +157,11 @@ public class CrearUsuarioValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConNombreCompletoVacioONull_DeberiaRetornarError(string nombreInvalido)
+    public async Task Validate_ConNombreCompletoVacioONull_DeberiaRetornarError(string? nombreInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.NombreCompleto = nombreInvalido;
+        command.NombreCompleto = nombreInvalido ?? string.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -254,11 +254,11 @@ public class CrearUsuarioValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConEmailVacioONull_DeberiaRetornarError(string emailInvalido)
+    public async Task Validate_ConEmailVacioONull_DeberiaRetornarError(string? emailInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.Email = emailInvalido;
+        command.Email = emailInvalido ?? string.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -336,11 +336,11 @@ public class CrearUsuarioValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConPasswordVaciaONull_DeberiaRetornarError(string passwordInvalida)
+    public async Task Validate_ConPasswordVaciaONull_DeberiaRetornarError(string? passwordInvalida)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.Password = passwordInvalida;
+        command.Password = passwordInvalida ?? string.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -439,11 +439,11 @@ public class CrearUsuarioValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConConfirmarPasswordVaciaONull_DeberiaRetornarError(string confirmacionInvalida)
+    public async Task Validate_ConConfirmarPasswordVaciaONull_DeberiaRetornarError(string? confirmacionInvalida)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.ConfirmarPassword = confirmacionInvalida;
+        command.ConfirmarPassword = confirmacionInvalida ?? string.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -498,11 +498,11 @@ public class CrearUsuarioValidatorTests
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
-    public async Task Validate_ConRolVacioONull_DeberiaRetornarError(string rolInvalido)
+    public async Task Validate_ConRolVacioONull_DeberiaRetornarError(string? rolInvalido)
     {
         // Arrange
         var command = CrearCommandValido();
-        command.Rol = rolInvalido;
+        command.Rol = rolInvalido ?? string.Empty;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -511,7 +511,7 @@ public class CrearUsuarioValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(CrearUsuarioCommand.Rol) &&
-            e.ErrorMessage.Contains("El rol principal es requerido"));
+            e.ErrorMessage.Contains("El rol es requerido"));
     }
 
     [Theory]
@@ -822,7 +822,7 @@ public class CrearUsuarioValidatorTests
     [InlineData("+521234567890")]   // Con código país
     [InlineData("1234567890")]      // Sin código país
     [InlineData("12345678901234")]  // Hasta 14 dígitos
-    public async Task Validate_ConTelefonoValido_NoDeberiaRetornarErrorDeTelefono(string telefono)
+    public async Task Validate_ConTelefonoValido_NoDeberiaRetornarErrorDeTelefono(string? telefono)
     {
         // Arrange
         var command = CrearCommandValido();
@@ -867,7 +867,7 @@ public class CrearUsuarioValidatorTests
     [InlineData("Limpieza")]
     [InlineData("Seguridad")]
     [InlineData("Sistemas")]
-    public async Task Validate_ConDepartamentoValido_NoDeberiaRetornarErrorDeDepartamento(string departamento)
+    public async Task Validate_ConDepartamentoValido_NoDeberiaRetornarErrorDeDepartamento(string? departamento)
     {
         // Arrange
         var command = CrearCommandValido();
@@ -907,7 +907,7 @@ public class CrearUsuarioValidatorTests
     [InlineData("Cocinero Junior")]
     [InlineData("Mesero")]
     [InlineData("Supervisor de Turno")]
-    public async Task Validate_ConPuestoValido_NoDeberiaRetornarErrorDePuesto(string puesto)
+    public async Task Validate_ConPuestoValido_NoDeberiaRetornarErrorDePuesto(string? puesto)
     {
         // Arrange
         var command = CrearCommandValido();

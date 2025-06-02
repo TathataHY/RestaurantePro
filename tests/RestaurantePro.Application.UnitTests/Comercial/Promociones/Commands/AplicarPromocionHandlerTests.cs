@@ -11,8 +11,6 @@ public class AplicarPromocionHandlerTests
     private readonly Mock<ILogger<AplicarPromocionHandler>> _mockLogger;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
     private readonly Mock<ICommunicationService> _mockNotificacionService;
-    private readonly Mock<IUnitOfWork> _mockUnitOfWork;
-    private readonly Mock<ICalculadoraPromocionesService> _mockCalculadoraPromociones;
     private readonly AplicarPromocionHandler _handler;
 
     public AplicarPromocionHandlerTests()
@@ -22,17 +20,13 @@ public class AplicarPromocionHandlerTests
         _mockLogger = new Mock<ILogger<AplicarPromocionHandler>>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
         _mockNotificacionService = new Mock<ICommunicationService>();
-        _mockUnitOfWork = new Mock<IUnitOfWork>();
-        _mockCalculadoraPromociones = new Mock<ICalculadoraPromocionesService>();
 
         _handler = new AplicarPromocionHandler(
             _mockContext.Object,
             _mockMapper.Object,
             _mockLogger.Object,
             _mockCurrentUserService.Object,
-            _mockNotificacionService.Object,
-            _mockUnitOfWork.Object,
-            _mockCalculadoraPromociones.Object);
+            _mockNotificacionService.Object);
 
         ConfigurarMocksBase();
     }
@@ -338,11 +332,7 @@ public class AplicarPromocionHandlerTests
     private void ConfigurarMocksBase()
     {
         _mockCurrentUserService.Setup(x => x.UserId)
-            .Returns(Guid.NewGuid());
-
-        var mockTransaction = new Mock<IDbContextTransaction>();
-        _mockUnitOfWork.Setup(u => u.BeginTransactionAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(mockTransaction.Object);
+            .Returns(Guid.NewGuid().ToString());
     }
 
     #endregion

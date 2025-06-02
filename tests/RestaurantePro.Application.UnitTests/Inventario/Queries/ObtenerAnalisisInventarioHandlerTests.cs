@@ -323,14 +323,17 @@ public class ObtenerAnalisisInventarioHandlerTests
     private static Ingrediente CreateMockIngrediente(Guid id, string nombre, decimal stock, decimal stockMinimo, decimal costo)
     {
         var ingrediente = Ingrediente.Crear(
+            id,
             nombre,
+            $"COD-{nombre.ToUpper()}",
             $"Descripción de {nombre}",
-            UnidadMedida.Kilogramos,
+            UnidadMedida.Kilogramo,
             stockMinimo,
-            stock);
+            stock,
+            RotacionIngrediente.Media,
+            TemporadaIngrediente.TodoElAño);
 
-        // Usar reflection para establecer propiedades que no se pueden establecer directamente
-        typeof(EntityBase).GetProperty("Id")?.SetValue(ingrediente, id);
+        // Establecer el costo promedio usando reflection
         typeof(Ingrediente).GetProperty("CostoPromedio")?.SetValue(ingrediente, costo);
 
         return ingrediente;

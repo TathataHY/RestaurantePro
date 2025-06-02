@@ -308,8 +308,17 @@ public class ComandaCreadaInventarioHandlerTests
     // Helper method para crear ingredientes con stock
     private static Ingrediente CreateIngredienteWithStock(string nombre, decimal stockMinimo, decimal stockActual)
     {
-        // Usar factory method para crear ingrediente
-        return Ingrediente.Crear(nombre, "Unidad", stockMinimo, stockActual);
+        // Usar factory method para crear ingrediente con todos los parámetros requeridos
+        return Ingrediente.Crear(
+            Guid.NewGuid(),
+            nombre,
+            $"COD-{nombre.Replace(" ", "").ToUpper()}",
+            $"Descripción de {nombre}",
+            UnidadMedida.Unidad,
+            stockMinimo,
+            stockActual,
+            RotacionIngrediente.Media,
+            TemporadaIngrediente.TodoElAño);
     }
 
     private static Comanda CreateMockComanda(Guid comandaId, Guid mesaId)
