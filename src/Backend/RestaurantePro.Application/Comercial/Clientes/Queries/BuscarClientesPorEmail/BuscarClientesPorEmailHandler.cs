@@ -1,5 +1,7 @@
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
 
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+
 public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEmailQuery, Result<PaginatedList<ClienteSummaryDto>>>
 {
     private readonly IApplicationDbContext _context;
@@ -41,7 +43,7 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
             // 3. Aplicar ordenamiento
             query = AplicarOrdenamiento(query, request);
 
-            // 4. Materializar la consulta completa primero (para compatibilidad con mocks)
+            // 4. ✅ Materializar la consulta completa respetando cancellationToken
             var todosLosClientes = await query.ToListAsync(cancellationToken);
 
             // 5. Contar total
@@ -60,12 +62,29 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
                 .Take(request.TamanoPagina)
                 .ToList();
 
-            // 7. Mapear a DTOs
+            // 7. Mapear a DTOs de forma segura usando las propiedades correctas de ClienteSummaryDto
             var clientesDto = clientesPaginados.Select(c => new ClienteSummaryDto
             {
                 Id = c.Id,
+                NombreCompleto = c.Nombre?.NombreCompleto ?? "Sin nombre",
                 Email = c.Email?.Value ?? "",
-                Telefono = c.Telefono?.Value ?? ""
+                Telefono = c.Telefono?.Value ?? "",
+                Activo = c.EstaActivo,
+                FechaRegistro = c.FechaCreacion,
+                TipoCliente = c.Segmento.ToString(),
+                RegistradoPor = "Sistema", // TODO: Implementar cuando esté disponible
+                FechaNacimiento = c.FechaNacimiento,
+                Ciudad = "", // TODO: Implementar cuando esté disponible
+                Pais = "", // TODO: Implementar cuando esté disponible
+                PuntosFidelizacion = c.PuntosAcumulados,
+                NivelFidelizacion = "Bronce", // TODO: Calcular desde fidelización
+                TotalOrdenes = c.CantidadVisitas,
+                MontoTotalCompras = 0m, // TODO: Calcular desde histórico
+                FechaUltimaOrden = null, // TODO: Calcular desde histórico
+                PromedioCompra = 0m, // TODO: Calcular desde histórico
+                EsFrecuente = c.CantidadVisitas >= 10,
+                DiasSinVisitar = (int)(DateTime.Now - c.FechaCreacion).TotalDays, // Aproximación
+                EsVIP = c.Segmento == SegmentoCliente.Premium
             }).ToList();
 
             // 8. Crear resultado paginado
@@ -76,6 +95,11 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
                 totalCount, request.Pagina, resultado.TotalPages);
 
             return Result.Success(resultado);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Búsqueda de clientes cancelada por el usuario");
+            throw; // Re-lanzar para que las pruebas de cancelación funcionen
         }
         catch (Exception ex)
         {
@@ -91,24 +115,26 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
         {
             if (request.BusquedaExacta)
             {
-                // Para búsqueda exacta, usar comparación directa
+                // ✅ Para búsqueda exacta, usar comparación case-insensitive
+                var emailLower = request.Email.ToLowerInvariant();
                 query = query.Where(c => c.Email != null && 
-                                       c.Email.Value == request.Email);
+                                       c.Email.Value.ToLower() == emailLower);
             }
             else
             {
-                // Para búsqueda parcial, usar Contains
+                // ✅ Para búsqueda parcial, usar Contains case-insensitive
+                var emailLower = request.Email.ToLowerInvariant();
                 query = query.Where(c => c.Email != null && 
-                                       c.Email.Value.Contains(request.Email));
+                                       c.Email.Value.ToLower().Contains(emailLower));
             }
         }
 
         // Búsqueda por dominio
         if (!string.IsNullOrEmpty(request.Dominio))
         {
-            var dominioPattern = $"@{request.Dominio}";
+            var dominioPattern = $"@{request.Dominio.ToLowerInvariant()}";
             query = query.Where(c => c.Email != null && 
-                                   c.Email.Value.Contains(dominioPattern));
+                                   c.Email.Value.ToLower().Contains(dominioPattern));
         }
 
         return query;
@@ -128,8 +154,10 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
         }
         else
         {
-            // Fallback a ordenamiento por email
-            query = query.OrderBy(c => c.Email != null ? c.Email.Value : "");
+            // ✅ Fallback a ordenamiento por email de forma segura
+            query = esDescendente
+                ? query.OrderByDescending(c => c.Email != null ? c.Email.Value : "")
+                : query.OrderBy(c => c.Email != null ? c.Email.Value : "");
         }
 
         return query;

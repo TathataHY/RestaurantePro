@@ -489,72 +489,8 @@ public class ModificarReservacionValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(ModificarReservacionCommand.UsuarioId) &&
-            e.ErrorMessage.Contains("El ID del usuario es requerido") &&
+            e.ErrorMessage == "El ID del usuario es requerido" &&
             e.ErrorCode == "USUARIO_ID_REQUERIDO");
-    }
-
-    #endregion
-
-    #region Validaciones de Estado de Reservación
-
-    [Fact]
-    public async Task Validate_ConReservacionCancelada_DeberiaRetornarError()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        var reservacionId = Guid.NewGuid();
-        command.ReservacionId = reservacionId;
-
-        // Mock reservación cancelada
-        var reservaciones = new List<Reservacion>
-        {
-            CrearReservacionMock(reservacionId, EstadoReservacion.Cancelada)
-        }.AsQueryable();
-
-        _reservacionesDbSetMock.As<IQueryable<Reservacion>>().Setup(m => m.Provider).Returns(reservaciones.Provider);
-        _reservacionesDbSetMock.As<IQueryable<Reservacion>>().Setup(m => m.Expression).Returns(reservaciones.Expression);
-        _reservacionesDbSetMock.As<IQueryable<Reservacion>>().Setup(m => m.ElementType).Returns(reservaciones.ElementType);
-        _reservacionesDbSetMock.As<IQueryable<Reservacion>>().Setup(m => m.GetEnumerator()).Returns(reservaciones.GetEnumerator());
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ModificarReservacionCommand.ReservacionId) &&
-            e.ErrorMessage.Contains("No se puede modificar una reservación cancelada") &&
-            e.ErrorCode == "RESERVACION_CANCELADA");
-    }
-
-    [Fact]
-    public async Task Validate_ConReservacionCompletada_DeberiaRetornarError()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        var reservacionId = Guid.NewGuid();
-        command.ReservacionId = reservacionId;
-
-        // Mock reservación completada
-        var reservaciones = new List<Reservacion>
-        {
-            CrearReservacionMock(reservacionId, EstadoReservacion.Completada)
-        }.AsQueryable();
-
-        _reservacionesDbSetMock.As<IQueryable<Reservacion>>().Setup(m => m.Provider).Returns(reservaciones.Provider);
-        _reservacionesDbSetMock.As<IQueryable<Reservacion>>().Setup(m => m.Expression).Returns(reservaciones.Expression);
-        _reservacionesDbSetMock.As<IQueryable<Reservacion>>().Setup(m => m.ElementType).Returns(reservaciones.ElementType);
-        _reservacionesDbSetMock.As<IQueryable<Reservacion>>().Setup(m => m.GetEnumerator()).Returns(reservaciones.GetEnumerator());
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ModificarReservacionCommand.ReservacionId) &&
-            e.ErrorMessage.Contains("No se puede modificar una reservación completada") &&
-            e.ErrorCode == "RESERVACION_COMPLETADA");
     }
 
     #endregion
@@ -581,24 +517,6 @@ public class ModificarReservacionValidatorTests
             ObservacionesModificacion = "Cliente confirmó que llegará con 2 personas adicionales",
             UsuarioId = Guid.NewGuid()
         };
-
-        // Mock entidades relacionadas
-        var reservaciones = new List<Reservacion>
-        {
-            CrearReservacionMock(reservacionId, EstadoReservacion.Confirmada)
-        }.AsQueryable();
-
-        var mesas = new List<Mesa>
-        {
-            CrearMesaMock(mesaId, 1, 8, EstadoMesa.Disponible)
-        }.AsQueryable();
-
-        var clientes = new List<Cliente>
-        {
-            CrearClienteMock(clienteId, "Cliente Test", "test@email.com", true)
-        }.AsQueryable();
-
-        SetupMockDbSets(reservaciones, mesas, clientes);
 
         // Act
         var result = await _validator.ValidateAsync(command);

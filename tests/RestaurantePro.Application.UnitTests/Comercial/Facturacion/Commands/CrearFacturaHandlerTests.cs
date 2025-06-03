@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
 using Moq;
 using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
@@ -638,40 +640,50 @@ public class CrearFacturaHandlerTests
 
     private void SetupClientesDbSet(List<Cliente> clientes)
     {
-        var queryable = clientes.AsQueryable();
-        _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(queryable.Provider);
-        _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.Expression).Returns(queryable.Expression);
-        _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-        _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
-
-        // NO usar FirstOrDefaultAsync - es un método de extensión que causa errores
-        // _clientesDbSetMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Cliente, bool>>>(), It.IsAny<CancellationToken>()))
-        //     .Returns<System.Linq.Expressions.Expression<Func<Cliente, bool>>, CancellationToken>((predicate, token) =>
-        //     {
-        //         var compiled = predicate.Compile();
-        //         var result = clientes.FirstOrDefault(compiled);
-        //         return Task.FromResult(result);
-        //     });
+        var mockSet = CreateDbSetMock(clientes);
+        _contextMock.Setup(x => x.Clientes).Returns(mockSet.Object);
+        
+        // Setup específico para FindAsync
+        mockSet.Setup(x => x.FindAsync(It.IsAny<Guid>()))
+            .Returns<Guid>(id =>
+            {
+                var result = clientes.FirstOrDefault(c => c.Id == id);
+                return ValueTask.FromResult(result);
+            });
     }
 
     private void SetupComandasDbSet(List<Comanda> comandas)
     {
-        var queryable = comandas.AsQueryable();
-        _comandasDbSetMock.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(queryable.Provider);
-        _comandasDbSetMock.As<IQueryable<Comanda>>().Setup(m => m.Expression).Returns(queryable.Expression);
-        _comandasDbSetMock.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-        _comandasDbSetMock.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
+        var mockSet = CreateDbSetMock(comandas);
+        _contextMock.Setup(x => x.Comandas).Returns(mockSet.Object);
+        
+        // Setup específico para FindAsync  
+        mockSet.Setup(x => x.FindAsync(It.IsAny<Guid>()))
+            .Returns<Guid>(id =>
+            {
+                var result = comandas.FirstOrDefault(c => c.Id == id);
+                return ValueTask.FromResult(result);
+            });
+    }
 
-        // NO usar Where() - es un método de extensión que causa errores
-        // _comandasDbSetMock.Setup(x => x.Where(It.IsAny<System.Linq.Expressions.Expression<Func<Comanda, bool>>>()))
-        //     .Returns<System.Linq.Expressions.Expression<Func<Comanda, bool>>>(predicate =>
-        //     {
-        //         var compiled = predicate.Compile();
-        //         return comandas.Where(compiled).AsQueryable();
-        //     });
+    private Mock<DbSet<T>> CreateDbSetMock<T>(List<T> data) where T : class
+    {
+        var queryable = data.AsQueryable();
+        var dbSetMock = new Mock<DbSet<T>>();
 
-        // NO hacer setup de Include() ya que es un método de extensión y causa errores de Moq
-        // El handler debe funcionar sin Include para las pruebas unitarias
+        dbSetMock.As<IQueryable<T>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<T>(queryable.Provider));
+        dbSetMock.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
+        dbSetMock.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
+        dbSetMock.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
+
+        dbSetMock.As<IAsyncEnumerable<T>>()
+            .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
+            .Returns(new TestAsyncEnumerator<T>(queryable.GetEnumerator()));
+
+        // Eliminamos los setups de Include ya que son métodos de extensión que no se pueden mockear directamente
+        // El handler debería funcionar sin Include en las pruebas unitarias
+        
+        return dbSetMock;
     }
 
     #endregion

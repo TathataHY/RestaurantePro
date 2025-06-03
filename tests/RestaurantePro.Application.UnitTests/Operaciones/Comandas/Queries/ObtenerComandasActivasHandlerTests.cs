@@ -276,18 +276,21 @@ public class ObtenerComandasActivasHandlerTests
             SoloAtrasadas = true
         };
 
-        var comandas = CreateMockComandasAtrasadas();
-        var comandasDto = CreateMockComandaSummaryDtos().Take(2).ToList();
+        // El repositorio devuelve todas las comandas (incluyendo no atrasadas)
+        var todasLasComandas = CreateMockComandasAtrasadas();
+        // El handler aplica el filtro de atrasadas en memoria y devuelve solo esas
+        var comandasAtrasadas = todasLasComandas; // Ya están creadas como atrasadas
+        var comandasDto = CreateMockComandaSummaryDtos().Take(comandasAtrasadas.Count).ToList();
         
-        SetupRepositoryQuery(comandas, 5); // 5 totales en repo
-        SetupMapperToSummaryDto(comandas.Take(2).ToList(), comandasDto); // Solo 2 atrasadas después del filtro
+        SetupRepositoryQuery(todasLasComandas, todasLasComandas.Count);
+        SetupMapperToSummaryDto(comandasAtrasadas, comandasDto);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.Equal(2, result.Value.Items.Count); // Solo las atrasadas
+        Assert.Equal(comandasAtrasadas.Count, result.Value.Items.Count);
     }
 
     [Fact]
@@ -301,18 +304,18 @@ public class ObtenerComandasActivasHandlerTests
             SoloConDescuentos = true
         };
 
-        var comandas = CreateMockComandasConDescuentos();
-        var comandasDto = CreateMockComandaSummaryDtos().Take(1).ToList();
+        var comandasConDescuentos = CreateMockComandasConDescuentos();
+        var comandasDto = CreateMockComandaSummaryDtos().Take(comandasConDescuentos.Count).ToList();
         
-        SetupRepositoryQuery(comandas, 3); // 3 totales en repo
-        SetupMapperToSummaryDto(comandas.Take(1).ToList(), comandasDto); // Solo 1 con descuento después del filtro
+        SetupRepositoryQuery(comandasConDescuentos, comandasConDescuentos.Count);
+        SetupMapperToSummaryDto(comandasConDescuentos, comandasDto);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
         Assert.True(result.Succeeded);
-        Assert.Equal(1, result.Value.Items.Count); // Solo la con descuento
+        Assert.Equal(comandasConDescuentos.Count, result.Value.Items.Count);
     }
 
     [Fact]

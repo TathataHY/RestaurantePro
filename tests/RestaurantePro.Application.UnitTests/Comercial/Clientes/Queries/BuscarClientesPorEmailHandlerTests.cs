@@ -12,6 +12,7 @@ using Moq;
 using RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
 using RestaurantePro.Application.Comercial.Clientes.DTOs;
 using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.UnitTests.Common;
 using RestaurantePro.Domain.Comercial.Clientes;
 using RestaurantePro.Domain.Comercial.Clientes.Enums;
 using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
@@ -19,94 +20,6 @@ using Xunit;
 using Microsoft.EntityFrameworkCore;
 
 namespace RestaurantePro.Application.UnitTests.Comercial.Clientes.Queries;
-
-// Clases helper para mockear Entity Framework async operations
-internal class TestAsyncQueryProvider<TEntity> : IQueryProvider
-{
-    private readonly IQueryProvider _inner;
-
-    internal TestAsyncQueryProvider(IQueryProvider inner)
-    {
-        _inner = inner;
-    }
-
-    public IQueryable CreateQuery(Expression expression)
-    {
-        return new TestAsyncEnumerable<TEntity>(expression);
-    }
-
-    public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
-    {
-        return new TestAsyncEnumerable<TElement>(expression);
-    }
-
-    public object Execute(Expression expression)
-    {
-        return _inner.Execute(expression);
-    }
-
-    public TResult Execute<TResult>(Expression expression)
-    {
-        return _inner.Execute<TResult>(expression);
-    }
-}
-
-internal class TestAsyncEnumerable<T> : IAsyncEnumerable<T>, IQueryable<T>
-{
-    private readonly IQueryable<T> _queryable;
-
-    public TestAsyncEnumerable(IEnumerable<T> enumerable)
-    {
-        _queryable = enumerable.AsQueryable();
-    }
-
-    public TestAsyncEnumerable(Expression expression)
-    {
-        _queryable = new EnumerableQuery<T>(expression);
-    }
-
-    public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
-    {
-        return new TestAsyncEnumerator<T>(_queryable.GetEnumerator());
-    }
-
-    public Type ElementType => _queryable.ElementType;
-    public Expression Expression => _queryable.Expression;
-    public IQueryProvider Provider => new TestAsyncQueryProvider<T>(_queryable.Provider);
-
-    public IEnumerator<T> GetEnumerator()
-    {
-        return _queryable.GetEnumerator();
-    }
-
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return _queryable.GetEnumerator();
-    }
-}
-
-internal class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
-{
-    private readonly IEnumerator<T> _inner;
-
-    public TestAsyncEnumerator(IEnumerator<T> inner)
-    {
-        _inner = inner;
-    }
-
-    public ValueTask<bool> MoveNextAsync()
-    {
-        return new ValueTask<bool>(_inner.MoveNext());
-    }
-
-    public T Current => _inner.Current;
-
-    public ValueTask DisposeAsync()
-    {
-        _inner.Dispose();
-        return new ValueTask();
-    }
-}
 
 /// <summary>
 /// Tests unitarios para BuscarClientesPorEmailHandler
@@ -127,16 +40,17 @@ public class BuscarClientesPorEmailHandlerTests
         _mockMapper = new Mock<IMapper>();
         _mockLogger = new Mock<ILogger<BuscarClientesPorEmailHandler>>();
         _mockClientesDbSet = new Mock<DbSet<Cliente>>();
-        
-        _handler = new BuscarClientesPorEmailHandler(
-            _mockContext.Object,
-            _mockMapper.Object,
-            _mockLogger.Object);
-
         _clientesEjemplo = CrearClientesEjemplo();
+
         ConfigurarMockDbSet();
         ConfigurarMockMapper();
         ConfigurarMockContext();
+
+        _handler = new BuscarClientesPorEmailHandler(
+            _mockContext.Object,
+            _mockMapper.Object,
+            _mockLogger.Object
+        );
     }
 
     [Fact]
@@ -519,35 +433,10 @@ public class BuscarClientesPorEmailHandlerTests
 
     private void ConfigurarMockDbSet()
     {
-        var queryableClientes = _clientesEjemplo.AsQueryable();
+        // Usar el MockDbSetHelper centralizado
+        var mockDbSet = MockDbSetHelper.CreateMockDbSet(_clientesEjemplo.AsQueryable());
         
-        // Crear un enumerable async que funcione con Entity Framework
-        var asyncQueryable = new TestAsyncEnumerable<Cliente>(_clientesEjemplo);
-        
-        // Configurar como IQueryable con soporte async
-        _mockClientesDbSet.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(asyncQueryable.Provider);
-        _mockClientesDbSet.As<IQueryable<Cliente>>().Setup(m => m.Expression).Returns(asyncQueryable.Expression);
-        _mockClientesDbSet.As<IQueryable<Cliente>>().Setup(m => m.ElementType).Returns(asyncQueryable.ElementType);
-        _mockClientesDbSet.As<IQueryable<Cliente>>().Setup(m => m.GetEnumerator()).Returns(asyncQueryable.GetEnumerator());
-        
-        // Configurar como IAsyncEnumerable para Entity Framework async operations
-        _mockClientesDbSet.As<IAsyncEnumerable<Cliente>>()
-            .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-            .Returns(asyncQueryable.GetAsyncEnumerator());
-
-        // Configurar FindAsync si se necesita
-        _mockClientesDbSet.Setup(x => x.FindAsync(It.IsAny<object[]>()))
-            .Returns<object[]>(keyValues => 
-            {
-                if (keyValues.Length > 0 && keyValues[0] is Guid id)
-                {
-                    var cliente = _clientesEjemplo.FirstOrDefault(c => c.Id == id);
-                    return new ValueTask<Cliente?>(cliente);
-                }
-                return new ValueTask<Cliente?>((Cliente?)null);
-            });
-
-        _mockContext.Setup(c => c.Clientes).Returns(_mockClientesDbSet.Object);
+        _mockContext.Setup(c => c.Clientes).Returns(mockDbSet.Object);
     }
 
     private List<Cliente> CrearClientesEjemplo()
@@ -608,7 +497,7 @@ public class BuscarClientesPorEmailHandlerTests
 
     private void ConfigurarMockContext()
     {
-        _mockContext.Setup(c => c.Clientes).Returns(_mockClientesDbSet.Object);
+        // Ya configurado en ConfigurarMockDbSet()
     }
 
     #endregion

@@ -1,3 +1,12 @@
+using AutoMapper;
+using MediatR;
+using Microsoft.Extensions.Logging;
+using RestaurantePro.Application.Operaciones.Comandas.DTOs;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
+using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+
 namespace RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
 
 /// <summary>
@@ -29,7 +38,7 @@ public class FinalizarComandaHandler : IRequestHandler<FinalizarComandaCommand, 
         try
         {
             // Obtener la comanda
-            var comanda = await _comandaRepository.ObtenerPorIdAsync(request.ComandaId);
+            var comanda = await _comandaRepository.ObtenerPorIdAsync(request.ComandaId, cancellationToken);
             if (comanda == null)
             {
                 _logger.LogWarning("❌ Comanda {ComandaId} no encontrada", request.ComandaId);
@@ -65,7 +74,7 @@ public class FinalizarComandaHandler : IRequestHandler<FinalizarComandaCommand, 
             {
                 _logger.LogError("❌ Error al finalizar comanda {ComandaId}: {Error}", 
                     request.ComandaId, ex.Message);
-                return Result.Failure<ComandaDto>(ex.Message);
+                return Result.Failure<ComandaDto>($"No se puede cambiar el estado");
             }
 
             // 5. Agregar observaciones si las hay - usando la propiedad directamente
@@ -78,7 +87,7 @@ public class FinalizarComandaHandler : IRequestHandler<FinalizarComandaCommand, 
             }
 
             // 6. Guardar cambios
-            await _comandaRepository.ActualizarAsync(comanda);
+            await _comandaRepository.ActualizarAsync(comanda, cancellationToken);
 
             // 7. Mapear a DTO
             var comandaDto = _mapper.Map<ComandaDto>(comanda);

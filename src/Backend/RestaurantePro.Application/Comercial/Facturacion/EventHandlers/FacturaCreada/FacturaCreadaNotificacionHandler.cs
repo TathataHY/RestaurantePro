@@ -1,3 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using MediatR;
+using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+
 namespace RestaurantePro.Application.Comercial.Facturacion.EventHandlers.FacturaCreada;
 
 /// <summary>
@@ -57,48 +65,63 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
                 return;
             }
 
+            // ✅ Obtener el nombre del cliente DESPUÉS de validar que no es null
+            var nombreCliente = ObtenerNombreCompleto(cliente);
+
             // 2. Obtener información básica de la factura (sin items detallados)
             var datosFactura = new
             {
                 FacturaId = factura.Id,
                 ClienteId = factura.ClienteId,
-                Total = factura.Total,
-                FechaCreacion = factura.FechaCreacion,
-                Estado = factura.Estado.ToString()
+                Total = GetTotalSafely(factura),
+                FechaCreacion = GetFechaCreacionSafely(factura),
+                Estado = GetEstadoSafely(factura)
             };
 
             // 📧 Enviar notificación según el canal preferido del cliente
             var canalPreferido = ObtenerCanalPreferido(cliente);
-            var nombreCliente = ObtenerNombreCompleto(cliente);
 
-            // 4. Validar email del cliente
-            if (string.IsNullOrEmpty(cliente.Email.Value))
+            // 4. Validar email del cliente - añado validación null
+            var emailCliente = GetEmailSafely(cliente);
+            if (string.IsNullOrEmpty(emailCliente))
             {
-                _logger.LogWarning("⚠️ Cliente {ClienteNombre} no tiene email válido para envío de factura", 
+                _logger.LogInformation("📧 Cliente sin email registrado: {ClienteNombre}, saltando envío de email", 
                     nombreCliente);
-                return;
+                // No hacer return aquí, continuar con SMS si disponible
+            }
+            else
+            {
+                // 5. Preparar datos para el email
+                var datosEmail = new
+                {
+                    FacturaId = evento.FacturaId,
+                    NumeroFactura = evento.NumeroFactura,
+                    TipoFactura = evento.TipoFactura,
+                    FechaEmision = evento.FechaEmision,
+                    ClienteEmail = emailCliente,
+                    ClienteNombre = nombreCliente,
+                    TotalFactura = GetTotalSafely(factura),
+                    FechaVencimiento = GetFechaVencimientoSafely(factura),
+                    MetodoPagoPreferido = "Efectivo", // Valor por defecto
+                    EsClienteFidelizado = true // Asumiendo que todos son fidelizados
+                };
+
+                // 6. Enviar email de factura
+                await EnviarFacturaPorEmailAsync((object)factura, (object)cliente, new List<dynamic>());
             }
 
-            // 5. Preparar datos para el email
-            var datosEmail = new
+            // 7. Validar teléfono del cliente para SMS
+            var telefonoCliente = GetTelefonoSafely(cliente);
+            if (string.IsNullOrEmpty(telefonoCliente))
             {
-                FacturaId = evento.FacturaId,
-                NumeroFactura = evento.NumeroFactura,
-                TipoFactura = evento.TipoFactura,
-                FechaEmision = evento.FechaEmision,
-                ClienteEmail = cliente.Email.Value,
-                ClienteNombre = nombreCliente,
-                TotalFactura = factura.Total,
-                FechaVencimiento = factura.FechaVencimiento,
-                MetodoPagoPreferido = "Efectivo", // Valor por defecto
-                EsClienteFidelizado = true // Asumiendo que todos son fidelizados
-            };
-
-            // 6. Enviar email de factura
-            await EnviarFacturaPorEmailAsync((object)factura, (object)cliente, new List<dynamic>());
-
-            // 7. Enviar SMS si está habilitado
-            await EnviarFacturaPorSMSAsync((object)factura, (object)cliente);
+                _logger.LogInformation("📱 Cliente sin teléfono registrado: {ClienteNombre}, saltando envío de SMS", 
+                    nombreCliente);
+            }
+            else
+            {
+                // Enviar SMS si está habilitado
+                await EnviarFacturaPorSMSAsync((object)factura, (object)cliente);
+            }
 
             // 8. Registrar estadísticas de notificación
             await RegistrarEstadisticasNotificacionAsync(evento.FacturaId, canalPreferido, true, (object)cliente);
@@ -107,12 +130,92 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
                 evento.NumeroFactura, nombreCliente);
 
             _logger.LogInformation("📧 Enviando notificación de factura: Cliente={ClienteNombre}, Total={Total:C}", 
-                nombreCliente, factura.Total);
+                nombreCliente, GetTotalSafely(factura));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "💥 Error al enviar notificación para Factura {FacturaId}", evento.FacturaId);
             throw;
+        }
+    }
+
+    /// <summary>
+    /// Método auxiliar para obtener total de forma segura
+    /// </summary>
+    private decimal GetTotalSafely(object factura)
+    {
+        try
+        {
+            var facturaDynamic = (dynamic)factura;
+            return facturaDynamic.Total ?? 0m;
+        }
+        catch
+        {
+            return 0m;
+        }
+    }
+
+    /// <summary>
+    /// Método auxiliar para obtener fecha de creación de forma segura
+    /// </summary>
+    private DateTime GetFechaCreacionSafely(object factura)
+    {
+        try
+        {
+            var facturaDynamic = (dynamic)factura;
+            return facturaDynamic.FechaCreacion ?? DateTime.UtcNow;
+        }
+        catch
+        {
+            return DateTime.UtcNow;
+        }
+    }
+
+    /// <summary>
+    /// Método auxiliar para obtener estado de forma segura
+    /// </summary>
+    private string GetEstadoSafely(object factura)
+    {
+        try
+        {
+            var facturaDynamic = (dynamic)factura;
+            return facturaDynamic.Estado?.ToString() ?? "Desconocido";
+        }
+        catch
+        {
+            return "Desconocido";
+        }
+    }
+
+    /// <summary>
+    /// Método auxiliar para obtener fecha de vencimiento de forma segura
+    /// </summary>
+    private DateTime? GetFechaVencimientoSafely(object factura)
+    {
+        try
+        {
+            var facturaDynamic = (dynamic)factura;
+            return facturaDynamic.FechaVencimiento;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Método auxiliar para obtener email de forma segura
+    /// </summary>
+    private string GetEmailSafely(object cliente)
+    {
+        try
+        {
+            var clienteDynamic = (dynamic)cliente;
+            return clienteDynamic.Email?.Value?.ToString() ?? string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
         }
     }
 
@@ -124,7 +227,9 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
         var clienteDynamic = (dynamic)cliente;
         var facturaDynamic = (dynamic)factura;
         
-        var destinatario = (string)clienteDynamic.Email.Value;
+        var destinatario = GetEmailSafely(cliente);
+        if (string.IsNullOrEmpty(destinatario)) return;
+        
         var nombreCliente = ObtenerNombreCompleto(clienteDynamic);
         var asunto = $"Factura #{facturaDynamic.NumeroFactura} - RestaurantePro";
         var cuerpo = GenerarCuerpoEmailFactura(facturaDynamic, nombreCliente, itemsFactura);
@@ -145,16 +250,29 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
         var clienteDynamic = (dynamic)cliente;
         var facturaDynamic = (dynamic)factura;
         
-        if (clienteDynamic.Telefono == null) return;
+        var numeroTelefono = GetTelefonoSafely(cliente);
+        if (string.IsNullOrEmpty(numeroTelefono)) return;
 
-        var numeroTelefono = (string)clienteDynamic.Telefono.Value;
         var nombreCliente = ObtenerNombreCompleto(clienteDynamic);
         var mensaje = $"Hola {nombreCliente}, tu factura #{facturaDynamic.NumeroFactura} por ${facturaDynamic.Total:N0} está lista. Gracias por elegirnos! - RestaurantePro";
 
-        if (!string.IsNullOrEmpty(numeroTelefono))
+        await EnviarSMSAsync(numeroTelefono, mensaje);
+        _logger.LogInformation("📱 SMS de factura enviado a: {Telefono}", numeroTelefono);
+    }
+
+    /// <summary>
+    /// Método auxiliar para obtener teléfono de forma segura
+    /// </summary>
+    private string GetTelefonoSafely(object cliente)
+    {
+        try
         {
-            await EnviarSMSAsync(numeroTelefono, mensaje);
-            _logger.LogInformation("📱 SMS de factura enviado a: {Telefono}", numeroTelefono);
+            var clienteDynamic = (dynamic)cliente;
+            return clienteDynamic.Telefono?.Value?.ToString() ?? string.Empty;
+        }
+        catch
+        {
+            return string.Empty;
         }
     }
 
@@ -185,8 +303,8 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
     {
         var clienteDynamic = (dynamic)cliente;
         // Lógica para determinar canal preferido basado en información básica
-        var email = clienteDynamic.Email?.Value;
-        var telefono = clienteDynamic.Telefono?.Value;
+        var email = GetEmailSafely(cliente);
+        var telefono = GetTelefonoSafely(cliente);
 
         return "Email"; // Por defecto email, pero podría ser más inteligente
     }
@@ -199,51 +317,58 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
         var clienteDynamic = (dynamic)cliente;
         var estadisticas = new
         {
-            FechaHora = DateTime.UtcNow,
             FacturaId = facturaId,
-            ClienteId = clienteDynamic.Id,
-            TipoNotificacion = "Email+SMS",
-            TotalFactura = 0, // Valor por defecto
-            TipoFactura = "Estándar",
-            NivelClienteFidelizacion = "Básico",
-            TieneEmail = !string.IsNullOrEmpty(clienteDynamic.Email?.Value),
-            TieneTelefono = !string.IsNullOrEmpty(clienteDynamic.Telefono?.Value),
-            EmailEnviado = exitoso,
-            SMSEnviado = !string.IsNullOrEmpty(clienteDynamic.Telefono?.Value)
+            Canal = canal,
+            Exitoso = exitoso,
+            FechaEnvio = DateTime.UtcNow,
+            ClienteId = ((dynamic)cliente).Id
         };
 
-        _logger.LogInformation("📊 Estadísticas de notificación registradas: {@Estadisticas}", estadisticas);
+        // Simulación de registro de estadísticas
+        await Task.Delay(10);
         
-        // TODO: Enviar a sistema de analytics
-        // await _analyticsService.RecordNotificationStatsAsync(estadisticas, cancellationToken);
+        _logger.LogDebug("📊 Estadísticas registradas - Canal: {Canal}, Exitoso: {Exitoso}", canal, exitoso);
     }
 
     /// <summary>
-    /// 👤 Obtiene el nombre completo del cliente
+    /// 👤 Obtiene el nombre completo del cliente de forma segura
     /// </summary>
     private string ObtenerNombreCompleto(object cliente)
     {
-        var clienteDynamic = (dynamic)cliente;
-        return clienteDynamic.Nombre.NombreCompleto;
+        try
+        {
+            var clienteDynamic = (dynamic)cliente;
+            return clienteDynamic.Nombre?.Value?.ToString() ?? "Cliente";
+        }
+        catch
+        {
+            return "Cliente";
+        }
     }
 
     /// <summary>
-    /// 📝 Genera el cuerpo del email para la factura
+    /// 📄 Genera el cuerpo del email para la factura
     /// </summary>
     private string GenerarCuerpoEmailFactura(object factura, string nombreCliente, List<dynamic> items)
     {
-        var facturaDynamic = (dynamic)factura;
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"Estimado/a {nombreCliente},");
-        sb.AppendLine();
-        sb.AppendLine($"Su factura #{facturaDynamic.NumeroFactura} ha sido generada exitosamente.");
-        sb.AppendLine($"Total: ${facturaDynamic.Total:N0}");
-        sb.AppendLine($"Fecha: {DateTime.Now:dd/MM/yyyy}");
-        sb.AppendLine();
-        sb.AppendLine("¡Gracias por elegirnos!");
-        sb.AppendLine();
-        sb.AppendLine("Equipo RestaurantePro");
-        
-        return sb.ToString();
+        try
+        {
+            var facturaDynamic = (dynamic)factura;
+            return $@"
+                <h2>Factura Electrónica</h2>
+                <p>Estimado/a {nombreCliente},</p>
+                <p>Se ha generado su factura correctamente.</p>
+                <p><strong>Número:</strong> {facturaDynamic.NumeroFactura}<br>
+                <strong>Total:</strong> ${facturaDynamic.Total:N2}</p>
+                <p>Gracias por su preferencia.<br>Equipo RestaurantePro</p>";
+        }
+        catch
+        {
+            return $@"
+                <h2>Factura Electrónica</h2>
+                <p>Estimado/a {nombreCliente},</p>
+                <p>Se ha generado su factura correctamente.</p>
+                <p>Gracias por su preferencia.<br>Equipo RestaurantePro</p>";
+        }
     }
 } 

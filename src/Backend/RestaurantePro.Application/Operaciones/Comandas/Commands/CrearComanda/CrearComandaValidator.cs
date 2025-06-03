@@ -8,36 +8,37 @@ public class CrearComandaValidator : AbstractValidator<CrearComandaCommand>
 {
     public CrearComandaValidator()
     {
+        // MesaId: Solo validar si está presente y no es Empty
         RuleFor(x => x.MesaId)
-            .NotEmpty().WithMessage("El ID de la mesa es obligatorio");
+            .NotEqual(Guid.Empty).WithMessage("El ID de la mesa es obligatorio")
+            .When(x => x.MesaId.HasValue);
 
+        // MeseroId es obligatorio (desde el Command, tiene un valor por defecto)
         RuleFor(x => x.MeseroId)
             .NotEmpty().WithMessage("El ID del mesero es obligatorio");
 
+        // Items - según las pruebas, cuando se crean deben tener contenido
         RuleFor(x => x.Items)
             .NotNull().WithMessage("La comanda debe tener al menos un ítem")
             .NotEmpty().WithMessage("La comanda debe tener al menos un ítem");
 
+        // Observaciones - opcional, pero con límite si se incluye
         RuleFor(x => x.Observaciones)
             .MaximumLength(500).WithMessage("Las observaciones no pueden exceder 500 caracteres")
             .When(x => !string.IsNullOrWhiteSpace(x.Observaciones));
 
-        // Validaciones para productos iniciales (renombrado para coincidir con las pruebas)
+        // Validaciones anidadas para cada item
         RuleForEach(x => x.Items)
-            .SetValidator(new AgregarProductoValidator())
-            .When(x => x.Items != null && x.Items.Any());
+            .SetValidator(new AgregarProductoValidator());
 
-        // Validar que no se excedan los límites de productos por comanda
+        // Límites de colección
         RuleFor(x => x.Items)
-            .Must(productos => productos.Count <= 50)
-            .WithMessage("No se pueden agregar más de 50 productos diferentes en una comanda")
-            .When(x => x.Items != null && x.Items.Any());
+            .Must(productos => productos == null || productos.Count <= 50)
+            .WithMessage("No se pueden agregar más de 50 productos diferentes en una comanda");
 
-        // Validar que las cantidades totales no sean excesivas
         RuleFor(x => x.Items)
-            .Must(productos => productos.Sum(p => p.Cantidad) <= 200)
-            .WithMessage("La cantidad total de productos no puede exceder 200 unidades")
-            .When(x => x.Items != null && x.Items.Any());
+            .Must(productos => productos == null || productos.Sum(p => p.Cantidad) <= 200)
+            .WithMessage("La cantidad total de productos no puede exceder 200 unidades");
     }
 }
 
@@ -61,17 +62,16 @@ public class AgregarProductoValidator : AbstractValidator<AgregarProductoDto>
 
         RuleFor(x => x.Observaciones)
             .MaximumLength(200).WithMessage("Las observaciones del producto no pueden exceder 200 caracteres")
-            .When(x => !string.IsNullOrWhiteSpace(x.Observaciones));
+            .When(x => !string.IsNullOrEmpty(x.Observaciones));
 
-        // Validar personalizaciones
+        // Personalizaciones - opcional
         RuleForEach(x => x.Personalizaciones)
             .SetValidator(new PersonalizacionValidator())
-            .When(x => x.Personalizaciones != null && x.Personalizaciones.Any());
+            .When(x => x.Personalizaciones != null);
 
         RuleFor(x => x.Personalizaciones)
-            .Must(personalizaciones => personalizaciones.Count <= 10)
-            .WithMessage("No se pueden agregar más de 10 personalizaciones por producto")
-            .When(x => x.Personalizaciones != null && x.Personalizaciones.Any());
+            .Must(personalizaciones => personalizaciones == null || personalizaciones.Count <= 10)
+            .WithMessage("No se pueden agregar más de 10 personalizaciones por producto");
     }
 }
 
@@ -105,6 +105,6 @@ public class PersonalizacionValidator : AbstractValidator<PersonalizacionCreateD
 
         RuleFor(x => x.Detalles)
             .MaximumLength(100).WithMessage("Los detalles no pueden exceder 100 caracteres")
-            .When(x => !string.IsNullOrWhiteSpace(x.Detalles));
+            .When(x => !string.IsNullOrEmpty(x.Detalles));
     }
 } 

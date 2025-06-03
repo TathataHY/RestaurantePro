@@ -16,7 +16,7 @@ public class DesactivarProveedorValidator : AbstractValidator<DesactivarProveedo
 
         RuleFor(x => x.Id)
             .NotEmpty()
-            .WithMessage("El ID del proveedor es obligatorio")
+            .WithMessage("ID del proveedor es obligatorio")
             .MustAsync(ProveedorDebeExistir)
             .WithMessage("El proveedor especificado no existe")
             .MustAsync(ProveedorNoDebeEstarDesactivado)
@@ -28,11 +28,11 @@ public class DesactivarProveedorValidator : AbstractValidator<DesactivarProveedo
 
         RuleFor(x => x.RazonDesactivacion)
             .NotEmpty()
-            .WithMessage("El motivo de desactivación es obligatorio")
+            .WithMessage("motivo de desactivación es obligatorio")
             .MinimumLength(5)
-            .WithMessage("La razón de desactivación debe tener al menos 5 caracteres")
+            .WithMessage("debe tener al menos 5 caracteres")
             .MaximumLength(1000)
-            .WithMessage("La razón de desactivación no puede exceder 1000 caracteres");
+            .WithMessage("no puede exceder 1000 caracteres");
     }
 
     private async Task<bool> ProveedorDebeExistir(Guid proveedorId, CancellationToken cancellationToken)
@@ -50,7 +50,7 @@ public class DesactivarProveedorValidator : AbstractValidator<DesactivarProveedo
         
         if (proveedor == null) return true; // Este error se maneja en otra validación
         
-        return proveedor.EstaActivo;
+        return proveedor.Activo;
     }
 
     private async Task<bool> ProveedorNoDebeTenerOrdenesActivas(Guid proveedorId, CancellationToken cancellationToken)

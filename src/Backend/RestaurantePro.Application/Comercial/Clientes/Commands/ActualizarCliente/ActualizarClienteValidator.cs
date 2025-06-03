@@ -18,36 +18,36 @@ public class ActualizarClienteValidator : AbstractValidator<ActualizarClienteCom
             .Must(HaveAtLeastOneFieldToUpdate)
             .WithMessage("Debe proporcionar al menos un campo para actualizar");
 
-        // Nombre - validar solo si se proporciona
+        // Nombre - validar solo si se proporciona (no es null)
         RuleFor(x => x.Nombre)
-            .Must(nombre => !string.IsNullOrWhiteSpace(nombre))
-            .WithMessage("El nombre no puede estar vacío si se proporciona")
-            .When(x => x.Nombre != null)
-            .MaximumLength(200).WithMessage("El nombre no puede exceder 200 caracteres")
+            .NotEmpty().WithMessage("El nombre no puede estar vacío si se proporciona")
+            .When(x => x.Nombre != null);
+            
+        RuleFor(x => x.Nombre)
             .MinimumLength(2).WithMessage("El nombre debe tener al menos 2 caracteres")
-            .When(x => !string.IsNullOrWhiteSpace(x.Nombre));
+            .When(x => x.Nombre != null);
+            
+        RuleFor(x => x.Nombre)
+            .MaximumLength(200).WithMessage("El nombre no puede exceder 200 caracteres")
+            .When(x => x.Nombre != null);
 
-        // Email - validar solo si se proporciona
+        // Email - validar solo si se proporciona (no es null)
         RuleFor(x => x.Email)
-            .Must(email => !string.IsNullOrWhiteSpace(email))
-            .WithMessage("El email no puede estar vacío si se proporciona")
-            .When(x => x.Email != null)
+            .NotEmpty().WithMessage("El email no puede estar vacío si se proporciona")
             .EmailAddress().WithMessage("El formato del email no es válido")
             .MaximumLength(320).WithMessage("El email no puede exceder 320 caracteres")
-            .When(x => !string.IsNullOrWhiteSpace(x.Email));
+            .When(x => x.Email != null);
 
-        // Teléfono - validar solo si se proporciona
+        // Teléfono - validar solo si se proporciona (no es null)
         RuleFor(x => x.Telefono)
-            .Must(telefono => !string.IsNullOrWhiteSpace(telefono))
-            .WithMessage("El teléfono no puede estar vacío si se proporciona")
-            .When(x => x.Telefono != null)
-            .Matches(@"^\+?[1-9]\d{1,14}$").WithMessage("El formato del teléfono no es válido")
-            .When(x => !string.IsNullOrWhiteSpace(x.Telefono));
+            .NotEmpty().WithMessage("El teléfono no puede estar vacío si se proporciona")
+            .Matches(@"^(\+?[0-9]{1,3}[\s\-\(\)]?)?[\d\s\-\(\)]{7,14}$").WithMessage("El formato del teléfono no es válido")
+            .When(x => x.Telefono != null);
 
         // Fecha de nacimiento - validar solo si se proporciona
         RuleFor(x => x.FechaNacimiento)
-            .LessThan(DateTime.Now.AddYears(-18)).WithMessage("El cliente debe ser mayor de 18 años")
-            .GreaterThan(DateTime.Now.AddYears(-120)).WithMessage("La fecha de nacimiento no puede ser mayor a 120 años")
+            .LessThanOrEqualTo(DateTime.Today.AddYears(-18)).WithMessage("El cliente debe ser mayor de 18 años")
+            .GreaterThan(DateTime.Today.AddYears(-120)).WithMessage("La fecha de nacimiento no puede ser mayor a 120 años")
             .When(x => x.FechaNacimiento.HasValue);
     }
 

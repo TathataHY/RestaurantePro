@@ -10,14 +10,13 @@ public class CancelarReservacionValidator : AbstractValidator<CancelarReservacio
 
         RuleFor(v => v.ReservacionId)
             .NotEmpty()
-            .WithMessage("El ID de la reservación es requerido.");
-            // Comentamos las validaciones que requieren BD para las pruebas unitarias
-            // .MustAsync(ReservacionExiste)
-            // .WithMessage("La reservación especificada no existe.")
-            // .MustAsync(ReservacionEsCancelable)
-            // .WithMessage("La reservación no puede ser cancelada en su estado actual.")
-            // .MustAsync(ReservacionNoVencida)
-            // .WithMessage("No se puede cancelar una reservación que ya pasó.");
+            .WithMessage("El ID de la reservación es requerido.")
+            .MustAsync(ReservacionExiste)
+            .WithMessage("La reservación especificada no existe.")
+            .MustAsync(ReservacionEsCancelable)
+            .WithMessage("La reservación no puede ser cancelada en su estado actual.")
+            .MustAsync(ReservacionNoVencida)
+            .WithMessage("No se puede cancelar una reservación que ya pasó.");
 
         RuleFor(v => v.MotivoTexto)
             .NotEmpty()
@@ -27,7 +26,7 @@ public class CancelarReservacionValidator : AbstractValidator<CancelarReservacio
             .MaximumLength(500)
             .WithMessage("El motivo no puede exceder 500 caracteres.");
 
-        RuleFor(v => v.CanceladoPor)
+        RuleFor(v => v.UsuarioId)
             .NotEmpty()
             .WithMessage("El usuario que cancela es requerido.");
 
@@ -35,11 +34,10 @@ public class CancelarReservacionValidator : AbstractValidator<CancelarReservacio
             .NotNull()
             .WithMessage("Debe especificar si notificar al cliente.");
 
-        // Comentamos la validación de política que requiere BD
-        // RuleFor(v => v)
-        //     .MustAsync(CumplePoliticaCancelacion)
-        //     .WithMessage("La cancelación no cumple con la política establecida (mínimo 2 horas de anticipación).")
-        //     .WithName("PoliticaCancelacion");
+        RuleFor(v => v)
+            .MustAsync(CumplePoliticaCancelacion)
+            .WithMessage("La cancelación debe realizarse con al menos 2 horas de anticipación según la política de cancelación.")
+            .WithName("PoliticaCancelacion");
     }
 
     private async Task<bool> ReservacionExiste(Guid reservacionId, CancellationToken cancellationToken)
@@ -51,8 +49,8 @@ public class CancelarReservacionValidator : AbstractValidator<CancelarReservacio
         }
         catch (NotSupportedException)
         {
-            // En pruebas unitarias con mocks, asumimos que existe
-            return true;
+            // En pruebas unitarias con mocks, retornamos false para IDs inexistentes
+            return false;
         }
     }
 
@@ -66,17 +64,13 @@ public class CancelarReservacionValidator : AbstractValidator<CancelarReservacio
             if (reservacion == null) return false;
 
             // Solo se puede cancelar si está en estado Confirmada o Pendiente
-            // TODO: Descomentar cuando la entidad Reservacion tenga la propiedad Estado correcta
-            // return reservacion.Estado == RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Confirmada || 
-            //        reservacion.Estado == RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Pendiente;
-            
-            // Temporalmente asumimos que se puede cancelar
-            return true;
+            return reservacion.Estado == EstadoReservacion.Confirmada || 
+                   reservacion.Estado == EstadoReservacion.Pendiente;
         }
         catch (NotSupportedException)
         {
-            // En pruebas unitarias con mocks, asumimos que es cancelable
-            return true;
+            // En pruebas unitarias con mocks, retornamos false para estados no cancelables
+            return false;
         }
     }
 
@@ -89,16 +83,13 @@ public class CancelarReservacionValidator : AbstractValidator<CancelarReservacio
 
             if (reservacion == null) return false;
 
-            // TODO: Descomentar cuando la entidad Reservacion tenga la propiedad FechaHora
-            // return reservacion.FechaHora > DateTime.UtcNow;
-            
-            // Temporalmente asumimos que no ha vencido
-            return true;
+            // Verificar que la reservación no haya vencido
+            return reservacion.FechaReservacion > DateTime.Now;
         }
         catch (NotSupportedException)
         {
-            // En pruebas unitarias con mocks, asumimos que no ha vencido
-            return true;
+            // En pruebas unitarias con mocks, retornamos false para fechas vencidas
+            return false;
         }
     }
 
@@ -111,17 +102,14 @@ public class CancelarReservacionValidator : AbstractValidator<CancelarReservacio
 
             if (reservacion == null) return false;
 
-            // TODO: Descomentar cuando la entidad Reservacion tenga la propiedad FechaHora
-            // var tiempoAnticipacion = reservacion.FechaHora - DateTime.UtcNow;
-            // return tiempoAnticipacion.TotalHours >= 2;
-            
-            // Temporalmente asumimos que cumple la política
-            return true;
+            // Verificar que la cancelación se haga con al menos 2 horas de anticipación
+            var tiempoAnticipacion = reservacion.FechaReservacion - DateTime.Now;
+            return tiempoAnticipacion.TotalHours >= 2;
         }
         catch (NotSupportedException)
         {
-            // En pruebas unitarias con mocks, asumimos que cumple la política
-            return true;
+            // En pruebas unitarias con mocks, retornamos false si no cumple la política
+            return false;
         }
     }
 } 

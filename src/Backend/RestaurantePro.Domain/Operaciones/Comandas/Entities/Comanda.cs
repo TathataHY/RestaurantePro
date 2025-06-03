@@ -549,7 +549,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// <param name="precioUnitario">Precio unitario</param>
         /// <param name="observaciones">Observaciones del ítem</param>
         /// <returns>El ítem agregado</returns>
-        public ItemComanda AgregarItem(Guid productoId, string nombreProducto, int cantidad, decimal precioUnitario, string? observaciones = null)
+        public virtual ItemComanda AgregarItem(Guid productoId, string nombreProducto, int cantidad, decimal precioUnitario, string? observaciones = null)
         {
             ValidarComandaActiva();
 

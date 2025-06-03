@@ -700,25 +700,18 @@ public class AnularFacturaHandlerTests
         var queryable = data.AsQueryable();
         var dbSetMock = new Mock<DbSet<T>>();
 
-        // Configure IQueryable implementation
         dbSetMock.As<IQueryable<T>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<T>(queryable.Provider));
         dbSetMock.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
         dbSetMock.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
         dbSetMock.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
 
-        // Configure IAsyncEnumerable implementation
         dbSetMock.As<IAsyncEnumerable<T>>()
             .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
             .Returns(new TestAsyncEnumerator<T>(queryable.GetEnumerator()));
 
-        // Configure Include method (returns the same dbset mock for simplicity)
-        dbSetMock.Setup(x => x.Include(It.IsAny<string>()))
-            .Returns(dbSetMock.Object);
-
-        // Configure Include<TProperty> method
-        dbSetMock.Setup(x => x.Include(It.IsAny<Expression<Func<T, object>>>()))
-            .Returns(dbSetMock.Object);
-
+        // Eliminamos los setups de Include ya que son métodos de extensión que no se pueden mockear directamente
+        // El handler debería funcionar sin Include en las pruebas unitarias
+        
         return dbSetMock;
     }
 

@@ -60,7 +60,12 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
 
         RuleFor(x => x.UsuarioSolicitanteId)
             .NotEqual(Guid.Empty)
-            .WithMessage("El ID del usuario solicitante es requerido.");
+            .WithMessage("El usuario solicitante es requerido.");
+
+        RuleFor(x => x.UsuarioSolicitanteId)
+            .MustAsync(UsuarioExiste)
+            .WithMessage("El usuario especificado no existe.")
+            .When(x => x.UsuarioSolicitanteId != Guid.Empty);
 
         RuleFor(x => x.NombrePersonalizado)
             .MaximumLength(200)
@@ -76,24 +81,24 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
         RuleFor(x => x.FechaInicio)
             .NotEmpty()
             .WithMessage("La fecha de inicio es requerida.")
-            .LessThanOrEqualTo(DateTime.Today.AddDays(1))
+            .LessThanOrEqualTo(DateTime.Today)
             .WithMessage("La fecha de inicio no puede ser futura.")
             .GreaterThanOrEqualTo(DateTime.Today.AddYears(-5))
-            .WithMessage("La fecha de inicio no puede ser mayor a 5 años atrás.");
+            .WithMessage("La fecha de inicio no puede ser anterior a 5 años.");
 
         RuleFor(x => x.FechaFin)
             .NotEmpty()
             .WithMessage("La fecha de fin es requerida.")
-            .GreaterThanOrEqualTo(x => x.FechaInicio)
-            .WithMessage("La fecha de fin debe ser posterior o igual a la fecha de inicio.")
-            .LessThanOrEqualTo(DateTime.Today.AddDays(1))
+            .GreaterThan(x => x.FechaInicio)
+            .WithMessage("La fecha de fin debe ser posterior a la fecha de inicio.")
+            .LessThanOrEqualTo(DateTime.Today)
             .WithMessage("La fecha de fin no puede ser futura.");
 
         // Validar rango de fechas no mayor a 1 año
         RuleFor(x => x)
             .Must(command => (command.FechaFin - command.FechaInicio).TotalDays <= 365)
-            .WithMessage("El rango de fechas no puede exceder 1 año.")
-            .WithName("RangoFechas");
+            .WithMessage("El rango de fechas no puede ser mayor a un año.")
+            .WithName("FechaFin");
     }
 
     /// <summary>
@@ -102,22 +107,23 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
     private void ConfigurarValidacionesFormato()
     {
         RuleFor(x => x.FiltrosEspecificos)
-            .Must(filtros => filtros == null || filtros.Count <= 100)
-            .WithMessage("No se pueden especificar más de 100 filtros específicos.")
-            .Must(filtros => filtros == null || filtros.All(id => id != Guid.Empty))
-            .WithMessage("Todos los IDs de filtros deben ser válidos.")
-            .When(x => x.FiltrosEspecificos != null);
+            .Must(filtros => filtros == null || filtros.Count <= 10)
+            .WithMessage("No se pueden especificar más de 10 filtros específicos.");
+
+        // Validar GUIDs válidos en FiltrosEspecificos por índice
+        RuleForEach(x => x.FiltrosEspecificos)
+            .Must(id => id != Guid.Empty)
+            .WithMessage("Los filtros específicos no pueden estar vacíos.");
 
         RuleFor(x => x.ParametrosAdicionales)
-            .Must(parametros => parametros == null || parametros.Count <= 50)
-            .WithMessage("No se pueden especificar más de 50 parámetros adicionales.")
-            .When(x => x.ParametrosAdicionales != null);
+            .Must(parametros => parametros == null || parametros.Count <= 20)
+            .WithMessage("No se pueden especificar más de 20 parámetros adicionales.");
 
         // Validar que al menos una opción de contenido esté habilitada
         RuleFor(x => x)
             .Must(command => command.IncluirGraficos || command.IncluirDetalles || command.IncluirResumenEjecutivo)
-            .WithMessage("Debe incluir al menos gráficos, detalles o resumen ejecutivo.")
-            .WithName("ContenidoReporte");
+            .WithMessage("Debe incluir al menos un tipo de contenido en el reporte.")
+            .WithName("ContenidoIncluido");
     }
 
     /// <summary>
@@ -125,17 +131,16 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
     /// </summary>
     private void ConfigurarValidacionesUsuario()
     {
-        // TODO: Comentado temporalmente para evitar problemas con mocks
-        // RuleFor(x => x.UsuarioSolicitanteId)
-        //     .MustAsync(UsuarioTienePermisosReportes)
-        //     .WithMessage("El usuario no tiene permisos para generar reportes.")
-        //     .When(x => x.UsuarioSolicitanteId != Guid.Empty);
+        RuleFor(x => x.UsuarioSolicitanteId)
+            .MustAsync(UsuarioTienePermisosReportes)
+            .WithMessage("El usuario no tiene permisos para generar reportes.")
+            .When(x => x.UsuarioSolicitanteId != Guid.Empty);
 
-        // RuleFor(x => x)
-        //     .MustAsync(UsuarioTienePermisosParaTipoReporte)
-        //     .WithMessage("El usuario no tiene permisos para generar este tipo de reporte.")
-        //     .When(x => x.UsuarioSolicitanteId != Guid.Empty)
-        //     .WithName("PermisosEspecificos");
+        RuleFor(x => x)
+            .MustAsync(UsuarioTienePermisosParaTipoReporte)
+            .WithMessage("El usuario no tiene permisos para generar este tipo de reporte.")
+            .When(x => x.UsuarioSolicitanteId != Guid.Empty)
+            .WithName("PermisosEspecificos");
     }
 
     /// <summary>
@@ -147,15 +152,15 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
             .NotEmpty()
             .WithMessage("El email de destino es requerido cuando se solicita envío por email.")
             .EmailAddress()
-            .WithMessage("El email de destino debe tener un formato válido.")
+            .WithMessage("El formato del email de destino no es válido.")
             .MaximumLength(254)
             .WithMessage("El email no puede exceder 254 caracteres.")
             .When(x => x.EnviarPorEmail);
 
-        RuleFor(x => x.EnviarPorEmail)
-            .Equal(false)
-            .WithMessage("No se puede enviar por email reportes de más de 30 días de rango.")
-            .When(x => (x.FechaFin - x.FechaInicio).TotalDays > 30);
+        RuleFor(x => x)
+            .Must(command => !command.EnviarPorEmail || (command.FechaFin - command.FechaInicio).TotalDays <= 30)
+            .WithMessage("El envío por email está limitado a reportes con rango máximo de 30 días.")
+            .WithName("EnviarPorEmail");
     }
 
     /// <summary>
@@ -166,28 +171,27 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
         // Reportes financieros requieren prioridad alta
         RuleFor(x => x.Prioridad)
             .Must(prioridad => prioridad == NivelPrioridad.Alta || prioridad == NivelPrioridad.Critica)
-            .WithMessage("Los reportes financieros requieren prioridad alta o crítica.")
+            .WithMessage("Los reportes financieros requieren prioridad alta.")
             .When(x => x.TipoReporte == TipoReporte.Financiero);
 
         // Reportes personalizados requieren nombre personalizado
         RuleFor(x => x.NombrePersonalizado)
             .NotEmpty()
-            .WithMessage("Los reportes personalizados requieren un nombre personalizado.")
+            .WithMessage("El nombre personalizado es requerido para reportes personalizados.")
             .When(x => x.TipoReporte == TipoReporte.Personalizado);
 
-        // TODO: Comentado temporalmente para evitar problemas con mocks
-        // // Validar que existan datos para el período solicitado
-        // RuleFor(x => x)
-        //     .MustAsync(PeriodoTieneDatos)
-        //     .WithMessage("El período seleccionado no tiene datos suficientes para generar el reporte.")
-        //     .When(x => x.FechaInicio < DateTime.Today.AddDays(-90))
-        //     .WithName("DatosDisponibles");
+        // Validar que existan datos para el período solicitado
+        RuleFor(x => x)
+            .MustAsync(PeriodoTieneDatos)
+            .WithMessage("El período seleccionado no tiene datos suficientes para generar el reporte.")
+            .When(x => x.FechaInicio < DateTime.Today.AddDays(-90))
+            .WithName("DatosDisponibles");
 
-        // // Limitar reportes concurrentes por usuario
-        // RuleFor(x => x.UsuarioSolicitanteId)
-        //     .MustAsync(UsuarioNoTieneMuchasGeneracionesPendientes)
-        //     .WithMessage("El usuario tiene demasiadas generaciones de reportes pendientes.")
-        //     .When(x => x.UsuarioSolicitanteId != Guid.Empty);
+        // Limitar reportes concurrentes por usuario
+        RuleFor(x => x.UsuarioSolicitanteId)
+            .MustAsync(UsuarioNoTieneMuchasGeneracionesPendientes)
+            .WithMessage("El usuario tiene demasiadas generaciones de reportes pendientes.")
+            .When(x => x.UsuarioSolicitanteId != Guid.Empty);
     }
 
     /// <summary>
@@ -195,18 +199,17 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
     /// </summary>
     private void ConfigurarValidacionesPermisos()
     {
-        // TODO: Comentado temporalmente para evitar problemas con mocks
-        // // Reportes de inventario requieren permisos específicos
-        // RuleFor(x => x.UsuarioSolicitanteId)
-        //     .MustAsync(UsuarioTienePermisosInventario)
-        //     .WithMessage("El usuario no tiene permisos para generar reportes de inventario.")
-        //     .When(x => x.TipoReporte == TipoReporte.Inventario);
+        // Reportes de inventario requieren permisos específicos
+        RuleFor(x => x.UsuarioSolicitanteId)
+            .MustAsync(UsuarioTienePermisosInventario)
+            .WithMessage("El usuario no tiene permisos para generar reportes de inventario.")
+            .When(x => x.TipoReporte == TipoReporte.Inventario);
 
-        // // Reportes financieros requieren permisos especiales
-        // RuleFor(x => x.UsuarioSolicitanteId)
-        //     .MustAsync(UsuarioTienePermisosFinancieros)
-        //     .WithMessage("El usuario no tiene permisos para generar reportes financieros.")
-        //     .When(x => x.TipoReporte == TipoReporte.Financiero);
+        // Reportes financieros requieren permisos especiales
+        RuleFor(x => x.UsuarioSolicitanteId)
+            .MustAsync(UsuarioTienePermisosFinancieros)
+            .WithMessage("El usuario no tiene permisos para generar reportes financieros.")
+            .When(x => x.TipoReporte == TipoReporte.Financiero);
     }
 
     // Métodos de validación personalizados

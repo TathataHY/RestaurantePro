@@ -218,19 +218,42 @@ public class CrearUsuarioHandlerTests
 
         SetupUsuarioExistenteMock(usuarioAdmin);
 
+        var expectedDto = new UsuarioDto
+        {
+            Id = Guid.NewGuid(),
+            NombreUsuario = "supervisor.cocina",
+            Nombre = "Supervisor",
+            Apellido = "Cocina",
+            Email = "supervisor.cocina@restaurantepro.com",
+            Rol = "Supervisor", // Corregir para que coincida con lo esperado
+            Activo = true,
+            FechaCreacion = DateTime.UtcNow
+        };
+
         _mockMapper.Setup(m => m.Map<UsuarioDto>(It.IsAny<Usuario>()))
-                   .Returns(_usuarioDtoEjemplo);
+                   .Returns(expectedDto);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
+        
+        // Si el resultado no es exitoso, mostrar el error para debugging
+        if (!result.Succeeded)
+        {
+            throw new Exception($"Test failed with error: {result.Error}");
+        }
+        
         result.Succeeded.Should().BeTrue();
 
-        // Verificar uso del factory method
-        command.Rol.Should().Be("Supervisor");
+        // Verificar que el factory method configuró correctamente los valores
+        command.Rol.Should().Be("Supervisor"); // Verificar el comando creado
         command.Departamento.Should().Be("Cocina");
+        
+        // Verificar que el resultado contiene los valores esperados
+        result.Value.Should().NotBeNull();
+        result.Value.Rol.Should().Be("Supervisor");
 
         _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -273,14 +296,33 @@ public class CrearUsuarioHandlerTests
 
         SetupUsuarioExistenteMock(usuarioAdmin);
 
+        var expectedDto = new UsuarioDto
+        {
+            Id = Guid.NewGuid(),
+            NombreUsuario = "usuario.horarios",
+            Nombre = "Usuario",
+            Apellido = "con Horarios",
+            Email = "usuario.horarios@restaurantepro.com",
+            Rol = "Supervisor",
+            Activo = true,
+            FechaCreacion = DateTime.UtcNow
+        };
+
         _mockMapper.Setup(m => m.Map<UsuarioDto>(It.IsAny<Usuario>()))
-                   .Returns(_usuarioDtoEjemplo);
+                   .Returns(expectedDto);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
+        
+        // Si el resultado no es exitoso, mostrar el error para debugging
+        if (!result.Succeeded)
+        {
+            throw new Exception($"Test failed with error: {result.Error}");
+        }
+        
         result.Succeeded.Should().BeTrue();
 
         // Verificar que se configuran los horarios
@@ -480,14 +522,33 @@ public class CrearUsuarioHandlerTests
 
         SetupUsuarioExistenteMock(usuarioAdmin);
 
+        var expectedDto = new UsuarioDto
+        {
+            Id = Guid.NewGuid(),
+            NombreUsuario = $"usuario.{rol.ToLower()}",
+            Nombre = "Usuario",
+            Apellido = rol,
+            Email = $"usuario.{rol.ToLower()}@restaurantepro.com",
+            Rol = rol,
+            Activo = true,
+            FechaCreacion = DateTime.UtcNow
+        };
+
         _mockMapper.Setup(m => m.Map<UsuarioDto>(It.IsAny<Usuario>()))
-                   .Returns(_usuarioDtoEjemplo);
+                   .Returns(expectedDto);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
+        
+        // Si el resultado no es exitoso, mostrar el error para debugging
+        if (!result.Succeeded)
+        {
+            throw new Exception($"Test failed with error: {result.Error}");
+        }
+        
         result.Succeeded.Should().BeTrue();
 
         // Verificar que el nivel esperado es correcto para el rol

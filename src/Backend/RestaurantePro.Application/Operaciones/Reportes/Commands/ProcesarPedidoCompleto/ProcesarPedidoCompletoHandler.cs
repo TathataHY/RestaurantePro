@@ -195,10 +195,18 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
         {
             try
             {
+                // Obtener el UserId del servicio y convertir a Guid de manera segura
+                var usuarioId = Guid.Empty;
+                if (!string.IsNullOrEmpty(_currentUserService.UserId) && 
+                    Guid.TryParse(_currentUserService.UserId, out var parsedUserId))
+                {
+                    usuarioId = parsedUserId;
+                }
+
                 var finalizarCommand = new FinalizarComandaCommand
                 {
                     ComandaId = comanda.Id,
-                    UsuarioId = Guid.Parse(_currentUserService.UserId ?? Guid.Empty.ToString()),
+                    UsuarioId = usuarioId,
                     FechaFinalizacion = _dateTimeService.Now,
                     ObservacionesFinalizacion = "Finalizada automáticamente al procesar pedido completo",
                     ValidarTodosItemsListos = true,

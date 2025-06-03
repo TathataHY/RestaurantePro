@@ -1,5 +1,91 @@
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Validators;
 
+// Helper classes para manejar async en Entity Framework mocks
+internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
+{
+    private readonly IQueryProvider _inner;
+
+    internal TestAsyncQueryProvider(IQueryProvider inner)
+    {
+        _inner = inner;
+    }
+
+    public IQueryable CreateQuery(Expression expression)
+    {
+        return new TestAsyncEnumerable<TEntity>(expression);
+    }
+
+    public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
+    {
+        return new TestAsyncEnumerable<TElement>(expression);
+    }
+
+    public object Execute(Expression expression)
+    {
+        return _inner.Execute(expression);
+    }
+
+    public TResult Execute<TResult>(Expression expression)
+    {
+        return _inner.Execute<TResult>(expression);
+    }
+
+    public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken)
+    {
+        return Execute<TResult>(expression);
+    }
+}
+
+internal class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
+{
+    public TestAsyncEnumerable(IEnumerable<T> enumerable)
+        : base(enumerable)
+    { }
+
+    public TestAsyncEnumerable(Expression expression)
+        : base(expression)
+    { }
+
+    public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+    {
+        return new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
+    }
+
+    IQueryProvider IQueryable.Provider
+    {
+        get { return new TestAsyncQueryProvider<T>(this); }
+    }
+}
+
+internal class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
+{
+    private readonly IEnumerator<T> _inner;
+
+    public TestAsyncEnumerator(IEnumerator<T> inner)
+    {
+        _inner = inner;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _inner.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    public ValueTask<bool> MoveNextAsync()
+    {
+        return ValueTask.FromResult(_inner.MoveNext());
+    }
+
+    public T Current
+    {
+        get
+        {
+            return _inner.Current;
+        }
+    }
+}
+
 /// <summary>
 /// 🔥 TESTS EXHAUSTIVOS PARA OBTENER FACTURA POR ID VALIDATOR - IMPLEMENTACIÓN COMPLETA
 /// Tests completos para validar todas las reglas críticas de consulta de factura por ID
@@ -9,11 +95,59 @@ public class ObtenerFacturaPorIdValidatorTests
 {
     private readonly ObtenerFacturaPorIdValidator _validator;
     private readonly Mock<IApplicationDbContext> _mockContext;
+    private readonly Mock<DbSet<Factura>> _mockFacturasDbSet;
+    private readonly Mock<DbSet<Usuario>> _mockUsuariosDbSet;
 
     public ObtenerFacturaPorIdValidatorTests()
     {
         _mockContext = new Mock<IApplicationDbContext>();
+        _mockFacturasDbSet = new Mock<DbSet<Factura>>();
+        _mockUsuariosDbSet = new Mock<DbSet<Usuario>>();
+        
+        // Configurar los DbSets en el contexto
+        _mockContext.Setup(c => c.Facturas).Returns(_mockFacturasDbSet.Object);
+        _mockContext.Setup(c => c.Usuarios).Returns(_mockUsuariosDbSet.Object);
+        
+        // Configurar datos de prueba básicos
+        ConfigurarDatosPrueba();
+        
         _validator = new ObtenerFacturaPorIdValidator(_mockContext.Object);
+    }
+
+    private void ConfigurarDatosPrueba()
+    {
+        // Configurar facturas de prueba
+        var facturas = new List<Factura>
+        {
+            Factura.Crear("F-001", TipoFactura.Normal, "Cliente Test"),
+            Factura.Crear("F-002", TipoFactura.Fiscal, "Cliente Fiscal", null, "RFC123456789")
+        };
+
+        // Configurar el comportamiento async del DbSet de Facturas
+        var mockFacturasQueryable = facturas.AsQueryable();
+        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<Factura>(mockFacturasQueryable.Provider));
+        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(mockFacturasQueryable.Expression);
+        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(mockFacturasQueryable.ElementType);
+        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(mockFacturasQueryable.GetEnumerator());
+
+        // Configurar usuarios de prueba
+        var usuarios = new List<Usuario>
+        {
+            Usuario.Crear("testuser", "Usuario Test", "test@test.com", RolUsuario.Cajero),
+            Usuario.Crear("admin", "Administrador", "admin@test.com", RolUsuario.Administrador)
+        };
+
+        // Activar los usuarios
+        foreach (var usuario in usuarios)
+        {
+            usuario.ConfirmarCuenta();
+        }
+
+        var mockUsuariosQueryable = usuarios.AsQueryable();
+        _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<Usuario>(mockUsuariosQueryable.Provider));
+        _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(mockUsuariosQueryable.Expression);
+        _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(mockUsuariosQueryable.ElementType);
+        _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(mockUsuariosQueryable.GetEnumerator());
     }
 
     #region Validation Query Helper

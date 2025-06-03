@@ -171,7 +171,7 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
                 return Result.Failure<object>("La cantidad debe ser mayor que cero para personalizaciones de tipo Extra");
             }
 
-            if (tipoUpper == "SUSTITUIR" && !dto.IngredienteSustitucionId.HasValue)
+            if (tipoUpper == "SUSTITUIR" && (!dto.IngredienteSustitucionId.HasValue || dto.IngredienteSustitucionId.Value == Guid.Empty))
             {
                 return Result.Failure<object>("Se requiere especificar el ingrediente de sustitución para personalizaciones de tipo Sustituir");
             }
@@ -225,7 +225,7 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
 
                 case "SUSTITUIR":
                     // Validar que existe ingrediente de sustitución
-                    if (!dto.IngredienteSustitucionId.HasValue)
+                    if (!dto.IngredienteSustitucionId.HasValue || dto.IngredienteSustitucionId.Value == Guid.Empty)
                     {
                         return Result.Failure("Para sustituir un ingrediente se requiere especificar el ingrediente de sustitución");
                     }

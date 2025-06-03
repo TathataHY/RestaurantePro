@@ -1,3 +1,5 @@
+using FluentValidation;
+
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Commands.ModificarReservacion;
 
 /// <summary>
@@ -18,7 +20,7 @@ public class ModificarReservacionValidator : AbstractValidator<ModificarReservac
             .GreaterThanOrEqualTo(DateTime.Today)
             .WithMessage("La fecha de reservación no puede ser en el pasado")
             .WithErrorCode("FECHA_RESERVACION_PASADO")
-            .LessThanOrEqualTo(DateTime.Today.AddDays(90))
+            .Must(FechaEnRangoPermitido)
             .WithMessage("La fecha de reservación no puede ser más de 90 días en el futuro")
             .WithErrorCode("FECHA_RESERVACION_MUY_FUTURA");
 
@@ -37,26 +39,52 @@ public class ModificarReservacionValidator : AbstractValidator<ModificarReservac
             .WithMessage("El número de personas no puede exceder 20")
             .WithErrorCode("NUMERO_PERSONAS_EXCESIVO");
 
+        // Validaciones opcionales de Mesa y Cliente
+        RuleFor(x => x.NuevaMesaId)
+            .NotEqual(Guid.Empty)
+            .WithMessage("El ID de la mesa es requerido")
+            .WithErrorCode("MESA_ID_REQUERIDO")
+            .When(x => x.NuevaMesaId.HasValue);
+
+        RuleFor(x => x.NuevoClienteId)
+            .NotEqual(Guid.Empty)
+            .WithMessage("El ID del cliente es requerido")
+            .WithErrorCode("CLIENTE_ID_REQUERIDO")
+            .When(x => x.NuevoClienteId.HasValue);
+
         RuleFor(x => x.MotivoModificacion)
             .NotEmpty()
-            .WithMessage("El motivo de la modificación es requerido")
+            .WithMessage("El motivo de modificación es requerido")
+            .WithErrorCode("MOTIVO_MODIFICACION_REQUERIDO")
             .MaximumLength(500)
-            .WithMessage("El motivo no puede exceder 500 caracteres");
+            .WithMessage("El motivo de modificación no puede exceder 500 caracteres")
+            .WithErrorCode("MOTIVO_MODIFICACION_LONGITUD");
 
         RuleFor(x => x.ObservacionesModificacion)
             .MaximumLength(1000)
             .WithMessage("Las observaciones no pueden exceder 1000 caracteres")
+            .WithErrorCode("OBSERVACIONES_LONGITUD")
             .When(x => !string.IsNullOrEmpty(x.ObservacionesModificacion));
 
         RuleFor(x => x.UsuarioId)
             .NotEmpty()
-            .WithMessage("El ID del usuario es requerido");
+            .WithMessage("El ID del usuario es requerido")
+            .WithErrorCode("USUARIO_ID_REQUERIDO");
 
         // Validación de fecha y hora combinadas
         RuleFor(x => x)
             .Must(x => CombineDateAndTime(x.NuevaFechaReservacion, x.NuevaHoraReservacion) > DateTime.Now.AddHours(2))
             .WithMessage("La nueva fecha y hora debe ser al menos 2 horas en el futuro")
             .When(x => x.NuevaFechaReservacion >= DateTime.Today);
+    }
+
+    private static bool FechaEnRangoPermitido(DateTime fecha)
+    {
+        // Permitir hasta 90 días desde hoy (inclusive)
+        // Usar Date para normalizar y evitar problemas con horas
+        var fechaBase = DateTime.Now.Date;
+        var fechaLimite = fechaBase.AddDays(90);
+        return fecha.Date <= fechaLimite;
     }
 
     private static bool BeValidBusinessHour(TimeSpan hora)

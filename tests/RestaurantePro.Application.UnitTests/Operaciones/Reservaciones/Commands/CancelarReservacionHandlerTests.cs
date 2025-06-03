@@ -1,5 +1,25 @@
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Commands;
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using FluentAssertions;
+using Moq;
+using Xunit;
+using Microsoft.EntityFrameworkCore;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands.CancelarReservacion;
+using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
+using AutoMapper;
+using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Query;
+using RestaurantePro.Application.UnitTests.Common;
+
 /// <summary>
 /// Tests unitarios para CancelarReservacionHandler
 /// Cobertura completa de cancelación de reservaciones, políticas empresariales y auditoría completa
@@ -10,7 +30,8 @@ public class CancelarReservacionHandlerTests
     private readonly Mock<ILogger<CancelarReservacionHandler>> _mockLogger;
     private readonly Mock<INotificationService> _mockNotificationService;
     private readonly Mock<IEmailService> _mockEmailService;
-    private readonly Mock<DbSet<Reservacion>> _mockReservacionesDbSet;
+    private readonly Mock<IMapper> _mockMapper;
+    private Mock<DbSet<Reservacion>> _mockReservacionesDbSet;
     private readonly CancelarReservacionHandler _handler;
     private readonly List<Reservacion> _reservacionesEjemplo;
 
@@ -20,13 +41,14 @@ public class CancelarReservacionHandlerTests
         _mockLogger = new Mock<ILogger<CancelarReservacionHandler>>();
         _mockNotificationService = new Mock<INotificationService>();
         _mockEmailService = new Mock<IEmailService>();
-        _mockReservacionesDbSet = new Mock<DbSet<Reservacion>>();
+        _mockMapper = new Mock<IMapper>();
         
         _handler = new CancelarReservacionHandler(
             _mockContext.Object,
             _mockLogger.Object,
             _mockNotificationService.Object,
-            _mockEmailService.Object);
+            _mockEmailService.Object,
+            _mockMapper.Object);
 
         _reservacionesEjemplo = CrearReservacionesEjemplo();
         ConfigurarMockDbSet();
@@ -389,54 +411,40 @@ public class CancelarReservacionHandlerTests
 
     private void ConfigurarMockDbSet()
     {
-        var queryableReservaciones = _reservacionesEjemplo.AsQueryable();
-        
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.Provider).Returns(queryableReservaciones.Provider);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.Expression).Returns(queryableReservaciones.Expression);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.ElementType).Returns(queryableReservaciones.ElementType);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.GetEnumerator()).Returns(queryableReservaciones.GetEnumerator());
-
-        _mockReservacionesDbSet.Setup(x => x.FirstOrDefaultAsync(
-                It.IsAny<Expression<Func<Reservacion, bool>>>(),
-                It.IsAny<CancellationToken>()))
-            .Returns<Expression<Func<Reservacion, bool>>, CancellationToken>((predicate, ct) =>
-            {
-                if (ct.IsCancellationRequested)
-                    throw new OperationCanceledException();
-                
-                var compiledPredicate = predicate.Compile();
-                var result = _reservacionesEjemplo.FirstOrDefault(compiledPredicate);
-                return Task.FromResult(result);
-            });
-
+        _mockReservacionesDbSet = MockDbSetHelper.CreateMockDbSet(_reservacionesEjemplo.AsQueryable());
         _mockContext.Setup(c => c.Reservaciones).Returns(_mockReservacionesDbSet.Object);
         _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        
+        // Configurar el mock del mapper
+        _mockMapper.Setup(m => m.Map<ReservacionDto>(It.IsAny<Reservacion>()))
+            .Returns((Reservacion r) => new ReservacionDto
+            {
+                Id = r.Id,
+                ClienteId = r.ClienteId,
+                MesaId = r.MesaId,
+                Estado = r.Estado,
+                FechaHoraReservacion = r.FechaReservacion,
+                NumeroPersonas = r.CantidadPersonas
+            });
     }
 
     private void ConfigurarMockDbSetConReservaciones(List<Reservacion> reservaciones)
     {
-        var queryableReservaciones = reservaciones.AsQueryable();
-        
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.Provider).Returns(queryableReservaciones.Provider);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.Expression).Returns(queryableReservaciones.Expression);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.ElementType).Returns(queryableReservaciones.ElementType);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.GetEnumerator()).Returns(queryableReservaciones.GetEnumerator());
-
-        _mockReservacionesDbSet.Setup(x => x.FirstOrDefaultAsync(
-                It.IsAny<Expression<Func<Reservacion, bool>>>(),
-                It.IsAny<CancellationToken>()))
-            .Returns<Expression<Func<Reservacion, bool>>, CancellationToken>((predicate, ct) =>
-            {
-                if (ct.IsCancellationRequested)
-                    throw new OperationCanceledException();
-                
-                var compiledPredicate = predicate.Compile();
-                var result = reservaciones.FirstOrDefault(compiledPredicate);
-                return Task.FromResult(result);
-            });
-
+        _mockReservacionesDbSet = MockDbSetHelper.CreateMockDbSet(reservaciones.AsQueryable());
         _mockContext.Setup(c => c.Reservaciones).Returns(_mockReservacionesDbSet.Object);
         _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        
+        // Configurar el mock del mapper
+        _mockMapper.Setup(m => m.Map<ReservacionDto>(It.IsAny<Reservacion>()))
+            .Returns((Reservacion r) => new ReservacionDto
+            {
+                Id = r.Id,
+                ClienteId = r.ClienteId,
+                MesaId = r.MesaId,
+                Estado = r.Estado,
+                FechaHoraReservacion = r.FechaReservacion,
+                NumeroPersonas = r.CantidadPersonas
+            });
     }
 
     private List<Reservacion> CrearReservacionesEjemplo()
@@ -458,12 +466,14 @@ public class CancelarReservacionHandlerTests
         
         typeof(Reservacion).GetProperty("Id")?.SetValue(reservacion, id);
         typeof(Reservacion).GetProperty("Estado")?.SetValue(reservacion, estado);
-        typeof(Reservacion).GetProperty("FechaHora")?.SetValue(reservacion, fechaHora);
+        typeof(Reservacion).GetProperty("Fecha")?.SetValue(reservacion, fechaHora.Date);
+        typeof(Reservacion).GetProperty("Hora")?.SetValue(reservacion, fechaHora.TimeOfDay);
         typeof(Reservacion).GetProperty("ClienteId")?.SetValue(reservacion, Guid.NewGuid());
         typeof(Reservacion).GetProperty("MesaId")?.SetValue(reservacion, Guid.NewGuid());
-        typeof(Reservacion).GetProperty("NumeroPersonas")?.SetValue(reservacion, 4);
-        typeof(Reservacion).GetProperty("TelefonoContacto")?.SetValue(reservacion, "+1234567890");
-        typeof(Reservacion).GetProperty("CodigoReservacion")?.SetValue(reservacion, $"RES-{id:N}".Substring(0, 12));
+        typeof(Reservacion).GetProperty("CantidadPersonas")?.SetValue(reservacion, 4);
+        typeof(Reservacion).GetProperty("Telefono")?.SetValue(reservacion, "+1234567890");
+        typeof(Reservacion).GetProperty("Email")?.SetValue(reservacion, "test@email.com");
+        typeof(Reservacion).GetProperty("Observaciones")?.SetValue(reservacion, "Test reservation");
         typeof(Reservacion).GetProperty("FechaCreacion")?.SetValue(reservacion, DateTime.Now.AddHours(-2));
         
         return reservacion;
