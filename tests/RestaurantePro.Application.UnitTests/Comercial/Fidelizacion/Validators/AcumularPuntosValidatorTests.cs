@@ -27,7 +27,8 @@ public class AcumularPuntosValidatorTests
             TipoTransaccion = RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.Compra,
             Canal = "Presencial",
             MultiplicadorEspecial = 1,
-            UsuarioQueAcumula = "usuario_test"
+            UsuarioQueAcumula = "usuario_test",
+            FacturaId = Guid.NewGuid() // Requerido para transacciones de compra
         };
     }
 

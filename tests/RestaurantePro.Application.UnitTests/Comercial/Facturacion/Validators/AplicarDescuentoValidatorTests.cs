@@ -148,9 +148,9 @@ public class AplicarDescuentoValidatorTests
     }
 
     [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
+    [InlineData(0)]
+    [InlineData(9)]
+    [InlineData(10)]
     public async Task Validate_ConTipoDescuentoInvalido_DeberiaRetornarError(int tipoInvalido)
     {
         // Arrange

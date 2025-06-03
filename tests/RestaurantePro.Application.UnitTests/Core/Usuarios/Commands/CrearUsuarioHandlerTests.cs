@@ -75,6 +75,13 @@ public class CrearUsuarioHandlerTests
 
         // Assert
         result.Should().NotBeNull();
+        
+        // Si falla, mostrar el error real para debugging
+        if (!result.Succeeded)
+        {
+            throw new Exception($"Test failed with error: {result.Error}");
+        }
+        
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.Should().BeEquivalentTo(_usuarioDtoEjemplo);
@@ -193,6 +200,7 @@ public class CrearUsuarioHandlerTests
             "supervisor.cocina@restaurantepro.com",
             "555-777-6666",
             "Cocina",
+            Guid.NewGuid(),
             _usuarioCreadorAdmin.Id);
 
         SetupUsuarioExistenteMock(_usuarioCreadorAdmin);
@@ -220,8 +228,8 @@ public class CrearUsuarioHandlerTests
         // Arrange
         var horarios = new List<CrearUsuarioHorarioDto>
         {
-            new() { DiaSemana = 1, HoraInicio = "08:00", HoraFin = "16:00" },
-            new() { DiaSemana = 2, HoraInicio = "08:00", HoraFin = "16:00" }
+            new() { DiaSemana = "Lunes", HoraInicio = TimeSpan.FromHours(8), HoraFin = TimeSpan.FromHours(16) },
+            new() { DiaSemana = "Martes", HoraInicio = TimeSpan.FromHours(8), HoraFin = TimeSpan.FromHours(16) }
         };
 
         var command = new CrearUsuarioCommand
@@ -231,7 +239,7 @@ public class CrearUsuarioHandlerTests
             Email = "usuario.horarios@restaurantepro.com",
             Password = "TempPassword123!",
             ConfirmarPassword = "TempPassword123!",
-            Rol = "Empleado",
+            Rol = "Mesero",
             HorariosTrabajo = horarios,
             UsuarioCreadorId = _usuarioCreadorAdmin.Id
         };
@@ -277,7 +285,7 @@ public class CrearUsuarioHandlerTests
             Email = "usuario.config@restaurantepro.com",
             Password = "TempPassword123!",
             ConfirmarPassword = "TempPassword123!",
-            Rol = "Empleado",
+            Rol = "Mesero",
             ConfiguracionPersonal = configuraciones,
             UsuarioCreadorId = _usuarioCreadorAdmin.Id
         };
@@ -418,8 +426,8 @@ public class CrearUsuarioHandlerTests
     }
 
     [Theory]
-    [InlineData("Empleado", 1)]
-    [InlineData("Supervisor", 5)]
+    [InlineData("Mesero", 1)]
+    [InlineData("Cajero", 5)]
     [InlineData("Gerente", 7)]
     [InlineData("Administrador", 10)]
     public async Task Handle_ConDiferentesRoles_DeberiaAsignarNivelCorrectoAutomaticamente(string rol, int nivelEsperado)
@@ -453,10 +461,10 @@ public class CrearUsuarioHandlerTests
         
         switch (rol)
         {
-            case "Empleado":
+            case "Mesero":
                 nivelEsperado.Should().Be(1);
                 break;
-            case "Supervisor":
+            case "Cajero":
                 nivelEsperado.Should().Be(5);
                 break;
             case "Gerente":
@@ -486,7 +494,7 @@ public class CrearUsuarioHandlerTests
             Email = "usuario.permisos@restaurantepro.com",
             Password = "TempPassword123!",
             ConfirmarPassword = "TempPassword123!",
-            Rol = "Empleado",
+            Rol = "Mesero",
             PermisosEspecificos = permisosEspeciales,
             UsuarioCreadorId = _usuarioCreadorAdmin.Id
         };
@@ -522,10 +530,17 @@ public class CrearUsuarioHandlerTests
 
     private void ConfigurarMockContext()
     {
-        // Mock para AddAsync - crear un mock simple que acepta cualquier entidad
+        // Configurar AddAsync usando una implementación que funciona con Moq
         var mockUsuarios = new Mock<DbSet<Usuario>>();
+        
+        // Configurar AddAsync para que retorne un ValueTask exitoso
         mockUsuarios.Setup(x => x.AddAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
-                   .Returns(default(ValueTask<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Usuario>>));
+                   .Returns((Usuario usuario, CancellationToken ct) => 
+                   {
+                       var mockEntry = new Mock<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Usuario>>();
+                       mockEntry.Setup(e => e.Entity).Returns(usuario);
+                       return new ValueTask<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Usuario>>(mockEntry.Object);
+                   });
 
         _mockContext.Setup(c => c.Usuarios).Returns(mockUsuarios.Object);
         _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
@@ -537,6 +552,9 @@ public class CrearUsuarioHandlerTests
         var mockQueryable = usuariosList.AsQueryable().BuildMockDbSet();
 
         _mockContext.Setup(c => c.Usuarios).Returns(mockQueryable.Object);
+        
+        // También configuramos SaveChangesAsync para este contexto específico
+        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
     }
 
     private void SetupUsuarioNoExistenteMock()
@@ -545,6 +563,9 @@ public class CrearUsuarioHandlerTests
         var mockQueryable = usuariosList.AsQueryable().BuildMockDbSet();
 
         _mockContext.Setup(c => c.Usuarios).Returns(mockQueryable.Object);
+        
+        // También configuramos SaveChangesAsync para este contexto específico
+        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
     }
 
     private Usuario CrearUsuarioAdministrador()
@@ -566,7 +587,7 @@ public class CrearUsuarioHandlerTests
             Nombre = "Usuario",
             Apellido = "Test",
             Email = "usuario.test@restaurantepro.com",
-            Rol = "Empleado",
+            Rol = "Mesero",
             Activo = true,
             FechaCreacion = DateTime.UtcNow
         };

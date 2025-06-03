@@ -514,14 +514,30 @@ public class ComercialMappingProfileTests
 
     private object CrearEmailMock(string email)
     {
-        // Crear objeto dinámico que simule el value object Email
-        return new { Value = email };
+        // Crear el value object Email usando su factory method
+        try
+        {
+            return Email.Crear(email);
+        }
+        catch
+        {
+            // Fallback: crear objeto dinámico
+            return new { Value = email };
+        }
     }
 
     private object CrearTelefonoMock(string telefono)
     {
-        // Crear objeto dinámico que simule el value object PhoneNumber
-        return new { Value = telefono };
+        // Crear el value object PhoneNumber usando su factory method
+        try
+        {
+            return PhoneNumber.Crear(telefono);
+        }
+        catch
+        {
+            // Fallback: crear objeto dinámico
+            return new { Value = telefono };
+        }
     }
 
     private object CrearNumeroFacturaMock(string numero)

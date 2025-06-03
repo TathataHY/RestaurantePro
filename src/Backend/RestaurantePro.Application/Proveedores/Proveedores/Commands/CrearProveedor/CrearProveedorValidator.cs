@@ -22,14 +22,20 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     {
         RuleFor(x => x.Nombre)
             .NotEmpty().WithMessage("El nombre del proveedor es obligatorio")
-            .MaximumLength(200).WithMessage("El nombre no puede exceder 200 caracteres")
-            .MinimumLength(3).WithMessage("El nombre debe tener al menos 3 caracteres")
-            .Must(BeValidCompanyName).WithMessage("El nombre contiene caracteres no válidos");
+            .DependentRules(() => {
+                RuleFor(x => x.Nombre)
+                    .MinimumLength(3).WithMessage("El nombre debe tener al menos 3 caracteres")
+                    .MaximumLength(200).WithMessage("El nombre no puede exceder 200 caracteres")
+                    .Must(BeValidCompanyName).WithMessage("El nombre contiene caracteres no válidos");
+            });
 
         RuleFor(x => x.NombreContacto)
             .NotEmpty().WithMessage("El nombre del contacto es obligatorio")
-            .MaximumLength(100).WithMessage("El nombre del contacto no puede exceder 100 caracteres")
-            .MinimumLength(2).WithMessage("El nombre del contacto debe tener al menos 2 caracteres");
+            .DependentRules(() => {
+                RuleFor(x => x.NombreContacto)
+                    .MinimumLength(2).WithMessage("El nombre del contacto debe tener al menos 2 caracteres")
+                    .MaximumLength(100).WithMessage("El nombre del contacto no puede exceder 100 caracteres");
+            });
 
         RuleFor(x => x.UsuarioId)
             .NotEmpty().WithMessage("El ID del usuario es obligatorio")
@@ -43,15 +49,21 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     {
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("El email es obligatorio")
-            .EmailAddress().WithMessage("El email debe tener un formato válido")
-            .MaximumLength(254).WithMessage("El email no puede exceder 254 caracteres")
-            .Must(BeValidEmailDomain).WithMessage("El dominio del email no es válido");
+            .DependentRules(() => {
+                RuleFor(x => x.Email)
+                    .EmailAddress().WithMessage("El email debe tener un formato válido")
+                    .MaximumLength(254).WithMessage("El email no puede exceder 254 caracteres")
+                    .Must(BeValidEmailDomain).WithMessage("El dominio del email no es válido");
+            });
 
         RuleFor(x => x.Telefono)
             .NotEmpty().WithMessage("El teléfono es obligatorio")
-            .MinimumLength(10).WithMessage("El teléfono debe tener al menos 10 dígitos")
-            .MaximumLength(15).WithMessage("El teléfono no puede exceder 15 dígitos")
-            .Must(BeValidPhoneNumber).WithMessage("El teléfono debe contener solo números, espacios, guiones y paréntesis");
+            .DependentRules(() => {
+                RuleFor(x => x.Telefono)
+                    .MinimumLength(10).WithMessage("El teléfono debe tener al menos 10 dígitos")
+                    .MaximumLength(15).WithMessage("El teléfono no puede exceder 15 dígitos")
+                    .Must(BeValidPhoneNumber).WithMessage("El teléfono debe contener solo números, espacios, guiones y paréntesis");
+            });
     }
 
     /// <summary>

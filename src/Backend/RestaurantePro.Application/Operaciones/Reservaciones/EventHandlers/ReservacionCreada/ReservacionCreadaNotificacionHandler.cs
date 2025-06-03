@@ -113,12 +113,15 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
         var fechaReservacion = evento.Fecha.Date + evento.Hora;
         var tiempoRestante = fechaReservacion - DateTime.UtcNow;
 
+        // Validar email del cliente - puede ser null o vacío
+        var emailCliente = string.IsNullOrWhiteSpace(cliente.Email?.Value) ? null : cliente.Email.Value;
+
         var datosConfirmacion = new ConfirmacionReservacionData
         {
             ReservacionId = reservacion.Id,
             ClienteId = cliente.Id,
             ClienteNombre = cliente.Nombre.NombreCompleto,
-            ClienteEmail = cliente.Email.Value,
+            ClienteEmail = emailCliente ?? string.Empty, // Usar string vacío si no tiene email válido
             ClienteTelefono = cliente.Telefono?.Value,
             FechaHoraReservacion = fechaReservacion,
             CantidadPersonas = reservacion.CantidadPersonas,

@@ -22,8 +22,18 @@ public class CambiarPasswordUsuarioValidatorTests
 
     private void ConfigurarContextoBasico()
     {
-        // Configurar comportamiento por defecto: usuarios existentes para validaciones básicas
-        var usuarios = new List<Usuario>();
+        // Crear usuarios por defecto para satisfacer las validaciones básicas
+        var usuarioDefault = Usuario.Crear("usuario.default", "Usuario Default", "usuario.default@test.com", RolUsuario.Mesero);
+        var autorizadorDefault = Usuario.Crear("admin.default", "Admin Default", "admin.default@test.com", RolUsuario.Administrador);
+
+        // Configurar IDs específicos para poder referenciarlos en los tests
+        var usuarioId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var autorizadorId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        
+        usuarioDefault.GetType().GetProperty("Id")?.SetValue(usuarioDefault, usuarioId);
+        autorizadorDefault.GetType().GetProperty("Id")?.SetValue(autorizadorDefault, autorizadorId);
+
+        var usuarios = new List<Usuario> { usuarioDefault, autorizadorDefault };
         var mockUsuarios = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
         _mockContext.Setup(c => c.Usuarios).Returns(mockUsuarios.Object);
     }
@@ -62,8 +72,8 @@ public class CambiarPasswordUsuarioValidatorTests
     {
         return new CambiarPasswordUsuarioCommand
         {
-            UsuarioId = Guid.NewGuid(),
-            UsuarioAutorizaId = Guid.NewGuid(),
+            UsuarioId = Guid.Parse("11111111-1111-1111-1111-111111111111"), // Usuario default que siempre existe
+            UsuarioAutorizaId = Guid.Parse("22222222-2222-2222-2222-222222222222"), // Autorizador default que siempre existe
             MotivosCambio = "Cambio de contraseña por políticas de seguridad empresarial",
             Prioridad = 2,
             PasswordNueva = "NuevaPassword123!",

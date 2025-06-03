@@ -27,21 +27,55 @@ public class ComercialMappingProfile : Profile
             .ForMember(dest => dest.Apellido, opt => opt.MapFrom(src => src.Nombre.Apellido))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.Value))
             .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono.Value))
-            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.EstaActivo));
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.EstaActivo))
+            // Mapeos de propiedades faltantes 
+            .ForMember(dest => dest.Direccion, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.Tipo, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.Notas, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.TarjetaFidelizacionId, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.PuntosFidelizacion, opt => opt.MapFrom(src => 0)) // Default value
+            .ForMember(dest => dest.NivelFidelizacion, opt => opt.MapFrom(src => NivelFidelizacion.Bronce)) // Default value
+            .ForMember(dest => dest.TotalVisitas, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
+            .ForMember(dest => dest.TotalGastado, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
+            .ForMember(dest => dest.UltimaVisita, opt => opt.MapFrom(src => (DateTime?)null)) // TODO: Calcular desde histórico
+            .ForMember(dest => dest.PromedioGasto, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
+            // Heredadas de BaseDto
+            .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.CreadoPor, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.ModificadoPor, opt => opt.Ignore()); // TODO: Implementar en entidad
 
         // Cliente Entity -> ClienteSummaryDto
         CreateMap<Cliente, ClienteSummaryDto>()
             .ForMember(dest => dest.NombreCompleto, opt => opt.MapFrom(src => $"{src.Nombre.Nombre} {src.Nombre.Apellido}".Trim()))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.Value))
             .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono.Value))
-            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.EstaActivo));
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.EstaActivo))
+            // Mapeos de propiedades faltantes
+            .ForMember(dest => dest.TipoCliente, opt => opt.MapFrom(src => "Regular")) // TODO: Implementar en entidad
+            .ForMember(dest => dest.FechaRegistro, opt => opt.MapFrom(src => src.FechaCreacion))
+            .ForMember(dest => dest.RegistradoPor, opt => opt.MapFrom(src => "Sistema")) // TODO: Implementar en entidad
+            .ForMember(dest => dest.FechaNacimiento, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.Ciudad, opt => opt.MapFrom(src => "")) // TODO: Implementar en entidad
+            .ForMember(dest => dest.Pais, opt => opt.MapFrom(src => "")) // TODO: Implementar en entidad
+            .ForMember(dest => dest.PuntosFidelizacion, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde fidelización
+            .ForMember(dest => dest.NivelFidelizacion, opt => opt.MapFrom(src => "Bronce")) // TODO: Calcular desde fidelización
+            .ForMember(dest => dest.TotalOrdenes, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
+            .ForMember(dest => dest.MontoTotalCompras, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
+            .ForMember(dest => dest.FechaUltimaOrden, opt => opt.MapFrom(src => (DateTime?)null)) // TODO: Calcular desde histórico
+            .ForMember(dest => dest.PromedioCompra, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
+            .ForMember(dest => dest.EsFrecuente, opt => opt.MapFrom(src => false)) // TODO: Calcular desde histórico
+            .ForMember(dest => dest.DiasSinVisitar, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
+            .ForMember(dest => dest.EsVIP, opt => opt.MapFrom(src => false)); // TODO: Calcular desde lógica de negocio
 
         // ClienteCreateDto -> CrearClienteCommand
-        CreateMap<ClienteCreateDto, CrearClienteCommand>();
+        CreateMap<ClienteCreateDto, CrearClienteCommand>()
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => $"{src.Nombre} {src.Apellido}".Trim()));
 
         // ClienteUpdateDto -> ActualizarClienteCommand
         CreateMap<ClienteUpdateDto, ActualizarClienteCommand>()
-            .ForMember(dest => dest.Id, opt => opt.Ignore()); // El ID viene por separado
+            .ForMember(dest => dest.Id, opt => opt.Ignore()) // El ID viene por separado
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => $"{src.Nombre} {src.Apellido}".Trim()))
+            .ForMember(dest => dest.EstaActivo, opt => opt.Ignore()); // Mapear si existe en UpdateDto
 
         // TODO: Reactivar cuando existan estos DTOs y entidades en Domain
         // TarjetaFidelizacion mappings
@@ -76,7 +110,18 @@ public class ComercialMappingProfile : Profile
             .ForMember(dest => dest.NombreCliente, opt => opt.MapFrom(src => src.NombreCliente))
             .ForMember(dest => dest.ClienteId, opt => opt.MapFrom(src => src.ClienteId))
             .ForMember(dest => dest.MontoPagado, opt => opt.MapFrom(src => src.TotalPagado))
-            .ForMember(dest => dest.FechaPago, opt => opt.MapFrom(src => src.FechaPago));
+            .ForMember(dest => dest.FechaPago, opt => opt.MapFrom(src => src.FechaPago))
+            // Mapeos de propiedades faltantes identificadas por AutoMapper
+            .ForMember(dest => dest.ComandaId, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.NumeroComanda, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.Descuentos, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde descuentos aplicados
+            .ForMember(dest => dest.MetodoPago, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.ReferenciaPago, opt => opt.Ignore()) // TODO: Implementar en entidad
+            // Heredadas de BaseDto
+            .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.CreadoPor, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.ModificadoPor, opt => opt.Ignore()) // TODO: Implementar en entidad
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => true)); // Default value
 
         // TODO: Implementar cuando los DTOs estén disponibles
         // DetalleFacturaDto y DescuentoFacturaDto no existen actualmente

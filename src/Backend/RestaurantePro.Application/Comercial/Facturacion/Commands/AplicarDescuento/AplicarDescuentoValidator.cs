@@ -68,8 +68,8 @@ public class AplicarDescuentoValidator : AbstractValidator<AplicarDescuentoComma
         // Verificar si es un número que corresponde a un enum válido
         if (int.TryParse(tipo, out var numeroTipo))
         {
-            // Los números 1, 2, 3 no son válidos - solo aceptamos strings válidos
-            return false;
+            // Mapear números a índices del array (1-8 corresponden a índices 0-7)
+            return numeroTipo >= 1 && numeroTipo <= _tiposDescuentoValidos.Length;
         }
 
         return false;
@@ -106,22 +106,24 @@ public class AplicarDescuentoValidator : AbstractValidator<AplicarDescuentoComma
             .WithMessage("Debe especificar un porcentaje o un monto fijo, pero no ambos.")
             .WithName("TipoValorDescuento");
 
-        // Validaciones para porcentaje
+        // Validaciones para porcentaje - corregir las condiciones When
         RuleFor(v => v.Porcentaje)
             .GreaterThan(0)
             .WithMessage("El porcentaje de descuento debe ser mayor a 0.")
-            .When(v => v.Porcentaje > 0);
+            .When(v => v.MontoFijo == 0); // Cuando no hay monto fijo, debe validar porcentaje
 
         RuleFor(v => v.Porcentaje)
             .LessThanOrEqualTo(100)
             .WithMessage("El porcentaje de descuento no puede exceder 100%.")
             .When(v => v.Porcentaje > 0);
 
-        // Validaciones para monto fijo
+        // Validaciones para monto fijo - corregir las condiciones When y agregar null-safety
         RuleFor(v => v.MontoFijo)
             .GreaterThan(0)
             .WithMessage("El monto fijo debe ser mayor a 0.")
-            .When(v => v.MontoFijo > 0);
+            .When(v => v.Porcentaje == 0 || 
+                      (!string.IsNullOrEmpty(v.TipoDescuento) && 
+                       (v.TipoDescuento == "2" || v.TipoDescuento.Equals("MontoFijo", StringComparison.OrdinalIgnoreCase))));
 
         RuleFor(v => v.MontoFijo)
             .LessThanOrEqualTo(100000)
