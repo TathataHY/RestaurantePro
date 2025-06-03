@@ -77,7 +77,8 @@ public class ActualizarUsuarioValidatorTests
             Posicion = "Supervisor de Meseros",
             FechaIngreso = DateTime.Today.AddYears(-2),
             SalarioBase = 25000m,
-            ObservacionesAdicionales = "Actualización por promoción interna"
+            ObservacionesAdicionales = "Actualización por promoción interna",
+            RequiereAprobacion = true
         };
     }
 
@@ -465,7 +466,7 @@ public class ActualizarUsuarioValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var nombreLargo = new string('a', 85);
+        var nombreLargo = new string('a', 95); // 95 + "@domain.com" (11) = 106 caracteres > 100
         command.Email = $"{nombreLargo}@domain.com"; // Más de 100 caracteres
 
         // Act

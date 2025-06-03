@@ -51,7 +51,7 @@ public class AjustarInventarioHandler : IRequestHandler<AjustarInventarioCommand
             var ingrediente = await _ingredienteRepository.ObtenerPorIdAsync(request.IngredienteId, cancellationToken);
             if (ingrediente == null)
             {
-                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<bool>($"Ingrediente con ID {request.IngredienteId} no encontrado");
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<bool>($"Ingrediente no encontrado con ID {request.IngredienteId}");
             }
 
             // Validar el ajuste
@@ -114,13 +114,13 @@ public class AjustarInventarioHandler : IRequestHandler<AjustarInventarioCommand
 
             if (string.IsNullOrWhiteSpace(userId))
             {
-                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure("Usuario no autenticado");
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure("Usuario sin autorización para realizar ajustes de inventario");
             }
 
             // Validar autorización según el rol
             if (!Enum.TryParse<RolUsuario>(userRole, out var rol))
             {
-                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure("Rol de usuario no válido");
+                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure("Usuario sin autorización válida para ajustes de inventario");
             }
 
             // Validar límites según el rol

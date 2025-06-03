@@ -211,72 +211,148 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
     // Métodos de validación personalizados
     private async Task<bool> UsuarioExiste(Guid usuarioId, CancellationToken cancellationToken)
     {
-        return await _context.Usuarios
-            .AnyAsync(u => u.Id == usuarioId, cancellationToken);
+        try
+        {
+            return await _context.Usuarios
+                .AnyAsync(u => u.Id == usuarioId, cancellationToken);
+        }
+        catch (NotSupportedException)
+        {
+            // En entornos de test, fallback a versión síncrona
+            return _context.Usuarios.Any(u => u.Id == usuarioId);
+        }
     }
 
     private async Task<bool> UsuarioTienePermisosReportes(Guid usuarioId, CancellationToken cancellationToken)
     {
-        var usuario = await _context.Usuarios
-            .FirstOrDefaultAsync(u => u.Id == usuarioId, cancellationToken);
+        try
+        {
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Id == usuarioId, cancellationToken);
 
-        if (usuario == null) return false;
+            if (usuario == null) return false;
 
-        // Verificar si tiene roles que permiten generar reportes
-        return usuario.Roles.Any(r => r == RolUsuario.Administrador || 
-                                     r == RolUsuario.Gerente) ||
-               usuario.EsAdministrador;
+            // Verificar si tiene roles que permiten generar reportes
+            return usuario.Roles.Any(r => r == RolUsuario.Administrador || 
+                                         r == RolUsuario.Gerente) ||
+                   usuario.EsAdministrador;
+        }
+        catch (NotSupportedException)
+        {
+            // En entornos de test, fallback a versión síncrona
+            var usuario = _context.Usuarios.FirstOrDefault(u => u.Id == usuarioId);
+            if (usuario == null) return false;
+            
+            return usuario.Roles.Any(r => r == RolUsuario.Administrador || 
+                                         r == RolUsuario.Gerente) ||
+                   usuario.EsAdministrador;
+        }
     }
 
     private async Task<bool> UsuarioTienePermisosParaTipoReporte(GenerarReporteCommand command, CancellationToken cancellationToken)
     {
-        var usuario = await _context.Usuarios
-            .FirstOrDefaultAsync(u => u.Id == command.UsuarioSolicitanteId, cancellationToken);
-
-        if (usuario == null) return false;
-
-        // Lógica específica según el tipo de reporte
-        return command.TipoReporte switch
+        try
         {
-            TipoReporte.Financiero => usuario.Roles.Contains(RolUsuario.Administrador) || usuario.EsAdministrador,
-            TipoReporte.Inventario => usuario.Roles.Any(r => r == RolUsuario.Administrador || r == RolUsuario.Gerente) || usuario.EsAdministrador,
-            _ => true // Otros reportes son accesibles para usuarios con permisos básicos
-        };
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Id == command.UsuarioSolicitanteId, cancellationToken);
+
+            if (usuario == null) return false;
+
+            // Lógica específica según el tipo de reporte
+            return command.TipoReporte switch
+            {
+                TipoReporte.Financiero => usuario.Roles.Contains(RolUsuario.Administrador) || usuario.EsAdministrador,
+                TipoReporte.Inventario => usuario.Roles.Any(r => r == RolUsuario.Administrador || r == RolUsuario.Gerente) || usuario.EsAdministrador,
+                _ => true // Otros reportes son accesibles para usuarios con permisos básicos
+            };
+        }
+        catch (NotSupportedException)
+        {
+            // En entornos de test, fallback a versión síncrona
+            var usuario = _context.Usuarios.FirstOrDefault(u => u.Id == command.UsuarioSolicitanteId);
+            if (usuario == null) return false;
+
+            return command.TipoReporte switch
+            {
+                TipoReporte.Financiero => usuario.Roles.Contains(RolUsuario.Administrador) || usuario.EsAdministrador,
+                TipoReporte.Inventario => usuario.Roles.Any(r => r == RolUsuario.Administrador || r == RolUsuario.Gerente) || usuario.EsAdministrador,
+                _ => true
+            };
+        }
     }
 
     private async Task<bool> UsuarioTienePermisosInventario(Guid usuarioId, CancellationToken cancellationToken)
     {
-        var usuario = await _context.Usuarios
-            .FirstOrDefaultAsync(u => u.Id == usuarioId, cancellationToken);
+        try
+        {
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Id == usuarioId, cancellationToken);
 
-        return usuario?.Roles.Any(r => r == RolUsuario.Administrador || 
-                                      r == RolUsuario.Gerente || 
-                                      r == RolUsuario.EncargadoInventario) == true ||
-               usuario?.EsAdministrador == true;
+            return usuario?.Roles.Any(r => r == RolUsuario.Administrador || 
+                                          r == RolUsuario.Gerente || 
+                                          r == RolUsuario.EncargadoInventario) == true ||
+                   usuario?.EsAdministrador == true;
+        }
+        catch (NotSupportedException)
+        {
+            // En entornos de test, fallback a versión síncrona
+            var usuario = _context.Usuarios.FirstOrDefault(u => u.Id == usuarioId);
+            return usuario?.Roles.Any(r => r == RolUsuario.Administrador || 
+                                          r == RolUsuario.Gerente || 
+                                          r == RolUsuario.EncargadoInventario) == true ||
+                   usuario?.EsAdministrador == true;
+        }
     }
 
     private async Task<bool> UsuarioTienePermisosFinancieros(Guid usuarioId, CancellationToken cancellationToken)
     {
-        var usuario = await _context.Usuarios
-            .FirstOrDefaultAsync(u => u.Id == usuarioId, cancellationToken);
+        try
+        {
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Id == usuarioId, cancellationToken);
 
-        return usuario?.Roles.Contains(RolUsuario.Administrador) == true || 
-               usuario?.EsAdministrador == true;
+            return usuario?.Roles.Contains(RolUsuario.Administrador) == true || 
+                   usuario?.EsAdministrador == true;
+        }
+        catch (NotSupportedException)
+        {
+            // En entornos de test, fallback a versión síncrona
+            var usuario = _context.Usuarios.FirstOrDefault(u => u.Id == usuarioId);
+            return usuario?.Roles.Contains(RolUsuario.Administrador) == true || 
+                   usuario?.EsAdministrador == true;
+        }
     }
 
     private async Task<bool> PeriodoTieneDatos(GenerarReporteCommand command, CancellationToken cancellationToken)
     {
-        // Verificar según el tipo de reporte si hay datos disponibles
-        return command.TipoReporte switch
+        try
         {
-            TipoReporte.VentasDiarias or TipoReporte.VentasSemanales or TipoReporte.VentasMensuales =>
-                await _context.Comandas.AnyAsync(c => c.FechaCreacion.Date >= command.FechaInicio.Date && 
-                                                     c.FechaCreacion.Date <= command.FechaFin.Date, cancellationToken),
-            TipoReporte.Inventario =>
-                await _context.MovimientosInventario.AnyAsync(m => m.FechaCreacion.Date >= command.FechaInicio.Date && 
-                                                                  m.FechaCreacion.Date <= command.FechaFin.Date, cancellationToken),
-            _ => true // Para otros tipos, asumir que hay datos
-        };
+            // Verificar según el tipo de reporte si hay datos disponibles
+            return command.TipoReporte switch
+            {
+                TipoReporte.VentasDiarias or TipoReporte.VentasSemanales or TipoReporte.VentasMensuales =>
+                    await _context.Comandas.AnyAsync(c => c.FechaCreacion.Date >= command.FechaInicio.Date && 
+                                                         c.FechaCreacion.Date <= command.FechaFin.Date, cancellationToken),
+                TipoReporte.Inventario =>
+                    await _context.MovimientosInventario.AnyAsync(m => m.FechaCreacion.Date >= command.FechaInicio.Date && 
+                                                                      m.FechaCreacion.Date <= command.FechaFin.Date, cancellationToken),
+                _ => true // Para otros tipos, asumir que hay datos
+            };
+        }
+        catch (NotSupportedException)
+        {
+            // En entornos de test, fallback a versión síncrona
+            return command.TipoReporte switch
+            {
+                TipoReporte.VentasDiarias or TipoReporte.VentasSemanales or TipoReporte.VentasMensuales =>
+                    _context.Comandas.Any(c => c.FechaCreacion.Date >= command.FechaInicio.Date && 
+                                              c.FechaCreacion.Date <= command.FechaFin.Date),
+                TipoReporte.Inventario =>
+                    _context.MovimientosInventario.Any(m => m.FechaCreacion.Date >= command.FechaInicio.Date && 
+                                                           m.FechaCreacion.Date <= command.FechaFin.Date),
+                _ => true
+            };
+        }
     }
 
     private async Task<bool> UsuarioNoTieneMuchasGeneracionesPendientes(Guid usuarioId, CancellationToken cancellationToken)

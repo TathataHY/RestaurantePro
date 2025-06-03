@@ -23,7 +23,7 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
         RuleFor(x => x.Nombre)
             .NotEmpty().WithMessage("El nombre del proveedor es obligatorio")
             .MaximumLength(200).WithMessage("El nombre no puede exceder 200 caracteres")
-            .MinimumLength(2).WithMessage("El nombre debe tener al menos 2 caracteres")
+            .MinimumLength(3).WithMessage("El nombre debe tener al menos 3 caracteres")
             .Must(BeValidCompanyName).WithMessage("El nombre contiene caracteres no válidos");
 
         RuleFor(x => x.NombreContacto)
@@ -60,9 +60,9 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     private void ConfigurarValidacionesUbicacion()
     {
         RuleFor(x => x.Direccion)
-            .NotEmpty().WithMessage("La dirección es obligatoria")
             .MaximumLength(300).WithMessage("La dirección no puede exceder 300 caracteres")
-            .MinimumLength(10).WithMessage("La dirección debe tener al menos 10 caracteres");
+            .MinimumLength(10).WithMessage("La dirección debe tener al menos 10 caracteres")
+            .When(x => !string.IsNullOrWhiteSpace(x.Direccion));
 
         RuleFor(x => x.Ciudad)
             .NotEmpty().WithMessage("La ciudad es obligatoria")
@@ -86,18 +86,17 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     /// </summary>
     private void ConfigurarValidacionesFiscales()
     {
+        // RFC es opcional para todos los países, pero si se proporciona debe ser válido
         RuleFor(x => x.RFC)
-            .NotEmpty().WithMessage("El RFC es obligatorio")
             .Length(12, 13).WithMessage("El RFC debe tener 12 o 13 caracteres")
             .Must(BeValidRFC).WithMessage("El RFC no tiene un formato válido")
-            .When(x => x.Pais.Equals("México", StringComparison.OrdinalIgnoreCase));
+            .When(x => !string.IsNullOrWhiteSpace(x.RFC) && x.Pais.Equals("México", StringComparison.OrdinalIgnoreCase));
 
         // Para países diferentes a México, validar identificación fiscal de forma más flexible
         RuleFor(x => x.RFC)
-            .NotEmpty().WithMessage("La identificación fiscal es obligatoria")
             .MaximumLength(20).WithMessage("La identificación fiscal no puede exceder 20 caracteres")
             .MinimumLength(5).WithMessage("La identificación fiscal debe tener al menos 5 caracteres")
-            .When(x => !x.Pais.Equals("México", StringComparison.OrdinalIgnoreCase));
+            .When(x => !string.IsNullOrWhiteSpace(x.RFC) && !x.Pais.Equals("México", StringComparison.OrdinalIgnoreCase));
 
         RuleFor(x => x.InformacionBancaria)
             .MaximumLength(500).WithMessage("La información bancaria no puede exceder 500 caracteres")

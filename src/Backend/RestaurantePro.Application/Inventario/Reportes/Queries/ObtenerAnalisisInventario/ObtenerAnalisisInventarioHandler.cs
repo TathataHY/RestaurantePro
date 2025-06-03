@@ -299,7 +299,7 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
         TendenciasInventario tendencias,
         ObtenerAnalisisInventarioQuery request)
     {
-        return new AnalisisInventarioDto
+        var analisis = new AnalisisInventarioDto
         {
             InfoAnalisis = new InfoAnalisisDto
             {
@@ -332,7 +332,157 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
                 TasaRotacionGlobal = metricas.RotacionInventario,
                 EficienciaGeneralInventario = CalcularEficienciaGeneral(metricas),
                 ClasificacionEficiencia = GenerarClasificacionEficiencia(metricas.PorcentajeStockOptimo)
+            },
+            // Agregar análisis detallado por ingrediente
+            AnalisisIngredientes = GenerarAnalisisIngredientes(datos, metricas),
+            // Agregar análisis por categorías
+            AnalisisCategorias = GenerarAnalisisCategorias(datos, metricas)
+        };
+
+        // Agregar predicciones si se solicitan
+        if (request.IncluirTendencias)
+        {
+            analisis.Predicciones = GenerarPrediccionesInventario(datos, tendencias, metricas);
+        }
+
+        // Agregar análisis financiero si se solicita
+        if (request.NivelDetalle == "Financiero" || request.NivelDetalle == "Completo")
+        {
+            analisis.AnalisisFinanciero = GenerarAnalisisFinanciero(datos, metricas);
+        }
+
+        return analisis;
+    }
+
+    private List<RestaurantePro.Application.Inventario.Reportes.DTOs.AnalisisIngredienteDto> GenerarAnalisisIngredientes(DatosInventarioAnalisis datos, MetricasInventario metricas)
+    {
+        return datos.Ingredientes.Select(ingrediente =>
+        {
+            var movimientosIngrediente = datos.Movimientos.Where(m => m.IngredienteId == ingrediente.Id).ToList();
+            var totalConsumo = movimientosIngrediente
+                .Where(m => m.TipoMovimiento == RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Egreso)
+                .Sum(m => m.Cantidad);
+            var totalIngreso = movimientosIngrediente
+                .Where(m => m.TipoMovimiento == RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Ingreso)
+                .Sum(m => m.Cantidad);
+
+            return new RestaurantePro.Application.Inventario.Reportes.DTOs.AnalisisIngredienteDto
+            {
+                IngredienteId = ingrediente.Id,
+                NombreIngrediente = ingrediente.Nombre,
+                CodigoIngrediente = ingrediente.Codigo,
+                StockActual = ingrediente.Stock,
+                StockMinimo = ingrediente.StockMinimo,
+                UnidadMedida = ingrediente.UnidadMedida.ToString(),
+                CostoUnitarioPromedio = ingrediente.CostoPromedio,
+                ValorInventario = ingrediente.Stock * ingrediente.CostoPromedio,
+                PorcentajeStockOptimo = ingrediente.StockMinimo > 0 ? (ingrediente.Stock / ingrediente.StockMinimo) * 100 : 0,
+                EstadoStock = DeterminarEstadoStock(ingrediente),
+                TotalMovimientos = movimientosIngrediente.Count,
+                ConsumoTotal = totalConsumo,
+                IngresoTotal = totalIngreso,
+                RotacionIngrediente = ingrediente.Stock > 0 ? totalConsumo / ingrediente.Stock : 0,
+                DiasStockRestante = totalConsumo > 0 ? (int)(ingrediente.Stock / (totalConsumo / (decimal)(datos.FechaFin - datos.FechaInicio).TotalDays)) : 999,
+                RequiereAtencion = ingrediente.Stock <= ingrediente.StockMinimo,
+                SugerenciaAccion = GenerarSugerenciaAccion(ingrediente, totalConsumo)
+            };
+        }).ToList();
+    }
+
+    private List<RestaurantePro.Application.Inventario.Reportes.DTOs.AnalisisCategoriaDto> GenerarAnalisisCategorias(DatosInventarioAnalisis datos, MetricasInventario metricas)
+    {
+        // Agrupar por unidad de medida como proxy para categorías hasta que tengamos categorías reales
+        var categorias = datos.Ingredientes
+            .GroupBy(i => i.UnidadMedida)
+            .Select(g => new RestaurantePro.Application.Inventario.Reportes.DTOs.AnalisisCategoriaDto
+            {
+                CategoriaId = Guid.NewGuid(), // Temporal
+                NombreCategoria = g.Key.ToString(),
+                TotalIngredientes = g.Count(),
+                IngredientesEnStock = g.Count(i => i.Stock > 0),
+                IngredientesBajoStock = g.Count(i => i.Stock <= i.StockMinimo),
+                ValorTotalCategoria = g.Sum(i => i.Stock * i.CostoPromedio),
+                PorcentajeValorTotal = metricas.ValorTotalInventario > 0 ? 
+                    (g.Sum(i => i.Stock * i.CostoPromedio) / metricas.ValorTotalInventario) * 100 : 0,
+                RotacionPromedio = g.Any(i => i.Stock > 0) ? 
+                    g.Where(i => i.Stock > 0).Average(i => datos.Movimientos
+                        .Where(m => m.IngredienteId == i.Id && m.TipoMovimiento == RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Egreso)
+                        .Sum(m => m.Cantidad) / i.Stock) : 0,
+                AlertasActivas = g.Count(i => i.Stock <= i.StockMinimo),
+                TendenciaCategoria = "Estable" // Simplificado por ahora
+            }).ToList();
+
+        return categorias.OrderByDescending(c => c.ValorTotalCategoria).ToList();
+    }
+
+    private PrediccionesInventarioDto GenerarPrediccionesInventario(DatosInventarioAnalisis datos, TendenciasInventario tendencias, MetricasInventario metricas)
+    {
+        return new PrediccionesInventarioDto
+        {
+            FechaPrediccion = _dateTimeService.Now,
+            TipoPrediccion = "BasadaEnHistorico",
+            NivelConfianza = 75, // Nivel medio por ahora
+            
+            // Predicciones de consumo
+            ConsumoProximoMes = datos.Movimientos
+                .Where(m => m.TipoMovimiento == RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Egreso)
+                .Sum(m => m.Cantidad) * 1.2m, // Proyección simple +20%
+            
+            IngredientesEnRiesgo = datos.Ingredientes
+                .Where(i => i.Stock <= i.StockMinimo * 1.5m)
+                .Select(i => new PrediccionIngredienteDto
+                {
+                    IngredienteId = i.Id,
+                    NombreIngrediente = i.Nombre,
+                    FechaAgotamientoEstimada = _dateTimeService.Now.AddDays(CalcularDiasHastaAgotamiento(i, datos)),
+                    CantidadRecomendadaCompra = i.StockMinimo * 2,
+                    NivelRiesgo = i.Stock <= 0 ? "Alto" : i.Stock <= i.StockMinimo ? "Medio" : "Bajo"
+                }).ToList(),
+            
+            TendenciaGeneralConsumo = tendencias.TendenciaConsumo > 0 ? "Ascendente" : 
+                                   tendencias.TendenciaConsumo < 0 ? "Descendente" : "Estable",
+            
+            RecomendacionesAutomaticas = new List<string>
+            {
+                "Revisar stock de ingredientes críticos",
+                "Considerar aumento de pedidos para ingredientes de alta rotación",
+                "Optimizar inventario según patrones de consumo"
             }
+        };
+    }
+
+    private AnalisisFinancieroDto GenerarAnalisisFinanciero(DatosInventarioAnalisis datos, MetricasInventario metricas)
+    {
+        var costosDetallados = datos.Ingredientes.Select(i => new CostoDetalladoDto
+        {
+            IngredienteId = i.Id,
+            NombreIngrediente = i.Nombre,
+            CostoUnitario = i.CostoPromedio,
+            CantidadStock = i.Stock,
+            ValorTotal = i.Stock * i.CostoPromedio,
+            PorcentajeDelTotal = metricas.ValorTotalInventario > 0 ? 
+                (i.Stock * i.CostoPromedio / metricas.ValorTotalInventario) * 100 : 0
+        }).OrderByDescending(c => c.ValorTotal).ToList();
+
+        return new AnalisisFinancieroDto
+        {
+            FechaAnalisis = _dateTimeService.Now,
+            ValorTotalInventario = metricas.ValorTotalInventario,
+            CostosDetallados = costosDetallados,
+            Top10IngredientesMasCaros = costosDetallados.Take(10).ToList(),
+            DistribucionCostos = new DistribucionCostosDto
+            {
+                IngredientesAltoCosto = costosDetallados.Where(c => c.PorcentajeDelTotal >= 10).Sum(c => c.ValorTotal),
+                IngredientesCostoMedio = costosDetallados.Where(c => c.PorcentajeDelTotal >= 5 && c.PorcentajeDelTotal < 10).Sum(c => c.ValorTotal),
+                IngredientesBajoCosto = costosDetallados.Where(c => c.PorcentajeDelTotal < 5).Sum(c => c.ValorTotal)
+            },
+            AnalisisROI = new AnalisisROIDto
+            {
+                RotacionCapital = metricas.RotacionInventario,
+                DiasInventarioPromedio = metricas.RotacionInventario > 0 ? 365m / metricas.RotacionInventario : 0,
+                EficienciaCapital = CalcularEficienciaCapital(metricas)
+            },
+            RecomendacionesFinancieras = GenerarRecomendacionesFinancieras(costosDetallados, metricas)
         };
     }
 
@@ -374,6 +524,73 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
             >= 60 => "Deficiente",
             _ => "Crítica"
         };
+    }
+
+    private string DeterminarEstadoStock(Ingrediente ingrediente)
+    {
+        if (ingrediente.Stock <= 0)
+            return "SinStock";
+        if (ingrediente.Stock <= ingrediente.StockMinimo * 0.5m)
+            return "Crítico";
+        if (ingrediente.Stock <= ingrediente.StockMinimo)
+            return "Bajo";
+        if (ingrediente.Stock <= ingrediente.StockMinimo * 2)
+            return "Normal";
+        return "Alto";
+    }
+
+    private string GenerarSugerenciaAccion(Ingrediente ingrediente, decimal totalConsumo)
+    {
+        if (ingrediente.Stock <= 0)
+            return "Comprar urgentemente";
+        if (ingrediente.Stock <= ingrediente.StockMinimo)
+            return "Reabastecer pronto";
+        if (totalConsumo == 0)
+            return "Revisar necesidad";
+        return "Monitoreando";
+    }
+
+    private int CalcularDiasHastaAgotamiento(Ingrediente ingrediente, DatosInventarioAnalisis datos)
+    {
+        var totalDias = (decimal)(datos.FechaFin - datos.FechaInicio).TotalDays;
+        var consumoPromedioDiario = datos.Movimientos
+            .Where(m => m.IngredienteId == ingrediente.Id && 
+                       m.TipoMovimiento == RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Egreso)
+            .Sum(m => m.Cantidad) / Math.Max(1, totalDias);
+
+        return consumoPromedioDiario > 0 ? (int)(ingrediente.Stock / consumoPromedioDiario) : 999;
+    }
+
+    private decimal CalcularEficienciaCapital(MetricasInventario metricas)
+    {
+        // Fórmula simplificada de eficiencia de capital
+        if (metricas.ValorTotalInventario > 0 && metricas.RotacionInventario > 0)
+        {
+            return Math.Min(100, metricas.RotacionInventario * 10);
+        }
+        return 0;
+    }
+
+    private List<string> GenerarRecomendacionesFinancieras(List<CostoDetalladoDto> costosDetallados, MetricasInventario metricas)
+    {
+        var recomendaciones = new List<string>();
+
+        if (costosDetallados.Any(c => c.PorcentajeDelTotal > 20))
+        {
+            recomendaciones.Add("Considerar negociar mejores precios para ingredientes de alto valor");
+        }
+
+        if (metricas.RotacionInventario < 1)
+        {
+            recomendaciones.Add("Mejorar la rotación de inventario para optimizar el capital de trabajo");
+        }
+
+        if (metricas.PorcentajeStockOptimo < 80)
+        {
+            recomendaciones.Add("Revisar niveles de stock para evitar desperdicios");
+        }
+
+        return recomendaciones;
     }
 
     // DTOs internos para el análisis

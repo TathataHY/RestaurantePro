@@ -282,6 +282,51 @@ public class AnalisisIngredienteDto
     /// Nivel de prioridad para reposición
     /// </summary>
     public string PrioridadReposicion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Código del ingrediente
+    /// </summary>
+    public string CodigoIngrediente { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Valor total del inventario para este ingrediente
+    /// </summary>
+    public decimal ValorInventario { get; set; }
+
+    /// <summary>
+    /// Porcentaje del stock óptimo actual
+    /// </summary>
+    public decimal PorcentajeStockOptimo { get; set; }
+
+    /// <summary>
+    /// Total de movimientos en el período analizado
+    /// </summary>
+    public int TotalMovimientos { get; set; }
+
+    /// <summary>
+    /// Consumo total en el período
+    /// </summary>
+    public decimal ConsumoTotal { get; set; }
+
+    /// <summary>
+    /// Ingreso total en el período
+    /// </summary>
+    public decimal IngresoTotal { get; set; }
+
+    /// <summary>
+    /// Tasa de rotación del ingrediente
+    /// </summary>
+    public decimal RotacionIngrediente { get; set; }
+
+    /// <summary>
+    /// Indica si el ingrediente requiere atención inmediata
+    /// </summary>
+    public bool RequiereAtencion { get; set; }
+
+    /// <summary>
+    /// Sugerencia de acción para el ingrediente
+    /// </summary>
+    public string SugerenciaAccion { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -343,6 +388,26 @@ public class AnalisisCategoriaDto
     /// Recomendaciones específicas para la categoría
     /// </summary>
     public List<string> RecomendacionesCategoria { get; set; } = new();
+
+    /// <summary>
+    /// ID de la categoría
+    /// </summary>
+    public Guid CategoriaId { get; set; }
+
+    /// <summary>
+    /// Rotación promedio de la categoría
+    /// </summary>
+    public decimal RotacionPromedio { get; set; }
+
+    /// <summary>
+    /// Alertas activas en la categoría
+    /// </summary>
+    public int AlertasActivas { get; set; }
+
+    /// <summary>
+    /// Tendencia general de la categoría
+    /// </summary>
+    public string TendenciaCategoria { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -435,6 +500,41 @@ public class PrediccionesInventarioDto
     /// Fecha recomendada para próxima revisión
     /// </summary>
     public DateTime FechaProximaRevision { get; set; }
+
+    /// <summary>
+    /// Fecha de la predicción
+    /// </summary>
+    public DateTime FechaPrediccion { get; set; }
+
+    /// <summary>
+    /// Tipo de predicción utilizada
+    /// </summary>
+    public string TipoPrediccion { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Nivel de confianza de la predicción (0-100)
+    /// </summary>
+    public int NivelConfianza { get; set; }
+
+    /// <summary>
+    /// Consumo proyectado para el próximo mes
+    /// </summary>
+    public decimal ConsumoProximoMes { get; set; }
+
+    /// <summary>
+    /// Lista de ingredientes en riesgo de agotamiento
+    /// </summary>
+    public List<PrediccionIngredienteDto> IngredientesEnRiesgo { get; set; } = new();
+
+    /// <summary>
+    /// Tendencia general de consumo
+    /// </summary>
+    public string TendenciaGeneralConsumo { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Recomendaciones automáticas generadas
+    /// </summary>
+    public List<string> RecomendacionesAutomaticas { get; set; } = new();
 }
 
 /// <summary>
@@ -486,6 +586,16 @@ public class PrediccionIngredienteDto
     /// Nivel de confiabilidad de la predicción
     /// </summary>
     public decimal ConfiabilidadPrediccion { get; set; }
+
+    /// <summary>
+    /// Cantidad recomendada para compra
+    /// </summary>
+    public decimal CantidadRecomendadaCompra { get; set; }
+
+    /// <summary>
+    /// Nivel de riesgo del ingrediente
+    /// </summary>
+    public string NivelRiesgo { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -655,6 +765,41 @@ public class AnalisisFinancieroDto
     /// Resumen financiero
     /// </summary>
     public string ResumenFinanciero { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Fecha del análisis
+    /// </summary>
+    public DateTime FechaAnalisis { get; set; }
+
+    /// <summary>
+    /// Valor total del inventario
+    /// </summary>
+    public decimal ValorTotalInventario { get; set; }
+
+    /// <summary>
+    /// Lista de costos detallados por ingrediente
+    /// </summary>
+    public List<CostoDetalladoDto> CostosDetallados { get; set; } = new();
+
+    /// <summary>
+    /// Top 10 ingredientes más caros
+    /// </summary>
+    public List<CostoDetalladoDto> Top10IngredientesMasCaros { get; set; } = new();
+
+    /// <summary>
+    /// Distribución de costos por rangos
+    /// </summary>
+    public DistribucionCostosDto DistribucionCostos { get; set; } = new();
+
+    /// <summary>
+    /// Análisis de ROI del inventario
+    /// </summary>
+    public AnalisisROIDto AnalisisROI { get; set; } = new();
+
+    /// <summary>
+    /// Recomendaciones financieras
+    /// </summary>
+    public List<string> RecomendacionesFinancieras { get; set; } = new();
 }
 
 /// <summary>
@@ -974,44 +1119,121 @@ public class MovimientoStock
 }
 
 /// <summary>
-/// DTO con predicción semanal de consumo
+/// DTO con información de costo detallado por ingrediente
 /// </summary>
-public class PrediccionSemanal
+public class CostoDetalladoDto
 {
     /// <summary>
-    /// Semana del año para la predicción
+    /// ID del ingrediente
     /// </summary>
-    public int Semana { get; set; }
+    public Guid IngredienteId { get; set; }
 
     /// <summary>
-    /// Año de la predicción
+    /// Nombre del ingrediente
     /// </summary>
-    public int Año { get; set; }
+    public string NombreIngrediente { get; set; } = string.Empty;
 
     /// <summary>
-    /// Cantidad predicha de consumo
+    /// Costo unitario del ingrediente
     /// </summary>
-    public decimal CantidadPredicha { get; set; }
+    public decimal CostoUnitario { get; set; }
 
     /// <summary>
-    /// Nivel de confianza de la predicción (0-100)
+    /// Cantidad en stock
     /// </summary>
-    public double NivelConfianza { get; set; }
+    public decimal CantidadStock { get; set; }
 
     /// <summary>
-    /// Factores que influyen en la predicción
+    /// Valor total del ingrediente en inventario
     /// </summary>
-    public List<string> Factores { get; set; } = new();
+    public decimal ValorTotal { get; set; }
 
     /// <summary>
-    /// Fecha de inicio de la semana
+    /// Porcentaje del total del inventario
     /// </summary>
-    public DateTime FechaInicio { get; set; }
+    public decimal PorcentajeDelTotal { get; set; }
 
     /// <summary>
-    /// Fecha de fin de la semana
+    /// Código del ingrediente
     /// </summary>
-    public DateTime FechaFin { get; set; }
+    public string CodigoIngrediente { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Unidad de medida
+    /// </summary>
+    public string UnidadMedida { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// DTO para distribución de costos por rangos
+/// </summary>
+public class DistribucionCostosDto
+{
+    /// <summary>
+    /// Valor total de ingredientes de alto costo (>= 10% del total)
+    /// </summary>
+    public decimal IngredientesAltoCosto { get; set; }
+
+    /// <summary>
+    /// Valor total de ingredientes de costo medio (5-10% del total)
+    /// </summary>
+    public decimal IngredientesCostoMedio { get; set; }
+
+    /// <summary>
+    /// Valor total de ingredientes de bajo costo (< 5% del total)
+    /// </summary>
+    public decimal IngredientesBajoCosto { get; set; }
+
+    /// <summary>
+    /// Porcentaje de ingredientes de alto costo
+    /// </summary>
+    public decimal PorcentajeAltoCosto { get; set; }
+
+    /// <summary>
+    /// Porcentaje de ingredientes de costo medio
+    /// </summary>
+    public decimal PorcentajeCostoMedio { get; set; }
+
+    /// <summary>
+    /// Porcentaje de ingredientes de bajo costo
+    /// </summary>
+    public decimal PorcentajeBajoCosto { get; set; }
+}
+
+/// <summary>
+/// DTO para análisis de ROI del inventario
+/// </summary>
+public class AnalisisROIDto
+{
+    /// <summary>
+    /// Rotación de capital en el inventario
+    /// </summary>
+    public decimal RotacionCapital { get; set; }
+
+    /// <summary>
+    /// Días promedio de inventario
+    /// </summary>
+    public decimal DiasInventarioPromedio { get; set; }
+
+    /// <summary>
+    /// Eficiencia del capital (0-100)
+    /// </summary>
+    public decimal EficienciaCapital { get; set; }
+
+    /// <summary>
+    /// ROI estimado del inventario
+    /// </summary>
+    public decimal ROIEstimado { get; set; }
+
+    /// <summary>
+    /// Costo de oportunidad del capital inmovilizado
+    /// </summary>
+    public decimal CostoOportunidad { get; set; }
+
+    /// <summary>
+    /// Recomendación de optimización
+    /// </summary>
+    public string RecomendacionOptimizacion { get; set; } = string.Empty;
 }
 
 /// <summary>

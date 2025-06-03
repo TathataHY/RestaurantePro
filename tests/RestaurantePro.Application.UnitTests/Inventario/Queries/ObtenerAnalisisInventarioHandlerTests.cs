@@ -1,3 +1,18 @@
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnalisisInventario;
+using RestaurantePro.Application.UnitTests.Common;
+using RestaurantePro.Domain.Core.Usuarios.Enums;
+using RestaurantePro.Domain.Inventario.Ingredientes;
+using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
+using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos;
+using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
+using RestaurantePro.Domain.Core.Shared;
+using AutoMapper;
+
 namespace RestaurantePro.Application.UnitTests.Inventario.Queries;
 
 /// <summary>
@@ -282,23 +297,20 @@ public class ObtenerAnalisisInventarioHandlerTests
             CreateMockIngrediente(Guid.NewGuid(), "Tomate", 100, 20, 150m),
             CreateMockIngrediente(Guid.NewGuid(), "Cebolla", 50, 10, 80m),
             CreateMockIngrediente(Guid.NewGuid(), "Aceite", 25, 5, 120m)
-        }.AsQueryable();
+        };
 
         var movimientos = new List<MovimientoInventario>
         {
             CreateMockMovimiento(Guid.NewGuid(), ingredientes.First().Id, TipoMovimientoInventario.Ingreso, 50),
             CreateMockMovimiento(Guid.NewGuid(), ingredientes.First().Id, TipoMovimientoInventario.Egreso, 30)
-        }.AsQueryable();
+        };
 
-        _ingredientesDbSetMock.As<IQueryable<Ingrediente>>().Setup(m => m.Provider).Returns(ingredientes.Provider);
-        _ingredientesDbSetMock.As<IQueryable<Ingrediente>>().Setup(m => m.Expression).Returns(ingredientes.Expression);
-        _ingredientesDbSetMock.As<IQueryable<Ingrediente>>().Setup(m => m.ElementType).Returns(ingredientes.ElementType);
-        _ingredientesDbSetMock.As<IQueryable<Ingrediente>>().Setup(m => m.GetEnumerator()).Returns(ingredientes.GetEnumerator());
+        // Usar MockDbSetHelper para configurar correctamente los mocks async
+        _ingredientesDbSetMock = MockDbSetHelper.CreateMockDbSet(ingredientes.AsQueryable());
+        _movimientosDbSetMock = MockDbSetHelper.CreateMockDbSet(movimientos.AsQueryable());
 
-        _movimientosDbSetMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.Provider).Returns(movimientos.Provider);
-        _movimientosDbSetMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.Expression).Returns(movimientos.Expression);
-        _movimientosDbSetMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.ElementType).Returns(movimientos.ElementType);
-        _movimientosDbSetMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.GetEnumerator()).Returns(movimientos.GetEnumerator());
+        _contextMock.Setup(c => c.Ingredientes).Returns(_ingredientesDbSetMock.Object);
+        _contextMock.Setup(c => c.MovimientosInventario).Returns(_movimientosDbSetMock.Object);
     }
 
     private void SetupMockDataCriticos()
@@ -306,18 +318,16 @@ public class ObtenerAnalisisInventarioHandlerTests
         var ingredientesCriticos = new List<Ingrediente>
         {
             CreateMockIngrediente(Guid.NewGuid(), "Ingrediente Crítico", 5, 20, 200m) // Stock bajo
-        }.AsQueryable();
+        };
 
-        _ingredientesDbSetMock.As<IQueryable<Ingrediente>>().Setup(m => m.Provider).Returns(ingredientesCriticos.Provider);
-        _ingredientesDbSetMock.As<IQueryable<Ingrediente>>().Setup(m => m.Expression).Returns(ingredientesCriticos.Expression);
-        _ingredientesDbSetMock.As<IQueryable<Ingrediente>>().Setup(m => m.ElementType).Returns(ingredientesCriticos.ElementType);
-        _ingredientesDbSetMock.As<IQueryable<Ingrediente>>().Setup(m => m.GetEnumerator()).Returns(ingredientesCriticos.GetEnumerator());
+        var movimientos = new List<MovimientoInventario>();
 
-        var movimientos = new List<MovimientoInventario>().AsQueryable();
-        _movimientosDbSetMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.Provider).Returns(movimientos.Provider);
-        _movimientosDbSetMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.Expression).Returns(movimientos.Expression);
-        _movimientosDbSetMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.ElementType).Returns(movimientos.ElementType);
-        _movimientosDbSetMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.GetEnumerator()).Returns(movimientos.GetEnumerator());
+        // Usar MockDbSetHelper para configurar correctamente los mocks async
+        _ingredientesDbSetMock = MockDbSetHelper.CreateMockDbSet(ingredientesCriticos.AsQueryable());
+        _movimientosDbSetMock = MockDbSetHelper.CreateMockDbSet(movimientos.AsQueryable());
+
+        _contextMock.Setup(c => c.Ingredientes).Returns(_ingredientesDbSetMock.Object);
+        _contextMock.Setup(c => c.MovimientosInventario).Returns(_movimientosDbSetMock.Object);
     }
 
     private static Ingrediente CreateMockIngrediente(Guid id, string nombre, decimal stock, decimal stockMinimo, decimal costo)

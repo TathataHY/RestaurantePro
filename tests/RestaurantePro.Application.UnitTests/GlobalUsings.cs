@@ -303,7 +303,7 @@ global using ProcesarPedidoCompletoDto = RestaurantePro.Application.Operaciones.
 global using ItemPedidoDto = RestaurantePro.Application.Operaciones.Reportes.DTOs.ItemPedidoDto;
 
 // DTOs de Inventario
-global using PrediccionSemanal = RestaurantePro.Application.Inventario.Reportes.DTOs.PrediccionSemanal;
+// global using PrediccionSemanal = RestaurantePro.Application.Inventario.Reportes.DTOs.PrediccionSemanal;
 global using StockOptimoIngrediente = RestaurantePro.Application.Inventario.Reportes.DTOs.StockOptimoIngrediente;
 
 // Enums
