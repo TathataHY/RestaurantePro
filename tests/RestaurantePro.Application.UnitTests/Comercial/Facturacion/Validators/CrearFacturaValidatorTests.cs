@@ -1,3 +1,13 @@
+using FluentAssertions;
+using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using Moq;
+using RestaurantePro.Application.Common.Interfaces.Persistence;
+using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
+using RestaurantePro.Domain.Core.Entities.Comercial;
+using RestaurantePro.Domain.Operaciones.Entities;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Validators;
 
 /// <summary>
@@ -13,33 +23,35 @@ public class CrearFacturaValidatorTests
     {
         _mockContext = new Mock<IApplicationDbContext>();
         _validator = new CrearFacturaValidator(_mockContext.Object);
+        
+        ConfigurarMocks();
     }
 
     #region ComandasIds Validations
 
     [Fact]
-    public void Validator_ConComandasIdsValidas_DeberiaSerValido()
+    public async Task Validator_ConComandasIdsValidas_DeberiaSerValido()
     {
         // Arrange
         var command = CrearComandoValido();
         command.ComandasIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeTrue();
     }
 
     [Fact]
-    public void Validator_ConComandasIdsVacia_DeberiaFallar()
+    public async Task Validator_ConComandasIdsVacia_DeberiaFallar()
     {
         // Arrange
         var command = CrearComandoValido();
         command.ComandasIds = new List<Guid>();
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -48,14 +60,14 @@ public class CrearFacturaValidatorTests
     }
 
     [Fact]
-    public void Validator_ConComandasIdsNull_DeberiaFallar()
+    public async Task Validator_ConComandasIdsNull_DeberiaFallar()
     {
         // Arrange
         var command = CrearComandoValido();
         command.ComandasIds = null!;
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -64,14 +76,14 @@ public class CrearFacturaValidatorTests
     }
 
     [Fact]
-    public void Validator_ConComandasConGuidVacio_DeberiaFallar()
+    public async Task Validator_ConComandasConGuidVacio_DeberiaFallar()
     {
         // Arrange
         var command = CrearComandoValido();
         command.ComandasIds = new List<Guid> { Guid.NewGuid(), Guid.Empty };
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -84,28 +96,28 @@ public class CrearFacturaValidatorTests
     #region TipoFactura Validations
 
     [Fact]
-    public void Validator_ConTipoFacturaValido_DeberiaSerValido()
+    public async Task Validator_ConTipoFacturaValido_DeberiaSerValido()
     {
         // Arrange
         var command = CrearComandoValido();
         command.TipoFactura = "Normal";
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeTrue();
     }
 
     [Fact]
-    public void Validator_ConTipoFacturaVacio_DeberiaFallar()
+    public async Task Validator_ConTipoFacturaVacio_DeberiaFallar()
     {
         // Arrange
         var command = CrearComandoValido();
         command.TipoFactura = "";
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -114,14 +126,14 @@ public class CrearFacturaValidatorTests
     }
 
     [Fact]
-    public void Validator_ConTipoFacturaNull_DeberiaFallar()
+    public async Task Validator_ConTipoFacturaNull_DeberiaFallar()
     {
         // Arrange
         var command = CrearComandoValido();
         command.TipoFactura = null!;
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -135,14 +147,14 @@ public class CrearFacturaValidatorTests
     [InlineData("Global")]
     [InlineData("NotaCredito")]
     [InlineData("NotaDebito")]
-    public void Validator_ConTiposFacturaValidos_DeberiaSerValido(string tipoFactura)
+    public async Task Validator_ConTiposFacturaValidos_DeberiaSerValido(string tipoFactura)
     {
         // Arrange
         var command = CrearComandoValido();
         command.TipoFactura = tipoFactura;
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeTrue();
@@ -154,14 +166,14 @@ public class CrearFacturaValidatorTests
     [InlineData("Debito")]
     [InlineData("NORMAL")]
     [InlineData("normal")]
-    public void Validator_ConTiposFacturaInvalidos_DeberiaFallar(string tipoInvalido)
+    public async Task Validator_ConTiposFacturaInvalidos_DeberiaFallar(string tipoInvalido)
     {
         // Arrange
         var command = CrearComandoValido();
         command.TipoFactura = tipoInvalido;
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -174,28 +186,28 @@ public class CrearFacturaValidatorTests
     #region NombreCliente Validations
 
     [Fact]
-    public void Validator_ConNombreClienteValido_DeberiaSerValido()
+    public async Task Validator_ConNombreClienteValido_DeberiaSerValido()
     {
         // Arrange
         var command = CrearComandoValido();
         command.NombreCliente = "Juan Pérez";
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeTrue();
     }
 
     [Fact]
-    public void Validator_ConNombreClienteVacio_DeberiaFallar()
+    public async Task Validator_ConNombreClienteVacio_DeberiaFallar()
     {
         // Arrange
         var command = CrearComandoValido();
         command.NombreCliente = "";
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -204,14 +216,14 @@ public class CrearFacturaValidatorTests
     }
 
     [Fact]
-    public void Validator_ConNombreClienteNull_DeberiaFallar()
+    public async Task Validator_ConNombreClienteNull_DeberiaFallar()
     {
         // Arrange
         var command = CrearComandoValido();
         command.NombreCliente = null!;
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -220,14 +232,14 @@ public class CrearFacturaValidatorTests
     }
 
     [Fact]
-    public void Validator_ConNombreClienteMuyCorto_DeberiaFallar()
+    public async Task Validator_ConNombreClienteMuyCorto_DeberiaFallar()
     {
         // Arrange
         var command = CrearComandoValido();
         command.NombreCliente = "A";
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -236,14 +248,14 @@ public class CrearFacturaValidatorTests
     }
 
     [Fact]
-    public void Validator_ConNombreClienteMuyLargo_DeberiaFallar()
+    public async Task Validator_ConNombreClienteMuyLargo_DeberiaFallar()
     {
         // Arrange
         var command = CrearComandoValido();
         command.NombreCliente = new string('A', 201);
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -260,14 +272,14 @@ public class CrearFacturaValidatorTests
     [InlineData("USD")]
     [InlineData("EUR")]
     [InlineData("CAD")]
-    public void Validator_ConMonedasValidas_DeberiaSerValido(string moneda)
+    public async Task Validator_ConMonedasValidas_DeberiaSerValido(string moneda)
     {
         // Arrange
         var command = CrearComandoValido();
         command.Moneda = moneda;
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeTrue();
@@ -280,14 +292,14 @@ public class CrearFacturaValidatorTests
     [InlineData("mxn")]
     [InlineData("")]
     [InlineData(null)]
-    public void Validator_ConMonedasInvalidas_DeberiaFallar(string? monedaInvalida)
+    public async Task Validator_ConMonedasInvalidas_DeberiaFallar(string? monedaInvalida)
     {
         // Arrange
         var command = CrearComandoValido();
         command.Moneda = monedaInvalida!;
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -302,14 +314,14 @@ public class CrearFacturaValidatorTests
     [InlineData("TarjetaCredito")]
     [InlineData("TarjetaDebito")]
     [InlineData("Transferencia")]
-    public void Validator_ConMetodosPagoValidos_DeberiaSerValido(string metodoPago)
+    public async Task Validator_ConMetodosPagoValidos_DeberiaSerValido(string metodoPago)
     {
         // Arrange
         var command = CrearComandoValido();
         command.MetodoPagoPreferido = metodoPago;
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeTrue();
@@ -320,14 +332,14 @@ public class CrearFacturaValidatorTests
     [InlineData("")]
     [InlineData("MetodoInvalido")]
     [InlineData("Bitcoin")]
-    public void Validator_ConMetodosPagoInvalidos_DeberiaFallar(string? metodoPagoInvalido)
+    public async Task Validator_ConMetodosPagoInvalidos_DeberiaFallar(string? metodoPagoInvalido)
     {
         // Arrange
         var command = CrearComandoValido();
         command.MetodoPagoPreferido = metodoPagoInvalido;
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -338,13 +350,13 @@ public class CrearFacturaValidatorTests
     #region Integration Tests
 
     [Fact]
-    public void Validator_ConTodosLosCamposValidos_DeberiaSerValido()
+    public async Task Validator_ConTodosLosCamposValidos_DeberiaSerValido()
     {
         // Arrange
         var command = CrearComandoValido();
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeTrue();
@@ -352,7 +364,7 @@ public class CrearFacturaValidatorTests
     }
 
     [Fact]
-    public void Validator_ConMultiplesErrores_DeberiaListarTodos()
+    public async Task Validator_ConMultiplesErrores_DeberiaListarTodos()
     {
         // Arrange
         var command = new CrearFacturaCommand
@@ -365,7 +377,7 @@ public class CrearFacturaValidatorTests
         };
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
@@ -376,7 +388,7 @@ public class CrearFacturaValidatorTests
     }
 
     [Fact]
-    public void Validator_ConFacturaFiscalCompleta_DeberiaSerValido()
+    public async Task Validator_ConFacturaFiscalCompleta_DeberiaSerValido()
     {
         // Arrange
         var command = new CrearFacturaCommand
@@ -392,7 +404,7 @@ public class CrearFacturaValidatorTests
         };
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeTrue();
@@ -400,7 +412,7 @@ public class CrearFacturaValidatorTests
     }
 
     [Fact]
-    public void Validator_ConNotaCreditoConFacturaOriginal_DeberiaSerValido()
+    public async Task Validator_ConNotaCreditoConFacturaOriginal_DeberiaSerValido()
     {
         // Arrange
         var command = new CrearFacturaCommand
@@ -414,7 +426,7 @@ public class CrearFacturaValidatorTests
         };
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeTrue();
@@ -426,16 +438,16 @@ public class CrearFacturaValidatorTests
     #region Performance Tests
 
     [Fact]
-    public void Validator_RendimientoValidacion_DeberiaSerRapido()
+    public async Task Validator_RendimientoValidacion_DeberiaSerRapido()
     {
         // Arrange
         var command = CrearComandoValido();
-        var stopwatch = Stopwatch.StartNew();
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
         for (int i = 0; i < 1000; i++)
         {
-            _validator.Validate(command);
+            await _validator.ValidateAsync(command);
         }
         stopwatch.Stop();
 
@@ -448,7 +460,7 @@ public class CrearFacturaValidatorTests
     #region Edge Cases
 
     [Fact]
-    public void Validator_ConComandasDuplicadas_DeberiaSerValido()
+    public async Task Validator_ConComandasDuplicadas_DeberiaSerValido()
     {
         // Arrange
         var comandaId = Guid.NewGuid();
@@ -456,35 +468,35 @@ public class CrearFacturaValidatorTests
         command.ComandasIds = new List<Guid> { comandaId, comandaId }; // Duplicadas
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeTrue(); // El validator básico no valida duplicados
     }
 
     [Fact]
-    public void Validator_ConMuchasComandas_DeberiaSerValido()
+    public async Task Validator_ConMuchasComandas_DeberiaSerValido()
     {
         // Arrange
         var command = CrearComandoValido();
         command.ComandasIds = Enumerable.Range(1, 50).Select(_ => Guid.NewGuid()).ToList();
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeTrue();
     }
 
     [Fact]
-    public void Validator_ConCaracteresEspecialesEnNombre_DeberiaSerValido()
+    public async Task Validator_ConCaracteresEspecialesEnNombre_DeberiaSerValido()
     {
         // Arrange
         var command = CrearComandoValido();
         command.NombreCliente = "José María Péñez & Asociados S.A. de C.V.";
 
         // Act
-        var result = _validator.Validate(command);
+        var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeTrue();
@@ -505,6 +517,48 @@ public class CrearFacturaValidatorTests
             MetodoPagoPreferido = "Efectivo",
             Observaciones = "Factura de ejemplo"
         };
+    }
+
+    private void ConfigurarMocks()
+    {
+        // Mock para comandas
+        var mockComandas = new Mock<DbSet<Comanda>>();
+        var comandasData = new List<Comanda>
+        {
+            new Comanda { Id = Guid.NewGuid(), Estado = EstadoComanda.Finalizada, Total = 100.00m }
+        }.AsQueryable();
+
+        mockComandas.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(comandasData.Provider);
+        mockComandas.As<IQueryable<Comanda>>().Setup(m => m.Expression).Returns(comandasData.Expression);
+        mockComandas.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(comandasData.ElementType);
+        mockComandas.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(comandasData.GetEnumerator());
+
+        _mockContext.Setup(c => c.Comandas).Returns(mockComandas.Object);
+
+        // Mock para facturas
+        var mockFacturas = new Mock<DbSet<Factura>>();
+        var facturasData = new List<Factura>().AsQueryable();
+
+        mockFacturas.As<IQueryable<Factura>>().Setup(m => m.Provider).Returns(facturasData.Provider);
+        mockFacturas.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(facturasData.Expression);
+        mockFacturas.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(facturasData.ElementType);
+        mockFacturas.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(facturasData.GetEnumerator());
+
+        _mockContext.Setup(c => c.Facturas).Returns(mockFacturas.Object);
+
+        // Mock para clientes
+        var mockClientes = new Mock<DbSet<Cliente>>();
+        var clientesData = new List<Cliente>
+        {
+            new Cliente { Id = Guid.NewGuid(), Nombre = "Cliente Ejemplo" }
+        }.AsQueryable();
+
+        mockClientes.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientesData.Provider);
+        mockClientes.As<IQueryable<Cliente>>().Setup(m => m.Expression).Returns(clientesData.Expression);
+        mockClientes.As<IQueryable<Cliente>>().Setup(m => m.ElementType).Returns(clientesData.ElementType);
+        mockClientes.As<IQueryable<Cliente>>().Setup(m => m.GetEnumerator()).Returns(clientesData.GetEnumerator());
+
+        _mockContext.Setup(c => c.Clientes).Returns(mockClientes.Object);
     }
 
     #endregion

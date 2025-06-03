@@ -490,10 +490,31 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         {
             return (Estado, nuevoEstado) switch
             {
+                // Transiciones normales del flujo
                 (EstadoComanda.Creada, EstadoComanda.EnProceso) => true,
                 (EstadoComanda.EnProceso, EstadoComanda.Lista) => true,
                 (EstadoComanda.Lista, EstadoComanda.Entregada) => true,
                 (EstadoComanda.Entregada, EstadoComanda.Finalizada) => true,
+                
+                // Transiciones directas para finalización (casos especiales)
+                (EstadoComanda.Creada, EstadoComanda.Finalizada) => true,    // Finalización directa
+                (EstadoComanda.EnProceso, EstadoComanda.Finalizada) => true, // Finalización desde en proceso
+                (EstadoComanda.Lista, EstadoComanda.Finalizada) => true,     // Finalización desde lista
+                
+                // Cancelaciones permitidas desde estados activos
+                (EstadoComanda.Creada, EstadoComanda.Cancelada) => true,
+                (EstadoComanda.EnProceso, EstadoComanda.Cancelada) => true,
+                (EstadoComanda.Lista, EstadoComanda.Cancelada) => true,
+                
+                // Retrocesos permitidos en casos especiales
+                (EstadoComanda.Lista, EstadoComanda.EnProceso) => true,      // Volver a preparación
+                (EstadoComanda.Entregada, EstadoComanda.Lista) => true,      // Volver a lista
+                
+                // No se permite cambiar desde estados finales
+                (EstadoComanda.Finalizada, _) => false,
+                (EstadoComanda.Cancelada, _) => false,
+                
+                // Cualquier otra transición no está permitida
                 _ => false
             };
         }

@@ -42,9 +42,9 @@ public class ComandaDto : BaseDto
     public EstadoComanda Estado { get; set; }
 
     /// <summary>
-    /// Estado de la comanda como enum string para facilitar el frontend
+    /// Estado de la comanda en texto amigable para el usuario
     /// </summary>
-    public string EstadoTexto => Estado.ToString();
+    public string EstadoTexto { get; set; } = string.Empty;
 
     /// <summary>
     /// Fecha de apertura de la comanda

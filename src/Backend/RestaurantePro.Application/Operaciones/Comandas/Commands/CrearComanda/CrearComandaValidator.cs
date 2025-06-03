@@ -9,12 +9,10 @@ public class CrearComandaValidator : AbstractValidator<CrearComandaCommand>
     public CrearComandaValidator()
     {
         RuleFor(x => x.MesaId)
-            .NotEmpty().WithMessage("El ID de la mesa es obligatorio")
-            .NotEqual(Guid.Empty).WithMessage("El ID de la mesa no puede ser un GUID vacío");
+            .NotEmpty().WithMessage("El ID de la mesa es obligatorio");
 
         RuleFor(x => x.MeseroId)
-            .NotEmpty().WithMessage("El ID del mesero es obligatorio")
-            .NotEqual(Guid.Empty).WithMessage("El ID del mesero no puede ser un GUID vacío");
+            .NotEmpty().WithMessage("El ID del mesero es obligatorio");
 
         RuleFor(x => x.Items)
             .NotNull().WithMessage("La comanda debe tener al menos un ítem")
@@ -51,8 +49,7 @@ public class AgregarProductoValidator : AbstractValidator<AgregarProductoDto>
     public AgregarProductoValidator()
     {
         RuleFor(x => x.ProductoId)
-            .NotEmpty().WithMessage("El ID del producto es obligatorio")
-            .NotEqual(Guid.Empty).WithMessage("El ID del producto no puede ser un GUID vacío");
+            .NotEmpty().WithMessage("El ID del producto es obligatorio");
 
         RuleFor(x => x.Cantidad)
             .GreaterThan(0).WithMessage("La cantidad debe ser mayor a 0")
@@ -91,8 +88,7 @@ public class PersonalizacionValidator : AbstractValidator<PersonalizacionCreateD
             .WithMessage("El tipo de personalización debe ser: Extra, Quitar o Sustituir");
 
         RuleFor(x => x.IngredienteId)
-            .NotEmpty().WithMessage("El ID del ingrediente es obligatorio")
-            .NotEqual(Guid.Empty).WithMessage("El ID del ingrediente no puede ser un GUID vacío");
+            .NotEmpty().WithMessage("El ID del ingrediente es obligatorio");
 
         RuleFor(x => x.Cantidad)
             .GreaterThan(0).WithMessage("La cantidad debe ser mayor a 0")

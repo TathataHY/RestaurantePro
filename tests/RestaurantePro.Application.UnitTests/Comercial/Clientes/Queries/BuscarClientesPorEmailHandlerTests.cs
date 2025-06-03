@@ -489,7 +489,7 @@ public class BuscarClientesPorEmailHandlerTests
         
         typeof(Cliente).GetProperty("Id")?.SetValue(cliente, id);
         typeof(Cliente).GetProperty("Email")?.SetValue(cliente, Email.Create(email));
-        typeof(Cliente).GetProperty("Telefono")?.SetValue(cliente, telefono);
+        typeof(Cliente).GetProperty("Telefono")?.SetValue(cliente, PhoneNumber.Create(telefono));
         typeof(Cliente).GetProperty("FechaCreacion")?.SetValue(cliente, fechaCreacion);
         typeof(Cliente).GetProperty("PuntosAcumulados")?.SetValue(cliente, 100);
         typeof(Cliente).GetProperty("CantidadVisitas")?.SetValue(cliente, 5);

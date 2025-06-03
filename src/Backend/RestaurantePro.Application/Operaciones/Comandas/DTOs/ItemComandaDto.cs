@@ -58,7 +58,7 @@ public class ItemComandaDto : BaseDto
     /// <summary>
     /// Texto representativo del estado del item
     /// </summary>
-    public string EstadoTexto => Estado.ToString();
+    public string EstadoTexto { get; set; } = string.Empty;
 
     /// <summary>
     /// Fecha de preparación del item

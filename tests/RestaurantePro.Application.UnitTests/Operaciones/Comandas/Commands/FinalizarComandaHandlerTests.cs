@@ -61,7 +61,7 @@ public class FinalizarComandaHandlerTests
         var comanda = CreateComandaConItems(comandaId, EstadoComanda.EnProceso);
         var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 85.50m);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         _comandaRepositoryMock.Setup(x => x.ActualizarAsync(comanda, CancellationToken.None))
@@ -74,11 +74,16 @@ public class FinalizarComandaHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.True(result.Succeeded);
+        if (!result.Succeeded)
+        {
+            // Log del error para debugging
+            System.Console.WriteLine($"Error en test: {result.Error}");
+        }
+        Assert.True(result.Succeeded, $"Expected success but got error: {result.Error}");
         Assert.Equal(comandaDto, result.Value);
 
         // Verify repository calls
-        _comandaRepositoryMock.Verify(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), CancellationToken.None), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.ObtenerPorIdAsync(comandaId, CancellationToken.None), Times.Once);
         _comandaRepositoryMock.Verify(x => x.ActualizarAsync(comanda, CancellationToken.None), Times.Once);
     }
 
@@ -101,7 +106,7 @@ public class FinalizarComandaHandlerTests
         var comanda = CreateComandaConItems(comandaId, EstadoComanda.Creada);
         var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 42.75m);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda))
@@ -140,7 +145,7 @@ public class FinalizarComandaHandlerTests
         var comanda = CreateComandaConItems(comandaId, EstadoComanda.EnProceso);
         var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 67.25m);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda))
@@ -180,7 +185,7 @@ public class FinalizarComandaHandlerTests
         var comanda = CreateComandaConItems(comandaId, EstadoComanda.EnProceso);
         var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 91.00m);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda))
@@ -206,7 +211,7 @@ public class FinalizarComandaHandlerTests
         // Arrange
         var comandaId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
-        var observaciones = "Cliente satisfecho con el servicio";
+        var observaciones = "Observaciones especiales de finalización";
         
         var command = new FinalizarComandaCommand
         {
@@ -218,9 +223,9 @@ public class FinalizarComandaHandlerTests
         };
 
         var comanda = CreateComandaConItems(comandaId, EstadoComanda.EnProceso);
-        var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 55.80m);
+        var comandaDto = CreateMockComandaDto(comandaId, "Finalizada", 125.75m);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda))
@@ -232,8 +237,9 @@ public class FinalizarComandaHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         
-        // Verify logging de observaciones
+        // Verify que se loguean las observaciones
         VerifyLogContains(LogLevel.Information, observaciones);
+        
         // Verify que el repositorio fue llamado para actualizar
         _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -256,7 +262,7 @@ public class FinalizarComandaHandlerTests
             NotificarMesero = true
         };
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Comanda)null);
 
         // Act
@@ -285,7 +291,7 @@ public class FinalizarComandaHandlerTests
         };
 
         var comanda = CreateComandaConItems(comandaId, EstadoComanda.Finalizada);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         // Act
@@ -314,7 +320,7 @@ public class FinalizarComandaHandlerTests
         };
 
         var comanda = CreateComandaConItems(comandaId, EstadoComanda.Cancelada);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         // Act
@@ -343,7 +349,7 @@ public class FinalizarComandaHandlerTests
         };
 
         var comanda = CreateComandaSinItems(comandaId, EstadoComanda.Creada);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         // Act
@@ -375,7 +381,7 @@ public class FinalizarComandaHandlerTests
         // En su lugar, probamos con una comanda sin items
         var comanda = CreateComandaSinItems(comandaId, EstadoComanda.Creada);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         // Act
@@ -401,19 +407,19 @@ public class FinalizarComandaHandlerTests
         };
 
         var comanda = CreateComandaConItems(comandaId, EstadoComanda.EnProceso);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         // Simular error en actualización
         _comandaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Error en transición de estado"));
+            .ThrowsAsync(new InvalidOperationException("No se puede cambiar el estado de EnProceso a Finalizada"));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Contains("Error", result.Error);
+        Assert.Contains("No se puede cambiar el estado", result.Error);
     }
 
     [Fact]
@@ -430,7 +436,7 @@ public class FinalizarComandaHandlerTests
             NotificarMesero = true
         };
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Error de base de datos"));
 
         // Act
@@ -453,15 +459,8 @@ public class FinalizarComandaHandlerTests
         var usuarioId = Guid.NewGuid();
         var observaciones = "Test observaciones";
 
-        // Act
-        var command = new FinalizarComandaCommand
-        {
-            ComandaId = comandaId,
-            UsuarioId = usuarioId,
-            ObservacionesFinalizacion = observaciones,
-            ValidarTodosItemsListos = true,
-            NotificarMesero = true
-        };
+        // Act - Usar el factory method real
+        var command = FinalizarComandaCommand.Crear(comandaId, usuarioId, observaciones);
 
         // Assert
         Assert.Equal(comandaId, command.ComandaId);
@@ -553,13 +552,13 @@ public class FinalizarComandaHandlerTests
 
     private static Comanda CreateComandaConItems(Guid id, EstadoComanda estado)
     {
-        // Crear comanda usando el factory method del dominio
+        // Crear comanda usando el factory method del dominio con todos los parámetros
         var meseroId = Guid.NewGuid();
-        var comanda = Comanda.Crear(meseroId);
-        
-        // Asignar una mesa antes de agregar productos
+        var clienteId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
-        SetPrivateProperty(comanda, "MesaId", mesaId);
+        var observaciones = "Comanda de prueba";
+        
+        var comanda = Comanda.Crear(meseroId, clienteId, mesaId, observaciones);
         
         // Agregar items a la comanda
         comanda.AgregarProducto(Guid.NewGuid(), 1, 25.00m, "Item 1");
@@ -577,9 +576,13 @@ public class FinalizarComandaHandlerTests
 
     private static Comanda CreateComandaSinItems(Guid id, EstadoComanda estado)
     {
-        // Crear comanda usando el factory method del dominio sin items
+        // Crear comanda usando el factory method del dominio con parámetros mínimos
         var meseroId = Guid.NewGuid();
-        var comanda = Comanda.Crear(meseroId);
+        var clienteId = Guid.NewGuid();
+        var mesaId = Guid.NewGuid();
+        var observaciones = "Comanda sin items";
+        
+        var comanda = Comanda.Crear(meseroId, clienteId, mesaId, observaciones);
         
         // Cambiar el estado si es necesario (usar reflexión para simular en tests)
         SetPrivateProperty(comanda, "Id", id);

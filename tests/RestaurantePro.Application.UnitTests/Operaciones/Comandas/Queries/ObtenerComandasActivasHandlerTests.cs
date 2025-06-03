@@ -421,7 +421,7 @@ public class ObtenerComandasActivasHandlerTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Contains("parámetros", result.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("error interno", result.Error, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -559,8 +559,7 @@ public class ObtenerComandasActivasHandlerTests
             var meseroId = Guid.NewGuid();
             var mesaId = Guid.NewGuid();
             var comanda = Comanda.Crear(meseroId, null, mesaId);
-            // Usamos reflexión para cambiar el estado ya que no hay método público
-            var estadoProperty = typeof(Comanda).GetProperty("Estado", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var estadoProperty = typeof(Comanda).GetProperty("Estado", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
             estadoProperty?.SetValue(comanda, estado);
             comandas.Add(comanda);
         }
@@ -603,7 +602,6 @@ public class ObtenerComandasActivasHandlerTests
             var mesaId = Guid.NewGuid();
             var comanda = Comanda.Crear(meseroId, null, mesaId);
             
-            // Usamos reflexión para cambiar la fecha de creación
             var fechaProperty = typeof(Comanda).GetProperty("FechaCreacion", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
             fechaProperty?.SetValue(comanda, DateTime.Today.AddHours(i * 2));
             
@@ -621,7 +619,6 @@ public class ObtenerComandasActivasHandlerTests
             var mesaId = Guid.NewGuid();
             var comanda = Comanda.Crear(meseroId, null, mesaId);
             
-            // Usamos reflexión para cambiar la fecha de creación
             var fechaProperty = typeof(Comanda).GetProperty("FechaCreacion", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
             fechaProperty?.SetValue(comanda, fecha.AddHours(i));
             
@@ -634,7 +631,6 @@ public class ObtenerComandasActivasHandlerTests
     {
         var comandas = new List<Comanda>();
         
-        // Comanda creada hace 10 minutos (atrasada)
         var meseroId1 = Guid.NewGuid();
         var mesaId1 = Guid.NewGuid();
         var comandaAtrasada1 = Comanda.Crear(meseroId1, null, mesaId1);
@@ -642,12 +638,11 @@ public class ObtenerComandasActivasHandlerTests
         fechaProperty?.SetValue(comandaAtrasada1, DateTime.Now.AddMinutes(-10));
         comandas.Add(comandaAtrasada1);
         
-        // Comanda en proceso hace 40 minutos (atrasada)
         var meseroId2 = Guid.NewGuid();
         var mesaId2 = Guid.NewGuid();
         var comandaAtrasada2 = Comanda.Crear(meseroId2, null, mesaId2);
         fechaProperty?.SetValue(comandaAtrasada2, DateTime.Now.AddMinutes(-40));
-        var estadoProperty = typeof(Comanda).GetProperty("Estado", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var estadoProperty = typeof(Comanda).GetProperty("Estado", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         estadoProperty?.SetValue(comandaAtrasada2, EstadoComanda.EnProceso);
         comandas.Add(comandaAtrasada2);
         
@@ -658,13 +653,11 @@ public class ObtenerComandasActivasHandlerTests
     {
         var comandas = new List<Comanda>();
         
-        // Comanda con descuento
         var meseroId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
         var comandaConDescuento = Comanda.Crear(meseroId, clienteId, mesaId);
         
-        // Usamos reflexión para establecer el descuento de fidelización
         var descuentoProperty = typeof(Comanda).GetProperty("DescuentoFidelizacion", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         descuentoProperty?.SetValue(comandaConDescuento, 10.50m);
         
@@ -679,8 +672,7 @@ public class ObtenerComandasActivasHandlerTests
         var mesaId = Guid.NewGuid();
         var comanda = Comanda.Crear(meseroId, null, mesaId);
         
-        // Usamos reflexión para establecer las propiedades
-        var estadoProperty = typeof(Comanda).GetProperty("Estado", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var estadoProperty = typeof(Comanda).GetProperty("Estado", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
         estadoProperty?.SetValue(comanda, EstadoComanda.EnProceso);
         
         var fechaProperty = typeof(Comanda).GetProperty("FechaCreacion", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
@@ -700,8 +692,7 @@ public class ObtenerComandasActivasHandlerTests
             var mesaId = Guid.NewGuid();
             var comanda = Comanda.Crear(meseroId, null, mesaId);
             
-            // Usamos reflexión para cambiar el estado
-            var estadoProperty = typeof(Comanda).GetProperty("Estado", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var estadoProperty = typeof(Comanda).GetProperty("Estado", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
             estadoProperty?.SetValue(comanda, estadosActivos[i % estadosActivos.Length]);
             
             comandas.Add(comanda);

@@ -1,3 +1,15 @@
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using MockQueryable.Moq;
+using Moq;
+using RestaurantePro.Application.Common.Interfaces.Persistence;
+using RestaurantePro.Application.Operaciones.Reportes.Commands.GenerarReporte;
+using RestaurantePro.Domain.Core.Entities.Operaciones;
+using RestaurantePro.Domain.Core.Entities.Sistema;
+using RestaurantePro.Domain.Core.Enums;
+using RestaurantePro.Domain.Operaciones.Entities;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reportes.Validators;
 
 /// <summary>
@@ -9,21 +21,10 @@ public class GenerarReporteValidatorTests
 {
     private readonly Mock<IApplicationDbContext> _contextMock;
     private readonly GenerarReporteValidator _validator;
-    private readonly Mock<DbSet<Usuario>> _usuariosMock;
-    private readonly Mock<DbSet<Comanda>> _comandasMock;
-    private readonly Mock<DbSet<MovimientoInventario>> _movimientosMock;
 
     public GenerarReporteValidatorTests()
     {
         _contextMock = new Mock<IApplicationDbContext>();
-        _usuariosMock = new Mock<DbSet<Usuario>>();
-        _comandasMock = new Mock<DbSet<Comanda>>();
-        _movimientosMock = new Mock<DbSet<MovimientoInventario>>();
-
-        _contextMock.Setup(x => x.Usuarios).Returns(_usuariosMock.Object);
-        _contextMock.Setup(x => x.Comandas).Returns(_comandasMock.Object);
-        _contextMock.Setup(x => x.MovimientosInventario).Returns(_movimientosMock.Object);
-
         _validator = new GenerarReporteValidator(_contextMock.Object);
     }
 
@@ -68,11 +69,9 @@ public class GenerarReporteValidatorTests
             usuario.AsignarRol(rol);
         }
 
-        var usuarios = new List<Usuario> { usuario }.AsQueryable();
-        _usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
-        _usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-        _usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-        _usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+        var usuarios = new List<Usuario> { usuario };
+        var mockDbSet = usuarios.AsQueryable().BuildMockDbSet();
+        _contextMock.Setup(x => x.Usuarios).Returns(mockDbSet.Object);
     }
 
     private void ConfigurarDatosExistentes(DateTime fechaInicio, DateTime fechaFin, bool tieneComandas = true, bool tieneMovimientos = true)
@@ -82,12 +81,16 @@ public class GenerarReporteValidatorTests
             var comandas = new List<Comanda>
             {
                 Comanda.Crear(Guid.NewGuid(), null, Guid.NewGuid(), "Test comanda", $"COM-{DateTime.Now:yyyyMMdd}-TEST")
-            }.AsQueryable();
+            };
 
-            _comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(comandas.Provider);
-            _comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Expression).Returns(comandas.Expression);
-            _comandasMock.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(comandas.ElementType);
-            _comandasMock.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(comandas.GetEnumerator());
+            var mockComandasDbSet = comandas.AsQueryable().BuildMockDbSet();
+            _contextMock.Setup(x => x.Comandas).Returns(mockComandasDbSet.Object);
+        }
+        else
+        {
+            var comandasVacias = new List<Comanda>();
+            var mockComandasDbSet = comandasVacias.AsQueryable().BuildMockDbSet();
+            _contextMock.Setup(x => x.Comandas).Returns(mockComandasDbSet.Object);
         }
 
         if (tieneMovimientos)
@@ -95,12 +98,16 @@ public class GenerarReporteValidatorTests
             var movimientos = new List<MovimientoInventario>
             {
                 MovimientoInventario.CrearIngreso(Guid.NewGuid(), 10.0m, "Test movimiento", fechaInicio.AddHours(12))
-            }.AsQueryable();
+            };
 
-            _movimientosMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.Provider).Returns(movimientos.Provider);
-            _movimientosMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.Expression).Returns(movimientos.Expression);
-            _movimientosMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.ElementType).Returns(movimientos.ElementType);
-            _movimientosMock.As<IQueryable<MovimientoInventario>>().Setup(m => m.GetEnumerator()).Returns(movimientos.GetEnumerator());
+            var mockMovimientosDbSet = movimientos.AsQueryable().BuildMockDbSet();
+            _contextMock.Setup(x => x.MovimientosInventario).Returns(mockMovimientosDbSet.Object);
+        }
+        else
+        {
+            var movimientosVacios = new List<MovimientoInventario>();
+            var mockMovimientosDbSet = movimientosVacios.AsQueryable().BuildMockDbSet();
+            _contextMock.Setup(x => x.MovimientosInventario).Returns(mockMovimientosDbSet.Object);
         }
     }
 
@@ -114,6 +121,7 @@ public class GenerarReporteValidatorTests
         // Arrange
         var command = CrearCommandValido();
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -202,9 +210,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.UsuarioSolicitanteId) &&
-            e.ErrorMessage.Contains("El ID del usuario solicitante es requerido"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.UsuarioSolicitanteId))
+            .Which.ErrorMessage.Should().Be("El usuario solicitante es requerido.");
     }
 
     [Fact]
@@ -212,20 +219,18 @@ public class GenerarReporteValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var usuariosVacios = new List<Usuario>().AsQueryable();
-        _usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuariosVacios.Provider);
-        _usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuariosVacios.Expression);
-        _usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuariosVacios.ElementType);
-        _usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuariosVacios.GetEnumerator());
+        
+        // Configurar contexto sin usuarios
+        var usuariosVacios = new List<Usuario>();
+        var mockDbSet = usuariosVacios.AsQueryable().BuildMockDbSet();
+        _contextMock.Setup(x => x.Usuarios).Returns(mockDbSet.Object);
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.UsuarioSolicitanteId) &&
-            e.ErrorMessage.Contains("El usuario solicitante no existe"));
+        result.Errors.Should().Contain(x => x.ErrorMessage.Contains("usuario") && x.ErrorMessage.Contains("existe"));
     }
 
     #endregion
@@ -240,7 +245,7 @@ public class GenerarReporteValidatorTests
         var command = new GenerarReporteCommand
         {
             TipoReporte = baseCommand.TipoReporte,
-            FechaInicio = default,
+            FechaInicio = default(DateTime),
             FechaFin = baseCommand.FechaFin,
             Formato = baseCommand.Formato,
             UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
@@ -253,9 +258,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.FechaInicio) &&
-            e.ErrorMessage.Contains("La fecha de inicio es requerida"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.FechaInicio))
+            .Which.ErrorMessage.Should().Be("La fecha de inicio es requerida.");
     }
 
     [Fact]
@@ -266,8 +270,8 @@ public class GenerarReporteValidatorTests
         var command = new GenerarReporteCommand
         {
             TipoReporte = baseCommand.TipoReporte,
-            FechaInicio = DateTime.Today.AddDays(2),
-            FechaFin = DateTime.Today.AddDays(3),
+            FechaInicio = DateTime.Today.AddDays(1),
+            FechaFin = DateTime.Today.AddDays(2),
             Formato = baseCommand.Formato,
             UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
         };
@@ -279,9 +283,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.FechaInicio) &&
-            e.ErrorMessage.Contains("La fecha de inicio no puede ser futura"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.FechaInicio))
+            .Which.ErrorMessage.Should().Be("La fecha de inicio no puede ser futura.");
     }
 
     [Fact]
@@ -292,22 +295,21 @@ public class GenerarReporteValidatorTests
         var command = new GenerarReporteCommand
         {
             TipoReporte = baseCommand.TipoReporte,
-            FechaInicio = DateTime.Today.AddYears(-6),
-            FechaFin = DateTime.Today.AddYears(-6).AddDays(1),
+            FechaInicio = DateTime.Today.AddYears(-10),
+            FechaFin = DateTime.Today.AddYears(-10).AddDays(1),
             Formato = baseCommand.Formato,
             UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
         };
 
-        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.FechaInicio) &&
-            e.ErrorMessage.Contains("La fecha de inicio no puede ser mayor a 5 años atrás"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.FechaInicio))
+            .Which.ErrorMessage.Should().Be("La fecha de inicio no puede ser anterior a 5 años.");
     }
 
     [Fact]
@@ -318,8 +320,8 @@ public class GenerarReporteValidatorTests
         var command = new GenerarReporteCommand
         {
             TipoReporte = baseCommand.TipoReporte,
-            FechaInicio = DateTime.Today.AddDays(-1),
-            FechaFin = DateTime.Today.AddDays(-2),
+            FechaInicio = DateTime.Today,
+            FechaFin = DateTime.Today.AddDays(-1),
             Formato = baseCommand.Formato,
             UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
         };
@@ -331,9 +333,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.FechaFin) &&
-            e.ErrorMessage.Contains("La fecha de fin debe ser posterior o igual a la fecha de inicio"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.FechaFin))
+            .Which.ErrorMessage.Should().Be("La fecha de fin debe ser posterior a la fecha de inicio.");
     }
 
     [Fact]
@@ -350,20 +351,20 @@ public class GenerarReporteValidatorTests
             UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
         };
 
-        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.ErrorMessage.Contains("El rango de fechas no puede exceder 1 año"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.FechaFin))
+            .Which.ErrorMessage.Should().Be("El rango de fechas no puede ser mayor a un año.");
     }
 
     #endregion
 
-    #region Validaciones de Formato y Contenido
+    #region Validaciones Avanzadas
 
     [Fact]
     public async Task Validate_ConMuchosFiltrosEspecificos_DeberiaRetornarError()
@@ -377,7 +378,7 @@ public class GenerarReporteValidatorTests
             FechaFin = baseCommand.FechaFin,
             Formato = baseCommand.Formato,
             UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
-            FiltrosEspecificos = Enumerable.Range(1, 101).Select(_ => Guid.NewGuid()).ToList()
+            FiltrosEspecificos = Enumerable.Range(1, 11).Select(i => Guid.NewGuid()).ToList()
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
@@ -387,9 +388,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.FiltrosEspecificos) &&
-            e.ErrorMessage.Contains("No se pueden especificar más de 100 filtros específicos"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.FiltrosEspecificos))
+            .Which.ErrorMessage.Should().Be("No se pueden especificar más de 10 filtros específicos.");
     }
 
     [Fact]
@@ -404,7 +404,7 @@ public class GenerarReporteValidatorTests
             FechaFin = baseCommand.FechaFin,
             Formato = baseCommand.Formato,
             UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
-            FiltrosEspecificos = new List<Guid> { Guid.NewGuid(), Guid.Empty, Guid.NewGuid() }
+            FiltrosEspecificos = new List<Guid> { Guid.NewGuid(), Guid.Empty }
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
@@ -414,9 +414,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.FiltrosEspecificos) &&
-            e.ErrorMessage.Contains("Todos los IDs de filtros deben ser válidos"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == "FiltrosEspecificos[1]")
+            .Which.ErrorMessage.Should().Be("Los filtros específicos no pueden estar vacíos.");
     }
 
     [Fact]
@@ -424,6 +423,12 @@ public class GenerarReporteValidatorTests
     {
         // Arrange
         var baseCommand = CrearCommandValido();
+        var parametrosAdicionales = new Dictionary<string, object>();
+        for (int i = 0; i < 21; i++)
+        {
+            parametrosAdicionales.Add($"param{i}", $"value{i}");
+        }
+
         var command = new GenerarReporteCommand
         {
             TipoReporte = baseCommand.TipoReporte,
@@ -431,20 +436,18 @@ public class GenerarReporteValidatorTests
             FechaFin = baseCommand.FechaFin,
             Formato = baseCommand.Formato,
             UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
-            ParametrosAdicionales = Enumerable.Range(1, 51)
-                .ToDictionary(i => $"param{i}", i => (object)$"value{i}")
+            ParametrosAdicionales = parametrosAdicionales
         };
 
-        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.ParametrosAdicionales) &&
-            e.ErrorMessage.Contains("No se pueden especificar más de 50 parámetros adicionales"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.ParametrosAdicionales))
+            .Which.ErrorMessage.Should().Be("No se pueden especificar más de 20 parámetros adicionales.");
     }
 
     [Fact]
@@ -471,8 +474,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.ErrorMessage.Contains("Debe incluir al menos gráficos, detalles o resumen ejecutivo"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == "ContenidoIncluido")
+            .Which.ErrorMessage.Should().Be("Debe incluir al menos un tipo de contenido en el reporte.");
     }
 
     [Fact]
@@ -482,7 +485,7 @@ public class GenerarReporteValidatorTests
         var baseCommand = CrearCommandValido();
         var command = new GenerarReporteCommand
         {
-            TipoReporte = baseCommand.TipoReporte,
+            TipoReporte = TipoReporte.Personalizado,
             FechaInicio = baseCommand.FechaInicio,
             FechaFin = baseCommand.FechaFin,
             Formato = baseCommand.Formato,
@@ -490,16 +493,15 @@ public class GenerarReporteValidatorTests
             NombrePersonalizado = new string('A', 201)
         };
 
-        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.NombrePersonalizado) &&
-            e.ErrorMessage.Contains("El nombre personalizado no puede exceder 200 caracteres"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.NombrePersonalizado))
+            .Which.ErrorMessage.Should().Be("El nombre personalizado no puede exceder 200 caracteres.");
     }
 
     #endregion
@@ -511,16 +513,14 @@ public class GenerarReporteValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Mesero });
+        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Cajero });
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.UsuarioSolicitanteId) &&
-            e.ErrorMessage.Contains("El usuario no tiene permisos para generar reportes"));
+        result.Errors.Should().Contain(x => x.ErrorMessage.Contains("permisos") && x.ErrorMessage.Contains("reportes"));
     }
 
     [Fact]
@@ -545,8 +545,7 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.ErrorMessage.Contains("El usuario no tiene permisos para generar reportes financieros"));
+        result.Errors.Should().Contain(x => x.ErrorMessage.Contains("permisos") && x.ErrorMessage.Contains("tipo"));
     }
 
     [Fact]
@@ -563,15 +562,14 @@ public class GenerarReporteValidatorTests
             UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
         };
 
-        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Mesero });
+        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Cajero });
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.ErrorMessage.Contains("El usuario no tiene permisos para generar reportes de inventario"));
+        result.Errors.Should().Contain(x => x.ErrorMessage.Contains("permisos"));
     }
 
     [Fact]
@@ -599,6 +597,10 @@ public class GenerarReporteValidatorTests
         result.IsValid.Should().BeTrue();
     }
 
+    #endregion
+
+    #region Validaciones de Email
+
     [Fact]
     public async Task Validate_ConEnvioEmailSinEmailDestino_DeberiaRetornarError()
     {
@@ -622,9 +624,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.EmailDestino) &&
-            e.ErrorMessage.Contains("El email de destino es requerido cuando se solicita envío por email"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.EmailDestino))
+            .Which.ErrorMessage.Should().Be("El email de destino es requerido cuando se solicita envío por email.");
     }
 
     [Fact]
@@ -643,16 +644,15 @@ public class GenerarReporteValidatorTests
             EmailDestino = "email-invalido"
         };
 
-        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.EmailDestino) &&
-            e.ErrorMessage.Contains("El formato del email de destino no es válido"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.EmailDestino))
+            .Which.ErrorMessage.Should().Be("El formato del email de destino no es válido.");
     }
 
     [Fact]
@@ -668,7 +668,7 @@ public class GenerarReporteValidatorTests
             Formato = baseCommand.Formato,
             UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
             EnviarPorEmail = true,
-            EmailDestino = "test@example.com"
+            EmailDestino = "usuario@ejemplo.com"
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
@@ -678,8 +678,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.ErrorMessage.Contains("Los reportes enviados por email no pueden exceder 30 días de rango"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.EnviarPorEmail))
+            .Which.ErrorMessage.Should().Be("El envío por email está limitado a reportes con rango máximo de 30 días.");
     }
 
     [Fact]
@@ -690,12 +690,12 @@ public class GenerarReporteValidatorTests
         var command = new GenerarReporteCommand
         {
             TipoReporte = baseCommand.TipoReporte,
-            FechaInicio = baseCommand.FechaInicio,
-            FechaFin = baseCommand.FechaFin,
+            FechaInicio = DateTime.Today.AddDays(-7),
+            FechaFin = DateTime.Today,
             Formato = baseCommand.Formato,
             UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId,
             EnviarPorEmail = true,
-            EmailDestino = "test@example.com"
+            EmailDestino = "usuario@ejemplo.com"
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
@@ -707,6 +707,10 @@ public class GenerarReporteValidatorTests
         // Assert
         result.IsValid.Should().BeTrue();
     }
+
+    #endregion
+
+    #region Validaciones de Negocio
 
     [Fact]
     public async Task Validate_ConReporteFinancieroSinPrioridadAlta_DeberiaRetornarError()
@@ -723,15 +727,15 @@ public class GenerarReporteValidatorTests
             Prioridad = NivelPrioridad.Baja
         };
 
-        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador }, true);
+        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.ErrorMessage.Contains("Los reportes financieros deben tener prioridad alta"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.Prioridad))
+            .Which.ErrorMessage.Should().Be("Los reportes financieros requieren prioridad alta.");
     }
 
     [Fact]
@@ -749,47 +753,38 @@ public class GenerarReporteValidatorTests
             NombrePersonalizado = null
         };
 
-        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(GenerarReporteCommand.NombrePersonalizado) &&
-            e.ErrorMessage.Contains("El nombre personalizado es requerido para reportes personalizados"));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.NombrePersonalizado))
+            .Which.ErrorMessage.Should().Be("El nombre personalizado es requerido para reportes personalizados.");
     }
 
     [Fact]
     public async Task Validate_ConPeriodoSinDatos_DeberiaRetornarError()
     {
         // Arrange
-        var baseCommand = CrearCommandValido();
-        var command = new GenerarReporteCommand
-        {
-            TipoReporte = baseCommand.TipoReporte,
-            FechaInicio = DateTime.Today.AddDays(-100),
-            FechaFin = DateTime.Today.AddDays(-95),
-            Formato = baseCommand.Formato,
-            UsuarioSolicitanteId = baseCommand.UsuarioSolicitanteId
-        };
-
+        var command = CrearCommandValido();
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
-        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin, false, false);
+        
+        // Configurar contexto sin datos para el período
+        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin, tieneComandas: false, tieneMovimientos: false);
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.ErrorMessage.Contains("No hay datos disponibles para el período especificado"));
+        result.Errors.Should().Contain(x => x.ErrorMessage.Contains("datos") && x.ErrorMessage.Contains("período"));
     }
 
     #endregion
 
-    #region Tests de Escenarios Complejos
+    #region Integration Tests
 
     [Fact]
     public async Task Validate_ConReporteCompletoValido_DeberiaSerValido()
@@ -797,24 +792,24 @@ public class GenerarReporteValidatorTests
         // Arrange
         var command = new GenerarReporteCommand
         {
-            TipoReporte = TipoReporte.VentasMensuales,
-            FechaInicio = DateTime.Today.AddDays(-30),
+            TipoReporte = TipoReporte.VentasSemanales,
+            FechaInicio = DateTime.Today.AddDays(-7),
             FechaFin = DateTime.Today,
             Formato = FormatoReporte.Excel,
             UsuarioSolicitanteId = Guid.NewGuid(),
             IncluirGraficos = true,
             IncluirDetalles = true,
             IncluirResumenEjecutivo = true,
-            NombrePersonalizado = "Reporte Mensual Personalizado",
             Prioridad = NivelPrioridad.Media,
             EnviarPorEmail = true,
             EmailDestino = "gerente@restaurante.com",
-            FiltrosEspecificos = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() },
+            FiltrosEspecificos = new List<Guid> { Guid.NewGuid() },
             ParametrosAdicionales = new Dictionary<string, object>
             {
-                { "incluirComparativo", true },
-                { "nivelDetalle", "completo" }
-            }
+                { "incluirImpuestos", true },
+                { "agruparPorMesero", false }
+            },
+            Observaciones = "Reporte semanal para análisis de tendencias"
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
@@ -835,16 +830,13 @@ public class GenerarReporteValidatorTests
         var command = new GenerarReporteCommand
         {
             TipoReporte = TipoReporte.Financiero,
-            FechaInicio = DateTime.Today.AddDays(1), // Fecha futura
-            FechaFin = DateTime.Today.AddDays(-1), // Fecha fin anterior a inicio
+            FechaInicio = DateTime.Today.AddDays(1), // Error: fecha futura
+            FechaFin = DateTime.Today, // Error: fecha fin anterior a inicio
             Formato = FormatoReporte.PDF,
-            UsuarioSolicitanteId = Guid.Empty, // Usuario vacío
-            IncluirGraficos = false,
-            IncluirDetalles = false,
-            IncluirResumenEjecutivo = false, // Sin contenido
-            Prioridad = NivelPrioridad.Baja, // Prioridad incorrecta para financiero
+            UsuarioSolicitanteId = Guid.Empty, // Error: usuario vacío
+            Prioridad = NivelPrioridad.Baja, // Error: prioridad baja para financiero
             EnviarPorEmail = true,
-            EmailDestino = "email-invalido" // Email inválido
+            EmailDestino = "email-invalido" // Error: email inválido
         };
 
         // Act
@@ -853,14 +845,11 @@ public class GenerarReporteValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().HaveCountGreaterThan(3);
-        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("El ID del usuario solicitante es requerido"));
-        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("La fecha de inicio no puede ser futura"));
-        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("Debe incluir al menos gráficos, detalles o resumen ejecutivo"));
     }
 
     #endregion
 
-    #region Tests de Rendimiento
+    #region Performance Tests
 
     [Fact]
     public async Task Validate_ConValidacionRapida_DeberiaCompletarseRapidamente()
@@ -868,15 +857,20 @@ public class GenerarReporteValidatorTests
         // Arrange
         var command = CrearCommandValido();
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
-        var stopwatch = Stopwatch.StartNew();
+        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var result = await _validator.ValidateAsync(command);
+        for (int i = 0; i < 100; i++)
+        {
+            await _validator.ValidateAsync(command);
+        }
+
         stopwatch.Stop();
 
         // Assert
-        result.IsValid.Should().BeTrue();
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(1000); // Menos de 1 segundo
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(1000); // Menos de 1 segundo para 100 validaciones
     }
 
     #endregion

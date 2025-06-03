@@ -693,15 +693,14 @@ public class AgregarItemComandaHandlerTests
     private static Mock<Comanda> CreateMockComanda(Guid id, EstadoComanda estado)
     {
         var mock = new Mock<Comanda>();
-        mock.Setup(x => x.Id).Returns(id);
         mock.Setup(x => x.Estado).Returns(estado);
+        mock.Setup(x => x.PuedeAgregarItems()).Returns(estado != EstadoComanda.Finalizada && estado != EstadoComanda.Cancelada);
         return mock;
     }
 
     private static Mock<ItemComanda> CreateMockItemComanda(Guid productoId, int cantidad, decimal precio)
     {
         var mock = new Mock<ItemComanda>();
-        mock.Setup(x => x.Id).Returns(Guid.NewGuid());
         mock.Setup(x => x.ProductoId).Returns(productoId);
         mock.Setup(x => x.Cantidad).Returns(cantidad);
         mock.Setup(x => x.PrecioUnitario).Returns(precio);

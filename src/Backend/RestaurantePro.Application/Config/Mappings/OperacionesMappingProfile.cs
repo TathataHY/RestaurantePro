@@ -22,7 +22,7 @@ public class OperacionesMappingProfile : Profile
     {
         // Comanda → ComandaDto (mapeo completo con cálculos)
         CreateMap<Comanda, ComandaDto>()
-            .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado.ToString()))
+            .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado))
             .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => MapearEstadoTexto(src.Estado)))
             .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items))
             .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.Total != null ? src.Total.Subtotal : 0))
@@ -87,7 +87,8 @@ public class OperacionesMappingProfile : Profile
         // ItemComanda → ItemComandaDto
         CreateMap<ItemComanda, ItemComandaDto>()
             .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.Subtotal))
-            .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado.ToString()))
+            .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado))
+            .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => MapearEstadoItemTexto(src.Estado)))
             .ForMember(dest => dest.TienePersonalizaciones, opt => opt.MapFrom(src => src.Personalizaciones.Any()))
             .ForMember(dest => dest.PrecioPersonalizaciones, opt => opt.MapFrom(src => src.Personalizaciones.Sum(p => p.PrecioAdicional)))
             .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Subtotal + src.Personalizaciones.Sum(p => p.PrecioAdicional)))
@@ -251,5 +252,18 @@ public class OperacionesMappingProfile : Profile
         EstadoComanda.Finalizada => "#6B7280",  // Gris
         EstadoComanda.Cancelada => "#EF4444",   // Rojo
         _ => "#6B7280"                          // Gris por defecto
+    };
+
+    /// <summary>
+    /// Mapea el estado del item a texto amigable
+    /// </summary>
+    private static string MapearEstadoItemTexto(EstadoItemComanda estado) => estado switch
+    {
+        EstadoItemComanda.Pendiente => "Pendiente",
+        EstadoItemComanda.EnPreparacion => "EnPreparacion",
+        EstadoItemComanda.Listo => "Listo",
+        EstadoItemComanda.Entregado => "Entregado",
+        EstadoItemComanda.Cancelado => "Cancelado",
+        _ => estado.ToString()
     };
 } 

@@ -131,25 +131,39 @@ public class AcumularPuntosHandlerTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var facturaId = Guid.NewGuid();
         var command = new AcumularPuntosCommand
         {
             ClienteId = clienteId,
-            FacturaId = facturaId,
             MontoCompra = 120.50m,
-            TipoAcumulacion = TipoAcumulacion.PorCompra,
-            Comentarios = "Almuerzo familiar"
+            TipoAcumulacion = TipoAcumulacion.PorCompra
         };
-
-        var resultadoAcumulacion = CreateMockResultadoVentaBasica(clienteId);
 
         // Setup mocks básicos
         var clienteMock = CreateMockCliente(clienteId);
-        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
+        var tarjetaMock = CreateMockTarjeta(clienteId);
+        var calculoResultado = CreateMockCalculoResultado(120);
+        var resultadoAcumulacion = CreateMockResultadoVentaBasica(clienteId);
+
+        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(clienteMock);
+
+        _tarjetaRepositoryMock.Setup(x => x.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tarjetaMock);
+
+        _calculadoraPuntosMock.Setup(x => x.CalcularPuntosPorCompraAsync(It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(calculoResultado));
+
+        _transaccionRepositoryMock.Setup(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _tarjetaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         _currentUserServiceMock.Setup(x => x.UserId)
             .Returns(Guid.NewGuid().ToString());
+
+        _mapperMock.Setup(x => x.Map<AcumulacionPuntosDto>(It.IsAny<object>()))
+            .Returns(resultadoAcumulacion);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -174,11 +188,30 @@ public class AcumularPuntosHandlerTests
 
         // Setup mocks básicos
         var clienteMock = CreateMockCliente(clienteId);
-        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
+        var tarjetaMock = CreateMockTarjeta(clienteId);
+        var calculoResultado = CreateMockCalculoResultado(450);
+        var resultadoAcumulacion = CreateMockResultadoVentaBasica(clienteId);
+
+        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(clienteMock);
+
+        _tarjetaRepositoryMock.Setup(x => x.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tarjetaMock);
+
+        _calculadoraPuntosMock.Setup(x => x.CalcularPuntosPorCompraAsync(It.IsAny<Guid>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(calculoResultado));
+
+        _transaccionRepositoryMock.Setup(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _tarjetaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         _currentUserServiceMock.Setup(x => x.UserId)
             .Returns(Guid.NewGuid().ToString());
+
+        _mapperMock.Setup(x => x.Map<AcumulacionPuntosDto>(It.IsAny<object>()))
+            .Returns(resultadoAcumulacion);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -204,11 +237,34 @@ public class AcumularPuntosHandlerTests
 
         // Setup mocks básicos
         var clienteMock = CreateMockCliente(clienteId);
-        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
+        var tarjetaMock = CreateMockTarjeta(clienteId);
+        var promocionMock = CreateMockPromocion();
+        var calculoResultado = CreateMockCalculoResultado(360); // Doble puntos
+        var resultadoAcumulacion = CreateMockResultadoVentaBasica(clienteId);
+
+        _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(clienteMock);
+
+        _tarjetaRepositoryMock.Setup(x => x.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tarjetaMock);
+
+        _promocionRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync("DOUBLE2025", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(promocionMock);
+
+        _calculadoraPuntosMock.Setup(x => x.CalcularPuntosPorPromocionAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Dictionary<string, object>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(calculoResultado));
+
+        _transaccionRepositoryMock.Setup(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        _tarjetaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         _currentUserServiceMock.Setup(x => x.UserId)
             .Returns(Guid.NewGuid().ToString());
+
+        _mapperMock.Setup(x => x.Map<AcumulacionPuntosDto>(It.IsAny<object>()))
+            .Returns(resultadoAcumulacion);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -300,6 +356,32 @@ public class AcumularPuntosHandlerTests
             FechaAcumulacion = DateTime.UtcNow,
             Concepto = "Acumulación por Compra"
         };
+    }
+
+    private static TarjetaFidelizacion CreateMockTarjeta(Guid clienteId)
+    {
+        return TarjetaFidelizacion.Crear(clienteId, $"TF{clienteId.ToString()[..8]}");
+    }
+
+    private static CalculoResultadoPuntos CreateMockCalculoResultado(decimal puntos)
+    {
+        return new CalculoResultadoPuntos((int)puntos, 1.0m, 0, "Mock calculation");
+    }
+
+    private static Promocion CreateMockPromocion()
+    {
+        return Promocion.Crear(
+            "DOUBLE2025",
+            "Doble Puntos 2025", 
+            "Promoción de doble puntos para el año 2025",
+            TipoPromocion.Acumulacion,
+            2.0m,
+            DateTime.UtcNow.AddDays(-30),
+            DateTime.UtcNow.AddDays(30),
+            0m,
+            0,
+            null,
+            false);
     }
 
     #endregion
