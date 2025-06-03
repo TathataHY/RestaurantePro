@@ -502,7 +502,12 @@ public class UnificarComandasHandlerTests
         // Configurar el método Add para comandas
         _mockContext.Setup(c => c.Comandas.Add(It.IsAny<Comanda>()));
         _mockContext.Setup(c => c.Comandas.AddAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+                   .Returns((Comanda comanda, CancellationToken ct) => 
+                   {
+                       var mockEntry = new Mock<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Comanda>>();
+                       mockEntry.Setup(e => e.Entity).Returns(comanda);
+                       return new ValueTask<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Comanda>>(mockEntry.Object);
+                   });
     }
 
     private void ConfigurarMocksParaUnificacionExitosa(List<Comanda> comandas, Mesa mesaDestino)

@@ -34,7 +34,7 @@ public class ComercialMappingProfile : Profile
             .ForMember(dest => dest.Notas, opt => opt.Ignore()) // TODO: Implementar en entidad
             .ForMember(dest => dest.TarjetaFidelizacionId, opt => opt.Ignore()) // TODO: Implementar en entidad
             .ForMember(dest => dest.PuntosFidelizacion, opt => opt.MapFrom(src => 0)) // Default value
-            .ForMember(dest => dest.NivelFidelizacion, opt => opt.MapFrom(src => NivelFidelizacion.Bronce)) // Default value
+            .ForMember(dest => dest.NivelFidelizacion, opt => opt.MapFrom(src => NivelFidelizacion.Basico)) // Default value
             .ForMember(dest => dest.TotalVisitas, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
             .ForMember(dest => dest.TotalGastado, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
             .ForMember(dest => dest.UltimaVisita, opt => opt.MapFrom(src => (DateTime?)null)) // TODO: Calcular desde histórico

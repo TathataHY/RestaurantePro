@@ -517,7 +517,7 @@ public class ComercialMappingProfileTests
         // Crear el value object Email usando su factory method
         try
         {
-            return Email.Crear(email);
+            return Email.Create(email);
         }
         catch
         {
@@ -531,7 +531,7 @@ public class ComercialMappingProfileTests
         // Crear el value object PhoneNumber usando su factory method
         try
         {
-            return PhoneNumber.Crear(telefono);
+            return PhoneNumber.Create(telefono);
         }
         catch
         {
