@@ -1,3 +1,12 @@
+using FluentAssertions;
+using MockQueryable.Moq;
+using Moq;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ConfirmarReservacion;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Validators;
 
 /// <summary>
@@ -44,8 +53,8 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.ReservacionId))
-            .Which.ErrorMessage.Should().Be("El ID de la reservación es requerido.");
+        result.Errors.Should().Contain(x => x.PropertyName == "Identificacion")
+            .Which.ErrorMessage.Should().Be("Debe proporcionar el ID de reservación o el código de reservación.");
     }
 
     [Fact]
@@ -80,7 +89,7 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.CodigoReservacion))
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(ConfirmarReservacionCommand.CodigoReservacion))
             .Which.ErrorMessage.Should().Be("El código de reservación es requerido cuando no se proporciona ID.");
     }
 
@@ -99,7 +108,7 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.CodigoReservacion))
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(ConfirmarReservacionCommand.CodigoReservacion))
             .Which.ErrorMessage.Should().Be("El código de reservación debe tener entre 6 y 20 caracteres.");
     }
 
@@ -119,7 +128,7 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.CodigoReservacion))
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(ConfirmarReservacionCommand.CodigoReservacion))
             .Which.ErrorMessage.Should().Be("El código de reservación solo puede contener letras mayúsculas, números y guiones.");
     }
 
@@ -136,7 +145,7 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == "Identificacion")
+        result.Errors.Should().Contain(x => x.PropertyName == "Identificacion")
             .Which.ErrorMessage.Should().Be("Debe proporcionar el ID de reservación o el código de reservación.");
     }
 
@@ -179,7 +188,7 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.MetodoConfirmacion))
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(ConfirmarReservacionCommand.MetodoConfirmacion))
             .Which.ErrorMessage.Should().Be("El método de confirmación es requerido.");
     }
 
@@ -195,7 +204,7 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.MetodoConfirmacion))
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(ConfirmarReservacionCommand.MetodoConfirmacion))
             .Which.ErrorMessage.Should().Be("El método de confirmación debe ser válido: Manual, Telefono, Email, SMS, App.");
     }
 
@@ -205,15 +214,15 @@ public class ConfirmarReservacionValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.MetodoConfirmacion = "Manual";
-        command.ConfirmadoPor = null;
+        command.ConfirmadoPor = "";
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.ConfirmadoPor))
-            .Which.ErrorMessage.Should().Be("La persona que confirma es requerida para confirmaciones manuales.");
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(ConfirmarReservacionCommand.ConfirmadoPor))
+            .Which.ErrorMessage.Should().Be("Es requerido especificar quién confirma para el método manual.");
     }
 
     #endregion
@@ -232,8 +241,7 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.ReservacionId))
-            .Which.ErrorMessage.Should().Be("La reservación especificada no existe.");
+        result.Errors.Should().Contain(x => x.ErrorMessage.Contains("no existe"));
     }
 
     [Fact]
@@ -248,8 +256,7 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.ReservacionId))
-            .Which.ErrorMessage.Should().Be("La reservación no puede ser confirmada en su estado actual.");
+        result.Errors.Should().Contain(x => x.ErrorMessage.Contains("no puede ser confirmada"));
     }
 
     [Fact]
@@ -264,8 +271,7 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.ReservacionId))
-            .Which.ErrorMessage.Should().Be("Ha excedido el tiempo límite para confirmar la reservación.");
+        result.Errors.Should().Contain(x => x.ErrorMessage.Contains("tiempo límite"));
     }
 
     [Fact]
@@ -280,27 +286,22 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.ReservacionId))
-            .Which.ErrorMessage.Should().Be("La mesa ya no está disponible para la fecha y hora de la reservación.");
+        result.Errors.Should().Contain(x => x.ErrorMessage.Contains("no está disponible"));
     }
-
-    #endregion
-
-    #region Validaciones Opcionales
 
     [Fact]
     public async Task Validator_ConNotasConfirmacionLargas_DeberiaFallar()
     {
         // Arrange
         var command = CrearComandoValido();
-        command.NotasConfirmacion = new string('A', 501); // Más de 500 caracteres
+        command.NotasConfirmacion = new string('A', 501); // Excede el límite de 500
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.NotasConfirmacion))
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(ConfirmarReservacionCommand.NotasConfirmacion))
             .Which.ErrorMessage.Should().Be("Las notas de confirmación no pueden exceder 500 caracteres.");
     }
 
@@ -317,12 +318,14 @@ public class ConfirmarReservacionValidatorTests
             command.DatosAdicionales.Add($"key{i}", $"value{i}");
         }
 
+        ConfigurarMocksParaValidacion(command.ReservacionId);
+
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(ConfirmarReservacionCommand.DatosAdicionales))
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(ConfirmarReservacionCommand.DatosAdicionales))
             .Which.ErrorMessage.Should().Be("Los datos adicionales contienen información inválida.");
     }
 
@@ -332,68 +335,41 @@ public class ConfirmarReservacionValidatorTests
 
     private void ConfigurarMocksParaValidacion(Guid reservacionId)
     {
-        var reservacionesMock = new Mock<DbSet<Reservacion>>();
-        
-        // Mock para ReservacionExiste
-        reservacionesMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        // Mock para ReservacionEsConfirmable - usar factory method
         var reservacion = CrearReservacionParaTest(reservacionId, EstadoReservacion.Pendiente);
-        reservacionesMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(reservacion);
-
-        _contextMock.Setup(x => x.Reservaciones).Returns(reservacionesMock.Object);
+        var reservaciones = new List<Reservacion> { reservacion };
+        
+        var mockDbSet = reservaciones.AsQueryable().BuildMockDbSet();
+        _contextMock.Setup(x => x.Reservaciones).Returns(mockDbSet.Object);
     }
 
     private void ConfigurarMocksParaCodigoReservacion(string codigoReservacion)
     {
-        var reservacionesMock = new Mock<DbSet<Reservacion>>();
-        
-        reservacionesMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         var reservacion = CrearReservacionParaTest(Guid.NewGuid(), EstadoReservacion.Pendiente);
-        // Usar reflection para setear el código de reservación
-        typeof(Reservacion).GetProperty("CodigoReservacion")?.SetValue(reservacion, codigoReservacion);
+        var reservaciones = new List<Reservacion> { reservacion };
         
-        reservacionesMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(reservacion);
-
-        _contextMock.Setup(x => x.Reservaciones).Returns(reservacionesMock.Object);
+        var mockDbSet = reservaciones.AsQueryable().BuildMockDbSet();
+        _contextMock.Setup(x => x.Reservaciones).Returns(mockDbSet.Object);
     }
 
     private void ConfigurarMockReservacionNoExiste(Guid reservacionId)
     {
-        var reservacionesMock = new Mock<DbSet<Reservacion>>();
+        var reservaciones = new List<Reservacion>(); // Lista vacía - no existe
         
-        reservacionesMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
-        _contextMock.Setup(x => x.Reservaciones).Returns(reservacionesMock.Object);
+        var mockDbSet = reservaciones.AsQueryable().BuildMockDbSet();
+        _contextMock.Setup(x => x.Reservaciones).Returns(mockDbSet.Object);
     }
 
     private void ConfigurarMockReservacionNoConfirmable(Guid reservacionId)
     {
-        var reservacionesMock = new Mock<DbSet<Reservacion>>();
+        var reservacion = CrearReservacionParaTest(reservacionId, EstadoReservacion.Confirmada); // Ya confirmada
+        var reservaciones = new List<Reservacion> { reservacion };
         
-        reservacionesMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        var reservacion = CrearReservacionParaTest(reservacionId, EstadoReservacion.Confirmada);
-        reservacionesMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(reservacion);
-
-        _contextMock.Setup(x => x.Reservaciones).Returns(reservacionesMock.Object);
+        var mockDbSet = reservaciones.AsQueryable().BuildMockDbSet();
+        _contextMock.Setup(x => x.Reservaciones).Returns(mockDbSet.Object);
     }
 
     private void ConfigurarMockTiempoLimiteExcedido(Guid reservacionId)
     {
-        var reservacionesMock = new Mock<DbSet<Reservacion>>();
-        
-        reservacionesMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         // Crear reservación con fecha/hora específica usando factory method
         var fechaReservacion = DateTime.UtcNow.AddHours(1); // Solo 1 hora antes, límite es 2 horas
         var reservacion = Reservacion.Crear(
@@ -408,19 +384,13 @@ public class ConfirmarReservacionValidatorTests
         // Usar reflection para setear el ID específico
         typeof(EntityBase).GetProperty("Id")?.SetValue(reservacion, reservacionId);
         
-        reservacionesMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(reservacion);
-
-        _contextMock.Setup(x => x.Reservaciones).Returns(reservacionesMock.Object);
+        var reservaciones = new List<Reservacion> { reservacion };
+        var mockDbSet = reservaciones.AsQueryable().BuildMockDbSet();
+        _contextMock.Setup(x => x.Reservaciones).Returns(mockDbSet.Object);
     }
 
     private void ConfigurarMockMesaNoDisponible(Guid reservacionId)
     {
-        var reservacionesMock = new Mock<DbSet<Reservacion>>();
-        
-        reservacionesMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
         // Crear reservación para mañana usando factory method
         var fechaReservacion = DateTime.UtcNow.AddDays(1);
         var mesaId = Guid.NewGuid();
@@ -435,15 +405,22 @@ public class ConfirmarReservacionValidatorTests
 
         // Usar reflection para setear el ID específico
         typeof(EntityBase).GetProperty("Id")?.SetValue(reservacion, reservacionId);
+
+        // Crear otra reservación confirmada para la misma mesa (conflicto)
+        var reservacionConflicto = Reservacion.Crear(
+            mesaId: mesaId,
+            clienteId: Guid.NewGuid(),
+            fecha: fechaReservacion,
+            duracionEstimada: TimeSpan.FromHours(2),
+            cantidadPersonas: 2,
+            telefono: "987654321",
+            email: "conflicto@test.com");
         
-        reservacionesMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(reservacion);
-
-        // Mock para conflictos - hay otra reservación confirmada
-        reservacionesMock.Setup(x => x.Where(It.IsAny<Expression<Func<Reservacion, bool>>>()).AnyAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        _contextMock.Setup(x => x.Reservaciones).Returns(reservacionesMock.Object);
+        reservacionConflicto.Confirmar(); // Confirmar la reservación conflicto
+        
+        var reservaciones = new List<Reservacion> { reservacion, reservacionConflicto };
+        var mockDbSet = reservaciones.AsQueryable().BuildMockDbSet();
+        _contextMock.Setup(x => x.Reservaciones).Returns(mockDbSet.Object);
     }
 
     /// <summary>

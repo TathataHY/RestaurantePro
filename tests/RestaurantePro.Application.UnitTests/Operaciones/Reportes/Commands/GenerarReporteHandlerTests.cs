@@ -1,3 +1,5 @@
+using RestaurantePro.Application.UnitTests.Common;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reportes.Commands;
 
 /// <summary>
@@ -85,35 +87,38 @@ public class GenerarReporteHandlerTests
 
     private void ConfigurarComandasMock(List<Comanda> comandas)
     {
-        var queryable = comandas.AsQueryable();
-        _mockComandas.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(queryable.Provider);
-        _mockComandas.As<IQueryable<Comanda>>().Setup(m => m.Expression).Returns(queryable.Expression);
-        _mockComandas.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-        _mockComandas.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
-
-        // Configurar ToListAsync para que retorne las comandas
-        _mockComandas.Setup(x => x.ToListAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandas);
-
-        _mockContext.Setup(c => c.Comandas).Returns(_mockComandas.Object);
+        // Asegurar que las comandas tengan totales calculados
+        foreach (var comanda in comandas)
+        {
+            try
+            {
+                // Usar la secuencia correcta de estados para finalizar la comanda
+                comanda.MarcarEnPreparacion();
+                comanda.MarcarLista();
+                comanda.MarcarEntregada();
+                comanda.MarcarPagada(); // Esto calculará el total correctamente y finalizará la comanda
+            }
+            catch
+            {
+                // Si no se puede finalizar, al menos intentar recalcular el total
+                // Las comandas ya deberían tener items agregados por las pruebas
+            }
+        }
+        
+        var mockSet = MockDbSetHelper.CreateMockDbSet(comandas.AsQueryable());
+        _mockContext.Setup(c => c.Comandas).Returns(mockSet.Object);
     }
 
     private void ConfigurarMovimientosMock(List<MovimientoInventario> movimientos)
     {
-        var movimientosQueryable = movimientos.AsQueryable();
-        _mockMovimientos.As<IQueryable<MovimientoInventario>>().Setup(m => m.Provider).Returns(movimientosQueryable.Provider);
-        _mockMovimientos.As<IQueryable<MovimientoInventario>>().Setup(m => m.Expression).Returns(movimientosQueryable.Expression);
-        _mockMovimientos.As<IQueryable<MovimientoInventario>>().Setup(m => m.ElementType).Returns(movimientosQueryable.ElementType);
-        _mockMovimientos.As<IQueryable<MovimientoInventario>>().Setup(m => m.GetEnumerator()).Returns(movimientosQueryable.GetEnumerator());
+        var mockSet = MockDbSetHelper.CreateMockDbSet(movimientos.AsQueryable());
+        _mockContext.Setup(c => c.MovimientosInventario).Returns(mockSet.Object);
     }
 
     private void ConfigurarIngredientesMock(List<Ingrediente> ingredientes)
     {
-        var ingredientesQueryable = ingredientes.AsQueryable();
-        _mockIngredientes.As<IQueryable<Ingrediente>>().Setup(m => m.Provider).Returns(ingredientesQueryable.Provider);
-        _mockIngredientes.As<IQueryable<Ingrediente>>().Setup(m => m.Expression).Returns(ingredientesQueryable.Expression);
-        _mockIngredientes.As<IQueryable<Ingrediente>>().Setup(m => m.ElementType).Returns(ingredientesQueryable.ElementType);
-        _mockIngredientes.As<IQueryable<Ingrediente>>().Setup(m => m.GetEnumerator()).Returns(ingredientesQueryable.GetEnumerator());
+        var mockSet = MockDbSetHelper.CreateMockDbSet(ingredientes.AsQueryable());
+        _mockContext.Setup(c => c.Ingredientes).Returns(mockSet.Object);
     }
 
     #endregion

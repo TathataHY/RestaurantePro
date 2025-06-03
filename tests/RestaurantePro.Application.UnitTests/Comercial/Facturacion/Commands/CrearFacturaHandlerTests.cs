@@ -621,8 +621,8 @@ public class CrearFacturaHandlerTests
             NombreCliente = "Cliente Test"
         };
 
-        _comandasDbSetMock.Setup(x => x.Where(It.IsAny<System.Linq.Expressions.Expression<Func<Comanda, bool>>>()))
-            .Throws(new InvalidOperationException("Error de base de datos"));
+        // En su lugar, configurar el context para que falle
+        _contextMock.Setup(x => x.Comandas).Throws(new InvalidOperationException("Error de base de datos"));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -644,13 +644,14 @@ public class CrearFacturaHandlerTests
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
         _clientesDbSetMock.As<IQueryable<Cliente>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
 
-        _clientesDbSetMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Cliente, bool>>>(), It.IsAny<CancellationToken>()))
-            .Returns<System.Linq.Expressions.Expression<Func<Cliente, bool>>, CancellationToken>((predicate, token) =>
-            {
-                var compiled = predicate.Compile();
-                var result = clientes.FirstOrDefault(compiled);
-                return Task.FromResult(result);
-            });
+        // NO usar FirstOrDefaultAsync - es un método de extensión que causa errores
+        // _clientesDbSetMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Cliente, bool>>>(), It.IsAny<CancellationToken>()))
+        //     .Returns<System.Linq.Expressions.Expression<Func<Cliente, bool>>, CancellationToken>((predicate, token) =>
+        //     {
+        //         var compiled = predicate.Compile();
+        //         var result = clientes.FirstOrDefault(compiled);
+        //         return Task.FromResult(result);
+        //     });
     }
 
     private void SetupComandasDbSet(List<Comanda> comandas)
@@ -661,12 +662,13 @@ public class CrearFacturaHandlerTests
         _comandasDbSetMock.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
         _comandasDbSetMock.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
 
-        _comandasDbSetMock.Setup(x => x.Where(It.IsAny<System.Linq.Expressions.Expression<Func<Comanda, bool>>>()))
-            .Returns<System.Linq.Expressions.Expression<Func<Comanda, bool>>>(predicate =>
-            {
-                var compiled = predicate.Compile();
-                return comandas.Where(compiled).AsQueryable();
-            });
+        // NO usar Where() - es un método de extensión que causa errores
+        // _comandasDbSetMock.Setup(x => x.Where(It.IsAny<System.Linq.Expressions.Expression<Func<Comanda, bool>>>()))
+        //     .Returns<System.Linq.Expressions.Expression<Func<Comanda, bool>>>(predicate =>
+        //     {
+        //         var compiled = predicate.Compile();
+        //         return comandas.Where(compiled).AsQueryable();
+        //     });
 
         // NO hacer setup de Include() ya que es un método de extensión y causa errores de Moq
         // El handler debe funcionar sin Include para las pruebas unitarias

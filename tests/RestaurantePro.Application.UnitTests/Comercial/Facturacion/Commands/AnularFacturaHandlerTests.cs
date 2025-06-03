@@ -197,9 +197,7 @@ public class AnularFacturaHandlerTests
         Assert.True(result.Succeeded);
         
         // Verificar que se validó el gerente
-        _usuariosDbSetMock.Verify(x => x.FirstOrDefaultAsync(
-            It.IsAny<System.Linq.Expressions.Expression<Func<Usuario, bool>>>(),
-            It.IsAny<CancellationToken>()), Times.Once);
+        _usuariosDbSetMock.Verify(x => x.FindAsync(gerenteId), Times.Once);
     }
 
     [Fact]
@@ -630,16 +628,10 @@ public class AnularFacturaHandlerTests
         _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
         _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
 
-        // No intentar mockear Include ya que es un método de extensión
-        // En su lugar, setup FirstOrDefaultAsync directamente
-        _facturasDbSetMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Factura, bool>>>(), It.IsAny<CancellationToken>()))
-            .Returns<System.Linq.Expressions.Expression<Func<Factura, bool>>, CancellationToken>((predicate, token) =>
-            {
-                var compiled = predicate.Compile();
-                var result = facturas.FirstOrDefault(compiled);
-                return Task.FromResult(result);
-            });
+        // Configurar el DbSet mock para el repositorio
+        _contextMock.Setup(x => x.Facturas).Returns(_facturasDbSetMock.Object);
 
+        // Setup FindAsync directamente
         _facturasDbSetMock.Setup(x => x.FindAsync(It.IsAny<Guid>()))
             .Returns<Guid>(id =>
             {
@@ -656,12 +648,15 @@ public class AnularFacturaHandlerTests
         _usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
         _usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
 
-        _usuariosDbSetMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Usuario, bool>>>(), It.IsAny<CancellationToken>()))
-            .Returns<System.Linq.Expressions.Expression<Func<Usuario, bool>>, CancellationToken>((predicate, token) =>
+        // Configurar el DbSet mock para el repositorio
+        _contextMock.Setup(x => x.Usuarios).Returns(_usuariosDbSetMock.Object);
+
+        // Setup FindAsync para usuarios
+        _usuariosDbSetMock.Setup(x => x.FindAsync(It.IsAny<Guid>()))
+            .Returns<Guid>(id =>
             {
-                var compiled = predicate.Compile();
-                var result = usuarios.FirstOrDefault(compiled);
-                return Task.FromResult(result);
+                var result = usuarios.FirstOrDefault(u => u.Id == id);
+                return ValueTask.FromResult(result);
             });
     }
 

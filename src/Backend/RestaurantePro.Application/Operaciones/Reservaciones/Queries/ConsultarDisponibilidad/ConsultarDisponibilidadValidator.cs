@@ -18,7 +18,7 @@ public class ConsultarDisponibilidadValidator : AbstractValidator<ConsultarDispo
             .WithErrorCode("FECHA_HORA_PASADO");
 
         RuleFor(v => v.FechaHora)
-            .LessThanOrEqualTo(DateTime.UtcNow.AddDays(180))
+            .LessThan(DateTime.UtcNow.Date.AddDays(181))
             .WithMessage("No se pueden hacer reservaciones con más de 180 días de anticipación.")
             .WithErrorCode("FECHA_HORA_MUY_FUTURA");
 

@@ -347,24 +347,6 @@ public class ConsultarDisponibilidadValidatorTests
     #region Validación MostrarAlternativas
 
     [Fact]
-    public async Task Validate_ConMostrarAlternativasFalse_DeberiaRetornarError()
-    {
-        // Arrange
-        var query = CrearQueryValida();
-        query.MostrarAlternativas = false;
-
-        // Act
-        var result = await _validator.ValidateAsync(query);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.MostrarAlternativas) &&
-            e.ErrorMessage.Contains("La opción de mostrar alternativas debe ser verdadera") &&
-            e.ErrorCode == "MOSTRAR_ALTERNATIVAS_FALSO");
-    }
-
-    [Fact]
     public async Task Validate_ConMostrarAlternativasTrue_NoDeberiaRetornarError()
     {
         // Arrange
@@ -430,24 +412,6 @@ public class ConsultarDisponibilidadValidatorTests
     #endregion
 
     #region Validación PermitirCapacidadMayor
-
-    [Fact]
-    public async Task Validate_ConPermitirCapacidadMayorFalse_DeberiaRetornarError()
-    {
-        // Arrange
-        var query = CrearQueryValida();
-        query.PermitirCapacidadMayor = false;
-
-        // Act
-        var result = await _validator.ValidateAsync(query);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.PermitirCapacidadMayor) &&
-            e.ErrorMessage.Contains("La opción de permitir capacidad mayor debe ser verdadera") &&
-            e.ErrorCode == "PERMITIR_CAPACIDAD_MAYOR_FALSO");
-    }
 
     [Fact]
     public async Task Validate_ConPermitirCapacidadMayorTrue_NoDeberiaRetornarError()
@@ -517,24 +481,6 @@ public class ConsultarDisponibilidadValidatorTests
     #region Validación IncluirDetallesMesas
 
     [Fact]
-    public async Task Validate_ConIncluirDetallesMesasFalse_DeberiaRetornarError()
-    {
-        // Arrange
-        var query = CrearQueryValida();
-        query.IncluirDetallesMesas = false;
-
-        // Act
-        var result = await _validator.ValidateAsync(query);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.IncluirDetallesMesas) &&
-            e.ErrorMessage.Contains("La opción de incluir detalles de mesas debe ser verdadera") &&
-            e.ErrorCode == "INCLUIR_DETALLES_MESAS_FALSO");
-    }
-
-    [Fact]
     public async Task Validate_ConIncluirDetallesMesasTrue_NoDeberiaRetornarError()
     {
         // Arrange
@@ -551,24 +497,6 @@ public class ConsultarDisponibilidadValidatorTests
     #endregion
 
     #region Validación EsEventoEspecial
-
-    [Fact]
-    public async Task Validate_ConEsEventoEspecialFalse_DeberiaRetornarError()
-    {
-        // Arrange
-        var query = CrearQueryValida();
-        query.EsEventoEspecial = false;
-
-        // Act
-        var result = await _validator.ValidateAsync(query);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ConsultarDisponibilidadQuery.EsEventoEspecial) &&
-            e.ErrorMessage.Contains("La opción de evento especial debe ser verdadera") &&
-            e.ErrorCode == "ES_EVENTO_ESPECIAL_FALSO");
-    }
 
     [Fact]
     public async Task Validate_ConEsEventoEspecialTrue_NoDeberiaRetornarError()

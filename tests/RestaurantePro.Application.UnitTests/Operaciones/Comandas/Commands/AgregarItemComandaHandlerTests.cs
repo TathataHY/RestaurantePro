@@ -694,7 +694,11 @@ public class AgregarItemComandaHandlerTests
     {
         var mock = new Mock<Comanda>();
         mock.Setup(x => x.Estado).Returns(estado);
-        mock.Setup(x => x.PuedeAgregarItems()).Returns(estado != EstadoComanda.Finalizada && estado != EstadoComanda.Cancelada);
+        mock.Setup(x => x.Id).Returns(Guid.NewGuid());
+        // En lugar de PuedeAgregarItems(), usar lógica directa basada en el estado
+        // Los items solo se pueden agregar en estado Creada o EnProceso
+        var puedeAgregar = estado == EstadoComanda.Creada || estado == EstadoComanda.EnProceso;
+        // No necesitamos mockear PuedeAgregarItems() ya que no existe en la entidad real
         return mock;
     }
 

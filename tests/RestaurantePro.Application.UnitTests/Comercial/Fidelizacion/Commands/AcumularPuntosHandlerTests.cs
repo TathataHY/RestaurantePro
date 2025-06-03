@@ -374,7 +374,7 @@ public class AcumularPuntosHandlerTests
             "DOUBLE2025",
             "Doble Puntos 2025", 
             "Promoción de doble puntos para el año 2025",
-            TipoPromocion.Acumulacion,
+            TipoPromocion.CanjePuntos,
             2.0m,
             DateTime.UtcNow.AddDays(-30),
             DateTime.UtcNow.AddDays(30),

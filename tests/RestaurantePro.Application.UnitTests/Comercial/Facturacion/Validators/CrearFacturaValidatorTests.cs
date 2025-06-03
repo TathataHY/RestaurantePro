@@ -2,10 +2,14 @@ using FluentAssertions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Moq;
-using RestaurantePro.Application.Common.Interfaces.Persistence;
+using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
-using RestaurantePro.Domain.Core.Entities.Comercial;
-using RestaurantePro.Domain.Operaciones.Entities;
+using RestaurantePro.Application.UnitTests.Common;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using Xunit;
 
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Validators;
@@ -521,43 +525,34 @@ public class CrearFacturaValidatorTests
 
     private void ConfigurarMocks()
     {
-        // Mock para comandas
-        var mockComandas = new Mock<DbSet<Comanda>>();
-        var comandasData = new List<Comanda>
-        {
-            new Comanda { Id = Guid.NewGuid(), Estado = EstadoComanda.Finalizada, Total = 100.00m }
-        }.AsQueryable();
-
-        mockComandas.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(comandasData.Provider);
-        mockComandas.As<IQueryable<Comanda>>().Setup(m => m.Expression).Returns(comandasData.Expression);
-        mockComandas.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(comandasData.ElementType);
-        mockComandas.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(comandasData.GetEnumerator());
-
+        // Mock para comandas - usar factory method Crear y MockDbSetHelper
+        var comanda = Comanda.Crear(
+            meseroId: Guid.NewGuid(),
+            clienteId: Guid.NewGuid(),
+            mesaId: Guid.NewGuid(),
+            observaciones: "Comanda de prueba"
+        );
+        // Forzar el estado usando reflection ya que es propiedad privada
+        typeof(Comanda).GetProperty("Estado")!.SetValue(comanda, EstadoComanda.Finalizada);
+        
+        var comandasData = new List<Comanda> { comanda }.AsQueryable();
+        var mockComandas = MockDbSetHelper.CreateMockDbSet(comandasData);
         _mockContext.Setup(c => c.Comandas).Returns(mockComandas.Object);
 
-        // Mock para facturas
-        var mockFacturas = new Mock<DbSet<Factura>>();
-        var facturasData = new List<Factura>().AsQueryable();
-
-        mockFacturas.As<IQueryable<Factura>>().Setup(m => m.Provider).Returns(facturasData.Provider);
-        mockFacturas.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(facturasData.Expression);
-        mockFacturas.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(facturasData.ElementType);
-        mockFacturas.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(facturasData.GetEnumerator());
-
+        // Mock para facturas - usando MockDbSetHelper para lista vacía
+        var mockFacturas = MockDbSetHelper.CreateEmptyMockDbSet<Factura>();
         _mockContext.Setup(c => c.Facturas).Returns(mockFacturas.Object);
 
-        // Mock para clientes
-        var mockClientes = new Mock<DbSet<Cliente>>();
-        var clientesData = new List<Cliente>
-        {
-            new Cliente { Id = Guid.NewGuid(), Nombre = "Cliente Ejemplo" }
-        }.AsQueryable();
-
-        mockClientes.As<IQueryable<Cliente>>().Setup(m => m.Provider).Returns(clientesData.Provider);
-        mockClientes.As<IQueryable<Cliente>>().Setup(m => m.Expression).Returns(clientesData.Expression);
-        mockClientes.As<IQueryable<Cliente>>().Setup(m => m.ElementType).Returns(clientesData.ElementType);
-        mockClientes.As<IQueryable<Cliente>>().Setup(m => m.GetEnumerator()).Returns(clientesData.GetEnumerator());
-
+        // Mock para clientes - usar factory method Crear y MockDbSetHelper
+        var cliente = Cliente.Crear(
+            ClienteNombre.Crear("Cliente", "Ejemplo"),
+            "cliente@ejemplo.com",
+            "+52-555-1234567",
+            DateTime.Now.AddYears(-25)
+        );
+        
+        var clientesData = new List<Cliente> { cliente }.AsQueryable();
+        var mockClientes = MockDbSetHelper.CreateMockDbSet(clientesData);
         _mockContext.Setup(c => c.Clientes).Returns(mockClientes.Object);
     }
 

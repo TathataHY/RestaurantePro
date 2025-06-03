@@ -24,44 +24,46 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
     {
         RuleFor(v => v.ComandasIds)
             .NotEmpty()
-            .WithMessage("Debe especificar al menos una comanda para facturar.")
-            .Must(TenerComandasValidas)
-            .WithMessage("Todas las comandas deben tener IDs válidos.");
+            .WithMessage("Debe especificar al menos una comanda para facturar.");
 
         RuleFor(v => v.TipoFactura)
             .NotEmpty()
             .WithMessage("El tipo de factura es requerido.")
-            .Must(tipoFactura => _tiposFacturaValidos.Contains(tipoFactura, StringComparer.OrdinalIgnoreCase))
+            .Must(TipoFacturaValido)
             .WithMessage($"El tipo de factura debe ser uno de: {string.Join(", ", _tiposFacturaValidos)}.");
 
         RuleFor(v => v.NombreCliente)
             .NotEmpty()
             .WithMessage("El nombre del cliente es requerido.")
-            .MaximumLength(200)
-            .WithMessage("El nombre del cliente no puede exceder 200 caracteres.")
             .MinimumLength(2)
-            .WithMessage("El nombre del cliente debe tener al menos 2 caracteres.");
+            .WithMessage("El nombre del cliente debe tener al menos 2 caracteres.")
+            .MaximumLength(200)
+            .WithMessage("El nombre del cliente no puede exceder 200 caracteres.");
 
         RuleFor(v => v.Moneda)
-            .Must(moneda => _monedasValidas.Contains(moneda, StringComparer.OrdinalIgnoreCase))
+            .Must(MonedaValida)
             .WithMessage($"La moneda debe ser una de: {string.Join(", ", _monedasValidas)}.");
+
+        RuleFor(v => v.MetodoPagoPreferido)
+            .Must(MetodoPagoValido)
+            .WithMessage($"El método de pago debe ser uno de: {string.Join(", ", _metodosPagoValidos)}.")
+            .When(v => !string.IsNullOrWhiteSpace(v.MetodoPagoPreferido));
     }
 
     private void ConfigurarValidacionesComandas()
     {
         RuleFor(v => v.ComandasIds)
-            .Must(comandasIds => comandasIds.Count <= 10)
+            .Must(TenerComandasValidas)
+            .WithMessage("Todas las comandas deben tener IDs válidos.")
+            .Must(comandasIds => comandasIds?.Count <= 10)
             .WithMessage("No se pueden facturar más de 10 comandas a la vez.")
             .MustAsync(TodasLasComandasExisten)
             .WithMessage("Una o más comandas especificadas no existen.")
             .MustAsync(TodasLasComandasEstanCompletas)
             .WithMessage("Solo se pueden facturar comandas finalizadas.")
             .MustAsync(NingunaCamandaYaFacturada)
-            .WithMessage("Una o más comandas ya han sido facturadas.");
-
-        RuleForEach(v => v.ComandasIds)
-            .NotEqual(Guid.Empty)
-            .WithMessage("Los IDs de comanda no pueden estar vacíos.");
+            .WithMessage("Una o más comandas ya han sido facturadas.")
+            .When(v => v.ComandasIds?.Any() == true);
     }
 
     private void ConfigurarValidacionesCliente()
@@ -76,17 +78,17 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
             .WithMessage("El formato del email no es válido.")
             .MaximumLength(320)
             .WithMessage("El email no puede exceder 320 caracteres.")
-            .When(v => !string.IsNullOrEmpty(v.EmailCliente));
+            .When(v => !string.IsNullOrWhiteSpace(v.EmailCliente));
 
         RuleFor(v => v.TelefonoCliente)
-            .Matches(@"^\+?[1-9]\d{1,14}$")
+            .Matches(@"^[\+]?[1-9][\d\s\-\(\)]{7,15}$")
             .WithMessage("El formato del teléfono no es válido.")
-            .When(v => !string.IsNullOrEmpty(v.TelefonoCliente));
+            .When(v => !string.IsNullOrWhiteSpace(v.TelefonoCliente));
 
         RuleFor(v => v.DireccionCliente)
             .MaximumLength(500)
             .WithMessage("La dirección no puede exceder 500 caracteres.")
-            .When(v => !string.IsNullOrEmpty(v.DireccionCliente));
+            .When(v => !string.IsNullOrWhiteSpace(v.DireccionCliente));
     }
 
     private void ConfigurarValidacionesFiscales()
@@ -99,19 +101,19 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
             .WithMessage("El RFC debe tener 12 o 13 caracteres.")
             .Must(BeValidRFC)
             .WithMessage("El RFC no tiene un formato válido.")
-            .When(v => v.TipoFactura.Equals("Fiscal", StringComparison.OrdinalIgnoreCase));
+            .When(v => EsFacturaFiscal(v.TipoFactura));
 
         // Para facturas fiscales, la dirección es obligatoria
         RuleFor(v => v.DireccionCliente)
             .NotEmpty()
             .WithMessage("La dirección fiscal es obligatoria para facturas fiscales.")
-            .When(v => v.TipoFactura.Equals("Fiscal", StringComparison.OrdinalIgnoreCase));
+            .When(v => EsFacturaFiscal(v.TipoFactura));
 
         // Para facturas fiscales con envío por email, el email es obligatorio
         RuleFor(v => v.EmailCliente)
             .NotEmpty()
             .WithMessage("El email es obligatorio para facturas fiscales con envío electrónico.")
-            .When(v => v.TipoFactura.Equals("Fiscal", StringComparison.OrdinalIgnoreCase) && v.EnviarPorEmail);
+            .When(v => EsFacturaFiscal(v.TipoFactura) && v.EnviarPorEmail);
     }
 
     private void ConfigurarValidacionesFinancieras()
@@ -128,17 +130,14 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
             .LessThanOrEqualTo(100)
             .WithMessage("El tipo de cambio no puede exceder 100.")
             .When(v => v.TipoCambio.HasValue);
-
-        RuleFor(v => v.MetodoPagoPreferido)
-            .Must(metodo => string.IsNullOrEmpty(metodo) || _metodosPagoValidos.Contains(metodo, StringComparer.OrdinalIgnoreCase))
-            .WithMessage($"El método de pago debe ser uno de: {string.Join(", ", _metodosPagoValidos)}.");
     }
 
     private void ConfigurarValidacionesDescuentos()
     {
         RuleFor(v => v.DescuentosAdicionales)
-            .Must(descuentos => descuentos.Count <= 5)
-            .WithMessage("No se pueden aplicar más de 5 descuentos adicionales.");
+            .Must(descuentos => descuentos?.Count <= 5)
+            .WithMessage("No se pueden aplicar más de 5 descuentos adicionales.")
+            .When(v => v.DescuentosAdicionales?.Any() == true);
 
         RuleForEach(v => v.DescuentosAdicionales)
             .ChildRules(descuento =>
@@ -170,7 +169,8 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
                     .WithMessage("El motivo del descuento es requerido.")
                     .MaximumLength(200)
                     .WithMessage("El motivo no puede exceder 200 caracteres.");
-            });
+            })
+            .When(v => v.DescuentosAdicionales?.Any() == true);
     }
 
     private void ConfigurarValidacionesNegocio()
@@ -185,7 +185,7 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
         RuleFor(v => v.Observaciones)
             .MaximumLength(1000)
             .WithMessage("Las observaciones no pueden exceder 1000 caracteres.")
-            .When(v => !string.IsNullOrEmpty(v.Observaciones));
+            .When(v => !string.IsNullOrWhiteSpace(v.Observaciones));
 
         // Validación de lógica de negocio
         RuleFor(v => v)
@@ -195,13 +195,43 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
     }
 
     // Métodos de validación personalizados
-    private static bool TenerComandasValidas(List<Guid> comandasIds)
+    private static bool TenerComandasValidas(List<Guid>? comandasIds)
     {
+        if (comandasIds == null || !comandasIds.Any()) return false;
         return comandasIds.All(id => id != Guid.Empty);
+    }
+
+    private bool TipoFacturaValido(string? tipoFactura)
+    {
+        if (string.IsNullOrWhiteSpace(tipoFactura)) return false;
+        return _tiposFacturaValidos.Any(tipo => 
+            string.Equals(tipo, tipoFactura, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool MonedaValida(string? moneda)
+    {
+        if (string.IsNullOrWhiteSpace(moneda)) return false;
+        return _monedasValidas.Any(m => 
+            string.Equals(m, moneda, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool MetodoPagoValido(string? metodoPago)
+    {
+        if (string.IsNullOrWhiteSpace(metodoPago)) return true; // Opcional
+        return _metodosPagoValidos.Any(metodo => 
+            string.Equals(metodo, metodoPago, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool EsFacturaFiscal(string? tipoFactura)
+    {
+        return !string.IsNullOrWhiteSpace(tipoFactura) && 
+               string.Equals(tipoFactura, "Fiscal", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<bool> TodasLasComandasExisten(List<Guid> comandasIds, CancellationToken cancellationToken)
     {
+        if (comandasIds?.Any() != true) return false;
+        
         var existenTodas = await _context.Comandas
             .Where(c => comandasIds.Contains(c.Id))
             .CountAsync(cancellationToken) == comandasIds.Count;
@@ -211,6 +241,8 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
 
     private async Task<bool> TodasLasComandasEstanCompletas(List<Guid> comandasIds, CancellationToken cancellationToken)
     {
+        if (comandasIds?.Any() != true) return false;
+        
         var comandasCompletas = await _context.Comandas
             .Where(c => comandasIds.Contains(c.Id))
             .AllAsync(c => c.Estado == EstadoComanda.Finalizada, cancellationToken);
@@ -220,6 +252,8 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
 
     private async Task<bool> NingunaCamandaYaFacturada(List<Guid> comandasIds, CancellationToken cancellationToken)
     {
+        if (comandasIds?.Any() != true) return true;
+        
         var comandasFacturadas = await _context.Facturas
             .Where(f => f.ComandasIds.Any(id => comandasIds.Contains(id)))
             .AnyAsync(cancellationToken);
@@ -247,13 +281,15 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
     private async Task<bool> BeValidBusinessLogic(CrearFacturaCommand command, CancellationToken cancellationToken)
     {
         // Si se especifica envío por email, debe haber email
-        if (command.EnviarPorEmail && string.IsNullOrEmpty(command.EmailCliente))
+        if (command.EnviarPorEmail && string.IsNullOrWhiteSpace(command.EmailCliente))
         {
             return false;
         }
 
         // Si hay tipo de cambio, la moneda no debe ser MXN
-        if (command.TipoCambio.HasValue && command.Moneda.Equals("MXN", StringComparison.OrdinalIgnoreCase))
+        if (command.TipoCambio.HasValue && 
+            !string.IsNullOrWhiteSpace(command.Moneda) &&
+            string.Equals(command.Moneda, "MXN", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
@@ -267,9 +303,10 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
             if (cliente != null)
             {
                 // Si el cliente tiene email registrado y se especifica uno diferente
-                if (!string.IsNullOrEmpty(cliente.Email.ToString()) && 
-                    !string.IsNullOrEmpty(command.EmailCliente) &&
-                    !string.Equals(cliente.Email.ToString(), command.EmailCliente, StringComparison.OrdinalIgnoreCase))
+                var clienteEmail = cliente.Email?.ToString();
+                if (!string.IsNullOrWhiteSpace(clienteEmail) && 
+                    !string.IsNullOrWhiteSpace(command.EmailCliente) &&
+                    !string.Equals(clienteEmail, command.EmailCliente, StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
                 }
