@@ -56,8 +56,11 @@ public class GenerarReporteValidatorTests
         var usuario = Usuario.Crear("testuser", "Test User", "test@test.com", rolPrincipal);
         
         // Usar reflexión para asignar el Id ya que es de solo lectura
-        var idProperty = typeof(Usuario).BaseType.GetProperty("Id");
-        idProperty?.SetValue(usuario, usuarioId);
+        var idProperty = typeof(Usuario).BaseType?.GetProperty("Id");
+        if (idProperty != null)
+        {
+            idProperty.SetValue(usuario, usuarioId);
+        }
         
         // Asignar roles adicionales si hay más de uno
         foreach (var rol in roles.Skip(1))

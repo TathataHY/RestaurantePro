@@ -59,7 +59,7 @@ public class FinalizarComandaHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.Equal(comandaId, result.Value.Id);
-        Assert.Equal("Finalizada", result.Value.Estado);
+        Assert.Equal(EstadoComanda.Finalizada, result.Value.Estado);
         Assert.Equal(85.50m, result.Value.Total);
 
         // Verify transición de estado
@@ -353,7 +353,7 @@ public class FinalizarComandaHandlerTests
         var comanda = new Mock<Comanda>();
         comanda.Setup(x => x.Id).Returns(comandaId);
         comanda.Setup(x => x.Estado).Returns(EstadoComanda.Creada);
-        comanda.Setup(x => x.Items).Returns((ICollection<ItemComanda>)null);
+        comanda.Setup(x => x.Items).Returns((IReadOnlyCollection<ItemComanda>)null);
 
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda.Object);

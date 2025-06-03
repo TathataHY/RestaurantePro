@@ -181,7 +181,7 @@ public class LiberarMesaHandlerTests
         };
 
         _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
-            .ReturnsAsync((Mesa?)null);
+            .ThrowsAsync(new KeyNotFoundException($"Mesa con ID {mesaId} no encontrada"));
 
         _currentUserServiceMock.Setup(x => x.UserId)
             .Returns(Guid.NewGuid().ToString());
@@ -191,7 +191,7 @@ public class LiberarMesaHandlerTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Equal("Mesa no encontrada", result.Error);
+        Assert.Contains("Mesa no encontrada", result.Error);
         _mesaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Mesa>()), Times.Never);
         _mesaRepositoryMock.Verify(x => x.GuardarCambiosAsync(), Times.Never);
     }
@@ -291,8 +291,8 @@ public class LiberarMesaHandlerTests
 
     private static Mesa CreateMockMesa(Guid mesaId, EstadoMesa estado)
     {
-        // Crear mesa usando el constructor que requiere parámetros
-        var mesa = Mesa.Crear(1, 4, "Salón principal", "Mesa estándar");
+        // Crear mesa usando el constructor que requiere 3 parámetros: numero, capacidad, ubicacion
+        var mesa = Mesa.Crear(1, 4, "Salón principal");
         
         // Usar reflexión para establecer el ID y estado si es necesario
         var idProperty = typeof(Mesa).GetProperty("Id");

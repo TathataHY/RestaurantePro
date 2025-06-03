@@ -243,7 +243,7 @@ public class ObtenerMesasDisponiblesHandlerTests
         var query = ObtenerMesasDisponiblesQuery.Basica();
 
         _mockRepository.Setup(r => r.ObtenerMesasDisponiblesAsync())
-                      .ReturnsAsync((List<Mesa>?)null);
+                      .ReturnsAsync(value: null);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);

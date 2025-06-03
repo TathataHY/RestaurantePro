@@ -468,7 +468,20 @@ public class DividirComandaHandlerTests
 
         var mockTransaction = new Mock<IDbContextTransaction>();
         _mockUnitOfWork.Setup(u => u.BeginTransactionAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(mockTransaction.Object);
+            .Returns(Task.FromResult(mockTransaction.Object));
+
+        _mockDateTimeService.Setup(d => d.Now)
+            .Returns(DateTime.UtcNow);
+
+        _mockUnitOfWork.Setup(u => u.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        // Configurar DbSets mockeados
+        var comandasMock = MockDbSetHelper.CreateMockDbSet(new List<Comanda>().AsQueryable());
+        var mesasMock = MockDbSetHelper.CreateMockDbSet(new List<Mesa>().AsQueryable());
+        
+        _mockContext.Setup(c => c.Comandas).Returns(comandasMock.Object);
+        _mockContext.Setup(c => c.Mesas).Returns(mesasMock.Object);
     }
 
     private void ConfigurarMocksParaDivisionExitosa(Comanda comandaOriginal)

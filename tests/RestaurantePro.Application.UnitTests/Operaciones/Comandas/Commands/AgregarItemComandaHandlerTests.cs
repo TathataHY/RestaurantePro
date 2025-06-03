@@ -78,8 +78,8 @@ public class AgregarItemComandaHandlerTests
             25.50m,
             It.IsAny<string>()), Times.Once);
 
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(comanda.Object), Times.Once);
-        _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(comanda.Object, CancellationToken.None), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(CancellationToken.None), Times.Once);
     }
 
     [Fact]

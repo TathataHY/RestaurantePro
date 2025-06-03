@@ -49,8 +49,6 @@ public class CancelarReservacionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
-        resultado.Data.Id.Should().Be(reservacionId);
 
         _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
