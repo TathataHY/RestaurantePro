@@ -1,6 +1,3 @@
-using RestaurantePro.Application.UnitTests.Common;
-using RestaurantePro.Domain.Core.Productos.ValueObjects;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Validators;
 
 /// <summary>
@@ -61,16 +58,20 @@ public class AplicarDescuentoValidatorTests
 
     private AplicarDescuentoCommand CrearCommandValido()
     {
+        // Usar las entidades que existen en los mocks
+        var facturaExistente = _mockContext.Object.Facturas.First();
+        var usuarioExistente = _mockContext.Object.Usuarios.First();
+
         return new AplicarDescuentoCommand
         {
-            FacturaId = Guid.NewGuid(), // Los validators buscarán en la colección mockeada
+            FacturaId = facturaExistente.Id, // Usar ID que existe en los mocks
             TipoDescuento = "General",
             Concepto = "Descuento promocional",
             Motivo = "Promoción especial del día para clientes frecuentes",
             Porcentaje = 10m,
             MontoFijo = 0m,
             Prioridad = 5,
-            UsuarioAutorizaId = Guid.NewGuid(), // Los validators buscarán en la colección mockeada
+            UsuarioAutorizaId = usuarioExistente.Id, // Usar ID que existe en los mocks
             ProductosEspecificos = new List<Guid>(),
             CategoriasAplicables = new List<string>(),
             MontoMinimoFactura = null,
@@ -835,29 +836,20 @@ public class AplicarDescuentoValidatorTests
     [Fact]
     public async Task Validate_ConCommandCompletoValido_DeberiaSerValido()
     {
-        // Arrange
-        var facturaId = Guid.NewGuid();
-        var usuarioId = Guid.NewGuid();
-
-        // Crear entidades usando factorías correctas
-        var factura = Factura.Crear("FAC-001", TipoFactura.Normal, "Cliente Test");
-        var usuario = Usuario.Crear("testuser", "Usuario Test", "test@test.com", RolUsuario.Administrador);
-
-        _mockContext.Setup(c => c.Facturas.FindAsync(facturaId))
-            .ReturnsAsync(factura);
-        _mockContext.Setup(c => c.Usuarios.FindAsync(usuarioId))
-            .ReturnsAsync(usuario);
+        // Arrange - usar los IDs que existen en los mocks
+        var facturaExistente = _mockContext.Object.Facturas.First();
+        var usuarioExistente = _mockContext.Object.Usuarios.First();
 
         var command = new AplicarDescuentoCommand
         {
-            FacturaId = facturaId,
+            FacturaId = facturaExistente.Id,
             TipoDescuento = "General",
             Concepto = "Descuento promocional especial",
             Motivo = "Promoción del día para clientes frecuentes del restaurante",
             Porcentaje = 15m,
             MontoFijo = 0m,
             Prioridad = 3,
-            UsuarioAutorizaId = usuarioId,
+            UsuarioAutorizaId = usuarioExistente.Id,
             ProductosEspecificos = new List<Guid>(),
             CategoriasAplicables = new List<string>(),
             MontoMinimoFactura = 500m,
@@ -869,7 +861,14 @@ public class AplicarDescuentoValidatorTests
         // Act
         var result = await _validator.ValidateAsync(command);
 
-        // Assert
+        // Assert - mostrar errores específicos si falla
+        if (!result.IsValid)
+        {
+            var errorsString = string.Join(Environment.NewLine, 
+                result.Errors.Select(e => $"Propiedad: {e.PropertyName}, Error: {e.ErrorMessage}"));
+            Assert.True(result.IsValid, $"La validación falló con los siguientes errores:{Environment.NewLine}{errorsString}");
+        }
+        
         result.IsValid.Should().BeTrue();
         result.Errors.Should().BeEmpty();
     }

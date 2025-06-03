@@ -1,17 +1,3 @@
-using RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
-using RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
-using RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda;
-using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using MediatR;
-using Microsoft.Extensions.Logging;
-using Moq;
-using Xunit;
-using FluentAssertions;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
 
 /// <summary>

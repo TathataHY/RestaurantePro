@@ -133,10 +133,13 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
         }
         else
         {
+            // Obtener un clienteId válido de las comandas originales
+            var clienteId = comandasOriginales.FirstOrDefault()?.ClienteId ?? Guid.NewGuid(); // Fallback si no hay cliente
+            
             // Crear nueva comanda unificada usando factory method correcto
             comandaUnificada = Comanda.Crear(
                 meseroId: request.MeseroId,
-                clienteId: comandasOriginales.FirstOrDefault()?.ClienteId,
+                clienteId: clienteId,
                 mesaId: request.MesaDestinoId,
                 observaciones: request.ObservacionesUnificada ?? $"Unificación de comandas: {string.Join(", ", comandasOriginales.Select(c => c.Id))}"
             );
@@ -215,12 +218,19 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
 
             if (request.MantenerHistorico)
             {
-                // Cancelar comanda pero mantener en histórico
-                comandaOriginal.Cancelar($"Unificada en comanda {comandaUnificada.Id} el {_dateTimeService.Now:dd/MM/yyyy HH:mm}");
+                // Marcar comanda como unificada (Dividida) manteniendo histórico
+                // Usar reflection para establecer el estado directamente ya que no hay método específico
+                var estadoProperty = typeof(Comanda).GetProperty("Estado");
+                if (estadoProperty != null && estadoProperty.CanWrite)
+                {
+                    estadoProperty.SetValue(comandaOriginal, EstadoComanda.Dividida);
+                }
+                
+                comandaOriginal.AgregarObservacion($"Unificada en comanda {comandaUnificada.Id} el {_dateTimeService.Now:dd/MM/yyyy HH:mm}");
             }
             else
             {
-                // Cancelar comanda
+                // Cancelar comanda completamente
                 comandaOriginal.Cancelar($"Cancelada por unificación el {_dateTimeService.Now:dd/MM/yyyy HH:mm}");
             }
         }

@@ -1,5 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.EventHandlers.FacturaCreada;
 
 /// <summary>

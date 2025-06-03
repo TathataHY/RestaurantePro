@@ -1,7 +1,5 @@
 namespace RestaurantePro.Application.Operaciones.Reportes.Commands.ProcesarPedidoCompleto;
 
-using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
-
 /// <summary>
 /// Handler para procesar pedidos completos desde comanda hasta facturación
 /// Orquesta todo el workflow de procesamiento de pedidos

@@ -1,18 +1,3 @@
-using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Moq;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnalisisInventario;
-using RestaurantePro.Application.UnitTests.Common;
-using RestaurantePro.Domain.Core.Usuarios.Enums;
-using RestaurantePro.Domain.Inventario.Ingredientes;
-using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
-using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos;
-using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
-using RestaurantePro.Domain.Core.SharedKernel;
-using AutoMapper;
-
 namespace RestaurantePro.Application.UnitTests.Inventario.Queries;
 
 /// <summary>

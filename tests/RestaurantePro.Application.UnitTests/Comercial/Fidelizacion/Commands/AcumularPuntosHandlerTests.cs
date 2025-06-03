@@ -1,6 +1,3 @@
-using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands;
 
 /// <summary>

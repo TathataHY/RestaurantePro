@@ -1,19 +1,3 @@
-using RestaurantePro.Application.UnitTests.Common;
-using RestaurantePro.Application.Operaciones.Comandas.Commands.DividirComanda;
-using RestaurantePro.Application.Operaciones.Comandas.DTOs;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-using Microsoft.Extensions.Logging;
-using AutoMapper;
-using FluentAssertions;
-using Moq;
-using Xunit;
-using System.Reflection;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.Commands;
 
 /// <summary>

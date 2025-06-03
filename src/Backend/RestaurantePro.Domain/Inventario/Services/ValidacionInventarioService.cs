@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace RestaurantePro.Domain.Inventario.Services;
 
 /// <summary>

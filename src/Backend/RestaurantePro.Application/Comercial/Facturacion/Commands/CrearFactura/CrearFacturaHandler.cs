@@ -6,7 +6,7 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
     private readonly IMapper _mapper;
     private readonly ILogger<CrearFacturaHandler> _logger;
     private readonly IServicioFacturacion _servicioFacturacion;
-    private readonly ComercialServiceFacade _comercialServiceFacade;
+    private readonly IComercialServiceFacade _comercialServiceFacade;
     private readonly IEmailService _emailService;
     private readonly ICurrentUserService _currentUserService;
 
@@ -15,7 +15,7 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
         IMapper mapper,
         ILogger<CrearFacturaHandler> logger,
         IServicioFacturacion servicioFacturacion,
-        ComercialServiceFacade comercialServiceFacade,
+        IComercialServiceFacade comercialServiceFacade,
         IEmailService emailService,
         ICurrentUserService currentUserService)
     {

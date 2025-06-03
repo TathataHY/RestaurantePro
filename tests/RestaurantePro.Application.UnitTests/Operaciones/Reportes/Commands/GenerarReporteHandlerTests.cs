@@ -1,26 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
-using Moq;
-using Xunit;
-using FluentAssertions;
-using MediatR;
-using RestaurantePro.Application.Operaciones.Reportes.Commands.GenerarReporte;
-using RestaurantePro.Application.Common.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using Moq;
-using Xunit;
-using FluentAssertions;
-using MediatR;
-using RestaurantePro.Application.Common.Enums;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
-using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reportes.Commands;
 
 /// <summary>

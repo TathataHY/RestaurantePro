@@ -1,7 +1,5 @@
 namespace RestaurantePro.Application.Comercial.Fidelizacion.Commands.CrearTarjetaFidelizacion;
 
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-
 /// <summary>
 /// Command para crear una nueva tarjeta de fidelización
 /// </summary>

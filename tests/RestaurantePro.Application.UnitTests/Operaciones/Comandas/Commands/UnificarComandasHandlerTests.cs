@@ -1,21 +1,3 @@
-using RestaurantePro.Application.UnitTests.Common;
-using RestaurantePro.Application.Operaciones.Comandas.Commands.UnificarComandas;
-using RestaurantePro.Application.Operaciones.Comandas.DTOs;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Logging;
-using AutoMapper;
-using FluentAssertions;
-using Moq;
-using Xunit;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.Commands;
 
 /// <summary>
@@ -84,6 +66,13 @@ public class UnificarComandasHandlerTests
 
         // Assert
         resultado.Should().NotBeNull();
+        
+        // TEMPORAL: Mostrar el error específico para diagnóstico
+        if (!resultado.Succeeded)
+        {
+            throw new Exception($"ERROR DEL HANDLER: {resultado.Error}");
+        }
+        
         resultado.Succeeded.Should().BeTrue();
         resultado.Value.Should().NotBeNull();
         resultado.Value.ComandasOriginalesIds.Should().BeEquivalentTo(comandaIds);

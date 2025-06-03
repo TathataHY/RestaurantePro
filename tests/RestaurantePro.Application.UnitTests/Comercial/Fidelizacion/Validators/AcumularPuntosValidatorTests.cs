@@ -1,7 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Validators;
 
-using RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos;
-
 /// <summary>
 /// 🔥 TESTS EXHAUSTIVOS PARA ACUMULAR PUNTOS VALIDATOR - IMPLEMENTACIÓN COMPLETA
 /// Tests completos para validar todas las reglas críticas de acumulación de puntos de fidelización

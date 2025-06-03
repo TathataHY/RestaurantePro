@@ -1,17 +1,4 @@
 namespace RestaurantePro.Application.UnitTests.Core.Usuarios.Commands;
-using RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
-using RestaurantePro.Application.Core.Usuarios.DTOs;
-using RestaurantePro.Domain.Core.Usuarios.Entities;
-using RestaurantePro.Domain.Core.Usuarios.Enums;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using AutoMapper;
-using Moq;
-using FluentAssertions;
-using Xunit;
-using MockQueryable.Moq;
 using CrearUsuarioHorarioDto = RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario.HorarioTrabajoDto;
 
 /// <summary>
@@ -530,41 +517,50 @@ public class CrearUsuarioHandlerTests
 
     private void ConfigurarMockContext()
     {
-        // Configurar AddAsync usando una implementación que funciona con Moq
-        var mockUsuarios = new Mock<DbSet<Usuario>>();
-        
-        // Configurar AddAsync para que retorne un ValueTask exitoso
-        mockUsuarios.Setup(x => x.AddAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
-                   .Returns((Usuario usuario, CancellationToken ct) => 
-                   {
-                       var mockEntry = new Mock<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Usuario>>();
-                       mockEntry.Setup(e => e.Entity).Returns(usuario);
-                       return new ValueTask<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Usuario>>(mockEntry.Object);
-                   });
-
-        _mockContext.Setup(c => c.Usuarios).Returns(mockUsuarios.Object);
-        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        // No configurar nada aquí - será configurado en cada test específico
     }
 
     private void SetupUsuarioExistenteMock(Usuario usuario)
     {
+        // Crear lista con el usuario y convertirla a mock queryable
         var usuariosList = new List<Usuario> { usuario };
-        var mockQueryable = usuariosList.AsQueryable().BuildMockDbSet();
+        var mockUsuariosDbSet = usuariosList.AsQueryable().BuildMockDbSet();
 
-        _mockContext.Setup(c => c.Usuarios).Returns(mockQueryable.Object);
+        // Configurar AddAsync
+        mockUsuariosDbSet.Setup(x => x.AddAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
+                        .Returns((Usuario u, CancellationToken ct) => 
+                        {
+                            var mockEntry = new Mock<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Usuario>>();
+                            mockEntry.Setup(e => e.Entity).Returns(u);
+                            return new ValueTask<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Usuario>>(mockEntry.Object);
+                        });
+
+        // Configurar el contexto para retornar nuestro DbSet mockeado
+        _mockContext.Setup(c => c.Usuarios).Returns(mockUsuariosDbSet.Object);
         
-        // También configuramos SaveChangesAsync para este contexto específico
+        // Configurar SaveChangesAsync
         _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
     }
 
     private void SetupUsuarioNoExistenteMock()
     {
+        // Crear lista vacía y convertirla a mock queryable
         var usuariosList = new List<Usuario>();
-        var mockQueryable = usuariosList.AsQueryable().BuildMockDbSet();
+        var mockUsuariosDbSet = usuariosList.AsQueryable().BuildMockDbSet();
 
-        _mockContext.Setup(c => c.Usuarios).Returns(mockQueryable.Object);
+        // Configurar AddAsync
+        mockUsuariosDbSet.Setup(x => x.AddAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
+                        .Returns((Usuario u, CancellationToken ct) => 
+                        {
+                            var mockEntry = new Mock<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Usuario>>();
+                            mockEntry.Setup(e => e.Entity).Returns(u);
+                            return new ValueTask<Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Usuario>>(mockEntry.Object);
+                        });
+
+        // Configurar el contexto para retornar nuestro DbSet vacío mockeado
+        _mockContext.Setup(c => c.Usuarios).Returns(mockUsuariosDbSet.Object);
         
-        // También configuramos SaveChangesAsync para este contexto específico
+        // Configurar SaveChangesAsync
         _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
     }
 

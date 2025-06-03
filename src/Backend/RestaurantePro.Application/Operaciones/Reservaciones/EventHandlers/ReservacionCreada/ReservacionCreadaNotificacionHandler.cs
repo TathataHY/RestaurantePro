@@ -336,7 +336,7 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
             HoraSolicitada = horaReservacion,
             CantidadPersonas = evento.CantidadPersonas,
             TiempoAnticipacion = tiempoAnticipacion,
-            TieneEmail = !string.IsNullOrEmpty(cliente.Email.Value),
+            TieneEmail = !string.IsNullOrEmpty(cliente.Email?.Value),
             TieneTelefono = !string.IsNullOrEmpty(cliente.Telefono?.Value),
             ClienteFidelizado = nivelClienteFidelizacion != NivelFidelizacion.Basico,
             TieneObservaciones = !string.IsNullOrEmpty(reservacion.Observaciones),

@@ -1,8 +1,5 @@
 namespace RestaurantePro.Domain.UnitTests.Comercial.Promociones.Services;
 
-// Importar las clases DTO del dominio
-using static RestaurantePro.Domain.Comercial.Promociones.Services.ICalculadoraPromocionesService;
-
 /// <summary>
 /// Pruebas unitarias para CalculadoraPromocionesService (Servicio de Dominio)
 /// </summary>

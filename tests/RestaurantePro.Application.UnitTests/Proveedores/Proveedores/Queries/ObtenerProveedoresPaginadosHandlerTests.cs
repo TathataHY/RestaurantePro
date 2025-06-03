@@ -1,22 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using AutoMapper;
-using Microsoft.Extensions.Logging;
-using Moq;
-using RestaurantePro.Application.Common.DTOs;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Proveedores.Proveedores.DTOs;
-using RestaurantePro.Application.Proveedores.Proveedores.Queries.ObtenerProveedoresPaginados;
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-using RestaurantePro.Domain.Proveedores.Entities;
-using RestaurantePro.Domain.Proveedores.Enums;
-using RestaurantePro.Domain.Proveedores.Interfaces;
-using Xunit;
-
 namespace RestaurantePro.Application.UnitTests.Proveedores.Proveedores.Queries;
 
 /// <summary>

@@ -1,10 +1,3 @@
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Operaciones.Reportes.Queries.ObtenerReporteVentasDiaria;
-using RestaurantePro.Application.Operaciones.Reportes.DTOs;
-using Microsoft.Extensions.Logging;
-using Moq;
-using Xunit;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Queries;
 
 /// <summary>

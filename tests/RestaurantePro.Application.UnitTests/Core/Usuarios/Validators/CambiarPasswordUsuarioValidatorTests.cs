@@ -33,6 +33,10 @@ public class CambiarPasswordUsuarioValidatorTests
         usuarioDefault.GetType().GetProperty("Id")?.SetValue(usuarioDefault, usuarioId);
         autorizadorDefault.GetType().GetProperty("Id")?.SetValue(autorizadorDefault, autorizadorId);
 
+        // Asegurar que los usuarios estén activos
+        usuarioDefault.Activar();
+        autorizadorDefault.Activar();
+
         var usuarios = new List<Usuario> { usuarioDefault, autorizadorDefault };
         var mockUsuarios = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
         _mockContext.Setup(c => c.Usuarios).Returns(mockUsuarios.Object);

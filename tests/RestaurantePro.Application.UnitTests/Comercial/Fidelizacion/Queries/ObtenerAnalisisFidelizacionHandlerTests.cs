@@ -1,5 +1,3 @@
-using RestaurantePro.Application.Comercial.Reportes.DTOs;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Queries;
 
 /// <summary>

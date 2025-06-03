@@ -1,6 +1,3 @@
-using FluentAssertions;
-using RestaurantePro.Application.Operaciones.Comandas.Commands.ProcesarPedidoCompleto;
-using Xunit;
 using ComandasProcesarPedidoValidator = RestaurantePro.Application.Operaciones.Comandas.Commands.ProcesarPedidoCompleto.ProcesarPedidoCompletoValidator;
 using ComandasProcesarPedidoCommand = RestaurantePro.Application.Operaciones.Comandas.Commands.ProcesarPedidoCompleto.ProcesarPedidoCompletoCommand;
 

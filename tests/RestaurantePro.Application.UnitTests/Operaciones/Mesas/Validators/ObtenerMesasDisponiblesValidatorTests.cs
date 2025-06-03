@@ -1,7 +1,3 @@
-using FluentAssertions;
-using FluentValidation.TestHelper;
-using RestaurantePro.Application.Operaciones.Mesas.Queries.ObtenerMesasDisponibles;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Mesas.Validators;
 
 /// <summary>

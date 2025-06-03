@@ -1,12 +1,3 @@
-using System.Diagnostics;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-using RestaurantePro.Domain.Core.Usuarios.Entities;
-using RestaurantePro.Domain.Core.Usuarios.Enums;
-using RestaurantePro.Domain.Core.Productos.Entities;
-using RestaurantePro.Domain.Core.Productos.ValueObjects;
-using RestaurantePro.Domain.Core.Base;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reportes.Queries;
 
 /// <summary>

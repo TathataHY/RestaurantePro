@@ -1,5 +1,3 @@
-using RestaurantePro.Application.Common.DTOs;
-
 namespace RestaurantePro.Application.Operaciones.Reportes.DTOs;
 
 /// <summary>

@@ -1,5 +1,4 @@
 namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands;
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
 
 /// <summary>
 /// Tests unitarios para CrearTarjetaFidelizacionHandler

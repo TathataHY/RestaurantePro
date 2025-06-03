@@ -1,5 +1,3 @@
-using MockQueryable.Moq;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Queries;
 
 /// <summary>

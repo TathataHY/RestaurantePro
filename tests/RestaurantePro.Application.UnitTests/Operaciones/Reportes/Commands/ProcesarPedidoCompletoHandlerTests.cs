@@ -1,13 +1,7 @@
-using RestaurantePro.Application.Operaciones.Reportes.DTOs;
-using RestaurantePro.Application.Comercial.Facturacion.DTOs;
-using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
-using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reportes.Commands;
+
+using ProcesarPedidoCompletoCommand = RestaurantePro.Application.Operaciones.Reportes.Commands.ProcesarPedidoCompleto.ProcesarPedidoCompletoCommand;
+using ProcesarPedidoCompletoHandler = RestaurantePro.Application.Operaciones.Reportes.Commands.ProcesarPedidoCompleto.ProcesarPedidoCompletoHandler;
 
 /// <summary>
 /// Tests unitarios para ProcesarPedidoCompletoHandler

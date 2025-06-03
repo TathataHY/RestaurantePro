@@ -69,7 +69,8 @@ public class ComercialMappingProfile : Profile
 
         // ClienteCreateDto -> CrearClienteCommand
         CreateMap<ClienteCreateDto, CrearClienteCommand>()
-            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => $"{src.Nombre} {src.Apellido}".Trim()));
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => $"{src.Nombre} {src.Apellido}".Trim()))
+            .ForMember(dest => dest.EstaActivo, opt => opt.MapFrom(src => true));
 
         // ClienteUpdateDto -> ActualizarClienteCommand
         CreateMap<ClienteUpdateDto, ActualizarClienteCommand>()

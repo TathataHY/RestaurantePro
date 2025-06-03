@@ -1,20 +1,3 @@
-using FluentAssertions;
-using Microsoft.Extensions.Logging;
-using Moq;
-using RestaurantePro.Application.Common.Behaviors;
-using RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
-using RestaurantePro.Application.Core.Productos.DTOs;
-using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
-using RestaurantePro.Application.Comercial.Facturacion.DTOs;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
-using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
-
 namespace RestaurantePro.Application.UnitTests.Common.Behaviors;
 
 /// <summary>

@@ -115,7 +115,7 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
         }
 
         var rolCreadorMasAlto = usuarioCreador.Roles.Max(); // Enum se puede comparar directamente
-        if (rolAsignar >= rolCreadorMasAlto)
+        if (rolAsignar < rolCreadorMasAlto)
         {
             return Result.Failure<bool>("No puede asignar un rol igual o superior al suyo.");
         }

@@ -1,15 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Comercial.Clientes.Commands;
 
-// Usings adicionales necesarios que no están en GlobalUsings
-using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
-using RestaurantePro.Domain.Comercial.Clientes.Events.Cliente;
-using RestaurantePro.Domain.Core.Usuarios.Enums;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-
 /// <summary>
 /// 🚫 Tests para DesactivarClienteHandler
 /// Validaciones empresariales de desactivación, cancelación de reservaciones y auditoría

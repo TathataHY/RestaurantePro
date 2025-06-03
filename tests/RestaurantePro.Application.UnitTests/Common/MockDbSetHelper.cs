@@ -1,11 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Moq;
-using Microsoft.EntityFrameworkCore.Query;
-using System.Linq.Expressions;
-using System.Threading;
-using System.Threading.Tasks;
-using System;
-
 namespace RestaurantePro.Application.UnitTests.Common;
 
 /// <summary>

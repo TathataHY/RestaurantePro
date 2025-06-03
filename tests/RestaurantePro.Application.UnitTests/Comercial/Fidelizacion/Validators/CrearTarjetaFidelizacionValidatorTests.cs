@@ -1,5 +1,4 @@
 namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Validators;
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
 
 /// <summary>
 /// Tests para CrearTarjetaFidelizacionValidator

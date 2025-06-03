@@ -1,7 +1,4 @@
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.Validators;
-using RestaurantePro.Application.UnitTests.Common;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
 
 /// <summary>
 /// Tests unitarios para UnificarComandasValidator

@@ -1,6 +1,4 @@
 namespace RestaurantePro.Application.Comercial.Facturacion.Commands.AplicarDescuento;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Comercial.Promociones.Enums;
 
 public class AplicarDescuentoValidator : AbstractValidator<AplicarDescuentoCommand>
 {

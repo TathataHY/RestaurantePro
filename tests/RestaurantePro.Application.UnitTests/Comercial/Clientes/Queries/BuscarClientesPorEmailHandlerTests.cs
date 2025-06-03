@@ -1,15 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Moq;
-using Xunit;
-using FluentAssertions;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Clientes.Queries;
 
 /// <summary>

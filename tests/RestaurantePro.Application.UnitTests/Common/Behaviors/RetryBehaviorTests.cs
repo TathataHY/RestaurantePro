@@ -1,7 +1,3 @@
-using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Threading;
-
 namespace RestaurantePro.Application.UnitTests.Common.Behaviors;
 
 /// <summary>

@@ -157,8 +157,10 @@ global using RestaurantePro.Application.Core.Productos.Commands.ActualizarProduc
 // Application - Commands (Comercial)
 global using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente;
 global using RestaurantePro.Application.Comercial.Clientes.Commands.ActualizarCliente;
+global using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
 global using RestaurantePro.Application.Comercial.Fidelizacion.Commands.CrearTarjetaFidelizacion;
 global using RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos;
+global using RestaurantePro.Application.Comercial.Promociones.Commands.AplicarPromocion;
 
 // Application - Commands (Operaciones)
 global using RestaurantePro.Application.Operaciones.Mesas.Commands.AsignarMesa;

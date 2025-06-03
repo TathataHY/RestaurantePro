@@ -1,7 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Comercial.Reportes.Validators;
 
-using FluentValidation.TestHelper;
-
 /// <summary>
 /// Tests para ObtenerAnalisisFidelizacionValidator
 /// Valida reglas de negocio para obtener análisis completo de fidelización

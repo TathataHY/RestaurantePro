@@ -1,21 +1,3 @@
-using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
-using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
-using RestaurantePro.Application.Comercial.Facturacion.DTOs;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Comercial.Services;
-using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Moq;
-using Xunit;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Commands;
 
 /// <summary>
@@ -28,7 +10,7 @@ public class CrearFacturaHandlerTests
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<ILogger<CrearFacturaHandler>> _loggerMock;
     private readonly Mock<IServicioFacturacion> _servicioFacturacionMock;
-    private readonly Mock<ComercialServiceFacade> _comercialServiceFacadeMock;
+    private readonly Mock<IComercialServiceFacade> _comercialServiceFacadeMock;
     private readonly Mock<IEmailService> _emailServiceMock;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
     private readonly Mock<DbSet<Cliente>> _clientesDbSetMock;
@@ -41,7 +23,7 @@ public class CrearFacturaHandlerTests
         _mapperMock = new Mock<IMapper>();
         _loggerMock = new Mock<ILogger<CrearFacturaHandler>>();
         _servicioFacturacionMock = new Mock<IServicioFacturacion>();
-        _comercialServiceFacadeMock = new Mock<ComercialServiceFacade>();
+        _comercialServiceFacadeMock = new Mock<IComercialServiceFacade>();
         _emailServiceMock = new Mock<IEmailService>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
         _clientesDbSetMock = new Mock<DbSet<Cliente>>();

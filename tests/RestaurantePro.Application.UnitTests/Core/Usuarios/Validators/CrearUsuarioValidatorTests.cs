@@ -1,8 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Core.Usuarios.Validators;
 using CrearUsuarioHorarioDto = RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario.HorarioTrabajoDto;
-using RestaurantePro.Application.UnitTests.Common;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// 🔥 TESTS EXHAUSTIVOS PARA CREAR USUARIO VALIDATOR - IMPLEMENTACIÓN COMPLETA

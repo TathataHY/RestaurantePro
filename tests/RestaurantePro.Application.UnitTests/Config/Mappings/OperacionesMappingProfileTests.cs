@@ -355,7 +355,7 @@ public class OperacionesMappingProfileTests
     public void Map_PersonalizacionNull_DeberiaRetornarNull()
     {
         // Arrange
-        PersonalizacionItem? personalizacion = null;
+        RestaurantePro.Domain.Operaciones.Comandas.ValueObjects.PersonalizacionItem? personalizacion = null;
 
         // Act
         var dto = _mapper.Map<PersonalizacionDto>(personalizacion);
@@ -553,10 +553,10 @@ public class OperacionesMappingProfileTests
         return item;
     }
 
-    private PersonalizacionItem CrearPersonalizacionEjemplo(decimal precioAdicional)
+    private RestaurantePro.Domain.Operaciones.Comandas.ValueObjects.PersonalizacionItem CrearPersonalizacionEjemplo(decimal precioAdicional)
     {
         // Usar el método factory estático del value object
-        return PersonalizacionItem.CrearAgregar(
+        return RestaurantePro.Domain.Operaciones.Comandas.ValueObjects.PersonalizacionItem.CrearAgregar(
             Guid.NewGuid(),
             "Queso extra",
             1m,

@@ -4,9 +4,11 @@ global using FluentAssertions;
 global using Moq;
 global using Moq.Language;
 global using Moq.Language.Flow;
+global using MockQueryable.Moq;
 
 // .NET Base
 global using System;
+global using System.Collections.Concurrent;
 global using System.Collections.Generic;
 global using System.Linq;
 global using System.Linq.Expressions;
@@ -27,7 +29,13 @@ global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.EntityFrameworkCore.Storage;
-global using Microsoft.Extensions.Configuration;
+global using Microsoft.EntityFrameworkCore.ChangeTracking;
+global using Microsoft.EntityFrameworkCore.Metadata;
+global using Microsoft.EntityFrameworkCore.Metadata.Builders;
+global using Microsoft.EntityFrameworkCore.Query;
+global using Microsoft.EntityFrameworkCore.Infrastructure;
+global using Microsoft.EntityFrameworkCore.Internal;
+global using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 global using Microsoft.Extensions.Options;
 global using Microsoft.Extensions.Caching.Memory;
 
@@ -40,6 +48,7 @@ global using AutoMapper;
 // FluentValidation para tests de validadores
 global using FluentValidation;
 global using FluentValidation.Results;
+global using FluentValidation.TestHelper;
 
 // Domain - Referencias para testing
 global using RestaurantePro.Domain.Core.SharedKernel.Results;
@@ -63,6 +72,7 @@ global using RestaurantePro.Application.Core.Productos.Commands.EliminarProducto
 global using RestaurantePro.Application.Core.Productos.Queries.ObtenerProductoPorId;
 global using RestaurantePro.Application.Core.Productos.Queries.ObtenerProductosPaginados;
 global using RestaurantePro.Application.Core.Productos.Queries.ObtenerProductosPorCategoria;
+global using RestaurantePro.Application.Core.Productos.Queries.VerificarDisponibilidadProducto;
 global using RestaurantePro.Application.Common.DTOs;
 global using RestaurantePro.Application.Common.Behaviors;
 global using RestaurantePro.Application.Common.Exceptions;
@@ -165,6 +175,7 @@ global using RestaurantePro.Application.Operaciones.Comandas.Commands.AgregarIte
 global using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
 global using RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
 global using RestaurantePro.Application.Operaciones.Comandas.Commands.DividirComanda;
+global using RestaurantePro.Application.Operaciones.Comandas.Commands.ProcesarPedidoCompleto;
 global using RestaurantePro.Application.Operaciones.Comandas.Commands.UnificarComandas;
 global using RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaCreada;
 global using RestaurantePro.Application.Operaciones.Comandas.EventHandlers.ComandaFinalizada;
@@ -207,6 +218,7 @@ global using RestaurantePro.Application.Comercial.Promociones.DTOs;
 global using RestaurantePro.Application.Comercial.Promociones.Commands.AplicarPromocion;
 
 // Application - Reportes
+global using RestaurantePro.Application.Operaciones.Reportes.DTOs;
 global using RestaurantePro.Application.Operaciones.Reportes.Commands.GenerarReporte;
 global using RestaurantePro.Application.Operaciones.Reportes.Commands.ProcesarPedidoCompleto;
 global using RestaurantePro.Application.Operaciones.Reportes.Queries.ObtenerReporteVentasDiaria;
@@ -223,6 +235,7 @@ global using RestaurantePro.Domain.Comercial.Services;
 global using RestaurantePro.Domain.Comercial.Promociones.Services;
 global using RestaurantePro.Domain.Comercial.Promociones.Entities;
 global using RestaurantePro.Domain.Comercial.Promociones.Enums;
+global using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
 
 // Domain - Core
 global using RestaurantePro.Domain.Core.Usuarios.Entities;
@@ -235,11 +248,6 @@ global using RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
 global using RestaurantePro.Application.Core.Usuarios.Commands.ActualizarUsuario;
 global using RestaurantePro.Application.Core.Usuarios.Commands.CambiarPasswordUsuario;
 global using RestaurantePro.Application.Core.Usuarios.DTOs;
-
-// Domain - Core Usuarios
-global using RestaurantePro.Domain.Core.Usuarios.Entities;
-global using RestaurantePro.Domain.Core.Usuarios.Interfaces;
-global using RestaurantePro.Domain.Core.Usuarios.Enums;
 
 // Resolve ValidationException ambiguity
 global using ValidationException = RestaurantePro.Application.Common.Exceptions.ValidationException;
