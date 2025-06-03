@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MediatR;
 using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Common.Enums;
 
 namespace RestaurantePro.Application.Comercial.Facturacion.EventHandlers.FacturaCreada;
 
@@ -15,17 +17,26 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
 {
     private readonly IFacturaRepository _facturaRepository;
     private readonly IClienteRepository _clienteRepository;
+    private readonly IEmailService _emailService;
+    private readonly ISMSService _smsService;
+    private readonly INotificationService _notificationService;
     private readonly ILogger<FacturaCreadaNotificacionHandler> _logger;
     private readonly IMediator _mediator;
 
     public FacturaCreadaNotificacionHandler(
         IFacturaRepository facturaRepository,
         IClienteRepository clienteRepository,
+        IEmailService emailService,
+        ISMSService smsService,
+        INotificationService notificationService,
         ILogger<FacturaCreadaNotificacionHandler> logger,
         IMediator mediator)
     {
         _facturaRepository = facturaRepository;
         _clienteRepository = clienteRepository;
+        _emailService = emailService;
+        _smsService = smsService;
+        _notificationService = notificationService;
         _logger = logger;
         _mediator = mediator;
     }
@@ -123,7 +134,12 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
                 await EnviarFacturaPorSMSAsync((object)factura, (object)cliente);
             }
 
-            // 8. Registrar estadísticas de notificación
+            // 8. Enviar notificación con prioridad basada en monto
+            var totalFactura = GetTotalSafely(factura);
+            var prioridad = DeterminarPrioridad(totalFactura);
+            await EnviarNotificacionPorPrioridad(evento.FacturaId, evento.NumeroFactura, totalFactura, prioridad);
+
+            // 9. Registrar estadísticas de notificación
             await RegistrarEstadisticasNotificacionAsync(evento.FacturaId, canalPreferido, true, (object)cliente);
 
             _logger.LogInformation("✅ Notificaciones enviadas exitosamente para Factura {NumeroFactura} al cliente {ClienteNombre}", 
@@ -281,8 +297,7 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
     /// </summary>
     private async Task EnviarEmailAsync(string destinatario, string asunto, string cuerpo)
     {
-        // Simulación de envío de email - en producción se conectaría con servicio real
-        await Task.Delay(100); // Simular latencia de API
+        await _emailService.SendEmailAsync(destinatario, asunto, cuerpo);
         _logger.LogDebug("📧 Email enviado - Destinatario: {Email}, Asunto: {Asunto}", destinatario, asunto);
     }
 
@@ -291,8 +306,7 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
     /// </summary>
     private async Task EnviarSMSAsync(string numero, string mensaje)
     {
-        // Simulación de envío de SMS - en producción se conectaría con servicio real  
-        await Task.Delay(50); // Simular latencia de API
+        await _smsService.SendSMSAsync(numero, mensaje);
         _logger.LogDebug("📱 SMS enviado - Número: {Numero}, Mensaje: {Mensaje}", numero, mensaje);
     }
 
@@ -370,5 +384,27 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
                 <p>Se ha generado su factura correctamente.</p>
                 <p>Gracias por su preferencia.<br>Equipo RestaurantePro</p>";
         }
+    }
+
+    /// <summary>
+    /// Determina la prioridad de notificación basada en el monto
+    /// </summary>
+    private NivelPrioridad DeterminarPrioridad(decimal monto)
+    {
+        if (monto >= 1000) return NivelPrioridad.Alta;
+        if (monto >= 100) return NivelPrioridad.Media;
+        return NivelPrioridad.Baja;
+    }
+
+    /// <summary>
+    /// Envía notificación usando el servicio con prioridad
+    /// </summary>
+    private async Task EnviarNotificacionPorPrioridad(Guid facturaId, string numeroFactura, decimal total, NivelPrioridad prioridad)
+    {
+        var mensaje = $"Nueva factura #{numeroFactura} generada por {total:C}";
+        var titulo = "Factura Creada";
+        var prioridadTexto = prioridad.ToString();
+
+        await _notificationService.EnviarNotificacionAsync(facturaId, mensaje, titulo, prioridadTexto);
     }
 } 

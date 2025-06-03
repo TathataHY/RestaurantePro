@@ -197,7 +197,8 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
             {
                 // Obtener el UserId del servicio y convertir a Guid de manera segura
                 var usuarioId = Guid.Empty;
-                if (!string.IsNullOrEmpty(_currentUserService.UserId) && 
+                if (_currentUserService != null && 
+                    !string.IsNullOrEmpty(_currentUserService.UserId) && 
                     Guid.TryParse(_currentUserService.UserId, out var parsedUserId))
                 {
                     usuarioId = parsedUserId;
@@ -207,7 +208,7 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
                 {
                     ComandaId = comanda.Id,
                     UsuarioId = usuarioId,
-                    FechaFinalizacion = _dateTimeService.Now,
+                    FechaFinalizacion = _dateTimeService?.Now ?? DateTime.Now,
                     ObservacionesFinalizacion = "Finalizada automáticamente al procesar pedido completo",
                     ValidarTodosItemsListos = true,
                     NotificarMesero = false
@@ -377,7 +378,7 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
             Moneda = request.InfoPago.Moneda ?? "USD",
             EstadoPago = "Completado",
             ReferenciaPago = request.InfoPago.ReferenciaPago,
-            FechaPago = _dateTimeService.Now,
+            FechaPago = _dateTimeService?.Now ?? DateTime.Now,
             ObservacionesPago = request.InfoPago.ObservacionesPago
         } : null;
 
@@ -397,7 +398,7 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
             MesaId = Guid.Empty, // comanda.MesaId ?? Guid.Empty
             NumeroMesa = "1", // Simulado
             EstadoMesa = "Disponible",
-            HoraLiberacion = _dateTimeService.Now,
+            HoraLiberacion = _dateTimeService?.Now ?? DateTime.Now,
             TiempoOcupacion = TimeSpan.FromHours(1) // Simulado
         } : null;
 

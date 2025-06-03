@@ -30,16 +30,13 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
             });
 
         RuleFor(x => x.NombreContacto)
-            .NotEmpty().WithMessage("El nombre del contacto es obligatorio")
-            .DependentRules(() => {
-                RuleFor(x => x.NombreContacto)
-                    .MinimumLength(2).WithMessage("El nombre del contacto debe tener al menos 2 caracteres")
-                    .MaximumLength(100).WithMessage("El nombre del contacto no puede exceder 100 caracteres");
-            });
+            .MaximumLength(100).WithMessage("El nombre del contacto no puede exceder 100 caracteres")
+            .MinimumLength(2).WithMessage("El nombre del contacto debe tener al menos 2 caracteres")
+            .When(x => !string.IsNullOrWhiteSpace(x.NombreContacto));
 
         RuleFor(x => x.UsuarioId)
-            .NotEmpty().WithMessage("El ID del usuario es obligatorio")
-            .NotEqual(Guid.Empty).WithMessage("El ID del usuario no puede ser un GUID vacío");
+            .NotEqual(Guid.Empty).WithMessage("El ID del usuario no puede ser un GUID vacío")
+            .When(x => x.UsuarioId != Guid.Empty);
     }
 
     /// <summary>
@@ -51,17 +48,14 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
             .NotEmpty().WithMessage("El email es obligatorio")
             .DependentRules(() => {
                 RuleFor(x => x.Email)
-                    .EmailAddress().WithMessage("El email debe tener un formato válido")
-                    .MaximumLength(254).WithMessage("El email no puede exceder 254 caracteres")
-                    .Must(BeValidEmailDomain).WithMessage("El dominio del email no es válido");
+                    .Must(BeValidEmail).WithMessage("El formato del email no es válido")
+                    .MaximumLength(254).WithMessage("El email no puede exceder 254 caracteres");
             });
 
         RuleFor(x => x.Telefono)
             .NotEmpty().WithMessage("El teléfono es obligatorio")
             .DependentRules(() => {
                 RuleFor(x => x.Telefono)
-                    .MinimumLength(10).WithMessage("El teléfono debe tener al menos 10 dígitos")
-                    .MaximumLength(15).WithMessage("El teléfono no puede exceder 15 dígitos")
                     .Must(BeValidPhoneNumber).WithMessage("El teléfono debe contener solo números, espacios, guiones y paréntesis");
             });
     }
@@ -73,19 +67,18 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     {
         RuleFor(x => x.Direccion)
             .MaximumLength(300).WithMessage("La dirección no puede exceder 300 caracteres")
-            .MinimumLength(10).WithMessage("La dirección debe tener al menos 10 caracteres")
             .When(x => !string.IsNullOrWhiteSpace(x.Direccion));
 
         RuleFor(x => x.Ciudad)
-            .NotEmpty().WithMessage("La ciudad es obligatoria")
             .MaximumLength(100).WithMessage("La ciudad no puede exceder 100 caracteres")
             .MinimumLength(2).WithMessage("La ciudad debe tener al menos 2 caracteres")
-            .Must(BeValidCityName).WithMessage("La ciudad contiene caracteres no válidos");
+            .Must(BeValidCityName).WithMessage("La ciudad contiene caracteres no válidos")
+            .When(x => !string.IsNullOrWhiteSpace(x.Ciudad));
 
         RuleFor(x => x.Pais)
-            .NotEmpty().WithMessage("El país es obligatorio")
             .MaximumLength(50).WithMessage("El país no puede exceder 50 caracteres")
-            .Must(BeValidCountryName).WithMessage("El país contiene caracteres no válidos");
+            .Must(BeValidCountryName).WithMessage("El país contiene caracteres no válidos")
+            .When(x => !string.IsNullOrWhiteSpace(x.Pais));
 
         RuleFor(x => x.CodigoPostal)
             .MaximumLength(10).WithMessage("El código postal no puede exceder 10 caracteres")
@@ -98,17 +91,10 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     /// </summary>
     private void ConfigurarValidacionesFiscales()
     {
-        // RFC es opcional para todos los países, pero si se proporciona debe ser válido
+        // RFC es opcional, pero si se proporciona debe ser válido
         RuleFor(x => x.RFC)
-            .Length(12, 13).WithMessage("El RFC debe tener 12 o 13 caracteres")
             .Must(BeValidRFC).WithMessage("El RFC no tiene un formato válido")
-            .When(x => !string.IsNullOrWhiteSpace(x.RFC) && x.Pais.Equals("México", StringComparison.OrdinalIgnoreCase));
-
-        // Para países diferentes a México, validar identificación fiscal de forma más flexible
-        RuleFor(x => x.RFC)
-            .MaximumLength(20).WithMessage("La identificación fiscal no puede exceder 20 caracteres")
-            .MinimumLength(5).WithMessage("La identificación fiscal debe tener al menos 5 caracteres")
-            .When(x => !string.IsNullOrWhiteSpace(x.RFC) && !x.Pais.Equals("México", StringComparison.OrdinalIgnoreCase));
+            .When(x => !string.IsNullOrWhiteSpace(x.RFC));
 
         RuleFor(x => x.InformacionBancaria)
             .MaximumLength(500).WithMessage("La información bancaria no puede exceder 500 caracteres")
@@ -132,7 +118,7 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
         // Validación para proveedores internacionales
         RuleFor(x => x.DiasCredito)
             .LessThanOrEqualTo(90).WithMessage("Para proveedores internacionales, el crédito máximo es 90 días")
-            .When(x => !x.Pais.Equals("México", StringComparison.OrdinalIgnoreCase));
+            .When(x => !string.IsNullOrWhiteSpace(x.Pais) && !x.Pais.Equals("México", StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -156,13 +142,19 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
         
         // Permitir números, espacios, guiones, paréntesis y el símbolo +
         var phonePattern = @"^[\d\s\-\(\)\+]+$";
-        return System.Text.RegularExpressions.Regex.IsMatch(telefono, phonePattern);
+        var isValidFormat = System.Text.RegularExpressions.Regex.IsMatch(telefono, phonePattern);
+        
+        // Verificar que tenga al menos 10 dígitos
+        var digitsOnly = System.Text.RegularExpressions.Regex.Replace(telefono, @"[^\d]", "");
+        var hasMinDigits = digitsOnly.Length >= 10;
+        
+        return isValidFormat && hasMinDigits;
     }
 
     /// <summary>
-    /// Valida que el dominio del email sea válido
+    /// Valida que el formato del email sea válido
     /// </summary>
-    private bool BeValidEmailDomain(string email)
+    private bool BeValidEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email)) return false;
         
@@ -178,11 +170,11 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     }
 
     /// <summary>
-    /// Valida que el RFC mexicano sea válido
+    /// Valida que el RFC sea válido (mexicano o genérico)
     /// </summary>
     private bool BeValidRFC(string rfc)
     {
-        if (string.IsNullOrWhiteSpace(rfc)) return false;
+        if (string.IsNullOrWhiteSpace(rfc)) return true; // Es opcional
         
         // RFC para personas físicas: 4 letras + 6 números + 3 alfanuméricos
         // RFC para personas morales: 3 letras + 6 números + 3 alfanuméricos

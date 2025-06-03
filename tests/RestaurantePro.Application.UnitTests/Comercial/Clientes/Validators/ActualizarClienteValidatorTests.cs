@@ -678,7 +678,7 @@ public class ActualizarClienteValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var nombreEmail = new string('a', Math.Max(1, longitud - 10)); // Ajustar para @test.com
+        var nombreEmail = new string('a', Math.Max(1, longitud - 9)); // Ajustar para @test.com (9 caracteres)
         command.Email = $"{nombreEmail}@test.com";
 
         // Act

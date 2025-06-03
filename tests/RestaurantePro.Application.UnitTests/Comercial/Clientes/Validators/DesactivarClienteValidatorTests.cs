@@ -112,7 +112,7 @@ public class DesactivarClienteValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.MotivoDesactivacion = new string('A', 251); // Más de 250 caracteres
+        command.MotivoDesactivacion = new string('A', 501); // Más de 500 caracteres
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -121,7 +121,7 @@ public class DesactivarClienteValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(DesactivarClienteCommand.MotivoDesactivacion) &&
-            e.ErrorMessage.Contains("El motivo de desactivación no puede exceder"));
+            e.ErrorMessage.Contains("El motivo no puede exceder 500 caracteres"));
     }
 
     [Theory]

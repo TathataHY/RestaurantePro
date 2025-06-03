@@ -179,7 +179,7 @@ public class CrearUsuarioCommand : IRequest<Result<UsuarioDto>>
             Email = email,
             Password = GenerarPasswordTemporal(),
             ConfirmarPassword = GenerarPasswordTemporal(),
-            Rol = "Supervisor",
+            Rol = "Gerente",
             RolesAdicionales = new List<string> { "Mesero" },
             Telefono = telefono,
             Departamento = departamento,

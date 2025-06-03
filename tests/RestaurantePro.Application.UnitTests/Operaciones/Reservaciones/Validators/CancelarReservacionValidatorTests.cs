@@ -9,7 +9,7 @@ public class CancelarReservacionValidatorTests
 {
     private readonly Mock<IApplicationDbContext> _mockContext;
     private readonly CancelarReservacionValidator _validator;
-    private readonly Mock<DbSet<Reservacion>> _mockReservacionesDbSet;
+    private Mock<DbSet<Reservacion>> _mockReservacionesDbSet;
 
     public CancelarReservacionValidatorTests()
     {
@@ -73,22 +73,15 @@ public class CancelarReservacionValidatorTests
 
     private void ConfigurarReservacionExistente(Reservacion reservacion)
     {
-        var data = new List<Reservacion> { reservacion }.AsQueryable();
-        
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.Provider).Returns(data.Provider);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.Expression).Returns(data.Expression);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.ElementType).Returns(data.ElementType);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.GetEnumerator()).Returns(data.GetEnumerator());
+        var data = new List<Reservacion> { reservacion };
+        _mockReservacionesDbSet = MockDbSetHelper.CreateMockDbSet(data.AsQueryable());
+        _mockContext.Setup(c => c.Reservaciones).Returns(_mockReservacionesDbSet.Object);
     }
 
     private void ConfigurarReservacionInexistente()
     {
-        var data = new List<Reservacion>().AsQueryable();
-        
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.Provider).Returns(data.Provider);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.Expression).Returns(data.Expression);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.ElementType).Returns(data.ElementType);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.GetEnumerator()).Returns(data.GetEnumerator());
+        _mockReservacionesDbSet = MockDbSetHelper.CreateEmptyMockDbSet<Reservacion>();
+        _mockContext.Setup(c => c.Reservaciones).Returns(_mockReservacionesDbSet.Object);
     }
 
     #endregion

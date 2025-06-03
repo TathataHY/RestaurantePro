@@ -274,8 +274,8 @@ public class ActualizarProveedorValidatorTests
         // Arrange
         var command = CrearCommandValido();
         // Email con más de 100 caracteres
-        var nombreLargo = new string('a', 85);
-        command.Email = $"{nombreLargo}@domain.com"; // Total: 96 + 4 = 100+
+        var nombreLargo = new string('a', 90);
+        command.Email = $"{nombreLargo}@domain.com"; // Total: 90 + 11 = 101 caracteres
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -312,8 +312,8 @@ public class ActualizarProveedorValidatorTests
         // Arrange
         var command = CrearCommandValido();
         // Email con exactamente 100 caracteres
-        var nombreLargo = new string('a', 84);
-        command.Email = $"{nombreLargo}@domain.com"; // Total: 84 + 11 = 95 caracteres
+        var nombreLargo = new string('a', 89);
+        command.Email = $"{nombreLargo}@domain.com"; // Total: 89 + 11 = 100 caracteres
 
         // Act
         var result = await _validator.ValidateAsync(command);
