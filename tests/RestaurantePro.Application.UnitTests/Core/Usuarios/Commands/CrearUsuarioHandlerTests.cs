@@ -1,5 +1,7 @@
 namespace RestaurantePro.Application.UnitTests.Core.Usuarios.Commands;
 using CrearUsuarioHorarioDto = RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario.HorarioTrabajoDto;
+using RestaurantePro.Application.UnitTests.Common;
+using System.Linq.Expressions;
 
 /// <summary>
 /// Pruebas unitarias para CrearUsuarioHandler
@@ -57,7 +59,7 @@ public class CrearUsuarioHandlerTests
         _mockMapper.Setup(m => m.Map<UsuarioDto>(It.IsAny<Usuario>()))
                    .Returns(_usuarioDtoEjemplo);
 
-        // Act
+        // Act - Removiendo try-catch para ver el error real
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
@@ -522,11 +524,14 @@ public class CrearUsuarioHandlerTests
 
     private void SetupUsuarioExistenteMock(Usuario usuario)
     {
-        // Crear lista con el usuario y convertirla a mock queryable
+        // Crear lista con el usuario y usar MockDbSetHelper
         var usuariosList = new List<Usuario> { usuario };
-        var mockUsuariosDbSet = usuariosList.AsQueryable().BuildMockDbSet();
+        var mockUsuariosDbSet = MockDbSetHelper.CreateMockDbSet(usuariosList.AsQueryable());
 
-        // Configurar AddAsync
+        // NO intentar configurar FirstOrDefaultAsync directamente - Moq no puede hacerlo
+        // El MockDbSetHelper ya configura el QueryProvider correctamente
+        
+        // Configurar AddAsync para el DbSet
         mockUsuariosDbSet.Setup(x => x.AddAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
                         .Returns((Usuario u, CancellationToken ct) => 
                         {
@@ -544,11 +549,14 @@ public class CrearUsuarioHandlerTests
 
     private void SetupUsuarioNoExistenteMock()
     {
-        // Crear lista vacía y convertirla a mock queryable
+        // Crear lista vacía y usar MockDbSetHelper
         var usuariosList = new List<Usuario>();
-        var mockUsuariosDbSet = usuariosList.AsQueryable().BuildMockDbSet();
+        var mockUsuariosDbSet = MockDbSetHelper.CreateMockDbSet(usuariosList.AsQueryable());
 
-        // Configurar AddAsync
+        // NO intentar configurar FirstOrDefaultAsync directamente - Moq no puede hacerlo
+        // El MockDbSetHelper ya configura el QueryProvider correctamente
+
+        // Configurar AddAsync para el DbSet
         mockUsuariosDbSet.Setup(x => x.AddAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
                         .Returns((Usuario u, CancellationToken ct) => 
                         {

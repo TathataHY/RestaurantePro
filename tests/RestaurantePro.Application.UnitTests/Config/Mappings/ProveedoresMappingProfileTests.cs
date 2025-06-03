@@ -410,26 +410,61 @@ public class ProveedoresMappingProfileTests
 
     private ContactoProveedor CrearContactoProveedorEjemplo()
     {
-        // Usar reflexión para crear la instancia y establecer las propiedades necesarias
-        var contacto = (ContactoProveedor)Activator.CreateInstance(typeof(ContactoProveedor), true);
+        // Como el método Crear es internal, usar reflexión para crear la instancia correctamente
+        var contactoType = typeof(ContactoProveedor);
+        var createMethod = contactoType.GetMethod("Crear", BindingFlags.NonPublic | BindingFlags.Static);
         
-        // Establecer propiedades usando reflexión (sin usar mock para propiedades no-override-ables)
-        typeof(ContactoProveedor).GetProperty("ProveedorId", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(contacto, Guid.NewGuid());
-        typeof(ContactoProveedor).GetProperty("Nombre", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(contacto, "Juan Pérez");
-        typeof(ContactoProveedor).GetProperty("Cargo", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(contacto, "Gerente de Ventas");
-        typeof(ContactoProveedor).GetProperty("Telefono", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(contacto, PhoneNumber.Create("555-9876543"));
-        typeof(ContactoProveedor).GetProperty("Email", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(contacto, Email.Create("juan.perez@distribuidoraabc.com"));
+        if (createMethod == null)
+        {
+            // Si no podemos usar el método factory, crear usando constructor privado y reflexión
+            var contacto = (ContactoProveedor)Activator.CreateInstance(contactoType, true)!;
+            
+            // Establecer propiedades usando reflexión
+            SetProperty(contacto, nameof(ContactoProveedor.ProveedorId), Guid.NewGuid());
+            SetProperty(contacto, nameof(ContactoProveedor.Nombre), "Juan Pérez");
+            SetProperty(contacto, nameof(ContactoProveedor.Cargo), "Gerente de Ventas");
+            SetProperty(contacto, nameof(ContactoProveedor.Telefono), PhoneNumber.Create("555-9876543"));
+            SetProperty(contacto, nameof(ContactoProveedor.Email), Email.Create("juan.perez@distribuidoraabc.com"));
+            
+            // Establecer propiedades base
+            SetProperty(contacto, "Id", Guid.NewGuid());
+            SetProperty(contacto, "FechaCreacion", DateTime.UtcNow.AddDays(-25));
+            
+            return contacto;
+        }
         
-        // Establecer propiedades base
-        typeof(RestaurantePro.Domain.Core.Base.EntityBase).GetProperty("Id", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(contacto, Guid.NewGuid());
-        typeof(RestaurantePro.Domain.Core.Base.EntityBase).GetProperty("FechaCreacion", BindingFlags.NonPublic | BindingFlags.Instance)?.SetValue(contacto, DateTime.UtcNow.AddDays(-25));
-        
-        return contacto;
+        // Usar el método factory si está disponible
+        return (ContactoProveedor)createMethod.Invoke(null, new object[]
+        {
+            Guid.NewGuid(),
+            "Juan Pérez",
+            "Gerente de Ventas", 
+            "555-9876543",
+            "juan.perez@distribuidoraabc.com"
+        })!;
     }
 
     private ContactoProveedor CrearContactoProveedorCompletoEjemplo()
     {
         return CrearContactoProveedorEjemplo(); // Ya está completo
+    }
+
+    /// <summary>
+    /// Helper method para establecer propiedades usando reflexión
+    /// </summary>
+    private void SetProperty(object obj, string propertyName, object value)
+    {
+        var property = obj.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        if (property != null && property.CanWrite)
+        {
+            property.SetValue(obj, value);
+        }
+        else
+        {
+            // Si la propiedad no es writable, intentar con el campo backing
+            var backingField = obj.GetType().GetField($"<{propertyName}>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
+            backingField?.SetValue(obj, value);
+        }
     }
 
     #endregion

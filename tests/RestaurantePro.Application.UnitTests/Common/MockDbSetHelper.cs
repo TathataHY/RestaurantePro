@@ -95,16 +95,26 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
             }
         }
         
-        // Si esperamos Task<T> para otras operaciones
+        // Si esperamos Task<T> para otras operaciones como FirstOrDefaultAsync
         if (expectedResultType.IsGenericType && expectedResultType.GetGenericTypeDefinition() == typeof(Task<>))
         {
             var taskResultType = expectedResultType.GetGenericArguments()[0];
             try
             {
-                var methodInfo = typeof(TestAsyncQueryProvider<TEntity>).GetMethod(nameof(ExecuteAsync), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                var genericMethod = methodInfo?.MakeGenericMethod(taskResultType);
-                var result = genericMethod?.Invoke(this, new object[] { expression, cancellationToken });
-                return (TResult)result!;
+                // Ejecutar la expresión síncronamente y envolver en Task
+                var result = _inner.Execute(expression);
+                
+                // Si el resultado es del tipo correcto, devolverlo
+                if (result != null && taskResultType.IsAssignableFrom(result.GetType()))
+                {
+                    var taskResult = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType)?.Invoke(null, new[] { result });
+                    return (TResult)taskResult!;
+                }
+                
+                // Si el resultado es null o no es del tipo correcto, usar valor por defecto
+                var defaultValue = taskResultType.IsValueType ? Activator.CreateInstance(taskResultType) : null;
+                var taskResultDefault = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType)?.Invoke(null, new[] { defaultValue });
+                return (TResult)taskResultDefault!;
             }
             catch
             {

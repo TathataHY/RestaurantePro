@@ -26,12 +26,15 @@ public class AplicarDescuentoValidatorTests
             observaciones: "Factura de prueba"
         );
         
+        // Crear usuario administrador para que pase las validaciones
         var usuario = Usuario.Crear(
             nombreUsuario: "admin",
             nombreCompleto: "Administrador Test",
             email: "admin@test.com",
-            rol: RolUsuario.Administrador
+            rol: RolUsuario.Administrador  // Asegurar que es administrador
         );
+        
+        usuario.ConfirmarCuenta(); // Esto cambia el estado de PendienteConfirmacion a Activo
         
         var productos = new List<Producto>
         {
@@ -47,9 +50,20 @@ public class AplicarDescuentoValidatorTests
         var facturas = new List<Factura> { factura };
         var usuarios = new List<Usuario> { usuario };
 
-        _mockContext.Setup(c => c.Facturas).Returns(MockDbSetHelper.CreateMockDbSet(facturas.AsQueryable()).Object);
-        _mockContext.Setup(c => c.Usuarios).Returns(MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable()).Object);
-        _mockContext.Setup(c => c.Productos).Returns(MockDbSetHelper.CreateMockDbSet(productos.AsQueryable()).Object);
+        // Configurar mocks de DbSet
+        var facturasDbSetMock = MockDbSetHelper.CreateMockDbSet(facturas.AsQueryable());
+        var usuariosDbSetMock = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
+        var productosDbSetMock = MockDbSetHelper.CreateMockDbSet(productos.AsQueryable());
+
+        _mockContext.Setup(c => c.Facturas).Returns(facturasDbSetMock.Object);
+        _mockContext.Setup(c => c.Usuarios).Returns(usuariosDbSetMock.Object);
+        _mockContext.Setup(c => c.Productos).Returns(productosDbSetMock.Object);
+
+        // Configurar FindAsync específicamente para que el validador pueda encontrar las entidades
+        facturasDbSetMock.Setup(m => m.FindAsync(factura.Id))
+            .ReturnsAsync(factura);
+        usuariosDbSetMock.Setup(m => m.FindAsync(usuario.Id))
+            .ReturnsAsync(usuario);
         
         _validator = new AplicarDescuentoValidator(_mockContext.Object);
     }

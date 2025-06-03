@@ -1,3 +1,8 @@
+using FluentAssertions;
+using RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.AgregarContacto;
+using RestaurantePro.Application.Proveedores.ContactosProveedor.DTOs;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Proveedores.ContactosProveedor.Validators;
 
 /// <summary>

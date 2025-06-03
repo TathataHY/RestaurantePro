@@ -41,49 +41,81 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
         {
             return await _unitOfWork.EjecutarEnTransaccionAsync(async () =>
             {
-                // 1. Obtener comandas originales
-                var comandasOriginalesResult = await ObtenerComandasOriginales(request.ComandasIds, cancellationToken);
-                if (!comandasOriginalesResult.Succeeded)
+                try
                 {
-                    return Result.Failure<UnificarComandasDto>(comandasOriginalesResult.Error ?? "Error obteniendo comandas originales");
+                    // 1. Obtener comandas originales
+                    _logger.LogInformation("🔍 Paso 1: Obteniendo comandas originales");
+                    var comandasOriginalesResult = await ObtenerComandasOriginales(request.ComandasIds, cancellationToken);
+                    if (!comandasOriginalesResult.Succeeded)
+                    {
+                        return Result.Failure<UnificarComandasDto>(comandasOriginalesResult.Error ?? "Error obteniendo comandas originales");
+                    }
+
+                    var comandasOriginales = comandasOriginalesResult.Value;
+                    _logger.LogInformation("✅ Comandas originales obtenidas: {Count}", comandasOriginales.Count);
+
+                    // 2. Determinar comanda principal o crear nueva
+                    _logger.LogInformation("🔍 Paso 2: Obteniendo o creando comanda unificada");
+                    var comandaUnificadaResult = await ObtenerOCrearComandaUnificada(comandasOriginales, request, cancellationToken);
+                    if (!comandaUnificadaResult.Succeeded)
+                    {
+                        return Result.Failure<UnificarComandasDto>(comandaUnificadaResult.Error ?? "Error obteniendo o creando comanda unificada");
+                    }
+
+                    var comandaUnificada = comandaUnificadaResult.Value;
+                    _logger.LogInformation("✅ Comanda unificada preparada: {ComandaId}", comandaUnificada.Id);
+
+                    // 3. Consolidar items de todas las comandas
+                    _logger.LogInformation("🔍 Paso 3: Consolidando items");
+                    await ConsolidarItems(comandasOriginales, comandaUnificada, cancellationToken);
+                    _logger.LogInformation("✅ Items consolidados");
+
+                    // 4. Aplicar estrategia de descuentos
+                    _logger.LogInformation("🔍 Paso 4: Aplicando estrategia de descuentos");
+                    await AplicarEstrategiaDescuentos(comandasOriginales, comandaUnificada, request.EstrategiaDescuentos, cancellationToken);
+                    _logger.LogInformation("✅ Estrategia de descuentos aplicada");
+
+                    // 5. Actualizar comandas originales
+                    _logger.LogInformation("🔍 Paso 5: Actualizando comandas originales");
+                    await ActualizarComandasOriginales(comandasOriginales, comandaUnificada, request, cancellationToken);
+                    _logger.LogInformation("✅ Comandas originales actualizadas");
+
+                    // 6. Actualizar estado de la mesa destino
+                    _logger.LogInformation("🔍 Paso 6: Actualizando mesa destino");
+                    await ActualizarMesaDestino(request.MesaDestinoId, cancellationToken);
+                    _logger.LogInformation("✅ Mesa destino actualizada");
+
+                    // 7. Registrar auditoría
+                    _logger.LogInformation("🔍 Paso 7: Registrando auditoría");
+                    await RegistrarAuditoria(comandasOriginales, comandaUnificada, request, cancellationToken);
+                    _logger.LogInformation("✅ Auditoría registrada");
+
+                    // 8. Guardar cambios
+                    _logger.LogInformation("🔍 Paso 8: Guardando cambios");
+                    await _unitOfWork.GuardarCambiosAsync(cancellationToken);
+                    _logger.LogInformation("✅ Cambios guardados");
+
+                    // 9. Crear respuesta
+                    _logger.LogInformation("🔍 Paso 9: Creando respuesta");
+                    var response = CrearRespuesta(comandasOriginales, comandaUnificada, request);
+                    _logger.LogInformation("✅ Respuesta creada");
+
+                    _logger.LogInformation("✅ Unificación completada exitosamente. Comandas originales: {ComandasOriginalesIds}, Comanda unificada: {ComandaUnificadaId}",
+                        string.Join(", ", request.ComandasIds), comandaUnificada.Id);
+
+                    return Result.Success<UnificarComandasDto>(response);
                 }
-
-                var comandasOriginales = comandasOriginalesResult.Value;
-
-                // 2. Determinar comanda principal o crear nueva
-                var comandaUnificadaResult = await ObtenerOCrearComandaUnificada(comandasOriginales, request, cancellationToken);
-                if (!comandaUnificadaResult.Succeeded)
+                catch (NullReferenceException ex)
                 {
-                    return Result.Failure<UnificarComandasDto>(comandaUnificadaResult.Error ?? "Error obteniendo o creando comanda unificada");
+                    _logger.LogError(ex, "❌ NullReferenceException en unificación: {Message}. StackTrace: {StackTrace}", 
+                        ex.Message, ex.StackTrace);
+                    return Result.Failure<UnificarComandasDto>($"Error de referencia nula: {ex.Message} - {ex.StackTrace}");
                 }
-
-                var comandaUnificada = comandaUnificadaResult.Value;
-
-                // 3. Consolidar items de todas las comandas
-                await ConsolidarItems(comandasOriginales, comandaUnificada, cancellationToken);
-
-                // 4. Aplicar estrategia de descuentos
-                await AplicarEstrategiaDescuentos(comandasOriginales, comandaUnificada, request.EstrategiaDescuentos, cancellationToken);
-
-                // 5. Actualizar comandas originales
-                await ActualizarComandasOriginales(comandasOriginales, comandaUnificada, request, cancellationToken);
-
-                // 6. Actualizar estado de la mesa destino
-                await ActualizarMesaDestino(request.MesaDestinoId, cancellationToken);
-
-                // 7. Registrar auditoría
-                await RegistrarAuditoria(comandasOriginales, comandaUnificada, request, cancellationToken);
-
-                // 8. Guardar cambios
-                await _unitOfWork.GuardarCambiosAsync(cancellationToken);
-
-                // 9. Crear respuesta
-                var response = CrearRespuesta(comandasOriginales, comandaUnificada, request);
-
-                _logger.LogInformation("✅ Unificación completada exitosamente. Comandas originales: {ComandasOriginalesIds}, Comanda unificada: {ComandaUnificadaId}",
-                    string.Join(", ", request.ComandasIds), comandaUnificada.Id);
-
-                return Result.Success<UnificarComandasDto>(response);
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "❌ Excepción general en unificación: {Message}", ex.Message);
+                    return Result.Failure<UnificarComandasDto>($"Error en transacción: {ex.Message}");
+                }
 
             }, cancellationToken);
         }
@@ -101,6 +133,7 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
     {
         var comandas = await _context.Comandas
             .Include(c => c.Mesa)
+            .Include(c => c.Items)
             .Where(c => comandasIds.Contains(c.Id))
             .ToListAsync(cancellationToken);
 
@@ -152,9 +185,25 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
 
     private async Task ConsolidarItems(List<Comanda> comandasOriginales, Comanda comandaUnificada, CancellationToken cancellationToken)
     {
-        // Obtener todos los items de las comandas originales
-        var todosLosItems = comandasOriginales.SelectMany(c => c.Items).ToList();
+        // SEGURIDAD: Validar que las comandas y sus Items no sean null
+        if (comandasOriginales == null || !comandasOriginales.Any())
+        {
+            _logger.LogWarning("No hay comandas originales para consolidar items");
+            return;
+        }
+
+        // Obtener todos los items de las comandas originales, manejando colecciones null
+        var todosLosItems = comandasOriginales
+            .Where(c => c.Items != null)
+            .SelectMany(c => c.Items)
+            .ToList();
         
+        if (!todosLosItems.Any())
+        {
+            _logger.LogInformation("No hay items para consolidar en las comandas originales");
+            return;
+        }
+
         // Agrupar items por producto para consolidar cantidades
         var itemsConsolidados = todosLosItems
             .GroupBy(i => new { i.ProductoId, i.PrecioUnitario, i.Observaciones })
@@ -178,6 +227,9 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
                 itemConsolidado.Observaciones
             );
         }
+
+        _logger.LogInformation("Consolidados {TotalItems} items únicos de {TotalComandas} comandas", 
+            itemsConsolidados.Count, comandasOriginales.Count);
     }
 
     private async Task AplicarEstrategiaDescuentos(List<Comanda> comandasOriginales, Comanda comandaUnificada, EstrategiaDescuentos estrategia, CancellationToken cancellationToken)
@@ -265,6 +317,9 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
         // Calcular total usando el objeto TotalComanda
         var montoTotal = comandaUnificada.Total?.Total ?? 0m;
 
+        // SEGURIDAD: Manejar Items null para evitar NullReferenceException
+        var totalItemsUnificados = comandaUnificada.Items?.Sum(i => i.Cantidad) ?? 0;
+
         return new UnificarComandasDto
         {
             ComandasOriginalesIds = comandasOriginales.Select(c => c.Id).ToList(),
@@ -275,7 +330,7 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
             FechaUnificacion = _dateTimeService.Now,
             AutorizadoPor = request.AutorizadoPor,
             UnificacionExitosa = true,
-            TotalItemsUnificados = comandaUnificada.Items.Sum(i => i.Cantidad),
+            TotalItemsUnificados = totalItemsUnificados,
             MontoTotalUnificado = montoTotal,
             EstrategiaDescuentos = request.EstrategiaDescuentos
         };
