@@ -1,3 +1,6 @@
+using RestaurantePro.Application.UnitTests.Common;
+using RestaurantePro.Domain.Core.Productos.ValueObjects;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Validators;
 
 /// <summary>
@@ -8,21 +11,48 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Validators;
 public class AplicarDescuentoValidatorTests
 {
     private readonly Mock<IApplicationDbContext> _mockContext;
-    private readonly Mock<DbSet<Factura>> _mockFacturas;
-    private readonly Mock<DbSet<Usuario>> _mockUsuarios;
-    private readonly Mock<DbSet<Producto>> _mockProductos;
     private readonly AplicarDescuentoValidator _validator;
 
     public AplicarDescuentoValidatorTests()
     {
         _mockContext = new Mock<IApplicationDbContext>();
-        _mockFacturas = new Mock<DbSet<Factura>>();
-        _mockUsuarios = new Mock<DbSet<Usuario>>();
-        _mockProductos = new Mock<DbSet<Producto>>();
         
-        _mockContext.Setup(c => c.Facturas).Returns(_mockFacturas.Object);
-        _mockContext.Setup(c => c.Usuarios).Returns(_mockUsuarios.Object);
-        _mockContext.Setup(c => c.Productos).Returns(_mockProductos.Object);
+        // Configurar mocks usando MockDbSetHelper para evitar errores de AnyAsync
+        var factura = Factura.Crear(
+            numeroFactura: "FAC-001",
+            tipoFactura: TipoFactura.Normal,
+            nombreCliente: "Cliente Test",
+            clienteId: Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            identificacionFiscal: null,
+            direccionCliente: "Dirección Test",
+            comandasIds: new List<Guid> { Guid.NewGuid() },
+            observaciones: "Factura de prueba"
+        );
+        
+        var usuario = Usuario.Crear(
+            nombreUsuario: "admin",
+            nombreCompleto: "Administrador Test",
+            email: "admin@test.com",
+            rol: RolUsuario.Administrador
+        );
+        
+        var productos = new List<Producto>
+        {
+            Producto.Crear(
+                nombre: "Producto Test",
+                descripcion: "Descripción del producto test",
+                precio: new PrecioProducto(100m),
+                categoriaId: Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                categoriaNombre: "Categoría Test"
+            )
+        };
+
+        var facturas = new List<Factura> { factura };
+        var usuarios = new List<Usuario> { usuario };
+
+        _mockContext.Setup(c => c.Facturas).Returns(MockDbSetHelper.CreateMockDbSet(facturas.AsQueryable()).Object);
+        _mockContext.Setup(c => c.Usuarios).Returns(MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable()).Object);
+        _mockContext.Setup(c => c.Productos).Returns(MockDbSetHelper.CreateMockDbSet(productos.AsQueryable()).Object);
         
         _validator = new AplicarDescuentoValidator(_mockContext.Object);
     }
@@ -33,14 +63,14 @@ public class AplicarDescuentoValidatorTests
     {
         return new AplicarDescuentoCommand
         {
-            FacturaId = Guid.NewGuid(),
+            FacturaId = Guid.NewGuid(), // Los validators buscarán en la colección mockeada
             TipoDescuento = "General",
             Concepto = "Descuento promocional",
             Motivo = "Promoción especial del día para clientes frecuentes",
             Porcentaje = 10m,
             MontoFijo = 0m,
             Prioridad = 5,
-            UsuarioAutorizaId = Guid.NewGuid(),
+            UsuarioAutorizaId = Guid.NewGuid(), // Los validators buscarán en la colección mockeada
             ProductosEspecificos = new List<Guid>(),
             CategoriasAplicables = new List<string>(),
             MontoMinimoFactura = null,
@@ -80,7 +110,7 @@ public class AplicarDescuentoValidatorTests
         var facturaIdInexistente = Guid.NewGuid();
         command.FacturaId = facturaIdInexistente;
 
-        _mockFacturas.Setup(f => f.FindAsync(facturaIdInexistente))
+        _mockContext.Setup(c => c.Facturas.FindAsync(facturaIdInexistente))
             .ReturnsAsync((Factura?)null);
 
         // Act
@@ -813,9 +843,9 @@ public class AplicarDescuentoValidatorTests
         var factura = Factura.Crear("FAC-001", TipoFactura.Normal, "Cliente Test");
         var usuario = Usuario.Crear("testuser", "Usuario Test", "test@test.com", RolUsuario.Administrador);
 
-        _mockFacturas.Setup(f => f.FindAsync(facturaId))
+        _mockContext.Setup(c => c.Facturas.FindAsync(facturaId))
             .ReturnsAsync(factura);
-        _mockUsuarios.Setup(u => u.FindAsync(usuarioId))
+        _mockContext.Setup(c => c.Usuarios.FindAsync(usuarioId))
             .ReturnsAsync(usuario);
 
         var command = new AplicarDescuentoCommand

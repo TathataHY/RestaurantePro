@@ -1,4 +1,7 @@
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.Validators;
+using RestaurantePro.Application.UnitTests.Common;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 /// <summary>
 /// Tests unitarios para UnificarComandasValidator
@@ -35,6 +38,7 @@ public class UnificarComandasValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.ComandasIds = new List<Guid>();
+        ConfigurarMocksBasicos(); // Agregar configuración básica
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -50,6 +54,7 @@ public class UnificarComandasValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.ComandasIds = new List<Guid> { Guid.NewGuid() };
+        ConfigurarMocksBasicos(); // Agregar configuración básica
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -71,6 +76,8 @@ public class UnificarComandasValidatorTests
         {
             command.ComandasIds.Add(Guid.NewGuid());
         }
+        
+        ConfigurarMocksBasicos(); // Agregar configuración básica
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -87,6 +94,7 @@ public class UnificarComandasValidatorTests
         var command = CrearComandoValido();
         var comandaId = Guid.NewGuid();
         command.ComandasIds = new List<Guid> { comandaId, comandaId }; // ID duplicado
+        ConfigurarMocksBasicos(); // Agregar configuración básica
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -102,6 +110,7 @@ public class UnificarComandasValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.MesaDestinoId = Guid.Empty;
+        ConfigurarMocksBasicos(); // Agregar configuración básica
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -117,6 +126,7 @@ public class UnificarComandasValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.MeseroId = Guid.Empty;
+        ConfigurarMocksBasicos(); // Agregar configuración básica
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -135,6 +145,7 @@ public class UnificarComandasValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.MotivoUnificacion = motivoInvalido;
+        ConfigurarMocksBasicos(); // Agregar configuración básica
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -150,6 +161,7 @@ public class UnificarComandasValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.EstrategiaDescuentos = (EstrategiaDescuentos)999; // Valor inválido
+        ConfigurarMocksBasicos(); // Agregar configuración básica
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -240,6 +252,7 @@ public class UnificarComandasValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.NotasUnificacion = new string('A', 501); // Más de 500 caracteres
+        ConfigurarMocksBasicos(); // Agregar configuración básica
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -255,6 +268,7 @@ public class UnificarComandasValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.ObservacionesUnificada = new string('A', 501); // Más de 500 caracteres
+        ConfigurarMocksBasicos(); // Agregar configuración básica
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -264,92 +278,266 @@ public class UnificarComandasValidatorTests
         result.Errors.Should().Contain(x => x.ErrorMessage == "Las observaciones de la comanda unificada no pueden exceder 500 caracteres.");
     }
 
+    private void ConfigurarMocksBasicos()
+    {
+        // Configurar mocks básicos para evitar NullReferenceException
+        var comandasVacias = new List<Comanda>().AsQueryable();
+        var comandasMock = new Mock<DbSet<Comanda>>();
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(comandasVacias.Provider);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Expression).Returns(comandasVacias.Expression);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(comandasVacias.ElementType);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(comandasVacias.GetEnumerator());
+        
+        comandasMock.Setup(x => x.AnyAsync(
+                It.IsAny<Expression<Func<Comanda, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Expression<Func<Comanda, bool>>, CancellationToken>((predicate, ct) =>
+            {
+                if (ct.IsCancellationRequested)
+                    throw new OperationCanceledException();
+                var compiledPredicate = predicate.Compile();
+                return Task.FromResult(comandasVacias.Any(compiledPredicate));
+            });
+        
+        _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
+
+        var mesasVacias = new List<Mesa>().AsQueryable();
+        var mesasMock = new Mock<DbSet<Mesa>>();
+        mesasMock.As<IQueryable<Mesa>>().Setup(m => m.Provider).Returns(mesasVacias.Provider);
+        mesasMock.As<IQueryable<Mesa>>().Setup(m => m.Expression).Returns(mesasVacias.Expression);
+        mesasMock.As<IQueryable<Mesa>>().Setup(m => m.ElementType).Returns(mesasVacias.ElementType);
+        mesasMock.As<IQueryable<Mesa>>().Setup(m => m.GetEnumerator()).Returns(mesasVacias.GetEnumerator());
+        
+        mesasMock.Setup(x => x.AnyAsync(
+                It.IsAny<Expression<Func<Mesa, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Expression<Func<Mesa, bool>>, CancellationToken>((predicate, ct) =>
+            {
+                if (ct.IsCancellationRequested)
+                    throw new OperationCanceledException();
+                var compiledPredicate = predicate.Compile();
+                return Task.FromResult(mesasVacias.Any(compiledPredicate));
+            });
+        
+        _contextMock.Setup(x => x.Mesas).Returns(mesasMock.Object);
+
+        var usuariosVacios = new List<Usuario>().AsQueryable();
+        var usuariosMock = new Mock<DbSet<Usuario>>();
+        usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuariosVacios.Provider);
+        usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuariosVacios.Expression);
+        usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuariosVacios.ElementType);
+        usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuariosVacios.GetEnumerator());
+        
+        usuariosMock.Setup(x => x.AnyAsync(
+                It.IsAny<Expression<Func<Usuario, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Expression<Func<Usuario, bool>>, CancellationToken>((predicate, ct) =>
+            {
+                if (ct.IsCancellationRequested)
+                    throw new OperationCanceledException();
+                var compiledPredicate = predicate.Compile();
+                return Task.FromResult(usuariosVacios.Any(compiledPredicate));
+            });
+        
+        _contextMock.Setup(x => x.Usuarios).Returns(usuariosMock.Object);
+    }
+
     private void ConfigurarMocksParaValidacion(UnificarComandasCommand command)
     {
-        // Mock para comandas
+        // Mock para comandas - configuración manual async
+        var comandas = command.ComandasIds.Select(id => CrearComandaMock(id, EstadoComanda.Creada)).ToList().AsQueryable();
         var comandasMock = new Mock<DbSet<Comanda>>();
-        comandasMock.Setup(x => x.Where(It.IsAny<Expression<Func<Comanda, bool>>>()).CountAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(command.ComandasIds.Count);
-
-        var comandas = command.ComandasIds.Select(id => CrearComandaMock(id, EstadoComanda.Creada)).ToList();
         
-        comandasMock.Setup(x => x.Where(It.IsAny<Expression<Func<Comanda, bool>>>()).ToListAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandas);
-
-        // Mock para mesas
-        var mesasMock = new Mock<DbSet<Mesa>>();
-        mesasMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Mesa, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        var mesa = CrearMesaMock(command.MesaDestinoId, EstadoMesa.Disponible);
-        mesasMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Mesa, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(mesa);
-
-        // Mock para usuarios (meseros)
-        var usuariosMock = new Mock<DbSet<Usuario>>();
-        usuariosMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Usuario, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        var usuario = CrearUsuarioMock(command.MeseroId, true);
-        usuariosMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Usuario, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(usuario);
-
-        // Mock para factura items (no facturadas)
-        var facturaItemsMock = new Mock<DbSet<object>>(); // Usando object como placeholder
-        facturaItemsMock.Setup(x => x.Where(It.IsAny<Expression<Func<object, bool>>>()).AnyAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(comandas.Provider);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Expression).Returns(comandas.Expression);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(comandas.ElementType);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(comandas.GetEnumerator());
+        
+        comandasMock.Setup(x => x.AnyAsync(
+                It.IsAny<Expression<Func<Comanda, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Expression<Func<Comanda, bool>>, CancellationToken>((predicate, ct) =>
+            {
+                if (ct.IsCancellationRequested)
+                    throw new OperationCanceledException();
+                var compiledPredicate = predicate.Compile();
+                return Task.FromResult(comandas.Any(compiledPredicate));
+            });
+        
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
+
+        // Mock para mesas - configuración manual async
+        var mesa = CrearMesaMock(command.MesaDestinoId, EstadoMesa.Disponible);
+        var mesas = new List<Mesa> { mesa }.AsQueryable();
+        var mesasMock = new Mock<DbSet<Mesa>>();
+        
+        mesasMock.As<IQueryable<Mesa>>().Setup(m => m.Provider).Returns(mesas.Provider);
+        mesasMock.As<IQueryable<Mesa>>().Setup(m => m.Expression).Returns(mesas.Expression);
+        mesasMock.As<IQueryable<Mesa>>().Setup(m => m.ElementType).Returns(mesas.ElementType);
+        mesasMock.As<IQueryable<Mesa>>().Setup(m => m.GetEnumerator()).Returns(mesas.GetEnumerator());
+        
+        mesasMock.Setup(x => x.AnyAsync(
+                It.IsAny<Expression<Func<Mesa, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Expression<Func<Mesa, bool>>, CancellationToken>((predicate, ct) =>
+            {
+                if (ct.IsCancellationRequested)
+                    throw new OperationCanceledException();
+                var compiledPredicate = predicate.Compile();
+                return Task.FromResult(mesas.Any(compiledPredicate));
+            });
+        
         _contextMock.Setup(x => x.Mesas).Returns(mesasMock.Object);
+
+        // Mock para usuarios (meseros) - configuración manual async
+        var usuario = CrearUsuarioMock(command.MeseroId, true);
+        var usuarios = new List<Usuario> { usuario }.AsQueryable();
+        var usuariosMock = new Mock<DbSet<Usuario>>();
+        
+        usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
+        usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
+        usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
+        usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+        
+        usuariosMock.Setup(x => x.AnyAsync(
+                It.IsAny<Expression<Func<Usuario, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Expression<Func<Usuario, bool>>, CancellationToken>((predicate, ct) =>
+            {
+                if (ct.IsCancellationRequested)
+                    throw new OperationCanceledException();
+                var compiledPredicate = predicate.Compile();
+                return Task.FromResult(usuarios.Any(compiledPredicate));
+            });
+        
         _contextMock.Setup(x => x.Usuarios).Returns(usuariosMock.Object);
-        // FacturaItems no existe en IApplicationDbContext, comentamos por ahora
-        // _contextMock.Setup(x => x.FacturaItems).Returns(facturaItemsMock.Object);
     }
 
     private void ConfigurarMockComandasNoExisten()
     {
+        var comandasVacias = new List<Comanda>().AsQueryable();
         var comandasMock = new Mock<DbSet<Comanda>>();
-        comandasMock.Setup(x => x.Where(It.IsAny<Expression<Func<Comanda, bool>>>()).CountAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(0); // No encuentra comandas
-
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(comandasVacias.Provider);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Expression).Returns(comandasVacias.Expression);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(comandasVacias.ElementType);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(comandasVacias.GetEnumerator());
+        
+        comandasMock.Setup(x => x.AnyAsync(
+                It.IsAny<Expression<Func<Comanda, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Expression<Func<Comanda, bool>>, CancellationToken>((predicate, ct) =>
+            {
+                if (ct.IsCancellationRequested)
+                    throw new OperationCanceledException();
+                var compiledPredicate = predicate.Compile();
+                return Task.FromResult(comandasVacias.Any(compiledPredicate));
+            });
+        
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
     }
 
     private void ConfigurarMockComandasNoUnificables(UnificarComandasCommand command)
     {
-        var comandasMock = new Mock<DbSet<Comanda>>();
-        comandasMock.Setup(x => x.Where(It.IsAny<Expression<Func<Comanda, bool>>>()).CountAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(command.ComandasIds.Count);
-
-        var comandas = command.ComandasIds.Select(id => CrearComandaMock(id, EstadoComanda.Finalizada)).ToList();
+        // Crear comandas que NO son unificables (diferentes estados)
+        var comandas = command.ComandasIds.Select((id, index) => 
+            CrearComandaMock(id, index == 0 ? EstadoComanda.Finalizada : EstadoComanda.Creada)
+        ).ToList().AsQueryable();
         
-        comandasMock.Setup(x => x.Where(It.IsAny<Expression<Func<Comanda, bool>>>()).ToListAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comandas);
-
+        var comandasMock = new Mock<DbSet<Comanda>>();
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(comandas.Provider);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Expression).Returns(comandas.Expression);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(comandas.ElementType);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(comandas.GetEnumerator());
+        
+        comandasMock.Setup(x => x.AnyAsync(
+                It.IsAny<Expression<Func<Comanda, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Expression<Func<Comanda, bool>>, CancellationToken>((predicate, ct) =>
+            {
+                if (ct.IsCancellationRequested)
+                    throw new OperationCanceledException();
+                var compiledPredicate = predicate.Compile();
+                return Task.FromResult(comandas.Any(compiledPredicate));
+            });
+        
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
     }
 
     private void ConfigurarMockComandasFacturadas(UnificarComandasCommand command)
     {
-        // FacturaItems no está disponible en IApplicationDbContext
-        // Por ahora omitimos esta validación específica
+        ConfigurarMocksBasicos();
+        
+        // Crear comandas que están facturadas
+        var comandas = command.ComandasIds.Select(id => 
+        {
+            var comanda = CrearComandaMock(id, EstadoComanda.Finalizada);
+            // Marcar como facturada usando reflection si es necesario
+            return comanda;
+        }).ToList().AsQueryable();
+        
+        var comandasMock = new Mock<DbSet<Comanda>>();
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(comandas.Provider);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.Expression).Returns(comandas.Expression);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(comandas.ElementType);
+        comandasMock.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(comandas.GetEnumerator());
+        
+        comandasMock.Setup(x => x.AnyAsync(
+                It.IsAny<Expression<Func<Comanda, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Expression<Func<Comanda, bool>>, CancellationToken>((predicate, ct) =>
+            {
+                if (ct.IsCancellationRequested)
+                    throw new OperationCanceledException();
+                var compiledPredicate = predicate.Compile();
+                return Task.FromResult(comandas.Any(compiledPredicate));
+            });
+        
+        _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
     }
 
     private void ConfigurarMockMesaNoExiste()
     {
+        var mesasVacias = new List<Mesa>().AsQueryable();
         var mesasMock = new Mock<DbSet<Mesa>>();
-        mesasMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Mesa, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
+        mesasMock.As<IQueryable<Mesa>>().Setup(m => m.Provider).Returns(mesasVacias.Provider);
+        mesasMock.As<IQueryable<Mesa>>().Setup(m => m.Expression).Returns(mesasVacias.Expression);
+        mesasMock.As<IQueryable<Mesa>>().Setup(m => m.ElementType).Returns(mesasVacias.ElementType);
+        mesasMock.As<IQueryable<Mesa>>().Setup(m => m.GetEnumerator()).Returns(mesasVacias.GetEnumerator());
+        
+        mesasMock.Setup(x => x.AnyAsync(
+                It.IsAny<Expression<Func<Mesa, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Expression<Func<Mesa, bool>>, CancellationToken>((predicate, ct) =>
+            {
+                if (ct.IsCancellationRequested)
+                    throw new OperationCanceledException();
+                var compiledPredicate = predicate.Compile();
+                return Task.FromResult(mesasVacias.Any(compiledPredicate));
+            });
+        
         _contextMock.Setup(x => x.Mesas).Returns(mesasMock.Object);
     }
 
     private void ConfigurarMockMeseroNoExiste()
     {
+        var usuariosVacios = new List<Usuario>().AsQueryable();
         var usuariosMock = new Mock<DbSet<Usuario>>();
-        usuariosMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Usuario, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
+        usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuariosVacios.Provider);
+        usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuariosVacios.Expression);
+        usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuariosVacios.ElementType);
+        usuariosMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuariosVacios.GetEnumerator());
+        
+        usuariosMock.Setup(x => x.AnyAsync(
+                It.IsAny<Expression<Func<Usuario, bool>>>(),
+                It.IsAny<CancellationToken>()))
+            .Returns<Expression<Func<Usuario, bool>>, CancellationToken>((predicate, ct) =>
+            {
+                if (ct.IsCancellationRequested)
+                    throw new OperationCanceledException();
+                var compiledPredicate = predicate.Compile();
+                return Task.FromResult(usuariosVacios.Any(compiledPredicate));
+            });
+        
         _contextMock.Setup(x => x.Usuarios).Returns(usuariosMock.Object);
     }
 

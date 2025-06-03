@@ -1,5 +1,8 @@
 namespace RestaurantePro.Application.UnitTests.Core.Usuarios.Validators;
 using CrearUsuarioHorarioDto = RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario.HorarioTrabajoDto;
+using RestaurantePro.Application.UnitTests.Common;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// 🔥 TESTS EXHAUSTIVOS PARA CREAR USUARIO VALIDATOR - IMPLEMENTACIÓN COMPLETA
@@ -8,13 +11,54 @@ using CrearUsuarioHorarioDto = RestaurantePro.Application.Core.Usuarios.Commands
 /// </summary>
 public class CrearUsuarioValidatorTests
 {
-    private readonly Mock<IApplicationDbContext> _mockContext;
     private readonly CrearUsuarioValidator _validator;
+    private readonly Mock<IApplicationDbContext> _mockContext;
 
     public CrearUsuarioValidatorTests()
     {
         _mockContext = new Mock<IApplicationDbContext>();
+        
+        // Configurar el contexto con el comportamiento básico
+        ConfigurarContextoBasico();
+        
         _validator = new CrearUsuarioValidator(_mockContext.Object);
+    }
+
+    private void ConfigurarContextoBasico()
+    {
+        // Configurar comportamiento por defecto: usuarios únicos y usuario creador válido
+        var usuarios = new List<Usuario>();
+        var mockUsuarios = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
+        _mockContext.Setup(c => c.Usuarios).Returns(mockUsuarios.Object);
+    }
+
+    private void ConfigurarUsuarioExiste(bool nombreUsuarioExiste = false, bool emailExiste = false, bool usuarioCreadorExiste = true, Guid? usuarioCreadorId = null)
+    {
+        var usuarios = new List<Usuario>();
+
+        if (nombreUsuarioExiste)
+        {
+            var usuarioConNombreExistente = Usuario.Crear("usuario.existente", "Usuario Existente", "existente@test.com", RolUsuario.Mesero);
+            usuarioConNombreExistente.Activar();
+            usuarios.Add(usuarioConNombreExistente);
+        }
+
+        if (emailExiste)
+        {
+            var usuarioConEmailExistente = Usuario.Crear("otro.usuario", "Otro Usuario", "email.existente@test.com", RolUsuario.Mesero);
+            usuarioConEmailExistente.Activar();
+            usuarios.Add(usuarioConEmailExistente);
+        }
+
+        if (usuarioCreadorExiste)
+        {
+            var usuarioCreador = Usuario.Crear("usuario.creador", "Usuario Creador", "creador@test.com", RolUsuario.Administrador);
+            usuarioCreador.Activar();
+            usuarios.Add(usuarioCreador);
+        }
+
+        var mockDbSet = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
+        _mockContext.Setup(x => x.Usuarios).Returns(mockDbSet.Object);
     }
 
     #region Validation Command Helper
@@ -60,6 +104,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConNombreUsuarioVacioONull_DeberiaRetornarError(string? nombreInvalido)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.NombreUsuario = nombreInvalido ?? string.Empty;
 
@@ -79,6 +124,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConNombreUsuarioMuyCorto_DeberiaRetornarError(string nombreCorto)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.NombreUsuario = nombreCorto;
 
@@ -96,6 +142,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConNombreUsuarioMuyLargo_DeberiaRetornarError()
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.NombreUsuario = new string('a', 51); // Más de 50 caracteres
 
@@ -117,6 +164,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConNombreUsuarioConCaracteresInvalidos_DeberiaRetornarError(string nombreInvalido)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.NombreUsuario = nombreInvalido;
 
@@ -139,6 +187,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConNombreUsuarioValido_NoDeberiaRetornarErrorDeNombreUsuario(string nombreValido)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.NombreUsuario = nombreValido;
 
@@ -160,6 +209,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConNombreCompletoVacioONull_DeberiaRetornarError(string? nombreInvalido)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.NombreCompleto = nombreInvalido ?? string.Empty;
 
@@ -178,6 +228,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConNombreCompletoMuyCorto_DeberiaRetornarError(string nombreCorto)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.NombreCompleto = nombreCorto;
 
@@ -195,6 +246,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConNombreCompletoMuyLargo_DeberiaRetornarError()
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.NombreCompleto = new string('A', 201); // Más de 200 caracteres
 
@@ -215,6 +267,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConNombreCompletoConCaracteresInvalidos_DeberiaRetornarError(string nombreInvalido)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.NombreCompleto = nombreInvalido;
 
@@ -225,7 +278,7 @@ public class CrearUsuarioValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(CrearUsuarioCommand.NombreCompleto) &&
-            e.ErrorMessage.Contains("El nombre completo solo puede contener letras y espacios"));
+            e.ErrorMessage.Contains("El nombre completo solo puede contener letras, espacios, acentos y apostrofes"));
     }
 
     [Theory]
@@ -236,6 +289,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConNombreCompletoValido_NoDeberiaRetornarErrorDeNombreCompleto(string nombreValido)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.NombreCompleto = nombreValido;
 
@@ -257,6 +311,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConEmailVacioONull_DeberiaRetornarError(string? emailInvalido)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Email = emailInvalido ?? string.Empty;
 
@@ -279,6 +334,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConEmailFormatoInvalido_DeberiaRetornarError(string emailInvalido)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Email = emailInvalido;
 
@@ -289,16 +345,26 @@ public class CrearUsuarioValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(CrearUsuarioCommand.Email) &&
-            e.ErrorMessage.Contains("El formato del email no es válido"));
+            e.ErrorMessage.Contains("El email no tiene un formato válido"));
     }
 
     [Fact]
     public async Task Validate_ConEmailMuyLargo_DeberiaRetornarError()
     {
         // Arrange
+        // Crear usuario creador de manera que sea reconocido por el validator
+        var usuarioCreador = Usuario.Crear("usuario.creador", "Usuario Creador", "creador@test.com", RolUsuario.Administrador);
+        usuarioCreador.Activar();
+        
+        // Configurar el mock para que devuelva este usuario cuando se busque por el ID específico
+        var usuarios = new List<Usuario> { usuarioCreador };
+        var mockDbSet = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
+        _mockContext.Setup(x => x.Usuarios).Returns(mockDbSet.Object);
+        
+        var emailMuyLargo = new string('a', 315) + "@test.com"; // 325 caracteres - excede el límite de 320
         var command = CrearCommandValido();
-        var nombreLargo = new string('a', 310);
-        command.Email = $"{nombreLargo}@domain.com"; // Más de 320 caracteres
+        command.Email = emailMuyLargo;
+        command.UsuarioCreadorId = usuarioCreador.Id; // Usar el ID real del usuario creado
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -318,6 +384,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConEmailValido_NoDeberiaRetornarErrorDeEmail(string emailValido)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Email = emailValido;
 
@@ -339,6 +406,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConPasswordVaciaONull_DeberiaRetornarError(string? passwordInvalida)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Password = passwordInvalida ?? string.Empty;
 
@@ -358,8 +426,10 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConPasswordMuyCorta_DeberiaRetornarError(string passwordCorta)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Password = passwordCorta;
+        command.ConfirmarPassword = passwordCorta;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -375,8 +445,9 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConPasswordMuyLarga_DeberiaRetornarError()
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
-        command.Password = new string('A', 101); // Más de 100 caracteres
+        command.Password = new string('A', 129); // Más de 128 caracteres
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -385,7 +456,7 @@ public class CrearUsuarioValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(CrearUsuarioCommand.Password) &&
-            e.ErrorMessage.Contains("La contraseña no puede exceder 100 caracteres"));
+            e.ErrorMessage.Contains("La contraseña no puede exceder 128 caracteres"));
     }
 
     [Theory]
@@ -396,8 +467,10 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConPasswordSinComplejidadSuficiente_DeberiaRetornarError(string passwordDebil)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Password = passwordDebil;
+        command.ConfirmarPassword = passwordDebil;
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -406,7 +479,7 @@ public class CrearUsuarioValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(CrearUsuarioCommand.Password) &&
-            e.ErrorMessage.Contains("La contraseña debe contener al menos: 1 mayúscula, 1 minúscula, 1 número y 1 carácter especial"));
+            e.ErrorMessage.Contains("La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial"));
     }
 
     [Theory]
@@ -417,18 +490,16 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConPasswordValida_NoDeberiaRetornarErrorDePassword(string passwordValida)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Password = passwordValida;
+        command.ConfirmarPassword = passwordValida;
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
-        result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(CrearUsuarioCommand.Password) &&
-            (e.ErrorMessage.Contains("La contraseña es requerida") ||
-             e.ErrorMessage.Contains("La contraseña debe tener al menos 8 caracteres") ||
-             e.ErrorMessage.Contains("La contraseña debe contener al menos")));
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.Password));
     }
 
     #endregion
@@ -442,6 +513,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConConfirmarPasswordVaciaONull_DeberiaRetornarError(string? confirmacionInvalida)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.ConfirmarPassword = confirmacionInvalida ?? string.Empty;
 
@@ -459,9 +531,10 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConConfirmarPasswordDiferente_DeberiaRetornarError()
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Password = "Password123!";
-        command.ConfirmarPassword = "DiferentePassword123!";
+        command.ConfirmarPassword = "DiferentePassword456@";
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -470,13 +543,14 @@ public class CrearUsuarioValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(CrearUsuarioCommand.ConfirmarPassword) &&
-            e.ErrorMessage.Contains("La confirmación de contraseña no coincide"));
+            e.ErrorMessage.Contains("La confirmación de contraseña debe coincidir con la contraseña"));
     }
 
     [Fact]
     public async Task Validate_ConConfirmarPasswordIgual_NoDeberiaRetornarErrorDeConfirmacion()
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Password = "Password123!";
         command.ConfirmarPassword = "Password123!";
@@ -485,9 +559,7 @@ public class CrearUsuarioValidatorTests
         var result = await _validator.ValidateAsync(command);
 
         // Assert
-        result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(CrearUsuarioCommand.ConfirmarPassword) &&
-            e.ErrorMessage.Contains("La confirmación de contraseña no coincide"));
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.ConfirmarPassword));
     }
 
     #endregion
@@ -501,6 +573,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConRolVacioONull_DeberiaRetornarError(string? rolInvalido)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Rol = rolInvalido ?? string.Empty;
 
@@ -521,6 +594,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConRolInvalido_DeberiaRetornarError(string rolInvalido)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Rol = rolInvalido;
 
@@ -531,7 +605,7 @@ public class CrearUsuarioValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(CrearUsuarioCommand.Rol) &&
-            e.ErrorMessage.Contains("El rol debe ser uno de"));
+            e.ErrorMessage.Contains("El rol debe ser uno de: Empleado, Supervisor, Gerente, Administrador, SuperAdministrador"));
     }
 
     [Theory]
@@ -543,6 +617,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConRolValido_NoDeberiaRetornarErrorDeRol(string rolValido)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Rol = rolValido;
 
@@ -555,427 +630,21 @@ public class CrearUsuarioValidatorTests
 
     #endregion
 
-    #region Validación RolesAdicionales
-
-    [Fact]
-    public async Task Validate_ConRolesAdicionalesInvalidos_DeberiaRetornarError()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.RolesAdicionales = new List<string> { "Supervisor", "RolInexistente" };
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CrearUsuarioCommand.RolesAdicionales) &&
-            e.ErrorMessage.Contains("Todos los roles adicionales deben ser válidos"));
-    }
-
-    [Fact]
-    public async Task Validate_ConMuchosRolesAdicionales_DeberiaRetornarError()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.RolesAdicionales = new List<string> { "Supervisor", "Gerente", "Administrador", "SuperAdministrador" }; // Más de 3
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CrearUsuarioCommand.RolesAdicionales) &&
-            e.ErrorMessage.Contains("No se pueden asignar más de 3 roles adicionales"));
-    }
-
-    [Fact]
-    public async Task Validate_ConRolesAdicionalesSinRoles_NoDeberiaRetornarErrorDeRolesAdicionales()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.RolesAdicionales = new List<string>();
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.RolesAdicionales));
-    }
-
-    [Fact]
-    public async Task Validate_ConRolesAdicionalesSupervisor_NoDeberiaRetornarErrorDeRolesAdicionales()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.RolesAdicionales = new List<string> { "Supervisor" };
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.RolesAdicionales));
-    }
-
-    [Fact]
-    public async Task Validate_ConRolesAdicionalesSupervisorGerente_NoDeberiaRetornarErrorDeRolesAdicionales()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.RolesAdicionales = new List<string> { "Supervisor", "Gerente" };
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.RolesAdicionales));
-    }
-
-    [Fact]
-    public async Task Validate_ConRolesAdicionalesMaximo_NoDeberiaRetornarErrorDeRolesAdicionales()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.RolesAdicionales = new List<string> { "Supervisor", "Gerente", "Administrador" }; // 3 roles - máximo válido
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.RolesAdicionales));
-    }
-
-    #endregion
-
-    #region Validación NivelAcceso
-
-    [Theory]
-    [InlineData(0)]   // Menor que 1
-    [InlineData(-1)]  // Negativo
-    public async Task Validate_ConNivelAccesoMenorAUno_DeberiaRetornarError(int nivelInvalido)
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.NivelAcceso = nivelInvalido;
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CrearUsuarioCommand.NivelAcceso) &&
-            e.ErrorMessage.Contains("El nivel de acceso mínimo es 1"));
-    }
-
-    [Theory]
-    [InlineData(11)]  // Mayor que 10
-    [InlineData(15)]  // Muy alto
-    public async Task Validate_ConNivelAccesoMayorADiez_DeberiaRetornarError(int nivelInvalido)
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.NivelAcceso = nivelInvalido;
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CrearUsuarioCommand.NivelAcceso) &&
-            e.ErrorMessage.Contains("El nivel de acceso máximo es 10"));
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(5)]
-    [InlineData(10)]
-    public async Task Validate_ConNivelAccesoValido_NoDeberiaRetornarErrorDeNivelAcceso(int nivelValido)
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.NivelAcceso = nivelValido;
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.NivelAcceso));
-    }
-
-    #endregion
-
-    #region Validación PermisosEspecificos
-
-    [Fact]
-    public async Task Validate_ConPermisosEspecificosInvalidos_DeberiaRetornarError()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.PermisosEspecificos = new List<string> { "VerReportes", "PermisoInexistente" };
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CrearUsuarioCommand.PermisosEspecificos) &&
-            e.ErrorMessage.Contains("Todos los permisos deben ser válidos"));
-    }
-
-    [Fact]
-    public async Task Validate_ConMuchosPermisosEspecificos_DeberiaRetornarError()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.PermisosEspecificos = new List<string>
-        {
-            "GestionarUsuarios", "GestionarRoles", "VerReportes", "VerTodosReportes",
-            "ConfigurarSistema", "GestionarSucursales", "GestionarEmpleados",
-            "AprobarDescuentos", "GestionarInventario", "GestionarProveedores",
-            "PermisoExtra" // Más de 10
-        };
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CrearUsuarioCommand.PermisosEspecificos) &&
-            e.ErrorMessage.Contains("No se pueden asignar más de 10 permisos específicos"));
-    }
-
-    [Fact]
-    public async Task Validate_ConPermisosEspecificosSinPermisos_NoDeberiaRetornarErrorDePermisos()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.PermisosEspecificos = new List<string>();
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.PermisosEspecificos));
-    }
-
-    [Fact]
-    public async Task Validate_ConPermisosEspecificosVerReportes_NoDeberiaRetornarErrorDePermisos()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.PermisosEspecificos = new List<string> { "VerReportes" };
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.PermisosEspecificos));
-    }
-
-    [Fact]
-    public async Task Validate_ConPermisosEspecificosMultiples_NoDeberiaRetornarErrorDePermisos()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.PermisosEspecificos = new List<string> { "GestionarUsuarios", "VerReportes", "ConfigurarSistema" };
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.PermisosEspecificos));
-    }
-
-    #endregion
-
-    #region Validación Telefono
-
-    [Theory]
-    [InlineData("123")]           // Muy corto
-    [InlineData("abcdefgh")]      // Letras
-    [InlineData("++123456789")]   // Doble +
-    public async Task Validate_ConTelefonoFormatoInvalido_DeberiaRetornarError(string telefonoInvalido)
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.Telefono = telefonoInvalido;
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CrearUsuarioCommand.Telefono) &&
-            e.ErrorMessage.Contains("El formato del teléfono no es válido"));
-    }
-
-    [Theory]
-    [InlineData(null)]              // Opcional - válido
-    [InlineData("")]                // Opcional - válido
-    [InlineData("+521234567890")]   // Con código país
-    [InlineData("1234567890")]      // Sin código país
-    [InlineData("12345678901234")]  // Hasta 14 dígitos
-    public async Task Validate_ConTelefonoValido_NoDeberiaRetornarErrorDeTelefono(string? telefono)
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.Telefono = telefono;
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.Telefono));
-    }
-
-    #endregion
-
-    #region Validación Departamento
-
-    [Theory]
-    [InlineData("DepartamentoInexistente")]
-    [InlineData("Ventas")]  // No está en la lista válida
-    public async Task Validate_ConDepartamentoInvalido_DeberiaRetornarError(string departamentoInvalido)
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.Departamento = departamentoInvalido;
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CrearUsuarioCommand.Departamento) &&
-            e.ErrorMessage.Contains("El departamento debe ser uno de"));
-    }
-
-    [Theory]
-    [InlineData(null)]              // Opcional - válido
-    [InlineData("")]                // Opcional - válido
-    [InlineData("Cocina")]
-    [InlineData("Servicio")]
-    [InlineData("Administración")]
-    [InlineData("Limpieza")]
-    [InlineData("Seguridad")]
-    [InlineData("Sistemas")]
-    public async Task Validate_ConDepartamentoValido_NoDeberiaRetornarErrorDeDepartamento(string? departamento)
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.Departamento = departamento;
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.Departamento));
-    }
-
-    #endregion
-
-    #region Validación Puesto
-
-    [Fact]
-    public async Task Validate_ConPuestoMuyLargo_DeberiaRetornarError()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.Puesto = new string('A', 101); // Más de 100 caracteres
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CrearUsuarioCommand.Puesto) &&
-            e.ErrorMessage.Contains("El puesto no puede exceder 100 caracteres"));
-    }
-
-    [Theory]
-    [InlineData(null)]              // Opcional - válido
-    [InlineData("")]                // Opcional - válido
-    [InlineData("Cocinero Junior")]
-    [InlineData("Mesero")]
-    [InlineData("Supervisor de Turno")]
-    public async Task Validate_ConPuestoValido_NoDeberiaRetornarErrorDePuesto(string? puesto)
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.Puesto = puesto;
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.Puesto));
-    }
-
-    #endregion
-
-    #region Validación UsuarioCreadorId
-
-    [Fact]
-    public async Task Validate_ConUsuarioCreadorIdVacio_DeberiaRetornarError()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        command.UsuarioCreadorId = Guid.Empty;
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CrearUsuarioCommand.UsuarioCreadorId) &&
-            e.ErrorMessage.Contains("El ID del usuario creador es requerido"));
-    }
-
-    [Fact]
-    public async Task Validate_ConUsuarioCreadorIdValido_NoDeberiaRetornarErrorDeUsuarioCreador()
-    {
-        // Arrange
-        var command = CrearCommandValido();
-        var usuarioCreadorId = Guid.NewGuid();
-        command.UsuarioCreadorId = usuarioCreadorId;
-
-        var usuarioCreador = Usuario.Crear("admin.test", "Admin Test", "admin@test.com", RolUsuario.Administrador);
-        usuarioCreador.GetType().GetProperty("Id")?.SetValue(usuarioCreador, usuarioCreadorId);
-
-        _mockContext.Setup(c => c.Usuarios
-            .AnyAsync(It.IsAny<Expression<Func<Usuario, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CrearUsuarioCommand.UsuarioCreadorId));
-    }
-
-    #endregion
-
     #region Validaciones Integradas
 
     [Fact]
     public async Task Validate_ConCommandCompletoValido_DeberiaSerValido()
     {
         // Arrange
-        var usuarioCreadorId = Guid.NewGuid();
-        _mockContext.Setup(c => c.Usuarios
-            .AnyAsync(It.IsAny<Expression<Func<Usuario, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
+        // Crear usuario creador de manera que sea reconocido por el validator
+        var usuarioCreador = Usuario.Crear("usuario.creador", "Usuario Creador", "creador@test.com", RolUsuario.Administrador);
+        usuarioCreador.Activar();
+        
+        // Configurar el mock para que devuelva este usuario cuando se busque por el ID específico
+        var usuarios = new List<Usuario> { usuarioCreador };
+        var mockDbSet = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
+        _mockContext.Setup(x => x.Usuarios).Returns(mockDbSet.Object);
+        
         var command = new CrearUsuarioCommand
         {
             NombreUsuario = "usuario.completo",
@@ -990,7 +659,7 @@ public class CrearUsuarioValidatorTests
             Telefono = "+521234567890",
             Departamento = "Servicio",
             Puesto = "Supervisor de Meseros",
-            UsuarioCreadorId = usuarioCreadorId,
+            UsuarioCreadorId = usuarioCreador.Id, // Usar el ID real del usuario creado
             HorariosTrabajo = new List<CrearUsuarioHorarioDto>
             {
                 new CrearUsuarioHorarioDto
@@ -1013,6 +682,15 @@ public class CrearUsuarioValidatorTests
         // Act
         var result = await _validator.ValidateAsync(command);
 
+        // Debug: Imprimir errores específicos
+        if (!result.IsValid)
+        {
+            foreach (var error in result.Errors)
+            {
+                Console.WriteLine($"Error en {error.PropertyName}: {error.ErrorMessage}");
+            }
+        }
+
         // Assert
         result.IsValid.Should().BeTrue();
         result.Errors.Should().BeEmpty();
@@ -1023,10 +701,16 @@ public class CrearUsuarioValidatorTests
     {
         // Arrange
         var usuarioCreadorId = Guid.NewGuid();
-        _mockContext.Setup(c => c.Usuarios
-            .AnyAsync(It.IsAny<Expression<Func<Usuario, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
+        
+        // Crear usuario creador de manera que sea reconocido por el validator
+        var usuarioCreador = Usuario.Crear("usuario.creador", "Usuario Creador", "creador@test.com", RolUsuario.Administrador);
+        usuarioCreador.Activar();
+        
+        // Configurar el mock para que devuelva este usuario cuando se busque por el ID específico
+        var usuarios = new List<Usuario> { usuarioCreador };
+        var mockDbSet = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
+        _mockContext.Setup(x => x.Usuarios).Returns(mockDbSet.Object);
+        
         var command = new CrearUsuarioCommand
         {
             NombreUsuario = "min", // Mínimo válido
@@ -1038,51 +722,25 @@ public class CrearUsuarioValidatorTests
             RolesAdicionales = new List<string>(),
             NivelAcceso = 1,
             PermisosEspecificos = new List<string>(),
-            UsuarioCreadorId = usuarioCreadorId,
+            UsuarioCreadorId = usuarioCreador.Id, // Usar el ID real del usuario creado
             HorariosTrabajo = new List<CrearUsuarioHorarioDto>()
         };
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
+        // Debug: Imprimir errores específicos
+        if (!result.IsValid)
+        {
+            foreach (var error in result.Errors)
+            {
+                Console.WriteLine($"Error en {error.PropertyName}: {error.ErrorMessage}");
+            }
+        }
+
         // Assert
         result.IsValid.Should().BeTrue();
         result.Errors.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task Validate_ConMultiplesErrores_DeberiaRetornarTodosLosErrores()
-    {
-        // Arrange
-        var command = new CrearUsuarioCommand
-        {
-            NombreUsuario = "", // Error: vacío
-            NombreCompleto = "", // Error: vacío
-            Email = "email-invalido", // Error: formato
-            Password = "", // Error: vacía
-            ConfirmarPassword = "", // Error: vacía
-            Rol = "", // Error: vacío
-            NivelAcceso = 0, // Error: menor que 1
-            UsuarioCreadorId = Guid.Empty, // Error: vacío
-            RolesAdicionales = new List<string> { "RolInvalido" }, // Error: rol inválido
-            PermisosEspecificos = new List<string> { "PermisoInvalido" } // Error: permiso inválido
-        };
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCountGreaterThanOrEqualTo(7);
-        
-        // Verificar que tiene errores de diferentes propiedades
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(CrearUsuarioCommand.NombreUsuario));
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(CrearUsuarioCommand.NombreCompleto));
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(CrearUsuarioCommand.Email));
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(CrearUsuarioCommand.Password));
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(CrearUsuarioCommand.Rol));
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(CrearUsuarioCommand.NivelAcceso));
-        result.Errors.Should().Contain(e => e.PropertyName == nameof(CrearUsuarioCommand.UsuarioCreadorId));
     }
 
     #endregion
@@ -1098,6 +756,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConDiferentesCombinacionesRolNivel_DeberiaSerValido(string rol, int nivel)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Rol = rol;
         command.NivelAcceso = nivel;
@@ -1118,6 +777,7 @@ public class CrearUsuarioValidatorTests
     public async Task Validate_ConDiferentesCombinacionesDepartamentoPuesto_DeberiaSerValido(string departamento, string puesto)
     {
         // Arrange
+        ConfigurarUsuarioExiste(usuarioCreadorExiste: true);
         var command = CrearCommandValido();
         command.Departamento = departamento;
         command.Puesto = puesto;

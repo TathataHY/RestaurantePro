@@ -46,18 +46,18 @@ public class CrearUsuarioValidator : AbstractValidator<CrearUsuarioCommand>
             .WithMessage("El nombre completo debe tener al menos 2 caracteres.")
             .MaximumLength(200)
             .WithMessage("El nombre completo no puede exceder 200 caracteres.")
-            .Matches(@"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]+$")
-            .WithMessage("El nombre completo solo puede contener letras y espacios.");
+            .Matches(@"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s']+$")
+            .WithMessage("El nombre completo solo puede contener letras, espacios, acentos y apostrofes.");
 
         RuleFor(v => v.Email)
             .NotEmpty()
             .WithMessage("El email es requerido.")
-            .EmailAddress()
-            .WithMessage("El formato del email no es válido.")
             .MaximumLength(320)
             .WithMessage("El email no puede exceder 320 caracteres.")
+            .Must(BeValidEmail)
+            .WithMessage("El email no tiene un formato válido.")
             .MustAsync(EmailEsUnico)
-            .WithMessage("El email ya está registrado.");
+            .WithMessage("El email ya está en uso.");
     }
 
     private void ConfigurarValidacionesCredenciales()
@@ -67,23 +67,23 @@ public class CrearUsuarioValidator : AbstractValidator<CrearUsuarioCommand>
             .WithMessage("La contraseña es requerida.")
             .MinimumLength(8)
             .WithMessage("La contraseña debe tener al menos 8 caracteres.")
-            .MaximumLength(100)
-            .WithMessage("La contraseña no puede exceder 100 caracteres.")
+            .MaximumLength(128)
+            .WithMessage("La contraseña no puede exceder 128 caracteres.")
             .Must(TenerPasswordSegura)
-            .WithMessage("La contraseña debe contener al menos: 1 mayúscula, 1 minúscula, 1 número y 1 carácter especial.");
+            .WithMessage("La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial.");
 
         RuleFor(v => v.ConfirmarPassword)
             .NotEmpty()
             .WithMessage("La confirmación de contraseña es requerida.")
             .Equal(v => v.Password)
-            .WithMessage("La confirmación de contraseña no coincide.");
+            .WithMessage("La confirmación de contraseña debe coincidir con la contraseña.");
     }
 
     private void ConfigurarValidacionesRoles()
     {
         RuleFor(v => v.Rol)
             .NotEmpty()
-            .WithMessage("El rol principal es requerido.")
+            .WithMessage("El rol es requerido.")
             .Must(rol => _rolesValidos.Contains(rol, StringComparer.OrdinalIgnoreCase))
             .WithMessage($"El rol debe ser uno de: {string.Join(", ", _rolesValidos)}.");
 
@@ -244,6 +244,23 @@ public class CrearUsuarioValidator : AbstractValidator<CrearUsuarioCommand>
     {
         return !await _context.Usuarios
             .AnyAsync(u => u.Email == email, cancellationToken);
+    }
+
+    private static bool BeValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        try
+        {
+            // Usar expresión regular más estricta para validar email
+            var emailRegex = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+            return System.Text.RegularExpressions.Regex.IsMatch(email, emailRegex);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private static bool TenerPasswordSegura(string password)

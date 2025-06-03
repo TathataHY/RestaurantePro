@@ -222,7 +222,7 @@ public class UnificarComandasHandlerTests
             EstrategiaDescuentos = estrategia
         };
 
-        var comandas = CrearComandasConDescuentos(comandaIds, new[] { 100m, 50m });
+        var comandas = CrearComandasConDescuentos(comandaIds, new[] { 40m, 30m });
         var mesaDestino = CrearMesa(command.MesaDestinoId);
 
         ConfigurarMocksParaUnificacionExitosa(comandas, mesaDestino);
@@ -486,6 +486,20 @@ public class UnificarComandasHandlerTests
         
         _mockContext.Setup(c => c.Comandas).Returns(comandasMock.Object);
         _mockContext.Setup(c => c.Mesas).Returns(mesasMock.Object);
+        
+        // Configurar el mapper para respuestas básicas
+        var mockResult = new UnificarComandasDto
+        {
+            ComandaUnificadaId = Guid.NewGuid(),
+            ComandasOriginalesIds = new List<Guid>(),
+            MesaDestinoId = Guid.NewGuid(),
+            MeseroId = Guid.NewGuid(),
+            UnificacionExitosa = true,
+            EstrategiaDescuentos = EstrategiaDescuentos.Sumar
+        };
+        
+        _mockMapper.Setup(m => m.Map<UnificarComandasDto>(It.IsAny<object>()))
+            .Returns(mockResult);
     }
 
     private void ConfigurarMocksParaUnificacionExitosa(List<Comanda> comandas, Mesa mesaDestino)
@@ -498,6 +512,20 @@ public class UnificarComandasHandlerTests
 
         _mockUnitOfWork.Setup(u => u.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
+            
+        // Configurar mapper específico para este test
+        var mockResult = new UnificarComandasDto
+        {
+            ComandaUnificadaId = comandas.First().Id,
+            ComandasOriginalesIds = comandas.Select(c => c.Id).ToList(),
+            MesaDestinoId = mesaDestino.Id,
+            MeseroId = comandas.First().MeseroId,
+            UnificacionExitosa = true,
+            EstrategiaDescuentos = EstrategiaDescuentos.Sumar
+        };
+        
+        _mockMapper.Setup(m => m.Map<UnificarComandasDto>(It.IsAny<object>()))
+            .Returns(mockResult);
     }
 
     private void ConfigurarMockComandas(IEnumerable<Comanda> comandas)
@@ -521,11 +549,16 @@ public class UnificarComandasHandlerTests
     {
         return comandaIds.Select((id, index) => 
         {
+            // Crear comanda con cliente asociado para permitir descuentos de fidelización
             var comanda = CrearComanda(id, EstadoComanda.EnProceso, index + 1);
-            // Aplicar descuento de fidelización para simular descuentos
+            
+            // Usar reflection para agregar cliente ID si se va a aplicar descuento
             if (descuentos.Length > index && descuentos[index] > 0)
             {
-                comanda.AplicarDescuentoFidelizacion(descuentos[index] / 100m); // Convertir a porcentaje
+                typeof(Comanda).GetProperty("ClienteId")?.SetValue(comanda, Guid.NewGuid());
+                
+                var porcentajeValido = Math.Min(descuentos[index] / 100m, 0.40m); // Máximo 40%
+                comanda.AplicarDescuentoFidelizacion(porcentajeValido);
             }
             return comanda;
         }).ToList();

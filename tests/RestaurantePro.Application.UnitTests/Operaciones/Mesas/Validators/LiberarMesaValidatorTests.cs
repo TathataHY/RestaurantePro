@@ -399,9 +399,9 @@ public class LiberarMesaValidatorTests
         // Arrange - Mesa liberada por mesero específico
         var command = new LiberarMesaCommand
         {
-            MesaId = new Guid("MESA0001-1234-5678-9012-123456789012"),
+            MesaId = new Guid("12345001-1234-5678-9012-123456789012"),
             Observaciones = "Mesa 5 liberada tras servicio excelente",
-            MeseroId = new Guid("MESERO01-1234-5678-9012-123456789012")
+            MeseroId = new Guid("12345601-1234-5678-9012-123456789012")
         };
 
         // Act

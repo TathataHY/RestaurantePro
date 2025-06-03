@@ -50,9 +50,34 @@ public class GenerarReporteHandlerTests
         _mockMovimientos = new Mock<DbSet<MovimientoInventario>>();
         _mockIngredientes = new Mock<DbSet<Ingrediente>>();
 
+        // Configurar DbSets en el contexto
         _mockContext.Setup(x => x.Comandas).Returns(_mockComandas.Object);
         _mockContext.Setup(x => x.MovimientosInventario).Returns(_mockMovimientos.Object);
         _mockContext.Setup(x => x.Ingredientes).Returns(_mockIngredientes.Object);
+
+        // Configurar CurrentUserService
+        _mockCurrentUserService.Setup(x => x.UserId).Returns(Guid.NewGuid().ToString());
+        
+        // Configurar FileStorageService exitoso
+        _mockFileStorageService.Setup(x => x.SubirArchivoAsync(
+                It.IsAny<DatosArchivo>(), 
+                It.IsAny<string>(), 
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success("reports/reporte_12345.pdf"));
+            
+        _mockFileStorageService.Setup(x => x.ObtenerUrlTemporalAsync(
+                It.IsAny<string>(), 
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success("https://storage.example.com/reports/reporte_12345.pdf"));
+
+        // Configurar EmailService exitoso
+        _mockEmailService.Setup(x => x.SendEmailWithAttachmentAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()))
+            .ReturnsAsync(true);
 
         _handler = new GenerarReporteHandler(
             _mockContext.Object,

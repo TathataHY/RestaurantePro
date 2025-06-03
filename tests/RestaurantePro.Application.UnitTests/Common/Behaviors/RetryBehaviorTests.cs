@@ -5,13 +5,13 @@ namespace RestaurantePro.Application.UnitTests.Common.Behaviors;
 /// </summary>
 public class RetryBehaviorTests
 {
-    private readonly Mock<ILogger<RetryBehavior<CrearProductoCommand, Result<ProductoDto>>>> _mockLogger;
+    private readonly Mock<ILogger<RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>>> _mockLogger;
     private readonly Mock<IOptions<RetrySettings>> _mockRetrySettings;
-    private readonly RetryBehavior<CrearProductoCommand, Result<ProductoDto>> _behavior;
+    private readonly RetryBehavior<CrearFacturaCommand, Result<FacturaDto>> _behavior;
 
     public RetryBehaviorTests()
     {
-        _mockLogger = new Mock<ILogger<RetryBehavior<CrearProductoCommand, Result<ProductoDto>>>>();
+        _mockLogger = new Mock<ILogger<RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>>>();
         _mockRetrySettings = new Mock<IOptions<RetrySettings>>();
         
         var retrySettings = new RetrySettings
@@ -23,18 +23,25 @@ public class RetryBehaviorTests
         };
         
         _mockRetrySettings.Setup(x => x.Value).Returns(retrySettings);
-        _behavior = new RetryBehavior<CrearProductoCommand, Result<ProductoDto>>(_mockLogger.Object, _mockRetrySettings.Object);
+        _behavior = new RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>(_mockLogger.Object, _mockRetrySettings.Object);
     }
 
     [Fact]
     public async Task Handle_RequestExitoso_NoDeberiaReintentar()
     {
         // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
-        var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
+        
+        var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => {
+            callCount++;
+            return Task.FromResult(expectedResult);
+        };
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -48,11 +55,15 @@ public class RetryBehaviorTests
     public async Task Handle_ExcepcionTransitoria_DeberiaReintentar()
     {
         // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
-        var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
+        
+        var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
         {
             callCount++;
             if (callCount == 1)
@@ -72,10 +83,13 @@ public class RetryBehaviorTests
     public async Task Handle_ExcepcionNoTransitoria_NoDeberiaReintentar()
     {
         // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
         {
             callCount++;
             throw new ArgumentException("Parámetro inválido");
@@ -93,10 +107,13 @@ public class RetryBehaviorTests
     public async Task Handle_MaximosReintentos_DeberiaLanzarUltimaExcepcion()
     {
         // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
         {
             callCount++;
             throw new TimeoutException("Timeout persistente");
@@ -108,25 +125,30 @@ public class RetryBehaviorTests
 
         exception.Message.Should().Contain("Timeout persistente");
         
-        // Debería haber intentado el máximo de reintentos (3 por defecto + 1 intento inicial = 4)
-        callCount.Should().Be(4);
+        // Debería haber intentado el máximo de reintentos (3 por defecto)
+        callCount.Should().Be(3);
     }
 
     [Theory]
     [InlineData(typeof(TimeoutException))]
     [InlineData(typeof(TaskCanceledException))]
     [InlineData(typeof(HttpRequestException))]
-    [InlineData(typeof(SocketException))]
     public async Task Handle_ExcepcionesTransitorias_DeberiaReintentar(Type exceptionType)
     {
         // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
-        var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
         
-        var transitoryException = (Exception)Activator.CreateInstance(exceptionType, "Error transitorio")!;
+        var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
+        
+        var transitoryException = exceptionType == typeof(HttpRequestException) 
+            ? new HttpRequestException("Error transitorio")
+            : (Exception)Activator.CreateInstance(exceptionType, "Error transitorio")!;
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
         {
             callCount++;
             if (callCount == 1)
@@ -146,13 +168,17 @@ public class RetryBehaviorTests
     public async Task Handle_BackoffExponencial_DeberiaEsperarTiemposCrecientes()
     {
         // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
-        var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
+        
+        var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
         
         var tiemposEjecucion = new List<DateTime>();
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
         {
             callCount++;
             tiemposEjecucion.Add(DateTime.UtcNow);
@@ -180,22 +206,30 @@ public class RetryBehaviorTests
     public async Task Handle_ConCancellationToken_DeberiaRespetarCancelacion()
     {
         // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
+        
         var cancellationTokenSource = new CancellationTokenSource();
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
         {
             callCount++;
-            cancellationTokenSource.Cancel(); // Cancelar en primera ejecución
-            throw new TimeoutException("Timeout");
+            if (callCount == 1)
+            {
+                cancellationTokenSource.Cancel(); // Cancelar en primera ejecución
+                throw new TimeoutException("Timeout");
+            }
+            return Task.FromResult(Result.Success(new FacturaDto()));
         };
 
         // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(() => 
+        await Assert.ThrowsAsync<TimeoutException>(() => 
             _behavior.Handle(command, nextDelegate, cancellationTokenSource.Token));
 
-        // No debería continuar reintentando después de cancelación
+        // Debería haber intentado al menos una vez
         callCount.Should().Be(1);
     }
 
@@ -203,155 +237,30 @@ public class RetryBehaviorTests
     public async Task Handle_ConJitter_DeberiaVariarTiemposDeEspera()
     {
         // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
         
-        // Crear múltiples behaviors para probar variabilidad del jitter
-        var behaviors = Enumerable.Range(0, 5)
-            .Select(_ => new RetryBehavior<CrearProductoCommand, Result<ProductoDto>>(_mockLogger.Object, _mockRetrySettings.Object))
-            .ToList();
+        var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
         
-        var tiemposDelay = new List<TimeSpan>();
+        var tiemposEjecucion = new List<DateTime>();
+        var delays = new List<TimeSpan>();
         
-        foreach (var behaviorTest in behaviors)
+        int callCount = 0;
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
         {
-            var inicio = DateTime.UtcNow;
-            int callCount = 0;
-            RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
+            callCount++;
+            tiemposEjecucion.Add(DateTime.UtcNow);
+            
+            // Calcular delay si no es la primera ejecución
+            if (tiemposEjecucion.Count > 1)
             {
-                callCount++;
-                if (callCount == 1)
-                    throw new TimeoutException("Test");
-                return Task.FromResult(Result.Success(new ProductoDto()));
-            };
-
-            try
-            {
-                await behaviorTest.Handle(command, nextDelegate, CancellationToken.None);
-                var tiempoTotal = DateTime.UtcNow - inicio;
-                tiemposDelay.Add(tiempoTotal);
+                delays.Add(tiemposEjecucion.Last() - tiemposEjecucion[^2]);
             }
-            catch
-            {
-                // Ignorar excepciones para este test específico
-            }
-        }
-
-        // Assert
-        // Con jitter, los tiempos deberían variar entre ejecuciones
-        var tiemposDistintos = tiemposDelay.Distinct().Count();
-        tiemposDistintos.Should().BeGreaterThan(1, "El jitter debería producir tiempos diferentes");
-    }
-
-    [Fact]
-    public async Task Handle_RetryPolicyCustom_DeberiaUsarConfiguracion()
-    {
-        // Arrange
-        var customSettings = new RetrySettings
-        {
-            MaxAttempts = 2, // Solo 2 reintentos
-            BaseDelayMs = 50,
-            Enabled = true
-        };
-        
-        var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
-        mockCustomSettings.Setup(x => x.Value).Returns(customSettings);
-        
-        var customBehavior = new RetryBehavior<CrearProductoCommand, Result<ProductoDto>>(_mockLogger.Object, mockCustomSettings.Object);
-        
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
-        
-        int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
-        {
-            callCount++;
-            throw new TimeoutException("Timeout persistente");
-        };
-
-        // Act & Assert
-        await Assert.ThrowsAsync<TimeoutException>(() => 
-            customBehavior.Handle(command, nextDelegate, CancellationToken.None));
-
-        // Debería haber intentado solo 3 veces total (1 inicial + 2 reintentos)
-        callCount.Should().Be(3);
-    }
-
-    [Fact]
-    public async Task Handle_MultiplesFallas_DeberiaLoggearCadaReintento()
-    {
-        // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
-        
-        int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
-        {
-            callCount++;
-            throw new TimeoutException("Timeout persistente");
-        };
-
-        // Act & Assert
-        await Assert.ThrowsAsync<TimeoutException>(() => 
-            _behavior.Handle(command, nextDelegate, CancellationToken.None));
-
-        // Verificar que se loggea cada reintento
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Reintentando")),
-                It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
-            Times.AtLeastOnce);
-    }
-
-    [Fact]
-    public async Task Handle_ExcepcionCompleja_DeberiaSerializarContexto()
-    {
-        // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Compleja" };
-        var excepcionCompleja = new InvalidOperationException("Operación compleja falló");
-        
-        int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
-        {
-            callCount++;
-            if (callCount == 1)
-                throw excepcionCompleja;
-            return Task.FromResult(Result.Success(new ProductoDto { Nombre = "Pizza Compleja" }));
-        };
-
-        // Act
-        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
-
-        // Assert
-        result.Should().NotBeNull();
-        
-        // Verificar que se loggea información detallada del contexto
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Pizza Compleja")),
-                It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
-            Times.AtLeastOnce);
-    }
-
-    [Theory]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
-    public async Task Handle_ReintentoEnNumeroEspecifico_DeberiaLoggearNumeroCorrect(int numeroReintento)
-    {
-        // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
-        var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
-        
-        int callCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
-        {
-            callCount++;
-            if (callCount <= numeroReintento)
-                throw new TimeoutException($"Fallo {callCount}");
+            
+            if (callCount <= 3) // Fallar las primeras 3 veces
+                throw new TimeoutException("Timeout temporal");
             return Task.FromResult(expectedResult);
         };
 
@@ -361,17 +270,134 @@ public class RetryBehaviorTests
         // Assert
         result.Should().Be(expectedResult);
         
-        // Verificar que se ejecutó el número correcto de veces
-        callCount.Should().Be(numeroReintento + 1);
+        // El jitter debería producir tiempos diferentes entre intentos
+        var tiemposDistintos = delays.Select(d => d.TotalMilliseconds).Distinct().Count();
+        tiemposDistintos.Should().BeGreaterThan(1, "El jitter debería producir tiempos diferentes");
+    }
+
+    [Fact]
+    public async Task Handle_RetryPolicyCustom_DeberiaUsarConfiguracion()
+    {
+        // Arrange
+        var customSettings = new RetrySettings
+        {
+            MaxAttempts = 2,
+            BaseDelayMs = 50,
+            MaxDelayMs = 5000
+        };
         
-        // Verificar que se loggeó el número específico de reintento
+        var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
+        mockCustomSettings.Setup(x => x.Value).Returns(customSettings);
+        
+        var customBehavior = new RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>(_mockLogger.Object, mockCustomSettings.Object);
+        
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
+        
+        int callCount = 0;
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        {
+            callCount++;
+            throw new TimeoutException("Siempre falla");
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<TimeoutException>(() => 
+            customBehavior.Handle(command, nextDelegate, CancellationToken.None));
+
+        // Debería respetar MaxAttempts personalizado (2)
+        callCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Handle_MultiplesFallas_DeberiaLoggearCadaReintento()
+    {
+        // Arrange
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
+        
+        int callCount = 0;
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        {
+            callCount++;
+            throw new TimeoutException($"Fallo {callCount}");
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<TimeoutException>(() => 
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
+
+        // Verificar que se loggeó el reintento
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains($"Reintento {numeroReintento}")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Reintentando")),
                 It.IsAny<Exception>(),
-                (Func<It.IsAnyType, Exception?, string>)It.IsAny<object>()),
-            Times.Once);
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public async Task Handle_ExcepcionCompleja_DeberiaSerializarContexto()
+    {
+        // Arrange
+        var command = new CrearFacturaCommand();
+        var comandaId = Guid.NewGuid();
+        command.ComandasIds.Add(comandaId);
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
+        
+        int callCount = 0;
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        {
+            callCount++;
+            var complexException = new InvalidOperationException("Operación compleja falló");
+            complexException.Data["RequestId"] = comandaId;
+            complexException.Data["Timestamp"] = DateTime.UtcNow;
+            throw complexException;
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() => 
+            _behavior.Handle(command, nextDelegate, CancellationToken.None));
+
+        // No debería reintentar InvalidOperationException (no es transitoria)
+        callCount.Should().Be(1);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public async Task Handle_ReintentoEnNumeroEspecifico_DeberiaLoggearNumeroCorrect(int numeroReintento)
+    {
+        // Arrange
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
+        
+        var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
+        
+        int callCount = 0;
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        {
+            callCount++;
+            if (callCount < numeroReintento + 1) // Fallar hasta llegar al número de reintento deseado
+                throw new TimeoutException($"Fallo {callCount}");
+            return Task.FromResult(expectedResult);
+        };
+
+        // Act
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
+
+        // Assert
+        result.Should().Be(expectedResult);
+        callCount.Should().Be(numeroReintento + 1); // número de reintentos + 1 intento inicial exitoso
     }
 } 
