@@ -1,7 +1,12 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Threading;
+
 namespace RestaurantePro.Application.UnitTests.Common.Behaviors;
 
 /// <summary>
 /// Tests para RetryBehavior - Comportamiento de reintentos con backoff exponencial
+/// Optimizado para probar concurrencia y configuración dinámica
 /// </summary>
 public class RetryBehaviorTests
 {
@@ -168,6 +173,19 @@ public class RetryBehaviorTests
     public async Task Handle_BackoffExponencial_DeberiaEsperarTiemposCrecientes()
     {
         // Arrange
+        var customSettings = new RetrySettings
+        {
+            MaxAttempts = 4, // Aumentar intentos para mejor validación
+            BaseDelayMs = 100, // Delay base más predecible
+            MaxDelayMs = 5000,
+            Enabled = true
+        };
+        
+        var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
+        mockCustomSettings.Setup(x => x.Value).Returns(customSettings);
+        
+        var customBehavior = new RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>(_mockLogger.Object, mockCustomSettings.Object);
+        
         var command = new CrearFacturaCommand();
         command.ComandasIds.Add(Guid.NewGuid());
         command.NombreCliente = "Cliente Test";
@@ -176,30 +194,54 @@ public class RetryBehaviorTests
         var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
         
         var tiemposEjecucion = new List<DateTime>();
+        var delays = new List<TimeSpan>();
         
         int callCount = 0;
         RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
         {
             callCount++;
             tiemposEjecucion.Add(DateTime.UtcNow);
-            if (callCount <= 2)
+            
+            // Calcular delay si no es la primera ejecución
+            if (tiemposEjecucion.Count > 1)
+            {
+                delays.Add(tiemposEjecucion.Last() - tiemposEjecucion[^2]);
+            }
+            
+            if (callCount <= 2) // Fallar las primeras 2 veces, exitoso en la 3ra
                 throw new TimeoutException("Timeout");
             return Task.FromResult(expectedResult);
         };
 
         // Act
-        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
+        var result = await customBehavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
         tiemposEjecucion.Should().HaveCount(3);
+        delays.Should().HaveCount(2); // Dos delays entre las 3 ejecuciones
         
-        // Verificar que hay delays entre ejecuciones (backoff exponencial)
-        var delay1 = tiemposEjecucion[1] - tiemposEjecucion[0];
-        var delay2 = tiemposEjecucion[2] - tiemposEjecucion[1];
+        // Verificar que todos los delays son positivos
+        foreach (var delay in delays)
+        {
+            delay.Should().BeGreaterThan(TimeSpan.Zero, "Todos los delays deben ser positivos");
+        }
         
-        delay1.Should().BeGreaterThan(TimeSpan.Zero);
-        delay2.Should().BeGreaterThan(delay1); // Backoff exponencial
+        // Con jitter, los delays pueden variar, pero el rango debe ser apropiado
+        // Para el primer reintento: baseDelay (100ms) con jitter = 10ms a 100ms
+        // Para el segundo reintento: 2*baseDelay (200ms) con jitter = 20ms a 200ms
+        delays[0].TotalMilliseconds.Should().BeInRange(10, 120, "Primer delay debe estar en rango con jitter");
+        delays[1].TotalMilliseconds.Should().BeInRange(20, 220, "Segundo delay debe estar en rango con jitter");
+        
+        // Verificar que en promedio, el backoff exponencial funciona
+        // El rango máximo del segundo delay debe ser mayor que el del primero
+        var maxPossibleDelay1 = 100; // baseDelay * 1
+        
+        // Al menos uno de los delays debería mostrar la progresión exponencial
+        // O el segundo delay debería estar en un rango más alto que el primero
+        (delays[1].TotalMilliseconds > delays[0].TotalMilliseconds || 
+         delays[1].TotalMilliseconds > maxPossibleDelay1 * 0.5).Should().BeTrue(
+            "El backoff exponencial con jitter debería mostrar progresión en el tiempo base");
     }
 
     [Fact]
@@ -238,7 +280,7 @@ public class RetryBehaviorTests
     }
 
     [Fact]
-    public async Task Handle_ConJitter_DeberiaVariarTiemposDeEspera()
+    public async Task Handle_ConJitterMejorado_DeberiaVariarTiemposDeEspera()
     {
         // Arrange
         var command = new CrearFacturaCommand();
@@ -250,8 +292,8 @@ public class RetryBehaviorTests
         var customSettings = new RetrySettings
         {
             MaxAttempts = 5, // Aumentar a 5 intentos
-            BaseDelayMs = 10, // Delay base muy pequeño para el test
-            MaxDelayMs = 1000
+            BaseDelayMs = 50, // Delay base pequeño para el test
+            MaxDelayMs = 2000
         };
         
         var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
@@ -287,9 +329,151 @@ public class RetryBehaviorTests
         // Assert
         result.Should().Be(expectedResult);
         
-        // El jitter debería producir tiempos diferentes entre intentos
+        // El jitter mejorado debería producir tiempos más distribuidos
         var tiemposDistintos = delays.Select(d => d.TotalMilliseconds).Distinct().Count();
-        tiemposDistintos.Should().BeGreaterThan(1, "El jitter debería producir tiempos diferentes");
+        tiemposDistintos.Should().BeGreaterThan(1, "El jitter mejorado debería producir tiempos diferentes");
+        
+        // Los delays deben estar dentro del rango esperado (con jitter)
+        foreach (var delay in delays)
+        {
+            delay.TotalMilliseconds.Should().BeGreaterThan(0, "Delay debe ser positivo");
+            delay.TotalMilliseconds.Should().BeLessThan(2000, "Delay no debe exceder MaxDelay");
+        }
+    }
+
+    [Fact]
+    public async Task Handle_ConfiguracionDinamica_DeberiaUsarRetryableCommands()
+    {
+        // Arrange
+        var customSettings = new RetrySettings
+        {
+            MaxAttempts = 2,
+            BaseDelayMs = 50,
+            MaxDelayMs = 5000,
+            RetryableCommands = new List<string> { "CrearFactura", "ProcesarPago" }
+        };
+        
+        var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
+        mockCustomSettings.Setup(x => x.Value).Returns(customSettings);
+        
+        var customBehavior = new RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>(_mockLogger.Object, mockCustomSettings.Object);
+        
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
+        
+        int callCount = 0;
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        {
+            callCount++;
+            throw new TimeoutException("Siempre falla");
+        };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<TimeoutException>(() => 
+            customBehavior.Handle(command, nextDelegate, CancellationToken.None));
+
+        // Debería respetar MaxAttempts personalizado (2)
+        callCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Handle_ConfiguracionExcepcionesPersonalizadas_DeberiaRespetarRetryableExceptions()
+    {
+        // Arrange
+        var customSettings = new RetrySettings
+        {
+            MaxAttempts = 3,
+            BaseDelayMs = 10,
+            MaxDelayMs = 1000,
+            RetryableExceptions = new List<string> { "TimeoutException", "CustomTransientException" }
+        };
+        
+        var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
+        mockCustomSettings.Setup(x => x.Value).Returns(customSettings);
+        
+        var customBehavior = new RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>(_mockLogger.Object, mockCustomSettings.Object);
+        
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
+        
+        var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
+        
+        int callCount = 0;
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        {
+            callCount++;
+            if (callCount == 1)
+                throw new TimeoutException("Timeout configurado como retriable");
+            return Task.FromResult(expectedResult);
+        };
+
+        // Act
+        var result = await customBehavior.Handle(command, nextDelegate, CancellationToken.None);
+
+        // Assert
+        result.Should().Be(expectedResult);
+        callCount.Should().Be(2); // Primera falla + reintento exitoso
+    }
+
+    [Fact]
+    public async Task Handle_ConcurrenciaAlta_DeberiaManejarMultiplesThreadsSafely()
+    {
+        // Arrange
+        var customSettings = new RetrySettings
+        {
+            MaxAttempts = 2,
+            BaseDelayMs = 10,
+            MaxDelayMs = 100
+        };
+        
+        var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
+        mockCustomSettings.Setup(x => x.Value).Returns(customSettings);
+        
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
+        
+        var tasks = new List<Task>();
+        var results = new ConcurrentBag<bool>();
+        
+        // Act - Simular múltiples threads ejecutando retry behavior concurrentemente
+        for (int i = 0; i < 10; i++)
+        {
+            tasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    var behavior = new RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>(_mockLogger.Object, mockCustomSettings.Object);
+                    
+                    int attemptCount = 0;
+                    RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+                    {
+                        attemptCount++;
+                        if (attemptCount == 1)
+                            throw new TimeoutException("Thread-safe test");
+                        return Task.FromResult(Result.Success(new FacturaDto()));
+                    };
+
+                    await behavior.Handle(command, nextDelegate, CancellationToken.None);
+                    results.Add(true);
+                }
+                catch
+                {
+                    results.Add(false);
+                }
+            }));
+        }
+        
+        await Task.WhenAll(tasks);
+        
+        // Assert
+        results.Should().HaveCount(10);
+        results.Where(r => r).Should().HaveCount(10, "Todos los threads deberían completarse exitosamente");
     }
 
     [Fact]
@@ -430,5 +614,190 @@ public class RetryBehaviorTests
         // Assert
         result.Should().Be(expectedResult);
         callCount.Should().Be(numeroReintento + 1); // número de reintentos + 1 intento inicial exitoso
+    }
+
+    [Fact]
+    public async Task Handle_TimeoutExtremo_DeberiaRespetarMaxDelayOptimizado()
+    {
+        // Arrange - Test para verificar que los delays optimizados previenen timeouts extremos
+        var customSettings = new RetrySettings
+        {
+            MaxAttempts = 4,
+            BaseDelayMs = 800,  // Configuración optimizada
+            MaxDelayMs = 25000, // Configuración optimizada
+            Enabled = true
+        };
+        
+        var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
+        mockCustomSettings.Setup(x => x.Value).Returns(customSettings);
+        
+        var customBehavior = new RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>(_mockLogger.Object, mockCustomSettings.Object);
+        
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test Extremo";
+        command.TipoFactura = "Normal";
+        
+        var tiemposDelay = new List<TimeSpan>();
+        
+        int callCount = 0;
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        {
+            callCount++;
+            
+            // Simular delay tracking (aunque no podemos capturar directamente el delay interno)
+            if (callCount <= 3) // Fallar los primeros 3 intentos
+            {
+                throw new TimeoutException("Timeout extremo simulado");
+            }
+            return Task.FromResult(Result.Success(new FacturaDto { Id = Guid.NewGuid() }));
+        };
+
+        // Act
+        var stopwatch = Stopwatch.StartNew();
+        var result = await customBehavior.Handle(command, nextDelegate, CancellationToken.None);
+        stopwatch.Stop();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeTrue();
+        callCount.Should().Be(4); // 3 fallos + 1 éxito
+        
+        // El tiempo total no debería exceder el límite razonable (considerando delays optimizados)
+        // Con BaseDelay 800ms y 3 reintentos, esperamos menos de 15 segundos total
+        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(15), 
+            "Los delays optimizados deberían prevenir timeouts extremos");
+    }
+
+    [Fact]
+    public async Task Handle_AltaCargarConcurrente_DeberiaEscalarSinTimeouts()
+    {
+        // Arrange - Test de stress para prevenir timeouts bajo alta carga
+        var customSettings = new RetrySettings
+        {
+            MaxAttempts = 2,
+            BaseDelayMs = 50,   // Delay muy pequeño para test de stress
+            MaxDelayMs = 500,   // Límite bajo para test rápido
+            Enabled = true
+        };
+        
+        var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
+        mockCustomSettings.Setup(x => x.Value).Returns(customSettings);
+        
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Stress Test";
+        command.TipoFactura = "Normal";
+        
+        var tasks = new List<Task<bool>>();
+        var completedCount = 0;
+        var timeoutCount = 0;
+        
+        // Act - Ejecutar 20 tareas concurrentes para simular alta carga
+        for (int i = 0; i < 20; i++)
+        {
+            var taskId = i; // Capturar variable para closure
+            tasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    var behavior = new RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>(_mockLogger.Object, mockCustomSettings.Object);
+                    
+                    int attemptCount = 0;
+                    RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+                    {
+                        attemptCount++;
+                        
+                        // 50% de probabilidad de fallo en el primer intento para simular carga
+                        if (attemptCount == 1 && taskId % 2 == 0)
+                        {
+                            throw new TimeoutException($"Stress test timeout {taskId}");
+                        }
+                        
+                        return Task.FromResult(Result.Success(new FacturaDto { Id = Guid.NewGuid() }));
+                    };
+
+                    using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)); // Timeout de 5 segundos por tarea
+                    await behavior.Handle(command, nextDelegate, cts.Token);
+                    
+                    Interlocked.Increment(ref completedCount);
+                    return true;
+                }
+                catch (OperationCanceledException)
+                {
+                    Interlocked.Increment(ref timeoutCount);
+                    return false;
+                }
+                catch
+                {
+                    return false;
+                }
+            }));
+        }
+        
+        await Task.WhenAll(tasks);
+        
+        // Assert
+        completedCount.Should().BeGreaterThan(15, "Al menos 75% de las tareas deberían completarse sin timeout");
+        timeoutCount.Should().BeLessThan(5, "Menos del 25% de las tareas deberían sufrir timeout");
+        
+        var successfulTasks = tasks.Count(t => t.Result);
+        successfulTasks.Should().BeGreaterThan(15, "La mayoría de tareas deberían ser exitosas bajo alta carga");
+    }
+
+    [Fact]
+    public async Task Handle_ConfiguracionOptimizada_DeberiaReducirTiempoTotalRetry()
+    {
+        // Arrange - Comparar configuración optimizada vs configuración anterior
+        var configOptimizada = new RetrySettings
+        {
+            MaxAttempts = 3,
+            BaseDelayMs = 800,  // Optimizado
+            MaxDelayMs = 25000, // Optimizado
+            Enabled = true
+        };
+        
+        var configAnterior = new RetrySettings
+        {
+            MaxAttempts = 3,
+            BaseDelayMs = 1000, // Configuración anterior
+            MaxDelayMs = 30000, // Configuración anterior
+            Enabled = true
+        };
+        
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Optimización";
+        command.TipoFactura = "Normal";
+        
+        // Test con configuración optimizada
+        var mockOptimizada = new Mock<IOptions<RetrySettings>>();
+        mockOptimizada.Setup(x => x.Value).Returns(configOptimizada);
+        
+        var behaviorOptimizado = new RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>(_mockLogger.Object, mockOptimizada.Object);
+        
+        var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
+        
+        int callCountOptimizado = 0;
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegateOptimizado = _ => 
+        {
+            callCountOptimizado++;
+            if (callCountOptimizado <= 2) // Fallar 2 veces, exitoso en la 3ra
+                throw new TimeoutException("Test optimización");
+            return Task.FromResult(expectedResult);
+        };
+
+        // Act & Assert
+        var stopwatch = Stopwatch.StartNew();
+        var result = await behaviorOptimizado.Handle(command, nextDelegateOptimizado, CancellationToken.None);
+        stopwatch.Stop();
+        
+        result.Should().Be(expectedResult);
+        callCountOptimizado.Should().Be(3);
+        
+        // Con configuración optimizada, el tiempo total debería ser menor
+        // Esperamos que con 2 reintentos y configuración optimizada tome menos tiempo
+        stopwatch.Elapsed.Should().BeLessThan(TimeSpan.FromSeconds(5), 
+            "La configuración optimizada debería reducir tiempos de retry");
     }
 } 

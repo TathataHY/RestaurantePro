@@ -9,7 +9,7 @@ public class AjustarInventarioHandlerTests
     private readonly Mock<IIngredienteRepository> _ingredienteRepositoryMock;
     private readonly Mock<IMovimientoInventarioRepository> _movimientoRepositoryMock;
     private readonly Mock<IProveedorRepository> _proveedorRepositoryMock;
-    private readonly Mock<IInventarioAuditService> _auditServiceMock;
+    private readonly Mock<IAuditService> _auditServiceMock;
     private readonly Mock<ICommunicationService> _notificacionServiceMock;
     private readonly Mock<IAlertaStockService> _alertaStockServiceMock;
     private readonly Mock<IValidacionInventarioService> _validacionServiceMock;
@@ -25,7 +25,7 @@ public class AjustarInventarioHandlerTests
         _ingredienteRepositoryMock = new Mock<IIngredienteRepository>();
         _movimientoRepositoryMock = new Mock<IMovimientoInventarioRepository>();
         _proveedorRepositoryMock = new Mock<IProveedorRepository>();
-        _auditServiceMock = new Mock<IInventarioAuditService>();
+        _auditServiceMock = new Mock<IAuditService>();
         _notificacionServiceMock = new Mock<ICommunicationService>();
         _alertaStockServiceMock = new Mock<IAlertaStockService>();
         _validacionServiceMock = new Mock<IValidacionInventarioService>();
@@ -40,6 +40,10 @@ public class AjustarInventarioHandlerTests
             _movimientoRepositoryMock.Object,
             _validacionServiceMock.Object,
             _currentUserMock.Object,
+            _notificacionServiceMock.Object,
+            _alertaStockServiceMock.Object,
+            _auditServiceMock.Object,
+            _unitOfWorkMock.Object,
             _loggerMock.Object);
     }
 
@@ -194,14 +198,19 @@ public class AjustarInventarioHandlerTests
     {
         // Arrange
         var ingredienteId = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
         var command = new AjustarInventarioCommand
         {
             IngredienteId = ingredienteId,
             TipoMovimiento = TipoMovimientoInventario.Incremento,
             Cantidad = 10m,
             MotivoAjuste = "Ajuste de prueba",
-            UsuarioId = Guid.NewGuid()
+            UsuarioId = usuarioId
         };
+
+        // Setup user mock para evitar NullReferenceException en validación de autorización
+        _currentUserMock.Setup(x => x.UserId).Returns(usuarioId.ToString());
+        _currentUserMock.Setup(x => x.Rol).Returns(RolUsuario.Administrador.ToString());
 
         _ingredienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(ingredienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Ingrediente?)null);

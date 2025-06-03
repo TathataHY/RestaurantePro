@@ -1,3 +1,5 @@
+using MockQueryable.Moq;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Queries;
 
 /// <summary>
@@ -482,52 +484,14 @@ public class ConsultarDisponibilidadHandlerTests
 
     private void ConfigurarMockDbSetConMesas(List<Mesa> mesas)
     {
-        var queryableMesas = mesas.AsQueryable();
-        
-        _mockMesasDbSet.As<IQueryable<Mesa>>().Setup(m => m.Provider).Returns(queryableMesas.Provider);
-        _mockMesasDbSet.As<IQueryable<Mesa>>().Setup(m => m.Expression).Returns(queryableMesas.Expression);
-        _mockMesasDbSet.As<IQueryable<Mesa>>().Setup(m => m.ElementType).Returns(queryableMesas.ElementType);
-        _mockMesasDbSet.As<IQueryable<Mesa>>().Setup(m => m.GetEnumerator()).Returns(queryableMesas.GetEnumerator());
-
-        _mockMesasDbSet.Setup(x => x.FirstOrDefaultAsync(
-                It.IsAny<Expression<Func<Mesa, bool>>>(),
-                It.IsAny<CancellationToken>()))
-            .Returns<Expression<Func<Mesa, bool>>, CancellationToken>((predicate, ct) =>
-            {
-                if (ct.IsCancellationRequested)
-                    throw new OperationCanceledException();
-                
-                var compiledPredicate = predicate.Compile();
-                var result = mesas.FirstOrDefault(compiledPredicate);
-                return Task.FromResult(result);
-            });
-
-        _mockContext.Setup(c => c.Mesas).Returns(_mockMesasDbSet.Object);
+        var mockDbSet = mesas.AsQueryable().BuildMockDbSet();
+        _mockContext.Setup(c => c.Mesas).Returns(mockDbSet.Object);
     }
 
     private void ConfigurarMockDbSetConReservaciones(List<Reservacion> reservaciones)
     {
-        var queryableReservaciones = reservaciones.AsQueryable();
-        
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.Provider).Returns(queryableReservaciones.Provider);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.Expression).Returns(queryableReservaciones.Expression);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.ElementType).Returns(queryableReservaciones.ElementType);
-        _mockReservacionesDbSet.As<IQueryable<Reservacion>>().Setup(m => m.GetEnumerator()).Returns(queryableReservaciones.GetEnumerator());
-
-        _mockReservacionesDbSet.Setup(x => x.AnyAsync(
-                It.IsAny<Expression<Func<Reservacion, bool>>>(),
-                It.IsAny<CancellationToken>()))
-            .Returns<Expression<Func<Reservacion, bool>>, CancellationToken>((predicate, ct) =>
-            {
-                if (ct.IsCancellationRequested)
-                    throw new OperationCanceledException();
-                
-                var compiledPredicate = predicate.Compile();
-                var result = reservaciones.Any(compiledPredicate);
-                return Task.FromResult(result);
-            });
-
-        _mockContext.Setup(c => c.Reservaciones).Returns(_mockReservacionesDbSet.Object);
+        var mockDbSet = reservaciones.AsQueryable().BuildMockDbSet();
+        _mockContext.Setup(c => c.Reservaciones).Returns(mockDbSet.Object);
     }
 
     private List<Mesa> CrearMesasEjemplo()
@@ -555,31 +519,74 @@ public class ConsultarDisponibilidadHandlerTests
 
     private Mesa CrearMesa(Guid id, int numero, int capacidad, EstadoMesa estado, TipoMesa tipo)
     {
-        // Usar reflection para crear la mesa con propiedades privadas
-        var mesa = (Mesa)Activator.CreateInstance(typeof(Mesa), true)!;
+        // Usar el método de fábrica de la entidad Mesa
+        var mesa = Mesa.Crear(numero, capacidad, $"Mesa {numero}");
         
+        // Usar reflection solo para setear el ID y estado si es necesario
         typeof(Mesa).GetProperty("Id")?.SetValue(mesa, id);
-        typeof(Mesa).GetProperty("Numero")?.SetValue(mesa, numero);
-        typeof(Mesa).GetProperty("Capacidad")?.SetValue(mesa, capacidad);
-        typeof(Mesa).GetProperty("Estado")?.SetValue(mesa, estado);
-        typeof(Mesa).GetProperty("Tipo")?.SetValue(mesa, tipo);
-        typeof(Mesa).GetProperty("Ubicacion")?.SetValue(mesa, $"Mesa {numero}");
+        
+        // Cambiar estado si no es el por defecto (Disponible)
+        if (estado != EstadoMesa.Disponible)
+        {
+            switch (estado)
+            {
+                case EstadoMesa.Ocupada:
+                    mesa.MarcarComoOcupada();
+                    break;
+                case EstadoMesa.Reservada:
+                    mesa.MarcarComoReservada();
+                    break;
+                case EstadoMesa.FueraDeServicio:
+                    mesa.MarcarComoFueraDeServicio("Test");
+                    break;
+            }
+        }
         
         return mesa;
     }
 
     private Reservacion CrearReservacion(Guid id, Guid mesaId, DateTime fechaHora, EstadoReservacion estado)
     {
-        // Usar reflection para crear la reservación con propiedades privadas
-        var reservacion = (Reservacion)Activator.CreateInstance(typeof(Reservacion), true)!;
+        // Usar el método de fábrica de la entidad Reservacion
+        var clienteId = Guid.NewGuid();
+        var duracionEstimada = TimeSpan.FromHours(2);
+        var cantidadPersonas = 4;
+        var telefono = "123456789";
+        var email = "test@test.com";
         
+        var reservacion = Reservacion.Crear(
+            mesaId, 
+            clienteId, 
+            fechaHora, 
+            duracionEstimada, 
+            cantidadPersonas, 
+            telefono, 
+            email, 
+            "Reservación de prueba");
+        
+        // Usar reflection solo para setear el ID
         typeof(Reservacion).GetProperty("Id")?.SetValue(reservacion, id);
-        typeof(Reservacion).GetProperty("MesaId")?.SetValue(reservacion, mesaId);
-        typeof(Reservacion).GetProperty("FechaReservacion")?.SetValue(reservacion, fechaHora);
-        typeof(Reservacion).GetProperty("Estado")?.SetValue(reservacion, estado);
-        typeof(Reservacion).GetProperty("ClienteId")?.SetValue(reservacion, Guid.NewGuid());
-        typeof(Reservacion).GetProperty("NumeroPersonas")?.SetValue(reservacion, 4);
-        typeof(Reservacion).GetProperty("CodigoReservacion")?.SetValue(reservacion, $"RES-{id:N}".Substring(0, 12));
+        
+        // Cambiar estado si no es el por defecto (Pendiente)
+        if (estado != EstadoReservacion.Pendiente)
+        {
+            switch (estado)
+            {
+                case EstadoReservacion.Confirmada:
+                    reservacion.Confirmar();
+                    break;
+                case EstadoReservacion.Cancelada:
+                    reservacion.Cancelar("Test cancelación");
+                    break;
+                case EstadoReservacion.Completada:
+                    reservacion.Confirmar();
+                    reservacion.Completar();
+                    break;
+                case EstadoReservacion.NoShow:
+                    reservacion.MarcarNoAsistio();
+                    break;
+            }
+        }
         
         return reservacion;
     }

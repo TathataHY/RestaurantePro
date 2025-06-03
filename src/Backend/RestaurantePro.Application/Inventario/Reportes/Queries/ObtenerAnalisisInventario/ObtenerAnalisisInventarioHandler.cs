@@ -31,45 +31,52 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
 
     public async Task<Result<AnalisisInventarioDto>> Handle(ObtenerAnalisisInventarioQuery request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("📊 Iniciando análisis de inventario - Período: {FechaInicio} a {FechaFin}, Usuario: {UserId}",
-            request.FechaInicio, request.FechaFin, _currentUserService.UserId);
-
         try
         {
-            // 1. Validar parámetros
+            _logger.LogInformation("Iniciando análisis de inventario para el período {FechaInicio} - {FechaFin}", 
+                request.FechaInicio, request.FechaFin);
+
+            // Validar parámetros de entrada
             var validacionResult = ValidarParametros(request);
             if (!validacionResult.Succeeded)
             {
+                _logger.LogWarning("Validación falló: {Error}", validacionResult.Error);
                 return Result.Failure<AnalisisInventarioDto>(validacionResult.Error ?? "Error de validación");
             }
 
-            // 2. Obtener datos base del inventario
-            var datosInventario = await ObtenerDatosInventario(request, cancellationToken);
+            // Obtener datos del inventario
+            var datos = await ObtenerDatosInventario(request, cancellationToken);
+            _logger.LogDebug("Obtenidos {IngredientesCount} ingredientes y {MovimientosCount} movimientos", 
+                datos.Ingredientes.Count, datos.Movimientos.Count);
 
-            // 3. Calcular métricas principales
-            var metricas = await CalcularMetricas(datosInventario, request, cancellationToken);
+            // Calcular métricas
+            var metricas = await CalcularMetricas(datos, request, cancellationToken);
+            _logger.LogDebug("Métricas calculadas: {TotalIngredientes} ingredientes, {ValorTotal} valor total", 
+                metricas.TotalIngredientes, metricas.ValorTotalInventario);
 
-            // 4. Identificar alertas y problemas
-            var alertas = IdentificarAlertas(datosInventario, request, cancellationToken);
+            // Identificar alertas
+            var alertas = IdentificarAlertas(datos, request, cancellationToken);
+            _logger.LogDebug("Identificadas {AlertasCount} alertas", alertas.Count);
 
-            // 5. Generar recomendaciones
-            var recomendaciones = GenerarRecomendaciones(datosInventario, metricas, alertas, cancellationToken);
+            // Generar recomendaciones
+            var recomendaciones = GenerarRecomendaciones(datos, metricas, alertas, cancellationToken);
+            _logger.LogDebug("Generadas {RecomendacionesCount} recomendaciones", recomendaciones.Count);
 
-            // 6. Obtener tendencias
-            var tendencias = await CalcularTendencias(request, cancellationToken);
+            // Calcular tendencias si se solicitan
+            var tendencias = request.IncluirTendencias ? 
+                await CalcularTendencias(request, cancellationToken) : new TendenciasInventario();
 
-            // 7. Construir análisis completo
-            var analisis = ConstruirAnalisisCompleto(datosInventario, metricas, alertas, recomendaciones, tendencias, request);
+            // Construir análisis completo
+            var analisis = ConstruirAnalisisCompleto(datos, metricas, alertas, recomendaciones, tendencias, request);
 
-            _logger.LogInformation("✅ Análisis de inventario completado - {TotalIngredientes} ingredientes analizados, {TotalAlertas} alertas generadas",
-                analisis.ResumenExecutivo.TotalIngredientes, analisis.Alertas.Count);
-
+            _logger.LogInformation("Análisis de inventario completado exitosamente");
             return Result.Success(analisis);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error generando análisis de inventario: {Error}", ex.Message);
-            return Result.Failure<AnalisisInventarioDto>("Error interno al generar el análisis de inventario");
+            _logger.LogError(ex, "Error interno al generar el análisis de inventario: {Message}. StackTrace: {StackTrace}", 
+                ex.Message, ex.StackTrace);
+            return Result.Failure<AnalisisInventarioDto>($"Error interno al generar el análisis de inventario: {ex.Message}");
         }
     }
 
@@ -163,17 +170,32 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
         metricas.CantidadTotalEntrada = movimientosEntrada.Sum(m => m.Cantidad);
         metricas.CantidadTotalSalida = movimientosSalida.Sum(m => m.Cantidad);
 
-        // Rotación de inventario
-        if (metricas.ValorTotalInventario > 0)
+        // Rotación de inventario con validaciones para división por cero
+        if (metricas.ValorTotalInventario > 0 && datos.Ingredientes.Any())
         {
             var diasPeriodo = (datos.FechaFin - datos.FechaInicio).TotalDays;
+            
+            // Asegurar que tenemos al menos 1 día para evitar división por cero
+            if (diasPeriodo <= 0)
+                diasPeriodo = 1;
+
             var consumoDiarioPromedio = metricas.CantidadTotalSalida / (decimal)diasPeriodo;
-            var stockPromedio = datos.Ingredientes.Average(i => i.Stock);
+            
+            // Calcular stock promedio solo si hay ingredientes
+            var stockPromedio = datos.Ingredientes.Any() ? datos.Ingredientes.Average(i => i.Stock) : 0;
             
             if (stockPromedio > 0)
             {
                 metricas.RotacionInventario = consumoDiarioPromedio / stockPromedio;
             }
+            else
+            {
+                metricas.RotacionInventario = 0;
+            }
+        }
+        else
+        {
+            metricas.RotacionInventario = 0;
         }
 
         // TODO: Análisis de compras cuando OrdenesCompra esté disponible
@@ -181,7 +203,7 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
         metricas.ValorTotalCompras = 0;
         metricas.PromedioOrdenCompra = 0;
 
-        // Eficiencia del inventario (simplificado)
+        // Eficiencia del inventario (simplificado) con validación
         metricas.PorcentajeStockOptimo = datos.Ingredientes.Count > 0 ?
             (decimal)datos.Ingredientes.Count(i => i.Stock >= i.StockMinimo) / datos.Ingredientes.Count * 100 : 0;
 
@@ -553,10 +575,15 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
     private int CalcularDiasHastaAgotamiento(Ingrediente ingrediente, DatosInventarioAnalisis datos)
     {
         var totalDias = (decimal)(datos.FechaFin - datos.FechaInicio).TotalDays;
+        
+        // Asegurar que tenemos al menos 1 día para evitar división por cero
+        if (totalDias <= 0)
+            totalDias = 1;
+            
         var consumoPromedioDiario = datos.Movimientos
             .Where(m => m.IngredienteId == ingrediente.Id && 
                        m.TipoMovimiento == RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Egreso)
-            .Sum(m => m.Cantidad) / Math.Max(1, totalDias);
+            .Sum(m => m.Cantidad) / totalDias;
 
         return consumoPromedioDiario > 0 ? (int)(ingrediente.Stock / consumoPromedioDiario) : 999;
     }

@@ -28,7 +28,7 @@ public class AuditingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest,
         
         if (isCommand)
         {
-            await LogAuditStart(request, requestName, auditId);
+            LogAuditStart(request, requestName, auditId);
         }
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -39,7 +39,7 @@ public class AuditingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest,
             
             if (isCommand)
             {
-                await LogAuditSuccess(request, response, requestName, auditId, stopwatch.ElapsedMilliseconds);
+                LogAuditSuccess(request, response, requestName, auditId, stopwatch.ElapsedMilliseconds);
             }
             
             return response;
@@ -48,7 +48,7 @@ public class AuditingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest,
         {
             if (isCommand)
             {
-                await LogAuditFailure(request, requestName, auditId, stopwatch.ElapsedMilliseconds, ex);
+                LogAuditFailure(request, requestName, auditId, stopwatch.ElapsedMilliseconds, ex);
             }
             throw;
         }
@@ -81,11 +81,11 @@ public class AuditingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest,
     /// <summary>
     /// Registra el inicio de una operación auditable
     /// </summary>
-    private async Task LogAuditStart(TRequest request, string requestName, Guid auditId)
+    private void LogAuditStart(TRequest request, string requestName, Guid auditId)
     {
         try
         {
-            var userId = await GetCurrentUserId();
+            var userId = GetCurrentUserId();
             var requestData = SerializeRequest(request);
             
             _logger.LogInformation(
@@ -101,11 +101,11 @@ public class AuditingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest,
     /// <summary>
     /// Registra una operación exitosa
     /// </summary>
-    private async Task LogAuditSuccess(TRequest request, TResponse response, string requestName, Guid auditId, long elapsedMs)
+    private void LogAuditSuccess(TRequest request, TResponse response, string requestName, Guid auditId, long elapsedMs)
     {
         try
         {
-            var userId = await GetCurrentUserId();
+            var userId = GetCurrentUserId();
             var responseData = SerializeResponse(response);
             
             _logger.LogInformation(
@@ -121,11 +121,11 @@ public class AuditingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest,
     /// <summary>
     /// Registra una operación fallida
     /// </summary>
-    private async Task LogAuditFailure(TRequest request, string requestName, Guid auditId, long elapsedMs, Exception exception)
+    private void LogAuditFailure(TRequest request, string requestName, Guid auditId, long elapsedMs, Exception exception)
     {
         try
         {
-            var userId = await GetCurrentUserId();
+            var userId = GetCurrentUserId();
             
             _logger.LogError(
                 "AUDIT_FAILURE: {AuditId} | Usuario: {UserId} | Operación: {Operation} | Error: {ErrorMessage} | Duración: {ElapsedMs}ms | Timestamp: {Timestamp}",
@@ -140,7 +140,7 @@ public class AuditingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest,
     /// <summary>
     /// Obtiene el ID del usuario actual
     /// </summary>
-    private async Task<string> GetCurrentUserId()
+    private string GetCurrentUserId()
     {
         try
         {

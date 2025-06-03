@@ -167,9 +167,13 @@ public class AnularFacturaValidatorTests
     public async Task Validate_ConFacturaExistente_NoDeberiaRetornarErrorDeExistencia()
     {
         // Arrange
-        var command = CrearCommandValido();
         var factura = CrearFacturaValida();
         var usuario = CrearUsuarioValido();
+        
+        var command = CrearCommandValido();
+        // Hacer que el ID coincida con la factura del mock
+        command.FacturaId = factura.Id;
+        command.UsuarioAutorizaId = usuario.Id;
 
         // Configurar mocks con datos existentes
         ConfigurarMockConFacturaExistente(factura);
@@ -283,11 +287,19 @@ public class AnularFacturaValidatorTests
     public async Task Validate_ConDescripcionDetalladaMuyLarga_DeberiaRetornarError()
     {
         // Arrange
+        var factura = CrearFacturaValida();
+        var usuario = CrearUsuarioValido();
+        
         var command = CrearCommandValido();
-        command.DescripcionDetallada = new string('x', 501); // 501 caracteres
+        command.DescripcionDetallada = new string('x', 2001); // 2001 caracteres (excede el límite de 2000)
+        
+        // Hacer que los IDs coincidan con las entidades del mock
+        command.FacturaId = factura.Id;
+        command.UsuarioAutorizaId = usuario.Id;
 
         // Configurar mocks con datos existentes
-        ConfigurarMocksDefecto();
+        ConfigurarMockConFacturaExistente(factura);
+        ConfigurarMockConUsuarioExistente(usuario);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -296,7 +308,7 @@ public class AnularFacturaValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(AnularFacturaCommand.DescripcionDetallada) &&
-            e.ErrorMessage.Contains("máximo 500 caracteres"));
+            e.ErrorMessage.Contains("no puede exceder 2000 caracteres"));
     }
 
     [Theory]
@@ -323,6 +335,12 @@ public class AnularFacturaValidatorTests
         // Arrange
         var command = CrearCommandValido();
         command.DescripcionDetallada = new string('D', 2000); // Exactamente 2000 caracteres
+
+        // Configurar mocks con datos existentes para evitar otros errores
+        var factura = CrearFacturaValida();
+        var usuario = CrearUsuarioValido();
+        ConfigurarMockConFacturaExistente(factura);
+        ConfigurarMockConUsuarioExistente(usuario);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -675,9 +693,13 @@ public class AnularFacturaValidatorTests
     public async Task Validate_ConCommandCompletoValido_DeberiaSerValido()
     {
         // Arrange
-        var command = CrearCommandValido();
         var factura = CrearFacturaValida();
         var usuario = CrearUsuarioValido();
+        
+        var command = CrearCommandValido();
+        // Hacer que los IDs coincidan con las entidades del mock
+        command.FacturaId = factura.Id;
+        command.UsuarioAutorizaId = usuario.Id;
 
         // Configurar mocks con datos existentes
         ConfigurarMockConFacturaExistente(factura);
@@ -686,7 +708,13 @@ public class AnularFacturaValidatorTests
         // Act
         var result = await _validator.ValidateAsync(command);
 
-        // Assert
+        // Assert - Temporal: imprimir errores para debug
+        if (!result.IsValid)
+        {
+            var errorsText = string.Join("\n", result.Errors.Select(e => $"Property: {e.PropertyName}, Error: {e.ErrorMessage}"));
+            throw new Exception($"Validation failed with errors:\n{errorsText}");
+        }
+        
         result.IsValid.Should().BeTrue();
         result.Errors.Should().BeEmpty();
     }
@@ -695,19 +723,19 @@ public class AnularFacturaValidatorTests
     public async Task Validate_ConCommandMinimoValido_DeberiaSerValido()
     {
         // Arrange
+        var factura = CrearFacturaValida();
+        var usuario = CrearUsuarioValido();
+        
         var command = new AnularFacturaCommand
         {
-            FacturaId = Guid.NewGuid(),
+            FacturaId = factura.Id, // Usar el ID de la factura del mock
             Motivo = "Error en el pedido",
             TipoAnulacion = "Normal",
             Prioridad = 1,
-            UsuarioAutorizaId = Guid.NewGuid(),
+            UsuarioAutorizaId = usuario.Id, // Usar el ID del usuario del mock
             ProcesarDevolucionPago = true,
             MetodoDevolucion = "Efectivo"
         };
-
-        var factura = CrearFacturaValida();
-        var usuario = CrearUsuarioValido();
 
         // Configurar mocks con datos existentes
         ConfigurarMockConFacturaExistente(factura);
@@ -891,9 +919,17 @@ public class AnularFacturaValidatorTests
     public async Task Validate_ConMultiplesValidacionesConcurrentes_DeberiaSerConsistente()
     {
         // Arrange
-        var commands = Enumerable.Range(1, 10).Select(_ => CrearCommandValido()).ToList();
         var factura = CrearFacturaValida();
         var usuario = CrearUsuarioValido();
+        
+        var commands = Enumerable.Range(1, 10).Select(_ => 
+        {
+            var cmd = CrearCommandValido();
+            // Hacer que todos los comandos usen los mismos IDs que las entidades en los mocks
+            cmd.FacturaId = factura.Id;
+            cmd.UsuarioAutorizaId = usuario.Id;
+            return cmd;
+        }).ToList();
 
         // Configurar mocks con datos existentes
         ConfigurarMockConFacturaExistente(factura);

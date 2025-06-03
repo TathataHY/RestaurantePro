@@ -10,7 +10,7 @@ using RestaurantePro.Domain.Inventario.Ingredientes;
 using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
 using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos;
 using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
-using RestaurantePro.Domain.Core.Shared;
+using RestaurantePro.Domain.Core.SharedKernel;
 using AutoMapper;
 
 namespace RestaurantePro.Application.UnitTests.Inventario.Queries;
@@ -26,8 +26,8 @@ public class ObtenerAnalisisInventarioHandlerTests
     private readonly Mock<ILogger<ObtenerAnalisisInventarioHandler>> _loggerMock;
     private readonly Mock<IDateTimeService> _dateTimeServiceMock;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
-    private readonly Mock<DbSet<Ingrediente>> _ingredientesDbSetMock;
-    private readonly Mock<DbSet<MovimientoInventario>> _movimientosDbSetMock;
+    private Mock<DbSet<Ingrediente>> _ingredientesDbSetMock;
+    private Mock<DbSet<MovimientoInventario>> _movimientosDbSetMock;
     private readonly ObtenerAnalisisInventarioHandler _handler;
 
     public ObtenerAnalisisInventarioHandlerTests()
@@ -37,15 +37,9 @@ public class ObtenerAnalisisInventarioHandlerTests
         _loggerMock = new Mock<ILogger<ObtenerAnalisisInventarioHandler>>();
         _dateTimeServiceMock = new Mock<IDateTimeService>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
-        _ingredientesDbSetMock = new Mock<DbSet<Ingrediente>>();
-        _movimientosDbSetMock = new Mock<DbSet<MovimientoInventario>>();
 
         // Mock para IInventarioServiceFacade necesario por el constructor real
         var inventarioServiceFacadeMock = new Mock<IInventarioServiceFacade>();
-
-        // Setup context mocks
-        _contextMock.Setup(x => x.Ingredientes).Returns(_ingredientesDbSetMock.Object);
-        _contextMock.Setup(x => x.MovimientosInventario).Returns(_movimientosDbSetMock.Object);
 
         // Setup date time service
         _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
@@ -238,6 +232,11 @@ public class ObtenerAnalisisInventarioHandlerTests
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
+        if (!result.Succeeded)
+        {
+            // Log error for debugging
+            throw new Exception($"Handler failed with error: {result.Error}");
+        }
         result.Succeeded.Should().BeTrue();
         result.Value.ResumenExecutivo.Should().NotBeNull();
     }
