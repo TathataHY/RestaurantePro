@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Queries;
 
 /// <summary>
@@ -635,20 +637,52 @@ public class ObtenerReservacionesPorFechaHandlerTests
 
     private Reservacion CrearReservacion(Guid id, EstadoReservacion estado, DateTime fechaReservacion)
     {
-        // Usar reflection para crear la reservación con propiedades privadas
-        var reservacion = (Reservacion)Activator.CreateInstance(typeof(Reservacion), true)!;
+        // Usar el factory method de la entidad Reservacion
+        var mesaId = Guid.NewGuid();
+        var clienteId = Guid.NewGuid();
+        var duracion = TimeSpan.FromHours(2);
+        var cantidadPersonas = 4;
+        var telefono = "123456789";
+        var email = "test@example.com";
+        var observaciones = "Reservación de prueba";
         
-        typeof(Reservacion).GetProperty("Id")?.SetValue(reservacion, id);
-        typeof(Reservacion).GetProperty("Estado")?.SetValue(reservacion, estado);
-        typeof(Reservacion).GetProperty("ClienteId")?.SetValue(reservacion, Guid.NewGuid());
-        typeof(Reservacion).GetProperty("MesaId")?.SetValue(reservacion, Guid.NewGuid());
-        typeof(Reservacion).GetProperty("FechaReservacion")?.SetValue(reservacion, fechaReservacion);
-        typeof(Reservacion).GetProperty("Fecha")?.SetValue(reservacion, fechaReservacion.Date);
-        typeof(Reservacion).GetProperty("Hora")?.SetValue(reservacion, fechaReservacion.TimeOfDay);
-        typeof(Reservacion).GetProperty("NumeroPersonas")?.SetValue(reservacion, 4);
-        typeof(Reservacion).GetProperty("TelefonoContacto")?.SetValue(reservacion, "+1234567890");
-        typeof(Reservacion).GetProperty("CodigoReservacion")?.SetValue(reservacion, $"RES-{id:N}".Substring(0, 12));
-        typeof(Reservacion).GetProperty("FechaCreacion")?.SetValue(reservacion, DateTime.Now);
+        var reservacion = Reservacion.Crear(
+            mesaId,
+            clienteId,
+            fechaReservacion,
+            duracion,
+            cantidadPersonas,
+            telefono,
+            email,
+            observaciones);
+        
+        // Usar reflection solo para el ID y estado si es necesario
+        if (id != Guid.Empty)
+        {
+            var idProperty = typeof(Reservacion).BaseType?.GetProperty("Id", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+            idProperty?.SetValue(reservacion, id);
+        }
+        
+        // Cambiar estado si no es el por defecto (Pendiente)
+        if (estado != EstadoReservacion.Pendiente)
+        {
+            switch (estado)
+            {
+                case EstadoReservacion.Confirmada:
+                    reservacion.Confirmar();
+                    break;
+                case EstadoReservacion.Cancelada:
+                    reservacion.Cancelar("Test cancelación");
+                    break;
+                case EstadoReservacion.Completada:
+                    reservacion.Confirmar();
+                    reservacion.Completar();
+                    break;
+                case EstadoReservacion.NoShow:
+                    reservacion.MarcarNoAsistio();
+                    break;
+            }
+        }
         
         return reservacion;
     }

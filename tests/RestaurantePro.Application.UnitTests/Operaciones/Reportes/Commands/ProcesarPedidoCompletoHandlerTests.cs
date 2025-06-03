@@ -675,12 +675,13 @@ public class ProcesarPedidoCompletoHandlerTests
 
     private static Comanda CreateMockComanda(Guid id, Guid? clienteId, Guid mesaId, decimal total)
     {
-        var comanda = Comanda.Crear(mesaId, Guid.NewGuid(), clienteId, "Comanda de prueba");
+        // Usar el constructor estático correcto con los parámetros en el orden adecuado
+        var comanda = Comanda.Crear(Guid.NewGuid(), clienteId, mesaId, "Comanda de prueba");
         
-        // Usar reflexión para setear propiedades
+        // Usar reflexión para setear el ID específico después de la creación
         typeof(EntityBase).GetProperty("Id")?.SetValue(comanda, id);
         
-        // Agregar items para llegar al total
+        // Agregar items para llegar al total (después de setear la mesa para evitar la validación)
         comanda.AgregarItem(Guid.NewGuid(), "Producto Test", 1, total);
         
         return comanda;
