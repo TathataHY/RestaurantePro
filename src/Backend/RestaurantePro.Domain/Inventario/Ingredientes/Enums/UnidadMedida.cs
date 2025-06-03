@@ -50,6 +50,11 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Enums
         /// </summary>
         Paquete = 8,
         
+        /// <summary>
+        /// Piezas (unidades individuales)
+        /// </summary>
+        Piezas = 9,
+        
         // Alias en plural para compatibilidad con tests
         /// <summary>
         /// Alias en plural para Kilogramo
@@ -74,11 +79,6 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Enums
         /// <summary>
         /// Alias en plural para Unidad
         /// </summary>
-        Unidades = Unidad,
-        
-        /// <summary>
-        /// Alias para Unidad como piezas
-        /// </summary>
-        Piezas = Unidad
+        Unidades = Unidad
     }
 }

@@ -34,7 +34,7 @@ public class IngredienteDto : BaseDto
     /// <summary>
     /// Texto de la unidad de medida del ingrediente
     /// </summary>
-    public string UnidadMedidaTexto => UnidadMedida.ToString();
+    public string UnidadMedidaTexto { get; set; } = string.Empty;
 
     /// <summary>
     /// Stock actual disponible
@@ -79,7 +79,7 @@ public class IngredienteDto : BaseDto
     /// <summary>
     /// Indica si está activo
     /// </summary>
-    public bool Activo { get; set; }
+    public new bool Activo { get; set; }
 
     /// <summary>
     /// Indica si requiere refrigeración

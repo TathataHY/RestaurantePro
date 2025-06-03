@@ -447,11 +447,13 @@ public class CrearIngredienteValidatorTests
         var command = new CrearIngredienteCommand
         {
             Nombre = "", // Error: vacío
+            Codigo = "", // Error: vacío
             Descripcion = new string('A', 501), // Error: muy larga
             StockMinimo = -5, // Error: negativo
             StockInicial = -15, // Error: negativo
             CostoInicial = -25.00m, // Error: negativo
-            UsuarioId = Guid.Empty // Error: vacío
+            UsuarioId = Guid.Empty, // Error: vacío
+            MotivoStockInicial = "Stock inicial al crear ingrediente"
         };
 
         // Act
@@ -461,6 +463,7 @@ public class CrearIngredienteValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().HaveCountGreaterThan(3);
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearIngredienteCommand.Nombre));
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearIngredienteCommand.Codigo));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearIngredienteCommand.StockMinimo));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearIngredienteCommand.CostoInicial));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearIngredienteCommand.UsuarioId));
@@ -473,13 +476,15 @@ public class CrearIngredienteValidatorTests
         var command = new CrearIngredienteCommand
         {
             Nombre = "Aceite de oliva extra virgen",
+            Codigo = "ACE-OLI-001",
             Descripcion = "Aceite de oliva extra virgen importado de España, ideal para ensaladas y cocina mediterránea",
             UnidadMedida = "Litros",
             StockMinimo = 5,
             StockInicial = 20,
             CostoInicial = 85.50m,
             ProveedorPrincipalId = Guid.NewGuid(),
-            UsuarioId = Guid.NewGuid()
+            UsuarioId = Guid.NewGuid(),
+            MotivoStockInicial = "Stock inicial al crear ingrediente"
         };
 
         // Act
@@ -521,13 +526,15 @@ public class CrearIngredienteValidatorTests
         return new CrearIngredienteCommand
         {
             Nombre = "Harina de trigo",
+            Codigo = "HAR-TRI-001",
             Descripcion = "Harina de trigo refinada para panadería",
             UnidadMedida = "Kilogramos",
             StockMinimo = 10,
             StockInicial = 50,
             CostoInicial = 25.50m,
             ProveedorPrincipalId = Guid.NewGuid(),
-            UsuarioId = Guid.NewGuid()
+            UsuarioId = Guid.NewGuid(),
+            MotivoStockInicial = "Stock inicial al crear ingrediente"
         };
     }
 

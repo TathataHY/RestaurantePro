@@ -39,6 +39,7 @@ public class AjustarInventarioHandlerTests
             _ingredienteRepositoryMock.Object,
             _movimientoRepositoryMock.Object,
             _validacionServiceMock.Object,
+            _currentUserMock.Object,
             _loggerMock.Object);
     }
 

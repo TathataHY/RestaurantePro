@@ -20,16 +20,26 @@ public class CrearIngredienteValidator : AbstractValidator<CrearIngredienteComma
     private void ConfigurarValidacionesBasicas()
     {
         RuleFor(x => x.Nombre)
-            .NotEmpty().WithMessage("El nombre del ingrediente es obligatorio")
-            .MaximumLength(100).WithMessage("El nombre no puede exceder 100 caracteres")
-            .MinimumLength(2).WithMessage("El nombre debe tener al menos 2 caracteres")
-            .Matches(@"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s\-\.]+$").WithMessage("El nombre solo puede contener letras, espacios, guiones y puntos");
+            .NotEmpty().WithMessage("El nombre del ingrediente es obligatorio");
+
+        When(x => !string.IsNullOrWhiteSpace(x.Nombre), () =>
+        {
+            RuleFor(x => x.Nombre)
+                .MinimumLength(3).WithMessage("El nombre debe tener al menos 3 caracteres")
+                .MaximumLength(200).WithMessage("El nombre no puede exceder 200 caracteres")
+                .Matches(@"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s\-\.]+$").WithMessage("El nombre solo puede contener letras, espacios, guiones y puntos");
+        });
 
         RuleFor(x => x.Codigo)
-            .NotEmpty().WithMessage("El código del ingrediente es obligatorio")
-            .MaximumLength(20).WithMessage("El código no puede exceder 20 caracteres")
-            .MinimumLength(2).WithMessage("El código debe tener al menos 2 caracteres")
-            .Matches(@"^[A-Z0-9\-_]+$").WithMessage("El código solo puede contener letras mayúsculas, números, guiones y guiones bajos");
+            .NotEmpty().WithMessage("El código del ingrediente es obligatorio");
+
+        When(x => !string.IsNullOrWhiteSpace(x.Codigo), () =>
+        {
+            RuleFor(x => x.Codigo)
+                .MinimumLength(2).WithMessage("El código debe tener al menos 2 caracteres")
+                .MaximumLength(20).WithMessage("El código no puede exceder 20 caracteres")
+                .Matches(@"^[A-Z0-9\-_]+$").WithMessage("El código solo puede contener letras mayúsculas, números, guiones y guiones bajos");
+        });
 
         RuleFor(x => x.Descripcion)
             .MaximumLength(500).WithMessage("La descripción no puede exceder 500 caracteres");
@@ -48,22 +58,22 @@ public class CrearIngredienteValidator : AbstractValidator<CrearIngredienteComma
     private void ConfigurarValidacionesNumericas()
     {
         RuleFor(x => x.StockInicial)
-            .GreaterThanOrEqualTo(0).WithMessage("El stock inicial no puede ser negativo")
+            .GreaterThanOrEqualTo(0).WithMessage("El stock inicial debe ser mayor o igual a 0")
             .LessThan(1000000).WithMessage("El stock inicial no puede exceder 999,999 unidades");
 
         RuleFor(x => x.StockMinimo)
-            .GreaterThanOrEqualTo(0).WithMessage("El stock mínimo no puede ser negativo")
+            .GreaterThanOrEqualTo(0).WithMessage("El stock mínimo debe ser mayor o igual a 0")
             .LessThan(100000).WithMessage("El stock mínimo no puede exceder 99,999 unidades");
 
         RuleFor(x => x.CostoInicial)
-            .GreaterThanOrEqualTo(0).WithMessage("El costo inicial no puede ser negativo")
-            .LessThan(1000000).WithMessage("El costo inicial no puede exceder $999,999");
+            .GreaterThanOrEqualTo(0).WithMessage("El costo inicial debe ser mayor o igual a 0")
+            .LessThanOrEqualTo(100000).WithMessage("El costo inicial no puede exceder $100,000");
 
-        // El stock mínimo debe ser menor o igual al stock inicial
-        RuleFor(x => x)
-            .Must(x => x.StockMinimo <= x.StockInicial)
-            .WithMessage("El stock mínimo no puede ser mayor al stock inicial")
-            .When(x => x.StockInicial > 0);
+        // El stock inicial debe ser mayor o igual al stock mínimo
+        RuleFor(x => x.StockInicial)
+            .Must((command, stockInicial) => stockInicial >= command.StockMinimo)
+            .WithMessage("El stock inicial debe ser mayor o igual al stock mínimo")
+            .When(x => x.StockMinimo >= 0 && x.StockInicial >= 0);
     }
 
     /// <summary>
@@ -74,17 +84,31 @@ public class CrearIngredienteValidator : AbstractValidator<CrearIngredienteComma
         var rotacionesValidas = new[] { "Baja", "Media", "Alta" };
         RuleFor(x => x.Rotacion)
             .Must(r => rotacionesValidas.Contains(r, StringComparer.OrdinalIgnoreCase))
-            .WithMessage($"La rotación debe ser una de: {string.Join(", ", rotacionesValidas)}");
+            .WithMessage($"La rotación debe ser una de: {string.Join(", ", rotacionesValidas)}")
+            .When(x => !string.IsNullOrWhiteSpace(x.Rotacion));
 
         var temporadasValidas = new[] { "TodoElAño", "Primavera", "Verano", "Otoño", "Invierno" };
         RuleFor(x => x.Temporada)
             .Must(t => temporadasValidas.Contains(t, StringComparer.OrdinalIgnoreCase))
-            .WithMessage($"La temporada debe ser una de: {string.Join(", ", temporadasValidas)}");
+            .WithMessage($"La temporada debe ser una de: {string.Join(", ", temporadasValidas)}")
+            .When(x => !string.IsNullOrWhiteSpace(x.Temporada));
 
-        var unidadesValidas = new[] { "Gramos", "Kilogramos", "Mililitros", "Litros", "Unidad", "Docena", "Paquete" };
+        // Validación de unidades de medida - incluir tanto formas singulares como plurales
+        var unidadesValidas = new[] { 
+            "Unidad", "Unidades", 
+            "Kilogramo", "Kilogramos", 
+            "Gramo", "Gramos", 
+            "Litro", "Litros", 
+            "Mililitro", "Mililitros", 
+            "Cucharada", "Cucharadas",
+            "Cucharadita", "Cucharaditas",
+            "Taza", "Tazas",
+            "Paquete", "Paquetes",
+            "Piezas", "Pieza"
+        };
         RuleFor(x => x.UnidadMedida)
             .Must(u => unidadesValidas.Contains(u, StringComparer.OrdinalIgnoreCase))
-            .WithMessage($"La unidad de medida debe ser una de: {string.Join(", ", unidadesValidas)}");
+            .WithMessage("La unidad de medida no es válida");
     }
 
     /// <summary>

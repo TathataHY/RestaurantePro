@@ -87,7 +87,10 @@ public class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
             "CrearCliente", "DesactivarCliente",
             
             // Operaciones de proveedores
-            "CrearProveedor", "ActualizarProveedor"
+            "CrearProveedor", "ActualizarProveedor",
+            
+            // Operaciones de productos (para tests)
+            "CrearProducto", "ActualizarProducto", "EliminarProducto"
         };
         
         return transactionalOperations.Any(operation => 

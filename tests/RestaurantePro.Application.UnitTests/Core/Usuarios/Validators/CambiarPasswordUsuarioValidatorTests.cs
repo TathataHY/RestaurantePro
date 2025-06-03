@@ -13,7 +13,47 @@ public class CambiarPasswordUsuarioValidatorTests
     public CambiarPasswordUsuarioValidatorTests()
     {
         _mockContext = new Mock<IApplicationDbContext>();
+        
+        // Configurar el contexto con el comportamiento básico
+        ConfigurarContextoBasico();
+        
         _validator = new CambiarPasswordUsuarioValidator(_mockContext.Object);
+    }
+
+    private void ConfigurarContextoBasico()
+    {
+        // Configurar comportamiento por defecto: usuarios existentes para validaciones básicas
+        var usuarios = new List<Usuario>();
+        var mockUsuarios = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
+        _mockContext.Setup(c => c.Usuarios).Returns(mockUsuarios.Object);
+    }
+
+    private void ConfigurarUsuariosExistentes(bool usuarioExiste = true, bool autorizadorExiste = true, Guid? usuarioId = null, Guid? autorizadorId = null)
+    {
+        var usuarios = new List<Usuario>();
+
+        if (usuarioExiste)
+        {
+            var usuario = Usuario.Crear("usuario.test", "Usuario Test", "usuario@test.com", RolUsuario.Mesero);
+            if (usuarioId.HasValue)
+            {
+                usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId.Value);
+            }
+            usuarios.Add(usuario);
+        }
+
+        if (autorizadorExiste)
+        {
+            var autorizador = Usuario.Crear("autorizador.test", "Autorizador Test", "autorizador@test.com", RolUsuario.Administrador);
+            if (autorizadorId.HasValue)
+            {
+                autorizador.GetType().GetProperty("Id")?.SetValue(autorizador, autorizadorId.Value);
+            }
+            usuarios.Add(autorizador);
+        }
+
+        var mockUsuarios = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
+        _mockContext.Setup(c => c.Usuarios).Returns(mockUsuarios.Object);
     }
 
     #region Validation Command Helper
@@ -63,8 +103,7 @@ public class CambiarPasswordUsuarioValidatorTests
         var usuarioIdInexistente = Guid.NewGuid();
         command.UsuarioId = usuarioIdInexistente;
 
-        _mockContext.Setup(c => c.Usuarios.FindAsync(usuarioIdInexistente))
-            .ReturnsAsync((Usuario?)null);
+        ConfigurarUsuariosExistentes(usuarioExiste: false, autorizadorExiste: true);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -81,11 +120,7 @@ public class CambiarPasswordUsuarioValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var usuario = Usuario.Crear("test.user", "Test User", "test@test.com", RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, command.UsuarioId);
-
-        _mockContext.Setup(c => c.Usuarios.FindAsync(command.UsuarioId))
-            .ReturnsAsync(usuario);
+        ConfigurarUsuariosExistentes(usuarioExiste: true, autorizadorExiste: true, usuarioId: command.UsuarioId, autorizadorId: command.UsuarioAutorizaId);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -125,8 +160,7 @@ public class CambiarPasswordUsuarioValidatorTests
         var autorizadorIdInexistente = Guid.NewGuid();
         command.UsuarioAutorizaId = autorizadorIdInexistente;
 
-        _mockContext.Setup(c => c.Usuarios.FindAsync(autorizadorIdInexistente))
-            .ReturnsAsync((Usuario?)null);
+        ConfigurarUsuariosExistentes(usuarioExiste: true, autorizadorExiste: false);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -575,30 +609,20 @@ public class CambiarPasswordUsuarioValidatorTests
         // Arrange
         var usuarioId = Guid.NewGuid();
         var autorizadorId = Guid.NewGuid();
-        
-        var usuario = Usuario.Crear("test.user", "Test User", "test@test.com", RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
-        
-        var autorizador = Usuario.Crear("admin.user", "Admin User", "admin@test.com", RolUsuario.Administrador);
-        autorizador.GetType().GetProperty("Id")?.SetValue(autorizador, autorizadorId);
-
-        _mockContext.Setup(c => c.Usuarios.FindAsync(usuarioId))
-            .ReturnsAsync(usuario);
-        _mockContext.Setup(c => c.Usuarios.FindAsync(autorizadorId))
-            .ReturnsAsync(autorizador);
-
         var command = new CambiarPasswordUsuarioCommand
         {
             UsuarioId = usuarioId,
             UsuarioAutorizaId = autorizadorId,
-            MotivosCambio = "Cambio de contraseña por política de seguridad empresarial establecida",
-            Prioridad = 2,
+            MotivosCambio = "Cambio de contraseña por políticas de seguridad empresarial y actualización trimestral",
+            Prioridad = 3,
             PasswordNueva = "NuevaPasswordSegura123!",
             PasswordActual = "PasswordActualSegura123!",
             InvalidarSesionesActivas = true,
             FechaExpiracion = DateTime.UtcNow.AddDays(90),
-            ObservacionesAdicionales = "Cambio programado por política de seguridad de la empresa"
+            ObservacionesAdicionales = "Cambio programado por política de seguridad, usuario notificado previamente"
         };
+
+        ConfigurarUsuariosExistentes(usuarioExiste: true, autorizadorExiste: true, usuarioId: usuarioId, autorizadorId: autorizadorId);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -614,18 +638,6 @@ public class CambiarPasswordUsuarioValidatorTests
         // Arrange
         var usuarioId = Guid.NewGuid();
         var autorizadorId = Guid.NewGuid();
-        
-        var usuario = Usuario.Crear("test.user", "Test User", "test@test.com", RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
-        
-        var autorizador = Usuario.Crear("admin.user", "Admin User", "admin@test.com", RolUsuario.Administrador);
-        autorizador.GetType().GetProperty("Id")?.SetValue(autorizador, autorizadorId);
-
-        _mockContext.Setup(c => c.Usuarios.FindAsync(usuarioId))
-            .ReturnsAsync(usuario);
-        _mockContext.Setup(c => c.Usuarios.FindAsync(autorizadorId))
-            .ReturnsAsync(autorizador);
-
         var command = new CambiarPasswordUsuarioCommand
         {
             UsuarioId = usuarioId,
@@ -635,9 +647,9 @@ public class CambiarPasswordUsuarioValidatorTests
             PasswordNueva = "MinPass1!",
             PasswordActual = "OldPass1!",
             InvalidarSesionesActivas = false
-            // Sin FechaExpiracion - opcional
-            // Sin ObservacionesAdicionales - opcional
         };
+
+        ConfigurarUsuariosExistentes(usuarioExiste: true, autorizadorExiste: true, usuarioId: usuarioId, autorizadorId: autorizadorId);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -753,36 +765,42 @@ public class CambiarPasswordUsuarioValidatorTests
     public async Task Validate_ConCambioAdministrativo_DeberiaSerValido()
     {
         // Arrange
+        var usuarioId = Guid.NewGuid();
+        var autorizadorId = Guid.NewGuid();
         var command = CrearCommandValido();
-        command.Prioridad = 4; // Máxima prioridad - administrativo
-        command.InvalidarSesionesActivas = true;
-        command.ObservacionesAdicionales = "Cambio administrativo por política de seguridad";
+        command.UsuarioId = usuarioId;
+        command.UsuarioAutorizaId = autorizadorId;
+        command.MotivosCambio = "Cambio administrativo por política de seguridad";
+        command.Prioridad = 4;
+
+        ConfigurarUsuariosExistentes(usuarioExiste: true, autorizadorExiste: true, usuarioId: usuarioId, autorizadorId: autorizadorId);
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CambiarPasswordUsuarioCommand.Prioridad));
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CambiarPasswordUsuarioCommand.InvalidarSesionesActivas));
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CambiarPasswordUsuarioCommand.ObservacionesAdicionales));
+        result.IsValid.Should().BeTrue();
     }
 
     [Fact]
     public async Task Validate_ConCambioUsuarioRegular_DeberiaSerValido()
     {
         // Arrange
+        var usuarioId = Guid.NewGuid();
+        var autorizadorId = Guid.NewGuid();
         var command = CrearCommandValido();
-        command.Prioridad = 1; // Baja prioridad - usuario regular
-        command.InvalidarSesionesActivas = false;
-        command.FechaExpiracion = DateTime.UtcNow.AddDays(30);
+        command.UsuarioId = usuarioId;
+        command.UsuarioAutorizaId = autorizadorId;
+        command.MotivosCambio = "Solicitud de cambio por el usuario";
+        command.Prioridad = 1;
+
+        ConfigurarUsuariosExistentes(usuarioExiste: true, autorizadorExiste: true, usuarioId: usuarioId, autorizadorId: autorizadorId);
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
         // Assert
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CambiarPasswordUsuarioCommand.Prioridad));
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CambiarPasswordUsuarioCommand.InvalidarSesionesActivas));
-        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CambiarPasswordUsuarioCommand.FechaExpiracion));
+        result.IsValid.Should().BeTrue();
     }
 
     [Theory]

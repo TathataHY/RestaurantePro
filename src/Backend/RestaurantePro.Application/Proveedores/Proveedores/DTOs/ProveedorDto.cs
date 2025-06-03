@@ -7,9 +7,9 @@ namespace RestaurantePro.Application.Proveedores.Proveedores.DTOs;
 public class ProveedorDto : BaseDto
 {
     /// <summary>
-    /// ID del proveedor
+    /// Identificador único del proveedor
     /// </summary>
-    public Guid Id { get; set; }
+    public new Guid Id { get; set; }
 
     /// <summary>
     /// Nombre del proveedor
@@ -82,9 +82,9 @@ public class ProveedorDto : BaseDto
     public string CategoriaTexto => Categoria.ToString();
 
     /// <summary>
-    /// Indica si el proveedor está activo
+    /// Indica si está activo
     /// </summary>
-    public bool Activo { get; set; }
+    public new bool Activo { get; set; }
 
     /// <summary>
     /// Calificación promedio del proveedor
@@ -99,12 +99,12 @@ public class ProveedorDto : BaseDto
     /// <summary>
     /// Fecha de creación del registro
     /// </summary>
-    public DateTime FechaCreacion { get; set; }
+    public new DateTime FechaCreacion { get; set; }
 
     /// <summary>
-    /// Usuario que creó el registro
+    /// Usuario que registró al proveedor
     /// </summary>
-    public string CreadoPor { get; set; } = string.Empty;
+    public new string CreadoPor { get; set; } = string.Empty;
 
     /// <summary>
     /// Fecha de la última compra

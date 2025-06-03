@@ -500,66 +500,27 @@ public class ComercialMappingProfileTests
 
     private object CrearNombreMock(string nombre, string apellido)
     {
-        // Crear mock del value object Nombre
-        var nombreMock = new Mock<object>();
-        var nombreType = typeof(Cliente).Assembly.GetTypes()
-            .FirstOrDefault(t => t.Name.Contains("Nombre"));
-            
-        if (nombreType != null)
+        // Crear el value object ClienteNombre usando su factory method
+        try
         {
-            try
-            {
-                var nombreObj = Activator.CreateInstance(nombreType, true);
-                nombreType.GetProperty("Nombre")?.SetValue(nombreObj, nombre);
-                nombreType.GetProperty("Apellido")?.SetValue(nombreObj, apellido);
-                return nombreObj!;
-            }
-            catch { }
+            return ClienteNombre.Crear(nombre, apellido);
         }
-        
-        // Fallback: crear objeto dinámico
-        return new { Nombre = nombre, Apellido = apellido };
+        catch
+        {
+            // Fallback: crear objeto dinámico
+            return new { Nombre = nombre, Apellido = apellido };
+        }
     }
 
     private object CrearEmailMock(string email)
     {
-        // Crear mock del value object Email
-        var emailType = typeof(Cliente).Assembly.GetTypes()
-            .FirstOrDefault(t => t.Name.Contains("Email"));
-            
-        if (emailType != null)
-        {
-            try
-            {
-                var emailObj = Activator.CreateInstance(emailType, true);
-                emailType.GetProperty("Value")?.SetValue(emailObj, email);
-                return emailObj!;
-            }
-            catch { }
-        }
-        
-        // Fallback: crear objeto dinámico
+        // Crear objeto dinámico que simule el value object Email
         return new { Value = email };
     }
 
     private object CrearTelefonoMock(string telefono)
     {
-        // Crear mock del value object Telefono
-        var telefonoType = typeof(Cliente).Assembly.GetTypes()
-            .FirstOrDefault(t => t.Name.Contains("Telefono"));
-            
-        if (telefonoType != null)
-        {
-            try
-            {
-                var telefonoObj = Activator.CreateInstance(telefonoType, true);
-                telefonoType.GetProperty("Value")?.SetValue(telefonoObj, telefono);
-                return telefonoObj!;
-            }
-            catch { }
-        }
-        
-        // Fallback: crear objeto dinámico
+        // Crear objeto dinámico que simule el value object PhoneNumber
         return new { Value = telefono };
     }
 

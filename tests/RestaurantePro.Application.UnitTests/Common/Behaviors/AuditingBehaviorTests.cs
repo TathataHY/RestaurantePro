@@ -35,14 +35,14 @@ public class AuditingBehaviorTests
         result.Should().Be(expectedResult);
         
         // Verificar que se hizo logging de auditoría
-        var anyLogLevel = It.IsAny<LogLevel>();
-        var anyEventId = It.IsAny<EventId>();
-        var anyState = It.IsAny<It.IsAnyType>();
-        var anyException = It.IsAny<Exception>();
-        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
-            x => x.Log(anyLogLevel, anyEventId, anyState, anyException, anyFormatter),
-            Times.AtLeastOnce);
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("AUDIT_START")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
@@ -64,13 +64,14 @@ public class AuditingBehaviorTests
         result.Should().Be(expectedResult);
         
         // Verificar que se hizo logging de auditoría exitosa
-        var anyEventId = It.IsAny<EventId>();
-        var anyState = It.IsAny<It.IsAnyType>();
-        var anyException = It.IsAny<Exception>();
-        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
-            x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
-            Times.AtLeastOnce);
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("AUDIT_SUCCESS")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
@@ -90,13 +91,14 @@ public class AuditingBehaviorTests
             _behavior.Handle(command, nextDelegate, CancellationToken.None));
         
         // Verificar que se hizo logging de auditoría fallida
-        var anyEventId = It.IsAny<EventId>();
-        var anyState = It.IsAny<It.IsAnyType>();
-        var anyException = It.IsAny<Exception>();
-        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
-            x => x.Log(LogLevel.Warning, anyEventId, anyState, anyException, anyFormatter),
-            Times.AtLeastOnce);
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("AUDIT_FAILURE")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
@@ -146,13 +148,14 @@ public class AuditingBehaviorTests
         result.Should().Be(expectedResult);
         
         // Debería loggear pero sin información de usuario
-        var anyEventId = It.IsAny<EventId>();
-        var anyState = It.IsAny<It.IsAnyType>();
-        var anyException = It.IsAny<Exception>();
-        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
-            x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
-            Times.AtLeastOnce);
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("AUDIT_START")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
@@ -175,13 +178,14 @@ public class AuditingBehaviorTests
         result.Should().Be(expectedResult);
         
         // Verificar que se incluye información de usuario
-        var anyEventId = It.IsAny<EventId>();
-        var anyState = It.IsAny<It.IsAnyType>();
-        var anyException = It.IsAny<Exception>();
-        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
-            x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
-            Times.AtLeastOnce);
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("AUDIT_START")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
@@ -202,13 +206,14 @@ public class AuditingBehaviorTests
         result.Should().Be(expectedResult);
         
         // Verificar que se incluye tiempo de ejecución
-        var anyEventId = It.IsAny<EventId>();
-        var anyState = It.IsAny<It.IsAnyType>();
-        var anyException = It.IsAny<Exception>();
-        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
-            x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
-            Times.AtLeastOnce);
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("AUDIT_SUCCESS")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
@@ -233,13 +238,14 @@ public class AuditingBehaviorTests
         result.Should().Be(expectedResult);
         
         // Verificar que se serializa el command
-        var anyEventId = It.IsAny<EventId>();
-        var anyState = It.IsAny<It.IsAnyType>();
-        var anyException = It.IsAny<Exception>();
-        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
-            x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
-            Times.AtLeastOnce);
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("AUDIT_START") && v.ToString()!.Contains("Pizza Especial")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Fact]
@@ -263,13 +269,14 @@ public class AuditingBehaviorTests
         result.Should().Be(expectedResult);
         
         // Verificar que se audita el command
-        var anyEventId = It.IsAny<EventId>();
-        var anyState = It.IsAny<It.IsAnyType>();
-        var anyException = It.IsAny<Exception>();
-        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
-            x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
-            Times.AtLeastOnce);
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("AUDIT_START")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     [Theory]
@@ -293,13 +300,14 @@ public class AuditingBehaviorTests
         result.Should().Be(expectedResult);
         
         // Verificar que se incluye el nombre del command (usando el parámetro commandName)
-        var anyEventId = It.IsAny<EventId>();
-        var anyState = It.IsAny<It.IsAnyType>();
-        var anyException = It.IsAny<Exception>();
-        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
-            x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
-            Times.AtLeastOnce);
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("AUDIT_START")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
         
         // Verificar que el nombre del comando es válido
         commandName.Should().NotBeNullOrEmpty();
@@ -324,12 +332,13 @@ public class AuditingBehaviorTests
 
         // Assert
         // Verificar que se generan múltiples audit IDs únicos
-        var anyEventId = It.IsAny<EventId>();
-        var anyState = It.IsAny<It.IsAnyType>();
-        var anyException = It.IsAny<Exception>();
-        var anyFormatter = It.IsAny<Func<It.IsAnyType, Exception?, string>>();
         _mockLogger.Verify(
-            x => x.Log(LogLevel.Information, anyEventId, anyState, anyException, anyFormatter),
-            Times.AtLeast(4)); // 2 comandos x 2 logs mínimo cada uno
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("AUDIT_START")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Exactly(2)); // 2 comandos
     }
 } 

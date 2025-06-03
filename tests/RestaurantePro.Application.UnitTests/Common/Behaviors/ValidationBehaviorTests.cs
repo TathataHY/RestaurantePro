@@ -245,7 +245,7 @@ public class ValidationBehaviorTests
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
             _behavior.Handle(command, nextDelegate, CancellationToken.None));
 
-        // Debe filtrar errores con propiedades nulas o vacías
+        // Debe filtrar errores con propiedades nulas/vacías y mantener solo el válido
         exception.Errors.Should().ContainKey("Nombre");
         exception.Errors.Should().HaveCount(1);
         exception.Errors["Nombre"].Should().Contain("El nombre es requerido");
@@ -256,11 +256,11 @@ public class ValidationBehaviorTests
     {
         // Arrange
         var command = new CrearProductoCommand { Nombre = "Test" };
-        ValidationContext<CrearProductoCommand> capturedContext = null;
+        IValidationContext capturedContext = null;
         
         var validationResult = new FluentValidation.Results.ValidationResult();
         _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
-            .Callback<ValidationContext<CrearProductoCommand>, CancellationToken>((context, ct) => 
+            .Callback<IValidationContext, CancellationToken>((context, ct) => 
             {
                 capturedContext = context;
             })

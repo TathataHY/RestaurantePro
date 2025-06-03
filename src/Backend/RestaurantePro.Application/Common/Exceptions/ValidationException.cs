@@ -20,6 +20,7 @@ public class ValidationException : Exception
         : this()
     {
         Errors = failures
+            .Where(e => !string.IsNullOrEmpty(e.PropertyName) && !string.IsNullOrEmpty(e.ErrorMessage))
             .GroupBy(e => e.PropertyName, e => e.ErrorMessage)
             .ToDictionary(failureGroup => failureGroup.Key, failureGroup => failureGroup.ToArray());
     }
@@ -39,6 +40,15 @@ public class ValidationException : Exception
         Errors = new Dictionary<string, string[]>
         {
             { field, errors }
+        };
+    }
+
+    public ValidationException(string message, string field, string error)
+        : base(message)
+    {
+        Errors = new Dictionary<string, string[]>
+        {
+            { field, new[] { error } }
         };
     }
 } 

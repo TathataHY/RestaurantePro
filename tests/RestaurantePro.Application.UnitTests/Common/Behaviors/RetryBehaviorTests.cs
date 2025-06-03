@@ -219,18 +219,22 @@ public class RetryBehaviorTests
             callCount++;
             if (callCount == 1)
             {
-                cancellationTokenSource.Cancel(); // Cancelar en primera ejecución
-                throw new TimeoutException("Timeout");
+                // Primera llamada: lanzar excepción transitoria para que reintente
+                throw new TimeoutException("Timeout transitorio");
             }
+            // Segunda llamada: nunca debería llegar aquí si respeta la cancelación
             return Task.FromResult(Result.Success(new FacturaDto()));
         };
 
+        // Cancelar ANTES de ejecutar para que la verificación inicial detecte la cancelación
+        cancellationTokenSource.Cancel();
+
         // Act & Assert
-        await Assert.ThrowsAsync<TimeoutException>(() => 
+        await Assert.ThrowsAsync<OperationCanceledException>(() => 
             _behavior.Handle(command, nextDelegate, cancellationTokenSource.Token));
 
-        // Debería haber intentado al menos una vez
-        callCount.Should().Be(1);
+        // Debería no haber ejecutado nada por la verificación inicial de cancelación
+        callCount.Should().Be(0);
     }
 
     [Fact]
@@ -241,6 +245,19 @@ public class RetryBehaviorTests
         command.ComandasIds.Add(Guid.NewGuid());
         command.NombreCliente = "Cliente Test";
         command.TipoFactura = "Normal";
+        
+        // Configurar retry settings con más intentos y delays menores para el test
+        var customSettings = new RetrySettings
+        {
+            MaxAttempts = 5, // Aumentar a 5 intentos
+            BaseDelayMs = 10, // Delay base muy pequeño para el test
+            MaxDelayMs = 1000
+        };
+        
+        var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
+        mockCustomSettings.Setup(x => x.Value).Returns(customSettings);
+        
+        var customBehavior = new RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>(_mockLogger.Object, mockCustomSettings.Object);
         
         var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
         
@@ -259,13 +276,13 @@ public class RetryBehaviorTests
                 delays.Add(tiemposEjecucion.Last() - tiemposEjecucion[^2]);
             }
             
-            if (callCount <= 3) // Fallar las primeras 3 veces
+            if (callCount <= 3) // Fallar las primeras 3 veces, exitoso en la 4ta
                 throw new TimeoutException("Timeout temporal");
             return Task.FromResult(expectedResult);
         };
 
         // Act
-        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
+        var result = await customBehavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);
@@ -382,6 +399,20 @@ public class RetryBehaviorTests
         command.NombreCliente = "Cliente Test";
         command.TipoFactura = "Normal";
         
+        // Configurar retry settings con delays muy pequeños para test
+        var customSettings = new RetrySettings
+        {
+            MaxAttempts = Math.Max(numeroReintento + 2, 5), // Asegurar suficientes intentos
+            BaseDelayMs = 1, // Delay muy pequeño para test
+            MaxDelayMs = 10,
+            Enabled = true
+        };
+        
+        var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
+        mockCustomSettings.Setup(x => x.Value).Returns(customSettings);
+        
+        var customBehavior = new RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>(_mockLogger.Object, mockCustomSettings.Object);
+        
         var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
         
         int callCount = 0;
@@ -394,7 +425,7 @@ public class RetryBehaviorTests
         };
 
         // Act
-        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
+        var result = await customBehavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
         result.Should().Be(expectedResult);

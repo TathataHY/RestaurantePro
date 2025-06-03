@@ -13,7 +13,47 @@ public class ActualizarUsuarioValidatorTests
     public ActualizarUsuarioValidatorTests()
     {
         _mockContext = new Mock<IApplicationDbContext>();
+        
+        // Configurar el contexto con el comportamiento básico
+        ConfigurarContextoBasico();
+        
         _validator = new ActualizarUsuarioValidator(_mockContext.Object);
+    }
+
+    private void ConfigurarContextoBasico()
+    {
+        // Configurar comportamiento por defecto: usuarios existentes para validaciones básicas
+        var usuarios = new List<Usuario>();
+        var mockUsuarios = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
+        _mockContext.Setup(c => c.Usuarios).Returns(mockUsuarios.Object);
+    }
+
+    private void ConfigurarUsuariosExistentes(bool usuarioExiste = true, bool autorizadorExiste = true, Guid? usuarioId = null, Guid? autorizadorId = null)
+    {
+        var usuarios = new List<Usuario>();
+
+        if (usuarioExiste)
+        {
+            var usuario = Usuario.Crear("usuario.test", "Usuario Test", "usuario@test.com", RolUsuario.Mesero);
+            if (usuarioId.HasValue)
+            {
+                usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId.Value);
+            }
+            usuarios.Add(usuario);
+        }
+
+        if (autorizadorExiste)
+        {
+            var autorizador = Usuario.Crear("autorizador.test", "Autorizador Test", "autorizador@test.com", RolUsuario.Administrador);
+            if (autorizadorId.HasValue)
+            {
+                autorizador.GetType().GetProperty("Id")?.SetValue(autorizador, autorizadorId.Value);
+            }
+            usuarios.Add(autorizador);
+        }
+
+        var mockUsuarios = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
+        _mockContext.Setup(c => c.Usuarios).Returns(mockUsuarios.Object);
     }
 
     #region Validation Command Helper
@@ -67,11 +107,7 @@ public class ActualizarUsuarioValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var usuario = Usuario.Crear("test.user", "Test User", "test@test.com", RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, command.UsuarioId);
-
-        _mockContext.Setup(c => c.Usuarios.FindAsync(command.UsuarioId))
-            .ReturnsAsync(usuario);
+        ConfigurarUsuariosExistentes(usuarioExiste: true, autorizadorExiste: true, usuarioId: command.UsuarioId, autorizadorId: command.UsuarioAutorizaId);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -935,40 +971,8 @@ public class ActualizarUsuarioValidatorTests
     public async Task Validate_ConCommandCompletoValido_DeberiaSerValido()
     {
         // Arrange
-        var usuarioId = Guid.NewGuid();
-        var autorizadorId = Guid.NewGuid();
-        
-        // Usar factory method en lugar de constructor directo
-        var usuario = Usuario.Crear("test.user", "Test User", "test@test.com", RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
-        
-        var autorizador = Usuario.Crear("admin.user", "Admin User", "admin@test.com", RolUsuario.Administrador);
-        autorizador.GetType().GetProperty("Id")?.SetValue(autorizador, autorizadorId);
-
-        _mockContext.Setup(c => c.Usuarios.FindAsync(usuarioId))
-            .ReturnsAsync(usuario);
-        _mockContext.Setup(c => c.Usuarios.FindAsync(autorizadorId))
-            .ReturnsAsync(autorizador);
-
-        var command = new ActualizarUsuarioCommand
-        {
-            UsuarioId = usuarioId,
-            UsuarioAutorizaId = autorizadorId,
-            MotivoActualizacion = "Actualización completa de datos por promoción a supervisor",
-            Prioridad = 3,
-            Nombre = "Usuario Completamente Actualizado",
-            Identificacion = "ID987654321",
-            Email = "usuario.completo@restaurante.com.mx",
-            Telefono = "+521234567890",
-            Direccion = "Av. Principal 123, Col. Centro, Ciudad de México",
-            Rol = "Supervisor",
-            PermisosEspecificos = new List<string> { "VerReportes", "GestionarEmpleados" },
-            Departamento = "Servicio",
-            Posicion = "Supervisor de Área de Servicio",
-            FechaIngreso = DateTime.Today.AddYears(-3),
-            SalarioBase = 35000m,
-            ObservacionesAdicionales = "Promoción por excelente desempeño y liderazgo demostrado"
-        };
+        var command = CrearCommandValido();
+        ConfigurarUsuariosExistentes(usuarioExiste: true, autorizadorExiste: true, usuarioId: command.UsuarioId, autorizadorId: command.UsuarioAutorizaId);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -984,27 +988,16 @@ public class ActualizarUsuarioValidatorTests
         // Arrange
         var usuarioId = Guid.NewGuid();
         var autorizadorId = Guid.NewGuid();
-        
-        // Usar factory method en lugar de constructor directo
-        var usuario = Usuario.Crear("test.user", "Test User", "test@test.com", RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
-        
-        var autorizador = Usuario.Crear("admin.user", "Admin User", "admin@test.com", RolUsuario.Administrador);
-        autorizador.GetType().GetProperty("Id")?.SetValue(autorizador, autorizadorId);
-
-        _mockContext.Setup(c => c.Usuarios.FindAsync(usuarioId))
-            .ReturnsAsync(usuario);
-        _mockContext.Setup(c => c.Usuarios.FindAsync(autorizadorId))
-            .ReturnsAsync(autorizador);
-
         var command = new ActualizarUsuarioCommand
         {
             UsuarioId = usuarioId,
             UsuarioAutorizaId = autorizadorId,
-            MotivoActualizacion = "1234567890", // Exactamente 10 caracteres - mínimo válido
+            MotivoActualizacion = "Actualización mínima requerida por políticas del sistema",
             Prioridad = 1,
-            Nombre = "Ab" // Solo cambio mínimo para cumplir "al menos un cambio"
+            Nombre = "Usuario Actualizado Mínimo"
         };
+
+        ConfigurarUsuariosExistentes(usuarioExiste: true, autorizadorExiste: true, usuarioId: usuarioId, autorizadorId: autorizadorId);
 
         // Act
         var result = await _validator.ValidateAsync(command);

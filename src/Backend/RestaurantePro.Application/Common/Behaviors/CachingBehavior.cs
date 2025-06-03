@@ -14,8 +14,8 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
         ILogger<CachingBehavior<TRequest, TResponse>> logger,
         IMemoryCache memoryCache)
     {
-        _logger = logger;
-        _memoryCache = memoryCache;
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _memoryCache = memoryCache ?? throw new ArgumentNullException(nameof(memoryCache));
     }
 
     public async Task<TResponse> Handle(
@@ -23,6 +23,9 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
         RequestHandlerDelegate<TResponse> next, 
         CancellationToken cancellationToken)
     {
+        // Verificar cancelación antes de continuar
+        cancellationToken.ThrowIfCancellationRequested();
+        
         // Solo aplicar caché a consultas (queries), no a comandos
         if (!IsQuery(request))
         {
@@ -39,6 +42,9 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
             return cachedResponse!;
         }
 
+        // Verificar cancelación antes de ejecutar la operación
+        cancellationToken.ThrowIfCancellationRequested();
+
         // Ejecutar la operación original
         _logger.LogDebug("📝 Cache MISS para {RequestName}", requestName);
         var response = await next();
@@ -51,7 +57,13 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
             Priority = CacheItemPriority.Normal
         };
 
-        _memoryCache.Set(cacheKey, response, cacheOptions);
+        // Usar CreateEntry en lugar del extension method Set para mejor compatibilidad con testing
+        using var entry = _memoryCache.CreateEntry(cacheKey);
+        entry.Value = response;
+        entry.AbsoluteExpirationRelativeToNow = cacheOptions.AbsoluteExpirationRelativeToNow;
+        entry.SlidingExpiration = cacheOptions.SlidingExpiration;
+        entry.Priority = cacheOptions.Priority;
+        
         _logger.LogDebug("💾 Guardado en caché: {RequestName}", requestName);
 
         return response;

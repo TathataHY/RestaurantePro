@@ -538,26 +538,15 @@ public class CoreMappingProfileTests
 
     private Usuario CrearUsuarioEjemplo()
     {
-        // Usar reflection para crear usuario con propiedades privadas
-        var usuario = (Usuario)Activator.CreateInstance(typeof(Usuario), true)!;
-        
-        typeof(Usuario).GetProperty("Id")?.SetValue(usuario, Guid.NewGuid());
-        typeof(Usuario).GetProperty("NombreUsuario")?.SetValue(usuario, "jperez");
-        typeof(Usuario).GetProperty("Email")?.SetValue(usuario, "juan.perez@restaurante.com");
-        typeof(Usuario).GetProperty("NombreCompleto")?.SetValue(usuario, "Juan Pérez García");
-        typeof(Usuario).GetProperty("Estado")?.SetValue(usuario, EstadoUsuario.Activo);
-        typeof(Usuario).GetProperty("TipoUsuario")?.SetValue(usuario, TipoUsuario.Empleado);
-        typeof(Usuario).GetProperty("Rol")?.SetValue(usuario, "Mesero");
-        typeof(Usuario).GetProperty("NivelAcceso")?.SetValue(usuario, 5);
-        typeof(Usuario).GetProperty("Permisos")?.SetValue(usuario, new List<string> { "LEER_MENU", "CREAR_ORDEN" });
-        typeof(Usuario).GetProperty("SupervisorId")?.SetValue(usuario, Guid.NewGuid());
-        typeof(Usuario).GetProperty("Departamento")?.SetValue(usuario, "Servicio");
-        typeof(Usuario).GetProperty("Posicion")?.SetValue(usuario, "Mesero Senior");
-        typeof(Usuario).GetProperty("Identificacion")?.SetValue(usuario, "12345678");
-        typeof(Usuario).GetProperty("UltimoAcceso")?.SetValue(usuario, DateTime.UtcNow.AddHours(-2));
-        typeof(Usuario).GetProperty("MotivoBloqueo")?.SetValue(usuario, null);
-        typeof(Usuario).GetProperty("EsAdministrador")?.SetValue(usuario, false);
-        typeof(Usuario).GetProperty("FechaCreacion")?.SetValue(usuario, DateTime.UtcNow.AddDays(-30));
+        // Usar el método factory del dominio en lugar de reflexión
+        var usuario = Usuario.Crear(
+            "jperez",
+            "Juan Pérez García", 
+            "juan.perez@restaurante.com",
+            RolUsuario.Mesero);
+
+        // Confirmar la cuenta para que esté activo
+        usuario.ConfirmarCuenta();
         
         return usuario;
     }

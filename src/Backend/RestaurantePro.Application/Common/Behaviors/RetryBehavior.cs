@@ -24,7 +24,7 @@ public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
         // Solo aplicar retry a Commands críticos, no a Queries
         var shouldRetry = ShouldApplyRetry(requestName);
         
-        if (!shouldRetry)
+        if (!shouldRetry || !_retrySettings.Enabled)
         {
             return await next();
         }
@@ -35,6 +35,9 @@ public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
         while (true)
         {
             attempt++;
+            
+            // Verificar cancelación antes de cada intento
+            cancellationToken.ThrowIfCancellationRequested();
             
             try
             {
@@ -47,7 +50,15 @@ public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
                 
                 return await next();
             }
-            catch (Exception ex) when (attempt < maxAttempts && IsRetriableException(ex))
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Si la operación fue cancelada, no reintentar
+                _logger.LogInformation(
+                    "Operación {RequestName} cancelada en intento {Attempt}",
+                    requestName, attempt);
+                throw;
+            }
+            catch (Exception ex) when (attempt < maxAttempts && IsRetriableException(ex) && !cancellationToken.IsCancellationRequested)
             {
                 var delay = CalculateDelay(attempt);
                 
@@ -56,7 +67,17 @@ public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
                     "Reintentando en {DelayMs}ms. Error: {ErrorMessage}",
                     requestName, attempt, maxAttempts, delay.TotalMilliseconds, ex.Message);
                 
-                await Task.Delay(delay, cancellationToken);
+                try
+                {
+                    await Task.Delay(delay, cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    _logger.LogInformation(
+                        "Operación {RequestName} cancelada durante delay del intento {Attempt}",
+                        requestName, attempt);
+                    throw;
+                }
             }
             catch (Exception ex)
             {

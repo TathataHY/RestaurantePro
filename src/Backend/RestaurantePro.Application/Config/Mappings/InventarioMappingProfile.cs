@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.Config.Mappings;
+using System.Reflection;
 
 /// <summary>
 /// Profile de AutoMapper para el contexto Inventario
@@ -20,40 +21,48 @@ public class InventarioMappingProfile : Profile
     {
         // Ingrediente Entity -> IngredienteDto
         CreateMap<Ingrediente, IngredienteDto>()
-            // .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre.Valor))
-            // .ForMember(dest => dest.Descripcion, opt => opt.MapFrom(src => src.Descripcion.Valor))
-            // .ForMember(dest => dest.CantidadStock, opt => opt.MapFrom(src => src.Stock.Cantidad))
-            .ForMember(dest => dest.UnidadMedida, opt => opt.MapFrom(src => src.UnidadMedida.ToString()))
-            // .ForMember(dest => dest.CostoPromedio, opt => opt.MapFrom(src => src.Stock.CostoPromedio))
-            // .ForMember(dest => dest.StockMinimo, opt => opt.MapFrom(src => src.Stock.StockMinimo))
-            // .ForMember(dest => dest.StockMaximo, opt => opt.MapFrom(src => src.Stock.StockMaximo))
-            // .ForMember(dest => dest.Categoria, opt => opt.MapFrom(src => src.Categoria.ToString()))
-            // .ForMember(dest => dest.ProveedorPrincipalId, opt => opt.MapFrom(src => src.ProveedorPrincipal != null ? src.ProveedorPrincipal.Id : (Guid?)null))
-            // .ForMember(dest => dest.ProveedorPrincipalNombre, opt => opt.MapFrom(src => src.ProveedorPrincipal != null ? src.ProveedorPrincipal.Nombre : string.Empty))
-            // .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.Activo))
-            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion));
-            // .ForMember(dest => dest.CreadoPor, opt => opt.MapFrom(src => src.CreadoPor)); // TODO: Propiedad no existe
+            .ForMember(dest => dest.UnidadMedida, opt => opt.MapFrom(src => src.UnidadMedida))
+            .ForMember(dest => dest.UnidadMedidaTexto, opt => opt.MapFrom(src => MapearUnidadMedidaTexto(src.UnidadMedida)))
+            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
+            // Mapeo de propiedades básicas (AutoMapper las mapea automáticamente por nombre)
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre))
+            .ForMember(dest => dest.Descripcion, opt => opt.MapFrom(src => src.Descripcion ?? string.Empty))
+            // Propiedades calculadas - las ignoramos y se asignan en el handler
+            .ForMember(dest => dest.StockActual, opt => opt.Ignore())
+            .ForMember(dest => dest.StockMaximo, opt => opt.Ignore())
+            .ForMember(dest => dest.CostoUnitario, opt => opt.Ignore())
+            .ForMember(dest => dest.NombreProveedorPrincipal, opt => opt.Ignore())
+            .ForMember(dest => dest.Activo, opt => opt.Ignore())
+            .ForMember(dest => dest.RequiereRefrigeracion, opt => opt.Ignore())
+            .ForMember(dest => dest.DiasVencimiento, opt => opt.Ignore())
+            .ForMember(dest => dest.EstadoStock, opt => opt.Ignore())
+            .ForMember(dest => dest.ColorEstado, opt => opt.Ignore())
+            .ForMember(dest => dest.EstaBajoMinimo, opt => opt.Ignore())
+            .ForMember(dest => dest.DiasEstimadosDuracion, opt => opt.Ignore())
+            .ForMember(dest => dest.ValorTotalStock, opt => opt.Ignore())
+            .ForMember(dest => dest.ResumenEstado, opt => opt.Ignore())
+            .ForMember(dest => dest.MovimientosRecientes, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore())
+            .ForMember(dest => dest.CreadoPor, opt => opt.Ignore())
+            .ForMember(dest => dest.ModificadoPor, opt => opt.Ignore());
 
         // Ingrediente Entity -> IngredienteSummaryDto (para listas)
         CreateMap<Ingrediente, IngredienteSummaryDto>()
-            // .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre.Valor))
-            // .ForMember(dest => dest.CantidadStock, opt => opt.MapFrom(src => src.Stock.Cantidad))
-            // .ForMember(dest => dest.UnidadMedidaTexto, opt => opt.MapFrom(src => src.UnidadMedida.ToString()))
-            // .ForMember(dest => dest.CostoPromedio, opt => opt.MapFrom(src => src.Stock.CostoPromedio))
-            // .ForMember(dest => dest.StockMinimo, opt => opt.MapFrom(src => src.Stock.StockMinimo))
-            // .ForMember(dest => dest.Categoria, opt => opt.MapFrom(src => src.Categoria.ToString()))
-            // .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.Activo))
-            // Propiedades calculadas se asignan en el handler
-            // .ForMember(dest => dest.EstadoStock, opt => opt.Ignore())
-            // .ForMember(dest => dest.ColorEstado, opt => opt.Ignore())
-            // .ForMember(dest => dest.PorcentajeStock, opt => opt.Ignore())
-            // .ForMember(dest => dest.EstaBajoMinimo, opt => opt.Ignore())
-            // .ForMember(dest => dest.DiasRestantesOptimo, opt => opt.Ignore())
-            // .ForMember(dest => dest.FechaProximaReposicion, opt => opt.Ignore())
-            // .ForMember(dest => dest.CantidadSugerida, opt => opt.Ignore())
-            // .ForMember(dest => dest.ProveedorSugerido, opt => opt.Ignore())
-            // .ForMember(dest => dest.UltimoMovimiento, opt => opt.Ignore())
-            .ForMember(dest => dest.FechaRegistro, opt => opt.MapFrom(src => DateTime.UtcNow)); // ARREGLADO: Mapeo directo sin IncludeBase
+            .ForMember(dest => dest.FechaRegistro, opt => opt.MapFrom(src => src.FechaCreacion))
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre))
+            .ForMember(dest => dest.UnidadMedida, opt => opt.MapFrom(src => MapearUnidadMedidaTexto(src.UnidadMedida)))
+            // Propiedades calculadas - las ignoramos y se asignan en el handler
+            .ForMember(dest => dest.Categoria, opt => opt.Ignore())
+            .ForMember(dest => dest.StockActual, opt => opt.Ignore())
+            .ForMember(dest => dest.StockMaximo, opt => opt.Ignore())
+            .ForMember(dest => dest.CostoUnitario, opt => opt.Ignore())
+            .ForMember(dest => dest.Activo, opt => opt.Ignore())
+            .ForMember(dest => dest.RegistradoPor, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaUltimoMovimiento, opt => opt.Ignore())
+            .ForMember(dest => dest.TipoUltimoMovimiento, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaVencimiento, opt => opt.Ignore())
+            .ForMember(dest => dest.TotalRecetas, opt => opt.Ignore())
+            .ForMember(dest => dest.ConsumoPromedioMensual, opt => opt.Ignore());
 
         // IngredienteCreateDto -> CrearIngredienteCommand
         CreateMap<IngredienteCreateDto, CrearIngredienteCommand>()
@@ -67,18 +76,58 @@ public class InventarioMappingProfile : Profile
     }
 
     /// <summary>
+    /// Mapea UnidadMedida a texto según las expectativas de los tests
+    /// </summary>
+    private static string MapearUnidadMedidaTexto(UnidadMedida unidad)
+    {
+        return unidad switch
+        {
+            UnidadMedida.Unidad => "Unidad",
+            UnidadMedida.Piezas => "Piezas", 
+            UnidadMedida.Gramo => "Gramo",
+            UnidadMedida.Kilogramo => "Kilogramo",
+            UnidadMedida.Litro => "Litro",
+            UnidadMedida.Mililitro => "Mililitro",
+            UnidadMedida.Cucharada => "Cucharada",
+            UnidadMedida.Cucharadita => "Cucharadita",
+            UnidadMedida.Taza => "Taza",
+            UnidadMedida.Paquete => "Paquete",
+            _ => unidad.ToString()
+        };
+    }
+
+    /// <summary>
     /// Configura los mapeos específicos para MovimientosInventario
     /// </summary>
     private void ConfigurarMapeosMovimientosInventario()
     {
         // MovimientoInventario -> MovimientoInventarioDto
-        CreateMap<MovimientoInventario, MovimientoInventarioDto>()
-            // .ForMember(dest => dest.TipoMovimientoTexto, opt => opt.MapFrom(src => src.TipoMovimiento.ToString()))
-            .ForMember(dest => dest.Fecha, opt => opt.MapFrom(src => DateTime.UtcNow)); // ARREGLADO: Usar Fecha en lugar de FechaCreacion
-            // .ForMember(dest => dest.FechaMovimiento, opt => opt.MapFrom(src => src.FechaMovimiento)); // TODO: Propiedad no existe
-            // TODO: Reactivar cuando existan estas propiedades en MovimientoInventarioDto
-            //.ForMember(dest => dest.NombreIngrediente, opt => opt.MapFrom(src => src.Ingrediente != null ? src.Ingrediente.Nombre : string.Empty))
-            //.ForMember(dest => dest.NombreUsuario, opt => opt.MapFrom(src => src.Usuario != null ? src.Usuario.Nombre : string.Empty));
+        CreateMap<MovimientoInventario, RestaurantePro.Application.Inventario.MovimientosInventario.DTOs.MovimientoInventarioDto>()
+            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.Fecha))
+            .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.TipoMovimiento))
+            .ForMember(dest => dest.Cantidad, opt => opt.MapFrom(src => src.Cantidad))
+            .ForMember(dest => dest.Motivo, opt => opt.MapFrom(src => src.Motivo))
+            .ForMember(dest => dest.IngredienteId, opt => opt.MapFrom(src => src.IngredienteId))
+            // Propiedades que no existen en la entidad - ignorar y asignar en handler
+            .ForMember(dest => dest.CostoUnitario, opt => opt.Ignore())
+            .ForMember(dest => dest.StockAnterior, opt => opt.Ignore())
+            .ForMember(dest => dest.Observaciones, opt => opt.Ignore())
+            .ForMember(dest => dest.UsuarioId, opt => opt.Ignore())
+            .ForMember(dest => dest.NumeroDocumento, opt => opt.Ignore())
+            .ForMember(dest => dest.ProveedorId, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore())
+            .ForMember(dest => dest.CreadoPor, opt => opt.Ignore())
+            .ForMember(dest => dest.ModificadoPor, opt => opt.Ignore())
+            .ForMember(dest => dest.Activo, opt => opt.Ignore())
+            // Propiedades calculadas - las ignoramos y se asignan en el handler
+            .ForMember(dest => dest.StockResultante, opt => opt.Ignore())
+            .ForMember(dest => dest.NombreUsuario, opt => opt.Ignore())
+            .ForMember(dest => dest.NombreIngrediente, opt => opt.Ignore())
+            .ForMember(dest => dest.NombreProveedor, opt => opt.Ignore())
+            .ForMember(dest => dest.ColorTipo, opt => opt.Ignore())
+            .ForMember(dest => dest.IconoTipo, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaTexto, opt => opt.Ignore())
+            .ForMember(dest => dest.CantidadTexto, opt => opt.Ignore());
     }
 
     /// <summary>

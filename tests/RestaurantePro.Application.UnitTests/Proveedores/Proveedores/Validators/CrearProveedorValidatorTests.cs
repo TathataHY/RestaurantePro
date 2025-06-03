@@ -397,7 +397,7 @@ public class CrearProveedorValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.Direccion = new string('A', 501);
+        command.Direccion = new string('A', 301);
 
         // Act
         var result = _validator.Validate(command);
@@ -405,7 +405,7 @@ public class CrearProveedorValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProveedorCommand.Direccion))
-            .Which.ErrorMessage.Should().Be("La dirección no puede exceder 500 caracteres");
+            .Which.ErrorMessage.Should().Be("La dirección no puede exceder 300 caracteres");
     }
 
     #endregion
@@ -541,10 +541,17 @@ public class CrearProveedorValidatorTests
         return new CrearProveedorCommand
         {
             Nombre = "Distribuidora ABC S.A.",
+            NombreContacto = "Juan Pérez",
             RFC = "ABC123456789",
             Email = "ventas@distribuidoraabc.com",
             Telefono = "+52-55-1234-5678",
-            Direccion = "Av. Insurgentes Sur 1234, Col. Del Valle, CDMX"
+            Direccion = "Av. Insurgentes Sur 1234, Col. Del Valle, CDMX",
+            Ciudad = "Ciudad de México",
+            Pais = "México",
+            CodigoPostal = "12345",
+            InformacionBancaria = "Banco ABC - Cuenta 1234567890",
+            DiasCredito = 30,
+            UsuarioId = Guid.NewGuid()
         };
     }
 

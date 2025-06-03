@@ -179,7 +179,7 @@ public class ExceptionHandlingBehaviorTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Excepción de dominio")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error no controlado")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -207,7 +207,7 @@ public class ExceptionHandlingBehaviorTests
     {
         // Arrange
         var command = new CrearProductoCommand { Nombre = "Test" };
-        var validationException = new ValidationException("Campo", new[] { "Error de validación" });
+        var validationException = new ValidationException("Error de validación", "Campo", "Error de validación");
         
         RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw validationException;
 

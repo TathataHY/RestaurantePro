@@ -26,7 +26,7 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
             var requestId = Guid.NewGuid();
 
             _logger.LogError(exception, 
-                "Error procesando {RequestName} con ID {RequestId}: {ErrorMessage}", 
+                "Error no controlado procesando {RequestName} con ID {RequestId}: {ErrorMessage}", 
                 requestName, requestId, exception.Message);
 
             // Convertir excepciones de dominio a excepciones de aplicación
@@ -41,6 +41,16 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
     {
         return exception switch
         {
+            // Excepciones de aplicación que deben mantenerse sin conversión
+            RestaurantePro.Application.Common.Exceptions.ValidationException appValidation => appValidation,
+            ConflictException => exception,
+            NotFoundException => exception,
+            ForbiddenAccessException => exception,
+            AppException => exception,
+            
+            // Excepciones del sistema que deben mantenerse
+            OperationCanceledException => exception,
+            
             // Excepciones de dominio específicas
             EntityNotFoundException domainNotFound => new NotFoundException(
                 domainNotFound.EntityName ?? "Unknown", 
@@ -48,27 +58,31 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
                 domainNotFound.Message),
 
             BusinessRuleViolationException businessRule => new RestaurantePro.Application.Common.Exceptions.ValidationException(
+                businessRule.Message,
                 "BusinessRule", 
-                new[] { businessRule.Message }),
+                businessRule.Message),
 
-            DomainException domain => new AppException(
-                $"Error de dominio en {requestName}: {domain.Message}",
-                domain),
+            DomainException domain => new RestaurantePro.Application.Common.Exceptions.ValidationException(
+                $"Error de dominio: {domain.Message}",
+                "Domain", 
+                $"Error de dominio: {domain.Message}"),
 
             // Excepciones de validación de FluentValidation
             FluentValidation.ValidationException fluentValidation => new RestaurantePro.Application.Common.Exceptions.ValidationException(
                 fluentValidation.Errors),
 
-            // Excepciones estándar
+            // Excepciones estándar - preservar mensaje original
             ArgumentNullException argNull => new RestaurantePro.Application.Common.Exceptions.ValidationException(
+                argNull.Message, // Preservar mensaje original
                 argNull.ParamName ?? "Unknown", 
-                new[] { "El parámetro no puede ser nulo." }),
+                argNull.Message),
 
             ArgumentException arg => new RestaurantePro.Application.Common.Exceptions.ValidationException(
+                arg.Message, // Preservar mensaje original
                 arg.ParamName ?? "Unknown", 
-                new[] { arg.Message }),
+                arg.Message),
 
-            InvalidOperationException invalidOp => new ConflictException(
+            InvalidOperationException invalidOp => new AppException(
                 $"Operación no válida en {requestName}: {invalidOp.Message}",
                 invalidOp),
 
@@ -76,7 +90,7 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
                 $"Acceso denegado para {requestName}: {unauthorized.Message}"),
 
             TimeoutException timeout => new AppException(
-                $"Timeout en {requestName} (ID: {requestId}): La operación tardó demasiado tiempo.",
+                timeout.Message, // Preservar mensaje original
                 timeout),
 
             // Excepciones de concurrencia
