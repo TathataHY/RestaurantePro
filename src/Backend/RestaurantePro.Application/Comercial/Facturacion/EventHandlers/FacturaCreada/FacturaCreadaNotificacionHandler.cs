@@ -42,6 +42,13 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
 
             var factura = facturaResult;
 
+            // 🔍 Verificar si la factura tiene cliente asociado
+            if (!factura.ClienteId.HasValue)
+            {
+                _logger.LogWarning("⚠️ Factura {FacturaId} no tiene cliente asociado, omitiendo notificación", evento.FacturaId);
+                return;
+            }
+
             // 🔍 Obtener el cliente
             var cliente = await _clienteRepository.ObtenerPorIdAsync(factura.ClienteId.Value, cancellationToken);
             if (cliente == null)
@@ -119,7 +126,7 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
         
         var destinatario = (string)clienteDynamic.Email.Value;
         var nombreCliente = ObtenerNombreCompleto(clienteDynamic);
-        var asunto = $"Factura #{facturaDynamic.Numero} - RestaurantePro";
+        var asunto = $"Factura #{facturaDynamic.NumeroFactura} - RestaurantePro";
         var cuerpo = GenerarCuerpoEmailFactura(facturaDynamic, nombreCliente, itemsFactura);
 
         // Obtener información del canal de pago preferido para personalización
@@ -142,7 +149,7 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
 
         var numeroTelefono = (string)clienteDynamic.Telefono.Value;
         var nombreCliente = ObtenerNombreCompleto(clienteDynamic);
-        var mensaje = $"Hola {nombreCliente}, tu factura #{facturaDynamic.Numero} por ${facturaDynamic.Total:N0} está lista. Gracias por elegirnos! - RestaurantePro";
+        var mensaje = $"Hola {nombreCliente}, tu factura #{facturaDynamic.NumeroFactura} por ${facturaDynamic.Total:N0} está lista. Gracias por elegirnos! - RestaurantePro";
 
         if (!string.IsNullOrEmpty(numeroTelefono))
         {
@@ -229,7 +236,7 @@ public class FacturaCreadaNotificacionHandler : Domain.Core.Base.Events.Handlers
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"Estimado/a {nombreCliente},");
         sb.AppendLine();
-        sb.AppendLine($"Su factura #{facturaDynamic.Numero} ha sido generada exitosamente.");
+        sb.AppendLine($"Su factura #{facturaDynamic.NumeroFactura} ha sido generada exitosamente.");
         sb.AppendLine($"Total: ${facturaDynamic.Total:N0}");
         sb.AppendLine($"Fecha: {DateTime.Now:dd/MM/yyyy}");
         sb.AppendLine();

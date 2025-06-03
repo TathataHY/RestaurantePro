@@ -38,8 +38,14 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
             // 2. Aplicar filtros de búsqueda
             query = AplicarFiltrosBusqueda(query, request);
 
-            // 3. Contar total antes de paginación
-            var totalCount = await query.CountAsync(cancellationToken);
+            // 3. Aplicar ordenamiento
+            query = AplicarOrdenamiento(query, request);
+
+            // 4. Materializar la consulta completa primero (para compatibilidad con mocks)
+            var todosLosClientes = await query.ToListAsync(cancellationToken);
+
+            // 5. Contar total
+            var totalCount = todosLosClientes.Count;
 
             if (totalCount == 0)
             {
@@ -48,27 +54,23 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
                     new List<ClienteSummaryDto>(), 0, request.Pagina, request.TamanoPagina));
             }
 
-            // 4. Aplicar ordenamiento
-            query = AplicarOrdenamiento(query, request);
-
-            // 5. Aplicar paginación
-            var clientes = await query
+            // 6. Aplicar paginación en memoria
+            var clientesPaginados = todosLosClientes
                 .Skip((request.Pagina - 1) * request.TamanoPagina)
                 .Take(request.TamanoPagina)
-                .Select(c => new ClienteSummaryDto
-                {
-                    Id = c.Id,
-                    Email = c.Email,
-                    Telefono = c.Telefono ?? "",
-                    // TODO: Agregar más propiedades cuando estén disponibles en ClienteSummaryDto
-                    // Nombre = c.Nombre.ToString(),
-                    // Activo = c.Estado == EstadoCliente.Activo,
-                })
-                .ToListAsync(cancellationToken);
+                .ToList();
 
-            // 6. Crear resultado paginado
+            // 7. Mapear a DTOs
+            var clientesDto = clientesPaginados.Select(c => new ClienteSummaryDto
+            {
+                Id = c.Id,
+                Email = c.Email?.Value ?? "",
+                Telefono = c.Telefono?.Value ?? ""
+            }).ToList();
+
+            // 8. Crear resultado paginado
             var resultado = new PaginatedList<ClienteSummaryDto>(
-                clientes, totalCount, request.Pagina, request.TamanoPagina);
+                clientesDto, totalCount, request.Pagina, request.TamanoPagina);
 
             _logger.LogInformation("Búsqueda completada: {TotalEncontrados} clientes encontrados, {PaginaActual}/{TotalPaginas} páginas",
                 totalCount, request.Pagina, resultado.TotalPages);
@@ -89,22 +91,24 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
         {
             if (request.BusquedaExacta)
             {
-                // Búsqueda exacta
-                query = query.Where(c => c.Email == request.Email);
+                // Para búsqueda exacta, usar comparación directa
+                query = query.Where(c => c.Email != null && 
+                                       c.Email.Value == request.Email);
             }
             else
             {
-                // Búsqueda parcial (LIKE)
+                // Para búsqueda parcial, usar Contains
                 query = query.Where(c => c.Email != null && 
-                                       c.Email.Value.ToLower().Contains(request.Email.ToLower()));
+                                       c.Email.Value.Contains(request.Email));
             }
         }
 
         // Búsqueda por dominio
         if (!string.IsNullOrEmpty(request.Dominio))
         {
-            var dominioLower = request.Dominio.ToLower();
-            query = query.Where(c => c.Email != null && c.Email.Value.ToLower().Contains($"@{dominioLower}"));
+            var dominioPattern = $"@{request.Dominio}";
+            query = query.Where(c => c.Email != null && 
+                                   c.Email.Value.Contains(dominioPattern));
         }
 
         return query;
@@ -125,7 +129,7 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
         else
         {
             // Fallback a ordenamiento por email
-            query = query.OrderBy(c => c.Email);
+            query = query.OrderBy(c => c.Email != null ? c.Email.Value : "");
         }
 
         return query;

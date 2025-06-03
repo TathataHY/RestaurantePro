@@ -90,6 +90,22 @@ namespace RestaurantePro.Domain.Core.Base
         }
 
         /// <summary>
+        /// Establece la fecha de creación (solo para pruebas)
+        /// </summary>
+        protected internal void SetFechaCreacionForTesting(DateTime fecha)
+        {
+            FechaCreacion = fecha;
+        }
+
+        /// <summary>
+        /// Establece el ID (solo para pruebas)
+        /// </summary>
+        protected internal void SetIdForTesting(Guid id)
+        {
+            Id = id;
+        }
+
+        /// <summary>
         /// Compara dos entidades por su identidad, no por sus propiedades
         /// </summary>
         public override bool Equals(object? obj)

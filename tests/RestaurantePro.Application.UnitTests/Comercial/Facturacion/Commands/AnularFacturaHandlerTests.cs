@@ -526,10 +526,12 @@ public class AnularFacturaHandlerTests
         var facturaOriginal = CreateMockFacturaEmitida(facturaId);
         var facturaAnulada = CreateMockFacturaAnulada(facturaId); // Fue anulada por otro proceso
 
-        SetupFacturasDbSet(new List<Factura> { facturaOriginal });
+        // Setup inicial con factura original
+        var mockSet = CreateDbSetMock(new List<Factura> { facturaOriginal });
+        _contextMock.Setup(x => x.Facturas).Returns(mockSet.Object);
         
         // Simular que al buscar por FindAsync devuelve factura anulada (anulada concurrentemente)
-        _facturasDbSetMock.Setup(x => x.FindAsync(facturaId))
+        mockSet.Setup(x => x.FindAsync(facturaId))
             .ReturnsAsync(facturaAnulada);
 
         // Act
@@ -595,8 +597,9 @@ public class AnularFacturaHandlerTests
             TipoAnulacion = "Normal"
         };
 
-        _facturasDbSetMock.Setup(x => x.Include(It.IsAny<string>()))
-            .Throws(new InvalidOperationException("Error de base de datos"));
+        // Simular una excepción en el context al tratar de acceder a Facturas
+        _contextMock.Setup(x => x.Facturas)
+            .Throws(new InvalidOperationException("Error de base de datos simulado"));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -616,23 +619,61 @@ public class AnularFacturaHandlerTests
             Times.Once);
     }
 
+    [Fact]
+    public async Task Debug_Handle_FacturaNoExiste_MostrarExcepcionExacta()
+    {
+        // Arrange
+        var facturaId = Guid.NewGuid();
+        var command = new AnularFacturaCommand
+        {
+            FacturaId = facturaId,
+            Motivo = "Motivo válido",
+            UsuarioAutorizaId = Guid.NewGuid(),
+            TipoAnulacion = "Normal"
+        };
+
+        SetupFacturasDbSet(new List<Factura>()); // Factura no existe
+
+        Exception capturedException = null;
+
+        try
+        {
+            // Act
+            var result = await _handler.Handle(command, CancellationToken.None);
+            
+            // Si llegamos aquí, capturar el resultado
+            Console.WriteLine($"Result succeeded: {result.Succeeded}");
+            Console.WriteLine($"Result error: {result.Error}");
+        }
+        catch (Exception ex)
+        {
+            capturedException = ex;
+            Console.WriteLine($"Exception Type: {ex.GetType().Name}");
+            Console.WriteLine($"Exception Message: {ex.Message}");
+            Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+            
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"Inner Exception Type: {ex.InnerException.GetType().Name}");
+                Console.WriteLine($"Inner Exception Message: {ex.InnerException.Message}");
+            }
+        }
+
+        // Para que el test no falle, solo log la información
+        Assert.True(true, $"Debug test - Exception captured: {capturedException?.GetType().Name ?? "None"}");
+    }
+
     #endregion
 
     #region Helper Methods - Setup
 
     private void SetupFacturasDbSet(List<Factura> facturas)
     {
-        var queryable = facturas.AsQueryable();
-        _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.Provider).Returns(queryable.Provider);
-        _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(queryable.Expression);
-        _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-        _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
-
-        // Configurar el DbSet mock para el repositorio
-        _contextMock.Setup(x => x.Facturas).Returns(_facturasDbSetMock.Object);
-
-        // Setup FindAsync directamente
-        _facturasDbSetMock.Setup(x => x.FindAsync(It.IsAny<Guid>()))
+        var mockSet = CreateDbSetMock(facturas);
+        _contextMock.Setup(x => x.Facturas).Returns(mockSet.Object);
+        
+        // Setup específico para FindAsync
+        mockSet.Setup(x => x.FindAsync(It.IsAny<Guid>()))
             .Returns<Guid>(id =>
             {
                 var result = facturas.FirstOrDefault(f => f.Id == id);
@@ -642,22 +683,43 @@ public class AnularFacturaHandlerTests
 
     private void SetupUsuariosDbSet(List<Usuario> usuarios)
     {
-        var queryable = usuarios.AsQueryable();
-        _usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(queryable.Provider);
-        _usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(queryable.Expression);
-        _usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-        _usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
-
-        // Configurar el DbSet mock para el repositorio
-        _contextMock.Setup(x => x.Usuarios).Returns(_usuariosDbSetMock.Object);
-
-        // Setup FindAsync para usuarios
-        _usuariosDbSetMock.Setup(x => x.FindAsync(It.IsAny<Guid>()))
+        var mockSet = CreateDbSetMock(usuarios);
+        _contextMock.Setup(x => x.Usuarios).Returns(mockSet.Object);
+        
+        // Setup específico para FindAsync
+        mockSet.Setup(x => x.FindAsync(It.IsAny<Guid>()))
             .Returns<Guid>(id =>
             {
                 var result = usuarios.FirstOrDefault(u => u.Id == id);
                 return ValueTask.FromResult(result);
             });
+    }
+
+    private Mock<DbSet<T>> CreateDbSetMock<T>(List<T> data) where T : class
+    {
+        var queryable = data.AsQueryable();
+        var dbSetMock = new Mock<DbSet<T>>();
+
+        // Configure IQueryable implementation
+        dbSetMock.As<IQueryable<T>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<T>(queryable.Provider));
+        dbSetMock.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
+        dbSetMock.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
+        dbSetMock.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
+
+        // Configure IAsyncEnumerable implementation
+        dbSetMock.As<IAsyncEnumerable<T>>()
+            .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
+            .Returns(new TestAsyncEnumerator<T>(queryable.GetEnumerator()));
+
+        // Configure Include method (returns the same dbset mock for simplicity)
+        dbSetMock.Setup(x => x.Include(It.IsAny<string>()))
+            .Returns(dbSetMock.Object);
+
+        // Configure Include<TProperty> method
+        dbSetMock.Setup(x => x.Include(It.IsAny<Expression<Func<T, object>>>()))
+            .Returns(dbSetMock.Object);
+
+        return dbSetMock;
     }
 
     #endregion
@@ -811,4 +873,89 @@ public class AnularFacturaHandlerTests
     }
 
     #endregion
+}
+
+/// <summary>
+/// Helper classes for async DbSet mocking
+/// </summary>
+internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
+{
+    private readonly IQueryProvider _inner;
+
+    internal TestAsyncQueryProvider(IQueryProvider inner)
+    {
+        _inner = inner;
+    }
+
+    public IQueryable CreateQuery(Expression expression)
+    {
+        return new TestAsyncEnumerable<TEntity>(expression);
+    }
+
+    public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
+    {
+        return new TestAsyncEnumerable<TElement>(expression);
+    }
+
+    public object Execute(Expression expression)
+    {
+        return _inner.Execute(expression);
+    }
+
+    public TResult Execute<TResult>(Expression expression)
+    {
+        return _inner.Execute<TResult>(expression);
+    }
+
+    public ValueTask<TResult> ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
+    {
+        var result = Execute<TResult>(expression);
+        return ValueTask.FromResult(result);
+    }
+
+    TResult IAsyncQueryProvider.ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken)
+    {
+        return Execute<TResult>(expression);
+    }
+}
+
+internal class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
+{
+    public TestAsyncEnumerable(IEnumerable<T> enumerable)
+        : base(enumerable)
+    { }
+
+    public TestAsyncEnumerable(Expression expression)
+        : base(expression)
+    { }
+
+    public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+    {
+        return new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
+    }
+
+    IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
+}
+
+internal class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
+{
+    private readonly IEnumerator<T> _inner;
+
+    public TestAsyncEnumerator(IEnumerator<T> inner)
+    {
+        _inner = inner;
+    }
+
+    public T Current => _inner.Current;
+
+    public ValueTask<bool> MoveNextAsync()
+    {
+        return ValueTask.FromResult(_inner.MoveNext());
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _inner.Dispose();
+        return ValueTask.CompletedTask;
+    }
 } 

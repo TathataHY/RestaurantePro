@@ -1,42 +1,27 @@
 using System.Linq.Expressions;
+using System.Collections;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
+using Moq;
 
 namespace RestaurantePro.Application.UnitTests.Common;
 
 /// <summary>
 /// Helper para crear DbSet mocks en los tests unitarios que funcione con EF async methods
+/// Usa MockQueryable.Moq para manejo correcto de operaciones asíncronas
 /// </summary>
 public static class MockDbSetHelper
 {
     /// <summary>
-    /// Crea un mock de DbSet con datos específicos usando TestAsyncQueryProvider
+    /// Crea un mock de DbSet con datos específicos
     /// </summary>
     /// <typeparam name="T">Tipo de entidad</typeparam>
     /// <param name="data">Datos a incluir en el DbSet mockeado</param>
     /// <returns>Mock de DbSet configurado</returns>
     public static Mock<DbSet<T>> CreateMockDbSet<T>(IQueryable<T> data) where T : class
     {
-        var mockSet = new Mock<DbSet<T>>();
-        
-        // Configurar como IQueryable con TestAsyncQueryProvider
-        mockSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<T>(data.Provider));
-        mockSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(data.Expression);
-        mockSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(data.ElementType);
-        mockSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(data.GetEnumerator());
-        
-        // Configurar como IAsyncEnumerable
-        mockSet.As<IAsyncEnumerable<T>>().Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-            .Returns(new TestAsyncEnumerator<T>(data.GetEnumerator()));
-        
-        // Configurar métodos específicos de EF síncronos
-        mockSet.Setup(x => x.Add(It.IsAny<T>())).Returns((T entity) => null!);
-        mockSet.Setup(x => x.Remove(It.IsAny<T>())).Returns((T entity) => null!);
-        mockSet.Setup(x => x.Update(It.IsAny<T>())).Returns((T entity) => null!);
-        
-        // Configurar AddAsync - simplemente retornar una ValueTask completada sin intentar mockear EntityEntry
-        mockSet.Setup(x => x.AddAsync(It.IsAny<T>(), It.IsAny<CancellationToken>()))
-               .Returns((T entity, CancellationToken token) => ValueTask.FromResult((Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<T>)null!));
-        
-        return mockSet;
+        // Usar MockQueryable.Moq que maneja correctamente EF async operations
+        return data.BuildMockDbSet();
     }
 
     /// <summary>
@@ -50,9 +35,7 @@ public static class MockDbSetHelper
     }
 }
 
-/// <summary>
-/// Implementación de IAsyncQueryProvider para tests que soporte Entity Framework async methods
-/// </summary>
+// Clases helper para mockear Entity Framework async operations
 internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
 {
     private readonly IQueryProvider _inner;
@@ -72,7 +55,7 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
         return new TestAsyncEnumerable<TElement>(expression);
     }
 
-    public object Execute(Expression expression)
+    public object? Execute(Expression expression)
     {
         return _inner.Execute(expression);
     }
@@ -84,99 +67,87 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
 
     public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
     {
-        var expectedResultType = typeof(TResult);
+        var resultType = typeof(TResult);
         
-        try
+        // Manejar Task<T>
+        if (resultType.IsGenericType && resultType.GetGenericTypeDefinition() == typeof(Task<>))
         {
-            // Si esperamos Task<bool> (como para AnyAsync)
-            if (expectedResultType == typeof(Task<bool>))
+            var innerType = resultType.GetGenericArguments()[0];
+            
+            // Para FirstOrDefaultAsync<T>
+            if (innerType == typeof(TEntity) || innerType.IsAssignableFrom(typeof(TEntity)))
             {
-                var result = Execute<bool>(expression);
+                var queryable = new TestAsyncEnumerable<TEntity>(expression);
+                var result = queryable.FirstOrDefault();
                 return (TResult)(object)Task.FromResult(result);
             }
             
-            // Si esperamos Task<T> para otras operaciones como FirstOrDefaultAsync
-            if (expectedResultType.IsGenericType && expectedResultType.GetGenericTypeDefinition() == typeof(Task<>))
+            // Para AnyAsync - devuelve Task<bool>
+            if (innerType == typeof(bool))
             {
-                var taskResultType = expectedResultType.GetGenericArguments()[0];
-                
-                // Ejecutar la query de forma síncrona usando el provider interno
-                // El provider interno es el que sabe cómo procesar las expressions LINQ correctamente
-                try
-                {
-                    var syncResult = _inner.Execute(expression);
-                    
-                    // Envolver el resultado en Task
-                    var taskFromResult = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType);
-                    var taskResult = taskFromResult?.Invoke(null, new[] { syncResult });
-                    return (TResult)taskResult!;
-                }
-                catch
-                {
-                    // Si falla la ejecución síncrona, devolver valor por defecto
-                    object? defaultValue = null;
-                    if (taskResultType.IsValueType)
-                    {
-                        defaultValue = Activator.CreateInstance(taskResultType);
-                    }
-                    
-                    var taskFromResultDefault = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType);
-                    var taskResultDefault = taskFromResultDefault?.Invoke(null, new[] { defaultValue });
-                    return (TResult)taskResultDefault!;
-                }
+                var queryable = new TestAsyncEnumerable<TEntity>(expression);
+                var result = queryable.Any();
+                return (TResult)(object)Task.FromResult(result);
             }
             
-            // Para otros casos, ejecutar síncronamente
-            var directResult = Execute<TResult>(expression);
-            return directResult;
+            // Para consultas que devuelven listas
+            if (innerType.IsGenericType && innerType.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                var queryable = new TestAsyncEnumerable<TEntity>(expression);
+                var result = queryable.ToList();
+                return (TResult)(object)Task.FromResult(result);
+            }
+            
+            // Fallback para otros tipos
+            var syncResult = Execute(expression);
+            return (TResult)(object)Task.FromResult(syncResult);
         }
-        catch (Exception)
+        
+        // Manejar ValueTask<T>
+        if (resultType.IsGenericType && resultType.GetGenericTypeDefinition() == typeof(ValueTask<>))
         {
-            // En caso de error, devolver valor por defecto envuelto en Task si es necesario
-            if (expectedResultType.IsGenericType && expectedResultType.GetGenericTypeDefinition() == typeof(Task<>))
-            {
-                var taskResultType = expectedResultType.GetGenericArguments()[0];
-                object? defaultValue = null;
-                if (taskResultType.IsValueType)
-                {
-                    defaultValue = Activator.CreateInstance(taskResultType);
-                }
-                
-                var taskFromResult = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType);
-                var taskResult = taskFromResult?.Invoke(null, new[] { defaultValue });
-                return (TResult)taskResult!;
-            }
-            
-            // Para tipos no-Task, devolver valor por defecto
-            if (typeof(TResult).IsValueType)
-            {
-                return (TResult)Activator.CreateInstance(typeof(TResult))!;
-            }
-            
-            return default(TResult)!;
+            var innerType = resultType.GetGenericArguments()[0];
+            var syncResult = Execute(expression);
+            return (TResult)(object)ValueTask.FromResult(syncResult);
         }
+        
+        // Para otros tipos, ejecutar síncronamente
+        return Execute<TResult>(expression);
     }
 }
 
-/// <summary>
-/// Implementación de IAsyncEnumerable para tests
-/// </summary>
-internal class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
+internal class TestAsyncEnumerable<T> : IAsyncEnumerable<T>, IQueryable<T>
 {
+    private readonly IQueryable<T> _queryable;
+
     public TestAsyncEnumerable(IEnumerable<T> enumerable)
-        : base(enumerable)
-    { }
+    {
+        _queryable = enumerable.AsQueryable();
+    }
 
     public TestAsyncEnumerable(Expression expression)
-        : base(expression)
-    { }
+    {
+        _queryable = new EnumerableQuery<T>(expression);
+    }
 
     public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
     {
-        return new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
+        return new TestAsyncEnumerator<T>(_queryable.GetEnumerator());
     }
 
-    IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
+    public Type ElementType => _queryable.ElementType;
+    public Expression Expression => _queryable.Expression;
+    public IQueryProvider Provider => new TestAsyncQueryProvider<T>(_queryable.Provider);
+
+    public IEnumerator<T> GetEnumerator()
+    {
+        return _queryable.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return _queryable.GetEnumerator();
+    }
 }
 
 /// <summary>

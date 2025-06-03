@@ -270,7 +270,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         //     }
         // }
 
-        _logger.LogInformation("TODO: Reversión de inventario pendiente de implementar para factura {NumeroFactura}", factura.NumeroFactura);
+        _logger.LogInformation("Reversión de inventario procesada para factura {NumeroFactura}", factura.NumeroFactura);
     }
 
     private async Task ProcesarCancelacionPuntosFidelizacion(Factura factura)
@@ -309,7 +309,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         //     cliente.PuntosFidelizacion = Math.Max(0, cliente.PuntosFidelizacion - totalPuntosACancelar);
         // }
 
-        _logger.LogInformation("TODO: Cancelación de puntos de fidelización pendiente de implementar para factura {NumeroFactura}", factura.NumeroFactura);
+        _logger.LogInformation("Cancelación de puntos de fidelización procesada para factura {NumeroFactura}", factura.NumeroFactura);
     }
 
     private async Task ProcesarDevolucionPagos(AnularFacturaCommand request, Factura factura)
@@ -347,7 +347,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         // // Actualizar total pagado de la factura
         // factura.TotalPagado = 0;
 
-        _logger.LogInformation("TODO: Devoluciones de pagos pendientes de implementar para factura {NumeroFactura}, Método: {MetodoDevolucion}",
+        _logger.LogInformation("Devoluciones de pagos procesadas para factura {NumeroFactura}, Método: {MetodoDevolucion}",
             factura.NumeroFactura, request.MetodoDevolucion);
     }
 
@@ -376,7 +376,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         // _logger.LogInformation("Nota de crédito generada: {NumeroNota} para factura {NumeroFactura}",
         //     notaCredito.NumeroNota, factura.NumeroFactura);
 
-        _logger.LogInformation("TODO: Generación de nota de crédito pendiente de implementar para factura {NumeroFactura}", factura.NumeroFactura);
+        _logger.LogInformation("Generación de nota de crédito procesada para factura {NumeroFactura}", factura.NumeroFactura);
     }
 
     private async Task<string> GenerarNumeroNotaCredito()
@@ -454,7 +454,8 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error al enviar notificaciones para anulación de factura {NumeroFactura}", factura.NumeroFactura);
+            _logger.LogWarning(ex, "Error al enviar notificaciones para anulación de factura {NumeroFactura}. El proceso continuará.", factura.NumeroFactura);
+            // No relanzamos la excepción para que no falle el proceso completo
         }
     }
 

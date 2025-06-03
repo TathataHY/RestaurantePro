@@ -10,6 +10,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
+using RestaurantePro.Application.Comercial.Clientes.DTOs;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Comercial.Clientes;
 using RestaurantePro.Domain.Comercial.Clientes.Enums;
@@ -134,6 +135,8 @@ public class BuscarClientesPorEmailHandlerTests
 
         _clientesEjemplo = CrearClientesEjemplo();
         ConfigurarMockDbSet();
+        ConfigurarMockMapper();
+        ConfigurarMockContext();
     }
 
     [Fact]
@@ -573,6 +576,39 @@ public class BuscarClientesPorEmailHandlerTests
         typeof(Cliente).GetProperty("Segmento")?.SetValue(cliente, SegmentoCliente.Regular);
         
         return cliente;
+    }
+
+    private void ConfigurarMockMapper()
+    {
+        _mockMapper.Setup(m => m.Map<Cliente, ClienteSummaryDto>(It.IsAny<Cliente>()))
+            .Returns((Cliente cliente) => new ClienteSummaryDto
+            {
+                Id = cliente.Id,
+                NombreCompleto = "Cliente Test", // Simulamos el nombre completo
+                Email = cliente.Email.Value,
+                Telefono = cliente.Telefono.Value,
+                TipoCliente = cliente.Segmento.ToString(),
+                Activo = true,
+                FechaRegistro = cliente.FechaCreacion,
+                RegistradoPor = "Sistema",
+                FechaNacimiento = null,
+                Ciudad = "",
+                Pais = "",
+                PuntosFidelizacion = cliente.PuntosAcumulados,
+                NivelFidelizacion = "Regular",
+                TotalOrdenes = cliente.CantidadVisitas,
+                MontoTotalCompras = 1000m,
+                FechaUltimaOrden = cliente.FechaCreacion,
+                PromedioCompra = 100m,
+                EsFrecuente = cliente.CantidadVisitas > 5,
+                DiasSinVisitar = 15,
+                EsVIP = cliente.Segmento == SegmentoCliente.Premium
+            });
+    }
+
+    private void ConfigurarMockContext()
+    {
+        _mockContext.Setup(c => c.Clientes).Returns(_mockClientesDbSet.Object);
     }
 
     #endregion

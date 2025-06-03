@@ -73,6 +73,7 @@ public class ObtenerFacturaPorIdHandlerTests
 
         // Assert
         resultado.Should().NotBeNull();
+        
         resultado.Succeeded.Should().BeTrue();
         resultado.Value.Should().NotBeNull();
         resultado.Value.Id.Should().Be(facturaId);

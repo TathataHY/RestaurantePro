@@ -13,6 +13,9 @@ public class DividirComandaValidatorTests
     {
         _contextMock = new Mock<IApplicationDbContext>();
         _validator = new DividirComandaValidator(_contextMock.Object);
+        
+        // Configurar mocks básicos por defecto para evitar NullReferenceException
+        ConfigurarMocksBasicos();
     }
 
     [Fact]
@@ -25,7 +28,12 @@ public class DividirComandaValidatorTests
         // Act
         var result = await _validator.ValidateAsync(command);
 
-        // Assert
+        // Assert - Debug para ver errores específicos
+        if (!result.IsValid)
+        {
+            var errores = string.Join("; ", result.Errors.Select(e => e.ErrorMessage));
+            throw new Exception($"Validación falló con errores: {errores}");
+        }
         result.IsValid.Should().BeTrue();
     }
 
@@ -35,6 +43,7 @@ public class DividirComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.ComandaOriginalId = Guid.Empty;
+        ConfigurarMocksBasicos(); // Configurar mocks básicos
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -50,6 +59,7 @@ public class DividirComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.TipoDivision = (TipoDivisionComanda)999; // Valor inválido
+        ConfigurarMocksBasicos(); // Configurar mocks básicos
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -68,6 +78,7 @@ public class DividirComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.MotivoDivision = motivoInvalido;
+        ConfigurarMocksBasicos(); // Configurar mocks básicos
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -83,6 +94,7 @@ public class DividirComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.DivisionItems = new List<DivisionComandaDto>();
+        ConfigurarMocksBasicos(); // Configurar mocks básicos
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -111,6 +123,8 @@ public class DividirComandaValidatorTests
                 }
             });
         }
+        
+        ConfigurarMocksBasicos(); // Configurar mocks básicos
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -183,6 +197,7 @@ public class DividirComandaValidatorTests
                 Items = new List<ItemDivisionDto> { new ItemDivisionDto { ItemId = Guid.NewGuid(), Cantidad = 1 } }
             }
         };
+        ConfigurarMocksBasicos(); // Configurar mocks básicos
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -198,6 +213,7 @@ public class DividirComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.NotasDivision = new string('A', 501); // Más de 500 caracteres
+        ConfigurarMocksBasicos(); // Configurar mocks básicos
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -209,76 +225,69 @@ public class DividirComandaValidatorTests
 
     private void ConfigurarMocksParaValidacion(DividirComandaCommand command)
     {
-        // Mock para comandas
-        var comandasMock = new Mock<DbSet<Comanda>>();
-        comandasMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
+        // Crear comanda existente para validación
         var comanda = CrearComandaValidaParaDivision();
         typeof(EntityBase).GetProperty("Id")?.SetValue(comanda, command.ComandaOriginalId);
         
-        comandasMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comanda);
+        var comandas = new List<Comanda> { comanda };
+        var comandasMock = MockDbSetHelper.CreateMockDbSet(comandas.AsQueryable());
 
-        // Mock para items de comanda
-        var itemsComandaMock = new Mock<DbSet<ItemComanda>>();
-        itemsComandaMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<ItemComanda, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
+        // Crear items de comanda con IDs específicos que coincidan con los del command
+        var itemsComanda = new List<ItemComanda>();
+        
+        // Obtener todos los ItemIds únicos de las divisiones
+        var itemIds = command.DivisionItems
+            .SelectMany(d => d.Items)
+            .Select(i => i.ItemId)
+            .Distinct()
+            .ToList();
 
-        var itemsComanda = new List<ItemComanda>
+        // Crear items con esos IDs específicos
+        foreach (var itemId in itemIds)
         {
-            CrearItemComanda(Guid.NewGuid(), 2),
-            CrearItemComanda(Guid.NewGuid(), 1)
-        };
-        itemsComandaMock.Setup(x => x.Where(It.IsAny<Expression<Func<ItemComanda, bool>>>()).ToListAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(itemsComanda);
-
-        // TODO: Descomentar cuando FacturaItems esté disponible en el contexto
-        // Mock para factura items (no facturada)
-        // var facturaItemsMock = new Mock<DbSet<FacturaItem>>();
-        // facturaItemsMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<FacturaItem, bool>>>(), It.IsAny<CancellationToken>()))
-        //     .ReturnsAsync(false);
+            var item = CrearItemComanda(itemId, 5); // Crear con cantidad suficiente para las divisiones
+            // Asignar el item a la comanda original
+            typeof(ItemComanda).GetProperty("ComandaId")?.SetValue(item, command.ComandaOriginalId);
+            itemsComanda.Add(item);
+        }
+        
+        var itemsComandaMock = MockDbSetHelper.CreateMockDbSet(itemsComanda.AsQueryable());
 
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
         _contextMock.Setup(x => x.ItemsComanda).Returns(itemsComandaMock.Object);
-        // _contextMock.Setup(x => x.FacturaItems).Returns(facturaItemsMock.Object);
     }
 
     private void ConfigurarMockComandaNoExiste()
     {
-        var comandasMock = new Mock<DbSet<Comanda>>();
-        comandasMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false);
-
+        // Usar lista vacía para simular que no existe la comanda
+        var comandasMock = MockDbSetHelper.CreateEmptyMockDbSet<Comanda>();
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
     }
 
     private void ConfigurarMockComandaNoDivisible(DividirComandaCommand command)
     {
-        var comandasMock = new Mock<DbSet<Comanda>>();
-        comandasMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
+        // Crear comanda no divisible (finalizada)
         var comanda = CrearComandaValidaParaDivision();
         typeof(EntityBase).GetProperty("Id")?.SetValue(comanda, command.ComandaOriginalId);
         // Marcar como finalizada usando método del dominio 
         comanda.ActualizarEstado(EstadoComanda.Finalizada);
 
-        comandasMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(comanda);
-
+        var comandas = new List<Comanda> { comanda };
+        var comandasMock = MockDbSetHelper.CreateMockDbSet(comandas.AsQueryable());
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
     }
 
     private void ConfigurarMockComandaSinItems(DividirComandaCommand command)
     {
-        var comandasMock = new Mock<DbSet<Comanda>>();
-        comandasMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        var itemsComandaMock = new Mock<DbSet<ItemComanda>>();
-        itemsComandaMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<ItemComanda, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(false); // No tiene items
+        // Crear comanda existente pero sin items
+        var comanda = CrearComandaValidaParaDivision();
+        typeof(EntityBase).GetProperty("Id")?.SetValue(comanda, command.ComandaOriginalId);
+        
+        var comandas = new List<Comanda> { comanda };
+        var comandasMock = MockDbSetHelper.CreateMockDbSet(comandas.AsQueryable());
+        
+        // Items vacíos para simular que no tiene items
+        var itemsComandaMock = MockDbSetHelper.CreateEmptyMockDbSet<ItemComanda>();
 
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
         _contextMock.Setup(x => x.ItemsComanda).Returns(itemsComandaMock.Object);
@@ -286,6 +295,10 @@ public class DividirComandaValidatorTests
 
     private DividirComandaCommand CrearComandoValido()
     {
+        // Usar IDs predefinidos para mantener consistencia
+        var item1Id = new Guid("11111111-1111-1111-1111-111111111111");
+        var item2Id = new Guid("22222222-2222-2222-2222-222222222222");
+        
         return new DividirComandaCommand
         {
             ComandaOriginalId = Guid.NewGuid(),
@@ -298,7 +311,7 @@ public class DividirComandaValidatorTests
                     NumeroComandaNueva = 1,
                     Items = new List<ItemDivisionDto> 
                     { 
-                        new ItemDivisionDto { ItemId = Guid.NewGuid(), Cantidad = 1 } 
+                        new ItemDivisionDto { ItemId = item1Id, Cantidad = 2 } 
                     }
                 },
                 new DivisionComandaDto 
@@ -306,7 +319,7 @@ public class DividirComandaValidatorTests
                     NumeroComandaNueva = 2,
                     Items = new List<ItemDivisionDto> 
                     { 
-                        new ItemDivisionDto { ItemId = Guid.NewGuid(), Cantidad = 1 } 
+                        new ItemDivisionDto { ItemId = item2Id, Cantidad = 1 } 
                     }
                 }
             },
@@ -348,4 +361,22 @@ public class DividirComandaValidatorTests
 
         return item;
     }
+
+    #region Helper Methods
+
+    private void ConfigurarMocksBasicos()
+    {
+        // Configurar DbSets vacíos para evitar NullReferenceException
+        var comandasMock = MockDbSetHelper.CreateEmptyMockDbSet<Comanda>();
+        var itemsComandaMock = MockDbSetHelper.CreateEmptyMockDbSet<ItemComanda>();
+        var mesasMock = MockDbSetHelper.CreateEmptyMockDbSet<Mesa>();
+        var usuariosMock = MockDbSetHelper.CreateEmptyMockDbSet<Usuario>();
+
+        _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
+        _contextMock.Setup(x => x.ItemsComanda).Returns(itemsComandaMock.Object);
+        _contextMock.Setup(x => x.Mesas).Returns(mesasMock.Object);
+        _contextMock.Setup(x => x.Usuarios).Returns(usuariosMock.Object);
+    }
+
+    #endregion
 } 

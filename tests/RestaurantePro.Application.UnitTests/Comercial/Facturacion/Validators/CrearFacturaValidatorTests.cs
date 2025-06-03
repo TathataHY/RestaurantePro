@@ -385,7 +385,7 @@ public class CrearFacturaValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCount(5);
+        result.Errors.Should().HaveCount(6); // Actualizado de 5 a 6 porque moneda ahora es obligatoria
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearFacturaCommand.ComandasIds));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearFacturaCommand.TipoFactura));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearFacturaCommand.NombreCliente));
