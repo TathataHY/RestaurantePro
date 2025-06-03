@@ -42,6 +42,9 @@ public class DividirComandaHandlerTests
     {
         // Arrange
         var comandaOriginalId = Guid.NewGuid();
+        var itemId1 = Guid.NewGuid();
+        var itemId2 = Guid.NewGuid();
+        
         var command = new DividirComandaCommand
         {
             ComandaOriginalId = comandaOriginalId,
@@ -58,7 +61,7 @@ public class DividirComandaHandlerTests
                     MesaDestinoId = Guid.NewGuid(),
                     Items = new List<ItemDivisionDto>
                     {
-                        new ItemDivisionDto { ItemId = Guid.NewGuid(), Cantidad = 2 }
+                        new ItemDivisionDto { ItemId = itemId1, Cantidad = 2 }
                     }
                 },
                 new DivisionComandaDto
@@ -67,13 +70,18 @@ public class DividirComandaHandlerTests
                     MesaDestinoId = Guid.NewGuid(),
                     Items = new List<ItemDivisionDto>
                     {
-                        new ItemDivisionDto { ItemId = Guid.NewGuid(), Cantidad = 1 }
+                        new ItemDivisionDto { ItemId = itemId2, Cantidad = 1 }
                     }
                 }
             }
         };
 
-        var comandaOriginal = CrearComandaConItems(comandaOriginalId);
+        var comandaOriginal = CrearComandaConItems(comandaOriginalId, new[]
+        {
+            CrearItemComanda(itemId1, cantidad: 2),
+            CrearItemComanda(itemId2, cantidad: 1)
+        });
+        
         ConfigurarMocksParaDivisionExitosa(comandaOriginal);
 
         // Act
@@ -232,7 +240,10 @@ public class DividirComandaHandlerTests
                 new DivisionComandaDto 
                 { 
                     NumeroComandaNueva = 1,
-                    Items = new List<ItemDivisionDto>() 
+                    Items = new List<ItemDivisionDto>
+                    {
+                        new ItemDivisionDto { ItemId = Guid.NewGuid(), Cantidad = 1 }
+                    }
                 }
             }
         };
@@ -243,14 +254,8 @@ public class DividirComandaHandlerTests
         var propEstado = typeof(Comanda).GetProperty("Estado", BindingFlags.Public | BindingFlags.Instance);
         propEstado?.SetValue(comandaOriginal, estadoComanda);
 
-        if (deberiaDividir)
-        {
-            ConfigurarMocksParaDivisionExitosa(comandaOriginal);
-        }
-        else
-        {
-            ConfigurarMockComandas(new[] { comandaOriginal });
-        }
+        // CRÍTICO: SIEMPRE configurar la comanda para que el handler la pueda encontrar
+        ConfigurarMockComandas(new[] { comandaOriginal });
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -317,6 +322,9 @@ public class DividirComandaHandlerTests
     {
         // Arrange
         var comandaOriginalId = Guid.NewGuid();
+        var itemId1 = Guid.NewGuid();
+        var itemId2 = Guid.NewGuid();
+        
         var command = new DividirComandaCommand
         {
             ComandaOriginalId = comandaOriginalId,
@@ -329,24 +337,28 @@ public class DividirComandaHandlerTests
                 new DivisionComandaDto 
                 { 
                     NumeroComandaNueva = 1,
-                    Items = new List<ItemDivisionDto>() 
+                    Items = new List<ItemDivisionDto>
+                    {
+                        new ItemDivisionDto { ItemId = itemId1, Cantidad = 1 }
+                    }
                 },
                 new DivisionComandaDto 
                 { 
                     NumeroComandaNueva = 2,
-                    Items = new List<ItemDivisionDto>() 
+                    Items = new List<ItemDivisionDto>
+                    {
+                        new ItemDivisionDto { ItemId = itemId2, Cantidad = 1 }
+                    }
                 }
             }
         };
 
-        var comandaOriginal = CrearComandaConItems(comandaOriginalId);
-        // TODO: Descuentos no está disponible aún en la entidad Comanda del dominio
-        // comandaOriginal.Descuentos = new List<DescuentoComanda>
-        // {
-        //     new DescuentoComanda { Monto = 100m }
-        // };
-        // comandaOriginal.Subtotal = 1000m;
-
+        var comandaOriginal = CrearComandaConItems(comandaOriginalId, new[]
+        {
+            CrearItemComanda(itemId1, cantidad: 1),
+            CrearItemComanda(itemId2, cantidad: 1)
+        });
+        
         ConfigurarMocksParaDivisionExitosa(comandaOriginal);
 
         // Act
@@ -410,18 +422,35 @@ public class DividirComandaHandlerTests
     public async Task Handle_ConErrorEnTransaccion_DeberiaRevertirCambios()
     {
         // Arrange
+        var comandaOriginalId = Guid.NewGuid();
+        var itemId = Guid.NewGuid();
+        
         var command = new DividirComandaCommand
         {
-            ComandaOriginalId = Guid.NewGuid(),
+            ComandaOriginalId = comandaOriginalId,
             TipoDivision = TipoDivisionComanda.PorItems,
             MotivoDivision = "Test error",
-            DivisionItems = new List<DivisionComandaDto>()
+            DivisionItems = new List<DivisionComandaDto>
+            {
+                new DivisionComandaDto
+                {
+                    NumeroComandaNueva = 1,
+                    Items = new List<ItemDivisionDto>
+                    {
+                        new ItemDivisionDto { ItemId = itemId, Cantidad = 1 }
+                    }
+                }
+            }
         };
 
-        var comandaOriginal = CrearComandaConItems(command.ComandaOriginalId);
+        var comandaOriginal = CrearComandaConItems(comandaOriginalId, new[]
+        {
+            CrearItemComanda(itemId, cantidad: 1)
+        });
         ConfigurarMockComandas(new[] { comandaOriginal });
 
-        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
+        // Configurar error en SaveChanges específicamente
+        _mockUnitOfWork.Setup(u => u.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Error en base de datos"));
 
         // Act
@@ -430,14 +459,14 @@ public class DividirComandaHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("Error interno al dividir la comanda");
+        resultado.Error.Should().Contain("Error en transacción");
 
         // Verificar logging de error
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error al dividir comanda")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Excepción general en división")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -459,6 +488,10 @@ public class DividirComandaHandlerTests
 
         _mockUnitOfWork.Setup(u => u.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
+
+        // CRÍTICO: Configurar EjecutarEnTransaccionAsync para que ejecute la función que recibe
+        _mockUnitOfWork.Setup(u => u.EjecutarEnTransaccionAsync(It.IsAny<Func<Task<Result<DividirComandaDto>>>>(), It.IsAny<CancellationToken>()))
+            .Returns<Func<Task<Result<DividirComandaDto>>>, CancellationToken>((func, token) => func());
 
         // Configurar DbSets mockeados
         var comandasMock = MockDbSetHelper.CreateMockDbSet(new List<Comanda>().AsQueryable());

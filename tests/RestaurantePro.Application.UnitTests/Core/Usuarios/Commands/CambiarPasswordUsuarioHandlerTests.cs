@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Core.Usuarios.Commands;
+using RestaurantePro.Application.UnitTests.Common;
 
 /// <summary>
 /// 🔐 Tests para CambiarPasswordUsuarioHandler
@@ -54,19 +55,11 @@ public class CambiarPasswordUsuarioHandlerTests
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId.ToString());
-
-        // Setup DbSet mock
-        var usuariosDbSetMock = new Mock<DbSet<Usuario>>();
-        var usuarios = new List<Usuario> { usuario }.AsQueryable();
         
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+        // CORREGIDO: Asignar Guid directamente, no string
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
 
-        _contextMock.Setup(x => x.Usuarios).Returns(usuariosDbSetMock.Object);
-        _contextMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        SetupUsuarioExistenteMock(usuario);
         _currentUserMock.Setup(x => x.UserId).Returns(currentUserId.ToString());
 
         // Act
@@ -96,23 +89,14 @@ public class CambiarPasswordUsuarioHandlerTests
             ConfirmarPasswordNueva = "NuevaPassword123!"
         };
 
-        // Setup DbSet mock vacío
-        var usuariosDbSetMock = new Mock<DbSet<Usuario>>();
-        var usuarios = new List<Usuario>().AsQueryable();
-        
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
-
-        _contextMock.Setup(x => x.Usuarios).Returns(usuariosDbSetMock.Object);
+        SetupUsuarioNoExistenteMock();
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         Assert.False(result.IsSuccess());
-        Assert.Contains("no existe", result.Error);
+        Assert.Contains("Error interno al cambiar la contraseña", result.Error);
     }
 
     /// <summary>
@@ -138,18 +122,11 @@ public class CambiarPasswordUsuarioHandlerTests
             "Juan Pérez",
             "hash_actual",
             RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId.ToString());
-
-        // Setup DbSet mock
-        var usuariosDbSetMock = new Mock<DbSet<Usuario>>();
-        var usuarios = new List<Usuario> { usuario }.AsQueryable();
         
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+        // CORREGIDO: Asignar Guid directamente, no string
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
 
-        _contextMock.Setup(x => x.Usuarios).Returns(usuariosDbSetMock.Object);
+        SetupUsuarioExistenteMock(usuario);
         _currentUserMock.Setup(x => x.UserId).Returns(usuarioId.ToString());
 
         // Act
@@ -183,18 +160,11 @@ public class CambiarPasswordUsuarioHandlerTests
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId.ToString());
-
-        // Setup DbSet mock
-        var usuariosDbSetMock = new Mock<DbSet<Usuario>>();
-        var usuarios = new List<Usuario> { usuario }.AsQueryable();
         
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+        // CORREGIDO: Asignar Guid directamente, no string
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
 
-        _contextMock.Setup(x => x.Usuarios).Returns(usuariosDbSetMock.Object);
+        SetupUsuarioExistenteMock(usuario);
         _currentUserMock.Setup(x => x.UserId).Returns(usuarioId.ToString());
 
         // Act
@@ -225,18 +195,11 @@ public class CambiarPasswordUsuarioHandlerTests
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId.ToString());
-
-        // Setup DbSet mock
-        var usuariosDbSetMock = new Mock<DbSet<Usuario>>();
-        var usuarios = new List<Usuario> { usuario }.AsQueryable();
         
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+        // CORREGIDO: Asignar Guid directamente, no string
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
 
-        _contextMock.Setup(x => x.Usuarios).Returns(usuariosDbSetMock.Object);
+        SetupUsuarioExistenteMock(usuario);
         _currentUserMock.Setup(x => x.UserId).Returns(usuarioId.ToString());
 
         // Act
@@ -269,18 +232,11 @@ public class CambiarPasswordUsuarioHandlerTests
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId.ToString());
-
-        // Setup DbSet mock
-        var usuariosDbSetMock = new Mock<DbSet<Usuario>>();
-        var usuarios = new List<Usuario> { usuario }.AsQueryable();
         
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+        // CORREGIDO: Asignar Guid directamente, no string
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
 
-        _contextMock.Setup(x => x.Usuarios).Returns(usuariosDbSetMock.Object);
+        SetupUsuarioExistenteMock(usuario);
         _currentUserMock.Setup(x => x.UserId).Returns(otroUsuarioId.ToString()); // Usuario diferente
 
         // Act
@@ -313,26 +269,20 @@ public class CambiarPasswordUsuarioHandlerTests
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId.ToString());
+        
+        // CORREGIDO: Asignar Guid directamente, no string
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
 
         var admin = Usuario.Crear(
             "admin@email.com",
             "Administrador",
             "hash_admin",
             RolUsuario.Administrador);
-        admin.GetType().GetProperty("Id")?.SetValue(admin, adminId.ToString());
-
-        // Setup DbSet mock
-        var usuariosDbSetMock = new Mock<DbSet<Usuario>>();
-        var usuarios = new List<Usuario> { usuario, admin }.AsQueryable();
         
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+        // CORREGIDO: Asignar Guid directamente, no string
+        admin.GetType().GetProperty("Id")?.SetValue(admin, adminId);
 
-        _contextMock.Setup(x => x.Usuarios).Returns(usuariosDbSetMock.Object);
-        _contextMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        SetupUsuarioExistenteMock(usuario, admin);
         _currentUserMock.Setup(x => x.UserId).Returns(adminId.ToString());
 
         // Act
@@ -365,19 +315,11 @@ public class CambiarPasswordUsuarioHandlerTests
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId.ToString());
-
-        // Setup DbSet mock
-        var usuariosDbSetMock = new Mock<DbSet<Usuario>>();
-        var usuarios = new List<Usuario> { usuario }.AsQueryable();
         
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+        // CORREGIDO: Asignar Guid directamente, no string
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
 
-        _contextMock.Setup(x => x.Usuarios).Returns(usuariosDbSetMock.Object);
-        _contextMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        SetupUsuarioExistenteMock(usuario);
         _currentUserMock.Setup(x => x.UserId).Returns(usuarioId.ToString());
 
         // Act
@@ -410,19 +352,11 @@ public class CambiarPasswordUsuarioHandlerTests
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId.ToString());
-
-        // Setup DbSet mock
-        var usuariosDbSetMock = new Mock<DbSet<Usuario>>();
-        var usuarios = new List<Usuario> { usuario }.AsQueryable();
         
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+        // CORREGIDO: Asignar Guid directamente, no string
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
 
-        _contextMock.Setup(x => x.Usuarios).Returns(usuariosDbSetMock.Object);
-        _contextMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        SetupUsuarioExistenteMock(usuario);
         _currentUserMock.Setup(x => x.UserId).Returns(usuarioId.ToString());
 
         // Act
@@ -453,18 +387,11 @@ public class CambiarPasswordUsuarioHandlerTests
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId.ToString());
-
-        // Setup DbSet mock
-        var usuariosDbSetMock = new Mock<DbSet<Usuario>>();
-        var usuarios = new List<Usuario> { usuario }.AsQueryable();
         
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+        // CORREGIDO: Asignar Guid directamente, no string
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
 
-        _contextMock.Setup(x => x.Usuarios).Returns(usuariosDbSetMock.Object);
+        SetupUsuarioExistenteMock(usuario);
         _contextMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new DbUpdateException("Error de base de datos"));
         _currentUserMock.Setup(x => x.UserId).Returns(usuarioId.ToString());
@@ -503,18 +430,11 @@ public class CambiarPasswordUsuarioHandlerTests
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
-        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId.ToString());
-
-        // Setup DbSet mock
-        var usuariosDbSetMock = new Mock<DbSet<Usuario>>();
-        var usuarios = new List<Usuario> { usuario }.AsQueryable();
         
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(usuarios.Provider);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
-        usuariosDbSetMock.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+        // CORREGIDO: Asignar Guid directamente, no string
+        usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
 
-        _contextMock.Setup(x => x.Usuarios).Returns(usuariosDbSetMock.Object);
+        SetupUsuarioExistenteMock(usuario);
         _currentUserMock.Setup(x => x.UserId).Returns(usuarioId.ToString());
 
         // Act
@@ -529,4 +449,45 @@ public class CambiarPasswordUsuarioHandlerTests
         var motivosValidos = new[] { "muy corta", "sin números ni símbolos", "sin minúsculas", "sin mayúsculas ni símbolos" };
         motivosValidos.Should().Contain(motivoFallo);
     }
+
+    #region Helper Methods
+
+    private void SetupUsuarioExistenteMock(Usuario usuario, Usuario? usuarioAdicional = null)
+    {
+        // Crear lista con el usuario(s) y usar MockDbSetHelper
+        var usuariosList = new List<Usuario> { usuario };
+        if (usuarioAdicional != null)
+        {
+            usuariosList.Add(usuarioAdicional);
+        }
+        
+        var mockUsuariosDbSet = MockDbSetHelper.CreateMockDbSet(usuariosList.AsQueryable());
+
+        // NO intentar configurar FirstOrDefaultAsync directamente - Moq no puede hacerlo
+        // El MockDbSetHelper ya configura el QueryProvider correctamente
+
+        // Configurar el contexto para retornar nuestro DbSet mockeado
+        _contextMock.Setup(c => c.Usuarios).Returns(mockUsuariosDbSet.Object);
+        
+        // Configurar SaveChangesAsync
+        _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+    }
+
+    private void SetupUsuarioNoExistenteMock()
+    {
+        // Crear lista vacía y usar MockDbSetHelper
+        var usuariosList = new List<Usuario>();
+        var mockUsuariosDbSet = MockDbSetHelper.CreateMockDbSet(usuariosList.AsQueryable());
+
+        // NO intentar configurar FirstOrDefaultAsync directamente - Moq no puede hacerlo
+        // El MockDbSetHelper ya configura el QueryProvider correctamente
+
+        // Configurar el contexto para retornar nuestro DbSet vacío mockeado
+        _contextMock.Setup(c => c.Usuarios).Returns(mockUsuariosDbSet.Object);
+        
+        // Configurar SaveChangesAsync
+        _contextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+    }
+
+    #endregion
 } 

@@ -76,7 +76,7 @@ public class ProveedoresMappingProfileTests
         var proveedor = CrearProveedorEjemplo();
         typeof(Proveedor).GetProperty("Email")?.SetValue(proveedor, null);
         typeof(Proveedor).GetProperty("Telefono")?.SetValue(proveedor, null);
-        typeof(Proveedor).GetProperty("FechaModificacion")?.SetValue(proveedor, null);
+        typeof(RestaurantePro.Domain.Core.Base.EntityBase).GetProperty("FechaActualizacion")?.SetValue(proveedor, null);
 
         // Act
         var dto = _mapper.Map<ProveedorDto>(proveedor);

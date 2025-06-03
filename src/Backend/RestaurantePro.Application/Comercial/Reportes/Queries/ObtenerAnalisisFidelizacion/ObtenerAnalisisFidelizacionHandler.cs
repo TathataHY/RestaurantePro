@@ -94,7 +94,7 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
             return Result.Failure("El período de análisis no puede exceder 2 años");
         }
 
-        if (diferenciaDias < 7) // Mínimo 1 semana
+        if (diferenciaDias <= 6) // Mínimo 1 semana (7 días)
         {
             return Result.Failure("El período de análisis debe ser de al menos 1 semana");
         }

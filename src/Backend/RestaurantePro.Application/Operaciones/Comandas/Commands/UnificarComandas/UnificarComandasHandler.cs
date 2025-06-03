@@ -54,6 +54,15 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
                     var comandasOriginales = comandasOriginalesResult.Value;
                     _logger.LogInformation("✅ Comandas originales obtenidas: {Count}", comandasOriginales.Count);
 
+                    // 1.5. Validar estados de comandas ANTES de continuar
+                    _logger.LogInformation("🔍 Paso 1.5: Validando estados de comandas");
+                    var validacionEstadosResult = ValidarEstadosComandas(comandasOriginales);
+                    if (!validacionEstadosResult.Succeeded)
+                    {
+                        return Result.Failure<UnificarComandasDto>(validacionEstadosResult.Error ?? "Error validando estados de comandas");
+                    }
+                    _logger.LogInformation("✅ Estados de comandas validados correctamente");
+
                     // 2. Determinar comanda principal o crear nueva
                     _logger.LogInformation("🔍 Paso 2: Obteniendo o creando comanda unificada");
                     var comandaUnificadaResult = await ObtenerOCrearComandaUnificada(comandasOriginales, request, cancellationToken);
@@ -342,6 +351,26 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
         var timestamp = _dateTimeService.Now.ToString("yyyyMMddHHmmss");
         var random = Random.Shared.Next(1000, 9999);
         return $"UNI-{timestamp}-{random}";
+    }
+
+    /// <summary>
+    /// Valida que todas las comandas estén en estados unificables
+    /// </summary>
+    private Result ValidarEstadosComandas(List<Comanda> comandas)
+    {
+        var estadosValidos = new[] { EstadoComanda.Creada, EstadoComanda.EnProceso };
+        var estadosInvalidos = comandas
+            .Where(c => !estadosValidos.Contains(c.Estado))
+            .Select(c => new { c.Id, c.Estado })
+            .ToList();
+
+        if (estadosInvalidos.Any())
+        {
+            var estadosTexto = string.Join(", ", estadosInvalidos.Select(x => $"Comanda {x.Id}: {x.Estado}"));
+            return Result.Failure($"Las comandas con estados {estadosTexto} no son unificables. Solo se pueden unificar comandas en estado Creada o EnProceso.");
+        }
+
+        return Result.Success();
     }
 
     #endregion

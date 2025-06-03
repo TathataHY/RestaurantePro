@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+
 namespace RestaurantePro.Application.UnitTests.Common;
 
 /// <summary>
@@ -85,7 +87,9 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
         {
             try
             {
-                var result = Execute<bool>(expression);
+                // Para operaciones como AnyAsync, necesitamos evaluar la expresión
+                var query = new TestAsyncEnumerable<TEntity>(expression);
+                var result = query.Any();
                 return (TResult)(object)Task.FromResult(result);
             }
             catch
@@ -101,8 +105,39 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
             var taskResultType = expectedResultType.GetGenericArguments()[0];
             try
             {
-                // Ejecutar la expresión síncronamente y envolver en Task
-                var result = _inner.Execute(expression);
+                // Para FirstOrDefaultAsync, necesitamos evaluar la expresión correctamente
+                var query = new TestAsyncEnumerable<TEntity>(expression);
+                
+                // Obtener el resultado usando LINQ to Objects
+                object? result = null;
+                
+                // Comprobar si es una operación FirstOrDefault
+                if (expression is MethodCallExpression methodCall && 
+                    methodCall.Method.Name == "FirstOrDefault")
+                {
+                    // Ejecutar FirstOrDefault en la secuencia
+                    var enumerable = query.AsEnumerable();
+                    if (methodCall.Arguments.Count > 1) // Con predicado
+                    {
+                        // Compilar y ejecutar el predicado
+                        var lambda = methodCall.Arguments[1] as LambdaExpression ??
+                                   ((UnaryExpression)methodCall.Arguments[1]).Operand as LambdaExpression;
+                        if (lambda != null)
+                        {
+                            var compiledPredicate = lambda.Compile();
+                            result = enumerable.Cast<object>().FirstOrDefault(item => (bool)compiledPredicate.DynamicInvoke(item));
+                        }
+                    }
+                    else // Sin predicado
+                    {
+                        result = enumerable.FirstOrDefault();
+                    }
+                }
+                else
+                {
+                    // Para otras operaciones, usar el provider interno
+                    result = _inner.Execute(expression);
+                }
                 
                 // Si el resultado es del tipo correcto, devolverlo
                 if (result != null && taskResultType.IsAssignableFrom(result.GetType()))
@@ -116,8 +151,11 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
                 var taskResultDefault = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType)?.Invoke(null, new[] { defaultValue });
                 return (TResult)taskResultDefault!;
             }
-            catch
+            catch (Exception ex)
             {
+                // En caso de error, loguearlo y devolver valor por defecto
+                System.Diagnostics.Debug.WriteLine($"Error en ExecuteAsync: {ex.Message}");
+                
                 // Si falla, crear una tarea completada con valor por defecto
                 var defaultValue = taskResultType.IsValueType ? Activator.CreateInstance(taskResultType) : null;
                 var taskResult = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType)?.Invoke(null, new[] { defaultValue });

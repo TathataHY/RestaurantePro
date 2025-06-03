@@ -39,58 +39,99 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
 
         try
         {
-            return await _unitOfWork.EjecutarEnTransaccionAsync<Result<DividirComandaDto>>(async () =>
+            return await _unitOfWork.EjecutarEnTransaccionAsync(async () =>
             {
-                // 1. Obtener comanda original completa
-                var comandaOriginalResult = await ObtenerComandaOriginal(request.ComandaOriginalId, cancellationToken);
-                if (!comandaOriginalResult.Succeeded)
+                try
                 {
-                    return Result.Failure<DividirComandaDto>(comandaOriginalResult.Error ?? "Error obteniendo comanda original");
+                    // 1. Obtener comanda original completa
+                    _logger.LogInformation("🔍 Paso 1: Obteniendo comanda original");
+                    var comandaOriginalResult = await ObtenerComandaOriginal(request.ComandaOriginalId, cancellationToken);
+                    if (!comandaOriginalResult.Succeeded)
+                    {
+                        return Result.Failure<DividirComandaDto>(comandaOriginalResult.Error ?? "Error obteniendo comanda original");
+                    }
+
+                    var comandaOriginal = comandaOriginalResult.Value;
+                    _logger.LogInformation("✅ Comanda original obtenida: {ComandaId}", comandaOriginal.Id);
+
+                    // 1.5. Validar estado de comanda ANTES de continuar
+                    _logger.LogInformation("🔍 Paso 1.5: Validando estado de comanda");
+                    var validacionEstadoResult = ValidarEstadoComanda(comandaOriginal);
+                    if (!validacionEstadoResult.Succeeded)
+                    {
+                        return Result.Failure<DividirComandaDto>(validacionEstadoResult.Error ?? "Error validando estado de comanda");
+                    }
+                    _logger.LogInformation("✅ Estado de comanda validado correctamente");
+
+                    // 2. Validar distribución de items
+                    _logger.LogInformation("🔍 Paso 2: Validando distribución de items");
+                    var validacionResult = await ValidarDistribucionItems(comandaOriginal, request, cancellationToken);
+                    if (!validacionResult.Succeeded)
+                    {
+                        return Result.Failure<DividirComandaDto>(validacionResult.Error ?? "Error validando distribución de items");
+                    }
+                    _logger.LogInformation("✅ Distribución de items validada");
+
+                    // 3. Crear nuevas comandas
+                    _logger.LogInformation("🔍 Paso 3: Creando nuevas comandas");
+                    var nuevasComandasResult = await CrearNuevasComandas(comandaOriginal, request, cancellationToken);
+                    if (!nuevasComandasResult.Succeeded)
+                    {
+                        return Result.Failure<DividirComandaDto>(nuevasComandasResult.Error ?? "Error creando nuevas comandas");
+                    }
+
+                    var nuevasComandas = nuevasComandasResult.Value;
+                    _logger.LogInformation("✅ Nuevas comandas creadas: {Count}", nuevasComandas.Count);
+
+                    // 4. Distribuir items entre las nuevas comandas
+                    _logger.LogInformation("🔍 Paso 4: Distribuyendo items");
+                    await DistribuirItems(comandaOriginal, nuevasComandas, request, cancellationToken);
+                    _logger.LogInformation("✅ Items distribuidos");
+
+                    // 5. Distribuir descuentos si es necesario
+                    if (request.DistribuirDescuentos)
+                    {
+                        _logger.LogInformation("🔍 Paso 5: Distribuyendo descuentos");
+                        await DistribuirDescuentos(comandaOriginal, nuevasComandas, cancellationToken);
+                        _logger.LogInformation("✅ Descuentos distribuidos");
+                    }
+
+                    // 6. Actualizar comanda original
+                    _logger.LogInformation("🔍 Paso 6: Actualizando comanda original");
+                    await ActualizarComandaOriginal(comandaOriginal, request, cancellationToken);
+                    _logger.LogInformation("✅ Comanda original actualizada");
+
+                    // 7. Registrar auditoría
+                    _logger.LogInformation("🔍 Paso 7: Registrando auditoría");
+                    await RegistrarAuditoria(comandaOriginal, nuevasComandas, request, cancellationToken);
+                    _logger.LogInformation("✅ Auditoría registrada");
+
+                    // 8. Guardar cambios
+                    _logger.LogInformation("🔍 Paso 8: Guardando cambios");
+                    await _unitOfWork.GuardarCambiosAsync(cancellationToken);
+                    _logger.LogInformation("✅ Cambios guardados");
+
+                    // 9. Crear respuesta
+                    _logger.LogInformation("🔍 Paso 9: Creando respuesta");
+                    var response = CrearRespuesta(comandaOriginal, nuevasComandas, request);
+                    _logger.LogInformation("✅ Respuesta creada");
+
+                    _logger.LogInformation("✅ División completada exitosamente. Comanda original: {ComandaOriginalId}, Nuevas comandas: {NuevasComandasIds}",
+                        request.ComandaOriginalId, string.Join(", ", nuevasComandas.Select(c => c.Id)));
+
+                    return Result.Success<DividirComandaDto>(response);
                 }
-
-                var comandaOriginal = comandaOriginalResult.Value;
-
-                // 2. Validar distribución de items
-                var validacionResult = await ValidarDistribucionItems(comandaOriginal, request, cancellationToken);
-                if (!validacionResult.Succeeded)
+                catch (NullReferenceException ex)
                 {
-                    return Result.Failure<DividirComandaDto>(validacionResult.Error ?? "Error validando distribución de items");
+                    _logger.LogError(ex, "❌ NullReferenceException en división: {Message}. StackTrace: {StackTrace}", 
+                        ex.Message, ex.StackTrace);
+                    return Result.Failure<DividirComandaDto>($"Error de referencia nula: {ex.Message} - {ex.StackTrace}");
                 }
-
-                // 3. Crear nuevas comandas
-                var nuevasComandasResult = await CrearNuevasComandas(comandaOriginal, request, cancellationToken);
-                if (!nuevasComandasResult.Succeeded)
+                catch (Exception ex)
                 {
-                    return Result.Failure<DividirComandaDto>(nuevasComandasResult.Error ?? "Error creando nuevas comandas");
+                    _logger.LogError(ex, "❌ Excepción general en división: {Message}", ex.Message);
+                    return Result.Failure<DividirComandaDto>($"Error en transacción: {ex.Message}");
                 }
-
-                var nuevasComandas = nuevasComandasResult.Value;
-
-                // 4. Distribuir items entre las nuevas comandas
-                await DistribuirItems(comandaOriginal, nuevasComandas, request, cancellationToken);
-
-                // 5. Distribuir descuentos si es necesario
-                if (request.DistribuirDescuentos)
-                {
-                    await DistribuirDescuentos(comandaOriginal, nuevasComandas, cancellationToken);
-                }
-
-                // 6. Actualizar comanda original
-                await ActualizarComandaOriginal(comandaOriginal, request, cancellationToken);
-
-                // 7. Registrar auditoría
-                await RegistrarAuditoria(comandaOriginal, nuevasComandas, request, cancellationToken);
-
-                // 8. Guardar cambios
-                await _unitOfWork.GuardarCambiosAsync(cancellationToken);
-
-                // 9. Crear respuesta
-                var response = CrearRespuesta(comandaOriginal, nuevasComandas, request);
-
-                _logger.LogInformation("✅ División completada exitosamente. Comanda original: {ComandaOriginalId}, Nuevas comandas: {NuevasComandasIds}",
-                    request.ComandaOriginalId, string.Join(", ", nuevasComandas.Select(c => c.Id)));
-
-                return Result.Success<DividirComandaDto>(response);
 
             }, cancellationToken);
         }
@@ -252,6 +293,21 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
             DivisionExitosa = true,
             TotalComandasCreadas = nuevasComandas.Count
         };
+    }
+
+    /// <summary>
+    /// Valida que la comanda esté en un estado divisible
+    /// </summary>
+    private Result ValidarEstadoComanda(Comanda comanda)
+    {
+        var estadosValidos = new[] { EstadoComanda.Creada, EstadoComanda.EnProceso };
+        
+        if (!estadosValidos.Contains(comanda.Estado))
+        {
+            return Result.Failure($"La comanda en estado {comanda.Estado} no es divisible. Solo se pueden dividir comandas en estado Creada o EnProceso.");
+        }
+
+        return Result.Success();
     }
 
     #endregion

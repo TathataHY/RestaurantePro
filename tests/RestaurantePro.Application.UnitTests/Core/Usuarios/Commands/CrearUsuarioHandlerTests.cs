@@ -46,20 +46,38 @@ public class CrearUsuarioHandlerTests
     public async Task Handle_ConDatosValidos_DeberiaCrearUsuarioCorrectamente()
     {
         // Arrange
+        // Usar un ID específico que coincida con el usuario creador
+        var usuarioCreadorId = Guid.NewGuid();
+        var usuarioCreadorEspecifico = Usuario.Crear("admin", "Administrador Sistema", "admin@restaurantepro.com", RolUsuario.Administrador);
+        
+        // IMPORTANTE: Usar reflection para asignar el ID específico
+        // Esto asegura que el ID del usuario en el mock coincida con el ID del command
+        var idProperty = typeof(Usuario).GetProperty("Id");
+        if (idProperty != null && idProperty.CanWrite)
+        {
+            idProperty.SetValue(usuarioCreadorEspecifico, usuarioCreadorId);
+        }
+        else
+        {
+            // Si no se puede escribir directamente, usar el campo privado
+            var idField = typeof(Usuario).GetField("_id", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            idField?.SetValue(usuarioCreadorEspecifico, usuarioCreadorId);
+        }
+
         var command = CrearUsuarioCommand.CrearEmpleado(
             "juan.perez",
             "Juan Pérez",
             "juan.perez@restaurantepro.com",
             "555-123-4567",
             "Cocina",
-            _usuarioCreadorAdmin.Id);
+            usuarioCreadorId); // Usar el mismo ID
 
-        SetupUsuarioExistenteMock(_usuarioCreadorAdmin);
+        SetupUsuarioExistenteMock(usuarioCreadorEspecifico);
 
         _mockMapper.Setup(m => m.Map<UsuarioDto>(It.IsAny<Usuario>()))
                    .Returns(_usuarioDtoEjemplo);
 
-        // Act - Removiendo try-catch para ver el error real
+        // Act - Sin try-catch para ver el error real
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
@@ -68,7 +86,8 @@ public class CrearUsuarioHandlerTests
         // Si falla, mostrar el error real para debugging
         if (!result.Succeeded)
         {
-            throw new Exception($"Test failed with error: {result.Error}");
+            // Lanzar una excepción con más detalles para ver qué está fallando
+            throw new Exception($"Test failed with detailed error: {result.Error}. Check inner exceptions and mocking setup.");
         }
         
         result.Succeeded.Should().BeTrue();

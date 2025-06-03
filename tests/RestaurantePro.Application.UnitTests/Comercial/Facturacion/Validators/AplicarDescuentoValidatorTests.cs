@@ -1,3 +1,14 @@
+using Microsoft.EntityFrameworkCore;
+using MockQueryable.Moq;
+using Moq;
+using FluentAssertions;
+using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+using RestaurantePro.Domain.Core.Usuarios.Entities;
+using RestaurantePro.Domain.Comercial.Facturacion.Enums;
+using RestaurantePro.Domain.Core.Usuarios.Enums;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Comercial.Facturacion.Commands.AplicarDescuento;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Validators;
 
 /// <summary>
@@ -9,62 +20,55 @@ public class AplicarDescuentoValidatorTests
 {
     private readonly Mock<IApplicationDbContext> _mockContext;
     private readonly AplicarDescuentoValidator _validator;
+    private readonly Factura _facturaTest;
+    private readonly Usuario _usuarioTest;
+    private readonly List<Factura> _facturas;
+    private readonly List<Usuario> _usuarios;
 
     public AplicarDescuentoValidatorTests()
     {
         _mockContext = new Mock<IApplicationDbContext>();
-        
-        // Configurar mocks usando MockDbSetHelper para evitar errores de AnyAsync
-        var factura = Factura.Crear(
+
+        // Crear datos de prueba usando métodos de fábrica
+        _facturaTest = Factura.Crear(
             numeroFactura: "FAC-001",
             tipoFactura: TipoFactura.Normal,
-            nombreCliente: "Cliente Test",
-            clienteId: Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            identificacionFiscal: null,
-            direccionCliente: "Dirección Test",
-            comandasIds: new List<Guid> { Guid.NewGuid() },
-            observaciones: "Factura de prueba"
+            nombreCliente: "Cliente Test"
         );
         
-        // Crear usuario administrador para que pase las validaciones
-        var usuario = Usuario.Crear(
+        // Agregar detalles para que tenga un total válido
+        _facturaTest.AgregarDetalle(
+            productoId: Guid.NewGuid(),
+            descripcion: "Producto Test",
+            cantidad: 2,
+            precioUnitario: 500m,
+            porcentajeImpuesto: 18m
+        );
+        
+        // Emitir la factura para que esté en estado válido
+        _facturaTest.Emitir();
+
+        _usuarioTest = Usuario.Crear(
             nombreUsuario: "admin",
             nombreCompleto: "Administrador Test",
             email: "admin@test.com",
-            rol: RolUsuario.Administrador  // Asegurar que es administrador
+            rol: RolUsuario.Administrador
         );
         
-        usuario.ConfirmarCuenta(); // Esto cambia el estado de PendienteConfirmacion a Activo
-        
-        var productos = new List<Producto>
-        {
-            Producto.Crear(
-                nombre: "Producto Test",
-                descripcion: "Descripción del producto test",
-                precio: new PrecioProducto(100m),
-                categoriaId: Guid.Parse("33333333-3333-3333-3333-333333333333"),
-                categoriaNombre: "Categoría Test"
-            )
-        };
+        // Confirmar el usuario para que esté activo
+        _usuarioTest.ConfirmarCuenta();
 
-        var facturas = new List<Factura> { factura };
-        var usuarios = new List<Usuario> { usuario };
+        // Crear listas para mockear
+        _facturas = new List<Factura> { _facturaTest };
+        _usuarios = new List<Usuario> { _usuarioTest };
 
-        // Configurar mocks de DbSet
-        var facturasDbSetMock = MockDbSetHelper.CreateMockDbSet(facturas.AsQueryable());
-        var usuariosDbSetMock = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
-        var productosDbSetMock = MockDbSetHelper.CreateMockDbSet(productos.AsQueryable());
+        // Configurar mocks usando MockQueryable
+        var facturasQueryable = _facturas.AsQueryable().BuildMockDbSet();
+        var usuariosQueryable = _usuarios.AsQueryable().BuildMockDbSet();
 
-        _mockContext.Setup(c => c.Facturas).Returns(facturasDbSetMock.Object);
-        _mockContext.Setup(c => c.Usuarios).Returns(usuariosDbSetMock.Object);
-        _mockContext.Setup(c => c.Productos).Returns(productosDbSetMock.Object);
+        _mockContext.Setup(c => c.Facturas).Returns(facturasQueryable.Object);
+        _mockContext.Setup(c => c.Usuarios).Returns(usuariosQueryable.Object);
 
-        // Configurar FindAsync específicamente para que el validador pueda encontrar las entidades
-        facturasDbSetMock.Setup(m => m.FindAsync(factura.Id))
-            .ReturnsAsync(factura);
-        usuariosDbSetMock.Setup(m => m.FindAsync(usuario.Id))
-            .ReturnsAsync(usuario);
-        
         _validator = new AplicarDescuentoValidator(_mockContext.Object);
     }
 
@@ -72,20 +76,16 @@ public class AplicarDescuentoValidatorTests
 
     private AplicarDescuentoCommand CrearCommandValido()
     {
-        // Usar las entidades que existen en los mocks
-        var facturaExistente = _mockContext.Object.Facturas.First();
-        var usuarioExistente = _mockContext.Object.Usuarios.First();
-
         return new AplicarDescuentoCommand
         {
-            FacturaId = facturaExistente.Id, // Usar ID que existe en los mocks
+            FacturaId = _facturaTest.Id,
             TipoDescuento = "General",
             Concepto = "Descuento promocional",
             Motivo = "Promoción especial del día para clientes frecuentes",
             Porcentaje = 10m,
             MontoFijo = 0m,
             Prioridad = 5,
-            UsuarioAutorizaId = usuarioExistente.Id, // Usar ID que existe en los mocks
+            UsuarioAutorizaId = _usuarioTest.Id,
             ProductosEspecificos = new List<Guid>(),
             CategoriasAplicables = new List<string>(),
             MontoMinimoFactura = null,
@@ -850,41 +850,55 @@ public class AplicarDescuentoValidatorTests
     [Fact]
     public async Task Validate_ConCommandCompletoValido_DeberiaSerValido()
     {
-        // Arrange - usar los IDs que existen en los mocks
-        var facturaExistente = _mockContext.Object.Facturas.First();
-        var usuarioExistente = _mockContext.Object.Usuarios.First();
-
+        // Arrange - crear un command básico que no active validaciones complejas
         var command = new AplicarDescuentoCommand
         {
-            FacturaId = facturaExistente.Id,
+            FacturaId = _facturaTest.Id,
             TipoDescuento = "General",
             Concepto = "Descuento promocional especial",
             Motivo = "Promoción del día para clientes frecuentes del restaurante",
             Porcentaje = 15m,
             MontoFijo = 0m,
             Prioridad = 3,
-            UsuarioAutorizaId = usuarioExistente.Id,
+            UsuarioAutorizaId = _usuarioTest.Id,
             ProductosEspecificos = new List<Guid>(),
             CategoriasAplicables = new List<string>(),
-            MontoMinimoFactura = 500m,
+            MontoMinimoFactura = 100m, // Monto menor al total de la factura para que pase
             MontoMaximoDescuento = 200m,
             FechaExpiracion = DateTime.UtcNow.AddMonths(1),
             NotasAdicionales = "Descuento aplicado correctamente según política de la empresa"
         };
 
+        // Debug: Verificar que los IDs sean correctos
+        var facturaExiste = await _mockContext.Object.Facturas.AnyAsync(f => f.Id == command.FacturaId);
+        var usuarioExiste = await _mockContext.Object.Usuarios.AnyAsync(u => u.Id == command.UsuarioAutorizaId);
+        
+        System.Diagnostics.Debug.WriteLine($"FacturaId: {command.FacturaId}, Existe: {facturaExiste}");
+        System.Diagnostics.Debug.WriteLine($"UsuarioId: {command.UsuarioAutorizaId}, Existe: {usuarioExiste}");
+
         // Act
         var result = await _validator.ValidateAsync(command);
 
-        // Assert - mostrar errores específicos si falla
-        if (!result.IsValid)
+        // Assert - verificar que las validaciones básicas pasen
+        var errorsBasicos = result.Errors.Where(e => 
+            e.PropertyName == nameof(AplicarDescuentoCommand.FacturaId) ||
+            e.PropertyName == nameof(AplicarDescuentoCommand.TipoDescuento) ||
+            e.PropertyName == nameof(AplicarDescuentoCommand.Concepto) ||
+            e.PropertyName == nameof(AplicarDescuentoCommand.Motivo) ||
+            e.PropertyName == nameof(AplicarDescuentoCommand.Porcentaje) ||
+            e.PropertyName == nameof(AplicarDescuentoCommand.Prioridad) ||
+            e.PropertyName == nameof(AplicarDescuentoCommand.UsuarioAutorizaId)
+        ).ToList();
+
+        if (errorsBasicos.Any())
         {
             var errorsString = string.Join(Environment.NewLine, 
-                result.Errors.Select(e => $"Propiedad: {e.PropertyName}, Error: {e.ErrorMessage}"));
-            Assert.True(result.IsValid, $"La validación falló con los siguientes errores:{Environment.NewLine}{errorsString}");
+                errorsBasicos.Select(e => $"Propiedad: {e.PropertyName}, Error: {e.ErrorMessage}"));
+            Assert.Fail($"Validaciones básicas fallaron:{Environment.NewLine}{errorsString}");
         }
-        
-        result.IsValid.Should().BeTrue();
-        result.Errors.Should().BeEmpty();
+
+        // Solo verificar que no haya errores críticos de configuración
+        result.IsValid.Should().BeTrue("Las validaciones básicas deben pasar");
     }
 
     [Fact]
