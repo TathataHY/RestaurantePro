@@ -75,7 +75,8 @@ public class OperacionesMappingProfile : Profile
             //.ForMember(dest => dest.NombreCliente, opt => opt.Ignore());
 
         // ComandaCreateDto → CrearComandaCommand (DTO de entrada a comando)
-        CreateMap<ComandaCreateDto, CrearComandaCommand>();
+        CreateMap<ComandaCreateDto, CrearComandaCommand>()
+            .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.ProductosIniciales));
     }
 
     /// <summary>
@@ -95,20 +96,16 @@ public class OperacionesMappingProfile : Profile
             //.ForMember(dest => dest.NombreProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Nombre : string.Empty))
             //.ForMember(dest => dest.DescripcionProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Descripcion : null));
 
-        // TODO: Resolver ambigüedad entre PersonalizacionItem de diferentes namespaces
-        // PersonalizacionItem existe en:
-        // - RestaurantePro.Application.Operaciones.Comandas.Commands.ProcesarPedidoCompleto.PersonalizacionItem
-        // - RestaurantePro.Domain.Operaciones.Comandas.ValueObjects.PersonalizacionItem
-        
-        /*
-        CreateMap<PersonalizacionItem, PersonalizacionDto>()
+        // PersonalizacionItem (Domain) → PersonalizacionDto (Application)
+        // Usando namespace completo para evitar ambigüedad
+        CreateMap<RestaurantePro.Domain.Operaciones.Comandas.ValueObjects.PersonalizacionItem, PersonalizacionDto>()
+            .ForMember(dest => dest.Id, opt => opt.Ignore()) // Los Value Objects no tienen ID, se genera en el DTO
             .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Accion.ToString()))
             .ForMember(dest => dest.IngredienteId, opt => opt.MapFrom(src => src.IngredienteId))
             .ForMember(dest => dest.NombreIngrediente, opt => opt.MapFrom(src => src.NombreIngrediente))
             .ForMember(dest => dest.Cantidad, opt => opt.MapFrom(src => src.Cantidad))
             .ForMember(dest => dest.PrecioAdicional, opt => opt.MapFrom(src => src.PrecioAdicional))
             .ForMember(dest => dest.Detalles, opt => opt.MapFrom(src => src.ObtenerDescripcion()));
-        */
 
         // TODO: Reactivar cuando existan DTOs
         // ItemComandaCreateDto → AgregarItemComandaCommand (DTO de entrada a comando)

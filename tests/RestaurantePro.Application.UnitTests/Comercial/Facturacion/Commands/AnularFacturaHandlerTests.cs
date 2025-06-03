@@ -630,9 +630,8 @@ public class AnularFacturaHandlerTests
         _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
         _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
 
-        _facturasDbSetMock.Setup(x => x.Include(It.IsAny<string>()))
-            .Returns(_facturasDbSetMock.Object);
-
+        // No intentar mockear Include ya que es un método de extensión
+        // En su lugar, setup FirstOrDefaultAsync directamente
         _facturasDbSetMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Factura, bool>>>(), It.IsAny<CancellationToken>()))
             .Returns<System.Linq.Expressions.Expression<Func<Factura, bool>>, CancellationToken>((predicate, token) =>
             {
@@ -672,58 +671,132 @@ public class AnularFacturaHandlerTests
 
     private static Factura CreateMockFacturaEmitida(Guid id, decimal total = 1000.00m)
     {
-        var facturaMock = new Mock<Factura>();
-        facturaMock.Setup(x => x.Id).Returns(id);
-        facturaMock.Setup(x => x.NumeroFactura).Returns($"FAC-{id.ToString().Substring(0, 8)}");
-        facturaMock.Setup(x => x.Estado).Returns(EstadoFactura.Emitida);
-        facturaMock.Setup(x => x.Total).Returns(total);
-        facturaMock.Setup(x => x.FechaEmision).Returns(DateTime.UtcNow.AddDays(-1));
-        facturaMock.Setup(x => x.NombreCliente).Returns("Cliente Test");
-        facturaMock.Setup(x => x.Detalles).Returns(new List<DetalleFactura>());
-        return facturaMock.Object;
+        // Crear factura usando factory method real
+        var factura = Factura.Crear(
+            numeroFactura: $"FAC-{id.ToString().Substring(0, 8)}",
+            tipoFactura: TipoFactura.Normal,
+            nombreCliente: "Cliente Test",
+            clienteId: null,
+            identificacionFiscal: null,
+            direccionCliente: null,
+            comandasIds: null,
+            observaciones: null,
+            fechaEmision: DateTime.UtcNow.AddDays(-1)
+        );
+
+        // Agregar un detalle para que tenga contenido
+        factura.AgregarDetalle(
+            productoId: Guid.NewGuid(),
+            descripcion: "Producto de prueba",
+            cantidad: 1,
+            precioUnitario: total,
+            porcentajeImpuesto: 16
+        );
+
+        // Emitir la factura para cambiar su estado
+        factura.Emitir();
+
+        // Usar reflexión para establecer el ID específico
+        typeof(EntityBase).GetProperty("Id")?.SetValue(factura, id);
+
+        return factura;
     }
 
     private static Factura CreateMockFacturaAnulada(Guid id)
     {
-        var facturaMock = new Mock<Factura>();
-        facturaMock.Setup(x => x.Id).Returns(id);
-        facturaMock.Setup(x => x.NumeroFactura).Returns($"FAC-{id.ToString().Substring(0, 8)}");
-        facturaMock.Setup(x => x.Estado).Returns(EstadoFactura.Anulada);
-        facturaMock.Setup(x => x.Total).Returns(1000.00m);
-        facturaMock.Setup(x => x.FechaEmision).Returns(DateTime.UtcNow.AddDays(-1));
-        facturaMock.Setup(x => x.NombreCliente).Returns("Cliente Test");
-        facturaMock.Setup(x => x.Detalles).Returns(new List<DetalleFactura>());
-        return facturaMock.Object;
+        // Crear factura usando factory method real
+        var factura = Factura.Crear(
+            numeroFactura: $"FAC-{id.ToString().Substring(0, 8)}",
+            tipoFactura: TipoFactura.Normal,
+            nombreCliente: "Cliente Test",
+            clienteId: null,
+            identificacionFiscal: null,
+            direccionCliente: null,
+            comandasIds: null,
+            observaciones: null,
+            fechaEmision: DateTime.UtcNow.AddDays(-1)
+        );
+
+        // Agregar detalle y emitir
+        factura.AgregarDetalle(
+            productoId: Guid.NewGuid(),
+            descripcion: "Producto de prueba",
+            cantidad: 1,
+            precioUnitario: 1000.00m,
+            porcentajeImpuesto: 16
+        );
+
+        factura.Emitir();
+        factura.Anular("Anulada para test");
+
+        // Usar reflexión para establecer el ID específico
+        typeof(EntityBase).GetProperty("Id")?.SetValue(factura, id);
+
+        return factura;
     }
 
     private static Factura CreateMockFacturaConCliente(Guid id, Guid clienteId)
     {
-        var facturaMock = new Mock<Factura>();
-        facturaMock.Setup(x => x.Id).Returns(id);
-        facturaMock.Setup(x => x.NumeroFactura).Returns($"FAC-{id.ToString().Substring(0, 8)}");
-        facturaMock.Setup(x => x.Estado).Returns(EstadoFactura.Emitida);
-        facturaMock.Setup(x => x.Total).Returns(1000.00m);
-        facturaMock.Setup(x => x.ClienteId).Returns(clienteId);
-        facturaMock.Setup(x => x.FechaEmision).Returns(DateTime.UtcNow.AddDays(-1));
-        facturaMock.Setup(x => x.NombreCliente).Returns("Cliente Test");
-        facturaMock.Setup(x => x.Detalles).Returns(new List<DetalleFactura>());
-        return facturaMock.Object;
+        // Crear factura usando factory method real
+        var factura = Factura.Crear(
+            numeroFactura: $"FAC-{id.ToString().Substring(0, 8)}",
+            tipoFactura: TipoFactura.Normal,
+            nombreCliente: "Cliente Test",
+            clienteId: clienteId,
+            identificacionFiscal: null,
+            direccionCliente: null,
+            comandasIds: null,
+            observaciones: null,
+            fechaEmision: DateTime.UtcNow.AddDays(-1)
+        );
+
+        // Agregar detalle y emitir
+        factura.AgregarDetalle(
+            productoId: Guid.NewGuid(),
+            descripcion: "Producto de prueba",
+            cantidad: 1,
+            precioUnitario: 1000.00m,
+            porcentajeImpuesto: 16
+        );
+
+        factura.Emitir();
+
+        // Usar reflexión para establecer el ID específico
+        typeof(EntityBase).GetProperty("Id")?.SetValue(factura, id);
+
+        return factura;
     }
 
     private static Usuario CreateMockUsuarioGerente(Guid id)
     {
-        var usuarioMock = new Mock<Usuario>();
-        usuarioMock.Setup(x => x.Id).Returns(id);
-        usuarioMock.Setup(x => x.EsAdministrador).Returns(true);
-        return usuarioMock.Object;
+        // Crear usuario real usando factory method
+        var usuario = Usuario.Crear(
+            nombreUsuario: "gerente.test",
+            nombreCompleto: "Gerente Test",
+            email: "gerente@test.com",
+            rol: RolUsuario.Gerente
+        );
+
+        // Usar reflexión para establecer propiedades específicas
+        typeof(EntityBase).GetProperty("Id")?.SetValue(usuario, id);
+
+        return usuario;
     }
 
     private static Usuario CreateMockUsuarioNormal(Guid id)
     {
-        var usuarioMock = new Mock<Usuario>();
-        usuarioMock.Setup(x => x.Id).Returns(id);
-        usuarioMock.Setup(x => x.EsAdministrador).Returns(false);
-        return usuarioMock.Object;
+        // Crear usuario real usando factory method
+        var usuario = Usuario.Crear(
+            nombreUsuario: "usuario.test",
+            nombreCompleto: "Usuario Test",
+            email: "usuario@test.com",
+            rol: RolUsuario.Mesero
+        );
+
+        // Usar reflexión para establecer propiedades específicas
+        typeof(EntityBase).GetProperty("Id")?.SetValue(usuario, id);
+
+        return usuario;
     }
 
     private static FacturaDto CreateMockFacturaDto(Guid id)

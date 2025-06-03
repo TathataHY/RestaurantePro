@@ -415,25 +415,49 @@ public class ObtenerReservacionPorIdHandlerTests
         string? observaciones = null,
         DateTime? fechaReservacion = null)
     {
-        // Usar reflection para crear la reservación con propiedades privadas
+        // Usar reflection para crear la entidad con constructor privado (similar a ModificarReservacionValidatorTests)
         var reservacion = (Reservacion)Activator.CreateInstance(typeof(Reservacion), true)!;
         
+        // Configurar propiedades básicas usando reflection
         typeof(Reservacion).GetProperty("Id")?.SetValue(reservacion, id);
-        typeof(Reservacion).GetProperty("Estado")?.SetValue(reservacion, estado);
         typeof(Reservacion).GetProperty("ClienteId")?.SetValue(reservacion, Guid.NewGuid());
         typeof(Reservacion).GetProperty("MesaId")?.SetValue(reservacion, Guid.NewGuid());
-        typeof(Reservacion).GetProperty("FechaReservacion")?.SetValue(reservacion, fechaReservacion ?? DateTime.Now.AddDays(1));
         typeof(Reservacion).GetProperty("Fecha")?.SetValue(reservacion, (fechaReservacion ?? DateTime.Now.AddDays(1)).Date);
         typeof(Reservacion).GetProperty("Hora")?.SetValue(reservacion, (fechaReservacion ?? DateTime.Now.AddDays(1)).TimeOfDay);
-        typeof(Reservacion).GetProperty("NumeroPersonas")?.SetValue(reservacion, 4);
-        typeof(Reservacion).GetProperty("CantidadPersonas")?.SetValue(reservacion, 4);
-        typeof(Reservacion).GetProperty("TelefonoContacto")?.SetValue(reservacion, "+1234567890");
-        typeof(Reservacion).GetProperty("CodigoReservacion")?.SetValue(reservacion, $"RES-{id:N}".Substring(0, 12));
-        typeof(Reservacion).GetProperty("Observaciones")?.SetValue(reservacion, observaciones);
         typeof(Reservacion).GetProperty("DuracionEstimada")?.SetValue(reservacion, TimeSpan.FromMinutes(120));
+        typeof(Reservacion).GetProperty("CantidadPersonas")?.SetValue(reservacion, 4);
+        typeof(Reservacion).GetProperty("Telefono")?.SetValue(reservacion, "+1234567890");
+        typeof(Reservacion).GetProperty("Email")?.SetValue(reservacion, "test@example.com");
+        typeof(Reservacion).GetProperty("Observaciones")?.SetValue(reservacion, observaciones ?? "Test");
+        typeof(Reservacion).GetProperty("Estado")?.SetValue(reservacion, estado);
         typeof(Reservacion).GetProperty("FechaCreacion")?.SetValue(reservacion, DateTime.Now);
         
         return reservacion;
+    }
+    
+    private static void SetPrivateProperty(object obj, string propertyName, object value)
+    {
+        var type = obj.GetType();
+        
+        // Para EntityBase, intentar usar backing fields directamente
+        if (propertyName == "Id")
+        {
+            // El Id es protected set en EntityBase, intentamos el field privado
+            var idField = type.BaseType?.GetField("<Id>k__BackingField", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) ??
+                         type.GetField("<Id>k__BackingField", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (idField != null)
+            {
+                idField.SetValue(obj, value);
+                return;
+            }
+        }
+        
+        // Fallback: intentar property normal
+        var property = type.GetProperty(propertyName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (property != null && property.CanWrite)
+        {
+            property.SetValue(obj, value);
+        }
     }
 
     private ReservacionDto CrearReservacionDto(Guid id, EstadoReservacion estado)

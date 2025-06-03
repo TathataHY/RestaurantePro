@@ -330,7 +330,8 @@ public class ConsultarDisponibilidadHandlerTests
             DuracionEstimadaMinutos = 120
         };
 
-        _mockMesasDbSet.Setup(x => x.Where(It.IsAny<Expression<Func<Mesa, bool>>>()))
+        // Configurar el contexto para lanzar excepción al acceder a Mesas
+        _mockContext.Setup(c => c.Mesas)
             .Throws(new Exception("Error de base de datos"));
 
         // Act

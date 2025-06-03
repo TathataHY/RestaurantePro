@@ -64,12 +64,6 @@ public class ConsultarDisponibilidadValidator : AbstractValidator<ConsultarDispo
             .WithErrorCode("MESA_PREFERIDA_INVALIDA")
             .When(v => v.MesaPreferida.HasValue);
 
-        // ===== VALIDACIONES DE MOSTRAR ALTERNATIVAS =====
-        RuleFor(v => v.MostrarAlternativas)
-            .Equal(true)
-            .WithMessage("La opción de mostrar alternativas debe ser verdadera.")
-            .WithErrorCode("MOSTRAR_ALTERNATIVAS_FALSO");
-
         // ===== VALIDACIONES DE RANGO ALTERNATIVAS =====
         RuleFor(v => v.RangoAlternativasMinutos)
             .GreaterThan(0)
@@ -83,12 +77,6 @@ public class ConsultarDisponibilidadValidator : AbstractValidator<ConsultarDispo
             .WithErrorCode("RANGO_ALTERNATIVAS_MUY_LARGO")
             .When(v => v.MostrarAlternativas);
 
-        // ===== VALIDACIONES DE PERMITIR CAPACIDAD MAYOR =====
-        RuleFor(v => v.PermitirCapacidadMayor)
-            .Equal(true)
-            .WithMessage("La opción de permitir capacidad mayor debe ser verdadera.")
-            .WithErrorCode("PERMITIR_CAPACIDAD_MAYOR_FALSO");
-
         // ===== VALIDACIONES DE MARGEN TOLERANCIA =====
         RuleFor(v => v.MargenToleranciaPersonas)
             .GreaterThan(0)
@@ -99,18 +87,6 @@ public class ConsultarDisponibilidadValidator : AbstractValidator<ConsultarDispo
             .LessThanOrEqualTo(100)
             .WithMessage("El margen de tolerancia no puede exceder 100 personas.")
             .WithErrorCode("MARGEN_TOLERANCIA_EXCESIVO");
-
-        // ===== VALIDACIONES DE INCLUIR DETALLES MESAS =====
-        RuleFor(v => v.IncluirDetallesMesas)
-            .Equal(true)
-            .WithMessage("La opción de incluir detalles de mesas debe ser verdadera.")
-            .WithErrorCode("INCLUIR_DETALLES_MESAS_FALSO");
-
-        // ===== VALIDACIONES DE EVENTO ESPECIAL =====
-        RuleFor(v => v.EsEventoEspecial)
-            .Equal(true)
-            .WithMessage("La opción de evento especial debe ser verdadera.")
-            .WithErrorCode("ES_EVENTO_ESPECIAL_FALSO");
 
         // ===== VALIDACIONES PARA EVENTOS ESPECIALES =====
         RuleFor(v => v.DuracionEstimadaMinutos)

@@ -72,6 +72,7 @@ public class CoreMappingProfile : Profile
             .ForMember(dest => dest.NivelAcceso, opt => opt.MapFrom(src => src.NivelAcceso))
             .ForMember(dest => dest.Permisos, opt => opt.MapFrom(src => src.Permisos.ToList()))
             .ForMember(dest => dest.SupervisorId, opt => opt.MapFrom(src => src.SupervisorId))
+            .ForMember(dest => dest.NombreSupervisor, opt => opt.MapFrom(src => string.Empty))
             .ForMember(dest => dest.Departamento, opt => opt.MapFrom(src => src.Departamento))
             .ForMember(dest => dest.Posicion, opt => opt.MapFrom(src => src.Posicion))
             .ForMember(dest => dest.Identificacion, opt => opt.MapFrom(src => src.Identificacion))

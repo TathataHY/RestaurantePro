@@ -1,3 +1,28 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
+using RestaurantePro.Application.Comercial.Facturacion.DTOs;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Comercial.Services;
+using RestaurantePro.Domain.Comercial.Facturacion.Services;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+using RestaurantePro.Domain.Comercial.Facturacion.Enums;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Commands;
 
 /// <summary>
@@ -643,8 +668,8 @@ public class CrearFacturaHandlerTests
                 return comandas.Where(compiled).AsQueryable();
             });
 
-        _comandasDbSetMock.Setup(x => x.Include(It.IsAny<string>()))
-            .Returns(_comandasDbSetMock.Object);
+        // NO hacer setup de Include() ya que es un método de extensión y causa errores de Moq
+        // El handler debe funcionar sin Include para las pruebas unitarias
     }
 
     #endregion
@@ -653,68 +678,137 @@ public class CrearFacturaHandlerTests
 
     private static Cliente CreateMockCliente(Guid id, string nombre, string email)
     {
-        var clienteMock = new Mock<Cliente>();
-        clienteMock.Setup(x => x.Id).Returns(id);
-        
-        // Crear ClienteNombre usando el método Crear que acepta nombre y apellido
-        var nombreCompleto = ClienteNombre.Crear(nombre, "Apellido");
-        clienteMock.Setup(x => x.Nombre).Returns(nombreCompleto);
-        
-        // Crear Email usando el método Create
+        // Usar el factory method del dominio en lugar de Mock
+        var nombreCompleto = ClienteNombre.Crear(nombre, "Apellido Test");
         var emailVO = Email.Create(email);
-        clienteMock.Setup(x => x.Email).Returns(emailVO);
+        var telefono = PhoneNumber.Create("+5212345678900"); // Teléfono de prueba
+        var fechaNacimiento = DateTime.Now.AddYears(-30);
         
-        return clienteMock.Object;
+        var cliente = Cliente.Crear(id, nombreCompleto, emailVO, telefono, fechaNacimiento, true);
+        
+        return cliente;
     }
 
     private static Comanda CreateMockComandaFinalizada(Guid id)
     {
-        var comandaMock = new Mock<Comanda>();
-        comandaMock.Setup(x => x.Id).Returns(id);
-        comandaMock.Setup(x => x.Estado).Returns(EstadoComanda.Finalizada);
-        comandaMock.Setup(x => x.Items).Returns(new List<ItemComanda>());
-        return comandaMock.Object;
+        // Usar el factory method del dominio
+        var meseroId = Guid.NewGuid();
+        var clienteId = Guid.NewGuid();
+        var mesaId = Guid.NewGuid();
+        
+        var comanda = Comanda.Crear(meseroId, clienteId, mesaId, "Comanda de prueba");
+        
+        // Agregar algunos items para que tenga contenido
+        comanda.AgregarItem(Guid.NewGuid(), "Producto Test", 2, 15.50m, "Sin observaciones");
+        comanda.AgregarItem(Guid.NewGuid(), "Producto Test 2", 1, 25.00m, "Sin observaciones");
+        
+        // Usar reflexión para cambiar el estado a Finalizada (solo para pruebas)
+        SetPrivateProperty(comanda, "Id", id);
+        SetPrivateProperty(comanda, "Estado", EstadoComanda.Finalizada);
+        
+        return comanda;
     }
 
     private static Comanda CreateMockComandaEnProceso(Guid id)
     {
-        var comandaMock = new Mock<Comanda>();
-        comandaMock.Setup(x => x.Id).Returns(id);
-        comandaMock.Setup(x => x.Estado).Returns(EstadoComanda.EnProceso);
-        comandaMock.Setup(x => x.Items).Returns(new List<ItemComanda>());
-        return comandaMock.Object;
+        // Usar el factory method del dominio
+        var meseroId = Guid.NewGuid();
+        var clienteId = Guid.NewGuid();
+        var mesaId = Guid.NewGuid();
+        
+        var comanda = Comanda.Crear(meseroId, clienteId, mesaId, "Comanda en proceso");
+        
+        // Agregar algunos items
+        comanda.AgregarItem(Guid.NewGuid(), "Producto Test", 1, 20.00m, "Sin observaciones");
+        
+        // Usar reflexión para cambiar el ID y estado
+        SetPrivateProperty(comanda, "Id", id);
+        SetPrivateProperty(comanda, "Estado", EstadoComanda.EnProceso);
+        
+        return comanda;
     }
 
     private static Factura CreateMockFactura()
     {
-        var facturaMock = new Mock<Factura>();
-        facturaMock.Setup(x => x.Id).Returns(Guid.NewGuid());
-        facturaMock.Setup(x => x.NumeroFactura).Returns("FAC-001");
-        facturaMock.Setup(x => x.TipoFactura).Returns(TipoFactura.Normal);
-        facturaMock.Setup(x => x.NombreCliente).Returns("Cliente Test");
-        facturaMock.Setup(x => x.Subtotal).Returns(1000.00m);
-        facturaMock.Setup(x => x.TotalImpuestos).Returns(160.00m);
-        facturaMock.Setup(x => x.TotalDescuentos).Returns(0.00m);
-        facturaMock.Setup(x => x.Total).Returns(1160.00m);
-        facturaMock.Setup(x => x.Estado).Returns(EstadoFactura.Borrador);
-        facturaMock.Setup(x => x.FechaEmision).Returns(DateTime.UtcNow);
-        return facturaMock.Object;
+        // Usar el factory method del dominio
+        var numeroFactura = $"FAC-{DateTime.Now:yyyyMMdd}-001";
+        var tipoFactura = TipoFactura.Normal;
+        var nombreCliente = "Cliente Test";
+        var comandaId = Guid.NewGuid();
+        
+        var factura = Factura.Crear(
+            numeroFactura,
+            tipoFactura,
+            nombreCliente,
+            null,
+            null,
+            null,
+            new List<Guid> { comandaId },
+            "Factura de prueba"
+        );
+        
+        return factura;
     }
 
     private static Factura CreateMockFacturaEmitida()
     {
-        var facturaMock = new Mock<Factura>();
-        facturaMock.Setup(x => x.Id).Returns(Guid.NewGuid());
-        facturaMock.Setup(x => x.NumeroFactura).Returns("FAC-001");
-        facturaMock.Setup(x => x.TipoFactura).Returns(TipoFactura.Normal);
-        facturaMock.Setup(x => x.NombreCliente).Returns("Cliente Test");
-        facturaMock.Setup(x => x.Subtotal).Returns(1000.00m);
-        facturaMock.Setup(x => x.TotalImpuestos).Returns(160.00m);
-        facturaMock.Setup(x => x.TotalDescuentos).Returns(0.00m);
-        facturaMock.Setup(x => x.Total).Returns(1160.00m);
-        facturaMock.Setup(x => x.Estado).Returns(EstadoFactura.Emitida);
-        facturaMock.Setup(x => x.FechaEmision).Returns(DateTime.UtcNow);
-        return facturaMock.Object;
+        // Usar el factory method del dominio
+        var numeroFactura = $"FAC-{DateTime.Now:yyyyMMdd}-002";
+        var tipoFactura = TipoFactura.Normal;
+        var nombreCliente = "Cliente Test";
+        var comandaId = Guid.NewGuid();
+        
+        var factura = Factura.Crear(
+            numeroFactura,
+            tipoFactura,
+            nombreCliente,
+            null,
+            null,
+            null,
+            new List<Guid> { comandaId },
+            "Factura emitida de prueba"
+        );
+        
+        // Usar reflexión para cambiar el estado a Emitida (solo para pruebas)
+        SetPrivateProperty(factura, "Estado", EstadoFactura.Emitida);
+        
+        return factura;
+    }
+
+    private static void SetPrivateProperty(object obj, string propertyName, object value)
+    {
+        var type = obj.GetType();
+        
+        // Para EntityBase, intentar usar backing fields directamente
+        if (propertyName == "Id")
+        {
+            // El Id es protected set en EntityBase, intentamos el field privado
+            var idField = type.BaseType?.GetField("<Id>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance) ??
+                         type.GetField("<Id>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (idField != null)
+            {
+                idField.SetValue(obj, value);
+                return;
+            }
+        }
+        
+        // Para Estado, buscar backing field
+        if (propertyName == "Estado")
+        {
+            var estadoField = type.GetField("<Estado>k__BackingField", BindingFlags.NonPublic | BindingFlags.Instance);
+            if (estadoField != null)
+            {
+                estadoField.SetValue(obj, value);
+                return;
+            }
+        }
+        
+        // Fallback: intentar property normal
+        var property = type.GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        if (property != null && property.CanWrite)
+        {
+            property.SetValue(obj, value);
+        }
     }
 
     #endregion

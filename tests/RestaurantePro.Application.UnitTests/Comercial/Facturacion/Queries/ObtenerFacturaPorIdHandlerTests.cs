@@ -1,3 +1,16 @@
+using AutoMapper;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Common.DTOs;
+using RestaurantePro.Application.Comercial.Facturacion.DTOs;
+using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturaPorId;
+using RestaurantePro.Application.UnitTests.Common;
+using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+using RestaurantePro.Domain.Enums;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Queries;
 
 /// <summary>
@@ -20,16 +33,32 @@ public class ObtenerFacturaPorIdHandlerTests
         _mockMapper = new Mock<IMapper>();
         _mockLogger = new Mock<ILogger<ObtenerFacturaPorIdHandler>>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
-        _mockFacturasDbSet = new Mock<DbSet<Factura>>();
         
-        _handler = new ObtenerFacturaPorIdHandler(
-            _mockContext.Object,
-            _mockMapper.Object,
-            _mockLogger.Object,
-            _mockCurrentUserService.Object);
-
         _facturasEjemplo = CrearFacturasEjemplo();
-        ConfigurarMockDbSet();
+        _mockFacturasDbSet = MockDbSetHelper.CreateMockDbSet(_facturasEjemplo.AsQueryable());
+        _mockContext.Setup(c => c.Facturas).Returns(_mockFacturasDbSet.Object);
+
+        _mockMapper.Setup(m => m.Map<FacturaDto>(It.IsAny<Factura>()))
+                   .Returns((Factura factura) => new FacturaDto
+                   {
+                       Id = factura.Id,
+                       Numero = factura.NumeroFactura,
+                       Tipo = factura.TipoFactura,
+                       Estado = factura.Estado,
+                       Total = factura.Total,
+                       Subtotal = factura.Subtotal,
+                       Descuentos = factura.TotalDescuentos,
+                       Impuestos = factura.TotalImpuestos,
+                       MontoPagado = factura.TotalPagado,
+                       ClienteId = factura.ClienteId,
+                       NombreCliente = factura.NombreCliente,
+                       FechaEmision = factura.FechaEmision,
+                       FechaVencimiento = factura.FechaVencimiento,
+                       FechaPago = factura.FechaPago,
+                       FechaCreacion = factura.FechaCreacion
+                   });
+
+        _handler = new ObtenerFacturaPorIdHandler(_mockContext.Object, _mockMapper.Object, _mockLogger.Object, _mockCurrentUserService.Object);
     }
 
     [Fact]
@@ -243,10 +272,9 @@ public class ObtenerFacturaPorIdHandlerTests
         // Arrange
         var query = new ObtenerFacturaPorIdQuery { FacturaId = Guid.NewGuid() };
 
-        _mockFacturasDbSet.Setup(x => x.FirstOrDefaultAsync(
-                It.IsAny<Expression<Func<Factura, bool>>>(),
-                It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new Exception("Error de base de datos"));
+        // Configurar el contexto para lanzar excepción al acceder a Facturas
+        _mockContext.Setup(c => c.Facturas)
+            .Throws(new Exception("Error de base de datos"));
 
         // Act
         var resultado = await _handler.Handle(query, CancellationToken.None);
@@ -407,52 +435,14 @@ public class ObtenerFacturaPorIdHandlerTests
 
     private void ConfigurarMockDbSet()
     {
-        var queryableFacturas = _facturasEjemplo.AsQueryable();
-        
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Provider).Returns(queryableFacturas.Provider);
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(queryableFacturas.Expression);
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(queryableFacturas.ElementType);
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(queryableFacturas.GetEnumerator());
-
-        _mockFacturasDbSet.Setup(x => x.FirstOrDefaultAsync(
-                It.IsAny<Expression<Func<Factura, bool>>>(),
-                It.IsAny<CancellationToken>()))
-            .Returns<Expression<Func<Factura, bool>>, CancellationToken>((predicate, ct) =>
-            {
-                if (ct.IsCancellationRequested)
-                    throw new OperationCanceledException();
-                
-                var compiledPredicate = predicate.Compile();
-                var result = _facturasEjemplo.FirstOrDefault(compiledPredicate);
-                return Task.FromResult(result);
-            });
-
-        _mockContext.Setup(c => c.Facturas).Returns(_mockFacturasDbSet.Object);
+        var mockDbSet = MockDbSetHelper.CreateMockDbSet(_facturasEjemplo.AsQueryable());
+        _mockContext.Setup(c => c.Facturas).Returns(mockDbSet.Object);
     }
 
     private void ConfigurarMockDbSetConFacturas(List<Factura> facturas)
     {
-        var queryableFacturas = facturas.AsQueryable();
-        
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Provider).Returns(queryableFacturas.Provider);
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(queryableFacturas.Expression);
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(queryableFacturas.ElementType);
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(queryableFacturas.GetEnumerator());
-
-        _mockFacturasDbSet.Setup(x => x.FirstOrDefaultAsync(
-                It.IsAny<Expression<Func<Factura, bool>>>(),
-                It.IsAny<CancellationToken>()))
-            .Returns<Expression<Func<Factura, bool>>, CancellationToken>((predicate, ct) =>
-            {
-                if (ct.IsCancellationRequested)
-                    throw new OperationCanceledException();
-                
-                var compiledPredicate = predicate.Compile();
-                var result = facturas.FirstOrDefault(compiledPredicate);
-                return Task.FromResult(result);
-            });
-
-        _mockContext.Setup(c => c.Facturas).Returns(_mockFacturasDbSet.Object);
+        var mockDbSet = MockDbSetHelper.CreateMockDbSet(facturas.AsQueryable());
+        _mockContext.Setup(c => c.Facturas).Returns(mockDbSet.Object);
     }
 
     private List<Factura> CrearFacturasEjemplo()

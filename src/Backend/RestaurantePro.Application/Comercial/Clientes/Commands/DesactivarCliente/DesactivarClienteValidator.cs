@@ -13,11 +13,14 @@ public class DesactivarClienteValidator : AbstractValidator<DesactivarClienteCom
 
         RuleFor(v => v.ClienteId)
             .NotEmpty()
-            .WithMessage("El ID del cliente es requerido.")
+            .WithMessage("El ID del cliente es requerido")
+            .WithErrorCode("CLIENTE_ID_REQUERIDO")
             .MustAsync(ClienteExiste)
-            .WithMessage("El cliente especificado no existe.")
+            .WithMessage("El cliente no existe")
+            .WithErrorCode("CLIENTE_NO_EXISTE")
             .MustAsync(ClienteEstaActivo)
-            .WithMessage("El cliente ya está desactivado.")
+            .WithMessage("El cliente ya se encuentra desactivado")
+            .WithErrorCode("CLIENTE_YA_DESACTIVADO")
             .MustAsync(ClienteNoTieneReservacionesActivas)
             .WithMessage("No se puede desactivar un cliente con reservaciones activas.");
 
@@ -31,7 +34,7 @@ public class DesactivarClienteValidator : AbstractValidator<DesactivarClienteCom
 
         RuleFor(v => v.DesactivadoPor)
             .NotEmpty()
-            .WithMessage("El usuario que desactiva es requerido.")
+            .WithMessage("Usuario que desactiva es requerido")
             .MaximumLength(100)
             .WithMessage("El nombre de usuario no puede exceder 100 caracteres.");
 

@@ -520,12 +520,13 @@ public class ObtenerComandasActivasHandlerTests
         var comandas = new List<Comanda>();
         for (int i = 1; i <= 5; i++)
         {
-            var comanda = new Mock<Comanda>();
-            comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
-            comanda.Setup(x => x.NumeroComanda).Returns($"COM-{i:000}");
-            comanda.Setup(x => x.Estado).Returns((EstadoComanda)(i % 3 + 1)); // Rotar entre estados
-            comanda.Setup(x => x.FechaCreacion).Returns(DateTime.Now.AddMinutes(-i * 10));
-            comandas.Add(comanda.Object);
+            var meseroId = Guid.NewGuid();
+            var clienteId = Guid.NewGuid();
+            var mesaId = Guid.NewGuid();
+            var observaciones = $"Observaciones {i}";
+            
+            var comanda = Comanda.Crear(meseroId, clienteId, mesaId, observaciones);
+            comandas.Add(comanda);
         }
         return comandas;
     }
@@ -555,20 +556,22 @@ public class ObtenerComandasActivasHandlerTests
         var comandas = new List<Comanda>();
         for (int i = 1; i <= 2; i++)
         {
-            var comanda = new Mock<Comanda>();
-            comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
-            comanda.Setup(x => x.Estado).Returns(estado);
-            comandas.Add(comanda.Object);
+            var meseroId = Guid.NewGuid();
+            var mesaId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
+            // Usamos reflexión para cambiar el estado ya que no hay método público
+            var estadoProperty = typeof(Comanda).GetProperty("Estado", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            estadoProperty?.SetValue(comanda, estado);
+            comandas.Add(comanda);
         }
         return comandas;
     }
 
     private static List<Comanda> CreateMockComandasPorMesa(Guid mesaId)
     {
-        var comanda = new Mock<Comanda>();
-        comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
-        comanda.Setup(x => x.MesaId).Returns(mesaId);
-        return new List<Comanda> { comanda.Object };
+        var meseroId = Guid.NewGuid();
+        var comanda = Comanda.Crear(meseroId, null, mesaId);
+        return new List<Comanda> { comanda };
     }
 
     private static List<Comanda> CreateMockComandasPorMesero(Guid meseroId)
@@ -576,20 +579,19 @@ public class ObtenerComandasActivasHandlerTests
         var comandas = new List<Comanda>();
         for (int i = 1; i <= 2; i++)
         {
-            var comanda = new Mock<Comanda>();
-            comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
-            comanda.Setup(x => x.MeseroId).Returns(meseroId);
-            comandas.Add(comanda.Object);
+            var mesaId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
+            comandas.Add(comanda);
         }
         return comandas;
     }
 
     private static List<Comanda> CreateMockComandasPorCliente(Guid clienteId)
     {
-        var comanda = new Mock<Comanda>();
-        comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
-        comanda.Setup(x => x.ClienteId).Returns(clienteId);
-        return new List<Comanda> { comanda.Object };
+        var meseroId = Guid.NewGuid();
+        var mesaId = Guid.NewGuid();
+        var comanda = Comanda.Crear(meseroId, clienteId, mesaId);
+        return new List<Comanda> { comanda };
     }
 
     private static List<Comanda> CreateMockComandasHoy()
@@ -597,10 +599,15 @@ public class ObtenerComandasActivasHandlerTests
         var comandas = new List<Comanda>();
         for (int i = 1; i <= 3; i++)
         {
-            var comanda = new Mock<Comanda>();
-            comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
-            comanda.Setup(x => x.FechaCreacion).Returns(DateTime.Today.AddHours(i * 2));
-            comandas.Add(comanda.Object);
+            var meseroId = Guid.NewGuid();
+            var mesaId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
+            
+            // Usamos reflexión para cambiar la fecha de creación
+            var fechaProperty = typeof(Comanda).GetProperty("FechaCreacion", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            fechaProperty?.SetValue(comanda, DateTime.Today.AddHours(i * 2));
+            
+            comandas.Add(comanda);
         }
         return comandas;
     }
@@ -610,10 +617,15 @@ public class ObtenerComandasActivasHandlerTests
         var comandas = new List<Comanda>();
         for (int i = 1; i <= 2; i++)
         {
-            var comanda = new Mock<Comanda>();
-            comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
-            comanda.Setup(x => x.FechaCreacion).Returns(fecha.AddHours(i));
-            comandas.Add(comanda.Object);
+            var meseroId = Guid.NewGuid();
+            var mesaId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
+            
+            // Usamos reflexión para cambiar la fecha de creación
+            var fechaProperty = typeof(Comanda).GetProperty("FechaCreacion", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            fechaProperty?.SetValue(comanda, fecha.AddHours(i));
+            
+            comandas.Add(comanda);
         }
         return comandas;
     }
@@ -623,18 +635,21 @@ public class ObtenerComandasActivasHandlerTests
         var comandas = new List<Comanda>();
         
         // Comanda creada hace 10 minutos (atrasada)
-        var comandaAtrasada1 = new Mock<Comanda>();
-        comandaAtrasada1.Setup(x => x.Id).Returns(Guid.NewGuid());
-        comandaAtrasada1.Setup(x => x.Estado).Returns(EstadoComanda.Creada);
-        comandaAtrasada1.Setup(x => x.FechaCreacion).Returns(DateTime.Now.AddMinutes(-10));
-        comandas.Add(comandaAtrasada1.Object);
+        var meseroId1 = Guid.NewGuid();
+        var mesaId1 = Guid.NewGuid();
+        var comandaAtrasada1 = Comanda.Crear(meseroId1, null, mesaId1);
+        var fechaProperty = typeof(Comanda).GetProperty("FechaCreacion", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        fechaProperty?.SetValue(comandaAtrasada1, DateTime.Now.AddMinutes(-10));
+        comandas.Add(comandaAtrasada1);
         
         // Comanda en proceso hace 40 minutos (atrasada)
-        var comandaAtrasada2 = new Mock<Comanda>();
-        comandaAtrasada2.Setup(x => x.Id).Returns(Guid.NewGuid());
-        comandaAtrasada2.Setup(x => x.Estado).Returns(EstadoComanda.EnProceso);
-        comandaAtrasada2.Setup(x => x.FechaCreacion).Returns(DateTime.Now.AddMinutes(-40));
-        comandas.Add(comandaAtrasada2.Object);
+        var meseroId2 = Guid.NewGuid();
+        var mesaId2 = Guid.NewGuid();
+        var comandaAtrasada2 = Comanda.Crear(meseroId2, null, mesaId2);
+        fechaProperty?.SetValue(comandaAtrasada2, DateTime.Now.AddMinutes(-40));
+        var estadoProperty = typeof(Comanda).GetProperty("Estado", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        estadoProperty?.SetValue(comandaAtrasada2, EstadoComanda.EnProceso);
+        comandas.Add(comandaAtrasada2);
         
         return comandas;
     }
@@ -644,21 +659,34 @@ public class ObtenerComandasActivasHandlerTests
         var comandas = new List<Comanda>();
         
         // Comanda con descuento
-        var comandaConDescuento = new Mock<Comanda>();
-        comandaConDescuento.Setup(x => x.Id).Returns(Guid.NewGuid());
-        comandaConDescuento.Setup(x => x.DescuentoFidelizacion).Returns(10.50m);
-        comandas.Add(comandaConDescuento.Object);
+        var meseroId = Guid.NewGuid();
+        var mesaId = Guid.NewGuid();
+        var clienteId = Guid.NewGuid();
+        var comandaConDescuento = Comanda.Crear(meseroId, clienteId, mesaId);
+        
+        // Usamos reflexión para establecer el descuento de fidelización
+        var descuentoProperty = typeof(Comanda).GetProperty("DescuentoFidelizacion", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        descuentoProperty?.SetValue(comandaConDescuento, 10.50m);
+        
+        comandas.Add(comandaConDescuento);
         
         return comandas;
     }
 
     private static List<Comanda> CreateMockComandasConFiltrosCombinados()
     {
-        var comanda = new Mock<Comanda>();
-        comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
-        comanda.Setup(x => x.Estado).Returns(EstadoComanda.EnProceso);
-        comanda.Setup(x => x.FechaCreacion).Returns(DateTime.Now.AddMinutes(-40)); // Atrasada
-        return new List<Comanda> { comanda.Object };
+        var meseroId = Guid.NewGuid();
+        var mesaId = Guid.NewGuid();
+        var comanda = Comanda.Crear(meseroId, null, mesaId);
+        
+        // Usamos reflexión para establecer las propiedades
+        var estadoProperty = typeof(Comanda).GetProperty("Estado", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        estadoProperty?.SetValue(comanda, EstadoComanda.EnProceso);
+        
+        var fechaProperty = typeof(Comanda).GetProperty("FechaCreacion", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        fechaProperty?.SetValue(comanda, DateTime.Now.AddMinutes(-40)); // Atrasada
+        
+        return new List<Comanda> { comanda };
     }
 
     private static List<Comanda> CreateMockComandasActivasSolamente()
@@ -668,10 +696,15 @@ public class ObtenerComandasActivasHandlerTests
         
         for (int i = 0; i < 5; i++)
         {
-            var comanda = new Mock<Comanda>();
-            comanda.Setup(x => x.Id).Returns(Guid.NewGuid());
-            comanda.Setup(x => x.Estado).Returns(estadosActivos[i % estadosActivos.Length]);
-            comandas.Add(comanda.Object);
+            var meseroId = Guid.NewGuid();
+            var mesaId = Guid.NewGuid();
+            var comanda = Comanda.Crear(meseroId, null, mesaId);
+            
+            // Usamos reflexión para cambiar el estado
+            var estadoProperty = typeof(Comanda).GetProperty("Estado", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            estadoProperty?.SetValue(comanda, estadosActivos[i % estadosActivos.Length]);
+            
+            comandas.Add(comanda);
         }
         return comandas;
     }

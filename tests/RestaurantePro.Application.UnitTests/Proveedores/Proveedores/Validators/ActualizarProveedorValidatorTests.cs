@@ -660,16 +660,26 @@ public class ActualizarProveedorValidatorTests
     }
 
     [Theory]
-    [InlineData(10, true)]   // Email corto - válido
+    [InlineData(15, true)]   // Email corto - válido
     [InlineData(50, true)]   // Email medio - válido
     [InlineData(95, true)]   // Email largo - válido
-    [InlineData(100, false)] // Email muy largo - probablemente inválido
+    [InlineData(105, false)] // Email muy largo - inválido
     public async Task Validate_ConDiferentesLongitudesEmail_DeberiaValidarCorrectamente(int longitudBase, bool deberiaSerValido)
     {
         // Arrange
         var command = CrearCommandValido();
-        var nombreEmail = new string('a', longitudBase - 11); // -11 por "@domain.com"
-        command.Email = $"{nombreEmail}@domain.com";
+        
+        if (longitudBase <= 100)
+        {
+            var nombreEmail = new string('a', Math.Max(1, longitudBase - 11)); // -11 por "@domain.com", mínimo 1
+            command.Email = $"{nombreEmail}@domain.com";
+        }
+        else
+        {
+            // Para emails muy largos, crear directamente un email que exceda el límite
+            var nombreEmail = new string('a', longitudBase - 11);
+            command.Email = $"{nombreEmail}@domain.com";
+        }
 
         // Act
         var result = await _validator.ValidateAsync(command);

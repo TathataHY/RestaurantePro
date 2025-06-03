@@ -72,30 +72,41 @@ public class ComandaFinalizadaFidelizacionHandler : Domain.Core.Base.Events.Hand
             var resultadoAplicacion = await _servicioFidelizacion.AcumularPuntosAsync(
                 cliente.Id, evento.ComandaId, evento.Total);
 
-            if (resultadoAplicacion != null && resultadoAplicacion.Value > 0)
+            if (resultadoAplicacion != null && resultadoAplicacion.Succeeded)
             {
-                _logger.LogInformation("✅ Se acumularon {Puntos} puntos al cliente {ClienteNombre} por Comanda {ComandaId}", 
-                    puntosCalculados, cliente.Nombre.NombreCompleto, evento.ComandaId);
+                if (resultadoAplicacion.Value > 0)
+                {
+                    var nombreClienteCompleto = cliente.Nombre?.NombreCompleto ?? "Cliente Desconocido";
+                    _logger.LogInformation("✅ Se acumularon {Puntos} puntos al cliente {ClienteNombre} por Comanda {ComandaId}", 
+                        puntosCalculados, nombreClienteCompleto, evento.ComandaId);
 
-                // 🔄 Verificar si hubo cambio de nivel
-                var cambioNivel = await VerificarCambioNivelCliente(cliente.Id, cancellationToken);
+                    // 🔄 Verificar si hubo cambio de nivel
+                    var cambioNivel = await VerificarCambioNivelCliente(cliente.Id, cancellationToken);
 
-                // 📊 Registrar estadísticas de fidelización
-                await RegistrarEstadisticasFidelizacion(evento, cliente, puntosCalculados, cambioNivel, cancellationToken);
+                    // 📊 Registrar estadísticas de fidelización
+                    await RegistrarEstadisticasFidelizacion(evento, cliente, puntosCalculados, cambioNivel, cancellationToken);
 
-                // 📢 Notificar al cliente sobre puntos y nivel (si cambió)
-                await NotificarClienteFidelizacion(cliente, puntosCalculados, cambioNivel, evento, cancellationToken);
+                    // 📢 Notificar al cliente sobre puntos y nivel (si cambió)
+                    await NotificarClienteFidelizacion(cliente, puntosCalculados, cambioNivel, evento, cancellationToken);
 
-                var nombreCliente = cliente.Nombre.NombreCompleto;
-                var nivelTexto = nivelCliente.ToString();
+                    var nombreCliente = cliente.Nombre?.NombreCompleto ?? "Cliente Desconocido";
+                    var nivelTexto = nivelCliente.ToString();
 
-                _logger.LogInformation("✅ Procesamiento de fidelización completo - Cliente: {ClienteNombre}, Puntos: {Puntos}, Nivel: {Nivel}",
-                    nombreCliente, puntosCalculados, nivelTexto);
+                    _logger.LogInformation("✅ Procesamiento de fidelización completo - Cliente: {ClienteNombre}, Puntos: {Puntos}, Nivel: {Nivel}",
+                        nombreCliente, puntosCalculados, nivelTexto);
+                }
+                else
+                {
+                    // Caso de 0 puntos acumulados exitosamente (por monto muy bajo, por ejemplo)
+                    var nombreClienteCompleto = cliente.Nombre?.NombreCompleto ?? "Cliente Desconocido";
+                    _logger.LogInformation("ℹ️ Se procesó fidelización para cliente {ClienteNombre} pero no se acumularon puntos (monto: {Monto:C})", 
+                        nombreClienteCompleto, evento.Total);
+                }
             }
             else
             {
                 _logger.LogError("💥 Error al acumular puntos para cliente {ClienteId}: {Error}", 
-                    cliente.Id, resultadoAplicacion.Error);
+                    cliente.Id, resultadoAplicacion?.Error ?? "Resultado nulo");
             }
         }
         catch (Exception ex)
@@ -185,7 +196,7 @@ public class ComandaFinalizadaFidelizacionHandler : Domain.Core.Base.Events.Hand
         Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada evento,
         CancellationToken cancellationToken)
     {
-        var nombreCliente = cliente.Nombre.NombreCompleto;
+        var nombreCliente = cliente.Nombre?.NombreCompleto ?? "Cliente Desconocido";
         var nivelActual = NivelFidelizacion.Basico; // Valor por defecto
 
         var mensaje = cambioNivel 

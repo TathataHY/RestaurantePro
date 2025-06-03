@@ -192,6 +192,10 @@ public class ComandaFinalizadaFidelizacionHandlerTests
         _mockClienteRepository.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
+        // Configurar el mock del servicio de fidelización para retornar 0 puntos por monto bajo
+        _mockServicioFidelizacion.Setup(x => x.AcumularPuntosAsync(clienteId, comandaId, montoTotal))
+            .ReturnsAsync(Result.Success(0)); // 0 puntos por monto muy bajo
+
         // Act
         await _handler.Handle(evento, CancellationToken.None);
 

@@ -499,27 +499,89 @@ public class TransferirMesaHandlerTests
 
     private Comanda CrearComanda(Guid id, Guid mesaId, EstadoComanda estado, int numeroPersonas = 4)
     {
-        // Usar reflection para crear comanda con propiedades privadas
-        var comanda = (Comanda)Activator.CreateInstance(typeof(Comanda), true)!;
+        // Crear comanda usando el factory method
+        var comanda = Comanda.Crear(
+            meseroId: Guid.NewGuid(),
+            clienteId: null, 
+            mesaId: mesaId,
+            observaciones: "Comanda de prueba"
+        );
         
-        typeof(Comanda).GetProperty("Id")?.SetValue(comanda, id);
-        typeof(Comanda).GetProperty("MesaId")?.SetValue(comanda, mesaId);
-        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, estado);
-        typeof(Comanda).GetProperty("MeseroId")?.SetValue(comanda, Guid.NewGuid());
-        typeof(Comanda).GetProperty("Items")?.SetValue(comanda, new List<ItemComanda>());
+        // Actualizar estado si es diferente al inicial usando métodos públicos
+        if (estado != EstadoComanda.Creada)
+        {
+            switch (estado)
+            {
+                case EstadoComanda.EnProceso:
+                    comanda.ActualizarEstado(EstadoComanda.EnProceso);
+                    break;
+                case EstadoComanda.Lista:
+                    comanda.ActualizarEstado(EstadoComanda.EnProceso);
+                    comanda.ActualizarEstado(EstadoComanda.Lista);
+                    break;
+                case EstadoComanda.Entregada:
+                    comanda.ActualizarEstado(EstadoComanda.EnProceso);
+                    comanda.ActualizarEstado(EstadoComanda.Lista);
+                    comanda.ActualizarEstado(EstadoComanda.Entregada);
+                    break;
+                case EstadoComanda.Finalizada:
+                    // Primero agregar un producto para que la validación pase
+                    comanda.AgregarProducto(Guid.NewGuid(), 1, 10.00m, "Producto de prueba");
+                    comanda.ActualizarEstado(EstadoComanda.EnProceso);
+                    comanda.ActualizarEstado(EstadoComanda.Lista);
+                    comanda.ActualizarEstado(EstadoComanda.Entregada);
+                    comanda.ActualizarEstado(EstadoComanda.Finalizada);
+                    break;
+                case EstadoComanda.Cancelada:
+                    // Usar el método Cancelar específico de la entidad
+                    comanda.Cancelar("Cancelada por test");
+                    break;
+                case EstadoComanda.Dividida:
+                    // Para Dividida, agregar producto primero y usar el comportamiento por defecto
+                    // El estado Dividida se maneja en procesos específicos, para tests usamos Finalizada
+                    comanda.AgregarProducto(Guid.NewGuid(), 1, 10.00m, "Producto de prueba");
+                    comanda.ActualizarEstado(EstadoComanda.EnProceso);
+                    comanda.ActualizarEstado(EstadoComanda.Lista);
+                    comanda.ActualizarEstado(EstadoComanda.Entregada);
+                    comanda.ActualizarEstado(EstadoComanda.Finalizada);
+                    break;
+            }
+        }
         
         return comanda;
     }
 
     private Mesa CrearMesa(Guid id, EstadoMesa estado, int capacidad = 6, string numero = "M01")
     {
-        // Usar reflection para crear mesa con propiedades privadas
-        var mesa = (Mesa)Activator.CreateInstance(typeof(Mesa), true)!;
+        // Crear mesa usando el factory method 
+        var mesa = Mesa.Crear(
+            numero: int.Parse(numero.Replace("M", "")), // Convertir "M01" a 1
+            capacidad: capacidad,
+            ubicacion: "Zona General"
+        );
         
-        typeof(Mesa).GetProperty("Id")?.SetValue(mesa, id);
-        typeof(Mesa).GetProperty("Estado")?.SetValue(mesa, estado);
-        typeof(Mesa).GetProperty("Capacidad")?.SetValue(mesa, capacidad);
-        typeof(Mesa).GetProperty("Numero")?.SetValue(mesa, numero);
+        // Si necesitamos un ID específico, usar reflection solo para la propiedad Id
+        if (id != Guid.Empty && id != mesa.Id)
+        {
+            typeof(Mesa).GetProperty("Id")?.SetValue(mesa, id);
+        }
+        
+        // Actualizar estado si es diferente al inicial
+        if (estado != EstadoMesa.Disponible)
+        {
+            switch (estado)
+            {
+                case EstadoMesa.Ocupada:
+                    mesa.MarcarComoOcupada();
+                    break;
+                case EstadoMesa.Reservada:
+                    mesa.MarcarComoReservada();
+                    break;
+                case EstadoMesa.FueraDeServicio:
+                    mesa.MarcarComoFueraDeServicio("Test");
+                    break;
+            }
+        }
         
         return mesa;
     }

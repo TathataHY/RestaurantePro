@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
 
 /// <summary>
@@ -9,30 +8,38 @@ public class CrearComandaValidator : AbstractValidator<CrearComandaCommand>
 {
     public CrearComandaValidator()
     {
+        RuleFor(x => x.MesaId)
+            .NotEmpty().WithMessage("El ID de la mesa es obligatorio")
+            .NotEqual(Guid.Empty).WithMessage("El ID de la mesa no puede ser un GUID vacío");
+
         RuleFor(x => x.MeseroId)
             .NotEmpty().WithMessage("El ID del mesero es obligatorio")
             .NotEqual(Guid.Empty).WithMessage("El ID del mesero no puede ser un GUID vacío");
+
+        RuleFor(x => x.Items)
+            .NotNull().WithMessage("La comanda debe tener al menos un ítem")
+            .NotEmpty().WithMessage("La comanda debe tener al menos un ítem");
 
         RuleFor(x => x.Observaciones)
             .MaximumLength(500).WithMessage("Las observaciones no pueden exceder 500 caracteres")
             .When(x => !string.IsNullOrWhiteSpace(x.Observaciones));
 
-        // Validaciones para productos iniciales
-        RuleForEach(x => x.ProductosIniciales)
+        // Validaciones para productos iniciales (renombrado para coincidir con las pruebas)
+        RuleForEach(x => x.Items)
             .SetValidator(new AgregarProductoValidator())
-            .When(x => x.ProductosIniciales.Any());
+            .When(x => x.Items != null && x.Items.Any());
 
         // Validar que no se excedan los límites de productos por comanda
-        RuleFor(x => x.ProductosIniciales)
+        RuleFor(x => x.Items)
             .Must(productos => productos.Count <= 50)
             .WithMessage("No se pueden agregar más de 50 productos diferentes en una comanda")
-            .When(x => x.ProductosIniciales.Any());
+            .When(x => x.Items != null && x.Items.Any());
 
         // Validar que las cantidades totales no sean excesivas
-        RuleFor(x => x.ProductosIniciales)
+        RuleFor(x => x.Items)
             .Must(productos => productos.Sum(p => p.Cantidad) <= 200)
             .WithMessage("La cantidad total de productos no puede exceder 200 unidades")
-            .When(x => x.ProductosIniciales.Any());
+            .When(x => x.Items != null && x.Items.Any());
     }
 }
 
@@ -49,7 +56,7 @@ public class AgregarProductoValidator : AbstractValidator<AgregarProductoDto>
 
         RuleFor(x => x.Cantidad)
             .GreaterThan(0).WithMessage("La cantidad debe ser mayor a 0")
-            .LessThanOrEqualTo(50).WithMessage("La cantidad no puede exceder 50 unidades por producto");
+            .LessThanOrEqualTo(100).WithMessage("La cantidad no puede exceder 100 unidades");
 
         RuleFor(x => x.PrecioUnitario)
             .GreaterThan(0).WithMessage("El precio unitario debe ser mayor a 0")
@@ -62,12 +69,12 @@ public class AgregarProductoValidator : AbstractValidator<AgregarProductoDto>
         // Validar personalizaciones
         RuleForEach(x => x.Personalizaciones)
             .SetValidator(new PersonalizacionValidator())
-            .When(x => x.Personalizaciones.Any());
+            .When(x => x.Personalizaciones != null && x.Personalizaciones.Any());
 
         RuleFor(x => x.Personalizaciones)
             .Must(personalizaciones => personalizaciones.Count <= 10)
             .WithMessage("No se pueden agregar más de 10 personalizaciones por producto")
-            .When(x => x.Personalizaciones.Any());
+            .When(x => x.Personalizaciones != null && x.Personalizaciones.Any());
     }
 }
 

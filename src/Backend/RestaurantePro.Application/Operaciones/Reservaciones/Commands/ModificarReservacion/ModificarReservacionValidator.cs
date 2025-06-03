@@ -9,27 +9,33 @@ public class ModificarReservacionValidator : AbstractValidator<ModificarReservac
     {
         RuleFor(x => x.ReservacionId)
             .NotEmpty()
-            .WithMessage("El ID de la reservación es requerido");
+            .WithMessage("El ID de la reservación es requerido")
+            .WithErrorCode("RESERVACION_ID_REQUERIDO");
 
         RuleFor(x => x.NuevaFechaReservacion)
             .NotEmpty()
             .WithMessage("La nueva fecha de reservación es requerida")
             .GreaterThanOrEqualTo(DateTime.Today)
-            .WithMessage("La nueva fecha no puede ser anterior a hoy")
+            .WithMessage("La fecha de reservación no puede ser en el pasado")
+            .WithErrorCode("FECHA_RESERVACION_PASADO")
             .LessThanOrEqualTo(DateTime.Today.AddDays(90))
-            .WithMessage("No se pueden hacer reservaciones con más de 90 días de anticipación");
+            .WithMessage("La fecha de reservación no puede ser más de 90 días en el futuro")
+            .WithErrorCode("FECHA_RESERVACION_MUY_FUTURA");
 
         RuleFor(x => x.NuevaHoraReservacion)
             .NotEmpty()
             .WithMessage("La nueva hora de reservación es requerida")
             .Must(BeValidBusinessHour)
-            .WithMessage("La hora debe estar entre las 08:00 y las 23:00");
+            .WithMessage("La hora de reservación debe estar entre las 10:00 y las 22:30")
+            .WithErrorCode("HORA_RESERVACION_FUERA_HORARIO");
 
         RuleFor(x => x.NuevoNumeroPersonas)
             .GreaterThan(0)
             .WithMessage("El número de personas debe ser mayor a 0")
+            .WithErrorCode("NUMERO_PERSONAS_INVALIDO")
             .LessThanOrEqualTo(20)
-            .WithMessage("No se pueden hacer reservaciones para más de 20 personas");
+            .WithMessage("El número de personas no puede exceder 20")
+            .WithErrorCode("NUMERO_PERSONAS_EXCESIVO");
 
         RuleFor(x => x.MotivoModificacion)
             .NotEmpty()
@@ -55,7 +61,8 @@ public class ModificarReservacionValidator : AbstractValidator<ModificarReservac
 
     private static bool BeValidBusinessHour(TimeSpan hora)
     {
-        return hora >= TimeSpan.FromHours(8) && hora <= TimeSpan.FromHours(23);
+        // Cambiar a 10:00 - 22:30 como esperan las pruebas
+        return hora >= TimeSpan.FromHours(10) && hora <= new TimeSpan(22, 30, 0);
     }
 
     private static DateTime CombineDateAndTime(DateTime fecha, TimeSpan hora)

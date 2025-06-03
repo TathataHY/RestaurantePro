@@ -658,8 +658,8 @@ public class CambiarPasswordUsuarioValidatorTests
             UsuarioAutorizaId = autorizadorId,
             MotivosCambio = "1234567890", // Exactamente 10 caracteres - mínimo válido
             Prioridad = 1,
-            PasswordNueva = "MinPass1!",
-            PasswordActual = "OldPass1!",
+            PasswordNueva = "Complex#789", // Usar exactamente la de las pruebas válidas
+            PasswordActual = "MiClave$456", // Usar exactamente la de las pruebas válidas
             InvalidarSesionesActivas = false
         };
 
