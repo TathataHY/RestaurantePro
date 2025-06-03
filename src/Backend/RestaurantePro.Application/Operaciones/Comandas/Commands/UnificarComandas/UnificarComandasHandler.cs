@@ -201,20 +201,33 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
             return;
         }
 
-        // Obtener todos los items de las comandas originales, manejando colecciones null
-        var todosLosItems = comandasOriginales
+        // CRÍTICO: Si comandaUnificada es una de las comandas originales (comanda principal),
+        // solo agregar items de las OTRAS comandas para evitar duplicados
+        var comandasParaConsolidar = comandasOriginales
+            .Where(c => c.Id != comandaUnificada.Id) // Excluir la comanda principal si es el caso
             .Where(c => c.Items != null)
-            .SelectMany(c => c.Items)
             .ToList();
-        
-        if (!todosLosItems.Any())
+
+        // Si no hay otras comandas para consolidar (solo hay una comanda), no hacer nada
+        if (!comandasParaConsolidar.Any())
         {
-            _logger.LogInformation("No hay items para consolidar en las comandas originales");
+            _logger.LogInformation("No hay comandas adicionales para consolidar items (comanda principal única)");
             return;
         }
 
-        // Agrupar items por producto para consolidar cantidades
-        var itemsConsolidados = todosLosItems
+        // Obtener todos los items de las comandas a consolidar (excluyendo la principal)
+        var itemsParaAgregar = comandasParaConsolidar
+            .SelectMany(c => c.Items)
+            .ToList();
+        
+        if (!itemsParaAgregar.Any())
+        {
+            _logger.LogInformation("No hay items para consolidar en las comandas adicionales");
+            return;
+        }
+
+        // Agrupar items por producto para consolidar cantidades de las comandas secundarias
+        var itemsConsolidados = itemsParaAgregar
             .GroupBy(i => new { i.ProductoId, i.PrecioUnitario, i.Observaciones })
             .Select(grupo => new
             {
@@ -225,20 +238,42 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
             })
             .ToList();
 
-        // Agregar items consolidados a la comanda unificada usando método real
+        // Agregar items consolidados a la comanda unificada
         foreach (var itemConsolidado in itemsConsolidados)
         {
-            comandaUnificada.AgregarItem(
-                itemConsolidado.ProductoId,
-                "Producto Consolidado", // nombreProducto - requerido por el método
-                itemConsolidado.CantidadTotal,
-                itemConsolidado.PrecioUnitario,
-                itemConsolidado.Observaciones
-            );
+            // Verificar si ya existe un item con el mismo producto en la comanda unificada
+            var itemExistente = comandaUnificada.Items?.FirstOrDefault(i => 
+                i.ProductoId == itemConsolidado.ProductoId && 
+                i.PrecioUnitario == itemConsolidado.PrecioUnitario &&
+                i.Observaciones == itemConsolidado.Observaciones);
+
+            if (itemExistente != null)
+            {
+                // Si existe, actualizar cantidad usando el método del dominio
+                // NOTA: Esto requeriría un método específico en el dominio para modificar cantidad
+                // Por ahora, agregamos como item separado con observación especial
+                comandaUnificada.AgregarItem(
+                    itemConsolidado.ProductoId,
+                    $"Producto {itemConsolidado.ProductoId} (Consolidado)",
+                    itemConsolidado.CantidadTotal,
+                    itemConsolidado.PrecioUnitario,
+                    itemConsolidado.Observaciones + " - Unificación"
+                );
+            }
+            else
+            {
+                comandaUnificada.AgregarItem(
+                    itemConsolidado.ProductoId,
+                    $"Producto {itemConsolidado.ProductoId}",
+                    itemConsolidado.CantidadTotal,
+                    itemConsolidado.PrecioUnitario,
+                    itemConsolidado.Observaciones
+                );
+            }
         }
 
-        _logger.LogInformation("Consolidados {TotalItems} items únicos de {TotalComandas} comandas", 
-            itemsConsolidados.Count, comandasOriginales.Count);
+        _logger.LogInformation("Consolidados {TotalItems} items únicos de {TotalComandasSecundarias} comandas secundarias a la comanda principal", 
+            itemsConsolidados.Count, comandasParaConsolidar.Count);
     }
 
     private async Task AplicarEstrategiaDescuentos(List<Comanda> comandasOriginales, Comanda comandaUnificada, EstrategiaDescuentos estrategia, CancellationToken cancellationToken)

@@ -515,10 +515,8 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
                 throw new InvalidOperationException("El email no puede estar vacío");
             }
             
-            // Validación más estricta de formato de email
-            if (!Email.Contains("@") || !Email.Contains(".") || 
-                Email.StartsWith("@") || Email.EndsWith("@") || 
-                !Email.Substring(Email.IndexOf("@")).Contains("."))
+            // Validación de formato de email más robusta
+            if (!EsEmailValido(Email))
             {
                 throw new InvalidOperationException("El email debe tener un formato válido");
             }
@@ -526,6 +524,26 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
             if (!_roles.Any())
             {
                 throw new InvalidOperationException("El usuario debe tener al menos un rol asignado");
+            }
+        }
+        
+        /// <summary>
+        /// Valida si un email tiene un formato válido
+        /// </summary>
+        private static bool EsEmailValido(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return false;
+
+            try
+            {
+                // Usar expresión regular más robusta para validar email
+                var emailRegex = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+                return System.Text.RegularExpressions.Regex.IsMatch(email, emailRegex);
+            }
+            catch
+            {
+                return false;
             }
         }
     }

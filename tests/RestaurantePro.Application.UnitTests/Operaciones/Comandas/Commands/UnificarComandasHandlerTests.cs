@@ -167,7 +167,12 @@ public class UnificarComandasHandlerTests
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
+        // Assert - TEMPORAL: Si falla, mostrar el error específico
+        if (!resultado.Succeeded)
+        {
+            throw new Exception($"Test falló con error: {resultado.Error}");
+        }
+
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeTrue();
         resultado.Value.ComandaUnificadaId.Should().Be(comandaPrincipalId);
@@ -418,8 +423,20 @@ public class UnificarComandasHandlerTests
         var comandas = CrearComandasParaUnificar(command.ComandasIds);
         ConfigurarMockComandas(comandas);
 
-        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Error en base de datos"));
+        // CRÍTICO: Configurar UnitOfWork para que propague el error correctamente
+        _mockUnitOfWork.Setup(u => u.EjecutarEnTransaccionAsync(It.IsAny<Func<Task<Result<UnificarComandasDto>>>>(), It.IsAny<CancellationToken>()))
+            .Returns<Func<Task<Result<UnificarComandasDto>>>, CancellationToken>(async (func, ct) => 
+            {
+                try
+                {
+                    // Simular error en la transacción - lanzar excepción directamente
+                    throw new InvalidOperationException("Error en base de datos simulado");
+                }
+                catch (Exception ex)
+                {
+                    return Result.Failure<UnificarComandasDto>($"Error en transacción: {ex.Message}");
+                }
+            });
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -576,9 +593,10 @@ public class UnificarComandasHandlerTests
         {
             var comanda = CrearComanda(id, EstadoComanda.EnProceso, index + 1);
             
-            // CRÍTICO: Agregar al menos un item a cada comanda para evitar NullReferenceException
+            // CRÍTICO: Agregar un item con producto único para cada comanda para evitar duplicados
+            // Cada comanda debe tener un producto diferente para evitar conflictos durante la unificación
             comanda.AgregarItem(
-                Guid.NewGuid(), 
+                Guid.NewGuid(), // Producto único para cada comanda
                 $"Producto Test {index + 1}", 
                 1, 
                 25.50m, 

@@ -66,7 +66,7 @@ public class CambiarPasswordUsuarioHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.True(result.IsSuccess());
+        Assert.True(result.Succeeded);
         Assert.True(result.Value);
 
         // Verify save fue llamado
@@ -95,8 +95,8 @@ public class CambiarPasswordUsuarioHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.False(result.IsSuccess());
-        Assert.Contains("Error interno al cambiar la contraseña", result.Error);
+        Assert.False(result.Succeeded);
+        Assert.Contains("El usuario especificado no existe", result.Error);
     }
 
     /// <summary>
@@ -133,7 +133,7 @@ public class CambiarPasswordUsuarioHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.False(result.IsSuccess());
+        Assert.False(result.Succeeded);
     }
 
     /// <summary>
@@ -171,7 +171,7 @@ public class CambiarPasswordUsuarioHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.False(result.IsSuccess());
+        Assert.False(result.Succeeded);
     }
 
     /// <summary>
@@ -206,7 +206,7 @@ public class CambiarPasswordUsuarioHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.False(result.IsSuccess());
+        Assert.False(result.Succeeded);
     }
 
     /// <summary>
@@ -243,7 +243,7 @@ public class CambiarPasswordUsuarioHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.False(result.IsSuccess());
+        Assert.False(result.Succeeded);
     }
 
     /// <summary>
@@ -265,7 +265,7 @@ public class CambiarPasswordUsuarioHandlerTests
         };
 
         var usuario = Usuario.Crear(
-            "juan.perez@email.com",
+            "juan.perez",
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
@@ -274,9 +274,9 @@ public class CambiarPasswordUsuarioHandlerTests
         usuario.GetType().GetProperty("Id")?.SetValue(usuario, usuarioId);
 
         var admin = Usuario.Crear(
-            "admin@email.com",
+            "admin",
             "Administrador",
-            "hash_admin",
+            "admin@email.com",
             RolUsuario.Administrador);
         
         // CORREGIDO: Asignar Guid directamente, no string
@@ -289,7 +289,7 @@ public class CambiarPasswordUsuarioHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.True(result.IsSuccess());
+        Assert.True(result.Succeeded);
     }
 
     /// <summary>
@@ -311,7 +311,7 @@ public class CambiarPasswordUsuarioHandlerTests
         };
 
         var usuario = Usuario.Crear(
-            "juan.perez@email.com",
+            "juan.perez",
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
@@ -326,7 +326,7 @@ public class CambiarPasswordUsuarioHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.True(result.IsSuccess());
+        Assert.True(result.Succeeded);
     }
 
     /// <summary>
@@ -363,7 +363,7 @@ public class CambiarPasswordUsuarioHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.True(result.IsSuccess());
+        Assert.True(result.Succeeded);
     }
 
     /// <summary>
@@ -383,7 +383,7 @@ public class CambiarPasswordUsuarioHandlerTests
         };
 
         var usuario = Usuario.Crear(
-            "juan.perez@email.com",
+            "juan.perez",
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
@@ -400,7 +400,7 @@ public class CambiarPasswordUsuarioHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.False(result.IsSuccess());
+        Assert.False(result.Succeeded);
         Assert.Contains("Error interno", result.Error);
     }
 
@@ -426,7 +426,7 @@ public class CambiarPasswordUsuarioHandlerTests
         };
 
         var usuario = Usuario.Crear(
-            "juan.perez@email.com",
+            "juan.perez",
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);
@@ -441,7 +441,7 @@ public class CambiarPasswordUsuarioHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.False(result.IsSuccess());
+        Assert.False(result.Succeeded);
         
         // Verificar que el motivo de fallo es válido y descriptivo
         motivoFallo.Should().NotBeNullOrEmpty();

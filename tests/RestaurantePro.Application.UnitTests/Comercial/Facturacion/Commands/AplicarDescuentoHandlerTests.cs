@@ -1,3 +1,7 @@
+using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Domain.Comercial.Facturacion.Enums;
+using RestaurantePro.Application.UnitTests.Common;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Commands;
 
 /// <summary>
@@ -225,7 +229,7 @@ public class AplicarDescuentoHandlerTests
             AplicarAntesDeImpuestos = true
         };
 
-        var factura = CreateMockFacturaEmitida(facturaId, 1000m, 800m);
+        var factura = CreateFacturaEmitida(facturaId, 1000m, 800m);
         var facturaDto = CreateMockFacturaDto(facturaId);
 
         SetupFacturasDbSet(new List<Factura> { factura });
@@ -266,7 +270,7 @@ public class AplicarDescuentoHandlerTests
             UsuarioAutorizaId = usuarioId
         };
 
-        var factura = CreateMockFacturaEmitida(facturaId, 500m, 400m);
+        var factura = CreateFacturaEmitida(facturaId, 500m, 400m);
         var facturaDto = CreateMockFacturaDto(facturaId);
 
         SetupFacturasDbSet(new List<Factura> { factura });
@@ -306,7 +310,7 @@ public class AplicarDescuentoHandlerTests
             UsuarioAutorizaId = usuarioId
         };
 
-        var factura = CreateMockFacturaEmitida(facturaId, 1000m, 800m);
+        var factura = CreateFacturaEmitida(facturaId, 1000m, 800m);
         var facturaDto = CreateMockFacturaDto(facturaId);
 
         SetupFacturasDbSet(new List<Factura> { factura });
@@ -356,7 +360,7 @@ public class AplicarDescuentoHandlerTests
             UsuarioAutorizaId = usuarioId
         };
 
-        var factura = CreateMockFacturaEmitida(facturaId, 1000m, 800m);
+        var factura = CreateFacturaEmitida(facturaId, 1000m, 800m);
         var facturaDto = CreateMockFacturaDto(facturaId);
 
         SetupFacturasDbSet(new List<Factura> { factura });
@@ -404,7 +408,7 @@ public class AplicarDescuentoHandlerTests
             UsuarioAutorizaId = usuarioId
         };
 
-        var factura = CreateMockFacturaEmitida(facturaId, 1000m, 800m);
+        var factura = CreateFacturaEmitida(facturaId, 1000m, 800m);
         var facturaDto = CreateMockFacturaDto(facturaId);
 
         SetupFacturasDbSet(new List<Factura> { factura });
@@ -445,7 +449,7 @@ public class AplicarDescuentoHandlerTests
             UsuarioAutorizaId = usuarioId
         };
 
-        var factura = CreateMockFacturaEmitida(facturaId, 1000m, 800m);
+        var factura = CreateFacturaEmitida(facturaId, 1000m, 800m);
         var facturaDto = CreateMockFacturaDto(facturaId);
 
         SetupFacturasDbSet(new List<Factura> { factura });
@@ -485,7 +489,7 @@ public class AplicarDescuentoHandlerTests
             UsuarioAutorizaId = usuarioId
         };
 
-        var factura = CreateMockFacturaEmitida(facturaId, 5000m, 4000m);
+        var factura = CreateFacturaEmitida(facturaId, 5000m, 4000m);
         var facturaDto = CreateMockFacturaDto(facturaId);
 
         SetupFacturasDbSet(new List<Factura> { factura });
@@ -528,7 +532,7 @@ public class AplicarDescuentoHandlerTests
             UsuarioAutorizaId = usuarioId
         };
 
-        var factura = CreateMockFacturaEmitida(facturaId, 1000m, 800m);
+        var factura = CreateFacturaEmitida(facturaId, 1000m, 800m);
         var facturaDto = CreateMockFacturaDto(facturaId);
 
         SetupFacturasDbSet(new List<Factura> { factura });
@@ -598,7 +602,7 @@ public class AplicarDescuentoHandlerTests
             UsuarioAutorizaId = Guid.NewGuid()
         };
 
-        var facturaAnulada = CreateMockFacturaAnulada(facturaId);
+        var facturaAnulada = CreateFacturaAnulada(facturaId);
 
         SetupFacturasDbSet(new List<Factura> { facturaAnulada });
 
@@ -625,7 +629,7 @@ public class AplicarDescuentoHandlerTests
             UsuarioAutorizaId = Guid.NewGuid()
         };
 
-        var factura = CreateMockFacturaEmitida(facturaId, 1000m, 800m);
+        var factura = CreateFacturaEmitida(facturaId, 1000m, 800m);
 
         SetupFacturasDbSet(new List<Factura> { factura });
 
@@ -652,7 +656,7 @@ public class AplicarDescuentoHandlerTests
             UsuarioAutorizaId = Guid.NewGuid()
         };
 
-        var factura = CreateMockFacturaEmitida(facturaId, 1000m, 800m);
+        var factura = CreateFacturaEmitida(facturaId, 1000m, 800m);
 
         SetupFacturasDbSet(new List<Factura> { factura });
         
@@ -684,7 +688,7 @@ public class AplicarDescuentoHandlerTests
             UsuarioAutorizaId = Guid.NewGuid()
         };
 
-        var factura = CreateMockFacturaEmitida(facturaId, 1000m, 800m);
+        var factura = CreateFacturaEmitida(facturaId, 1000m, 800m);
         var facturaDto = CreateMockFacturaDto(facturaId);
 
         SetupFacturasDbSet(new List<Factura> { factura });
@@ -733,7 +737,8 @@ public class AplicarDescuentoHandlerTests
             UsuarioAutorizaId = Guid.NewGuid()
         };
 
-        _facturasDbSetMock.Setup(x => x.Include(It.IsAny<string>()))
+        // Simular excepción en el acceso al contexto
+        _contextMock.Setup(x => x.Facturas)
             .Throws(new InvalidOperationException("Error de base de datos"));
 
         // Act
@@ -761,54 +766,85 @@ public class AplicarDescuentoHandlerTests
     private void SetupFacturasDbSet(List<Factura> facturas)
     {
         var queryable = facturas.AsQueryable();
-        _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.Provider).Returns(queryable.Provider);
-        _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(queryable.Expression);
-        _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-        _facturasDbSetMock.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
-
-        _facturasDbSetMock.Setup(x => x.Include(It.IsAny<string>()))
-            .Returns(_facturasDbSetMock.Object);
-
-        _facturasDbSetMock.Setup(x => x.FirstOrDefaultAsync(It.IsAny<System.Linq.Expressions.Expression<Func<Factura, bool>>>(), It.IsAny<CancellationToken>()))
-            .Returns<System.Linq.Expressions.Expression<Func<Factura, bool>>, CancellationToken>((predicate, token) =>
-            {
-                var compiled = predicate.Compile();
-                var result = facturas.FirstOrDefault(compiled);
-                return Task.FromResult(result);
-            });
+        var facturasDbSetMock = MockDbSetHelper.CreateMockDbSet(queryable);
+        
+        _contextMock.Setup(c => c.Facturas).Returns(facturasDbSetMock.Object);
     }
 
     #endregion
 
     #region Helper Methods - Data Creation
 
-    private static Factura CreateMockFacturaEmitida(Guid id, decimal total = 1000.00m, decimal subtotal = 800.00m)
+    private static Factura CreateFacturaEmitida(Guid id, decimal total = 1000.00m, decimal subtotal = 800.00m)
     {
-        var facturaMock = new Mock<Factura>();
-        facturaMock.Setup(x => x.Id).Returns(id);
-        facturaMock.Setup(x => x.NumeroFactura).Returns($"FAC-{id.ToString().Substring(0, 8)}");
-        facturaMock.Setup(x => x.Estado).Returns(EstadoFactura.Emitida);
-        facturaMock.Setup(x => x.Total).Returns(total);
-        facturaMock.Setup(x => x.Subtotal).Returns(subtotal);
-        facturaMock.Setup(x => x.TotalDescuentos).Returns(0m);
-        facturaMock.Setup(x => x.FechaEmision).Returns(DateTime.UtcNow.AddDays(-1));
-        facturaMock.Setup(x => x.NombreCliente).Returns("Cliente Test");
-        facturaMock.Setup(x => x.Detalles).Returns(new List<DetalleFactura>());
-        return facturaMock.Object;
+        // Crear factura real usando el factory method
+        var factura = Factura.Crear(
+            numeroFactura: $"FAC-{id.ToString().Substring(0, 8)}",
+            tipoFactura: TipoFactura.Normal,
+            nombreCliente: "Cliente Test"
+        );
+        
+        // Agregar detalles para llegar al total deseado
+        var precioUnitario = subtotal / 2; // 2 items para alcanzar el subtotal
+        factura.AgregarDetalle(
+            productoId: Guid.NewGuid(),
+            descripcion: "Producto Test 1",
+            cantidad: 1,
+            precioUnitario: precioUnitario,
+            porcentajeImpuesto: 18m
+        );
+        
+        factura.AgregarDetalle(
+            productoId: Guid.NewGuid(),
+            descripcion: "Producto Test 2",
+            cantidad: 1,
+            precioUnitario: precioUnitario,
+            porcentajeImpuesto: 18m
+        );
+        
+        // Emitir la factura para que esté en estado válido
+        factura.Emitir();
+        
+        // Usar reflexión para establecer el Id si es necesario
+        if (factura.Id != id)
+        {
+            var idProperty = typeof(EntityBase).GetProperty("Id");
+            idProperty?.SetValue(factura, id);
+        }
+        
+        return factura;
     }
 
-    private static Factura CreateMockFacturaAnulada(Guid id)
+    private static Factura CreateFacturaAnulada(Guid id)
     {
-        var facturaMock = new Mock<Factura>();
-        facturaMock.Setup(x => x.Id).Returns(id);
-        facturaMock.Setup(x => x.NumeroFactura).Returns($"FAC-{id.ToString().Substring(0, 8)}");
-        facturaMock.Setup(x => x.Estado).Returns(EstadoFactura.Anulada);
-        facturaMock.Setup(x => x.Total).Returns(1000.00m);
-        facturaMock.Setup(x => x.Subtotal).Returns(800.00m);
-        facturaMock.Setup(x => x.FechaEmision).Returns(DateTime.UtcNow.AddDays(-1));
-        facturaMock.Setup(x => x.NombreCliente).Returns("Cliente Test");
-        facturaMock.Setup(x => x.Detalles).Returns(new List<DetalleFactura>());
-        return facturaMock.Object;
+        // Crear factura real y luego anularla
+        var factura = Factura.Crear(
+            numeroFactura: $"FAC-{id.ToString().Substring(0, 8)}",
+            tipoFactura: TipoFactura.Normal,
+            nombreCliente: "Cliente Test"
+        );
+        
+        // Agregar detalles
+        factura.AgregarDetalle(
+            productoId: Guid.NewGuid(),
+            descripcion: "Producto Test",
+            cantidad: 2,
+            precioUnitario: 400m,
+            porcentajeImpuesto: 18m
+        );
+        
+        // Emitir y luego anular
+        factura.Emitir();
+        factura.Anular("Motivo de test");
+        
+        // Usar reflexión para establecer el Id si es necesario
+        if (factura.Id != id)
+        {
+            var idProperty = typeof(EntityBase).GetProperty("Id");
+            idProperty?.SetValue(factura, id);
+        }
+        
+        return factura;
     }
 
     private static FacturaDto CreateMockFacturaDto(Guid id)

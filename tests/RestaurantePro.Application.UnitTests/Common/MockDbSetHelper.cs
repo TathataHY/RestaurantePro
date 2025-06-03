@@ -32,6 +32,10 @@ public static class MockDbSetHelper
         mockSet.Setup(x => x.Remove(It.IsAny<T>())).Returns((T entity) => null!);
         mockSet.Setup(x => x.Update(It.IsAny<T>())).Returns((T entity) => null!);
         
+        // Configurar AddAsync - simplemente retornar una ValueTask completada sin intentar mockear EntityEntry
+        mockSet.Setup(x => x.AddAsync(It.IsAny<T>(), It.IsAny<CancellationToken>()))
+               .Returns((T entity, CancellationToken token) => ValueTask.FromResult((Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<T>)null!));
+        
         return mockSet;
     }
 
@@ -82,111 +86,74 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
     {
         var expectedResultType = typeof(TResult);
         
-        // Si esperamos Task<bool> (como para AnyAsync)
-        if (expectedResultType == typeof(Task<bool>))
+        try
         {
-            try
+            // Si esperamos Task<bool> (como para AnyAsync)
+            if (expectedResultType == typeof(Task<bool>))
             {
-                // Para operaciones como AnyAsync, necesitamos evaluar la expresión
-                var query = new TestAsyncEnumerable<TEntity>(expression);
-                var result = query.Any();
+                var result = Execute<bool>(expression);
                 return (TResult)(object)Task.FromResult(result);
             }
-            catch
+            
+            // Si esperamos Task<T> para otras operaciones como FirstOrDefaultAsync
+            if (expectedResultType.IsGenericType && expectedResultType.GetGenericTypeDefinition() == typeof(Task<>))
             {
-                // Si falla, retornar false por defecto
-                return (TResult)(object)Task.FromResult(false);
-            }
-        }
-        
-        // Si esperamos Task<T> para otras operaciones como FirstOrDefaultAsync
-        if (expectedResultType.IsGenericType && expectedResultType.GetGenericTypeDefinition() == typeof(Task<>))
-        {
-            var taskResultType = expectedResultType.GetGenericArguments()[0];
-            try
-            {
-                // Para FirstOrDefaultAsync, necesitamos evaluar la expresión correctamente
-                var query = new TestAsyncEnumerable<TEntity>(expression);
+                var taskResultType = expectedResultType.GetGenericArguments()[0];
                 
-                // Obtener el resultado usando LINQ to Objects
-                object? result = null;
-                
-                // Comprobar si es una operación FirstOrDefault
-                if (expression is MethodCallExpression methodCall && 
-                    methodCall.Method.Name == "FirstOrDefault")
+                // Ejecutar la query de forma síncrona usando el provider interno
+                // El provider interno es el que sabe cómo procesar las expressions LINQ correctamente
+                try
                 {
-                    // Ejecutar FirstOrDefault en la secuencia
-                    var enumerable = query.AsEnumerable();
-                    if (methodCall.Arguments.Count > 1) // Con predicado
-                    {
-                        // Compilar y ejecutar el predicado
-                        var lambda = methodCall.Arguments[1] as LambdaExpression ??
-                                   ((UnaryExpression)methodCall.Arguments[1]).Operand as LambdaExpression;
-                        if (lambda != null)
-                        {
-                            var compiledPredicate = lambda.Compile();
-                            result = enumerable.Cast<object>().FirstOrDefault(item => (bool)compiledPredicate.DynamicInvoke(item));
-                        }
-                    }
-                    else // Sin predicado
-                    {
-                        result = enumerable.FirstOrDefault();
-                    }
-                }
-                else
-                {
-                    // Para otras operaciones, usar el provider interno
-                    result = _inner.Execute(expression);
-                }
-                
-                // Si el resultado es del tipo correcto, devolverlo
-                if (result != null && taskResultType.IsAssignableFrom(result.GetType()))
-                {
-                    var taskResult = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType)?.Invoke(null, new[] { result });
+                    var syncResult = _inner.Execute(expression);
+                    
+                    // Envolver el resultado en Task
+                    var taskFromResult = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType);
+                    var taskResult = taskFromResult?.Invoke(null, new[] { syncResult });
                     return (TResult)taskResult!;
                 }
-                
-                // Si el resultado es null o no es del tipo correcto, usar valor por defecto
-                var defaultValue = taskResultType.IsValueType ? Activator.CreateInstance(taskResultType) : null;
-                var taskResultDefault = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType)?.Invoke(null, new[] { defaultValue });
-                return (TResult)taskResultDefault!;
+                catch
+                {
+                    // Si falla la ejecución síncrona, devolver valor por defecto
+                    object? defaultValue = null;
+                    if (taskResultType.IsValueType)
+                    {
+                        defaultValue = Activator.CreateInstance(taskResultType);
+                    }
+                    
+                    var taskFromResultDefault = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType);
+                    var taskResultDefault = taskFromResultDefault?.Invoke(null, new[] { defaultValue });
+                    return (TResult)taskResultDefault!;
+                }
             }
-            catch (Exception ex)
+            
+            // Para otros casos, ejecutar síncronamente
+            var directResult = Execute<TResult>(expression);
+            return directResult;
+        }
+        catch (Exception)
+        {
+            // En caso de error, devolver valor por defecto envuelto en Task si es necesario
+            if (expectedResultType.IsGenericType && expectedResultType.GetGenericTypeDefinition() == typeof(Task<>))
             {
-                // En caso de error, loguearlo y devolver valor por defecto
-                System.Diagnostics.Debug.WriteLine($"Error en ExecuteAsync: {ex.Message}");
+                var taskResultType = expectedResultType.GetGenericArguments()[0];
+                object? defaultValue = null;
+                if (taskResultType.IsValueType)
+                {
+                    defaultValue = Activator.CreateInstance(taskResultType);
+                }
                 
-                // Si falla, crear una tarea completada con valor por defecto
-                var defaultValue = taskResultType.IsValueType ? Activator.CreateInstance(taskResultType) : null;
-                var taskResult = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType)?.Invoke(null, new[] { defaultValue });
+                var taskFromResult = typeof(Task).GetMethod(nameof(Task.FromResult))?.MakeGenericMethod(taskResultType);
+                var taskResult = taskFromResult?.Invoke(null, new[] { defaultValue });
                 return (TResult)taskResult!;
             }
-        }
-        
-        // Para otros casos, ejecutar síncronamente
-        try
-        {
-            var result = Execute<TResult>(expression);
-            return result;
-        }
-        catch
-        {
-            // Si falla, retornar valor por defecto
-            return typeof(TResult).IsValueType ? (TResult)Activator.CreateInstance(typeof(TResult))! : default(TResult)!;
-        }
-    }
-    
-    private Task<T> ExecuteAsyncGeneric<T>(Expression expression, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var result = Execute<T>(expression);
-            return Task.FromResult(result);
-        }
-        catch
-        {
-            var defaultValue = typeof(T).IsValueType ? (T)Activator.CreateInstance(typeof(T))! : default(T)!;
-            return Task.FromResult(defaultValue);
+            
+            // Para tipos no-Task, devolver valor por defecto
+            if (typeof(TResult).IsValueType)
+            {
+                return (TResult)Activator.CreateInstance(typeof(TResult))!;
+            }
+            
+            return default(TResult)!;
         }
     }
 }

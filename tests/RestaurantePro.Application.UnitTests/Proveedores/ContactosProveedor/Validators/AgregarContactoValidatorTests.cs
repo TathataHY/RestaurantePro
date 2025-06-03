@@ -341,7 +341,7 @@ public class AgregarContactoValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var nombreLargo = new string('a', 135);
+        var nombreLargo = new string('a', 142); // 142 + 11 ("@domain.com") = 153 caracteres, que excede 150
         command.Email = $"{nombreLargo}@domain.com"; // Más de 150 caracteres
 
         // Act
@@ -620,17 +620,58 @@ public class AgregarContactoValidatorTests
             e.ErrorMessage.Contains("El límite de autorización no puede exceder $1,000,000"));
     }
 
-    [Theory]
-    [InlineData(null, false)]      // Sin limite, no autoriza - válido
-    [InlineData(2500, true)]       // Con limite, autoriza - válido
-    [InlineData(75000, false)]     // Con limite, no autoriza - válido
-    [InlineData(1000000, true)]    // Límite máximo - válido
-    public async Task Validate_ConLimiteAutorizacionValido_NoDeberiaRetornarErrorDeLimite(decimal? limite, bool autoriza)
+    [Fact]
+    public async Task Validate_ConLimiteAutorizacionValido_SinLimite_NoDeberiaRetornarErrorDeLimite()
     {
         // Arrange
         var command = CrearCommandValido();
-        command.LimiteAutorizacion = limite;
-        command.PuedeAutorizarPedidos = autoriza;
+        command.LimiteAutorizacion = null;
+        command.PuedeAutorizarPedidos = false;
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(AgregarContactoCommand.LimiteAutorizacion));
+    }
+
+    [Fact]
+    public async Task Validate_ConLimiteAutorizacionValido_2500_NoDeberiaRetornarErrorDeLimite()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.LimiteAutorizacion = 2500m;
+        command.PuedeAutorizarPedidos = true;
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(AgregarContactoCommand.LimiteAutorizacion));
+    }
+
+    [Fact]
+    public async Task Validate_ConLimiteAutorizacionValido_75000_NoDeberiaRetornarErrorDeLimite()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.LimiteAutorizacion = 75000m;
+        command.PuedeAutorizarPedidos = false;
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(AgregarContactoCommand.LimiteAutorizacion));
+    }
+
+    [Fact]
+    public async Task Validate_ConLimiteAutorizacionValido_1000000_NoDeberiaRetornarErrorDeLimite()
+    {
+        // Arrange
+        var command = CrearCommandValido();
+        command.LimiteAutorizacion = 1000000m;
+        command.PuedeAutorizarPedidos = true;
 
         // Act
         var result = await _validator.ValidateAsync(command);
