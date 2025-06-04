@@ -109,6 +109,19 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
 
     private async Task<Result<InformacionClienteDto>> PrepararInformacionCliente(CrearFacturaCommand request, CancellationToken cancellationToken)
     {
+        // Si no hay ClienteId, usar la información proporcionada directamente
+        if (!request.ClienteId.HasValue)
+        {
+            return Result.Success(new InformacionClienteDto
+            {
+                NombreCliente = request.NombreCliente ?? "Consumidor Final",
+                EmailCliente = request.EmailCliente,
+                TelefonoCliente = request.TelefonoCliente,
+                IdentificacionFiscal = request.IdentificacionFiscal,
+                DireccionCliente = request.DireccionCliente
+            });
+        }
+
         var clienteCompleto = await _context.Clientes
             .FirstOrDefaultAsync(c => c.Id == request.ClienteId.Value, cancellationToken);
 

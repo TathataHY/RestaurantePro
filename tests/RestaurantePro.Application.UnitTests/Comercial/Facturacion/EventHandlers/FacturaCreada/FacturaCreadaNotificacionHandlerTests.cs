@@ -121,7 +121,7 @@ public class FacturaCreadaNotificacionHandlerTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("⚠️ Cliente no encontrado para factura")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("no tiene cliente asociado")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -165,7 +165,7 @@ public class FacturaCreadaNotificacionHandlerTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("⚠️ Factura no encontrada para notificación")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Cliente no encontrado para factura")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -208,7 +208,7 @@ public class FacturaCreadaNotificacionHandlerTests
         
         // SÍ debería enviarse SMS
         _mockSMSService.Verify(x => x.SendSMSAsync(
-            "+1234567890", It.Is<string>(s => s.Contains(numeroFactura) && s.Contains("180.00"))), 
+            "+1234567890", It.Is<string>(s => s.Contains(numeroFactura) && s.Contains("$180"))), 
             Times.Once);
     }
 

@@ -1,3 +1,16 @@
+using FluentAssertions;
+using Moq;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using RestaurantePro.Application.Comercial.Facturacion.Commands.AnularFactura;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+using RestaurantePro.Domain.Core.Usuarios.Entities;
+using RestaurantePro.Domain.Comercial.Facturacion.Enums;
+using RestaurantePro.Domain.Core.Usuarios.Enums;
+using RestaurantePro.Application.Comercial.Facturacion.DTOs;
+using MockQueryable.Moq;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Commands;
 
 /// <summary>
@@ -669,7 +682,7 @@ public class AnularFacturaHandlerTests
 
     private void SetupFacturasDbSet(List<Factura> facturas)
     {
-        var mockSet = CreateDbSetMock(facturas);
+        var mockSet = facturas.AsQueryable().BuildMockDbSet();
         _contextMock.Setup(x => x.Facturas).Returns(mockSet.Object);
         
         // Setup específico para FindAsync
@@ -683,7 +696,7 @@ public class AnularFacturaHandlerTests
 
     private void SetupUsuariosDbSet(List<Usuario> usuarios)
     {
-        var mockSet = CreateDbSetMock(usuarios);
+        var mockSet = usuarios.AsQueryable().BuildMockDbSet();
         _contextMock.Setup(x => x.Usuarios).Returns(mockSet.Object);
         
         // Setup específico para FindAsync

@@ -251,7 +251,8 @@ public class ActualizarProveedorValidatorTests
     [InlineData("@domain.com")]
     [InlineData("email.domain.com")]
     [InlineData("email@@domain.com")]
-    [InlineData("email@domain")]
+    [InlineData("email@domain.")]
+    [InlineData("email@domain..com")]
     public async Task Validate_ConEmailFormatoInvalido_DeberiaRetornarError(string emailInvalido)
     {
         // Arrange

@@ -23,6 +23,7 @@ using RestaurantePro.Domain.Operaciones.Comandas.Entities;
 using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
 using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+using MockQueryable.Moq;
 using Xunit;
 
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Commands;
@@ -181,6 +182,24 @@ public class CrearFacturaHandlerTests
                 comandaId, TipoFactura.Normal, "Cliente Consumidor Final", null, null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(factura));
 
+        // Configurar currentUserService para devolver un userId válido
+        _currentUserServiceMock.Setup(x => x.UserId).Returns(Guid.NewGuid().ToString());
+
+        // Configurar el mapper para devolver un DTO válido
+        var expectedDto = new FacturaDto
+        {
+            Id = factura.Id,
+            Numero = factura.NumeroFactura,
+            FechaEmision = factura.FechaEmision,
+            Tipo = factura.TipoFactura,
+            NombreCliente = factura.NombreCliente,
+            Total = factura.Total,
+            Estado = factura.Estado
+        };
+
+        _mapperMock.Setup(x => x.Map<FacturaDto>(It.IsAny<Factura>()))
+                   .Returns(expectedDto);
+
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
@@ -204,6 +223,7 @@ public class CrearFacturaHandlerTests
             ComandasIds = new List<Guid> { comandaId },
             TipoFactura = "Normal",
             ClienteId = clienteId,
+            NombreCliente = "Cliente Registrado",
             EmitirInmediatamente = false
         };
 
@@ -440,15 +460,15 @@ public class CrearFacturaHandlerTests
     public async Task Handle_ComandaNoExiste_DeberiaRetornarError()
     {
         // Arrange
-        var comandaId = Guid.NewGuid();
+        var comandaIdInexistente = Guid.NewGuid();
         var command = new CrearFacturaCommand
         {
-            ComandasIds = new List<Guid> { comandaId },
+            ComandasIds = new List<Guid> { comandaIdInexistente },
             TipoFactura = "Normal",
             NombreCliente = "Cliente Test"
         };
 
-        SetupComandasDbSet(new List<Comanda>()); // Comanda no existe
+        SetupComandasDbSet(new List<Comanda>()); // Lista vacía
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -640,7 +660,7 @@ public class CrearFacturaHandlerTests
 
     private void SetupClientesDbSet(List<Cliente> clientes)
     {
-        var mockSet = CreateDbSetMock(clientes);
+        var mockSet = clientes.AsQueryable().BuildMockDbSet();
         _contextMock.Setup(x => x.Clientes).Returns(mockSet.Object);
         
         // Setup específico para FindAsync
@@ -654,7 +674,7 @@ public class CrearFacturaHandlerTests
 
     private void SetupComandasDbSet(List<Comanda> comandas)
     {
-        var mockSet = CreateDbSetMock(comandas);
+        var mockSet = comandas.AsQueryable().BuildMockDbSet();
         _contextMock.Setup(x => x.Comandas).Returns(mockSet.Object);
         
         // Setup específico para FindAsync  
@@ -664,26 +684,6 @@ public class CrearFacturaHandlerTests
                 var result = comandas.FirstOrDefault(c => c.Id == id);
                 return ValueTask.FromResult(result);
             });
-    }
-
-    private Mock<DbSet<T>> CreateDbSetMock<T>(List<T> data) where T : class
-    {
-        var queryable = data.AsQueryable();
-        var dbSetMock = new Mock<DbSet<T>>();
-
-        dbSetMock.As<IQueryable<T>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<T>(queryable.Provider));
-        dbSetMock.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
-        dbSetMock.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
-        dbSetMock.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(queryable.GetEnumerator());
-
-        dbSetMock.As<IAsyncEnumerable<T>>()
-            .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
-            .Returns(new TestAsyncEnumerator<T>(queryable.GetEnumerator()));
-
-        // Eliminamos los setups de Include ya que son métodos de extensión que no se pueden mockear directamente
-        // El handler debería funcionar sin Include en las pruebas unitarias
-        
-        return dbSetMock;
     }
 
     #endregion

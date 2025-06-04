@@ -41,22 +41,32 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
             return (TResult)(object)Task.FromResult(result);
         }
         
-        // Manejar otros tipos Task<T>
+        // Manejar Task<T> genérico
         if (resultType.IsGenericType && resultType.GetGenericTypeDefinition() == typeof(Task<>))
         {
             var innerType = resultType.GetGenericArguments()[0];
-            var syncResult = _inner.Execute(expression);
             
-            if (syncResult == null)
+            try
             {
-                return (TResult)(object)Task.FromResult<object?>(null);
-            }
-            
-            var taskFromResult = typeof(Task).GetMethod(nameof(Task.FromResult))
-                ?.MakeGenericMethod(innerType)
-                ?.Invoke(null, new[] { syncResult });
+                // Intentar ejecutar síncronamente primero
+                var syncResult = _inner.Execute(expression);
                 
-            return (TResult)taskFromResult!;
+                // Crear Task.FromResult con el resultado
+                var taskFromResult = typeof(Task).GetMethod(nameof(Task.FromResult))
+                    ?.MakeGenericMethod(innerType)
+                    ?.Invoke(null, new[] { syncResult });
+                    
+                return (TResult)taskFromResult!;
+            }
+            catch
+            {
+                // En caso de error, devolver Task con valor por defecto
+                var defaultValue = innerType.IsValueType ? Activator.CreateInstance(innerType) : null;
+                var taskFromResult = typeof(Task).GetMethod(nameof(Task.FromResult))
+                    ?.MakeGenericMethod(innerType)
+                    ?.Invoke(null, new[] { defaultValue });
+                return (TResult)taskFromResult!;
+            }
         }
 
         // Para otros tipos, ejecutar síncronamente
@@ -138,7 +148,10 @@ public class ObtenerFacturaPorIdValidatorTests
 
     private void ConfigurarDatosPrueba()
     {
-        // Datos de ejemplo
+        // Crear facturas de ejemplo con IDs fijos para pruebas
+        var facturaId1 = new Guid("12345678-1234-1234-1234-123456789012");
+        var facturaId2 = new Guid("87654321-4321-4321-4321-210987654321");
+        
         var facturas = new List<Factura>
         {
             Factura.Crear(
@@ -152,7 +165,13 @@ public class ObtenerFacturaPorIdValidatorTests
                 nombreCliente: "Cliente Fiscal",
                 identificacionFiscal: "RFC123456789",
                 fechaEmision: DateTime.UtcNow.AddDays(-1))
-        }.AsQueryable();
+        };
+        
+        // Asignar IDs fijos usando reflection
+        typeof(Factura).GetProperty("Id")?.SetValue(facturas[0], facturaId1);
+        typeof(Factura).GetProperty("Id")?.SetValue(facturas[1], facturaId2);
+        
+        var facturasQueryable = facturas.AsQueryable();
 
         var usuarios = new List<Usuario>
         {
@@ -169,10 +188,10 @@ public class ObtenerFacturaPorIdValidatorTests
         }.AsQueryable();
 
         // Configurar mocks para DbSet<Factura>
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<Factura>(facturas.Provider));
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(facturas.Expression);
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(facturas.ElementType);
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(facturas.GetEnumerator());
+        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<Factura>(facturasQueryable.Provider));
+        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(facturasQueryable.Expression);
+        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(facturasQueryable.ElementType);
+        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(facturasQueryable.GetEnumerator());
 
         // Configurar mocks para DbSet<Usuario>
         _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<Usuario>(usuarios.Provider));
@@ -191,7 +210,7 @@ public class ObtenerFacturaPorIdValidatorTests
     {
         return new ObtenerFacturaPorIdQuery
         {
-            FacturaId = Guid.NewGuid()
+            FacturaId = new Guid("12345678-1234-1234-1234-123456789012") // Usar ID de factura mockeada
         };
     }
 

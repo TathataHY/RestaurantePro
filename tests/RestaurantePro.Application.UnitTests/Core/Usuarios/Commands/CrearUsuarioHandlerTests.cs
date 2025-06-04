@@ -42,19 +42,19 @@ public class CrearUsuarioHandlerTests
     public async Task Handle_ConDatosValidos_DeberiaCrearUsuarioCorrectamente()
     {
         // Arrange
-        var usuarioCreador = Usuario.Crear("admin", "Administrador Sistema", "admin@restaurantepro.com", RolUsuario.Administrador);
-
+        var usuarioAdmin = Usuario.Crear("admin.creador", "Administrador Creador", "admin@restaurantepro.com", RolUsuario.Administrador);
+        
         var command = CrearUsuarioCommand.CrearEmpleado(
             "juan.perez",
             "Juan Pérez",
             "juan.perez@restaurantepro.com",
             "555-123-4567",
             "Cocina",
-            usuarioCreador.Id); // Usar el ID generado automáticamente
+            usuarioAdmin.Id);
 
-        SetupUsuarioExistenteMock(usuarioCreador);
+        SetupUsuarioExistenteMock(usuarioAdmin);
 
-        // Configurar el mapper para retornar cualquier DTO válido
+        // Configurar mapper para devolver DTO con propiedades correctas
         var expectedDto = new UsuarioDto
         {
             Id = Guid.NewGuid(),
@@ -62,7 +62,7 @@ public class CrearUsuarioHandlerTests
             Nombre = "Juan",
             Apellido = "Pérez",
             Email = "juan.perez@restaurantepro.com",
-            Rol = "Empleado",
+            Rol = "Mesero", // CrearEmpleado asigna rol "Mesero", no "Empleado"
             Activo = true,
             FechaCreacion = DateTime.UtcNow
         };
@@ -88,7 +88,7 @@ public class CrearUsuarioHandlerTests
         // Verificar propiedades clave en lugar de equivalencia exacta
         result.Value.NombreUsuario.Should().Be("juan.perez");
         result.Value.Email.Should().Be("juan.perez@restaurantepro.com");
-        result.Value.Rol.Should().Be("Empleado");
+        result.Value.Rol.Should().Be("Mesero"); // Corregir expectativa
 
         // Verificar que se llamaron los métodos esperados
         _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
@@ -225,7 +225,7 @@ public class CrearUsuarioHandlerTests
             Nombre = "Supervisor",
             Apellido = "Cocina",
             Email = "supervisor.cocina@restaurantepro.com",
-            Rol = "Supervisor", // Corregir para que coincida con lo esperado
+            Rol = "Gerente", // CrearSupervisor asigna rol "Gerente", no "Supervisor"
             Activo = true,
             FechaCreacion = DateTime.UtcNow
         };
@@ -248,12 +248,12 @@ public class CrearUsuarioHandlerTests
         result.Succeeded.Should().BeTrue();
 
         // Verificar que el factory method configuró correctamente los valores
-        command.Rol.Should().Be("Supervisor"); // Verificar el comando creado
+        command.Rol.Should().Be("Gerente"); // CrearSupervisor asigna rol "Gerente"
         command.Departamento.Should().Be("Cocina");
         
         // Verificar que el resultado contiene los valores esperados
         result.Value.Should().NotBeNull();
-        result.Value.Rol.Should().Be("Supervisor");
+        result.Value.Rol.Should().Be("Gerente"); // Corregir expectativa
 
         _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }

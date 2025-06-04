@@ -495,7 +495,7 @@ public class CrearReservacionValidatorTests
     {
         // Arrange - Reservación para hoy, pero muy próxima
         var command = CrearComandoValido();
-        command.FechaHoraReservacion = DateTime.Now.AddMinutes(30); // Solo 30 minutos
+        command.FechaHoraReservacion = DateTime.Now.AddMinutes(60); // Solo 1 hora (menos de 2 horas requeridas)
 
         // Act
         var result = _validator.Validate(command);

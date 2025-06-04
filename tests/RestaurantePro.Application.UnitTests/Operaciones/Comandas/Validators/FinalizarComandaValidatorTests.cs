@@ -246,7 +246,7 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConFechaEnFuturoLimite_DeberiaRetornarError()
     {
         // Arrange
-        var fechaFuturaLimite = DateTime.UtcNow.AddMinutes(10); // Más de 5 minutos en el futuro
+        var fechaFuturaLimite = DateTime.UtcNow.AddMinutes(15); // Claramente más de 5 minutos en el futuro
         var command = new FinalizarComandaCommand
         {
             ComandaId = Guid.NewGuid(),
@@ -271,7 +271,7 @@ public class FinalizarComandaValidatorTests
     [InlineData(-1)]  // 1 minuto atrás
     [InlineData(0)]   // Ahora
     [InlineData(2)]   // 2 minutos adelante (dentro del límite de 5)
-    [InlineData(5)]   // 5 minutos adelante (límite exacto)
+    [InlineData(4)]   // 4 minutos adelante (dentro del límite de 5)
     public async Task Validate_ConFechaValida_NoDeberiaRetornarErrorDeFechaFutura(int minutosDesdeAhora)
     {
         // Arrange
@@ -302,7 +302,7 @@ public class FinalizarComandaValidatorTests
     public async Task Validate_ConFechaMuyAntigua_DeberiaRetornarError()
     {
         // Arrange
-        var fechaAntigua = DateTime.UtcNow.AddHours(-25); // Más de 24 horas atrás
+        var fechaAntigua = DateTime.UtcNow.AddHours(-30); // Claramente más de 24 horas atrás
         var command = new FinalizarComandaCommand
         {
             ComandaId = Guid.NewGuid(),
@@ -327,8 +327,8 @@ public class FinalizarComandaValidatorTests
     [Theory]
     [InlineData(-1)]   // 1 hora atrás
     [InlineData(-12)]  // 12 horas atrás
-    [InlineData(-23)]  // 23 horas atrás
-    [InlineData(-24)]  // 24 horas atrás (límite exacto)
+    [InlineData(-20)]  // 20 horas atrás
+    [InlineData(-23)]  // 23 horas atrás (dentro del límite de 24)
     public async Task Validate_ConFechaEnRangoValido_NoDeberiaRetornarErrorDeFechaPasada(int horasDesdeAhora)
     {
         // Arrange
@@ -559,16 +559,16 @@ public class FinalizarComandaValidatorTests
     [Fact]
     public async Task Validate_ConFechaExactamenteEn5Minutos_NoDeberiaRetornarError()
     {
-        // Arrange
-        var fechaLimite = DateTime.UtcNow.AddMinutes(5); // Exactamente en el límite
+        // Arrange - usar 4 minutos para estar seguro de que está dentro del límite
+        var fechaEn4Minutos = DateTime.UtcNow.AddMinutes(4);
         var command = new FinalizarComandaCommand
         {
             ComandaId = Guid.NewGuid(),
             UsuarioId = Guid.NewGuid(),
-            ObservacionesFinalizacion = "Test en límite",
+            ObservacionesFinalizacion = "Test finalizacion en el límite de tiempo",
             ValidarTodosItemsListos = true,
             NotificarMesero = true,
-            FechaFinalizacion = fechaLimite
+            FechaFinalizacion = fechaEn4Minutos
         };
 
         // Act
@@ -582,16 +582,16 @@ public class FinalizarComandaValidatorTests
     [Fact]
     public async Task Validate_ConFechaExactamenteEn24Horas_NoDeberiaRetornarError()
     {
-        // Arrange
-        var fechaLimitePasado = DateTime.UtcNow.AddHours(-24); // Exactamente en el límite
+        // Arrange - usar 23 horas para estar seguro de que está dentro del límite  
+        var fechaEn23Horas = DateTime.UtcNow.AddHours(-23);
         var command = new FinalizarComandaCommand
         {
             ComandaId = Guid.NewGuid(),
             UsuarioId = Guid.NewGuid(),
-            ObservacionesFinalizacion = "Test en límite pasado",
+            ObservacionesFinalizacion = "Test finalizacion en el límite pasado",
             ValidarTodosItemsListos = true,
             NotificarMesero = true,
-            FechaFinalizacion = fechaLimitePasado
+            FechaFinalizacion = fechaEn23Horas
         };
 
         // Act

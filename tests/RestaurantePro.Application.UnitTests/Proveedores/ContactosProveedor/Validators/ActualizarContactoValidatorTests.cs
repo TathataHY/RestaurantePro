@@ -311,7 +311,9 @@ public class ActualizarContactoValidatorTests
     [InlineData("email-invalido")]
     [InlineData("@dominio.com")]
     [InlineData("usuario@")]
-    [InlineData("usuario..doble@dominio.com")]
+    [InlineData("usuario@dominio.")]
+    [InlineData("usuario@.dominio.com")]
+    [InlineData("usuario..punto@dominio.com")]
     public async Task Validate_ConEmailFormatoInvalido_DeberiaRetornarError(string emailInvalido)
     {
         // Arrange

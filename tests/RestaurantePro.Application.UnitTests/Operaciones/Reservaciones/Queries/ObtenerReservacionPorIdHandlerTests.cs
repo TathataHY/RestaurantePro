@@ -428,7 +428,7 @@ public class ObtenerReservacionPorIdHandlerTests
         typeof(Reservacion).GetProperty("CantidadPersonas")?.SetValue(reservacion, 4);
         typeof(Reservacion).GetProperty("Telefono")?.SetValue(reservacion, "+1234567890");
         typeof(Reservacion).GetProperty("Email")?.SetValue(reservacion, "test@example.com");
-        typeof(Reservacion).GetProperty("Observaciones")?.SetValue(reservacion, observaciones ?? "Test");
+        typeof(Reservacion).GetProperty("Observaciones")?.SetValue(reservacion, observaciones);
         typeof(Reservacion).GetProperty("Estado")?.SetValue(reservacion, estado);
         typeof(Reservacion).GetProperty("FechaCreacion")?.SetValue(reservacion, DateTime.Now);
         

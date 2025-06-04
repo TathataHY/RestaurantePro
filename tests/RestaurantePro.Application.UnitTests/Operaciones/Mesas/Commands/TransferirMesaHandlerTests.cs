@@ -1,3 +1,15 @@
+using FluentAssertions;
+using Moq;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using RestaurantePro.Application.Operaciones.Mesas.Commands.TransferirMesa;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
+using MockQueryable.Moq;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Mesas.Commands;
 
 /// <summary>
@@ -465,83 +477,25 @@ public class TransferirMesaHandlerTests
 
     private void ConfigurarMockComandas(IEnumerable<Comanda> comandas)
     {
-        var mockSet = new Mock<DbSet<Comanda>>();
-        var queryableComandas = comandas.AsQueryable();
-        
-        // Configurar consultas síncronas básicas
-        mockSet.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(queryableComandas.Provider);
-        mockSet.As<IQueryable<Comanda>>().Setup(m => m.Expression).Returns(queryableComandas.Expression);
-        mockSet.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(queryableComandas.ElementType);
-        mockSet.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(queryableComandas.GetEnumerator());
-
-        // Configurar FirstOrDefaultAsync sin problemas de tipos
-        mockSet.Setup(m => m.FirstOrDefaultAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Expression<Func<Comanda, bool>>, CancellationToken>((predicate, ct) =>
-            {
-                var compiledPredicate = predicate.Compile();
-                var result = comandas.FirstOrDefault(compiledPredicate);
-                return Task.FromResult(result);
-            });
-
+        var mockSet = comandas.AsQueryable().BuildMockDbSet();
         _mockContext.Setup(c => c.Comandas).Returns(mockSet.Object);
     }
 
     private void ConfigurarMockComandasVacio()
     {
-        var mockSet = new Mock<DbSet<Comanda>>();
-        var queryableComandas = new List<Comanda>().AsQueryable();
-        
-        // Configurar consultas síncronas básicas
-        mockSet.As<IQueryable<Comanda>>().Setup(m => m.Provider).Returns(queryableComandas.Provider);
-        mockSet.As<IQueryable<Comanda>>().Setup(m => m.Expression).Returns(queryableComandas.Expression);
-        mockSet.As<IQueryable<Comanda>>().Setup(m => m.ElementType).Returns(queryableComandas.ElementType);
-        mockSet.As<IQueryable<Comanda>>().Setup(m => m.GetEnumerator()).Returns(queryableComandas.GetEnumerator());
-
-        // Configurar FirstOrDefaultAsync que devuelve null
-        mockSet.Setup(m => m.FirstOrDefaultAsync(It.IsAny<Expression<Func<Comanda, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Comanda)null);
-
+        var mockSet = new List<Comanda>().AsQueryable().BuildMockDbSet();
         _mockContext.Setup(c => c.Comandas).Returns(mockSet.Object);
     }
 
     private void ConfigurarMockMesas(IEnumerable<Mesa> mesas)
     {
-        var mockSet = new Mock<DbSet<Mesa>>();
-        var queryableMesas = mesas.AsQueryable();
-        
-        // Configurar consultas síncronas
-        mockSet.As<IQueryable<Mesa>>().Setup(m => m.Provider).Returns(queryableMesas.Provider);
-        mockSet.As<IQueryable<Mesa>>().Setup(m => m.Expression).Returns(queryableMesas.Expression);
-        mockSet.As<IQueryable<Mesa>>().Setup(m => m.ElementType).Returns(queryableMesas.ElementType);
-        mockSet.As<IQueryable<Mesa>>().Setup(m => m.GetEnumerator()).Returns(queryableMesas.GetEnumerator());
-
-        // Configurar FirstOrDefaultAsync específico
-        mockSet.Setup(m => m.FirstOrDefaultAsync(It.IsAny<Expression<Func<Mesa, bool>>>(), It.IsAny<CancellationToken>()))
-            .Returns<Expression<Func<Mesa, bool>>, CancellationToken>((predicate, ct) =>
-            {
-                var compiledPredicate = predicate.Compile();
-                var result = mesas.FirstOrDefault(compiledPredicate);
-                return Task.FromResult(result);
-            });
-
+        var mockSet = mesas.AsQueryable().BuildMockDbSet();
         _mockContext.Setup(c => c.Mesas).Returns(mockSet.Object);
     }
 
     private void ConfigurarMockMesasVacio()
     {
-        var mockSet = new Mock<DbSet<Mesa>>();
-        var queryableMesas = new List<Mesa>().AsQueryable();
-        
-        // Configurar consultas síncronas
-        mockSet.As<IQueryable<Mesa>>().Setup(m => m.Provider).Returns(queryableMesas.Provider);
-        mockSet.As<IQueryable<Mesa>>().Setup(m => m.Expression).Returns(queryableMesas.Expression);
-        mockSet.As<IQueryable<Mesa>>().Setup(m => m.ElementType).Returns(queryableMesas.ElementType);
-        mockSet.As<IQueryable<Mesa>>().Setup(m => m.GetEnumerator()).Returns(queryableMesas.GetEnumerator());
-
-        // Configurar FirstOrDefaultAsync específico - devuelve null
-        mockSet.Setup(m => m.FirstOrDefaultAsync(It.IsAny<Expression<Func<Mesa, bool>>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Mesa)null);
-
+        var mockSet = new List<Mesa>().AsQueryable().BuildMockDbSet();
         _mockContext.Setup(c => c.Mesas).Returns(mockSet.Object);
     }
 

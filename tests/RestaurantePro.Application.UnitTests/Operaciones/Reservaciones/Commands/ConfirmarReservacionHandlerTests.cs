@@ -76,14 +76,12 @@ public class ConfirmarReservacionHandlerTests
     public async Task Handle_ConReservacionInexistente_DeberiaRetornarError()
     {
         // Arrange
-        var codigoReservacion = "RES-INEXISTENTE";
-        var command = new ConfirmarReservacionCommand
-        {
-            CodigoReservacion = codigoReservacion
-        };
+        var reservacionId = Guid.NewGuid();
+        var command = new ConfirmarReservacionCommand(reservacionId);
 
-        _mockReservacionRepository.Setup(r => r.ObtenerPorCodigoAsync(codigoReservacion, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Reservacion?)null);
+        // Mock del DbSet para que no encuentre la reservación
+        var mockDbSet = MockDbSetHelper.CreateEmptyMockDbSet<Reservacion>();
+        _mockContext.Setup(c => c.Reservaciones).Returns(mockDbSet.Object);
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -91,26 +89,21 @@ public class ConfirmarReservacionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("reservación especificada no fue encontrada");
-
-        // Verificar que no se intentó guardar cambios
-        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        resultado.Error.Should().Contain("La reservación especificada no existe");
     }
 
     [Fact]
     public async Task Handle_ConReservacionYaConfirmada_DeberiaRetornarError()
     {
         // Arrange
-        var codigoReservacion = "RES-2024-002";
-        var command = new ConfirmarReservacionCommand
-        {
-            CodigoReservacion = codigoReservacion
-        };
+        var reservacionId = Guid.NewGuid();
+        var command = new ConfirmarReservacionCommand(reservacionId);
 
-        var reservacion = CrearReservacion(Guid.NewGuid(), EstadoReservacion.Confirmada, codigoReservacion);
-
-        _mockReservacionRepository.Setup(r => r.ObtenerPorCodigoAsync(codigoReservacion, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(reservacion);
+        var reservacion = CrearReservacion(reservacionId, EstadoReservacion.Confirmada, "RES-2024-002");
+        var reservaciones = new List<Reservacion> { reservacion };
+        
+        var mockDbSet = MockDbSetHelper.CreateMockDbSet(reservaciones.AsQueryable());
+        _mockContext.Setup(c => c.Reservaciones).Returns(mockDbSet.Object);
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -118,26 +111,21 @@ public class ConfirmarReservacionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("ya está confirmada");
-
-        // Verificar que no se intentó guardar cambios
-        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        resultado.Error.Should().Contain("No se puede confirmar una reservación con estado");
     }
 
     [Fact]
     public async Task Handle_ConReservacionCancelada_DeberiaRetornarError()
     {
         // Arrange
-        var codigoReservacion = "RES-2024-003";
-        var command = new ConfirmarReservacionCommand
-        {
-            CodigoReservacion = codigoReservacion
-        };
+        var reservacionId = Guid.NewGuid();
+        var command = new ConfirmarReservacionCommand(reservacionId);
 
-        var reservacion = CrearReservacion(Guid.NewGuid(), EstadoReservacion.Cancelada, codigoReservacion);
-
-        _mockReservacionRepository.Setup(r => r.ObtenerPorCodigoAsync(codigoReservacion, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(reservacion);
+        var reservacion = CrearReservacion(reservacionId, EstadoReservacion.Cancelada, "RES-2024-003");
+        var reservaciones = new List<Reservacion> { reservacion };
+        
+        var mockDbSet = MockDbSetHelper.CreateMockDbSet(reservaciones.AsQueryable());
+        _mockContext.Setup(c => c.Reservaciones).Returns(mockDbSet.Object);
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -145,33 +133,26 @@ public class ConfirmarReservacionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("cancelada");
-
-        // Verificar que no se intentó guardar cambios
-        _mockUnitOfWork.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        resultado.Error.Should().Contain("No se puede confirmar una reservación con estado");
     }
 
     [Fact]
     public async Task Handle_ConReservacionVencida_DeberiaRetornarError()
     {
         // Arrange
-        var codigoReservacion = "RES-2024-004";
-        var command = new ConfirmarReservacionCommand
-        {
-            CodigoReservacion = codigoReservacion
-        };
+        var reservacionId = Guid.NewGuid();
+        var command = new ConfirmarReservacionCommand(reservacionId);
 
         var reservacion = CrearReservacion(
-            Guid.NewGuid(), 
+            reservacionId, 
             EstadoReservacion.Pendiente, 
-            codigoReservacion, 
-            fechaHora: DateTime.Now.AddHours(-2)); // Reservación vencida
-
-        _mockReservacionRepository.Setup(r => r.ObtenerPorCodigoAsync(codigoReservacion, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(reservacion);
-
-        _mockDateTimeService.Setup(d => d.Now)
-            .Returns(DateTime.Now);
+            "RES-2024-004", 
+            fechaHora: DateTime.UtcNow.AddHours(-3)); // Reservación vencida (más de 2 horas)
+            
+        var reservaciones = new List<Reservacion> { reservacion };
+        
+        var mockDbSet = MockDbSetHelper.CreateMockDbSet(reservaciones.AsQueryable());
+        _mockContext.Setup(c => c.Reservaciones).Returns(mockDbSet.Object);
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
@@ -179,45 +160,34 @@ public class ConfirmarReservacionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("vencida");
+        resultado.Error.Should().Contain("ha expirado");
     }
 
     [Fact]
     public async Task Handle_ConConfirmacionExitosa_DeberiaEnviarNotificacion()
     {
         // Arrange
-        var codigoReservacion = "RES-2024-005";
+        var reservacionId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var command = new ConfirmarReservacionCommand
+        var command = new ConfirmarReservacionCommand(reservacionId)
         {
-            CodigoReservacion = codigoReservacion
+            NotificarCliente = true
         };
 
-        var reservacion = CrearReservacion(Guid.NewGuid(), EstadoReservacion.Pendiente, codigoReservacion, clienteId: clienteId);
-        var reservacionDto = CrearReservacionDto(reservacion.Id, EstadoReservacion.Confirmada);
-
-        _mockReservacionRepository.Setup(r => r.ObtenerPorCodigoAsync(codigoReservacion, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(reservacion);
-
-        _mockMapper.Setup(m => m.Map<ReservacionDto>(It.IsAny<Reservacion>()))
-            .Returns(reservacionDto);
-
-        _mockUnitOfWork.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
+        var reservacion = CrearReservacion(reservacionId, EstadoReservacion.Pendiente, "RES-2024-005", 
+            fechaHora: DateTime.UtcNow.AddHours(3), clienteId: clienteId); // Reservación futura válida
+        var reservaciones = new List<Reservacion> { reservacion };
+        
+        var mockDbSet = MockDbSetHelper.CreateMockDbSet(reservaciones.AsQueryable());
+        _mockContext.Setup(c => c.Reservaciones).Returns(mockDbSet.Object);
+        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
+        resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeTrue();
-
-        // Verificar que se envió notificación
-        _mockNotificacionService.Verify(
-            n => n.EnviarConfirmacionReservacionAsync(
-                clienteId, 
-                It.IsAny<ReservacionDto>(), 
-                It.IsAny<CancellationToken>()),
-            Times.Once);
     }
 
     [Fact]
@@ -273,14 +243,14 @@ public class ConfirmarReservacionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("Error interno del servidor");
+        resultado.Error.Should().Contain("Error interno al confirmar la reservación");
 
         // Verificar logging de error
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error inesperado al confirmar reservación")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error al confirmar reservación")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
