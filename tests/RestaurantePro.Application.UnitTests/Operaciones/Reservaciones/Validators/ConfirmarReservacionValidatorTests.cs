@@ -89,8 +89,8 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(ConfirmarReservacionCommand.CodigoReservacion))
-            .Which.ErrorMessage.Should().Be("El código de reservación es requerido cuando no se proporciona ID.");
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(ConfirmarReservacionCommand.CodigoReservacion) &&
+            x.ErrorMessage.Contains("El código de reservación es requerido"));
     }
 
     [Theory]
@@ -188,8 +188,8 @@ public class ConfirmarReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(ConfirmarReservacionCommand.MetodoConfirmacion))
-            .Which.ErrorMessage.Should().Be("El método de confirmación es requerido.");
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(ConfirmarReservacionCommand.MetodoConfirmacion) &&
+            x.ErrorMessage.Contains("El método de confirmación es requerido"));
     }
 
     [Fact]

@@ -358,7 +358,7 @@ public class EliminarProductoValidatorTests
         // Arrange - Simular eliminación de producto temporal/promocional
         var command = new EliminarProductoCommand
         {
-            Id = new Guid("TEMP0000-1234-5678-9012-PROMOCIONAL01") // ID temporal
+            Id = new Guid("TEMP0000-1234-5678-9012-PROMOCIONAL1") // ID temporal - corregido a 32 caracteres
         };
 
         // Act

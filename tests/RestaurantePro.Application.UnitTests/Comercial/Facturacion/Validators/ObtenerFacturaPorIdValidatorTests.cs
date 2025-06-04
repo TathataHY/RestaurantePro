@@ -30,9 +30,37 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
         return _inner.Execute<TResult>(expression);
     }
 
-    public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken)
+    public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
     {
-        return Execute<TResult>(expression);
+        var resultType = typeof(TResult);
+        
+        // Manejar Task<bool> para AnyAsync
+        if (resultType == typeof(Task<bool>))
+        {
+            var result = _inner.Execute<bool>(expression);
+            return (TResult)(object)Task.FromResult(result);
+        }
+        
+        // Manejar otros tipos Task<T>
+        if (resultType.IsGenericType && resultType.GetGenericTypeDefinition() == typeof(Task<>))
+        {
+            var innerType = resultType.GetGenericArguments()[0];
+            var syncResult = _inner.Execute(expression);
+            
+            if (syncResult == null)
+            {
+                return (TResult)(object)Task.FromResult<object?>(null);
+            }
+            
+            var taskFromResult = typeof(Task).GetMethod(nameof(Task.FromResult))
+                ?.MakeGenericMethod(innerType)
+                ?.Invoke(null, new[] { syncResult });
+                
+            return (TResult)taskFromResult!;
+        }
+
+        // Para otros tipos, ejecutar síncronamente
+        return _inner.Execute<TResult>(expression);
     }
 }
 
@@ -103,51 +131,58 @@ public class ObtenerFacturaPorIdValidatorTests
         _mockContext = new Mock<IApplicationDbContext>();
         _mockFacturasDbSet = new Mock<DbSet<Factura>>();
         _mockUsuariosDbSet = new Mock<DbSet<Usuario>>();
-        
-        // Configurar los DbSets en el contexto
-        _mockContext.Setup(c => c.Facturas).Returns(_mockFacturasDbSet.Object);
-        _mockContext.Setup(c => c.Usuarios).Returns(_mockUsuariosDbSet.Object);
-        
-        // Configurar datos de prueba básicos
+
         ConfigurarDatosPrueba();
-        
         _validator = new ObtenerFacturaPorIdValidator(_mockContext.Object);
     }
 
     private void ConfigurarDatosPrueba()
     {
-        // Configurar facturas de prueba
+        // Datos de ejemplo
         var facturas = new List<Factura>
         {
-            Factura.Crear("F-001", TipoFactura.Normal, "Cliente Test"),
-            Factura.Crear("F-002", TipoFactura.Fiscal, "Cliente Fiscal", null, "RFC123456789")
-        };
+            Factura.Crear(
+                numeroFactura: "F-001",
+                tipoFactura: TipoFactura.Normal,
+                nombreCliente: "Cliente Test",
+                fechaEmision: DateTime.UtcNow),
+            Factura.Crear(
+                numeroFactura: "F-002",
+                tipoFactura: TipoFactura.Fiscal,
+                nombreCliente: "Cliente Fiscal",
+                identificacionFiscal: "RFC123456789",
+                fechaEmision: DateTime.UtcNow.AddDays(-1))
+        }.AsQueryable();
 
-        // Configurar el comportamiento async del DbSet de Facturas
-        var mockFacturasQueryable = facturas.AsQueryable();
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<Factura>(mockFacturasQueryable.Provider));
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(mockFacturasQueryable.Expression);
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(mockFacturasQueryable.ElementType);
-        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(mockFacturasQueryable.GetEnumerator());
-
-        // Configurar usuarios de prueba
         var usuarios = new List<Usuario>
         {
-            Usuario.Crear("testuser", "Usuario Test", "test@test.com", RolUsuario.Cajero),
-            Usuario.Crear("admin", "Administrador", "admin@test.com", RolUsuario.Administrador)
-        };
+            Usuario.Crear(
+                nombreUsuario: "testuser",
+                nombreCompleto: "Usuario Test",
+                email: "test@test.com",
+                rol: RolUsuario.Gerente),
+            Usuario.Crear(
+                nombreUsuario: "admin",
+                nombreCompleto: "Admin User",
+                email: "admin@test.com", 
+                rol: RolUsuario.Administrador)
+        }.AsQueryable();
 
-        // Activar los usuarios
-        foreach (var usuario in usuarios)
-        {
-            usuario.ConfirmarCuenta();
-        }
+        // Configurar mocks para DbSet<Factura>
+        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<Factura>(facturas.Provider));
+        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.Expression).Returns(facturas.Expression);
+        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.ElementType).Returns(facturas.ElementType);
+        _mockFacturasDbSet.As<IQueryable<Factura>>().Setup(m => m.GetEnumerator()).Returns(facturas.GetEnumerator());
 
-        var mockUsuariosQueryable = usuarios.AsQueryable();
-        _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<Usuario>(mockUsuariosQueryable.Provider));
-        _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(mockUsuariosQueryable.Expression);
-        _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(mockUsuariosQueryable.ElementType);
-        _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(mockUsuariosQueryable.GetEnumerator());
+        // Configurar mocks para DbSet<Usuario>
+        _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.Provider).Returns(new TestAsyncQueryProvider<Usuario>(usuarios.Provider));
+        _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.Expression).Returns(usuarios.Expression);
+        _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.ElementType).Returns(usuarios.ElementType);
+        _mockUsuariosDbSet.As<IQueryable<Usuario>>().Setup(m => m.GetEnumerator()).Returns(usuarios.GetEnumerator());
+
+        // Configurar el contexto
+        _mockContext.Setup(c => c.Facturas).Returns(_mockFacturasDbSet.Object);
+        _mockContext.Setup(c => c.Usuarios).Returns(_mockUsuariosDbSet.Object);
     }
 
     #region Validation Query Helper

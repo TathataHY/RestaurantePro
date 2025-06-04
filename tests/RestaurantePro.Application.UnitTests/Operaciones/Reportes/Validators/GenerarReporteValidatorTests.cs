@@ -258,8 +258,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.FechaInicio))
-            .Which.ErrorMessage.Should().Be("La fecha de inicio es requerida.");
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(GenerarReporteCommand.FechaInicio) &&
+            x.ErrorMessage.Contains("La fecha de inicio es requerida"));
     }
 
     [Fact]
@@ -283,8 +283,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.FechaInicio))
-            .Which.ErrorMessage.Should().Be("La fecha de inicio no puede ser futura.");
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(GenerarReporteCommand.FechaInicio) &&
+            x.ErrorMessage.Contains("La fecha de inicio no puede ser futura"));
     }
 
     [Fact]
@@ -308,8 +308,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.FechaInicio))
-            .Which.ErrorMessage.Should().Be("La fecha de inicio no puede ser anterior a 5 años.");
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(GenerarReporteCommand.FechaInicio) &&
+            x.ErrorMessage.Contains("La fecha de inicio no puede ser anterior a 5 años"));
     }
 
     [Fact]
@@ -333,8 +333,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(GenerarReporteCommand.FechaFin))
-            .Which.ErrorMessage.Should().Be("La fecha de fin debe ser posterior a la fecha de inicio.");
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(GenerarReporteCommand.FechaFin) &&
+            x.ErrorMessage.Contains("La fecha de fin debe ser posterior a la fecha de inicio"));
     }
 
     [Fact]

@@ -27,15 +27,13 @@ public class FinalizarComandaValidator : AbstractValidator<FinalizarComandaComma
 
         // Validación fecha (no puede ser futura)
         RuleFor(x => x.FechaFinalizacion)
-            .LessThanOrEqualTo(DateTime.UtcNow.AddMinutes(5))
-            .When(x => x.FechaFinalizacion.HasValue)
+            .Must(fecha => !fecha.HasValue || fecha.Value <= DateTime.UtcNow.AddMinutes(5))
             .WithMessage("🕐 La fecha de finalización no puede ser en el futuro")
             .WithErrorCode("FINALIZAR_FECHA_FUTURA");
 
         // Validación fecha (no puede ser muy antigua - más de 24 horas)
         RuleFor(x => x.FechaFinalizacion)
-            .GreaterThanOrEqualTo(DateTime.UtcNow.AddHours(-24))
-            .When(x => x.FechaFinalizacion.HasValue)
+            .Must(fecha => !fecha.HasValue || fecha.Value >= DateTime.UtcNow.AddHours(-24))
             .WithMessage("📅 La fecha de finalización no puede ser mayor a 24 horas en el pasado")
             .WithErrorCode("FINALIZAR_FECHA_ANTIGUA");
     }

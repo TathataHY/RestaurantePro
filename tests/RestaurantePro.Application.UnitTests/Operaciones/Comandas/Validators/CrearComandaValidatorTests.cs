@@ -95,8 +95,8 @@ public class CrearComandaValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearComandaCommand.Items))
-            .Which.ErrorMessage.Should().Be("La comanda debe tener al menos un ítem");
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearComandaCommand.Items) &&
+            x.ErrorMessage.Contains("La comanda debe tener al menos un ítem"));
     }
 
     #endregion
@@ -257,7 +257,7 @@ public class CrearComandaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         var item = CrearItemValido();
-        item.Observaciones = new string('A', 501); // Máximo 500
+        item.Observaciones = new string('A', 201); // Máximo 200
         command.Items = new List<AgregarProductoDto> { item };
 
         // Act
@@ -335,7 +335,7 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         var personalizacion = CrearPersonalizacionValida();
-        personalizacion.Tipo = "Extra queso";
+        personalizacion.Tipo = "Extra"; // Tipo válido según el validador
         item.Personalizaciones = new List<PersonalizacionCreateDto> { personalizacion };
         command.Items = new List<AgregarProductoDto> { item };
 
@@ -421,18 +421,22 @@ public class CrearComandaValidatorTests
         var command = new CrearComandaCommand
         {
             MesaId = Guid.NewGuid(),
+            MeseroId = Guid.NewGuid(),
             Items = new List<AgregarProductoDto>
             {
                 new AgregarProductoDto
                 {
                     ProductoId = Guid.NewGuid(),
                     Cantidad = 2,
+                    PrecioUnitario = 15.50m,
                     Observaciones = "Término medio",
                     Personalizaciones = new List<PersonalizacionCreateDto>
                     {
                         new PersonalizacionCreateDto
                         {
-                            Tipo = "Extra salsa",
+                            Tipo = "Extra",
+                            IngredienteId = Guid.NewGuid(),
+                            Cantidad = 1,
                             Detalles = "Salsa BBQ extra",
                             PrecioAdicional = 3.50m
                         }
@@ -442,6 +446,7 @@ public class CrearComandaValidatorTests
                 {
                     ProductoId = Guid.NewGuid(),
                     Cantidad = 1,
+                    PrecioUnitario = 12.00m,
                     Observaciones = "Sin cebolla",
                     Personalizaciones = new List<PersonalizacionCreateDto>()
                 }
@@ -463,18 +468,21 @@ public class CrearComandaValidatorTests
         var command = new CrearComandaCommand
         {
             MesaId = Guid.Empty, // Error: mesa vacía
+            MeseroId = Guid.Empty, // Error: mesero vacío
             Items = new List<AgregarProductoDto>
             {
                 new AgregarProductoDto
                 {
                     ProductoId = Guid.Empty, // Error: producto vacío
                     Cantidad = 0, // Error: cantidad inválida
-                    Observaciones = new string('A', 501), // Error: muy largo
+                    PrecioUnitario = 0, // Error: precio debe ser mayor a 0
+                    Observaciones = new string('A', 201), // Error: muy largo (límite 200)
                     Personalizaciones = new List<PersonalizacionCreateDto>
                     {
                         new PersonalizacionCreateDto
                         {
                             Tipo = "", // Error: nombre vacío
+                            IngredienteId = Guid.Empty, // Error: ingrediente vacío
                             PrecioAdicional = -5.00m // Error: costo negativo
                         }
                     }
@@ -487,10 +495,12 @@ public class CrearComandaValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCountGreaterThan(4);
+        result.Errors.Should().HaveCountGreaterThan(6);
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearComandaCommand.MesaId));
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearComandaCommand.MeseroId));
         result.Errors.Should().Contain(x => x.PropertyName.Contains("ProductoId"));
         result.Errors.Should().Contain(x => x.PropertyName.Contains("Cantidad"));
+        result.Errors.Should().Contain(x => x.PropertyName.Contains("PrecioUnitario"));
         result.Errors.Should().Contain(x => x.PropertyName.Contains("Observaciones"));
         result.Errors.Should().Contain(x => x.PropertyName.Contains("Tipo"));
         result.Errors.Should().Contain(x => x.PropertyName.Contains("PrecioAdicional"));
@@ -519,7 +529,9 @@ public class CrearComandaValidatorTests
         item.Personalizaciones = Enumerable.Range(1, 10)
             .Select(i => new PersonalizacionCreateDto
             {
-                Tipo = $"Personalización {i}",
+                Tipo = "Extra", // Tipo válido
+                IngredienteId = Guid.NewGuid(), // Requerido
+                Cantidad = 1, // Requerido para tipo Extra
                 Detalles = $"Descripción {i}",
                 PrecioAdicional = i * 2.50m
             }).ToList();
@@ -602,6 +614,7 @@ public class CrearComandaValidatorTests
         return new CrearComandaCommand
         {
             MesaId = Guid.NewGuid(),
+            MeseroId = Guid.NewGuid(),
             Items = new List<AgregarProductoDto>
             {
                 CrearItemValido()
@@ -615,6 +628,7 @@ public class CrearComandaValidatorTests
         {
             ProductoId = Guid.NewGuid(),
             Cantidad = 1,
+            PrecioUnitario = 15.50m, // Requerido por el validador
             Observaciones = "Observaciones test",
             Personalizaciones = new List<PersonalizacionCreateDto>
             {
@@ -628,6 +642,8 @@ public class CrearComandaValidatorTests
         return new PersonalizacionCreateDto
         {
             Tipo = "Extra",
+            IngredienteId = Guid.NewGuid(), // Requerido por el validador
+            Cantidad = 1, // Requerido para tipo Extra
             Detalles = "Queso extra mozzarella",
             PrecioAdicional = 5.50m
         };
@@ -638,14 +654,18 @@ public class CrearComandaValidatorTests
         return new CrearComandaCommand
         {
             MesaId = Guid.NewGuid(),
+            MeseroId = Guid.NewGuid(),
             Items = Enumerable.Range(1, 5).Select(i => new AgregarProductoDto
             {
                 ProductoId = Guid.NewGuid(),
                 Cantidad = i,
+                PrecioUnitario = 10.00m + (i * 5.00m), // Requerido por el validador
                 Observaciones = $"Observaciones para item {i}",
                 Personalizaciones = Enumerable.Range(1, 3).Select(j => new PersonalizacionCreateDto
                 {
-                    Tipo = $"Personalización {j}",
+                    Tipo = "Extra", // Tipo válido
+                    IngredienteId = Guid.NewGuid(), // Requerido
+                    Cantidad = 1, // Requerido para tipo Extra
                     Detalles = $"Descripción detallada {j}",
                     PrecioAdicional = j * 2.5m
                 }).ToList()

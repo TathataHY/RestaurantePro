@@ -9,6 +9,7 @@ using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Application.UnitTests.Common;
+using MockQueryable.Moq;
 
 namespace RestaurantePro.Application.UnitTests.Operaciones.Mesas.Validators;
 
@@ -160,22 +161,22 @@ public class TransferirMesaValidatorTests
             numeroComanda: "TEST-001");
         // Usar reflection para establecer el ID y estado si es necesario
         typeof(Comanda).GetProperty("Id")?.SetValue(comanda, command.ComandaId);
-        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, EstadoComanda.Creada);
+        comanda.ActualizarEstado(EstadoComanda.Creada);
 
         var mesaOrigen = Mesa.Crear(numero: 1, capacidad: 4, ubicacion: "Interior");
         typeof(Mesa).GetProperty("Id")?.SetValue(mesaOrigen, command.MesaOrigenId);
-        typeof(Mesa).GetProperty("Estado")?.SetValue(mesaOrigen, EstadoMesa.Ocupada);
+        mesaOrigen.MarcarComoOcupada();
 
         var mesaDestino = Mesa.Crear(numero: 2, capacidad: 4, ubicacion: "Interior");
         typeof(Mesa).GetProperty("Id")?.SetValue(mesaDestino, command.MesaDestinoId);
-        typeof(Mesa).GetProperty("Estado")?.SetValue(mesaDestino, EstadoMesa.Disponible);
+        mesaDestino.MarcarComoOcupada();
 
-        // Configurar mocks usando MockDbSetHelper
+        // Configurar mocks usando MockQueryable
         var comandasList = new List<Comanda> { comanda };
         var mesasList = new List<Mesa> { mesaOrigen, mesaDestino };
 
-        var comandasMock = MockDbSetHelper.CreateMockDbSet(comandasList.AsQueryable());
-        var mesasMock = MockDbSetHelper.CreateMockDbSet(mesasList.AsQueryable());
+        var comandasMock = comandasList.AsQueryable().BuildMockDbSet();
+        var mesasMock = mesasList.AsQueryable().BuildMockDbSet();
 
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
         _contextMock.Setup(x => x.Mesas).Returns(mesasMock.Object);
@@ -184,12 +185,13 @@ public class TransferirMesaValidatorTests
     private void ConfigurarMockComandaNoExiste()
     {
         // Configurar DbSet vacío
-        var comandasMock = MockDbSetHelper.CreateEmptyMockDbSet<Comanda>();
-        var mesasMock = MockDbSetHelper.CreateMockDbSet(new List<Mesa>
+        var comandasMock = new List<Comanda>().AsQueryable().BuildMockDbSet();
+        var mesasList = new List<Mesa>
         {
             Mesa.Crear(numero: 1, capacidad: 4, ubicacion: "Interior"),
             Mesa.Crear(numero: 2, capacidad: 4, ubicacion: "Interior")
-        }.AsQueryable());
+        };
+        var mesasMock = mesasList.AsQueryable().BuildMockDbSet();
 
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
         _contextMock.Setup(x => x.Mesas).Returns(mesasMock.Object);
@@ -202,20 +204,23 @@ public class TransferirMesaValidatorTests
             clienteId: null,
             mesaId: command.MesaOrigenId,
             observaciones: "Test comanda",
-            numeroComanda: "TEST-002");
-        // Usar reflection para establecer el ID y estado finalizado
+            numeroComanda: "TEST-001");
         typeof(Comanda).GetProperty("Id")?.SetValue(comanda, command.ComandaId);
-        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, EstadoComanda.Finalizada);
+        comanda.ActualizarEstado(EstadoComanda.Finalizada); // Estado no transferible
+
+        var mesaOrigen = Mesa.Crear(numero: 1, capacidad: 4, ubicacion: "Interior");
+        typeof(Mesa).GetProperty("Id")?.SetValue(mesaOrigen, command.MesaOrigenId);
+        mesaOrigen.MarcarComoOcupada();
+
+        var mesaDestino = Mesa.Crear(numero: 2, capacidad: 4, ubicacion: "Interior");
+        typeof(Mesa).GetProperty("Id")?.SetValue(mesaDestino, command.MesaDestinoId);
+        mesaDestino.MarcarComoOcupada();
 
         var comandasList = new List<Comanda> { comanda };
-        var comandasMock = MockDbSetHelper.CreateMockDbSet(comandasList.AsQueryable());
+        var mesasList = new List<Mesa> { mesaOrigen, mesaDestino };
 
-        var mesasList = new List<Mesa>
-        {
-            Mesa.Crear(numero: 1, capacidad: 4, ubicacion: "Interior"),
-            Mesa.Crear(numero: 2, capacidad: 4, ubicacion: "Interior")
-        };
-        var mesasMock = MockDbSetHelper.CreateMockDbSet(mesasList.AsQueryable());
+        var comandasMock = comandasList.AsQueryable().BuildMockDbSet();
+        var mesasMock = mesasList.AsQueryable().BuildMockDbSet();
 
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
         _contextMock.Setup(x => x.Mesas).Returns(mesasMock.Object);
@@ -223,38 +228,37 @@ public class TransferirMesaValidatorTests
 
     private void ConfigurarMockMesaDestinoNoDisponible(TransferirMesaCommand command)
     {
-        // Crear comanda en la mesa destino para hacerla no disponible
-        var comandaEnMesaDestino = Comanda.Crear(
-            meseroId: Guid.NewGuid(),
-            clienteId: null,
-            mesaId: command.MesaDestinoId,
-            observaciones: "Comanda en mesa destino",
-            numeroComanda: "TEST-003");
-        typeof(Comanda).GetProperty("Id")?.SetValue(comandaEnMesaDestino, Guid.NewGuid());
-        typeof(Comanda).GetProperty("Estado")?.SetValue(comandaEnMesaDestino, EstadoComanda.EnProceso);
-
-        var comandaOriginal = Comanda.Crear(
+        var comanda = Comanda.Crear(
             meseroId: Guid.NewGuid(),
             clienteId: null,
             mesaId: command.MesaOrigenId,
             observaciones: "Test comanda",
             numeroComanda: "TEST-001");
-        typeof(Comanda).GetProperty("Id")?.SetValue(comandaOriginal, command.ComandaId);
-        typeof(Comanda).GetProperty("Estado")?.SetValue(comandaOriginal, EstadoComanda.Creada);
+        typeof(Comanda).GetProperty("Id")?.SetValue(comanda, command.ComandaId);
+        comanda.ActualizarEstado(EstadoComanda.Creada);
 
-        var comandasList = new List<Comanda> { comandaOriginal, comandaEnMesaDestino };
-        var comandasMock = MockDbSetHelper.CreateMockDbSet(comandasList.AsQueryable());
+        // Crear comanda activa en mesa destino para hacerla no disponible
+        var comandaEnDestino = Comanda.Crear(
+            meseroId: Guid.NewGuid(),
+            clienteId: null,
+            mesaId: command.MesaDestinoId,
+            observaciones: "Comanda existente",
+            numeroComanda: "TEST-002");
+        comandaEnDestino.ActualizarEstado(EstadoComanda.EnProceso);
 
         var mesaOrigen = Mesa.Crear(numero: 1, capacidad: 4, ubicacion: "Interior");
         typeof(Mesa).GetProperty("Id")?.SetValue(mesaOrigen, command.MesaOrigenId);
-        typeof(Mesa).GetProperty("Estado")?.SetValue(mesaOrigen, EstadoMesa.Ocupada);
+        mesaOrigen.MarcarComoOcupada();
 
-        var mesaDestino = Mesa.Crear(numero: 2, capacidad: 6, ubicacion: "Terraza");
+        var mesaDestino = Mesa.Crear(numero: 2, capacidad: 4, ubicacion: "Interior");
         typeof(Mesa).GetProperty("Id")?.SetValue(mesaDestino, command.MesaDestinoId);
-        typeof(Mesa).GetProperty("Estado")?.SetValue(mesaDestino, EstadoMesa.Ocupada);
+        mesaDestino.MarcarComoOcupada();
 
+        var comandasList = new List<Comanda> { comanda, comandaEnDestino };
         var mesasList = new List<Mesa> { mesaOrigen, mesaDestino };
-        var mesasMock = MockDbSetHelper.CreateMockDbSet(mesasList.AsQueryable());
+
+        var comandasMock = comandasList.AsQueryable().BuildMockDbSet();
+        var mesasMock = mesasList.AsQueryable().BuildMockDbSet();
 
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
         _contextMock.Setup(x => x.Mesas).Returns(mesasMock.Object);

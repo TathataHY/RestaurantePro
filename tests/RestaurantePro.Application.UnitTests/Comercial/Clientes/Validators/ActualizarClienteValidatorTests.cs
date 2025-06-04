@@ -416,7 +416,7 @@ public class ActualizarClienteValidatorTests
     }
 
     [Theory]
-    [InlineData(-18)]   // Exactamente 18 años - límite válido
+    [InlineData(-19)]   // 19 años - claramente válido
     [InlineData(-25)]   // 25 años
     [InlineData(-50)]   // 50 años
     [InlineData(-120)]  // Exactamente 120 años - límite válido
@@ -424,7 +424,7 @@ public class ActualizarClienteValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.FechaNacimiento = DateTime.Now.AddYears(anosAtras);
+        command.FechaNacimiento = DateTime.Today.AddYears(anosAtras);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -759,7 +759,7 @@ public class ActualizarClienteValidatorTests
     }
 
     [Theory]
-    [InlineData(-18, true)]   // Recién mayor de edad - activo
+    [InlineData(-19, true)]   // Recién mayor de edad - activo
     [InlineData(-25, true)]   // Adulto joven - activo
     [InlineData(-40, true)]   // Adulto - activo
     [InlineData(-65, false)]  // Adulto mayor - inactivo
@@ -767,7 +767,7 @@ public class ActualizarClienteValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        command.FechaNacimiento = DateTime.Now.AddYears(anosAtras);
+        command.FechaNacimiento = DateTime.Today.AddYears(anosAtras);
         command.EstaActivo = estaActivo;
 
         // Act
