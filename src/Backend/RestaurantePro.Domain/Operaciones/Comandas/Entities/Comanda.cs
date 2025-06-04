@@ -490,6 +490,9 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         {
             return (Estado, nuevoEstado) switch
             {
+                // Permitir transiciones al mismo estado (no-op)
+                var (actual, nuevo) when actual == nuevo => true,
+                
                 // Transiciones normales del flujo
                 (EstadoComanda.Creada, EstadoComanda.EnProceso) => true,
                 (EstadoComanda.EnProceso, EstadoComanda.Lista) => true,
@@ -510,7 +513,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 (EstadoComanda.Lista, EstadoComanda.EnProceso) => true,      // Volver a preparación
                 (EstadoComanda.Entregada, EstadoComanda.Lista) => true,      // Volver a lista
                 
-                // No se permite cambiar desde estados finales
+                // No se permite cambiar desde estados finales (excepto al mismo estado)
                 (EstadoComanda.Finalizada, _) => false,
                 (EstadoComanda.Cancelada, _) => false,
                 

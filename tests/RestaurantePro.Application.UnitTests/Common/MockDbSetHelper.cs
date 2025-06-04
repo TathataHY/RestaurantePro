@@ -68,6 +68,12 @@ internal class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
 
     public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
     {
+        // ✅ IMPORTANTE: Verificar si el token está cancelado antes de ejecutar
+        if (cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException(cancellationToken);
+        }
+
         var resultType = typeof(TResult);
         
         // Manejar Task<T>
@@ -133,7 +139,13 @@ internal class TestAsyncEnumerable<T> : IAsyncEnumerable<T>, IQueryable<T>
 
     public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
     {
-        return new TestAsyncEnumerator<T>(_queryable.GetEnumerator());
+        // ✅ IMPORTANTE: Verificar si el token está cancelado antes de crear el enumerador
+        if (cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException(cancellationToken);
+        }
+        
+        return new TestAsyncEnumerator<T>(_queryable.GetEnumerator(), cancellationToken);
     }
 
     public Type ElementType => _queryable.ElementType;
@@ -157,14 +169,22 @@ internal class TestAsyncEnumerable<T> : IAsyncEnumerable<T>, IQueryable<T>
 internal class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
 {
     private readonly IEnumerator<T> _inner;
+    private readonly CancellationToken _cancellationToken;
 
-    public TestAsyncEnumerator(IEnumerator<T> inner)
+    public TestAsyncEnumerator(IEnumerator<T> inner, CancellationToken cancellationToken = default)
     {
         _inner = inner;
+        _cancellationToken = cancellationToken;
     }
 
     public ValueTask<bool> MoveNextAsync()
     {
+        // ✅ IMPORTANTE: Verificar si el token está cancelado antes de cada movimiento
+        if (_cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException(_cancellationToken);
+        }
+        
         return ValueTask.FromResult(_inner.MoveNext());
     }
 

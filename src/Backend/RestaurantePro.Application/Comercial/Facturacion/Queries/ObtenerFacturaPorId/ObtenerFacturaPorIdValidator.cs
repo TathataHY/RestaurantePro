@@ -21,6 +21,7 @@ public class ObtenerFacturaPorIdValidator : AbstractValidator<ObtenerFacturaPorI
         RuleFor(v => v.FacturaId)
             .NotEqual(Guid.Empty)
             .WithMessage("El ID de la factura es requerido.")
+            .WithErrorCode("FACTURA_ID_REQUERIDO")
             .MustAsync(FacturaExiste)
             .WithMessage("La factura especificada no existe.");
 

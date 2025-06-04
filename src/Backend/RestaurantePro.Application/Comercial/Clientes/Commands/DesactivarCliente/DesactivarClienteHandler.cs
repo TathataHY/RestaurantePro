@@ -52,10 +52,14 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
                 return Result.Failure(validacionResult.Error);
             }
 
-            // 4. Desactivar el cliente usando el método del dominio
+            // 4. Categorizar motivo de desactivación y loggear
+            var categoria = CategorizarMotivoDesactivacion(request.MotivoDesactivacion);
+            _logger.LogInformation("Categoría de desactivación determinada: {Categoria} para cliente {ClienteId}", categoria, request.ClienteId);
+
+            // 5. Desactivar el cliente usando el método del dominio
             cliente.Desactivar();
 
-            // 5. Manejar reactivación automática si se especifica
+            // 6. Manejar reactivación automática si se especifica
             if (request.FechaReactivacion.HasValue)
             {
                 // TODO: Descomentar cuando Cliente tenga FechaReactivacionProgramada
@@ -64,16 +68,16 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
                     request.ClienteId, request.FechaReactivacion.Value);
             }
 
-            // 6. Guardar cambios usando el repositorio
+            // 7. Guardar cambios usando el repositorio
             await _clienteRepository.ActualizarAsync(cliente, cancellationToken);
 
-            // 7. Notificar al cliente si se solicita
+            // 8. Notificar al cliente si se solicita
             if (request.NotificarCliente)
             {
                 await NotificarDesactivacionCliente(cliente, request.MotivoDesactivacion);
             }
 
-            // 8. Registrar auditoría
+            // 9. Registrar auditoría
             await RegistrarAuditoriaDesactivacion(cliente, true, request); // estadoAnterior temporal
 
             _logger.LogInformation("Cliente {ClienteId} desactivado exitosamente", request.ClienteId);
@@ -239,5 +243,44 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
         {
             _logger.LogError(ex, "Error al registrar auditoría de desactivación {ClienteId}", cliente.Id);
         }
+    }
+
+    /// <summary>
+    /// Categoriza el motivo de desactivación para logging y auditoría
+    /// </summary>
+    private string CategorizarMotivoDesactivacion(string motivo)
+    {
+        var motivoLower = motivo.ToLowerInvariant();
+
+        if (motivoLower.Contains("solicitud del cliente") || 
+            motivoLower.Contains("solicitud voluntaria") || 
+            motivoLower.Contains("voluntariamente"))
+        {
+            return "✅ Solicitud voluntaria";
+        }
+
+        if (motivoLower.Contains("incumplimiento") || 
+            motivoLower.Contains("pagos") || 
+            motivoLower.Contains("financiero"))
+        {
+            return "💳 Problemas financieros";
+        }
+
+        if (motivoLower.Contains("mudó") || 
+            motivoLower.Contains("cambio de ciudad") || 
+            motivoLower.Contains("residencia"))
+        {
+            return "🏠 Cambio de residencia";
+        }
+
+        if (motivoLower.Contains("comportamiento") || 
+            motivoLower.Contains("inapropiado") || 
+            motivoLower.Contains("violación") || 
+            motivoLower.Contains("políticas"))
+        {
+            return "⚠️ Violación de políticas";
+        }
+
+        return "📋 Otros motivos";
     }
 } 

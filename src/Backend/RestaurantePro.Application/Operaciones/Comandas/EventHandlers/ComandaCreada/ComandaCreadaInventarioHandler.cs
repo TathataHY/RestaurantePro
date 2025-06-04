@@ -40,6 +40,15 @@ public class ComandaCreadaInventarioHandler : Domain.Core.Base.Events.Handlers.I
             }
 
             var comanda = comandaResult;
+
+            // Verificar si hay ingredientes registrados en el sistema
+            var ingredientesTotales = await _ingredienteRepository.ObtenerTodosAsync(cancellationToken);
+            if (ingredientesTotales == null || !ingredientesTotales.Any())
+            {
+                _logger.LogInformation("No hay ingredientes registrados en el sistema para verificar inventario");
+                return;
+            }
+
             var alertasBajoStock = new List<string>();
 
             // 2. Verificar stock para cada item de la comanda
