@@ -48,7 +48,7 @@ public class ActualizarClienteValidator : AbstractValidator<ActualizarClienteCom
         RuleFor(x => x.FechaNacimiento)
             .LessThanOrEqualTo(DateTime.Today.AddYears(-18)).WithMessage("El cliente debe ser mayor de 18 años")
             .GreaterThan(DateTime.Today.AddYears(-120)).WithMessage("La fecha de nacimiento no puede ser mayor a 120 años")
-            .When(x => x.FechaNacimiento.HasValue);
+            .When(x => x.FechaNacimiento.HasValue && x.FechaNacimiento > DateTime.MinValue);
     }
 
     /// <summary>

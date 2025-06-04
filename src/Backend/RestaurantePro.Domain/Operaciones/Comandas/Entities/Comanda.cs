@@ -849,5 +849,39 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
 
             return true;
         }
+
+        /// <summary>
+        /// Marca la comanda como dividida
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Si la comanda no está en estado correcto para ser dividida</exception>
+        public void MarcarComoDividida()
+        {
+            // Solo se pueden dividir comandas en estado Creada o EnProceso
+            if (Estado != EstadoComanda.Creada && Estado != EstadoComanda.EnProceso)
+            {
+                throw new InvalidOperationException($"No se puede dividir una comanda en estado {Estado}");
+            }
+            
+            Estado = EstadoComanda.Dividida;
+            ActualizarFecha();
+            ValidarInvariantes();
+            
+            AddDomainEvent(new ComandaDividida(Id));
+        }
+
+        /// <summary>
+        /// Actualiza las observaciones de la comanda
+        /// </summary>
+        /// <param name="observaciones">Nuevas observaciones</param>
+        public void ActualizarObservaciones(string observaciones)
+        {
+            if (string.IsNullOrWhiteSpace(observaciones))
+            {
+                throw new ArgumentException("Las observaciones no pueden estar vacías", nameof(observaciones));
+            }
+            
+            Observaciones = observaciones;
+            ActualizarFecha();
+        }
     }
 }

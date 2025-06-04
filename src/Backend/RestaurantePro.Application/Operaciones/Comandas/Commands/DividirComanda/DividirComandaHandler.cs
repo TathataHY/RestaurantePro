@@ -98,7 +98,11 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
 
                     // 6. Actualizar comanda original
                     _logger.LogInformation("🔍 Paso 6: Actualizando comanda original");
-                    await ActualizarComandaOriginal(comandaOriginal, request, cancellationToken);
+                    var actualizacionResult = await ActualizarComandaOriginal(comandaOriginal, request, cancellationToken);
+                    if (!actualizacionResult.Succeeded)
+                    {
+                        return Result.Failure<DividirComandaDto>(actualizacionResult.Error ?? "Error al actualizar comanda original");
+                    }
                     _logger.LogInformation("✅ Comanda original actualizada");
 
                     // 7. Registrar auditoría
@@ -256,17 +260,43 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
         }
     }
 
-    private async Task ActualizarComandaOriginal(Comanda comandaOriginal, DividirComandaCommand request, CancellationToken cancellationToken)
+    private async Task<Result> ActualizarComandaOriginal(Comanda comandaOriginal, DividirComandaCommand request, CancellationToken cancellationToken)
     {
-        if (!request.MantenerComandaOriginal)
+        try
         {
-            // Cancelar la comanda original
-            comandaOriginal.Cancelar($"Dividida en {request.DivisionItems.Count} comandas el {_dateTimeService.Now:dd/MM/yyyy HH:mm}");
+            if (!request.MantenerComandaOriginal)
+            {
+                comandaOriginal.MarcarComoDividida();
+                _logger.LogInformation("✅ Comanda {ComandaId} marcada como dividida exitosamente", comandaOriginal.Id);
+            }
+            else
+            {
+                // Actualizar observaciones para indicar que ha sido dividida
+                var fechaActual = _dateTimeService.Now;
+                var observacionDivision = $"Comanda dividida el {fechaActual:dd/MM/yyyy HH:mm}. Motivo: {request.MotivoDivision}";
+                
+                if (string.IsNullOrEmpty(comandaOriginal.Observaciones))
+                {
+                    comandaOriginal.ActualizarObservaciones(observacionDivision);
+                }
+                else
+                {
+                    comandaOriginal.ActualizarObservaciones($"{comandaOriginal.Observaciones}\n{observacionDivision}");
+                }
+                _logger.LogInformation("✅ Observaciones actualizadas en comanda {ComandaId}", comandaOriginal.Id);
+            }
+            
+            return Result.Success();
         }
-        else
+        catch (InvalidOperationException ex)
         {
-            // Agregar observación sobre la división
-            comandaOriginal.AgregarObservacion($"Comanda dividida el {_dateTimeService.Now:dd/MM/yyyy HH:mm}. Motivo: {request.MotivoDivision}");
+            _logger.LogError(ex, "❌ Error al actualizar comanda original {ComandaId}: {Message}", comandaOriginal.Id, ex.Message);
+            return Result.Failure($"No se puede dividir la comanda: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error inesperado al actualizar comanda original {ComandaId}: {Message}", comandaOriginal.Id, ex.Message);
+            return Result.Failure($"Error inesperado al actualizar la comanda: {ex.Message}");
         }
     }
 

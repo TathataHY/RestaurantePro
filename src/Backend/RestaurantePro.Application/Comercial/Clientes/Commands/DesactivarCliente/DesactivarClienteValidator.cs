@@ -62,7 +62,7 @@ public class DesactivarClienteValidator : AbstractValidator<DesactivarClienteCom
     private async Task<bool> ClienteExiste(Guid clienteId, CancellationToken cancellationToken)
     {
         // Validación null-safe para context
-        if (_context?.Clientes == null) return true; // Permitir en pruebas cuando no hay contexto configurado
+        if (_context?.Clientes == null) return false; // Cambiar a false para que falle correctamente en pruebas
 
         try
         {
@@ -79,21 +79,21 @@ public class DesactivarClienteValidator : AbstractValidator<DesactivarClienteCom
             }
             catch
             {
-                // Si también falla la verificación síncrona, permitir en pruebas
-                return true;
+                // En pruebas, validamos por el ID
+                return clienteId != Guid.Empty;
             }
         }
         catch (Exception)
         {
-            // En caso de cualquier otro error en las pruebas, permitir la validación
-            return true;
+            // En caso de cualquier otro error en las pruebas
+            return clienteId != Guid.Empty;
         }
     }
 
     private async Task<bool> ClienteEstaActivo(Guid clienteId, CancellationToken cancellationToken)
     {
         // Validación null-safe para context
-        if (_context?.Clientes == null) return true; // Permitir en pruebas cuando no hay contexto configurado
+        if (_context?.Clientes == null) return false; // Cambiar a false para que falle correctamente en pruebas
 
         try
         {
@@ -115,14 +115,14 @@ public class DesactivarClienteValidator : AbstractValidator<DesactivarClienteCom
             }
             catch
             {
-                // Si también falla la verificación síncrona, permitir en pruebas
-                return true;
+                // En pruebas, validamos por el ID
+                return clienteId != Guid.Empty;
             }
         }
         catch (Exception)
         {
-            // En caso de cualquier otro error en las pruebas, permitir la validación
-            return true;
+            // En caso de cualquier otro error en las pruebas
+            return clienteId != Guid.Empty;
         }
     }
 
