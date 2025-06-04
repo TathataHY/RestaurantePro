@@ -55,10 +55,10 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
             var calculoResultado = CreateMockCalculoResultado(120);
             var resultadoAcumulacion = CreateMockResultadoVentaBasica(clienteId);
 
-            _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId))
+            _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(clienteMock);
 
-            _tarjetaRepositoryMock.Setup(x => x.ObtenerTarjetaActivaPorClienteIdAsync(clienteId))
+            _tarjetaRepositoryMock.Setup(x => x.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(tarjetaMock);
 
             _calculadoraPuntosMock.Setup(x => x.CalcularPuntosPorCompraAsync(
@@ -67,10 +67,10 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Result.Success(calculoResultado));
 
-            _transaccionRepositoryMock.Setup(x => x.AgregarAsync(It.IsAny<TransaccionPuntos>()))
+            _transaccionRepositoryMock.Setup(x => x.AgregarAsync(It.IsAny<TransaccionPuntos>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
-            _tarjetaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>()))
+            _tarjetaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             _currentUserServiceMock.Setup(x => x.UserId)
@@ -99,7 +99,7 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
                 MontoCompra = 100.00m
             };
 
-            _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId))
+            _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((Cliente)null);
 
             // Act

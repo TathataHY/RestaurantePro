@@ -348,3 +348,5 @@ public class AcumularPuntosHandler : IRequestHandler<AcumularPuntosCommand, Resu
         return mensajes[new Random().Next(mensajes.Length)];
     }
 } 
+
+
