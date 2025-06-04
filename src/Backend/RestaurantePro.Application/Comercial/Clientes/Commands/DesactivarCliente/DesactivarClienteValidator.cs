@@ -16,34 +16,39 @@ public class DesactivarClienteValidator : AbstractValidator<DesactivarClienteCom
             .WithMessage("El ID del cliente es requerido")
             .WithErrorCode("CLIENTE_ID_REQUERIDO");
 
+        // Regla para verificar que el cliente existe
+        RuleFor(v => v.ClienteId)
+            .MustAsync(ClienteExiste)
+            .WithMessage("El cliente no existe")
+            .WithErrorCode("CLIENTE_NO_EXISTE")
+            .When(v => v.ClienteId != Guid.Empty);
+
+        // Regla para verificar que el cliente está activo
+        RuleFor(v => v.ClienteId)
+            .MustAsync(ClienteEstaActivo)
+            .WithMessage("El cliente ya está desactivado")
+            .WithErrorCode("CLIENTE_YA_DESACTIVADO")
+            .When(v => v.ClienteId != Guid.Empty);
+
+        RuleFor(v => v.MotivoDesactivacion)
+            .NotEmpty()
+            .WithMessage("El motivo de desactivación es requerido")
+            .WithErrorCode("MOTIVO_REQUERIDO")
+            .MaximumLength(500)
+            .WithMessage("El motivo de desactivación no puede exceder 500 caracteres")
+            .WithErrorCode("MOTIVO_MUY_LARGO");
+
+        RuleFor(v => v.NotasAdicionales)
+            .MaximumLength(2000)
+            .WithMessage("Las notas no pueden exceder 2000 caracteres")
+            .WithErrorCode("NOTAS_MUY_LARGAS");
+
         // Separamos estas reglas para que las pruebas puedan validar cada una individualmente
-        When(v => v.ClienteId != Guid.Empty, () => {
-            RuleFor(v => v.ClienteId)
-                .MustAsync(ClienteExiste)
-                .WithMessage("El cliente no existe")
-                .WithErrorCode("CLIENTE_NO_EXISTE");
-        });
-        
-        When(v => v.ClienteId != Guid.Empty, () => {
-            RuleFor(v => v.ClienteId)
-                .MustAsync(ClienteEstaActivo)
-                .WithMessage("El cliente ya se encuentra desactivado")
-                .WithErrorCode("CLIENTE_YA_DESACTIVADO");
-        });
-        
         When(v => v.ClienteId != Guid.Empty, () => {
             RuleFor(v => v.ClienteId)
                 .MustAsync(ClienteNoTieneReservacionesActivas)
                 .WithMessage("No se puede desactivar un cliente con reservaciones activas.");
         });
-
-        RuleFor(v => v.MotivoDesactivacion)
-            .NotEmpty()
-            .WithMessage("El motivo de desactivación es requerido.")
-            .MinimumLength(3) // Reducimos a 3 caracteres para que pase la prueba con "Baja"
-            .WithMessage("El motivo debe tener al menos 3 caracteres.")
-            .MaximumLength(500)
-            .WithMessage("El motivo no puede exceder 500 caracteres.");
 
         RuleFor(v => v.DesactivadoPor)
             .NotEmpty()
@@ -80,32 +85,18 @@ public class DesactivarClienteValidator : AbstractValidator<DesactivarClienteCom
 
     private async Task<bool> ClienteExiste(Guid clienteId, CancellationToken cancellationToken)
     {
-        // Validación null-safe para context
-        if (_context?.Clientes == null) return true; // Cambiamos a true para pruebas
+        if (_context?.Clientes == null) return false;
 
         try
         {
-            return await _context.Clientes
-                .AnyAsync(c => c.Id == clienteId, cancellationToken);
-        }
-        catch (InvalidOperationException)
-        {
-            // Si hay problemas con IAsyncQueryProvider en tests, usar verificación síncrona
-            try
-            {
-                return _context.Clientes
-                    .Any(c => c.Id == clienteId);
-            }
-            catch
-            {
-                // En pruebas, validamos por el ID
-                return clienteId != Guid.Empty;
-            }
+            var cliente = await _context.Clientes
+                .FirstOrDefaultAsync(c => c.Id == clienteId, cancellationToken);
+
+            return cliente != null;
         }
         catch (Exception)
         {
-            // En caso de cualquier otro error en las pruebas
-            return clienteId != Guid.Empty;
+            return false;
         }
     }
 

@@ -413,12 +413,12 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             if (FechaActualizacion.HasValue && FechaActualizacion < FechaCreacion)
                 throw new InvalidOperationException("La fecha de actualización no puede ser anterior a la fecha de creación");
             
-            // No validamos fechas futuras para permitir pruebas
-            // if (FechaCreacion > DateTime.Now)
-            //    throw new InvalidOperationException("La fecha de creación no puede ser en el futuro");
+            // Descomentar la validación de fechas futuras para que pase la prueba
+            if (FechaCreacion > DateTime.Now)
+                throw new InvalidOperationException("La fecha de creación no puede ser en el futuro");
             
-            // if (FechaActualizacion.HasValue && FechaActualizacion > DateTime.Now)
-            //    throw new InvalidOperationException("La fecha de actualización no puede ser en el futuro");
+            if (FechaActualizacion.HasValue && FechaActualizacion > DateTime.Now)
+                throw new InvalidOperationException("La fecha de actualización no puede ser en el futuro");
                 
             // Validar coherencia de estado con propiedades
             if (Estado == EstadoComanda.Cancelada && string.IsNullOrWhiteSpace(Observaciones))
