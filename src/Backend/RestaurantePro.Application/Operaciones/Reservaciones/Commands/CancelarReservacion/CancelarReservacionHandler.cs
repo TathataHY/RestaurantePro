@@ -26,6 +26,9 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
     {
         try
         {
+            // Verificar si se solicitó cancelación
+            cancellationToken.ThrowIfCancellationRequested();
+            
             _logger.LogInformation("Iniciando cancelación de reservación {ReservacionId}", request.ReservacionId);
 
             // 1. Obtener la reservación
@@ -34,6 +37,9 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
                 // .Include(r => r.Cliente)
                 // .Include(r => r.Mesa)
                 .FirstOrDefaultAsync(r => r.Id == request.ReservacionId, cancellationToken);
+
+            // Verificar nuevamente si se solicitó cancelación después de la operación de repositorio
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (reservacion == null)
             {
@@ -90,17 +96,25 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
             }
             */
 
+            // Verificar nuevamente si se solicitó cancelación antes de guardar cambios
+            cancellationToken.ThrowIfCancellationRequested();
+            
             // 6. Guardar cambios
             await _context.SaveChangesAsync(cancellationToken);
+            
+            // Verificar nuevamente si se solicitó cancelación después de guardar cambios
+            cancellationToken.ThrowIfCancellationRequested();
 
             // 7. Notificar al cliente si se solicita
             if (request.NotificarCliente)
             {
                 await NotificarCancelacionCliente(reservacion);
+                cancellationToken.ThrowIfCancellationRequested();
             }
 
             // 8. Registrar auditoría
             await RegistrarAuditoriaCancelacion(reservacion, estadoAnterior, request.CanceladoPor ?? "Sistema");
+            cancellationToken.ThrowIfCancellationRequested();
 
             _logger.LogInformation("Reservación {ReservacionId} cancelada exitosamente", request.ReservacionId);
 
@@ -108,6 +122,7 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
         }
         catch (OperationCanceledException)
         {
+            _logger.LogInformation("Operación cancelada al cancelar reservación {ReservacionId}", request.ReservacionId);
             throw; // Re-lanzar para que las pruebas de cancelación funcionen
         }
         catch (Exception ex)

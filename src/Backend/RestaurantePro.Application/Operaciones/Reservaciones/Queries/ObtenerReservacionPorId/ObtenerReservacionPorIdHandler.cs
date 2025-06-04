@@ -26,10 +26,16 @@ public class ObtenerReservacionPorIdHandler : IRequestHandler<ObtenerReservacion
     {
         try
         {
+            // Verificar si se solicitó cancelación
+            cancellationToken.ThrowIfCancellationRequested();
+            
             _logger.LogInformation("🔍 Buscando reservación con ID {ReservacionId}", request.Id);
 
             // Buscar la reservación por ID
             var reservacion = await _reservacionRepository.ObtenerPorIdAsync(request.Id, cancellationToken);
+
+            // Verificar nuevamente si se solicitó cancelación después de la operación de repositorio
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (reservacion == null)
             {
