@@ -39,37 +39,42 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             // Arrange
             var clientes = new List<Cliente>
             {
-                CrearClienteConVisitas("Cliente 1", 10, NivelFidelizacion.Basico),
-                CrearClienteConVisitas("Cliente 2", 25, NivelFidelizacion.Plata),
-                CrearClienteConVisitas("Cliente 3", 40, NivelFidelizacion.Oro)
+                CrearClienteConVisitas("Cliente Frecuente", 12, NivelFidelizacion.Basico),
+                CrearClienteConVisitas("Cliente Regular", 20, NivelFidelizacion.Basico),
+                CrearClienteConVisitas("Cliente Premium", 35, NivelFidelizacion.Basico)
             };
             
             IEnumerable<Cliente> clientesEnumerable = clientes;
             _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(90, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(clientesEnumerable));
                 
-            // Setup para cada llamada específica a ObtenerTarjetaActivaPorClienteIdAsync con los IDs de cada cliente
+            // Simulamos que tienen tarjetas, pero con nivel básico por defecto
             foreach (var cliente in clientes)
             {
                 var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, $"TF-{Guid.NewGuid():N}");
                 tarjeta.Activar();
+                
                 _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, It.IsAny<CancellationToken>()))
                     .ReturnsAsync(tarjeta);
+                    
+                _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
+                    .Returns(Task.CompletedTask);
             }
-                
-            _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
-                
+            
             // Act
             var resultado = await _policy.EjecutarPolicy(_cancellationToken);
             
             // Assert
             resultado.ClientesActualizados.Should().HaveCount(3);
             
-            // Verificar que se llamó al método para actualizar nivel para cada cliente
+            // Verificar actualizaciones (al menos una tarjeta por cada nivel de fidelización)
             _tarjetaRepositoryMock.Verify(
-                r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()),
-                Times.Exactly(3));
+                r => r.ActualizarAsync(It.Is<TarjetaFidelizacion>(t => t.NivelFidelizacion == NivelFidelizacion.Plata), It.IsAny<CancellationToken>()),
+                Times.AtLeastOnce);
+                
+            _tarjetaRepositoryMock.Verify(
+                r => r.ActualizarAsync(It.Is<TarjetaFidelizacion>(t => t.NivelFidelizacion == NivelFidelizacion.Oro), It.IsAny<CancellationToken>()),
+                Times.AtLeastOnce);
         }
         
         [Fact]
@@ -262,7 +267,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 .Select(_ => (char)('a' + random.Next(0, 26)))
                 .ToArray());
                 
-            var email = $"{partes[0].ToLower()}.{randomText}@test.com";
+            // Aseguramos que el email sea más variado y menos propenso a tener patrones
+            var email = Email.Create($"{partes[0].ToLower()}{randomText}@mailtest.com");
             
             // Usar Crear con todos los parámetros requeridos
             var cliente = Cliente.Crear(
