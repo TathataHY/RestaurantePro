@@ -130,6 +130,11 @@ public class ObtenerReservacionesPorFechaHandler : IRequestHandler<ObtenerReserv
 
             return Result.Success(resultado);
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("🚫 Operación cancelada al obtener reservaciones por fecha {Fecha}", request.Fecha);
+            throw; // Re-throw para que se propague correctamente
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error al obtener reservaciones por fecha {Fecha}", request.Fecha);

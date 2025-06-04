@@ -86,6 +86,11 @@ public class ObtenerReservacionPorIdHandler : IRequestHandler<ObtenerReservacion
 
             return Result.Success(reservacionDto);
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("🚫 Operación cancelada al obtener reservación {ReservacionId}", request.Id);
+            throw; // Re-throw para que se propague correctamente
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error al obtener reservación por ID {ReservacionId}", request.Id);

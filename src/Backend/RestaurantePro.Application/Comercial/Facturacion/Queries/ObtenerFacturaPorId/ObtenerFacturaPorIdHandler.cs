@@ -45,6 +45,11 @@ public class ObtenerFacturaPorIdHandler : IRequestHandler<ObtenerFacturaPorIdQue
 
             return Result.Success(facturaDto);
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("🚫 Operación cancelada al consultar factura {FacturaId}", request.FacturaId);
+            throw; // Re-throw para que se propague correctamente
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al consultar factura {FacturaId}", request.FacturaId);

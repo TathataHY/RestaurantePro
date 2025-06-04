@@ -89,6 +89,11 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
             _logger.LogInformation("✅ Reservación confirmada exitosamente: {ReservacionId}", reservacion.Id);
             return Result.Success(response);
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("🚫 Operación cancelada al confirmar reservación {ReservacionId}", request.ReservacionId);
+            throw; // Re-throw para que se propague correctamente
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error al confirmar reservación - ID: {ReservacionId}: {ErrorMessage}", 

@@ -4,7 +4,7 @@ namespace RestaurantePro.Application.Proveedores.Proveedores.Queries.ObtenerProv
 /// Query para obtener proveedores con paginación y filtros avanzados
 /// Permite búsqueda, filtrado y ordenamiento de proveedores
 /// </summary>
-public class ObtenerProveedoresPaginadosQuery : IRequest<Result<PaginatedList<ProveedorSummaryDto>>>
+public class ObtenerProveedoresPaginadosQuery : IRequest<Result<PaginatedList<ProveedorDto>>>
 {
     /// <summary>
     /// Número de página (base 1)

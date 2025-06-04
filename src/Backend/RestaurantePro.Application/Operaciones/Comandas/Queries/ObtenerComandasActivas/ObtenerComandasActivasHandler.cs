@@ -260,73 +260,12 @@ public class ObtenerComandasActivasHandler : IRequestHandler<ObtenerComandasActi
 
     private async Task<(List<Comanda>, int)> ObtenerComandasConFiltros(ObtenerComandasActivasQuery request, Dictionary<string, object> criterios)
     {
-        // Usar ObtenerComandasAbiertas que ya existe en el repositorio para comandas activas
-        var comandasAbiertas = await _comandaRepository.ObtenerComandasAbiertas(true);
-        var query = comandasAbiertas.AsQueryable();
+        // Usar ObtenerComandasActivasAsync que existe en el repositorio
+        var (comandas, totalCount) = await _comandaRepository.ObtenerComandasActivasAsync(
+            criterios, 
+            request.PageNumber - 1, // El repositorio usa base 0 para páginas
+            request.PageSize);
 
-        // Aplicar filtros básicos
-        if (criterios.ContainsKey("MesaId"))
-        {
-            var mesaId = (Guid)criterios["MesaId"];
-            query = query.Where(c => c.MesaId == mesaId);
-        }
-
-        if (criterios.ContainsKey("MeseroId"))
-        {
-            var meseroId = (Guid)criterios["MeseroId"];
-            query = query.Where(c => c.MeseroId == meseroId);
-        }
-
-        if (criterios.ContainsKey("ClienteId"))
-        {
-            var clienteId = (Guid)criterios["ClienteId"];
-            query = query.Where(c => c.ClienteId == clienteId);
-        }
-
-        if (criterios.ContainsKey("Estado"))
-        {
-            var estado = criterios["Estado"].ToString();
-            query = query.Where(c => c.Estado.ToString() == estado);
-        }
-
-        // Aplicar filtros de fecha
-        if (criterios.ContainsKey("FechaInicio"))
-        {
-            var fechaInicio = (DateTime)criterios["FechaInicio"];
-            query = query.Where(c => c.FechaCreacion >= fechaInicio);
-        }
-
-        if (criterios.ContainsKey("FechaFin"))
-        {
-            var fechaFin = (DateTime)criterios["FechaFin"];
-            query = query.Where(c => c.FechaCreacion <= fechaFin);
-        }
-
-        // Aplicar ordenamiento
-        query = request.OrdenarPor switch
-        {
-            "TiempoTranscurrido" => request.DireccionOrden == "Desc" 
-                ? query.OrderBy(c => c.FechaCreacion)  // Más antiguas primero = más tiempo transcurrido
-                : query.OrderByDescending(c => c.FechaCreacion),
-            "Total" => request.DireccionOrden == "Desc"
-                ? query.OrderByDescending(c => c.Total!.Total)
-                : query.OrderBy(c => c.Total!.Total),
-            "Estado" => request.DireccionOrden == "Desc"
-                ? query.OrderByDescending(c => c.Estado)
-                : query.OrderBy(c => c.Estado),
-            _ => request.DireccionOrden == "Desc"
-                ? query.OrderByDescending(c => c.FechaCreacion)
-                : query.OrderBy(c => c.FechaCreacion)
-        };
-
-        var totalCount = query.Count();
-        
-        // Aplicar paginación
-        var comandasPaginadas = query
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
-            .ToList();
-
-        return (comandasPaginadas, totalCount);
+        return (comandas.ToList(), totalCount);
     }
 } 

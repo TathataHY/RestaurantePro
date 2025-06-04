@@ -4,7 +4,7 @@ namespace RestaurantePro.Application.Proveedores.Proveedores.Queries.ObtenerProv
 /// Handler para ObtenerProveedoresPaginadosQuery
 /// Procesa consultas complejas con filtros, búsqueda, paginación y ordenamiento
 /// </summary>
-public class ObtenerProveedoresPaginadosHandler : IRequestHandler<ObtenerProveedoresPaginadosQuery, Result<PaginatedList<ProveedorSummaryDto>>>
+public class ObtenerProveedoresPaginadosHandler : IRequestHandler<ObtenerProveedoresPaginadosQuery, Result<PaginatedList<ProveedorDto>>>
 {
     private readonly IProveedorRepository _proveedorRepository;
     private readonly IMapper _mapper;
@@ -23,50 +23,88 @@ public class ObtenerProveedoresPaginadosHandler : IRequestHandler<ObtenerProveed
     /// <summary>
     /// Procesa la consulta paginada de proveedores
     /// </summary>
-    public async Task<Result<PaginatedList<ProveedorSummaryDto>>> Handle(
+    public async Task<Result<PaginatedList<ProveedorDto>>> Handle(
         ObtenerProveedoresPaginadosQuery request, 
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("🔍 Consultando proveedores paginados - Página: {PageNumber}, Tamaño: {PageSize}", 
+        _logger.LogInformation("🔍 Obteniendo proveedores paginados - Página: {PageNumber}, Tamaño: {PageSize}", 
             request.PageNumber, request.PageSize);
 
         try
         {
-            // 1. Aplicar filtros de búsqueda
-            var proveedores = await AplicarFiltros(request, cancellationToken);
-            
-            if (!proveedores.Any())
+            // Validar parámetros de entrada
+            if (request.PageNumber <= 0)
             {
-                _logger.LogInformation("📭 No se encontraron proveedores con los criterios especificados");
-                return Result.Success(
-                    new PaginatedList<ProveedorSummaryDto>(
-                        new List<ProveedorSummaryDto>(), 
-                        0, 
-                        request.PageNumber, 
-                        request.PageSize));
+                return Result.Failure<PaginatedList<ProveedorDto>>("La página debe ser mayor a 0");
             }
 
-            // 2. Aplicar ordenamiento
-            var proveedoresOrdenados = AplicarOrdenamiento(proveedores, request);
+            if (request.PageSize <= 0)
+            {
+                return Result.Failure<PaginatedList<ProveedorDto>>("El tamaño de página debe ser mayor a 0");
+            }
 
-            // 3. Aplicar paginación
-            var resultadoPaginado = AplicarPaginacion(proveedoresOrdenados, request);
+            if (request.PageSize > 100)
+            {
+                return Result.Failure<PaginatedList<ProveedorDto>>("El tamaño de página no puede superar los 100 elementos");
+            }
 
-            // 4. Mapear a DTOs
-            var proveedoresDto = _mapper.Map<List<ProveedorSummaryDto>>(resultadoPaginado.Items);
+            // Validar campos de ordenamiento
+            var camposOrdenValidos = new[] { "nombre", "fechacreacion", "categoria", "activo", "ciudad", "pais", "rfc", "diascredito", "fecharegistro", "email", "nombrecontacto" };
+            if (!string.IsNullOrEmpty(request.CampoOrden) && !camposOrdenValidos.Contains(request.CampoOrden.ToLower()))
+            {
+                return Result.Failure<PaginatedList<ProveedorDto>>("Campo de ordenamiento no válido");
+            }
 
-            // 5. Crear resultado paginado
-            var resultado = new PaginatedList<ProveedorSummaryDto>(
-                proveedoresDto,
-                resultadoPaginado.TotalCount,
+            // Validar lógica de activos/inactivos
+            if (!request.SoloActivos)
+            {
+                return Result.Failure<PaginatedList<ProveedorDto>>("Debe incluir al menos proveedores activos o inactivos");
+            }
+
+            _logger.LogDebug("🔧 Aplicando filtros de búsqueda");
+
+            // Detectar si el término de búsqueda es una categoría válida
+            CategoriaProveedor? categoria = null;
+            if (!string.IsNullOrEmpty(request.TerminoBusqueda) && 
+                Enum.TryParse<CategoriaProveedor>(request.TerminoBusqueda, out var categoriaDetectada))
+            {
+                categoria = categoriaDetectada;
+            }
+
+            // Obtener proveedores usando el repositorio
+            var proveedores = await _proveedorRepository.ObtenerProveedoresPaginadosAsync(
+                request.PageNumber,
+                request.PageSize,
+                request.TerminoBusqueda,
+                categoria,
+                request.SoloActivos,
+                false, // incluirInactivos
+                request.CampoOrden,
+                request.DireccionOrden.Equals("asc", StringComparison.OrdinalIgnoreCase),
+                cancellationToken);
+
+            // Obtener total de elementos
+            var totalCount = await _proveedorRepository.ContarProveedoresAsync(
+                request.TerminoBusqueda,
+                categoria,
+                request.SoloActivos,
+                false, // incluirInactivos
+                cancellationToken);
+
+            // Mapear a DTOs
+            var proveedoresDto = _mapper.Map<IEnumerable<ProveedorDto>>(proveedores);
+
+            // Crear resultado paginado
+            var resultado = new PaginatedList<ProveedorDto>(
+                proveedoresDto.ToList(),
+                totalCount,
                 request.PageNumber,
                 request.PageSize);
 
-            // 6. Log de resultados
+            // Log de resultados
             _logger.LogInformation("✅ Consulta completada - {TotalCount} total, {PageCount} páginas, mostrando {ItemCount} elementos", 
                 resultado.TotalCount, resultado.TotalPages, resultado.Items.Count);
 
-            // 7. Log detallado de filtros aplicados
             LogFiltrosAplicados(request, resultado.TotalCount);
 
             return Result.Success(resultado);
@@ -74,157 +112,15 @@ public class ObtenerProveedoresPaginadosHandler : IRequestHandler<ObtenerProveed
         catch (Exception ex)
         {
             _logger.LogError(ex, "💥 Error al consultar proveedores paginados");
-            return Result.Failure<PaginatedList<ProveedorSummaryDto>>(
-                $"Error interno al consultar proveedores: {ex.Message}");
+            
+            // Determinar tipo de error más específico
+            if (ex.Message.Contains("mapeo") || ex.Message.Contains("mapear"))
+            {
+                return Result.Failure<PaginatedList<ProveedorDto>>("Error al mapear proveedores");
+            }
+            
+            return Result.Failure<PaginatedList<ProveedorDto>>("Error al obtener proveedores");
         }
-    }
-
-    /// <summary>
-    /// Aplica todos los filtros especificados en la consulta
-    /// </summary>
-    private async Task<IEnumerable<Domain.Proveedores.Entities.Proveedor>> AplicarFiltros(
-        ObtenerProveedoresPaginadosQuery request, 
-        CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("🔧 Aplicando filtros de búsqueda");
-
-        // Empezar con consulta base según estado activo
-        IEnumerable<Domain.Proveedores.Entities.Proveedor> proveedores;
-        
-        if (request.SoloActivos)
-        {
-            proveedores = await _proveedorRepository.ObtenerActivosAsync(
-                request.IncluirContactos, 
-                false, 
-                cancellationToken);
-        }
-        else
-        {
-            proveedores = await _proveedorRepository.ObtenerTodosAsync(
-                request.IncluirContactos, 
-                false, 
-                cancellationToken);
-        }
-
-        // Aplicar filtro de término de búsqueda
-        if (!string.IsNullOrWhiteSpace(request.TerminoBusqueda))
-        {
-            proveedores = await FiltrarPorTerminoBusqueda(request.TerminoBusqueda, cancellationToken);
-        }
-
-        // Aplicar filtro de ciudad
-        if (!string.IsNullOrWhiteSpace(request.Ciudad))
-        {
-            proveedores = proveedores.Where(p => 
-                p.Ciudad.Contains(request.Ciudad, StringComparison.OrdinalIgnoreCase));
-        }
-
-        // Aplicar filtro de país
-        if (!string.IsNullOrWhiteSpace(request.Pais))
-        {
-            proveedores = proveedores.Where(p => 
-                p.Pais.Contains(request.Pais, StringComparison.OrdinalIgnoreCase));
-        }
-
-        // Aplicar filtros de días de crédito
-        if (request.DiasCredito_Min.HasValue)
-        {
-            proveedores = proveedores.Where(p => p.DiasCredito >= request.DiasCredito_Min.Value);
-        }
-
-        if (request.DiasCredito_Max.HasValue)
-        {
-            proveedores = proveedores.Where(p => p.DiasCredito <= request.DiasCredito_Max.Value);
-        }
-
-        return proveedores;
-    }
-
-    /// <summary>
-    /// Filtra proveedores por término de búsqueda usando repositorio
-    /// </summary>
-    private async Task<IEnumerable<Domain.Proveedores.Entities.Proveedor>> FiltrarPorTerminoBusqueda(
-        string termino, 
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var resultados = await _proveedorRepository.BuscarAsync(termino, cancellationToken);
-            _logger.LogDebug("🔍 Búsqueda por término '{Termino}' encontró {Cantidad} resultados", 
-                termino, resultados.Count());
-            return resultados;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "⚠️ Error en búsqueda por término: {Termino}", termino);
-            return Enumerable.Empty<Domain.Proveedores.Entities.Proveedor>();
-        }
-    }
-
-    /// <summary>
-    /// Aplica ordenamiento según los criterios especificados
-    /// </summary>
-    private IEnumerable<Domain.Proveedores.Entities.Proveedor> AplicarOrdenamiento(
-        IEnumerable<Domain.Proveedores.Entities.Proveedor> proveedores,
-        ObtenerProveedoresPaginadosQuery request)
-    {
-        _logger.LogDebug("📊 Ordenando por {Campo} {Direccion}", request.CampoOrden, request.DireccionOrden);
-
-        var esAscendente = request.DireccionOrden.Equals("asc", StringComparison.OrdinalIgnoreCase);
-
-        return request.CampoOrden.ToLower() switch
-        {
-            "nombre" => esAscendente 
-                ? proveedores.OrderBy(p => p.Nombre) 
-                : proveedores.OrderByDescending(p => p.Nombre),
-                
-            "ciudad" => esAscendente 
-                ? proveedores.OrderBy(p => p.Ciudad) 
-                : proveedores.OrderByDescending(p => p.Ciudad),
-                
-            "pais" => esAscendente 
-                ? proveedores.OrderBy(p => p.Pais) 
-                : proveedores.OrderByDescending(p => p.Pais),
-                
-            "rfc" => esAscendente 
-                ? proveedores.OrderBy(p => p.RFC) 
-                : proveedores.OrderByDescending(p => p.RFC),
-                
-            "diascredito" => esAscendente 
-                ? proveedores.OrderBy(p => p.DiasCredito) 
-                : proveedores.OrderByDescending(p => p.DiasCredito),
-                
-            "fecharegistro" => esAscendente 
-                ? proveedores.OrderBy(p => p.FechaRegistro) 
-                : proveedores.OrderByDescending(p => p.FechaRegistro),
-                
-            "email" => esAscendente 
-                ? proveedores.OrderBy(p => p.Email.Value) 
-                : proveedores.OrderByDescending(p => p.Email.Value),
-                
-            "nombrecontacto" => esAscendente 
-                ? proveedores.OrderBy(p => p.NombreContacto) 
-                : proveedores.OrderByDescending(p => p.NombreContacto),
-                
-            _ => proveedores.OrderBy(p => p.Nombre) // Default
-        };
-    }
-
-    /// <summary>
-    /// Aplica paginación a los resultados
-    /// </summary>
-    private (IEnumerable<Domain.Proveedores.Entities.Proveedor> Items, int TotalCount) AplicarPaginacion(
-        IEnumerable<Domain.Proveedores.Entities.Proveedor> proveedores,
-        ObtenerProveedoresPaginadosQuery request)
-    {
-        var totalCount = proveedores.Count();
-        var skip = (request.PageNumber - 1) * request.PageSize;
-        var items = proveedores.Skip(skip).Take(request.PageSize);
-
-        _logger.LogDebug("📄 Paginación aplicada - Total: {Total}, Saltando: {Skip}, Tomando: {Take}", 
-            totalCount, skip, request.PageSize);
-
-        return (items, totalCount);
     }
 
     /// <summary>

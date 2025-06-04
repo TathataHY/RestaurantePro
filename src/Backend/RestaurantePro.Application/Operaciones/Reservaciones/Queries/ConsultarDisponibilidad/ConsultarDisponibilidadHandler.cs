@@ -34,6 +34,12 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
 
             return Result.Success(disponibilidad);
         }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("🚫 Operación cancelada al consultar disponibilidad para {NumeroPersonas} personas el {FechaHora}", 
+                request.NumeroPersonas, request.FechaHora);
+            throw; // Re-throw para que se propague correctamente
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al consultar disponibilidad para {NumeroPersonas} personas el {FechaHora}", 
