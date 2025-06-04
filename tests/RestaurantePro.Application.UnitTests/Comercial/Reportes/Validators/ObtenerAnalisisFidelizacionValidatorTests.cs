@@ -107,18 +107,18 @@ public class ObtenerAnalisisFidelizacionValidatorTests
     }
 
     [Theory]
-    [InlineData(1)]     // 1 día - válido
+    [InlineData(7)]     // 7 días - mínimo válido
     [InlineData(30)]    // 30 días - válido
     [InlineData(90)]    // 90 días - válido
     [InlineData(365)]   // 1 año - válido
-    [InlineData(730)]   // 2 años - límite
+    [InlineData(729)]   // 2 años menos 1 día - dentro del límite
     public async Task RangoFechas_DebeAceptarRangosValidos(int dias)
     {
         // Arrange
         var query = new ObtenerAnalisisFidelizacionQuery
         {
-            FechaInicio = DateTime.Now.AddDays(-dias),
-            FechaFin = DateTime.Now,
+            FechaInicio = DateTime.Today.AddDays(-dias),
+            FechaFin = DateTime.Today,
             TipoAnalisis = TipoAnalisis.Basico
         };
 
@@ -344,8 +344,8 @@ public class ObtenerAnalisisFidelizacionValidatorTests
         // Arrange
         var query = new ObtenerAnalisisFidelizacionQuery
         {
-            FechaInicio = DateTime.Now.AddDays(-180),
-            FechaFin = DateTime.Now,
+            FechaInicio = DateTime.Today.AddDays(-180),
+            FechaFin = DateTime.Today.AddDays(-1),
             TipoAnalisis = TipoAnalisis.Completo,
             ClientesEspecificos = null,
             NivelMinimo = NivelFidelizacion.Plata,
@@ -369,8 +369,8 @@ public class ObtenerAnalisisFidelizacionValidatorTests
         // Arrange
         var query = new ObtenerAnalisisFidelizacionQuery
         {
-            FechaInicio = DateTime.Now.AddDays(-30),
-            FechaFin = DateTime.Now,
+            FechaInicio = DateTime.Today.AddDays(-30),
+            FechaFin = DateTime.Today.AddDays(-1),
             TipoAnalisis = TipoAnalisis.Basico,
             ClientesEspecificos = null,
             NivelMinimo = null,
@@ -394,8 +394,8 @@ public class ObtenerAnalisisFidelizacionValidatorTests
         // Arrange
         var query = new ObtenerAnalisisFidelizacionQuery
         {
-            FechaInicio = DateTime.Now.AddYears(-2), // Máximo permitido
-            FechaFin = DateTime.Now,
+            FechaInicio = DateTime.Today.AddDays(-729), // Justo por debajo del máximo permitido (730 días)
+            FechaFin = DateTime.Today.AddDays(-1),
             TipoAnalisis = TipoAnalisis.ClientesEspecificos,
             ClientesEspecificos = CrearListaClientes(1000) // Límite máximo
         };

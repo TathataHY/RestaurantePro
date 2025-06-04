@@ -17,6 +17,9 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
     {
         try
         {
+            // Añadir verificación de cancelación
+            cancellationToken.ThrowIfCancellationRequested();
+            
             _logger.LogInformation("Consultando disponibilidad para {NumeroPersonas} personas el {FechaHora}, Mesa preferida: {MesaPreferida}, Zona: {ZonaPreferida}", 
                 request.NumeroPersonas, request.FechaHora, request.MesaPreferida, request.ZonaPreferida);
 
@@ -58,38 +61,45 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
             return Result.Failure<DisponibilidadDto>("La mesa especificada no existe.");
         }
 
-        var estaDisponible = await VerificarDisponibilidadMesa(mesa.Id, request.FechaHora, request.DuracionEstimadaMinutos, cancellationToken);
-
         var disponibilidad = new DisponibilidadDto
         {
-            HayDisponibilidad = estaDisponible,
+            HayDisponibilidad = false,
             FechaHoraConsultada = request.FechaHora,
             NumeroPersonasSolicitadas = request.NumeroPersonas,
             MesasDisponibles = new List<MesaDisponibleDto>()
         };
 
+        // Verificar capacidad primero
+        if (mesa.Capacidad < request.NumeroPersonas - request.MargenToleranciaPersonas)
+        {
+            disponibilidad.MotivoNoDisponibilidad = $"La capacidad de la mesa ({mesa.Capacidad} personas) es insuficiente para el número solicitado ({request.NumeroPersonas} personas).";
+            
+            // Buscar alternativas si se solicita
+            if (request.MostrarAlternativas)
+            {
+                disponibilidad.AlternativasSugeridas = await BuscarAlternativas(request, cancellationToken);
+            }
+            
+            return Result.Success(disponibilidad);
+        }
+
+        // Verificar disponibilidad
+        var estaDisponible = await VerificarDisponibilidadMesa(mesa.Id, request.FechaHora, request.DuracionEstimadaMinutos, cancellationToken);
+
         if (estaDisponible)
         {
-            // Verificar capacidad
-            if (mesa.Capacidad >= request.NumeroPersonas - request.MargenToleranciaPersonas)
-            {
-                disponibilidad.MesasDisponibles.Add(await CrearMesaDisponibleDto(mesa, request.FechaHora, true));
-            }
-            else
-            {
-                disponibilidad.HayDisponibilidad = false;
-                disponibilidad.MotivoNoDisponibilidad = $"La capacidad de la mesa ({mesa.Capacidad} personas) es insuficiente para el número solicitado ({request.NumeroPersonas} personas).";
-            }
+            disponibilidad.HayDisponibilidad = true;
+            disponibilidad.MesasDisponibles.Add(await CrearMesaDisponibleDto(mesa, request.FechaHora, true));
         }
         else
         {
             disponibilidad.MotivoNoDisponibilidad = "La mesa está ocupada en el horario solicitado.";
-        }
-
-        // Buscar alternativas si se solicita
-        if (!disponibilidad.HayDisponibilidad && request.MostrarAlternativas)
-        {
-            disponibilidad.AlternativasSugeridas = await BuscarAlternativas(request, cancellationToken);
+            
+            // Buscar alternativas si se solicita
+            if (request.MostrarAlternativas)
+            {
+                disponibilidad.AlternativasSugeridas = await BuscarAlternativas(request, cancellationToken);
+            }
         }
 
         return Result.Success(disponibilidad);
@@ -106,6 +116,11 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
             NumeroPersonasSolicitadas = request.NumeroPersonas,
             MesasDisponibles = new List<MesaDisponibleDto>()
         };
+
+        // Filtrar mesas fuera de servicio u ocupadas
+        mesasCandidatas = mesasCandidatas.Where(m => m.Estado != EstadoMesa.FueraDeServicio &&
+                                                   m.Estado != EstadoMesa.Ocupada &&
+                                                   m.Estado != EstadoMesa.Reservada).ToList();
 
         // 2. Verificar disponibilidad de cada mesa candidata
         foreach (var mesa in mesasCandidatas)
@@ -143,8 +158,8 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
 
     private async Task<List<Mesa>> ObtenerMesasCandidatas(ConsultarDisponibilidadQuery request, CancellationToken cancellationToken)
     {
-        // TODO: Usar propiedad real Estado en lugar de Activa
-        var query = _context.Mesas.Where(m => m.Estado != EstadoMesa.FueraDeServicio);
+        // Obtener todas las mesas
+        var query = _context.Mesas.AsQueryable();
 
         // Filtrar por capacidad
         var capacidadMinima = request.NumeroPersonas - request.MargenToleranciaPersonas;
@@ -157,9 +172,6 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
         // {
         //     query = query.Where(m => m.Zona == request.ZonaPreferida);
         // }
-
-        // Excluir mesas fuera de servicio
-        query = query.Where(m => m.Estado != EstadoMesa.FueraDeServicio);
 
         return await query.OrderBy(m => Math.Abs(m.Capacidad - request.NumeroPersonas)).ToListAsync(cancellationToken);
     }
@@ -207,9 +219,9 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
 
     private List<MesaDisponibleDto> OrdenarMesasPorPreferencia(List<MesaDisponibleDto> mesas, ConsultarDisponibilidadQuery request)
     {
-        return mesas.OrderBy(m => Math.Abs(m.Capacidad - request.NumeroPersonas)) // Capacidad óptima primero
-                   .ThenBy(m => string.IsNullOrEmpty(request.ZonaPreferida) ? 0 : 
+        return mesas.OrderBy(m => string.IsNullOrEmpty(request.ZonaPreferida) ? 0 : 
                               m.Zona == request.ZonaPreferida ? 0 : 1) // Zona preferida primero
+                   .ThenByDescending(m => m.Capacidad) // Capacidad descendente
                    .ThenBy(m => m.PrecioBase) // Precio más bajo primero
                    .ThenBy(m => m.Numero) // Número de mesa como tiebreaker
                    .ToList();

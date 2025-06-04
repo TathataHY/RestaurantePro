@@ -133,7 +133,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// Constructor privado para EF Core.
         /// La creación de comandas debe hacerse a través del factory method Crear().
         /// </summary>
-        private Comanda() { }
+        protected Comanda() { }
 
         /// <summary>
         /// Factory method para crear una nueva comanda.

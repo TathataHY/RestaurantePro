@@ -29,8 +29,12 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
         RuleFor(v => v.TipoFactura)
             .NotEmpty()
             .WithMessage("El tipo de factura es requerido.")
+            .When(v => v.TipoFactura != null, ApplyConditionTo.CurrentValidator);
+
+        RuleFor(v => v.TipoFactura)
             .Must(TipoFacturaValido)
-            .WithMessage($"El tipo de factura debe ser uno de: {string.Join(", ", _tiposFacturaValidos)}.");
+            .WithMessage($"El tipo de factura debe ser uno de: {string.Join(", ", _tiposFacturaValidos)}.")
+            .When(v => !string.IsNullOrWhiteSpace(v.TipoFactura), ApplyConditionTo.CurrentValidator);
 
         RuleFor(v => v.NombreCliente)
             .NotEmpty()

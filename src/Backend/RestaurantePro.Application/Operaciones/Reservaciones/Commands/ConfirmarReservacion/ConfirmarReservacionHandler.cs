@@ -36,11 +36,14 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
 
     public async Task<Result<ConfirmarReservacionDto>> Handle(ConfirmarReservacionCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("🎟️ Iniciando confirmación de reservación - ID: {ReservacionId}, Código: {CodigoReservacion}",
-            request.ReservacionId, request.CodigoReservacion);
-
         try
         {
+            // Verificar cancelación
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            _logger.LogInformation("🎟️ Iniciando confirmación de reservación - ID: {ReservacionId}, Código: {CodigoReservacion}",
+                request.ReservacionId, request.CodigoReservacion);
+
             // TODO: Usar UnitOfWork cuando esté disponible
             // using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
 

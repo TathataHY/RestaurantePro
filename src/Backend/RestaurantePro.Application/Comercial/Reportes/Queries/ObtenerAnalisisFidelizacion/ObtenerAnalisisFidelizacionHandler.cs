@@ -495,6 +495,17 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
                 EfectividadCampanas = 0 // TODO: Calcular cuando tengamos datos de campañas
             },
 
+            // Tendencias siempre debe tener un valor, nunca null
+            Tendencias = request.IncluirTendencias ? MapearATendenciasDto(tendencias) : new TendenciasFidelizacionDto(),
+            
+            // Análisis IA (nunca null)
+            AnalisisRiesgo = new AnalisisRiesgoAbandonoDto 
+            { 
+                ClientesRiesgoAlto = new List<ClienteRiesgoDto>(), 
+                FactoresRiesgo = new List<FactorRiesgoDto>(), 
+                NivelRiesgoPrograma = "Bajo" 
+            },
+
             // Recomendaciones estratégicas
             RecomendacionesEstrategicas = recomendaciones.Select(r => new RecomendacionEstrategicaDto
             {
@@ -520,6 +531,17 @@ public class ObtenerAnalisisFidelizacionHandler : IRequestHandler<ObtenerAnalisi
             return "Regular";
         else
             return "Necesita Mejora";
+    }
+
+    private TendenciasFidelizacionDto MapearATendenciasDto(TendenciasFidelizacion tendencias)
+    {
+        return new TendenciasFidelizacionDto
+        {
+            TendenciaRetencion = new List<TendenciaMensualDto>(),
+            TendenciaAdquisicion = new List<TendenciaMensualDto>(),
+            TendenciaValorCliente = new List<TendenciaMensualDto>(),
+            TendenciaFrecuencia = new List<TendenciaMensualDto>()
+        };
     }
 
     // DTOs internos para el análisis

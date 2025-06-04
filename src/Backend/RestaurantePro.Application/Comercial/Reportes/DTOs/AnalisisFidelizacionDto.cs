@@ -1028,14 +1028,9 @@ public class RecomendacionEstrategicaDto
 public class AnalisisRiesgoAbandonoDto
 {
     /// <summary>
-    /// Clientes en riesgo alto de abandono
+    /// Lista de clientes con riesgo alto de abandono
     /// </summary>
     public List<ClienteRiesgoDto> ClientesRiesgoAlto { get; set; } = new();
-
-    /// <summary>
-    /// Clientes en riesgo medio de abandono
-    /// </summary>
-    public List<ClienteRiesgoDto> ClientesRiesgoMedio { get; set; } = new();
 
     /// <summary>
     /// Factores de riesgo identificados
@@ -1048,14 +1043,19 @@ public class AnalisisRiesgoAbandonoDto
     public List<EstrategiaRetencionDto> EstrategiasRetencion { get; set; } = new();
 
     /// <summary>
-    /// Valor en riesgo total
+    /// Valor total en riesgo
     /// </summary>
     public decimal ValorEnRiesgoTotal { get; set; }
 
     /// <summary>
-    /// Porcentaje de la base en riesgo
+    /// Porcentaje de la base de clientes en riesgo
     /// </summary>
     public decimal PorcentajeBaseEnRiesgo { get; set; }
+    
+    /// <summary>
+    /// Nivel de riesgo global del programa
+    /// </summary>
+    public string NivelRiesgoPrograma { get; set; } = string.Empty;
 }
 
 /// <summary>

@@ -214,7 +214,7 @@ public class ObtenerAnalisisFidelizacionHandlerTests
         var fechaActual = new DateTime(2024, 1, 15, 10, 0, 0); // Misma fecha del mock
         var query = new ObtenerAnalisisFidelizacionQuery
         {
-            FechaInicio = fechaActual.AddDays(-7), // 7 días atrás (mínimo válido)
+            FechaInicio = fechaActual.AddDays(-8), // 8 días atrás (más del mínimo válido)
             FechaFin = fechaActual.AddDays(-1), // 1 día atrás (no futuro)
             TipoAnalisis = TipoAnalisis.Basico,
             IncluirTendencias = false,

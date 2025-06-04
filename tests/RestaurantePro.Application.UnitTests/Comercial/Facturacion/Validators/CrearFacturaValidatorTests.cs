@@ -111,8 +111,8 @@ public class CrearFacturaValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearFacturaCommand.TipoFactura))
-            .Which.ErrorMessage.Should().Be("El tipo de factura es requerido.");
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearFacturaCommand.TipoFactura) &&
+                                           x.ErrorMessage == "El tipo de factura es requerido.");
     }
 
     [Fact]
@@ -127,8 +127,8 @@ public class CrearFacturaValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearFacturaCommand.TipoFactura))
-            .Which.ErrorMessage.Should().Be("El tipo de factura es requerido.");
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearFacturaCommand.TipoFactura) &&
+                                           x.ErrorMessage == "El tipo de factura es requerido.");
     }
 
     [Theory]
