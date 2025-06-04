@@ -1,7 +1,5 @@
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
 
-using RestaurantePro.Domain.Comercial.Clientes.Enums;
-
 public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEmailQuery, Result<PaginatedList<ClienteSummaryDto>>>
 {
     private readonly IApplicationDbContext _context;

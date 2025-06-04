@@ -1,15 +1,3 @@
-using FluentAssertions;
-using Moq;
-using AutoMapper;
-using Microsoft.Extensions.Logging;
-using RestaurantePro.Application.Operaciones.Mesas.Commands.TransferirMesa;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-using MockQueryable.Moq;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Mesas.Commands;
 
 /// <summary>

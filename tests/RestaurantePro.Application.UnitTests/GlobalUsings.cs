@@ -8,6 +8,7 @@ global using MockQueryable.Moq;
 
 // .NET Base
 global using System;
+global using System.Collections;
 global using System.Collections.Concurrent;
 global using System.Collections.Generic;
 global using System.Linq;
@@ -51,6 +52,8 @@ global using FluentValidation.Results;
 global using FluentValidation.TestHelper;
 
 // Domain - Referencias para testing
+global using RestaurantePro.Domain.Core.Base;
+global using RestaurantePro.Domain.Core.Base.Events;
 global using RestaurantePro.Domain.Core.SharedKernel.Results;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Validation;

@@ -1,7 +1,3 @@
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-using RestaurantePro.Application.UnitTests.Common;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Commands;
 
 /// <summary>

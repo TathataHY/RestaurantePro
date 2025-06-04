@@ -1,7 +1,4 @@
 namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Queries;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
 
 /// <summary>
 /// Tests unitarios para ObtenerAnalisisFidelizacionHandler

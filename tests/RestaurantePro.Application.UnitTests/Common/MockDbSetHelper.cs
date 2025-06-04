@@ -1,10 +1,3 @@
-using System.Linq.Expressions;
-using System.Collections;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query;
-using Moq;
-using MockQueryable;
-
 namespace RestaurantePro.Application.UnitTests.Common;
 
 /// <summary>

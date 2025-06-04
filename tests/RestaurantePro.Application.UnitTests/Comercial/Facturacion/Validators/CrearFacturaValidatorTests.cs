@@ -1,17 +1,3 @@
-using FluentAssertions;
-using FluentValidation;
-using Microsoft.EntityFrameworkCore;
-using Moq;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
-using RestaurantePro.Application.UnitTests.Common;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
-using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-using Xunit;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Validators;
 
 /// <summary>

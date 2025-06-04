@@ -1,7 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Core.Usuarios.Commands;
 using CrearUsuarioHorarioDto = RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario.HorarioTrabajoDto;
-using RestaurantePro.Application.UnitTests.Common;
-using System.Linq.Expressions;
 
 /// <summary>
 /// Pruebas unitarias para CrearUsuarioHandler

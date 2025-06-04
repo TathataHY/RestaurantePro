@@ -1,12 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Proveedores.ContactosProveedor.Validators;
 
-using System;
-using System.Threading.Tasks;
-using FluentAssertions;
-using FluentValidation;
-using RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.ActualizarContacto;
-using Xunit;
-
 /// <summary>
 /// Tests para ActualizarContactoValidator
 /// </summary>

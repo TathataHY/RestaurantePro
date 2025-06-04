@@ -1,5 +1,4 @@
 namespace RestaurantePro.Application.Proveedores.Proveedores.Commands.CrearProveedor;
-using System.Text.RegularExpressions;
 
 /// <summary>
 /// Validador para CrearProveedorCommand

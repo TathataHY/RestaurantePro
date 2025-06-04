@@ -1,15 +1,3 @@
-using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
-using MockQueryable.Moq;
-using Moq;
-// using RestaurantePro.Application.Common.Interfaces.Persistence; // TEMPORAL: Este namespace no existe
-using RestaurantePro.Application.Operaciones.Reportes.Commands.GenerarReporte;
-// using RestaurantePro.Domain.Core.Entities.Operaciones; // TEMPORAL: Este namespace no existe
-// using RestaurantePro.Domain.Core.Entities.Sistema; // TEMPORAL: Este namespace no existe  
-// using RestaurantePro.Domain.Core.Enums; // TEMPORAL: Este namespace no existe
-// using RestaurantePro.Domain.Operaciones.Entities; // TEMPORAL: Este namespace no existe
-using Xunit;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reportes.Validators;
 
 /// <summary>

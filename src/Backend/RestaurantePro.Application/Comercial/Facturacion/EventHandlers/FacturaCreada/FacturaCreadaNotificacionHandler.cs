@@ -1,13 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using MediatR;
-using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Common.Enums;
-
 namespace RestaurantePro.Application.Comercial.Facturacion.EventHandlers.FacturaCreada;
 
 /// <summary>

@@ -1,5 +1,4 @@
 namespace RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.ActualizarContacto;
-using System.Text.RegularExpressions;
 
 /// <summary>
 /// Validador para ActualizarContactoCommand

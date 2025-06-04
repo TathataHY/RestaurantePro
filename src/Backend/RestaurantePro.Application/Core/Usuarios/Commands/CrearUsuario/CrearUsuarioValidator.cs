@@ -1,5 +1,4 @@
 namespace RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
-using System.Text.RegularExpressions;
 
 public class CrearUsuarioValidator : AbstractValidator<CrearUsuarioCommand>
 {

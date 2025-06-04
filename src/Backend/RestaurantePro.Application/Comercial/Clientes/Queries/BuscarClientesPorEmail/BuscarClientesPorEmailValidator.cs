@@ -1,5 +1,4 @@
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
-using System.Text.RegularExpressions;
 
 public class BuscarClientesPorEmailValidator : AbstractValidator<BuscarClientesPorEmailQuery>
 {

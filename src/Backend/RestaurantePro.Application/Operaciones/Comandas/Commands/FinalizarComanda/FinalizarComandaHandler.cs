@@ -1,12 +1,3 @@
-using AutoMapper;
-using MediatR;
-using Microsoft.Extensions.Logging;
-using RestaurantePro.Application.Operaciones.Comandas.DTOs;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-
 namespace RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
 
 /// <summary>

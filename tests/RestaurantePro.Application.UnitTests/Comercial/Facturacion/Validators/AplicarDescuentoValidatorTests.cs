@@ -1,14 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using MockQueryable.Moq;
-using Moq;
-using FluentAssertions;
-using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-using RestaurantePro.Domain.Core.Usuarios.Entities;
-using RestaurantePro.Domain.Comercial.Facturacion.Enums;
-using RestaurantePro.Domain.Core.Usuarios.Enums;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Comercial.Facturacion.Commands.AplicarDescuento;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Validators;
 
 /// <summary>

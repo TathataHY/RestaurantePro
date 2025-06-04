@@ -1,5 +1,4 @@
 namespace RestaurantePro.Application.UnitTests.Core.Usuarios.Commands;
-using RestaurantePro.Application.UnitTests.Common;
 
 /// <summary>
 /// 🔐 Tests para CambiarPasswordUsuarioHandler

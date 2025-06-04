@@ -1,23 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using AutoMapper;
-using FluentAssertions;
-using Microsoft.Extensions.Logging;
-using Moq;
-using RestaurantePro.Application.Common.Behaviors;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Application.Operaciones.Comandas.Commands.UnificarComandas;
-using RestaurantePro.Application.UnitTests.Common;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-using Xunit;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.Commands;
 
 /// <summary>

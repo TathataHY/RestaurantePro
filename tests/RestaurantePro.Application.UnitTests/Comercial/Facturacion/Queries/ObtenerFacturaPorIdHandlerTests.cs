@@ -1,16 +1,3 @@
-using AutoMapper;
-using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Moq;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Common.DTOs;
-using RestaurantePro.Application.Comercial.Facturacion.DTOs;
-using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturaPorId;
-using RestaurantePro.Application.UnitTests.Common;
-using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-using RestaurantePro.Domain.Enums;
-
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Queries;
 
 /// <summary>

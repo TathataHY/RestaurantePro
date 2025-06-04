@@ -1,15 +1,3 @@
-using FluentAssertions;
-using Moq;
-using RestaurantePro.Application.Operaciones.Comandas.Commands.UnificarComandas;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-using RestaurantePro.Domain.Core.Usuarios.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Enums;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
-using RestaurantePro.Domain.Core.Usuarios.Enums;
-using MockQueryable.Moq;
-
 namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.Validators;
 
 /// <summary>

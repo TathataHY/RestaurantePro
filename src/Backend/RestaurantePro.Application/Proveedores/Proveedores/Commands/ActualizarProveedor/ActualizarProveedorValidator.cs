@@ -1,5 +1,4 @@
 namespace RestaurantePro.Application.Proveedores.Proveedores.Commands.ActualizarProveedor;
-using System.Text.RegularExpressions;
 
 public class ActualizarProveedorValidator : AbstractValidator<ActualizarProveedorCommand>
 {
