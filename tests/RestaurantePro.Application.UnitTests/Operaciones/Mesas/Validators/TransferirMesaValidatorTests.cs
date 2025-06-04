@@ -25,7 +25,23 @@ public class TransferirMesaValidatorTests
     public TransferirMesaValidatorTests()
     {
         _contextMock = new Mock<IApplicationDbContext>();
+        
+        // Configurar mocks por defecto para evitar NullReferenceException
+        ConfigurarMocksDefecto();
+        
         _validator = new TransferirMesaValidator(_contextMock.Object);
+    }
+
+    private void ConfigurarMocksDefecto()
+    {
+        // Configurar DbSets vacíos por defecto
+        var comandasVacias = new List<Comanda>().AsQueryable().BuildMockDbSet();
+        var mesasVacias = new List<Mesa>().AsQueryable().BuildMockDbSet();
+        var usuariosVacios = new List<Usuario>().AsQueryable().BuildMockDbSet();
+
+        _contextMock.Setup(x => x.Comandas).Returns(comandasVacias.Object);
+        _contextMock.Setup(x => x.Mesas).Returns(mesasVacias.Object);
+        _contextMock.Setup(x => x.Usuarios).Returns(usuariosVacios.Object);
     }
 
     [Fact]
@@ -206,7 +222,7 @@ public class TransferirMesaValidatorTests
             observaciones: "Test comanda",
             numeroComanda: "TEST-001");
         typeof(Comanda).GetProperty("Id")?.SetValue(comanda, command.ComandaId);
-        comanda.ActualizarEstado(EstadoComanda.Finalizada); // Estado no transferible
+        comanda.ActualizarEstado(EstadoComanda.Cancelada); // Estado no transferible
 
         var mesaOrigen = Mesa.Crear(numero: 1, capacidad: 4, ubicacion: "Interior");
         typeof(Mesa).GetProperty("Id")?.SetValue(mesaOrigen, command.MesaOrigenId);

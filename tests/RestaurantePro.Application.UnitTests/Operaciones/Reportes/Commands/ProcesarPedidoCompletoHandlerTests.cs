@@ -568,6 +568,10 @@ public class ProcesarPedidoCompletoHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comanda.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
+        // Setup mediator para FinalizarComandaCommand
+        _mediatorMock.Setup(x => x.Send(It.IsAny<FinalizarComandaCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(new ComandaDto { Id = comanda.Id, Estado = EstadoComanda.Finalizada }));
+
         // Setup mediator para CrearFacturaCommand
         _mediatorMock.Setup(x => x.Send(It.IsAny<CrearFacturaCommand>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(new FacturaDto { Id = Guid.NewGuid() }));
@@ -589,6 +593,13 @@ public class ProcesarPedidoCompletoHandlerTests
         _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
+        // Setup para servicios de contexto
+        _currentUserServiceMock.Setup(x => x.UserId)
+            .Returns(Guid.NewGuid().ToString());
+
+        _dateTimeServiceMock.Setup(x => x.Now)
+            .Returns(DateTime.UtcNow);
+
         _mapperMock.Setup(x => x.Map<ProcesarPedidoCompletoDto>(It.IsAny<object>()))
             .Returns(resultadoDto);
     }
@@ -601,11 +612,30 @@ public class ProcesarPedidoCompletoHandlerTests
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(cliente.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
 
+        // Setup mediator para FinalizarComandaCommand
+        _mediatorMock.Setup(x => x.Send(It.IsAny<FinalizarComandaCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(new ComandaDto { Id = comanda.Id, Estado = EstadoComanda.Finalizada }));
+
+        // Setup mediator para CrearFacturaCommand
+        _mediatorMock.Setup(x => x.Send(It.IsAny<CrearFacturaCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(new FacturaDto { Id = Guid.NewGuid() }));
+
+        // Setup para obtener factura creada
+        _facturaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateMockFactura());
+
         _comandaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
+
+        // Setup para servicios de contexto
+        _currentUserServiceMock.Setup(x => x.UserId)
+            .Returns(Guid.NewGuid().ToString());
+
+        _dateTimeServiceMock.Setup(x => x.Now)
+            .Returns(DateTime.UtcNow);
 
         _mapperMock.Setup(x => x.Map<ProcesarPedidoCompletoDto>(It.IsAny<object>()))
             .Returns(resultadoDto);
@@ -621,11 +651,30 @@ public class ProcesarPedidoCompletoHandlerTests
             It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(resultadoPago as Factura ?? CreateMockFactura()));
 
+        // Setup mediator para FinalizarComandaCommand
+        _mediatorMock.Setup(x => x.Send(It.IsAny<FinalizarComandaCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(new ComandaDto { Id = comanda.Id, Estado = EstadoComanda.Finalizada }));
+
+        // Setup mediator para CrearFacturaCommand
+        _mediatorMock.Setup(x => x.Send(It.IsAny<CrearFacturaCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(new FacturaDto { Id = Guid.NewGuid() }));
+
+        // Setup para obtener factura creada
+        _facturaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateMockFactura());
+
         _comandaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
+
+        // Setup para servicios de contexto
+        _currentUserServiceMock.Setup(x => x.UserId)
+            .Returns(Guid.NewGuid().ToString());
+
+        _dateTimeServiceMock.Setup(x => x.Now)
+            .Returns(DateTime.UtcNow);
 
         _mapperMock.Setup(x => x.Map<ProcesarPedidoCompletoDto>(It.IsAny<object>()))
             .Returns(resultadoDto);
@@ -635,6 +684,10 @@ public class ProcesarPedidoCompletoHandlerTests
     {
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comanda.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
+
+        // Setup mediator para FinalizarComandaCommand
+        _mediatorMock.Setup(x => x.Send(It.IsAny<FinalizarComandaCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(new ComandaDto { Id = comanda.Id, Estado = EstadoComanda.Finalizada }));
 
         // Setup mediator para CrearFacturaCommand
         _mediatorMock.Setup(x => x.Send(It.IsAny<CrearFacturaCommand>(), It.IsAny<CancellationToken>()))
@@ -650,6 +703,13 @@ public class ProcesarPedidoCompletoHandlerTests
         _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
+        // Setup para servicios de contexto
+        _currentUserServiceMock.Setup(x => x.UserId)
+            .Returns(Guid.NewGuid().ToString());
+
+        _dateTimeServiceMock.Setup(x => x.Now)
+            .Returns(DateTime.UtcNow);
+
         _mapperMock.Setup(x => x.Map<ProcesarPedidoCompletoDto>(It.IsAny<object>()))
             .Returns(resultadoDto);
     }
@@ -658,6 +718,10 @@ public class ProcesarPedidoCompletoHandlerTests
     {
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comanda.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
+
+        // Setup mediator para FinalizarComandaCommand
+        _mediatorMock.Setup(x => x.Send(It.IsAny<FinalizarComandaCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success(new ComandaDto { Id = comanda.Id, Estado = EstadoComanda.Finalizada }));
 
         // Setup mediator para CrearFacturaCommand
         _mediatorMock.Setup(x => x.Send(It.IsAny<CrearFacturaCommand>(), It.IsAny<CancellationToken>()))
@@ -672,6 +736,13 @@ public class ProcesarPedidoCompletoHandlerTests
 
         _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
+
+        // Setup para servicios de contexto
+        _currentUserServiceMock.Setup(x => x.UserId)
+            .Returns(Guid.NewGuid().ToString());
+
+        _dateTimeServiceMock.Setup(x => x.Now)
+            .Returns(DateTime.UtcNow);
 
         _mapperMock.Setup(x => x.Map<ProcesarPedidoCompletoDto>(It.IsAny<object>()))
             .Returns(resultadoDto);

@@ -329,22 +329,8 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
 
     private async Task<FacturaDto> MapearFacturaADto(Factura factura)
     {
-        return new FacturaDto
-        {
-            Id = factura.Id,
-            Numero = factura.NumeroFactura,
-            FechaEmision = factura.FechaEmision,
-            Tipo = factura.TipoFactura,
-            NombreCliente = factura.NombreCliente,
-            ClienteId = factura.ClienteId,
-            Subtotal = factura.Subtotal,
-            Impuestos = factura.TotalImpuestos,
-            Descuentos = factura.TotalDescuentos,
-            Total = factura.Total,
-            Estado = factura.Estado,
-            CreadoPor = _currentUserService.UserId?.ToString() ?? "Sistema",
-            FechaCreacion = DateTime.UtcNow
-        };
+        // Usar el mapper inyectado en lugar de mapeo manual
+        return _mapper.Map<FacturaDto>(factura);
     }
 }
 

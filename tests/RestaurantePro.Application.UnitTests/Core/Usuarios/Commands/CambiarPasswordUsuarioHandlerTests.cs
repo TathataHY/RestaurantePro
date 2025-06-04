@@ -118,9 +118,9 @@ public class CambiarPasswordUsuarioHandlerTests
         };
 
         var usuario = Usuario.Crear(
-            "juan.perez@email.com",
+            "juan.perez",
             "Juan Pérez",
-            "hash_actual",
+            "juan.perez@email.com",
             RolUsuario.Mesero);
         
         // CORREGIDO: Asignar Guid directamente, no string
@@ -348,7 +348,7 @@ public class CambiarPasswordUsuarioHandlerTests
         };
 
         var usuario = Usuario.Crear(
-            "juan.perez@email.com",
+            "juan.perez",
             "Juan Pérez",
             "juan.perez@email.com",
             RolUsuario.Mesero);

@@ -692,13 +692,15 @@ public class CrearFacturaHandlerTests
 
     private static Cliente CreateMockCliente(Guid id, string nombre, string email)
     {
-        // Usar el factory method del dominio en lugar de Mock
+        // Usar la segunda sobrecarga que acepta strings directamente
         var nombreCompleto = ClienteNombre.Crear(nombre, "Apellido Test");
-        var emailVO = Email.Create(email);
-        var telefono = PhoneNumber.Create("+5212345678900"); // Teléfono de prueba
         var fechaNacimiento = DateTime.Now.AddYears(-30);
         
-        var cliente = Cliente.Crear(id, nombreCompleto, emailVO, telefono, fechaNacimiento, true);
+        // Esta sobrecarga acepta strings y genera un ID automáticamente
+        var cliente = Cliente.Crear(nombreCompleto, email, "+5212345678900", fechaNacimiento);
+        
+        // Establecer el ID específico usando reflexión
+        SetPrivateProperty(cliente, "Id", id);
         
         return cliente;
     }

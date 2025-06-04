@@ -453,34 +453,38 @@ public class BuscarClientesPorEmailHandlerTests
 
     private Cliente CrearCliente(Guid id, string email, string telefono, DateTime fechaCreacion)
     {
-        // Usar reflection para crear el cliente con propiedades privadas
-        var cliente = (Cliente)Activator.CreateInstance(typeof(Cliente), true)!;
+        // Usar la sobrecarga simplificada de Cliente.Crear que acepta strings directamente
+        var nombre = ClienteNombre.Crear("Cliente", "Test");
+        var cliente = Cliente.Crear(nombre, email, telefono, fechaCreacion.AddYears(-30));
         
+        // Establecer el ID específico usando reflection (no se puede cambiar después de creación)
         typeof(Cliente).GetProperty("Id")?.SetValue(cliente, id);
-        typeof(Cliente).GetProperty("Email")?.SetValue(cliente, Email.Create(email));
-        typeof(Cliente).GetProperty("Telefono")?.SetValue(cliente, PhoneNumber.Create(telefono));
-        typeof(Cliente).GetProperty("FechaCreacion")?.SetValue(cliente, fechaCreacion);
+        
+        // Configurar propiedades adicionales usando reflection
         typeof(Cliente).GetProperty("PuntosAcumulados")?.SetValue(cliente, 100);
         typeof(Cliente).GetProperty("CantidadVisitas")?.SetValue(cliente, 5);
-        typeof(Cliente).GetProperty("Segmento")?.SetValue(cliente, SegmentoCliente.Regular);
+        typeof(Cliente).GetProperty("FechaCreacion")?.SetValue(cliente, fechaCreacion);
         
         return cliente;
     }
 
     private void ConfigurarMockMapper()
     {
+        // El handler no está usando el mapper en la nueva implementación,
+        // crea los DTOs manualmente, así que este setup ya no es necesario
+        // pero lo mantenemos por compatibilidad
         _mockMapper.Setup(m => m.Map<Cliente, ClienteSummaryDto>(It.IsAny<Cliente>()))
             .Returns((Cliente cliente) => new ClienteSummaryDto
             {
                 Id = cliente.Id,
-                NombreCompleto = "Cliente Test", // Simulamos el nombre completo
-                Email = cliente.Email.Value,
-                Telefono = cliente.Telefono.Value,
+                NombreCompleto = cliente.Nombre?.NombreCompleto ?? "Cliente Test",
+                Email = cliente.Email?.Value ?? "",
+                Telefono = cliente.Telefono?.Value ?? "",
                 TipoCliente = cliente.Segmento.ToString(),
-                Activo = true,
+                Activo = cliente.EstaActivo,
                 FechaRegistro = cliente.FechaCreacion,
                 RegistradoPor = "Sistema",
-                FechaNacimiento = null,
+                FechaNacimiento = cliente.FechaNacimiento,
                 Ciudad = "",
                 Pais = "",
                 PuntosFidelizacion = cliente.PuntosAcumulados,

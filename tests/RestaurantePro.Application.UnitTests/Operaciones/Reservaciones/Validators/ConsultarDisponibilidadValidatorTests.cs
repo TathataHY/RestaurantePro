@@ -504,6 +504,9 @@ public class ConsultarDisponibilidadValidatorTests
         // Arrange
         var query = CrearQueryValida();
         query.EsEventoEspecial = true;
+        query.NumeroPersonas = 8; // Mínimo para eventos especiales: 6
+        query.DuracionEstimadaMinutos = 150; // Mínimo para eventos especiales: 120
+        query.FechaHora = DateTime.UtcNow.AddDays(3); // Anticipación para eventos especiales
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -605,14 +608,26 @@ public class ConsultarDisponibilidadValidatorTests
     [InlineData("Desayuno", 8, 0, 9, 30, 2)]
     [InlineData("Almuerzo", 12, 30, 14, 0, 4)]
     [InlineData("Cena", 19, 0, 21, 30, 6)]
-    [InlineData("Cena Tardía", 21, 30, 23, 0, 2)]
+    [InlineData("Cena Tardía", 21, 30, 0, 30, 8)] // Evento especial: 3 horas (180 min)
     public async Task Validate_ConDiferentesHorarios_DeberiaSerValido(string tipo, int hIni, int mIni, int hFin, int mFin, int personas)
     {
         // Arrange
         var query = CrearQueryValida();
         query.EsEventoEspecial = tipo == "Cena Tardía";
         query.NumeroPersonas = personas;
-        query.DuracionEstimadaMinutos = (hFin - hIni) * 60 + (mFin - mIni);
+        
+        // Calcular duración correctamente
+        var duracion = tipo == "Cena Tardía" 
+            ? 180 // 3 horas para eventos especiales
+            : (hFin - hIni) * 60 + (mFin - mIni);
+        
+        query.DuracionEstimadaMinutos = duracion;
+        
+        // Para eventos especiales, agregar anticipación
+        if (query.EsEventoEspecial)
+        {
+            query.FechaHora = DateTime.UtcNow.AddDays(3);
+        }
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -629,6 +644,7 @@ public class ConsultarDisponibilidadValidatorTests
         query.EsEventoEspecial = true;
         query.NumeroPersonas = 25;
         query.DuracionEstimadaMinutos = 300; // 5 horas
+        query.FechaHora = DateTime.UtcNow.AddDays(3); // 3 días de anticipación para eventos especiales
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -707,7 +723,8 @@ public class ConsultarDisponibilidadValidatorTests
         var query = CrearQueryValida();
         query.EsEventoEspecial = true;
         query.NumeroPersonas = 100;
-        query.DuracionEstimadaMinutos = 360; // Exactamente 100 caracteres
+        query.DuracionEstimadaMinutos = 360; // 6 horas máximas
+        query.FechaHora = DateTime.UtcNow.AddDays(3); // Anticipación para eventos especiales
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -729,8 +746,9 @@ public class ConsultarDisponibilidadValidatorTests
             {
                 var q = CrearQueryValida();
                 q.FechaHora = DateTime.UtcNow.AddDays(i);
-                q.NumeroPersonas = i;
-                q.DuracionEstimadaMinutos = i * 60;
+                q.NumeroPersonas = Math.Min(i + 1, 100); // Asegurar que sea al menos 1 persona
+                q.DuracionEstimadaMinutos = Math.Min(i * 30 + 60, 360); // Duración entre 90 y 360 min
+                q.EsEventoEspecial = false; // Evitar reglas de eventos especiales
                 return q;
             })
             .ToList();
@@ -769,6 +787,9 @@ public class ConsultarDisponibilidadValidatorTests
         // Arrange
         var query = CrearQueryValida();
         query.EsEventoEspecial = true;
+        query.NumeroPersonas = 8; // Mínimo para eventos especiales
+        query.DuracionEstimadaMinutos = 180; // Mínimo para eventos especiales
+        query.FechaHora = DateTime.UtcNow.AddDays(3); // Anticipación para eventos especiales
 
         // Act
         var result = await _validator.ValidateAsync(query);
