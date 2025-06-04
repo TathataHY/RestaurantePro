@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.Proveedores.Proveedores.Commands.CrearProveedor;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// Validador para CrearProveedorCommand
@@ -158,15 +159,10 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     {
         if (string.IsNullOrWhiteSpace(email)) return false;
         
-        try
-        {
-            var addr = new System.Net.Mail.MailAddress(email);
-            return addr.Address == email;
-        }
-        catch
-        {
-            return false;
-        }
+        // Expresión regular más estricta para validación de email
+        // Esta versión mejorada rechaza puntos consecutivos y dominios que empiezan o terminan con punto
+        var regex = new Regex(@"^[a-zA-Z0-9](?:[a-zA-Z0-9_%+-]+(?:\.[a-zA-Z0-9_%+-]+)*)?@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$");
+        return regex.IsMatch(email);
     }
 
     /// <summary>

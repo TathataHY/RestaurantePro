@@ -32,6 +32,9 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
     {
         try
         {
+            // Lanzar explícitamente si el token es cancelado
+            cancellationToken.ThrowIfCancellationRequested();
+
             _logger.LogInformation("Iniciando búsqueda de clientes por email: '{Email}'", request.Email);
 
             // 1. Query base de clientes
@@ -62,7 +65,7 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
                 .Take(request.TamanoPagina)
                 .ToList();
 
-            // 7. Mapear a DTOs de forma segura usando las propiedades correctas de ClienteSummaryDto
+            // 7. Mapear a DTOs de forma segura
             var clientesDto = clientesPaginados.Select(c => new ClienteSummaryDto
             {
                 Id = c.Id,
@@ -111,7 +114,7 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
     private IQueryable<Cliente> AplicarFiltrosBusqueda(IQueryable<Cliente> query, BuscarClientesPorEmailQuery request)
     {
         // Búsqueda por email
-        if (!string.IsNullOrEmpty(request.Email))
+        if (!string.IsNullOrWhiteSpace(request.Email))
         {
             if (request.BusquedaExacta)
             {
@@ -130,7 +133,7 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
         }
 
         // Búsqueda por dominio
-        if (!string.IsNullOrEmpty(request.Dominio))
+        if (!string.IsNullOrWhiteSpace(request.Dominio))
         {
             var dominioPattern = $"@{request.Dominio.ToLowerInvariant()}";
             query = query.Where(c => c.Email != null && 

@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.Proveedores.Proveedores.Commands.ActualizarProveedor;
+using System.Text.RegularExpressions;
 
 public class ActualizarProveedorValidator : AbstractValidator<ActualizarProveedorCommand>
 {
@@ -23,7 +24,7 @@ public class ActualizarProveedorValidator : AbstractValidator<ActualizarProveedo
         RuleFor(x => x.Email)
             .NotEmpty()
             .WithMessage("El email es obligatorio")
-            .EmailAddress()
+            .Must(BeValidEmail)
             .WithMessage("El email debe tener un formato válido")
             .MaximumLength(100)
             .WithMessage("El email no puede exceder 100 caracteres");
@@ -66,6 +67,17 @@ public class ActualizarProveedorValidator : AbstractValidator<ActualizarProveedo
             .MaximumLength(1000)
             .WithMessage("Las notas no pueden exceder 1000 caracteres");
         */
+    }
+
+    private static bool BeValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+        
+        // Expresión regular más estricta para validación de email
+        // Esta versión mejorada rechaza puntos consecutivos y dominios que empiezan o terminan con punto
+        var regex = new Regex(@"^[a-zA-Z0-9](?:[a-zA-Z0-9_%+-]+(?:\.[a-zA-Z0-9_%+-]+)*)?@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$");
+        return regex.IsMatch(email);
     }
 
     private static bool BeValidUrl(string? url)

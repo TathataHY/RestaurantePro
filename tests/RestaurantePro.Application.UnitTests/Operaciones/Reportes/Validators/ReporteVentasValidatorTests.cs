@@ -19,7 +19,7 @@ using RestaurantePro.Domain.Core.Usuarios.Entities;
 using RestaurantePro.Domain.Core.Usuarios.Enums;
 using Xunit;
 
-public class ObtenerReporteVentasDiariaValidatorTests
+public class ReporteVentasValidatorTests
 {
     private readonly Mock<IApplicationDbContext> _contextMock;
     private readonly ObtenerReporteVentasDiariaValidator _validator;
@@ -27,7 +27,7 @@ public class ObtenerReporteVentasDiariaValidatorTests
     private readonly Mock<DbSet<Usuario>> _usuariosMock;
     private readonly Mock<DbSet<Comanda>> _comandasMock;
 
-    public ObtenerReporteVentasDiariaValidatorTests()
+    public ReporteVentasValidatorTests()
     {
         _contextMock = new Mock<IApplicationDbContext>();
         _mesasMock = new Mock<DbSet<Mesa>>();
@@ -74,7 +74,7 @@ public class ObtenerReporteVentasDiariaValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => 
+        result.Errors.Should().Contain(e =>
             e.PropertyName == nameof(ObtenerReporteVentasDiariaQuery.FechaReporte) &&
             e.ErrorMessage.Contains("La fecha del reporte no puede ser futura"));
     }

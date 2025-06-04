@@ -20,9 +20,9 @@ public class CrearTarjetaFidelizacionValidator : AbstractValidator<CrearTarjetaF
             .WithMessage("Los puntos iniciales no pueden ser negativos");
 
         RuleFor(x => x.CodigoTarjeta)
-            .NotEmpty()
             .Length(8, 20)
-            .WithMessage("El código de tarjeta debe tener entre 8 y 20 caracteres");
+            .WithMessage("El código de tarjeta debe tener entre 8 y 20 caracteres")
+            .When(x => !string.IsNullOrWhiteSpace(x.CodigoTarjeta));
 
         RuleFor(x => x.Observaciones)
             .MaximumLength(500)

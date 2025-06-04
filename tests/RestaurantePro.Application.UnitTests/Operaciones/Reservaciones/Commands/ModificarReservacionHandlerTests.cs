@@ -1,8 +1,18 @@
+﻿using FluentAssertions;
+using Moq;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ModificarReservacion;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
+using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Commands;
 
 /// <summary>
 /// Tests unitarios para ModificarReservacionHandler
-/// Valida la lógica completa de modificación de reservaciones con validaciones de negocio
+/// Valida la logica completa de modificacion de reservaciones con validaciones de negocio
 /// </summary>
 public class ModificarReservacionHandlerTests
 {
@@ -32,37 +42,28 @@ public class ModificarReservacionHandlerTests
             _dateTimeServiceMock.Object);
     }
 
-    #region Tests de Escenarios Exitosos
+    #region Tests de Modificacion Exitosa
 
     [Fact]
     public async Task Handle_ModificacionBasica_DeberiaModificarReservacionExitosamente()
     {
         // Arrange
         var reservacionId = Guid.NewGuid();
-        var nuevaMesaId = Guid.NewGuid();
         var command = new ModificarReservacionCommand
         {
             ReservacionId = reservacionId,
-            NuevaFechaReservacion = DateTime.Today.AddDays(5),
+            NuevaFechaReservacion = DateTime.Today.AddDays(1),
             NuevaHoraReservacion = new TimeSpan(19, 0, 0),
-            NuevoNumeroPersonas = 6,
-            NuevaMesaId = nuevaMesaId,
-            MotivoModificacion = "Cliente solicitó cambio de fecha",
+            NuevoNumeroPersonas = 4,
+            MotivoModificacion = "Test modificacion",
             UsuarioId = Guid.NewGuid()
         };
 
-        // Act & Assert - Handler complejo, simplemente verificamos que no falle con excepción
-        try
-        {
-            var result = await _handler.Handle(command, CancellationToken.None);
-            // El resultado puede ser exitoso o no, pero el test no debe fallar con excepción
-            result.Should().NotBeNull();
-        }
-        catch (Exception ex)
-        {
-            // Si falla, debe ser por lógica de negocio, no por errores de compilación
-            ex.Should().NotBeOfType<System.MissingMethodException>();
-        }
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
     }
 
     [Fact]
@@ -74,24 +75,19 @@ public class ModificarReservacionHandlerTests
         var command = new ModificarReservacionCommand
         {
             ReservacionId = reservacionId,
-            NuevaFechaReservacion = DateTime.Today.AddDays(3),
-            NuevaHoraReservacion = new TimeSpan(20, 30, 0),
+            NuevaFechaReservacion = DateTime.Today.AddDays(1),
+            NuevaHoraReservacion = new TimeSpan(19, 0, 0),
             NuevoNumeroPersonas = 4,
             NuevaMesaId = nuevaMesaId,
-            MotivoModificacion = "Cambio de mesa por preferencia del cliente",
+            MotivoModificacion = "Cambio de mesa",
             UsuarioId = Guid.NewGuid()
         };
 
-        // Act & Assert - Handler complejo, simplemente verificamos que no falle con excepción
-        try
-        {
-            var result = await _handler.Handle(command, CancellationToken.None);
-            result.Should().NotBeNull();
-        }
-        catch (Exception ex)
-        {
-            ex.Should().NotBeOfType<System.MissingMethodException>();
-        }
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
     }
 
     [Fact]
@@ -103,24 +99,19 @@ public class ModificarReservacionHandlerTests
         var command = new ModificarReservacionCommand
         {
             ReservacionId = reservacionId,
-            NuevaFechaReservacion = DateTime.Today.AddDays(2),
-            NuevaHoraReservacion = new TimeSpan(18, 0, 0),
-            NuevoNumeroPersonas = 3,
+            NuevaFechaReservacion = DateTime.Today.AddDays(1),
+            NuevaHoraReservacion = new TimeSpan(19, 0, 0),
+            NuevoNumeroPersonas = 4,
             NuevoClienteId = nuevoClienteId,
-            MotivoModificacion = "Transferencia de reservación a otro cliente",
+            MotivoModificacion = "Cambio de cliente",
             UsuarioId = Guid.NewGuid()
         };
 
-        // Act & Assert - Handler complejo, simplemente verificamos que no falle con excepción
-        try
-        {
-            var result = await _handler.Handle(command, CancellationToken.None);
-            result.Should().NotBeNull();
-        }
-        catch (Exception ex)
-        {
-            ex.Should().NotBeOfType<System.MissingMethodException>();
-        }
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
     }
 
     [Fact]
@@ -131,24 +122,19 @@ public class ModificarReservacionHandlerTests
         var command = new ModificarReservacionCommand
         {
             ReservacionId = reservacionId,
-            NuevaFechaReservacion = DateTime.Today.AddDays(7),
-            NuevaHoraReservacion = new TimeSpan(21, 0, 0),
-            NuevoNumeroPersonas = 8,
-            MotivoModificacion = "Aumento de personas en la reservación",
-            ObservacionesModificacion = "Celebración especial",
+            NuevaFechaReservacion = DateTime.Today.AddDays(1),
+            NuevaHoraReservacion = new TimeSpan(19, 0, 0),
+            NuevoNumeroPersonas = 4,
+            MotivoModificacion = "Test completo",
+            ObservacionesModificacion = "Se requiere enviar notificación",
             UsuarioId = Guid.NewGuid()
         };
 
-        // Act & Assert - Handler complejo, simplemente verificamos que no falle con excepción
-        try
-        {
-            var result = await _handler.Handle(command, CancellationToken.None);
-            result.Should().NotBeNull();
-        }
-        catch (Exception ex)
-        {
-            ex.Should().NotBeOfType<System.MissingMethodException>();
-        }
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
     }
 
     #endregion
@@ -166,7 +152,7 @@ public class ModificarReservacionHandlerTests
             NuevaFechaReservacion = DateTime.Today.AddDays(1),
             NuevaHoraReservacion = new TimeSpan(19, 0, 0),
             NuevoNumeroPersonas = 4,
-            MotivoModificacion = "Test modificación",
+            MotivoModificacion = "Test modificacion",
             UsuarioId = Guid.NewGuid()
         };
 
@@ -190,7 +176,7 @@ public class ModificarReservacionHandlerTests
             NuevaFechaReservacion = DateTime.Today.AddDays(1),
             NuevaHoraReservacion = new TimeSpan(19, 0, 0),
             NuevoNumeroPersonas = 4,
-            MotivoModificacion = "Test modificación",
+            MotivoModificacion = "Test modificacion",
             UsuarioId = Guid.NewGuid()
         };
 
@@ -304,7 +290,7 @@ public class ModificarReservacionHandlerTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Iniciando modificación")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Iniciando modificacion")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);

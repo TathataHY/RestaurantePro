@@ -790,51 +790,64 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// <exception cref="InvalidOperationException">Si la comanda está en un estado que no permite modificaciones</exception>
         public void AgregarObservacion(string observacion)
         {
-            Guard.AgainstNullOrWhiteSpace(observacion, nameof(observacion));
+            if (string.IsNullOrWhiteSpace(observacion))
+                throw new ArgumentException("La observación no puede estar vacía", nameof(observacion));
 
-            if (observacion.Length > 200)
-                throw new ArgumentException("La observación no puede exceder 200 caracteres", nameof(observacion));
+            if (observacion.Length > 500)
+                throw new ArgumentException("La observación no puede exceder los 500 caracteres", nameof(observacion));
 
-            // Permitir agregar observaciones hasta que esté finalizada o cancelada
-            if (Estado == EstadoComanda.Finalizada)
-                throw new InvalidOperationException("No se pueden agregar observaciones a una comanda finalizada");
+            Observaciones = string.IsNullOrEmpty(Observaciones) 
+                ? observacion 
+                : $"{Observaciones}\n{observacion}";
 
-            // Si ya hay observaciones, las concatenamos
-            if (!string.IsNullOrWhiteSpace(Observaciones))
+            ActualizarFecha();
+        }
+
+        /// <summary>
+        /// Transfiere la comanda a una mesa diferente
+        /// </summary>
+        /// <param name="nuevaMesaId">ID de la mesa a la que se transferirá la comanda</param>
+        /// <param name="razonTransferencia">Motivo por el que se realiza la transferencia</param>
+        /// <returns>True si la transferencia fue exitosa</returns>
+        /// <exception cref="InvalidOperationException">Si la comanda está finalizada o cancelada</exception>
+        /// <exception cref="ArgumentException">Si el ID de la mesa es inválido</exception>
+        public bool TransferirAMesa(Guid nuevaMesaId, string? razonTransferencia = null)
+        {
+            if (nuevaMesaId == Guid.Empty)
+                throw new ArgumentException("El ID de la mesa de destino no puede estar vacío", nameof(nuevaMesaId));
+
+            if (Estado == EstadoComanda.Finalizada || Estado == EstadoComanda.Cancelada)
+                throw new InvalidOperationException($"No se puede transferir una comanda en estado {Estado}");
+
+            // Guardar el ID de la mesa anterior para el evento
+            var mesaAnteriorId = MesaId;
+            
+            // Cambiar el ID de la mesa usando reflection (solución temporal)
+            var property = typeof(Comanda).GetProperty("MesaId");
+            if (property != null && property.CanWrite)
             {
-                // Separar observaciones con "; " para claridad
-                Observaciones = $"{Observaciones}; {observacion}";
+                property.SetValue(this, nuevaMesaId);
             }
             else
             {
-                Observaciones = observacion;
+                // Si no se puede usar reflection, significa que estamos en una implementación real
+                // y necesitamos una solución definitiva
+                throw new NotImplementedException("La implementación actual no permite cambiar la mesa de una comanda");
             }
 
-            // Validar que el total no exceda el límite después de agregar la observación
-            if (Observaciones.Length > 500)
+            // Registrar la transferencia en las observaciones si se proporciona una razón
+            if (!string.IsNullOrEmpty(razonTransferencia))
             {
-                // Si excede, recortar la nueva observación para que quepa
-                var longitudDisponible = 500 - (Observaciones.Length - observacion.Length - 2); // -2 por el "; "
-                if (longitudDisponible > 10) // Mínimo 10 caracteres para que valga la pena
-                {
-                    var observacionRecortada = observacion.Substring(0, longitudDisponible - 3) + "...";
-                    Observaciones = string.IsNullOrWhiteSpace(Observaciones.Replace($"; {observacion}", "")) 
-                        ? observacionRecortada 
-                        : $"{Observaciones.Replace($"; {observacion}", "")}; {observacionRecortada}";
-                }
-                else
-                {
-                    // Si no hay espacio suficiente, revertir
-                    Observaciones = Observaciones.Replace($"; {observacion}", "");
-                    throw new InvalidOperationException("No hay espacio suficiente para agregar la observación completa");
-                }
+                AgregarObservacion($"Mesa transferida: {razonTransferencia}");
             }
 
+            // Actualizar la fecha de modificación
             ActualizarFecha();
-            MarkAsModified();
 
-            // Emitir evento de dominio
-            AddDomainEvent(new Events.Comanda.ObservacionAgregada(Id, observacion));
+            // Registrar evento de dominio para la transferencia
+            AddDomainEvent(new ComandaTransferida(Id, mesaAnteriorId, nuevaMesaId));
+
+            return true;
         }
     }
 }

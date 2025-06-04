@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.ActualizarContacto;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// Validador para ActualizarContactoCommand
@@ -42,7 +43,7 @@ public class ActualizarContactoValidator : AbstractValidator<ActualizarContactoC
         RuleFor(x => x.Email)
             .NotEmpty()
             .WithMessage("El email del contacto es obligatorio")
-            .EmailAddress()
+            .Must(BeValidEmail)
             .WithMessage("El email debe tener un formato válido")
             .MaximumLength(150)
             .WithMessage("El email no puede exceder 150 caracteres");
@@ -55,13 +56,13 @@ public class ActualizarContactoValidator : AbstractValidator<ActualizarContactoC
 
         // Validaciones opcionales pero con reglas específicas
         RuleFor(x => x.EmailSecundario)
-            .EmailAddress()
+            .Must(BeValidEmail)
             .WithMessage("El email secundario debe tener un formato válido")
             .MaximumLength(150)
             .WithMessage("El email secundario no puede exceder 150 caracteres")
             .NotEqual(x => x.Email)
             .WithMessage("El email secundario debe ser diferente al email principal")
-            .When(x => !string.IsNullOrEmpty(x.EmailSecundario));
+            .When(x => !string.IsNullOrWhiteSpace(x.EmailSecundario));
 
         RuleFor(x => x.TelefonoMovil)
             .Matches(@"^[\d\-\+\(\)\s]{7,20}$")
@@ -133,6 +134,17 @@ public class ActualizarContactoValidator : AbstractValidator<ActualizarContactoC
             .MustAsync(ValidateContactoPrincipalChange)
             .WithMessage("Error en la validación del contacto principal")
             .When(x => x.EsPrincipal);
+    }
+
+    private static bool BeValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        // Expresión regular más estricta para validación de email
+        // Esta versión mejorada rechaza puntos consecutivos y dominios que empiezan o terminan con punto
+        var regex = new Regex(@"^[a-zA-Z0-9](?:[a-zA-Z0-9_%+-]+(?:\.[a-zA-Z0-9_%+-]+)*)?@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$");
+        return regex.IsMatch(email);
     }
 
     private static bool BeValidNotificationTypes(List<string> tiposNotificaciones)

@@ -40,6 +40,7 @@ public class ModificarReservacionHandler : IRequestHandler<ModificarReservacionC
             var reservacionResult = await ObtenerReservacionCompleta(request.ReservacionId, cancellationToken);
             if (!reservacionResult.Succeeded)
             {
+                // Propagamos el mensaje de error que vendrá con "no existe"
                 return Result.Failure<ReservacionDto>(reservacionResult.Error);
             }
 
@@ -95,6 +96,12 @@ public class ModificarReservacionHandler : IRequestHandler<ModificarReservacionC
         {
             _logger.LogError(ex, "❌ Error modificando reservación {ReservacionId}: {Error}", 
                 request.ReservacionId, ex.Message);
+            // En lugar de retornar un mensaje genérico, verificamos si la excepción está
+            // relacionada con la no existencia de la reservación
+            if (ex.Message.Contains("no existe") || ex.Message.Contains("no encontrada"))
+            {
+                return Result.Failure<ReservacionDto>(ex.Message);
+            }
             return Result.Failure<ReservacionDto>("Error interno al modificar la reservación");
         }
     }

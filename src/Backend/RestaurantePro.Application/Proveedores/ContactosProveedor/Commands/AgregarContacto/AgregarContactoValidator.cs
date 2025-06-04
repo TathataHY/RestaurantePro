@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.AgregarContacto;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// Validador para AgregarContactoCommand
@@ -38,7 +39,7 @@ public class AgregarContactoValidator : AbstractValidator<AgregarContactoCommand
         RuleFor(x => x.Email)
             .NotEmpty()
             .WithMessage("El email del contacto es obligatorio")
-            .EmailAddress()
+            .Must(BeValidEmail)
             .WithMessage("El email debe tener un formato válido")
             .MaximumLength(150)
             .WithMessage("El email no puede exceder 150 caracteres");
@@ -51,7 +52,7 @@ public class AgregarContactoValidator : AbstractValidator<AgregarContactoCommand
 
         // Validaciones opcionales pero con reglas específicas
         RuleFor(x => x.EmailSecundario)
-            .EmailAddress()
+            .Must(BeValidEmail)
             .WithMessage("El email secundario debe tener un formato válido")
             .MaximumLength(150)
             .WithMessage("El email secundario no puede exceder 150 caracteres")
@@ -116,6 +117,17 @@ public class AgregarContactoValidator : AbstractValidator<AgregarContactoCommand
         RuleFor(x => x.Email)
             .MustAsync(EmailNotExists)
             .WithMessage("Ya existe un contacto con este email para el proveedor");
+    }
+
+    private static bool BeValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+        
+        // Expresión regular más estricta para validación de email
+        // Esta versión mejorada rechaza puntos consecutivos y dominios que empiezan o terminan con punto
+        var regex = new Regex(@"^[a-zA-Z0-9](?:[a-zA-Z0-9_%+-]+(?:\.[a-zA-Z0-9_%+-]+)*)?@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$");
+        return regex.IsMatch(email);
     }
 
     private static bool BeValidNotificationTypes(List<string> tiposNotificaciones)

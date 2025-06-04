@@ -36,7 +36,7 @@ public class ObtenerReporteVentasDiariaValidator : AbstractValidator<ObtenerRepo
         RuleFor(x => x.FechaReporte)
             .NotEmpty()
             .WithMessage("La fecha del reporte es requerida.")
-            .LessThanOrEqualTo(DateTime.Today.AddDays(1))
+            .LessThanOrEqualTo(DateTime.Today)
             .WithMessage("La fecha del reporte no puede ser futura.")
             .GreaterThanOrEqualTo(DateTime.Today.AddYears(-2))
             .WithMessage("La fecha del reporte no puede ser mayor a 2 años atrás.");
@@ -61,20 +61,16 @@ public class ObtenerReporteVentasDiariaValidator : AbstractValidator<ObtenerRepo
             .WithMessage("Todos los IDs de mesero deben ser válidos.")
             .When(x => x.MeserosEspecificos != null);
 
-        // NOTA: Validaciones asíncronas comentadas temporalmente para solucionar problemas con DbSet mocks
-        // Estas validaciones causan NotSupportedException en las pruebas unitarias debido a 
-        // limitaciones de los mocks de Entity Framework con IQueryable.Provider
+        // Validaciones asíncronas para verificar existencia
+        RuleFor(x => x.MesesEspecificos)
+            .MustAsync(ValidarMesasExisten)
+            .WithMessage("Una o más mesas especificadas no existen.")
+            .When(x => x.MesesEspecificos != null && x.MesesEspecificos.Any());
 
-        // Validaciones asíncronas para verificar existencia - COMENTADAS TEMPORALMENTE
-        // RuleFor(x => x.MesesEspecificos)
-        //     .MustAsync(ValidarMesasExisten)
-        //     .WithMessage("Una o más mesas especificadas no existen.")
-        //     .When(x => x.MesesEspecificos != null && x.MesesEspecificos.Any());
-
-        // RuleFor(x => x.MeserosEspecificos)
-        //     .MustAsync(ValidarMeserosExisten)
-        //     .WithMessage("Uno o más meseros especificados no existen.")
-        //     .When(x => x.MeserosEspecificos != null && x.MeserosEspecificos.Any());
+        RuleFor(x => x.MeserosEspecificos)
+            .MustAsync(ValidarMeserosExisten)
+            .WithMessage("Uno o más meseros especificados no existen.")
+            .When(x => x.MeserosEspecificos != null && x.MeserosEspecificos.Any());
     }
 
     /// <summary>
@@ -128,15 +124,11 @@ public class ObtenerReporteVentasDiariaValidator : AbstractValidator<ObtenerRepo
     /// </summary>
     private void ConfigurarValidacionesNegocio()
     {
-        // NOTA: Validación de fecha operacional comentada temporalmente para solucionar problemas con DbSet mocks
-        // Esta validación causa NotSupportedException en las pruebas unitarias debido a 
-        // limitaciones de los mocks de Entity Framework con AnyAsync()
-
-        // No permitir reportes de fechas que no tienen datos operacionales - COMENTADA TEMPORALMENTE
-        // RuleFor(x => x.FechaReporte)
-        //     .MustAsync(FechaEsOperacional)
-        //     .WithMessage("La fecha seleccionada no tiene datos operacionales.")
-        //     .When(x => x.FechaReporte < DateTime.Today.AddDays(-30));
+        // No permitir reportes de fechas que no tienen datos operacionales
+        RuleFor(x => x.FechaReporte)
+            .MustAsync(FechaEsOperacional)
+            .WithMessage("La fecha seleccionada no tiene datos operacionales.")
+            .When(x => x.FechaReporte < DateTime.Today.AddDays(-30));
 
         // Validar combinaciones que requieren recursos intensivos
         RuleFor(x => x)
@@ -147,6 +139,11 @@ public class ObtenerReporteVentasDiariaValidator : AbstractValidator<ObtenerRepo
                            query.IncluirComparativoPeriodoAnterior))
             .WithMessage("No se pueden incluir todos los análisis simultáneamente por limitaciones de rendimiento.")
             .WithName("LimitacionesRendimiento");
+        
+        // No permitir fechas futuras
+        RuleFor(x => x.FechaReporte)
+            .LessThanOrEqualTo(DateTime.Today)
+            .WithMessage("La fecha del reporte no puede ser futura.");
     }
 
     // Métodos de validación personalizados
@@ -154,30 +151,54 @@ public class ObtenerReporteVentasDiariaValidator : AbstractValidator<ObtenerRepo
     {
         if (mesaIds == null || !mesaIds.Any()) return true;
 
-        var existenTodas = await _context.Mesas
-            .Where(m => mesaIds.Contains(m.Id))
-            .CountAsync(cancellationToken) == mesaIds.Count;
+        try
+        {
+            var existenTodas = await _context.Mesas
+                .Where(m => mesaIds.Contains(m.Id))
+                .CountAsync(cancellationToken) == mesaIds.Count;
 
-        return existenTodas;
+            return existenTodas;
+        }
+        catch (Exception)
+        {
+            // En caso de error en la consulta, retornar false para mostrar mensaje de error
+            return false;
+        }
     }
 
     private async Task<bool> ValidarMeserosExisten(List<Guid> meseroIds, CancellationToken cancellationToken)
     {
         if (meseroIds == null || !meseroIds.Any()) return true;
 
-        var existenTodos = await _context.Usuarios
-            .Where(u => meseroIds.Contains(u.Id) && u.Roles.Contains(RolUsuario.Mesero))
-            .CountAsync(cancellationToken) == meseroIds.Count;
+        try
+        {
+            var existenTodos = await _context.Usuarios
+                .Where(u => meseroIds.Contains(u.Id) && u.Roles.Contains(RolUsuario.Mesero))
+                .CountAsync(cancellationToken) == meseroIds.Count;
 
-        return existenTodos;
+            return existenTodos;
+        }
+        catch (Exception)
+        {
+            // En caso de error en la consulta, retornar false para mostrar mensaje de error
+            return false;
+        }
     }
 
     private async Task<bool> FechaEsOperacional(DateTime fecha, CancellationToken cancellationToken)
     {
-        // Verificar si hay comandas para esa fecha para confirmar que es una fecha operacional
-        var tieneComandas = await _context.Comandas
-            .AnyAsync(c => c.FechaCreacion.Date == fecha.Date, cancellationToken);
+        try
+        {
+            // Verificar si hay comandas para esa fecha para confirmar que es una fecha operacional
+            var tieneComandas = await _context.Comandas
+                .AnyAsync(c => c.FechaCreacion.Date == fecha.Date, cancellationToken);
 
-        return tieneComandas;
+            return tieneComandas;
+        }
+        catch (Exception)
+        {
+            // En caso de error en la consulta, asumir que no hay comandas
+            return false;
+        }
     }
 } 

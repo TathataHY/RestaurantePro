@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
+using System.Text.RegularExpressions;
 
 public class BuscarClientesPorEmailValidator : AbstractValidator<BuscarClientesPorEmailQuery>
 {
@@ -94,10 +95,11 @@ public class BuscarClientesPorEmailValidator : AbstractValidator<BuscarClientesP
     {
         if (string.IsNullOrWhiteSpace(email)) return true; // Validación opcional
 
-        // Para búsqueda parcial, permitimos patrones parciales
+        // Para búsqueda parcial no necesitamos una validación estricta
+        // ya que se trata de buscar coincidencias, no de validar formato completo
         if (email.Length < 3) return false;
 
-        // Verificar caracteres válidos básicos
+        // Verificar caracteres válidos básicos para email
         var allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@.-_+";
         return email.All(c => allowedChars.Contains(c));
     }

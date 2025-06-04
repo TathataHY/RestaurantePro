@@ -78,7 +78,7 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
             else
             {
                 disponibilidad.HayDisponibilidad = false;
-                disponibilidad.MotivoNoDisponibilidad = $"La mesa tiene capacidad para {mesa.Capacidad} personas, pero se solicitaron {request.NumeroPersonas}.";
+                disponibilidad.MotivoNoDisponibilidad = $"La capacidad de la mesa ({mesa.Capacidad} personas) es insuficiente para el número solicitado ({request.NumeroPersonas} personas).";
             }
         }
         else

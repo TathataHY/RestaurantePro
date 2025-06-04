@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
+using System.Text.RegularExpressions;
 
 public class CrearUsuarioValidator : AbstractValidator<CrearUsuarioCommand>
 {
@@ -251,16 +252,10 @@ public class CrearUsuarioValidator : AbstractValidator<CrearUsuarioCommand>
         if (string.IsNullOrWhiteSpace(email))
             return false;
 
-        try
-        {
-            // Usar expresión regular más estricta para validar email
-            var emailRegex = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
-            return System.Text.RegularExpressions.Regex.IsMatch(email, emailRegex);
-        }
-        catch
-        {
-            return false;
-        }
+        // Expresión regular más estricta para validación de email
+        // Esta versión mejorada rechaza puntos consecutivos y dominios que empiezan o terminan con punto
+        var regex = new Regex(@"^[a-zA-Z0-9](?:[a-zA-Z0-9_%+-]+(?:\.[a-zA-Z0-9_%+-]+)*)?@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$");
+        return regex.IsMatch(email);
     }
 
     private static bool TenerPasswordSegura(string password)
