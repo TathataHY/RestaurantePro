@@ -221,7 +221,7 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
     {
         return mesas.OrderBy(m => string.IsNullOrEmpty(request.ZonaPreferida) ? 0 : 
                               m.Zona == request.ZonaPreferida ? 0 : 1) // Zona preferida primero
-                   .ThenByDescending(m => m.Capacidad) // Capacidad descendente
+                   .ThenBy(m => m.Capacidad) // Capacidad ascendente
                    .ThenBy(m => m.PrecioBase) // Precio más bajo primero
                    .ThenBy(m => m.Numero) // Número de mesa como tiebreaker
                    .ToList();

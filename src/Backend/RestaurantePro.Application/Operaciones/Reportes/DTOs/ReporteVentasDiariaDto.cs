@@ -77,6 +77,7 @@ public class DistribucionHorariaDto
     public int TotalComandas { get; set; }
     public decimal MontoTotal { get; set; }
     public decimal PromedioComanda { get; set; }
+    public decimal PorcentajeDiario { get; set; }
 }
 
 /// <summary>

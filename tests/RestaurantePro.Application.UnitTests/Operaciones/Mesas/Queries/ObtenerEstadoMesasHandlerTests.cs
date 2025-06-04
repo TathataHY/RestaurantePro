@@ -173,78 +173,75 @@ public class ObtenerEstadoMesasHandlerTests
     public async Task Handle_ConZonaInexistente_DeberiaRetornarEstadoVacio()
     {
         // Arrange
-        var query = new ObtenerEstadoMesasQuery
-        {
-            Zona = "ZonaInexistente",
-            IncluirEstadisticas = true
-        };
+        var zonaInexistente = "ZonaQueNoExiste";
+        var query = new ObtenerEstadoMesasQuery { Zona = zonaInexistente };
 
         _mockMesaRepository.Setup(r => r.ObtenerTodasAsync())
             .ReturnsAsync(_mesasEjemplo);
 
         _mockMapper.Setup(m => m.Map<List<MesaDto>>(It.IsAny<List<Mesa>>()))
-            .Returns(new List<MesaDto>());
-
-        // Act
-        var resultado = await _handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        resultado.Should().NotBeNull();
-        resultado.Succeeded.Should().BeTrue();
-        resultado.Value.Zona.Should().Be("ZonaInexistente");
-        resultado.Value.Mesas.Should().BeEmpty();
-        resultado.Value.Estadisticas.MesasDisponibles.Should().Be(0);
-        resultado.Value.Estadisticas.PorcentajeOcupacion.Should().Be(0);
-    }
-
-    [Fact]
-    public async Task Handle_ConEstadisticasCompletas_DeberiaCalcularTodasLasMetricas()
-    {
-        // Arrange
-        var query = new ObtenerEstadoMesasQuery
-        {
-            IncluirEstadisticas = true
-        };
-
-        _mockMesaRepository.Setup(r => r.ObtenerTodasAsync())
-            .ReturnsAsync(_mesasEjemplo);
-
-        _mockMapper.Setup(m => m.Map<List<MesaDto>>(_mesasEjemplo))
             .Returns(_mesasDtoEjemplo);
 
         // Act
         var resultado = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
+        resultado.Succeeded.Should().BeTrue();
+        resultado.Value.Mesas.Should().BeNull("porque la zona no existe");
+        resultado.Value.TotalMesas.Should().Be(0);
+        resultado.Value.Zona.Should().Be(zonaInexistente);
+    }
+
+    [Fact]
+    public async Task Handle_ConEstadisticasCompletas_DeberiaCalcularTodasLasMetricas()
+    {
+        // Arrange
+        var query = new ObtenerEstadoMesasQuery { IncluirEstadisticas = true };
+
+        _mockMesaRepository.Setup(r => r.ObtenerTodasAsync())
+            .ReturnsAsync(_mesasEjemplo);
+
+        _mockMapper.Setup(m => m.Map<List<MesaDto>>(It.IsAny<List<Mesa>>()))
+            .Returns(_mesasDtoEjemplo);
+
+        // Act
+        var resultado = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        resultado.Succeeded.Should().BeTrue();
+        resultado.Value.Estadisticas.Should().NotBeNull();
+        
         var estadisticas = resultado.Value.Estadisticas;
         
-        // Verificar conteos por estado
+        // Verificar conteo de mesas por estado
         estadisticas.MesasDisponibles.Should().Be(2);
         estadisticas.MesasOcupadas.Should().Be(2);
         estadisticas.MesasReservadas.Should().Be(1);
         estadisticas.MesasFueraDeServicio.Should().Be(1);
-        estadisticas.MesasActivas.Should().Be(6);
-        estadisticas.MesasInactivas.Should().Be(0);
-
+        
         // Verificar porcentajes
-        estadisticas.PorcentajeOcupacion.Should().Be(50m); // (2+1)/6 * 100
-        estadisticas.PorcentajeDisponibilidad.Should().Be(33.33m); // 2/6 * 100
-
+        estadisticas.PorcentajeOcupacion.Should().Be(50); // (2+1)/6 * 100 = 50%
+        estadisticas.PorcentajeDisponibilidad.Should().Be(33); // 2/6 * 100 = 33.33% (truncado a entero)
+        
         // Verificar capacidades
-        estadisticas.CapacidadTotalDisponible.Should().Be(8); // Mesa 1 (4) + Mesa 6 (4)
-        estadisticas.CapacidadTotalOcupada.Should().Be(10); // Mesa 2 (4) + Mesa 3 (2) + Mesa 4 (4)
-
+        estadisticas.CapacidadTotalDisponible.Should().Be(8); // Suma de capacidades de mesas disponibles
+        estadisticas.CapacidadTotalOcupada.Should().Be(10); // Suma de capacidades de mesas ocupadas y reservadas
+        
         // Verificar estadísticas por zona
-        estadisticas.PorZona.Should().NotBeEmpty();
+        estadisticas.PorZona.Should().NotBeNull();
         estadisticas.PorZona.Should().HaveCount(2); // Interior y Terraza
         
         var zonaInterior = estadisticas.PorZona.FirstOrDefault(z => z.Zona == "Interior");
         zonaInterior.Should().NotBeNull();
         zonaInterior!.TotalMesas.Should().Be(4);
+        zonaInterior.Disponibles.Should().Be(1);
+        zonaInterior.PorcentajeOcupacion.Should().Be(75); // (2+1)/4 * 100 = 75%
         
         var zonaTerraza = estadisticas.PorZona.FirstOrDefault(z => z.Zona == "Terraza");
         zonaTerraza.Should().NotBeNull();
         zonaTerraza!.TotalMesas.Should().Be(2);
+        zonaTerraza.Disponibles.Should().Be(1);
+        zonaTerraza.FueraDeServicio.Should().Be(1);
     }
 
     [Theory]

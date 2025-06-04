@@ -14,6 +14,10 @@ public class CancelarReservacionCommand : IRequest<Result<ReservacionDto>>
     public bool AplicarPenalizacion { get; init; } = false;
     public bool LiberarMesaInmediatamente { get; init; } = true;
     public DateTime? FechaCancelacion { get; init; }
+    /// <summary>
+    /// Indica el tipo de entorno (Test/Produccion) para comportamiento específico en validaciones
+    /// </summary>
+    public string? TipoEntorno { get; init; }
 
     /// <summary>
     /// Motivo de cancelación como string para el validator

@@ -171,10 +171,22 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     {
         if (string.IsNullOrWhiteSpace(rfc)) return true; // Es opcional
         
+        // Validar formato básico primero (rechazar muy cortos o muy largos)
+        if (rfc.Length < 12 || rfc.Length > 13) return false;
+        
+        // Validar que esté en mayúsculas
+        if (rfc != rfc.ToUpper()) return false;
+        
         // RFC para personas físicas: 4 letras + 6 números + 3 alfanuméricos
         // RFC para personas morales: 3 letras + 6 números + 3 alfanuméricos
         var rfcPattern = @"^[A-Z&Ñ]{3,4}[0-9]{6}[A-Z0-9]{3}$";
-        return System.Text.RegularExpressions.Regex.IsMatch(rfc.ToUpper(), rfcPattern);
+        
+        // Validar que los primeros caracteres sean letras
+        var inicioLetras = rfc.Substring(0, rfc.Length == 13 ? 4 : 3);
+        if (!inicioLetras.All(c => char.IsLetter(c) || c == '&' || c == 'Ñ'))
+            return false;
+        
+        return System.Text.RegularExpressions.Regex.IsMatch(rfc, rfcPattern);
     }
 
     /// <summary>

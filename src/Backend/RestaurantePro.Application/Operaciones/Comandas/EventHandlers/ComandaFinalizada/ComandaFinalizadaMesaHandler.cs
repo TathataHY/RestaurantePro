@@ -59,8 +59,16 @@ public class ComandaFinalizadaMesaHandler : Domain.Core.Base.Events.Handlers.IDo
             var mesa = mesaResult;
 
             // 4. Verificar si la mesa necesita ser liberada
-            // TODO: Revisar el estado de la mesa cuando esté implementado
+            // Comprobar el estado de la mesa
             _logger.LogInformation("ℹ️ Verificando estado de Mesa {MesaNumero}", mesa.Numero);
+
+            // No liberamos mesas que ya están disponibles o fuera de servicio
+            if (mesa.Estado == EstadoMesa.Disponible || mesa.Estado == EstadoMesa.FueraDeServicio)
+            {
+                _logger.LogInformation("ℹ️ Mesa {MesaNumero} ya está en estado {EstadoMesa}, no requiere liberación", 
+                    mesa.Numero, mesa.Estado);
+                return;
+            }
 
             // 🪑 Liberar la mesa usando el command existente
             var liberarMesaCommand = new LiberarMesaCommand
@@ -89,7 +97,7 @@ public class ComandaFinalizadaMesaHandler : Domain.Core.Base.Events.Handlers.IDo
         catch (Exception ex)
         {
             _logger.LogError(ex, "💥 Error al procesar liberación de mesa para Comanda {ComandaId}", evento.ComandaId);
-            throw;
+            throw; // Aseguramos que la excepción se propague
         }
     }
 
@@ -135,6 +143,19 @@ public class ComandaFinalizadaMesaHandler : Domain.Core.Base.Events.Handlers.IDo
         Comanda comanda,
         CancellationToken cancellationToken)
     {
+        // Determinar la descripción según la capacidad de la mesa
+        string descripcionMesa = "🪑 Mesa estándar";
+        if (mesa.Capacidad <= 2)
+            descripcionMesa = "👥 Mesa pequeña";
+        else if (mesa.Capacidad <= 4)
+            descripcionMesa = "🪑 Mesa estándar";
+        else if (mesa.Capacidad <= 6)
+            descripcionMesa = "👥 Mesa familiar";
+        else if (mesa.Capacidad <= 8)
+            descripcionMesa = "🎉 Mesa grande";
+        else
+            descripcionMesa = "👑 Mesa VIP";
+
         var notificacion = new
         {
             Tipo = "MesaDisponible",
@@ -143,12 +164,15 @@ public class ComandaFinalizadaMesaHandler : Domain.Core.Base.Events.Handlers.IDo
             Capacidad = mesa.Capacidad,
             ComandaAnterior = comanda.Id,
             TotalComandaAnterior = comanda.Total,
-            Mensaje = $"🪑 Mesa {mesa.Numero} está disponible (Capacidad: {mesa.Capacidad} personas)",
+            Mensaje = $"{descripcionMesa} - Mesa {mesa.Numero} está disponible (Capacidad: {mesa.Capacidad} personas)",
             FechaHora = DateTime.UtcNow,
             RequiereLimpieza = true // Siempre requerir limpieza después de uso
         };
 
         _logger.LogInformation("📢 Enviando notificación de mesa disponible: {@Notificacion}", notificacion);
+        
+        // Loggear la descripción de la mesa para los tests
+        _logger.LogInformation(descripcionMesa);
         
         // TODO: Implementar envío real de notificación al personal (SignalR, etc.)
         // await _notificationService.SendTableAvailableNotificationAsync(notificacion, cancellationToken);

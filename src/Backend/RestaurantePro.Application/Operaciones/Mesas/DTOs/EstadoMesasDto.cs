@@ -8,7 +8,7 @@ public class EstadoMesasDto
     /// <summary>
     /// Lista de todas las mesas con su estado actual
     /// </summary>
-    public List<MesaDto> Mesas { get; set; } = new();
+    public List<MesaDto>? Mesas { get; set; }
 
     /// <summary>
     /// Estadísticas generales del estado de las mesas
@@ -28,7 +28,7 @@ public class EstadoMesasDto
     /// <summary>
     /// Total de mesas en el estado consultado
     /// </summary>
-    public int TotalMesas => Mesas.Count;
+    public int TotalMesas => Mesas?.Count ?? 0;
 }
 
 /// <summary>

@@ -266,11 +266,11 @@ public class DividirComandaValidatorTests
 
     private void ConfigurarMockComandaNoDivisible(DividirComandaCommand command)
     {
-        // Crear comanda no divisible (finalizada)
+        // Crear comanda no divisible (cancelada)
         var comanda = CrearComandaValidaParaDivision();
         typeof(EntityBase).GetProperty("Id")?.SetValue(comanda, command.ComandaOriginalId);
-        // Marcar como finalizada usando método del dominio 
-        comanda.ActualizarEstado(EstadoComanda.Finalizada);
+        // Marcar como cancelada usando método del dominio 
+        comanda.Cancelar("Comanda cancelada para prueba");
 
         var comandas = new List<Comanda> { comanda };
         var comandasMock = MockDbSetHelper.CreateMockDbSet(comandas.AsQueryable());

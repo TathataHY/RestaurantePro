@@ -95,7 +95,7 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
             // 7. Generar resultado consolidado
             var resultado = await GenerarResultadoConsolidado(comanda, factura, request, fidelizacionResult, liberacionResult, cancellationToken);
 
-            _logger.LogInformation("✅ Pedido procesado completamente - Comanda: {ComandaId}, Factura: {FacturaId}",
+            _logger.LogInformation("✅ Pedido procesado exitosamente - Comanda: {ComandaId}, Factura: {FacturaId}",
                 request.ComandaId, factura.Id);
 
             return Result.Success(resultado);
@@ -148,7 +148,13 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
                     var pagoTarjetaResult = await ProcesarPagoTarjeta(comanda, request.InfoPago, cancellationToken);
                     if (!pagoTarjetaResult.Succeeded)
                     {
-                        return pagoTarjetaResult;
+                        // Aseguramos que el mensaje de error incluya la frase requerida
+                        string errorMessage = pagoTarjetaResult.Error;
+                        if (!errorMessage.Contains("Error en el procesamiento del pago"))
+                        {
+                            errorMessage = "Error en el procesamiento del pago: " + errorMessage;
+                        }
+                        return Result.Failure(errorMessage);
                     }
                 }
 
@@ -158,7 +164,7 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Error procesando pago para comanda {ComandaId}: {Error}", comanda.Id, ex.Message);
-                return Result.Failure("Error procesando el pago");
+                return Result.Failure("Error en el procesamiento del pago: " + ex.Message);
             }
         }
 
@@ -172,12 +178,12 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
         
         if (string.IsNullOrEmpty(infoPago.NumeroTarjeta) || infoPago.NumeroTarjeta.Length < 16)
         {
-            return Result.Failure("Número de tarjeta inválido");
+            return Result.Failure("Error en el procesamiento del pago: Número de tarjeta inválido");
         }
 
         if (infoPago.MontoTotal != comanda.Total.Total)
         {
-            return Result.Failure("El monto del pago no coincide con el total de la comanda");
+            return Result.Failure("Error en el procesamiento del pago: El monto del pago no coincide con el total de la comanda");
         }
 
         // Simular tiempo de procesamiento
@@ -191,45 +197,48 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
 
     private async Task<Result> FinalizarComandaSiEsNecesario(Comanda comanda, CancellationToken cancellationToken)
     {
-        if (comanda.Estado != EstadoComanda.Finalizada)
+        if (comanda.Estado == EstadoComanda.Finalizada)
         {
-            try
-            {
-                // Obtener el UserId del servicio y convertir a Guid de manera segura
-                var usuarioId = Guid.Empty;
-                if (_currentUserService != null && 
-                    !string.IsNullOrEmpty(_currentUserService.UserId) && 
-                    Guid.TryParse(_currentUserService.UserId, out var parsedUserId))
-                {
-                    usuarioId = parsedUserId;
-                }
-
-                var finalizarCommand = new FinalizarComandaCommand
-                {
-                    ComandaId = comanda.Id,
-                    UsuarioId = usuarioId,
-                    FechaFinalizacion = _dateTimeService?.Now ?? DateTime.Now,
-                    ObservacionesFinalizacion = "Finalizada automáticamente al procesar pedido completo",
-                    ValidarTodosItemsListos = true,
-                    NotificarMesero = false
-                };
-
-                var result = await _mediator.Send(finalizarCommand, cancellationToken);
-                if (!result.Succeeded)
-                {
-                    return Result.Failure($"Error finalizando comanda: {result.Error}");
-                }
-
-                _logger.LogInformation("✅ Comanda finalizada automáticamente: {ComandaId}", comanda.Id);
-                return Result.Success();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error finalizando comanda {ComandaId}: {Error}", comanda.Id, ex.Message);
-                return Result.Failure("Error finalizando la comanda");
-            }
+            _logger.LogWarning("⚠️ Intento de procesar comanda que ya está finalizada: {ComandaId}", comanda.Id);
+            return Result.Failure("La comanda ya está finalizada. No se puede procesar nuevamente.");
         }
 
+        try
+        {
+            // Obtener el UserId del servicio y convertir a Guid de manera segura
+            var usuarioId = Guid.Empty;
+            if (_currentUserService != null && 
+                !string.IsNullOrEmpty(_currentUserService.UserId) && 
+                Guid.TryParse(_currentUserService.UserId, out var parsedUserId))
+            {
+                usuarioId = parsedUserId;
+            }
+
+            var finalizarCommand = new FinalizarComandaCommand
+            {
+                ComandaId = comanda.Id,
+                UsuarioId = usuarioId,
+                FechaFinalizacion = _dateTimeService?.Now ?? DateTime.Now,
+                ObservacionesFinalizacion = "Finalizada automáticamente al procesar pedido completo",
+                ValidarTodosItemsListos = true,
+                NotificarMesero = false
+            };
+
+            var result = await _mediator.Send(finalizarCommand, cancellationToken);
+            if (!result.Succeeded)
+            {
+                return Result.Failure($"Error finalizando comanda: {result.Error}");
+            }
+
+            _logger.LogInformation("✅ Comanda finalizada automáticamente: {ComandaId}", comanda.Id);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error finalizando comanda {ComandaId}: {Error}", comanda.Id, ex.Message);
+            return Result.Failure("Error finalizando la comanda");
+        }
+        
         return Result.Success();
     }
 
@@ -252,7 +261,7 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
             var result = await _mediator.Send(crearFacturaCommand, cancellationToken);
             if (!result.Succeeded)
             {
-                return Result.Failure<Factura>($"Error creando factura: {result.Error}");
+                return Result.Failure<Factura>($"Error al generar factura: {result.Error}");
             }
 
             var facturaDto = result.Value;
@@ -264,7 +273,7 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error creando factura para comanda {ComandaId}: {Error}", comanda.Id, ex.Message);
-            return Result.Failure<Factura>("Error creando la factura");
+            return Result.Failure<Factura>("Error al generar factura");
         }
     }
 

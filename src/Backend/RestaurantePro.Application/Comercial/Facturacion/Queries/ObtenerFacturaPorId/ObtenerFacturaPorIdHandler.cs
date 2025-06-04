@@ -23,6 +23,9 @@ public class ObtenerFacturaPorIdHandler : IRequestHandler<ObtenerFacturaPorIdQue
     {
         try
         {
+            // Verificar explícitamente si la cancelación ha sido solicitada
+            cancellationToken.ThrowIfCancellationRequested();
+            
             _logger.LogInformation("Consultando factura por ID: {FacturaId}", request.FacturaId);
 
             // 1. Obtener la factura con las relaciones necesarias
@@ -31,6 +34,9 @@ public class ObtenerFacturaPorIdHandler : IRequestHandler<ObtenerFacturaPorIdQue
                 // .Include(f => f.Cliente)
                 // .Include(f => f.Detalles)
                 .FirstOrDefaultAsync(f => f.Id == request.FacturaId, cancellationToken);
+
+            // Verificar nuevamente la cancelación después de la operación de base de datos
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (factura == null)
             {
@@ -59,6 +65,17 @@ public class ObtenerFacturaPorIdHandler : IRequestHandler<ObtenerFacturaPorIdQue
 
     private FacturaDto CrearFacturaDto(Factura factura, ObtenerFacturaPorIdQuery request)
     {
+        // Verificar si la factura está vencida
+        var estado = factura.Estado;
+        if (factura.FechaVencimiento < DateTime.Now && 
+            factura.Estado != EstadoFactura.Anulada)
+        {
+            estado = EstadoFactura.Vencida;
+        }
+        
+        // Calcular el total correcto a partir de los componentes
+        decimal totalCalculado = factura.Subtotal - factura.TotalDescuentos + factura.TotalImpuestos;
+        
         return new FacturaDto
         {
             Id = factura.Id,
@@ -67,12 +84,12 @@ public class ObtenerFacturaPorIdHandler : IRequestHandler<ObtenerFacturaPorIdQue
             NombreCliente = factura.NombreCliente,
             FechaEmision = factura.FechaEmision,
             FechaVencimiento = factura.FechaVencimiento,
-            Estado = factura.Estado,
+            Estado = estado,
             Tipo = factura.TipoFactura,
             Subtotal = factura.Subtotal,
             Impuestos = factura.TotalImpuestos,
             Descuentos = factura.TotalDescuentos,
-            Total = factura.Total,
+            Total = totalCalculado, // Usar el total calculado en lugar del almacenado
             MontoPagado = factura.TotalPagado,
             FechaPago = factura.FechaPago,
             MetodoPago = "Efectivo", // TODO: Obtener de la entidad cuando esté disponible

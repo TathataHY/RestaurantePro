@@ -40,7 +40,7 @@ public class ModificarReservacionHandler : IRequestHandler<ModificarReservacionC
             var reservacionResult = await ObtenerReservacionCompleta(request.ReservacionId, cancellationToken);
             if (!reservacionResult.Succeeded)
             {
-                // Propagamos el mensaje de error que vendrá con "no existe"
+                // Propagamos el mensaje de error original que ya contiene "no existe"
                 return Result.Failure<ReservacionDto>(reservacionResult.Error);
             }
 
@@ -116,7 +116,7 @@ public class ModificarReservacionHandler : IRequestHandler<ModificarReservacionC
         if (reservacion == null)
         {
             _logger.LogWarning("⚠️ Reservación no encontrada: {ReservacionId}", reservacionId);
-            return Result.Failure<Reservacion>("La reservación especificada no existe");
+            return Result.Failure<Reservacion>($"La reservación con ID {reservacionId} no existe");
         }
 
         return Result.Success(reservacion);

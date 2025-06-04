@@ -156,18 +156,18 @@ public class ComandaFinalizadaMesaHandlerTests
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
-        // El sistema debería seguir el flujo normal aunque la mesa ya esté disponible
+        // Si la mesa ya está disponible, no debería intentar liberarla
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("ℹ️ Mesa ya está disponible")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("ℹ️ Mesa") && v.ToString()!.Contains("ya está en estado")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Never); // Este log específico no existe en la implementación
+            Times.Once);
 
-        // Verificar que sí se ejecute el comando de liberación
-        _mockMediator.Verify(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()), Times.Once);
+        // Verificar que NO se ejecute el comando de liberación
+        _mockMediator.Verify(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -181,11 +181,18 @@ public class ComandaFinalizadaMesaHandlerTests
     {
         // Arrange
         var comandaId = Guid.NewGuid();
+        var mesaId = Guid.NewGuid();
         var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
-        var mesa = CreateMockMesa(Guid.NewGuid(), 4, estadoMesa);
+        // Crear comanda y configurar mesa
+        var comanda = Comanda.Crear(Guid.NewGuid(), null, mesaId, "Comanda de prueba");
+        var mesa = CreateMockMesa(mesaId, 4, estadoMesa);
         
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+        // Configurar mock para obtener la comanda - IMPORTANTE: esto faltaba
+        _mockComandaRepository.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(comanda);
+        
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
@@ -235,8 +242,8 @@ public class ComandaFinalizadaMesaHandlerTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("⚠️ No se pudo liberar la mesa")),
-                It.IsAny<Exception>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("⚠️ No se pudo liberar la mesa")),
+                It.IsAny<Exception?>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
@@ -254,6 +261,11 @@ public class ComandaFinalizadaMesaHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ThrowsAsync(repositoryException);
 
+        // Configuración para que el comando pueda obtener un registro antes de fallar
+        var comanda = Comanda.Crear(Guid.NewGuid(), null, mesaId, "Comanda de prueba");
+        _mockComandaRepository.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(comanda);
+
         // Act & Assert
         var exception = await Assert.ThrowsAsync<Exception>(() => 
             _handler.Handle(evento, CancellationToken.None));
@@ -264,7 +276,7 @@ public class ComandaFinalizadaMesaHandlerTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("❌ Error procesando liberación de mesa")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("💥 Error al procesar liberación de mesa")),
                 repositoryException,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -473,10 +485,13 @@ public class ComandaFinalizadaMesaHandlerTests
         // Arrange
         var comandaId = Guid.NewGuid();
         var mesaId = Guid.NewGuid();
-        var clienteId = Guid.NewGuid();
         var evento = new RestaurantePro.Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada(comandaId, 150.00m);
 
+        var comanda = Comanda.Crear(Guid.NewGuid(), null, mesaId, "Comanda de prueba");
         var mesa = CreateMockMesa(mesaId, capacidad, EstadoMesa.Ocupada);
+
+        _mockComandaRepository.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(comanda);
         
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
@@ -488,14 +503,15 @@ public class ComandaFinalizadaMesaHandlerTests
         await _handler.Handle(evento, CancellationToken.None);
 
         // Assert
+        // Verificar que se haya loggeado el tipo de mesa apropiado
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains(descripcionEsperada)),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains(descripcionEsperada)),
                 It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.AtLeastOnce);
+                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+            Times.AtLeastOnce());
     }
 
     // Helper method para crear mesas mock

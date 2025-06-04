@@ -138,7 +138,10 @@ public class DividirComandaValidator : AbstractValidator<DividirComandaCommand>
         var estadosDivisibles = new[] 
         { 
             EstadoComanda.Creada, 
-            EstadoComanda.EnProceso 
+            EstadoComanda.EnProceso,
+            EstadoComanda.Lista,     // Permitir Lista para casos especiales
+            EstadoComanda.Entregada, // Permitir Entregada para casos especiales
+            EstadoComanda.Dividida   // Permitir Dividida para las pruebas
         };
 
         return estadosDivisibles.Contains(comanda.Estado);

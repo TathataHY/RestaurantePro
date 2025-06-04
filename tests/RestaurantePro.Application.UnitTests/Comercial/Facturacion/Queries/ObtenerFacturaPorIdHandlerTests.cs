@@ -155,8 +155,20 @@ public class ObtenerFacturaPorIdHandlerTests
     public async Task Handle_ConFacturaVencida_DeberiaRetornarFacturaConEstadoVencida()
     {
         // Arrange
-        var facturaId = _facturasEjemplo[3].Id; // Factura vencida
-        var query = new ObtenerFacturaPorIdQuery { FacturaId = facturaId };
+        var fechaVencimientoAntigua = DateTime.Now.AddDays(-10); // Fecha vencida hace 10 días
+        var factura = CrearFacturaConFechas(
+            Guid.NewGuid(),
+            "FAC-VENCIDA-001",
+            DateTime.Now.AddDays(-30), // Fecha emisión 30 días atrás
+            fechaVencimientoAntigua, // Fecha vencimiento 10 días atrás
+            null, // No pagada
+            DateTime.Now.AddDays(-30) // Fecha creación 30 días atrás
+        );
+
+        var facturas = new List<Factura> { factura };
+        ConfigurarMockDbSetConFacturas(facturas);
+        
+        var query = new ObtenerFacturaPorIdQuery { FacturaId = factura.Id };
 
         // Act
         var resultado = await _handler.Handle(query, CancellationToken.None);
@@ -165,7 +177,8 @@ public class ObtenerFacturaPorIdHandlerTests
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeTrue();
         resultado.Value.Estado.Should().Be(EstadoFactura.Vencida);
-        resultado.Value.FechaVencimiento.Should().BeBefore(DateTime.Now);
+        // Verificar que la fecha de vencimiento es la misma que configuramos
+        resultado.Value.FechaVencimiento.Should().Be(fechaVencimientoAntigua);
         resultado.Value.MontoPagado.Should().Be(0);
     }
 

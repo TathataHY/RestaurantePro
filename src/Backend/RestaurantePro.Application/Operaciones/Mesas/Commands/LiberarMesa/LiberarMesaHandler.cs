@@ -64,7 +64,7 @@ public class LiberarMesaHandler : IRequestHandler<LiberarMesaCommand, Result<Uni
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error interno al liberar mesa {MesaId}", request.MesaId);
-            return Result.Failure<Unit>("Error interno del servidor al liberar la mesa");
+            return Result.Failure<Unit>($"Error liberando mesa: {ex.Message}");
         }
     }
 } 
