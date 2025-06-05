@@ -87,7 +87,7 @@ public class ComandaFinalizadaMesaHandler : Domain.Core.Base.Events.Handlers.IDo
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error procesando evento ComandaFinalizada {ComandaId} para liberación de mesa: {ErrorMessage}", notification.ComandaId, ex.Message);
+            _logger.LogError(ex, "💥 Error al procesar liberación de mesa para comanda {ComandaId}: {ErrorMessage}", notification.ComandaId, ex.Message);
             throw; // Propagamos la excepción para que pueda ser manejada por un nivel superior
         }
     }

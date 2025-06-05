@@ -30,6 +30,9 @@ public class ObtenerReservacionPorIdQuery : IRequest<Result<ReservacionDto>>
     /// </summary>
     public static ObtenerReservacionPorIdQuery Basica(Guid id)
     {
+        if (id == Guid.Empty)
+            throw new ArgumentException("El ID de la reservación es requerido", nameof(id));
+            
         return new ObtenerReservacionPorIdQuery
         {
             Id = id,
@@ -44,6 +47,9 @@ public class ObtenerReservacionPorIdQuery : IRequest<Result<ReservacionDto>>
     /// </summary>
     public static ObtenerReservacionPorIdQuery Completa(Guid id)
     {
+        if (id == Guid.Empty)
+            throw new ArgumentException("El ID de la reservación es requerido", nameof(id));
+            
         return new ObtenerReservacionPorIdQuery
         {
             Id = id,
@@ -58,6 +64,9 @@ public class ObtenerReservacionPorIdQuery : IRequest<Result<ReservacionDto>>
     /// </summary>
     public static ObtenerReservacionPorIdQuery Simple(Guid id)
     {
+        if (id == Guid.Empty)
+            throw new ArgumentException("El ID de la reservación es requerido", nameof(id));
+            
         return new ObtenerReservacionPorIdQuery
         {
             Id = id,

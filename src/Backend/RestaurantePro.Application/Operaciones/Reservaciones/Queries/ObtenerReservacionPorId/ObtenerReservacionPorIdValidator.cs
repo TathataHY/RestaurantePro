@@ -7,12 +7,12 @@ public class ObtenerReservacionPorIdValidator : AbstractValidator<ObtenerReserva
 {
     public ObtenerReservacionPorIdValidator()
     {
-        RuleFor(x => x.Id)
-            .NotEmpty()
-            .WithMessage("El ID de la reservación es requerido")
-            .WithErrorCode("RESERVACION_ID_REQUERIDO")
-            .NotEqual(Guid.Empty)
-            .WithMessage("El ID de la reservación no puede ser un GUID vacío")
-            .WithErrorCode("RESERVACION_ID_REQUERIDO");
+        // Hacemos que solo valide Id si el objeto no es nulo para evitar excepciones
+        When(x => x != null, () => {
+            RuleFor(x => x.Id)
+                .NotEmpty()
+                .WithMessage("El ID de la reservación es requerido para realizar la consulta")
+                .WithErrorCode("RESERVACION_ID_REQUERIDO");
+        });
     }
 } 

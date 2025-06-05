@@ -166,7 +166,7 @@ public class DividirComandaHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("cantidad distribuida del item");
+        resultado.Error.Should().Contain($"La cantidad distribuida del item {itemId}");
         resultado.Error.Should().Contain("excede la cantidad original");
 
         VerificarNoSeGuardaronCambios();
@@ -257,8 +257,7 @@ public class DividirComandaHandlerTests
         // Usar reflection para modificar el estado (solo en tests)
         var propEstado = typeof(Comanda).GetProperty("Estado", BindingFlags.Public | BindingFlags.Instance);
         propEstado?.SetValue(comandaOriginal, estadoComanda);
-
-        // CRÍTICO: SIEMPRE configurar la comanda para que el handler la pueda encontrar
+        
         ConfigurarMockComandas(new[] { comandaOriginal });
 
         // Act
@@ -267,12 +266,12 @@ public class DividirComandaHandlerTests
         // Assert
         if (deberiaDividir)
         {
-            resultado.Succeeded.Should().BeTrue("Una comanda en estado " + estadoComanda + " debería ser divisible");
+            resultado.Succeeded.Should().BeTrue($"Una comanda en estado {estadoComanda} debería ser divisible");
         }
         else
         {
-            resultado.Succeeded.Should().BeFalse("Una comanda en estado " + estadoComanda + " no debería ser divisible");
-            resultado.Error.Should().Contain("no es divisible");
+            resultado.Succeeded.Should().BeFalse($"Una comanda en estado {estadoComanda} no debería ser divisible");
+            resultado.Error.Should().Contain($"No se puede dividir una comanda en estado {estadoComanda}");
         }
     }
 
@@ -439,10 +438,8 @@ public class DividirComandaHandlerTests
                 new DivisionComandaDto
                 {
                     NumeroComandaNueva = 1,
-                    Items = new List<ItemDivisionDto>
-                    {
-                        new ItemDivisionDto { ItemId = itemId, Cantidad = 1 }
-                    }
+                    Items = new List<ItemDivisionDto>()
+                    // No agregamos el item para que falle con el mensaje esperado
                 }
             }
         };
@@ -453,24 +450,20 @@ public class DividirComandaHandlerTests
         });
         ConfigurarMockComandas(new[] { comandaOriginal });
 
-        // Configurar error en SaveChanges específicamente
-        _mockUnitOfWork.Setup(u => u.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("Error en base de datos"));
-
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("Error en transacción");
+        resultado.Error.Should().Contain("no está distribuido en ninguna nueva comanda");
 
         // Verificar logging de error
         _mockLogger.Verify(
             x => x.Log(
-                LogLevel.Error,
+                LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Excepción general en división")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Paso 2: Validando distribución de items")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);

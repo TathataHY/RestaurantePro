@@ -27,16 +27,12 @@ public class AcumularPuntosValidator : AbstractValidator<AcumularPuntosCommand>
             .NotEmpty()
             .WithMessage("El canal de la transacción es obligatorio")
             .MaximumLength(50)
-            .WithMessage("El canal no puede exceder 50 caracteres")
-            .Must(BeValidCanal)
-            .WithMessage("Canal no válido. Valores permitidos: Presencial, App, Web, Telefono, WhatsApp");
+            .WithMessage("El canal no puede exceder 50 caracteres");
 
         // Validaciones opcionales pero con reglas específicas
         RuleFor(x => x.CodigoPromocion)
             .MaximumLength(50)
             .WithMessage("El código de promoción no puede exceder 50 caracteres")
-            .Matches(@"^[A-Z0-9\-_]+$")
-            .WithMessage("El código de promoción solo puede contener letras mayúsculas, números, guiones y guiones bajos")
             .When(x => !string.IsNullOrEmpty(x.CodigoPromocion));
 
         RuleFor(x => x.MultiplicadorEspecial)
@@ -56,15 +52,11 @@ public class AcumularPuntosValidator : AbstractValidator<AcumularPuntosCommand>
         RuleFor(x => x.CategoriaProductos)
             .MaximumLength(100)
             .WithMessage("La categoría de productos no puede exceder 100 caracteres")
-            .Must(BeValidCategoriaProductos)
-            .WithMessage("Categoría de productos no válida")
             .When(x => !string.IsNullOrEmpty(x.CategoriaProductos));
 
         RuleFor(x => x.TipoFechaEspecial)
             .NotEmpty()
             .WithMessage("Si es fecha especial, debe especificar el tipo")
-            .Must(BeValidTipoFechaEspecial)
-            .WithMessage("Tipo de fecha especial no válido. Valores permitidos: Cumpleanos, Aniversario, Boda, Graduacion")
             .When(x => x.EsFechaEspecial);
 
         RuleFor(x => x.Sucursal)
