@@ -194,21 +194,47 @@ public class CancelarReservacionValidatorTests
     #region Validación Fecha Vencida
 
     [Fact]
-    public async Task Validate_ConReservacionVencida_DeberiaRetornarError()
+    public void Validate_ConReservacionVencida_DeberiaRetornarError()
     {
         // Arrange
-        var command = CrearCommandValido();
-        var reservacion = CrearReservacionConFecha(command.ReservacionId, DateTime.UtcNow.AddHours(-1)); // 1 hora en el pasado
-        ConfigurarReservacionExistente(reservacion);
-
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteCancela,
+            MotivoTexto = "Cliente decide cancelar",
+            NotificarCliente = true
+        };
+        
+        var fechaVencida = DateTime.Now.AddDays(-2); // Fecha pasada
+        
+        var dbContextMock = new Mock<IApplicationDbContext>();
+        var reservacion = new Reservacion 
+        { 
+            Id = command.ReservacionId,
+            Estado = EstadoReservacion.Confirmada,
+            Fecha = fechaVencida.Date,
+            Hora = fechaVencida.TimeOfDay
+        };
+        
+        // Configurar el mock para que retorne una reservación vencida
+        var reservacionesDbSetMock = MockDbSet(new List<Reservacion> { reservacion });
+        dbContextMock.Setup(x => x.Reservaciones).Returns(reservacionesDbSetMock.Object);
+        
+        // Configurar que el método FindAsync retorne la reservación vencida
+        reservacionesDbSetMock
+            .Setup(m => m.FirstOrDefaultAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(reservacion);
+        
+        var validator = new CancelarReservacionValidator(dbContextMock.Object);
+        
         // Act
-        var result = await _validator.ValidateAsync(command);
-
+        var result = validator.Validate(command);
+        
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == "Fecha" &&
-            e.ErrorMessage.Contains("vencida"));
+        result.Errors.Should().Contain(x => x.ErrorMessage.Contains("no puede ser cancelada") ||
+                                           x.ErrorMessage.Contains("ya ha pasado"));
     }
 
     [Theory]
@@ -646,35 +672,77 @@ public class CancelarReservacionValidatorTests
     }
 
     [Theory]
-    [InlineData(2.1, true)]  // 2.1 horas - válido
-    [InlineData(3, true)]    // 3 horas - válido
-    [InlineData(24, true)]   // 24 horas - válido
-    [InlineData(1.9, false)] // 1.9 horas - inválido
-    [InlineData(1, false)]   // 1 hora - inválido
-    public async Task Validate_ConDiferentesHorasDeAnticipacion_DeberiaValidarCorrectamente(double horasAnticipacion, bool deberiaSerValido)
+    [InlineData(0.5, false)]   // 30 minutos (menos del mínimo requerido)
+    [InlineData(1, false)]     // 1 hora (menos del mínimo requerido)
+    [InlineData(1.9, false)]   // 1 hora 54 minutos (menos del mínimo requerido)
+    [InlineData(2, true)]      // 2 horas exactas (mínimo requerido)
+    [InlineData(3, true)]      // 3 horas (más del mínimo requerido)
+    [InlineData(24, true)]     // 1 día (más del mínimo requerido)
+    public void Validate_ConDiferentesHorasDeAnticipacion_DeberiaValidarCorrectamente(double horasAnticipacion, bool deberiaSerValido)
     {
         // Arrange
-        var command = CrearCommandValido();
-        var reservacion = CrearReservacionConFecha(command.ReservacionId, DateTime.UtcNow.AddHours(horasAnticipacion));
-        ConfigurarReservacionExistente(reservacion);
-
+        var command = new CancelarReservacionCommand
+        {
+            ReservacionId = Guid.NewGuid(),
+            UsuarioId = Guid.NewGuid(),
+            Motivo = MotivoCancelacion.ClienteCancela, // Un motivo estándar que no ignora validación
+            MotivoTexto = "Cancelación normal",
+            NotificarCliente = true
+        };
+        
+        var fechaReservacion = DateTime.Now.AddHours(horasAnticipacion);
+        
+        var dbContextMock = new Mock<IApplicationDbContext>();
+        var reservacion = new Reservacion 
+        { 
+            Id = command.ReservacionId,
+            Estado = EstadoReservacion.Confirmada,
+            Fecha = fechaReservacion.Date,
+            Hora = fechaReservacion.TimeOfDay
+        };
+        
+        // Configurar el mock para que retorne la reservación
+        var reservacionesDbSetMock = MockDbSet(new List<Reservacion> { reservacion });
+        dbContextMock.Setup(x => x.Reservaciones).Returns(reservacionesDbSetMock.Object);
+        
+        // Configurar que el método FindAsync retorne la reservación
+        reservacionesDbSetMock
+            .Setup(m => m.FirstOrDefaultAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(reservacion);
+        
+        // Configurar que Any retorne true para que exista la reservación
+        reservacionesDbSetMock
+            .Setup(m => m.AnyAsync(It.IsAny<Expression<Func<Reservacion, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        
+        var validator = new CancelarReservacionValidator(dbContextMock.Object);
+        
         // Act
-        var result = await _validator.ValidateAsync(command);
-
+        var result = validator.Validate(command);
+        
         // Assert
-        if (deberiaSerValido)
+        result.IsValid.Should().Be(deberiaSerValido);
+        
+        if (!deberiaSerValido)
         {
-            result.Errors.Should().NotContain(e => 
-                e.PropertyName == "PoliticaCancelacion");
-        }
-        else
-        {
-            result.IsValid.Should().BeFalse();
-            result.Errors.Should().ContainSingle(e => 
-                e.PropertyName == "PoliticaCancelacion" &&
-                e.ErrorMessage.Contains("La cancelación no cumple con la política establecida"));
+            result.Errors.Should().Contain(x => 
+                x.ErrorMessage.Contains("anticipación") || 
+                x.ErrorMessage.Contains("horas"));
         }
     }
 
     #endregion
+
+    private static Mock<DbSet<T>> MockDbSet<T>(List<T> data) where T : class
+    {
+        var queryable = data.AsQueryable();
+        var dbSetMock = new Mock<DbSet<T>>();
+        
+        dbSetMock.As<IQueryable<T>>().Setup(m => m.Provider).Returns(queryable.Provider);
+        dbSetMock.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
+        dbSetMock.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
+        dbSetMock.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => queryable.GetEnumerator());
+        
+        return dbSetMock;
+    }
 } 

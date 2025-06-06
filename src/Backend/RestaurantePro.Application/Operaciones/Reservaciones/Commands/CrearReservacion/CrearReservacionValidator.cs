@@ -96,10 +96,9 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
 
     private static bool BeFutureDate(DateTime fechaHora)
     {
-        // Para los tests, consideramos válida cualquier fecha en el futuro o de hoy
-        // Y para fechas pasadas menos de una hora (para manejar casos límite)
+        // Consideramos válida cualquier fecha en el futuro o de hoy
         var ahora = DateTime.Now;
-        return fechaHora >= ahora.AddHours(-1);
+        return fechaHora >= ahora;
     }
 
     private static bool IsToday(DateTime fechaHora)
@@ -146,8 +145,8 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
             return true;
         }
 
-        // Para hoy, debe ser al menos 2 horas después (para tests reducimos a 1 hora)
-        return fechaHora >= DateTime.Now.AddHours(1);
+        // Para hoy, debe ser al menos 2 horas después
+        return fechaHora >= DateTime.Now.AddHours(2);
     }
 
     private static bool BeValidPhoneNumber(string telefono)

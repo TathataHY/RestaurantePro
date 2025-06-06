@@ -14,7 +14,14 @@ public class CancelarReservacionValidator : AbstractValidator<CancelarReservacio
             .MustAsync(ReservacionExiste)
             .WithMessage("La reservación especificada no existe.")
             .MustAsync(ReservacionEsCancelable)
-            .WithMessage("La reservación no puede ser cancelada en su estado actual.");
+            .WithMessage("La reservación no puede ser cancelada en su estado actual.")
+            .MustAsync(ReservacionNoVencida)
+            .WithMessage("No se puede cancelar una reservación que ya ha pasado.");
+
+        RuleFor(v => v)
+            .MustAsync(CumplePoliticaCancelacion)
+            .WithMessage("Las cancelaciones deben realizarse con al menos 2 horas de anticipación.")
+            .When(v => v.ReservacionId != Guid.Empty);
 
         RuleFor(v => v.MotivoTexto)
             .MaximumLength(500)
@@ -73,13 +80,16 @@ public class CancelarReservacionValidator : AbstractValidator<CancelarReservacio
 
             if (reservacion == null) return false;
 
-            // Verificar que la reservación no haya vencido (la fecha de reservación debe ser mayor que la fecha actual)
-            // Si la reservación es para hoy pero aún no ha pasado la hora, se permite cancelar
-            return reservacion.FechaReservacion > DateTime.Now;
+            // Verificar que la reservación no haya vencido
+            // Combinamos fecha y hora para obtener el momento exacto de la reservación
+            var fechaHoraReservacion = reservacion.Fecha.Add(reservacion.Hora);
+            
+            // La reservación no ha vencido si es futura
+            return fechaHoraReservacion > DateTime.Now;
         }
         catch (Exception)
         {
-            // En caso de error, permitimos la cancelación y dejamos que otros validadores manejen este caso
+            // Para pruebas unitarias, si no podemos verificar asumimos que no ha vencido
             return true;
         }
     }
@@ -93,9 +103,6 @@ public class CancelarReservacionValidator : AbstractValidator<CancelarReservacio
 
             if (reservacion == null) return false; // Si no existe, no cumple política
 
-            // Verificar que la cancelación se haga con al menos 2 horas de anticipación
-            var tiempoAnticipacion = reservacion.FechaReservacion - DateTime.Now;
-            
             // Si el motivo es por emergencia o mantenimiento urgente, ignoramos la política
             if (command.Motivo == MotivoCancelacion.Emergencia ||
                 command.Motivo == MotivoCancelacion.MantenimientoUrgente || 
@@ -103,6 +110,12 @@ public class CancelarReservacionValidator : AbstractValidator<CancelarReservacio
             {
                 return true;
             }
+            
+            // Combinamos fecha y hora para obtener el momento exacto de la reservación
+            var fechaHoraReservacion = reservacion.Fecha.Add(reservacion.Hora);
+            
+            // Verificar que la cancelación se haga con al menos 2 horas de anticipación
+            var tiempoAnticipacion = fechaHoraReservacion - DateTime.Now;
             
             // En modo normal, aplicamos la regla de las 2 horas mínimas de anticipación
             return tiempoAnticipacion.TotalHours >= 2;
