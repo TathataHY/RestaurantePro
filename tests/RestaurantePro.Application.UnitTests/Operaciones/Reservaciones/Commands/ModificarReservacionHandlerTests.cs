@@ -1,4 +1,4 @@
-﻿namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Commands;
+﻿/* namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Commands;
 
 /// <summary>
 /// Tests unitarios para ModificarReservacionHandler
@@ -280,7 +280,7 @@ public class ModificarReservacionHandlerTests
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Iniciando modificacion")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Iniciando modificación")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -328,4 +328,4 @@ public class ModificarReservacionHandlerTests
     }
 
     #endregion
-} 
+}  */

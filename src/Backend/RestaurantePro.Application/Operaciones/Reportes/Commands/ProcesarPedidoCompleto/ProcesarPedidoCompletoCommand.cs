@@ -1,3 +1,6 @@
+using MediatR;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+
 namespace RestaurantePro.Application.Operaciones.Reportes.Commands.ProcesarPedidoCompleto;
 
 /// <summary>
@@ -59,6 +62,16 @@ public class ProcesarPedidoCompletoCommand : IRequest<Result<ProcesarPedidoCompl
     /// Observaciones para la factura
     /// </summary>
     public string? ObservacionesFactura { get; set; }
+
+    /// <summary>
+    /// Dirección de entrega del pedido
+    /// </summary>
+    public string? DireccionEntrega { get; set; }
+
+    /// <summary>
+    /// Teléfono de contacto para la entrega
+    /// </summary>
+    public string? TelefonoEntrega { get; set; }
 
     /// <summary>
     /// ID del usuario que procesa el pedido

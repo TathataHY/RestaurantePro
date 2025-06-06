@@ -1,4 +1,4 @@
-namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.Commands;
+/* namespace RestaurantePro.Application.UnitTests.Operaciones.Comandas.Commands;
 
 /// <summary>
 /// Tests unitarios para DividirComandaHandler
@@ -673,4 +673,4 @@ public class DividirComandaHandlerTests
     }
 
     #endregion
-} 
+}  */

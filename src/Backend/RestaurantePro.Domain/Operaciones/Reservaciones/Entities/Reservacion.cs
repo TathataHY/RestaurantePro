@@ -176,9 +176,14 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
         /// </summary>
         public void Cancelar(string motivo)
         {
-            if (Estado == EstadoReservacion.Completada || Estado == EstadoReservacion.Cancelada)
+            if (Estado == EstadoReservacion.Cancelada)
             {
-                throw new InvalidOperationException($"La reservación con estado {Estado} no puede cancelarse");
+                throw new InvalidOperationException($"La reservación ya está cancelada");
+            }
+            
+            if (Estado == EstadoReservacion.Completada)
+            {
+                throw new InvalidOperationException($"La reservación completada no puede ser cancelada");
             }
 
             Estado = EstadoReservacion.Cancelada;

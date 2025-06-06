@@ -252,27 +252,44 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
         // Categorización básica de motivos - podría implementarse con IA/ML en futuras versiones
         motivo = motivo?.ToLower() ?? string.Empty;
         
+        string categoria;
+        
         if (motivo.Contains("error") || motivo.Contains("duplicado") || motivo.Contains("prueba"))
         {
-            return "Error Administrativo";
+            categoria = "❌ Error Administrativo";
+            _logger.LogInformation("❌ Error Administrativo: Cliente desactivado por error administrativo");
         }
         else if (motivo.Contains("solicitud") || motivo.Contains("cliente") || motivo.Contains("pide"))
         {
-            return "Solicitud del Cliente";
+            categoria = "Solicitud del Cliente";
+            _logger.LogInformation("✅ Solicitud voluntaria: Cliente solicitó desactivación");
         }
-        else if (motivo.Contains("pago") || motivo.Contains("factura") || motivo.Contains("deuda"))
+        else if (motivo.Contains("pago") || motivo.Contains("factura") || motivo.Contains("deuda") || motivo.Contains("incumplimiento"))
         {
-            return "Problemas de Pago";
+            categoria = "Problemas de Pago";
+            _logger.LogInformation("💳 Problemas financieros: Cliente con problemas de pago");
         }
         else if (motivo.Contains("uso") || motivo.Contains("inactiv") || motivo.Contains("abandon"))
         {
-            return "Inactividad";
+            categoria = "⏰ Inactividad";
+            _logger.LogInformation("⏰ Inactividad: Cliente sin actividad reciente");
         }
-        else if (motivo.Contains("fraude") || motivo.Contains("abus") || motivo.Contains("términos"))
+        else if (motivo.Contains("fraude") || motivo.Contains("abus") || motivo.Contains("términos") || motivo.Contains("comportamiento"))
         {
-            return "Violación de Términos";
+            categoria = "Violación de Términos";
+            _logger.LogInformation("⚠️ Violación de políticas: Cliente infringió los términos de servicio");
+        }
+        else if (motivo.Contains("mudó") || motivo.Contains("traslado") || motivo.Contains("residencia") || motivo.Contains("ciudad"))
+        {
+            categoria = "🏠 Cambio de residencia";
+            _logger.LogInformation("🏠 Cambio de residencia: Cliente cambió de ubicación");
+        }
+        else
+        {
+            categoria = "Otros";
+            _logger.LogInformation("❓ Motivo no categorizado: {Motivo}", motivo);
         }
         
-        return "Otros";
+        return categoria;
     }
 } 

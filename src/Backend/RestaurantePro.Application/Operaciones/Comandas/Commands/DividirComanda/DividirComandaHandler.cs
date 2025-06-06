@@ -441,6 +441,3 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
 
     #endregion
 }
-
-
-

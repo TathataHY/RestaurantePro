@@ -9,7 +9,7 @@ public class AnularFacturaHandlerTests
     private readonly Mock<IApplicationDbContext> _contextMock;
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<ILogger<AnularFacturaHandler>> _loggerMock;
-    private readonly Mock<IServicioFacturacion> _servicioFacturacionMock;
+    private readonly Mock<IDateTimeService> _dateTimeServiceMock;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
     private readonly Mock<IEmailService> _emailServiceMock;
     private readonly Mock<INotificationService> _notificationServiceMock;
@@ -22,7 +22,7 @@ public class AnularFacturaHandlerTests
         _contextMock = new Mock<IApplicationDbContext>();
         _mapperMock = new Mock<IMapper>();
         _loggerMock = new Mock<ILogger<AnularFacturaHandler>>();
-        _servicioFacturacionMock = new Mock<IServicioFacturacion>();
+        _dateTimeServiceMock = new Mock<IDateTimeService>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
         _emailServiceMock = new Mock<IEmailService>();
         _notificationServiceMock = new Mock<INotificationService>();
@@ -37,7 +37,7 @@ public class AnularFacturaHandlerTests
             _contextMock.Object,
             _mapperMock.Object,
             _loggerMock.Object,
-            _servicioFacturacionMock.Object,
+            _dateTimeServiceMock.Object,
             _currentUserServiceMock.Object,
             _emailServiceMock.Object,
             _notificationServiceMock.Object);
