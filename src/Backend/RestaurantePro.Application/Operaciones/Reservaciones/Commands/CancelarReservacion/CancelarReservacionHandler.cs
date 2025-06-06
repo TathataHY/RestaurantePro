@@ -1,24 +1,40 @@
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
+
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Commands.CancelarReservacion;
 
+/// <summary>
+/// Handler para cancelar una reservación
+/// </summary>
 public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCommand, Result<ReservacionDto>>
 {
     private readonly IApplicationDbContext _context;
     private readonly ILogger<CancelarReservacionHandler> _logger;
-    private readonly INotificationService _notificationService;
     private readonly IEmailService _emailService;
+    private readonly INotificationService _notificationService;
     private readonly IMapper _mapper;
 
     public CancelarReservacionHandler(
         IApplicationDbContext context,
         ILogger<CancelarReservacionHandler> logger,
-        INotificationService notificationService,
         IEmailService emailService,
+        INotificationService notificationService,
         IMapper mapper)
     {
         _context = context;
         _logger = logger;
-        _notificationService = notificationService;
         _emailService = emailService;
+        _notificationService = notificationService;
         _mapper = mapper;
     }
 
@@ -31,104 +47,51 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
             
             _logger.LogInformation("Iniciando cancelación de reservación {ReservacionId}", request.ReservacionId);
 
-            // 1. Obtener la reservación
+            // Buscar la reservación
             var reservacion = await _context.Reservaciones
-                // TODO: Descomentar cuando las relaciones estén implementadas
-                // .Include(r => r.Cliente)
-                // .Include(r => r.Mesa)
+                .Include(r => r.Cliente)
+                .Include(r => r.Mesa)
                 .FirstOrDefaultAsync(r => r.Id == request.ReservacionId, cancellationToken);
-
-            // Verificar nuevamente si se solicitó cancelación después de la operación de repositorio
-            cancellationToken.ThrowIfCancellationRequested();
 
             if (reservacion == null)
             {
                 _logger.LogWarning("Reservación {ReservacionId} no encontrada", request.ReservacionId);
-                return Result.Failure<ReservacionDto>("La reservación no fue encontrada");
+                return Result<ReservacionDto>.Failure($"No se encontró la reservación con ID {request.ReservacionId}");
             }
 
-            // 2. Validar estado actual
-            if (!PuedeSerCancelada(reservacion))
-            {
-                var mensaje = reservacion.Estado switch
-                {
-                    EstadoReservacion.Cancelada => "La reservación ya está cancelada",
-                    EstadoReservacion.Completada => "La reservación completada no puede ser cancelada",
-                    _ => "La reservación no puede ser cancelada en su estado actual"
-                };
-                
-                _logger.LogWarning("Reservación {ReservacionId} no puede ser cancelada en estado {Estado}", 
-                    request.ReservacionId, reservacion.Estado);
-                return Result.Failure<ReservacionDto>(mensaje);
-            }
-
-            // 3. Validar política de cancelación (2 horas mínimo)
-            if (!CumplePoliticaCancelacion(reservacion))
-            {
-                _logger.LogWarning("Reservación {ReservacionId} no cumple política de cancelación", request.ReservacionId);
-                return Result.Failure<ReservacionDto>("La cancelación debe realizarse con al menos 2 horas de anticipación según la política de cancelación");
-            }
-
-            // 4. Cancelar la reservación usando el método de dominio
-            var estadoAnterior = reservacion.Estado;
-            var motivoCancelacion = !string.IsNullOrWhiteSpace(request.MotivoDetalle) 
-                ? request.MotivoDetalle 
-                : "Cancelación solicitada";
-
+            // Intentar cancelar la reservación
             try
             {
-                reservacion.Cancelar(motivoCancelacion);
+                // La validación de estado ya se hizo en el validator
+                reservacion.Cancelar(request.MotivoDetalle ?? request.Motivo.ToString());
+                
+                // Registrar la cancelación
+                _logger.LogInformation("Reservación {ReservacionId} cancelada por {UsuarioId}. Motivo: {Motivo}", 
+                    reservacion.Id, request.UsuarioId, request.MotivoDetalle);
+                
+                // Guardar cambios
+                await _context.SaveChangesAsync(cancellationToken);
+                
+                // Notificar al cliente si es necesario
+                if (request.NotificarCliente && reservacion.Cliente != null)
+                {
+                    await NotificarCliente(reservacion, request);
+                }
+                
+                // Crear DTO para retornar
+                var reservacionDto = _mapper.Map<ReservacionDto>(reservacion);
+                return Result<ReservacionDto>.Success(reservacionDto);
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning("No se puede cancelar la reservación {ReservacionId}: {Error}", 
-                    request.ReservacionId, ex.Message);
-                return Result.Failure<ReservacionDto>(ex.Message);
+                _logger.LogWarning(ex, "Error al cancelar reservación {ReservacionId}: {Error}", request.ReservacionId, ex.Message);
+                return Result<ReservacionDto>.Failure(ex.Message);
             }
-
-            // 5. Liberar la mesa si estaba asignada
-            // TODO: Implementar cuando Mesa esté disponible
-            /*
-            if (reservacion.Mesa != null)
-            {
-                reservacion.Mesa.Estado = EstadoMesa.Disponible;
-                _logger.LogInformation("Mesa {MesaNumero} liberada automáticamente", reservacion.Mesa.Numero);
-            }
-            */
-
-            // Verificar nuevamente si se solicitó cancelación antes de guardar cambios
-            cancellationToken.ThrowIfCancellationRequested();
-            
-            // 6. Guardar cambios
-            await _context.SaveChangesAsync(cancellationToken);
-            
-            // Verificar nuevamente si se solicitó cancelación después de guardar cambios
-            cancellationToken.ThrowIfCancellationRequested();
-
-            // 7. Notificar al cliente si se solicita
-            if (request.NotificarCliente)
-            {
-                await NotificarCancelacionCliente(reservacion);
-                cancellationToken.ThrowIfCancellationRequested();
-            }
-
-            // 8. Registrar auditoría
-            await RegistrarAuditoriaCancelacion(reservacion, estadoAnterior, request.CanceladoPor ?? "Sistema");
-            cancellationToken.ThrowIfCancellationRequested();
-
-            _logger.LogInformation("Reservación {ReservacionId} cancelada exitosamente", request.ReservacionId);
-
-            return Result.Success(_mapper.Map<ReservacionDto>(reservacion));
         }
-        catch (OperationCanceledException)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogInformation("Operación cancelada al cancelar reservación {ReservacionId}", request.ReservacionId);
-            throw; // Re-lanzar para que las pruebas de cancelación funcionen
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error al cancelar reservación {ReservacionId}", request.ReservacionId);
-            return Result.Failure<ReservacionDto>("Error interno al cancelar la reservación.");
+            _logger.LogError(ex, "Error inesperado al cancelar reservación {ReservacionId}: {Error}", request.ReservacionId, ex.Message);
+            return Result<ReservacionDto>.Failure($"Error al cancelar la reservación: {ex.Message}");
         }
     }
 
@@ -145,47 +108,53 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
         return tiempoAnticipacion.TotalHours >= 2;
     }
 
-    private async Task NotificarCancelacionCliente(Reservacion reservacion)
+    private async Task NotificarCliente(Reservacion reservacion, CancelarReservacionCommand request)
     {
         try
         {
-            // Usar directamente las propiedades disponibles en la reservación
-            string clienteEmail = reservacion.Email;
-            string clienteNombre = "Cliente"; // Por ahora usar valor por defecto
-            
-            // TODO: Obtener nombre del cliente cuando la navegación esté disponible
-            /*
-            if (reservacion.Cliente != null)
+            if (reservacion.Cliente == null || string.IsNullOrEmpty(reservacion.Email))
             {
-                clienteNombre = reservacion.Cliente.Nombre;
-            }
-            */
-
-            if (!string.IsNullOrWhiteSpace(clienteEmail))
-            {
-                var emailContent = $@"
-                    <h2>Reservación Cancelada</h2>
-                    <p>Estimado/a {clienteNombre},</p>
-                    <p>Su reservación ha sido cancelada.</p>
-                    <p>Lamentamos los inconvenientes. Puede realizar una nueva reservación cuando guste.</p>
-                    <p>Atentamente,<br>Equipo RestaurantePro</p>";
-
-                await _emailService.SendEmailAsync(
-                    clienteEmail,
-                    "Reservación Cancelada - RestaurantePro",
-                    emailContent);
+                _logger.LogWarning("No se puede notificar al cliente de la reservación {ReservacionId} - datos de contacto no disponibles", 
+                    reservacion.Id);
+                return;
             }
 
-            // Notificación en sistema usando el ClienteId de la reservación
-            await _notificationService.EnviarNotificacionAsync(
-                reservacion.ClienteId,
-                "Reservación Cancelada",
-                "Su reservación ha sido cancelada.",
-                "Reservacion");
+            // Primero intentamos enviar un email
+            if (!string.IsNullOrEmpty(reservacion.Email))
+            {
+                var emailSubject = "Cancelación de su reserva";
+                var emailBody = $"Estimado/a {reservacion.Cliente.Nombre},<br><br>" +
+                           $"Le informamos que su reserva para el {reservacion.Fecha:dd/MM/yyyy} a las {reservacion.Hora:hh\\:mm} " +
+                           $"ha sido cancelada.<br><br>" +
+                           $"Motivo: {request.MotivoDetalle}<br><br>" +
+                           $"Lamentamos cualquier inconveniente que esto pueda causarle.<br><br>" +
+                           $"Atentamente,<br>El equipo del restaurante";
+
+                await _emailService.SendEmailAsync(reservacion.Email, emailSubject, emailBody);
+                _logger.LogInformation("Email de cancelación enviado a {Email} para reservación {ReservacionId}", 
+                    reservacion.Email, reservacion.Id);
+            }
+
+            // Luego intentamos enviar una notificación (SMS o push)
+            if (!string.IsNullOrEmpty(reservacion.Telefono))
+            {
+                var mensaje = $"Su reserva para el {reservacion.Fecha:dd/MM/yyyy} a las {reservacion.Hora:hh\\:mm} ha sido cancelada. " +
+                              $"Motivo: {request.Motivo}";
+                
+                await _notificationService.EnviarNotificacionAsync(
+                    reservacion.ClienteId,
+                    "Reservación Cancelada",
+                    mensaje,
+                    "Reservacion");
+                    
+                _logger.LogInformation("Notificación de cancelación enviada a {Telefono} para reservación {ReservacionId}", 
+                    reservacion.Telefono, reservacion.Id);
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al notificar cancelación de reservación {ReservacionId}", 
+            // No queremos que un error de notificación interrumpa el proceso principal
+            _logger.LogError(ex, "Error al enviar notificación de cancelación para reservación {ReservacionId}", 
                 reservacion.Id);
         }
     }
@@ -221,3 +190,4 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
         }
     }
 } 
+

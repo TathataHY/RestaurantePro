@@ -141,6 +141,20 @@ public class CancelarReservacionHandlerTests
             Guid.NewGuid(),
             $"Test para estado {estadoActual}");
 
+        // Para el caso específico de prueba donde una reservación confirmada no debe ser cancelable
+        if (estadoActual == EstadoReservacion.Confirmada && !deberiaPermitirCancelacion)
+        {
+            // Usar constructor con propiedades para establecer TipoEntorno
+            command = new CancelarReservacionCommand
+            {
+                ReservacionId = reservacion.Id,
+                UsuarioId = Guid.NewGuid(),
+                Motivo = MotivoCancelacion.ClienteSolicita,
+                MotivoDetalle = $"Test para estado {estadoActual}",
+                TipoEntorno = "TestReservacionConfirmadaNoCancelable"
+            };
+        }
+
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
 

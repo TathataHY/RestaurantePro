@@ -28,7 +28,7 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
 
         RuleFor(v => v.TipoFactura)
             .NotNull()
-            .WithMessage("El tipo de factura no puede ser nulo.");
+            .WithMessage("El tipo de factura es requerido.");
 
         RuleFor(v => v.TipoFactura)
             .NotEmpty()

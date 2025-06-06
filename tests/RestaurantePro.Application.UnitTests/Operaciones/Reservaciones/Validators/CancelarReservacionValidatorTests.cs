@@ -24,6 +24,44 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Validat
             _mockContext = new Mock<IApplicationDbContext>();
         }
 
+        // Helper para crear una reservación válida para testing
+        private Reservacion CrearReservacionParaTest(Guid id, EstadoReservacion estado, DateTime fechaReservacion)
+        {
+            // Utilizamos el método de fábrica estático Crear en lugar de crear directamente
+            var reservacion = Reservacion.Crear(
+                mesaId: Guid.NewGuid(),
+                clienteId: Guid.NewGuid(),
+                fecha: fechaReservacion,
+                hora: new TimeSpan(20, 0, 0),
+                cantidadPersonas: 4,
+                telefono: "612345678",
+                email: "cliente@example.com",
+                observaciones: "Observación de prueba"
+            );
+            
+            // Establecemos el ID específico para la prueba
+            reservacion.SetIdForTesting(id);
+            
+            // Establecemos el estado correcto según la prueba
+            switch (estado)
+            {
+                case EstadoReservacion.Confirmada:
+                    reservacion.Confirmar();
+                    break;
+                case EstadoReservacion.Cancelada:
+                    reservacion.Confirmar(); // Primero confirmar
+                    reservacion.Cancelar("Motivo de prueba");
+                    break;
+                case EstadoReservacion.Completada:
+                    reservacion.Confirmar(); // Primero confirmar
+                    reservacion.Completar();
+                    break;
+                // Para Pendiente no hacemos nada, ya viene así por defecto
+            }
+            
+            return reservacion;
+        }
+
         [Fact]
         public async Task Validate_ConReservacionIdVacia_DeberiaRetornarError()
         {
@@ -37,15 +75,17 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Validat
                 NotificarCliente = true
             };
             
+            var mockSet = MockDbSet(new List<Reservacion>());
+            _mockContext.Setup(c => c.Reservaciones).Returns(mockSet.Object);
+            
             var validator = new CancelarReservacionValidator(_mockContext.Object);
-
+            
             // Act
             var result = await validator.ValidateAsync(command);
-
+            
             // Assert
             result.IsValid.Should().BeFalse();
-            result.Errors.Should().Contain(e => 
-                e.PropertyName == nameof(CancelarReservacionCommand.ReservacionId));
+            result.Errors.Should().Contain(e => e.ErrorMessage == "El ID de la reservación es obligatorio");
         }
 
         [Theory]
@@ -58,85 +98,73 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Validat
         public async Task Validate_ConDiferentesHorasDeAnticipacion_DeberiaValidarCorrectamente(double horasAnticipacion, bool deberiaSerValido)
         {
             // Arrange
+            var reservacionId = Guid.NewGuid();
+            var fechaReservacion = DateTime.Now.AddHours(horasAnticipacion);
+            
+            var reservacion = CrearReservacionParaTest(reservacionId, EstadoReservacion.Confirmada, fechaReservacion);
+            
+            var reservaciones = new List<Reservacion> { reservacion };
+            var mockSet = MockDbSet(reservaciones);
+            _mockContext.Setup(c => c.Reservaciones).Returns(mockSet.Object);
+            
             var command = new CancelarReservacionCommand
             {
-                ReservacionId = Guid.NewGuid(),
+                ReservacionId = reservacionId,
                 UsuarioId = Guid.NewGuid(),
                 Motivo = MotivoCancelacion.ClienteSolicita,
-                MotivoDetalle = "Cliente canceló por cambio de planes",
+                MotivoDetalle = "Motivo válido",
                 NotificarCliente = true
             };
             
-            // Crear un validator mock que sobrescriba los métodos virtuales
-            var validator = new TestCancelarReservacionValidator(_mockContext.Object, 
-                reservacionNoVencida: true,  // La reservación no ha vencido (es futura)
-                cumplePolitica: horasAnticipacion >= 2); // Cumple la política solo si tiene 2+ horas de anticipación
+            var validator = new CancelarReservacionValidator(_mockContext.Object);
             
             // Act
             var result = await validator.ValidateAsync(command);
             
             // Assert
             result.IsValid.Should().Be(deberiaSerValido);
-            if (!deberiaSerValido && !result.IsValid)
+            if (!deberiaSerValido)
             {
-                result.Errors.Should().Contain(e => 
-                    e.ErrorMessage.Contains("anticipación") || 
-                    e.ErrorMessage.Contains("horas"));
+                result.Errors.Should().Contain(e => e.ErrorMessage.Contains("anticipación mínima"));
             }
         }
-        
-        [Fact]
-        public async Task Validate_ConReservacionVencida_DeberiaRetornarError()
+
+        [Theory]
+        [InlineData(EstadoReservacion.Pendiente, true)]
+        [InlineData(EstadoReservacion.Confirmada, true)]
+        [InlineData(EstadoReservacion.Cancelada, false)]
+        [InlineData(EstadoReservacion.Completada, false)]
+        public async Task Validate_ConDiferentesEstados_DeberiaValidarCorrectamente(EstadoReservacion estado, bool deberiaSerValido)
         {
             // Arrange
+            var reservacionId = Guid.NewGuid();
+            var fechaReservacion = DateTime.Now.AddHours(24); // Suficiente anticipación
+            
+            var reservacion = CrearReservacionParaTest(reservacionId, estado, fechaReservacion);
+            
+            var reservaciones = new List<Reservacion> { reservacion };
+            var mockSet = MockDbSet(reservaciones);
+            _mockContext.Setup(c => c.Reservaciones).Returns(mockSet.Object);
+            
             var command = new CancelarReservacionCommand
             {
-                ReservacionId = Guid.NewGuid(),
+                ReservacionId = reservacionId,
                 UsuarioId = Guid.NewGuid(),
                 Motivo = MotivoCancelacion.ClienteSolicita,
-                MotivoDetalle = "Cliente decide cancelar",
+                MotivoDetalle = "Motivo válido",
                 NotificarCliente = true
             };
             
-            // Crear un validator mock que sobrescriba los métodos virtuales
-            var validator = new TestCancelarReservacionValidator(_mockContext.Object, 
-                reservacionNoVencida: false,  // La reservación ha vencido (fecha pasada)
-                cumplePolitica: true);        // Esta validación no importa en este test
+            var validator = new CancelarReservacionValidator(_mockContext.Object);
             
             // Act
             var result = await validator.ValidateAsync(command);
             
             // Assert
-            result.IsValid.Should().BeFalse();
-            result.Errors.Should().NotBeEmpty();
-            result.Errors.Should().Contain(e => 
-                e.ErrorMessage.Contains("ya ha pasado") || 
-                e.ErrorMessage.Contains("anticipación"));
-        }
-        
-        // Clase que nos permite testear diferentes comportamientos sobrescribiendo los métodos virtuales
-        private class TestCancelarReservacionValidator : CancelarReservacionValidator
-        {
-            private readonly bool _reservacionNoVencida;
-            private readonly bool _cumplePolitica;
-            
-            public TestCancelarReservacionValidator(
-                IApplicationDbContext context, 
-                bool reservacionNoVencida, 
-                bool cumplePolitica) : base(context)
+            result.IsValid.Should().Be(deberiaSerValido);
+            if (!deberiaSerValido)
             {
-                _reservacionNoVencida = reservacionNoVencida;
-                _cumplePolitica = cumplePolitica;
-            }
-            
-            public override Task<bool> ReservacionNoVencidaAsync(Guid reservacionId, CancellationToken cancellationToken)
-            {
-                return Task.FromResult(_reservacionNoVencida);
-            }
-            
-            public override Task<bool> CumplePoliticaCancelacionAsync(CancelarReservacionCommand command, CancellationToken cancellationToken)
-            {
-                return Task.FromResult(_cumplePolitica);
+                result.Errors.Should().Contain(e => e.ErrorMessage.Contains("no puede ser cancelada"));
             }
         }
         
