@@ -102,7 +102,7 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
     private static bool IsDateWithoutTime(DateTime fechaHora)
     {
         // Si la hora es exactamente medianoche, consideramos que es una fecha sin hora específica
-        return fechaHora.TimeOfDay == TimeSpan.Zero;
+        return fechaHora.Hour == 0 && fechaHora.Minute == 0 && fechaHora.Second == 0;
     }
 
     private static bool BeWithin90Days(DateTime fechaHora)
