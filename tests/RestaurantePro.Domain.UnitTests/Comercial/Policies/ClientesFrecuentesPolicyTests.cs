@@ -1,4 +1,20 @@
 #nullable disable
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using FluentAssertions;
+using Moq;
+using Xunit;
+using RestaurantePro.Domain.Comercial.Entities;
+using RestaurantePro.Domain.Comercial.Enums;
+using RestaurantePro.Domain.Comercial.Interfaces;
+using RestaurantePro.Domain.Comercial.Policies;
+using RestaurantePro.Domain.Comercial.ValueObjects;
+using RestaurantePro.Domain.Common.Interfaces;
+using RestaurantePro.Domain.Core.Notifications;
+
 namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
 {
     public class ClientesFrecuentesPolicyTests
@@ -48,7 +64,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(90, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(clientesEnumerable));
                 
-            // Simulamos que tienen tarjetas, pero con nivel básico por defecto
+            // Simulamos que tienen tarjetas, pero con nivel basico por defecto
             foreach (var cliente in clientes)
             {
                 var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, $"TF-{Guid.NewGuid():N}");
@@ -67,7 +83,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             // Assert
             resultado.ClientesActualizados.Should().HaveCount(3);
             
-            // Verificar actualizaciones (al menos una tarjeta por cada nivel de fidelización)
+            // Verificar actualizaciones (al menos una tarjeta por cada nivel de fidelizacion)
             _tarjetaRepositoryMock.Verify(
                 r => r.ActualizarAsync(It.Is<TarjetaFidelizacion>(t => t.NivelFidelizacion == NivelFidelizacion.Plata), It.IsAny<CancellationToken>()),
                 Times.AtLeastOnce);
@@ -110,7 +126,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             _clienteRepositoryMock.Setup(r => r.ObtenerClientesActivosConVisitasAsync(90, It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(clientesEnumerable));
                 
-            // Simular que no tienen tarjeta - usamos variable explícitamente nula
+            // Simular que no tienen tarjeta - usamos variable explicitamente nula
             foreach (var cliente in clientes)
             {
                 _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(cliente.Id, It.IsAny<CancellationToken>()))
@@ -176,8 +192,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             // Usamos reflection para establecer segmentos iniciales diferentes
             var segmentoProperty = typeof(Cliente).GetProperty("Segmento");
             segmentoProperty?.SetValue(clienteFrecuente, SegmentoCliente.SinClasificar);
-            segmentoProperty?.SetValue(clienteInactivo, SegmentoCliente.FrecuenciaAlta); // Cambiará a Inactivo
-            segmentoProperty?.SetValue(clientePremium, SegmentoCliente.TicketAlto);      // Cambiará a Premium
+            segmentoProperty?.SetValue(clienteInactivo, SegmentoCliente.FrecuenciaAlta); // Cambiara a Inactivo
+            segmentoProperty?.SetValue(clientePremium, SegmentoCliente.TicketAlto);      // Cambiara a Premium
             
             var clientes = new List<Cliente> { clienteFrecuente, clienteInactivo, clientePremium };
             
@@ -214,13 +230,13 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 .Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clientePremium.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(tarjetaPremium);
             
-            // Configuraciones específicas para simular el comportamiento que queremos probar
-            // Para clienteInactivo, simulamos que pasó mucho tiempo desde la última visita
+            // Configuraciones especificas para simular el comportamiento que queremos probar
+            // Para clienteInactivo, simulamos que paso mucho tiempo desde la ultima visita
             _dateTimeServiceMock
                 .Setup(d => d.Now)
                 .Returns(new DateTime(2023, 1, 1));
             
-            // Configurar el mock de actualización
+            // Configurar el mock de actualizacion
             _clienteRepositoryMock
                 .Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
@@ -229,7 +245,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             var resultado = await _policy.EjecutarSegmentacionClientes(_cancellationToken);
             
             // Assert
-            // Verificar que se hayan llamado los métodos adecuados
+            // Verificar que se hayan llamado los metodos adecuados
             _clienteRepositoryMock.Verify(
                 r => r.ObtenerClientesConHistorialVisitasAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()),
                 Times.Once);
@@ -239,7 +255,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()),
                 Times.AtLeast(1));
             
-            // Verificar que el resultado contenga información de segmentación
+            // Verificar que el resultado contenga informacion de segmentacion
             resultado.ConteoSegmentos.Should().NotBeEmpty();
             
             // Verificar que se hayan contado todos los segmentos
@@ -252,38 +268,38 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             resultado.ClientesSegmentados.Should().HaveCountGreaterThan(0);
         }
         
-        // Métodos auxiliares para crear objetos de prueba
+        // Metodos auxiliares para crear objetos de prueba
         private Cliente CrearClienteConVisitas(string nombre, int cantidadVisitas, NivelFidelizacion nivelActual)
         {
             var partes = nombre.Split(' ');
             var nombreCliente = ClienteNombre.Crear(
                 partes[0],
                 partes.Length > 1 ? partes[1] : "Apellido");
-                
-            // Usar un formato de email válido sin patrones repetitivos
+
+            // Usar un formato de email valido sin patrones repetitivos
             // Mezclamos texto aleatorio para evitar patrones repetitivos
             var random = new Random();
             var randomText = new string(Enumerable.Range(0, 8)
                 .Select(_ => (char)('a' + random.Next(0, 26)))
                 .ToArray());
-                
-            // Aseguramos que el email sea más variado y menos propenso a tener patrones
-            var email = Email.Create($"{partes[0].ToLower()}{randomText}@mailtest.com");
-            
-            // Usar Crear con todos los parámetros requeridos
+
+            // Aseguramos que el email sea mas variado y menos propenso a tener patrones
+            var email = Email.Create($"{partes[0].ToLower()}{randomText}@example.com");
+
+            // Usar Crear con todos los parametros requeridos
             var cliente = Cliente.Crear(
-                nombreCliente, 
+                nombreCliente,
                 email,
                 "123456789",
                 DateTime.Now.AddYears(-30)); // Agregar fechaNacimiento
-                
+
             // Establecer cantidad de visitas
             for (int i = 0; i < cantidadVisitas; i++)
             {
                 cliente.RegistrarVisita();
             }
-            
-            // Establecer nivel de fidelización directamente
+
+            // Establecer nivel de fidelizacion directamente
             if (nivelActual != NivelFidelizacion.Basico)
             {
                 var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, $"TF-{Guid.NewGuid():N}");
@@ -291,11 +307,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
                 tarjeta.ActualizarNivel(nivelActual);
                 cliente.AsociarTarjetaFidelizacion(tarjeta.Id);
             }
-            
+
             return cliente;
         }
     }
 } 
-
-
-
