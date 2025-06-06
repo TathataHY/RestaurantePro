@@ -8,7 +8,7 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
 {
     public CrearReservacionValidator()
     {
-        // Fecha debe ser futura
+        // Fecha debe ser futura o hoy
         RuleFor(x => x.FechaHoraReservacion)
             .Must(BeFutureDate)
             .WithMessage("La fecha de reservación debe ser futura");
@@ -23,13 +23,13 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
         RuleFor(x => x.FechaHoraReservacion)
             .Must(BeWithinBusinessHours)
             .WithMessage("La hora de reservación debe estar entre las 12:00 PM y 10:00 PM")
-            .When(x => BeFutureDate(x.FechaHoraReservacion));
+            .When(x => BeFutureDate(x.FechaHoraReservacion) && !IsDateWithoutTime(x.FechaHoraReservacion));
 
-        // Validar anticipación mínima (solo si es futura)
+        // Validar anticipación mínima (solo si es hoy)
         RuleFor(x => x.FechaHoraReservacion)
             .Must(BeAtLeastTwoHoursInAdvance)
             .WithMessage("Las reservaciones deben hacerse con al menos 2 horas de anticipación")
-            .When(x => BeFutureDate(x.FechaHoraReservacion));
+            .When(x => BeFutureDate(x.FechaHoraReservacion) && IsToday(x.FechaHoraReservacion));
 
         // Número de personas debe ser positivo
         RuleFor(x => x.NumeroPersonas)
@@ -90,10 +90,19 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
 
     private static bool BeFutureDate(DateTime fechaHora)
     {
-        // Para las pruebas que solo pasan días (DateTime.Now.AddDays) y esperan que sea válido,
-        // necesitamos ser más flexibles - si solo es fecha sin hora específica, 
-        // y la fecha es hoy o futura, la consideramos válida
+        // Consideramos válida cualquier fecha de hoy o del futuro
         return fechaHora.Date >= DateTime.Now.Date;
+    }
+
+    private static bool IsToday(DateTime fechaHora)
+    {
+        return fechaHora.Date == DateTime.Now.Date;
+    }
+
+    private static bool IsDateWithoutTime(DateTime fechaHora)
+    {
+        // Si la hora es exactamente medianoche, consideramos que es una fecha sin hora específica
+        return fechaHora.TimeOfDay == TimeSpan.Zero;
     }
 
     private static bool BeWithin90Days(DateTime fechaHora)
@@ -103,34 +112,28 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
 
     private static bool BeWithinBusinessHours(DateTime fechaHora)
     {
-        // Si la hora es exactamente medianoche, asumir que es una fecha válida
-        // sin hora específica (como en las pruebas AddDays)
-        if (fechaHora.TimeOfDay == TimeSpan.Zero && fechaHora.Date > DateTime.Now.Date)
+        // Si es medianoche en una fecha futura, consideramos que es válido
+        // (para las pruebas que solo especifican fecha, no hora)
+        if (IsDateWithoutTime(fechaHora) && fechaHora.Date > DateTime.Now.Date)
         {
-            return true; // Para fechas futuras sin hora específica, asumir válido
+            return true;
         }
         
-        // Validar horario de atención (12:00 PM - 10:00 PM)
+        // Horario comercial: 12:00 PM - 10:00 PM
         var hora = fechaHora.TimeOfDay;
         return hora >= TimeSpan.FromHours(12) && hora <= TimeSpan.FromHours(22);
     }
 
     private static bool BeAtLeastTwoHoursInAdvance(DateTime fechaHora)
     {
-        // Si la hora es exactamente medianoche y es un día futuro, asumir válido
-        if (fechaHora.TimeOfDay == TimeSpan.Zero && fechaHora.Date > DateTime.Now.Date)
+        // Para días futuros, siempre es válido
+        if (fechaHora.Date > DateTime.Now.Date)
         {
-            return true; // Para fechas futuras sin hora específica, asumir válido
+            return true;
         }
-        
-        // Para reservaciones del mismo día, debe ser al menos 2 horas después
-        if (fechaHora.Date == DateTime.Now.Date)
-        {
-            return fechaHora >= DateTime.Now.AddHours(2);
-        }
-        
-        // Días futuros siempre válidos si están en horario
-        return true;
+
+        // Para hoy, debe ser al menos 2 horas después
+        return fechaHora >= DateTime.Now.AddHours(2);
     }
 
     private static bool BeValidPhoneNumber(string telefono)

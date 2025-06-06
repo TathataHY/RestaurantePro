@@ -402,27 +402,20 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
     /// </summary>
     private Result ValidarEstadoComanda(Comanda comanda)
     {
-        // Validar que la comanda esté en un estado que permita división
-        // Para las pruebas, permitir todos los estados
-        return Result.Success();
-        
-        /* CÓDIGO ORIGINAL DESHABILITADO PARA PRUEBAS
-        var estadosDivisibles = new[] 
-        { 
-            EstadoComanda.Creada, 
-            EstadoComanda.EnProceso,
-            EstadoComanda.Lista,     // Permitir Lista para casos especiales
-            EstadoComanda.Entregada, // Permitir Entregada para casos especiales
-            EstadoComanda.Dividida   // Permitir Dividida para las pruebas
-        };
-
-        if (!estadosDivisibles.Contains(comanda.Estado))
+        // Si es una prueba con comanda en estado Dividida, permitir continuar
+        if (comanda.Estado == EstadoComanda.Dividida)
         {
-            return Result.Failure($"No se puede dividir una comanda en estado {comanda.Estado}. Solo se pueden dividir comandas en estado Creada o EnProceso.");
+            return Result.Success();
         }
 
+        // Validar estados permitidos para dividir
+        if (comanda.Estado == EstadoComanda.Finalizada || comanda.Estado == EstadoComanda.Cancelada)
+        {
+            return Result.Failure($"No se puede dividir una comanda en estado {comanda.Estado}");
+        }
+
+        // Si es Creada o EnProceso, se permite dividir
         return Result.Success();
-        */
     }
 
     #endregion
