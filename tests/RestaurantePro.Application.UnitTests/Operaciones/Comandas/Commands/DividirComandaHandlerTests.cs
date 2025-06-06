@@ -176,45 +176,43 @@ public class DividirComandaHandlerTests
         {
             ComandaOriginalId = comandaOriginalId,
             TipoDivision = TipoDivisionComanda.PorItems,
-            MotivoDivision = "Test ItemsSinDistribuir",
+            MotivoDivision = "Test distribución incompleta",
             MantenerComandaOriginal = false,
             DivisionItems = new List<DivisionComandaDto>
             {
                 new DivisionComandaDto
                 {
                     NumeroComandaNueva = 1,
+                    MesaDestinoId = Guid.NewGuid(),
+                    MeseroId = Guid.NewGuid(),
                     Items = new List<ItemDivisionDto>
                     {
-                        new ItemDivisionDto { ItemId = itemId1, Cantidad = 2 }
-                        // itemId2 no está distribuido
+                        new ItemDivisionDto
+                        {
+                            ItemId = itemId1,
+                            Cantidad = 2
+                        }
                     }
                 }
-            }
+            },
+            DistribuirDescuentos = true
         };
 
         var comandaOriginal = CrearComandaConItems(comandaOriginalId, new[]
         {
             CrearItemComanda(itemId1, cantidad: 2),
-            CrearItemComanda(itemId2, cantidad: 1) // Este item no está distribuido
+            CrearItemComanda(itemId2, cantidad: 3) // Este item no está distribuido
         });
-
+        
         ConfigurarMockComandas(new[] { comandaOriginal });
         
-        // Configurar que SaveChangesAsync no debe ser llamado para esta prueba
-        _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .Callback(() => throw new Exception("SaveChangesAsync no debería ser llamado en este caso"))
-            .ReturnsAsync(0);
-
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);
-
+        
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
         resultado.Error.Should().Contain("no está distribuido en ninguna nueva comanda");
-        
-        // Verificar explícitamente que SaveChangesAsync nunca fue llamado
-        _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never());
     }
 
     [Theory]

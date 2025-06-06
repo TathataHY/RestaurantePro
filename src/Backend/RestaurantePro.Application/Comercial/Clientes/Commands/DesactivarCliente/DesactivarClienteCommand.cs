@@ -1,10 +1,15 @@
+﻿using System;
+using MediatR;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using r = RestaurantePro.Domain.Core.SharedKernel.Results.Result;
+
 namespace RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarCliente;
 
 /// <summary>
 /// Command para desactivar un cliente del sistema
 /// Mantiene el registro pero lo marca como inactivo para auditoría
 /// </summary>
-public class DesactivarClienteCommand : IRequest<Result>
+public class DesactivarClienteCommand : IRequest<r>
 {
     /// <summary>
     /// ID único del cliente a desactivar
@@ -70,4 +75,4 @@ public class DesactivarClienteCommand : IRequest<Result>
             NotificarCliente = true
         };
     }
-} 
+}

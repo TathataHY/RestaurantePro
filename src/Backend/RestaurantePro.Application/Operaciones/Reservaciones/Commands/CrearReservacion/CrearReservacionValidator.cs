@@ -21,7 +21,7 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
 
         // Validar horario comercial (solo para tests de horarios)
         RuleFor(x => x.FechaHoraReservacion)
-            .Must(BeWithinBusinessHoursForTests)
+            .Must(BeWithinBusinessHours)
             .WithMessage("La hora de reservación debe estar entre las 12:00 PM y 10:00 PM")
             .When(x => !IsToday(x.FechaHoraReservacion));
 
@@ -97,8 +97,7 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
     private static bool BeFutureDate(DateTime fechaHora)
     {
         // Consideramos válida cualquier fecha en el futuro o de hoy
-        var ahora = DateTime.Now;
-        return fechaHora >= ahora;
+        return fechaHora.Date >= DateTime.Now.Date;
     }
 
     private static bool IsToday(DateTime fechaHora)
@@ -114,38 +113,20 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
 
     private static bool BeWithin90Days(DateTime fechaHora)
     {
-        return fechaHora <= DateTime.Now.AddDays(90);
+        // La fecha no debe ser más de 90 días en el futuro
+        return (fechaHora.Date - DateTime.Now.Date).TotalDays <= 90;
     }
 
     private static bool BeWithinBusinessHours(DateTime fechaHora)
     {
-        // Si es una fecha futura exactamente a medianoche, se considera como una fecha sin tiempo específico
-        // (típicamente para pruebas o cuando se establece solo una fecha)
-        if (fechaHora.Hour == 0 && fechaHora.Minute == 0 && fechaHora.Second == 0 && fechaHora.Date > DateTime.Now.Date)
-        {
-            return true;
-        }
-        
-        // Para tests, también permitimos horarios temprano en la mañana si la fecha es mañana o posterior
-        if (fechaHora.Date > DateTime.Now.Date && fechaHora.Hour < 12)
-        {
-            return true;
-        }
-        
-        // Horario comercial normal: 12:00 PM - 10:00 PM
-        var hora = fechaHora.TimeOfDay;
-        return hora >= TimeSpan.FromHours(12) && hora <= TimeSpan.FromHours(22);
+        // Horario comercial: entre 12:00 PM (hora 12) y 10:00 PM (hora 22)
+        int hora = fechaHora.Hour;
+        return hora >= 12 && hora <= 22;
     }
 
     private static bool BeAtLeastTwoHoursInAdvance(DateTime fechaHora)
     {
-        // Para días futuros, siempre es válido
-        if (fechaHora.Date > DateTime.Now.Date)
-        {
-            return true;
-        }
-
-        // Para hoy, debe ser al menos 2 horas después
+        // Para reservaciones en el mismo día, debe haber al menos 2 horas de anticipación
         return fechaHora >= DateTime.Now.AddHours(2);
     }
 
@@ -165,19 +146,6 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
         // No debe ser solo letras (para casos como "abcdefghij")
         if (telefono.All(c => char.IsLetter(c))) return false;
         
-        return true;
-    }
-
-    private static bool BeWithinBusinessHoursForTests(DateTime fechaHora)
-    {
-        // Para los tests, verificamos que si la hora es 0, 1, 2 o 3 AM, se considera inválida
-        // (para que fallen los tests que esperan que estas horas fallen)
-        if (fechaHora.Hour >= 0 && fechaHora.Hour < 4)
-        {
-            return false;
-        }
-        
-        // Para las demás horas, son válidas en el contexto de los tests
         return true;
     }
 }

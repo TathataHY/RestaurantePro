@@ -1,10 +1,13 @@
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using r = RestaurantePro.Domain.Core.SharedKernel.Results.Result;
+
 namespace RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarCliente;
 
 /// <summary>
 /// Handler para desactivar un cliente
 /// Implementa eliminación lógica (soft delete) manteniendo integridad
 /// </summary>
-public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand, Result>
+public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand, r>
 {
     private readonly IClienteRepository _clienteRepository;
     private readonly ILogger<DesactivarClienteHandler> _logger;
@@ -23,7 +26,7 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
         _emailService = emailService;
     }
 
-    public async Task<Result> Handle(DesactivarClienteCommand request, CancellationToken cancellationToken)
+    public async Task<r> Handle(DesactivarClienteCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -35,21 +38,21 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
             if (cliente == null)
             {
                 _logger.LogWarning("Cliente {ClienteId} no encontrado", request.ClienteId);
-                return Result.Failure("El cliente especificado no existe.");
+                return r.Failure("El cliente especificado no existe.");
             }
 
             // 2. Verificar que el cliente esté activo
             if (!cliente.EstaActivo)
             {
                 _logger.LogWarning("Cliente {ClienteId} ya está desactivado", request.ClienteId);
-                return Result.Failure("El cliente ya está desactivado.");
+                return r.Failure("El cliente ya está desactivado.");
             }
 
             // 3. Validaciones de negocio adicionales
             var validacionResult = await ValidarDesactivacion(cliente);
             if (!validacionResult.Succeeded)
             {
-                return Result.Failure(validacionResult.Error);
+                return r.Failure(validacionResult.Error);
             }
 
             // 4. Categorizar motivo de desactivación y loggear
@@ -82,16 +85,16 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
 
             _logger.LogInformation("Cliente {ClienteId} desactivado exitosamente", request.ClienteId);
 
-            return Result.Success();
+            return r.Success();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al desactivar cliente {ClienteId}", request.ClienteId);
-            return Result.Failure("Error interno al desactivar el cliente.");
+            return r.Failure("Error interno al desactivar el cliente.");
         }
     }
 
-    private async Task<Result> ValidarDesactivacion(Cliente cliente)
+    private async Task<r> ValidarDesactivacion(Cliente cliente)
     {
         // TODO: Descomentar cuando las entidades tengan las propiedades correctas
         /*
@@ -119,7 +122,7 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
         */
 
         // Temporalmente asumir que no hay restricciones
-        return Result.Success();
+        return r.Success();
     }
 
     private async Task DesactivarTarjetasFidelizacion(Cliente cliente)

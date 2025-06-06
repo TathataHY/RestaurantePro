@@ -396,7 +396,7 @@ public class UnificarComandasHandlerTests
             ComandasIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() },
             MesaDestinoId = Guid.NewGuid(),
             MeseroId = Guid.NewGuid(),
-            MotivoUnificacion = "Test error",
+            MotivoUnificacion = "Test error transacción",
             EstrategiaDescuentos = EstrategiaDescuentos.Sumar
         };
 
@@ -414,7 +414,7 @@ public class UnificarComandasHandlerTests
                 }
                 catch (Exception ex)
                 {
-                    return Result.Failure<UnificarComandasDto>($"Error en transacción: {ex.Message}");
+                    return Result.Failure<UnificarComandasDto>($"Error interno al unificar las comandas: {ex.Message}");
                 }
             });
 
