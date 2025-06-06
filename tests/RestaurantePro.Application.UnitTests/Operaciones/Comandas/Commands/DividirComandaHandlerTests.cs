@@ -522,7 +522,7 @@ public class DividirComandaHandlerTests
         _mockContext.Setup(c => c.Mesas).Returns(mesasMock.Object);
 
         // Configurar usuario de comandero
-        var comandero = Usuario.Crear("test-user", "Comandero Test", "test@mail.com", "123456", RolUsuario.Mesero);
+        var comandero = Usuario.Crear("test-user", "Comandero Test", "test@mail.com", RolUsuario.Mesero);
         comandero.GetType().GetProperty("Id")?.SetValue(comandero, Guid.NewGuid());
         var usuarios = new List<Usuario> { comandero };
         var usuariosMock = MockDbSetHelper.CreateMockDbSet(usuarios.AsQueryable());
@@ -600,7 +600,7 @@ public class DividirComandaHandlerTests
                     "Producto Test", 
                     item.Cantidad, 
                     item.PrecioUnitario, 
-                    item.Observaciones ?? string.Empty 
+                    string.Empty // Usar una cadena vacía en lugar de item.Observaciones ?? string.Empty
                 });
             }
         }
