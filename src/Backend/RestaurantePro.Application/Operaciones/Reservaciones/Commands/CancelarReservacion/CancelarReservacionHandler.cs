@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 
+
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Commands.CancelarReservacion;
 
 /// <summary>
@@ -56,7 +57,7 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
             if (reservacion == null)
             {
                 _logger.LogWarning("Reservación {ReservacionId} no encontrada", request.ReservacionId);
-                return Result<ReservacionDto>.Failure($"No se encontró la reservación con ID {request.ReservacionId}");
+                return Result.Failure($"No se encontró la reservación con ID {request.ReservacionId}").ToGeneric<ReservacionDto>();
             }
 
             // Intentar cancelar la reservación
@@ -85,13 +86,13 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
             catch (InvalidOperationException ex)
             {
                 _logger.LogWarning(ex, "Error al cancelar reservación {ReservacionId}: {Error}", request.ReservacionId, ex.Message);
-                return Result<ReservacionDto>.Failure(ex.Message);
+                return Result.Failure(ex.Message).ToGeneric<ReservacionDto>();
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.LogError(ex, "Error inesperado al cancelar reservación {ReservacionId}: {Error}", request.ReservacionId, ex.Message);
-            return Result<ReservacionDto>.Failure($"Error al cancelar la reservación: {ex.Message}");
+            return Result.Failure($"Error al cancelar la reservación: {ex.Message}").ToGeneric<ReservacionDto>();
         }
     }
 

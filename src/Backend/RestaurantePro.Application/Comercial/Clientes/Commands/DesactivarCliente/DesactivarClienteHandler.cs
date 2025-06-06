@@ -1,5 +1,4 @@
 using RestaurantePro.Domain.Core.SharedKernel.Results;
-using r = RestaurantePro.Domain.Core.SharedKernel.Results.Result;
 
 namespace RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarCliente;
 
@@ -7,7 +6,7 @@ namespace RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarClien
 /// Handler para desactivar un cliente
 /// Implementa eliminación lógica (soft delete) manteniendo integridad
 /// </summary>
-public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand, r>
+public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand, Result>
 {
     private readonly IClienteRepository _clienteRepository;
     private readonly ILogger<DesactivarClienteHandler> _logger;
@@ -26,7 +25,7 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
         _emailService = emailService;
     }
 
-    public async Task<r> Handle(DesactivarClienteCommand request, CancellationToken cancellationToken)
+    public async Task<Result> Handle(DesactivarClienteCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -38,21 +37,21 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
             if (cliente == null)
             {
                 _logger.LogWarning("Cliente {ClienteId} no encontrado", request.ClienteId);
-                return r.Failure("El cliente especificado no existe.");
+                return Result.Failure("El cliente especificado no existe.");
             }
 
             // 2. Verificar que el cliente esté activo
             if (!cliente.EstaActivo)
             {
                 _logger.LogWarning("Cliente {ClienteId} ya está desactivado", request.ClienteId);
-                return r.Failure("El cliente ya está desactivado.");
+                return Result.Failure("El cliente ya está desactivado.");
             }
 
             // 3. Validaciones de negocio adicionales
             var validacionResult = await ValidarDesactivacion(cliente);
             if (!validacionResult.Succeeded)
             {
-                return r.Failure(validacionResult.Error);
+                return Result.Failure(validacionResult.Error);
             }
 
             // 4. Categorizar motivo de desactivación y loggear
@@ -85,16 +84,16 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
 
             _logger.LogInformation("Cliente {ClienteId} desactivado exitosamente", request.ClienteId);
 
-            return r.Success();
+            return Result.Success();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al desactivar cliente {ClienteId}", request.ClienteId);
-            return r.Failure("Error interno al desactivar el cliente.");
+            return Result.Failure("Error interno al desactivar el cliente.");
         }
     }
 
-    private async Task<r> ValidarDesactivacion(Cliente cliente)
+    private async Task<Result> ValidarDesactivacion(Cliente cliente)
     {
         // TODO: Descomentar cuando las entidades tengan las propiedades correctas
         /*
@@ -122,7 +121,7 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
         */
 
         // Temporalmente asumir que no hay restricciones
-        return r.Success();
+        return Result.Success();
     }
 
     private async Task DesactivarTarjetasFidelizacion(Cliente cliente)
@@ -248,42 +247,32 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
         }
     }
 
-    /// <summary>
-    /// Categoriza el motivo de desactivación para logging y auditoría
-    /// </summary>
     private string CategorizarMotivoDesactivacion(string motivo)
     {
-        var motivoLower = motivo.ToLowerInvariant();
-
-        if (motivoLower.Contains("solicitud del cliente") || 
-            motivoLower.Contains("solicitud voluntaria") || 
-            motivoLower.Contains("voluntariamente"))
+        // Categorización básica de motivos - podría implementarse con IA/ML en futuras versiones
+        motivo = motivo?.ToLower() ?? string.Empty;
+        
+        if (motivo.Contains("error") || motivo.Contains("duplicado") || motivo.Contains("prueba"))
         {
-            return "✅ Solicitud voluntaria";
+            return "Error Administrativo";
         }
-
-        if (motivoLower.Contains("incumplimiento") || 
-            motivoLower.Contains("pagos") || 
-            motivoLower.Contains("financiero"))
+        else if (motivo.Contains("solicitud") || motivo.Contains("cliente") || motivo.Contains("pide"))
         {
-            return "💳 Problemas financieros";
+            return "Solicitud del Cliente";
         }
-
-        if (motivoLower.Contains("mudó") || 
-            motivoLower.Contains("cambio de ciudad") || 
-            motivoLower.Contains("residencia"))
+        else if (motivo.Contains("pago") || motivo.Contains("factura") || motivo.Contains("deuda"))
         {
-            return "🏠 Cambio de residencia";
+            return "Problemas de Pago";
         }
-
-        if (motivoLower.Contains("comportamiento") || 
-            motivoLower.Contains("inapropiado") || 
-            motivoLower.Contains("violación") || 
-            motivoLower.Contains("políticas"))
+        else if (motivo.Contains("uso") || motivo.Contains("inactiv") || motivo.Contains("abandon"))
         {
-            return "⚠️ Violación de políticas";
+            return "Inactividad";
         }
-
-        return "📋 Otros motivos";
+        else if (motivo.Contains("fraude") || motivo.Contains("abus") || motivo.Contains("términos"))
+        {
+            return "Violación de Términos";
+        }
+        
+        return "Otros";
     }
 } 

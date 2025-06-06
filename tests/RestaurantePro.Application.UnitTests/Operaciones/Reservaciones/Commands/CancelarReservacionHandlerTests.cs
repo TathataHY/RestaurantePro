@@ -26,8 +26,8 @@ public class CancelarReservacionHandlerTests
         _handler = new CancelarReservacionHandler(
             _mockContext.Object,
             _mockLogger.Object,
-            _mockNotificationService.Object,
             _mockEmailService.Object,
+            _mockNotificationService.Object,
             _mockMapper.Object);
 
         _reservacionesEjemplo = CrearReservacionesEjemplo();
