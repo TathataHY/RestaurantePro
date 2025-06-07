@@ -23,12 +23,12 @@ public class ProcesarPedidoCompletoCommand : IRequest<Result<ProcesarPedidoCompl
     /// <summary>
     /// Tipo de pago (Efectivo, Tarjeta, Digital, Transferencia)
     /// </summary>
-    public string TipoPago { get; set; }
+    public string TipoPago { get; set; } = string.Empty;
 
     /// <summary>
     /// Información adicional del pago
     /// </summary>
-    public InfoPagoDto InfoPago { get; set; }
+    public InfoPagoDto InfoPago { get; set; } = new InfoPagoDto();
 
     /// <summary>
     /// Indica si se debe liberar la mesa
@@ -41,43 +41,27 @@ public class ProcesarPedidoCompletoCommand : IRequest<Result<ProcesarPedidoCompl
     public Guid UsuarioId { get; set; }
 
     /// <summary>
+    /// ID del cliente relacionado con la factura
+    /// </summary>
+    public Guid ClienteId { get; set; }
+
+    /// <summary>
+    /// Dirección de entrega (para pedidos a domicilio)
+    /// </summary>
+    public string? DireccionEntrega { get; set; }
+    
+    /// <summary>
+    /// Teléfono de contacto para la entrega (para pedidos a domicilio)
+    /// </summary>
+    public string? TelefonoEntrega { get; set; }
+
+    /// <summary>
     /// Observaciones adicionales para el procesamiento
     /// </summary>
-    public string Observaciones { get; set; }
+    public string Observaciones { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Tipo de servicio (Local, ParaLlevar, Domicilio)
+    /// </summary>
+    public string TipoServicio { get; set; } = "Local";
 }
-
-/// <summary>
-/// DTO con información de pago
-/// </summary>
-public class InfoPagoDto
-{
-    /// <summary>
-    /// Número de tarjeta (si aplica)
-    /// </summary>
-    public string? NumeroTarjeta { get; set; }
-
-    /// <summary>
-    /// Nombre del titular
-    /// </summary>
-    public string? NombreTitular { get; set; }
-
-    /// <summary>
-    /// Monto total del pago
-    /// </summary>
-    public decimal MontoTotal { get; set; }
-
-    /// <summary>
-    /// Moneda del pago
-    /// </summary>
-    public string? Moneda { get; set; } = "USD";
-
-    /// <summary>
-    /// Referencia del pago
-    /// </summary>
-    public string? ReferenciaPago { get; set; }
-
-    /// <summary>
-    /// Observaciones del pago
-    /// </summary>
-    public string? ObservacionesPago { get; set; }
-} 

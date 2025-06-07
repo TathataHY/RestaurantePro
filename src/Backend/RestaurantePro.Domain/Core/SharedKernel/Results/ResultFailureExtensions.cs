@@ -22,11 +22,16 @@ public static class ResultFailureExtensions
     {
         if (result.Succeeded)
         {
-            return Result<T>.Success(defaultValue);
+            return Result.Success(defaultValue);
         }
         else
         {
-            return Result<T>.Failure(result.Error ?? "Error desconocido");
+            if (result.Errors != null && result.Errors.Count > 0)
+            {
+                return Result.Failure<T>(result.Errors);
+            }
+            
+            return Result.Failure<T>(result.Error ?? "Error desconocido");
         }
     }
     

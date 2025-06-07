@@ -20,32 +20,32 @@ namespace RestaurantePro.Application.Operaciones.Reportes.DTOs
         /// <summary>
         /// Tipo de pago (Efectivo, Tarjeta, Digital, Transferencia)
         /// </summary>
-        public string TipoPago { get; set; }
+        public string TipoPago { get; set; } = string.Empty;
         
         /// <summary>
         /// Número de tarjeta (para pagos con tarjeta)
         /// </summary>
-        public string NumeroTarjeta { get; set; }
+        public string? NumeroTarjeta { get; set; }
         
         /// <summary>
         /// Código de transacción para pagos digitales
         /// </summary>
-        public string CodigoTransaccion { get; set; }
+        public string? CodigoTransaccion { get; set; }
         
         /// <summary>
-        /// Código de transferencia (para pagos por transferencia)
+        /// Código de transferencia para pagos por transferencia bancaria
         /// </summary>
-        public string CodigoTransferencia { get; set; }
+        public string? CodigoTransferencia { get; set; }
         
         /// <summary>
-        /// Fecha de vencimiento de la tarjeta
+        /// Fecha de vencimiento de la tarjeta (para pagos con tarjeta)
         /// </summary>
-        public string FechaVencimiento { get; set; }
+        public string? FechaVencimiento { get; set; }
         
         /// <summary>
-        /// Código de seguridad de la tarjeta
+        /// Código de seguridad de la tarjeta (para pagos con tarjeta)
         /// </summary>
-        public string CodigoSeguridad { get; set; }
+        public string? CodigoSeguridad { get; set; }
         
         /// <summary>
         /// Cambio a devolver
@@ -66,5 +66,25 @@ namespace RestaurantePro.Application.Operaciones.Reportes.DTOs
         /// Fecha y hora de la transacción
         /// </summary>
         public DateTime FechaTransaccion { get; set; }
+
+        /// <summary>
+        /// Nombre del titular de la tarjeta
+        /// </summary>
+        public string? NombreTitular { get; set; }
+
+        /// <summary>
+        /// Moneda del pago
+        /// </summary>
+        public string Moneda { get; set; } = "USD";
+        
+        /// <summary>
+        /// Referencia del pago
+        /// </summary>
+        public string? ReferenciaPago { get; set; }
+        
+        /// <summary>
+        /// Observaciones del pago
+        /// </summary>
+        public string? ObservacionesPago { get; set; }
     }
 } 

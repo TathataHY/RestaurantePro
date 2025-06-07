@@ -35,7 +35,12 @@ public class ProcesarPedidoCompletoDto
     /// <summary>
     /// ID de la mesa liberada
     /// </summary>
-    public Guid MesaId { get; set; }
+    public Guid? MesaId { get; set; }
+    
+    /// <summary>
+    /// Información detallada sobre la mesa liberada
+    /// </summary>
+    public MesaLiberadaDto? MesaLiberadaDto { get; set; }
     
     /// <summary>
     /// Fecha y hora del procesamiento
