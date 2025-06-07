@@ -13,9 +13,19 @@ public class ProcesarPedidoCompletoDto
     public Guid ComandaId { get; set; }
     
     /// <summary>
+    /// ID del cliente (opcional)
+    /// </summary>
+    public Guid? ClienteId { get; set; }
+    
+    /// <summary>
     /// ID de la factura generada
     /// </summary>
     public Guid FacturaId { get; set; }
+    
+    /// <summary>
+    /// ID de la entrega (para pedidos a domicilio)
+    /// </summary>
+    public Guid EntregaId { get; set; }
     
     /// <summary>
     /// Total del pedido
@@ -50,7 +60,7 @@ public class ProcesarPedidoCompletoDto
     /// <summary>
     /// Estado final de la comanda
     /// </summary>
-    public string EstadoComanda { get; set; }
+    public string EstadoComanda { get; set; } = string.Empty;
 }
 
 /// <summary>

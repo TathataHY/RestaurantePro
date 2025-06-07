@@ -1,3 +1,5 @@
+using System;
+
 namespace RestaurantePro.Application.Operaciones.Mesas.DTOs;
 
 /// <summary>
@@ -13,7 +15,22 @@ public class LiberarMesaResult
     /// <summary>
     /// Número de la mesa liberada
     /// </summary>
-    public int NumeroMesa { get; set; }
+    public string Numero { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Estado de la mesa después de la liberación
+    /// </summary>
+    public string Estado { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Fecha y hora de la liberación
+    /// </summary>
+    public DateTime FechaLiberacion { get; set; } = DateTime.Now;
+
+    /// <summary>
+    /// Tiempo que estuvo ocupada la mesa
+    /// </summary>
+    public TimeSpan? TiempoOcupacion { get; set; }
 
     /// <summary>
     /// Indica si la liberación fue exitosa
@@ -26,24 +43,9 @@ public class LiberarMesaResult
     public string Mensaje { get; set; } = string.Empty;
 
     /// <summary>
-    /// Fecha y hora de la liberación
-    /// </summary>
-    public DateTime FechaLiberacion { get; set; }
-
-    /// <summary>
-    /// Tiempo total que estuvo ocupada la mesa
-    /// </summary>
-    public TimeSpan TiempoOcupacion { get; set; }
-
-    /// <summary>
     /// Estado anterior de la mesa
     /// </summary>
     public string EstadoAnterior { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Estado actual de la mesa después de la liberación
-    /// </summary>
-    public string EstadoActual { get; set; } = string.Empty;
 
     /// <summary>
     /// Indica si requiere limpieza

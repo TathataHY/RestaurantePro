@@ -1,53 +1,59 @@
+using System;
+
 namespace RestaurantePro.Application.Operaciones.Mesas.DTOs;
 
+/// <summary>
+/// DTO con información de una mesa
+/// </summary>
 public class MesaDto : BaseDto
 {
-    public int Numero { get; set; }
-    // Comentado temporalmente hasta encontrar el enum correcto
-    // public ZonaMesa Zona { get; set; }
-    public string Zona { get; set; } = string.Empty;
-    public int Capacidad { get; set; }
-    public bool Disponible { get; set; }
-    public EstadoMesa Estado { get; set; }
-    public string EstadoTexto => Estado.ToString();
-    public string? Descripcion { get; set; }
-    public bool Activa { get; set; }
+    /// <summary>
+    /// ID de la mesa
+    /// </summary>
+    public Guid Id { get; set; }
     
     /// <summary>
-    /// Ubicación específica de la mesa (compatibilidad con tests)
+    /// Número de la mesa
     /// </summary>
-    public string Ubicacion { get; set; } = string.Empty;
-
+    public string Numero { get; set; } = string.Empty;
+    
     /// <summary>
-    /// Nombre de la mesa (compatibilidad con tests)
+    /// Capacidad de la mesa (número de personas)
     /// </summary>
-    public string Nombre { get; set; } = string.Empty;
+    public int Capacidad { get; set; }
+    
+    /// <summary>
+    /// Estado actual de la mesa
+    /// </summary>
+    public string Estado { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// ID del cliente asignado (si está ocupada)
+    /// </summary>
+    public Guid? ClienteId { get; set; }
+    
+    /// <summary>
+    /// Nombre del cliente (si está disponible)
+    /// </summary>
+    public string NombreCliente { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Zona o área donde se encuentra la mesa
+    /// </summary>
+    public string Zona { get; set; } = string.Empty;
     
     /// <summary>
     /// Tipo de mesa
     /// </summary>
-    public TipoMesa Tipo { get; set; } = TipoMesa.Estandar;
-
-    /// <summary>
-    /// ID del mesero asignado (compatibilidad con tests)
-    /// </summary>
-    public Guid? MeseroAsignadoId { get; set; }
-
-    /// <summary>
-    /// Fecha de asignación del mesero (compatibilidad con tests)
-    /// </summary>
-    public DateTime? FechaAsignacion { get; set; }
+    public string Tipo { get; set; } = string.Empty;
     
-    // Información de ocupación actual
-    public Guid? ComandaActualId { get; set; }
-    public int? NumeroComandaActual { get; set; }
-    public DateTime? FechaOcupacion { get; set; }
-    public TimeSpan? TiempoOcupada => FechaOcupacion.HasValue && Estado == EstadoMesa.Ocupada 
-        ? DateTime.Now - FechaOcupacion.Value 
-        : null;
+    /// <summary>
+    /// Hora de la última actualización
+    /// </summary>
+    public DateTime UltimaActualizacion { get; set; }
     
-    // Estados calculados
-    public bool EstaDisponible => Estado == EstadoMesa.Disponible && Activa;
-    public bool EstaOcupada => Estado == EstadoMesa.Ocupada;
-    public bool EstaReservada => Estado == EstadoMesa.Reservada;
+    /// <summary>
+    /// Indica si la mesa está disponible para ser reservada
+    /// </summary>
+    public bool Disponible => Estado.Equals("Disponible", StringComparison.OrdinalIgnoreCase);
 } 

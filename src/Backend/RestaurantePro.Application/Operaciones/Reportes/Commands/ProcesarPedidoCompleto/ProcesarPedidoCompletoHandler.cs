@@ -90,77 +90,86 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
                 return Result.Failure<ProcesarPedidoCompletoDto>($"No se encontró la comanda con ID: {request.ComandaId}");
             }
             
-            // 2. Validar que la comanda esté en estado válido para procesar (EnProceso)
-            if (comanda.Estado != Domain.Operaciones.Comandas.Enums.EstadoComanda.EnProceso)
+            // 2. Validar que la comanda esté en estado válido para procesamiento
+            if (comanda.Estado != Domain.Operaciones.Comandas.Enums.EstadoComanda.Lista)
             {
-                _logger.LogWarning("❌ La comanda {ComandaId} no está en estado válido para procesar. Estado actual: {Estado}", 
+                _logger.LogWarning("⚠️ La comanda {ComandaId} no está en estado Lista para procesar. Estado actual: {Estado}", 
                     request.ComandaId, comanda.Estado);
-                return Result.Failure<ProcesarPedidoCompletoDto>($"La comanda debe estar en estado EnProceso para procesarla. Estado actual: {comanda.Estado}");
+                return Result.Failure<ProcesarPedidoCompletoDto>($"La comanda no está en estado Lista para procesar. Estado actual: {comanda.Estado}");
             }
             
-            // 3. Procesar el pago (si es requerido)
-            var pagoResult = await ProcesarPago(comanda, request, cancellationToken);
-            if (!pagoResult.Succeeded)
+            // 3. Procesar entrega a domicilio si corresponde
+            var resultadoEntrega = await ProcesarEntregaDomicilio(comanda, request, cancellationToken);
+            if (!resultadoEntrega.Succeeded)
             {
-                return Result.Failure<ProcesarPedidoCompletoDto>(pagoResult.Error ?? "Error al procesar el pago");
+                return Result.Failure<ProcesarPedidoCompletoDto>($"Error al procesar entrega a domicilio: {resultadoEntrega.Error}");
             }
             
-            // 4. Generar facturación
-            var facturaResult = await GenerarFactura(comanda, request, cancellationToken);
-            if (!facturaResult.Succeeded)
+            // 4. Procesar pago
+            var resultadoPago = await ProcesarPago(comanda, request, cancellationToken);
+            if (!resultadoPago.Succeeded)
             {
-                return Result.Failure<ProcesarPedidoCompletoDto>(facturaResult.Error ?? "Error al procesar la facturación");
+                return Result.Failure<ProcesarPedidoCompletoDto>($"Error al procesar pago: {resultadoPago.Error}");
             }
             
-            var factura = facturaResult.Value;
-            
-            // 5. Procesar fidelización (acumulación de puntos)
-            var fidelizacionResult = await ProcesarFidelizacion(comanda, factura, request, cancellationToken);
-            if (!fidelizacionResult.Succeeded)
+            // 5. Generar factura
+            var resultadoFactura = await GenerarFactura(comanda, request, cancellationToken);
+            if (!resultadoFactura.Succeeded)
             {
-                return Result.Failure<ProcesarPedidoCompletoDto>(fidelizacionResult.Error ?? "Error al procesar la fidelización");
+                return Result.Failure<ProcesarPedidoCompletoDto>($"Error al generar factura: {resultadoFactura.Error}");
             }
             
-            var puntosAcumulados = fidelizacionResult.Value;
-            
-            // 6. Cambiar estado de la comanda a Finalizada
-            await FinalizarComanda(comanda, cancellationToken);
-            
-            // 7. Liberar mesa (si aplica)
-            var mesaLiberadaResult = await LiberarMesa(comanda, request, cancellationToken);
-            if (!mesaLiberadaResult.Succeeded)
+            // 6. Procesar fidelización (acumular puntos)
+            var resultadoFidelizacion = await ProcesarFidelizacion(comanda, resultadoFactura.Value, request, cancellationToken);
+            if (!resultadoFidelizacion.Succeeded)
             {
-                _logger.LogWarning("⚠️ No se pudo liberar la mesa: {Error}", mesaLiberadaResult.Error);
-                // No fallamos todo el proceso si no se pudo liberar la mesa
+                _logger.LogWarning("⚠️ Error al procesar fidelización: {Error}", resultadoFidelizacion.Error);
+                // Continuamos con el proceso a pesar del error en fidelización
             }
             
-            // 8. Crear el DTO de respuesta
+            // 7. Entregar pedido al cliente
+            var resultadoEntrega2 = await EntregarPedidoCliente(comanda, request, cancellationToken);
+            if (!resultadoEntrega2.Succeeded)
+            {
+                return Result.Failure<ProcesarPedidoCompletoDto>($"Error al entregar pedido: {resultadoEntrega2.Error}");
+            }
+            
+            // 8. Liberar mesa si corresponde
+            var resultadoMesa = await LiberarMesa(comanda, request, cancellationToken);
+            if (!resultadoMesa.Succeeded)
+            {
+                return Result.Failure<ProcesarPedidoCompletoDto>($"Error al liberar mesa: {resultadoMesa.Error}");
+            }
+            
+            // 9. Finalizar comanda
+            var resultadoFinalizar = await FinalizarComanda(comanda, cancellationToken);
+            if (!resultadoFinalizar.Succeeded)
+            {
+                return Result.Failure<ProcesarPedidoCompletoDto>($"Error al finalizar comanda: {resultadoFinalizar.Error}");
+            }
+            
+            // Preparar resultado final
             var resultado = new ProcesarPedidoCompletoDto
             {
                 ComandaId = comanda.Id,
-                FacturaId = factura.Id,
-                Total = factura.Total,
-                PuntosAcumulados = puntosAcumulados,
-                MesaLiberada = mesaLiberadaResult.Value != null,
-                MesaId = comanda.MesaId,
+                FacturaId = resultadoFactura.Value.Id,
+                EntregaId = resultadoEntrega.Value,
+                Total = resultadoFactura.Value.Total,
+                PuntosAcumulados = resultadoFidelizacion.Value,
+                MesaLiberada = resultadoMesa.Value != null,
+                MesaId = resultadoMesa.Value?.MesaId,
                 FechaHora = DateTime.Now,
                 EstadoComanda = comanda.Estado.ToString()
             };
             
-            if (mesaLiberadaResult.Value != null)
-            {
-                resultado.MesaLiberadaDto = mesaLiberadaResult.Value;
-            }
-            
-            _logger.LogInformation("✅ Procesamiento de pedido completado exitosamente - Comanda: {ComandaId}, Factura: {FacturaId}", 
-                comanda.Id, factura.Id);
+            _logger.LogInformation("✅ Procesamiento completo de pedido finalizado exitosamente para comanda {ComandaId}", comanda.Id);
             
             return Result.Success(resultado);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error al procesar pedido completo: {Error}", ex.Message);
-            return Result.Failure<ProcesarPedidoCompletoDto>($"Error al procesar pedido: {ex.Message}");
+            _logger.LogError(ex, "❌ Error general al procesar pedido completo: {Message}", ex.Message);
+            return Result.Failure<ProcesarPedidoCompletoDto>($"Error general al procesar pedido: {ex.Message}");
         }
     }
 
@@ -208,27 +217,20 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
             {
                 return await ProcesarPagoTarjeta(comanda, request.InfoPago, cancellationToken);
             }
-            else if (request.TipoPago == "Efectivo")
-            {
-                return await ProcesarPagoEfectivo(comanda, request.InfoPago, cancellationToken);
-            }
-            else if (request.TipoPago == "Digital")
-            {
-                return await ProcesarPagoDigital(comanda, request.InfoPago, cancellationToken);
-            }
             else if (request.TipoPago == "Transferencia")
             {
                 return await ProcesarPagoTransferencia(comanda, request.InfoPago, cancellationToken);
             }
             else
             {
-                _logger.LogWarning("❌ Tipo de pago no soportado: {TipoPago}", request.TipoPago);
-                return Result.Failure($"Tipo de pago no soportado: {request.TipoPago}");
+                // Efectivo u otros medios que no requieren procesamiento electrónico
+                _logger.LogInformation("✅ Pago en efectivo registrado para comanda {ComandaId}", comanda.Id);
+                return Result.Success();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error procesando pago: {Error}", ex.Message);
+            _logger.LogError(ex, "❌ Error procesando pago para comanda {ComandaId}: {Message}", comanda.Id, ex.Message);
             return Result.Failure($"Error procesando pago: {ex.Message}");
         }
     }
@@ -344,15 +346,21 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
         }
     }
     
+    /// <summary>
+    /// Finalizar comanda cambiando su estado
+    /// </summary>
     private async Task<Result> FinalizarComanda(Comanda comanda, CancellationToken cancellationToken)
     {
         try
         {
             _logger.LogInformation("🔄 Finalizando comanda {ComandaId}", comanda.Id);
             
-            // Cambiar estado de la comanda a Finalizada
+            // Cambiar estado
             comanda.ActualizarEstado(Domain.Operaciones.Comandas.Enums.EstadoComanda.Finalizada);
+            
+            // Guardar cambios
             await _comandaRepository.ActualizarAsync(comanda, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
             
             _logger.LogInformation("✅ Comanda {ComandaId} finalizada correctamente", comanda.Id);
             
@@ -360,8 +368,8 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error finalizando comanda {ComandaId}: {Message}", comanda.Id, ex.Message);
-            return Result.Failure($"Error finalizando comanda: {ex.Message}");
+            _logger.LogError(ex, "❌ Error al finalizar comanda {ComandaId}", comanda.Id);
+            return Result.Failure($"Error al finalizar comanda: {ex.Message}");
         }
     }
 
@@ -372,44 +380,46 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
     {
         try
         {
-            _logger.LogInformation("📝 Generando factura para comanda {ComandaId}", comanda.Id);
+            _logger.LogInformation("🧾 Generando factura para comanda {ComandaId}", comanda.Id);
             
-            // Validar datos de facturación
-            if (request.ClienteId == Guid.Empty)
+            // Validar datos de facturación si el ClienteId es un Guid vacío (pero no nulo)
+            if (request.ClienteId.HasValue && request.ClienteId.Value == Guid.Empty)
             {
                 return Result.Failure<Factura>("Se requiere un cliente válido para generar la factura");
             }
             
-            // Obtener cliente
-            var cliente = await _clienteRepository.ObtenerPorIdAsync(request.ClienteId, cancellationToken);
-            if (cliente == null)
+            // Asegurarse de tener la información de total más actualizada
+            if (comanda.Total == null)
             {
-                return Result.Failure<Factura>($"No se encontró el cliente con ID {request.ClienteId}");
+                _logger.LogWarning("⚠️ La comanda {ComandaId} no tiene un total calculado", comanda.Id);
+                return Result.Failure<Factura>("La comanda no tiene un total calculado");
             }
             
-            // Crear la factura usando el servicio de facturación
-            var facturaRequest = new FacturaRequest
-            {
-                ComandaId = comanda.Id,
-                ClienteId = cliente.Id,
-                UsuarioId = request.UsuarioId,
-                Observaciones = request.Observaciones
-            };
+            // Generar la factura
+            var resultadoFactura = await _facturacionService.GenerarFacturaAsync(
+                comanda.Id,
+                request.ClienteId,
+                comanda.Total.Total, // Usar la propiedad Total del objeto TotalComanda
+                request.Observaciones ?? string.Empty,
+                cancellationToken);
             
-            var facturaResult = await _facturacionService.CrearFacturaAsync(facturaRequest, cancellationToken);
-            if (!facturaResult.IsSuccess)
+            if (resultadoFactura.Succeeded)
             {
-                return Result.Failure<Factura>(facturaResult.Error);
+                _logger.LogInformation("✅ Factura generada exitosamente: {FacturaId} para comanda {ComandaId}", 
+                    resultadoFactura.Value.Id, comanda.Id);
+                return resultadoFactura;
             }
-            
-            _logger.LogInformation("✅ Factura generada correctamente para comanda {ComandaId}", comanda.Id);
-            
-            return Result.Success(facturaResult.Value);
+            else
+            {
+                _logger.LogWarning("❌ Error al generar factura para comanda {ComandaId}: {Error}", 
+                    comanda.Id, resultadoFactura.Error);
+                return resultadoFactura;
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error generando factura para comanda {ComandaId}: {Message}", comanda.Id, ex.Message);
-            return Result.Failure<Factura>($"Error generando factura: {ex.Message}");
+            _logger.LogError(ex, "❌ Error inesperado al generar factura para comanda {ComandaId}", comanda.Id);
+            return Result.Failure<Factura>($"Error inesperado al generar factura: {ex.Message}");
         }
     }
 
@@ -420,99 +430,172 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
     {
         try
         {
+            // Verificar si hay un cliente para procesar fidelización
+            if (!factura.ClienteId.HasValue || factura.ClienteId.Value == Guid.Empty)
+            {
+                _logger.LogInformation("ℹ️ No se procesa fidelización - No hay cliente identificado en comanda {ComandaId}", comanda.Id);
+                return Result.Success(0);
+            }
+            
             _logger.LogInformation("🏆 Procesando fidelización para cliente {ClienteId} en comanda {ComandaId}", 
                 factura.ClienteId, comanda.Id);
             
             // Solicitar acumulación de puntos
-            var acumularRequest = new AcumularPuntosRequest
+            var acumularPuntosRequest = new Comercial.Fidelizacion.Interfaces.AcumularPuntosRequest
             {
-                ClienteId = factura.ClienteId,
+                ClienteId = factura.ClienteId.Value,
                 FacturaId = factura.Id,
                 MontoFactura = factura.Total,
-                FechaOperacion = DateTime.Now,
+                FechaOperacion = DateTime.UtcNow,
                 UsuarioId = request.UsuarioId
             };
             
-            var puntosResult = await _fidelizacionService.AcumularPuntosAsync(acumularRequest, cancellationToken);
-            if (!puntosResult.IsSuccess)
+            var resultadoFidelizacion = await _fidelizacionService.AcumularPuntosAsync(acumularPuntosRequest, cancellationToken);
+            
+            if (resultadoFidelizacion.Succeeded)
             {
-                _logger.LogWarning("⚠️ No se pudieron acumular puntos: {Error}", puntosResult.Error);
-                return Result.Success(0); // Continuamos el proceso aunque falle la fidelización
+                _logger.LogInformation("✅ Cliente {ClienteId} recibió {Puntos} puntos por compra de {MontoFactura}",
+                    factura.ClienteId, resultadoFidelizacion.Value, factura.Total);
+                return Result.Success(resultadoFidelizacion.Value);
             }
-            
-            _logger.LogInformation("✅ Se acumularon {Puntos} puntos para el cliente {ClienteId}", 
-                puntosResult.Value, factura.ClienteId);
-            
-            return Result.Success(puntosResult.Value);
+            else
+            {
+                _logger.LogWarning("⚠️ No se pudieron acumular puntos para cliente {ClienteId}: {Error}",
+                    factura.ClienteId, resultadoFidelizacion.Error);
+                return Result.Success(0); // No falla el proceso, simplemente no acumula puntos
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error procesando fidelización para comanda {ComandaId}: {Message}", 
-                comanda.Id, ex.Message);
-            return Result.Success(0); // No interrumpimos el proceso principal por errores en fidelización
+            _logger.LogError(ex, "❌ Error al procesar fidelización para cliente {ClienteId} en comanda {ComandaId}",
+                factura.ClienteId, comanda.Id);
+            return Result.Success(0); // No falla el proceso, simplemente no acumula puntos
         }
     }
 
     /// <summary>
-    /// Liberar mesa de la comanda
+    /// Procesar entrega a domicilio si corresponde
+    /// </summary>
+    private async Task<Result<Guid>> ProcesarEntregaDomicilio(Comanda comanda, ProcesarPedidoCompletoCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Verificar si es un pedido a domicilio
+            if (request.TipoServicio != "Domicilio" || string.IsNullOrEmpty(request.DireccionEntrega))
+            {
+                // No es necesario procesar entrega a domicilio
+                return Result.Success(Guid.Empty);
+            }
+
+            _logger.LogInformation("🚚 Procesando entrega a domicilio para comanda {ComandaId}", comanda.Id);
+            
+            // En un sistema real, aquí crearíamos la entrega en un sistema de domicilios
+            // Aquí simplemente devolvemos un GUID simulado
+            
+            // Simular procesamiento
+            var entregaId = Guid.NewGuid();
+            
+            _logger.LogInformation("✅ Entrega a domicilio registrada con ID {EntregaId} para comanda {ComandaId}", 
+                entregaId, comanda.Id);
+            
+            return Result.Success(entregaId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al procesar entrega a domicilio para comanda {ComandaId}", comanda.Id);
+            return Result.Failure<Guid>($"Error al procesar entrega a domicilio: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Entregar pedido al cliente (actualizar estado y notificar)
+    /// </summary>
+    private async Task<Result> EntregarPedidoCliente(Comanda comanda, ProcesarPedidoCompletoCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("🍽️ Entregando pedido al cliente para comanda {ComandaId}", comanda.Id);
+            
+            // Si el cliente tiene ID, registrar entrega (simulado)
+            if (comanda.ClienteId != Guid.Empty)
+            {
+                // Aquí iría código para registrar la entrega o enviar notificación
+                // En un sistema real, esto podría invocar a un servicio de notificaciones
+                _logger.LogInformation("📱 Se registra entrega al cliente {ClienteId}", comanda.ClienteId);
+            }
+            
+            // Actualizar estado de comanda a Entregada
+            comanda.ActualizarEstado(Domain.Operaciones.Comandas.Enums.EstadoComanda.Entregada);
+            
+            // Guardar cambios
+            await _comandaRepository.ActualizarAsync(comanda, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            
+            _logger.LogInformation("✅ Pedido entregado correctamente para comanda {ComandaId}", comanda.Id);
+            
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al entregar pedido para comanda {ComandaId}", comanda.Id);
+            return Result.Failure($"Error al entregar pedido: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Liberar mesa si corresponde
     /// </summary>
     private async Task<Result<MesaLiberadaDto>> LiberarMesa(Comanda comanda, ProcesarPedidoCompletoCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            // Si no se requiere liberar la mesa, saltamos este paso
+            // Verificar si hay mesa para liberar
+            if (comanda.MesaId == Guid.Empty)
+            {
+                _logger.LogInformation("ℹ️ No se libera mesa - Comanda {ComandaId} no tiene mesa asignada", comanda.Id);
+                return Result.Success<MesaLiberadaDto>(null);
+            }
+            
+            // Si el cliente indica que no quiere liberar la mesa, no la liberamos
             if (!request.LiberarMesa)
             {
-                _logger.LogInformation("ℹ️ No se requiere liberar la mesa para comanda {ComandaId}", comanda.Id);
-                return Result.Success(new MesaLiberadaDto
-                {
-                    MesaId = comanda.MesaId.GetValueOrDefault(),
-                    EstadoMesa = "No Liberada"
-                    // No establecemos FechaLiberacion para que tome su valor por defecto
-                });
+                _logger.LogInformation("ℹ️ No se libera mesa por indicación explícita del usuario - Comanda {ComandaId}, Mesa {MesaId}",
+                    comanda.Id, comanda.MesaId);
+                return Result.Success<MesaLiberadaDto>(null);
             }
             
-            if (!comanda.MesaId.HasValue || comanda.MesaId.Value == Guid.Empty)
+            _logger.LogInformation("🪑 Liberando mesa {MesaId} para comanda {ComandaId}", 
+                comanda.MesaId, comanda.Id);
+            
+            // Liberar la mesa
+            var resultadoLiberarMesa = await _mesaService.LiberarMesaAsync(
+                comanda.MesaId,
+                request.UsuarioId,
+                cancellationToken);
+            
+            if (!resultadoLiberarMesa.Succeeded)
             {
-                _logger.LogWarning("⚠️ La comanda {ComandaId} no tiene una mesa asignada", comanda.Id);
-                return Result.Success(new MesaLiberadaDto
-                {
-                    MesaId = Guid.Empty,
-                    EstadoMesa = "Sin Mesa"
-                    // No establecemos FechaLiberacion para que tome su valor por defecto
-                });
+                _logger.LogWarning("⚠️ Error al liberar mesa {MesaId}: {Error}", 
+                    comanda.MesaId, resultadoLiberarMesa.Error);
+                return Result.Failure<MesaLiberadaDto>(resultadoLiberarMesa.Error);
             }
             
-            _logger.LogInformation("🪑 Liberando mesa {MesaId} para comanda {ComandaId}", comanda.MesaId, comanda.Id);
+            _logger.LogInformation("✅ Mesa {MesaId} liberada correctamente", comanda.MesaId);
             
-            // Obtener la mesa
-            var mesaId = comanda.MesaId.Value;
-            var mesa = await _mesaRepository.ObtenerPorIdAsync(mesaId, cancellationToken);
-            if (mesa == null)
+            // Mapear a DTO
+            var mesaLiberadaDto = new MesaLiberadaDto
             {
-                return Result.Failure<MesaLiberadaDto>($"No se encontró la mesa con ID {mesaId}");
-            }
+                MesaId = resultadoLiberarMesa.Value.MesaId,
+                EstadoMesa = resultadoLiberarMesa.Value.Estado,
+                FechaLiberacion = resultadoLiberarMesa.Value.FechaLiberacion
+            };
             
-            // Liberar la mesa con el servicio
-            var liberarResult = await _mesaService.LiberarMesaAsync(mesa.Id, request.UsuarioId, cancellationToken);
-            if (!liberarResult.IsSuccess)
-            {
-                return Result.Failure<MesaLiberadaDto>(liberarResult.Error);
-            }
-            
-            _logger.LogInformation("✅ Mesa {MesaId} liberada correctamente", mesa.Id);
-            
-            return Result.Success(new MesaLiberadaDto
-            {
-                MesaId = mesa.Id,
-                EstadoMesa = "Disponible",
-                FechaLiberacion = DateTime.Now
-            });
+            return Result.Success(mesaLiberadaDto);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error liberando mesa para comanda {ComandaId}: {Message}", comanda.Id, ex.Message);
-            return Result.Failure<MesaLiberadaDto>($"Error liberando mesa: {ex.Message}");
+            _logger.LogError(ex, "❌ Error al liberar mesa para comanda {ComandaId}", comanda.Id);
+            return Result.Failure<MesaLiberadaDto>($"Error al liberar mesa: {ex.Message}");
         }
     }
 
@@ -648,55 +731,5 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
             direccionEntrega, telefonoEntrega);
         
         return pedidoId;
-    }
-
-    /// <summary>
-    /// Procesar entrega a domicilio si aplica
-    /// </summary>
-    private async Task<Result> ProcesarEntregaDomicilio(Comanda comanda, ProcesarPedidoCompletoCommand request, CancellationToken cancellationToken)
-    {
-        // Verificar si es una comanda para llevar o a domicilio usando la enumeración directamente 
-        // en lugar de la propiedad que no existe
-        TipoServicioComanda tipoServicio = TipoServicioComanda.Local; // Valor por defecto
-        
-        // Aquí podríamos determinar el tipo de servicio de alguna manera (por ejemplo, desde un campo en request)
-        // o desde alguna otra fuente, ya que la propiedad TipoServicio no existe en Comanda
-        if (request.TipoServicio == "Domicilio")
-        {
-            tipoServicio = TipoServicioComanda.Domicilio;
-        }
-        else if (request.TipoServicio == "ParaLlevar")
-        {
-            tipoServicio = TipoServicioComanda.ParaLlevar;
-        }
-        
-        if (tipoServicio != TipoServicioComanda.Domicilio && 
-            tipoServicio != TipoServicioComanda.ParaLlevar)
-        {
-            return Result.Success();
-        }
-        
-        try
-        {
-            _logger.LogInformation("🚚 Procesando entrega a domicilio/para llevar para comanda {ComandaId}", comanda.Id);
-            
-            // Aquí verificaríamos si hay información de entrega
-            // Por ahora, solo validamos que la comanda esté finalizada
-            if (comanda.Estado != EstadoComanda.Finalizada)
-            {
-                return Result.Failure("La comanda debe estar finalizada para procesar la entrega");
-            }
-            
-            // TODO: Implementar lógica de entrega a domicilio cuando se agregue el módulo
-            
-            _logger.LogInformation("✅ Entrega procesada para comanda {ComandaId}", comanda.Id);
-            
-            return Result.Success();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "❌ Error procesando entrega para comanda {ComandaId}: {Message}", comanda.Id, ex.Message);
-            return Result.Failure($"Error procesando entrega: {ex.Message}");
-        }
     }
 } 

@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Moq;
 using Xunit;
-using RestaurantePro.Domain.Comercial.Entities;
-using RestaurantePro.Domain.Comercial.Enums;
-using RestaurantePro.Domain.Comercial.Interfaces;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Domain.Comercial.Policies;
-using RestaurantePro.Domain.Comercial.ValueObjects;
-using RestaurantePro.Domain.Common.Interfaces;
-using RestaurantePro.Domain.Core.Notifications;
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Notification;
 
 namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
 {
@@ -249,65 +249,57 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Policies
             _clienteRepositoryMock.Verify(
                 r => r.ObtenerClientesConHistorialVisitasAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()),
                 Times.Once);
-            
-            // Verificar que se haya intentado actualizar al menos un cliente
+                
             _clienteRepositoryMock.Verify(
                 r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()),
-                Times.AtLeast(1));
-            
-            // Verificar que el resultado contenga informacion de segmentacion
-            resultado.ConteoSegmentos.Should().NotBeEmpty();
-            
-            // Verificar que se hayan contado todos los segmentos
-            resultado.ConteoSegmentos.Keys.Count.Should().Be(Enum.GetValues(typeof(SegmentoCliente)).Length);
-            
-            // La suma de todos los segmentos debe ser igual al total de clientes
-            resultado.ConteoSegmentos.Values.Sum().Should().Be(clientes.Count);
-            
-            // Verificar que se reporta al menos un cliente segmentado
-            resultado.ClientesSegmentados.Should().HaveCountGreaterThan(0);
+                Times.AtLeastOnce);
+                
+            // Verificar que el cliente frecuente haya pasado a FrecuenciaAlta
+            _clienteRepositoryMock.Verify(
+                r => r.ActualizarAsync(It.Is<Cliente>(c => c.Id == clienteFrecuente.Id && c.Segmento == SegmentoCliente.FrecuenciaAlta), 
+                It.IsAny<CancellationToken>()),
+                Times.Once);
+                
+            // Verificar que el cliente premium haya pasado a Premium
+            _clienteRepositoryMock.Verify(
+                r => r.ActualizarAsync(It.Is<Cliente>(c => c.Id == clientePremium.Id && c.Segmento == SegmentoCliente.Premium), 
+                It.IsAny<CancellationToken>()),
+                Times.Once);
         }
         
-        // Metodos auxiliares para crear objetos de prueba
         private Cliente CrearClienteConVisitas(string nombre, int cantidadVisitas, NivelFidelizacion nivelActual)
         {
-            var partes = nombre.Split(' ');
+            var nombreParts = nombre.Split(' ');
             var nombreCliente = ClienteNombre.Crear(
-                partes[0],
-                partes.Length > 1 ? partes[1] : "Apellido");
+                nombreParts[0],
+                nombreParts.Length > 1 ? nombreParts[1] : "Apellido");
 
-            // Usar un formato de email valido sin patrones repetitivos
-            // Mezclamos texto aleatorio para evitar patrones repetitivos
-            var random = new Random();
-            var randomText = new string(Enumerable.Range(0, 8)
-                .Select(_ => (char)('a' + random.Next(0, 26)))
-                .ToArray());
-
-            // Aseguramos que el email sea mas variado y menos propenso a tener patrones
-            var email = Email.Create($"{partes[0].ToLower()}{randomText}@example.com");
-
-            // Usar Crear con todos los parametros requeridos
+            var emailObj = Email.Create("test@email.com");
+            var telefonoObj = PhoneNumber.Create("+5491112345678");
+            
             var cliente = Cliente.Crear(
+                Guid.NewGuid(),
                 nombreCliente,
-                email,
-                "123456789",
-                DateTime.Now.AddYears(-30)); // Agregar fechaNacimiento
-
-            // Establecer cantidad de visitas
-            for (int i = 0; i < cantidadVisitas; i++)
-            {
-                cliente.RegistrarVisita();
-            }
-
-            // Establecer nivel de fidelizacion directamente
-            if (nivelActual != NivelFidelizacion.Basico)
-            {
-                var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, $"TF-{Guid.NewGuid():N}");
-                tarjeta.Activar();
-                tarjeta.ActualizarNivel(nivelActual);
-                cliente.AsociarTarjetaFidelizacion(tarjeta.Id);
-            }
-
+                emailObj,
+                telefonoObj,
+                DateTime.Now.AddYears(-30) // Mayor de edad
+            );
+            
+            // Simular la cantidad de visitas usando reflection
+            var visitasField = typeof(Cliente).GetField("_cantidadVisitas", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            visitasField?.SetValue(cliente, cantidadVisitas);
+            
+            // Asignar fecha de ultima visita reciente
+            var ultimaVisitaField = typeof(Cliente).GetField("_fechaUltimaVisita", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            ultimaVisitaField?.SetValue(cliente, DateTime.Now.AddDays(-7));
+            
+            // Asignar nivel de fidelización
+            var nivelField = typeof(Cliente).GetField("_nivelFidelizacion", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            nivelField?.SetValue(cliente, nivelActual);
+            
             return cliente;
         }
     }

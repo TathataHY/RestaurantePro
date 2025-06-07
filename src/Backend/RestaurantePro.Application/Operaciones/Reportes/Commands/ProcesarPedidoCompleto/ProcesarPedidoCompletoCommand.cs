@@ -6,7 +6,8 @@ using RestaurantePro.Domain.Core.SharedKernel.Results;
 namespace RestaurantePro.Application.Operaciones.Reportes.Commands.ProcesarPedidoCompleto;
 
 /// <summary>
-/// Comando para procesar un pedido completo (facturación, pago, liberación mesa)
+/// Comando para procesar completamente un pedido: finalizar comanda, procesar pago, generar factura,
+/// acumular puntos de fidelización y liberar mesa si corresponde.
 /// </summary>
 public class ProcesarPedidoCompletoCommand : IRequest<Result<ProcesarPedidoCompletoDto>>
 {
@@ -16,34 +17,39 @@ public class ProcesarPedidoCompletoCommand : IRequest<Result<ProcesarPedidoCompl
     public Guid ComandaId { get; set; }
 
     /// <summary>
-    /// Indica si se debe procesar el pago
+    /// ID del cliente (opcional)
     /// </summary>
-    public bool RequierePago { get; set; }
+    public Guid? ClienteId { get; set; }
 
     /// <summary>
-    /// Tipo de pago (Efectivo, Tarjeta, Digital, Transferencia)
-    /// </summary>
-    public string TipoPago { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Información adicional del pago
-    /// </summary>
-    public InfoPagoDto InfoPago { get; set; } = new InfoPagoDto();
-
-    /// <summary>
-    /// Indica si se debe liberar la mesa
-    /// </summary>
-    public bool LiberarMesa { get; set; }
-
-    /// <summary>
-    /// ID del usuario que solicita el proceso
+    /// ID del usuario que procesa la comanda
     /// </summary>
     public Guid UsuarioId { get; set; }
 
     /// <summary>
-    /// ID del cliente relacionado con la factura
+    /// Tipo de pago: "Efectivo", "Tarjeta", "Transferencia", etc.
     /// </summary>
-    public Guid ClienteId { get; set; }
+    public string TipoPago { get; set; } = "Efectivo";
+
+    /// <summary>
+    /// Indica si se requiere procesar un pago electrónico
+    /// </summary>
+    public bool RequierePago { get; set; } = false;
+
+    /// <summary>
+    /// Información adicional para el pago electrónico (requerido si RequierePago = true)
+    /// </summary>
+    public InfoPagoDto? InfoPago { get; set; }
+
+    /// <summary>
+    /// Indica si se debe liberar la mesa asociada a la comanda
+    /// </summary>
+    public bool LiberarMesa { get; set; } = true;
+
+    /// <summary>
+    /// Comentarios adicionales para el proceso
+    /// </summary>
+    public string Comentarios { get; set; } = string.Empty;
 
     /// <summary>
     /// Dirección de entrega (para pedidos a domicilio)
