@@ -256,9 +256,13 @@ public class AsignarMesaHandlerTests
         _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
             .ReturnsAsync(mesaOcupada);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _handler.Handle(command, CancellationToken.None));
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("La mesa", result.Error);
+        _mesaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Mesa>()), Times.Never);
     }
 
     [Fact]

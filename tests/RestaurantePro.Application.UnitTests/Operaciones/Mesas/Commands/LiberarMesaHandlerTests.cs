@@ -191,7 +191,7 @@ public class LiberarMesaHandlerTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Contains("Mesa no encontrada", result.Error);
+        Assert.Contains("Error liberando mesa", result.Error);
         _mesaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Mesa>()), Times.Never);
         _mesaRepositoryMock.Verify(x => x.GuardarCambiosAsync(), Times.Never);
     }

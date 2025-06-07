@@ -153,7 +153,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Entities
             // Act & Assert
             Action action = () => reservacion.Cancelar("Motivo");
             action.Should().Throw<InvalidOperationException>()
-                .WithMessage("*no puede cancelarse*");
+                .WithMessage("*La reservación completada no puede ser cancelada*");
         }
 
         [Fact]

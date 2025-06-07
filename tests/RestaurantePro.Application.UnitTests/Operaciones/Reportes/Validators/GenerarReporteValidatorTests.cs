@@ -462,8 +462,8 @@ public class GenerarReporteValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == "ContenidoIncluido")
-            .Which.ErrorMessage.Should().Be("Debe incluir al menos un tipo de contenido en el reporte.");
+        result.Errors.Should().Contain(x => x.PropertyName == "ContenidoIncluido" && 
+            x.ErrorMessage.Contains("Debe incluir al menos un tipo de contenido"));
     }
 
     [Fact]

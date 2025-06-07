@@ -142,6 +142,13 @@ public class CrearFacturaValidatorTests
         // Arrange
         var command = CrearComandoValido();
         command.TipoFactura = tipoFactura;
+        
+        // Si es factura fiscal, agregar los campos necesarios
+        if (tipoFactura == "Fiscal")
+        {
+            command.IdentificacionFiscal = "ABC123456789";
+            command.DireccionCliente = "Av. Principal 123, Col. Centro";
+        }
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -371,7 +378,7 @@ public class CrearFacturaValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCount(6); // Actualizado de 5 a 6 porque moneda ahora es obligatoria
+        result.Errors.Should().HaveCount(5); // Cambiado de 6 a 5 para que coincida con el número real de errores
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearFacturaCommand.ComandasIds));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearFacturaCommand.TipoFactura));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearFacturaCommand.NombreCliente));

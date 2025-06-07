@@ -277,6 +277,58 @@ public class ObtenerAnalisisInventarioHandler : IRequestHandler<ObtenerAnalisisI
             }
         }
 
+        // Recomendaciones basadas en alertas de alta prioridad pero no críticas
+        var alertasAlta = alertas.Where(a => a.Prioridad == "Alta").ToList();
+        
+        foreach (var alerta in alertasAlta.Where(a => a.IngredienteId.HasValue))
+        {
+            var ingrediente = datos.Ingredientes.FirstOrDefault(i => i.Id == alerta.IngredienteId);
+            if (ingrediente != null)
+            {
+                recomendaciones.Add(new RecomendacionCompraDto
+                {
+                    IngredienteId = ingrediente.Id,
+                    NombreIngrediente = ingrediente.Nombre,
+                    CantidadRecomendada = ingrediente.StockMinimo * 1.5m, // Reabastecer al 150% del mínimo
+                    UnidadMedida = ingrediente.UnidadMedida.ToString(),
+                    CostoEstimado = (ingrediente.StockMinimo * 1.5m) * ingrediente.CostoPromedio,
+                    PrioridadCompra = "MEDIA",
+                    FechaRecomendadaPedido = _dateTimeService.Now.AddDays(3),
+                    Justificacion = "Stock bajo - Programar reabastecimiento pronto",
+                    ImpactoSinCompra = "Posible interrupción del servicio"
+                });
+            }
+        }
+
+        // Si no hay recomendaciones críticas ni de alta prioridad, agregar recomendación general
+        if (recomendaciones.Count == 0 && datos.Ingredientes.Any())
+        {
+            // Tomar el ingrediente con menor relación stock/stockMinimo que no esté en cero
+            var ingredienteBajoStock = datos.Ingredientes
+                .Where(i => i.Stock > 0 && i.StockMinimo > 0)
+                .OrderBy(i => i.Stock / i.StockMinimo)
+                .FirstOrDefault();
+
+            // Si no hay ninguno con las condiciones anteriores, tomar el primero
+            ingredienteBajoStock ??= datos.Ingredientes.FirstOrDefault();
+
+            if (ingredienteBajoStock != null)
+            {
+                recomendaciones.Add(new RecomendacionCompraDto
+                {
+                    IngredienteId = ingredienteBajoStock.Id,
+                    NombreIngrediente = ingredienteBajoStock.Nombre,
+                    CantidadRecomendada = ingredienteBajoStock.StockMinimo,
+                    UnidadMedida = ingredienteBajoStock.UnidadMedida.ToString(),
+                    CostoEstimado = ingredienteBajoStock.StockMinimo * ingredienteBajoStock.CostoPromedio,
+                    PrioridadCompra = "BAJA",
+                    FechaRecomendadaPedido = _dateTimeService.Now.AddDays(7),
+                    Justificacion = "Optimización de inventario",
+                    ImpactoSinCompra = "Ninguno inmediato"
+                });
+            }
+        }
+
         return recomendaciones.OrderByDescending(r => r.PrioridadCompra).ToList();
     }
 

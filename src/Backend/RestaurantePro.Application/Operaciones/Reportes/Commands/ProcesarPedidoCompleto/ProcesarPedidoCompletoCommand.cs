@@ -2,6 +2,7 @@ using System;
 using MediatR;
 using RestaurantePro.Application.Operaciones.Reportes.DTOs;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Comercial.Facturacion.Enums;
 
 namespace RestaurantePro.Application.Operaciones.Reportes.Commands.ProcesarPedidoCompleto;
 
@@ -40,6 +41,16 @@ public class ProcesarPedidoCompletoCommand : IRequest<Result<ProcesarPedidoCompl
     /// Información adicional para el pago electrónico (requerido si RequierePago = true)
     /// </summary>
     public InfoPagoDto? InfoPago { get; set; }
+
+    /// <summary>
+    /// Tipo de factura a generar
+    /// </summary>
+    public TipoFactura TipoFactura { get; set; } = TipoFactura.Normal;
+
+    /// <summary>
+    /// Nombre del cliente para la factura
+    /// </summary>
+    public string NombreCliente { get; set; } = string.Empty;
 
     /// <summary>
     /// Indica si se debe liberar la mesa asociada a la comanda

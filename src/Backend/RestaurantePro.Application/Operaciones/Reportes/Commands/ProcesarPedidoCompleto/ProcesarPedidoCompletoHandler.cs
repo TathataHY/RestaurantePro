@@ -395,18 +395,29 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
                 return Result.Failure<Factura>("La comanda no tiene un total calculado");
             }
             
+            // Agregar información de tipo de factura y nombre de cliente a las observaciones
+            string observaciones = request.Observaciones ?? string.Empty;
+            observaciones += $" | Tipo: {request.TipoFactura} | Cliente: {request.NombreCliente}";
+            
+            _logger.LogInformation("📝 Generando factura tipo {TipoFactura} para cliente {NombreCliente}", 
+                request.TipoFactura, request.NombreCliente);
+            
             // Generar la factura
             var resultadoFactura = await _facturacionService.GenerarFacturaAsync(
                 comanda.Id,
                 request.ClienteId,
                 comanda.Total.Total, // Usar la propiedad Total del objeto TotalComanda
-                request.Observaciones ?? string.Empty,
+                observaciones,
                 cancellationToken);
             
             if (resultadoFactura.Succeeded)
             {
                 _logger.LogInformation("✅ Factura generada exitosamente: {FacturaId} para comanda {ComandaId}", 
                     resultadoFactura.Value.Id, comanda.Id);
+                
+                // Aquí se podría actualizar el tipo de factura si existe una propiedad para ello en el modelo Factura
+                // Por ahora lo dejamos en las observaciones
+                
                 return resultadoFactura;
             }
             else

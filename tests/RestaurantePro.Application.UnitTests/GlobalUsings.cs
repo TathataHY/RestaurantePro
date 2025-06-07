@@ -280,8 +280,8 @@ global using ISecurityValidationService = RestaurantePro.Application.Common.Inte
 
 // Interfaces de servicios faltantes para tests - usando aliases temporales
 global using IPagoService = RestaurantePro.Application.Common.Interfaces.IAuditService;
-global using IFacturacionService = RestaurantePro.Application.Common.Interfaces.IAuditService;
-global using IFidelizacionService = RestaurantePro.Application.Common.Interfaces.IAuditService;
+global using IFacturacionService = RestaurantePro.Application.Comercial.Facturacion.Interfaces.IFacturacionService;
+global using IFidelizacionService = RestaurantePro.Application.Comercial.Fidelizacion.Interfaces.IFidelizacionService;
 global using IOrquestadorWorkflowService = RestaurantePro.Application.Common.Interfaces.IAuditService;
 
 // global using IPagoService = RestaurantePro.Application.Common.Interfaces.IPagoService;

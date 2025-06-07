@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Validators;
+using Moq;
 
 /// <summary>
 /// 🔥 TESTS EXHAUSTIVOS PARA CANJEAR PUNTOS VALIDATOR - IMPLEMENTACIÓN COMPLETA
@@ -214,10 +215,10 @@ public class CanjearPuntosValidatorTests
     #region Validación ComandaId
 
     [Fact]
-    public async Task Validate_ConComandaIdVaciaCuandoSeEspecifica_DeberiaRetornarError()
+    public async Task Validate_ConPuntosCero_DeberiaRetornarError()
     {
-        // Arrange
-        var command = CanjearPuntosCommand.Crear(Guid.NewGuid(), 100, Guid.Empty);
+        // Arrange - Creamos un comando usando reflexión para evitar la validación del factory method
+        var command = CreateCommandWithInvalidPoints(0);
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -225,36 +226,74 @@ public class CanjearPuntosValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
+            e.PropertyName == nameof(CanjearPuntosCommand.PuntosAUtilizar) &&
+            e.ErrorMessage.Contains("debe ser mayor a 0"));
+    }
+
+    /// <summary>
+    /// Método auxiliar para crear un comando con puntos inválidos
+    /// </summary>
+    private CanjearPuntosCommand CreateCommandWithInvalidPoints(int puntos)
+    {
+        // Usamos el factory method con valores válidos
+        var validCommand = CanjearPuntosCommand.Crear(Guid.NewGuid(), 100);
+        
+        // Usamos reflexión para establecer los puntos inválidos
+        var field = typeof(CanjearPuntosCommand).GetField("<PuntosAUtilizar>k__BackingField", 
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        field?.SetValue(validCommand, puntos);
+        
+        return validCommand;
+    }
+    
+    [Fact]
+    public async Task Validate_ConComandaIdVaciaCuandoSeEspecifica_DeberiaRetornarError()
+    {
+        // Arrange - Crear un comando con ComandaId = Empty explícitamente
+        var command = CanjearPuntosCommand.Crear(Guid.NewGuid(), 100, Guid.Empty);
+        
+        // Act
+        var result = await _validator.ValidateAsync(command);
+        
+        // Debug - Imprimir la información para entender el problema
+        Console.WriteLine($"ComandaId: {command.ComandaId}, HasValue: {command.ComandaId.HasValue}, IsEmpty: {command.ComandaId == Guid.Empty}");
+        
+        foreach (var error in result.Errors)
+        {
+            Console.WriteLine($"Error: {error.PropertyName} - {error.ErrorMessage}");
+        }
+        
+        // Assert
+        result.IsValid.Should().BeFalse("Un ComandaId vacío debería ser inválido cuando se especifica");
+        result.Errors.Should().Contain(e => 
             e.PropertyName == nameof(CanjearPuntosCommand.ComandaId) &&
             e.ErrorMessage.Contains("El ID de la comanda es obligatorio cuando se especifica"));
     }
-
+    
     [Fact]
-    public async Task Validate_ConComandaIdValidaCuandoSeEspecifica_NoDeberiaRetornarErrorDeComandaId()
+    public async Task Validate_ConComandaIdNull_NoDeberiaRetornarError()
     {
-        // Arrange
-        var command = CanjearPuntosCommand.Crear(Guid.NewGuid(), 100, Guid.NewGuid());
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(CanjearPuntosCommand.ComandaId));
-    }
-
-    [Fact]
-    public async Task Validate_ConComandaIdNull_NoDeberiaValidarComandaId()
-    {
-        // Arrange
+        // Arrange - Crear un comando con ComandaId = null
         var command = CanjearPuntosCommand.Crear(Guid.NewGuid(), 100, null);
 
         // Act
         var result = await _validator.ValidateAsync(command);
 
-        // Assert
-        result.Errors.Should().NotContain(e => 
-            e.PropertyName == nameof(CanjearPuntosCommand.ComandaId));
+        // Assert - El resultado debería ser válido para otros campos, pero sin errores para ComandaId
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CanjearPuntosCommand.ComandaId));
+    }
+    
+    [Fact]
+    public async Task Validate_ConComandaIdValido_NoDeberiaRetornarError()
+    {
+        // Arrange - Crear un comando con un GUID válido
+        var command = CanjearPuntosCommand.Crear(Guid.NewGuid(), 100, Guid.NewGuid());
+
+        // Act
+        var result = await _validator.ValidateAsync(command);
+
+        // Assert - No debería haber errores para ComandaId
+        result.Errors.Should().NotContain(e => e.PropertyName == nameof(CanjearPuntosCommand.ComandaId));
     }
 
     #endregion
@@ -755,27 +794,6 @@ public class CanjearPuntosValidatorTests
 
         // Assert
         result.IsValid.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task Validate_ConPuntosCero_DeberiaRetornarError()
-    {
-        // Arrange
-        var commandBase = CrearCommandValido();
-        var command = CanjearPuntosCommand.Crear(
-            commandBase.ClienteId,
-            0, // Puntos cero - inválido
-            commandBase.ComandaId,
-            commandBase.Motivo);
-
-        // Act
-        var result = await _validator.ValidateAsync(command);
-
-        // Assert
-        result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(CanjearPuntosCommand.PuntosAUtilizar) &&
-            e.ErrorMessage.Contains("La cantidad de puntos debe ser mayor a 0"));
     }
 
     [Fact]

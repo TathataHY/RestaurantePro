@@ -164,27 +164,32 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
     }
 
     /// <summary>
-    /// Configura validaciones de lógica de negocio
+    /// Configura validaciones de negocio específicas
     /// </summary>
     private void ConfigurarValidacionesNegocio()
     {
         // Reportes financieros requieren prioridad alta
         RuleFor(x => x.Prioridad)
-            .Must(prioridad => prioridad == NivelPrioridad.Alta || prioridad == NivelPrioridad.Critica)
+            .Equal(NivelPrioridad.Alta)
             .WithMessage("Los reportes financieros requieren prioridad alta.")
             .When(x => x.TipoReporte == TipoReporte.Financiero);
 
-        // Reportes personalizados requieren nombre personalizado
+        // Reportes personalizados requieren nombre
         RuleFor(x => x.NombrePersonalizado)
             .NotEmpty()
             .WithMessage("El nombre personalizado es requerido para reportes personalizados.")
             .When(x => x.TipoReporte == TipoReporte.Personalizado);
 
+        // Debe tener al menos un tipo de contenido incluido
+        RuleFor(x => x)
+            .Must(x => x.IncluirGraficos || x.IncluirDetalles || x.IncluirResumenEjecutivo)
+            .WithMessage("Debe incluir al menos un tipo de contenido (gráficos, detalles o resumen).")
+            .WithName("ContenidoIncluido");
+
         // Validar que existan datos para el período solicitado
         RuleFor(x => x)
             .MustAsync(PeriodoTieneDatos)
             .WithMessage("El período seleccionado no tiene datos suficientes para generar el reporte.")
-            .When(x => x.FechaInicio < DateTime.Today.AddDays(-90))
             .WithName("DatosDisponibles");
 
         // Limitar reportes concurrentes por usuario

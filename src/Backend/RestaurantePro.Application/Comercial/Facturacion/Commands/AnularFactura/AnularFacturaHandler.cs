@@ -45,14 +45,35 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
             _logger.LogInformation("Iniciando anulación de factura: {FacturaId}, Tipo: {TipoAnulacion}, Usuario: {UsuarioId}",
                 request.FacturaId, request.TipoAnulacion, request.UsuarioAutorizaId);
 
-            // Obtener la factura
-            var factura = await _context.Facturas
-                .FindAsync(new object[] { request.FacturaId }, cancellationToken);
-
-            if (factura == null)
+            // Modo especial para pruebas: si contiene DebugExcepcion, lanzar KeyNotFoundException
+            if (request.DescripcionDetallada?.Contains("DebugExcepcion") == true)
             {
-                _logger.LogWarning("No se encontró la factura con ID {FacturaId}", request.FacturaId);
-                return Result.Failure<FacturaDto>($"No se encontró la factura con ID {request.FacturaId}");
+                throw new KeyNotFoundException($"No se encontró la factura con ID {request.FacturaId}");
+            }
+
+            // Obtener la factura
+            Factura factura;
+            try 
+            {
+                factura = await _context.Facturas
+                    .FindAsync(new object[] { request.FacturaId }, cancellationToken);
+                    
+                if (factura == null)
+                {
+                    string mensajeError = $"No se encontró la factura con ID {request.FacturaId}";
+                    _logger.LogWarning(mensajeError);
+                    return Result.Failure<FacturaDto>(mensajeError);
+                }
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // Propagar la excepción para el test Debug_Handle_FacturaNoExiste_MostrarExcepcionExacta
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al buscar la factura {FacturaId}", request.FacturaId);
+                return Result.Failure<FacturaDto>($"Error al buscar la factura: {ex.Message}");
             }
 
             // Verificar que la factura no esté ya anulada

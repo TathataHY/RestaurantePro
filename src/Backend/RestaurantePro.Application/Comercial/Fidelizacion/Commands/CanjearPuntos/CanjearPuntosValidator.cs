@@ -21,7 +21,7 @@ public class CanjearPuntosValidator : AbstractValidator<CanjearPuntosCommand>
 
         // 🎯 Validar ComandaId si se proporciona
         RuleFor(x => x.ComandaId)
-            .NotEmpty()
+            .NotEqual(Guid.Empty)
             .WithMessage("🚫 El ID de la comanda es obligatorio cuando se especifica")
             .When(x => x.ComandaId.HasValue);
 

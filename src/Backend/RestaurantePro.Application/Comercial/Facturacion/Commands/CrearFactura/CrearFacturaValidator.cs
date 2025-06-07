@@ -67,8 +67,8 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
         RuleFor(v => v.ComandasIds)
             .Must(TenerComandasValidas)
             .WithMessage("Todas las comandas deben tener IDs válidos.")
-            .Must(comandasIds => comandasIds?.Count <= 10)
-            .WithMessage("No se pueden facturar más de 10 comandas a la vez.")
+            .Must(comandasIds => comandasIds?.Count <= 50)
+            .WithMessage("No se pueden facturar más de 50 comandas a la vez.")
             // Comentar temporalmente las validaciones async para permitir que las pruebas pasen
             // .MustAsync(TodasLasComandasExisten)
             // .WithMessage("Una o más comandas especificadas no existen.")
@@ -224,16 +224,14 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
 
     private bool MonedaValida(string? moneda)
     {
-        // Solo valida el formato si no es null/empty (NotEmpty ya lo valida)
-        if (string.IsNullOrWhiteSpace(moneda)) return true;
+        if (string.IsNullOrWhiteSpace(moneda)) return false;
         return _monedasValidas.Any(m => 
             string.Equals(m, moneda, StringComparison.Ordinal));
     }
 
     private bool MetodoPagoValido(string? metodoPago)
     {
-        // Solo valida el formato si no es null/empty (NotEmpty ya lo valida)
-        if (string.IsNullOrWhiteSpace(metodoPago)) return true;
+        if (string.IsNullOrWhiteSpace(metodoPago)) return false;
         return _metodosPagoValidos.Any(metodo => 
             string.Equals(metodo, metodoPago, StringComparison.Ordinal));
     }
