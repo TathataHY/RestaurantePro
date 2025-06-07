@@ -1,194 +1,51 @@
+using System;
+
 namespace RestaurantePro.Application.Operaciones.Reportes.DTOs;
 
 /// <summary>
 /// DTO de respuesta para el procesamiento completo de pedido
 /// </summary>
-public class ProcesarPedidoCompletoDto : BaseDto
+public class ProcesarPedidoCompletoDto
 {
     /// <summary>
     /// ID de la comanda procesada
     /// </summary>
     public Guid ComandaId { get; set; }
-
+    
     /// <summary>
-    /// Número de la comanda
+    /// ID de la factura generada
     /// </summary>
-    public string NumeroComanda { get; set; } = string.Empty;
-
+    public Guid FacturaId { get; set; }
+    
     /// <summary>
-    /// Estado de la comanda
+    /// Total del pedido
     /// </summary>
-    public string EstadoComanda { get; set; } = string.Empty;
-
+    public decimal Total { get; set; }
+    
+    /// <summary>
+    /// Puntos acumulados por el cliente
+    /// </summary>
+    public int PuntosAcumulados { get; set; }
+    
+    /// <summary>
+    /// Indica si se liberó la mesa
+    /// </summary>
+    public bool MesaLiberada { get; set; }
+    
     /// <summary>
     /// ID de la mesa liberada
     /// </summary>
     public Guid MesaId { get; set; }
-
-    /// <summary>
-    /// Número de la mesa
-    /// </summary>
-    public int NumeroMesa { get; set; }
-
-    /// <summary>
-    /// Monto total de la comanda
-    /// </summary>
-    public decimal TotalComanda { get; set; }
-
-    /// <summary>
-    /// Monto total de la comanda con descuentos aplicados
-    /// </summary>
-    public decimal TotalConDescuentos { get; set; }
-
-    /// <summary>
-    /// Monto total de impuestos
-    /// </summary>
-    public decimal TotalImpuestos { get; set; }
-
-    /// <summary>
-    /// Monto total final de la comanda
-    /// </summary>
-    public decimal TotalFinal { get; set; }
-
-    /// <summary>
-    /// Método de pago utilizado
-    /// </summary>
-    public string MetodoPago { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Indica si la comanda fue facturada
-    /// </summary>
-    public bool FueFacturado { get; set; }
-
-    /// <summary>
-    /// ID de la factura generada
-    /// </summary>
-    public Guid? FacturaId { get; set; }
-
-    /// <summary>
-    /// Información de la factura procesada
-    /// </summary>
-    public FacturaProcesadaDto? Factura { get; set; }
-
-    /// <summary>
-    /// Información del pago procesado
-    /// </summary>
-    public PagoProcesadoDto? Pago { get; set; }
-
-    /// <summary>
-    /// Información de fidelización procesada
-    /// </summary>
-    public FidelizacionProcesadaDto? Fidelizacion { get; set; }
-
-    /// <summary>
-    /// Información de la mesa liberada
-    /// </summary>
-    public MesaLiberadaDto? Mesa { get; set; }
-
-    /// <summary>
-    /// Resumen del procesamiento
-    /// </summary>
-    public ResumenProcesamientoDto? Resumen { get; set; }
-
-    /// <summary>
-    /// Indica si se aplicaron puntos de fidelización
-    /// </summary>
-    public bool SeAplicaronPuntos { get; set; }
-
-    /// <summary>
-    /// Puntos ganados en esta transacción
-    /// </summary>
-    public int PuntosGanados { get; set; }
-
-    /// <summary>
-    /// Puntos utilizados en esta transacción
-    /// </summary>
-    public int PuntosUtilizados { get; set; }
-
-    /// <summary>
-    /// Lista de items del pedido
-    /// </summary>
-    public List<ItemPedidoDto> Items { get; set; } = new();
-
+    
     /// <summary>
     /// Fecha y hora del procesamiento
     /// </summary>
-    public DateTime FechaProcesamiento { get; set; }
-
+    public DateTime FechaHora { get; set; }
+    
     /// <summary>
-    /// Tiempo total de procesamiento
+    /// Estado final de la comanda
     /// </summary>
-    public TimeSpan TiempoProcesamiento { get; set; }
-
-    /// <summary>
-    /// Estado del procesamiento
-    /// </summary>
-    public string EstadoProcesamiento { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Usuario que procesó el pedido
-    /// </summary>
-    public string UsuarioProcesamiento { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Observaciones específicas del procesamiento
-    /// </summary>
-    public string? ObservacionesProcesamiento { get; set; }
-
-    /// <summary>
-    /// Indica si el procesamiento fue exitoso
-    /// </summary>
-    public bool ProcesamientoExitoso { get; set; }
-
-    /// <summary>
-    /// Lista de mensajes del procesamiento
-    /// </summary>
-    public List<string> Mensajes { get; set; } = new();
-
-    /// <summary>
-    /// Observaciones del procesamiento
-    /// </summary>
-    public List<string> Observaciones { get; set; } = new();
-
-    /// <summary>
-    /// Información de la mesa liberada (alias para compatibilidad)
-    /// </summary>
-    public MesaLiberadaDto? MesaLiberada => Mesa;
-
-    /// <summary>
-    /// Tiempo de procesamiento en milisegundos
-    /// </summary>
-    public double TiempoProcesamientoMs => TiempoProcesamiento.TotalMilliseconds;
-
-    /// <summary>
-    /// Indica si el pago fue exitoso (compatibilidad con tests)
-    /// </summary>
-    public bool PagoExitoso => Pago?.EstadoPago == "Aprobado" || Pago?.EstadoPago == "Exitoso";
-
-    /// <summary>
-    /// ID de la transacción de pago (compatibilidad con tests)
-    /// </summary>
-    public Guid? TransaccionPagoId => Pago?.PagoId;
-
-    /// <summary>
-    /// Indica si se generó factura (compatibilidad con tests)
-    /// </summary>
-    public bool FacturaGenerada => Factura != null;
-
-    /// <summary>
-    /// Número de la factura generada (compatibilidad con tests)
-    /// </summary>
-    public string? FacturaNumero => Factura?.NumeroFactura;
-
-    /// <summary>
-    /// Puntos de fidelización acumulados (compatibilidad con tests)
-    /// </summary>
-    public int PuntosFidelizacionAcumulados => Fidelizacion?.PuntosAcumulados ?? 0;
-
-    /// <summary>
-    /// Alias para PuntosFidelizacionAcumulados (compatibilidad con tests)
-    /// </summary>
-    public int PuntosAcumulados => PuntosFidelizacionAcumulados;
+    public string EstadoComanda { get; set; }
 }
 
 /// <summary>
@@ -358,37 +215,6 @@ public class FidelizacionProcesadaDto
     /// Beneficios obtenidos
     /// </summary>
     public List<string> BeneficiosObtenidos { get; set; } = new();
-}
-
-/// <summary>
-/// DTO con información de la mesa liberada
-/// </summary>
-public class MesaLiberadaDto
-{
-    /// <summary>
-    /// ID de la mesa
-    /// </summary>
-    public Guid MesaId { get; set; }
-
-    /// <summary>
-    /// Número de la mesa
-    /// </summary>
-    public string NumeroMesa { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Estado actual de la mesa
-    /// </summary>
-    public string EstadoMesa { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Hora de liberación
-    /// </summary>
-    public DateTime HoraLiberacion { get; set; }
-
-    /// <summary>
-    /// Tiempo total de ocupación
-    /// </summary>
-    public TimeSpan TiempoOcupacion { get; set; }
 }
 
 /// <summary>

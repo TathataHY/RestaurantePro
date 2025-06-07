@@ -1,144 +1,60 @@
-namespace RestaurantePro.Application.Operaciones.Reportes.Commands.ProcesarPedidoCompleto;
+using FluentValidation;
+using RestaurantePro.Application.Operaciones.Reportes.DTOs;
 
-/// <summary>
-/// Validator para ProcesarPedidoCompletoCommand
-/// </summary>
-public class ProcesarPedidoCompletoValidator : AbstractValidator<ProcesarPedidoCompletoCommand>
+namespace RestaurantePro.Application.Operaciones.Reportes.Commands.ProcesarPedidoCompleto
 {
-    private readonly List<string> _tiposPagoValidos = new() 
-    { 
-        "Efectivo", "Tarjeta", "Transferencia", "Cheque", "Mixto" 
-    };
-
-    private readonly List<string> _tiposFacturaValidos = new() 
-    { 
-        "Consumidor Final", "Crédito Fiscal", "Exportación" 
-    };
-
-    public ProcesarPedidoCompletoValidator()
+    /// <summary>
+    /// Validador para el comando de procesamiento completo de pedido
+    /// </summary>
+    public class ProcesarPedidoCompletoValidator : AbstractValidator<ProcesarPedidoCompletoCommand>
     {
-        RuleFor(x => x.ComandaId)
-            .NotEmpty()
-            .WithMessage("El ID de la comanda es requerido");
-
-        RuleFor(x => x.TipoPago)
-            .NotEmpty()
-            .WithMessage("El tipo de pago es requerido")
-            .Must(BeValidPaymentType)
-            .WithMessage($"El tipo de pago debe ser uno de: {string.Join(", ", _tiposPagoValidos)}");
-
-        RuleFor(x => x.UsuarioId)
-            .NotEmpty()
-            .WithMessage("El ID del usuario es requerido");
-
-        // Validaciones cuando requiere pago
-        When(x => x.RequierePago, () =>
+        public ProcesarPedidoCompletoValidator()
         {
-            RuleFor(x => x.InfoPago)
-                .NotNull()
-                .WithMessage("La información de pago es requerida cuando se requiere procesamiento de pago");
-
-            RuleFor(x => x.InfoPago!.MontoTotal)
-                .GreaterThan(0)
-                .WithMessage("El monto total debe ser mayor a 0")
-                .When(x => x.InfoPago != null);
-
-            RuleFor(x => x.InfoPago!.Moneda)
+            RuleFor(x => x.ComandaId)
                 .NotEmpty()
-                .WithMessage("La moneda es requerida")
-                .Must(BeValidCurrency)
-                .WithMessage("La moneda debe ser USD, EUR, o la moneda local")
-                .When(x => x.InfoPago != null);
-        });
+                .WithMessage("El ID de la comanda es requerido");
 
-        // Validaciones para pago con tarjeta
-        When(x => x.TipoPago == "Tarjeta" && x.InfoPago != null, () =>
-        {
-            RuleFor(x => x.InfoPago!.NumeroTarjeta)
+            RuleFor(x => x.UsuarioId)
                 .NotEmpty()
-                .WithMessage("El número de tarjeta es requerido para pagos con tarjeta")
-                .Must(BeValidCardNumber)
-                .WithMessage("El número de tarjeta no es válido");
-
-            RuleFor(x => x.InfoPago!.NombreTitular)
-                .NotEmpty()
-                .WithMessage("El nombre del titular es requerido para pagos con tarjeta")
-                .MaximumLength(100)
-                .WithMessage("El nombre del titular no puede exceder 100 caracteres");
-        });
-
-        // Validaciones de facturación
-        RuleFor(x => x.TipoFactura)
-            .Must(BeValidInvoiceType)
-            .WithMessage($"El tipo de factura debe ser uno de: {string.Join(", ", _tiposFacturaValidos)}")
-            .When(x => !string.IsNullOrEmpty(x.TipoFactura));
-
-        RuleFor(x => x.NombreCliente)
-            .NotEmpty()
-            .WithMessage("El nombre del cliente es requerido para la factura")
-            .MaximumLength(200)
-            .WithMessage("El nombre del cliente no puede exceder 200 caracteres")
-            .When(x => !string.IsNullOrEmpty(x.TipoFactura));
-
-        RuleFor(x => x.IdentificacionCliente)
-            .NotEmpty()
-            .WithMessage("La identificación del cliente es requerida")
-            .MaximumLength(50)
-            .WithMessage("La identificación no puede exceder 50 caracteres")
-            .When(x => x.TipoFactura == "Crédito Fiscal");
-
-        RuleFor(x => x.EmailCliente)
-            .EmailAddress()
-            .WithMessage("El email del cliente no es válido")
-            .When(x => !string.IsNullOrEmpty(x.EmailCliente));
-
-        RuleFor(x => x.TelefonoCliente)
-            .Matches(@"^\+?[\d\s\-\(\)]{7,15}$")
-            .WithMessage("El teléfono del cliente no es válido")
-            .When(x => !string.IsNullOrEmpty(x.TelefonoCliente));
-
-        RuleFor(x => x.ObservacionesFactura)
-            .MaximumLength(1000)
-            .WithMessage("Las observaciones de la factura no pueden exceder 1000 caracteres")
-            .When(x => !string.IsNullOrEmpty(x.ObservacionesFactura));
-
-        // Validaciones de InfoPago cuando está presente
-        RuleFor(x => x.InfoPago!.ReferenciaPago)
-            .MaximumLength(100)
-            .WithMessage("La referencia de pago no puede exceder 100 caracteres")
-            .When(x => x.InfoPago != null && !string.IsNullOrEmpty(x.InfoPago.ReferenciaPago));
-
-        RuleFor(x => x.InfoPago!.ObservacionesPago)
-            .MaximumLength(500)
-            .WithMessage("Las observaciones de pago no pueden exceder 500 caracteres")
-            .When(x => x.InfoPago != null && !string.IsNullOrEmpty(x.InfoPago.ObservacionesPago));
-    }
-
-    private bool BeValidPaymentType(string tipoPago)
-    {
-        return _tiposPagoValidos.Contains(tipoPago);
-    }
-
-    private bool BeValidInvoiceType(string? tipoFactura)
-    {
-        return string.IsNullOrEmpty(tipoFactura) || _tiposFacturaValidos.Contains(tipoFactura);
-    }
-
-    private static bool BeValidCurrency(string? moneda)
-    {
-        var monedasValidas = new[] { "USD", "EUR", "CRC", "GTQ", "HNL", "NIO", "PAB" };
-        return !string.IsNullOrEmpty(moneda) && monedasValidas.Contains(moneda.ToUpper());
-    }
-
-    private static bool BeValidCardNumber(string? numeroTarjeta)
-    {
-        if (string.IsNullOrEmpty(numeroTarjeta))
-            return false;
-
-        // Remover espacios y guiones
-        var numero = numeroTarjeta.Replace(" ", "").Replace("-", "");
-        
-        // Verificar que solo contenga dígitos y tenga longitud válida
-        return numero.All(char.IsDigit) && numero.Length >= 13 && numero.Length <= 19;
+                .WithMessage("El ID del usuario es requerido");
+                
+            // Validaciones condicionales según el tipo de pago
+            When(x => x.RequierePago && x.TipoPago == "Tarjeta" && x.InfoPago != null, () => {
+                RuleFor(x => x.InfoPago.NumeroTarjeta)
+                    .NotEmpty()
+                    .WithMessage("El número de tarjeta es requerido para pagos con tarjeta");
+                    
+                RuleFor(x => x.InfoPago.FechaVencimiento)
+                    .NotEmpty()
+                    .WithMessage("La fecha de vencimiento es requerida para pagos con tarjeta");
+                    
+                RuleFor(x => x.InfoPago.CodigoSeguridad)
+                    .NotEmpty()
+                    .WithMessage("El código de seguridad es requerido para pagos con tarjeta");
+            });
+            
+            When(x => x.RequierePago && x.TipoPago == "Digital" && x.InfoPago != null, () => {
+                RuleFor(x => x.InfoPago.CodigoTransaccion)
+                    .NotEmpty()
+                    .WithMessage("El código de transacción es requerido para pagos digitales");
+            });
+            
+            When(x => x.RequierePago && x.TipoPago == "Transferencia" && x.InfoPago != null, () => {
+                RuleFor(x => x.InfoPago.CodigoTransferencia)
+                    .NotEmpty()
+                    .WithMessage("El código de transferencia es requerido para pagos por transferencia");
+            });
+            
+            When(x => x.RequierePago && x.TipoPago == "Efectivo" && x.InfoPago != null, () => {
+                RuleFor(x => x.InfoPago.MontoRecibido)
+                    .GreaterThanOrEqualTo(x => x.InfoPago.MontoTotal)
+                    .WithMessage("El monto recibido debe ser mayor o igual al total a pagar");
+            });
+            
+            // Otras validaciones generales
+            RuleFor(x => x.Observaciones)
+                .MaximumLength(500)
+                .WithMessage("Las observaciones no pueden exceder los 500 caracteres");
+        }
     }
 } 
