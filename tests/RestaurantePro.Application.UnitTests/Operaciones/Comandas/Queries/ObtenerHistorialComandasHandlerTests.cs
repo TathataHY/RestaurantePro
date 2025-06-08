@@ -645,7 +645,11 @@ public class ObtenerHistorialComandasHandlerTests
         {
             var comanda = Comanda.Crear(Guid.NewGuid(), null, Guid.NewGuid(), "");
             SetPrivateProperty(comanda, "Estado", EstadoComanda.Finalizada);
-            // Nota: Los montos específicos se deberán configurar según la implementación de TotalComanda
+            
+            // Crear un objeto TotalComanda y asignarlo a la propiedad Total
+            var totalComanda = TotalComanda.Crear(montos[i], montos[i] * 0.16m);
+            SetPrivateProperty(comanda, "Total", totalComanda);
+            
             comandas.Add(comanda);
         }
         
