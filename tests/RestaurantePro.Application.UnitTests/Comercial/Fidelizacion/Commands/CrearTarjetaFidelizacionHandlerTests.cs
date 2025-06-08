@@ -160,7 +160,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
         _tarjetaRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((TarjetaFidelizacion?)null);
+            .ReturnsAsync((TarjetaFidelizacion)null!);
         _dateTimeServiceMock.Setup(x => x.Now)
             .Returns(DateTime.Now);
         _unitOfWorkMock.Setup(x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
@@ -204,7 +204,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteExistente, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
         _tarjetaRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((TarjetaFidelizacion?)null);
+            .ReturnsAsync((TarjetaFidelizacion)null!);
         _dateTimeServiceMock.Setup(x => x.Now)
             .Returns(DateTime.Now);
         _unitOfWorkMock.Setup(x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
@@ -256,7 +256,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
         _tarjetaRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((TarjetaFidelizacion?)null);
+            .ReturnsAsync((TarjetaFidelizacion)null!);
         _dateTimeServiceMock.Setup(x => x.Now)
             .Returns(DateTime.Now);
         _unitOfWorkMock.Setup(x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
@@ -287,8 +287,8 @@ public class CrearTarjetaFidelizacionHandlerTests
         
         Assert.True(result.Succeeded);
         Assert.Equal(TipoTarjetaFidelizacion.Vip, command.TipoTarjeta);
-        Assert.NotEmpty(result.Value.BeneficiosDisponibles);
-        Assert.Contains(result.Value.BeneficiosDisponibles, b => b.Descripcion == "Acceso VIP por 3 meses");
+        Assert.NotEmpty(result.Value?.BeneficiosDisponibles);
+        Assert.Contains(result.Value?.BeneficiosDisponibles, b => b.Descripcion == "Acceso VIP por 3 meses");
     }
 
     [Fact]
@@ -316,7 +316,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
         _tarjetaRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((TarjetaFidelizacion?)null);
+            .ReturnsAsync((TarjetaFidelizacion)null!);
         _dateTimeServiceMock.Setup(x => x.Now)
             .Returns(DateTime.Now);
         _unitOfWorkMock.Setup(x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
@@ -352,7 +352,7 @@ public class CrearTarjetaFidelizacionHandlerTests
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(cliente);
         _tarjetaRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((TarjetaFidelizacion?)null);
+            .ReturnsAsync((TarjetaFidelizacion)null!);
         _dateTimeServiceMock.Setup(x => x.Now)
             .Returns(DateTime.Now);
         _unitOfWorkMock.Setup(x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()))

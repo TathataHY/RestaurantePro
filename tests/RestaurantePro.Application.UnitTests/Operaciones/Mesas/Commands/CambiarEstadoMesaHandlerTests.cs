@@ -116,7 +116,7 @@ public class CambiarEstadoMesaHandlerTests
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Ocupada);
 
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
-            .ReturnsAsync((Mesa?)null);
+            .ReturnsAsync((Mesa)null!);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -332,7 +332,7 @@ public class CambiarEstadoMesaHandlerTests
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Ocupada);
 
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
-            .ReturnsAsync((Mesa?)null);
+            .ReturnsAsync((Mesa)null!);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);

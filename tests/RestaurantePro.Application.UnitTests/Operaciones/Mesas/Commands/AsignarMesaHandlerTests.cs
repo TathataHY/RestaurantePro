@@ -233,7 +233,7 @@ public class AsignarMesaHandlerTests
         var command = AsignarMesaCommand.Crear(mesaId);
 
         _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
-            .ReturnsAsync((Mesa?)null);
+            .ReturnsAsync((Mesa)null!);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
