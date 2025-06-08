@@ -40,106 +40,124 @@ public class AcumularPuntosHandler : IRequestHandler<AcumularPuntosCommand, Resu
 
     public async Task<Result<AcumulacionPuntosDto>> Handle(AcumularPuntosCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Iniciando acumulación de puntos para cliente {ClienteId}: {MontoCompra:C}, Tipo: {TipoTransaccion}", 
-            request.ClienteId, request.MontoCompra, request.TipoTransaccion);
-
         try
         {
-            // 1. Verificar y obtener cliente
+            _logger.LogInformation("Procesando acumulación de puntos: ClienteId={ClienteId}, TarjetaId={TarjetaId}, Monto={Monto}",
+                request.ClienteId, request.TarjetaFidelizacionId, request.MontoCompra);
+
+            // 1. Verificar que el cliente existe
             var cliente = await _clienteRepository.ObtenerPorIdAsync(request.ClienteId);
             if (cliente == null)
             {
-                _logger.LogWarning("Cliente no encontrado: {ClienteId}", request.ClienteId);
-                return Result.Failure<AcumulacionPuntosDto>("El cliente especificado no existe");
+                _logger.LogWarning("Cliente {ClienteId} no existe", request.ClienteId);
+                return Result.Failure<AcumulacionPuntosDto>($"Cliente con ID {request.ClienteId} no existe");
             }
 
-            // 2. Verificar que el cliente esté activo y elegible para puntos
             if (!cliente.EstaActivo)
             {
-                _logger.LogWarning("Cliente {ClienteId} no elegible para acumulación de puntos. Activo: {Activo}", 
-                    request.ClienteId, cliente.EstaActivo);
-                return Result.Failure<AcumulacionPuntosDto>("El cliente no está elegible para acumular puntos");
+                _logger.LogWarning("Cliente {ClienteId} no está activo", request.ClienteId);
+                return Result.Failure<AcumulacionPuntosDto>($"Cliente con ID {request.ClienteId} no está activo");
             }
 
-            // 3. Obtener o verificar tarjeta de fidelización
+            // 2. Verificar tarjeta de fidelización
+            Console.WriteLine("DEBUG: Verificando tarjeta de fidelización");
             var tarjeta = await ObtenerTarjetaFidelizacion(request, cliente);
             if (tarjeta == null)
             {
-                return Result.Failure<AcumulacionPuntosDto>("Error al obtener la tarjeta de fidelización del cliente");
+                _logger.LogWarning("No se encontró tarjeta de fidelización válida para el cliente {ClienteId}", request.ClienteId);
+                return Result.Failure<AcumulacionPuntosDto>("No se encontró una tarjeta de fidelización válida para el cliente");
             }
 
-            // 4. Validar promoción si se especifica
+            // 3. Verificar promoción (si aplica)
+            Console.WriteLine("DEBUG: Verificando promoción");
             Promocion? promocion = null;
             if (!string.IsNullOrEmpty(request.CodigoPromocion))
             {
-                var resultadoPromocion = await ValidarPromocion(request.CodigoPromocion, request.TipoTransaccion);
-                if (!resultadoPromocion.Succeeded)
+                var promocionResult = await ValidarPromocion(request.CodigoPromocion, request.TipoTransaccion);
+                if (!promocionResult.Succeeded)
                 {
-                    return Result.Failure<AcumulacionPuntosDto>(resultadoPromocion.Error ?? "Error validando promoción");
+                    return Result.Failure<AcumulacionPuntosDto>(promocionResult.Error);
                 }
-                promocion = resultadoPromocion.Value;
+                promocion = promocionResult.Value;
             }
 
-            // 5. Calcular puntos base y aplicar multiplicadores
-            var calculoResultado = await CalcularPuntosTransaccion(request, cliente, tarjeta, promocion);
-            if (!calculoResultado.Succeeded)
+            // 4. Calcular puntos a otorgar
+            Console.WriteLine("DEBUG: Calculando puntos");
+            var calculoResult = await CalcularPuntosTransaccion(request, cliente, tarjeta, promocion, cancellationToken);
+            if (!calculoResult.Succeeded)
             {
-                return Result.Failure<AcumulacionPuntosDto>(calculoResultado.Error ?? "Error calculando puntos");
+                Console.WriteLine($"DEBUG: Error en cálculo de puntos: {calculoResult.Error}");
+                return Result.Failure<AcumulacionPuntosDto>(calculoResult.Error);
             }
 
-            var puntosPorOtorgar = calculoResultado.Value.TotalPuntos;
-
-            // 6. Verificar límites diarios/mensuales
-            var validacionLimites = await ValidarLimitesAcumulacion(cliente, puntosPorOtorgar, request.TipoTransaccion);
-            if (!validacionLimites.Succeeded)
+            var puntosAOtorgar = calculoResult.Value.TotalPuntos;
+            Console.WriteLine($"DEBUG: Puntos a otorgar: {puntosAOtorgar}");
+            
+            if (puntosAOtorgar <= 0)
             {
-                return Result.Failure<AcumulacionPuntosDto>(validacionLimites.Error ?? "Error validando límites");
+                return Result.Failure<AcumulacionPuntosDto>($"La cantidad de puntos acumulados no puede ser cero o negativa. Valor: {puntosAOtorgar}");
             }
 
-            // 7. Registrar transacción de puntos
-            var transaccion = await CrearTransaccionPuntos(request, tarjeta, puntosPorOtorgar, promocion);
+            // 5. Validar límites de acumulación
+            Console.WriteLine("DEBUG: Validando límites");
+            var limiteResult = await ValidarLimitesAcumulacion(cliente, puntosAOtorgar, request.TipoTransaccion);
+            if (!limiteResult.Succeeded)
+            {
+                Console.WriteLine($"DEBUG: Error en validación de límites: {limiteResult.Error}");
+                return Result.Failure<AcumulacionPuntosDto>(limiteResult.Error);
+            }
 
-            // 8. Actualizar saldo de puntos en la tarjeta
-            var historialPuntos = tarjeta.AgregarPuntos(
-                puntosPorOtorgar, 
-                $"Acumulación por {request.TipoTransaccion} - Monto: {request.MontoCompra:C}");
+            // 6. Registrar transacción
+            Console.WriteLine("DEBUG: Registrando transacción");
+            var transaccion = CrearTransaccionPuntos(request, tarjeta, puntosAOtorgar, promocion);
+            await _transaccionRepository.AgregarAsync(transaccion, cancellationToken);
 
-            // 9. Guardar cambios
-            await _transaccionRepository.AgregarAsync(transaccion);
-            await _tarjetaRepository.ActualizarAsync(tarjeta);
+            // 7. Actualizar saldo de puntos
+            Console.WriteLine("DEBUG: Actualizando saldo");
+            var historialPuntos = tarjeta.AgregarPuntos(puntosAOtorgar, $"Acumulación por {request.TipoTransaccion} - Monto: {request.MontoCompra:C}");
+            await _tarjetaRepository.ActualizarAsync(tarjeta, cancellationToken);
 
-            // 10. Verificar ascensos de nivel
+            // 8. Verificar ascensos de nivel
+            Console.WriteLine("DEBUG: Verificando ascenso de nivel");
             await VerificarAscensoNivel(cliente, tarjeta);
 
-            // 11. Registrar logros y bonificaciones especiales
+            // 9. Procesar logros especiales
+            Console.WriteLine("DEBUG: Procesando logros");
             await ProcesarLogrosEspeciales(cliente, tarjeta, request);
 
-            _logger.LogInformation("Puntos acumulados exitosamente para cliente {ClienteId}: {PuntosOtorgados} puntos. Saldo total: {SaldoTotal}", 
-                request.ClienteId, puntosPorOtorgar, tarjeta.PuntosDisponibles);
-
-            // 12. Mapear y retornar resultado
-            var resultado = new AcumulacionPuntosDto
+            // 10. Generar respuesta
+            Console.WriteLine("DEBUG: Generando respuesta");
+            var mensaje = GenerarMensajeMotivacional(puntosAOtorgar, tarjeta);
+            
+            var dto = new AcumulacionPuntosDto
             {
-                ClienteId = cliente.Id,
                 TarjetaFidelizacionId = tarjeta.Id,
-                PuntosAcumulados = puntosPorOtorgar,
+                ClienteId = cliente.Id,
+                PuntosAcumulados = puntosAOtorgar,
                 TotalPuntos = tarjeta.PuntosDisponibles,
-                MontoTransaccion = request.MontoCompra,
-                FactorMultiplicacion = calculoResultado.Value.TasaConversion,
-                FechaAcumulacion = DateTime.UtcNow,
-                Concepto = $"Acumulación por {request.TipoTransaccion}",
                 FacturaId = request.FacturaId,
                 PromocionId = promocion?.Id,
+                FechaAcumulacion = DateTime.UtcNow,
+                MontoTransaccion = request.MontoCompra,
+                FactorMultiplicacion = calculoResult.Value.TasaConversion,
+                Concepto = $"Acumulación por {request.TipoTransaccion}",
+                TransaccionId = transaccion.Id,
                 TienePuntosBonus = request.PuntosBonus > 0,
                 PuntosBonus = request.PuntosBonus ?? 0,
                 MotivoBonus = request.PuntosBonus > 0 ? "Puntos bonus por transacción especial" : null
             };
 
-            return Result.Success(resultado);
+            return Result.Success(dto);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error inesperado al acumular puntos para cliente {ClienteId}", request.ClienteId);
+            _logger.LogError(ex, "Error interno del servidor al procesar la acumulación de puntos");
+            Console.WriteLine($"DEBUG EXCEPCIÓN: {ex.Message}");
+            Console.WriteLine($"DEBUG STACK: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"DEBUG INNER: {ex.InnerException.Message}");
+            }
             return Result.Failure<AcumulacionPuntosDto>("Error interno del servidor al procesar la acumulación de puntos");
         }
     }
@@ -198,7 +216,8 @@ public class AcumularPuntosHandler : IRequestHandler<AcumularPuntosCommand, Resu
         AcumularPuntosCommand request, 
         Cliente cliente, 
         TarjetaFidelizacion tarjeta, 
-        Promocion? promocion)
+        Promocion? promocion,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -217,20 +236,22 @@ public class AcumularPuntosHandler : IRequestHandler<AcumularPuntosCommand, Resu
                 return await _calculadoraPuntos.CalcularPuntosPorPromocionAsync(
                     tarjeta.Id, 
                     promocion.Id, 
-                    parametrosPromocion);
+                    parametrosPromocion,
+                    cancellationToken);
             }
             else
             {
-                // Calcular puntos por compra normal
+                // Cálculo normal por compra
                 return await _calculadoraPuntos.CalcularPuntosPorCompraAsync(
                     tarjeta.Id, 
-                    request.MontoCompra);
+                    request.MontoCompra,
+                    cancellationToken);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculando puntos para cliente {ClienteId}", cliente.Id);
-            return Result.Failure<CalculoResultadoPuntos>("Error en el cálculo de puntos");
+            _logger.LogError(ex, "Error calculando puntos para transacción");
+            return Result.Failure<CalculoResultadoPuntos>($"Error al calcular puntos: {ex.Message}");
         }
     }
 
@@ -255,7 +276,7 @@ public class AcumularPuntosHandler : IRequestHandler<AcumularPuntosCommand, Resu
         return Result.Success();
     }
 
-    private async Task<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos> CrearTransaccionPuntos(
+    private RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos CrearTransaccionPuntos(
         AcumularPuntosCommand request, 
         TarjetaFidelizacion tarjeta, 
         int puntosOtorgados, 
@@ -334,18 +355,24 @@ public class AcumularPuntosHandler : IRequestHandler<AcumularPuntosCommand, Resu
         }
     }
 
-    private static string GenerarMensajeMotivacional(int puntosOtorgados, TarjetaFidelizacion tarjeta)
+    /// <summary>
+    /// Genera un mensaje motivacional para el cliente basado en los puntos acumulados
+    /// </summary>
+    private string GenerarMensajeMotivacional(int puntosAcumulados, TarjetaFidelizacion tarjeta)
     {
-        var mensajes = new[]
+        // Generar mensajes personalizados según puntos acumulados
+        if (puntosAcumulados >= 500)
         {
-            $"¡Excelente! Ganaste {puntosOtorgados} puntos. ¡Sigue acumulando!",
-            $"¡Increíble! {puntosOtorgados} puntos más en tu cuenta. Total: {tarjeta.PuntosDisponibles}",
-            $"¡Fantástico! +{puntosOtorgados} puntos. ¡Estás cerca de grandes recompensas!",
-            $"¡Bien hecho! {puntosOtorgados} puntos ganados. ¡Tu fidelidad tiene recompensa!",
-            $"¡Genial! Sumaste {puntosOtorgados} puntos. Total acumulado: {tarjeta.PuntosDisponibles}"
-        };
-
-        return mensajes[new Random().Next(mensajes.Length)];
+            return $"¡Excelente! Has acumulado {puntosAcumulados} puntos. Estás muy cerca de alcanzar el siguiente nivel.";
+        }
+        else if (puntosAcumulados >= 100)
+        {
+            return $"¡Genial! Has sumado {puntosAcumulados} puntos a tu cuenta. Ya tienes {tarjeta.PuntosDisponibles} puntos disponibles.";
+        }
+        else
+        {
+            return $"¡Gracias por tu compra! Has acumulado {puntosAcumulados} puntos.";
+        }
     }
 } 
 

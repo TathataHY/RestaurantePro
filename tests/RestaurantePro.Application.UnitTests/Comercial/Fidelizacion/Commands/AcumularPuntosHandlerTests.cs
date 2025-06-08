@@ -10,9 +10,10 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
         private readonly Mock<IServicioFidelizacion> _servicioFidelizacionMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly Mock<ILogger<AcumularPuntosHandler>> _loggerMock;
-        private readonly Mock<ICurrentUserService> _currentUserServiceMock;
+        private readonly Mock<ICurrentUserService> _currentUserMock;
+        
         private readonly AcumularPuntosHandler _handler;
-
+        
         public AcumularPuntosHandlerTests()
         {
             _clienteRepositoryMock = new Mock<IClienteRepository>();
@@ -23,8 +24,8 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
             _servicioFidelizacionMock = new Mock<IServicioFidelizacion>();
             _mapperMock = new Mock<IMapper>();
             _loggerMock = new Mock<ILogger<AcumularPuntosHandler>>();
-            _currentUserServiceMock = new Mock<ICurrentUserService>();
-
+            _currentUserMock = new Mock<ICurrentUserService>();
+            
             _handler = new AcumularPuntosHandler(
                 _clienteRepositoryMock.Object,
                 _tarjetaRepositoryMock.Object,
@@ -34,58 +35,85 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
                 _servicioFidelizacionMock.Object,
                 _mapperMock.Object,
                 _loggerMock.Object,
-                _currentUserServiceMock.Object);
+                _currentUserMock.Object);
         }
-
+        
         [Fact]
         public async Task Handle_AcumulacionVentaBasica_DeberiaCalcularPuntosCorrectamente()
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var command = new AcumularPuntosCommand
-            {
-                ClienteId = clienteId,
-                MontoCompra = 120.50m,
-                TipoAcumulacion = TipoAcumulacion.PorCompra
-            };
-
-            // Setup mocks
-            var clienteMock = CreateMockCliente(clienteId);
-            var tarjetaMock = CreateMockTarjeta(clienteId);
-            var calculoResultado = CreateMockCalculoResultado(120);
-            var resultadoAcumulacion = CreateMockResultadoVentaBasica(clienteId);
-
+            var tarjetaId = Guid.NewGuid();
+            var facturaId = Guid.NewGuid();
+            
+            // Utilizar los métodos factory de ayuda existentes
+            var cliente = CreateMockCliente(clienteId);
+            var tarjeta = CreateMockTarjeta(clienteId);
+            
+            // Configuramos el ID de la tarjeta para que coincida con el esperado
+            // Usando reflexión, solo para pruebas
+            typeof(TarjetaFidelizacion).GetProperty("Id")?.SetValue(tarjeta, tarjetaId);
+                
+            // Configura mocks
+            _currentUserMock.Setup(x => x.UserId).Returns(Guid.NewGuid().ToString());
+            
             _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(clienteMock);
-
-            _tarjetaRepositoryMock.Setup(x => x.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(tarjetaMock);
-
+                .ReturnsAsync(cliente);
+                
+            _tarjetaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(tarjeta);
+                
+            // Configura el cálculo de puntos con el constructor correcto
+            var calculoResultado = new CalculoResultadoPuntos(100, 0.1m, 0, "Test calculation");
+            
             _calculadoraPuntosMock.Setup(x => x.CalcularPuntosPorCompraAsync(
                     It.IsAny<Guid>(), 
                     It.IsAny<decimal>(), 
                     It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Result.Success(calculoResultado));
-
-            _transaccionRepositoryMock.Setup(x => x.AgregarAsync(It.IsAny<TransaccionPuntos>(), It.IsAny<CancellationToken>()))
+                
+            _transaccionRepositoryMock.Setup(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
-
+                
             _tarjetaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
-
-            _currentUserServiceMock.Setup(x => x.UserId)
-                .Returns(Guid.NewGuid().ToString());
-
-            _mapperMock.Setup(x => x.Map<AcumulacionPuntosDto>(It.IsAny<object>()))
-                .Returns(resultadoAcumulacion);
-
+                
+            var command = new AcumularPuntosCommand
+            {
+                ClienteId = clienteId,
+                TarjetaFidelizacionId = tarjetaId,
+                MontoCompra = 1000,
+                TipoTransaccion = RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.Compra,
+                FacturaId = facturaId,
+                Canal = "Web",
+                Comentarios = "Compra test"
+            };
+            
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
-
+            
             // Assert
-            Assert.True(result.Succeeded);
-            Assert.NotNull(result.Value);
-            Assert.Equal(clienteId, result.Value.ClienteId);
+            // Imprimir el mensaje de error para diagnóstico
+            if (!result.Succeeded)
+            {
+                Console.WriteLine($"ERROR DETALLADO: {result.Error}");
+                
+                // Imprimir los mocks configurados
+                Console.WriteLine($"Mock calculadora configurado para: TarjetaId={tarjetaId}, Monto={command.MontoCompra}");
+                Console.WriteLine($"Comando solicitado: ClienteId={command.ClienteId}, TarjetaId={command.TarjetaFidelizacionId}, MontoCompra={command.MontoCompra}");
+                Console.WriteLine($"Tipo transacción: {command.TipoTransaccion}");
+            }
+            
+            result.Succeeded.Should().BeTrue();
+            result.Value.Should().NotBeNull();
+            result.Value.PuntosAcumulados.Should().Be(100);
+            result.Value.TarjetaFidelizacionId.Should().Be(tarjetaId);
+            result.Value.ClienteId.Should().Be(clienteId);
+            result.Value.FacturaId.Should().Be(facturaId);
+            
+            // Verificar que se llamaron los métodos esperados
+            _tarjetaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()), Times.Once);
+            _transaccionRepositoryMock.Verify(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -96,11 +124,13 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
             var command = new AcumularPuntosCommand
             {
                 ClienteId = clienteId,
-                MontoCompra = 100.00m
+                MontoCompra = 100.00m,
+                TipoTransaccion = RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos.TipoTransaccionPuntos.Compra,
+                Canal = "Web"
             };
 
             _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((Cliente)null);
+                .ReturnsAsync(default(Cliente));
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
@@ -128,7 +158,9 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
 
         private static TarjetaFidelizacion CreateMockTarjeta(Guid clienteId)
         {
-            return TarjetaFidelizacion.Crear(clienteId, $"TF{clienteId.ToString()[..8]}");
+            var tarjeta = TarjetaFidelizacion.Crear(clienteId, $"TF{clienteId.ToString()[..8]}");
+            tarjeta.Activar(); // Activar la tarjeta para permitir acumulación de puntos
+            return tarjeta;
         }
 
         private static CalculoResultadoPuntos CreateMockCalculoResultado(decimal puntos)

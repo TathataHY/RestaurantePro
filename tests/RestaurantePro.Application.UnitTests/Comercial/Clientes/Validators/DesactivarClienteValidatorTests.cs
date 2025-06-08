@@ -317,12 +317,16 @@ public class DesactivarClienteValidatorTests
         clienteDesactivado.GetType().GetProperty("Id")?.SetValue(clienteDesactivado, clienteId);
         clienteDesactivado.Desactivar(); // Marcar como desactivado
         
-        // Verificamos que realmente está desactivado
-        var estaActivo = (bool)clienteDesactivado.GetType().GetProperty("EstaActivo").GetValue(clienteDesactivado);
-        if (estaActivo)
+        // Verificamos que realmente está desactivado - corregido para manejar nulls
+        var propEstaActivo = clienteDesactivado.GetType().GetProperty("EstaActivo");
+        if (propEstaActivo != null)
         {
-            // Forzar desactivación si el método no funcionó
-            clienteDesactivado.GetType().GetProperty("EstaActivo").SetValue(clienteDesactivado, false);
+            var estaActivoObj = propEstaActivo.GetValue(clienteDesactivado);
+            if (estaActivoObj != null && (bool)estaActivoObj)
+            {
+                // Forzar desactivación si el método no funcionó
+                propEstaActivo.SetValue(clienteDesactivado, false);
+            }
         }
 
         // Configurar mock para devolver el cliente desactivado

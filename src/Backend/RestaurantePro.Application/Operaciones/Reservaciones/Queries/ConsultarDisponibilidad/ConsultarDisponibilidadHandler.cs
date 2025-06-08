@@ -182,13 +182,20 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
         var horaFin = fechaHora.AddMinutes(duracionMinutos);
 
         // Verificar si hay reservaciones que se solapan
-        // TODO: Usar propiedades reales de Reservacion en lugar de FechaHora y DuracionEstimadaMinutos
+        // Duración estimada de la reservación (debería ser un campo real en la entidad Reservacion)
+        int duracionReservacionEstimada = 120; // 2 horas es la duración estándar en este sistema
+
         var tieneReservacionSolapada = await _context.Reservaciones
             .AnyAsync(r => r.MesaId == mesaId &&
                           r.Estado != Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.Cancelada &&
                           r.Estado != Domain.Operaciones.Reservaciones.Enums.EstadoReservacion.NoShow &&
-                          // Usar propiedades reales de Reservacion
-                          r.FechaReservacion >= horaInicio && r.FechaReservacion <= horaFin,
+                          // Verificar cualquier tipo de solapamiento:
+                          // 1. La reservación existente comienza durante nuestro horario
+                          // 2. La reservación existente termina durante nuestro horario
+                          // 3. La reservación existente abarca completamente nuestro horario
+                          ((r.FechaReservacion >= horaInicio && r.FechaReservacion <= horaFin) || // Caso 1
+                           (r.FechaReservacion.AddMinutes(duracionReservacionEstimada) > horaInicio && 
+                            r.FechaReservacion < horaFin)), // Casos 2 y 3 combinados: la reservación termina después del inicio y comienza antes del fin
                           cancellationToken);
 
         return !tieneReservacionSolapada;

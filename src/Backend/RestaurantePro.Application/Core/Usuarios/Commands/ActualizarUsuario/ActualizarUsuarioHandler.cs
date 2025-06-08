@@ -540,6 +540,13 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
         ";
 
         await _emailService.SendEmailAsync(usuario.Email, asunto, mensaje);
+        
+        // Enviar notificación interna usando el servicio de notificaciones
+        await _notificationService.EnviarNotificacionAsync(
+            usuario.Id,
+            "Actualización de perfil",
+            $"Tu perfil ha sido actualizado. Campos modificados: {string.Join(", ", camposModificados)}",
+            "ActualizacionPerfil");
     }
 
     private async Task NotificarSupervisorActualizacion(

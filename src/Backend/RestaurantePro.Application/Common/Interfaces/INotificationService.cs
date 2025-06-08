@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using RestaurantePro.Application.Common.Models;
+
 namespace RestaurantePro.Application.Common.Interfaces;
 
 /// <summary>
@@ -48,4 +53,11 @@ public interface INotificationService
     /// <param name="usuarioId">ID del usuario</param>
     /// <returns>Número de notificaciones no leídas</returns>
     Task<int> ObtenerNotificacionesNoLeidasAsync(Guid usuarioId);
+    
+    /// <summary>
+    /// Envía una notificación utilizando un objeto Notification
+    /// </summary>
+    /// <param name="notification">Objeto Notification con todos los datos</param>
+    /// <returns>True si se envió correctamente</returns>
+    Task<bool> SendNotificationAsync(Notification notification);
 } 

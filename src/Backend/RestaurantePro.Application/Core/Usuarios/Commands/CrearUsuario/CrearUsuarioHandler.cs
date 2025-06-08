@@ -116,9 +116,9 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
 
         // En el enum RolUsuario, valores más bajos = jerarquía más alta (Administrador=1, Gerente=2, etc.)
         var rolCreadorMasAlto = usuarioCreador.Roles.Min(); // Min porque valores menores = jerarquía superior
-        if (rolAsignar <= rolCreadorMasAlto)
+        if (rolAsignar < rolCreadorMasAlto) // Cambiado de <= a <, permitiendo crear usuarios del mismo rol
         {
-            return Result.Failure<bool>("No puede asignar un rol igual o superior al suyo.");
+            return Result.Failure<bool>("No puede asignar un rol superior al suyo.");
         }
 
         return Result.Success(true);
@@ -362,6 +362,9 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
             Email = usuario.Email,
             Activo = usuario.Estado == EstadoUsuario.Activo,
             FechaCreacion = usuario.FechaCreacion,
+            
+            // Asignar el nombre de usuario
+            NombreUsuario = usuario.NombreUsuario,
             
             // Usuario dominio tiene Roles (colección), usar el primer rol como principal
             Rol = usuario.Roles.FirstOrDefault().ToString(),

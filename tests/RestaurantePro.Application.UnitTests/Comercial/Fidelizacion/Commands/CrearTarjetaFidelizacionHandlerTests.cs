@@ -229,24 +229,21 @@ public class CrearTarjetaFidelizacionHandlerTests
         var usuarioId = Guid.NewGuid();
         var tarjetaId = Guid.NewGuid();
         
-        var configuracion = new CrearTarjetaConfiguracion
-        {
-            PuntosIniciales = 1000,
-            MultiplicadorPuntos = 3.0m,
-            FechaVencimiento = DateTime.Today.AddMonths(3),
-            ConfiguracionesEspeciales = new Dictionary<string, object>
-            {
-                { "BeneficioEspecial", "Acceso VIP por 3 meses" },
-                { "TipoPromocion", "Promoción lanzamiento" }
-            }
-        };
-        
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
             TipoTarjeta = TipoTarjetaFidelizacion.Vip,
-            PuntosIniciales = 1000,
-            Configuracion = configuracion,
+            PuntosIniciales = 0,
+            Configuracion = new CrearTarjetaConfiguracion
+            {
+                MultiplicadorPuntos = 2.0m,
+                FechaVencimiento = DateTime.Now.AddYears(1),
+                ConfiguracionesEspeciales = new Dictionary<string, object>
+                {
+                    { "BeneficioEspecial", "Acceso VIP por 3 meses" },
+                    { "TipoPromocion", "Promoción lanzamiento" }
+                }
+            },
             ActivarInmediatamente = true,
             EnviarPorEmail = true,
             UsuarioId = usuarioId,
@@ -268,9 +265,30 @@ public class CrearTarjetaFidelizacionHandlerTests
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
+        // Assert with diagnostic info
+        if (!result.Succeeded)
+        {
+            Console.WriteLine($"ERROR: {result.Error}");
+            
+            // Imprimir la configuración para diagnosticar
+            Console.WriteLine("Configuración de la prueba:");
+            Console.WriteLine($"ClienteId: {clienteId}");
+            Console.WriteLine($"TipoTarjeta: {command.TipoTarjeta}");
+            Console.WriteLine($"ConfiguracionesEspeciales Count: {command.Configuracion?.ConfiguracionesEspeciales?.Count}");
+            
+            if (command.Configuracion?.ConfiguracionesEspeciales != null)
+            {
+                foreach (var config in command.Configuracion.ConfiguracionesEspeciales)
+                {
+                    Console.WriteLine($"Configuración: {config.Key}={config.Value}");
+                }
+            }
+        }
+        
         Assert.True(result.Succeeded);
         Assert.Equal(TipoTarjetaFidelizacion.Vip, command.TipoTarjeta);
+        Assert.NotEmpty(result.Value.BeneficiosDisponibles);
+        Assert.Contains(result.Value.BeneficiosDisponibles, b => b.Descripcion == "Acceso VIP por 3 meses");
     }
 
     [Fact]

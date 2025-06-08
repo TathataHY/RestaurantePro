@@ -426,6 +426,7 @@ public class AcumularPuntosValidatorTests
         command.MontoCompra = 1000.00m;
         command.MultiplicadorEspecial = 1;
         command.Comentarios = "Bono de 1000 puntos por registro completado";
+        command.EmpleadoId = Guid.NewGuid(); // Añadiendo el EmpleadoId requerido para AjusteManual
 
         // Act
         var result = await _validator.ValidateAsync(command);

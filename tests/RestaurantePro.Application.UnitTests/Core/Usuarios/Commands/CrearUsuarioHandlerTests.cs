@@ -168,7 +168,7 @@ public class CrearUsuarioHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Contain("No puede asignar un rol igual o superior al suyo");
+        result.Error.Should().Contain("No puede asignar un rol superior al suyo");
     }
 
     [Fact]
@@ -287,7 +287,7 @@ public class CrearUsuarioHandlerTests
             Email = "usuario.horarios@restaurantepro.com",
             Password = "TempPassword123!",
             ConfirmarPassword = "TempPassword123!",
-            Rol = "Supervisor",
+            Rol = "Gerente",
             HorariosTrabajo = horarios,
             UsuarioCreadorId = usuarioAdmin.Id
         };
@@ -301,7 +301,7 @@ public class CrearUsuarioHandlerTests
             Nombre = "Usuario",
             Apellido = "con Horarios",
             Email = "usuario.horarios@restaurantepro.com",
-            Rol = "Supervisor",
+            Rol = "Gerente",
             Activo = true,
             FechaCreacion = DateTime.UtcNow
         };

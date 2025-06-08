@@ -72,12 +72,12 @@ public class ConsultarDisponibilidadHandlerTests
     public async Task Handle_ConMesaEspecificaDisponible_DeberiaRetornarDisponibilidadPositiva()
     {
         // Arrange
-        var mesaEspecifica = _mesasEjemplo[0]; // Mesa de 4 personas
+        var mesaEspecifica = _mesasEjemplo[2]; // Cambiado de [0] a [2] - Mesa de 2 personas sin reservaciones
         var fechaConsulta = DateTime.Now.AddDays(1).Date.AddHours(19); // Mañana a las 7 PM
         var query = new ConsultarDisponibilidadQuery
         {
             FechaHora = fechaConsulta,
-            NumeroPersonas = 4,
+            NumeroPersonas = 2, // Cambiado de 4 a 2 para que coincida con la capacidad de la mesa
             MesaPreferida = mesaEspecifica.Id,
             DuracionEstimadaMinutos = 90
         };

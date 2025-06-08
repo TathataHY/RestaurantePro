@@ -67,6 +67,26 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         public int PuntosDisponibles { get; private set; }
 
         /// <summary>
+        /// Multiplicador de puntos para promociones especiales
+        /// </summary>
+        public decimal MultiplicadorPuntos { get; private set; } = 1.0m;
+
+        /// <summary>
+        /// Límite mensual de puntos que se pueden acumular
+        /// </summary>
+        public int? LimiteMensual { get; private set; }
+
+        /// <summary>
+        /// Etiquetas especiales asociadas a la tarjeta (beneficios, promociones, etc.)
+        /// </summary>
+        private readonly List<string> _etiquetas = new();
+
+        /// <summary>
+        /// Acceso de solo lectura a las etiquetas
+        /// </summary>
+        public IReadOnlyCollection<string> Etiquetas => _etiquetas.AsReadOnly();
+
+        /// <summary>
         /// Historial de operaciones con puntos de esta tarjeta
         /// </summary>
         private readonly List<HistorialPuntos> _historialPuntos = new();
@@ -374,6 +394,69 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
                 
             if (!Enum.IsDefined(typeof(NivelFidelizacion), NivelFidelizacion))
                 throw new InvalidOperationException($"Nivel de fidelización no válido: {NivelFidelizacion}");
+        }
+
+        /// <summary>
+        /// Configura un multiplicador de puntos para promociones especiales
+        /// </summary>
+        /// <param name="multiplicador">Valor del multiplicador (1.0 es el valor normal)</param>
+        public void ConfigurarMultiplicadorPuntos(decimal multiplicador)
+        {
+            if (multiplicador <= 0)
+                throw new ArgumentException("El multiplicador debe ser mayor que cero", nameof(multiplicador));
+
+            MultiplicadorPuntos = multiplicador;
+            MarkAsModified();
+            
+            AddDomainEvent(new TarjetaFidelizacionMultiplicadorConfigurado(Id, ClienteId, multiplicador));
+        }
+
+        /// <summary>
+        /// Configura una fecha de expiración personalizada para la tarjeta
+        /// </summary>
+        /// <param name="fechaExpiracion">Nueva fecha de expiración</param>
+        public void ConfigurarFechaExpiracion(DateTime fechaExpiracion)
+        {
+            if (fechaExpiracion <= DateTime.Now)
+                throw new ArgumentException("La fecha de expiración debe ser posterior a la fecha actual", nameof(fechaExpiracion));
+
+            FechaExpiracion = fechaExpiracion;
+            MarkAsModified();
+            
+            AddDomainEvent(new TarjetaFidelizacionFechaExpiracionActualizada(Id, ClienteId, fechaExpiracion));
+        }
+
+        /// <summary>
+        /// Configura un límite mensual de puntos que pueden acumularse
+        /// </summary>
+        /// <param name="limite">Valor del límite mensual</param>
+        public void ConfigurarLimiteMensual(int limite)
+        {
+            if (limite <= 0)
+                throw new ArgumentException("El límite mensual debe ser mayor que cero", nameof(limite));
+
+            LimiteMensual = limite;
+            MarkAsModified();
+            
+            AddDomainEvent(new TarjetaFidelizacionLimiteMensualConfigurado(Id, ClienteId, limite));
+        }
+
+        /// <summary>
+        /// Agrega una etiqueta o beneficio especial a la tarjeta
+        /// </summary>
+        /// <param name="etiqueta">Texto de la etiqueta</param>
+        public void AgregarEtiqueta(string etiqueta)
+        {
+            if (string.IsNullOrWhiteSpace(etiqueta))
+                throw new ArgumentException("La etiqueta no puede estar vacía", nameof(etiqueta));
+
+            if (!_etiquetas.Contains(etiqueta))
+            {
+                _etiquetas.Add(etiqueta);
+                MarkAsModified();
+                
+                AddDomainEvent(new TarjetaFidelizacionEtiquetaAgregada(Id, ClienteId, etiqueta));
+            }
         }
     }
 }

@@ -101,12 +101,14 @@ namespace RestaurantePro.Application.Comercial.Fidelizacion.DTOs
     /// </summary>
     public class BeneficioDto
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string Nombre { get; set; } = string.Empty;
         public string Descripcion { get; set; } = string.Empty;
         public int PuntosRequeridos { get; set; }
         public string TipoBeneficio { get; set; } = string.Empty;
         public decimal? ValorDescuento { get; set; }
-        public bool Activo { get; set; }
+        public bool Activo { get; set; } = true;
+        public DateTime? FechaActivacion { get; set; }
+        public DateTime? FechaExpiracion { get; set; }
     }
 } 
