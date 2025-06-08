@@ -162,21 +162,19 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
                     .MaximumLength(100)
                     .WithMessage("El concepto no puede exceder 100 caracteres.");
 
-                descuento.RuleFor(d => d.Porcentaje)
-                    .GreaterThanOrEqualTo(0)
-                    .WithMessage("El porcentaje de descuento no puede ser negativo.")
-                    .LessThanOrEqualTo(100)
-                    .WithMessage("El porcentaje de descuento no puede exceder 100%.")
-                    .When(d => d.MontoFijo == 0);
+                descuento.RuleFor(d => d.TipoDescuento)
+                    .NotEmpty()
+                    .WithMessage("El tipo de descuento es requerido.")
+                    .MaximumLength(50)
+                    .WithMessage("El tipo de descuento no puede exceder 50 caracteres.");
 
-                descuento.RuleFor(d => d.MontoFijo)
-                    .GreaterThanOrEqualTo(0)
-                    .WithMessage("El monto fijo de descuento no puede ser negativo.")
-                    .When(d => d.Porcentaje == 0);
+                descuento.RuleFor(d => d.Monto)
+                    .GreaterThan(0)
+                    .WithMessage("El monto del descuento debe ser mayor que cero.");
 
-                descuento.RuleFor(d => d)
-                    .Must(d => d.Porcentaje > 0 || d.MontoFijo > 0)
-                    .WithMessage("Debe especificar un porcentaje o un monto fijo para el descuento.");
+                descuento.RuleFor(d => d.UsuarioAutorizaId)
+                    .NotEqual(Guid.Empty)
+                    .WithMessage("Se requiere un usuario que autorice el descuento.");
 
                 descuento.RuleFor(d => d.Motivo)
                     .NotEmpty()

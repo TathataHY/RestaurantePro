@@ -74,7 +74,7 @@ public class CrearFacturaCommand : IRequest<Result<FacturaDto>>
     /// <summary>
     /// Descuentos adicionales a aplicar a nivel de factura
     /// </summary>
-    public List<DescuentoFacturaDto> DescuentosAdicionales { get; set; } = new();
+    public List<DescuentoAdicionalDto> DescuentosAdicionales { get; set; } = new();
 
     /// <summary>
     /// Método de pago preferido del cliente
@@ -172,7 +172,7 @@ public class CrearFacturaCommand : IRequest<Result<FacturaDto>>
         Guid comandaId, 
         string tipoFactura, 
         string nombreCliente,
-        List<DescuentoFacturaDto> descuentos)
+        List<DescuentoAdicionalDto> descuentos)
     {
         return new CrearFacturaCommand
         {
@@ -186,7 +186,7 @@ public class CrearFacturaCommand : IRequest<Result<FacturaDto>>
 }
 
 /// <summary>
-/// DTO para descuentos adicionales en factura
+/// DTO para descuentos adicionales en factura (para compatibilidad con versiones anteriores)
 /// </summary>
 public class DescuentoFacturaDto
 {
@@ -195,4 +195,45 @@ public class DescuentoFacturaDto
     public decimal MontoFijo { get; set; }
     public string Motivo { get; set; } = string.Empty;
     public bool AplicarAntesDeImpuestos { get; set; } = true;
+}
+
+/// <summary>
+/// DTO para descuentos adicionales en factura
+/// </summary>
+public class DescuentoAdicionalDto
+{
+    /// <summary>
+    /// Tipo de descuento (Promocional, Empleado, Volumen, Cortesia, etc.)
+    /// </summary>
+    public string TipoDescuento { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Monto del descuento
+    /// </summary>
+    public decimal Monto { get; set; }
+    
+    /// <summary>
+    /// Concepto o descripción del descuento
+    /// </summary>
+    public string Concepto { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Motivo del descuento
+    /// </summary>
+    public string Motivo { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Usuario que autoriza el descuento
+    /// </summary>
+    public Guid UsuarioAutorizaId { get; set; }
+    
+    /// <summary>
+    /// Si el descuento se aplica antes de calcular impuestos
+    /// </summary>
+    public bool AplicarAntesDeImpuestos { get; set; } = false;
+    
+    /// <summary>
+    /// Código de autorización (opcional)
+    /// </summary>
+    public string? CodigoAutorizacion { get; set; }
 } 
