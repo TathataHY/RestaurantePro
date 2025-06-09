@@ -3,7 +3,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Services;
 
@@ -35,30 +34,14 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Commands.Consumir
             ConsumirPreparacionCommand request,
             CancellationToken cancellationToken)
         {
-            _logger.LogInformation("Consumiendo preparación: {ProductoId}, Cantidad: {Cantidad}", 
-                request.ProductoId, request.Cantidad);
+            _logger.LogInformation("Consumiendo preparación: {PreparacionId}, Cantidad: {Cantidad}", 
+                request.PreparacionId, request.Cantidad);
 
             try
             {
-                // Verificar primero que haya suficiente cantidad disponible
-                var disponibilidad = await _servicioPreparaciones.VerificarDisponibilidadAsync(
-                    request.ProductoId, request.Cantidad);
-                
-                if (!disponibilidad.Succeeded)
-                {
-                    _logger.LogWarning("No hay suficiente cantidad disponible: {Error}", disponibilidad.Error);
-                    return Result.Failure(disponibilidad.Error ?? "No hay suficiente cantidad disponible");
-                }
-                
-                if (!disponibilidad.Value)
-                {
-                    _logger.LogWarning("No hay suficiente cantidad disponible del producto {ProductoId}", request.ProductoId);
-                    return Result.Failure($"No hay suficiente cantidad disponible del producto {request.ProductoId}");
-                }
-
                 // Consumir la preparación
                 var resultado = await _servicioPreparaciones.ConsumirPreparacionAsync(
-                    request.ProductoId, request.Cantidad);
+                    request.PreparacionId, request.Cantidad);
                 
                 if (!resultado.Succeeded)
                 {
@@ -66,14 +49,14 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Commands.Consumir
                     return Result.Failure(resultado.Error ?? "Error al consumir la preparación");
                 }
 
-                _logger.LogInformation("Preparación consumida exitosamente: {ProductoId}, Cantidad: {Cantidad}", 
-                    request.ProductoId, request.Cantidad);
+                _logger.LogInformation("Preparación consumida exitosamente: {PreparacionId}, Cantidad: {Cantidad}", 
+                    request.PreparacionId, request.Cantidad);
                 
                 return Result.Success();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al consumir la preparación: {ProductoId}", request.ProductoId);
+                _logger.LogError(ex, "Error al consumir la preparación: {PreparacionId}", request.PreparacionId);
                 return Result.Failure($"Error al consumir la preparación: {ex.Message}");
             }
         }

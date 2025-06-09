@@ -344,7 +344,7 @@ public class ServicioPreparaciones : IServicioPreparaciones
     }
 
     /// <summary>
-    /// Marca una preparación como disponible para consumo
+    /// Marca una preparación como disponible para su consumo
     /// </summary>
     public async Task<Result> MarcarComoDisponibleAsync(Guid preparacionId)
     {
@@ -395,16 +395,16 @@ public class ServicioPreparaciones : IServicioPreparaciones
     }
 
     /// <summary>
-    /// Agrega cantidad adicional a una preparación existente
+    /// Agrega una cantidad adicional a una preparación existente
     /// </summary>
     public async Task<Result> AgregarCantidadAsync(Guid preparacionId, int cantidadAdicional)
     {
-        _logger.LogInformation("Agregando cantidad adicional a preparación: {PreparacionId}", preparacionId);
-
+        _logger.LogInformation("Agregando cantidad adicional a preparación {PreparacionId}: {Cantidad}", preparacionId, cantidadAdicional);
+        
         _notificationManager.CreateNewNotification();
         _notificationManager.Require(preparacionId != Guid.Empty, "El ID de la preparación no puede estar vacío", "PreparacionId");
         _notificationManager.Require(cantidadAdicional > 0, "La cantidad adicional debe ser mayor que cero", "CantidadAdicional");
-
+        
         if (_notificationManager.HasErrors)
         {
             return _notificationManager.ToResult();

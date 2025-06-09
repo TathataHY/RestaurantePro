@@ -2,6 +2,7 @@ using System;
 using FluentValidation;
 using MediatR;
 using RestaurantePro.Application.Common.Models;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
 
 namespace RestaurantePro.Application.Operaciones.Preparaciones.Commands.ConsumirPreparacion
 {
@@ -11,9 +12,9 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Commands.Consumir
     public class ConsumirPreparacionCommand : IRequest<Result>
     {
         /// <summary>
-        /// ID del producto a consumir
+        /// ID de la preparación a consumir
         /// </summary>
-        public Guid ProductoId { get; set; }
+        public Guid PreparacionId { get; set; }
         
         /// <summary>
         /// Cantidad a consumir
@@ -38,8 +39,8 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Commands.Consumir
     {
         public ConsumirPreparacionCommandValidator()
         {
-            RuleFor(x => x.ProductoId)
-                .NotEmpty().WithMessage("El ID del producto es obligatorio");
+            RuleFor(x => x.PreparacionId)
+                .NotEmpty().WithMessage("El ID de la preparación es obligatorio");
                 
             RuleFor(x => x.Cantidad)
                 .GreaterThan(0).WithMessage("La cantidad debe ser mayor que cero");
