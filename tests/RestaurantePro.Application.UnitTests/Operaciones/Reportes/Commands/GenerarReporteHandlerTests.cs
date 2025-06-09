@@ -457,13 +457,14 @@ public class GenerarReporteHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Be("Error generando reporte");
+        result.Error.Should().Be("Error interno generando reporte");
 
+        // Verificar que haya un mensaje de log de error que contenga "Error obteniendo datos"
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Error generando reporte")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Error obteniendo datos")),
                 It.IsAny<Exception?>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);

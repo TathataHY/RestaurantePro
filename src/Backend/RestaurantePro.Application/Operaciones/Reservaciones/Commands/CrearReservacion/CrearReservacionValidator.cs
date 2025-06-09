@@ -127,7 +127,7 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
     private static bool BeAtLeastOneHourInAdvance(DateTime fechaHora)
     {
         // Para reservaciones en el mismo día, debe haber al menos 1 hora de anticipación
-        return fechaHora >= DateTime.Now.AddHours(1);
+        return fechaHora >= DateTime.Now.AddMinutes(60);
     }
 
     private static bool BeValidPhoneNumber(string telefono)

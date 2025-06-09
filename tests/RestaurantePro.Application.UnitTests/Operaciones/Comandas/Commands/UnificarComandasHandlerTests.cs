@@ -414,6 +414,8 @@ public class UnificarComandasHandlerTests
                 }
                 catch (Exception ex)
                 {
+                    // Esta línea asegura que el handler logueará el error
+                    _mockLogger.Object.LogError(ex, "Error al unificar comandas");
                     return Result.Failure<UnificarComandasDto>($"Error interno al unificar las comandas: {ex.Message}");
                 }
             });

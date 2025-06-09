@@ -494,12 +494,37 @@ public class CrearReservacionValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.FechaHoraReservacion = DateTime.Now.AddHours(5); // Bien por encima del mínimo de 1 hora
+        var now = DateTime.Now;
+        // Crear una hora válida para hoy que:
+        // 1. Esté dentro del horario comercial (12:00 a 22:00)
+        // 2. Tenga al menos 1 hora de anticipación
+        var horaComercial = Math.Max(now.Hour + 2, 14); // Al menos 2 horas después, mínimo 2PM
+        if (horaComercial > 21) 
+        {
+            // Si estamos muy tarde en el día, mejor usar el día siguiente a una hora razonable
+            command.FechaHoraReservacion = DateTime.Now.AddDays(1).Date.AddHours(19); // Mañana a las 7:00 PM
+        }
+        else
+        {
+            command.FechaHoraReservacion = DateTime.Now.Date.AddHours(horaComercial);
+        }
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
+        if (!result.IsValid)
+        {
+            Console.WriteLine($"Fecha actual: {now}");
+            Console.WriteLine($"Fecha reserva: {command.FechaHoraReservacion}");
+            Console.WriteLine($"Anticipación: {(command.FechaHoraReservacion - now).TotalHours} horas");
+            
+            foreach (var error in result.Errors)
+            {
+                Console.WriteLine($"Error: {error.PropertyName} - {error.ErrorMessage}");
+            }
+        }
+        
         result.IsValid.Should().BeTrue();
     }
 
