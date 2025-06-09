@@ -20,10 +20,11 @@ public class CanjearPuntosValidator : AbstractValidator<CanjearPuntosCommand>
             .WithMessage("🚫 No se pueden canjear más de 10,000 puntos en una sola operación");
 
         // 🎯 Validar ComandaId si se proporciona
-        RuleFor(x => x.ComandaId)
-            .NotEqual(Guid.Empty)
-            .WithMessage("🚫 El ID de la comanda es obligatorio cuando se especifica")
-            .When(x => x.ComandaId.HasValue);
+        RuleFor(command => command)
+            .Must(x => !x.ComandaId.HasValue || x.ComandaId.Value != Guid.Empty)
+            .When(x => x.ComandaId.HasValue)
+            .WithName("ComandaId")
+            .WithMessage("🚫 El ID de la comanda es obligatorio cuando se especifica");
 
         // 🎯 Validar motivo si se proporciona
         RuleFor(x => x.Motivo)
