@@ -1,3 +1,5 @@
+using RestaurantePro.Application.UnitTests.Config.Parallelization;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Validators;
 
 // Helper classes para manejar async en Entity Framework mocks
@@ -129,6 +131,7 @@ internal class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
 /// Tests completos para validar todas las reglas críticas de consulta de factura por ID
 /// Cobertura: 100% de reglas de negocio del ObtenerFacturaPorIdValidator
 /// </summary>
+[Collection("Parallelizable Tests")]
 public class ObtenerFacturaPorIdValidatorTests
 {
     private readonly ObtenerFacturaPorIdValidator _validator;

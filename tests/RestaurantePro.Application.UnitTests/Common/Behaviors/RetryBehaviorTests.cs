@@ -105,6 +105,7 @@ public class RetryBehaviorTests
     }
 
     [Fact]
+    [Trait("Category", "LongRunning")]
     public async Task Handle_MaximosReintentos_DeberiaLanzarUltimaExcepcion()
     {
         // Arrange
@@ -166,6 +167,7 @@ public class RetryBehaviorTests
     }
 
     [Fact]
+    [Trait("Category", "LongRunning")]
     public async Task Handle_BackoffExponencial_DeberiaEsperarTiemposCrecientes()
     {
         // Arrange
@@ -509,6 +511,7 @@ public class RetryBehaviorTests
     }
 
     [Fact]
+    [Trait("Category", "LongRunning")]
     public async Task Handle_MultiplesFallas_DeberiaLoggearCadaReintento()
     {
         // Arrange
@@ -613,6 +616,7 @@ public class RetryBehaviorTests
     }
 
     [Fact]
+    [Trait("Category", "LongRunning")]
     public async Task Handle_TimeoutExtremo_DeberiaRespetarMaxDelayOptimizado()
     {
         // Arrange - Test para verificar que los delays optimizados previenen timeouts extremos
@@ -666,6 +670,7 @@ public class RetryBehaviorTests
     }
 
     [Fact]
+    [Trait("Category", "LongRunning")]
     public async Task Handle_AltaCargarConcurrente_DeberiaEscalarSinTimeouts()
     {
         // Arrange - Test de stress para prevenir timeouts bajo alta carga
@@ -742,6 +747,7 @@ public class RetryBehaviorTests
     }
 
     [Fact]
+    [Trait("Category", "LongRunning")]
     public async Task Handle_ConfiguracionOptimizada_DeberiaReducirTiempoTotalRetry()
     {
         // Arrange - Comparar configuración optimizada vs configuración anterior

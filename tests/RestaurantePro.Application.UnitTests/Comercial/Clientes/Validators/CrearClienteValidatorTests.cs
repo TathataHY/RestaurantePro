@@ -1,5 +1,8 @@
+using RestaurantePro.Application.UnitTests.Config.Parallelization;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Clientes.Validators;
 
+[Collection("Parallelizable Tests")]
 public class CrearClienteValidatorTests
 {
     private readonly CrearClienteValidator _validator;

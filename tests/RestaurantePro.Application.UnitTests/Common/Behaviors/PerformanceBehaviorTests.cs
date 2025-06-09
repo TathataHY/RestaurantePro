@@ -52,6 +52,7 @@ public class PerformanceBehaviorTests
     }
 
     [Fact]
+    [Trait("Category", "LongRunning")]
     public async Task Handle_RequestLento_DeberiaGenerarAlerta()
     {
         // Arrange
@@ -121,6 +122,7 @@ public class PerformanceBehaviorTests
     }
 
     [Fact]
+    [Trait("Category", "LongRunning")]
     public async Task Handle_OperacionCriticamenteLenta_DeberiaGenerarAlertaCritica()
     {
         // Arrange
@@ -388,6 +390,7 @@ public class PerformanceBehaviorTests
     [InlineData(1500, false)]  // Medio - sin alerta para Command
     [InlineData(2500, true)]   // Lento - con alerta
     [InlineData(5500, true)]   // Muy lento - con alerta crítica
+    [Trait("Category", "LongRunning")]
     public async Task Handle_DiferentiTempos_DeberiaGenerarAlertasApropiadas(int delayMs, bool deberiaAlertar)
     {
         // Arrange
