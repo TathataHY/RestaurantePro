@@ -122,8 +122,8 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "❌ Excepción general en unificación: {Message}", ex.Message);
-                    return Result.Failure<UnificarComandasDto>($"Error en transacción: {ex.Message}");
+                    _logger.LogError(ex, "Error al unificar comandas");
+                    return Result.Failure<UnificarComandasDto>($"Error interno al unificar las comandas: {ex.Message}");
                 }
 
             }, cancellationToken);

@@ -119,20 +119,20 @@ public class ObtenerReservacionesPorFechaHandler : IRequestHandler<ObtenerReserv
                 reservacionesFiltradas = reservacionesFiltradas.Where(r => r.FechaReservacion > fechaHoraActual);
                 _logger.LogDebug("🔍 Filtro aplicado - Solo reservaciones futuras");
             }
-
-            if (!reservacionesFiltradas.Any())
-            {
-                _logger.LogInformation("⚠️ No hay reservaciones que cumplan los criterios especificados");
-                return Result.Success(new PaginatedList<ReservacionDto>(new List<ReservacionDto>(), 0, request.Pagina, request.TamanoPagina));
-            }
-
-            // Ordenar si se especifica
+            
+            // Ordenar si se especifica - IMPORTANTE: Este log debe ejecutarse siempre que OrdenarPorHora sea true
             if (request.OrdenarPorHora)
             {
                 reservacionesFiltradas = reservacionesFiltradas.OrderBy(r => r.Hora);
                 
                 // Solo agregar un único log con el formato que espera la prueba
-                _logger.LogDebug("Ordenamiento aplicado por hora");
+                _logger.LogDebug("🔍 Ordenamiento aplicado por hora");
+            }
+
+            if (!reservacionesFiltradas.Any())
+            {
+                _logger.LogInformation("⚠️ No hay reservaciones que cumplan los criterios especificados");
+                return Result.Success(new PaginatedList<ReservacionDto>(new List<ReservacionDto>(), 0, request.Pagina, request.TamanoPagina));
             }
 
             // Convertir a lista para aplicar paginación

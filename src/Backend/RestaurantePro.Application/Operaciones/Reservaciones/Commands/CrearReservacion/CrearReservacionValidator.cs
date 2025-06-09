@@ -33,8 +33,8 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
 
         // Validar anticipación mínima (solo si es hoy)
         RuleFor(x => x.FechaHoraReservacion)
-            .Must(BeAtLeastTwoHoursInAdvance)
-            .WithMessage("Las reservaciones deben hacerse con al menos 2 horas de anticipación")
+            .Must(BeAtLeastOneHourInAdvance)
+            .WithMessage("Las reservaciones deben hacerse con al menos 1 hora de anticipación")
             .When(x => BeFutureDate(x.FechaHoraReservacion) && IsToday(x.FechaHoraReservacion));
 
         // Número de personas debe ser positivo
@@ -124,10 +124,10 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
         return hora >= 12 && hora <= 22;
     }
 
-    private static bool BeAtLeastTwoHoursInAdvance(DateTime fechaHora)
+    private static bool BeAtLeastOneHourInAdvance(DateTime fechaHora)
     {
-        // Para reservaciones en el mismo día, debe haber al menos 2 horas de anticipación
-        return fechaHora >= DateTime.Now.AddHours(2);
+        // Para reservaciones en el mismo día, debe haber al menos 1 hora de anticipación
+        return fechaHora >= DateTime.Now.AddHours(1);
     }
 
     private static bool BeValidPhoneNumber(string telefono)

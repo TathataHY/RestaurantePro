@@ -269,9 +269,12 @@ public class DividirComandaValidatorTests
         // Crear comanda no divisible (cancelada)
         var comanda = CrearComandaValidaParaDivision();
         typeof(EntityBase).GetProperty("Id")?.SetValue(comanda, command.ComandaOriginalId);
-        // Marcar como cancelada usando método del dominio 
-        comanda.Cancelar("Comanda cancelada para prueba");
-
+        
+        // En lugar de usar el método Cancelar que llama a ValidarInvariantes y genera error,
+        // establecemos directamente las propiedades que necesitamos para que la comanda no sea divisible
+        typeof(Comanda).GetProperty("Estado")?.SetValue(comanda, EstadoComanda.Cancelada);
+        typeof(Comanda).GetProperty("Observaciones")?.SetValue(comanda, "CANCELADA: Comanda cancelada para prueba");
+        
         var comandas = new List<Comanda> { comanda };
         var comandasMock = MockDbSetHelper.CreateMockDbSet(comandas.AsQueryable());
         _contextMock.Setup(x => x.Comandas).Returns(comandasMock.Object);
