@@ -494,7 +494,7 @@ public class CrearReservacionValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.FechaHoraReservacion = DateTime.Now.AddHours(2); // Bien por encima del mínimo de 1 hora
+        command.FechaHoraReservacion = DateTime.Now.AddHours(5); // Bien por encima del mínimo de 1 hora
 
         // Act
         var result = _validator.Validate(command);

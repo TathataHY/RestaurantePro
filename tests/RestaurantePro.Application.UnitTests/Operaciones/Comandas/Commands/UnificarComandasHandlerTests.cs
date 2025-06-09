@@ -431,7 +431,7 @@ public class UnificarComandasHandlerTests
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error al unificar comandas")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Error al unificar comandas")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -547,6 +547,15 @@ public class UnificarComandasHandlerTests
     {
         var mockSet = MockDbSetHelper.CreateMockDbSet(comandas.AsQueryable());
         _mockContext.Setup(c => c.Comandas).Returns(mockSet.Object);
+        
+        // Verificar el mensaje de log específico usado en la implementación actual
+        _mockLogger.Setup(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Error al unificar comandas")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()));
         
         // CRÍTICO: Configurar el include para Items específicamente
         // Esto asegura que cuando el handler use .Include(c => c.Items), funcione correctamente

@@ -457,7 +457,7 @@ public class GenerarReporteHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Contain("Error interno al generar el reporte");
+        result.Error.Should().Be("Error generando reporte");
 
         _mockLogger.Verify(
             x => x.Log(

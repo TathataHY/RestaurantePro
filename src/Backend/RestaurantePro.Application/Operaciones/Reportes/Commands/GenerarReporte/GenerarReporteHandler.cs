@@ -99,7 +99,7 @@ public class GenerarReporteHandler : IRequestHandler<GenerarReporteCommand, Resu
             _logger.LogError(ex, "❌ Error generando reporte {TipoReporte} - ID: {ReporteId}", 
                 request.TipoReporte, reporteId);
 
-            return Result.Failure<ReporteGeneradoResult>($"Error interno al generar el reporte: {ex.Message}");
+            return Result.Failure<ReporteGeneradoResult>("Error generando reporte");
         }
     }
 
@@ -131,7 +131,7 @@ public class GenerarReporteHandler : IRequestHandler<GenerarReporteCommand, Resu
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error obteniendo datos para reporte {TipoReporte}", request.TipoReporte);
-            return Result.Failure<Dictionary<string, object>>($"Error interno al generar el reporte: {ex.Message}");
+            return Result.Failure<Dictionary<string, object>>("Error generando reporte");
         }
     }
 

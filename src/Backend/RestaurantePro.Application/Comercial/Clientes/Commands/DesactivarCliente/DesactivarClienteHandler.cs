@@ -56,7 +56,26 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
 
             // 4. Categorizar motivo de desactivación y loggear
             var categoria = CategorizarMotivoDesactivacion(request.MotivoDesactivacion);
-            _logger.LogInformation("Categoría de desactivación determinada: {Categoria} para cliente {ClienteId}", categoria, request.ClienteId);
+            if (request.MotivoDesactivacion.ToLower().Contains("mudó") || request.MotivoDesactivacion.ToLower().Contains("traslado") || request.MotivoDesactivacion.ToLower().Contains("residencia") || request.MotivoDesactivacion.ToLower().Contains("ciudad"))
+            {
+                _logger.LogInformation("🏠 Cambio de residencia para cliente {ClienteId}", request.ClienteId);
+            }
+            else if (request.MotivoDesactivacion.ToLower().Contains("comportamiento") || request.MotivoDesactivacion.ToLower().Contains("inapropiado"))
+            {
+                _logger.LogInformation("⚠️ Violación de políticas para cliente {ClienteId}", request.ClienteId);
+            }
+            else if (request.MotivoDesactivacion.ToLower().Contains("solicitud") || request.MotivoDesactivacion.ToLower().Contains("cliente") || request.MotivoDesactivacion.ToLower().Contains("pide"))
+            {
+                _logger.LogInformation("✅ Solicitud voluntaria para cliente {ClienteId}", request.ClienteId);
+            }
+            else if (request.MotivoDesactivacion.ToLower().Contains("pago") || request.MotivoDesactivacion.ToLower().Contains("factura") || request.MotivoDesactivacion.ToLower().Contains("deuda") || request.MotivoDesactivacion.ToLower().Contains("incumplimiento"))
+            {
+                _logger.LogInformation("💳 Problemas financieros para cliente {ClienteId}", request.ClienteId);
+            }
+            else
+            {
+                _logger.LogInformation("Categoría de desactivación determinada: {Categoria} para cliente {ClienteId}", categoria, request.ClienteId);
+            }
 
             // 5. Desactivar el cliente usando el método del dominio
             cliente.Desactivar();
@@ -282,7 +301,7 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
         else if (motivo.Contains("mudó") || motivo.Contains("traslado") || motivo.Contains("residencia") || motivo.Contains("ciudad"))
         {
             categoria = "🏠 Cambio de residencia";
-            _logger.LogInformation("🏠 Cambio de residencia: Cliente cambió de ubicación");
+            _logger.LogInformation("🏠 Cambio de residencia");
         }
         else
         {

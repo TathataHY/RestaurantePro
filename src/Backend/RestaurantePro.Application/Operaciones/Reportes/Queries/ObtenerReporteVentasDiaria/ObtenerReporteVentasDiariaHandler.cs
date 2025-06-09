@@ -115,7 +115,7 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generando reporte de ventas diarias: {Error}", ex.Message);
-            return Result.Failure<ReporteVentasDiariaDto>($"Error interno generando reporte: {ex.Message}");
+            return Result.Failure<ReporteVentasDiariaDto>("Error interno generando reporte");
         }
     }
 

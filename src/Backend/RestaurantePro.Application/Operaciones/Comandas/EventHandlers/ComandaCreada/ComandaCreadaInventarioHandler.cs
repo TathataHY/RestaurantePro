@@ -45,7 +45,7 @@ public class ComandaCreadaInventarioHandler : Domain.Core.Base.Events.Handlers.I
             var ingredientesTotales = await _ingredienteRepository.ObtenerTodosAsync(cancellationToken);
             if (ingredientesTotales == null || !ingredientesTotales.Any())
             {
-                _logger.LogInformation("No hay ingredientes registrados en el sistema");
+                _logger.LogInformation("No hay ingredientes registrados");
                 return;
             }
 

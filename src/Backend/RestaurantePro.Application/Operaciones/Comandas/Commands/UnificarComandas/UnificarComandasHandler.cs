@@ -123,16 +123,15 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error al unificar comandas");
-                    return Result.Failure<UnificarComandasDto>($"Error interno al unificar las comandas: {ex.Message}");
+                    return Result.Failure<UnificarComandasDto>($"Error al unificar comandas: {ex.Message}");
                 }
 
             }, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error al unificar comandas {ComandasIds}: {ErrorMessage}", 
-                string.Join(", ", request.ComandasIds), ex.Message);
-            return Result.Failure<UnificarComandasDto>($"Error interno al unificar las comandas: {ex.Message}");
+            _logger.LogError(ex, "Error al unificar comandas");
+            return Result.Failure<UnificarComandasDto>($"Error al unificar comandas: {ex.Message}");
         }
     }
 
