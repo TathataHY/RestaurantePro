@@ -72,6 +72,11 @@ public class PersonalizacionCreateDto
     /// ID del ingrediente a personalizar
     /// </summary>
     public Guid IngredienteId { get; set; }
+    
+    /// <summary>
+    /// Nombre del ingrediente (para visualización)
+    /// </summary>
+    public string NombreIngrediente { get; set; } = string.Empty;
 
     /// <summary>
     /// Cantidad para extras y sustituciones
@@ -82,6 +87,11 @@ public class PersonalizacionCreateDto
     /// ID del ingrediente de sustitución (solo para tipo "Sustituir")
     /// </summary>
     public Guid? IngredienteSustitucionId { get; set; }
+    
+    /// <summary>
+    /// Nombre del ingrediente de sustitución (solo para tipo "Sustituir")
+    /// </summary>
+    public string? NombreIngredienteSustitucion { get; set; }
 
     /// <summary>
     /// Precio adicional de la personalización

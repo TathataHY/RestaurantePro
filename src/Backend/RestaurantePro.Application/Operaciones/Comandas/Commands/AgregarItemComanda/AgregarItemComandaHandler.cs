@@ -1,3 +1,19 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using AutoMapper;
+using MediatR;
+using Microsoft.Extensions.Logging;
+using RestaurantePro.Application.Common.Models;
+using RestaurantePro.Application.Operaciones.Comandas.DTOs;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
+using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Services;
+
 namespace RestaurantePro.Application.Operaciones.Comandas.Commands.AgregarItemComanda;
 
 /// <summary>
@@ -9,15 +25,18 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
     private readonly IComandaRepository _comandaRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<AgregarItemComandaHandler> _logger;
+    private readonly IServicioPreparaciones _servicioPreparaciones;
 
     public AgregarItemComandaHandler(
         IComandaRepository comandaRepository,
         IMapper mapper,
-        ILogger<AgregarItemComandaHandler> logger)
+        ILogger<AgregarItemComandaHandler> logger,
+        IServicioPreparaciones servicioPreparaciones)
     {
         _comandaRepository = comandaRepository;
         _mapper = mapper;
         _logger = logger;
+        _servicioPreparaciones = servicioPreparaciones;
     }
 
     public async Task<Result<ComandaDto>> Handle(AgregarItemComandaCommand request, CancellationToken cancellationToken)
@@ -43,18 +62,41 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
                 return Result.Failure<ComandaDto>($"No se puede agregar items a una comanda en estado '{comanda.Estado}'");
             }
 
-            // 3. Agregar el producto usando el método del dominio
+            // 3. Verificar disponibilidad en preparaciones si es un producto preparado
+            var disponibilidadResult = await _servicioPreparaciones.VerificarDisponibilidadAsync(request.ProductoId, request.Cantidad);
+            
+            // Si hay disponibilidad de preparaciones, se consumirá después de agregar el producto
+            bool usarPreparacion = disponibilidadResult.Succeeded && disponibilidadResult.Value;
+
+            // 4. Agregar el producto usando el método del dominio
             var itemResult = await AgregarProductoAComanda(comanda, request);
             if (!itemResult.Succeeded)
             {
                 return Result.Failure<ComandaDto>(itemResult.Error);
             }
 
-            // 4. Guardar los cambios
+            // 5. Si hay preparaciones disponibles, consumirlas
+            if (usarPreparacion)
+            {
+                var consumoResult = await _servicioPreparaciones.ConsumirPreparacionAsync(request.ProductoId, request.Cantidad);
+                if (!consumoResult.Succeeded)
+                {
+                    _logger.LogWarning("⚠️ No se pudo consumir preparación. Error: {Error}", consumoResult.Error);
+                    // No fallamos toda la operación si no se puede consumir la preparación
+                    // Solo registramos la advertencia
+                }
+                else
+                {
+                    _logger.LogInformation("✅ Preparación consumida exitosamente. Producto: {ProductoId}, Cantidad: {Cantidad}", 
+                        request.ProductoId, request.Cantidad);
+                }
+            }
+
+            // 6. Guardar los cambios
             await _comandaRepository.ActualizarAsync(comanda);
             await _comandaRepository.GuardarCambiosAsync();
 
-            // 5. Mapear y retornar el resultado
+            // 7. Mapear y retornar el resultado
             var comandaDto = _mapper.Map<ComandaDto>(comanda);
 
             _logger.LogInformation("✅ Item agregado exitosamente a comanda {ComandaId}. Nuevo total: ${Total:F2}", 
@@ -62,20 +104,10 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
 
             return Result.Success(comandaDto);
         }
-        catch (BusinessRuleViolationException ex)
-        {
-            _logger.LogWarning("💼 Violación de regla de negocio al agregar item: {Error}", ex.Message);
-            return Result.Failure<ComandaDto>(ex.Message);
-        }
-        catch (ArgumentException ex)
-        {
-            _logger.LogWarning("📝 Error de argumentos al agregar item: {Error}", ex.Message);
-            return Result.Failure<ComandaDto>(ex.Message);
-        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "💥 Error inesperado al agregar item a comanda {ComandaId}", request.ComandaId);
-            return Result.Failure<ComandaDto>("Ocurrió un error interno al procesar la solicitud");
+            _logger.LogError(ex, "❌ Error al agregar item a comanda {ComandaId}", request.ComandaId);
+            return Result.Failure<ComandaDto>($"Error al procesar la solicitud: {ex.Message}");
         }
     }
 
@@ -84,8 +116,7 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
     /// </summary>
     private static bool PuedeModificarComanda(Comanda comanda)
     {
-        var estadosModificables = new[] { "Creada", "EnProceso" };
-        return estadosModificables.Contains(comanda.Estado.ToString());
+        return comanda.Estado == EstadoComanda.Creada || comanda.Estado == EstadoComanda.EnProceso;
     }
 
     /// <summary>
@@ -95,177 +126,67 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
     {
         try
         {
-            // Usar el método del dominio que retorna ItemComanda
-            var itemComanda = comanda.AgregarItem(
+            // Agregar el producto a la comanda
+            var item = comanda.AgregarItem(
                 request.ProductoId,
                 request.NombreProducto,
                 request.Cantidad,
                 request.PrecioUnitario,
                 request.Observaciones);
 
-            // Agregar personalizaciones si las hay
-            if (request.Personalizaciones.Any())
+            // Agregar personalizaciones si existen
+            if (request.Personalizaciones != null && request.Personalizaciones.Any())
             {
-                foreach (var personalizacionDto in request.Personalizaciones)
+                foreach (var personalizacion in request.Personalizaciones)
                 {
-                    var personalizacion = await CrearPersonalizacion(personalizacionDto);
-                    if (personalizacion.Succeeded)
+                    switch (personalizacion.Tipo)
                     {
-                        // Aplicar personalización usando los métodos del dominio
-                        var aplicado = await AplicarPersonalizacion(itemComanda, personalizacionDto);
-                        if (!aplicado.Succeeded)
-                        {
-                            _logger.LogWarning("⚠️ Error al aplicar personalización: {Error}", aplicado.Error);
-                            return Result.Failure(aplicado.Error);
-                        }
-                    }
-                    else
-                    {
-                        _logger.LogWarning("⚠️ Error al crear personalización: {Error}", personalizacion.Error);
-                        return Result.Failure(personalizacion.Error);
+                        case "Extra":
+                            comanda.AgregarPersonalizacionExtra(
+                                item.Id,
+                                personalizacion.IngredienteId,
+                                personalizacion.NombreIngrediente,
+                                personalizacion.Cantidad,
+                                personalizacion.PrecioAdicional);
+                            break;
+                        case "Quitar":
+                            comanda.AgregarPersonalizacionQuitar(
+                                item.Id,
+                                personalizacion.IngredienteId,
+                                personalizacion.NombreIngrediente);
+                            break;
+                        case "Sustituir":
+                            if (!personalizacion.IngredienteSustitucionId.HasValue)
+                            {
+                                return Result.Failure("Se requiere el ingrediente de sustitución para personalizaciones de tipo 'Sustituir'");
+                            }
+                            
+                            comanda.AgregarPersonalizacionSustituir(
+                                item.Id,
+                                personalizacion.IngredienteId,
+                                personalizacion.NombreIngrediente,
+                                personalizacion.IngredienteSustitucionId.Value,
+                                personalizacion.NombreIngredienteSustitucion ?? string.Empty,
+                                personalizacion.Cantidad,
+                                personalizacion.PrecioAdicional);
+                            break;
+                        default:
+                            return Result.Failure($"Tipo de personalización no soportado: {personalizacion.Tipo}");
                     }
                 }
             }
 
-            _logger.LogInformation("📦 Item agregado: {NombreProducto} x{Cantidad} = ${Subtotal:F2}", 
-                request.NombreProducto, request.Cantidad, itemComanda.Subtotal);
-
-            return Result.Success();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "💥 Error al agregar producto al dominio");
-            return Result.Failure($"Error al agregar el producto: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Valida los datos de una personalización desde el DTO
-    /// </summary>
-    private async Task<Result<object>> CrearPersonalizacion(PersonalizacionCreateDto dto)
-    {
-        try
-        {
-            await Task.CompletedTask; // No necesitamos operaciones async
-
-            // Validaciones básicas
-            if (dto.IngredienteId == Guid.Empty)
-            {
-                return Result.Failure<object>("El ID del ingrediente es requerido para la personalización");
-            }
-
-            if (string.IsNullOrWhiteSpace(dto.Tipo))
-            {
-                return Result.Failure<object>("El tipo de personalización es requerido");
-            }
-
-            var tipoUpper = dto.Tipo.ToUpperInvariant();
-            if (tipoUpper != "EXTRA" && tipoUpper != "QUITAR" && tipoUpper != "SUSTITUIR")
-            {
-                return Result.Failure<object>($"Tipo de personalización no válido: {dto.Tipo}");
-            }
-
-            // Validaciones específicas por tipo
-            if (tipoUpper == "EXTRA" && dto.Cantidad <= 0)
-            {
-                return Result.Failure<object>("La cantidad debe ser mayor que cero para personalizaciones de tipo Extra");
-            }
-
-            if (tipoUpper == "SUSTITUIR" && (!dto.IngredienteSustitucionId.HasValue || dto.IngredienteSustitucionId.Value == Guid.Empty))
-            {
-                return Result.Failure<object>("Se requiere especificar el ingrediente de sustitución para personalizaciones de tipo Sustituir");
-            }
-
-            if (dto.PrecioAdicional < 0)
-            {
-                return Result.Failure<object>("El precio adicional no puede ser negativo");
-            }
-            
-            _logger.LogDebug("✅ Personalización validada: {Tipo} - {IngredienteId}", dto.Tipo, dto.IngredienteId);
-            return Result.Success<object>(new object()); // Solo retornamos éxito, no necesitamos el objeto
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "💥 Error al validar personalización");
-            return Result.Failure<object>($"Error al validar personalización: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Aplica una personalización a un itemComanda usando los métodos del dominio
-    /// </summary>
-    private async Task<Result> AplicarPersonalizacion(ItemComanda itemComanda, PersonalizacionCreateDto dto)
-    {
-        try
-        {
-            await Task.CompletedTask; // No necesitamos operaciones async aquí
-
-            switch (dto.Tipo.ToUpperInvariant())
-            {
-                case "EXTRA":
-                    // Usar método del dominio para agregar extra
-                    itemComanda.AgregarPersonalizacionExtra(
-                        dto.IngredienteId,
-                        $"Extra ingrediente {dto.IngredienteId}", // TODO: Obtener nombre real del ingrediente
-                        dto.Cantidad,
-                        dto.PrecioAdicional);
-                    
-                    _logger.LogDebug("✨ Extra agregado: Ingrediente {IngredienteId} x{Cantidad} (+${Precio:F2})", 
-                        dto.IngredienteId, dto.Cantidad, dto.PrecioAdicional);
-                    break;
-
-                case "QUITAR":
-                    // Usar método del dominio para quitar ingrediente
-                    itemComanda.AgregarPersonalizacionQuitar(
-                        dto.IngredienteId,
-                        $"Quitar ingrediente {dto.IngredienteId}"); // TODO: Obtener nombre real del ingrediente
-                    
-                    _logger.LogDebug("✨ Ingrediente removido: {IngredienteId}", dto.IngredienteId);
-                    break;
-
-                case "SUSTITUIR":
-                    // Validar que existe ingrediente de sustitución
-                    if (!dto.IngredienteSustitucionId.HasValue || dto.IngredienteSustitucionId.Value == Guid.Empty)
-                    {
-                        return Result.Failure("Para sustituir un ingrediente se requiere especificar el ingrediente de sustitución");
-                    }
-
-                    // Usar método del dominio para sustituir
-                    itemComanda.AgregarPersonalizacionSustituir(
-                        dto.IngredienteId,
-                        $"Ingrediente {dto.IngredienteId}", // TODO: Obtener nombre real del ingrediente
-                        dto.IngredienteSustitucionId.Value,
-                        $"Ingrediente {dto.IngredienteSustitucionId.Value}", // TODO: Obtener nombre real del ingrediente
-                        dto.Cantidad,
-                        dto.PrecioAdicional);
-                    
-                    _logger.LogDebug("✨ Sustitución aplicada: {IngredienteOriginal} → {IngredienteSustituto} (+${Precio:F2})", 
-                        dto.IngredienteId, dto.IngredienteSustitucionId.Value, dto.PrecioAdicional);
-                    break;
-
-                default:
-                    return Result.Failure($"Tipo de personalización no válido: {dto.Tipo}. Valores válidos: Extra, Quitar, Sustituir");
-            }
-
-            _logger.LogInformation("✅ Personalización {Tipo} aplicada exitosamente al item {ItemId}", 
-                dto.Tipo, itemComanda.Id);
-            
             return Result.Success();
         }
         catch (InvalidOperationException ex)
         {
-            _logger.LogWarning("💼 Error de lógica de negocio al aplicar personalización: {Error}", ex.Message);
+            _logger.LogWarning("Error al agregar producto a comanda: {Error}", ex.Message);
             return Result.Failure(ex.Message);
         }
         catch (ArgumentException ex)
         {
-            _logger.LogWarning("📝 Error de argumentos al aplicar personalización: {Error}", ex.Message);
+            _logger.LogWarning("Error de validación al agregar producto: {Error}", ex.Message);
             return Result.Failure(ex.Message);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "💥 Error inesperado al aplicar personalización {Tipo}", dto.Tipo);
-            return Result.Failure($"Error interno al aplicar personalización: {ex.Message}");
         }
     }
 } 

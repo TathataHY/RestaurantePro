@@ -44,16 +44,18 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerEs
             // Calculamos estadísticas a partir de los datos reales
             var totalPreparaciones = preparaciones.Count;
             
-            var preparacionesDisponibles = preparaciones
-                .Count(p => p.Estado == EstadoPreparacion.Disponible);
-                
-            // Solo contar preparaciones que tengan estado "Disponible" y estén por vencer
-            // según las horas de anticipación
+            // Identificamos las preparaciones por vencer primero
             var preparacionesPorVencer = preparaciones
+                .Where(p => p.Estado == EstadoPreparacion.Disponible && 
+                           p.FechaVencimiento.HasValue &&
+                           p.FechaVencimiento.Value <= fechaActual.AddHours(5) && 
+                           p.FechaVencimiento.Value > fechaActual)
+                .ToList();
+                
+            // Contamos las preparaciones disponibles excluyendo las que están por vencer
+            var preparacionesDisponibles = preparaciones
                 .Count(p => p.Estado == EstadoPreparacion.Disponible && 
-                            p.FechaVencimiento.HasValue &&
-                            p.FechaVencimiento.Value <= fechaActual.AddHours(5) && 
-                            p.FechaVencimiento.Value > fechaActual);
+                            !preparacionesPorVencer.Any(pv => pv.Id == p.Id));
                 
             var preparacionesAgotadas = preparaciones
                 .Count(p => p.Estado == EstadoPreparacion.Agotada);
@@ -81,7 +83,7 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerEs
             {
                 TotalPreparaciones = totalPreparaciones,
                 PreparacionesDisponibles = preparacionesDisponibles,
-                PreparacionesPorVencer = preparacionesPorVencer,
+                PreparacionesPorVencer = preparacionesPorVencer.Count,
                 PreparacionesAgotadas = preparacionesAgotadas,
                 PreparacionesVencidas = preparacionesVencidas,
                 
