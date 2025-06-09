@@ -1,3 +1,9 @@
+using Microsoft.Extensions.Logging;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Events;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
+
 namespace RestaurantePro.Domain.Operaciones.Preparaciones.Services;
 
 /// <summary>
@@ -8,15 +14,18 @@ public class ServicioPreparaciones : IServicioPreparaciones
     private readonly ILogger<ServicioPreparaciones> _logger;
     private readonly INotificationManager _notificationManager;
     private readonly IDateTimeService _dateTimeService;
+    private readonly IPreparacionRepository _preparacionRepository;
 
     public ServicioPreparaciones(
         ILogger<ServicioPreparaciones> logger,
         INotificationManager notificationManager,
-        IDateTimeService dateTimeService)
+        IDateTimeService dateTimeService,
+        IPreparacionRepository preparacionRepository)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
         _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
+        _preparacionRepository = preparacionRepository ?? throw new ArgumentNullException(nameof(preparacionRepository));
     }
 
     /// <summary>
@@ -54,6 +63,10 @@ public class ServicioPreparaciones : IServicioPreparaciones
                 observaciones,
                 _dateTimeService.Now);
 
+            // Guardar en el repositorio
+            await _preparacionRepository.AgregarAsync(preparacion);
+            await _preparacionRepository.GuardarCambiosAsync();
+
             _logger.LogInformation("Preparación creada exitosamente: {PreparacionId}", preparacion.Id);
 
             return Result<PreparacionDiaria>.Success(preparacion);
@@ -82,11 +95,36 @@ public class ServicioPreparaciones : IServicioPreparaciones
             return _notificationManager.ToResult<bool>(false);
         }
 
-        await Task.CompletedTask; // Para evitar warning async
-        
-        // Implementación temporal: siempre retorna false (no hay preparaciones)
-        _logger.LogDebug("Verificación completada para producto {ProductoId} - Sin preparaciones disponibles", productoId);
-        return Result<bool>.Success(false);
+        try
+        {
+            // Obtener preparaciones disponibles del producto
+            var preparaciones = await _preparacionRepository.ObtenerPreparacionesDisponiblesPorProductoAsync(productoId);
+            
+            // Sumar cantidad disponible total
+            int cantidadDisponible = 0;
+            foreach (var preparacion in preparaciones)
+            {
+                if (preparacion.Estado == EstadoPreparacion.Disponible || 
+                    preparacion.Estado == EstadoPreparacion.PorVencer)
+                {
+                    cantidadDisponible += preparacion.CantidadDisponible;
+                }
+            }
+            
+            // Verificar si hay suficiente cantidad
+            bool hayDisponibilidad = cantidadDisponible >= cantidadRequerida;
+            
+            _logger.LogDebug("Verificación completada para producto {ProductoId} - Disponible: {Disponible}, Cantidad: {Cantidad}/{Requerida}", 
+                productoId, hayDisponibilidad, cantidadDisponible, cantidadRequerida);
+            
+            return Result<bool>.Success(hayDisponibilidad);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al verificar disponibilidad del producto {ProductoId}", productoId);
+            _notificationManager.AddError($"Error al verificar disponibilidad: {ex.Message}", "VerificarDisponibilidad");
+            return _notificationManager.ToResult<bool>(false);
+        }
     }
 
     /// <summary>
@@ -105,11 +143,68 @@ public class ServicioPreparaciones : IServicioPreparaciones
             return _notificationManager.ToResult();
         }
 
-        await Task.CompletedTask; // Para evitar warning async
-
-        // Implementación temporal: simula consumo exitoso
-        _logger.LogInformation("Preparación consumida exitosamente - Producto: {ProductoId}", productoId);
-        return Result.Success();
+        try
+        {
+            // Obtener preparaciones disponibles del producto ordenadas por fecha de vencimiento (FIFO)
+            var preparaciones = (await _preparacionRepository.ObtenerPreparacionesDisponiblesPorProductoAsync(productoId))
+                .OrderBy(p => p.FechaVencimiento ?? DateTime.MaxValue)
+                .ThenBy(p => p.FechaPreparacion)
+                .ToList();
+            
+            // Verificar si hay suficientes preparaciones
+            int cantidadDisponible = preparaciones.Sum(p => p.CantidadDisponible);
+            if (cantidadDisponible < cantidad)
+            {
+                _logger.LogWarning("No hay suficiente cantidad disponible. Disponible: {Disponible}, Solicitada: {Solicitada}", 
+                    cantidadDisponible, cantidad);
+                _notificationManager.AddError($"No hay suficiente cantidad disponible. Disponible: {cantidadDisponible}, Solicitada: {cantidad}", "ConsumirPreparacion");
+                return _notificationManager.ToResult();
+            }
+            
+            // Consumir de cada preparación hasta completar la cantidad requerida
+            int cantidadRestante = cantidad;
+            foreach (var preparacion in preparaciones)
+            {
+                if (cantidadRestante <= 0) break;
+                
+                // Determinar cuánto consumir de esta preparación
+                int cantidadAConsumir = Math.Min(cantidadRestante, preparacion.CantidadDisponible);
+                
+                // Consumir cantidad
+                var resultado = preparacion.ConsumirCantidad(cantidadAConsumir);
+                if (!resultado.Succeeded)
+                {
+                    _logger.LogWarning("Error al consumir preparación {PreparacionId}: {Error}", 
+                        preparacion.Id, resultado.Error);
+                    continue; // Intentar con la siguiente preparación
+                }
+                
+                // Actualizar preparación en repositorio
+                await _preparacionRepository.ActualizarAsync(preparacion);
+                
+                // Reducir cantidad restante
+                cantidadRestante -= cantidadAConsumir;
+            }
+            
+            // Guardar cambios
+            await _preparacionRepository.GuardarCambiosAsync();
+            
+            if (cantidadRestante > 0)
+            {
+                _logger.LogWarning("No se pudo consumir toda la cantidad solicitada. Restante: {Restante}", cantidadRestante);
+                _notificationManager.AddError($"Solo se consumieron {cantidad - cantidadRestante} de {cantidad} unidades", "ConsumirPreparacion");
+                return _notificationManager.ToResult();
+            }
+            
+            _logger.LogInformation("Preparación consumida exitosamente - Producto: {ProductoId}, Cantidad: {Cantidad}", productoId, cantidad);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al consumir preparación del producto {ProductoId}", productoId);
+            _notificationManager.AddError($"Error al consumir preparación: {ex.Message}", "ConsumirPreparacion");
+            return _notificationManager.ToResult();
+        }
     }
 
     /// <summary>
@@ -119,13 +214,20 @@ public class ServicioPreparaciones : IServicioPreparaciones
     {
         _logger.LogDebug("Obteniendo preparaciones del día");
 
-        await Task.CompletedTask; // Para evitar warning async
-        
-        // Implementación temporal: retorna lista vacía
-        var preparaciones = new List<PreparacionDiaria>();
-        
-        _logger.LogDebug("Se encontraron {Count} preparaciones del día", preparaciones.Count);
-        return Result<List<PreparacionDiaria>>.Success(preparaciones);
+        try
+        {
+            var preparaciones = await _preparacionRepository.ObtenerPreparacionesDelDiaAsync();
+            var listaPreparaciones = preparaciones.ToList();
+            
+            _logger.LogDebug("Se encontraron {Count} preparaciones del día", listaPreparaciones.Count);
+            return Result<List<PreparacionDiaria>>.Success(listaPreparaciones);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener preparaciones del día");
+            _notificationManager.AddError($"Error al obtener preparaciones: {ex.Message}", "ObtenerPreparaciones");
+            return _notificationManager.ToResult<List<PreparacionDiaria>>(new List<PreparacionDiaria>());
+        }
     }
 
     /// <summary>
@@ -143,15 +245,22 @@ public class ServicioPreparaciones : IServicioPreparaciones
             return _notificationManager.ToResult<List<PreparacionDiaria>>(new List<PreparacionDiaria>());
         }
 
-        await Task.CompletedTask; // Para evitar warning async
-        
-        // Implementación temporal: retorna lista vacía
-        var preparaciones = new List<PreparacionDiaria>();
-        
-        _logger.LogDebug("Se encontraron {Count} preparaciones para producto {ProductoId}", 
-            preparaciones.Count, productoId);
-        
-        return Result<List<PreparacionDiaria>>.Success(preparaciones);
+        try
+        {
+            var preparaciones = await _preparacionRepository.ObtenerPreparacionesDisponiblesPorProductoAsync(productoId);
+            var listaPreparaciones = preparaciones.ToList();
+            
+            _logger.LogDebug("Se encontraron {Count} preparaciones para producto {ProductoId}", 
+                listaPreparaciones.Count, productoId);
+            
+            return Result<List<PreparacionDiaria>>.Success(listaPreparaciones);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener preparaciones del producto {ProductoId}", productoId);
+            _notificationManager.AddError($"Error al obtener preparaciones: {ex.Message}", "ObtenerPreparaciones");
+            return _notificationManager.ToResult<List<PreparacionDiaria>>(new List<PreparacionDiaria>());
+        }
     }
 
     /// <summary>
@@ -161,12 +270,46 @@ public class ServicioPreparaciones : IServicioPreparaciones
     {
         _logger.LogInformation("Iniciando proceso de marcado de preparaciones vencidas");
 
-        await Task.CompletedTask; // Para evitar warning async
-
-        // Implementación temporal: simula proceso exitoso
-        var preparacionesMarcadas = 0;
-        _logger.LogInformation("Proceso completado: {Count} preparaciones marcadas como vencidas", preparacionesMarcadas);
-        return Result<int>.Success(preparacionesMarcadas);
+        try
+        {
+            var fechaActual = _dateTimeService.Now;
+            
+            // Obtener preparaciones disponibles y por vencer
+            var preparaciones = await _preparacionRepository.ObtenerPorEstadoAsync(EstadoPreparacion.Disponible);
+            var preparacionesPorVencer = await _preparacionRepository.ObtenerPorEstadoAsync(EstadoPreparacion.PorVencer);
+            
+            var todasPreparaciones = preparaciones.Concat(preparacionesPorVencer).ToList();
+            int preparacionesMarcadas = 0;
+            
+            // Revisar cada preparación
+            foreach (var preparacion in todasPreparaciones)
+            {
+                if (preparacion.HaVencido(fechaActual))
+                {
+                    var resultado = preparacion.MarcarComoVencida();
+                    if (resultado.Succeeded)
+                    {
+                        await _preparacionRepository.ActualizarAsync(preparacion);
+                        preparacionesMarcadas++;
+                    }
+                }
+            }
+            
+            // Guardar cambios
+            if (preparacionesMarcadas > 0)
+            {
+                await _preparacionRepository.GuardarCambiosAsync();
+            }
+            
+            _logger.LogInformation("Proceso completado: {Count} preparaciones marcadas como vencidas", preparacionesMarcadas);
+            return Result<int>.Success(preparacionesMarcadas);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al marcar preparaciones vencidas");
+            _notificationManager.AddError($"Error al marcar preparaciones vencidas: {ex.Message}", "MarcarVencidas");
+            return _notificationManager.ToResult<int>(0);
+        }
     }
 
     /// <summary>
@@ -184,13 +327,20 @@ public class ServicioPreparaciones : IServicioPreparaciones
             return _notificationManager.ToResult<List<PreparacionDiaria>>(new List<PreparacionDiaria>());
         }
 
-        await Task.CompletedTask; // Para evitar warning async
-        
-        // Implementación temporal: retorna lista vacía
-        var preparaciones = new List<PreparacionDiaria>();
-        
-        _logger.LogDebug("Se encontraron {Count} preparaciones por vencer", preparaciones.Count);
-        return Result<List<PreparacionDiaria>>.Success(preparaciones);
+        try
+        {
+            var preparaciones = await _preparacionRepository.ObtenerPorVencerAsync(horasAnticipacion);
+            var listaPreparaciones = preparaciones.ToList();
+            
+            _logger.LogDebug("Se encontraron {Count} preparaciones por vencer", listaPreparaciones.Count);
+            return Result<List<PreparacionDiaria>>.Success(listaPreparaciones);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener preparaciones por vencer");
+            _notificationManager.AddError($"Error al obtener preparaciones por vencer: {ex.Message}", "ObtenerPreparacionesPorVencer");
+            return _notificationManager.ToResult<List<PreparacionDiaria>>(new List<PreparacionDiaria>());
+        }
     }
 
     /// <summary>
@@ -208,11 +358,40 @@ public class ServicioPreparaciones : IServicioPreparaciones
             return _notificationManager.ToResult();
         }
 
-        await Task.CompletedTask; // Para evitar warning async
-
-        // Implementación temporal: simula operación exitosa
-        _logger.LogInformation("Preparación marcada como disponible: {PreparacionId}", preparacionId);
-        return Result.Success();
+        try
+        {
+            // Obtener preparación por ID
+            var preparacion = await _preparacionRepository.ObtenerPorIdAsync(preparacionId);
+            if (preparacion == null)
+            {
+                _logger.LogWarning("No se encontró la preparación con ID {PreparacionId}", preparacionId);
+                _notificationManager.AddError($"No se encontró la preparación con ID {preparacionId}", "MarcarComoDisponible");
+                return _notificationManager.ToResult();
+            }
+            
+            // Marcar como disponible
+            var resultado = preparacion.MarcarComoDisponible();
+            if (!resultado.Succeeded)
+            {
+                _logger.LogWarning("No se pudo marcar como disponible la preparación {PreparacionId}: {Error}", 
+                    preparacionId, resultado.Error);
+                _notificationManager.AddError(resultado.Error, "MarcarComoDisponible");
+                return _notificationManager.ToResult();
+            }
+            
+            // Actualizar en repositorio
+            await _preparacionRepository.ActualizarAsync(preparacion);
+            await _preparacionRepository.GuardarCambiosAsync();
+            
+            _logger.LogInformation("Preparación marcada como disponible: {PreparacionId}", preparacionId);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al marcar como disponible la preparación {PreparacionId}", preparacionId);
+            _notificationManager.AddError($"Error al marcar como disponible: {ex.Message}", "MarcarComoDisponible");
+            return _notificationManager.ToResult();
+        }
     }
 
     /// <summary>
@@ -231,11 +410,40 @@ public class ServicioPreparaciones : IServicioPreparaciones
             return _notificationManager.ToResult();
         }
 
-        await Task.CompletedTask; // Para evitar warning async
-
-        // Implementación temporal: simula operación exitosa
-        _logger.LogInformation("Cantidad adicional agregada a preparación: {PreparacionId}", preparacionId);
-        return Result.Success();
+        try
+        {
+            // Obtener preparación por ID
+            var preparacion = await _preparacionRepository.ObtenerPorIdAsync(preparacionId);
+            if (preparacion == null)
+            {
+                _logger.LogWarning("No se encontró la preparación con ID {PreparacionId}", preparacionId);
+                _notificationManager.AddError($"No se encontró la preparación con ID {preparacionId}", "AgregarCantidad");
+                return _notificationManager.ToResult();
+            }
+            
+            // Agregar cantidad
+            var resultado = preparacion.AgregarCantidad(cantidadAdicional);
+            if (!resultado.Succeeded)
+            {
+                _logger.LogWarning("No se pudo agregar cantidad a la preparación {PreparacionId}: {Error}", 
+                    preparacionId, resultado.Error);
+                _notificationManager.AddError(resultado.Error, "AgregarCantidad");
+                return _notificationManager.ToResult();
+            }
+            
+            // Actualizar en repositorio
+            await _preparacionRepository.ActualizarAsync(preparacion);
+            await _preparacionRepository.GuardarCambiosAsync();
+            
+            _logger.LogInformation("Cantidad adicional agregada a preparación: {PreparacionId}", preparacionId);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al agregar cantidad a la preparación {PreparacionId}", preparacionId);
+            _notificationManager.AddError($"Error al agregar cantidad: {ex.Message}", "AgregarCantidad");
+            return _notificationManager.ToResult();
+        }
     }
 
     /// <summary>
@@ -245,18 +453,18 @@ public class ServicioPreparaciones : IServicioPreparaciones
     {
         _logger.LogDebug("Obteniendo estadísticas de preparaciones del día");
 
-        await Task.CompletedTask; // Para evitar warning async
-
-        // Implementación temporal: estadísticas vacías
-        var estadisticas = new EstadisticasPreparaciones
+        try
         {
-            TotalPreparaciones = 0,
-            PreparacionesDisponibles = 0,
-            PreparacionesVencidas = 0,
-            PreparacionesAgotadas = 0
-        };
-
-        _logger.LogDebug("Estadísticas obtenidas: {TotalPreparaciones} preparaciones", estadisticas.TotalPreparaciones);
-        return Result<EstadisticasPreparaciones>.Success(estadisticas);
+            var estadisticas = await _preparacionRepository.ObtenerEstadisticasDelDiaAsync();
+            
+            _logger.LogDebug("Estadísticas obtenidas: {TotalPreparaciones} preparaciones", estadisticas.TotalPreparaciones);
+            return Result<EstadisticasPreparaciones>.Success(estadisticas);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener estadísticas de preparaciones");
+            _notificationManager.AddError($"Error al obtener estadísticas: {ex.Message}", "ObtenerEstadisticas");
+            return _notificationManager.ToResult<EstadisticasPreparaciones>(new EstadisticasPreparaciones());
+        }
     }
 } 

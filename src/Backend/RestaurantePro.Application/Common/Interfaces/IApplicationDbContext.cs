@@ -41,6 +41,9 @@ public interface IApplicationDbContext
     // Operaciones - Mesas
     DbSet<Mesa> Mesas { get; }
     
+    // Operaciones - Preparaciones
+    DbSet<PreparacionDiaria> Preparaciones { get; }
+    
     // Inventario - Ingredientes
     DbSet<Ingrediente> Ingredientes { get; }
     DbSet<MovimientoInventario> MovimientosInventario { get; }
@@ -89,6 +92,5 @@ public interface IApplicationDbContext
     /// Comienza una transacción de base de datos
     /// </summary>
     /// <returns>Transacción de base de datos</returns>
-    // TODO: Agregar cuando IUnitOfWork esté disponible
-    // Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
+    Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
 } 

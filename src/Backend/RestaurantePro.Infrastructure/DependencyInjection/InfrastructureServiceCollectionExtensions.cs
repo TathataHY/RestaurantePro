@@ -82,6 +82,9 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             // Proveedores
             services.AddScoped<IProveedorRepository, ProveedorRepository>();
             
+            // Repositorios de Operaciones
+            services.AddScoped<IPreparacionRepository, PreparacionRepository>();
+            
             return services;
         }
 

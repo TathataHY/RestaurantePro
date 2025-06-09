@@ -1,3 +1,13 @@
+using Moq;
+using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using RestaurantePro.Domain.Common.Interfaces;
+using RestaurantePro.Domain.Common.Services;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Services;
+
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Preparaciones.Services;
 
 /// <summary>
@@ -8,6 +18,7 @@ public class ServicioPreparacionesTests
     private readonly Mock<ILogger<ServicioPreparaciones>> _loggerMock;
     private readonly INotificationManager _notificationManager;
     private readonly Mock<IDateTimeService> _dateTimeServiceMock;
+    private readonly Mock<IPreparacionRepository> _preparacionRepositoryMock;
     private readonly ServicioPreparaciones _servicio;
     private readonly DateTime _fechaActual = new DateTime(2025, 1, 15, 10, 30, 0);
 
@@ -16,13 +27,15 @@ public class ServicioPreparacionesTests
         _loggerMock = new Mock<ILogger<ServicioPreparaciones>>();
         _notificationManager = new NotificationManager();
         _dateTimeServiceMock = new Mock<IDateTimeService>();
+        _preparacionRepositoryMock = new Mock<IPreparacionRepository>();
         
         _dateTimeServiceMock.Setup(x => x.Now).Returns(_fechaActual);
 
         _servicio = new ServicioPreparaciones(
             _loggerMock.Object,
             _notificationManager,
-            _dateTimeServiceMock.Object);
+            _dateTimeServiceMock.Object,
+            _preparacionRepositoryMock.Object);
     }
 
     #region Constructor Tests
@@ -34,7 +47,8 @@ public class ServicioPreparacionesTests
         var servicio = new ServicioPreparaciones(
             _loggerMock.Object,
             _notificationManager,
-            _dateTimeServiceMock.Object);
+            _dateTimeServiceMock.Object,
+            _preparacionRepositoryMock.Object);
 
         // Assert
         servicio.Should().NotBeNull();
@@ -45,7 +59,7 @@ public class ServicioPreparacionesTests
     {
         // Arrange & Act & Assert
         var ex = Assert.Throws<ArgumentNullException>(() => 
-            new ServicioPreparaciones(null!, _notificationManager, _dateTimeServiceMock.Object));
+            new ServicioPreparaciones(null!, _notificationManager, _dateTimeServiceMock.Object, _preparacionRepositoryMock.Object));
         
         ex.ParamName.Should().Be("logger");
     }
@@ -55,7 +69,7 @@ public class ServicioPreparacionesTests
     {
         // Arrange & Act & Assert
         var ex = Assert.Throws<ArgumentNullException>(() => 
-            new ServicioPreparaciones(_loggerMock.Object, null!, _dateTimeServiceMock.Object));
+            new ServicioPreparaciones(_loggerMock.Object, null!, _dateTimeServiceMock.Object, _preparacionRepositoryMock.Object));
         
         ex.ParamName.Should().Be("notificationManager");
     }
@@ -65,9 +79,19 @@ public class ServicioPreparacionesTests
     {
         // Arrange & Act & Assert
         var ex = Assert.Throws<ArgumentNullException>(() => 
-            new ServicioPreparaciones(_loggerMock.Object, _notificationManager, null!));
+            new ServicioPreparaciones(_loggerMock.Object, _notificationManager, null!, _preparacionRepositoryMock.Object));
         
         ex.ParamName.Should().Be("dateTimeService");
+    }
+
+    [Fact]
+    public void Constructor_ConPreparacionRepositoryNulo_DebeLanzarArgumentNullException()
+    {
+        // Arrange & Act & Assert
+        var ex = Assert.Throws<ArgumentNullException>(() => 
+            new ServicioPreparaciones(_loggerMock.Object, _notificationManager, _dateTimeServiceMock.Object, null!));
+        
+        ex.ParamName.Should().Be("preparacionRepository");
     }
 
     #endregion
@@ -84,6 +108,15 @@ public class ServicioPreparacionesTests
         var fechaVencimiento = _fechaActual.AddHours(8);
         var observaciones = "Preparación especial";
 
+        // Configurar mock del repositorio
+        _preparacionRepositoryMock
+            .Setup(x => x.AgregarAsync(It.IsAny<PreparacionDiaria>(), default))
+            .Returns(Task.CompletedTask);
+
+        _preparacionRepositoryMock
+            .Setup(x => x.GuardarCambiosAsync(default))
+            .Returns(Task.CompletedTask);
+
         // Act
         var resultado = await _servicio.PrepararProductoAsync(
             productoId, cantidad, chefId, fechaVencimiento, observaciones);
@@ -97,6 +130,10 @@ public class ServicioPreparacionesTests
         resultado.Value.CantidadPreparada.Should().Be(cantidad);
         resultado.Value.FechaVencimiento.Should().Be(fechaVencimiento);
         resultado.Value.Observaciones.Should().Be(observaciones);
+
+        // Verificar que se llamó al repositorio
+        _preparacionRepositoryMock.Verify(x => x.AgregarAsync(It.IsAny<PreparacionDiaria>(), default), Times.Once);
+        _preparacionRepositoryMock.Verify(x => x.GuardarCambiosAsync(default), Times.Once);
     }
 
     [Fact]
@@ -111,6 +148,9 @@ public class ServicioPreparacionesTests
         // Assert
         resultado.Succeeded.Should().BeFalse();
         resultado.Errors.Should().Contain(e => e.Contains("producto") || e.Contains("ID"));
+
+        // Verificar que no se llamó al repositorio
+        _preparacionRepositoryMock.Verify(x => x.AgregarAsync(It.IsAny<PreparacionDiaria>(), default), Times.Never);
     }
 
     [Fact]
@@ -126,6 +166,9 @@ public class ServicioPreparacionesTests
         // Assert
         resultado.Succeeded.Should().BeFalse();
         resultado.Errors.Should().Contain(e => e.Contains("cantidad"));
+
+        // Verificar que no se llamó al repositorio
+        _preparacionRepositoryMock.Verify(x => x.AgregarAsync(It.IsAny<PreparacionDiaria>(), default), Times.Never);
     }
 
     [Fact]
@@ -141,6 +184,9 @@ public class ServicioPreparacionesTests
         // Assert
         resultado.Succeeded.Should().BeFalse();
         resultado.Errors.Should().Contain(e => e.Contains("cantidad"));
+
+        // Verificar que no se llamó al repositorio
+        _preparacionRepositoryMock.Verify(x => x.AgregarAsync(It.IsAny<PreparacionDiaria>(), default), Times.Never);
     }
 
     [Fact]
@@ -155,6 +201,9 @@ public class ServicioPreparacionesTests
         // Assert
         resultado.Succeeded.Should().BeFalse();
         resultado.Errors.Should().Contain(e => e.Contains("chef"));
+
+        // Verificar que no se llamó al repositorio
+        _preparacionRepositoryMock.Verify(x => x.AgregarAsync(It.IsAny<PreparacionDiaria>(), default), Times.Never);
     }
 
     [Fact]
@@ -171,39 +220,29 @@ public class ServicioPreparacionesTests
         // Assert
         resultado.Succeeded.Should().BeFalse();
         resultado.Errors.Should().Contain(e => e.Contains("fecha") || e.Contains("vencimiento"));
+
+        // Verificar que no se llamó al repositorio
+        _preparacionRepositoryMock.Verify(x => x.AgregarAsync(It.IsAny<PreparacionDiaria>(), default), Times.Never);
     }
 
     [Fact]
-    public async Task PrepararProductoAsync_ConFechaVencimientoMuyLejana_DebeAgregarAdvertencia()
-    {
-        // Arrange
-        var productoId = Guid.NewGuid();
-        var chefId = Guid.NewGuid();
-        var fechaMuyLejana = _fechaActual.AddDays(10); // Más de 7 días
-
-        // Act
-        var resultado = await _servicio.PrepararProductoAsync(
-            productoId, 5, chefId, fechaMuyLejana);
-
-        // Assert
-        // Esta funcionalidad no está implementada aún en el servicio, 
-        // por lo que esperamos éxito pero sin la advertencia
-        resultado.Succeeded.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task PrepararProductoAsync_SinFechaVencimiento_DebeCrearPreparacionSinFecha()
+    public async Task PrepararProductoAsync_ConErrorEnRepositorio_DebeRetornarFallo()
     {
         // Arrange
         var productoId = Guid.NewGuid();
         var chefId = Guid.NewGuid();
 
+        // Configurar repositorio para lanzar excepción
+        _preparacionRepositoryMock
+            .Setup(x => x.AgregarAsync(It.IsAny<PreparacionDiaria>(), default))
+            .ThrowsAsync(new Exception("Error de conexión"));
+
         // Act
-        var resultado = await _servicio.PrepararProductoAsync(productoId, 5, chefId);
+        var resultado = await _servicio.PrepararProductoAsync(productoId, 10, chefId);
 
         // Assert
-        resultado.Succeeded.Should().BeTrue();
-        resultado.Value.FechaVencimiento.Should().BeNull();
+        resultado.Succeeded.Should().BeFalse();
+        resultado.Errors.Should().Contain(e => e.Contains("Error al preparar producto"));
     }
 
     #endregion
@@ -211,19 +250,60 @@ public class ServicioPreparacionesTests
     #region VerificarDisponibilidadAsync Tests
 
     [Fact]
-    public async Task VerificarDisponibilidadAsync_ConParametrosValidos_DebeRetornarTrue()
+    public async Task VerificarDisponibilidadAsync_ConPreparacionesDisponibles_DebeRetornarTrue()
     {
         // Arrange
         var productoId = Guid.NewGuid();
         var cantidadRequerida = 5;
+
+        // Crear preparaciones disponibles
+        var preparaciones = new List<PreparacionDiaria>
+        {
+            CrearPreparacionMock(productoId, 3, EstadoPreparacion.Disponible),
+            CrearPreparacionMock(productoId, 4, EstadoPreparacion.Disponible),
+            CrearPreparacionMock(productoId, 2, EstadoPreparacion.PorVencer),
+            CrearPreparacionMock(productoId, 1, EstadoPreparacion.Vencida) // Esta no debería contar
+        };
+
+        // Configurar mock del repositorio
+        _preparacionRepositoryMock
+            .Setup(x => x.ObtenerPreparacionesDisponiblesPorProductoAsync(productoId, default))
+            .ReturnsAsync(preparaciones);
 
         // Act
         var resultado = await _servicio.VerificarDisponibilidadAsync(productoId, cantidadRequerida);
 
         // Assert
         resultado.Succeeded.Should().BeTrue();
-        // La implementación temporal siempre retorna false (no hay preparaciones)
-        resultado.Value.Should().BeFalse();
+        resultado.Value.Should().BeTrue(); // Hay 3 + 4 + 2 = 9 disponibles, y se requieren 5
+    }
+
+    [Fact]
+    public async Task VerificarDisponibilidadAsync_SinPreparacionesSuficientes_DebeRetornarFalse()
+    {
+        // Arrange
+        var productoId = Guid.NewGuid();
+        var cantidadRequerida = 10;
+
+        // Crear preparaciones disponibles (insuficientes)
+        var preparaciones = new List<PreparacionDiaria>
+        {
+            CrearPreparacionMock(productoId, 3, EstadoPreparacion.Disponible),
+            CrearPreparacionMock(productoId, 4, EstadoPreparacion.Disponible),
+            CrearPreparacionMock(productoId, 1, EstadoPreparacion.Agotada) // Esta no debería contar
+        };
+
+        // Configurar mock del repositorio
+        _preparacionRepositoryMock
+            .Setup(x => x.ObtenerPreparacionesDisponiblesPorProductoAsync(productoId, default))
+            .ReturnsAsync(preparaciones);
+
+        // Act
+        var resultado = await _servicio.VerificarDisponibilidadAsync(productoId, cantidadRequerida);
+
+        // Assert
+        resultado.Succeeded.Should().BeTrue();
+        resultado.Value.Should().BeFalse(); // Hay 3 + 4 = 7 disponibles, y se requieren 10
     }
 
     [Fact]
@@ -234,7 +314,12 @@ public class ServicioPreparacionesTests
 
         // Assert
         resultado.Succeeded.Should().BeFalse();
-        resultado.Errors.Should().Contain(e => e.Contains("producto"));
+        resultado.Errors.Should().Contain(e => e.Contains("producto") || e.Contains("ID"));
+
+        // Verificar que no se llamó al repositorio
+        _preparacionRepositoryMock.Verify(
+            x => x.ObtenerPreparacionesDisponiblesPorProductoAsync(It.IsAny<Guid>(), default), 
+            Times.Never);
     }
 
     [Fact]
@@ -249,6 +334,11 @@ public class ServicioPreparacionesTests
         // Assert
         resultado.Succeeded.Should().BeFalse();
         resultado.Errors.Should().Contain(e => e.Contains("cantidad"));
+
+        // Verificar que no se llamó al repositorio
+        _preparacionRepositoryMock.Verify(
+            x => x.ObtenerPreparacionesDisponiblesPorProductoAsync(It.IsAny<Guid>(), default), 
+            Times.Never);
     }
 
     [Fact]
@@ -258,11 +348,35 @@ public class ServicioPreparacionesTests
         var productoId = Guid.NewGuid();
 
         // Act
-        var resultado = await _servicio.VerificarDisponibilidadAsync(productoId, -1);
+        var resultado = await _servicio.VerificarDisponibilidadAsync(productoId, -5);
 
         // Assert
         resultado.Succeeded.Should().BeFalse();
         resultado.Errors.Should().Contain(e => e.Contains("cantidad"));
+
+        // Verificar que no se llamó al repositorio
+        _preparacionRepositoryMock.Verify(
+            x => x.ObtenerPreparacionesDisponiblesPorProductoAsync(It.IsAny<Guid>(), default), 
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task VerificarDisponibilidadAsync_ConErrorEnRepositorio_DebeRetornarFallo()
+    {
+        // Arrange
+        var productoId = Guid.NewGuid();
+
+        // Configurar repositorio para lanzar excepción
+        _preparacionRepositoryMock
+            .Setup(x => x.ObtenerPreparacionesDisponiblesPorProductoAsync(productoId, default))
+            .ThrowsAsync(new Exception("Error de conexión"));
+
+        // Act
+        var resultado = await _servicio.VerificarDisponibilidadAsync(productoId, 5);
+
+        // Assert
+        resultado.Succeeded.Should().BeFalse();
+        resultado.Errors.Should().Contain(e => e.Contains("Error al verificar disponibilidad"));
     }
 
     #endregion
@@ -492,6 +606,46 @@ public class ServicioPreparacionesTests
         resultado.Succeeded.Should().BeTrue();
         resultado.Value.Should().NotBeNull();
         // Las estadísticas deberían estar vacías en la implementación temporal
+    }
+
+    #endregion
+
+    #region Helpers
+
+    /// <summary>
+    /// Crea una preparación mock para pruebas
+    /// </summary>
+    private PreparacionDiaria CrearPreparacionMock(Guid productoId, int cantidadDisponible, EstadoPreparacion estado)
+    {
+        var preparacion = PreparacionDiaria.Crear(
+            productoId,
+            cantidadDisponible, // Misma cantidad inicial y disponible
+            Guid.NewGuid(),
+            _fechaActual.AddHours(8),
+            "Test",
+            _fechaActual);
+
+        // Si el estado es diferente a Preparando, llamar a MarcarComoDisponible
+        if (estado != EstadoPreparacion.Preparando)
+        {
+            preparacion.MarcarComoDisponible();
+        }
+
+        // Establecer el estado correcto según corresponda
+        switch (estado)
+        {
+            case EstadoPreparacion.PorVencer:
+                preparacion.MarcarComoPorVencer();
+                break;
+            case EstadoPreparacion.Vencida:
+                preparacion.MarcarComoVencida();
+                break;
+            case EstadoPreparacion.Agotada:
+                preparacion.ConsumirCantidad(cantidadDisponible); // Consumir todo
+                break;
+        }
+
+        return preparacion;
     }
 
     #endregion
