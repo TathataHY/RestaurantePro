@@ -8,6 +8,42 @@ Las pruebas de integración en la capa de aplicación verifican la interacción 
 
 2. **Pruebas dentro de un Contexto (WithinContext)**: Verifican el flujo completo de operaciones dentro del mismo contexto, asegurando que los diferentes componentes (comandos, eventos, consultas) trabajan juntos correctamente.
 
+## Ejemplos Implementados
+
+### Dentro del Contexto de Operaciones
+Se ha implementado una prueba de integración que verifica el flujo completo:
+1. Creación de preparación mediante `CrearPreparacionCommand`
+2. Marcado como disponible mediante `MarcarComoDisponibleCommand`
+3. Consumo a través de `AgregarItemComandaHandler`
+
+### Entre Contextos de Operaciones e Inventario
+Se ha implementado una prueba de integración entre contextos que verifica:
+1. Que al crear una preparación se actualiza correctamente el inventario (stock de ingredientes)
+2. Que al consumir una preparación no se vuelve a actualizar el inventario (solo se actualiza la preparación)
+
+## Estado Actual
+
+> **NOTA IMPORTANTE**: Los archivos de prueba de integración han sido creados, pero actualmente no compilan correctamente debido a discrepancias entre las interfaces y tipos del proyecto. Estos archivos requieren ajustes adicionales para adaptarse a los cambios en las interfaces, tipos de datos y parámetros de los métodos en el sistema.
+
+## Cómo Ejecutar las Pruebas
+
+Una vez ajustados los archivos, las pruebas pueden ejecutarse con el siguiente comando:
+
+```powershell
+dotnet test tests\RestaurantePro.Application.UnitTests\RestaurantePro.Application.UnitTests.csproj --filter "Integration"
+```
+
+## Pasos Pendientes
+
+1. Corregir errores de compilación:
+   - Ajustar parámetros de métodos
+   - Actualizar tipos y enumeraciones
+   - Corregir llamadas a métodos mock
+
+2. Crear pruebas de integración adicionales:
+   - Entre Operaciones y Comercial (ej: Comandas y Facturación)
+   - Entre Inventario y Proveedores
+
 ## Detalles de la Estructura
 
 ### Pruebas Entre Contextos (BetweenContexts)

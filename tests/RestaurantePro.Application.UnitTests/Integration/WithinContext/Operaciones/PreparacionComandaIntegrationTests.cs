@@ -29,147 +29,121 @@ namespace RestaurantePro.Application.UnitTests.Integration.WithinContext.Operaci
         private readonly Mock<IComandaRepository> _comandaRepositoryMock;
         private readonly Mock<IServicioPreparaciones> _servicioPreparacionesMock;
         private readonly Mock<IMapper> _mapperMock;
-        private readonly Mock<ILogger<AgregarItemComandaHandler>> _loggerMock;
+        private readonly Mock<ILogger<CrearPreparacionCommandHandler>> _loggerCrearPreparacionMock;
+        private readonly Mock<ILogger<MarcarComoDisponibleCommandHandler>> _loggerMarcarDisponibleMock;
+        private readonly Mock<ILogger<AgregarItemComandaHandler>> _loggerAgregarItemMock;
         private readonly Fixture _fixture;
 
         public PreparacionComandaIntegrationTests()
         {
+            _fixture = new Fixture();
             _preparacionRepositoryMock = new Mock<IPreparacionRepository>();
             _comandaRepositoryMock = new Mock<IComandaRepository>();
             _servicioPreparacionesMock = new Mock<IServicioPreparaciones>();
             _mapperMock = new Mock<IMapper>();
-            _loggerMock = new Mock<ILogger<AgregarItemComandaHandler>>();
-            _fixture = new Fixture();
+            _loggerCrearPreparacionMock = new Mock<ILogger<CrearPreparacionCommandHandler>>();
+            _loggerMarcarDisponibleMock = new Mock<ILogger<MarcarComoDisponibleCommandHandler>>();
+            _loggerAgregarItemMock = new Mock<ILogger<AgregarItemComandaHandler>>();
         }
 
         [Fact]
-        public async Task Flujo_Completo_Preparacion_Comanda_Deberia_Funcionar()
+        public async Task IntegrationTest_CrearPreparacion_MarcarDisponible_AgregarItemComanda_Success()
         {
             // Arrange
             var productoId = Guid.NewGuid();
-            var cantidad = 5;
-            var chefId = Guid.NewGuid();
+            var cantidad = 10;
             var preparacionId = Guid.NewGuid();
             var comandaId = Guid.NewGuid();
-            var clienteId = Guid.NewGuid();
-            var mesaId = Guid.NewGuid();
-            var usuarioId = Guid.NewGuid(); // Usuario mesero
 
-            // Crear una preparación
-            var preparacion = PreparacionDiaria.Crear(
+            // Preparación diaria para el test
+            var preparacionDiaria = PreparacionDiaria.Crear(
                 productoId,
+                "Producto Test",
                 cantidad,
-                chefId,
-                DateTime.Now.AddDays(1),
-                "Observaciones de prueba",
                 DateTime.Now);
-            preparacion.SetIdForTesting(preparacionId);
+            preparacionDiaria.SetIdForTesting(preparacionId);
 
-            // Crear una comanda
+            // Comanda para el test
             var comanda = Comanda.Crear(
-                clienteId,
-                mesaId,
-                usuarioId, // Usuario mesero
-                "Observaciones de prueba");
+                "Mesa 1",
+                "Cliente Test",
+                2,
+                new List<ItemComanda>());
             comanda.SetIdForTesting(comandaId);
 
-            // Configurar el mock del servicio de preparaciones
-            _servicioPreparacionesMock
-                .Setup(s => s.VerificarDisponibilidadAsync(productoId, It.IsAny<int>()))
-                .ReturnsAsync(Result<bool>.Success(true));
-            
-            _servicioPreparacionesMock
-                .Setup(s => s.ConsumirPreparacionAsync(productoId, It.IsAny<int>()))
-                .ReturnsAsync(Result.Success());
-                
-            _servicioPreparacionesMock
-                .Setup(s => s.MarcarComoDisponibleAsync(preparacionId))
-                .ReturnsAsync(Result.Success());
+            // Configurar mocks para el flujo de la integración
+            // 1. Crear preparación
+            _preparacionRepositoryMock.Setup(r => r.AgregarAsync(It.IsAny<PreparacionDiaria>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(preparacionDiaria);
 
-            // Configurar el mock del repositorio de preparaciones
-            _preparacionRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(preparacionId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(preparacion);
+            // 2. Marcar como disponible
+            _preparacionRepositoryMock.Setup(r => r.ObtenerPorIdAsync(preparacionId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(preparacionDiaria);
 
-            // Configurar el mock del repositorio de comandas
-            _comandaRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            // 3. Agregar item a comanda
+            _comandaRepositoryMock.Setup(r => r.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(comanda);
+            _servicioPreparacionesMock.Setup(s => s.VerificarDisponibilidadAsync(productoId, 1, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(Result.Success(true));
+            _comandaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(comanda);
 
-            // Configurar el mapper para devolver un DTO cuando se mapea la comanda
-            var comandaDto = new ComandaDto
-            {
-                Id = comandaId,
-                ClienteId = clienteId,
-                MesaId = mesaId,
-                UsuarioId = usuarioId,
-                Total = 100
-            };
-            
-            _mapperMock
-                .Setup(m => m.Map<ComandaDto>(It.IsAny<Comanda>()))
-                .Returns(comandaDto);
+            // Crear los handlers
+            var crearPreparacionHandler = new CrearPreparacionCommandHandler(
+                _preparacionRepositoryMock.Object,
+                _mapperMock.Object,
+                _loggerCrearPreparacionMock.Object);
+
+            var marcarDisponibleHandler = new MarcarComoDisponibleCommandHandler(
+                _preparacionRepositoryMock.Object,
+                _loggerMarcarDisponibleMock.Object);
+
+            var agregarItemHandler = new AgregarItemComandaHandler(
+                _comandaRepositoryMock.Object,
+                _servicioPreparacionesMock.Object,
+                _loggerAgregarItemMock.Object);
 
             // Act
-            // 1. Marcar la preparación como disponible
-            var marcarComoDisponibleCommand = new MarcarComoDisponibleCommand
+            // 1. Crear la preparación
+            var crearCommand = new CrearPreparacionCommand
             {
-                PreparacionId = preparacionId,
-                Observaciones = "Preparación lista para consumo"
+                ProductoId = productoId,
+                NombreProducto = "Producto Test",
+                Cantidad = cantidad,
+                FechaElaboracion = DateTime.Now
             };
-            
-            var marcarComoDisponibleHandler = new MarcarComoDisponibleCommandHandler(
-                _servicioPreparacionesMock.Object,
-                _mapperMock.Object,
-                Mock.Of<ILogger<MarcarComoDisponibleCommandHandler>>());
-                
-            var marcarComoDisponibleResult = await marcarComoDisponibleHandler.Handle(
-                marcarComoDisponibleCommand, 
-                CancellationToken.None);
+            var crearResult = await crearPreparacionHandler.Handle(crearCommand, CancellationToken.None);
 
-            // 2. Agregar el item a la comanda
+            // 2. Marcar como disponible
+            var marcarCommand = new MarcarComoDisponibleCommand
+            {
+                PreparacionId = preparacionId
+            };
+            var marcarResult = await marcarDisponibleHandler.Handle(marcarCommand, CancellationToken.None);
+
+            // 3. Agregar item a la comanda
             var agregarItemCommand = new AgregarItemComandaCommand
             {
                 ComandaId = comandaId,
                 ProductoId = productoId,
-                Cantidad = 2,
-                Observaciones = "Test"
+                Cantidad = 1,
+                Observaciones = "Prueba de integración",
+                Personalizaciones = new List<PersonalizacionDto>()
             };
-            
-            var agregarItemHandler = new AgregarItemComandaHandler(
-                _comandaRepositoryMock.Object,
-                _mapperMock.Object,
-                _loggerMock.Object,
-                _servicioPreparacionesMock.Object);
-                
-            var agregarItemResult = await agregarItemHandler.Handle(
-                agregarItemCommand, 
-                CancellationToken.None);
+            var agregarItemResult = await agregarItemHandler.Handle(agregarItemCommand, CancellationToken.None);
 
             // Assert
-            Assert.True(marcarComoDisponibleResult.Succeeded);
+            Assert.True(crearResult.Succeeded);
+            Assert.True(marcarResult.Succeeded);
             Assert.True(agregarItemResult.Succeeded);
-            
-            // Verificar que se llamó a los métodos esperados
-            _servicioPreparacionesMock.Verify(
-                s => s.MarcarComoDisponibleAsync(preparacionId), 
-                Times.Once);
-                
-            _servicioPreparacionesMock.Verify(
-                s => s.VerificarDisponibilidadAsync(productoId, It.IsAny<int>()), 
-                Times.Once);
-                
-            _servicioPreparacionesMock.Verify(
-                s => s.ConsumirPreparacionAsync(productoId, It.IsAny<int>()), 
-                Times.Once);
-                
-            _comandaRepositoryMock.Verify(
-                r => r.ActualizarAsync(It.IsAny<Comanda>()), 
-                Times.Once);
-                
-            _comandaRepositoryMock.Verify(
-                r => r.GuardarCambiosAsync(), 
-                Times.Once);
+
+            // Verificar que los métodos fueron llamados con los parámetros correctos
+            _preparacionRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<PreparacionDiaria>(), It.IsAny<CancellationToken>()), Times.Once);
+            _preparacionRepositoryMock.Verify(r => r.ObtenerPorIdAsync(preparacionId, It.IsAny<CancellationToken>()), Times.Once);
+            _preparacionRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<PreparacionDiaria>(), It.IsAny<CancellationToken>()), Times.Once);
+            _comandaRepositoryMock.Verify(r => r.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()), Times.Once);
+            _servicioPreparacionesMock.Verify(s => s.VerificarDisponibilidadAsync(productoId, 1, It.IsAny<CancellationToken>()), Times.Once);
+            _comandaRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 } 
