@@ -916,8 +916,6 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Assert
             Assert.True(resultado.Succeeded);
             Assert.Equal(preparacionEsperada, resultado.Value);
-            
-            // _servicioPreparacionesMock.Verify(s => s.PrepararProductoAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<string>()), Times.Exactly(1));
         }
 
         [Fact]
@@ -963,8 +961,6 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             Assert.True(resultado.Succeeded);
             Assert.NotNull(resultado.Value);
             Assert.Equal(2, resultado.Value.Count());
-            
-            // _servicioPreparacionesMock.Verify(s => s.ObtenerPreparacionesDelDiaAsync(), Times.Exactly(1));
         }
 
         [Fact]
@@ -989,8 +985,6 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             Assert.NotNull(resultado.Value);
             Assert.Single(resultado.Value);
             Assert.Equal(productoId, resultado.Value.First().ProductoId);
-            
-            // _servicioPreparacionesMock.Verify(s => s.ObtenerPreparacionesPorProductoAsync(productoId), Times.Exactly(1));
         }
 
         [Fact]
@@ -1011,7 +1005,10 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             Assert.True(resultado.Succeeded);
             Assert.True(resultado.Value);
             
-            // _servicioPreparacionesMock.Verify(s => s.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
+            // Verificar que se llamó al servicio de preparaciones
+            _servicioPreparacionesMock.Verify(
+                s => s.VerificarDisponibilidadAsync(It.Is<Guid>(id => id == productoId), It.Is<int>(c => c == cantidadRequerida)), 
+                Times.Once);
         }
 
         [Fact]
@@ -1031,6 +1028,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Assert
             Assert.True(resultado.Succeeded);
             Assert.False(resultado.Value);
+            
+            // Verificar que se llamó al servicio de preparaciones
+            _servicioPreparacionesMock.Verify(
+                s => s.VerificarDisponibilidadAsync(It.Is<Guid>(id => id == productoId), It.Is<int>(c => c == cantidadRequerida)), 
+                Times.Once);
         }
 
         #endregion
@@ -1059,18 +1061,21 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             };
 
             // Configurar productos en repositorio
-            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto1Id, CancellationToken.None))
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto1Id))
                 .ReturnsAsync(producto1);
-            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto2Id, CancellationToken.None))
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto2Id))
                 .ReturnsAsync(producto2);
 
             // Configurar preparaciones: producto1 disponible, producto2 no
-            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(producto1Id, 2))
+            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(
+                producto1Id, 2, null))
                 .Returns(Task.FromResult(Result<bool>.Success(true)));
-            _servicioPreparacionesMock.Setup(x => x.ConsumirPreparacionAsync(producto1Id, 2))
+            _servicioPreparacionesMock.Setup(x => x.ConsumirPreparacionAsync(
+                producto1Id, 2))
                 .Returns(Task.FromResult(Result.Success()));
             
-            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(producto2Id, 1))
+            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(
+                producto2Id, 1, null))
                 .Returns(Task.FromResult(Result<bool>.Success(false)));
 
             // Act
@@ -1089,10 +1094,6 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             comanda.Items.Should().HaveCount(2);
             
             // Verificar que se consumió preparación para producto1
-            // _servicioPreparacionesMock.Verify(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(2));
-            // _servicioPreparacionesMock.Verify(x => x.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
-            
-            // Verificar observaciones
             var itemPreparado = comanda.Items.First(i => i.ProductoId == producto1Id);
             itemPreparado.Observaciones.Should().Contain("🍳 Preparación diaria");
             
@@ -1110,11 +1111,12 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             
             var productos = new[] { (productoId, 1, "") };
 
-            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(productoId, CancellationToken.None))
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(productoId))
                 .ReturnsAsync(producto);
 
             // Configurar error en servicio de preparaciones
-            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(productoId, 1))
+            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(
+                productoId, 1, null))
                 .ThrowsAsync(new InvalidOperationException("Error de conexión"));
 
             // Act
@@ -1122,7 +1124,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 clienteId: null,
                 mesaId: null,
                 meseroId: meseroId,
-                productos: productos);
+                productos: productos,
+                cancellationToken: CancellationToken.None);
 
             // Assert
             resultado.Succeeded.Should().BeTrue();
@@ -1145,15 +1148,17 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             var comanda = CrearComandaMock(comandaId);
             var producto = CrearProductoMock(productoId, "Pasta Bolognesa", 14.50m);
 
-            _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, true, CancellationToken.None))
+            _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, true))
                 .ReturnsAsync(comanda);
-            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(productoId, CancellationToken.None))
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(productoId))
                 .ReturnsAsync(producto);
 
             // Configurar preparaciones disponibles
-            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(productoId, 1))
+            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(
+                productoId, 1, null))
                 .Returns(Task.FromResult(Result<bool>.Success(true)));
-            _servicioPreparacionesMock.Setup(x => x.ConsumirPreparacionAsync(productoId, 1))
+            _servicioPreparacionesMock.Setup(x => x.ConsumirPreparacionAsync(
+                productoId, 1))
                 .Returns(Task.FromResult(Result.Success()));
 
             // Act
@@ -1162,13 +1167,6 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
 
             // Assert
             resultado.Succeeded.Should().BeTrue();
-            
-            // Verificar que se usó el flujo de preparaciones
-            // _servicioPreparacionesMock.Verify(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
-            // _servicioPreparacionesMock.Verify(x => x.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()), Times.Exactly(1));
-            
-            // Verificar que la comanda se actualizó
-            // _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>()), Times.Exactly(1));
         }
 
         [Fact]
@@ -1210,15 +1208,15 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             };
 
             // Configurar productos
-            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto1Id, CancellationToken.None))
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto1Id))
                 .ReturnsAsync(producto1);
-            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto2Id, CancellationToken.None))
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto2Id))
                 .ReturnsAsync((Producto?)null); // No existe
-            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto3Id, CancellationToken.None))
+            _productoRepositoryMock.Setup(x => x.ObtenerPorIdAsync(producto3Id))
                 .ReturnsAsync(producto3);
 
             // Configurar preparaciones
-            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>(), null))
                 .Returns(Task.FromResult(Result<bool>.Success(false))); // Al momento
 
             // Act
@@ -1298,7 +1296,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
         /// </summary>
         private void SetupObtenerReservacionPorId(Guid reservacionId, Reservacion reservacion)
         {
-            _reservacionRepositoryMock.Setup(r => r.ObtenerPorIdAsync(reservacionId, It.IsAny<CancellationToken>()))
+            _reservacionRepositoryMock.Setup(r => r.ObtenerPorIdAsync(reservacionId))
                 .ReturnsAsync(reservacion);
         }
 
@@ -1307,7 +1305,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
         /// </summary>
         private void VerifyObtenerReservacionPorId(Guid reservacionId, Moq.Times times)
         {
-            _reservacionRepositoryMock.Verify(r => r.ObtenerPorIdAsync(reservacionId, It.IsAny<CancellationToken>()), times);
+            _reservacionRepositoryMock.Verify(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == reservacionId)), times);
         }
     }
 } 

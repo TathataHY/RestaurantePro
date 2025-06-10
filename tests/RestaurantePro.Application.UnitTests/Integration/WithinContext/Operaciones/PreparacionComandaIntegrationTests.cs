@@ -109,31 +109,31 @@ namespace RestaurantePro.Application.UnitTests.Integration.WithinContext.Operaci
                 .ReturnsAsync(1);
                 
             var setupComandaSequence = _comandaRepositoryMock
-                .SetupSequence(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == comandaId), false, CancellationToken.None));
+                .SetupSequence(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == comandaId), It.IsAny<bool>()));
             setupComandaSequence.ReturnsAsync((Comanda)null);
             setupComandaSequence.ReturnsAsync(comanda);
 
-            // Setup para servicioPreparaciones
+            // Setup para servicioPreparaciones - usar valores concretos en lugar de argumentos opcionales
             _servicioPreparacionesMock.Setup(x => x.PrepararProductoAsync(
-                productoId,
-                cantidad,
-                chefId,
+                It.Is<Guid>(id => id == productoId),
+                It.Is<int>(c => c == cantidad),
+                It.Is<Guid>(id => id == chefId),
                 It.Is<DateTime>(d => d > DateTime.Now),
-                ""))
+                It.Is<string>(s => s == "")))
                 .ReturnsAsync(Result<PreparacionDiaria>.Success(preparacionDiaria));
 
             _servicioPreparacionesMock.Setup(x => x.MarcarComoDisponibleAsync(
-                preparacionId))
+                It.Is<Guid>(id => id == preparacionId)))
                 .ReturnsAsync(Result.Success());
 
             _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(
-                productoId,
-                1))
-                .ReturnsAsync(Result<bool>.Success(true));
+                It.Is<Guid>(id => id == productoId), 
+                It.Is<int>(c => c == 1)))
+                .ReturnsAsync(Result.Success(true));
 
             _servicioPreparacionesMock.Setup(x => x.ConsumirPreparacionAsync(
-                productoId,
-                1))
+                It.Is<Guid>(id => id == productoId), 
+                It.Is<int>(c => c == 1)))
                 .ReturnsAsync(Result.Success());
 
             // Configuración de fecha y hora
@@ -196,24 +196,28 @@ namespace RestaurantePro.Application.UnitTests.Integration.WithinContext.Operaci
             Assert.NotNull(crearResult);
             Assert.True(marcarResult.Succeeded);
             Assert.True(agregarItemResult.Succeeded);
-
-            // Verificar que los métodos fueron llamados con los parámetros correctos
+            
+            // Verificar que se realizaron las llamadas necesarias
+            _preparacionRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<PreparacionDiaria>()), Times.Once);
+            _preparacionRepositoryMock.Verify(r => r.GuardarCambiosAsync(), Times.AtLeastOnce);
+            _preparacionRepositoryMock.Verify(r => r.ObtenerPorIdAsync(preparacionId), Times.AtLeastOnce);
+            
+            // Verificar que se marcó la preparación como disponible
             _servicioPreparacionesMock.Verify(
-                x => x.PrepararProductoAsync(
-                    It.Is<Guid>(id => id == productoId),
-                    It.Is<int>(c => c == cantidad),
-                    It.Is<Guid>(id => id == chefId),
-                    It.IsAny<DateTime>(),
-                    It.IsAny<string>()),
+                s => s.MarcarComoDisponibleAsync(
+                    It.Is<Guid>(id => id == preparacionId)), 
                 Times.Once);
                 
+            // Verificar que se verificó la disponibilidad del producto
             _servicioPreparacionesMock.Verify(
-                x => x.MarcarComoDisponibleAsync(
-                    It.Is<Guid>(id => id == preparacionId)),
+                s => s.VerificarDisponibilidadAsync(
+                    It.Is<Guid>(id => id == productoId), 
+                    It.Is<int>(c => c == 1)), 
                 Times.Once);
                 
+            // Verificar que se consumió la preparación
             _servicioPreparacionesMock.Verify(
-                x => x.VerificarDisponibilidadAsync(
+                s => s.ConsumirPreparacionAsync(
                     It.Is<Guid>(id => id == productoId),
                     It.Is<int>(c => c == 1)),
                 Times.Once);

@@ -171,10 +171,9 @@ public class PreparacionDiariaTests
         var cantidadAConsumir = 3;
 
         // Act
-        var resultado = preparacion.ConsumirCantidad(cantidadAConsumir);
+        preparacion.ConsumirCantidad(cantidadAConsumir);
 
         // Assert
-        resultado.Succeeded.Should().BeTrue();
         preparacion.CantidadDisponible.Should().Be(7);
         preparacion.Estado.Should().Be(EstadoPreparacion.Disponible);
     }
@@ -187,10 +186,9 @@ public class PreparacionDiariaTests
         preparacion.MarcarComoDisponible();
 
         // Act
-        var resultado = preparacion.ConsumirCantidad(10);
+        preparacion.ConsumirCantidad(10);
 
         // Assert
-        resultado.Succeeded.Should().BeTrue();
         preparacion.CantidadDisponible.Should().Be(0);
         preparacion.Estado.Should().Be(EstadoPreparacion.Agotada);
     }
