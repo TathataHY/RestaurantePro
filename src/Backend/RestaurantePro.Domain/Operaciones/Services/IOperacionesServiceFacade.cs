@@ -243,11 +243,11 @@ namespace RestaurantePro.Domain.Operaciones.Services
         /// <param name="productoId">ID del producto a preparar</param>
         /// <param name="cantidad">Cantidad a preparar</param>
         /// <param name="chefId">ID del chef que realiza la preparación</param>
-        /// <param name="fechaVencimiento">Fecha de vencimiento opcional</param>
+        /// <param name="fechaVencimiento">Fecha de vencimiento</param>
         /// <param name="observaciones">Observaciones de la preparación</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Resultado con la preparación creada</returns>
-        Task<Result<PreparacionDiaria>> PrepararProductoAsync(Guid productoId, int cantidad, Guid chefId, DateTime? fechaVencimiento = null, string? observaciones = null, CancellationToken cancellationToken = default);
+        Task<Result<PreparacionDiaria>> PrepararProductoAsync(Guid productoId, int cantidad, Guid chefId, DateTime fechaVencimiento, string? observaciones = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Obtiene todas las preparaciones del día actual

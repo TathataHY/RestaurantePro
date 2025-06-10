@@ -79,8 +79,8 @@ public class AgregarItemComandaHandlerTests
         Assert.Equal(comandaId, result.Value.Id);
         Assert.Equal(51.00m, result.Value.Total);
 
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
-        _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), CancellationToken.None), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(CancellationToken.None), Times.Once);
     }
 
     [Fact]
@@ -154,8 +154,8 @@ public class AgregarItemComandaHandlerTests
         Assert.Equal(31.50m, result.Value.Total);
         
         // Verificar que se actualizó la comanda
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
-        _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), CancellationToken.None), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(CancellationToken.None), Times.Once);
     }
 
     [Fact]
@@ -199,8 +199,8 @@ public class AgregarItemComandaHandlerTests
         Assert.Equal(18.00m, result.Value.Total);
         
         // Verificar que se actualizó la comanda
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
-        _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), CancellationToken.None), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(CancellationToken.None), Times.Once);
     }
 
     [Fact]
@@ -246,8 +246,8 @@ public class AgregarItemComandaHandlerTests
         Assert.Equal(24.00m, result.Value.Total);
         
         // Verificar que se actualizó la comanda
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
-        _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), CancellationToken.None), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(CancellationToken.None), Times.Once);
     }
 
     [Fact]
@@ -286,8 +286,8 @@ public class AgregarItemComandaHandlerTests
         Assert.Equal(34.00m, result.Value.Total);
         
         // Verificar que se actualizó la comanda
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
-        _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), CancellationToken.None), Times.Once);
+        _comandaRepositoryMock.Verify(x => x.GuardarCambiosAsync(CancellationToken.None), Times.Once);
     }
 
     [Fact]
@@ -309,15 +309,15 @@ public class AgregarItemComandaHandlerTests
         };
 
         _comandaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(comandaId, false, CancellationToken.None))
             .ReturnsAsync(comanda);
 
         _servicioPreparacionesMock
-            .Setup(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+            .Setup(x => x.VerificarDisponibilidadAsync(productoId, 2))
             .ReturnsAsync(Result.Success(true));
 
         _servicioPreparacionesMock
-            .Setup(x => x.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+            .Setup(x => x.ConsumirPreparacionAsync(productoId, 2))
             .ReturnsAsync(Result.Success());
 
         _mapperMock
@@ -332,20 +332,20 @@ public class AgregarItemComandaHandlerTests
         
         // Verificar que se llamaron los métodos del servicio de preparaciones
         _servicioPreparacionesMock.Verify(
-            x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()),
+            x => x.VerificarDisponibilidadAsync(productoId, 2),
             Times.Once);
             
         _servicioPreparacionesMock.Verify(
-            x => x.ConsumirPreparacionAsync(It.IsAny<Guid>(), It.IsAny<int>()),
+            x => x.ConsumirPreparacionAsync(productoId, 2),
             Times.Once);
             
         // Verificar que se actualizó y guardó la comanda
         _comandaRepositoryMock.Verify(
-            x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()),
+            x => x.ActualizarAsync(It.IsAny<Comanda>(), CancellationToken.None),
             Times.Once);
             
         _comandaRepositoryMock.Verify(
-            x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()),
+            x => x.GuardarCambiosAsync(CancellationToken.None),
             Times.Once);
     }
 
@@ -368,11 +368,11 @@ public class AgregarItemComandaHandlerTests
         };
 
         _comandaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(comandaId, false, CancellationToken.None))
             .ReturnsAsync(comanda);
 
         _servicioPreparacionesMock
-            .Setup(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+            .Setup(x => x.VerificarDisponibilidadAsync(productoId, 2))
             .ReturnsAsync(Result.Success(false));
 
         _mapperMock
@@ -387,7 +387,7 @@ public class AgregarItemComandaHandlerTests
         
         // Verificar que se llamó VerificarDisponibilidad pero NO se llamó ConsumirPreparacion
         _servicioPreparacionesMock.Verify(
-            x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()),
+            x => x.VerificarDisponibilidadAsync(productoId, 2),
             Times.Once);
             
         _servicioPreparacionesMock.Verify(
@@ -396,11 +396,11 @@ public class AgregarItemComandaHandlerTests
             
         // Verificar que se actualizó y guardó la comanda de todos modos
         _comandaRepositoryMock.Verify(
-            x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()),
+            x => x.ActualizarAsync(It.IsAny<Comanda>(), CancellationToken.None),
             Times.Once);
             
         _comandaRepositoryMock.Verify(
-            x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()),
+            x => x.GuardarCambiosAsync(CancellationToken.None),
             Times.Once);
     }
 
@@ -415,7 +415,7 @@ public class AgregarItemComandaHandlerTests
         var comandaId = Guid.NewGuid();
         var command = CreateBasicCommand(comandaId, Guid.NewGuid());
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, false, CancellationToken.None))
             .ReturnsAsync((Comanda)null);
 
         // Act
@@ -426,7 +426,7 @@ public class AgregarItemComandaHandlerTests
         Assert.Contains("La comanda especificada no existe", result.Error);
         
         // Verify no se intenta actualizar
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Never);
+        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), CancellationToken.None), Times.Never);
     }
 
     [Fact]
@@ -437,7 +437,7 @@ public class AgregarItemComandaHandlerTests
         var command = CreateBasicCommand(comandaId, Guid.NewGuid());
 
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Finalizada);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, false, CancellationToken.None))
             .ReturnsAsync(comanda);
 
         // Act
@@ -456,7 +456,7 @@ public class AgregarItemComandaHandlerTests
         var command = CreateBasicCommand(comandaId, Guid.NewGuid());
 
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Cancelada);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, false, CancellationToken.None))
             .ReturnsAsync(comanda);
 
         // Act
@@ -475,7 +475,7 @@ public class AgregarItemComandaHandlerTests
         var command = CreateBasicCommand(comandaId, Guid.NewGuid());
 
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Lista);
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, false, CancellationToken.None))
             .ReturnsAsync(comanda);
 
         // Act
@@ -503,7 +503,7 @@ public class AgregarItemComandaHandlerTests
                 It.IsAny<string>()))
             .Throws(new ArgumentException("Ya existe un item con el producto especificado"));
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, false, CancellationToken.None))
             .ReturnsAsync(comandaMock.Object);
 
         // Act
@@ -524,7 +524,7 @@ public class AgregarItemComandaHandlerTests
         // Crear una comanda en estado que no permite agregar items (por ejemplo, Cancelada)
         var comanda = CreateMockComanda(comandaId, EstadoComanda.Cancelada);
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, false, CancellationToken.None))
             .ReturnsAsync(comanda);
 
         // Act
@@ -691,7 +691,7 @@ public class AgregarItemComandaHandlerTests
         var comandaId = Guid.NewGuid();
         var command = CreateBasicCommand(comandaId, Guid.NewGuid());
 
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, false, CancellationToken.None))
             .ThrowsAsync(new InvalidOperationException("Error de base de datos"));
 
         // Act
@@ -783,13 +783,13 @@ public class AgregarItemComandaHandlerTests
 
     private void SetupRepositoryAndMapper(Comanda comanda, ComandaDto comandaDto)
     {
-        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, false, CancellationToken.None))
             .ReturnsAsync(comanda);
 
-        _comandaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Comanda>(), CancellationToken.None))
             .Returns(Task.CompletedTask);
 
-        _comandaRepositoryMock.Setup(x => x.GuardarCambiosAsync(It.IsAny<CancellationToken>()))
+        _comandaRepositoryMock.Setup(x => x.GuardarCambiosAsync(CancellationToken.None))
             .ReturnsAsync(1);
 
         if (comandaDto != null)

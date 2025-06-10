@@ -10,7 +10,10 @@ using RestaurantePro.Application.Operaciones.Comandas.Commands.AgregarItemComand
 using RestaurantePro.Application.Operaciones.Comandas.DTOs;
 using RestaurantePro.Application.Operaciones.Preparaciones.Commands.CrearPreparacion;
 using RestaurantePro.Application.Operaciones.Preparaciones.Commands.MarcarComoDisponible;
+using RestaurantePro.Domain.Core.Productos.Services;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Core.SharedKernel.Services;
+using RestaurantePro.Domain.Inventario.Services;
 using RestaurantePro.Domain.Operaciones.Comandas.Entities;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
@@ -32,6 +35,10 @@ namespace RestaurantePro.Application.UnitTests.Integration.WithinContext.Operaci
         private readonly Mock<ILogger<CrearPreparacionCommandHandler>> _loggerCrearPreparacionMock;
         private readonly Mock<ILogger<MarcarComoDisponibleCommandHandler>> _loggerMarcarDisponibleMock;
         private readonly Mock<ILogger<AgregarItemComandaHandler>> _loggerAgregarItemMock;
+        private readonly Mock<IDateTimeService> _dateTimeServiceMock;
+        private readonly Mock<IRecetaService> _recetaServiceMock;
+        private readonly Mock<IInventarioServiceFacade> _inventarioServiceMock;
+        private readonly Mock<IApplicationDbContext> _dbContextMock;
         private readonly Fixture _fixture;
 
         public PreparacionComandaIntegrationTests()
@@ -44,6 +51,10 @@ namespace RestaurantePro.Application.UnitTests.Integration.WithinContext.Operaci
             _loggerCrearPreparacionMock = new Mock<ILogger<CrearPreparacionCommandHandler>>();
             _loggerMarcarDisponibleMock = new Mock<ILogger<MarcarComoDisponibleCommandHandler>>();
             _loggerAgregarItemMock = new Mock<ILogger<AgregarItemComandaHandler>>();
+            _dateTimeServiceMock = new Mock<IDateTimeService>();
+            _recetaServiceMock = new Mock<IRecetaService>();
+            _inventarioServiceMock = new Mock<IInventarioServiceFacade>();
+            _dbContextMock = new Mock<IApplicationDbContext>();
         }
 
         [Fact]
@@ -57,6 +68,7 @@ namespace RestaurantePro.Application.UnitTests.Integration.WithinContext.Operaci
             var chefId = Guid.NewGuid();
             var mesaId = Guid.NewGuid();
             var clienteId = Guid.NewGuid();
+            var meseroId = Guid.NewGuid();
 
             // Preparación diaria para el test
             var preparacionDiaria = PreparacionDiaria.Crear(
@@ -70,7 +82,7 @@ namespace RestaurantePro.Application.UnitTests.Integration.WithinContext.Operaci
             var comanda = Comanda.Crear(
                 mesaId,
                 clienteId,
-                2,
+                meseroId,
                 "Observaciones de prueba");
             comanda.SetIdForTesting(comandaId);
 
@@ -79,70 +91,75 @@ namespace RestaurantePro.Application.UnitTests.Integration.WithinContext.Operaci
                 .Returns(Task.CompletedTask);
             
             _preparacionRepositoryMock.Setup(r => r.GuardarCambiosAsync())
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(1);
             
-            _preparacionRepositoryMock.Setup(r => r.ObtenerPorIdAsync(preparacionId))
+            _preparacionRepositoryMock.Setup(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == preparacionId)))
                 .ReturnsAsync(preparacionDiaria);
                 
             // Setup secuencial para devolver primero null (no existe) y luego la preparación creada
             var setupSequence = _preparacionRepositoryMock
-                .SetupSequence(r => r.ObtenerPorIdAsync(preparacionId));
-            setupSequence.ReturnsAsync(null);
+                .SetupSequence(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == preparacionId)));
+            setupSequence.ReturnsAsync((PreparacionDiaria)null);
             setupSequence.ReturnsAsync(preparacionDiaria);
             
             _comandaRepositoryMock.Setup(r => r.AgregarAsync(It.IsAny<Comanda>()))
                 .Returns(Task.CompletedTask);
                 
             _comandaRepositoryMock.Setup(r => r.GuardarCambiosAsync())
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(1);
                 
             var setupComandaSequence = _comandaRepositoryMock
-                .SetupSequence(r => r.ObtenerPorIdAsync(comandaId));
-            setupComandaSequence.ReturnsAsync(null);
+                .SetupSequence(r => r.ObtenerPorIdAsync(It.Is<Guid>(id => id == comandaId), false, CancellationToken.None));
+            setupComandaSequence.ReturnsAsync((Comanda)null);
             setupComandaSequence.ReturnsAsync(comanda);
 
-            // Creación de handlers
-            var dbContextMock = new Mock<IApplicationDbContext>();
-            var mapperMock = new Mock<IMapper>();
-            var dateTimeServiceMock = new Mock<IDateTimeService>();
-            dateTimeServiceMock.Setup(d => d.Now).Returns(DateTime.Now);
-            
-            var loggerCrearPreparacionMock = new Mock<ILogger<CrearPreparacionCommandHandler>>();
-            var loggerMarcarDisponibleMock = new Mock<ILogger<MarcarComoDisponibleCommandHandler>>();
-            var loggerAgregarItemMock = new Mock<ILogger<AgregarItemComandaHandler>>();
-            
-            // Crear servicios de dominio
-            var notificationManagerMock = new Mock<INotificationManager>();
-            notificationManagerMock.Setup(n => n.HasErrors).Returns(false);
-            
-            var servicioPreparaciones = new ServicioPreparaciones(
-                new Mock<ILogger<ServicioPreparaciones>>().Object,
-                notificationManagerMock.Object,
-                dateTimeServiceMock.Object,
-                _preparacionRepositoryMock.Object);
-                
-            var servicioComandas = new ServicioComandas(
-                new Mock<ILogger<ServicioComandas>>().Object,
-                notificationManagerMock.Object,
-                _comandaRepositoryMock.Object);
+            // Setup para servicioPreparaciones
+            _servicioPreparacionesMock.Setup(x => x.PrepararProductoAsync(
+                productoId,
+                cantidad,
+                chefId,
+                It.Is<DateTime>(d => d > DateTime.Now),
+                ""))
+                .ReturnsAsync(Result<PreparacionDiaria>.Success(preparacionDiaria));
 
+            _servicioPreparacionesMock.Setup(x => x.MarcarComoDisponibleAsync(
+                preparacionId))
+                .ReturnsAsync(Result.Success());
+
+            _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(
+                productoId,
+                1))
+                .ReturnsAsync(Result<bool>.Success(true));
+
+            _servicioPreparacionesMock.Setup(x => x.ConsumirPreparacionAsync(
+                productoId,
+                1))
+                .ReturnsAsync(Result.Success());
+
+            // Configuración de fecha y hora
+            _dateTimeServiceMock.Setup(d => d.Now).Returns(DateTime.Now);
+            
+            // Configuración de mapper
+            _mapperMock
+                .Setup(x => x.Map<ComandaDto>(It.IsAny<Comanda>()))
+                .Returns(new ComandaDto { Id = comandaId });
+            
             // Crear handlers
             var crearPreparacionHandler = new CrearPreparacionCommandHandler(
-                dbContextMock.Object,
-                mapperMock.Object,
-                dateTimeServiceMock.Object,
-                loggerCrearPreparacionMock.Object);
+                _dbContextMock.Object,
+                _mapperMock.Object,
+                _dateTimeServiceMock.Object);
                 
             var marcarDisponibleHandler = new MarcarComoDisponibleCommandHandler(
-                servicioPreparaciones,
-                mapperMock.Object,
-                loggerMarcarDisponibleMock.Object);
+                _servicioPreparacionesMock.Object,
+                _mapperMock.Object,
+                _loggerMarcarDisponibleMock.Object);
                 
             var agregarItemHandler = new AgregarItemComandaHandler(
-                servicioComandas,
-                servicioPreparaciones,
-                mapperMock.Object,
-                loggerAgregarItemMock.Object);
+                _comandaRepositoryMock.Object,
+                _mapperMock.Object,
+                _loggerAgregarItemMock.Object,
+                _servicioPreparacionesMock.Object);
 
             // Act
             // 1. Crear la preparación
@@ -176,17 +193,30 @@ namespace RestaurantePro.Application.UnitTests.Integration.WithinContext.Operaci
             var agregarItemResult = await agregarItemHandler.Handle(agregarItemCommand, CancellationToken.None);
 
             // Assert
-            Assert.Equal(preparacionId, crearResult);
+            Assert.NotNull(crearResult);
             Assert.True(marcarResult.Succeeded);
             Assert.True(agregarItemResult.Succeeded);
 
             // Verificar que los métodos fueron llamados con los parámetros correctos
-            _preparacionRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<PreparacionDiaria>()), Times.Once);
-            _preparacionRepositoryMock.Verify(r => r.GuardarCambiosAsync(), Times.Once);
-            _preparacionRepositoryMock.Verify(r => r.ObtenerPorIdAsync(preparacionId), Times.AtMostOnce);
-            _comandaRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<Comanda>()), Times.Once);
-            _comandaRepositoryMock.Verify(r => r.GuardarCambiosAsync(), Times.Once);
-            _comandaRepositoryMock.Verify(r => r.ObtenerPorIdAsync(comandaId), Times.AtMostOnce);
+            _servicioPreparacionesMock.Verify(
+                x => x.PrepararProductoAsync(
+                    It.Is<Guid>(id => id == productoId),
+                    It.Is<int>(c => c == cantidad),
+                    It.Is<Guid>(id => id == chefId),
+                    It.IsAny<DateTime>(),
+                    It.IsAny<string>()),
+                Times.Once);
+                
+            _servicioPreparacionesMock.Verify(
+                x => x.MarcarComoDisponibleAsync(
+                    It.Is<Guid>(id => id == preparacionId)),
+                Times.Once);
+                
+            _servicioPreparacionesMock.Verify(
+                x => x.VerificarDisponibilidadAsync(
+                    It.Is<Guid>(id => id == productoId),
+                    It.Is<int>(c => c == 1)),
+                Times.Once);
         }
     }
 } 

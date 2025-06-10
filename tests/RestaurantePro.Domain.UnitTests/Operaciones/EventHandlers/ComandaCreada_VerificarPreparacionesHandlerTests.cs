@@ -37,7 +37,7 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
         var comanda = CrearComandaMock(comandaId, mesaId, empleadoId, sinItems: true);
 
         _comandaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(comandaId, CancellationToken.None))
             .ReturnsAsync(comanda);
 
         // Act
@@ -63,7 +63,7 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
             items: new[] { (producto1Id, 2), (producto2Id, 1) });
 
         _comandaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(comandaId, CancellationToken.None))
             .ReturnsAsync(comanda);
 
         // Configurar preparaciones: producto1 disponible, producto2 no
@@ -106,12 +106,18 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
             items: new[] { (producto1Id, 1), (producto2Id, 1), (producto3Id, 1) });
 
         _comandaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(comandaId, CancellationToken.None))
             .ReturnsAsync(comanda);
 
         // Solo 1 de 3 productos disponible en preparaciones (33% < 30%)
         _servicioPreparacionesMock
-            .Setup(x => x.VerificarDisponibilidadAsync(It.IsAny<Guid>(), It.IsAny<int>()))
+            .Setup(x => x.VerificarDisponibilidadAsync(producto1Id, 1))
+            .ReturnsAsync(Result.Success(false));
+        _servicioPreparacionesMock
+            .Setup(x => x.VerificarDisponibilidadAsync(producto2Id, 1))
+            .ReturnsAsync(Result.Success(false));
+        _servicioPreparacionesMock
+            .Setup(x => x.VerificarDisponibilidadAsync(producto3Id, 1))
             .ReturnsAsync(Result.Success(false));
 
         // Act
@@ -132,7 +138,7 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
         var evento = new ComandaCreada(comandaId, mesaId, empleadoId);
 
         _comandaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(comandaId, CancellationToken.None))
             .ReturnsAsync((Comanda?)null);
 
         // Act
@@ -157,7 +163,7 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
             items: new[] { (productoId, 1) });
 
         _comandaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(comandaId, CancellationToken.None))
             .ReturnsAsync(comanda);
 
         _servicioPreparacionesMock
@@ -247,7 +253,7 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
                 nivel,
                 It.IsAny<EventId>(),
                 It.Is<It.IsAnyType>((v, t) => Regex.IsMatch(v.ToString()!, patron)),
-                It.IsAny<Exception>(),
+                null,
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.AtLeastOnce);
     }

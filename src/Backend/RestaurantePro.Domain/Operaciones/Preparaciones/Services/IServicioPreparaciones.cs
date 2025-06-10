@@ -24,7 +24,7 @@ public interface IServicioPreparaciones
         Guid productoId, 
         int cantidad, 
         Guid chefId,
-        DateTime? fechaVencimiento = null,
+        DateTime fechaVencimiento,
         string? observaciones = null);
 
     /// <summary>
@@ -32,8 +32,12 @@ public interface IServicioPreparaciones
     /// </summary>
     /// <param name="productoId">ID del producto</param>
     /// <param name="cantidadRequerida">Cantidad requerida</param>
+    /// <param name="preparacionId">ID de una preparación específica (opcional)</param>
     /// <returns>True si hay suficiente cantidad disponible</returns>
-    Task<Result<bool>> VerificarDisponibilidadAsync(Guid productoId, int cantidadRequerida);
+    Task<Result<bool>> VerificarDisponibilidadAsync(
+        Guid productoId, 
+        int cantidadRequerida,
+        Guid? preparacionId = null);
 
     /// <summary>
     /// Consume una cantidad específica de un producto preparado

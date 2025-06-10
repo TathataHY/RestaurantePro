@@ -13,8 +13,10 @@ using RestaurantePro.Application.Operaciones.Preparaciones.Commands.CrearPrepara
 using RestaurantePro.Domain.Core.Base.Services;
 using RestaurantePro.Domain.Core.Productos.Services;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Core.SharedKernel.Services;
 using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
 using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
+using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
 using RestaurantePro.Domain.Inventario.Services;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
@@ -96,32 +98,34 @@ namespace RestaurantePro.Application.UnitTests.Integration.BetweenContexts.Opera
             };
 
             // Configuración de mocks
-            _preparacionRepositoryMock.Setup(r => r.AgregarAsync(It.IsAny<PreparacionDiaria>()))
+            _preparacionRepositoryMock.Setup(r => r.AgregarAsync(It.Is<PreparacionDiaria>(p => p.ProductoId == productoId)))
                 .Returns(Task.CompletedTask);
             
             _preparacionRepositoryMock.Setup(r => r.GuardarCambiosAsync())
-                .Returns(Task.CompletedTask);
+                .ReturnsAsync(1);
             
             _preparacionRepositoryMock.Setup(r => r.ObtenerPorIdAsync(preparacionId))
                 .ReturnsAsync(preparacion);
             
             // Obtener ingredientes del producto al crear preparación
-            _recetaServiceMock.Setup(s => s.ObtenerIngredientesParaProductoAsync(productoId, It.IsAny<CancellationToken>()))
+            _recetaServiceMock.Setup(s => s.ObtenerIngredientesParaProductoAsync(
+                productoId, 
+                CancellationToken.None))
                 .ReturnsAsync(Result.Success(ingredientesRequeridos));
 
             // Actualizar stock de ingredientes al crear preparación
             _inventarioServiceMock.Setup(s => s.ActualizarStockIngredienteAsync(
                     ingrediente1Id, 
-                    It.Is<decimal>(c => c < 0), 
-                    It.IsAny<TipoMovimientoInventario>(), 
-                    It.IsAny<string>()))
+                    0.2m * cantidad, 
+                    TipoMovimientoInventario.Salida, 
+                    "Preparación de producto"))
                 .ReturnsAsync(Result.Success(ingrediente1));
-
+                
             _inventarioServiceMock.Setup(s => s.ActualizarStockIngredienteAsync(
                     ingrediente2Id, 
-                    It.Is<decimal>(c => c < 0), 
-                    It.IsAny<TipoMovimientoInventario>(), 
-                    It.IsAny<string>()))
+                    0.1m * cantidad, 
+                    TipoMovimientoInventario.Salida, 
+                    "Preparación de producto"))
                 .ReturnsAsync(Result.Success(ingrediente2));
 
             // Creación de handlers y servicios
@@ -143,8 +147,7 @@ namespace RestaurantePro.Application.UnitTests.Integration.BetweenContexts.Opera
             var crearPreparacionHandler = new CrearPreparacionCommandHandler(
                 _dbContextMock.Object,
                 mapperMock.Object,
-                dateTimeServiceMock.Object,
-                _loggerCrearPreparacionMock.Object);
+                dateTimeServiceMock.Object);
                 
             var consumirPreparacionHandler = new ConsumirPreparacionCommandHandler(
                 servicioPreparaciones,
@@ -174,9 +177,26 @@ namespace RestaurantePro.Application.UnitTests.Integration.BetweenContexts.Opera
             Assert.True(consumirResult.Succeeded);
 
             // Verificar que se llamó a los métodos esperados
-            _preparacionRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<PreparacionDiaria>()), Times.Once);
+            _preparacionRepositoryMock.Verify(r => r.AgregarAsync(It.Is<PreparacionDiaria>(p => p.ProductoId == productoId)), Times.Once);
             _preparacionRepositoryMock.Verify(r => r.GuardarCambiosAsync(), Times.AtLeastOnce);
             _preparacionRepositoryMock.Verify(r => r.ObtenerPorIdAsync(preparacionId), Times.AtLeastOnce);
+            
+            // Verificar los ingredientes se actualizaron en inventario
+            _inventarioServiceMock.Verify(
+                s => s.ActualizarStockIngredienteAsync(
+                    ingrediente1Id,
+                    0.2m * cantidad,
+                    TipoMovimientoInventario.Salida, 
+                    "Preparación de producto"),
+                Times.AtLeastOnce);
+                
+            _inventarioServiceMock.Verify(
+                s => s.ActualizarStockIngredienteAsync(
+                    ingrediente2Id,
+                    0.1m * cantidad,
+                    TipoMovimientoInventario.Salida, 
+                    "Preparación de producto"),
+                Times.AtLeastOnce);
         }
     }
 } 

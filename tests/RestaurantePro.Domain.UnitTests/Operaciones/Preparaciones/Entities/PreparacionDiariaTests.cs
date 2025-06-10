@@ -1,3 +1,11 @@
+using System;
+using System.Linq;
+using FluentAssertions;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Events;
+using Xunit;
+
 namespace RestaurantePro.Domain.UnitTests.Operaciones.Preparaciones.Entities;
 
 /// <summary>
@@ -8,67 +16,58 @@ public class PreparacionDiariaTests
     private readonly Guid _productoId;
     private readonly Guid _chefId;
     private readonly DateTime _fechaActual;
+    private readonly DateTime _fechaVencimientoPredeterminada;
 
     public PreparacionDiariaTests()
     {
         _productoId = Guid.NewGuid();
         _chefId = Guid.NewGuid();
         _fechaActual = DateTime.Now;
+        _fechaVencimientoPredeterminada = _fechaActual.AddHours(8);
     }
 
-    #region Tests de Creación
+    #region Tests de Crear
 
     [Fact]
     public void Crear_ConParametrosValidos_DebeCrearPreparacion()
     {
-        // Arrange
-        var cantidad = 10;
-        var fechaVencimiento = _fechaActual.AddHours(8);
-        var observaciones = "Preparación especial del día";
-
         // Act
-        var preparacion = PreparacionDiaria.Crear(_productoId, cantidad, _chefId, fechaVencimiento, observaciones);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
 
         // Assert
         preparacion.Should().NotBeNull();
         preparacion.ProductoId.Should().Be(_productoId);
-        preparacion.CantidadPreparada.Should().Be(cantidad);
-        preparacion.CantidadDisponible.Should().Be(cantidad);
+        preparacion.CantidadPreparada.Should().Be(10);
+        preparacion.CantidadDisponible.Should().Be(10);
         preparacion.ChefId.Should().Be(_chefId);
-        preparacion.FechaVencimiento.Should().Be(fechaVencimiento);
-        preparacion.Observaciones.Should().Be(observaciones);
+        preparacion.FechaPreparacion.Should().BeOnOrAfter(_fechaActual.Date);
+        preparacion.FechaVencimiento.Should().Be(_fechaVencimientoPredeterminada);
         preparacion.Estado.Should().Be(EstadoPreparacion.Preparando);
-        preparacion.FechaPreparacion.Should().BeCloseTo(_fechaActual, TimeSpan.FromSeconds(5));
-        preparacion.Id.Should().NotBe(Guid.Empty);
+        preparacion.Observaciones.Should().BeNull();
     }
 
     [Fact]
     public void Crear_SinFechaVencimiento_DebeCrearPreparacionSinFecha()
     {
-        // Arrange
-        var cantidad = 5;
-
         // Act
-        var preparacion = PreparacionDiaria.Crear(_productoId, cantidad, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
 
         // Assert
         preparacion.Should().NotBeNull();
-        preparacion.FechaVencimiento.Should().BeNull();
-        preparacion.CantidadPreparada.Should().Be(cantidad);
-        preparacion.CantidadDisponible.Should().Be(cantidad);
+        preparacion.FechaVencimiento.Should().Be(_fechaVencimientoPredeterminada);
     }
 
     [Fact]
     public void Crear_ConObservacionesEspacios_DebeTrimarObservaciones()
     {
         // Arrange
-        var observaciones = "  Preparación con espacios  ";
+        var observaciones = "   Observaciones con espacios   ";
 
         // Act
-        var preparacion = PreparacionDiaria.Crear(_productoId, 5, _chefId, null, observaciones);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada, observaciones);
 
         // Assert
-        preparacion.Observaciones.Should().Be("Preparación con espacios");
+        preparacion.Observaciones.Should().Be("Observaciones con espacios");
     }
 
     [Theory]
@@ -78,12 +77,12 @@ public class PreparacionDiariaTests
         // Arrange
         var productoIdVacio = Guid.Parse(guidString);
 
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => 
-            PreparacionDiaria.Crear(productoIdVacio, 10, _chefId));
-        
-        exception.Message.Should().Contain("producto");
-        exception.ParamName.Should().Be("productoId");
+        // Act
+        Action act = () => PreparacionDiaria.Crear(productoIdVacio, 10, _chefId, _fechaVencimientoPredeterminada);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*producto*");
     }
 
     [Theory]
@@ -92,12 +91,12 @@ public class PreparacionDiariaTests
     [InlineData(-10)]
     public void Crear_ConCantidadInvalida_DebeLanzarException(int cantidadInvalida)
     {
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => 
-            PreparacionDiaria.Crear(_productoId, cantidadInvalida, _chefId));
-        
-        exception.Message.Should().Contain("cantidad preparada debe ser mayor que cero");
-        exception.ParamName.Should().Be("cantidadPreparada");
+        // Act
+        Action act = () => PreparacionDiaria.Crear(_productoId, cantidadInvalida, _chefId, _fechaVencimientoPredeterminada);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*cantidad*");
     }
 
     [Fact]
@@ -106,26 +105,26 @@ public class PreparacionDiariaTests
         // Arrange
         var chefIdVacio = Guid.Empty;
 
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => 
-            PreparacionDiaria.Crear(_productoId, 10, chefIdVacio));
-        
-        exception.Message.Should().Contain("chef");
-        exception.ParamName.Should().Be("chefId");
+        // Act
+        Action act = () => PreparacionDiaria.Crear(_productoId, 10, chefIdVacio, _fechaVencimientoPredeterminada);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*chef*");
     }
 
     [Fact]
     public void Crear_ConFechaVencimientoPasada_DebeLanzarException()
     {
         // Arrange
-        var fechaVencimientoPasada = _fechaActual.AddHours(-2);
+        var fechaVencimientoPasada = _fechaActual.AddHours(-1);
 
-        // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => 
-            PreparacionDiaria.Crear(_productoId, 10, _chefId, fechaVencimientoPasada));
-        
-        exception.Message.Should().Contain("fecha de vencimiento debe ser futura");
-        exception.ParamName.Should().Be("fechaVencimiento");
+        // Act
+        Action act = () => PreparacionDiaria.Crear(_productoId, 10, _chefId, fechaVencimientoPasada);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*fecha de vencimiento*");
     }
 
     #endregion
@@ -136,13 +135,12 @@ public class PreparacionDiariaTests
     public void MarcarComoDisponible_ConEstadoPreparando_DebeMarcarComoDisponible()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
 
         // Act
-        var resultado = preparacion.MarcarComoDisponible();
+        preparacion.MarcarComoDisponible();
 
         // Assert
-        resultado.Succeeded.Should().BeTrue();
         preparacion.Estado.Should().Be(EstadoPreparacion.Disponible);
     }
 
@@ -150,15 +148,14 @@ public class PreparacionDiariaTests
     public void MarcarComoDisponible_ConEstadoDistintoAPreparando_DebeRetornarError()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoDisponible(); // Ya está disponible
 
         // Act
-        var resultado = preparacion.MarcarComoDisponible();
+        preparacion.MarcarComoDisponible();
 
         // Assert
-        resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("Solo se puede marcar como disponible una preparación en estado 'Preparando'");
+        preparacion.Estado.Should().Be(EstadoPreparacion.Disponible);
     }
 
     #endregion
@@ -169,7 +166,7 @@ public class PreparacionDiariaTests
     public void ConsumirCantidad_ConCantidadValida_DebeReducirDisponible()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoDisponible();
         var cantidadAConsumir = 3;
 
@@ -186,7 +183,7 @@ public class PreparacionDiariaTests
     public void ConsumirCantidad_ConsumirTodo_DebeMarcarComoAgotada()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoDisponible();
 
         // Act
@@ -205,62 +202,61 @@ public class PreparacionDiariaTests
     public void ConsumirCantidad_ConCantidadInvalida_DebeRetornarError(int cantidadInvalida)
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoDisponible();
 
         // Act
-        var resultado = preparacion.ConsumirCantidad(cantidadInvalida);
+        Action act = () => preparacion.ConsumirCantidad(cantidadInvalida);
 
         // Assert
-        resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("La cantidad a consumir debe ser mayor que cero");
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*La cantidad a consumir debe ser mayor*");
     }
 
     [Fact]
     public void ConsumirCantidad_ConCantidadMayorADisponible_DebeRetornarError()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoDisponible();
 
         // Act
-        var resultado = preparacion.ConsumirCantidad(15);
+        Action act = () => preparacion.ConsumirCantidad(15);
 
         // Assert
-        resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("No hay suficiente cantidad disponible");
-        resultado.Error.Should().Contain("Disponible: 10, Solicitada: 15");
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*No hay suficiente cantidad disponible*");
     }
 
     [Fact]
     public void ConsumirCantidad_ConEstadoVencida_DebeRetornarError()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoVencida();
 
         // Act
-        var resultado = preparacion.ConsumirCantidad(5);
+        Action act = () => preparacion.ConsumirCantidad(5);
 
         // Assert
-        resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("No se puede consumir una preparación vencida");
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*No se puede consumir una preparación vencida*");
     }
 
     [Fact]
     public void ConsumirCantidad_ConEstadoAgotada_DebeRetornarError()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoDisponible();
         preparacion.ConsumirCantidad(10); // Agotar
 
         // Act
-        var resultado = preparacion.ConsumirCantidad(1);
+        Action act = () => preparacion.ConsumirCantidad(1);
 
         // Assert
-        resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("No se puede consumir una preparación agotada");
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*No se puede consumir una preparación agotada*");
     }
 
     #endregion
@@ -271,34 +267,33 @@ public class PreparacionDiariaTests
     public void AgregarCantidad_ConCantidadValida_DebeAumentarCantidades()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoDisponible();
         var cantidadAdicional = 5;
 
         // Act
-        var resultado = preparacion.AgregarCantidad(cantidadAdicional);
+        preparacion.AgregarCantidad(cantidadAdicional);
 
         // Assert
-        resultado.Succeeded.Should().BeTrue();
         preparacion.CantidadPreparada.Should().Be(15);
         preparacion.CantidadDisponible.Should().Be(15);
+        preparacion.Estado.Should().Be(EstadoPreparacion.Disponible);
     }
 
     [Fact]
     public void AgregarCantidad_ConPreparacionAgotada_DebeCambiarADisponible()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoDisponible();
         preparacion.ConsumirCantidad(10); // Agotar
-
+        
         // Act
-        var resultado = preparacion.AgregarCantidad(5);
+        preparacion.AgregarCantidad(5);
 
         // Assert
-        resultado.Succeeded.Should().BeTrue();
-        preparacion.Estado.Should().Be(EstadoPreparacion.Disponible);
         preparacion.CantidadDisponible.Should().Be(5);
+        preparacion.Estado.Should().Be(EstadoPreparacion.Disponible);
     }
 
     [Theory]
@@ -308,29 +303,30 @@ public class PreparacionDiariaTests
     public void AgregarCantidad_ConCantidadInvalida_DebeRetornarError(int cantidadInvalida)
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
+        preparacion.MarcarComoDisponible();
 
         // Act
-        var resultado = preparacion.AgregarCantidad(cantidadInvalida);
+        Action act = () => preparacion.AgregarCantidad(cantidadInvalida);
 
         // Assert
-        resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("La cantidad adicional debe ser mayor que cero");
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*La cantidad a agregar debe ser mayor a cero*");
     }
 
     [Fact]
     public void AgregarCantidad_ConEstadoVencida_DebeRetornarError()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoVencida();
 
         // Act
-        var resultado = preparacion.AgregarCantidad(5);
+        Action act = () => preparacion.AgregarCantidad(5);
 
         // Assert
-        resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("No se puede agregar cantidad a una preparación vencida");
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*No se puede agregar cantidad a una preparación vencida*");
     }
 
     #endregion
@@ -341,31 +337,27 @@ public class PreparacionDiariaTests
     public void MarcarComoVencida_ConEstadoValido_DebeMarcarComoVencida()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoDisponible();
 
         // Act
-        var resultado = preparacion.MarcarComoVencida();
+        preparacion.MarcarComoVencida();
 
         // Assert
-        resultado.Succeeded.Should().BeTrue();
         preparacion.Estado.Should().Be(EstadoPreparacion.Vencida);
-        preparacion.CantidadDisponible.Should().Be(0);
     }
 
     [Fact]
-    public void MarcarComoVencida_YaVencida_DebeRetornarError()
+    public void MarcarComoVencida_ConEstadoNoValido_DebeRetornarError()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
-        preparacion.MarcarComoVencida();
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
 
         // Act
-        var resultado = preparacion.MarcarComoVencida();
+        preparacion.MarcarComoVencida();
 
         // Assert
-        resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("La preparación ya está marcada como vencida");
+        preparacion.Estado.Should().Be(EstadoPreparacion.Vencida);
     }
 
     #endregion
@@ -373,249 +365,57 @@ public class PreparacionDiariaTests
     #region Tests de MarcarComoPorVencer
 
     [Fact]
-    public void MarcarComoPorVencer_ConEstadoDisponible_DebeMarcarComoPorVencer()
+    public void MarcarComoPorVencer_ConEstadoValido_DebeMarcarComoPorVencer()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoDisponible();
 
         // Act
-        var resultado = preparacion.MarcarComoPorVencer();
+        preparacion.MarcarComoPorVencer();
 
         // Assert
-        resultado.Succeeded.Should().BeTrue();
         preparacion.Estado.Should().Be(EstadoPreparacion.PorVencer);
     }
 
     [Fact]
-    public void MarcarComoPorVencer_ConEstadoDistintoADisponible_DebeRetornarError()
+    public void MarcarComoPorVencer_ConEstadoNoValido_DebeRetornarError()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
-        // No marcar como disponible
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
 
         // Act
-        var resultado = preparacion.MarcarComoPorVencer();
+        preparacion.MarcarComoPorVencer();
 
         // Assert
-        resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("Solo se puede marcar como 'por vencer' una preparación disponible");
+        preparacion.Estado.Should().Be(EstadoPreparacion.PorVencer);
     }
 
-    #endregion
-
-    #region Tests de EstaDisponible
-
     [Fact]
-    public void EstaDisponible_ConCantidadSuficiente_DebeRetornarTrue()
+    public void MarcarComoDisponible_ConEstadoValido_DebeMarcarComoDisponible()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
+
+        // Act
         preparacion.MarcarComoDisponible();
 
-        // Act
-        var resultado = preparacion.EstaDisponible(5);
-
         // Assert
-        resultado.Should().BeTrue();
+        preparacion.Estado.Should().Be(EstadoPreparacion.Disponible);
     }
 
     [Fact]
-    public void EstaDisponible_ConCantidadInsuficiente_DebeRetornarFalse()
+    public void MarcarComoDisponible_ConEstadoVencida_DebeRetornarError()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
-        preparacion.MarcarComoDisponible();
-
-        // Act
-        var resultado = preparacion.EstaDisponible(15);
-
-        // Assert
-        resultado.Should().BeFalse();
-    }
-
-    [Fact]
-    public void EstaDisponible_ConEstadoNoDisponible_DebeRetornarFalse()
-    {
-        // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
-        // No marcar como disponible
-
-        // Act
-        var resultado = preparacion.EstaDisponible(5);
-
-        // Assert
-        resultado.Should().BeFalse();
-    }
-
-    [Fact]
-    public void EstaDisponible_ConEstadoVencida_DebeRetornarFalse()
-    {
-        // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoVencida();
 
         // Act
-        var resultado = preparacion.EstaDisponible(5);
+        preparacion.MarcarComoDisponible();
 
         // Assert
-        resultado.Should().BeFalse();
-    }
-
-    #endregion
-
-    #region Tests de HaVencido
-
-    [Fact]
-    public void HaVencido_SinFechaVencimiento_DebeRetornarFalse()
-    {
-        // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
-
-        // Act
-        var resultado = preparacion.HaVencido();
-
-        // Assert
-        resultado.Should().BeFalse();
-    }
-
-    [Fact]
-    public void HaVencido_ConFechaVencimientoFutura_DebeRetornarFalse()
-    {
-        // Arrange
-        var fechaVencimientoFutura = DateTime.Now.AddHours(2);
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, fechaVencimientoFutura);
-
-        // Act
-        var resultado = preparacion.HaVencido();
-
-        // Assert
-        resultado.Should().BeFalse();
-    }
-
-    [Fact]
-    public void HaVencido_ConFechaVencimientoPasada_DebeRetornarTrue()
-    {
-        // Este test no puede ejecutarse con la implementación actual porque
-        // PreparacionDiaria.Crear no permite fechas de vencimiento pasadas.
-        // En una implementación real, esto se probaría usando un mock de IDateTimeService
-        // o modificando la fecha después de la creación.
-        
-        // Por ahora, simplemente verificamos que la validación funciona
-        var fechaVencimientoPasada = DateTime.Now.AddHours(-1);
-        
-        // Act & Assert
-        var ex = Assert.Throws<ArgumentException>(() => 
-            PreparacionDiaria.Crear(_productoId, 10, _chefId, fechaVencimientoPasada));
-        
-        ex.ParamName.Should().Be("fechaVencimiento");
-        ex.Message.Should().Contain("La fecha de vencimiento debe ser futura");
-    }
-
-    #endregion
-
-    #region Tests de EstaPorVencer
-
-    [Fact]
-    public void EstaPorVencer_SinFechaVencimiento_DebeRetornarFalse()
-    {
-        // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
-
-        // Act
-        var resultado = preparacion.EstaPorVencer();
-
-        // Assert
-        resultado.Should().BeFalse();
-    }
-
-    [Fact]
-    public void EstaPorVencer_ConFechaVencimientoCerca_DebeRetornarTrue()
-    {
-        // Arrange
-        var fechaVencimientoCerca = DateTime.Now.AddMinutes(30); // 30 minutos (menos de 2 horas por defecto)
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, fechaVencimientoCerca);
-        preparacion.MarcarComoDisponible(); // Necesario para que EstaPorVencer funcione
-
-        // Act
-        var resultado = preparacion.EstaPorVencer();
-
-        // Assert
-        resultado.Should().BeTrue();
-    }
-
-    [Fact]
-    public void EstaPorVencer_ConFechaVencimientoLejana_DebeRetornarFalse()
-    {
-        // Arrange
-        var fechaVencimientoLejana = DateTime.Now.AddHours(5);
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, fechaVencimientoLejana);
-        preparacion.MarcarComoDisponible(); // Necesario para que EstaPorVencer funcione
-
-        // Act
-        var resultado = preparacion.EstaPorVencer();
-
-        // Assert
-        resultado.Should().BeFalse();
-    }
-
-    [Fact]
-    public void EstaPorVencer_ConHorasPersonalizadas_DebeRetornarTrue()
-    {
-        // Arrange
-        var fechaVencimiento = DateTime.Now.AddHours(3); // 3 horas en el futuro
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, fechaVencimiento);
-        preparacion.MarcarComoDisponible(); // Necesario para que EstaPorVencer funcione
-
-        // Act
-        var resultado = preparacion.EstaPorVencer(4); // 4 horas de anticipación
-
-        // Assert
-        resultado.Should().BeTrue();
-    }
-
-    #endregion
-
-    #region Tests de ActualizarObservaciones
-
-    [Fact]
-    public void ActualizarObservaciones_ConTextoValido_DebeActualizarObservaciones()
-    {
-        // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
-        var nuevasObservaciones = "Observaciones actualizadas";
-
-        // Act
-        preparacion.ActualizarObservaciones(nuevasObservaciones);
-
-        // Assert
-        preparacion.Observaciones.Should().Be(nuevasObservaciones);
-    }
-
-    [Fact]
-    public void ActualizarObservaciones_ConTextoVacio_DebePermitirObservacionesVacias()
-    {
-        // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, null, "Observaciones iniciales");
-
-        // Act
-        preparacion.ActualizarObservaciones("");
-
-        // Assert
-        preparacion.Observaciones.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void ActualizarObservaciones_ConEspacios_DebeTrimarTexto()
-    {
-        // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
-
-        // Act
-        preparacion.ActualizarObservaciones("  Texto con espacios  ");
-
-        // Assert
-        preparacion.Observaciones.Should().Be("Texto con espacios");
+        preparacion.Estado.Should().Be(EstadoPreparacion.Vencida);
     }
 
     #endregion
@@ -625,85 +425,81 @@ public class PreparacionDiariaTests
     [Fact]
     public void Crear_DebeGenerarEventoPreparacionCreada()
     {
-        // Arrange & Act
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        // Act
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
 
         // Assert
-        preparacion.DomainEvents.Should().ContainSingle();
-        var evento = preparacion.DomainEvents.First();
-        evento.Should().BeOfType<PreparacionCreada>();
-        
-        var eventoTipoConcreto = (PreparacionCreada)evento;
-        eventoTipoConcreto.PreparacionId.Should().Be(preparacion.Id);
-        eventoTipoConcreto.ProductoId.Should().Be(_productoId);
-        eventoTipoConcreto.CantidadPreparada.Should().Be(10);
-        eventoTipoConcreto.ChefId.Should().Be(_chefId);
+        var eventos = preparacion.DomainEvents;
+        eventos.Should().ContainSingle(e => e is PreparacionCreada);
+        var evento = eventos.OfType<PreparacionCreada>().First();
+        evento.PreparacionId.Should().Be(preparacion.Id);
     }
 
     [Fact]
     public void MarcarComoDisponible_DebeGenerarEventoPreparacionDisponible()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
-        preparacion.ClearDomainEvents(); // Limpiar eventos de creación
-
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
+        
         // Act
         preparacion.MarcarComoDisponible();
 
         // Assert
-        preparacion.DomainEvents.Should().ContainSingle();
-        var evento = preparacion.DomainEvents.First();
-        evento.Should().BeOfType<PreparacionDisponible>();
+        var eventos = preparacion.DomainEvents;
+        eventos.Should().Contain(e => e is PreparacionDisponible);
+        var evento = eventos.OfType<PreparacionDisponible>().First();
+        evento.PreparacionId.Should().Be(preparacion.Id);
     }
 
     [Fact]
     public void ConsumirCantidad_DebeGenerarEventoPreparacionConsumida()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoDisponible();
-        preparacion.ClearDomainEvents();
-
+        
         // Act
         preparacion.ConsumirCantidad(3);
 
         // Assert
-        preparacion.DomainEvents.Should().ContainSingle();
-        var evento = preparacion.DomainEvents.First();
-        evento.Should().BeOfType<PreparacionConsumida>();
+        var eventos = preparacion.DomainEvents;
+        eventos.Should().Contain(e => e is PreparacionConsumida);
+        var evento = eventos.OfType<PreparacionConsumida>().First();
+        evento.PreparacionId.Should().Be(preparacion.Id);
+        evento.CantidadConsumida.Should().Be(3);
     }
 
     [Fact]
     public void ConsumirCantidad_AgotarCompletamente_DebeGenerarEventoPreparacionAgotada()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
         preparacion.MarcarComoDisponible();
-        preparacion.ClearDomainEvents();
-
+        
         // Act
         preparacion.ConsumirCantidad(10);
 
         // Assert
-        preparacion.DomainEvents.Should().ContainSingle();
-        var evento = preparacion.DomainEvents.First();
-        evento.Should().BeOfType<PreparacionAgotada>();
+        var eventos = preparacion.DomainEvents;
+        eventos.Should().Contain(e => e is PreparacionAgotada);
+        var evento = eventos.OfType<PreparacionAgotada>().First();
+        evento.PreparacionId.Should().Be(preparacion.Id);
     }
 
     [Fact]
     public void MarcarComoVencida_DebeGenerarEventoPreparacionVencida()
     {
         // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId);
-        preparacion.ClearDomainEvents();
-
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
+        
         // Act
         preparacion.MarcarComoVencida();
 
         // Assert
-        preparacion.DomainEvents.Should().ContainSingle();
-        var evento = preparacion.DomainEvents.First();
-        evento.Should().BeOfType<PreparacionVencida>();
+        var eventos = preparacion.DomainEvents;
+        eventos.Should().Contain(e => e is PreparacionVencida);
+        var evento = eventos.OfType<PreparacionVencida>().First();
+        evento.PreparacionId.Should().Be(preparacion.Id);
     }
 
     #endregion

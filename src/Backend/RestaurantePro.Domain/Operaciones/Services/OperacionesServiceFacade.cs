@@ -1315,7 +1315,7 @@ namespace RestaurantePro.Domain.Operaciones.Services
             Guid productoId,
             int cantidad,
             Guid chefId,
-            DateTime? fechaVencimiento = null,
+            DateTime fechaVencimiento,
             string? observaciones = null,
             CancellationToken cancellationToken = default)
         {

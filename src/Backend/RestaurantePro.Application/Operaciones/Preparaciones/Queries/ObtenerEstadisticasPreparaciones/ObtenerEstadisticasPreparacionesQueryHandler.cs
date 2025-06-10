@@ -47,9 +47,8 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerEs
             // Identificamos las preparaciones por vencer primero
             var preparacionesPorVencer = preparaciones
                 .Where(p => p.Estado == EstadoPreparacion.Disponible && 
-                           p.FechaVencimiento.HasValue &&
-                           p.FechaVencimiento.Value <= fechaActual.AddHours(5) && 
-                           p.FechaVencimiento.Value > fechaActual)
+                           p.FechaVencimiento <= fechaActual.AddHours(5) && 
+                           p.FechaVencimiento > fechaActual)
                 .ToList();
                 
             // Contamos las preparaciones disponibles excluyendo las que están por vencer
@@ -83,7 +82,7 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerEs
             {
                 TotalPreparaciones = totalPreparaciones,
                 PreparacionesDisponibles = preparacionesDisponibles,
-                PreparacionesPorVencer = preparacionesPorVencer.Count,
+                PreparacionesPorVencer = preparacionesPorVencer.Count(),
                 PreparacionesAgotadas = preparacionesAgotadas,
                 PreparacionesVencidas = preparacionesVencidas,
                 

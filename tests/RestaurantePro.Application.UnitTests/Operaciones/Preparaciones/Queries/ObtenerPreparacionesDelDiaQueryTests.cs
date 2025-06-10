@@ -92,7 +92,7 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Preparaciones.Queries
                 CantidadPreparada = p.CantidadPreparada,
                 CantidadDisponible = p.CantidadDisponible,
                 ChefId = p.ChefId,
-                FechaVencimiento = p.FechaVencimiento ?? fechaActual.AddDays(1), // Asegurar que no sea null
+                FechaVencimiento = p.FechaVencimiento,
                 FechaPreparacion = p.FechaCreacion,
                 Observaciones = p.Observaciones ?? string.Empty, // Aseguramos que no sea null
                 Estado = p.Estado,

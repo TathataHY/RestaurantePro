@@ -1,4 +1,7 @@
 using Microsoft.Extensions.Logging;
+using RestaurantePro.Domain.Core.Base.Services;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Core.SharedKernel.Services;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Events;
@@ -35,7 +38,7 @@ public class ServicioPreparaciones : IServicioPreparaciones
         Guid productoId, 
         int cantidad, 
         Guid chefId,
-        DateTime? fechaVencimiento = null,
+        DateTime fechaVencimiento,
         string? observaciones = null)
     {
         _logger.LogInformation("Iniciando preparación de producto {ProductoId}", productoId);
@@ -82,7 +85,10 @@ public class ServicioPreparaciones : IServicioPreparaciones
     /// <summary>
     /// Verifica si hay suficiente cantidad preparada de un producto
     /// </summary>
-    public async Task<Result<bool>> VerificarDisponibilidadAsync(Guid productoId, int cantidadRequerida)
+    public async Task<Result<bool>> VerificarDisponibilidadAsync(
+        Guid productoId, 
+        int cantidadRequerida,
+        Guid? preparacionId = null)
     {
         _logger.LogDebug("Verificando disponibilidad de producto {ProductoId}", productoId);
 
@@ -99,6 +105,17 @@ public class ServicioPreparaciones : IServicioPreparaciones
         {
             // Obtener preparaciones disponibles del producto
             var preparaciones = await _preparacionRepository.ObtenerPreparacionesDisponiblesPorProductoAsync(productoId);
+            
+            // Si se especificó una preparación específica, filtrar solo esa
+            if (preparacionId.HasValue)
+            {
+                preparaciones = preparaciones.Where(p => p.Id == preparacionId.Value).ToList();
+                if (!preparaciones.Any())
+                {
+                    _logger.LogWarning("No se encontró la preparación específica {PreparacionId}", preparacionId.Value);
+                    return Result<bool>.Success(false);
+                }
+            }
             
             // Sumar cantidad disponible total
             int cantidadDisponible = 0;
@@ -147,7 +164,7 @@ public class ServicioPreparaciones : IServicioPreparaciones
         {
             // Obtener preparaciones disponibles del producto ordenadas por fecha de vencimiento (FIFO)
             var preparaciones = (await _preparacionRepository.ObtenerPreparacionesDisponiblesPorProductoAsync(productoId))
-                .OrderBy(p => p.FechaVencimiento ?? DateTime.MaxValue)
+                .OrderBy(p => p.FechaVencimiento)
                 .ThenBy(p => p.FechaPreparacion)
                 .ToList();
             
@@ -171,19 +188,22 @@ public class ServicioPreparaciones : IServicioPreparaciones
                 int cantidadAConsumir = Math.Min(cantidadRestante, preparacion.CantidadDisponible);
                 
                 // Consumir cantidad
-                var resultado = preparacion.ConsumirCantidad(cantidadAConsumir);
-                if (!resultado.Succeeded)
+                try 
+                {
+                    preparacion.ConsumirCantidad(cantidadAConsumir);
+                    
+                    // Actualizar preparación en repositorio
+                    await _preparacionRepository.ActualizarAsync(preparacion);
+                    
+                    // Reducir cantidad restante
+                    cantidadRestante -= cantidadAConsumir;
+                }
+                catch (Exception ex)
                 {
                     _logger.LogWarning("Error al consumir preparación {PreparacionId}: {Error}", 
-                        preparacion.Id, resultado.Error);
+                        preparacion.Id, ex.Message);
                     continue; // Intentar con la siguiente preparación
                 }
-                
-                // Actualizar preparación en repositorio
-                await _preparacionRepository.ActualizarAsync(preparacion);
-                
-                // Reducir cantidad restante
-                cantidadRestante -= cantidadAConsumir;
             }
             
             // Guardar cambios
@@ -284,14 +304,11 @@ public class ServicioPreparaciones : IServicioPreparaciones
             // Revisar cada preparación
             foreach (var preparacion in todasPreparaciones)
             {
-                if (preparacion.HaVencido(fechaActual))
+                if (preparacion.FechaVencimiento <= fechaActual)
                 {
-                    var resultado = preparacion.MarcarComoVencida();
-                    if (resultado.Succeeded)
-                    {
-                        await _preparacionRepository.ActualizarAsync(preparacion);
-                        preparacionesMarcadas++;
-                    }
+                    preparacion.MarcarComoVencida();
+                    await _preparacionRepository.ActualizarAsync(preparacion);
+                    preparacionesMarcadas++;
                 }
             }
             
@@ -344,7 +361,7 @@ public class ServicioPreparaciones : IServicioPreparaciones
     }
 
     /// <summary>
-    /// Marca una preparación como disponible para su consumo
+    /// Marca una preparación como disponible para uso
     /// </summary>
     public async Task<Result> MarcarComoDisponibleAsync(Guid preparacionId)
     {
@@ -360,7 +377,7 @@ public class ServicioPreparaciones : IServicioPreparaciones
 
         try
         {
-            // Obtener preparación por ID
+            // Obtener la preparación
             var preparacion = await _preparacionRepository.ObtenerPorIdAsync(preparacionId);
             if (preparacion == null)
             {
@@ -370,20 +387,13 @@ public class ServicioPreparaciones : IServicioPreparaciones
             }
             
             // Marcar como disponible
-            var resultado = preparacion.MarcarComoDisponible();
-            if (!resultado.Succeeded)
-            {
-                _logger.LogWarning("No se pudo marcar como disponible la preparación {PreparacionId}: {Error}", 
-                    preparacionId, resultado.Error);
-                _notificationManager.AddError(resultado.Error, "MarcarComoDisponible");
-                return _notificationManager.ToResult();
-            }
+            preparacion.MarcarComoDisponible();
             
-            // Actualizar en repositorio
+            // Actualizar y guardar
             await _preparacionRepository.ActualizarAsync(preparacion);
             await _preparacionRepository.GuardarCambiosAsync();
             
-            _logger.LogInformation("Preparación marcada como disponible: {PreparacionId}", preparacionId);
+            _logger.LogInformation("Preparación {PreparacionId} marcada como disponible exitosamente", preparacionId);
             return Result.Success();
         }
         catch (Exception ex)
@@ -395,16 +405,17 @@ public class ServicioPreparaciones : IServicioPreparaciones
     }
 
     /// <summary>
-    /// Agrega una cantidad adicional a una preparación existente
+    /// Agrega cantidad adicional a una preparación existente
     /// </summary>
     public async Task<Result> AgregarCantidadAsync(Guid preparacionId, int cantidadAdicional)
     {
-        _logger.LogInformation("Agregando cantidad adicional a preparación {PreparacionId}: {Cantidad}", preparacionId, cantidadAdicional);
-        
+        _logger.LogInformation("Agregando cantidad a preparación: {PreparacionId}, Cantidad: {Cantidad}", 
+            preparacionId, cantidadAdicional);
+
         _notificationManager.CreateNewNotification();
         _notificationManager.Require(preparacionId != Guid.Empty, "El ID de la preparación no puede estar vacío", "PreparacionId");
         _notificationManager.Require(cantidadAdicional > 0, "La cantidad adicional debe ser mayor que cero", "CantidadAdicional");
-        
+
         if (_notificationManager.HasErrors)
         {
             return _notificationManager.ToResult();
@@ -412,7 +423,7 @@ public class ServicioPreparaciones : IServicioPreparaciones
 
         try
         {
-            // Obtener preparación por ID
+            // Obtener la preparación
             var preparacion = await _preparacionRepository.ObtenerPorIdAsync(preparacionId);
             if (preparacion == null)
             {
@@ -422,20 +433,13 @@ public class ServicioPreparaciones : IServicioPreparaciones
             }
             
             // Agregar cantidad
-            var resultado = preparacion.AgregarCantidad(cantidadAdicional);
-            if (!resultado.Succeeded)
-            {
-                _logger.LogWarning("No se pudo agregar cantidad a la preparación {PreparacionId}: {Error}", 
-                    preparacionId, resultado.Error);
-                _notificationManager.AddError(resultado.Error, "AgregarCantidad");
-                return _notificationManager.ToResult();
-            }
+            preparacion.AgregarCantidad(cantidadAdicional);
             
-            // Actualizar en repositorio
+            // Actualizar y guardar
             await _preparacionRepository.ActualizarAsync(preparacion);
             await _preparacionRepository.GuardarCambiosAsync();
             
-            _logger.LogInformation("Cantidad adicional agregada a preparación: {PreparacionId}", preparacionId);
+            _logger.LogInformation("Se agregó cantidad a la preparación {PreparacionId} exitosamente", preparacionId);
             return Result.Success();
         }
         catch (Exception ex)
@@ -468,3 +472,5 @@ public class ServicioPreparaciones : IServicioPreparaciones
         }
     }
 } 
+
+

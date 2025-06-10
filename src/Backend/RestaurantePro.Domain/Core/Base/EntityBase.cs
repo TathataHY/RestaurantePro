@@ -1,3 +1,7 @@
+using RestaurantePro.Domain.Core.Base.Events;
+using System;
+using System.Collections.Generic;
+
 namespace RestaurantePro.Domain.Core.Base
 {
     /// <summary>
