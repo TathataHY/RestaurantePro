@@ -109,7 +109,8 @@ namespace RestaurantePro.Application.UnitTests.Integration.BetweenContexts.Opera
             
             // Obtener ingredientes del producto al crear preparación
             _recetaServiceMock.Setup(s => s.ObtenerIngredientesParaProductoAsync(
-                It.Is<Guid>(id => id == productoId)))
+                It.Is<Guid>(id => id == productoId),
+                It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Result.Success(ingredientesRequeridos));
 
             // Actualizar stock de ingredientes al crear preparación
@@ -117,14 +118,16 @@ namespace RestaurantePro.Application.UnitTests.Integration.BetweenContexts.Opera
                     It.Is<Guid>(id => id == ingrediente1Id), 
                     It.IsAny<decimal>(), 
                     It.Is<TipoMovimientoInventario>(t => t == TipoMovimientoInventario.Salida),
-                    It.IsAny<string>()))
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Result.Success());
                 
             _inventarioServiceMock.Setup(s => s.ActualizarStockIngredienteAsync(
                     It.Is<Guid>(id => id == ingrediente2Id), 
                     It.IsAny<decimal>(), 
                     It.Is<TipoMovimientoInventario>(t => t == TipoMovimientoInventario.Salida),
-                    It.IsAny<string>()))
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Result.Success());
 
             // Creación de handlers y servicios
@@ -184,7 +187,8 @@ namespace RestaurantePro.Application.UnitTests.Integration.BetweenContexts.Opera
             // Verificar que se obtuvieron los ingredientes para el producto
             _recetaServiceMock.Verify(
                 s => s.ObtenerIngredientesParaProductoAsync(
-                    It.Is<Guid>(id => id == productoId)), 
+                    It.Is<Guid>(id => id == productoId),
+                    It.IsAny<CancellationToken>()), 
                 Times.Once());
             
             // Verificar que se actualizó el stock de cada ingrediente
@@ -193,7 +197,8 @@ namespace RestaurantePro.Application.UnitTests.Integration.BetweenContexts.Opera
                     It.Is<Guid>(id => id == ingrediente1Id),
                     It.IsAny<decimal>(),
                     It.Is<TipoMovimientoInventario>(t => t == TipoMovimientoInventario.Salida),
-                    It.IsAny<string>()),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()),
                 Times.Once());
                 
             _inventarioServiceMock.Verify(
@@ -201,7 +206,8 @@ namespace RestaurantePro.Application.UnitTests.Integration.BetweenContexts.Opera
                     It.Is<Guid>(id => id == ingrediente2Id),
                     It.IsAny<decimal>(),
                     It.Is<TipoMovimientoInventario>(t => t == TipoMovimientoInventario.Salida),
-                    It.IsAny<string>()),
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()),
                 Times.Once());
         }
     }

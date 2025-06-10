@@ -128,7 +128,8 @@ namespace RestaurantePro.Application.UnitTests.Integration.WithinContext.Operaci
 
             _servicioPreparacionesMock.Setup(x => x.VerificarDisponibilidadAsync(
                 It.Is<Guid>(id => id == productoId), 
-                It.Is<int>(c => c == 1)))
+                It.Is<int>(c => c == 1),
+                It.IsAny<Guid?>()))
                 .ReturnsAsync(Result.Success(true));
 
             _servicioPreparacionesMock.Setup(x => x.ConsumirPreparacionAsync(
@@ -212,7 +213,8 @@ namespace RestaurantePro.Application.UnitTests.Integration.WithinContext.Operaci
             _servicioPreparacionesMock.Verify(
                 s => s.VerificarDisponibilidadAsync(
                     It.Is<Guid>(id => id == productoId), 
-                    It.Is<int>(c => c == 1)), 
+                    It.Is<int>(c => c == 1),
+                    It.IsAny<Guid?>()), 
                 Times.Once);
                 
             // Verificar que se consumió la preparación

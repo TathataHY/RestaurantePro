@@ -315,7 +315,8 @@ public class AgregarItemComandaHandlerTests
         _servicioPreparacionesMock
             .Setup(x => x.VerificarDisponibilidadAsync(
                 It.Is<Guid>(id => id == productoId), 
-                It.Is<int>(c => c == 2)))
+                It.Is<int>(c => c == 2),
+                It.IsAny<Guid?>()))
             .ReturnsAsync(Result.Success(true));
 
         _servicioPreparacionesMock
@@ -338,7 +339,8 @@ public class AgregarItemComandaHandlerTests
         _servicioPreparacionesMock.Verify(
             x => x.VerificarDisponibilidadAsync(
                 It.Is<Guid>(id => id == productoId), 
-                It.Is<int>(c => c == 2)),
+                It.Is<int>(c => c == 2),
+                It.IsAny<Guid?>()),
             Times.Once);
             
         // Verificar que se actualizó y guardó la comanda
@@ -376,7 +378,8 @@ public class AgregarItemComandaHandlerTests
         _servicioPreparacionesMock
             .Setup(x => x.VerificarDisponibilidadAsync(
                 It.Is<Guid>(id => id == productoId), 
-                It.Is<int>(c => c == 2)))
+                It.Is<int>(c => c == 2),
+                It.IsAny<Guid?>()))
             .ReturnsAsync(Result.Success(false));
 
         _mapperMock
@@ -393,7 +396,8 @@ public class AgregarItemComandaHandlerTests
         _servicioPreparacionesMock.Verify(
             x => x.VerificarDisponibilidadAsync(
                 It.Is<Guid>(id => id == productoId), 
-                It.Is<int>(c => c == 2)),
+                It.Is<int>(c => c == 2),
+                It.IsAny<Guid?>()),
             Times.Once);
             
         // Verificar que se actualizó y guardó la comanda de todos modos
