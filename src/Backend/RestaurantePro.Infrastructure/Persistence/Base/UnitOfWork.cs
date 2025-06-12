@@ -1,174 +1,115 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Contexts;
 
-namespace RestaurantePro.Infrastructure.Persistence.Base
+namespace RestaurantePro.Infrastructure.Persistence.Base;
+
+/// <summary>
+/// Implementación del patrón Unit of Work para centralizar las transacciones
+/// </summary>
+public class UnitOfWork : IDisposable
 {
-    public class UnitOfWork : IUnitOfWork
+    private readonly DbContext _dbContext;
+    private readonly ILogger<UnitOfWork> _logger;
+    private IDbContextTransaction? _currentTransaction;
+    private bool _disposed;
+
+    public UnitOfWork(DbContext dbContext, ILogger<UnitOfWork> logger)
     {
-        private readonly RestauranteProDbContext _context;
-        private IDbContextTransaction _transaction;
-        private bool _disposed;
+        _dbContext = dbContext;
+        _logger = logger;
+    }
 
-        public UnitOfWork(RestauranteProDbContext context)
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        try
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            var result = await _dbContext.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Se guardaron {Count} cambios en la base de datos", result);
+            return result;
         }
-
-        public bool TieneTransaccionActiva => _transaction != null;
-
-        public async Task IniciarTransaccionAsync(CancellationToken cancellationToken = default)
+        catch (Exception ex)
         {
-            _transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            _logger.LogError(ex, "Error al guardar cambios en la base de datos");
+            throw;
         }
+    }
 
-        public async Task ConfirmarTransaccionAsync(CancellationToken cancellationToken = default)
+    public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        if (_currentTransaction != null)
         {
-            try
-            {
-                await _transaction?.CommitAsync(cancellationToken);
-            }
-            finally
-            {
-                if (_transaction != null)
-                {
-                    await _transaction.DisposeAsync();
-                    _transaction = null;
-                }
-            }
+            throw new InvalidOperationException("Ya existe una transacción activa");
         }
 
-        public async Task RevertirTransaccionAsync(CancellationToken cancellationToken = default)
+        _currentTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        _logger.LogInformation("Transacción iniciada: {TransactionId}", _currentTransaction.TransactionId);
+        return _currentTransaction;
+    }
+
+    public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        if (_currentTransaction == null)
         {
-            try
-            {
-                await _transaction?.RollbackAsync(cancellationToken);
-            }
-            finally
-            {
-                if (_transaction != null)
-                {
-                    await _transaction.DisposeAsync();
-                    _transaction = null;
-                }
-            }
+            throw new InvalidOperationException("No hay transacción activa para confirmar");
         }
 
-        public async Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default)
+        try
         {
-            return await _context.SaveChangesAsync(cancellationToken);
+            await _currentTransaction.CommitAsync(cancellationToken);
+            _logger.LogInformation("Transacción confirmada: {TransactionId}", _currentTransaction.TransactionId);
         }
-        
-        public async Task<int> GuardarEntidadesAsync(CancellationToken cancellationToken = default)
+        catch
         {
-            // Aquí publicaríamos eventos de dominio antes de guardar los cambios
-            await PublicarEventosDominioAsync(cancellationToken);
-            return await _context.SaveChangesAsync(cancellationToken);
+            await RollbackTransactionAsync(cancellationToken);
+            throw;
         }
-        
-        public async Task EjecutarEnTransaccionAsync(Func<Task> accion, CancellationToken cancellationToken = default)
+        finally
         {
-            if (TieneTransaccionActiva)
-            {
-                await accion();
-                return;
-            }
-            
-            await IniciarTransaccionAsync(cancellationToken);
-            try
-            {
-                await accion();
-                await ConfirmarTransaccionAsync(cancellationToken);
-            }
-            catch
-            {
-                await RevertirTransaccionAsync(cancellationToken);
-                throw;
-            }
+            _currentTransaction?.Dispose();
+            _currentTransaction = null;
         }
-        
-        public async Task<TResultado> EjecutarEnTransaccionAsync<TResultado>(Func<Task<TResultado>> funcion, CancellationToken cancellationToken = default)
+    }
+
+    public async Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        if (_currentTransaction == null)
         {
-            if (TieneTransaccionActiva)
-            {
-                return await funcion();
-            }
-            
-            await IniciarTransaccionAsync(cancellationToken);
-            try
-            {
-                var resultado = await funcion();
-                await ConfirmarTransaccionAsync(cancellationToken);
-                return resultado;
-            }
-            catch
-            {
-                await RevertirTransaccionAsync(cancellationToken);
-                throw;
-            }
-        }
-        
-        private async Task PublicarEventosDominioAsync(CancellationToken cancellationToken = default)
-        {
-            // Aquí implementaremos la publicación de eventos de dominio
-            // Por ahora dejamos una implementación vacía
-            await Task.CompletedTask;
-        }
-        
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            return;
         }
 
-        protected virtual void Dispose(bool disposing)
+        try
         {
-            if (!_disposed && disposing)
+            await _currentTransaction.RollbackAsync(cancellationToken);
+            _logger.LogInformation("Transacción revertida: {TransactionId}", _currentTransaction.TransactionId);
+        }
+        finally
+        {
+            _currentTransaction?.Dispose();
+            _currentTransaction = null;
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
             {
-                _context.Dispose();
-                _transaction?.Dispose();
+                _currentTransaction?.Dispose();
+                _dbContext.Dispose();
             }
+
             _disposed = true;
-        }
-
-        // ============================================
-        // ALIAS EN INGLÉS PARA COMPATIBILIDAD
-        // ============================================
-
-        /// <summary>
-        /// Alias en inglés para IniciarTransaccionAsync
-        /// </summary>
-        public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
-        {
-            await IniciarTransaccionAsync(cancellationToken);
-        }
-
-        /// <summary>
-        /// Alias en inglés para ConfirmarTransaccionAsync
-        /// </summary>
-        public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
-        {
-            await ConfirmarTransaccionAsync(cancellationToken);
-        }
-
-        /// <summary>
-        /// Alias en inglés para RevertirTransaccionAsync
-        /// </summary>
-        public async Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
-        {
-            await RevertirTransaccionAsync(cancellationToken);
-        }
-
-        /// <summary>
-        /// Alias en inglés para GuardarCambiosAsync
-        /// </summary>
-        public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            return await GuardarCambiosAsync(cancellationToken);
         }
     }
 } 

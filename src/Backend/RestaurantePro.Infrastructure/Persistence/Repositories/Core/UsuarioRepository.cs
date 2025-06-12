@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using RestaurantePro.Domain.Entities;
-using RestaurantePro.Domain.Interfaces.Repositories;
+using RestaurantePro.Domain.Core.Usuarios.Entities;
+using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 using RestaurantePro.Infrastructure.Persistence;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace RestaurantePro.Infrastructure.Repositories
+namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
 {
     public class UsuarioRepository : IUsuarioRepository
     {

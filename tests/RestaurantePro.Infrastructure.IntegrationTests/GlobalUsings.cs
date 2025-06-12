@@ -1,0 +1,16 @@
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.DependencyInjection;
+global using Moq;
+global using RestaurantePro.Application.Common.Interfaces;
+global using RestaurantePro.Domain.Core.Base.Entities;
+global using RestaurantePro.Domain.Core.Base.Services;
+global using RestaurantePro.Domain.Core.Productos.Entities;
+global using RestaurantePro.Domain.Interfaces.Repositories;
+global using RestaurantePro.Infrastructure.Persistence;
+global using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;
+global using Xunit; 

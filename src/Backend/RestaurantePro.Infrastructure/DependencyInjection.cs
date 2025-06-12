@@ -9,6 +9,7 @@ using RestaurantePro.Infrastructure.Persistence;
 using RestaurantePro.Infrastructure.Repositories;
 using RestaurantePro.Infrastructure.Services;
 using RestaurantePro.Infrastructure.Services.BackgroundServices;
+using RestaurantePro.Infrastructure.DependencyInjection;
 
 namespace RestaurantePro.Infrastructure
 {
@@ -16,25 +17,15 @@ namespace RestaurantePro.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
-                    b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+            // Configurar servicios de infraestructura
+            services.AddInfrastructureServices(configuration);
 
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddScoped<IPasswordHashService, PasswordHashService>();
-            services.AddScoped<IJwtGenerator, JwtGenerator>();
-            services.AddScoped<IIdentityService, IdentityService>();
-            services.AddScoped<IUserService, UserService>();
-            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddScoped<IUsuarioActualService, UsuarioActualService>();
-            
-            // Repositorios
-            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
-            
-            // Servicios en segundo plano
-            services.AddHostedService<ProcesadorInventarioBackgroundService>();
-            
+            // Configurar identidad
+            services.AddIdentityServices(configuration);
+
+            // Configurar servicios externos
+            // TODO: Implementar ExternalServicesSetup.cs
+
             return services;
         }
     }

@@ -1,19 +1,74 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <ItemGroup>
-    <ProjectReference Include="..\RestaurantePro.Application\RestaurantePro.Application.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.3" />
-  </ItemGroup>
-
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="ExternalServices\**" />
+    <Compile Remove="Identity\**" />
+    <Compile Remove="Services\**" />
+    <Compile Remove="DependencyInjection.cs" />
+    <Compile Remove="DependencyInjection\**" />
+    <Compile Remove="Persistence\Repositories\Comercial\**" />
+    <Compile Remove="Persistence\Repositories\Core\**" />
+    <Compile Remove="Persistence\Repositories\Inventario\**" />
+    <Compile Remove="Persistence\Repositories\Operaciones\**" />
+    <Compile Remove="Persistence\Repositories\Proveedores\**" />
+    <Compile Remove="Persistence\Configurations\**" />
+    <Compile Remove="Persistence\Contexts\**" />
+    <Compile Remove="Persistence\Interceptors\**" />
+    <Compile Remove="GlobalUsings.cs" />
+    <EmbeddedResource Remove="ExternalServices\**" />
+    <EmbeddedResource Remove="Identity\**" />
+    <EmbeddedResource Remove="Services\**" />
+    <EmbeddedResource Remove="DependencyInjection\**" />
+    <EmbeddedResource Remove="Persistence\Repositories\Comercial\**" />
+    <EmbeddedResource Remove="Persistence\Repositories\Core\**" />
+    <EmbeddedResource Remove="Persistence\Repositories\Inventario\**" />
+    <EmbeddedResource Remove="Persistence\Repositories\Operaciones\**" />
+    <EmbeddedResource Remove="Persistence\Repositories\Proveedores\**" />
+    <EmbeddedResource Remove="Persistence\Configurations\**" />
+    <EmbeddedResource Remove="Persistence\Contexts\**" />
+    <EmbeddedResource Remove="Persistence\Interceptors\**" />
+    <None Remove="ExternalServices\**" />
+    <None Remove="Identity\**" />
+    <None Remove="Services\**" />
+    <None Remove="DependencyInjection\**" />
+    <None Remove="Persistence\Repositories\Comercial\**" />
+    <None Remove="Persistence\Repositories\Core\**" />
+    <None Remove="Persistence\Repositories\Inventario\**" />
+    <None Remove="Persistence\Repositories\Operaciones\**" />
+    <None Remove="Persistence\Repositories\Proveedores\**" />
+    <None Remove="Persistence\Configurations\**" />
+    <None Remove="Persistence\Contexts\**" />
+    <None Remove="Persistence\Interceptors\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="14.0.0" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <PackageReference Include="MediatR" Version="12.5.0" />
+    <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.5" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.5" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RestaurantePro.Application\RestaurantePro.Application.csproj" />
+    <ProjectReference Include="..\RestaurantePro.Domain\RestaurantePro.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Persistence\Base\" />
+  </ItemGroup>
 
 </Project>

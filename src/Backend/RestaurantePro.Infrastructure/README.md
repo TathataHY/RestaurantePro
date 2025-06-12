@@ -69,9 +69,8 @@ Infrastructure/
 │       │   ├── ProveedorRepository.cs
 │       │   └── ContactoProveedorRepository.cs
 │       └── Base/            # Repositorios base y comunes
-│           ├── RepositoryBase.cs
-│           ├── UnitOfWork.cs
-│           └── IRepository.cs
+│           ├── Repository.cs
+│           └── UnitOfWork.cs
 │
 ├── Identity/                # Autenticación y autorización
 │   ├── Models/              # Modelos para identidad (AspNetCore.Identity)
