@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Domain.Core.Productos.Entities;
 using RestaurantePro.Domain.Core.Productos.Interfaces;
-using RestaurantePro.Domain.Core.Productos.Repositories;
 using RestaurantePro.Infrastructure.Persistence.Base;
 using System;
 using System.Collections.Generic;
@@ -22,39 +21,81 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         {
         }
 
-        public async Task<IEnumerable<Producto>> GetProductosPorCategoriaAsync(Guid categoriaId, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Obtiene un producto por su ID
+        /// </summary>
+        public override async Task<Producto?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _dbContext.Productos
-                .Where(p => p.CategoriaId == categoriaId && p.Activo)
-                .OrderBy(p => p.Nombre)
-                .ToListAsync(cancellationToken);
+            return await _dbSet.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
         }
 
-        public async Task<IEnumerable<Producto>> BuscarProductosAsync(string termino, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Obtiene todos los productos disponibles
+        /// </summary>
+        public async Task<IEnumerable<Producto>> ObtenerTodosAsync(bool soloActivos = true, CancellationToken cancellationToken = default)
         {
-            return await _dbContext.Productos
-                .Where(p => p.Nombre.Contains(termino) || p.Descripcion.Contains(termino))
-                .OrderBy(p => p.Nombre)
-                .ToListAsync(cancellationToken);
+            var query = _dbSet.AsQueryable();
+            
+            if (soloActivos)
+                query = query.Where(p => p.Activo);
+                
+            return await query.OrderBy(p => p.Nombre).ToListAsync(cancellationToken);
         }
 
-        public async Task<Producto> GetProductoConDetallesAsync(Guid id, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Obtiene productos por categoría
+        /// </summary>
+        public async Task<List<Producto>> ObtenerPorCategoriaAsync(Guid categoriaId, bool soloActivos = true, CancellationToken cancellationToken = default)
         {
-            return await _dbContext.Productos
-                .Include(p => p.Categoria)
+            var query = _dbSet.Where(p => p.CategoriaId == categoriaId);
+            
+            if (soloActivos)
+                query = query.Where(p => p.Activo);
+                
+            return await query.OrderBy(p => p.Nombre).ToListAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Obtiene productos que utilizan un ingrediente específico
+        /// </summary>
+        public async Task<IEnumerable<Producto>> ObtenerProductosPorIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Set<Producto>()
                 .Include(p => p.Ingredientes)
-                    .ThenInclude(i => i.Ingrediente)
-                .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+                .Where(p => p.Ingredientes.Any(i => i.IngredienteId == ingredienteId))
+                .OrderBy(p => p.Nombre)
+                .ToListAsync(cancellationToken);
         }
 
-        public async Task<bool> ExisteProductoConNombreAsync(string nombre, Guid? exceptoId = null, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Agrega un nuevo producto
+        /// </summary>
+        public Task AgregarAsync(Producto producto, CancellationToken cancellationToken = default)
         {
-            var query = _dbContext.Productos.AsQueryable();
-            
-            if (exceptoId.HasValue)
-                query = query.Where(p => p.Id != exceptoId.Value);
-            
-            return await query.AnyAsync(p => p.Nombre == nombre, cancellationToken);
+            _dbSet.Add(producto);
+            return _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Actualiza un producto existente
+        /// </summary>
+        public Task ActualizarAsync(Producto producto, CancellationToken cancellationToken = default)
+        {
+            _dbContext.Entry(producto).State = EntityState.Modified;
+            return _dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Elimina un producto por su ID
+        /// </summary>
+        public async Task EliminarAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var producto = await ObtenerPorIdAsync(id, cancellationToken);
+            if (producto != null)
+            {
+                producto.Activo = false;
+                await ActualizarAsync(producto, cancellationToken);
+            }
         }
 
         /// <summary>
@@ -117,6 +158,48 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
                         p.Descripcion.ToLower().Contains(terminoLower)))
                 .OrderBy(p => p.Nombre)
                 .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Producto>> GetProductosPorCategoriaAsync(Guid categoriaId, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Set<Producto>()
+                .Where(p => p.CategoriaId == categoriaId && p.Activo)
+                .OrderBy(p => p.Nombre)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<Producto>> BuscarProductosAsync(string termino, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(termino))
+                return await ObtenerTodosAsync(true, cancellationToken);
+            
+            var terminoLower = termino.ToLower();
+            
+            return await _dbSet
+                .Where(p => p.Activo && 
+                       (p.Nombre.ToLower().Contains(terminoLower) || 
+                        p.Descripcion.ToLower().Contains(terminoLower)))
+                .OrderBy(p => p.Nombre)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<Producto> GetProductoConDetallesAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Set<Producto>()
+                .Include(p => p.Categoria)
+                .Include(p => p.Ingredientes)
+                    .ThenInclude(i => i.Ingrediente)
+                .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        }
+
+        public async Task<bool> ExisteProductoConNombreAsync(string nombre, Guid? exceptoId = null, CancellationToken cancellationToken = default)
+        {
+            var query = _dbSet.AsQueryable();
+            
+            if (exceptoId.HasValue)
+                query = query.Where(p => p.Id != exceptoId.Value);
+            
+            return await query.AnyAsync(p => p.Nombre == nombre, cancellationToken);
         }
     }
 } 

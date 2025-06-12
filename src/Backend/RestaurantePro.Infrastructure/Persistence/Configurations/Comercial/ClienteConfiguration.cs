@@ -18,66 +18,81 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         builder.Property(p => p.Id)
             .ValueGeneratedNever();
         
-        builder.Property(p => p.Nombre)
-            .IsRequired()
-            .HasMaxLength(100);
-            
-        builder.Property(p => p.Apellidos)
-            .IsRequired()
-            .HasMaxLength(100);
-            
-        builder.Property(p => p.Email)
-            .IsRequired()
-            .HasMaxLength(150);
+        // Configurar el valor objeto Nombre como propiedad de navegación poseída
+        builder.OwnsOne(p => p.Nombre, nombre =>
+        {
+            nombre.Property(n => n.Nombres)
+                .HasColumnName("Nombres")
+                .IsRequired()
+                .HasMaxLength(100);
+                
+            nombre.Property(n => n.Apellidos)
+                .HasColumnName("Apellidos")
+                .IsRequired()
+                .HasMaxLength(100);
+        });
         
-        builder.Property(p => p.Telefono)
-            .HasMaxLength(20);
+        // Configurar el valor objeto Email como propiedad de navegación poseída
+        builder.OwnsOne(p => p.Email, email =>
+        {
+            email.Property(e => e.Value)
+                .HasColumnName("Email")
+                .IsRequired()
+                .HasMaxLength(150);
+        });
         
-        builder.Property(p => p.Direccion)
-            .HasMaxLength(200);
-            
-        builder.Property(p => p.CodigoPostal)
-            .HasMaxLength(10);
-            
-        builder.Property(p => p.Ciudad)
-            .HasMaxLength(100);
-            
-        builder.Property(p => p.Pais)
-            .HasMaxLength(100);
+        // Configurar el valor objeto Telefono como propiedad de navegación poseída
+        builder.OwnsOne(p => p.Telefono, telefono =>
+        {
+            telefono.Property(t => t.Value)
+                .HasColumnName("Telefono")
+                .IsRequired()
+                .HasMaxLength(20);
+        });
         
-        builder.Property(p => p.FechaNacimiento);
+        builder.Property(p => p.FechaNacimiento)
+            .IsRequired();
         
-        builder.Property(p => p.Activo)
+        builder.Property(p => p.EstaActivo)
             .IsRequired()
             .HasDefaultValue(true);
+            
+        builder.Property(p => p.PuntosAcumulados)
+            .IsRequired()
+            .HasDefaultValue(0);
+            
+        builder.Property(p => p.CantidadVisitas)
+            .IsRequired()
+            .HasDefaultValue(0);
+            
+        builder.Property(p => p.TarjetaFidelizacionPrincipalId);
+            
+        builder.Property(p => p.Segmento)
+            .IsRequired()
+            .HasConversion<string>();
         
-        // Configurar fechas de auditoría
+        // Configurar fechas
         builder.Property(p => p.FechaCreacion)
             .IsRequired();
             
-        builder.Property(p => p.CreadoPor)
-            .HasMaxLength(36);
+        builder.Property(p => p.FechaActualizacion);
             
-        builder.Property(p => p.FechaModificacion);
-        
-        builder.Property(p => p.ModificadoPor)
-            .HasMaxLength(36);
+        builder.Property(p => p.EstaEliminado)
+            .IsRequired()
+            .HasDefaultValue(false);
         
         // Configurar índices
-        builder.HasIndex(p => p.Email)
+        builder.HasIndex("Email_Value")
             .HasDatabaseName("IX_Clientes_Email")
             .IsUnique();
-        
-        builder.HasIndex(p => new { p.Nombre, p.Apellidos })
-            .HasDatabaseName("IX_Clientes_NombreApellidos");
             
-        builder.HasIndex(p => p.Telefono)
+        builder.HasIndex("Nombre_Nombres", "Nombre_Apellidos")
+            .HasDatabaseName("IX_Clientes_NombreCompleto");
+            
+        builder.HasIndex("Telefono_Value")
             .HasDatabaseName("IX_Clientes_Telefono");
-        
-        // Configurar relaciones
-        builder.HasOne(p => p.TarjetaFidelizacion)
-            .WithOne()
-            .HasForeignKey<TarjetaFidelizacion>(t => t.ClienteId)
-            .OnDelete(DeleteBehavior.Cascade);
+            
+        builder.HasIndex(p => p.TarjetaFidelizacionPrincipalId)
+            .HasDatabaseName("IX_Clientes_TarjetaFidelizacionId");
     }
 } 

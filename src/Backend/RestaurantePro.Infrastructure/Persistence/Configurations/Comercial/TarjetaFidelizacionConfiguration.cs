@@ -25,42 +25,60 @@ public class TarjetaFidelizacionConfiguration : IEntityTypeConfiguration<Tarjeta
         builder.Property(p => p.ClienteId)
             .IsRequired();
         
-        builder.Property(p => p.FechaExpiracion)
-            .IsRequired();
-        
-        builder.Property(p => p.Nivel)
+        builder.Property(p => p.Estado)
             .IsRequired()
-            .HasMaxLength(50)
             .HasConversion<string>();
+        
+        builder.Property(p => p.NivelFidelizacion)
+            .IsRequired()
+            .HasConversion<string>();
+        
+        builder.Property(p => p.FechaEmision)
+            .IsRequired();
+            
+        builder.Property(p => p.FechaActivacion);
+        
+        builder.Property(p => p.FechaExpiracion);
         
         builder.Property(p => p.PuntosAcumulados)
             .IsRequired()
             .HasDefaultValue(0);
         
-        builder.Property(p => p.PuntosCanjeados)
+        builder.Property(p => p.PuntosDisponibles)
             .IsRequired()
             .HasDefaultValue(0);
-        
-        builder.Property(p => p.Estado)
+            
+        builder.Property(p => p.MultiplicadorPuntos)
             .IsRequired()
-            .HasMaxLength(50)
-            .HasConversion<string>();
+            .HasPrecision(5, 2)
+            .HasDefaultValue(1.0m);
+            
+        builder.Property(p => p.LimiteMensual);
         
-        builder.Property(p => p.Activo)
+        builder.Property(p => p.EstaEliminado)
             .IsRequired()
-            .HasDefaultValue(true);
+            .HasDefaultValue(false);
         
-        // Configurar fechas de auditoría
+        // Configurar fechas
         builder.Property(p => p.FechaCreacion)
             .IsRequired();
             
-        builder.Property(p => p.CreadoPor)
-            .HasMaxLength(36);
-            
-        builder.Property(p => p.FechaModificacion);
+        builder.Property(p => p.FechaActualizacion);
         
-        builder.Property(p => p.ModificadoPor)
-            .HasMaxLength(36);
+        // Configurar listas
+        builder.HasMany(p => p.HistorialPuntos)
+            .WithOne()
+            .HasForeignKey("TarjetaFidelizacionId")
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        // Configurar colección de etiquetas
+        builder.Property<string>("EtiquetasSerializadas")
+            .HasColumnName("Etiquetas")
+            .HasMaxLength(500);
+            
+        // Configurar conversión para etiquetas
+        builder.Metadata.FindNavigation(nameof(TarjetaFidelizacion.Etiquetas))
+            ?.SetPropertyAccessMode(PropertyAccessMode.Field);
         
         // Configurar índices
         builder.HasIndex(p => p.Codigo)
@@ -68,10 +86,9 @@ public class TarjetaFidelizacionConfiguration : IEntityTypeConfiguration<Tarjeta
             .IsUnique();
         
         builder.HasIndex(p => p.ClienteId)
-            .HasDatabaseName("IX_TarjetasFidelizacion_ClienteId")
-            .IsUnique();
+            .HasDatabaseName("IX_TarjetasFidelizacion_ClienteId");
         
-        builder.HasIndex(p => new { p.Estado, p.Nivel })
+        builder.HasIndex(p => new { p.Estado, p.NivelFidelizacion })
             .HasDatabaseName("IX_TarjetasFidelizacion_EstadoNivel");
     }
 } 

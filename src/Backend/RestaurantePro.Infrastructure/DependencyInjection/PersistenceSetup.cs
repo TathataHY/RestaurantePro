@@ -2,13 +2,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Interfaces.Repositories;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Interceptors;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
-using System;
 using RestaurantePro.Infrastructure.Persistence.Base;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
 {
@@ -43,7 +45,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
                 provider.GetRequiredService<RestauranteProDbContext>());
 
             // Registrar Unit of Work
-            services.AddScoped<UnitOfWork>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // Registrar repositorios
             RegisterRepositories(services);
@@ -54,12 +56,15 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
         private static void RegisterRepositories(IServiceCollection services)
         {
             // Repositorio base genérico
-            services.AddScoped(typeof(IRepository<>), typeof(RepositoryBase<>));
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
-            // Repositorios específicos
-            services.AddScoped<IProductoRepository, ProductoRepository>();
+            // Repositorios específicos de Operaciones
+            services.AddScoped<IMesaRepository, MesaRepository>();
+            services.AddScoped<IComandaRepository, ComandaRepository>();
+            services.AddScoped<IReservacionRepository, ReservacionRepository>();
+            services.AddScoped<IPreparacionRepository, PreparacionRepository>();
             
-            // Añadir más repositorios aquí a medida que se implementen...
+            // TODO: Registrar otros repositorios de Comercial, Inventario, Core, etc.
         }
     }
 } 

@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.Base.Services;
+using RestaurantePro.Domain.Core.Base;
 using System;
 using System.Linq;
 using System.Threading;
@@ -13,11 +13,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
     public class SoftDeleteInterceptor : SaveChangesInterceptor
     {
         private readonly ICurrentUserService _currentUserService;
-        private readonly IDateTimeService _dateTimeService;
+        private readonly IDateTime _dateTimeService;
 
         public SoftDeleteInterceptor(
             ICurrentUserService currentUserService,
-            IDateTimeService dateTimeService)
+            IDateTime dateTimeService)
         {
             _currentUserService = currentUserService;
             _dateTimeService = dateTimeService;
@@ -39,19 +39,17 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
         {
             if (context == null) return;
 
-            foreach (var entry in context.ChangeTracker.Entries<ISoftDelete>())
+            foreach (var entry in context.ChangeTracker.Entries<EntityBase>())
             {
                 if (entry.State == EntityState.Deleted)
                 {
                     entry.State = EntityState.Modified;
-                    entry.Entity.Eliminado = true;
-                    entry.Entity.FechaEliminacion = _dateTimeService.Now;
-                    entry.Entity.EliminadoPor = _currentUserService.UserId;
-
-                    // También marcar como modificado el campo Eliminado para asegurar que se actualice
-                    entry.Property(nameof(ISoftDelete.Eliminado)).IsModified = true;
-                    entry.Property(nameof(ISoftDelete.FechaEliminacion)).IsModified = true;
-                    entry.Property(nameof(ISoftDelete.EliminadoPor)).IsModified = true;
+                    
+                    // Establecer la propiedad EstaEliminado a true
+                    entry.Property("EstaEliminado").CurrentValue = true;
+                    
+                    // Actualizar la fecha de modificación
+                    entry.Property("FechaActualizacion").CurrentValue = _dateTimeService.Now;
                 }
             }
         }

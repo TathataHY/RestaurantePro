@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.Base.Services;
+using RestaurantePro.Domain.Core.Base;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,11 +12,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
     public class AuditableEntityInterceptor : SaveChangesInterceptor
     {
         private readonly ICurrentUserService _currentUserService;
-        private readonly IDateTimeService _dateTimeService;
+        private readonly IDateTime _dateTimeService;
 
         public AuditableEntityInterceptor(
             ICurrentUserService currentUserService,
-            IDateTimeService dateTimeService)
+            IDateTime dateTimeService)
         {
             _currentUserService = currentUserService;
             _dateTimeService = dateTimeService;
@@ -38,18 +38,16 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
         {
             if (context == null) return;
 
-            foreach (var entry in context.ChangeTracker.Entries<BaseEntity>())
+            foreach (var entry in context.ChangeTracker.Entries<EntityBase>())
             {
                 if (entry.State == EntityState.Added)
                 {
-                    entry.Entity.FechaCreacion = _dateTimeService.Now;
-                    entry.Entity.CreadoPor = _currentUserService.UserId;
+                    entry.Property("FechaCreacion").CurrentValue = _dateTimeService.Now;
                 }
 
                 if (entry.State == EntityState.Modified || entry.HasChangedOwnedEntities())
                 {
-                    entry.Entity.UltimaModificacion = _dateTimeService.Now;
-                    entry.Entity.ModificadoPor = _currentUserService.UserId;
+                    entry.Property("FechaActualizacion").CurrentValue = _dateTimeService.Now;
                 }
             }
         }

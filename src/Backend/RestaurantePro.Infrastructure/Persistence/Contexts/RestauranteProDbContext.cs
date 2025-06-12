@@ -1,20 +1,10 @@
-using System;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Core.Base.Entities;
-using RestaurantePro.Domain.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Mesas.Entities;
-using RestaurantePro.Infrastructure.Identity.Models;
-using RestaurantePro.Infrastructure.Persistence.Interceptors;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace RestaurantePro.Infrastructure.Persistence.Contexts
 {
@@ -30,57 +20,46 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         }
         
         // Core - Productos
-        public DbSet<Producto> Productos => Set<Producto>();
+        public DbSet<Domain.Core.Productos.Entities.Producto> Productos { get; set; }
         
         // Core - Usuarios  
-        public DbSet<Usuario> Usuarios => Set<Usuario>();
+        public DbSet<Domain.Core.Usuarios.Entities.Usuario> Usuarios { get; set; }
         
         // Core - Notificaciones
-        public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
-        
-        // Core - Otros
-        public DbSet<Categoria> Categorias { get; set; }
-        public DbSet<Ingrediente> Ingredientes => Set<Ingrediente>();
-        public DbSet<IngredienteProducto> IngredientesProductos { get; set; }
-        public DbSet<ProductoIngrediente> ProductoIngredientes { get; set; }
+        public DbSet<Domain.Core.Notificaciones.Entities.Notificacion> Notificaciones { get; set; }
         
         // Comercial - Clientes
-        public DbSet<Cliente> Clientes => Set<Cliente>();
+        public DbSet<Domain.Comercial.Clientes.Entities.Cliente> Clientes { get; set; }
         
         // Comercial - Fidelización
-        public DbSet<TarjetaFidelizacion> TarjetasFidelizacion => Set<TarjetaFidelizacion>();
+        public DbSet<Domain.Comercial.Clientes.Entities.TarjetaFidelizacion> TarjetasFidelizacion { get; set; }
         
         // Comercial - Facturación
-        public DbSet<Factura> Facturas => Set<Factura>();
-        
-        // Comercial - Pagos
-        public DbSet<Pago> Pagos { get; set; }
+        public DbSet<Domain.Comercial.Facturacion.Entities.Factura> Facturas { get; set; }
         
         // Operaciones - Comandas
-        public DbSet<Comanda> Comandas => Set<Comanda>();
-        public DbSet<ItemComanda> ItemsComanda => Set<ItemComanda>();
-        public DbSet<ComandaDetalle> ComandaDetalles { get; set; }
-        public DbSet<ComandaDetallePersonalizacion> ComandaDetallePersonalizaciones { get; set; }
+        public DbSet<Domain.Operaciones.Comandas.Entities.Comanda> Comandas { get; set; }
+        public DbSet<Domain.Operaciones.Comandas.Entities.ItemComanda> ItemsComanda { get; set; }
         
         // Operaciones - Reservaciones
-        public DbSet<Reservacion> Reservaciones => Set<Reservacion>();
+        public DbSet<Domain.Operaciones.Reservaciones.Entities.Reservacion> Reservaciones { get; set; }
         
         // Operaciones - Mesas
-        public DbSet<Mesa> Mesas => Set<Mesa>();
+        public DbSet<Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa> Mesas { get; set; }
         
         // Operaciones - Preparaciones
-        public DbSet<PreparacionDiaria> Preparaciones => Set<PreparacionDiaria>();
+        public DbSet<Domain.Operaciones.Preparaciones.Entities.PreparacionDiaria> Preparaciones { get; set; }
         
-        // Inventario - Movimientos
-        public DbSet<MovimientoInventario> MovimientosInventario => Set<MovimientoInventario>();
-        public DbSet<InventarioMovimiento> InventarioMovimientos { get; set; }
+        // Inventario - Ingredientes
+        public DbSet<Domain.Inventario.Ingredientes.Entities.Ingrediente> Ingredientes { get; set; }
+        public DbSet<Domain.Inventario.Ingredientes.Movimientos.Entities.MovimientoInventario> MovimientosInventario { get; set; }
         
         // Inventario - Órdenes de Compra
-        public DbSet<OrdenCompra> OrdenesCompra => Set<OrdenCompra>();
+        public DbSet<Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra> OrdenesCompra { get; set; }
         
         // Proveedores
-        public DbSet<Proveedor> Proveedores => Set<Proveedor>();
-        public DbSet<ContactoProveedor> ContactosProveedor => Set<ContactoProveedor>();
+        public DbSet<Domain.Proveedores.Entities.Proveedor> Proveedores { get; set; }
+        public DbSet<Domain.Proveedores.Entities.ContactoProveedor> ContactosProveedor { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -124,13 +103,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         {
             try
             {
-                // Aplicar auditoría automática (en el futuro)
-                
                 var resultado = await base.SaveChangesAsync(cancellationToken);
                 _logger.LogInformation("Se guardaron {Count} cambios en la base de datos", resultado);
                 return resultado;
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 _logger.LogError(ex, "Error al guardar cambios en la base de datos");
                 throw;

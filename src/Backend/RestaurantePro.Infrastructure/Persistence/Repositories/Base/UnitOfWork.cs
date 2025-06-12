@@ -5,7 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RestaurantePro.Infrastructure.Persistence.Base;
+namespace RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 
 /// <summary>
 /// Implementación del patrón Unit of Work para centralizar las transacciones

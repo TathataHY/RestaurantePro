@@ -1,7 +1,8 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using RestaurantePro.Domain.Common;
+using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Domain.Core.Base.Events;
 using System;
 using System.Linq;
 using System.Threading;
@@ -35,7 +36,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
             if (context == null) return;
 
             // Obtener entidades con eventos de dominio pendientes
-            var entitiesWithEvents = context.ChangeTracker.Entries<BaseEntity>()
+            var entitiesWithEvents = context.ChangeTracker.Entries<EntityBase>()
                 .Where(e => e.Entity.DomainEvents.Any())
                 .Select(e => e.Entity)
                 .ToList();

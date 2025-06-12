@@ -4,19 +4,22 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
+using RestaurantePro.Domain.Core.Base.Services;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 using RestaurantePro.Domain.Proveedores.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
-using RestaurantePro.Infrastructure.Services;
+using RestaurantePro.Infrastructure.ExternalServices.Email;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
 {
@@ -51,7 +54,42 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddCommunicationServices();
 
             // Registrar servicio de fecha y hora
-            services.AddSingleton<IDateTime, DateTimeService>();
+            var dateTimeService = new DateTimeService();
+            services.AddSingleton<IDateTime>(dateTimeService);
+            services.AddSingleton<IDateTimeService>(dateTimeService);
+
+            return services;
+        }
+
+        /// <summary>
+        /// Agrega los servicios de identidad a la colección de servicios
+        /// </summary>
+        public static IServiceCollection AddIdentityServices(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            // Aquí se registrarían los servicios de identidad
+            // Por ahora solo un placeholder para evitar errores
+            return services;
+        }
+
+        /// <summary>
+        /// Agrega los servicios externos a la colección de servicios
+        /// </summary>
+        public static IServiceCollection AddExternalServices(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            // Configuración de servicios de email
+            services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+            services.AddScoped<IEmailService, EmailService>();
+
+            // Aquí se agregarían otros servicios externos como
+            // - APIs de terceros
+            // - Servicios de almacenamiento en la nube
+            // - Pasarelas de pago
+            // - Servicios de mensajería SMS
+            // - Etc.
 
             return services;
         }
@@ -68,6 +106,10 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             
             // Comercial
             services.AddScoped<IClienteRepository, ClienteRepository>();
+            
+            // Core
+            services.AddScoped<IProductoRepository, ProductoRepository>();
+            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             
             // Inventario
             services.AddScoped<IIngredienteRepository, IngredienteRepository>();
@@ -93,21 +135,32 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
         /// </summary>
         private static IServiceCollection AddCommunicationServices(this IServiceCollection services)
         {
-            // Servicios de comunicación
-            services.AddScoped<IEmailService, EmailService>();
-            services.AddScoped<ISMSService, SMSService>();
+            // Servicios de comunicación básicos serán registrados en AddExternalServices
+            // Aquí se registrarían otros servicios de comunicación interna si son necesarios
             
-            // 🆕 NUEVOS: Servicios de notificación avanzados
-            services.AddScoped<INotificationService, NotificationService>();
-            services.AddScoped<ISignalRService, SignalRService>();
-            services.AddScoped<IBackgroundJobService, BackgroundJobService>();
-
             return services;
         }
     }
 
-    public class DateTimeService : IDateTime
+    /// <summary>
+    /// Servicio para proporcionar información de fecha y hora
+    /// Implementa tanto IDateTime (Application) como IDateTimeService (Domain)
+    /// </summary>
+    public class DateTimeService : IDateTime, IDateTimeService
     {
+        /// <summary>
+        /// Fecha y hora actuales del sistema
+        /// </summary>
         public DateTime Now => DateTime.Now;
+        
+        /// <summary>
+        /// Fecha actual del sistema (sin hora)
+        /// </summary>
+        public DateTime Today => DateTime.Today;
+        
+        /// <summary>
+        /// Fecha y hora actuales del sistema en UTC
+        /// </summary>
+        public DateTime UtcNow => DateTime.UtcNow;
     }
 } 

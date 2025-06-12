@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace RestaurantePro.Infrastructure.Persistence.Base;
+namespace RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 
 /// <summary>
 /// Implementación base de repositorio genérico
@@ -26,19 +26,25 @@ public class Repository<T> where T : class
         _logger = logger;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Obtiene una entidad por su identificador
+    /// </summary>
     public virtual async Task<T?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _dbSet.FindAsync(new object[] { id }, cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Obtiene todas las entidades
+    /// </summary>
     public virtual async Task<IEnumerable<T>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
     {
         return await _dbSet.ToListAsync(cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Agrega una nueva entidad
+    /// </summary>
     public virtual async Task<T> AgregarAsync(T entity, CancellationToken cancellationToken = default)
     {
         var result = await _dbSet.AddAsync(entity, cancellationToken);
@@ -52,21 +58,27 @@ public class Repository<T> where T : class
         return entities;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Actualiza una entidad existente
+    /// </summary>
     public virtual Task ActualizarAsync(T entity, CancellationToken cancellationToken = default)
     {
         _dbSet.Update(entity);
         return Task.CompletedTask;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Elimina una entidad
+    /// </summary>
     public virtual async Task EliminarAsync(T entity, CancellationToken cancellationToken = default)
     {
         _dbSet.Remove(entity);
         await Task.CompletedTask;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Elimina una entidad por su identificador
+    /// </summary>
     public virtual async Task EliminarPorIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         var entity = await ObtenerPorIdAsync(id, cancellationToken);
@@ -123,7 +135,9 @@ public class Repository<T> where T : class
         return await _dbSet.FirstOrDefaultAsync(predicate, cancellationToken);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// Guarda los cambios en la base de datos
+    /// </summary>
     public virtual async Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default)
     {
         return await _dbContext.SaveChangesAsync(cancellationToken);
