@@ -62,3 +62,4 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Commands.Consumir
         }
     }
 } 
+

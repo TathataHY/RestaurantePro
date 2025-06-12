@@ -218,3 +218,5 @@ global using RestaurantePro.Domain.Operaciones.EventHandlers;
 global using static RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda;
 global using static RestaurantePro.Domain.Operaciones.Comandas.Enums.CanalOrden;
 
+// Alias para Result para evitar errores de tipado
+global using r = RestaurantePro.Domain.Core.SharedKernel.Results.Result;

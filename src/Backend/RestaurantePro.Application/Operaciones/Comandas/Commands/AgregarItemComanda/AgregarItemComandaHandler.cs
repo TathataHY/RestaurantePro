@@ -47,7 +47,7 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
         try
         {
             // 1. Buscar la comanda existente
-            var comanda = await _comandaRepository.ObtenerPorIdAsync(request.ComandaId);
+            var comanda = await _comandaRepository.ObtenerPorIdAsync(request.ComandaId, true, cancellationToken);
             if (comanda == null)
             {
                 _logger.LogWarning("❌ Comanda no encontrada: {ComandaId}", request.ComandaId);
@@ -93,8 +93,8 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
             }
 
             // 6. Guardar los cambios
-            await _comandaRepository.ActualizarAsync(comanda);
-            await _comandaRepository.GuardarCambiosAsync();
+            await _comandaRepository.ActualizarAsync(comanda, cancellationToken);
+            await _comandaRepository.GuardarCambiosAsync(cancellationToken);
 
             // 7. Mapear y retornar el resultado
             var comandaDto = _mapper.Map<ComandaDto>(comanda);
@@ -104,10 +104,20 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
 
             return Result.Success(comandaDto);
         }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning("❌ Error de operación al agregar item a comanda {ComandaId}: {Error}", request.ComandaId, ex.Message);
+            return Result.Failure<ComandaDto>(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning("❌ Error de validación al agregar item a comanda {ComandaId}: {Error}", request.ComandaId, ex.Message);
+            return Result.Failure<ComandaDto>(ex.Message);
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error al agregar item a comanda {ComandaId}", request.ComandaId);
-            return Result.Failure<ComandaDto>($"Error al procesar la solicitud: {ex.Message}");
+            _logger.LogError(ex, "❌ Error interno al agregar item a comanda {ComandaId}", request.ComandaId);
+            return Result.Failure<ComandaDto>("Ocurrió un error interno al procesar la solicitud: " + ex.Message);
         }
     }
 
@@ -158,7 +168,7 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
                         case "Sustituir":
                             if (!personalizacion.IngredienteSustitucionId.HasValue)
                             {
-                                return Result.Failure("Se requiere el ingrediente de sustitución para personalizaciones de tipo 'Sustituir'");
+                                return Result.Failure("Se requiere especificar el ingrediente de sustitución para personalizaciones de tipo Sustituir");
                             }
                             
                             comanda.AgregarPersonalizacionSustituir(
@@ -171,7 +181,7 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
                                 personalizacion.PrecioAdicional);
                             break;
                         default:
-                            return Result.Failure($"Tipo de personalización no soportado: {personalizacion.Tipo}");
+                            return Result.Failure($"Tipo de personalización no válido: {personalizacion.Tipo}");
                     }
                 }
             }
@@ -190,3 +200,4 @@ public class AgregarItemComandaHandler : IRequestHandler<AgregarItemComandaComma
         }
     }
 } 
+

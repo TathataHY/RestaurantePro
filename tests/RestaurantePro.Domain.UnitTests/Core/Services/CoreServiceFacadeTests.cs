@@ -170,7 +170,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Services
             
             _productoRepositoryMock
                 .Setup(r => r.ObtenerPorIdAsync(productoId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((Producto)null);
+                .ReturnsAsync((Producto?)null);
                 
             // Crear un NotificationManager real específico para esta prueba
             var notificationManager = new NotificationManager();

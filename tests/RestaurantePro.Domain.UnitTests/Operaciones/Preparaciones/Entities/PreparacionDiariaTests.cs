@@ -43,7 +43,7 @@ public class PreparacionDiariaTests
         preparacion.FechaPreparacion.Should().BeOnOrAfter(_fechaActual.Date);
         preparacion.FechaVencimiento.Should().Be(_fechaVencimientoPredeterminada);
         preparacion.Estado.Should().Be(EstadoPreparacion.Preparando);
-        preparacion.Observaciones.Should().BeNull();
+        preparacion.Observaciones.Should().BeEmpty();
     }
 
     [Fact]
@@ -156,6 +156,21 @@ public class PreparacionDiariaTests
 
         // Assert
         preparacion.Estado.Should().Be(EstadoPreparacion.Disponible);
+    }
+
+    [Fact]
+    public void MarcarComoDisponible_ConEstadoVencida_DebeRetornarError()
+    {
+        // Arrange
+        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
+        preparacion.MarcarComoVencida();
+
+        // Act
+        Action act = () => preparacion.MarcarComoDisponible();
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*No se puede marcar como disponible una preparación vencida*");
     }
 
     #endregion
@@ -400,20 +415,6 @@ public class PreparacionDiariaTests
 
         // Assert
         preparacion.Estado.Should().Be(EstadoPreparacion.Disponible);
-    }
-
-    [Fact]
-    public void MarcarComoDisponible_ConEstadoVencida_DebeRetornarError()
-    {
-        // Arrange
-        var preparacion = PreparacionDiaria.Crear(_productoId, 10, _chefId, _fechaVencimientoPredeterminada);
-        preparacion.MarcarComoVencida();
-
-        // Act
-        preparacion.MarcarComoDisponible();
-
-        // Assert
-        preparacion.Estado.Should().Be(EstadoPreparacion.Vencida);
     }
 
     #endregion

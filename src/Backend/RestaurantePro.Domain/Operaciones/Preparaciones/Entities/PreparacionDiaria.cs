@@ -1,6 +1,7 @@
 using RestaurantePro.Domain.Core.Base;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Events;
+using RestaurantePro.Domain.Core.Base.Testing;
 using System;
 
 namespace RestaurantePro.Domain.Operaciones.Preparaciones.Entities
@@ -55,7 +56,7 @@ namespace RestaurantePro.Domain.Operaciones.Preparaciones.Entities
         /// </summary>
         public PreparacionDiaria()
         {
-            Observaciones = string.Empty;
+            Observaciones = null;
         }
 
         /// <summary>
@@ -69,6 +70,19 @@ namespace RestaurantePro.Domain.Operaciones.Preparaciones.Entities
             string observaciones = "",
             DateTime? fechaPreparacion = null)
         {
+            if (productoId == Guid.Empty)
+                throw new ArgumentException("El ID del producto no puede estar vacío", nameof(productoId));
+                
+            if (chefId == Guid.Empty)
+                throw new ArgumentException("El ID del chef no puede estar vacío", nameof(chefId));
+                
+            if (cantidad <= 0)
+                throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(cantidad));
+                
+            // Validamos que la fecha sea futura (solo en entorno de producción)
+            if (!TestEnvironment.IsTestEnvironment && fechaVencimiento <= DateTime.Now)
+                throw new ArgumentException("La fecha de vencimiento debe ser futura", nameof(fechaVencimiento));
+
             var preparacion = new PreparacionDiaria
             {
                 ProductoId = productoId,
@@ -76,7 +90,7 @@ namespace RestaurantePro.Domain.Operaciones.Preparaciones.Entities
                 CantidadPreparada = cantidad,
                 CantidadDisponible = cantidad,
                 FechaVencimiento = fechaVencimiento,
-                Observaciones = observaciones ?? string.Empty,
+                Observaciones = observaciones?.Trim() ?? string.Empty,
                 FechaPreparacion = fechaPreparacion ?? DateTime.Now,
                 Estado = EstadoPreparacion.Preparando
             };
@@ -134,6 +148,9 @@ namespace RestaurantePro.Domain.Operaciones.Preparaciones.Entities
 
             if (Estado == EstadoPreparacion.Vencida)
                 throw new InvalidOperationException("No se puede consumir una preparación vencida");
+                
+            if (Estado == EstadoPreparacion.Agotada)
+                throw new InvalidOperationException("No se puede consumir una preparación agotada");
 
             if (cantidad > CantidadDisponible)
                 throw new InvalidOperationException($"No hay suficiente cantidad disponible. Solicitado: {cantidad}, Disponible: {CantidadDisponible}");

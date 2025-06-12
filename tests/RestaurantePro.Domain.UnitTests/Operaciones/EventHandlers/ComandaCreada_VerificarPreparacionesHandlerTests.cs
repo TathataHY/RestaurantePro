@@ -37,7 +37,7 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
         var comanda = CrearComandaMock(comandaId, mesaId, empleadoId, sinItems: true);
 
         _comandaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(comandaId))
+            .Setup(x => x.ObtenerPorIdAsync(It.Is<Guid>(id => id == comandaId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         // Act
@@ -65,21 +65,23 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
             items: new[] { (producto1Id, 2), (producto2Id, 1) });
 
         _comandaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(comandaId))
+            .Setup(x => x.ObtenerPorIdAsync(It.Is<Guid>(id => id == comandaId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         // Configurar preparaciones: producto1 disponible, producto2 no
         _servicioPreparacionesMock
             .Setup(x => x.VerificarDisponibilidadAsync(
                 It.Is<Guid>(id => id == producto1Id), 
-                It.Is<int>(c => c == 2)))
-            .ReturnsAsync(Result.Success(true));
+                It.Is<int>(c => c == 2),
+                It.Is<Guid?>(p => p == null)))
+            .ReturnsAsync(Result<bool>.Success(true));
 
         _servicioPreparacionesMock
             .Setup(x => x.VerificarDisponibilidadAsync(
-                It.Is<Guid>(id => id == producto2Id), 
-                It.Is<int>(c => c == 1)))
-            .ReturnsAsync(Result.Success(false));
+                It.Is<Guid>(id => id == producto2Id),
+                It.Is<int>(c => c == 1),
+                It.Is<Guid?>(p => p == null)))
+            .ReturnsAsync(Result<bool>.Success(false));
 
         // Act
         await _sut.Handle(evento, CancellationToken.None);
@@ -110,25 +112,30 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
             items: new[] { (producto1Id, 1), (producto2Id, 1), (producto3Id, 1) });
 
         _comandaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(comandaId))
+            .Setup(x => x.ObtenerPorIdAsync(It.Is<Guid>(id => id == comandaId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         // Solo 1 de 3 productos disponible en preparaciones (33% < 30%)
         _servicioPreparacionesMock
             .Setup(x => x.VerificarDisponibilidadAsync(
                 It.Is<Guid>(id => id == producto1Id), 
-                It.Is<int>(c => c == 1)))
-            .ReturnsAsync(Result.Success(false));
+                It.Is<int>(c => c == 1),
+                It.Is<Guid?>(p => p == null)))
+            .ReturnsAsync(Result<bool>.Success(false));
+        
         _servicioPreparacionesMock
             .Setup(x => x.VerificarDisponibilidadAsync(
-                It.Is<Guid>(id => id == producto2Id), 
-                It.Is<int>(c => c == 1)))
-            .ReturnsAsync(Result.Success(false));
+                It.Is<Guid>(id => id == producto2Id),
+                It.Is<int>(c => c == 1),
+                It.Is<Guid?>(p => p == null)))
+            .ReturnsAsync(Result<bool>.Success(false));
+        
         _servicioPreparacionesMock
             .Setup(x => x.VerificarDisponibilidadAsync(
-                It.Is<Guid>(id => id == producto3Id), 
-                It.Is<int>(c => c == 1)))
-            .ReturnsAsync(Result.Success(false));
+                It.Is<Guid>(id => id == producto3Id),
+                It.Is<int>(c => c == 1),
+                It.Is<Guid?>(p => p == null)))
+            .ReturnsAsync(Result<bool>.Success(false));
 
         // Act
         await _sut.Handle(evento, CancellationToken.None);
@@ -150,7 +157,7 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
         var evento = new ComandaCreada(comandaId, mesaId, empleadoId);
 
         _comandaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(comandaId))
+            .Setup(x => x.ObtenerPorIdAsync(It.Is<Guid>(id => id == comandaId), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Comanda?)null);
 
         // Act
@@ -177,13 +184,14 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
             items: new[] { (productoId, 1) });
 
         _comandaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(comandaId))
+            .Setup(x => x.ObtenerPorIdAsync(It.Is<Guid>(id => id == comandaId), It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
         _servicioPreparacionesMock
             .Setup(x => x.VerificarDisponibilidadAsync(
                 It.Is<Guid>(id => id == productoId), 
-                It.Is<int>(c => c == 1)))
+                It.Is<int>(c => c == 1),
+                It.Is<Guid?>(p => p == null)))
             .ThrowsAsync(new InvalidOperationException("Error de prueba"));
 
         // Act
@@ -257,7 +265,7 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
         {
             foreach (var item in items)
             {
-                comanda.AgregarProducto(item.ProductoId, item.Cantidad, 10.0m, "");
+                comanda.AgregarItem(item.ProductoId, $"Producto {item.ProductoId}", item.Cantidad, 10.0m);
             }
         }
 
@@ -266,27 +274,25 @@ public class ComandaCreada_VerificarPreparacionesHandlerTests
 
     private void VerificarLog(string patron)
     {
-        // Corregir para evitar CS0854 con argumentos opcionales
         _loggerMock.Verify(
             x => x.Log(
-                It.Is<LogLevel>(l => l == LogLevel.Information),
+                It.IsAny<LogLevel>(),
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>(o => o.ToString().Contains(patron)),
-                It.IsAny<Exception>(),
-                It.Is<Func<It.IsAnyType, Exception, string>>(f => true)),
-            Times.AtLeastOnce);
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(patron)),
+                It.Is<Exception>(ex => ex == null || ex != null),
+                It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+            Times.Once);
     }
 
     private void VerificarLogNivel(string patron, LogLevel nivel)
     {
-        // Corregir para evitar CS0854 con argumentos opcionales
         _loggerMock.Verify(
             x => x.Log(
                 It.Is<LogLevel>(l => l == nivel),
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>(o => o.ToString().Contains(patron)),
-                It.IsAny<Exception>(),
-                It.Is<Func<It.IsAnyType, Exception, string>>(f => true)),
-            Times.AtLeastOnce);
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains(patron)),
+                It.Is<Exception>(ex => ex == null || ex != null),
+                It.Is<Func<It.IsAnyType, Exception, string>>((v, t) => true)),
+            Times.Once);
     }
 } 

@@ -59,6 +59,10 @@ global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Validation;
 global using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 global using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
+
+// Alias para Result para evitar errores de tipado
+global using r = RestaurantePro.Domain.Core.SharedKernel.Results.Result;
+
 global using RestaurantePro.Domain.Core.Productos.Entities;
 global using RestaurantePro.Domain.Core.Productos.ValueObjects;
 global using RestaurantePro.Domain.Core.Productos.Interfaces;

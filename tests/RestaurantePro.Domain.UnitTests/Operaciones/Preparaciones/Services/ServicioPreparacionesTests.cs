@@ -26,7 +26,7 @@ public class ServicioPreparacionesTests
     private readonly Mock<IDateTimeService> _dateTimeServiceMock;
     private readonly Mock<IPreparacionRepository> _preparacionRepositoryMock;
     private readonly ServicioPreparaciones _servicio;
-    private readonly DateTime _fechaActual = new DateTime(2025, 1, 15, 10, 30, 0);
+    private readonly DateTime _fechaActual = DateTime.Now.AddDays(-1);
 
     public ServicioPreparacionesTests()
     {
@@ -129,7 +129,7 @@ public class ServicioPreparacionesTests
         var productoId = Guid.NewGuid();
         var cantidad = 10;
         var chefId = Guid.NewGuid();
-        var fechaVencimiento = _fechaActual.AddDays(1);
+        var fechaVencimiento = DateTime.Now.AddDays(5);
         var observaciones = "Prueba de preparación";
         
         var preparacion = new PreparacionDiaria(); // Preparación vacía para pruebas
@@ -540,9 +540,9 @@ public class ServicioPreparacionesTests
         // Arrange
         var preparacionId = Guid.NewGuid();
         var chefId = Guid.NewGuid();
-        var fechaVencimiento = _fechaActual.AddHours(8);
+        var fechaVencimiento = DateTime.Now.AddDays(1);
         var observaciones = "Test";
-        var fechaCreacion = _fechaActual;
+        var fechaCreacion = DateTime.Now.AddDays(-2);
         
         var preparacion = PreparacionDiaria.Crear(
             Guid.NewGuid(), 
@@ -597,9 +597,9 @@ public class ServicioPreparacionesTests
         var preparacionId = Guid.NewGuid();
         var cantidadAdicional = 5;
         var chefId = Guid.NewGuid();
-        var fechaVencimiento = _fechaActual.AddHours(8);
+        var fechaVencimiento = DateTime.Now.AddDays(1);
         var observaciones = "Test";
-        var fechaCreacion = _fechaActual;
+        var fechaCreacion = DateTime.Now.AddDays(-2);
         
         var preparacion = PreparacionDiaria.Crear(
             Guid.NewGuid(), 
@@ -703,9 +703,9 @@ public class ServicioPreparacionesTests
     private PreparacionDiaria CrearPreparacionMock(Guid productoId, int cantidadDisponible, EstadoPreparacion estado)
     {
         var chefId = Guid.NewGuid();
-        var fechaVencimiento = _fechaActual.AddHours(8);
+        var fechaVencimiento = DateTime.Now.AddDays(1);
         var observaciones = "Test";
-        var fechaCreacion = _fechaActual;
+        var fechaCreacion = DateTime.Now.AddDays(-2);
         
         // Crear la preparación con todos los parámetros explícitos (sin usar valores opcionales)
         var preparacion = PreparacionDiaria.Crear(

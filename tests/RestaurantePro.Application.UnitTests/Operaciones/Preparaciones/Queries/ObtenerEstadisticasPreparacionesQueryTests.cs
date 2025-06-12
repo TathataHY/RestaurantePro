@@ -88,22 +88,22 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Preparaciones.Queries
             DateTime fechaCreacion,
             EstadoPreparacion estado)
         {
-            var preparacion = PreparacionDiaria.Crear(
-                productoId,
-                cantidadPreparada,
-                Guid.NewGuid(),
-                fechaVencimiento,
-                "Observaciones",
-                fechaCreacion
-            );
+            // Crear una instancia privada sin usar el constructor público
+            var preparacion = (PreparacionDiaria)Activator.CreateInstance(
+                typeof(PreparacionDiaria), 
+                true);
 
-            // Establecer propiedades que no se pueden configurar mediante el constructor
-            // Esto es para simular diferentes estados de las preparaciones
-            typeof(PreparacionDiaria).GetProperty("CantidadDisponible")
-                .SetValue(preparacion, cantidadDisponible);
-            
-            typeof(PreparacionDiaria).GetProperty("Estado")
-                .SetValue(preparacion, estado);
+            // Establecer las propiedades mediante reflection
+            typeof(PreparacionDiaria).GetProperty("Id").SetValue(preparacion, Guid.NewGuid());
+            typeof(PreparacionDiaria).GetProperty("ProductoId").SetValue(preparacion, productoId);
+            typeof(PreparacionDiaria).GetProperty("CantidadPreparada").SetValue(preparacion, cantidadPreparada);
+            typeof(PreparacionDiaria).GetProperty("CantidadDisponible").SetValue(preparacion, cantidadDisponible);
+            typeof(PreparacionDiaria).GetProperty("ChefId").SetValue(preparacion, Guid.NewGuid());
+            typeof(PreparacionDiaria).GetProperty("FechaVencimiento").SetValue(preparacion, fechaVencimiento);
+            typeof(PreparacionDiaria).GetProperty("FechaCreacion").SetValue(preparacion, fechaCreacion);
+            typeof(PreparacionDiaria).GetProperty("FechaPreparacion").SetValue(preparacion, fechaCreacion);
+            typeof(PreparacionDiaria).GetProperty("Observaciones").SetValue(preparacion, "Observaciones");
+            typeof(PreparacionDiaria).GetProperty("Estado").SetValue(preparacion, estado);
 
             return preparacion;
         }

@@ -82,7 +82,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             _servicioPreparacionesMock
                 .Setup(s => s.VerificarDisponibilidadAsync(
                     It.Is<Guid>(id => id == productoId), 
-                    It.Is<int>(c => c == cantidad)))
+                    It.Is<int>(c => c == cantidad),
+                    It.IsAny<Guid?>()))
                 .ReturnsAsync(Result<bool>.Success(true));
 
             _servicioPreparacionesMock
@@ -124,7 +125,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             _servicioPreparacionesMock
                 .Setup(s => s.VerificarDisponibilidadAsync(
                     It.Is<Guid>(id => id == productoId), 
-                    It.Is<int>(c => c == cantidad)))
+                    It.Is<int>(c => c == cantidad),
+                    It.IsAny<Guid?>()))
                 .ReturnsAsync(Result<bool>.Success(false));
 
             // Act
@@ -162,7 +164,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             _servicioPreparacionesMock
                 .Setup(s => s.VerificarDisponibilidadAsync(
                     It.Is<Guid>(id => id == productoId), 
-                    It.Is<int>(c => c == cantidad)))
+                    It.Is<int>(c => c == cantidad),
+                    It.IsAny<Guid?>()))
                 .ReturnsAsync(Result<bool>.Success(false));
 
             // Act
@@ -204,7 +207,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             _servicioPreparacionesMock
                 .Setup(s => s.VerificarDisponibilidadAsync(
                     It.Is<Guid>(id => id == productoId), 
-                    It.Is<int>(c => c == cantidad)))
+                    It.Is<int>(c => c == cantidad),
+                    It.IsAny<Guid?>()))
                 .ReturnsAsync(Result<bool>.Success(true));
 
             _servicioPreparacionesMock
@@ -251,7 +255,8 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             _servicioPreparacionesMock
                 .Setup(s => s.VerificarDisponibilidadAsync(
                     It.Is<Guid>(id => id == productoId), 
-                    It.Is<int>(c => c == cantidad)))
+                    It.Is<int>(c => c == cantidad),
+                    It.IsAny<Guid?>()))
                 .ReturnsAsync(Result<bool>.Success(true));
 
             _servicioPreparacionesMock

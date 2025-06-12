@@ -71,7 +71,7 @@ public interface IServicioPreparaciones
     /// </summary>
     /// <param name="horasAnticipacion">Horas de anticipación para la alerta</param>
     /// <returns>Lista de preparaciones por vencer</returns>
-    Task<Result<List<PreparacionDiaria>>> ObtenerPreparacionesPorVencerAsync(int horasAnticipacion = 2);
+    Task<Result<List<PreparacionDiaria>>> ObtenerPreparacionesPorVencerAsync(int horasAnticipacion = 2); 
 
     /// <summary>
     /// Marca una preparación como disponible para consumo

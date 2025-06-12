@@ -49,6 +49,7 @@ public class ServicioPreparaciones : IServicioPreparaciones
         _notificationManager.Require(productoId != Guid.Empty, "El ID del producto no puede estar vacío", "ProductoId");
         _notificationManager.Require(cantidad > 0, "La cantidad debe ser mayor que cero", "Cantidad");
         _notificationManager.Require(chefId != Guid.Empty, "El ID del chef no puede estar vacío", "ChefId");
+        _notificationManager.Require(fechaVencimiento > _dateTimeService.Now, "La fecha de vencimiento debe ser futura", "FechaVencimiento");
 
         if (_notificationManager.HasErrors)
         {
@@ -361,7 +362,7 @@ public class ServicioPreparaciones : IServicioPreparaciones
     }
 
     /// <summary>
-    /// Marca una preparación como disponible para uso
+    /// Marca una preparación como disponible para consumo
     /// </summary>
     public async Task<Result> MarcarComoDisponibleAsync(Guid preparacionId)
     {
@@ -409,7 +410,7 @@ public class ServicioPreparaciones : IServicioPreparaciones
     /// </summary>
     public async Task<Result> AgregarCantidadAsync(Guid preparacionId, int cantidadAdicional)
     {
-        _logger.LogInformation("Agregando cantidad a preparación: {PreparacionId}, Cantidad: {Cantidad}", 
+        _logger.LogInformation("Agregando cantidad a preparación - ID: {PreparacionId}, Cantidad: {Cantidad}", 
             preparacionId, cantidadAdicional);
 
         _notificationManager.CreateNewNotification();
@@ -472,5 +473,6 @@ public class ServicioPreparaciones : IServicioPreparaciones
         }
     }
 } 
+
 
 

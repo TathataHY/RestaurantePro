@@ -12,6 +12,7 @@ using RestaurantePro.Application.Operaciones.Preparaciones.DTOs;
 using RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerPreparacionesDelDia;
 using RestaurantePro.Domain.Core.Base.Services;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
 using Xunit;
 using MockQueryable.Moq;
 
@@ -52,27 +53,28 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Preparaciones.Queries
             // Crear una lista de preparaciones de prueba
             var preparaciones = new List<PreparacionDiaria>
             {
-                PreparacionDiaria.Crear(
+                // Usamos reflection para evitar la validación de fecha de vencimiento
+                CreatePreparacionDirectly(
                     Guid.NewGuid(), 
                     10, 
                     Guid.NewGuid(), 
                     fechaActual.AddDays(1), // Fecha futura
                     "Observaciones 1",
                     fechaActual),
-                PreparacionDiaria.Crear(
+                CreatePreparacionDirectly(
                     Guid.NewGuid(), 
                     15, 
                     Guid.NewGuid(), 
                     fechaActual.AddDays(2), // Fecha futura
                     "Observaciones 2",
                     fechaActual.AddDays(-1)), // Esta fue creada ayer
-                PreparacionDiaria.Crear(
+                CreatePreparacionDirectly(
                     Guid.NewGuid(), 
                     20, 
                     Guid.NewGuid(), 
                     fechaActual.AddDays(3), // Fecha futura
                     "Observaciones 3",
-                    fechaActual), // Esta fue creada hoy
+                    fechaActual) // Esta fue creada hoy
             };
 
             // Configurar el DbSet mock con los datos de prueba
@@ -110,6 +112,34 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Preparaciones.Queries
             Assert.Equal(2, result.Count); // Solo 2 preparaciones fueron creadas hoy
             _contextMock.Verify(c => c.Preparaciones, Times.AtLeastOnce);
             _mapperMock.Verify(m => m.Map<List<PreparacionDto>>(It.IsAny<List<PreparacionDiaria>>()), Times.Once);
+        }
+
+        private PreparacionDiaria CreatePreparacionDirectly(
+            Guid productoId,
+            int cantidad,
+            Guid chefId,
+            DateTime fechaVencimiento,
+            string observaciones,
+            DateTime fechaCreacion)
+        {
+            // Crear una instancia privada sin usar el constructor público
+            var preparacion = (PreparacionDiaria)Activator.CreateInstance(
+                typeof(PreparacionDiaria), 
+                true);
+
+            // Establecer las propiedades mediante reflection
+            typeof(PreparacionDiaria).GetProperty("Id").SetValue(preparacion, Guid.NewGuid());
+            typeof(PreparacionDiaria).GetProperty("ProductoId").SetValue(preparacion, productoId);
+            typeof(PreparacionDiaria).GetProperty("CantidadPreparada").SetValue(preparacion, cantidad);
+            typeof(PreparacionDiaria).GetProperty("CantidadDisponible").SetValue(preparacion, cantidad);
+            typeof(PreparacionDiaria).GetProperty("ChefId").SetValue(preparacion, chefId);
+            typeof(PreparacionDiaria).GetProperty("FechaVencimiento").SetValue(preparacion, fechaVencimiento);
+            typeof(PreparacionDiaria).GetProperty("FechaCreacion").SetValue(preparacion, fechaCreacion);
+            typeof(PreparacionDiaria).GetProperty("FechaPreparacion").SetValue(preparacion, fechaCreacion);
+            typeof(PreparacionDiaria).GetProperty("Observaciones").SetValue(preparacion, observaciones);
+            typeof(PreparacionDiaria).GetProperty("Estado").SetValue(preparacion, EstadoPreparacion.Disponible);
+
+            return preparacion;
         }
     }
 } 
