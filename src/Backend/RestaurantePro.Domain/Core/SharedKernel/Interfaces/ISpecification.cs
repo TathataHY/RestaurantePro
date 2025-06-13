@@ -1,3 +1,6 @@
+using System;
+using System.Linq.Expressions;
+
 namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
 {
     /// <summary>

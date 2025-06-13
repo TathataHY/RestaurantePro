@@ -9,7 +9,7 @@ using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Domain.Proveedores.Entities;
 using RestaurantePro.Domain.Proveedores.Interfaces;
 using RestaurantePro.Domain.Proveedores.Results;
-using RestaurantePro.Infrastructure.Persistence.Base;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores

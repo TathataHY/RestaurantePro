@@ -10,31 +10,104 @@ using RestaurantePro.Domain.Comercial.Clientes.Enums;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Domain.Comercial.Facturacion.Entities;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Base;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Infrastructure.Persistence.Specifications;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
 {
     public class ClienteRepository : Repository<Cliente>, IClienteRepository
     {
-        private readonly RestauranteProDbContext _dbContext;
+        private new readonly DbContext _dbContext;
 
-        public ClienteRepository(RestauranteProDbContext context, ILogger<ClienteRepository> logger) 
-            : base(context, logger)
+        public ClienteRepository(DbContext dbContext, ILogger<ClienteRepository> logger)
+            : base(dbContext, logger)
         {
-            _dbContext = context;
+            _dbContext = dbContext;
         }
 
-        public new async Task<Cliente?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public override async Task<Cliente?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _dbContext.Set<Cliente>()
-                .FindAsync(new object[] { id }, cancellationToken);
+            return await _dbSet
+                .Include(c => c.TarjetaFidelizacion)
+                .FirstOrDefaultAsync(c => c.Id == id && c.Activo, cancellationToken);
         }
 
         public async Task<Cliente?> ObtenerPorEmailAsync(string email, CancellationToken cancellationToken = default)
         {
-            return await _dbContext.Set<Cliente>()
-                .FirstOrDefaultAsync(c => c.Email == email, cancellationToken);
+            return await _dbSet
+                .Include(c => c.TarjetaFidelizacion)
+                .FirstOrDefaultAsync(c => c.Email == email && c.Activo, cancellationToken);
+        }
+
+        public async Task<Cliente?> ObtenerPorTelefonoAsync(string telefono, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Include(c => c.TarjetaFidelizacion)
+                .FirstOrDefaultAsync(c => c.Telefono == telefono && c.Activo, cancellationToken);
+        }
+
+        public async Task<IEnumerable<Cliente>> ObtenerClientesFrecuentesAsync(int cantidad = 10, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Include(c => c.TarjetaFidelizacion)
+                .Where(c => c.Activo && c.TarjetaFidelizacion != null)
+                .OrderByDescending(c => c.TarjetaFidelizacion.PuntosAcumulados)
+                .Take(cantidad)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<(IEnumerable<Cliente> Items, int Total)> ObtenerPaginadoAsync(
+            int pagina, 
+            int elementosPorPagina, 
+            CancellationToken cancellationToken = default)
+        {
+            var query = _dbSet.AsQueryable();
+            
+            // Aplicar filtros
+            query = query.Where(c => c.Activo);
+            
+            // Contar total
+            var total = await query.CountAsync(cancellationToken);
+            
+            // Paginar resultados
+            var clientes = await query
+                .OrderBy(c => c.Nombre)
+                .Skip(pagina * elementosPorPagina)
+                .Take(elementosPorPagina)
+                .ToListAsync(cancellationToken);
+            
+            return (Items: clientes, Total: total);
+        }
+
+        // Implementación explícita para la interfaz específica
+        async Task<(IEnumerable<Cliente> Clientes, int Total)> IClienteRepository.ObtenerPaginadoAsync(
+            int pagina, 
+            int elementosPorPagina, 
+            CancellationToken cancellationToken)
+        {
+            var result = await ObtenerPaginadoAsync(pagina, elementosPorPagina, cancellationToken);
+            return (Clientes: result.Items, Total: result.Total);
+        }
+
+        public override async Task<Cliente> AgregarAsync(Cliente entity, CancellationToken cancellationToken = default)
+        {
+            var result = await _dbSet.AddAsync(entity, cancellationToken);
+            return result.Entity;
+        }
+
+        public override async Task<IEnumerable<Cliente>> AgregarRangoAsync(IEnumerable<Cliente> entities, CancellationToken cancellationToken = default)
+        {
+            await _dbSet.AddRangeAsync(entities, cancellationToken);
+            return entities;
+        }
+
+        public async Task<IEnumerable<Cliente>> BuscarPorNombreAsync(string nombre, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Include(c => c.TarjetaFidelizacion)
+                .Where(c => c.Nombre.Contains(nombre) && c.Activo)
+                .ToListAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<Cliente>> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default)
@@ -79,20 +152,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
             return await _dbContext.Set<Cliente>()
                 .Where(c => c.PuntosAcumulados >= puntosMinimos)
                 .ToListAsync(cancellationToken);
-        }
-
-        public new async Task<(IEnumerable<Cliente> Clientes, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default)
-        {
-            var query = _dbContext.Set<Cliente>().AsQueryable();
-            
-            var total = await query.CountAsync(cancellationToken);
-            
-            var clientes = await query
-                .Skip(pagina * elementosPorPagina)
-                .Take(elementosPorPagina)
-                .ToListAsync(cancellationToken);
-                
-            return (clientes, total);
         }
 
         public async Task<IEnumerable<Cliente>> ObtenerPorRangoFechasRegistroAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default)
@@ -167,20 +226,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
             return _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public override Task<Cliente> AgregarAsync(Cliente entity, CancellationToken cancellationToken = default)
-        {
-            _dbContext.Set<Cliente>().Add(entity);
-            _dbContext.SaveChangesAsync(cancellationToken);
-            return Task.FromResult(entity);
-        }
-
-        public override Task<IEnumerable<Cliente>> AgregarRangoAsync(IEnumerable<Cliente> entities, CancellationToken cancellationToken = default)
-        {
-            _dbContext.Set<Cliente>().AddRange(entities);
-            _dbContext.SaveChangesAsync(cancellationToken);
-            return Task.FromResult(entities);
-        }
-
         public Task<IEnumerable<Cliente>> BuscarAsync(Func<Cliente, bool> predicado, CancellationToken cancellationToken = default)
         {
             var result = _dbContext.Set<Cliente>().Where(predicado).ToList();
@@ -207,22 +252,23 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
 
         public async Task<IEnumerable<Cliente>> ObtenerPorSpecAsync(ISpecification<Cliente> spec, CancellationToken cancellationToken = default)
         {
-            return await ApplySpecification(spec).ToListAsync(cancellationToken);
+            var query = _dbContext.Set<Cliente>().AsQueryable();
+            var resultados = SpecificationEvaluator.GetQuery<Cliente>(query, spec);
+            return await resultados.ToListAsync(cancellationToken);
         }
 
         public async Task<int> ContarPorSpecAsync(ISpecification<Cliente> spec, CancellationToken cancellationToken = default)
         {
-            return await ApplySpecification(spec).CountAsync(cancellationToken);
+            var query = _dbContext.Set<Cliente>().AsQueryable();
+            var resultados = SpecificationEvaluator.GetQuery<Cliente>(query, spec);
+            return await resultados.CountAsync(cancellationToken);
         }
 
         public async Task<Cliente?> PrimeroODefaultPorSpecAsync(ISpecification<Cliente> spec, CancellationToken cancellationToken = default)
         {
-            return await ApplySpecification(spec).FirstOrDefaultAsync(cancellationToken);
-        }
-
-        private IQueryable<Cliente> ApplySpecification(ISpecification<Cliente> spec)
-        {
-            return SpecificationEvaluator<Cliente>.GetQuery(_dbContext.Set<Cliente>().AsQueryable(), spec);
+            var query = _dbContext.Set<Cliente>().AsQueryable();
+            var resultados = SpecificationEvaluator.GetQuery<Cliente>(query, spec);
+            return await resultados.FirstOrDefaultAsync(cancellationToken);
         }
     }
 } 

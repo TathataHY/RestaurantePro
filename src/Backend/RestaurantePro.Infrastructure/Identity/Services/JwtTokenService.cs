@@ -3,7 +3,6 @@ using Microsoft.IdentityModel.Tokens;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Infrastructure.Identity.Configuration;
-using RestaurantePro.Infrastructure.Identity.Models;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -22,15 +21,15 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             _jwtConfig = jwtConfig.Value;
         }
 
-        public JwtTokenResponse GenerateToken(ApplicationUser user, IList<string> roles)
+        public JwtTokenResponse GenerateToken(string userId, string userName, string email, IList<string> roles)
         {
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Sub, userId),
+                new Claim(JwtRegisteredClaimNames.Email, email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim("uid", user.Id)
+                new Claim(ClaimTypes.Name, userName),
+                new Claim("uid", userId)
             };
 
             // Agregar roles como claims
@@ -51,16 +50,20 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 signingCredentials: creds
             );
 
-            var refreshToken = GenerateRefreshToken();
-            var refreshTokenExpiryTime = DateTime.UtcNow.AddDays(_jwtConfig.RefreshTokenExpirationInDays);
+            var tokenHandler = new JwtSecurityTokenHandler();
 
             return new JwtTokenResponse
             {
-                Token = new JwtSecurityTokenHandler().WriteToken(token),
-                RefreshToken = refreshToken,
-                Expiration = expires,
-                RefreshTokenExpiration = refreshTokenExpiryTime
+                AccessToken = tokenHandler.WriteToken(token),
+                ExpiresIn = (int)TimeSpan.FromMinutes(_jwtConfig.ExpirationInMinutes).TotalSeconds,
+                RequiresRefresh = _jwtConfig.RefreshTokenExpirationInDays > 0
             };
+        }
+
+        // Método interno para usar con IdentityApplicationUser
+        internal JwtTokenResponse GenerateToken(IdentityApplicationUser user, IList<string> roles)
+        {
+            return GenerateToken(user.Id, user.UserName, user.Email, roles);
         }
 
         public string GenerateRefreshToken()

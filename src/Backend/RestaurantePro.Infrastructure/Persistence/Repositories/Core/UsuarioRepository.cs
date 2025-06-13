@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Domain.Core.Usuarios.Entities;
 using RestaurantePro.Domain.Core.Usuarios.Enums;
 using RestaurantePro.Domain.Core.Usuarios.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Base;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System;
 using System.Collections.Generic;

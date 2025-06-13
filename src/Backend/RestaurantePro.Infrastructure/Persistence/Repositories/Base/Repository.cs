@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +14,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 /// Implementación base de repositorio genérico
 /// </summary>
 /// <typeparam name="T">Tipo de entidad</typeparam>
-public class Repository<T> where T : class
+public class Repository<T> : IRepository<T> where T : class
 {
     protected readonly DbContext _dbContext;
     protected readonly DbSet<T> _dbSet;
@@ -45,17 +46,15 @@ public class Repository<T> where T : class
     /// <summary>
     /// Agrega una nueva entidad
     /// </summary>
-    public virtual async Task<T> AgregarAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual async Task AgregarAsync(T entity, CancellationToken cancellationToken = default)
     {
-        var result = await _dbSet.AddAsync(entity, cancellationToken);
-        return result.Entity;
+        await _dbSet.AddAsync(entity, cancellationToken);
     }
 
     /// <inheritdoc />
-    public virtual async Task<IEnumerable<T>> AgregarRangoAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+    public virtual async Task AgregarRangoAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
     {
         await _dbSet.AddRangeAsync(entities, cancellationToken);
-        return entities;
     }
 
     /// <summary>
@@ -141,5 +140,44 @@ public class Repository<T> where T : class
     public virtual async Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default)
     {
         return await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public Task<IEnumerable<T>> BuscarAsync(Func<T, bool> predicado, CancellationToken cancellationToken = default)
+    {
+        var result = _dbSet.Where(predicado).ToList();
+        return Task.FromResult<IEnumerable<T>>(result);
+    }
+
+    public Task<bool> ExisteAsync(Func<T, bool> predicado, CancellationToken cancellationToken = default)
+    {
+        var result = _dbSet.Any(predicado);
+        return Task.FromResult(result);
+    }
+
+    public Task<int> ContarAsync(Func<T, bool> predicado, CancellationToken cancellationToken = default)
+    {
+        var result = _dbSet.Count(predicado);
+        return Task.FromResult(result);
+    }
+
+    public Task<T?> PrimeroODefaultAsync(Func<T, bool> predicado, CancellationToken cancellationToken = default)
+    {
+        var result = _dbSet.FirstOrDefault(predicado);
+        return Task.FromResult(result);
+    }
+
+    public async Task<IEnumerable<T>> ObtenerPorSpecAsync(ISpecification<T> specification, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet.Where(specification.ToExpression()).ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> ContarPorSpecAsync(ISpecification<T> specification, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet.CountAsync(specification.ToExpression(), cancellationToken);
+    }
+
+    public async Task<T?> PrimeroODefaultPorSpecAsync(ISpecification<T> specification, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet.FirstOrDefaultAsync(specification.ToExpression(), cancellationToken);
     }
 } 

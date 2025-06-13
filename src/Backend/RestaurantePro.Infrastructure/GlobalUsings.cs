@@ -28,9 +28,9 @@ global using RestaurantePro.Application.Common.Models;
 
 // Domain - Base
 global using RestaurantePro.Domain.Core.Base;
-global using RestaurantePro.Domain.Core.Base.Entities;
 global using RestaurantePro.Domain.Core.Base.Events;
 global using RestaurantePro.Domain.Core.Base.Interfaces;
+global using RestaurantePro.Domain.Core.Base.Services;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Results;
 
@@ -74,17 +74,14 @@ global using RestaurantePro.Domain.Proveedores.Interfaces;
 global using RestaurantePro.Infrastructure.Identity.Models;
 global using RestaurantePro.Infrastructure.Persistence.Contexts;
 global using RestaurantePro.Infrastructure.Persistence.Interceptors;
-global using RestaurantePro.Infrastructure.Persistence.Base;
+global using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 global using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 global using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
 global using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 global using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
 global using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
-global using RestaurantePro.Infrastructure.Services;
-
-// Domain Entities - Para el DbContext
-global using RestaurantePro.Domain.Entities;
 
 // Alias para resolver ambigüedad
+// Alias para tipos que pueden generar ambigüedades
 global using IdentityApplicationUser = RestaurantePro.Infrastructure.Identity.Models.ApplicationUser;
 global using DomainApplicationUser = RestaurantePro.Domain.Core.Usuarios.Entities.ApplicationUser; 

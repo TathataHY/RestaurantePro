@@ -12,7 +12,7 @@ using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 using RestaurantePro.Domain.Proveedores.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Base;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
@@ -55,7 +55,6 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
 
             // Registrar servicio de fecha y hora
             var dateTimeService = new DateTimeService();
-            services.AddSingleton<IDateTime>(dateTimeService);
             services.AddSingleton<IDateTimeService>(dateTimeService);
 
             return services;
@@ -140,27 +139,5 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             
             return services;
         }
-    }
-
-    /// <summary>
-    /// Servicio para proporcionar información de fecha y hora
-    /// Implementa tanto IDateTime (Application) como IDateTimeService (Domain)
-    /// </summary>
-    public class DateTimeService : IDateTime, IDateTimeService
-    {
-        /// <summary>
-        /// Fecha y hora actuales del sistema
-        /// </summary>
-        public DateTime Now => DateTime.Now;
-        
-        /// <summary>
-        /// Fecha actual del sistema (sin hora)
-        /// </summary>
-        public DateTime Today => DateTime.Today;
-        
-        /// <summary>
-        /// Fecha y hora actuales del sistema en UTC
-        /// </summary>
-        public DateTime UtcNow => DateTime.UtcNow;
     }
 } 

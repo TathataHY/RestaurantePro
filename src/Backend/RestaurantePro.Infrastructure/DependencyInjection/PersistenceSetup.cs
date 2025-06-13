@@ -9,7 +9,7 @@ using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Interceptors;
-using RestaurantePro.Infrastructure.Persistence.Base;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
@@ -33,12 +33,21 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<SoftDeleteInterceptor>();
 
             // Configuración de la base de datos
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
-            
-            services.AddDbContext<RestauranteProDbContext>(options =>
+            services.AddDbContext<RestauranteProDbContext>((sp, options) =>
+            {
                 options.UseSqlServer(
-                    connectionString,
-                    b => b.MigrationsAssembly(typeof(RestauranteProDbContext).Assembly.FullName)));
+                    configuration.GetConnectionString("DefaultConnection"),
+                    sqlOptions =>
+                    {
+                        sqlOptions.MigrationsAssembly(typeof(RestauranteProDbContext).Assembly.FullName);
+                        sqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+                    });
+
+                // Agregar interceptores
+                options.AddInterceptors(
+                    sp.GetRequiredService<AuditableEntityInterceptor>(),
+                    sp.GetRequiredService<SoftDeleteInterceptor>());
+            });
 
             // Registrar interfaces de aplicación
             services.AddScoped<IApplicationDbContext>(provider => 

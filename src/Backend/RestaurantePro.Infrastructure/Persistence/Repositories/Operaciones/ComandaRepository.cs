@@ -9,8 +9,7 @@ using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Domain.Operaciones.Comandas.Entities;
 using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
-using RestaurantePro.Domain.Operaciones.Comandas.Repositories;
-using RestaurantePro.Infrastructure.Persistence.Base;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones

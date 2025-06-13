@@ -23,7 +23,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddSingleton<IConfigureOptions<JwtConfiguration>, JwtConfigurationSetup>();
 
             // Configurar Identity
-            services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            services.AddIdentity<IdentityApplicationUser, IdentityRole>(options =>
             {
                 // Configuración de contraseñas
                 options.Password.RequireDigit = true;
@@ -40,7 +40,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
                 // Configuración de usuario
                 options.User.RequireUniqueEmail = true;
             })
-            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddEntityFrameworkStores<RestauranteProDbContext>()
             .AddDefaultTokenProviders();
 
             // Configurar autenticación JWT
@@ -71,7 +71,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             // Registrar servicios de Identity
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IIdentityService, IdentityService>();
-            services.AddScoped<IPermissionService, PermissionService>();
+            services.AddScoped<IUserPermissionService, PermissionService>();
 
             return services;
         }

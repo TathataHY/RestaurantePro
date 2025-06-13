@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Common.Models;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
 using RestaurantePro.Infrastructure.Identity.Models;
 using System;
 using System.Collections.Generic;
@@ -10,22 +11,149 @@ using System.Threading.Tasks;
 
 namespace RestaurantePro.Infrastructure.Identity.Services
 {
-    public class PermissionService : IPermissionService
+    public class PermissionService : IUserPermissionService
     {
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly UserManager<IdentityApplicationUser> _userManager;
 
         public PermissionService(
             RoleManager<IdentityRole> roleManager,
-            UserManager<ApplicationUser> userManager)
+            UserManager<IdentityApplicationUser> userManager)
         {
             _roleManager = roleManager;
             _userManager = userManager;
         }
 
+        public async Task<bool> UsuarioTienePermisoAsync(Guid usuarioId, string permiso)
+        {
+            // Implementación básica - en un escenario real, verificaríamos permisos específicos
+            var user = await _userManager.FindByIdAsync(usuarioId.ToString());
+            if (user == null)
+            {
+                return false;
+            }
+
+            // Verificar si el usuario es administrador (tiene todos los permisos)
+            var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+            if (isAdmin)
+            {
+                return true;
+            }
+
+            // Obtener roles del usuario
+            var roles = await _userManager.GetRolesAsync(user);
+            
+            // Verificar si algún rol tiene el permiso
+            foreach (var role in roles)
+            {
+                var roleClaims = await _roleManager.GetClaimsAsync(await _roleManager.FindByNameAsync(role));
+                if (roleClaims.Any(c => c.Type == "Permission" && c.Value == permiso))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public async Task<bool> UsuarioTieneRolAsync(Guid usuarioId, string rol)
+        {
+            var user = await _userManager.FindByIdAsync(usuarioId.ToString());
+            if (user == null)
+            {
+                return false;
+            }
+
+            return await _userManager.IsInRoleAsync(user, rol);
+        }
+
+        public async Task<bool> UsuarioTieneNivelAccesoAsync(Guid usuarioId, int nivelRequerido)
+        {
+            // Implementación básica - en un escenario real, cada rol tendría un nivel de acceso
+            var user = await _userManager.FindByIdAsync(usuarioId.ToString());
+            if (user == null)
+            {
+                return false;
+            }
+
+            // Asignamos niveles ficticios a roles comunes
+            var roles = await _userManager.GetRolesAsync(user);
+            
+            int nivelMaximo = 0;
+            
+            foreach (var role in roles)
+            {
+                int nivelRol = role.ToLower() switch
+                {
+                    "admin" => 10,
+                    "manager" => 8,
+                    "supervisor" => 6,
+                    "employee" => 4,
+                    "user" => 2,
+                    _ => 1
+                };
+                
+                nivelMaximo = Math.Max(nivelMaximo, nivelRol);
+            }
+            
+            return nivelMaximo >= nivelRequerido;
+        }
+
+        public async Task<List<string>> ObtenerPermisosUsuarioAsync(Guid usuarioId)
+        {
+            var user = await _userManager.FindByIdAsync(usuarioId.ToString());
+            if (user == null)
+            {
+                return new List<string>();
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var permisos = new List<string>();
+            
+            foreach (var role in roles)
+            {
+                var roleClaims = await _roleManager.GetClaimsAsync(await _roleManager.FindByNameAsync(role));
+                permisos.AddRange(roleClaims
+                    .Where(c => c.Type == "Permission")
+                    .Select(c => c.Value));
+            }
+            
+            return permisos.Distinct().ToList();
+        }
+
+        public Task<List<Guid>> ObtenerSubordinadosAsync(Guid supervisorId)
+        {
+            // Implementación simulada - en un escenario real, consultaríamos la estructura organizacional
+            return Task.FromResult(new List<Guid>());
+        }
+
+        public Task<bool> PuedeSupervisarAsync(Guid supervisorId, Guid subordinadoId)
+        {
+            // Implementación simulada - en un escenario real, verificaríamos la jerarquía organizacional
+            return Task.FromResult(true);
+        }
+
+        public Task<List<Guid>> ObtenerUsuariosMismoDepartamentoAsync(Guid usuarioId)
+        {
+            // Implementación simulada - en un escenario real, consultaríamos la estructura organizacional
+            return Task.FromResult(new List<Guid>());
+        }
+
+        public async Task<bool> EsAdministradorAsync(Guid usuarioId)
+        {
+            var user = await _userManager.FindByIdAsync(usuarioId.ToString());
+            if (user == null)
+            {
+                return false;
+            }
+
+            return await _userManager.IsInRoleAsync(user, "Admin");
+        }
+
+        // Métodos internos para gestión de roles y permisos
         public async Task<Result<List<RoleDto>>> GetRolesAsync()
         {
-            var roles = _roleManager.Roles.OrderBy(r => r.Name).ToList();
+            var roles = await Task.FromResult(_roleManager.Roles.ToList());
             var roleDtos = new List<RoleDto>();
 
             foreach (var role in roles)
@@ -44,7 +172,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 });
             }
 
-            return Result<List<RoleDto>>.Success(roleDtos);
+            return Result.Success<List<RoleDto>>(roleDtos);
         }
 
         public async Task<Result<RoleDto>> GetRoleByIdAsync(string id)
@@ -52,7 +180,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             var role = await _roleManager.FindByIdAsync(id);
             if (role == null)
             {
-                return Result<RoleDto>.Failure(new List<string> { "Rol no encontrado" });
+                return Result.Failure<RoleDto>(new List<string> { "Rol no encontrado" });
             }
 
             var claims = await _roleManager.GetClaimsAsync(role);
@@ -61,19 +189,23 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 .Select(c => c.Value)
                 .ToList();
 
-            return Result<RoleDto>.Success(new RoleDto
+            var roleDto = new RoleDto
             {
                 Id = role.Id,
                 Name = role.Name,
                 Permissions = permissions
-            });
+            };
+
+            return Result.Success<RoleDto>(roleDto);
         }
 
         public async Task<Result<string>> CreateRoleAsync(string name, List<string> permissions)
         {
-            if (await _roleManager.RoleExistsAsync(name))
+            // Verificar que el nombre no esté en uso
+            var existingRole = await _roleManager.FindByNameAsync(name);
+            if (existingRole != null)
             {
-                return Result<string>.Failure(new List<string> { "Ya existe un rol con este nombre" });
+                return Result.Failure<string>(new List<string> { "Ya existe un rol con este nombre" });
             }
 
             var role = new IdentityRole(name);
@@ -81,34 +213,31 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
             if (!result.Succeeded)
             {
-                return Result<string>.Failure(result.Errors.Select(e => e.Description).ToList());
+                return Result.Failure<string>(result.Errors.Select(e => e.Description).ToList());
             }
 
-            // Asignar permisos
-            if (permissions != null && permissions.Count > 0)
+            // Agregar permisos
+            foreach (var permission in permissions)
             {
-                foreach (var permission in permissions)
-                {
-                    await _roleManager.AddClaimAsync(role, new Claim(CustomClaimTypes.Permission, permission));
-                }
+                await _roleManager.AddClaimAsync(role, new Claim(CustomClaimTypes.Permission, permission));
             }
 
-            return Result<string>.Success(role.Id);
+            return Result.Success<string>(role.Id);
         }
 
-        public async Task<Result> UpdateRoleAsync(string id, string name, List<string> permissions)
+        public async Task<Result<string>> UpdateRoleAsync(string id, string name, List<string> permissions)
         {
             var role = await _roleManager.FindByIdAsync(id);
             if (role == null)
             {
-                return Result.Failure(new List<string> { "Rol no encontrado" });
+                return Result.Failure<string>(new List<string> { "Rol no encontrado" });
             }
 
             // Verificar que el nombre no esté en uso por otro rol
             var existingRole = await _roleManager.FindByNameAsync(name);
             if (existingRole != null && existingRole.Id != id)
             {
-                return Result.Failure(new List<string> { "Ya existe un rol con este nombre" });
+                return Result.Failure<string>(new List<string> { "Ya existe un rol con este nombre" });
             }
 
             role.Name = name;
@@ -116,29 +245,23 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
             if (!result.Succeeded)
             {
-                return Result.Failure(result.Errors.Select(e => e.Description).ToList());
+                return Result.Failure<string>(result.Errors.Select(e => e.Description).ToList());
             }
 
-            // Actualizar permisos
+            // Eliminar permisos existentes
             var claims = await _roleManager.GetClaimsAsync(role);
-            var permissionClaims = claims.Where(c => c.Type == CustomClaimTypes.Permission).ToList();
-
-            // Eliminar permisos actuales
-            foreach (var claim in permissionClaims)
+            foreach (var claim in claims.Where(c => c.Type == CustomClaimTypes.Permission))
             {
                 await _roleManager.RemoveClaimAsync(role, claim);
             }
 
             // Agregar nuevos permisos
-            if (permissions != null && permissions.Count > 0)
+            foreach (var permission in permissions)
             {
-                foreach (var permission in permissions)
-                {
-                    await _roleManager.AddClaimAsync(role, new Claim(CustomClaimTypes.Permission, permission));
-                }
+                await _roleManager.AddClaimAsync(role, new Claim(CustomClaimTypes.Permission, permission));
             }
 
-            return Result.Success();
+            return Result<string>.Success(role.Id);
         }
 
         public async Task<Result> DeleteRoleAsync(string id)
@@ -149,62 +272,14 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 return Result.Failure(new List<string> { "Rol no encontrado" });
             }
 
-            // Verificar si hay usuarios con este rol
+            // Verificar que no haya usuarios con este rol
             var users = await _userManager.GetUsersInRoleAsync(role.Name);
             if (users.Any())
             {
-                return Result.Failure(new List<string> { "No se puede eliminar el rol porque tiene usuarios asignados" });
+                return Result.Failure(new List<string> { "No se puede eliminar el rol porque hay usuarios asignados a él" });
             }
 
             var result = await _roleManager.DeleteAsync(role);
-
-            if (!result.Succeeded)
-            {
-                return Result.Failure(result.Errors.Select(e => e.Description).ToList());
-            }
-
-            return Result.Success();
-        }
-
-        public async Task<Result> AssignRoleToUserAsync(string userId, string roleId)
-        {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return Result.Failure(new List<string> { "Usuario no encontrado" });
-            }
-
-            var role = await _roleManager.FindByIdAsync(roleId);
-            if (role == null)
-            {
-                return Result.Failure(new List<string> { "Rol no encontrado" });
-            }
-
-            var result = await _userManager.AddToRoleAsync(user, role.Name);
-
-            if (!result.Succeeded)
-            {
-                return Result.Failure(result.Errors.Select(e => e.Description).ToList());
-            }
-
-            return Result.Success();
-        }
-
-        public async Task<Result> RemoveRoleFromUserAsync(string userId, string roleId)
-        {
-            var user = await _userManager.FindByIdAsync(userId);
-            if (user == null)
-            {
-                return Result.Failure(new List<string> { "Usuario no encontrado" });
-            }
-
-            var role = await _roleManager.FindByIdAsync(roleId);
-            if (role == null)
-            {
-                return Result.Failure(new List<string> { "Rol no encontrado" });
-            }
-
-            var result = await _userManager.RemoveFromRoleAsync(user, role.Name);
 
             if (!result.Succeeded)
             {
@@ -219,7 +294,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
-                return Result<List<string>>.Failure(new List<string> { "Usuario no encontrado" });
+                return Result.Failure<List<string>>(new List<string> { "Usuario no encontrado" });
             }
 
             var roles = await _userManager.GetRolesAsync(user);
@@ -231,15 +306,59 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 if (role != null)
                 {
                     var claims = await _roleManager.GetClaimsAsync(role);
-                    var rolePermissions = claims
+                    permissions.AddRange(claims
                         .Where(c => c.Type == CustomClaimTypes.Permission)
-                        .Select(c => c.Value);
-
-                    permissions.AddRange(rolePermissions);
+                        .Select(c => c.Value));
                 }
             }
 
             return Result<List<string>>.Success(permissions.Distinct().ToList());
+        }
+
+        public async Task<Result> AddUserToRoleAsync(string userId, string roleName)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return Result.Failure(new List<string> { "Usuario no encontrado" });
+            }
+
+            if (!await _roleManager.RoleExistsAsync(roleName))
+            {
+                return Result.Failure(new List<string> { $"El rol '{roleName}' no existe" });
+            }
+
+            var result = await _userManager.AddToRoleAsync(user, roleName);
+
+            if (!result.Succeeded)
+            {
+                return Result.Failure(result.Errors.Select(e => e.Description).ToList());
+            }
+
+            return Result.Success();
+        }
+
+        public async Task<Result> RemoveUserFromRoleAsync(string userId, string roleName)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return Result.Failure(new List<string> { "Usuario no encontrado" });
+            }
+
+            if (!await _roleManager.RoleExistsAsync(roleName))
+            {
+                return Result.Failure(new List<string> { $"El rol '{roleName}' no existe" });
+            }
+
+            var result = await _userManager.RemoveFromRoleAsync(user, roleName);
+
+            if (!result.Succeeded)
+            {
+                return Result.Failure(result.Errors.Select(e => e.Description).ToList());
+            }
+
+            return Result.Success();
         }
     }
 

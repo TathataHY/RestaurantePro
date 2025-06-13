@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 /// <summary>
 /// Implementación del patrón Unit of Work para centralizar las transacciones
 /// </summary>
-public class UnitOfWork : IDisposable
+public class UnitOfWork : IUnitOfWork
 {
     private readonly DbContext _dbContext;
     private readonly ILogger<UnitOfWork> _logger;
@@ -22,6 +23,8 @@ public class UnitOfWork : IDisposable
         _dbContext = dbContext;
         _logger = logger;
     }
+
+    public bool TieneTransaccionActiva => _currentTransaction != null;
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -38,7 +41,16 @@ public class UnitOfWork : IDisposable
         }
     }
 
-    public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    public Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default) => 
+        SaveChangesAsync(cancellationToken);
+
+    public async Task<int> GuardarEntidadesAsync(CancellationToken cancellationToken = default)
+    {
+        // Aquí se podría implementar la publicación de eventos de dominio antes de guardar
+        return await SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
         if (_currentTransaction != null)
         {
@@ -47,8 +59,10 @@ public class UnitOfWork : IDisposable
 
         _currentTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         _logger.LogInformation("Transacción iniciada: {TransactionId}", _currentTransaction.TransactionId);
-        return _currentTransaction;
     }
+
+    public Task IniciarTransaccionAsync(CancellationToken cancellationToken = default) => 
+        BeginTransactionAsync(cancellationToken);
 
     public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
     {
@@ -74,6 +88,9 @@ public class UnitOfWork : IDisposable
         }
     }
 
+    public Task ConfirmarTransaccionAsync(CancellationToken cancellationToken = default) => 
+        CommitTransactionAsync(cancellationToken);
+
     public async Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
     {
         if (_currentTransaction == null)
@@ -90,6 +107,69 @@ public class UnitOfWork : IDisposable
         {
             _currentTransaction?.Dispose();
             _currentTransaction = null;
+        }
+    }
+
+    public Task RevertirTransaccionAsync(CancellationToken cancellationToken = default) => 
+        RollbackTransactionAsync(cancellationToken);
+
+    public async Task EjecutarEnTransaccionAsync(Func<Task> accion, CancellationToken cancellationToken = default)
+    {
+        var transaccionIniciada = false;
+        
+        try
+        {
+            if (_currentTransaction == null)
+            {
+                await BeginTransactionAsync(cancellationToken);
+                transaccionIniciada = true;
+            }
+
+            await accion();
+
+            if (transaccionIniciada)
+            {
+                await CommitTransactionAsync(cancellationToken);
+            }
+        }
+        catch
+        {
+            if (transaccionIniciada && _currentTransaction != null)
+            {
+                await RollbackTransactionAsync(cancellationToken);
+            }
+            throw;
+        }
+    }
+
+    public async Task<TResultado> EjecutarEnTransaccionAsync<TResultado>(Func<Task<TResultado>> funcion, CancellationToken cancellationToken = default)
+    {
+        var transaccionIniciada = false;
+        
+        try
+        {
+            if (_currentTransaction == null)
+            {
+                await BeginTransactionAsync(cancellationToken);
+                transaccionIniciada = true;
+            }
+
+            var resultado = await funcion();
+
+            if (transaccionIniciada)
+            {
+                await CommitTransactionAsync(cancellationToken);
+            }
+
+            return resultado;
+        }
+        catch
+        {
+            if (transaccionIniciada && _currentTransaction != null)
+            {
+                await RollbackTransactionAsync(cancellationToken);
+            }
+            throw;
         }
     }
 

@@ -12,13 +12,13 @@ namespace RestaurantePro.Infrastructure
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             // Configurar servicios de infraestructura
-            services.AddInfrastructureServices(configuration);
+            InfrastructureServiceCollectionExtensions.AddInfrastructureServices(services, configuration);
 
             // Configurar identidad
-            services.AddIdentityServices(configuration);
+            IdentitySetup.AddIdentityServices(services, configuration);
 
             // Configurar servicios externos
-            services.AddExternalServices(configuration);
+            InfrastructureServiceCollectionExtensions.AddExternalServices(services, configuration);
 
             return services;
         }

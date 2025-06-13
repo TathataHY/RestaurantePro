@@ -5,13 +5,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Base;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
@@ -177,32 +177,37 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             return mesasPosibles.Except(mesasReservadas);
         }
 
-        public override async Task<(IEnumerable<Reservacion> Items, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default)
+        public async Task<(IEnumerable<Reservacion> Items, int Total)> ObtenerPaginadoAsync(
+            int pagina, 
+            int elementosPorPagina, 
+            CancellationToken cancellationToken = default)
         {
             var query = _dbSet.AsQueryable();
             
+            // Aplicar filtros
+            query = query.Where(r => r.Activo);
+            
+            // Contar total
             var total = await query.CountAsync(cancellationToken);
             
+            // Paginar resultados
             var reservaciones = await query
+                .OrderByDescending(r => r.FechaReservacion)
                 .Skip(pagina * elementosPorPagina)
                 .Take(elementosPorPagina)
                 .ToListAsync(cancellationToken);
-                
+            
             return (Items: reservaciones, Total: total);
         }
-
-        public async Task<(IEnumerable<Reservacion> Reservaciones, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default)
+        
+        // Implementación explícita para la interfaz específica
+        async Task<(IEnumerable<Reservacion> Reservaciones, int Total)> IReservacionRepository.ObtenerPaginadoAsync(
+            int pagina, 
+            int elementosPorPagina, 
+            CancellationToken cancellationToken)
         {
-            var query = _dbSet.AsQueryable();
-            
-            var total = await query.CountAsync(cancellationToken);
-            
-            var reservaciones = await query
-                .Skip(pagina * elementosPorPagina)
-                .Take(elementosPorPagina)
-                .ToListAsync(cancellationToken);
-                
-            return (Reservaciones: reservaciones, Total: total);
+            var result = await ObtenerPaginadoAsync(pagina, elementosPorPagina, cancellationToken);
+            return (Reservaciones: result.Items, Total: result.Total);
         }
 
         public async Task<Dictionary<DateTime, int>> ObtenerEstadisticasPorDiaAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default)

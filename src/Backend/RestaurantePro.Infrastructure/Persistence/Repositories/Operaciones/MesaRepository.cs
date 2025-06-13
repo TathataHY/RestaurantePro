@@ -5,11 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Base;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones

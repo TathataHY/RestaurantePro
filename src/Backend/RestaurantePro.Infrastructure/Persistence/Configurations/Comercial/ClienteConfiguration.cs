@@ -21,12 +21,12 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         // Configurar el valor objeto Nombre como propiedad de navegación poseída
         builder.OwnsOne(p => p.Nombre, nombre =>
         {
-            nombre.Property(n => n.Nombres)
+            nombre.Property(n => n.Nombre)
                 .HasColumnName("Nombres")
                 .IsRequired()
                 .HasMaxLength(100);
                 
-            nombre.Property(n => n.Apellidos)
+            nombre.Property(n => n.Apellido)
                 .HasColumnName("Apellidos")
                 .IsRequired()
                 .HasMaxLength(100);

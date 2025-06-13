@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Domain.Core.Productos.Entities;
 using RestaurantePro.Domain.Core.Productos.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Base;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using System;
 using System.Collections.Generic;
 using System.Linq;
