@@ -105,12 +105,16 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
 
         public async Task<ItemComanda?> ObtenerItemPorIdAsync(Guid itemId, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.FindAsync(new object[] { itemId }, cancellationToken);
+            // Buscar el ItemComanda en su propio DbSet o recuperándolo desde Comandas
+            return await _dbContext.Set<ItemComanda>().FindAsync(new object[] { itemId }, cancellationToken);
         }
 
         public async Task<IEnumerable<ItemComanda>> ObtenerItemsPorProductoAsync(Guid productoId, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.Where(i => i.ProductoId == productoId).ToListAsync(cancellationToken);
+            // Obtener directamente desde el DbSet de ItemComanda
+            return await _dbContext.Set<ItemComanda>()
+                .Where(i => i.ProductoId == productoId)
+                .ToListAsync(cancellationToken);
         }
 
         public async Task<(IEnumerable<Comanda> Comandas, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, bool incluirItems = false, CancellationToken cancellationToken = default)
@@ -148,11 +152,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
 
         public async Task<IEnumerable<Comanda>> ObtenerPorIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default)
         {
-            // Necesitamos unir varias tablas para encontrar comandas que incluyan un ingrediente específico
-            // Esta es una implementación simplificada que asume que hay una relación entre ItemComanda y los ingredientes
+            // Buscar comandas que tienen ítems con personalizaciones que usan este ingrediente
             return await _dbSet
                 .Include(c => c.Items)
-                .Where(c => c.Items.Any(i => i.Ingredientes.Any(ing => ing.IngredienteId == ingredienteId)))
+                    .ThenInclude(i => i.Personalizaciones)
+                .Where(c => c.Items.Any(i => i.Personalizaciones.Any(p => p.IngredienteId == ingredienteId)))
                 .ToListAsync(cancellationToken);
         }
 
@@ -182,7 +186,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         {
             return await _dbSet
                 .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.Numero == numero && c.Activo, cancellationToken);
+                .FirstOrDefaultAsync(c => c.Numero == numero && !c.EstaEliminado, cancellationToken);
         }
         
         /// <summary>
@@ -193,7 +197,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         {
             return await _dbSet
                 .Include(c => c.Items)
-                .Where(c => c.Activo && c.Estado != "Completada" && c.Estado != "Cancelada")
+                .Where(c => !c.EstaEliminado && 
+                        c.Estado != EstadoComanda.Completada && 
+                        c.Estado != EstadoComanda.Cancelada)
                 .OrderByDescending(c => c.FechaCreacion)
                 .ToListAsync(cancellationToken);
         }
@@ -204,11 +210,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         /// <param name="estado">Estado de las comandas</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de comandas en el estado indicado</returns>
-        public async Task<IEnumerable<Comanda>> ObtenerComandasPorEstadoAsync(string estado, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Comanda>> ObtenerComandasPorEstadoAsync(EstadoComanda estado, CancellationToken cancellationToken = default)
         {
             return await _dbSet
                 .Include(c => c.Items)
-                .Where(c => c.Activo && c.Estado == estado)
+                .Where(c => !c.EstaEliminado && c.Estado == estado)
                 .OrderByDescending(c => c.FechaCreacion)
                 .ToListAsync(cancellationToken);
         }
@@ -223,7 +229,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         {
             return await _dbSet
                 .Include(c => c.Items)
-                .Where(c => c.Activo && c.ClienteId == clienteId)
+                .Where(c => !c.EstaEliminado && c.ClienteId == clienteId)
                 .OrderByDescending(c => c.FechaCreacion)
                 .ToListAsync(cancellationToken);
         }
@@ -238,7 +244,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         {
             return await _dbSet
                 .Include(c => c.Items)
-                .Where(c => c.Activo && c.MesaId == mesaId)
+                .Where(c => !c.EstaEliminado && c.MesaId == mesaId)
                 .OrderByDescending(c => c.FechaCreacion)
                 .ToListAsync(cancellationToken);
         }
@@ -252,8 +258,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         public async Task<bool> ExisteComandaActivaParaMesaAsync(Guid mesaId, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .AnyAsync(c => c.Activo && c.MesaId == mesaId && 
-                         c.Estado != "Completada" && c.Estado != "Cancelada", 
+                .AnyAsync(c => !c.EstaEliminado && c.MesaId == mesaId && 
+                         c.Estado != EstadoComanda.Completada && c.Estado != EstadoComanda.Cancelada, 
                          cancellationToken);
         }
 
@@ -262,8 +268,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         public async Task<IEnumerable<Comanda>> ObtenerComandasAbiertas(bool incluirItems = false, CancellationToken cancellationToken = default)
         {
             var query = _dbSet
-                .Where(c => c.Activo && 
-                      (c.Estado == "Creada" || c.Estado == "EnProceso" || c.Estado == "Lista"));
+                .Where(c => !c.EstaEliminado && 
+                    (c.Estado == EstadoComanda.Creada || 
+                     c.Estado == EstadoComanda.EnProceso || 
+                     c.Estado == EstadoComanda.Lista));
                       
             if (incluirItems)
             {

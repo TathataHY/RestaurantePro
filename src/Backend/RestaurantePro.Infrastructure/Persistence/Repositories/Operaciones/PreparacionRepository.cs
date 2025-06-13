@@ -84,9 +84,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             var fechaLimite = fechaActual.AddHours(horasAnticipacion);
             
             return await _dbContext.Set<PreparacionDiaria>()
-                .Where(p => p.FechaVencimiento.HasValue && 
-                            p.FechaVencimiento.Value > fechaActual && 
-                            p.FechaVencimiento.Value <= fechaLimite &&
+                .Where(p => p.FechaVencimiento != null && 
+                            p.FechaVencimiento > fechaActual && 
+                            p.FechaVencimiento <= fechaLimite &&
                             p.Estado == EstadoPreparacion.Disponible)
                 .ToListAsync(cancellationToken);
         }
@@ -114,9 +114,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             // Identificar las preparaciones por vencer primero (para contarlas aparte)
             var preparacionesPorVencer = preparaciones
                 .Where(p => p.Estado == EstadoPreparacion.Disponible && 
-                           p.FechaVencimiento.HasValue &&
-                           p.FechaVencimiento.Value <= fechaActual.AddHours(5) && 
-                           p.FechaVencimiento.Value > fechaActual)
+                           p.FechaVencimiento != null &&
+                           p.FechaVencimiento <= fechaActual.AddHours(5) && 
+                           p.FechaVencimiento > fechaActual)
                 .ToList();
                 
             // Calcular estadísticas
@@ -162,7 +162,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             return await _dbSet
                 .Include(p => p.Producto)
                 .Include(p => p.DetallesPreparacion)
-                .FirstOrDefaultAsync(p => p.Id == id && p.Activo, cancellationToken);
+                .FirstOrDefaultAsync(p => p.Id == id && !p.EstaEliminado, cancellationToken);
         }
 
         public override async Task<IEnumerable<PreparacionDiaria>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
@@ -215,55 +215,51 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             return (items, total);
         }
 
-        public Task<IEnumerable<PreparacionDiaria>> BuscarAsync(
+        public new Task<IEnumerable<PreparacionDiaria>> BuscarAsync(
             Func<PreparacionDiaria, bool> predicado, CancellationToken cancellationToken = default)
         {
-            var result = _dbSet.Where(predicado).ToList();
-            return Task.FromResult<IEnumerable<PreparacionDiaria>>(result);
+            return Task.FromResult(_dbSet.Where(predicado));
         }
 
-        public Task<bool> ExisteAsync(
+        public new Task<bool> ExisteAsync(
             Func<PreparacionDiaria, bool> predicado, CancellationToken cancellationToken = default)
         {
-            var result = _dbSet.Any(predicado);
-            return Task.FromResult(result);
+            return Task.FromResult(_dbSet.Any(predicado));
         }
 
-        public Task<int> ContarAsync(
+        public new Task<int> ContarAsync(
             Func<PreparacionDiaria, bool> predicado, CancellationToken cancellationToken = default)
         {
-            var result = _dbSet.Count(predicado);
-            return Task.FromResult(result);
+            return Task.FromResult(_dbSet.Count(predicado));
         }
 
-        public Task<PreparacionDiaria?> PrimeroODefaultAsync(
+        public new Task<PreparacionDiaria?> PrimeroODefaultAsync(
             Func<PreparacionDiaria, bool> predicado, CancellationToken cancellationToken = default)
         {
-            var result = _dbSet.FirstOrDefault(predicado);
-            return Task.FromResult(result);
+            return Task.FromResult(_dbSet.FirstOrDefault(predicado));
         }
 
-        public async Task<IEnumerable<PreparacionDiaria>> ObtenerPorSpecAsync(
+        public new async Task<IEnumerable<PreparacionDiaria>> ObtenerPorSpecAsync(
             ISpecification<PreparacionDiaria> spec, CancellationToken cancellationToken = default)
         {
-            var query = _dbContext.Preparaciones.AsQueryable();
-            var resultados = SpecificationEvaluator.GetQuery<PreparacionDiaria>(query, spec);
+            var query = _dbSet.AsQueryable();
+            var resultados = SpecificationEvaluator.GetQuery(query, spec);
             return await resultados.ToListAsync(cancellationToken);
         }
 
-        public async Task<int> ContarPorSpecAsync(
+        public new async Task<int> ContarPorSpecAsync(
             ISpecification<PreparacionDiaria> spec, CancellationToken cancellationToken = default)
         {
-            var query = _dbContext.Preparaciones.AsQueryable();
-            var resultados = SpecificationEvaluator.GetQuery<PreparacionDiaria>(query, spec);
+            var query = _dbSet.AsQueryable();
+            var resultados = SpecificationEvaluator.GetQuery(query, spec);
             return await resultados.CountAsync(cancellationToken);
         }
 
-        public async Task<PreparacionDiaria?> PrimeroODefaultPorSpecAsync(
+        public new async Task<PreparacionDiaria?> PrimeroODefaultPorSpecAsync(
             ISpecification<PreparacionDiaria> spec, CancellationToken cancellationToken = default)
         {
-            var query = _dbContext.Preparaciones.AsQueryable();
-            var resultados = SpecificationEvaluator.GetQuery<PreparacionDiaria>(query, spec);
+            var query = _dbSet.AsQueryable();
+            var resultados = SpecificationEvaluator.GetQuery(query, spec);
             return await resultados.FirstOrDefaultAsync(cancellationToken);
         }
 

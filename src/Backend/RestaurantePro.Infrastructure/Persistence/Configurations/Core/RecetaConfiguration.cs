@@ -14,12 +14,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
 
             builder.HasKey(r => r.Id);
 
-            builder.Property(r => r.Nombre)
-                .IsRequired()
-                .HasMaxLength(100);
-
-            builder.Property(r => r.Descripcion)
-                .HasMaxLength(500);
+            builder.Property(r => r.ProductoId)
+                .IsRequired();
 
             builder.Property(r => r.Preparacion)
                 .IsRequired()
@@ -27,9 +23,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
                 .HasColumnName("Instrucciones");
 
             builder.Property(r => r.TiempoPreparacionMinutos)
-                .IsRequired();
-
-            builder.Property(r => r.ProductoId)
                 .IsRequired();
 
             // Relaciones
@@ -45,11 +38,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Índices
-            builder.HasIndex(r => r.Nombre);
             builder.HasIndex(r => r.ProductoId).IsUnique();
             
             // Query Filters para soft delete
-            builder.HasQueryFilter(r => r.Activo);
+            builder.HasQueryFilter(r => !r.EstaEliminado);
         }
     }
 
@@ -76,7 +68,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
 
             // Índices
             builder.HasIndex("RecetaId");
-            builder.HasIndex(ir => new { ir.IngredienteId, ir.RecetaId }).IsUnique();
+            builder.HasIndex(new[] { "IngredienteId", "RecetaId" }).IsUnique();
         }
     }
 } 

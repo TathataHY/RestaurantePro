@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
 
 namespace RestaurantePro.Infrastructure.Persistence.Configurations.Operaciones;
 
@@ -70,14 +71,14 @@ public class ItemComandaConfiguration : IEntityTypeConfiguration<ItemComanda>
         builder.HasIndex(p => p.Estado)
             .HasDatabaseName("IX_ItemsComanda_Estado");
             
-        // Configurar las personalizaciones
+        // Configurar las personalizaciones como un objeto de valor
         builder.OwnsMany(p => p.Personalizaciones, personalización =>
         {
             personalización.ToTable("PersonalizacionesItemComanda", "Operaciones");
             personalización.WithOwner().HasForeignKey("ItemComandaId");
             personalización.HasKey("Id");
             
-            personalización.Property(p => p.Tipo)
+            personalización.Property(p => p.Accion)
                 .IsRequired()
                 .HasConversion<string>();
                 
