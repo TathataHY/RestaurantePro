@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Infrastructure.Persistence;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System;
 using Xunit;
 
@@ -9,7 +10,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
     public class DatabaseFixture : IDisposable
     {
         public readonly IServiceProvider ServiceProvider;
-        public readonly ApplicationDbContext DbContext;
+        public readonly RestauranteProDbContext DbContext;
         private readonly string _databaseName;
 
         public DatabaseFixture()
@@ -18,14 +19,14 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             var services = new ServiceCollection();
 
             // Configuración de la base de datos en memoria para pruebas
-            services.AddDbContext<ApplicationDbContext>(options =>
+            services.AddDbContext<RestauranteProDbContext>(options =>
                 options.UseInMemoryDatabase(_databaseName));
 
             // Registrar servicios adicionales necesarios
             ConfigureServices(services);
 
             ServiceProvider = services.BuildServiceProvider();
-            DbContext = ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            DbContext = ServiceProvider.GetRequiredService<RestauranteProDbContext>();
 
             // Inicializar con datos de prueba
             SeedDatabase();

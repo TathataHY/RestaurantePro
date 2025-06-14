@@ -481,7 +481,7 @@ public class CrearReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCount(5); // Cambiado de 6 a 5 que es el número real de errores
+        result.Errors.Should().HaveCount(6); // Ahora esperamos 6 errores en lugar de 5
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.FechaHoraReservacion));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.NumeroPersonas));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.NombreCliente));

@@ -1,0 +1,97 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using RestaurantePro.Domain.Proveedores.Entities;
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+
+namespace RestaurantePro.Infrastructure.Persistence.Configurations.Proveedores
+{
+    /// <summary>
+    /// Configuración para la entidad Proveedor
+    /// </summary>
+    public class ProveedorConfiguration : IEntityTypeConfiguration<Proveedor>
+    {
+        /// <summary>
+        /// Configura el mapeo de la entidad Proveedor
+        /// </summary>
+        public void Configure(EntityTypeBuilder<Proveedor> builder)
+        {
+            builder.ToTable("Proveedores", "Proveedores");
+            
+            builder.HasKey(p => p.Id);
+            
+            builder.Property(p => p.Nombre)
+                .IsRequired()
+                .HasMaxLength(100);
+                
+            builder.Property(p => p.RFC)
+                .IsRequired()
+                .HasMaxLength(20);
+                
+            builder.Property(p => p.Direccion)
+                .HasMaxLength(200);
+                
+            builder.Property(p => p.Ciudad)
+                .HasMaxLength(100);
+                
+            builder.Property(p => p.Estado)
+                .HasMaxLength(100);
+                
+            builder.Property(p => p.CodigoPostal)
+                .HasMaxLength(10);
+                
+            builder.Property(p => p.Pais)
+                .HasMaxLength(100);
+                
+            builder.Property(p => p.NombreContacto)
+                .HasMaxLength(100);
+                
+            builder.Property(p => p.Telefono)
+                .HasMaxLength(20);
+                
+            // Configuración para Email como Value Object
+            builder.OwnsOne(p => p.Email, emailBuilder =>
+            {
+                emailBuilder.Property(e => e.Value)
+                    .HasColumnName("Email")
+                    .HasMaxLength(100);
+            });
+                
+            builder.Property(p => p.SitioWeb)
+                .HasMaxLength(200);
+                
+            builder.Property(p => p.Categoria)
+                .HasConversion<string>()
+                .HasMaxLength(50);
+                
+            builder.Property(p => p.CondicionesPago)
+                .HasMaxLength(200);
+                
+            builder.Property(p => p.DiasCredito);
+                
+            builder.Property(p => p.LimiteCredito)
+                .HasPrecision(18, 2);
+                
+            builder.Property(p => p.Calificacion);
+                
+            builder.Property(p => p.Observaciones)
+                .HasMaxLength(500);
+                
+            // Relación con ContactoProveedor
+            builder.HasMany(p => p.Contactos)
+                .WithOne()
+                .HasForeignKey("ProveedorId")
+                .OnDelete(DeleteBehavior.Cascade);
+                
+            // Índices
+            builder.HasIndex(p => p.Nombre)
+                .HasDatabaseName("IX_Proveedores_Nombre");
+                
+            builder.HasIndex(p => p.RFC)
+                .HasDatabaseName("IX_Proveedores_RFC")
+                .IsUnique();
+                
+            builder.HasIndex(p => p.Categoria)
+                .HasDatabaseName("IX_Proveedores_Categoria");
+        }
+    }
+} 

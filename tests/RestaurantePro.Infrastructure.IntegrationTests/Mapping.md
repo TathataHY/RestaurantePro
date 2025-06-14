@@ -41,19 +41,19 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/❌` TarjetaFidelizacionConfiguration - Configuración para la entidad TarjetaFidelización
 
 #### Operaciones
-- `❌/❌` ComandaConfiguration - Configuración para la entidad Comanda
-- `❌/❌` ReservacionConfiguration - Configuración para la entidad Reservación
-- `❌/❌` MesaConfiguration - Configuración para la entidad Mesa
-- `❌/❌` PreparacionDiariaConfiguration - Configuración para la entidad PreparaciónDiaria
+- `✅/❌` ComandaConfiguration - Configuración para la entidad Comanda
+- `✅/❌` ReservacionConfiguration - Configuración para la entidad Reservación
+- `✅/❌` MesaConfiguration - Configuración para la entidad Mesa
+- `✅/❌` PreparacionDiariaConfiguration - Configuración para la entidad PreparaciónDiaria
 
 #### Inventario
-- `❌/❌` IngredienteConfiguration - Configuración para la entidad Ingrediente
-- `❌/❌` MovimientoInventarioConfiguration - Configuración para la entidad MovimientoInventario
-- `❌/❌` OrdenCompraConfiguration - Configuración para la entidad OrdenCompra
+- `✅/❌` IngredienteConfiguration - Configuración para la entidad Ingrediente
+- `✅/❌` MovimientoInventarioConfiguration - Configuración para la entidad MovimientoInventario
+- `✅/❌` OrdenCompraConfiguration - Configuración para la entidad OrdenCompra
 
 #### Proveedores
-- `❌/❌` ProveedorConfiguration - Configuración para la entidad Proveedor
-- `❌/❌` ContactoProveedorConfiguration - Configuración para la entidad ContactoProveedor
+- `✅/❌` ProveedorConfiguration - Configuración para la entidad Proveedor
+- `✅/❌` ContactoProveedorConfiguration - Configuración para la entidad ContactoProveedor
 
 ### Repositories
 
@@ -63,29 +63,29 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 
 #### Core
 - `✅/⬜` ProductoRepository - Repositorio para la entidad Producto
-- `❌/❌` UsuarioRepository - Repositorio para la entidad Usuario
-- `❌/❌` NotificacionRepository - Repositorio para la entidad Notificación
-- `❌/❌` RecetaRepository - Repositorio para la entidad Receta
+- `✅/❌` UsuarioRepository - Repositorio para la entidad Usuario
+- `✅/❌` NotificacionRepository - Repositorio para la entidad Notificación
+- `✅/❌` RecetaRepository - Repositorio para la entidad Receta
 
 #### Comercial
-- `❌/❌` ClienteRepository - Repositorio para la entidad Cliente
-- `❌/❌` FacturaRepository - Repositorio para la entidad Factura
-- `❌/❌` TarjetaFidelizacionRepository - Repositorio para la entidad TarjetaFidelización
+- `✅/❌` ClienteRepository - Repositorio para la entidad Cliente
+- `✅/❌` FacturaRepository - Repositorio para la entidad Factura
+- `✅/❌` TarjetaFidelizacionRepository - Repositorio para la entidad TarjetaFidelización
 
 #### Operaciones
-- `❌/❌` ComandaRepository - Repositorio para la entidad Comanda
-- `❌/❌` ReservacionRepository - Repositorio para la entidad Reservación
-- `❌/❌` MesaRepository - Repositorio para la entidad Mesa
-- `❌/❌` PreparacionDiariaRepository - Repositorio para la entidad PreparaciónDiaria
+- `✅/❌` ComandaRepository - Repositorio para la entidad Comanda
+- `✅/❌` ReservacionRepository - Repositorio para la entidad Reservación
+- `✅/❌` MesaRepository - Repositorio para la entidad Mesa
+- `✅/❌` PreparacionDiariaRepository - Repositorio para la entidad PreparaciónDiaria
 
 #### Inventario
-- `❌/❌` IngredienteRepository - Repositorio para la entidad Ingrediente
-- `❌/❌` MovimientoInventarioRepository - Repositorio para la entidad MovimientoInventario
-- `❌/❌` OrdenCompraRepository - Repositorio para la entidad OrdenCompra
+- `✅/❌` IngredienteRepository - Repositorio para la entidad Ingrediente
+- `✅/❌` MovimientoInventarioRepository - Repositorio para la entidad MovimientoInventario
+- `✅/❌` OrdenCompraRepository - Repositorio para la entidad OrdenCompra
 
 #### Proveedores
-- `❌/❌` ProveedorRepository - Repositorio para la entidad Proveedor
-- `❌/❌` ContactoProveedorRepository - Repositorio para la entidad ContactoProveedor
+- `✅/❌` ProveedorRepository - Repositorio para la entidad Proveedor
+- `✅/❌` ContactoProveedorRepository - Repositorio para la entidad ContactoProveedor
 
 ## Identity
 

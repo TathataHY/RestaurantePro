@@ -1,76 +1,75 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Moq;
 using RestaurantePro.Domain.Core.Productos.Entities;
-using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Domain.Core.Productos.ValueObjects;
+using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
 using System;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Contexts;
 
-public class RestauranteProDbContextTests
+public class TestDbContextTests
 {
-    [Fact]
-    public async Task DbContext_DebeGuardarProductoCorrectamente()
+    private TestDbContext CreateTestContext()
     {
-        // Arrange
         var serviceProvider = new ServiceCollection()
             .AddLogging(builder => builder.AddConsole())
             .BuildServiceProvider();
             
-        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-        var logger = loggerFactory.CreateLogger<RestauranteProDbContext>();
-        
-        var options = new DbContextOptionsBuilder<RestauranteProDbContext>()
+        var options = new DbContextOptionsBuilder<TestDbContext>()
             .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
+            .ConfigureWarnings(warnings => warnings.Ignore(
+                Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
             .Options;
             
-        var dbContext = new RestauranteProDbContext(options, logger);
+        // Crear un contexto personalizado para pruebas
+        return new TestDbContext(options);
+    }
+
+    [Fact]
+    public async Task DbContext_DebeGuardarProductoCorrectamente()
+    {
+        // Arrange
+        var dbContext = CreateTestContext();
         
-        var productoId = Guid.NewGuid();
-        var producto = new Producto
-        {
-            Id = productoId,
-            Nombre = "Producto de Prueba",
-            Descripcion = "Descripción del producto para prueba",
-            Precio = 100.0m,
-            Activo = true,
-            FechaCreacion = DateTime.UtcNow,
-            CreadoPor = "Test"
-        };
+        var categoriaId = Guid.NewGuid();
+        var producto = Producto.Crear(
+            "Producto de Prueba", 
+            "Descripción del producto para prueba", 
+            new PrecioProducto(100.0m), 
+            categoriaId, 
+            "Categoría de Prueba"
+        );
         
         // Act
         dbContext.Productos.Add(producto);
         await dbContext.SaveChangesAsync();
         
         // Assert
-        var productoGuardado = await dbContext.Productos.FindAsync(productoId);
+        var productoGuardado = await dbContext.Productos.FindAsync(producto.Id);
         Assert.NotNull(productoGuardado);
         Assert.Equal("Producto de Prueba", productoGuardado.Nombre);
-        Assert.Equal(100.0m, productoGuardado.Precio);
+        Assert.Equal(100.0m, productoGuardado.Precio.Valor);
+        
+        // Limpiar
+        await dbContext.Database.EnsureDeletedAsync();
+        await dbContext.DisposeAsync();
     }
     
     [Fact]
     public async Task DbContext_DebeComenzarTransaccionCorrectamente()
     {
         // Arrange
-        var serviceProvider = new ServiceCollection()
-            .AddLogging(builder => builder.AddConsole())
-            .BuildServiceProvider();
-            
-        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-        var logger = loggerFactory.CreateLogger<RestauranteProDbContext>();
-        
-        var options = new DbContextOptionsBuilder<RestauranteProDbContext>()
-            .UseInMemoryDatabase(databaseName: $"TestDb_{Guid.NewGuid()}")
-            .Options;
-            
-        var dbContext = new RestauranteProDbContext(options, logger);
+        var dbContext = CreateTestContext();
         
         // Act & Assert
         using var transaction = await dbContext.BeginTransactionAsync();
         Assert.NotNull(transaction);
+        
+        // Limpiar
+        await dbContext.Database.EnsureDeletedAsync();
+        await dbContext.DisposeAsync();
     }
 } 

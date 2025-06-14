@@ -8,17 +8,6 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
 
-  <!-- Excluir temporalmente archivos de prueba mientras se reorganiza la infraestructura -->
-  <ItemGroup>
-    <Compile Remove="GlobalUsings.cs" />
-    <Compile Remove="Persistence\**" />
-    <Compile Remove="TestBase\**" />
-    <EmbeddedResource Remove="Persistence\**" />
-    <EmbeddedResource Remove="TestBase\**" />
-    <None Remove="Persistence\**" />
-    <None Remove="TestBase\**" />
-  </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.5" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.5" />
