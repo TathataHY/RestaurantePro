@@ -160,16 +160,4 @@ namespace RestaurantePro.Infrastructure.ExternalServices.Email
             return cliente;
         }
     }
-
-    public class EmailSettings
-    {
-        public string ServidorSMTP { get; set; }
-        public int PuertoSMTP { get; set; }
-        public string Usuario { get; set; }
-        public string Password { get; set; }
-        public string DireccionRemitente { get; set; }
-        public string NombreRemitente { get; set; }
-        public bool UsarSSL { get; set; }
-        public string DirectorioPlantillas { get; set; }
-    }
 } 

@@ -62,7 +62,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
             if (context == null) return;
 
             var fechaActual = _dateTimeService.Now;
-            string? usuarioActual = _currentUserService.UsuarioId;
+            string? usuarioActual = _currentUserService.UserId;
             
             var cambios = 0;
 

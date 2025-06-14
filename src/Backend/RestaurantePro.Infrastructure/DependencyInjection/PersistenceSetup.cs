@@ -3,10 +3,14 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.Interfaces;
-using RestaurantePro.Domain.Comercial.Interfaces;
-using RestaurantePro.Domain.Operaciones.Interfaces;
-using RestaurantePro.Domain.Inventario.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
+using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
+using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
+using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
 using RestaurantePro.Domain.Proveedores.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Interceptors;
@@ -16,7 +20,6 @@ using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
-using RestaurantePro.Application.Common.Interfaces.Repositories;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
 {
@@ -110,7 +113,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<IComandaRepository, ComandaRepository>();
             services.AddScoped<IReservacionRepository, ReservacionRepository>();
             services.AddScoped<IMesaRepository, MesaRepository>();
-            services.AddScoped<IPreparacionDiariaRepository, PreparacionDiariaRepository>();
+            services.AddScoped<IPreparacionRepository, PreparacionRepository>();
             
             // Repositorios del dominio Inventario
             services.AddScoped<IIngredienteRepository, IngredienteRepository>();

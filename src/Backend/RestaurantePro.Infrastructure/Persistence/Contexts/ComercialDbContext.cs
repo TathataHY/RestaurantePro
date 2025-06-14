@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+using RestaurantePro.Domain.Core.Base.Services;
 using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Fidelizacion.Entities;
 using RestaurantePro.Domain.Comercial.Facturacion.Entities;
 using RestaurantePro.Infrastructure.Persistence.Interceptors;
 using System.Reflection;
@@ -22,7 +22,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
 
         // DbSets para entidades del contexto Comercial
         public DbSet<Cliente> Clientes { get; set; }
-        public DbSet<TarjetaFidelizacion> TarjetasFidelizacion { get; set; }
         public DbSet<Factura> Facturas { get; set; }
         public DbSet<DetalleFactura> DetallesFacturas { get; set; }
 

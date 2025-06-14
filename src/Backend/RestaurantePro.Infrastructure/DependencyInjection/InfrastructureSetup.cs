@@ -13,10 +13,10 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddPersistenceServices(configuration);
             
             // Servicios de identidad
-            services.AddIdentityServices(configuration);
+            IdentitySetup.AddIdentityServices(services, configuration);
             
             // Servicios externos
-            services.AddExternalServices(configuration);
+            ExternalServicesSetup.AddExternalServices(services, configuration);
             
             // Sistema de caché
             services.AddCachingServices(configuration);

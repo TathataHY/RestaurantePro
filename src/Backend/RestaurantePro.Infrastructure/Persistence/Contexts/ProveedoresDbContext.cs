@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+using RestaurantePro.Domain.Core.Base.Services;
 using RestaurantePro.Domain.Proveedores.Entities;
 using RestaurantePro.Infrastructure.Persistence.Interceptors;
 using System.Reflection;
@@ -21,8 +22,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         // DbSets para entidades del contexto Proveedores
         public DbSet<Proveedor> Proveedores { get; set; }
         public DbSet<ContactoProveedor> ContactosProveedores { get; set; }
-        public DbSet<CategoriaProveedor> CategoriasProveedores { get; set; }
-        public DbSet<EvaluacionProveedor> EvaluacionesProveedores { get; set; }
 
         public ProveedoresDbContext(
             DbContextOptions<ProveedoresDbContext> options,

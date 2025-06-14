@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+using RestaurantePro.Domain.Core.Base.Services;
 using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
-using RestaurantePro.Domain.Inventario.Movimientos.Entities;
-using RestaurantePro.Domain.Inventario.OrdenesCompra.Entities;
+using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
 using RestaurantePro.Infrastructure.Persistence.Interceptors;
 using System.Reflection;
 
@@ -24,7 +24,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         public DbSet<Ingrediente> Ingredientes { get; set; }
         public DbSet<MovimientoInventario> MovimientosInventario { get; set; }
         public DbSet<OrdenCompra> OrdenesCompra { get; set; }
-        public DbSet<DetalleOrdenCompra> DetallesOrdenCompra { get; set; }
 
         public InventarioDbContext(
             DbContextOptions<InventarioDbContext> options,

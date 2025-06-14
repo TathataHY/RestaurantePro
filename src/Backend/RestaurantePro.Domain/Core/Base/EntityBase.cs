@@ -96,7 +96,7 @@ namespace RestaurantePro.Domain.Core.Base
         /// <summary>
         /// Establece la fecha de creación (solo para pruebas)
         /// </summary>
-        protected internal void SetFechaCreacionForTesting(DateTime fecha)
+        public void SetFechaCreacionForTesting(DateTime fecha)
         {
             FechaCreacion = fecha;
         }

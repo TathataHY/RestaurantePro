@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.Base.Entities;
+using RestaurantePro.Domain.Core.Base;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+using RestaurantePro.Domain.Core.Base.Services;
 using RestaurantePro.Domain.Core.Productos.Entities;
 using RestaurantePro.Domain.Core.Usuarios.Entities;
 using RestaurantePro.Domain.Core.Notificaciones.Entities;
@@ -26,7 +27,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Notificacion> Notificaciones { get; set; }
         public DbSet<Receta> Recetas { get; set; }
-        public DbSet<IngredienteReceta> IngredientesRecetas { get; set; }
 
         public CoreDbContext(
             DbContextOptions<CoreDbContext> options,

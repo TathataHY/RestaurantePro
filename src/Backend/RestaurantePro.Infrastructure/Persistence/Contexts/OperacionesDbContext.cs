@@ -2,10 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+using RestaurantePro.Domain.Core.Base.Services;
 using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Mesas.Entities;
-using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
 using RestaurantePro.Infrastructure.Persistence.Interceptors;
 using System.Reflection;
 
@@ -25,7 +25,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         public DbSet<Comanda> Comandas { get; set; }
         public DbSet<ItemComanda> ItemsComandas { get; set; }
         public DbSet<Reservacion> Reservaciones { get; set; }
-        public DbSet<Mesa> Mesas { get; set; }
         public DbSet<PreparacionDiaria> PreparacionesDiarias { get; set; }
 
         public OperacionesDbContext(

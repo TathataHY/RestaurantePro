@@ -20,6 +20,7 @@ using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
 using RestaurantePro.Infrastructure.ExternalServices.Email;
+using RestaurantePro.Infrastructure.ExternalServices.Email.Models;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
 {
