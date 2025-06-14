@@ -31,21 +31,31 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         /// <summary>
         /// Obtiene una tarjeta de fidelización por su ID
         /// </summary>
-        public new async Task<TarjetaFidelizacion?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public new async Task<TarjetaFidelizacion> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _dbSet
+            var entidad = await _dbSet
                 .Include(t => t.HistorialPuntos)
                 .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+                
+            if (entidad == null)
+                throw new KeyNotFoundException($"No se encontró la tarjeta de fidelización con ID {id}");
+                
+            return entidad;
         }
 
         /// <summary>
         /// Obtiene una tarjeta de fidelización por su código
         /// </summary>
-        public async Task<TarjetaFidelizacion?> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken = default)
+        public async Task<TarjetaFidelizacion> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken = default)
         {
-            return await _dbSet
+            var entidad = await _dbSet
                 .Include(t => t.HistorialPuntos)
                 .FirstOrDefaultAsync(t => t.Codigo == codigo, cancellationToken);
+                
+            if (entidad == null)
+                throw new KeyNotFoundException($"No se encontró la tarjeta de fidelización con código {codigo}");
+                
+            return entidad;
         }
 
         /// <summary>
@@ -80,11 +90,16 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         /// <summary>
         /// Obtiene la tarjeta activa de un cliente
         /// </summary>
-        public async Task<TarjetaFidelizacion?> ObtenerTarjetaActivaPorClienteIdAsync(Guid clienteId, CancellationToken cancellationToken = default)
+        public async Task<TarjetaFidelizacion> ObtenerTarjetaActivaPorClienteIdAsync(Guid clienteId, CancellationToken cancellationToken = default)
         {
-            return await _dbSet
+            var entidad = await _dbSet
                 .Include(t => t.HistorialPuntos)
                 .FirstOrDefaultAsync(t => t.ClienteId == clienteId && t.Estado == EstadoTarjeta.Activa, cancellationToken);
+                
+            if (entidad == null)
+                throw new KeyNotFoundException($"No se encontró una tarjeta de fidelización activa para el cliente con ID {clienteId}");
+                
+            return entidad;
         }
 
         /// <summary>

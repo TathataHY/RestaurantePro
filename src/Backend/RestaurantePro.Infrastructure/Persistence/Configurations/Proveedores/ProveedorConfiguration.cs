@@ -33,20 +33,28 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Proveedores
             builder.Property(p => p.Ciudad)
                 .HasMaxLength(100);
                 
-            builder.Property(p => p.Estado)
+            builder.Property(p => p.Pais)
                 .HasMaxLength(100);
                 
             builder.Property(p => p.CodigoPostal)
                 .HasMaxLength(10);
                 
-            builder.Property(p => p.Pais)
-                .HasMaxLength(100);
-                
             builder.Property(p => p.NombreContacto)
                 .HasMaxLength(100);
                 
-            builder.Property(p => p.Telefono)
-                .HasMaxLength(20);
+            builder.Property(p => p.InformacionBancaria)
+                .HasMaxLength(200);
+                
+            builder.Property(p => p.DiasCredito);
+                
+            builder.Property(p => p.Activo);
+                
+            builder.Property(p => p.FechaRegistro);
+                
+            builder.Property(p => p.UltimaOrden);
+                
+            builder.Property(p => p.Observaciones)
+                .HasMaxLength(500);
                 
             // Configuración para Email como Value Object
             builder.OwnsOne(p => p.Email, emailBuilder =>
@@ -56,25 +64,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Proveedores
                     .HasMaxLength(100);
             });
                 
-            builder.Property(p => p.SitioWeb)
-                .HasMaxLength(200);
-                
-            builder.Property(p => p.Categoria)
-                .HasConversion<string>()
-                .HasMaxLength(50);
-                
-            builder.Property(p => p.CondicionesPago)
-                .HasMaxLength(200);
-                
-            builder.Property(p => p.DiasCredito);
-                
-            builder.Property(p => p.LimiteCredito)
-                .HasPrecision(18, 2);
-                
-            builder.Property(p => p.Calificacion);
-                
-            builder.Property(p => p.Observaciones)
-                .HasMaxLength(500);
+            // Configuración para PhoneNumber como Value Object
+            builder.OwnsOne(p => p.Telefono, phoneBuilder =>
+            {
+                phoneBuilder.Property(p => p.Value)
+                    .HasColumnName("Telefono")
+                    .HasMaxLength(20);
+            });
                 
             // Relación con ContactoProveedor
             builder.HasMany(p => p.Contactos)
@@ -89,9 +85,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Proveedores
             builder.HasIndex(p => p.RFC)
                 .HasDatabaseName("IX_Proveedores_RFC")
                 .IsUnique();
-                
-            builder.HasIndex(p => p.Categoria)
-                .HasDatabaseName("IX_Proveedores_Categoria");
         }
     }
-} 
+}

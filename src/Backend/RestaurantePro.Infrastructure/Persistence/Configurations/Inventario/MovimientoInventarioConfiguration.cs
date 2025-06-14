@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
+using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
 
 namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
 {
@@ -33,13 +33,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
                 .IsRequired()
                 .HasPrecision(10, 2);
                 
-            builder.Property(m => m.DocumentoReferencia)
+            builder.Property(m => m.Motivo)
                 .HasMaxLength(100);
                 
-            builder.Property(m => m.Observaciones)
-                .HasMaxLength(500);
+            builder.Property(m => m.CantidadFinal)
+                .HasPrecision(10, 2);
                 
-            builder.Property(m => m.UsuarioId)
+            builder.Property(m => m.EstaAplicado)
                 .IsRequired();
                 
             // Índices
@@ -53,4 +53,4 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
                 .HasDatabaseName("IX_MovimientosInventario_IngredienteId");
         }
     }
-} 
+}

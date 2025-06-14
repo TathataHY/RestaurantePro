@@ -29,9 +29,14 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
         /// <summary>
         /// Obtiene una orden de compra por su identificador
         /// </summary>
-        public new async Task<OrdenCompra?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public new async Task<OrdenCompra> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.FindAsync(new object[] { id }, cancellationToken);
+            var entidad = await _dbSet.FindAsync(new object[] { id }, cancellationToken);
+            
+            if (entidad == null)
+                throw new KeyNotFoundException($"No se encontró la orden de compra con ID {id}");
+                
+            return entidad;
         }
 
         /// <summary>
@@ -122,9 +127,14 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
         /// </summary>
         public async Task<OrdenCompra> ObtenerPorIdConItemsAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _dbSet
+            var entidad = await _dbSet
                 .Include(o => o.Items)
                 .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
+                
+            if (entidad == null)
+                throw new KeyNotFoundException($"No se encontró la orden de compra con ID {id}");
+                
+            return entidad;
         }
 
         /// <summary>

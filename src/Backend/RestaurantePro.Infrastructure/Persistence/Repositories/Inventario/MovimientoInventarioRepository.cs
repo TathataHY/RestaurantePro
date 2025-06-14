@@ -29,9 +29,14 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
         /// <summary>
         /// Obtiene un movimiento por su ID
         /// </summary>
-        public new async Task<MovimientoInventario?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public new async Task<MovimientoInventario> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.FindAsync(new object[] { id }, cancellationToken);
+            var entidad = await _dbSet.FindAsync(new object[] { id }, cancellationToken);
+            
+            if (entidad == null)
+                throw new KeyNotFoundException($"No se encontró el movimiento de inventario con ID {id}");
+                
+            return entidad;
         }
 
         /// <summary>

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities;
+using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Enums;
 
 namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
 {
@@ -18,17 +19,17 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
             
             builder.HasKey(o => o.Id);
             
-            builder.Property(o => o.Numero)
-                .IsRequired()
-                .HasMaxLength(50);
-                
             builder.Property(o => o.FechaEmision)
                 .IsRequired();
                 
             builder.Property(o => o.FechaEntregaEstimada)
                 .IsRequired();
                 
-            builder.Property(o => o.FechaEntregaReal);
+            builder.Property(o => o.FechaEnvio);
+                
+            builder.Property(o => o.FechaRecepcion);
+                
+            builder.Property(o => o.FechaCancelacion);
                 
             builder.Property(o => o.Estado)
                 .IsRequired()
@@ -45,47 +46,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
             builder.Property(o => o.Observaciones)
                 .HasMaxLength(500);
                 
-            builder.Property(o => o.UsuarioId)
-                .IsRequired();
+            builder.Property(o => o.ObservacionesRecepcion)
+                .HasMaxLength(500);
                 
-            // Configuración para la colección de items
-            builder.OwnsMany(o => o.Items, itemsBuilder =>
-            {
-                itemsBuilder.ToTable("ItemsOrdenCompra", "Inventario");
+            builder.Property(o => o.MotivoCancelacion)
+                .HasMaxLength(500);
                 
-                itemsBuilder.WithOwner().HasForeignKey("OrdenCompraId");
-                
-                itemsBuilder.HasKey("Id");
-                
-                itemsBuilder.Property(i => i.IngredienteId)
-                    .IsRequired();
-                    
-                itemsBuilder.Property(i => i.Cantidad)
-                    .IsRequired()
-                    .HasPrecision(10, 2);
-                    
-                itemsBuilder.Property(i => i.PrecioUnitario)
-                    .IsRequired()
-                    .HasPrecision(18, 2);
-                    
-                itemsBuilder.Property(i => i.Subtotal)
-                    .IsRequired()
-                    .HasPrecision(18, 2);
-                    
-                itemsBuilder.Property(i => i.Estado)
-                    .IsRequired()
-                    .HasConversion<string>()
-                    .HasMaxLength(50);
-                    
-                itemsBuilder.Property(i => i.Notas)
-                    .HasMaxLength(500);
-            });
-            
             // Índices
-            builder.HasIndex(o => o.Numero)
-                .HasDatabaseName("IX_OrdenesCompra_Numero")
-                .IsUnique();
-                
             builder.HasIndex(o => o.FechaEmision)
                 .HasDatabaseName("IX_OrdenesCompra_FechaEmision");
                 
@@ -94,6 +61,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
                 
             builder.HasIndex(o => o.ProveedorId)
                 .HasDatabaseName("IX_OrdenesCompra_ProveedorId");
+                
+            // Configurar relación con ItemOrdenCompra como una colección
+            builder.HasMany<ItemOrdenCompra>("_items")
+                .WithOne()
+                .HasForeignKey(i => i.OrdenCompraId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

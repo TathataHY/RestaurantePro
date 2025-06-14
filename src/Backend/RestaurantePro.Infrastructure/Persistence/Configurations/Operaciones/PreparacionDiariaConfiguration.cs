@@ -18,7 +18,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Operaciones
             
             builder.HasKey(p => p.Id);
             
-            builder.Property(p => p.Fecha)
+            builder.Property(p => p.FechaPreparacion)
                 .IsRequired();
                 
             builder.Property(p => p.Estado)
@@ -29,55 +29,30 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Operaciones
             builder.Property(p => p.Observaciones)
                 .HasMaxLength(500);
                 
-            builder.Property(p => p.ResponsableId)
+            builder.Property(p => p.ChefId)
                 .IsRequired();
                 
-            builder.Property(p => p.CantidadTotal)
-                .IsRequired()
-                .HasPrecision(10, 2);
+            builder.Property(p => p.CantidadPreparada)
+                .IsRequired();
                 
-            builder.Property(p => p.CostoTotal)
-                .IsRequired()
-                .HasPrecision(18, 2);
+            builder.Property(p => p.CantidadDisponible)
+                .IsRequired();
                 
-            // Configuración para la colección de elementos de preparación
-            builder.OwnsMany(p => p.Elementos, elementsBuilder =>
-            {
-                elementsBuilder.ToTable("ElementosPreparacion", "Operaciones");
+            builder.Property(p => p.FechaVencimiento)
+                .IsRequired();
                 
-                elementsBuilder.WithOwner().HasForeignKey("PreparacionDiariaId");
+            builder.Property(p => p.ProductoId)
+                .IsRequired();
                 
-                elementsBuilder.HasKey("Id");
-                
-                elementsBuilder.Property(e => e.ProductoId)
-                    .IsRequired();
-                    
-                elementsBuilder.Property(e => e.Cantidad)
-                    .IsRequired()
-                    .HasPrecision(10, 2);
-                    
-                elementsBuilder.Property(e => e.CostoUnitario)
-                    .IsRequired()
-                    .HasPrecision(18, 2);
-                    
-                elementsBuilder.Property(e => e.Estado)
-                    .IsRequired()
-                    .HasConversion<string>()
-                    .HasMaxLength(50);
-                    
-                elementsBuilder.Property(e => e.Notas)
-                    .HasMaxLength(500);
-            });
-            
             // Índices
-            builder.HasIndex(p => p.Fecha)
+            builder.HasIndex(p => p.FechaPreparacion)
                 .HasDatabaseName("IX_PreparacionesDiarias_Fecha");
                 
             builder.HasIndex(p => p.Estado)
                 .HasDatabaseName("IX_PreparacionesDiarias_Estado");
                 
-            builder.HasIndex(p => p.ResponsableId)
-                .HasDatabaseName("IX_PreparacionesDiarias_ResponsableId");
+            builder.HasIndex(p => p.ChefId)
+                .HasDatabaseName("IX_PreparacionesDiarias_ChefId");
         }
     }
-} 
+}

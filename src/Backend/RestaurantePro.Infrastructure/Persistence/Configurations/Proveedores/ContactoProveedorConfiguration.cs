@@ -22,15 +22,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Proveedores
                 .IsRequired()
                 .HasMaxLength(100);
                 
-            builder.Property(c => c.Apellidos)
-                .IsRequired()
-                .HasMaxLength(100);
-                
             builder.Property(c => c.Cargo)
                 .IsRequired()
-                .HasMaxLength(100);
-                
-            builder.Property(c => c.Departamento)
                 .HasMaxLength(100);
                 
             // Configuración para Email como Value Object
@@ -42,31 +35,19 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Proveedores
             });
             
             // Configuración para PhoneNumber como Value Object
-            builder.OwnsOne(c => c.PhoneNumber, phoneBuilder =>
+            builder.OwnsOne(c => c.Telefono, phoneBuilder =>
             {
                 phoneBuilder.Property(p => p.Value)
                     .HasColumnName("Telefono")
                     .HasMaxLength(20);
             });
                 
-            builder.Property(c => c.TelefonoMovil)
-                .HasMaxLength(20);
-                
-            builder.Property(c => c.Extension)
-                .HasMaxLength(10);
-                
-            builder.Property(c => c.EmailSecundario)
-                .HasMaxLength(100);
-                
-            builder.Property(c => c.Notas)
-                .HasMaxLength(500);
-                
             // Índices
-            builder.HasIndex(c => new { c.Nombre, c.Apellidos })
-                .HasDatabaseName("IX_ContactosProveedores_NombreCompleto");
+            builder.HasIndex(c => c.Nombre)
+                .HasDatabaseName("IX_ContactosProveedores_Nombre");
                 
             builder.HasIndex("ProveedorId")
                 .HasDatabaseName("IX_ContactosProveedores_ProveedorId");
         }
     }
-} 
+}
