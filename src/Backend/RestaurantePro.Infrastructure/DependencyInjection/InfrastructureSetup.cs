@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Core.Base.Services;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
 {
@@ -9,6 +11,9 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             this IServiceCollection services,
             IConfiguration configuration)
         {
+            // Registrar servicio de fecha y hora
+            services.AddSingleton<IDateTimeService, DateTimeService>();
+            
             // Configuración de base de datos
             services.AddPersistenceServices(configuration);
             
