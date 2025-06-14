@@ -26,8 +26,8 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             // Sistema de caché
             services.AddCachingServices(configuration);
             
-            // Logging
-            // TODO: services.AddLoggingServices(configuration);
+            // Configuración de logging
+            services.AddLoggingServices(configuration);
             
             // Background tasks
             // TODO: services.AddBackgroundTasksServices(configuration);

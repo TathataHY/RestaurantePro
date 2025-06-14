@@ -150,8 +150,17 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 ## Logging
 
 ### Providers
-- `⬜/⬜` SerilogProvider - Proveedor de logging con Serilog
-- `⬜/⬜` ApplicationInsightsProvider - Proveedor de logging con Application Insights
+- `✅/⬜` SerilogProvider - Proveedor de logging con Serilog (Estructura básica implementada)
+- `✅/⬜` ApplicationInsightsProvider - Proveedor de logging con Application Insights (Estructura básica implementada)
+
+### Configuration
+- `✅/⬜` LoggingConfiguration - Configuración para los servicios de logging
+- `✅/⬜` LoggingPolicies - Políticas para los servicios de logging
+
+### Enrichers
+- `✅/⬜` UserEnricher - Enriquecedor de logs para incluir información del usuario
+- `✅/⬜` CorrelationEnricher - Enriquecedor de logs para incluir información de correlación
+- `✅/⬜` ContextEnricher - Enriquecedor de logs para incluir información del contexto
 
 ## Monitoring
 
@@ -166,5 +175,5 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/⬜` IdentitySetup - Configuración de identidad
 - `✅/⬜` ExternalServicesSetup - Configuración de servicios externos
 - `✅/⬜` CachingSetup - Configuración de caché
-- `⬜/⬜` LoggingSetup - Configuración de logging
+- `✅/⬜` LoggingSetup - Configuración de logging
 - `⬜/⬜` BackgroundTasksSetup - Configuración de tareas en segundo plano 
