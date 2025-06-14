@@ -91,8 +91,8 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 
 ### Models
 - `✅/❌` ApplicationUser - Modelo de usuario para Identity
-- `❌/❌` ApplicationRole - Modelo de rol para Identity
-- `❌/❌` ApplicationUserRole - Modelo de relación usuario-rol para Identity
+- `✅/❌` ApplicationRole - Modelo de rol para Identity
+- `✅/❌` ApplicationUserRole - Modelo de relación usuario-rol para Identity
 
 ### Services
 - `✅/❌` IdentityService - Servicio para gestionar la identidad
@@ -100,12 +100,12 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/❌` PermissionService - Servicio para gestionar permisos
 
 ### Configuration
-- `❌/❌` IdentityConfiguration - Configuración de Identity
+- `✅/❌` IdentityConfiguration - Configuración de Identity
 - `✅/❌` JwtConfiguration - Configuración de JWT
 
 ### Extensions
-- `❌/❌` ClaimsPrincipalExtensions - Extensiones para ClaimsPrincipal
-- `❌/❌` IdentityResultExtensions - Extensiones para IdentityResult
+- `✅/❌` ClaimsPrincipalExtensions - Extensiones para ClaimsPrincipal
+- `✅/❌` IdentityResultExtensions - Extensiones para IdentityResult
 
 ## ExternalServices
 
@@ -144,8 +144,8 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 ## Caching
 
 ### Services
+- `✅/❌` MemoryCacheService - Servicio de caché en memoria
 - `❌/❌` RedisCacheService - Servicio de caché con Redis
-- `❌/❌` MemoryCacheService - Servicio de caché en memoria
 
 ## Logging
 
@@ -165,6 +165,6 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/❌` PersistenceSetup - Configuración de persistencia
 - `✅/❌` IdentitySetup - Configuración de identidad
 - `❌/❌` ExternalServicesSetup - Configuración de servicios externos
-- `❌/❌` CachingSetup - Configuración de caché
+- `✅/❌` CachingSetup - Configuración de caché
 - `❌/❌` LoggingSetup - Configuración de logging
 - `❌/❌` BackgroundTasksSetup - Configuración de tareas en segundo plano 
