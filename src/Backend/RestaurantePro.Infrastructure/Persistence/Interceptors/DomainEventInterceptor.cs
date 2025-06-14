@@ -1,8 +1,8 @@
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging;
 using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Domain.Core.Base.Events;
+using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 using System;
 using System.Linq;
 using System.Threading;
@@ -12,47 +12,54 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
 {
     public class DomainEventInterceptor : SaveChangesInterceptor
     {
-        private readonly IMediator _mediator;
+        private readonly IDomainEventDispatcher _domainEventDispatcher;
+        private readonly ILogger<DomainEventInterceptor> _logger;
 
-        public DomainEventInterceptor(IMediator mediator)
+        public DomainEventInterceptor(
+            IDomainEventDispatcher domainEventDispatcher,
+            ILogger<DomainEventInterceptor> logger)
         {
-            _mediator = mediator;
+            _domainEventDispatcher = domainEventDispatcher;
+            _logger = logger;
         }
 
         public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
         {
-            DispatchDomainEvents(eventData.Context).GetAwaiter().GetResult();
+            PublicarEventosDominio(eventData.Context).GetAwaiter().GetResult();
             return base.SavingChanges(eventData, result);
         }
 
         public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
         {
-            await DispatchDomainEvents(eventData.Context);
+            await PublicarEventosDominio(eventData.Context, cancellationToken);
             return await base.SavingChangesAsync(eventData, result, cancellationToken);
         }
 
-        private async Task DispatchDomainEvents(DbContext context)
+        private async Task PublicarEventosDominio(DbContext? context, CancellationToken cancellationToken = default)
         {
             if (context == null) return;
 
-            // Obtener entidades con eventos de dominio pendientes
-            var entitiesWithEvents = context.ChangeTracker.Entries<EntityBase>()
+            var entidadesConEventos = context.ChangeTracker.Entries<EntityBase>()
                 .Where(e => e.Entity.DomainEvents.Any())
                 .Select(e => e.Entity)
                 .ToList();
 
-            // Obtener todos los eventos de dominio
-            var domainEvents = entitiesWithEvents
-                .SelectMany(e => e.DomainEvents)
-                .ToList();
+            if (!entidadesConEventos.Any()) return;
 
-            // Limpiar los eventos de dominio
-            entitiesWithEvents.ForEach(entity => entity.ClearDomainEvents());
+            _logger.LogInformation("Encontradas {Count} entidades con eventos de dominio para publicar", entidadesConEventos.Count);
 
-            // Publicar los eventos utilizando MediatR
-            foreach (var domainEvent in domainEvents)
+            foreach (var entidad in entidadesConEventos)
             {
-                await _mediator.Publish(domainEvent);
+                var eventos = entidad.DomainEvents.ToList();
+                entidad.ClearDomainEvents();
+                
+                foreach (var evento in eventos)
+                {
+                    _logger.LogInformation("Publicando evento de dominio {EventType} para la entidad {EntityType} con ID {EntityId}",
+                        evento.GetType().Name, entidad.GetType().Name, entidad.Id);
+                    
+                    await _domainEventDispatcher.Dispatch(evento, cancellationToken);
+                }
             }
         }
     }

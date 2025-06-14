@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.Base;
 using RestaurantePro.Domain.Core.Base.Interfaces;
@@ -16,15 +17,18 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
     /// </summary>
     public class AuditableEntityInterceptor : SaveChangesInterceptor
     {
-        private readonly IDateTimeService _dateTimeService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IDateTimeService _dateTimeService;
+        private readonly ILogger<AuditableEntityInterceptor> _logger;
 
         public AuditableEntityInterceptor(
+            ICurrentUserService currentUserService,
             IDateTimeService dateTimeService,
-            ICurrentUserService currentUserService)
+            ILogger<AuditableEntityInterceptor> logger)
         {
-            _dateTimeService = dateTimeService;
             _currentUserService = currentUserService;
+            _dateTimeService = dateTimeService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -34,7 +38,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
             DbContextEventData eventData,
             InterceptionResult<int> result)
         {
-            UpdateEntities(eventData.Context);
+            AplicarAuditoria(eventData.Context);
             return base.SavingChanges(eventData, result);
         }
 
@@ -46,30 +50,55 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
             InterceptionResult<int> result,
             CancellationToken cancellationToken = default)
         {
-            UpdateEntities(eventData.Context);
+            AplicarAuditoria(eventData.Context);
             return base.SavingChangesAsync(eventData, result, cancellationToken);
         }
 
         /// <summary>
         /// Actualiza las propiedades de auditoría de las entidades
         /// </summary>
-        private void UpdateEntities(DbContext? context)
+        private void AplicarAuditoria(DbContext? context)
         {
             if (context == null) return;
 
-            foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>())
-            {
-                if (entry.State == EntityState.Added)
-                {
-                    entry.Entity.CreadoPor = _currentUserService.UserId;
-                    entry.Entity.FechaCreacion = _dateTimeService.Now;
-                }
+            var fechaActual = _dateTimeService.Now;
+            string? usuarioActual = _currentUserService.UsuarioId;
+            
+            var cambios = 0;
 
-                if (entry.State == EntityState.Modified || entry.HasChangedOwnedEntities())
+            foreach (var entry in context.ChangeTracker.Entries<EntityBase>())
+            {
+                switch (entry.State)
                 {
-                    entry.Entity.ModificadoPor = _currentUserService.UserId;
-                    entry.Entity.FechaModificacion = _dateTimeService.Now;
+                    case EntityState.Added:
+                        // La fecha de creación normalmente se establece en el constructor de EntityBase
+                        // pero podríamos confirmar que no se ha modificado
+                        if (entry.Entity.FechaCreacion == default)
+                        {
+                            entry.Entity.SetFechaCreacionForTesting(fechaActual);
+                            _logger.LogTrace("Estableciendo fecha de creación para entidad {EntityType} con ID {EntityId}", 
+                                entry.Entity.GetType().Name, entry.Entity.Id);
+                            cambios++;
+                        }
+                        break;
+                    
+                    case EntityState.Modified:
+                        // La fecha de actualización se maneja generalmente en los métodos de dominio
+                        // pero podríamos confirmar que se ha establecido
+                        if (entry.Entity.FechaActualizacion == null || entry.Entity.FechaActualizacion < fechaActual)
+                        {
+                            entry.Property(nameof(EntityBase.FechaActualizacion)).CurrentValue = fechaActual;
+                            _logger.LogTrace("Actualizando fecha de modificación para entidad {EntityType} con ID {EntityId}", 
+                                entry.Entity.GetType().Name, entry.Entity.Id);
+                            cambios++;
+                        }
+                        break;
                 }
+            }
+
+            if (cambios > 0)
+            {
+                _logger.LogInformation("Se aplicó auditoría a {Count} entidades", cambios);
             }
         }
     }

@@ -5,13 +5,31 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
 {
     public static class InfrastructureSetup
     {
-        public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddInfrastructureServices(
+            this IServiceCollection services,
+            IConfiguration configuration)
         {
-            // Configuración de persistencia
+            // Configuración de base de datos
             services.AddPersistenceServices(configuration);
-
-            // TODO: Implementar más configuraciones específicas
-
+            
+            // Servicios de identidad
+            services.AddIdentityServices(configuration);
+            
+            // Servicios externos
+            services.AddExternalServices(configuration);
+            
+            // Sistema de caché
+            services.AddCachingServices(configuration);
+            
+            // Logging
+            // TODO: services.AddLoggingServices(configuration);
+            
+            // Background tasks
+            // TODO: services.AddBackgroundTasksServices(configuration);
+            
+            // Monitoring
+            // TODO: services.AddMonitoringServices(configuration);
+            
             return services;
         }
     }

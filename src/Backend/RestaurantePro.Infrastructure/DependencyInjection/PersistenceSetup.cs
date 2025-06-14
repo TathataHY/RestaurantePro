@@ -1,18 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
-using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
-using RestaurantePro.Domain.Core.Productos.Interfaces;
-using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
-using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
-using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces;
-using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
+using RestaurantePro.Domain.Core.Interfaces;
+using RestaurantePro.Domain.Comercial.Interfaces;
+using RestaurantePro.Domain.Operaciones.Interfaces;
+using RestaurantePro.Domain.Inventario.Interfaces;
+using RestaurantePro.Domain.Proveedores.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Interceptors;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
@@ -20,6 +15,8 @@ using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
+using RestaurantePro.Application.Common.Interfaces.Repositories;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
 {
@@ -34,72 +31,95 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
         /// <param name="services">Colección de servicios</param>
         /// <param name="configuration">Configuración de la aplicación</param>
         /// <returns>Colección de servicios con los servicios de persistencia registrados</returns>
-        public static IServiceCollection AddPersistenceServices(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddPersistenceServices(
+            this IServiceCollection services,
+            IConfiguration configuration)
         {
             // Registrar interceptores
             services.AddScoped<AuditableEntityInterceptor>();
             services.AddScoped<DomainEventInterceptor>();
             services.AddScoped<SoftDeleteInterceptor>();
 
-            // Configuración de la base de datos
-            services.AddDbContext<RestauranteProDbContext>((sp, options) =>
-            {
-                options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
-                    sqlOptions =>
-                    {
-                        sqlOptions.MigrationsAssembly(typeof(RestauranteProDbContext).Assembly.FullName);
-                        sqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
-                    });
+            // Registrar contextos de base de datos por dominio
+            RegisterDbContexts(services, configuration);
 
-                // Agregar interceptores
-                options.AddInterceptors(
-                    sp.GetRequiredService<AuditableEntityInterceptor>(),
-                    sp.GetRequiredService<SoftDeleteInterceptor>());
-            });
-
-            // Registrar interfaces de aplicación
-            services.AddScoped<IApplicationDbContext>(provider => 
-                provider.GetRequiredService<RestauranteProDbContext>());
-
-            // Registrar Unit of Work
+            // Registrar UnitOfWork
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-            // Registrar repositorios
+            // Registrar repositorios por dominio
             RegisterRepositories(services);
 
             return services;
         }
 
+        private static void RegisterDbContexts(IServiceCollection services, IConfiguration configuration)
+        {
+            var defaultConnectionString = configuration.GetConnectionString("DefaultConnection");
+
+            // Contexto principal
+            services.AddDbContext<RestauranteProDbContext>(options =>
+                options.UseSqlServer(
+                    defaultConnectionString,
+                    sqlOptions => sqlOptions.MigrationsAssembly(typeof(RestauranteProDbContext).Assembly.FullName)));
+
+            // Core
+            services.AddDbContext<CoreDbContext>(options =>
+                options.UseSqlServer(
+                    defaultConnectionString,
+                    sqlOptions => sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryCore", "Core")));
+
+            // Comercial
+            services.AddDbContext<ComercialDbContext>(options =>
+                options.UseSqlServer(
+                    defaultConnectionString,
+                    sqlOptions => sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryComercial", "Comercial")));
+
+            // Operaciones
+            services.AddDbContext<OperacionesDbContext>(options =>
+                options.UseSqlServer(
+                    defaultConnectionString,
+                    sqlOptions => sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryOperaciones", "Operaciones")));
+
+            // Inventario
+            services.AddDbContext<InventarioDbContext>(options =>
+                options.UseSqlServer(
+                    defaultConnectionString,
+                    sqlOptions => sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryInventario", "Inventario")));
+
+            // Proveedores
+            services.AddDbContext<ProveedoresDbContext>(options =>
+                options.UseSqlServer(
+                    defaultConnectionString,
+                    sqlOptions => sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryProveedores", "Proveedores")));
+        }
+
         private static void RegisterRepositories(IServiceCollection services)
         {
-            // Repositorio base genérico
-            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-
-            // Repositorios específicos de Core
+            // Repositorios del dominio Core
             services.AddScoped<IProductoRepository, ProductoRepository>();
-            services.AddScoped<IRecetaRepository, RecetaRepository>();
+            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddScoped<INotificacionRepository, NotificacionRepository>();
+            services.AddScoped<IRecetaRepository, RecetaRepository>();
             
-            // Repositorios específicos de Comercial
+            // Repositorios del dominio Comercial
+            services.AddScoped<IClienteRepository, ClienteRepository>();
             services.AddScoped<IFacturaRepository, FacturaRepository>();
             services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
             
-            // Repositorios específicos de Operaciones
-            services.AddScoped<IMesaRepository, MesaRepository>();
+            // Repositorios del dominio Operaciones
             services.AddScoped<IComandaRepository, ComandaRepository>();
             services.AddScoped<IReservacionRepository, ReservacionRepository>();
-            services.AddScoped<IPreparacionRepository, PreparacionRepository>();
+            services.AddScoped<IMesaRepository, MesaRepository>();
+            services.AddScoped<IPreparacionDiariaRepository, PreparacionDiariaRepository>();
             
-            // Repositorios específicos de Inventario
+            // Repositorios del dominio Inventario
+            services.AddScoped<IIngredienteRepository, IngredienteRepository>();
             services.AddScoped<IMovimientoInventarioRepository, MovimientoInventarioRepository>();
             services.AddScoped<IOrdenCompraRepository, OrdenCompraRepository>();
             
-            // Repositorios específicos de Proveedores
+            // Repositorios del dominio Proveedores
             services.AddScoped<IProveedorRepository, ProveedorRepository>();
             services.AddScoped<IContactoProveedorRepository, ContactoProveedorRepository>();
-            
-            // TODO: Implementar servicios de caché, logging, etc.
         }
     }
 } 

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.Base;
 using RestaurantePro.Domain.Core.Base.Interfaces;
@@ -8,6 +9,7 @@ using RestaurantePro.Domain.Core.Base.Services;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace RestaurantePro.Infrastructure.Persistence.Interceptors
 {
@@ -18,13 +20,16 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
     {
         private readonly IDateTimeService _dateTimeService;
         private readonly ICurrentUserService _currentUserService;
+        private readonly ILogger<SoftDeleteInterceptor> _logger;
 
         public SoftDeleteInterceptor(
             IDateTimeService dateTimeService,
-            ICurrentUserService currentUserService)
+            ICurrentUserService currentUserService,
+            ILogger<SoftDeleteInterceptor> logger)
         {
             _dateTimeService = dateTimeService;
             _currentUserService = currentUserService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -34,7 +39,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
             DbContextEventData eventData,
             InterceptionResult<int> result)
         {
-            UpdateEntities(eventData.Context);
+            ProcesarEntidadesEliminadas(eventData.Context);
             return base.SavingChanges(eventData, result);
         }
 
@@ -46,26 +51,35 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
             InterceptionResult<int> result,
             CancellationToken cancellationToken = default)
         {
-            UpdateEntities(eventData.Context);
+            ProcesarEntidadesEliminadas(eventData.Context);
             return base.SavingChangesAsync(eventData, result, cancellationToken);
         }
 
         /// <summary>
         /// Actualiza las propiedades de borrado lógico de las entidades
         /// </summary>
-        private void UpdateEntities(DbContext? context)
+        private void ProcesarEntidadesEliminadas(DbContext? context)
         {
             if (context == null) return;
 
-            foreach (var entry in context.ChangeTracker.Entries<ISoftDelete>())
+            var entidadesEliminadas = context.ChangeTracker.Entries<EntityBase>()
+                .Where(e => e.State == EntityState.Deleted)
+                .ToList();
+
+            if (!entidadesEliminadas.Any()) return;
+
+            _logger.LogInformation("Procesando {Count} entidades para borrado lógico", entidadesEliminadas.Count);
+
+            foreach (var entry in entidadesEliminadas)
             {
-                if (entry.State == EntityState.Deleted)
-                {
-                    entry.State = EntityState.Modified;
-                    entry.Entity.Activo = false;
-                    entry.Entity.FechaEliminacion = _dateTimeService.Now;
-                    entry.Entity.EliminadoPor = _currentUserService.UserId;
-                }
+                // Cambiar el estado de la entidad a modificado
+                entry.State = EntityState.Modified;
+                
+                // Marcar la entidad como eliminada lógicamente
+                entry.Entity.MarkAsDeleted();
+                
+                _logger.LogInformation("Aplicando borrado lógico a entidad {EntityType} con ID {EntityId}", 
+                    entry.Entity.GetType().Name, entry.Entity.Id);
             }
         }
     }
