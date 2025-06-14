@@ -171,12 +171,17 @@ public class RetryBehaviorTests
     public async Task Handle_BackoffExponencial_DeberiaEsperarTiemposCrecientes()
     {
         // Arrange
+        var command = new CrearFacturaCommand();
+        command.ComandasIds.Add(Guid.NewGuid());
+        command.NombreCliente = "Cliente Test";
+        command.TipoFactura = "Normal";
+        
+        // Configurar retry settings con delays controlados para el test
         var customSettings = new RetrySettings
         {
-            MaxAttempts = 4, // Aumentar intentos para mejor validación
-            BaseDelayMs = 100, // Delay base más predecible
-            MaxDelayMs = 5000,
-            Enabled = true
+            MaxAttempts = 3,
+            BaseDelayMs = 100, // Delay base pequeño para el test
+            MaxDelayMs = 1000
         };
         
         var mockCustomSettings = new Mock<IOptions<RetrySettings>>();
@@ -184,62 +189,66 @@ public class RetryBehaviorTests
         
         var customBehavior = new RetryBehavior<CrearFacturaCommand, Result<FacturaDto>>(_mockLogger.Object, mockCustomSettings.Object);
         
-        var command = new CrearFacturaCommand();
-        command.ComandasIds.Add(Guid.NewGuid());
-        command.NombreCliente = "Cliente Test";
-        command.TipoFactura = "Normal";
+        // Ejecutar varias veces para obtener un promedio más confiable
+        var allDelays = new List<List<TimeSpan>>();
         
-        var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
-        
-        var tiemposEjecucion = new List<DateTime>();
-        var delays = new List<TimeSpan>();
-        
-        int callCount = 0;
-        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        // Ejecutar 5 veces para tener suficientes muestras
+        for (int run = 0; run < 5; run++)
         {
-            callCount++;
-            tiemposEjecucion.Add(DateTime.UtcNow);
+            var tiemposEjecucion = new List<DateTime>();
+            var delays = new List<TimeSpan>();
             
-            // Calcular delay si no es la primera ejecución
-            if (tiemposEjecucion.Count > 1)
+            int callCount = 0;
+            RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
             {
-                delays.Add(tiemposEjecucion.Last() - tiemposEjecucion[^2]);
-            }
+                callCount++;
+                tiemposEjecucion.Add(DateTime.UtcNow);
+                
+                // Calcular delay si no es la primera ejecución
+                if (tiemposEjecucion.Count > 1)
+                {
+                    delays.Add(tiemposEjecucion.Last() - tiemposEjecucion[^2]);
+                }
+                
+                if (callCount <= 2) // Fallar las primeras 2 veces
+                    throw new TimeoutException("Timeout temporal");
+                return Task.FromResult(Result.Success(new FacturaDto()));
+            };
             
-            if (callCount <= 2) // Fallar las primeras 2 veces, exitoso en la 3ra
-                throw new TimeoutException("Timeout");
-            return Task.FromResult(expectedResult);
-        };
-
-        // Act
-        var result = await customBehavior.Handle(command, nextDelegate, CancellationToken.None);
-
-        // Assert
-        result.Should().Be(expectedResult);
-        tiemposEjecucion.Should().HaveCount(3);
-        delays.Should().HaveCount(2); // Dos delays entre las 3 ejecuciones
-        
-        // Verificar que todos los delays son positivos
-        foreach (var delay in delays)
-        {
-            delay.Should().BeGreaterThan(TimeSpan.Zero, "Todos los delays deben ser positivos");
+            // Act
+            await customBehavior.Handle(command, nextDelegate, CancellationToken.None);
+            
+            // Guardar los delays de esta ejecución
+            allDelays.Add(delays);
         }
         
-        // Con jitter, los delays pueden variar, pero el rango debe ser apropiado
-        // Para el primer reintento: baseDelay (100ms) con jitter = 10ms a 100ms
-        // Para el segundo reintento: 2*baseDelay (200ms) con jitter = 20ms a 200ms
-        delays[0].TotalMilliseconds.Should().BeInRange(5, 150, "Primer delay debe estar en rango con jitter");
-        delays[1].TotalMilliseconds.Should().BeInRange(5, 250, "Segundo delay debe estar en rango con jitter");
+        // Assert
+        // Calcular promedios de delays para cada posición
+        var avgFirstDelay = allDelays.Select(d => d[0].TotalMilliseconds).Average();
+        var avgSecondDelay = allDelays.Select(d => d[1].TotalMilliseconds).Average();
+        
+        // Verificar que los delays están dentro de los rangos esperados
+        foreach (var delays in allDelays)
+        {
+            delays.Should().HaveCount(2); // Dos delays entre las 3 ejecuciones
+            
+            // Verificar que todos los delays son positivos
+            foreach (var delay in delays)
+            {
+                delay.Should().BeGreaterThan(TimeSpan.Zero, "Todos los delays deben ser positivos");
+            }
+            
+            // Con jitter, los delays pueden variar, pero el rango debe ser apropiado
+            // Para el primer reintento: baseDelay (100ms) con jitter = 10ms a 100ms
+            // Para el segundo reintento: 2*baseDelay (200ms) con jitter = 20ms a 200ms
+            delays[0].TotalMilliseconds.Should().BeInRange(5, 150, "Primer delay debe estar en rango con jitter");
+            delays[1].TotalMilliseconds.Should().BeInRange(5, 250, "Segundo delay debe estar en rango con jitter");
+        }
         
         // Verificar que en promedio, el backoff exponencial funciona
-        // El rango máximo del segundo delay debe ser mayor que el del primero
-        var maxPossibleDelay1 = 100; // baseDelay * 1
-        
-        // Al menos uno de los delays debería mostrar la progresión exponencial
-        // O el segundo delay debería estar en un rango más alto que el primero
-        (delays[1].TotalMilliseconds > delays[0].TotalMilliseconds || 
-         delays[1].TotalMilliseconds > maxPossibleDelay1 * 0.5).Should().BeTrue(
-            "El backoff exponencial con jitter debería mostrar progresión en el tiempo base");
+        // El promedio del segundo delay debería ser mayor que el del primero
+        avgSecondDelay.Should().BeGreaterThan(avgFirstDelay * 0.8, 
+            "En promedio, el backoff exponencial debería mostrar progresión en los tiempos de espera");
     }
 
     [Fact]

@@ -227,9 +227,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                         fechaHora,
                         TimeSpan.FromHours(2),
                         cantidadPersonas,
-                        observaciones,
-                        "",
-                        "");
+                        "123456789", // telefono (requerido)
+                        "cliente@ejemplo.com", // email (requerido)
+                        observaciones);
                         
                     return Task.FromResult(Result.Success(reservacion));
                 }
@@ -564,29 +564,10 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
         {
             // Arrange
             var clienteId = Guid.NewGuid();
-            var fecha = DateTime.Now.AddDays(1);
+            var fecha = DateTime.Now.AddDays(5); // Fecha futura
             var cantidadPersonas = 4;
             var observaciones = "Observaciones de prueba";
             var cancellationToken = CancellationToken.None;
-            
-            // Configurar mesa disponible
-            var mesaId = Guid.NewGuid();
-            var mesas = new List<Guid> { mesaId };
-            
-            _reservacionRepositoryMock
-                .Setup(r => r.ObtenerMesasDisponiblesAsync(
-                    It.IsAny<DateTime>(), 
-                    It.IsAny<TimeSpan>(), 
-                    It.IsAny<int>(), 
-                    It.IsAny<int>(), 
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(mesas);
-            
-            // Configurar mesa existente
-            var mesa = RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(1, 4, "Terraza");
-            _mesaRepositoryMock
-                .Setup(m => m.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
-                .ReturnsAsync(mesa);
             
             // Configurar cliente existente
             var clienteNombre = ClienteNombre.Crear("Juan", "Pérez");
@@ -602,6 +583,25 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 cantidadPersonas,
                 observaciones,
                 cancellationToken);
+            
+            // Log para depuración
+            Console.WriteLine($"Resultado exitoso: {resultado.Succeeded}");
+            if (!resultado.Succeeded)
+            {
+                Console.WriteLine($"Error: {resultado.Error}");
+            }
+            else if (resultado.Value != null)
+            {
+                Console.WriteLine($"Reservación ID: {resultado.Value.Id}");
+                Console.WriteLine($"Cliente ID: {resultado.Value.ClienteId}");
+                Console.WriteLine($"Mesa ID: {resultado.Value.MesaId}");
+                Console.WriteLine($"Fecha: {resultado.Value.Fecha}");
+                Console.WriteLine($"Personas: {resultado.Value.CantidadPersonas}");
+            }
+            else
+            {
+                Console.WriteLine("Resultado exitoso pero valor nulo");
+            }
             
             // Assert
             Assert.True(resultado.Succeeded);
