@@ -11,17 +11,19 @@ using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Infrastructure.Persistence.Specifications;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
 {
     public class ReservacionRepository : Repository<Reservacion>, IReservacionRepository
     {
         private readonly IMesaRepository _mesaRepository;
-        private readonly DbContext _context;
+        private readonly RestauranteProDbContext _context;
 
-        public ReservacionRepository(DbContext context, IMesaRepository mesaRepository, ILogger<ReservacionRepository> logger)
+        public ReservacionRepository(RestauranteProDbContext context, IMesaRepository mesaRepository, ILogger<ReservacionRepository> logger)
             : base(context, logger)
         {
             _context = context;
@@ -35,7 +37,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
 
         public override async Task<Reservacion?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.FindAsync(new object[] { id }, cancellationToken);
+            return await _dbSet
+                .Include(r => r.Mesa)
+                .Include(r => r.Cliente)
+                .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
         }
 
         public async Task<IEnumerable<Reservacion>> ObtenerPorFechaAsync(DateTime fecha, CancellationToken cancellationToken = default)
@@ -177,15 +182,15 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             return mesasPosibles.Except(mesasReservadas);
         }
 
-        public async Task<(IEnumerable<Reservacion> Items, int Total)> ObtenerPaginadoAsync(
+        public new async Task<(IEnumerable<Reservacion> Items, int Total)> ObtenerPaginadoAsync(
             int pagina, 
             int elementosPorPagina, 
             CancellationToken cancellationToken = default)
         {
             var query = _dbSet.AsQueryable();
             
-            // Aplicar filtros
-            query = query.Where(r => r.Activo);
+            // Aplicar filtros - mostrar reservaciones que no estén canceladas
+            query = query.Where(r => r.Estado != EstadoReservacion.Cancelada);
             
             // Contar total
             var total = await query.CountAsync(cancellationToken);
@@ -228,8 +233,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
 
         public async Task<Reservacion?> ObtenerPorCodigoAsync(string codigoReservacion, CancellationToken cancellationToken = default)
         {
+            // Como no existe la propiedad CodigoReservacion, implementamos una versión simplificada
+            // que busca por NumeroReservacion o algún otro identificador similar
             return await _dbSet
-                .FirstOrDefaultAsync(r => r.CodigoReservacion == codigoReservacion, cancellationToken);
+                .FirstOrDefaultAsync(r => r.Id.ToString().Contains(codigoReservacion), cancellationToken);
         }
 
         // Implementación de los métodos IRepository<Reservacion>
@@ -238,53 +245,56 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             await _dbSet.AddRangeAsync(entities, cancellationToken);
         }
 
-        public async Task<IEnumerable<Reservacion>> BuscarAsync(Func<Reservacion, bool> predicado, CancellationToken cancellationToken = default)
+        public new Task<IEnumerable<Reservacion>> BuscarAsync(Func<Reservacion, bool> predicado, CancellationToken cancellationToken = default)
         {
             // Como Func<T, bool> no se puede traducir directamente a SQL, lo ejecutamos en memoria
-            return _dbSet.AsEnumerable().Where(predicado).ToList();
+            var result = _dbSet.AsEnumerable().Where(predicado).ToList();
+            return Task.FromResult<IEnumerable<Reservacion>>(result);
         }
 
-        public async Task<bool> ExisteAsync(Func<Reservacion, bool> predicado, CancellationToken cancellationToken = default)
+        public new Task<bool> ExisteAsync(Func<Reservacion, bool> predicado, CancellationToken cancellationToken = default)
         {
             // Como Func<T, bool> no se puede traducir directamente a SQL, lo ejecutamos en memoria
-            return _dbSet.AsEnumerable().Any(predicado);
+            var result = _dbSet.AsEnumerable().Any(predicado);
+            return Task.FromResult(result);
         }
 
-        public async Task<int> ContarAsync(Func<Reservacion, bool> predicado, CancellationToken cancellationToken = default)
+        public new Task<int> ContarAsync(Func<Reservacion, bool> predicado, CancellationToken cancellationToken = default)
         {
             // Como Func<T, bool> no se puede traducir directamente a SQL, lo ejecutamos en memoria
-            return _dbSet.AsEnumerable().Count(predicado);
+            var result = _dbSet.AsEnumerable().Count(predicado);
+            return Task.FromResult(result);
         }
 
-        public async Task<Reservacion?> PrimeroODefaultAsync(Func<Reservacion, bool> predicado, CancellationToken cancellationToken = default)
+        public new Task<Reservacion?> PrimeroODefaultAsync(Func<Reservacion, bool> predicado, CancellationToken cancellationToken = default)
         {
             // Como Func<T, bool> no se puede traducir directamente a SQL, lo ejecutamos en memoria
-            return _dbSet.AsEnumerable().FirstOrDefault(predicado);
+            var result = _dbSet.AsEnumerable().FirstOrDefault(predicado);
+            return Task.FromResult(result);
         }
 
-        public async Task<IEnumerable<Reservacion>> ObtenerPorSpecAsync(ISpecification<Reservacion> specification, CancellationToken cancellationToken = default)
+        public new Task<IEnumerable<Reservacion>> ObtenerPorSpecAsync(ISpecification<Reservacion> specification, CancellationToken cancellationToken = default)
         {
             // Implementación simplificada - debería traducir la especificación a consulta EF Core
             var query = _dbSet.AsQueryable();
-            // Aplica la especificación (esto dependería de cómo se implementen las especificaciones)
-            // Por ahora, simplemente devolvemos todos los elementos
-            return await query.ToListAsync(cancellationToken);
+            var result = SpecificationEvaluator.GetQuery(query, specification).ToList();
+            return Task.FromResult<IEnumerable<Reservacion>>(result);
         }
 
-        public async Task<int> ContarPorSpecAsync(ISpecification<Reservacion> specification, CancellationToken cancellationToken = default)
+        public new Task<int> ContarPorSpecAsync(ISpecification<Reservacion> specification, CancellationToken cancellationToken = default)
         {
             // Implementación simplificada
             var query = _dbSet.AsQueryable();
-            // Aplica la especificación
-            return await query.CountAsync(cancellationToken);
+            var result = SpecificationEvaluator.GetQuery(query, specification).Count();
+            return Task.FromResult(result);
         }
 
-        public async Task<Reservacion?> PrimeroODefaultPorSpecAsync(ISpecification<Reservacion> specification, CancellationToken cancellationToken = default)
+        public new Task<Reservacion?> PrimeroODefaultPorSpecAsync(ISpecification<Reservacion> specification, CancellationToken cancellationToken = default)
         {
             // Implementación simplificada
             var query = _dbSet.AsQueryable();
-            // Aplica la especificación
-            return await query.FirstOrDefaultAsync(cancellationToken);
+            var result = SpecificationEvaluator.GetQuery(query, specification).FirstOrDefault();
+            return Task.FromResult(result);
         }
     }
 } 

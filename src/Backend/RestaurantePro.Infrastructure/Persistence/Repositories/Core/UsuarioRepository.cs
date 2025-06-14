@@ -16,7 +16,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
 {
     public class UsuarioRepository : Repository<Usuario>, IUsuarioRepository
     {
-        private readonly RestauranteProDbContext _dbContext;
+        private new readonly RestauranteProDbContext _dbContext;
 
         public UsuarioRepository(RestauranteProDbContext dbContext, ILogger<UsuarioRepository> logger)
             : base(dbContext, logger)
@@ -27,7 +27,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         /// <summary>
         /// Obtiene un usuario por su ID
         /// </summary>
-        public async Task<Usuario?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public override async Task<Usuario?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await _dbSet.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
         }
@@ -82,19 +82,21 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         /// <summary>
         /// Agrega un nuevo usuario
         /// </summary>
-        public async Task AgregarAsync(Usuario usuario, CancellationToken cancellationToken = default)
+        public override async Task<Usuario> AgregarAsync(Usuario usuario, CancellationToken cancellationToken = default)
         {
             await _dbSet.AddAsync(usuario, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
+            return usuario;
         }
 
         /// <summary>
         /// Actualiza un usuario existente
         /// </summary>
-        public async Task ActualizarAsync(Usuario usuario, CancellationToken cancellationToken = default)
+        public override async Task<Usuario> ActualizarAsync(Usuario usuario, CancellationToken cancellationToken = default)
         {
             _dbContext.Entry(usuario).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync(cancellationToken);
+            return usuario;
         }
 
         /// <summary>

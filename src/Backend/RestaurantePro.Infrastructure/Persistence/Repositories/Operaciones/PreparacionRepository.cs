@@ -26,7 +26,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
     public class PreparacionRepository : Repository<PreparacionDiaria>, IPreparacionRepository
     {
         private readonly IDateTimeService _dateTimeService;
-        private readonly RestauranteProDbContext _dbContext;
+        private new readonly RestauranteProDbContext _dbContext;
         
         /// <summary>
         /// Constructor
@@ -84,8 +84,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             var fechaLimite = fechaActual.AddHours(horasAnticipacion);
             
             return await _dbContext.Set<PreparacionDiaria>()
-                .Where(p => p.FechaVencimiento != null && 
-                            p.FechaVencimiento > fechaActual && 
+                .Where(p => p.FechaVencimiento > fechaActual && 
                             p.FechaVencimiento <= fechaLimite &&
                             p.Estado == EstadoPreparacion.Disponible)
                 .ToListAsync(cancellationToken);
@@ -114,7 +113,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             // Identificar las preparaciones por vencer primero (para contarlas aparte)
             var preparacionesPorVencer = preparaciones
                 .Where(p => p.Estado == EstadoPreparacion.Disponible && 
-                           p.FechaVencimiento != null &&
                            p.FechaVencimiento <= fechaActual.AddHours(5) && 
                            p.FechaVencimiento > fechaActual)
                 .ToList();
@@ -160,8 +158,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         public override async Task<PreparacionDiaria?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(p => p.Producto)
-                .Include(p => p.DetallesPreparacion)
                 .FirstOrDefaultAsync(p => p.Id == id && !p.EstaEliminado, cancellationToken);
         }
 

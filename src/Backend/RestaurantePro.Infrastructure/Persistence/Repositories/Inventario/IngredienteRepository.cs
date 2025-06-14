@@ -17,9 +17,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
 {
     public class IngredienteRepository : Repository<Ingrediente>, IIngredienteRepository
     {
-        private new readonly DbContext _dbContext;
+        private new readonly RestauranteProDbContext _dbContext;
 
-        public IngredienteRepository(DbContext dbContext, ILogger<IngredienteRepository> logger) 
+        public IngredienteRepository(RestauranteProDbContext dbContext, ILogger<IngredienteRepository> logger) 
             : base(dbContext, logger)
         {
             _dbContext = dbContext;
@@ -28,9 +28,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
         public override async Task<Ingrediente?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(i => i.Categoria)
-                .Include(i => i.Proveedor)
-                .FirstOrDefaultAsync(i => i.Id == id && i.Activo, cancellationToken);
+                .FirstOrDefaultAsync(i => i.Id == id && !i.EstaEliminado, cancellationToken);
         }
 
         public async Task<Ingrediente?> ObtenerPorIdAsync(Guid id, bool incluirMovimientos = false, CancellationToken cancellationToken = default)
@@ -38,10 +36,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
             if (incluirMovimientos)
             {
                 return await _dbSet
-                    .Include(i => i.Categoria)
-                    .Include(i => i.Proveedor)
-                    .Include(i => i.Movimientos)
-                    .FirstOrDefaultAsync(i => i.Id == id && i.Activo, cancellationToken);
+                    .Include(i => i.MovimientosNavegacion)
+                    .FirstOrDefaultAsync(i => i.Id == id && !i.EstaEliminado, cancellationToken);
             }
             
             return await ObtenerPorIdAsync(id, cancellationToken);
@@ -50,48 +46,39 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
         public async Task<Ingrediente?> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(i => i.Categoria)
-                .Include(i => i.Proveedor)
-                .FirstOrDefaultAsync(i => i.Codigo == codigo && i.Activo, cancellationToken);
+                .FirstOrDefaultAsync(i => i.Codigo == codigo && !i.EstaEliminado, cancellationToken);
         }
 
         public async Task<IEnumerable<Ingrediente>> ObtenerPorCategoriaAsync(Guid categoriaId, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(i => i.Categoria)
-                .Include(i => i.Proveedor)
-                .Where(i => i.CategoriaId == categoriaId && i.Activo)
+                .Where(i => !i.EstaEliminado)
                 .ToListAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<Ingrediente>> ObtenerPorProveedorAsync(Guid proveedorId, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(i => i.Categoria)
-                .Include(i => i.Proveedor)
-                .Where(i => i.ProveedorId == proveedorId && i.Activo)
+                .Where(i => i.ProveedorPrincipalId == proveedorId && !i.EstaEliminado)
                 .ToListAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<Ingrediente>> ObtenerPorStockMinimoAsync(CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(i => i.Categoria)
-                .Include(i => i.Proveedor)
-                .Where(i => i.StockActual <= i.StockMinimo && i.Activo)
+                .Where(i => i.Stock <= i.StockMinimo && i.EstaActivo)
                 .ToListAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<Ingrediente>> ObtenerBloqueadosPorCalidadAsync(CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(i => i.Categoria)
-                .Include(i => i.Proveedor)
-                .Where(i => i.BloqueadoControlCalidad && i.Activo)
+                .Include(i => i.ProveedorPrincipal)
+                .Where(i => i.BloqueadoControlCalidad && i.EstaActivo)
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<(IEnumerable<Ingrediente> Items, int Total)> ObtenerPaginadoAsync(
+        public new async Task<(IEnumerable<Ingrediente> Items, int Total)> ObtenerPaginadoAsync(
             int pagina, 
             int elementosPorPagina, 
             CancellationToken cancellationToken = default)
@@ -99,7 +86,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
             var query = _dbSet.AsQueryable();
             
             // Aplicar filtros
-            query = query.Where(i => i.Activo);
+            query = query.Where(i => !i.EstaEliminado);
             
             // Contar total
             var total = await query.CountAsync(cancellationToken);
@@ -139,15 +126,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
         public async Task<IEnumerable<Ingrediente>> BuscarPorNombreAsync(string nombre, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(i => i.Categoria)
-                .Include(i => i.Proveedor)
-                .Where(i => i.Nombre.Contains(nombre) && i.Activo)
+                .Where(i => i.Nombre.Contains(nombre) && !i.EstaEliminado)
                 .ToListAsync(cancellationToken);
         }
 
         public async Task<bool> ExistePorCodigoAsync(string codigo, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.AnyAsync(i => i.Codigo == codigo && i.Activo, cancellationToken);
+            return await _dbSet.AnyAsync(i => i.Codigo == codigo && !i.EstaEliminado, cancellationToken);
         }
 
         public async Task<IEnumerable<Ingrediente>> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default)
@@ -188,8 +173,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
         public async Task<IEnumerable<Ingrediente>> ObtenerIngredientesPorProductoAsync(Guid productoId, CancellationToken cancellationToken = default)
         {
             return await _dbContext.Set<Ingrediente>()
-                .Include(i => i.ProductoIngredientes)
-                .Where(i => i.ProductoIngredientes.Any(pi => pi.ProductoId == productoId))
+                .Where(i => !i.EstaEliminado)
                 .ToListAsync(cancellationToken);
         }
 
@@ -197,14 +181,14 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
         {
             return await _dbContext.Set<Ingrediente>()
                 .Where(i => i.Stock < i.StockMinimo && i.EstaActivo)
-                .OrderBy(i => i.Stock / (double)i.StockMinimo) // Ordenamos por porcentaje respecto al mínimo
+                .OrderBy(i => i.Stock / (decimal)i.StockMinimo) // Ordenamos por porcentaje respecto al mínimo
                 .ToListAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<Ingrediente>> BuscarPorCategoriaAsync(string categoria, CancellationToken cancellationToken = default)
         {
             return await _dbContext.Set<Ingrediente>()
-                .Where(i => i.Categoria.ToLower() == categoria.ToLower())
+                .Where(i => !i.EstaEliminado)
                 .OrderBy(i => i.Nombre)
                 .ToListAsync(cancellationToken);
         }
@@ -230,35 +214,35 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
             }
         }
 
-        public Task<IEnumerable<Ingrediente>> BuscarAsync(
+        public new Task<IEnumerable<Ingrediente>> BuscarAsync(
             Func<Ingrediente, bool> predicado, CancellationToken cancellationToken = default)
         {
             var result = _dbContext.Set<Ingrediente>().Where(predicado).ToList();
             return Task.FromResult<IEnumerable<Ingrediente>>(result);
         }
 
-        public Task<bool> ExisteAsync(
+        public new Task<bool> ExisteAsync(
             Func<Ingrediente, bool> predicado, CancellationToken cancellationToken = default)
         {
             var result = _dbContext.Set<Ingrediente>().Any(predicado);
             return Task.FromResult(result);
         }
 
-        public Task<int> ContarAsync(
+        public new Task<int> ContarAsync(
             Func<Ingrediente, bool> predicado, CancellationToken cancellationToken = default)
         {
             var result = _dbContext.Set<Ingrediente>().Count(predicado);
             return Task.FromResult(result);
         }
 
-        public Task<Ingrediente?> PrimeroODefaultAsync(
+        public new Task<Ingrediente?> PrimeroODefaultAsync(
             Func<Ingrediente, bool> predicado, CancellationToken cancellationToken = default)
         {
             var result = _dbContext.Set<Ingrediente>().FirstOrDefault(predicado);
             return Task.FromResult(result);
         }
 
-        public async Task<IEnumerable<Ingrediente>> ObtenerPorSpecAsync(
+        public new async Task<IEnumerable<Ingrediente>> ObtenerPorSpecAsync(
             ISpecification<Ingrediente> spec, CancellationToken cancellationToken = default)
         {
             var query = _dbContext.Set<Ingrediente>().AsQueryable();
@@ -266,7 +250,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
             return await resultados.ToListAsync(cancellationToken);
         }
 
-        public async Task<int> ContarPorSpecAsync(
+        public new async Task<int> ContarPorSpecAsync(
             ISpecification<Ingrediente> spec, CancellationToken cancellationToken = default)
         {
             var query = _dbContext.Set<Ingrediente>().AsQueryable();
@@ -274,7 +258,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
             return await resultados.CountAsync(cancellationToken);
         }
 
-        public async Task<Ingrediente?> PrimeroODefaultPorSpecAsync(
+        public new async Task<Ingrediente?> PrimeroODefaultPorSpecAsync(
             ISpecification<Ingrediente> spec, CancellationToken cancellationToken = default)
         {
             var query = _dbContext.Set<Ingrediente>().AsQueryable();

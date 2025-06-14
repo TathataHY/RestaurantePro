@@ -11,6 +11,7 @@ using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Infrastructure.Persistence.Specifications;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
 {
@@ -38,7 +39,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         /// <summary>
         /// Obtiene una mesa por su ID
         /// </summary>
-        public new async Task<Mesa> ObtenerPorIdAsync(Guid id)
+        public async Task<Mesa> ObtenerPorIdAsync(Guid id)
         {
             var mesa = await _dbSet.FindAsync(id);
             if (mesa == null)
@@ -74,7 +75,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         /// <summary>
         /// Agrega una nueva mesa
         /// </summary>
-        public new async Task AgregarAsync(Mesa mesa)
+        public async Task AgregarAsync(Mesa mesa)
         {
             await _dbSet.AddAsync(mesa);
         }
@@ -82,7 +83,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         /// <summary>
         /// Actualiza una mesa existente
         /// </summary>
-        public new Task ActualizarAsync(Mesa mesa)
+        public Task ActualizarAsync(Mesa mesa)
         {
             _dbContext.Entry(mesa).State = EntityState.Modified;
             return Task.CompletedTask;
@@ -91,7 +92,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         /// <summary>
         /// Elimina una mesa
         /// </summary>
-        public new async Task EliminarAsync(Guid id)
+        public async Task EliminarAsync(Guid id)
         {
             var mesa = await ObtenerPorIdAsync(id);
             _dbSet.Remove(mesa);
@@ -191,32 +192,35 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
 
         #region Implementación IRepository<Mesa>
 
-        public Task<IEnumerable<Mesa>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<Mesa>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
         {
-            return ObtenerTodasAsync();
+            return await ObtenerTodasAsync();
         }
 
-        public async Task AgregarRangoAsync(IEnumerable<Mesa> entities, CancellationToken cancellationToken = default)
+        public override async Task<IEnumerable<Mesa>> AgregarRangoAsync(IEnumerable<Mesa> entities, CancellationToken cancellationToken = default)
         {
             await _dbSet.AddRangeAsync(entities, cancellationToken);
+            return entities;
         }
 
-        public async Task EliminarAsync(Mesa entity, CancellationToken cancellationToken = default)
+        public override async Task<Mesa> EliminarAsync(Mesa entity, CancellationToken cancellationToken = default)
         {
             _dbSet.Remove(entity);
             await Task.CompletedTask;
+            return entity;
         }
 
-        public async Task EliminarPorIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public override async Task<Mesa> EliminarPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var entity = await ObtenerPorIdAsync(id, cancellationToken);
             if (entity != null)
             {
                 await EliminarAsync(entity, cancellationToken);
             }
+            return entity;
         }
 
-        public async Task<(IEnumerable<Mesa> Items, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default)
+        public override async Task<(IEnumerable<Mesa> Items, int Total)> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default)
         {
             var total = await _dbSet.CountAsync(cancellationToken);
             var items = await _dbSet
@@ -227,65 +231,68 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             return (Items: items, Total: total);
         }
 
-        public async Task<IEnumerable<Mesa>> BuscarAsync(Func<Mesa, bool> predicado, CancellationToken cancellationToken = default)
+        public new Task<IEnumerable<Mesa>> BuscarAsync(Func<Mesa, bool> predicado, CancellationToken cancellationToken = default)
         {
-            return _dbSet.Where(predicado).ToList();
+            return Task.FromResult<IEnumerable<Mesa>>(_dbSet.Where(predicado).ToList());
         }
 
-        public Task<bool> ExisteAsync(Func<Mesa, bool> predicado, CancellationToken cancellationToken = default)
+        public new Task<bool> ExisteAsync(Func<Mesa, bool> predicado, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_dbSet.Any(predicado));
         }
 
-        public Task<int> ContarAsync(Func<Mesa, bool> predicado, CancellationToken cancellationToken = default)
+        public new Task<int> ContarAsync(Func<Mesa, bool> predicado, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_dbSet.Count(predicado));
         }
 
-        public Task<Mesa?> PrimeroODefaultAsync(Func<Mesa, bool> predicado, CancellationToken cancellationToken = default)
+        public new Task<Mesa?> PrimeroODefaultAsync(Func<Mesa, bool> predicado, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_dbSet.FirstOrDefault(predicado));
         }
 
-        public async Task<IEnumerable<Mesa>> ObtenerPorSpecAsync(ISpecification<Mesa> specification, CancellationToken cancellationToken = default)
+        public new async Task<IEnumerable<Mesa>> ObtenerPorSpecAsync(
+            ISpecification<Mesa> spec, CancellationToken cancellationToken = default)
         {
-            // Esta es una implementación básica que asume que ISpecification tiene una propiedad Criteria
-            // En una implementación real, habría que adaptar esto
-            return await _dbSet.ToListAsync(cancellationToken);
+            var query = _dbSet.AsQueryable();
+            var resultados = SpecificationEvaluator.GetQuery(query, spec);
+            return await resultados.ToListAsync(cancellationToken);
         }
 
-        public Task<int> ContarPorSpecAsync(ISpecification<Mesa> specification, CancellationToken cancellationToken = default)
+        public new async Task<int> ContarPorSpecAsync(
+            ISpecification<Mesa> spec, CancellationToken cancellationToken = default)
         {
-            // Esta es una implementación básica
-            return Task.FromResult(0);
+            var query = _dbSet.AsQueryable();
+            var resultados = SpecificationEvaluator.GetQuery(query, spec);
+            return await resultados.CountAsync(cancellationToken);
         }
 
-        public Task<Mesa?> PrimeroODefaultPorSpecAsync(ISpecification<Mesa> specification, CancellationToken cancellationToken = default)
+        public new async Task<Mesa?> PrimeroODefaultPorSpecAsync(
+            ISpecification<Mesa> spec, CancellationToken cancellationToken = default)
         {
-            // Esta es una implementación básica
-            return Task.FromResult<Mesa?>(null);
+            var query = _dbSet.AsQueryable();
+            var resultados = SpecificationEvaluator.GetQuery(query, spec);
+            return await resultados.FirstOrDefaultAsync(cancellationToken);
         }
 
-        public async Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default)
+        public override async Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default)
         {
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        // Estas implementaciones dependen de la firma exacta del método en la interfaz Repository<T>
         Task<Mesa?> IRepository<Mesa>.ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            return _dbSet.FindAsync(new object[] { id }, cancellationToken).AsTask();
+            return ObtenerPorIdAsync(id, cancellationToken);
         }
 
         Task IRepository<Mesa>.AgregarAsync(Mesa entity, CancellationToken cancellationToken)
         {
-            return _dbSet.AddAsync(entity, cancellationToken).AsTask();
+            return AgregarAsync(entity);
         }
 
         Task IRepository<Mesa>.ActualizarAsync(Mesa entity, CancellationToken cancellationToken)
         {
-            _dbContext.Entry(entity).State = EntityState.Modified;
-            return Task.CompletedTask;
+            return ActualizarAsync(entity);
         }
 
         #endregion

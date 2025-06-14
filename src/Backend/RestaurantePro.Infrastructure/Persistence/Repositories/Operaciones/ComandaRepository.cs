@@ -11,6 +11,7 @@ using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Infrastructure.Persistence.Specifications;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
 {
@@ -19,7 +20,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
     /// </summary>
     public class ComandaRepository : Repository<Comanda>, IComandaRepository
     {
-        public ComandaRepository(DbContext dbContext, ILogger<ComandaRepository> logger)
+        public ComandaRepository(RestauranteProDbContext dbContext, ILogger<ComandaRepository> logger)
             : base(dbContext, logger)
         {
         }
@@ -186,7 +187,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         {
             return await _dbSet
                 .Include(c => c.Items)
-                .FirstOrDefaultAsync(c => c.Numero == numero && !c.EstaEliminado, cancellationToken);
+                .FirstOrDefaultAsync(c => c.NumeroComanda == numero && !c.EstaEliminado, cancellationToken);
         }
         
         /// <summary>
@@ -198,7 +199,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             return await _dbSet
                 .Include(c => c.Items)
                 .Where(c => !c.EstaEliminado && 
-                        c.Estado != EstadoComanda.Completada && 
+                        c.Estado != EstadoComanda.Finalizada && 
                         c.Estado != EstadoComanda.Cancelada)
                 .OrderByDescending(c => c.FechaCreacion)
                 .ToListAsync(cancellationToken);
@@ -259,7 +260,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         {
             return await _dbSet
                 .AnyAsync(c => !c.EstaEliminado && c.MesaId == mesaId && 
-                         c.Estado != EstadoComanda.Completada && c.Estado != EstadoComanda.Cancelada, 
+                         c.Estado != EstadoComanda.Finalizada && c.Estado != EstadoComanda.Cancelada, 
                          cancellationToken);
         }
 
@@ -284,7 +285,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
 
         public async Task<bool> ExisteNumeroComandaAsync(string numeroComanda, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.AnyAsync(c => c.Numero == numeroComanda, cancellationToken);
+            return await _dbSet.AnyAsync(c => c.NumeroComanda == numeroComanda, cancellationToken);
         }
 
         public async Task<int?> ObtenerUltimoSecuencialDelDiaAsync(DateTime fecha, CancellationToken cancellationToken = default)
@@ -292,21 +293,36 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             var fechaInicio = fecha.Date;
             var fechaFin = fechaInicio.AddDays(1).AddTicks(-1);
             
+            // Como no existe la propiedad Secuencial, usamos el NumeroComanda para extraer un número secuencial
             var ultimaComanda = await _dbSet
                 .Where(c => c.FechaCreacion >= fechaInicio && c.FechaCreacion <= fechaFin)
-                .OrderByDescending(c => c.Secuencial)
+                .OrderByDescending(c => c.FechaCreacion)
                 .FirstOrDefaultAsync(cancellationToken);
                 
-            return ultimaComanda?.Secuencial;
+            if (ultimaComanda == null)
+                return null;
+                
+            // Intentamos extraer un número secuencial del NumeroComanda
+            if (int.TryParse(ultimaComanda.NumeroComanda.Split('-').LastOrDefault(), out int secuencial))
+                return secuencial;
+                
+            return null;
         }
 
         public async Task<int> ObtenerUltimoSecuencialAsync(CancellationToken cancellationToken = default)
         {
             var ultimaComanda = await _dbSet
-                .OrderByDescending(c => c.Secuencial)
+                .OrderByDescending(c => c.FechaCreacion)
                 .FirstOrDefaultAsync(cancellationToken);
                 
-            return ultimaComanda?.Secuencial ?? 0;
+            if (ultimaComanda == null)
+                return 0;
+                
+            // Intentamos extraer un número secuencial del NumeroComanda
+            if (int.TryParse(ultimaComanda.NumeroComanda.Split('-').LastOrDefault(), out int secuencial))
+                return secuencial;
+                
+            return 0;
         }
 
         public async Task<int> ObtenerUltimoSecuencialAsync(Guid sucursalId, DateTime fecha, CancellationToken cancellationToken = default)
@@ -314,17 +330,25 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             var fechaInicio = fecha.Date;
             var fechaFin = fechaInicio.AddDays(1).AddTicks(-1);
             
+            // Como no existe la propiedad SucursalId, ignoramos ese filtro
             var ultimaComanda = await _dbSet
-                .Where(c => c.SucursalId == sucursalId && c.FechaCreacion >= fechaInicio && c.FechaCreacion <= fechaFin)
-                .OrderByDescending(c => c.Secuencial)
+                .Where(c => c.FechaCreacion >= fechaInicio && c.FechaCreacion <= fechaFin)
+                .OrderByDescending(c => c.FechaCreacion)
                 .FirstOrDefaultAsync(cancellationToken);
                 
-            return ultimaComanda?.Secuencial ?? 0;
+            if (ultimaComanda == null)
+                return 0;
+                
+            // Intentamos extraer un número secuencial del NumeroComanda
+            if (int.TryParse(ultimaComanda.NumeroComanda.Split('-').LastOrDefault(), out int secuencial))
+                return secuencial;
+                
+            return 0;
         }
 
         public async Task<(IEnumerable<Comanda> Comandas, int Total)> ObtenerComandasActivasAsync(Dictionary<string, object> criterios, int pagina, int elementosPorPagina, CancellationToken cancellationToken = default)
         {
-            var query = _dbSet.Where(c => c.Activo).AsQueryable();
+            var query = _dbSet.Where(c => !c.EstaEliminado).AsQueryable();
             
             // Aplicar filtros según los criterios recibidos
             foreach (var criterio in criterios)
@@ -332,7 +356,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
                 switch (criterio.Key.ToLower())
                 {
                     case "estado":
-                        if (criterio.Value is string estado)
+                        if (criterio.Value is string estadoStr && Enum.TryParse<EstadoComanda>(estadoStr, out var estado))
                             query = query.Where(c => c.Estado == estado);
                         break;
                     case "mesa":
@@ -357,7 +381,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
                         break;
                     case "numero":
                         if (criterio.Value is string numero)
-                            query = query.Where(c => c.Numero.Contains(numero));
+                            query = query.Where(c => c.NumeroComanda.Contains(numero));
                         break;
                 }
             }
@@ -386,53 +410,118 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             await _dbSet.AddRangeAsync(entities, cancellationToken);
         }
 
-        public async Task<IEnumerable<Comanda>> BuscarAsync(Func<Comanda, bool> predicado, CancellationToken cancellationToken = default)
+        public new async Task<IEnumerable<Comanda>> BuscarAsync(Func<Comanda, bool> predicado, CancellationToken cancellationToken = default)
         {
-            // Como Func<T, bool> no se puede traducir directamente a SQL, lo ejecutamos en memoria
-            return _dbSet.AsEnumerable().Where(predicado).ToList();
+            var result = _dbSet.Where(predicado).ToList();
+            return result;
         }
 
-        public async Task<bool> ExisteAsync(Func<Comanda, bool> predicado, CancellationToken cancellationToken = default)
+        public new async Task<bool> ExisteAsync(Func<Comanda, bool> predicado, CancellationToken cancellationToken = default)
         {
-            // Como Func<T, bool> no se puede traducir directamente a SQL, lo ejecutamos en memoria
-            return _dbSet.AsEnumerable().Any(predicado);
+            var result = _dbSet.Any(predicado);
+            return result;
         }
 
-        public async Task<int> ContarAsync(Func<Comanda, bool> predicado, CancellationToken cancellationToken = default)
+        public new async Task<int> ContarAsync(Func<Comanda, bool> predicado, CancellationToken cancellationToken = default)
         {
-            // Como Func<T, bool> no se puede traducir directamente a SQL, lo ejecutamos en memoria
-            return _dbSet.AsEnumerable().Count(predicado);
+            var result = _dbSet.Count(predicado);
+            return result;
         }
 
-        public async Task<Comanda?> PrimeroODefaultAsync(Func<Comanda, bool> predicado, CancellationToken cancellationToken = default)
+        public new async Task<Comanda?> PrimeroODefaultAsync(Func<Comanda, bool> predicado, CancellationToken cancellationToken = default)
         {
-            // Como Func<T, bool> no se puede traducir directamente a SQL, lo ejecutamos en memoria
-            return _dbSet.AsEnumerable().FirstOrDefault(predicado);
+            var result = _dbSet.FirstOrDefault(predicado);
+            return result;
         }
 
-        public async Task<IEnumerable<Comanda>> ObtenerPorSpecAsync(ISpecification<Comanda> specification, CancellationToken cancellationToken = default)
+        public new async Task<IEnumerable<Comanda>> ObtenerPorSpecAsync(
+            ISpecification<Comanda> spec, CancellationToken cancellationToken = default)
         {
-            // Implementación simplificada - debería traducir la especificación a consulta EF Core
             var query = _dbSet.AsQueryable();
-            // Aplica la especificación (esto dependería de cómo se implementen las especificaciones)
-            // Por ahora, simplemente devolvemos todos los elementos
-            return await query.ToListAsync(cancellationToken);
+            var resultados = SpecificationEvaluator.GetQuery(query, spec);
+            return await resultados.ToListAsync(cancellationToken);
         }
 
-        public async Task<int> ContarPorSpecAsync(ISpecification<Comanda> specification, CancellationToken cancellationToken = default)
+        public new async Task<int> ContarPorSpecAsync(
+            ISpecification<Comanda> spec, CancellationToken cancellationToken = default)
         {
-            // Implementación simplificada
             var query = _dbSet.AsQueryable();
-            // Aplica la especificación
-            return await query.CountAsync(cancellationToken);
+            var resultados = SpecificationEvaluator.GetQuery(query, spec);
+            return await resultados.CountAsync(cancellationToken);
         }
 
-        public async Task<Comanda?> PrimeroODefaultPorSpecAsync(ISpecification<Comanda> specification, CancellationToken cancellationToken = default)
+        public new async Task<Comanda?> PrimeroODefaultPorSpecAsync(
+            ISpecification<Comanda> spec, CancellationToken cancellationToken = default)
         {
-            // Implementación simplificada
             var query = _dbSet.AsQueryable();
-            // Aplica la especificación
-            return await query.FirstOrDefaultAsync(cancellationToken);
+            var resultados = SpecificationEvaluator.GetQuery(query, spec);
+            return await resultados.FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<Comanda>> ObtenerComandasCompletadasAsync(
+            DateTime fechaInicio, 
+            DateTime fechaFin, 
+            CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Where(c => c.Estado == EstadoComanda.Finalizada && 
+                            c.FechaCreacion >= fechaInicio && 
+                            c.FechaCreacion <= fechaFin)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<int> ContarComandasCompletadasAsync(
+            DateTime fechaInicio, 
+            DateTime fechaFin, 
+            CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .CountAsync(c => c.Estado == EstadoComanda.Finalizada && 
+                                c.FechaCreacion >= fechaInicio && 
+                                c.FechaCreacion <= fechaFin, 
+                            cancellationToken);
+        }
+
+        public async Task<int> ContarComandasCompletadasPorMesasAsync(
+            IEnumerable<Guid> mesaIds, 
+            DateTime fechaInicio, 
+            DateTime fechaFin, 
+            CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .CountAsync(c => c.Estado == EstadoComanda.Finalizada && 
+                                c.MesaId != Guid.Empty && 
+                                mesaIds.Contains(c.MesaId) &&
+                                c.FechaCreacion >= fechaInicio && 
+                                c.FechaCreacion <= fechaFin, 
+                            cancellationToken);
+        }
+
+        public async Task<int> ContarComandasPorEstadoAsync(
+            EstadoComanda estado, 
+            DateTime fechaInicio, 
+            DateTime fechaFin, 
+            CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .CountAsync(c => c.Estado == estado && 
+                                c.FechaCreacion >= fechaInicio && 
+                                c.FechaCreacion <= fechaFin, 
+                            cancellationToken);
+        }
+
+        public async Task<IEnumerable<Comanda>> ObtenerComandasFinalizadasPorMesaAsync(
+            Guid mesaId, 
+            DateTime fechaInicio, 
+            DateTime fechaFin, 
+            CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Where(c => c.Estado == EstadoComanda.Finalizada && 
+                            c.MesaId == mesaId &&
+                            c.FechaCreacion >= fechaInicio && 
+                            c.FechaCreacion <= fechaFin)
+                .ToListAsync(cancellationToken);
         }
     }
 } 

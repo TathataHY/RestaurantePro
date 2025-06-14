@@ -18,9 +18,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
 {
     public class ClienteRepository : Repository<Cliente>, IClienteRepository
     {
-        private new readonly DbContext _dbContext;
+        private new readonly RestauranteProDbContext _dbContext;
 
-        public ClienteRepository(DbContext dbContext, ILogger<ClienteRepository> logger)
+        public ClienteRepository(RestauranteProDbContext dbContext, ILogger<ClienteRepository> logger)
             : base(dbContext, logger)
         {
             _dbContext = dbContext;
@@ -29,35 +29,31 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         public override async Task<Cliente?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(c => c.TarjetaFidelizacion)
-                .FirstOrDefaultAsync(c => c.Id == id && c.Activo, cancellationToken);
+                .FirstOrDefaultAsync(c => c.Id == id && c.EstaActivo, cancellationToken);
         }
 
         public async Task<Cliente?> ObtenerPorEmailAsync(string email, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(c => c.TarjetaFidelizacion)
-                .FirstOrDefaultAsync(c => c.Email == email && c.Activo, cancellationToken);
+                .FirstOrDefaultAsync(c => c.Email.Value == email && c.EstaActivo, cancellationToken);
         }
 
         public async Task<Cliente?> ObtenerPorTelefonoAsync(string telefono, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(c => c.TarjetaFidelizacion)
-                .FirstOrDefaultAsync(c => c.Telefono == telefono && c.Activo, cancellationToken);
+                .FirstOrDefaultAsync(c => c.Telefono.Value == telefono && c.EstaActivo, cancellationToken);
         }
 
         public async Task<IEnumerable<Cliente>> ObtenerClientesFrecuentesAsync(int cantidad = 10, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(c => c.TarjetaFidelizacion)
-                .Where(c => c.Activo && c.TarjetaFidelizacion != null)
-                .OrderByDescending(c => c.TarjetaFidelizacion.PuntosAcumulados)
+                .Where(c => c.EstaActivo && c.TarjetaFidelizacionPrincipalId != null)
+                .OrderByDescending(c => c.PuntosAcumulados)
                 .Take(cantidad)
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<(IEnumerable<Cliente> Items, int Total)> ObtenerPaginadoAsync(
+        public new async Task<(IEnumerable<Cliente> Items, int Total)> ObtenerPaginadoAsync(
             int pagina, 
             int elementosPorPagina, 
             CancellationToken cancellationToken = default)
@@ -65,7 +61,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
             var query = _dbSet.AsQueryable();
             
             // Aplicar filtros
-            query = query.Where(c => c.Activo);
+            query = query.Where(c => c.EstaActivo);
             
             // Contar total
             var total = await query.CountAsync(cancellationToken);
@@ -105,8 +101,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         public async Task<IEnumerable<Cliente>> BuscarPorNombreAsync(string nombre, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Include(c => c.TarjetaFidelizacion)
-                .Where(c => c.Nombre.Contains(nombre) && c.Activo)
+                .Where(c => c.Nombre.NombreCompleto.Contains(nombre) && c.EstaActivo)
                 .ToListAsync(cancellationToken);
         }
 
@@ -226,49 +221,49 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
             return _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public Task<IEnumerable<Cliente>> BuscarAsync(Func<Cliente, bool> predicado, CancellationToken cancellationToken = default)
+        public new Task<IEnumerable<Cliente>> BuscarAsync(Func<Cliente, bool> predicado, CancellationToken cancellationToken = default)
         {
             var result = _dbContext.Set<Cliente>().Where(predicado).ToList();
             return Task.FromResult<IEnumerable<Cliente>>(result);
         }
 
-        public Task<bool> ExisteAsync(Func<Cliente, bool> predicado, CancellationToken cancellationToken = default)
+        public new Task<bool> ExisteAsync(Func<Cliente, bool> predicado, CancellationToken cancellationToken = default)
         {
             var result = _dbContext.Set<Cliente>().Any(predicado);
             return Task.FromResult(result);
         }
 
-        public Task<int> ContarAsync(Func<Cliente, bool> predicado, CancellationToken cancellationToken = default)
+        public new Task<int> ContarAsync(Func<Cliente, bool> predicado, CancellationToken cancellationToken = default)
         {
             var result = _dbContext.Set<Cliente>().Count(predicado);
             return Task.FromResult(result);
         }
 
-        public Task<Cliente?> PrimeroODefaultAsync(Func<Cliente, bool> predicado, CancellationToken cancellationToken = default)
+        public new Task<Cliente?> PrimeroODefaultAsync(Func<Cliente, bool> predicado, CancellationToken cancellationToken = default)
         {
             var result = _dbContext.Set<Cliente>().FirstOrDefault(predicado);
             return Task.FromResult(result);
         }
 
-        public async Task<IEnumerable<Cliente>> ObtenerPorSpecAsync(ISpecification<Cliente> spec, CancellationToken cancellationToken = default)
+        public new Task<IEnumerable<Cliente>> ObtenerPorSpecAsync(ISpecification<Cliente> spec, CancellationToken cancellationToken = default)
         {
-            var query = _dbContext.Set<Cliente>().AsQueryable();
-            var resultados = SpecificationEvaluator.GetQuery<Cliente>(query, spec);
-            return await resultados.ToListAsync(cancellationToken);
+            var query = _dbSet.AsQueryable();
+            var result = SpecificationEvaluator.GetQuery(query, spec).ToList();
+            return Task.FromResult<IEnumerable<Cliente>>(result);
         }
 
-        public async Task<int> ContarPorSpecAsync(ISpecification<Cliente> spec, CancellationToken cancellationToken = default)
+        public new Task<int> ContarPorSpecAsync(ISpecification<Cliente> spec, CancellationToken cancellationToken = default)
         {
-            var query = _dbContext.Set<Cliente>().AsQueryable();
-            var resultados = SpecificationEvaluator.GetQuery<Cliente>(query, spec);
-            return await resultados.CountAsync(cancellationToken);
+            var query = _dbSet.AsQueryable();
+            var result = SpecificationEvaluator.GetQuery(query, spec).Count();
+            return Task.FromResult(result);
         }
 
-        public async Task<Cliente?> PrimeroODefaultPorSpecAsync(ISpecification<Cliente> spec, CancellationToken cancellationToken = default)
+        public new Task<Cliente?> PrimeroODefaultPorSpecAsync(ISpecification<Cliente> spec, CancellationToken cancellationToken = default)
         {
-            var query = _dbContext.Set<Cliente>().AsQueryable();
-            var resultados = SpecificationEvaluator.GetQuery<Cliente>(query, spec);
-            return await resultados.FirstOrDefaultAsync(cancellationToken);
+            var query = _dbSet.AsQueryable();
+            var result = SpecificationEvaluator.GetQuery(query, spec).FirstOrDefault();
+            return Task.FromResult(result);
         }
     }
 } 

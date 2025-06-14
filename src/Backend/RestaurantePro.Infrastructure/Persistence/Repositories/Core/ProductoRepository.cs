@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using RestaurantePro.Domain.Core.Productos.Entities;
 using RestaurantePro.Domain.Core.Productos.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,9 +17,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
     /// </summary>
     public class ProductoRepository : Repository<Producto>, IProductoRepository
     {
-        public ProductoRepository(DbContext dbContext, ILogger<ProductoRepository> logger)
+        private new readonly RestauranteProDbContext _dbContext;
+
+        public ProductoRepository(RestauranteProDbContext dbContext, ILogger<ProductoRepository> logger)
             : base(dbContext, logger)
         {
+            _dbContext = dbContext;
         }
 
         /// <summary>
@@ -155,7 +159,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
             return await _dbSet
                 .Where(p => p.EstaActivo && 
                        (p.Nombre.ToLower().Contains(terminoLower) || 
-                        p.Descripcion != null && p.Descripcion.ToLower().Contains(terminoLower)))
+                        (p.Descripcion != null && p.Descripcion.ToLower().Contains(terminoLower))))
                 .OrderBy(p => p.Nombre)
                 .ToListAsync();
         }
@@ -178,7 +182,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
             return await _dbSet
                 .Where(p => p.EstaActivo && 
                        (p.Nombre.ToLower().Contains(terminoLower) || 
-                        p.Descripcion != null && p.Descripcion.ToLower().Contains(terminoLower)))
+                        (p.Descripcion != null && p.Descripcion.ToLower().Contains(terminoLower))))
                 .OrderBy(p => p.Nombre)
                 .ToListAsync(cancellationToken);
         }
