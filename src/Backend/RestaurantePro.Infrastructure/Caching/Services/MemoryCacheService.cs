@@ -1,9 +1,10 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
 using RestaurantePro.Infrastructure.Caching.Configuration;
-using RestaurantePro.Infrastructure.Caching.Services.Interfaces;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RestaurantePro.Infrastructure.Caching.Services
@@ -35,32 +36,28 @@ namespace RestaurantePro.Infrastructure.Caching.Services
         }
 
         /// <inheritdoc/>
-        public Task<T> GetAsync<T>(string key)
+        public bool Exists(string key)
         {
-            return Task.FromResult(Get<T>(key));
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentNullException(nameof(key));
+
+            return _memoryCache.TryGetValue(key, out _);
         }
 
         /// <inheritdoc/>
-        public void Set<T>(string key, T value, TimeSpan? expiration = null)
+        public void Set<T>(string key, T value, int expirationMinutes = 60)
         {
             if (string.IsNullOrEmpty(key))
                 throw new ArgumentNullException(nameof(key));
 
             var cacheEntryOptions = new MemoryCacheEntryOptions
             {
-                AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromMinutes(_cacheConfig.DefaultExpirationMinutes),
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(expirationMinutes),
                 Priority = CacheItemPriority.Normal
             };
 
             _logger.LogDebug("Estableciendo valor en caché para clave: {Key}", key);
             _memoryCache.Set(key, value, cacheEntryOptions);
-        }
-
-        /// <inheritdoc/>
-        public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)
-        {
-            Set(key, value, expiration);
-            return Task.CompletedTask;
         }
 
         /// <inheritdoc/>
@@ -74,29 +71,20 @@ namespace RestaurantePro.Infrastructure.Caching.Services
         }
 
         /// <inheritdoc/>
-        public Task RemoveAsync(string key)
+        public void InvalidatePattern(string pattern)
         {
-            Remove(key);
-            return Task.CompletedTask;
+            if (string.IsNullOrEmpty(pattern))
+                throw new ArgumentNullException(nameof(pattern));
+
+            _logger.LogWarning("Invalidación por patrón no está completamente soportada en IMemoryCache: {Pattern}", pattern);
+            
+            // IMemoryCache no tiene una forma directa de buscar por patrón
+            // Esta es una limitación de la implementación
+            // En una implementación real con Redis, esto sería más eficiente
         }
 
         /// <inheritdoc/>
-        public bool Exists(string key)
-        {
-            if (string.IsNullOrEmpty(key))
-                throw new ArgumentNullException(nameof(key));
-
-            return _memoryCache.TryGetValue(key, out _);
-        }
-
-        /// <inheritdoc/>
-        public Task<bool> ExistsAsync(string key)
-        {
-            return Task.FromResult(Exists(key));
-        }
-
-        /// <inheritdoc/>
-        public T GetOrCreate<T>(string key, Func<T> factory, TimeSpan? expiration = null)
+        public T GetOrCreate<T>(string key, Func<T> factory, int expirationMinutes = 60)
         {
             if (string.IsNullOrEmpty(key))
                 throw new ArgumentNullException(nameof(key));
@@ -112,18 +100,24 @@ namespace RestaurantePro.Infrastructure.Caching.Services
 
             _logger.LogDebug("Valor no encontrado en caché para clave: {Key}, creando nuevo valor", key);
             T newValue = factory();
-            Set(key, newValue, expiration);
+            Set(key, newValue, expirationMinutes);
             return newValue;
         }
 
         /// <inheritdoc/>
-        public async Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null)
+        public T GetOrAdd<T>(string key, Func<T> loadFunc, int timeToLiveMinutes = 10)
+        {
+            return GetOrCreate(key, loadFunc, timeToLiveMinutes);
+        }
+
+        /// <inheritdoc/>
+        public async Task<T> GetOrAddAsync<T>(string key, Func<CancellationToken, Task<T>> loadFunc, int timeToLiveMinutes = 10, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(key))
                 throw new ArgumentNullException(nameof(key));
 
-            if (factory == null)
-                throw new ArgumentNullException(nameof(factory));
+            if (loadFunc == null)
+                throw new ArgumentNullException(nameof(loadFunc));
 
             if (_memoryCache.TryGetValue(key, out T cachedValue))
             {
@@ -132,33 +126,9 @@ namespace RestaurantePro.Infrastructure.Caching.Services
             }
 
             _logger.LogDebug("Valor no encontrado en caché para clave: {Key}, creando nuevo valor", key);
-            T newValue = await factory();
-            await SetAsync(key, newValue, expiration);
+            T newValue = await loadFunc(cancellationToken);
+            Set(key, newValue, timeToLiveMinutes);
             return newValue;
-        }
-
-        /// <inheritdoc/>
-        public void Clear()
-        {
-            _logger.LogWarning("Limpiando toda la caché en memoria");
-            
-            // No hay un método directo para limpiar IMemoryCache
-            // Necesitamos crear una nueva instancia o usar un enfoque alternativo
-            // Esta es una limitación conocida de IMemoryCache
-            
-            // En una implementación real, podríamos usar un enfoque como:
-            // 1. Mantener un registro de todas las claves
-            // 2. Usar un campo de tipo MemoryCache que podamos reemplazar
-            // 3. Usar un proveedor de caché diferente que soporte limpieza completa
-            
-            _logger.LogWarning("La limpieza completa de IMemoryCache no está soportada directamente");
-        }
-
-        /// <inheritdoc/>
-        public Task ClearAsync()
-        {
-            Clear();
-            return Task.CompletedTask;
         }
     }
 } 

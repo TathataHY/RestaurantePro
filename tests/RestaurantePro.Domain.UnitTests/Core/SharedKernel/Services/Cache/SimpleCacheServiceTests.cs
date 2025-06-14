@@ -1,12 +1,17 @@
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+using System.Threading.Tasks;
+using Xunit;
+using FluentAssertions;
+
 namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services.Cache
 {
-    public class MemoryCacheServiceTests
+    public class SimpleCacheServiceTests
     {
-        private readonly MemoryCacheService _cacheService;
+        private readonly SimpleCacheService _cacheService;
 
-        public MemoryCacheServiceTests()
+        public SimpleCacheServiceTests()
         {
-            _cacheService = new MemoryCacheService();
+            _cacheService = new SimpleCacheService();
         }
 
         [Fact]

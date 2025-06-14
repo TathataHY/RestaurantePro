@@ -1,3 +1,12 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Strategy;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Telemetry;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Notification;
+using System.Linq;
+
 namespace RestaurantePro.Domain.Core
 {
     /// <summary>
@@ -26,13 +35,6 @@ namespace RestaurantePro.Domain.Core
             // Registrar servicios de caché con telemetría y TTL dinámico
             services.AddSingleton<ICacheTelemetry, InMemoryCacheTelemetry>();
             services.AddSingleton<IDynamicTtlStrategy, UsageBasedTtlStrategy>();
-            services.AddSingleton<ICacheService>(sp => 
-            {
-                var baseCacheService = new MemoryCacheService();
-                var telemetry = sp.GetRequiredService<ICacheTelemetry>();
-                var ttlStrategy = sp.GetRequiredService<IDynamicTtlStrategy>();
-                return new SmartCacheDecorator(baseCacheService, telemetry, ttlStrategy);
-            });
             
             // Registrar servicio de notificaciones con caché
             services.AddScoped<ServicioNotificaciones>(); // Implementación original
@@ -228,13 +230,21 @@ namespace RestaurantePro.Domain.Core
             // Registrar servicios de caché con telemetría y TTL dinámico para pruebas
             services.AddSingleton<ICacheTelemetry, InMemoryCacheTelemetry>();
             services.AddSingleton<IDynamicTtlStrategy, UsageBasedTtlStrategy>();
-            services.AddSingleton<ICacheService>(sp => 
+            
+            // Para pruebas, registramos una implementación simple de ICacheService si no está registrada
+            if (!services.Any(s => s.ServiceType == typeof(ICacheService)))
             {
-                var baseCacheService = new MemoryCacheService();
-                var telemetry = sp.GetRequiredService<ICacheTelemetry>();
-                var ttlStrategy = sp.GetRequiredService<IDynamicTtlStrategy>();
-                return new SmartCacheDecorator(baseCacheService, telemetry, ttlStrategy);
-            });
+                // Nota: La implementación real de ICacheService se registra en la capa de infraestructura
+                // Usamos una implementación simple para las pruebas
+                services.AddSingleton<ICacheService>(sp => 
+                {
+                    // Implementación simple de ICacheService para pruebas
+                    var simpleCacheService = new SimpleCacheService();
+                    var telemetry = sp.GetRequiredService<ICacheTelemetry>();
+                    var ttlStrategy = sp.GetRequiredService<IDynamicTtlStrategy>();
+                    return new SmartCacheDecorator(simpleCacheService, telemetry, ttlStrategy);
+                });
+            }
             
             // Registrar servicio de notificaciones con caché para pruebas
             services.AddScoped<ServicioNotificaciones>(); // Implementación original

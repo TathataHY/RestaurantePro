@@ -144,8 +144,8 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 ## Caching
 
 ### Services
-- `✅/❌` MemoryCacheService - Servicio de caché en memoria
-- `❌/❌` RedisCacheService - Servicio de caché con Redis
+- `✅/✅` MemoryCacheService - Servicio de caché en memoria
+- `✅/✅` RedisCacheService - Servicio de caché con Redis
 
 ## Logging
 
