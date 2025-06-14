@@ -110,19 +110,19 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 ## ExternalServices
 
 ### Payment
-- `⬜/⬜` PayPalService - Servicio para pagos con PayPal (Implementación futura)
-- `⬜/⬜` StripeService - Servicio para pagos con Stripe (Implementación futura)
+- `✅/⬜` PayPalService - Servicio para pagos con PayPal (Estructura implementada pero comentada para uso futuro)
+- `✅/⬜` StripeService - Servicio para pagos con Stripe (Estructura implementada pero comentada para uso futuro)
 
 ### Email
 - `✅/⬜` EmailService - Servicio para envío de correos electrónicos
 - `✅/⬜` SendGridService - Servicio para envío de correos electrónicos con SendGrid (Preparado para implementación futura)
 
 ### SMS
-- `⬜/⬜` TwilioService - Servicio para envío de SMS con Twilio (Implementación futura)
+- `✅/⬜` TwilioService - Servicio para envío de SMS con Twilio (Estructura implementada pero comentada para uso futuro)
 
 ### FileStorage
-- `⬜/⬜` LocalFileService - Servicio para almacenamiento local de archivos (Implementación futura)
-- `⬜/⬜` AzureBlobService - Servicio para almacenamiento en Azure Blob Storage (Implementación futura)
+- `✅/⬜` LocalFileService - Servicio para almacenamiento local de archivos
+- `✅/⬜` AzureBlobService - Servicio para almacenamiento en Azure Blob Storage (Estructura implementada pero comentada para uso futuro)
 
 ## BackgroundTasks
 

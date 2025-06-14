@@ -1,8 +1,11 @@
+using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Infrastructure.ExternalServices.Email;
-using RestaurantePro.Infrastructure.ExternalServices.Email.Models;
+using RestaurantePro.Infrastructure.ExternalServices.FileStorage;
+using RestaurantePro.Infrastructure.ExternalServices.Payment;
+using RestaurantePro.Infrastructure.ExternalServices.SMS;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
 {
@@ -12,51 +15,112 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
     public static class ExternalServicesSetup
     {
         /// <summary>
-        /// Agrega servicios externos a la colección de servicios
+        /// Registra los servicios externos en el contenedor de dependencias
         /// </summary>
-        /// <param name="services">Colección de servicios</param>
-        /// <param name="configuration">Configuración de la aplicación</param>
-        /// <returns>Colección de servicios con los servicios externos registrados</returns>
         public static IServiceCollection AddExternalServices(
-            this IServiceCollection services,
+            this IServiceCollection services, 
             IConfiguration configuration)
         {
-            // Configuración de Email
-            services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
-
-            // Servicios de Email
-            ConfigurarServiciosEmail(services, configuration);
-
-            // TODO: Agregar configuración de servicios de pago (PayPal, Stripe) - Implementación futura
+            // Registrar servicios de correo electrónico
+            services.AddEmailServices(configuration);
             
-            // TODO: Agregar configuración de servicios SMS (Twilio) - Implementación futura
-
-            // TODO: Agregar configuración de servicios de almacenamiento de archivos - Implementación futura
+            // Registrar servicios de almacenamiento de archivos
+            services.AddFileStorageServices(configuration);
+            
+            // Registrar servicios de pago
+            services.AddPaymentServices(configuration);
+            
+            // Registrar servicios de SMS
+            services.AddSMSServices(configuration);
             
             return services;
         }
-
-        private static void ConfigurarServiciosEmail(IServiceCollection services, IConfiguration configuration)
+        
+        /// <summary>
+        /// Registra los servicios de correo electrónico
+        /// </summary>
+        private static IServiceCollection AddEmailServices(
+            this IServiceCollection services, 
+            IConfiguration configuration)
         {
-            // Por ahora solo usamos la implementación SMTP estándar
-            // La implementación SendGrid está comentada en el código para implementación futura
+            // Registrar el servicio de correo electrónico principal
             services.AddScoped<IEmailService, EmailService>();
             
-            /*
-            // Código para seleccionar el proveedor según la configuración - Implementación futura
-            var emailProvider = configuration.GetValue<string>("EmailSettings:Provider")?.ToLower() ?? "smtp";
-
-            switch (emailProvider)
+            // Registrar el servicio de SendGrid (comentado para implementación futura)
+            // if (configuration.GetValue<bool>("Email:UseSendGrid"))
+            // {
+            //     services.AddScoped<IEmailService, SendGridService>();
+            // }
+            
+            return services;
+        }
+        
+        /// <summary>
+        /// Registra los servicios de almacenamiento de archivos
+        /// </summary>
+        private static IServiceCollection AddFileStorageServices(
+            this IServiceCollection services, 
+            IConfiguration configuration)
+        {
+            // Determinar qué proveedor de almacenamiento usar
+            var storageProvider = configuration["FileStorage:Provider"]?.ToLower() ?? "local";
+            
+            switch (storageProvider)
             {
-                case "sendgrid":
-                    services.AddScoped<IEmailService, SendGridService>();
+                case "azure":
+                    services.AddScoped<IFileStorageService, AzureBlobService>();
                     break;
-                case "smtp":
+                    
+                case "local":
                 default:
-                    services.AddScoped<IEmailService, EmailService>();
+                    services.AddScoped<IFileStorageService, LocalFileService>();
                     break;
             }
-            */
+            
+            return services;
+        }
+        
+        /// <summary>
+        /// Registra los servicios de pago
+        /// </summary>
+        private static IServiceCollection AddPaymentServices(
+            this IServiceCollection services, 
+            IConfiguration configuration)
+        {
+            // Determinar qué proveedor de pagos usar
+            var paymentProvider = configuration["Payment:Provider"]?.ToLower() ?? "none";
+            
+            switch (paymentProvider)
+            {
+                case "stripe":
+                    services.AddScoped<IPaymentService, StripeService>();
+                    break;
+                    
+                case "paypal":
+                    services.AddScoped<IPaymentService, PayPalService>();
+                    break;
+                    
+                case "none":
+                default:
+                    // Implementación simulada para desarrollo
+                    services.AddScoped<IPaymentService, StripeService>();
+                    break;
+            }
+            
+            return services;
+        }
+        
+        /// <summary>
+        /// Registra los servicios de SMS
+        /// </summary>
+        private static IServiceCollection AddSMSServices(
+            this IServiceCollection services, 
+            IConfiguration configuration)
+        {
+            // Registrar el servicio de SMS
+            services.AddScoped<ISMSService, TwilioService>();
+            
+            return services;
         }
     }
 } 

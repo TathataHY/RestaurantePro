@@ -1,3 +1,9 @@
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace RestaurantePro.Application.Common.Interfaces;
 
 /// <summary>

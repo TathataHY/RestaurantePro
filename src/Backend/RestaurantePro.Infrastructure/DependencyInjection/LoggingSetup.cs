@@ -48,6 +48,15 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
                 builder.AddDebug();
             });
             
+            // Registrar los proveedores de logging
+            services.AddSingleton<ILoggingProvider, SerilogProvider>();
+            services.AddSingleton<ILoggingProvider, ApplicationInsightsProvider>();
+            
+            // Registrar los enriquecedores
+            services.AddSingleton<UserEnricher>();
+            services.AddSingleton<CorrelationEnricher>();
+            services.AddSingleton<ContextEnricher>();
+            
             // Registrar el servicio de correlación
             services.AddScoped<ICorrelationService, CorrelationService>();
             
@@ -102,23 +111,31 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
         /// </summary>
         private class CorrelationService : ICorrelationService
         {
+            public CorrelationService()
+            {
+                // Inicializamos con valores por defecto para evitar nulos
+                CorrelationId = string.Empty;
+                RequestId = string.Empty;
+                SessionId = string.Empty;
+            }
+            
             public string CorrelationId { get; private set; }
             public string RequestId { get; private set; }
             public string SessionId { get; private set; }
             
             public void SetCorrelationId(string correlationId)
             {
-                CorrelationId = correlationId;
+                CorrelationId = correlationId ?? string.Empty;
             }
             
             public void SetRequestId(string requestId)
             {
-                RequestId = requestId;
+                RequestId = requestId ?? string.Empty;
             }
             
             public void SetSessionId(string sessionId)
             {
-                SessionId = sessionId;
+                SessionId = sessionId ?? string.Empty;
             }
         }
     }

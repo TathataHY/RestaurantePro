@@ -5,35 +5,32 @@ using RestaurantePro.Domain.Core.Base.Services;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
 {
+    /// <summary>
+    /// Configuración general de la infraestructura
+    /// </summary>
     public static class InfrastructureSetup
     {
+        /// <summary>
+        /// Registra todos los servicios de infraestructura
+        /// </summary>
         public static IServiceCollection AddInfrastructureServices(
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            // Registrar servicio de fecha y hora
-            services.AddSingleton<IDateTimeService, DateTimeService>();
-            
-            // Configuración de base de datos
+            // Registrar servicios de persistencia
             services.AddPersistenceServices(configuration);
             
-            // Servicios de identidad
+            // Registrar servicios de identidad
             IdentitySetup.AddIdentityServices(services, configuration);
             
-            // Servicios externos
-            ExternalServicesSetup.AddExternalServices(services, configuration);
+            // Registrar servicios externos
+            services.AddExternalServices(configuration);
             
-            // Sistema de caché
+            // Registrar servicios de caché
             services.AddCachingServices(configuration);
             
-            // Configuración de logging
+            // Registrar servicios de logging
             services.AddLoggingServices(configuration);
-            
-            // Background tasks
-            // TODO: services.AddBackgroundTasksServices(configuration);
-            
-            // Monitoring
-            // TODO: services.AddMonitoringServices(configuration);
             
             return services;
         }

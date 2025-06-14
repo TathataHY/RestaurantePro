@@ -473,6 +473,7 @@ public class CrearReservacionValidatorTests
             NumeroPersonas = 0, // Error: número inválido
             NombreCliente = "", // Error: nombre vacío
             TelefonoContacto = "123", // Error: teléfono inválido
+            Email = "correo.invalido", // Error: email inválido
             Observaciones = new string('A', 1001) // Error: muy largas
         };
 
@@ -481,11 +482,12 @@ public class CrearReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCount(6); // Ahora esperamos 6 errores en lugar de 5
+        result.Errors.Should().HaveCount(6); // Esperamos 6 errores
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.FechaHoraReservacion));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.NumeroPersonas));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.NombreCliente));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.TelefonoContacto));
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.Email));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.Observaciones));
     }
 
