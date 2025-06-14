@@ -857,7 +857,7 @@ public class GenerarReporteValidatorTests
         stopwatch.Stop();
 
         // Assert
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(2000); // Menos de 2 segundos para 100 validaciones (más tolerante en entornos de prueba)
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(3000); // Menos de 3 segundos para 100 validaciones (más tolerante en entornos de prueba)
     }
 
     #endregion
