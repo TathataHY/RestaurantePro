@@ -1,0 +1,144 @@
+using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using Moq;
+using RestaurantePro.Domain.Core.Notificaciones.Entities;
+using RestaurantePro.Domain.Core.Notificaciones.Enums;
+using RestaurantePro.Domain.Core.Usuarios.Entities;
+using RestaurantePro.Domain.Core.Usuarios.Enums;
+using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Core
+{
+    public class NotificacionRepositoryTests : IntegrationTestBase
+    {
+        private readonly NotificacionRepository _repository;
+        private readonly Mock<ILogger<NotificacionRepository>> _loggerMock;
+
+        private Guid _usuarioId1;
+        private Guid _usuarioId2;
+
+        public NotificacionRepositoryTests()
+        {
+            _loggerMock = new Mock<ILogger<NotificacionRepository>>();
+            _repository = new NotificacionRepository(DbContext, _loggerMock.Object);
+        }
+
+        protected override void SeedDatabase()
+        {
+            base.SeedDatabase();
+
+            var usuario1 = Usuario.Crear("user1", "User One", "user1@test.com", RolUsuario.Mesero);
+            usuario1.ConfirmarCuenta();
+            usuario1.Activar();
+            _usuarioId1 = usuario1.Id;
+
+            var usuario2 = Usuario.Crear("user2", "User Two", "user2@test.com", RolUsuario.Cajero);
+            usuario2.ConfirmarCuenta();
+            usuario2.Activar();
+            _usuarioId2 = usuario2.Id;
+
+            DbContext.Set<Usuario>().AddRange(usuario1, usuario2);
+
+            var notificaciones = new List<Notificacion>
+            {
+                Notificacion.Crear("Titulo 1", "Mensaje 1", TipoNotificacion.Informativa, _usuarioId1),
+                Notificacion.Crear("Titulo 2", "Mensaje 2", TipoNotificacion.Advertencia, _usuarioId1),
+                Notificacion.Crear("Titulo 3", "Mensaje 3", TipoNotificacion.Informativa, _usuarioId2),
+                Notificacion.Crear("Titulo 4", "Mensaje 4", TipoNotificacion.Alerta, _usuarioId1),
+            };
+
+            notificaciones[1].MarcarComoLeida();
+            
+            var notificacionAntigua = Notificacion.Crear("Titulo Antiguo", "Mensaje antiguo", TipoNotificacion.Error, _usuarioId2);
+            notificacionAntigua.SetFechaCreacionForTesting(DateTime.UtcNow.AddDays(-10));
+            notificaciones.Add(notificacionAntigua);
+
+            DbContext.Set<Notificacion>().AddRange(notificaciones);
+            DbContext.SaveChanges();
+        }
+
+        [Fact]
+        public async Task AgregarAsync_DebeGuardarNotificacion()
+        {
+            // Arrange
+            var nuevaNotificacion = Notificacion.Crear("Nueva Alerta", "Mensaje de alerta", TipoNotificacion.Alerta, _usuarioId1);
+
+            // Act
+            await _repository.AgregarAsync(nuevaNotificacion);
+            await DbContext.SaveChangesAsync();
+
+            // Assert
+            var notificacionGuardada = await _repository.ObtenerPorIdAsync(nuevaNotificacion.Id);
+            notificacionGuardada.Should().NotBeNull();
+            notificacionGuardada.Should().BeEquivalentTo(nuevaNotificacion);
+        }
+
+        [Fact]
+        public async Task ObtenerPorDestinatarioAsync_DebeRetornarNotificacionesCorrectas()
+        {
+            // Arrange
+            var destinatarioId = _usuarioId1;
+
+            // Act
+            var notificaciones = await _repository.ObtenerPorDestinatarioAsync(destinatarioId);
+
+            // Assert
+            notificaciones.Should().NotBeNull();
+            notificaciones.Should().HaveCount(3);
+            notificaciones.All(n => n.DestinatarioId == destinatarioId).Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task ObtenerPorTipoYDestinatarioAsync_DebeRetornarNotificacionesFiltradas()
+        {
+            // Arrange
+            var destinatarioId = _usuarioId1;
+            var tipo = TipoNotificacion.Informativa;
+
+            // Act
+            var notificaciones = await _repository.ObtenerPorTipoYDestinatarioAsync(tipo, destinatarioId);
+
+            // Assert
+            notificaciones.Should().NotBeNull();
+            notificaciones.Should().HaveCount(1);
+            notificaciones.First().Tipo.Should().Be(tipo);
+        }
+
+        [Fact]
+        public async Task ObtenerNoLeidasPorDestinatarioAsync_DebeRetornarSoloNoLeidas()
+        {
+            // Arrange
+            var destinatarioId = _usuarioId1;
+
+            // Act
+            var notificaciones = await _repository.ObtenerNoLeidasPorDestinatarioAsync(destinatarioId);
+
+            // Assert
+            notificaciones.Should().NotBeNull();
+            notificaciones.Should().HaveCount(2);
+            notificaciones.All(n => !n.EstaLeida).Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task EliminarAnterioresAFechaAsync_DebeEliminarNotificacionesAntiguas()
+        {
+            // Arrange
+            var fechaLimite = DateTime.UtcNow.AddDays(-5);
+
+            // Act
+            var cantidadEliminada = await _repository.EliminarAnterioresAFechaAsync(fechaLimite);
+            await DbContext.SaveChangesAsync();
+
+            // Assert
+            cantidadEliminada.Should().Be(1);
+            var notificacionesRestantes = await _repository.ObtenerTodosAsync();
+            notificacionesRestantes.Should().HaveCount(4);
+        }
+    }
+} 

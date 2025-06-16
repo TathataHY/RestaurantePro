@@ -5,6 +5,9 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.ValueObjects
     /// </summary>
     public class TotalComanda : ValueObject
     {
+        // Constructor para EF Core
+        private TotalComanda() { }
+
         /// <summary>
         /// Subtotal (sin impuestos)
         /// </summary>

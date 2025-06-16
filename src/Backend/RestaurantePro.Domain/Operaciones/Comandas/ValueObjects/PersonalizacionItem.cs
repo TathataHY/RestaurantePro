@@ -8,6 +8,11 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.ValueObjects
     public class PersonalizacionItem : ValueObject
     {
         /// <summary>
+        /// Constructor para EF Core
+        /// </summary>
+        private PersonalizacionItem() { }
+
+        /// <summary>
         /// ID del ingrediente que se está personalizando
         /// </summary>
         public Guid IngredienteId { get; }

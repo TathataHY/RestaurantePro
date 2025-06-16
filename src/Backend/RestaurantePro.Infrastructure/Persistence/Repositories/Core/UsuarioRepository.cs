@@ -5,8 +5,6 @@ using RestaurantePro.Domain.Core.Usuarios.Entities;
 using RestaurantePro.Domain.Core.Usuarios.Enums;
 using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
-using RestaurantePro.Infrastructure.Persistence.Contexts;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -16,12 +14,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
 {
     public class UsuarioRepository : Repository<Usuario>, IUsuarioRepository
     {
-        private new readonly RestauranteProDbContext _dbContext;
-
-        public UsuarioRepository(RestauranteProDbContext dbContext, ILogger<UsuarioRepository> logger)
-            : base(dbContext, logger)
+        public UsuarioRepository(DbContext dbContext, ILogger<UsuarioRepository> logger) : base(dbContext, logger)
         {
-            _dbContext = dbContext;
         }
 
         /// <summary>
@@ -110,6 +104,21 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         /// Verifica si existe un usuario con el email especificado
         /// </summary>
         public async Task<bool> ExisteEmailAsync(string email, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet.AnyAsync(u => u.Email.ToLower() == email.ToLower(), cancellationToken);
+        }
+
+        public async Task<Usuario?> BuscarPorEmailAsync(string email)
+        {
+            return await _dbSet.FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+        public async Task<IEnumerable<Usuario>> ObtenerUsuariosActivos()
+        {
+            return await _dbSet.Where(u => u.Estado == EstadoUsuario.Activo).ToListAsync();
+        }
+
+        public async Task<bool> ExisteUsuarioConEmailAsync(string email, System.Threading.CancellationToken cancellationToken)
         {
             return await _dbSet.AnyAsync(u => u.Email.ToLower() == email.ToLower(), cancellationToken);
         }

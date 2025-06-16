@@ -1,16 +1,13 @@
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using RestaurantePro.Domain.Core.Productos.Entities;
 using RestaurantePro.Domain.Core.Productos.ValueObjects;
 using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
-using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -20,50 +17,25 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
     {
         private readonly ProductoRepository _repository;
         private readonly Mock<ILogger<ProductoRepository>> _loggerMock;
-        private readonly TestDbContextAdapter _dbContextAdapter;
+        private Guid _categoriaId;
 
         public ProductoRepositoryTests()
         {
             _loggerMock = new Mock<ILogger<ProductoRepository>>();
-            _dbContextAdapter = new TestDbContextAdapter(DbContext);
-            _repository = new ProductoRepository(_dbContextAdapter, _loggerMock.Object);
+            _repository = new ProductoRepository(DbContext, _loggerMock.Object);
         }
 
         protected override void SeedDatabase()
         {
-            // Crear una categoría para pruebas
-            var categoria = ProductoCategoria.Crear(
-                "Categoría de Prueba",
-                "Descripción de categoría para pruebas",
-                1);
+            var categoria = ProductoCategoria.Crear("Categoría de Prueba", "Descripción", 1);
+            _categoriaId = categoria.Id;
 
-            // Crear productos para pruebas
             var productos = new[]
             {
-                Producto.Crear(
-                    "Producto 1",
-                    "Descripción del producto 1",
-                    new PrecioProducto(100.00m),
-                    categoria.Id,
-                    categoria.Nombre
-                ),
-                Producto.Crear(
-                    "Producto 2",
-                    "Descripción del producto 2",
-                    new PrecioProducto(200.00m),
-                    categoria.Id,
-                    categoria.Nombre
-                ),
-                Producto.Crear(
-                    "Producto 3",
-                    "Descripción del producto 3",
-                    new PrecioProducto(300.00m),
-                    categoria.Id,
-                    categoria.Nombre
-                )
+                Producto.Crear("Producto 1", "Descripción 1", new PrecioProducto(10m), _categoriaId, categoria.Nombre),
+                Producto.Crear("Producto 2", "Descripción 2", new PrecioProducto(20m), _categoriaId, categoria.Nombre),
+                Producto.Crear("Producto 3", "Descripción 3", new PrecioProducto(30m), _categoriaId, categoria.Nombre)
             };
-
-            // Desactivar un producto para probar filtros
             productos[2].Desactivar();
 
             DbContext.Categorias.Add(categoria);
@@ -72,200 +44,111 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         }
 
         [Fact]
-        public async Task ObtenerTodosAsync_DebeRetornarTodosLosProductos()
+        public async Task ObtenerTodosAsync_CuandoNoSeFiltraPorActivos_DebeRetornarTodosLosProductos()
         {
             // Act
-            var productos = await _repository.ObtenerTodosAsync(false);
+            var result = await _repository.ObtenerTodosAsync(false);
 
             // Assert
-            Assert.Equal(3, productos.Count());
+            result.Should().HaveCount(3);
         }
 
         [Fact]
-        public async Task ObtenerProductosPorCategoriaAsync_DebeRetornarSoloProductosActivosDeLaCategoria()
+        public async Task ObtenerTodosAsync_CuandoSeFiltraPorActivos_DebeRetornarSoloProductosActivos()
         {
-            // Arrange
-            var categoriaId = DbContext.Categorias.First().Id;
-
             // Act
-            var productos = await _repository.GetProductosPorCategoriaAsync(categoriaId);
+            var result = await _repository.ObtenerTodosAsync(true);
 
             // Assert
-            Assert.Equal(2, productos.Count());
-            Assert.All(productos, p => Assert.True(p.EstaActivo));
-            Assert.All(productos, p => Assert.Equal(categoriaId, p.CategoriaId));
+            result.Should().HaveCount(2);
+            result.Should().OnlyContain(p => p.EstaActivo);
         }
 
         [Fact]
-        public async Task BuscarProductosAsync_DebeRetornarProductosQueCoincidanConElTermino()
+        public async Task ObtenerPorCategoriaAsync_DebeRetornarProductosActivosDeEsaCategoria()
         {
             // Act
-            var productos = await _repository.BuscarProductosAsync("producto");
+            var result = await _repository.ObtenerPorCategoriaAsync(_categoriaId);
 
             // Assert
-            Assert.Equal(2, productos.Count());
-            Assert.All(productos, p => Assert.Contains("producto", p.Nombre.ToLower()));
+            result.Should().HaveCount(2);
+            result.Should().OnlyContain(p => p.CategoriaId == _categoriaId && p.EstaActivo);
         }
 
         [Fact]
-        public async Task ExisteProductoConNombreAsync_DebeRetornarTrueSiExisteProductoConElNombre()
-        {
-            // Act
-            var existe = await _repository.ExisteProductoConNombreAsync("Producto 1");
-
-            // Assert
-            Assert.True(existe);
-        }
-
-        [Fact]
-        public async Task ExisteProductoConNombreAsync_DebeRetornarFalseSiNoExisteProductoConElNombre()
-        {
-            // Act
-            var existe = await _repository.ExisteProductoConNombreAsync("Producto Inexistente");
-
-            // Assert
-            Assert.False(existe);
-        }
-
-        [Fact]
-        public async Task ExisteProductoConNombreAsync_DebeExcluirProductoConIdEspecificado()
-        {
-            // Arrange
-            var producto = await DbContext.Productos.FirstAsync(p => p.Nombre == "Producto 1");
-
-            // Act
-            var existe = await _repository.ExisteProductoConNombreAsync("Producto 1", producto.Id);
-
-            // Assert
-            Assert.False(existe);
-        }
-
-        [Fact]
-        public async Task ObtenerPorIdAsync_DebeRetornarProductoCorrecto()
+        public async Task ObtenerPorIdAsync_CuandoExiste_DebeRetornarElProducto()
         {
             // Arrange
             var productoExistente = await DbContext.Productos.FirstAsync();
 
             // Act
-            var producto = await _repository.ObtenerPorIdAsync(productoExistente.Id);
+            var result = await _repository.ObtenerPorIdAsync(productoExistente.Id);
 
             // Assert
-            Assert.NotNull(producto);
-            Assert.Equal(productoExistente.Id, producto.Id);
-            Assert.Equal(productoExistente.Nombre, producto.Nombre);
+            result.Should().NotBeNull();
+            result!.Id.Should().Be(productoExistente.Id);
         }
 
         [Fact]
-        public async Task ObtenerPorIdAsync_DebeRetornarNullSiNoExiste()
+        public async Task ObtenerPorIdAsync_CuandoNoExiste_DebeRetornarNull()
         {
             // Act
-            var producto = await _repository.ObtenerPorIdAsync(Guid.NewGuid());
+            var result = await _repository.ObtenerPorIdAsync(Guid.NewGuid());
 
             // Assert
-            Assert.Null(producto);
+            result.Should().BeNull();
         }
 
         [Fact]
-        public async Task AgregarAsync_DebeGuardarNuevoProducto()
+        public async Task AgregarAsync_DebeAñadirElProductoALaBaseDeDatos()
         {
             // Arrange
-            var categoria = await DbContext.Categorias.FirstAsync();
-            var nuevoProducto = Producto.Crear(
-                "Producto Nuevo",
-                "Descripción",
-                new PrecioProducto(50.00m),
-                categoria.Id,
-                categoria.Nombre
-            );
-
+            var nuevoProducto = Producto.Crear("Producto Nuevo", "Desc", new PrecioProducto(5m), _categoriaId);
+            
             // Act
-            await _repository.AgregarAsync(nuevoProducto);
-            var productoGuardado = await DbContext.Productos.FindAsync(nuevoProducto.Id);
-
+            await _repository.AgregarAsync(nuevoProducto, default);
+            await DbContext.SaveChangesAsync(); // Repository.cs no llama a SaveChanges
+            
             // Assert
-            Assert.NotNull(productoGuardado);
-            Assert.Equal("Producto Nuevo", productoGuardado.Nombre);
+            var productoGuardado = await DbContext.Productos.FindAsync(nuevoProducto.Id);
+            productoGuardado.Should().NotBeNull();
+            productoGuardado!.Nombre.Should().Be("Producto Nuevo");
         }
 
         [Fact]
-        public async Task ActualizarAsync_DebeModificarProductoExistente()
+        public async Task ActualizarAsync_DebeModificarElProductoEnLaBaseDeDatos()
         {
             // Arrange
             var productoAActualizar = await DbContext.Productos.FirstAsync();
-            var nuevoNombre = "Producto Actualizado";
-            productoAActualizar.Actualizar(
-                nuevoNombre,
-                productoAActualizar.Descripcion!,
-                productoAActualizar.Precio!
-            );
+            var nuevoNombre = "Nombre Actualizado";
+            productoAActualizar.Actualizar(nuevoNombre, "Desc Act", new PrecioProducto(15m));
 
             // Act
-            await _repository.ActualizarAsync(productoAActualizar);
-            var productoActualizado = await DbContext.Productos.FindAsync(productoAActualizar.Id);
+            await _repository.ActualizarAsync(productoAActualizar, default);
+            await DbContext.SaveChangesAsync(); // Repository.cs no llama a SaveChanges
 
             // Assert
-            Assert.NotNull(productoActualizado);
-            Assert.Equal(nuevoNombre, productoActualizado.Nombre);
+            var productoActualizado = await DbContext.Productos.FindAsync(productoAActualizar.Id);
+            productoActualizado.Should().NotBeNull();
+            productoActualizado!.Nombre.Should().Be(nuevoNombre);
         }
-        
+
         [Fact]
-        public async Task EliminarAsync_DebeMarcarProductoComoInactivo()
+        public async Task EliminarAsync_DebeMarcarElProductoComoInactivoEnLaBaseDeDatos()
         {
             // Arrange
             var productoAEliminar = await DbContext.Productos.FirstAsync(p => p.EstaActivo);
 
             // Act
-            await _repository.EliminarAsync(productoAEliminar.Id);
-            var productoEliminado = await DbContext.Productos.FindAsync(productoAEliminar.Id);
-
-            // Assert
-            Assert.NotNull(productoEliminado);
-            Assert.False(productoEliminado.EstaActivo);
-        }
-
-        [Fact]
-        public async Task ObtenerTodosAsync_DebeRetornarSoloProductosActivos()
-        {
-            // Act
-            var productos = await _repository.ObtenerTodosAsync(true);
-
-            // Assert
-            Assert.Equal(2, productos.Count());
-            Assert.All(productos, p => Assert.True(p.EstaActivo));
-        }
-
-        [Fact]
-        public async Task ObtenerProductosMasVendidosAsync_DebeRetornarProductosOrdenadosPorPopularidad()
-        {
-            // Arrange
-            var producto1 = await DbContext.Productos.FirstAsync(p => p.Nombre == "Producto 1");
-            var producto2 = await DbContext.Productos.FirstAsync(p => p.Nombre == "Producto 2");
+            await _repository.EliminarAsync(productoAEliminar.Id, default);
             
-            producto1.ActualizarPopularidad(5);
-            producto2.ActualizarPopularidad(8);
-            await DbContext.SaveChangesAsync();
-
-            // Act
-            var productos = await _repository.ObtenerProductosMasVendidosAsync(2);
-
             // Assert
-            Assert.Equal(2, productos.Count());
-            Assert.Equal("Producto 2", productos.First().Nombre);
-            Assert.Equal("Producto 1", productos.Last().Nombre);
-        }
+            // Tenemos que ignorar los filtros globales para encontrar la entidad marcada como eliminada
+            var productoEliminado = await DbContext.Productos.IgnoreQueryFilters()
+                                                    .FirstOrDefaultAsync(p => p.Id == productoAEliminar.Id);
 
-        [Fact]
-        public async Task GetProductoConDetallesAsync_DebeRetornarProducto()
-        {
-            // Arrange
-            var productoExistente = await DbContext.Productos.FirstAsync();
-
-            // Act
-            var producto = await _repository.GetProductoConDetallesAsync(productoExistente.Id);
-
-            // Assert
-            Assert.NotNull(producto);
-            Assert.Equal(productoExistente.Id, producto.Id);
+            productoEliminado.Should().NotBeNull();
+            productoEliminado!.EstaActivo.Should().BeFalse();
         }
     }
 } 

@@ -5,7 +5,6 @@ using Moq;
 using RestaurantePro.Domain.Core.Usuarios.Entities;
 using RestaurantePro.Domain.Core.Usuarios.Enums;
 using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
-using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using System;
 using System.Collections.Generic;
@@ -20,13 +19,11 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
     {
         private readonly UsuarioRepository _repository;
         private readonly Mock<ILogger<UsuarioRepository>> _loggerMock;
-        private readonly TestDbContextAdapter _dbContextAdapter;
 
         public UsuarioRepositoryTests()
         {
             _loggerMock = new Mock<ILogger<UsuarioRepository>>();
-            _dbContextAdapter = new TestDbContextAdapter(DbContext);
-            _repository = new UsuarioRepository(_dbContextAdapter, _loggerMock.Object);
+            _repository = new UsuarioRepository(DbContext, _loggerMock.Object);
         }
 
         protected override void SeedDatabase()

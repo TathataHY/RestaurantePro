@@ -1,14 +1,17 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using RestaurantePro.Domain.Core.Notificaciones.Entities;
 using RestaurantePro.Domain.Core.Productos.Entities;
 using RestaurantePro.Domain.Core.Productos.ValueObjects;
+using RestaurantePro.Domain.Core.SharedKernel;
 using RestaurantePro.Domain.Core.Usuarios.Entities;
-using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
 using System;
-using Xunit;
 using System.Threading.Tasks;
+using Xunit;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 {
@@ -22,9 +25,18 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
         public DbSet<Producto> Productos { get; set; }
         public DbSet<ProductoCategoria> Categorias { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Notificacion> Notificaciones { get; set; }
+        public DbSet<Receta> Recetas { get; set; }
+        public DbSet<Cliente> Clientes { get; set; }
+        public DbSet<TarjetaFidelizacion> TarjetasFidelizacion { get; set; }
+        public DbSet<Factura> Facturas { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Ignore<RestaurantePro.Domain.Core.Base.Events.DomainEvent>();
+            modelBuilder.Ignore<PersonalizacionItem>();
+            modelBuilder.Ignore<TotalComanda>();
+
             base.OnModelCreating(modelBuilder);
 
             // Configuraciones mínimas para las pruebas
@@ -64,6 +76,44 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
                 entity.Property(e => e.Email).IsRequired();
                 entity.Ignore(e => e.DomainEvents);
                 entity.Ignore(e => e.Roles);
+            });
+
+            modelBuilder.Entity<Notificacion>(entity =>
+            {
+                entity.ToTable("Notificaciones", "Test");
+                entity.HasKey(e => e.Id);
+                entity.Ignore(e => e.DomainEvents);
+            });
+
+            modelBuilder.Entity<Receta>(entity =>
+            {
+                entity.ToTable("Recetas", "Core");
+                entity.HasKey(e => e.Id);
+                entity.OwnsMany(e => e.Ingredientes, ownedNavigationBuilder =>
+                {
+                    ownedNavigationBuilder.ToJson();
+                });
+            });
+
+            modelBuilder.Entity<Cliente>(entity =>
+            {
+                entity.ToTable("Clientes", "Comercial");
+                entity.HasKey(e => e.Id);
+                entity.OwnsOne(e => e.Nombre);
+                entity.OwnsOne(e => e.Email);
+                entity.OwnsOne(e => e.Telefono);
+            });
+
+            modelBuilder.Entity<TarjetaFidelizacion>(entity =>
+            {
+                entity.ToTable("TarjetasFidelizacion", "Comercial");
+                entity.HasKey(e => e.Id);
+            });
+
+            modelBuilder.Entity<Factura>(entity =>
+            {
+                entity.ToTable("Facturas", "Comercial");
+                entity.HasKey(e => e.Id);
             });
         }
 

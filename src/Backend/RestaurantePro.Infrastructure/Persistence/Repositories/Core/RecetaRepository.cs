@@ -18,12 +18,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
     /// </summary>
     public class RecetaRepository : Repository<Receta>, IRecetaRepository
     {
-        private new readonly RestauranteProDbContext _dbContext;
-
-        public RecetaRepository(RestauranteProDbContext dbContext, ILogger<RecetaRepository> logger)
+        public RecetaRepository(DbContext dbContext, ILogger<RecetaRepository> logger)
             : base(dbContext, logger)
         {
-            _dbContext = dbContext;
         }
 
         /// <summary>
@@ -35,6 +32,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         public async Task<Receta?> ObtenerPorProductoIdAsync(Guid productoId, CancellationToken cancellationToken = default)
         {
             return await _dbSet
+                .Include(r => r.Ingredientes)
                 .FirstOrDefaultAsync(r => r.ProductoId == productoId, cancellationToken);
         }
 
@@ -47,6 +45,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         public async Task<IEnumerable<IngredienteReceta>> ObtenerRecetaIngredientesAsync(Guid recetaId, CancellationToken cancellationToken = default)
         {
             var receta = await _dbSet
+                .Include(r => r.Ingredientes)
                 .FirstOrDefaultAsync(r => r.Id == recetaId, cancellationToken);
                 
             return receta?.Ingredientes ?? new List<IngredienteReceta>();
@@ -58,10 +57,16 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         public override async Task<Receta?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await _dbSet
+                .Include(r => r.Ingredientes)
                 .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
             
             // Nota: Como los ingredientes son un value object dentro de la receta,
             // EF Core los cargará automáticamente como parte de la entidad principal
+        }
+
+        public Task<List<Receta>> ObtenerRecetasPorProducto(Guid productoId)
+        {
+            throw new System.NotImplementedException();
         }
     }
 } 

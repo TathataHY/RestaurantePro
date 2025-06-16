@@ -115,6 +115,8 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         /// </summary>
         public static readonly PhoneNumber Empty = new PhoneNumber(string.Empty);
 
+        private PhoneNumber() { }
+
         private PhoneNumber(string value)
         {
             Value = value;

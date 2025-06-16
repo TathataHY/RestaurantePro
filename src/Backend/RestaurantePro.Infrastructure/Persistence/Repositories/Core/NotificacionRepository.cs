@@ -18,12 +18,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
     /// </summary>
     public class NotificacionRepository : Repository<Notificacion>, INotificacionRepository
     {
-        private readonly RestauranteProDbContext _dbContext;
-
-        public NotificacionRepository(RestauranteProDbContext dbContext, ILogger<NotificacionRepository> logger)
+        public NotificacionRepository(DbContext dbContext, ILogger<NotificacionRepository> logger)
             : base(dbContext, logger)
         {
-            _dbContext = dbContext;
         }
 
         /// <summary>
@@ -61,7 +58,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
             CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Where(n => n.DestinatarioId == destinatarioId && !n.EstaLeida)
+                .Where(n => n.DestinatarioId == destinatarioId && n.FechaLectura == null)
                 .OrderByDescending(n => n.FechaCreacion)
                 .ToListAsync(cancellationToken);
         }
@@ -81,14 +78,20 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
             
             if (count > 0)
             {
-                // Obtener las entidades para registrar la operación
                 var notificacionesAntiguas = await notificacionesAntiguasQuery.ToListAsync(cancellationToken);
                 _dbSet.RemoveRange(notificacionesAntiguas);
                 
                 _logger.LogInformation("Eliminando {Count} notificaciones antiguas anteriores a {Fecha}", count, fecha);
+                await GuardarCambiosAsync(cancellationToken);
             }
             
             return count;
+        }
+
+        public async Task<IEnumerable<Notificacion>> ObtenerNotificacionesNoLeidasAsync(string usuarioId)
+        {
+            var destinatarioGuid = Guid.Parse(usuarioId);
+            return await _dbSet.Where(n => n.DestinatarioId == destinatarioGuid && !n.EstaLeida).ToListAsync();
         }
     }
 } 

@@ -31,6 +31,11 @@ namespace RestaurantePro.Domain.Core.Productos.ValueObjects
         public bool EsOpcional { get; }
 
         /// <summary>
+        /// Constructor para EF Core
+        /// </summary>
+        private IngredienteReceta() { }
+
+        /// <summary>
         /// Constructor privado
         /// </summary>
         private IngredienteReceta(

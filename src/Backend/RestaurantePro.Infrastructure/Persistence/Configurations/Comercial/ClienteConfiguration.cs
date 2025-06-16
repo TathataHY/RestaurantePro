@@ -39,6 +39,7 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
                 .HasColumnName("Email")
                 .IsRequired()
                 .HasMaxLength(150);
+            email.HasIndex(e => e.Value).IsUnique();
         });
         
         // Configurar el valor objeto Telefono como propiedad de navegación poseída
@@ -48,6 +49,7 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
                 .HasColumnName("Telefono")
                 .IsRequired()
                 .HasMaxLength(20);
+            telefono.HasIndex(t => t.Value);
         });
         
         builder.Property(p => p.FechaNacimiento)
@@ -82,14 +84,14 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
             .HasDefaultValue(false);
         
         // Configurar índices
-        builder.HasIndex("Email_Value")
+        builder.HasIndex(p => p.Email.Value)
             .HasDatabaseName("IX_Clientes_Email")
             .IsUnique();
             
-        builder.HasIndex("Nombre_Nombres", "Nombre_Apellidos")
+        builder.HasIndex(p => new { p.Nombre.Nombre, p.Nombre.Apellido })
             .HasDatabaseName("IX_Clientes_NombreCompleto");
             
-        builder.HasIndex("Telefono_Value")
+        builder.HasIndex(p => p.Telefono.Value)
             .HasDatabaseName("IX_Clientes_Telefono");
             
         builder.HasIndex(p => p.TarjetaFidelizacionPrincipalId)

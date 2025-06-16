@@ -135,6 +135,8 @@ namespace RestaurantePro.Domain.Core.SharedKernel.ValueObjects
         /// </summary>
         public static readonly Email Empty = new Email(string.Empty);
 
+        private Email() { }
+
         private Email(string value)
         {
             Value = value;
