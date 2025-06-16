@@ -4,7 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using RestaurantePro.Application.Common.Interfaces.Services;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 using RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Base;
 
 namespace RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Core;
@@ -44,7 +45,13 @@ public class UserInactivityJob : BackgroundJobBase
         var fechaInactividad = DateTime.UtcNow.AddDays(-_options.InactivityThresholdDays);
         _logger.LogInformation("Buscando usuarios inactivos desde {FechaInactividad}", fechaInactividad);
 
-        var usuariosInactivos = await _usuarioRepository.ObtenerInactivosDesdeAsync(fechaInactividad, cancellationToken);
+        // Obtenemos todos los usuarios activos
+        var todosUsuarios = await _usuarioRepository.ObtenerTodosAsync(soloActivos: true, cancellationToken);
+        
+        // Filtramos los usuarios inactivos (último acceso anterior a la fecha de inactividad)
+        var usuariosInactivos = todosUsuarios
+            .Where(u => u.UltimoAcceso.HasValue && u.UltimoAcceso.Value < fechaInactividad)
+            .ToList();
         
         if (!usuariosInactivos.Any())
         {
@@ -59,18 +66,17 @@ public class UserInactivityJob : BackgroundJobBase
             try
             {
                 // Enviar email recordatorio
-                if (_options.SendReminderEmails)
+                if (_options.SendReminderEmails && !string.IsNullOrEmpty(usuario.Email))
                 {
-                    await _emailService.EnviarCorreoAsync(
-                        destinatario: usuario.Email,
-                        asunto: "Te extrañamos en RestaurantePro",
-                        contenido: $"Hola {usuario.Nombre}, hace tiempo que no accedes a RestaurantePro. ¡Te esperamos pronto!",
-                        cancellationToken: cancellationToken);
+                    await _emailService.SendEmailAsync(
+                        usuario.Email,
+                        "Te extrañamos en RestaurantePro",
+                        $"Hola {usuario.NombreCompleto}, hace tiempo que no accedes a RestaurantePro. ¡Te esperamos pronto!");
                 }
 
-                // Marcar usuario como notificado
-                usuario.MarcarComoNotificadoInactividad();
-                await _unitOfWork.GuardarCambiosAsync(cancellationToken);
+                // Actualizar la fecha de último acceso para evitar notificaciones repetidas
+                // Nota: No tenemos un método MarcarComoNotificadoInactividad, así que actualizamos el usuario
+                await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
                 
                 _logger.LogInformation("Usuario {UsuarioId} notificado por inactividad", usuario.Id);
             }

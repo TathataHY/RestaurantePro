@@ -54,6 +54,26 @@ namespace RestaurantePro.Infrastructure.Caching.Services
         }
 
         /// <inheritdoc/>
+        public async Task<T> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentNullException(nameof(key));
+
+            var fullKey = GetFullKey(key);
+            _logger.LogDebug("Obteniendo valor de Redis para clave de forma asíncrona: {Key}", fullKey);
+
+            var value = await _database.StringGetAsync(fullKey);
+            if (!value.HasValue)
+            {
+                _logger.LogDebug("Valor no encontrado en Redis para clave: {Key}", fullKey);
+                return default;
+            }
+
+            _logger.LogDebug("Valor encontrado en Redis para clave: {Key}", fullKey);
+            return JsonSerializer.Deserialize<T>(value);
+        }
+
+        /// <inheritdoc/>
         public bool Exists(string key)
         {
             if (string.IsNullOrEmpty(key))
@@ -61,6 +81,16 @@ namespace RestaurantePro.Infrastructure.Caching.Services
 
             var fullKey = GetFullKey(key);
             return _database.KeyExists(fullKey);
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentNullException(nameof(key));
+
+            var fullKey = GetFullKey(key);
+            return await _database.KeyExistsAsync(fullKey);
         }
 
         /// <inheritdoc/>
@@ -78,6 +108,34 @@ namespace RestaurantePro.Infrastructure.Caching.Services
         }
 
         /// <inheritdoc/>
+        public async Task SetAsync<T>(string key, T value, int expirationMinutes = 60, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentNullException(nameof(key));
+
+            var fullKey = GetFullKey(key);
+            var serializedValue = JsonSerializer.Serialize(value);
+
+            _logger.LogDebug("Estableciendo valor en Redis para clave de forma asíncrona: {Key}", fullKey);
+            var expiry = expirationMinutes > 0 ? TimeSpan.FromMinutes(expirationMinutes) : (TimeSpan?)null;
+            await _database.StringSetAsync(fullKey, serializedValue, expiry);
+        }
+
+        /// <inheritdoc/>
+        public async Task SetAsync<T>(string key, T value, TimeSpan expiration, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentNullException(nameof(key));
+
+            var fullKey = GetFullKey(key);
+            var serializedValue = JsonSerializer.Serialize(value);
+
+            _logger.LogDebug("Estableciendo valor en Redis para clave de forma asíncrona con expiración: {Key}, {Expiration}", 
+                fullKey, expiration);
+            await _database.StringSetAsync(fullKey, serializedValue, expiration);
+        }
+
+        /// <inheritdoc/>
         public void Remove(string key)
         {
             if (string.IsNullOrEmpty(key))
@@ -86,6 +144,17 @@ namespace RestaurantePro.Infrastructure.Caching.Services
             var fullKey = GetFullKey(key);
             _logger.LogDebug("Eliminando valor de Redis para clave: {Key}", fullKey);
             _database.KeyDelete(fullKey);
+        }
+
+        /// <inheritdoc/>
+        public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentNullException(nameof(key));
+
+            var fullKey = GetFullKey(key);
+            _logger.LogDebug("Eliminando valor de Redis para clave de forma asíncrona: {Key}", fullKey);
+            await _database.KeyDeleteAsync(fullKey);
         }
 
         /// <inheritdoc/>
@@ -100,12 +169,40 @@ namespace RestaurantePro.Infrastructure.Caching.Services
             foreach (var endpoint in _redis.GetEndPoints())
             {
                 var server = _redis.GetServer(endpoint);
-                var keys = server.Keys(pattern: $"{fullPattern}*");
+                var keys = server.Keys(pattern: fullPattern);
 
                 foreach (var key in keys)
                 {
                     _database.KeyDelete(key);
                 }
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task InvalidatePatternAsync(string pattern, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(pattern))
+                throw new ArgumentNullException(nameof(pattern));
+
+            var fullPattern = GetFullKey(pattern);
+            _logger.LogDebug("Invalidando valores de Redis para patrón de forma asíncrona: {Pattern}", fullPattern);
+
+            foreach (var endpoint in _redis.GetEndPoints())
+            {
+                var server = _redis.GetServer(endpoint);
+                var keys = server.Keys(pattern: fullPattern);
+
+                foreach (var key in keys)
+                {
+                    // Nota: Podríamos mejorar esto usando TaskCompletionSource para cancelación
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
+                        
+                    await _database.KeyDeleteAsync(key);
+                }
+                
+                if (cancellationToken.IsCancellationRequested)
+                    break;
             }
         }
 
@@ -141,14 +238,14 @@ namespace RestaurantePro.Infrastructure.Caching.Services
             if (loadFunc == null)
                 throw new ArgumentNullException(nameof(loadFunc));
 
-            if (Exists(key))
+            if (await ExistsAsync(key, cancellationToken))
             {
-                return Get<T>(key);
+                return await GetAsync<T>(key, cancellationToken);
             }
 
             _logger.LogDebug("Creando nuevo valor asíncrono para clave: {Key}", key);
             var newValue = await loadFunc(cancellationToken);
-            Set(key, newValue, timeToLiveMinutes);
+            await SetAsync(key, newValue, timeToLiveMinutes, cancellationToken);
             return newValue;
         }
 
@@ -157,7 +254,7 @@ namespace RestaurantePro.Infrastructure.Caching.Services
         /// </summary>
         private string GetFullKey(string key)
         {
-            return $"{_keyPrefix}{key}";
+            return string.IsNullOrEmpty(_keyPrefix) ? key : $"{_keyPrefix}:{key}";
         }
     }
 } 

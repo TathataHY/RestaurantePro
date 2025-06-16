@@ -18,7 +18,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
     /// </summary>
     public class NotificacionRepository : Repository<Notificacion>, INotificacionRepository
     {
-        private new readonly RestauranteProDbContext _dbContext;
+        private readonly RestauranteProDbContext _dbContext;
 
         public NotificacionRepository(RestauranteProDbContext dbContext, ILogger<NotificacionRepository> logger)
             : base(dbContext, logger)
@@ -64,6 +64,31 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
                 .Where(n => n.DestinatarioId == destinatarioId && !n.EstaLeida)
                 .OrderByDescending(n => n.FechaCreacion)
                 .ToListAsync(cancellationToken);
+        }
+        
+        /// <summary>
+        /// Elimina las notificaciones anteriores a una fecha determinada
+        /// </summary>
+        /// <param name="fecha">Fecha límite para eliminar notificaciones anteriores</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Número de notificaciones eliminadas</returns>
+        public async Task<int> EliminarAnterioresAFechaAsync(DateTime fecha, CancellationToken cancellationToken = default)
+        {
+            var notificacionesAntiguasQuery = _dbSet
+                .Where(n => n.FechaCreacion < fecha);
+                
+            var count = await notificacionesAntiguasQuery.CountAsync(cancellationToken);
+            
+            if (count > 0)
+            {
+                // Obtener las entidades para registrar la operación
+                var notificacionesAntiguas = await notificacionesAntiguasQuery.ToListAsync(cancellationToken);
+                _dbSet.RemoveRange(notificacionesAntiguas);
+                
+                _logger.LogInformation("Eliminando {Count} notificaciones antiguas anteriores a {Fecha}", count, fecha);
+            }
+            
+            return count;
         }
     }
 } 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -54,17 +55,15 @@ public class DatabaseHealthCheck : IHealthCheck
             var migrationsApplied = await _dbContext.Database.GetAppliedMigrationsAsync(cancellationToken);
             var pendingMigrations = await _dbContext.Database.GetPendingMigrationsAsync(cancellationToken);
             
-            var migrationsInfo = new
+            // Crear un diccionario para los datos de salud
+            var data = new Dictionary<string, object>
             {
-                Applied = migrationsApplied,
-                Pending = pendingMigrations
+                ["DatabaseName"] = _dbContext.Database.GetDbConnection().Database,
+                ["MigrationsApplied"] = migrationsApplied,
+                ["PendingMigrations"] = pendingMigrations
             };
             
-            return HealthCheckResult.Healthy("Conexión a la base de datos establecida correctamente", data: new 
-            { 
-                DatabaseName = _dbContext.Database.GetDbConnection().Database,
-                MigrationsInfo = migrationsInfo 
-            });
+            return HealthCheckResult.Healthy("Conexión a la base de datos establecida correctamente", data);
         }
         catch (Exception ex)
         {

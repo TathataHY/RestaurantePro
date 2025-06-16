@@ -4,7 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using RestaurantePro.Application.Common.Interfaces.Services;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Base;
 
 namespace RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Comercial;
@@ -15,6 +16,7 @@ namespace RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Comercial;
 public class LoyaltyPointsExpirationJob : BackgroundJobBase
 {
     private readonly ITarjetaFidelizacionRepository _tarjetaRepository;
+    private readonly IClienteRepository _clienteRepository;
     private readonly IEmailService _emailService;
     private readonly IUnitOfWork _unitOfWork;
     private readonly LoyaltyPointsExpirationOptions _options;
@@ -28,11 +30,13 @@ public class LoyaltyPointsExpirationJob : BackgroundJobBase
     public LoyaltyPointsExpirationJob(
         ILogger<LoyaltyPointsExpirationJob> logger,
         ITarjetaFidelizacionRepository tarjetaRepository,
+        IClienteRepository clienteRepository,
         IEmailService emailService,
         IUnitOfWork unitOfWork,
         IOptions<LoyaltyPointsExpirationOptions> options) : base(logger)
     {
         _tarjetaRepository = tarjetaRepository ?? throw new ArgumentNullException(nameof(tarjetaRepository));
+        _clienteRepository = clienteRepository ?? throw new ArgumentNullException(nameof(clienteRepository));
         _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
@@ -42,11 +46,11 @@ public class LoyaltyPointsExpirationJob : BackgroundJobBase
     protected override async Task ExecuteInternalAsync(CancellationToken cancellationToken)
     {
         // Fecha de expiración (normalmente puntos que expiran en los próximos días)
-        var fechaExpiración = DateTime.UtcNow.AddDays(_options.DaysBeforeExpirationForNotification);
+        var fechaExpiracion = DateTime.UtcNow.AddDays(_options.DaysBeforeExpirationForNotification);
         _logger.LogInformation("Procesando puntos de fidelización que expirarán en {Dias} días", _options.DaysBeforeExpirationForNotification);
 
         // Obtener tarjetas con puntos próximos a expirar
-        var tarjetas = await _tarjetaRepository.ObtenerConPuntosProximosAExpirarAsync(fechaExpiración, cancellationToken);
+        var tarjetas = await _tarjetaRepository.ObtenerConPuntosProximosAExpirarAsync(fechaExpiracion, cancellationToken);
         
         if (!tarjetas.Any())
         {
@@ -60,40 +64,43 @@ public class LoyaltyPointsExpirationJob : BackgroundJobBase
         {
             try
             {
+                // Obtener información del cliente
+                var cliente = await _clienteRepository.ObtenerPorIdAsync(tarjeta.ClienteId, cancellationToken);
+                if (cliente == null)
+                {
+                    _logger.LogWarning("No se encontró el cliente {ClienteId} para la tarjeta {TarjetaId}", tarjeta.ClienteId, tarjeta.Id);
+                    continue;
+                }
+
                 // Procesar expiración o enviar notificación previa
-                if (_options.AutomaticExpiration && DateTime.UtcNow >= tarjeta.FechaExpiración)
+                if (_options.AutomaticExpiration)
                 {
                     // Expirar puntos automáticamente
-                    tarjeta.ExpirarPuntos();
+                    int puntosAExpirar = tarjeta.PuntosDisponibles;
+                    tarjeta.ExpirarPuntos(puntosAExpirar, "Expiración automática de puntos");
                     await _unitOfWork.GuardarCambiosAsync(cancellationToken);
                     
                     _logger.LogInformation("Puntos expirados automáticamente para la tarjeta {TarjetaId}", tarjeta.Id);
                     
                     // Notificar al cliente sobre la expiración
-                    if (_options.SendExpirationNotifications && tarjeta.Cliente?.Email != null)
+                    if (_options.SendExpirationNotifications && !string.IsNullOrEmpty(cliente.Email))
                     {
-                        await _emailService.EnviarCorreoAsync(
-                            destinatario: tarjeta.Cliente.Email,
-                            asunto: "Tus puntos de fidelización han expirado",
-                            contenido: $"Estimado/a {tarjeta.Cliente.Nombre}, lamentamos informarte que tus puntos de fidelización han expirado. ¡Sigue acumulando nuevos puntos en tu próxima visita!",
-                            cancellationToken: cancellationToken);
+                        await _emailService.SendEmailAsync(
+                            cliente.Email,
+                            "Tus puntos de fidelización han expirado",
+                            $"Estimado/a {cliente.Nombre}, lamentamos informarte que tus puntos de fidelización han expirado. ¡Sigue acumulando nuevos puntos en tu próxima visita!");
                     }
                 }
-                else if (_options.SendExpirationWarnings && tarjeta.Cliente?.Email != null)
+                else if (_options.SendExpirationWarnings && !string.IsNullOrEmpty(cliente.Email))
                 {
                     // Enviar advertencia previa a la expiración
-                    await _emailService.EnviarCorreoAsync(
-                        destinatario: tarjeta.Cliente.Email,
-                        asunto: "¡Tus puntos están a punto de expirar!",
-                        contenido: $"Estimado/a {tarjeta.Cliente.Nombre}, te recordamos que tienes {tarjeta.PuntosProximosAExpirar} puntos que expirarán el {tarjeta.FechaExpiración:dd/MM/yyyy}. ¡Visítanos pronto para canjearlos!",
-                        cancellationToken: cancellationToken);
-                    
-                    // Marcar como notificado
-                    tarjeta.MarcarNotificacionExpiracion();
-                    await _unitOfWork.GuardarCambiosAsync(cancellationToken);
+                    await _emailService.SendEmailAsync(
+                        cliente.Email,
+                        "¡Tus puntos están a punto de expirar!",
+                        $"Estimado/a {cliente.Nombre}, te recordamos que tienes {tarjeta.PuntosDisponibles} puntos que expirarán pronto. ¡Visítanos pronto para canjearlos!");
                     
                     _logger.LogInformation("Notificación de expiración enviada al cliente {ClienteId} para la tarjeta {TarjetaId}", 
-                        tarjeta.Cliente.Id, tarjeta.Id);
+                        cliente.Id, tarjeta.Id);
                 }
             }
             catch (Exception ex)

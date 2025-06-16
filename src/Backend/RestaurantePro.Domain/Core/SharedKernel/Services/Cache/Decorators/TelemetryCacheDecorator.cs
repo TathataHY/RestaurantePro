@@ -1,21 +1,27 @@
+using System;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Telemetry;
+
 namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
 {
     /// <summary>
-    /// Decorador para ICacheService que añade telemetría
+    /// Decorador para ICacheService que añade telemetría y métricas
     /// </summary>
     public class TelemetryCacheDecorator : ICacheService
     {
-        private readonly ICacheService _innerCacheService;
+        private readonly ICacheService _innerCache;
         private readonly ICacheTelemetry _telemetry;
         
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="innerCacheService">Servicio de caché decorado</param>
+        /// <param name="innerCache">Servicio de caché a decorar</param>
         /// <param name="telemetry">Servicio de telemetría</param>
-        public TelemetryCacheDecorator(ICacheService innerCacheService, ICacheTelemetry telemetry)
+        public TelemetryCacheDecorator(ICacheService innerCache, ICacheTelemetry telemetry)
         {
-            _innerCacheService = innerCacheService ?? throw new ArgumentNullException(nameof(innerCacheService));
+            _innerCache = innerCache ?? throw new ArgumentNullException(nameof(innerCache));
             _telemetry = telemetry ?? throw new ArgumentNullException(nameof(telemetry));
         }
         
@@ -27,8 +33,8 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
             
             try
             {
-                var result = _innerCacheService.Get<T>(key);
-                hit = !EqualityComparer<T>.Default.Equals(result, default);
+                var result = _innerCache.Get<T>(key);
+                hit = result != null;
                 return result;
             }
             catch (Exception ex)
@@ -44,6 +50,30 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
         }
         
         /// <inheritdoc />
+        public async Task<T> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            bool hit = false;
+            
+            try
+            {
+                var result = await _innerCache.GetAsync<T>(key, cancellationToken);
+                hit = result != null;
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackCacheError(key, "GetAsync", ex);
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _telemetry.TrackCacheAccess(key, hit, "GetAsync", stopwatch.ElapsedMilliseconds);
+            }
+        }
+        
+        /// <inheritdoc />
         public bool Exists(string key)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -51,7 +81,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
             
             try
             {
-                result = _innerCacheService.Exists(key);
+                result = _innerCache.Exists(key);
                 return result;
             }
             catch (Exception ex)
@@ -67,13 +97,36 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
         }
         
         /// <inheritdoc />
+        public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            bool result = false;
+            
+            try
+            {
+                result = await _innerCache.ExistsAsync(key, cancellationToken);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackCacheError(key, "ExistsAsync", ex);
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _telemetry.TrackCacheAccess(key, result, "ExistsAsync", stopwatch.ElapsedMilliseconds);
+            }
+        }
+        
+        /// <inheritdoc />
         public void Set<T>(string key, T value, int expirationMinutes = 60)
         {
             var stopwatch = Stopwatch.StartNew();
             
             try
             {
-                _innerCacheService.Set(key, value, expirationMinutes);
+                _innerCache.Set(key, value, expirationMinutes);
             }
             catch (Exception ex)
             {
@@ -88,13 +141,55 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
         }
         
         /// <inheritdoc />
+        public async Task SetAsync<T>(string key, T value, int expirationMinutes = 60, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            
+            try
+            {
+                await _innerCache.SetAsync(key, value, expirationMinutes, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackCacheError(key, "SetAsync", ex);
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _telemetry.TrackCacheAccess(key, true, "SetAsync", stopwatch.ElapsedMilliseconds);
+            }
+        }
+        
+        /// <inheritdoc />
+        public async Task SetAsync<T>(string key, T value, TimeSpan expiration, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            
+            try
+            {
+                await _innerCache.SetAsync(key, value, expiration, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackCacheError(key, "SetAsync", ex);
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _telemetry.TrackCacheAccess(key, true, "SetAsync", stopwatch.ElapsedMilliseconds);
+            }
+        }
+        
+        /// <inheritdoc />
         public void Remove(string key)
         {
             var stopwatch = Stopwatch.StartNew();
             
             try
             {
-                _innerCacheService.Remove(key);
+                _innerCache.Remove(key);
             }
             catch (Exception ex)
             {
@@ -109,16 +204,34 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
         }
         
         /// <inheritdoc />
-        public void InvalidatePattern(string pattern)
+        public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
         {
             var stopwatch = Stopwatch.StartNew();
-            int keysAffected = 0;
             
             try
             {
-                // Asumimos que afecta a al menos 1 clave
-                keysAffected = 1;
-                _innerCacheService.InvalidatePattern(pattern);
+                await _innerCache.RemoveAsync(key, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackCacheError(key, "RemoveAsync", ex);
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _telemetry.TrackCacheAccess(key, true, "RemoveAsync", stopwatch.ElapsedMilliseconds);
+            }
+        }
+        
+        /// <inheritdoc />
+        public void InvalidatePattern(string pattern)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            
+            try
+            {
+                _innerCache.InvalidatePattern(pattern);
             }
             catch (Exception ex)
             {
@@ -128,7 +241,28 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
             finally
             {
                 stopwatch.Stop();
-                _telemetry.TrackCacheInvalidation(pattern, keysAffected, stopwatch.ElapsedMilliseconds);
+                _telemetry.TrackCacheInvalidation(pattern, 0, stopwatch.ElapsedMilliseconds);
+            }
+        }
+        
+        /// <inheritdoc />
+        public async Task InvalidatePatternAsync(string pattern, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            
+            try
+            {
+                await _innerCache.InvalidatePatternAsync(pattern, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackCacheError(pattern, "InvalidatePatternAsync", ex);
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _telemetry.TrackCacheInvalidation(pattern, 0, stopwatch.ElapsedMilliseconds);
             }
         }
         
@@ -140,19 +274,9 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
             
             try
             {
-                // Primero verificamos si existe en caché
-                var existingValue = _innerCacheService.Get<T>(key);
-                hit = !EqualityComparer<T>.Default.Equals(existingValue, default);
-                
-                if (hit)
-                {
-                    return existingValue;
-                }
-                
-                // Si no existe, lo creamos
-                var newValue = factory();
-                _innerCacheService.Set(key, newValue, expirationMinutes);
-                return newValue;
+                var result = _innerCache.GetOrCreate(key, factory, expirationMinutes);
+                hit = true; // Siempre será hit porque GetOrCreate garantiza un valor
+                return result;
             }
             catch (Exception ex)
             {
@@ -169,35 +293,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
         /// <inheritdoc />
         public T GetOrAdd<T>(string key, Func<T> loadFunc, int timeToLiveMinutes = 10)
         {
-            var stopwatch = Stopwatch.StartNew();
-            bool hit = false;
-            
-            try
-            {
-                // Primero verificamos si existe en caché
-                var existingValue = _innerCacheService.Get<T>(key);
-                hit = !EqualityComparer<T>.Default.Equals(existingValue, default);
-                
-                if (hit)
-                {
-                    return existingValue;
-                }
-                
-                // Si no existe, lo creamos
-                var newValue = loadFunc();
-                _innerCacheService.Set(key, newValue, timeToLiveMinutes);
-                return newValue;
-            }
-            catch (Exception ex)
-            {
-                _telemetry.TrackCacheError(key, "GetOrAdd", ex);
-                throw;
-            }
-            finally
-            {
-                stopwatch.Stop();
-                _telemetry.TrackCacheAccess(key, hit, "GetOrAdd", stopwatch.ElapsedMilliseconds);
-            }
+            return GetOrCreate(key, loadFunc, timeToLiveMinutes);
         }
         
         /// <inheritdoc />
@@ -208,19 +304,9 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
             
             try
             {
-                // Primero verificamos si existe en caché
-                var existingValue = _innerCacheService.Get<T>(key);
-                hit = !EqualityComparer<T>.Default.Equals(existingValue, default);
-                
-                if (hit)
-                {
-                    return existingValue;
-                }
-                
-                // Si no existe, lo creamos de forma asíncrona
-                var newValue = await loadFunc(cancellationToken);
-                _innerCacheService.Set(key, newValue, timeToLiveMinutes);
-                return newValue;
+                var result = await _innerCache.GetOrAddAsync(key, loadFunc, timeToLiveMinutes, cancellationToken);
+                hit = true; // Siempre será hit porque GetOrAddAsync garantiza un valor
+                return result;
             }
             catch (Exception ex)
             {

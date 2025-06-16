@@ -1,3 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Strategy;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Telemetry;
+
 namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
 {
     /// <summary>
@@ -54,6 +62,34 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
         }
         
         /// <inheritdoc />
+        public async Task<T> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            bool hit = false;
+            
+            try
+            {
+                var result = await _innerCache.GetAsync<T>(key, cancellationToken);
+                hit = !EqualityComparer<T>.Default.Equals(result, default);
+                
+                // Registrar para TTL dinámico
+                _ttlStrategy.RegisterAccess(key, hit, "GetAsync");
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackCacheError(key, "GetAsync", ex);
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _telemetry.TrackCacheAccess(key, hit, "GetAsync", stopwatch.ElapsedMilliseconds);
+            }
+        }
+        
+        /// <inheritdoc />
         public bool Exists(string key)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -77,6 +113,33 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
             {
                 stopwatch.Stop();
                 _telemetry.TrackCacheAccess(key, result, "Exists", stopwatch.ElapsedMilliseconds);
+            }
+        }
+        
+        /// <inheritdoc />
+        public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            bool result = false;
+            
+            try
+            {
+                result = await _innerCache.ExistsAsync(key, cancellationToken);
+                
+                // Registrar para TTL dinámico
+                _ttlStrategy.RegisterAccess(key, result, "ExistsAsync");
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackCacheError(key, "ExistsAsync", ex);
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _telemetry.TrackCacheAccess(key, result, "ExistsAsync", stopwatch.ElapsedMilliseconds);
             }
         }
         
@@ -109,6 +172,63 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
         }
         
         /// <inheritdoc />
+        public async Task SetAsync<T>(string key, T value, int expirationMinutes = 60, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            
+            try
+            {
+                // Calcular TTL dinámico
+                int dynamicTtl = _ttlStrategy.CalculateTtl(key, expirationMinutes);
+                
+                // Usar el TTL calculado
+                await _innerCache.SetAsync(key, value, dynamicTtl, cancellationToken);
+                
+                // Registrar para análisis de TTL
+                _ttlStrategy.RegisterAccess(key, true, "SetAsync");
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackCacheError(key, "SetAsync", ex);
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _telemetry.TrackCacheAccess(key, true, "SetAsync", stopwatch.ElapsedMilliseconds);
+            }
+        }
+        
+        /// <inheritdoc />
+        public async Task SetAsync<T>(string key, T value, TimeSpan expiration, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            
+            try
+            {
+                // Convertir TimeSpan a minutos y aplicar TTL dinámico
+                int expirationMinutes = (int)expiration.TotalMinutes;
+                int dynamicTtl = _ttlStrategy.CalculateTtl(key, expirationMinutes);
+                
+                // Usar el TTL calculado
+                await _innerCache.SetAsync(key, value, dynamicTtl, cancellationToken);
+                
+                // Registrar para análisis de TTL
+                _ttlStrategy.RegisterAccess(key, true, "SetAsync");
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackCacheError(key, "SetAsync", ex);
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _telemetry.TrackCacheAccess(key, true, "SetAsync", stopwatch.ElapsedMilliseconds);
+            }
+        }
+        
+        /// <inheritdoc />
         public void Remove(string key)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -133,6 +253,30 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
         }
         
         /// <inheritdoc />
+        public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            
+            try
+            {
+                await _innerCache.RemoveAsync(key, cancellationToken);
+                
+                // Registrar para análisis de TTL
+                _ttlStrategy.RegisterAccess(key, true, "RemoveAsync");
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackCacheError(key, "RemoveAsync", ex);
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _telemetry.TrackCacheAccess(key, true, "RemoveAsync", stopwatch.ElapsedMilliseconds);
+            }
+        }
+        
+        /// <inheritdoc />
         public void InvalidatePattern(string pattern)
         {
             var stopwatch = Stopwatch.StartNew();
@@ -151,6 +295,34 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
             catch (Exception ex)
             {
                 _telemetry.TrackCacheError(pattern, "InvalidatePattern", ex);
+                throw;
+            }
+            finally
+            {
+                stopwatch.Stop();
+                _telemetry.TrackCacheInvalidation(pattern, keysAffected, stopwatch.ElapsedMilliseconds);
+            }
+        }
+        
+        /// <inheritdoc />
+        public async Task InvalidatePatternAsync(string pattern, CancellationToken cancellationToken = default)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            int keysAffected = 0;
+            
+            try
+            {
+                // Estimación conservadora
+                keysAffected = 5;
+                
+                await _innerCache.InvalidatePatternAsync(pattern, cancellationToken);
+                
+                // Registrar para análisis de TTL
+                _ttlStrategy.RegisterInvalidation(pattern, keysAffected);
+            }
+            catch (Exception ex)
+            {
+                _telemetry.TrackCacheError(pattern, "InvalidatePatternAsync", ex);
                 throw;
             }
             finally
@@ -216,9 +388,9 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
             
             try
             {
-                if (_innerCache.Exists(key))
+                if (await ExistsAsync(key, cancellationToken))
                 {
-                    var value = _innerCache.Get<T>(key);
+                    var value = await GetAsync<T>(key, cancellationToken);
                     hit = true;
                     
                     // Registrar para análisis de TTL
@@ -231,7 +403,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
                 
                 // Calcular TTL dinámico
                 int dynamicTtl = _ttlStrategy.CalculateTtl(key, timeToLiveMinutes);
-                _innerCache.Set(key, newValue, dynamicTtl);
+                await SetAsync(key, newValue, dynamicTtl, cancellationToken);
                 
                 // Registrar para análisis de TTL
                 _ttlStrategy.RegisterAccess(key, false, "GetOrAddAsync");

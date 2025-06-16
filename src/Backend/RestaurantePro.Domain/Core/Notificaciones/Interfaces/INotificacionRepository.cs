@@ -1,3 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using RestaurantePro.Domain.Core.Notificaciones.Entities;
+using RestaurantePro.Domain.Core.Notificaciones.Enums;
+
 namespace RestaurantePro.Domain.Core.Notificaciones.Interfaces
 {
     /// <summary>
@@ -26,5 +33,13 @@ namespace RestaurantePro.Domain.Core.Notificaciones.Interfaces
         Task<IEnumerable<Notificacion>> ObtenerNoLeidasPorDestinatarioAsync(
             Guid destinatarioId, 
             CancellationToken cancellationToken = default);
+            
+        /// <summary>
+        /// Elimina las notificaciones anteriores a una fecha determinada
+        /// </summary>
+        /// <param name="fecha">Fecha límite para eliminar notificaciones anteriores</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Número de notificaciones eliminadas</returns>
+        Task<int> EliminarAnterioresAFechaAsync(DateTime fecha, CancellationToken cancellationToken = default);
     }
 } 

@@ -73,6 +73,14 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache
             return Task.CompletedTask;
         }
 
+        public Task SetAsync<T>(string key, T value, TimeSpan expiration, CancellationToken cancellationToken = default)
+        {
+            // Convertir TimeSpan a minutos
+            int expirationMinutes = (int)expiration.TotalMinutes;
+            Set(key, value, expirationMinutes);
+            return Task.CompletedTask;
+        }
+
         public bool Exists(string key)
         {
             if (_cache.TryGetValue(key, out var item) && !item.IsExpired)
@@ -168,6 +176,41 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache
                 
                 return await factory(cancellationToken);
             }
+            
+            // Si la clave existe y no está expirada, devolver el valor
+            if (_cache.TryGetValue(key, out var item) && !item.IsExpired && item.Value is T typedValue)
+            {
+                return typedValue;
+            }
+            
+            // Si la clave existe pero está expirada, eliminarla
+            if (item?.IsExpired == true)
+            {
+                _cache.TryRemove(key, out _);
+            }
+            
+            // Crear un nuevo valor
+            var newValue = await factory(cancellationToken);
+            
+            // Guardar en caché con el tiempo de expiración especificado
+            await SetAsync(key, newValue, expirationMinutes, cancellationToken);
+            
+            return newValue;
+        }
+
+        public T GetOrCreate<T>(string key, Func<T> factory, int expirationMinutes = 60)
+        {
+            // Si el TTL es 0, siempre ejecutar la función factory y no almacenar en caché
+            if (expirationMinutes == 0)
+            {
+                // Eliminar la clave si existe
+                if (_cache.ContainsKey(key))
+                {
+                    _cache.TryRemove(key, out _);
+                }
+                
+                return factory();
+            }
 
             // Si la clave existe y no está expirada, devolver el valor
             if (_cache.TryGetValue(key, out var item) && !item.IsExpired && item.Value is T typedValue)
@@ -181,19 +224,13 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache
                 _cache.TryRemove(key, out _);
             }
 
-            // Si la clave no existe o está expirada, crear un nuevo valor
-            var newValue = await factory(cancellationToken);
+            // Crear un nuevo valor
+            var newValue = factory();
             
             // Guardar en caché con el tiempo de expiración especificado
             Set(key, newValue, expirationMinutes);
             
             return newValue;
-        }
-
-        public T GetOrCreate<T>(string key, Func<T> factory, int expirationMinutes = 60)
-        {
-            // Este método es un alias de GetOrAdd para mantener compatibilidad con la interfaz
-            return GetOrAdd(key, factory, expirationMinutes);
         }
     }
 } 

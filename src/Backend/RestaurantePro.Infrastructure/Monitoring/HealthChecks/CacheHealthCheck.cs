@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -36,7 +37,7 @@ public class CacheHealthCheck : IHealthCheck
             _logger.LogInformation("Verificando servicio de caché");
             
             // Intentar escribir un valor en caché
-            await _cacheService.SetAsync(TestKey, TestValue, TimeSpan.FromMinutes(1), cancellationToken);
+            await _cacheService.SetAsync(TestKey, TestValue, 1, cancellationToken);
             
             // Intentar leer el valor previamente escrito
             var retrievedValue = await _cacheService.GetAsync<string>(TestKey, cancellationToken);
@@ -67,14 +68,24 @@ public class CacheHealthCheck : IHealthCheck
         }
     }
     
-    private async Task<object> GetCacheStatisticsAsync()
+    private async Task<Dictionary<string, object>> GetCacheStatisticsAsync()
     {
         try
         {
             // Intentar obtener estadísticas del caché si el servicio lo soporta
             if (_cacheService is IProvidesCacheStatistics statsProvider)
             {
-                return await statsProvider.GetStatisticsAsync();
+                var stats = await statsProvider.GetStatisticsAsync();
+                if (stats is Dictionary<string, object> statsDictionary)
+                {
+                    return statsDictionary;
+                }
+                
+                // Si las estadísticas no son un diccionario, crear uno simple
+                return new Dictionary<string, object>
+                {
+                    { "CacheStatistics", stats }
+                };
             }
         }
         catch (Exception ex)
@@ -82,7 +93,7 @@ public class CacheHealthCheck : IHealthCheck
             _logger.LogWarning(ex, "No se pudieron obtener estadísticas del servicio de caché: {ErrorMessage}", ex.Message);
         }
         
-        return new { };
+        return new Dictionary<string, object>();
     }
 }
 

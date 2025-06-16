@@ -3,6 +3,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Base;
 
 namespace RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Core;

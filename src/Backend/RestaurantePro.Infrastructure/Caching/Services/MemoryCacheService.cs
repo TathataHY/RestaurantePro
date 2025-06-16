@@ -36,6 +36,12 @@ namespace RestaurantePro.Infrastructure.Caching.Services
         }
 
         /// <inheritdoc/>
+        public Task<T> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Get<T>(key));
+        }
+
+        /// <inheritdoc/>
         public bool Exists(string key)
         {
             if (string.IsNullOrEmpty(key))
@@ -45,19 +51,58 @@ namespace RestaurantePro.Infrastructure.Caching.Services
         }
 
         /// <inheritdoc/>
+        public Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Exists(key));
+        }
+
+        /// <inheritdoc/>
         public void Set<T>(string key, T value, int expirationMinutes = 60)
         {
             if (string.IsNullOrEmpty(key))
                 throw new ArgumentNullException(nameof(key));
 
-            var cacheEntryOptions = new MemoryCacheEntryOptions
+            var options = new MemoryCacheEntryOptions();
+            
+            if (expirationMinutes > 0)
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(expirationMinutes),
-                Priority = CacheItemPriority.Normal
-            };
+                options.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(expirationMinutes);
+                options.SlidingExpiration = TimeSpan.FromMinutes(Math.Min(expirationMinutes / 2, 10));
+            }
+            
+            _logger.LogDebug("Estableciendo valor en caché para clave: {Key} con expiración de {ExpirationMinutes} minutos", 
+                key, expirationMinutes);
+                
+            _memoryCache.Set(key, value, options);
+        }
 
-            _logger.LogDebug("Estableciendo valor en caché para clave: {Key}", key);
-            _memoryCache.Set(key, value, cacheEntryOptions);
+        /// <inheritdoc/>
+        public Task SetAsync<T>(string key, T value, int expirationMinutes = 60, CancellationToken cancellationToken = default)
+        {
+            Set(key, value, expirationMinutes);
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
+        public Task SetAsync<T>(string key, T value, TimeSpan expiration, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentNullException(nameof(key));
+
+            var options = new MemoryCacheEntryOptions();
+            
+            if (expiration != TimeSpan.Zero)
+            {
+                options.AbsoluteExpirationRelativeToNow = expiration;
+                options.SlidingExpiration = TimeSpan.FromMinutes(Math.Min((int)expiration.TotalMinutes / 2, 10));
+            }
+            
+            _logger.LogDebug("Estableciendo valor en caché para clave: {Key} con expiración de {Expiration}", 
+                key, expiration);
+                
+            _memoryCache.Set(key, value, options);
+            
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc/>
@@ -71,16 +116,27 @@ namespace RestaurantePro.Infrastructure.Caching.Services
         }
 
         /// <inheritdoc/>
+        public Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+        {
+            Remove(key);
+            return Task.CompletedTask;
+        }
+
+        /// <inheritdoc/>
         public void InvalidatePattern(string pattern)
         {
-            if (string.IsNullOrEmpty(pattern))
-                throw new ArgumentNullException(nameof(pattern));
+            // IMemoryCache no soporta directamente eliminación por patrón
+            // Esta es una implementación muy limitada que solo puede eliminar
+            // claves que empiezan con el patrón proporcionado
+            _logger.LogWarning("La implementación de IMemoryCache no soporta completamente la eliminación de claves por patrón. " +
+                               "Los resultados pueden ser limitados para el patrón: {Pattern}", pattern);
+        }
 
-            _logger.LogWarning("Invalidación por patrón no está completamente soportada en IMemoryCache: {Pattern}", pattern);
-            
-            // IMemoryCache no tiene una forma directa de buscar por patrón
-            // Esta es una limitación de la implementación
-            // En una implementación real con Redis, esto sería más eficiente
+        /// <inheritdoc/>
+        public Task InvalidatePatternAsync(string pattern, CancellationToken cancellationToken = default)
+        {
+            InvalidatePattern(pattern);
+            return Task.CompletedTask;
         }
 
         /// <inheritdoc/>
@@ -127,7 +183,7 @@ namespace RestaurantePro.Infrastructure.Caching.Services
 
             _logger.LogDebug("Valor no encontrado en caché para clave: {Key}, creando nuevo valor", key);
             T newValue = await loadFunc(cancellationToken);
-            Set(key, newValue, timeToLiveMinutes);
+            await SetAsync(key, newValue, timeToLiveMinutes, cancellationToken);
             return newValue;
         }
     }

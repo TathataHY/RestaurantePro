@@ -20,7 +20,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
     /// </summary>
     public class TarjetaFidelizacionRepository : Repository<TarjetaFidelizacion>, ITarjetaFidelizacionRepository
     {
-        private new readonly RestauranteProDbContext _dbContext;
+        private readonly RestauranteProDbContext _dbContext;
 
         public TarjetaFidelizacionRepository(RestauranteProDbContext dbContext, ILogger<TarjetaFidelizacionRepository> logger)
             : base(dbContext, logger)
@@ -31,16 +31,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         /// <summary>
         /// Obtiene una tarjeta de fidelización por su ID
         /// </summary>
-        public new async Task<TarjetaFidelizacion> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public new async Task<TarjetaFidelizacion?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var entidad = await _dbSet
+            _logger.LogInformation("Obteniendo tarjeta de fidelización con ID: {TarjetaId}", id);
+
+            return await _dbSet
                 .Include(t => t.HistorialPuntos)
                 .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
-                
-            if (entidad == null)
-                throw new KeyNotFoundException($"No se encontró la tarjeta de fidelización con ID {id}");
-                
-            return entidad;
         }
 
         /// <summary>
@@ -194,6 +191,31 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
                 _dbSet.Remove(tarjeta);
                 await _dbContext.SaveChangesAsync(cancellationToken);
             }
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<TarjetaFidelizacion>> ObtenerConPuntosProximosAExpirarAsync(
+            DateTime fechaLimite, 
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation("Obteniendo tarjetas de fidelización con puntos a expirar antes de: {FechaLimite}", fechaLimite);
+            
+            // Obtenemos tarjetas activas con puntos que expirarán antes de la fecha límite
+            return await _dbSet
+                .AsNoTracking()
+                .Include(t => t.HistorialPuntos.Where(hp => 
+                    hp.TipoOperacion != TipoOperacionPuntos.Vencidos && 
+                    hp.FechaOperacion <= fechaLimite && 
+                    hp.FechaOperacion > DateTime.Now))
+                .Where(t => 
+                    t.Estado == EstadoTarjeta.Activa &&
+                    t.PuntosDisponibles > 0 &&
+                    t.HistorialPuntos.Any(hp => 
+                        hp.TipoOperacion != TipoOperacionPuntos.Vencidos && 
+                        hp.FechaOperacion <= fechaLimite && 
+                        hp.FechaOperacion > DateTime.Now)
+                )
+                .ToListAsync(cancellationToken);
         }
     }
 } 

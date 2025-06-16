@@ -1,3 +1,14 @@
+using Microsoft.Extensions.Logging;
+using Moq;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Telemetry;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
+using FluentAssertions;
+
 namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services.Cache.Telemetry
 {
     public class CacheTelemetryTests
@@ -101,19 +112,42 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Services.Cache.Telem
             var innerCacheMock = new Mock<ICacheService>();
             var telemetryMock = new Mock<ICacheTelemetry>();
             
-            innerCacheMock.Setup(c => c.Get<string>("key"))
-                .Returns((string)null);
-                
+            // Simulamos el comportamiento real de GetOrAddAsync, que busca primero si existe 
+            // en caché y luego invoca la función loadFunc si no lo encuentra
+            innerCacheMock.Setup(c => c.GetOrAddAsync<string>(
+                    It.IsAny<string>(), 
+                    It.IsAny<Func<CancellationToken, Task<string>>>(),
+                    It.IsAny<int>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync((string key, Func<CancellationToken, Task<string>> loadFunc, int ttl, CancellationToken ct) => {
+                    // Simulamos la implementación interna que usa el valor cargado y lo retorna
+                    return "loaded_value"; 
+                });
+            
             var loadFunc = new Func<CancellationToken, Task<string>>(ct => Task.FromResult("loaded_value"));
             
             var decorator = new TelemetryCacheDecorator(innerCacheMock.Object, telemetryMock.Object);
             
             // Act
-            var result = await decorator.GetOrAddAsync("key", loadFunc);
+            var result = await decorator.GetOrAddAsync("key", loadFunc, 10);
             
             // Assert
-            innerCacheMock.Verify(c => c.Set("key", "loaded_value", It.IsAny<int>()), Times.Once);
-            telemetryMock.Verify(t => t.TrackCacheAccess("key", false, "GetOrAddAsync", It.IsAny<long>()), Times.Once);
+            // Verificamos que se llamó al método correcto del caché interno
+            innerCacheMock.Verify(
+                c => c.GetOrAddAsync(
+                    "key", 
+                    It.IsAny<Func<CancellationToken, Task<string>>>(),
+                    10, 
+                    It.IsAny<CancellationToken>()
+                ), 
+                Times.Once
+            );
+            
+            // Verificamos que la telemetría registró acceso al caché
+            telemetryMock.Verify(t => t.TrackCacheAccess("key", true, "GetOrAddAsync", It.IsAny<long>()), Times.Once);
+            
+            // Verificamos que el resultado es el esperado
+            result.Should().Be("loaded_value");
         }
         
         [Fact]

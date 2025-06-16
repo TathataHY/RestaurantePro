@@ -5,7 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using RestaurantePro.Application.Common.Interfaces.Services;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Core.Usuarios.Enums;
 using RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Base;
 
 namespace RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Inventario;
@@ -79,16 +80,16 @@ public class LowStockAlertJob : BackgroundJobBase
     {
         // Un ingrediente es crítico si su stock está por debajo del umbral crítico definido en las opciones
         var nivelCritico = ingrediente.StockMinimo * (_options.CriticalThresholdPercentage / 100.0m);
-        return ingrediente.StockActual <= nivelCritico;
+        return ingrediente.Stock <= nivelCritico;
     }
     
     private async Task EnviarAlertasEmailAsync(List<Ingrediente> ingredientes, bool esCritico, CancellationToken cancellationToken)
     {
-        var usuarios = await _usuarioRepository.ObtenerPorRolAsync(_options.InventoryManagerRole, cancellationToken);
+        var usuarios = await _usuarioRepository.ObtenerPorRolAsync(RolUsuario.EncargadoInventario, cancellationToken);
         
         if (!usuarios.Any())
         {
-            _logger.LogWarning("No se encontraron usuarios con rol {Rol} para enviar alertas", _options.InventoryManagerRole);
+            _logger.LogWarning("No se encontraron usuarios con rol {Rol} para enviar alertas", RolUsuario.EncargadoInventario);
             return;
         }
         
@@ -102,11 +103,10 @@ public class LowStockAlertJob : BackgroundJobBase
         {
             try
             {
-                await _emailService.EnviarCorreoAsync(
-                    destinatario: usuario.Email,
-                    asunto: asunto,
-                    contenido: contenido,
-                    cancellationToken: cancellationToken);
+                await _emailService.SendEmailAsync(
+                    usuario.Email,
+                    asunto,
+                    contenido);
                 
                 _logger.LogInformation("Alerta enviada al usuario {UsuarioId}", usuario.Id);
             }
@@ -119,11 +119,11 @@ public class LowStockAlertJob : BackgroundJobBase
     
     private async Task EnviarNotificacionesSistemaAsync(List<Ingrediente> ingredientesCriticos, List<Ingrediente> ingredientesBajo, CancellationToken cancellationToken)
     {
-        var usuarios = await _usuarioRepository.ObtenerPorRolAsync(_options.InventoryManagerRole, cancellationToken);
+        var usuarios = await _usuarioRepository.ObtenerPorRolAsync(RolUsuario.EncargadoInventario, cancellationToken);
         
         if (!usuarios.Any())
         {
-            _logger.LogWarning("No se encontraron usuarios con rol {Rol} para enviar notificaciones", _options.InventoryManagerRole);
+            _logger.LogWarning("No se encontraron usuarios con rol {Rol} para enviar notificaciones", RolUsuario.EncargadoInventario);
             return;
         }
         
@@ -139,8 +139,7 @@ public class LowStockAlertJob : BackgroundJobBase
                         usuarioId: usuario.Id,
                         titulo: "Stock Crítico",
                         mensaje: mensaje,
-                        tipo: "critical",
-                        cancellationToken: cancellationToken);
+                        tipo: "critical");
                 }
                 
                 // Notificar ingredientes con stock bajo
@@ -151,8 +150,7 @@ public class LowStockAlertJob : BackgroundJobBase
                         usuarioId: usuario.Id,
                         titulo: "Stock Bajo",
                         mensaje: mensaje,
-                        tipo: "warning",
-                        cancellationToken: cancellationToken);
+                        tipo: "warning");
                 }
                 
                 _logger.LogInformation("Notificaciones enviadas al usuario {UsuarioId}", usuario.Id);
@@ -176,7 +174,7 @@ public class LowStockAlertJob : BackgroundJobBase
         {
             contenido += $"<tr>" +
                          $"<td>{ingrediente.Nombre}</td>" +
-                         $"<td>{ingrediente.StockActual}</td>" +
+                         $"<td>{ingrediente.Stock}</td>" +
                          $"<td>{ingrediente.StockMinimo}</td>" +
                          $"<td>{ingrediente.UnidadMedida}</td>" +
                          $"</tr>";
@@ -205,8 +203,9 @@ public class LowStockAlertOptions
     public decimal CriticalThresholdPercentage { get; set; } = 50;
     
     /// <summary>
-    /// Rol de usuarios encargados del inventario
+    /// Rol de usuarios encargados del inventario (obsoleto, se usa RolUsuario.EncargadoInventario)
     /// </summary>
+    [Obsolete("Use RolUsuario.EncargadoInventario instead")]
     public string InventoryManagerRole { get; set; } = "Inventario.Gestor";
     
     /// <summary>

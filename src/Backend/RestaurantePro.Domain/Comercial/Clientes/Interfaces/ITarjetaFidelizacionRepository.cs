@@ -1,3 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+
 namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
 {
     /// <summary>
@@ -108,6 +115,14 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarea asíncrona</returns>
         Task EliminarAsync(Guid id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene las tarjetas con puntos próximos a expirar en la fecha indicada
+        /// </summary>
+        /// <param name="fechaExpiracion">Fecha de referencia para expiración de puntos</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de tarjetas con puntos próximos a expirar</returns>
+        Task<IEnumerable<TarjetaFidelizacion>> ObtenerConPuntosProximosAExpirarAsync(DateTime fechaExpiracion, CancellationToken cancellationToken = default);
     }
 }
 
