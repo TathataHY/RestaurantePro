@@ -62,8 +62,8 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/❌` UnitOfWork - Implementación de la unidad de trabajo
 
 #### Core
-- `✅/⬜` ProductoRepository - Repositorio para la entidad Producto
-- `✅/❌` UsuarioRepository - Repositorio para la entidad Usuario
+- `✅/✅` ProductoRepository - Repositorio para la entidad Producto
+- `✅/✅` UsuarioRepository - Repositorio para la entidad Usuario
 - `✅/❌` NotificacionRepository - Repositorio para la entidad Notificación
 - `✅/❌` RecetaRepository - Repositorio para la entidad Receta
 

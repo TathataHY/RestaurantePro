@@ -74,9 +74,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         /// </summary>
         public async Task<IEnumerable<Usuario>> ObtenerPorRolAsync(RolUsuario rol, CancellationToken cancellationToken = default)
         {
-            return await _dbSet
-                .Where(u => u.Roles.Contains(rol))
-                .ToListAsync(cancellationToken);
+            var todosLosUsuarios = await _dbSet.ToListAsync(cancellationToken);
+            return todosLosUsuarios.Where(u => u.Roles.Contains(rol));
         }
 
         /// <summary>
@@ -94,7 +93,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         /// </summary>
         public override async Task<Usuario> ActualizarAsync(Usuario usuario, CancellationToken cancellationToken = default)
         {
-            _dbContext.Entry(usuario).State = EntityState.Modified;
+            _dbSet.Update(usuario);
             await _dbContext.SaveChangesAsync(cancellationToken);
             return usuario;
         }

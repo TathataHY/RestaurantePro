@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Domain.Core.Productos.Entities;
 using RestaurantePro.Domain.Core.Productos.ValueObjects;
+using RestaurantePro.Domain.Core.Usuarios.Entities;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System;
 using Xunit;
@@ -20,6 +21,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 
         public DbSet<Producto> Productos { get; set; }
         public DbSet<ProductoCategoria> Categorias { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -52,6 +54,16 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Nombre).IsRequired();
                 entity.Ignore(e => e.DomainEvents);
+            });
+
+            modelBuilder.Entity<Usuario>(entity =>
+            {
+                entity.ToTable("Usuarios");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.NombreUsuario).IsRequired();
+                entity.Property(e => e.Email).IsRequired();
+                entity.Ignore(e => e.DomainEvents);
+                entity.Ignore(e => e.Roles);
             });
         }
 
