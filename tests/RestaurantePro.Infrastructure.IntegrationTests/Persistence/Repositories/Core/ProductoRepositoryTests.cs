@@ -23,8 +23,8 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
     {
         private readonly TestDbContext _testDbContext;
 
-        public TestDbContextAdapter(TestDbContext testDbContext) 
-            : base(new DbContextOptions<RestauranteProDbContext>(), null)
+        public TestDbContextAdapter(TestDbContext testDbContext)
+            : base(new DbContextOptions<RestauranteProDbContext>(), new Mock<ILogger<RestauranteProDbContext>>().Object)
         {
             _testDbContext = testDbContext;
         }
@@ -167,6 +167,134 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
             // Assert
             Assert.False(existe);
+        }
+
+        [Fact]
+        public async Task ObtenerPorIdAsync_DebeRetornarProductoCorrecto()
+        {
+            // Arrange
+            var productoExistente = await DbContext.Productos.FirstAsync();
+
+            // Act
+            var producto = await _repository.ObtenerPorIdAsync(productoExistente.Id);
+
+            // Assert
+            Assert.NotNull(producto);
+            Assert.Equal(productoExistente.Id, producto.Id);
+            Assert.Equal(productoExistente.Nombre, producto.Nombre);
+        }
+
+        [Fact]
+        public async Task ObtenerPorIdAsync_DebeRetornarNullSiNoExiste()
+        {
+            // Act
+            var producto = await _repository.ObtenerPorIdAsync(Guid.NewGuid());
+
+            // Assert
+            Assert.Null(producto);
+        }
+
+        [Fact]
+        public async Task AgregarAsync_DebeGuardarNuevoProducto()
+        {
+            // Arrange
+            var categoria = await DbContext.Categorias.FirstAsync();
+            var nuevoProducto = Producto.Crear(
+                "Producto Nuevo",
+                "Descripción",
+                new PrecioProducto(50.00m),
+                categoria.Id,
+                categoria.Nombre
+            );
+
+            // Act
+            await _repository.AgregarAsync(nuevoProducto);
+            var productoGuardado = await DbContext.Productos.FindAsync(nuevoProducto.Id);
+
+            // Assert
+            Assert.NotNull(productoGuardado);
+            Assert.Equal("Producto Nuevo", productoGuardado.Nombre);
+        }
+
+        [Fact]
+        public async Task ActualizarAsync_DebeModificarProductoExistente()
+        {
+            // Arrange
+            var productoAActualizar = await DbContext.Productos.FirstAsync();
+            var nuevoNombre = "Producto Actualizado";
+            productoAActualizar.Actualizar(
+                nuevoNombre,
+                productoAActualizar.Descripcion!,
+                productoAActualizar.Precio!
+            );
+
+            // Act
+            await _repository.ActualizarAsync(productoAActualizar);
+            var productoActualizado = await DbContext.Productos.FindAsync(productoAActualizar.Id);
+
+            // Assert
+            Assert.NotNull(productoActualizado);
+            Assert.Equal(nuevoNombre, productoActualizado.Nombre);
+        }
+        
+        [Fact]
+        public async Task EliminarAsync_DebeMarcarProductoComoInactivo()
+        {
+            // Arrange
+            var productoAEliminar = await DbContext.Productos.FirstAsync(p => p.EstaActivo);
+
+            // Act
+            await _repository.EliminarAsync(productoAEliminar.Id);
+            var productoEliminado = await DbContext.Productos.FindAsync(productoAEliminar.Id);
+
+            // Assert
+            Assert.NotNull(productoEliminado);
+            Assert.False(productoEliminado.EstaActivo);
+        }
+
+        [Fact]
+        public async Task ObtenerTodosAsync_DebeRetornarSoloProductosActivos()
+        {
+            // Act
+            var productos = await _repository.ObtenerTodosAsync(true);
+
+            // Assert
+            Assert.Equal(2, productos.Count());
+            Assert.All(productos, p => Assert.True(p.EstaActivo));
+        }
+
+        [Fact]
+        public async Task ObtenerProductosMasVendidosAsync_DebeRetornarProductosOrdenadosPorPopularidad()
+        {
+            // Arrange
+            var producto1 = await DbContext.Productos.FirstAsync(p => p.Nombre == "Producto 1");
+            var producto2 = await DbContext.Productos.FirstAsync(p => p.Nombre == "Producto 2");
+            
+            producto1.ActualizarPopularidad(5);
+            producto2.ActualizarPopularidad(8);
+            await DbContext.SaveChangesAsync();
+
+            // Act
+            var productos = await _repository.ObtenerProductosMasVendidosAsync(2);
+
+            // Assert
+            Assert.Equal(2, productos.Count());
+            Assert.Equal("Producto 2", productos.First().Nombre);
+            Assert.Equal("Producto 1", productos.Last().Nombre);
+        }
+
+        [Fact]
+        public async Task GetProductoConDetallesAsync_DebeRetornarProducto()
+        {
+            // Arrange
+            var productoExistente = await DbContext.Productos.FirstAsync();
+
+            // Act
+            var producto = await _repository.GetProductoConDetallesAsync(productoExistente.Id);
+
+            // Assert
+            Assert.NotNull(producto);
+            Assert.Equal(productoExistente.Id, producto.Id);
         }
     }
 } 

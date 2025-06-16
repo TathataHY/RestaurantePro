@@ -85,8 +85,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         /// </summary>
         public override Task ActualizarAsync(Producto producto, CancellationToken cancellationToken = default)
         {
-            _dbContext.Entry(producto).State = EntityState.Modified;
-            return _dbContext.SaveChangesAsync(cancellationToken);
+            _dbSet.Update(producto);
+            return Task.CompletedTask;
         }
 
         /// <summary>
