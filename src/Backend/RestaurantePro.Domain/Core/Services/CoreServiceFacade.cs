@@ -518,8 +518,9 @@ namespace RestaurantePro.Domain.Core.Services
         // Método auxiliar para obtener nombre de ingrediente
         private async Task<string?> ObtenerNombreIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken)
         {
-            // Implementación simplificada
-            return $"Ingrediente {ingredienteId.ToString().Substring(0, 8)}";
+            // Este método podría estar en un repositorio de ingredientes, pero para simplificar lo ponemos aquí
+            // Esto es solo un ejemplo, en un caso real se usaría un repositorio
+            return await Task.FromResult($"Ingrediente {ingredienteId}");
         }
 
         #endregion
@@ -531,50 +532,38 @@ namespace RestaurantePro.Domain.Core.Services
             string nombreUsuario, 
             string nombreCompleto, 
             string email, 
-            string rol, 
+            RolUsuario rol, 
             CancellationToken cancellationToken = default)
         {
-            _notificationManager.CreateNewNotification();
-            
-            // Validar parámetros
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(nombreUsuario), "El nombre de usuario no puede estar vacío", "NombreUsuario");
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(nombreCompleto), "El nombre completo no puede estar vacío", "NombreCompleto");
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(email), "El email no puede estar vacío", "Email");
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(rol), "El rol no puede estar vacío", "Rol");
-            
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
-            // Verificar si ya existe un usuario con el mismo nombre
-            var usuarioExistente = await _usuarioRepository.ObtenerPorNombreUsuarioAsync(nombreUsuario, cancellationToken);
-            if (usuarioExistente != null)
-            {
-                _notificationManager.AddError($"Ya existe un usuario con el nombre '{nombreUsuario}'", "NombreUsuario");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
-            // Convertir el rol a enum
-            if (!Enum.TryParse<RolUsuario>(rol, true, out var rolEnum))
-            {
-                _notificationManager.AddError($"Rol no válido: {rol}", "Rol");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
+            _notificationManager.ClearErrors();
+
             try
             {
-                // Crear el usuario
-                var usuario = Usuario.Crear(nombreUsuario, nombreCompleto, email, rolEnum);
-                
-                // Persistir el usuario
+                // Verificar si el usuario ya existe
+                var usuarioExistente = await _usuarioRepository.ObtenerPorNombreUsuarioAsync(nombreUsuario, cancellationToken);
+                if (usuarioExistente != null)
+                {
+                    _notificationManager.AddError($"El nombre de usuario '{nombreUsuario}' ya existe", nameof(nombreUsuario));
+                    return _notificationManager.ToResult<Usuario>(null);
+                }
+
+                // Crear el Value Object para el email
+                var emailVO = Email.Create(email);
+
+                // Crear la entidad de usuario a través de su factory
+                var usuario = Usuario.Crear(nombreUsuario, nombreCompleto, emailVO, rol);
+
+                // Persistir el nuevo usuario
                 await _usuarioRepository.AgregarAsync(usuario, cancellationToken);
                 
+                _logger.LogInformation("Usuario creado: {UsuarioId}, Nombre: {NombreUsuario}", usuario.Id, usuario.NombreUsuario);
+
                 return Result.Success(usuario);
             }
             catch (Exception ex)
             {
-                _notificationManager.AddError($"Error al crear usuario: {ex.Message}", "CrearUsuario");
+                _logger.LogError(ex, "Error al crear el usuario {NombreUsuario}", nombreUsuario);
+                _notificationManager.AddError($"Error interno al crear usuario: {ex.Message}", "CrearUsuario");
                 return _notificationManager.ToResult<Usuario>(null);
             }
         }

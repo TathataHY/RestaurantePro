@@ -1,3 +1,6 @@
+using System.Text;
+using System.Text.Json.Serialization;
+
 namespace RestaurantePro.Domain.Core.SharedKernel.Exceptions;
 
 /// <summary>
@@ -9,22 +12,35 @@ public abstract class DomainException : Exception
     /// <summary>
     /// Código de error específico del dominio
     /// </summary>
-    public string ErrorCode { get; }
+    public string ErrorCode { get; private set; }
     
     /// <summary>
     /// Contexto de dominio donde ocurrió la excepción
     /// </summary>
-    public string DomainContext { get; }
+    public string DomainContext { get; private set; }
     
     /// <summary>
     /// Datos adicionales relacionados con la excepción
     /// </summary>
-    public Dictionary<string, object> AdditionalData { get; }
+    public Dictionary<string, object> AdditionalData { get; private set; }
     
     /// <summary>
     /// Timestamp cuando ocurrió la excepción
     /// </summary>
-    public DateTime OccurredAt { get; }
+    public DateTime OccurredAt { get; private set; }
+
+    /// <summary>
+    /// Constructor para deserialización JSON.
+    /// </summary>
+    [JsonConstructor]
+    protected DomainException(string message, string errorCode, string domainContext, Dictionary<string, object> additionalData, DateTime occurredAt)
+        : base(message)
+    {
+        ErrorCode = errorCode;
+        DomainContext = domainContext;
+        AdditionalData = additionalData;
+        OccurredAt = occurredAt;
+    }
 
     /// <summary>
     /// Constructor base para excepciones de dominio

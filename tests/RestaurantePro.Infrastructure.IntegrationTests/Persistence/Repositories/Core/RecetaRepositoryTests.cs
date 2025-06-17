@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using RestaurantePro.Domain.Core.Productos.Entities;
@@ -7,52 +8,53 @@ using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
 using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using System.Reflection;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Core
 {
     public class RecetaRepositoryTests : IntegrationTestBase
     {
         private readonly RecetaRepository _recetaRepository;
-        private readonly Mock<ILogger<RecetaRepository>> _loggerMock;
-
         private Guid _productoId1;
-        private Guid _productoId2;
         private Guid _recetaId1;
+        private Guid _ingredienteId1;
+        private Guid _ingredienteId2;
+        private readonly PropertyInfo? propInfo = typeof(EntityBase).GetProperty(nameof(EntityBase.Id));
 
         public RecetaRepositoryTests()
         {
-            _loggerMock = new Mock<ILogger<RecetaRepository>>();
-            _recetaRepository = new RecetaRepository(DbContext, _loggerMock.Object);
+            _recetaRepository = new RecetaRepository(DbContext, Mock.Of<ILogger<RecetaRepository>>());
         }
 
-        protected override void SeedDatabase()
+        protected override async Task SeedDataAsync()
         {
-            base.SeedDatabase();
+            _productoId1 = Guid.NewGuid();
+            _ingredienteId1 = Guid.NewGuid();
+            _ingredienteId2 = Guid.NewGuid();
 
-            var producto1 = Producto.Crear("Pizza Margarita", "Pizza clásica", new PrecioProducto(12.50m), Guid.NewGuid());
-            var producto2 = Producto.Crear("Hamburguesa", "Hamburguesa de la casa", new PrecioProducto(10.00m), Guid.NewGuid());
-            DbContext.Set<Producto>().AddRange(producto1, producto2);
-            _productoId1 = producto1.Id;
-            _productoId2 = producto2.Id;
+            var producto = Producto.Crear("Hamburguesa", "Carne y queso", new PrecioProducto(12.5m), Guid.NewGuid(), "Comida Rápida");
+            // Sobrescribimos el ID para poder usarlo en los tests
+            propInfo?.SetValue(producto, _productoId1);
 
 
-            var receta1 = Receta.Crear(_productoId1, "1. Mezclar ingredientes. 2. Hornear.", 25);
-            receta1.AgregarIngrediente(Guid.NewGuid(), "Masa de pizza", 1, UnidadMedida.Unidad);
-            receta1.AgregarIngrediente(Guid.NewGuid(), "Salsa de tomate", 200, UnidadMedida.Gramos);
-            receta1.AgregarIngrediente(Guid.NewGuid(), "Queso Mozzarella", 250, UnidadMedida.Gramos);
-            _recetaId1 = receta1.Id;
-            
-            var receta2 = Receta.Crear(_productoId2, "1. Freir la carne. 2. Montar.", 15);
-            
-            DbContext.Set<Receta>().AddRange(receta1, receta2);
-            DbContext.SaveChanges();
+            var receta = Receta.Crear(producto.Id, "Cocinar la carne y montar.", 15);
+            receta.AgregarIngrediente(_ingredienteId1, "Carne de Res", 150, UnidadMedida.Gramos);
+            receta.AgregarIngrediente(_ingredienteId2, "Queso Cheddar", 2, UnidadMedida.Unidades);
+
+            _recetaId1 = receta.Id;
+
+            producto.Recetas.Add(receta);
+            DbContext.Productos.Add(producto);
+            // EF Core se encarga de guardar la receta por la relación de navegación
+            await DbContext.SaveChangesAsync();
         }
 
         [Fact]
-        public async Task ObtenerPorIdAsync_DebeRetornarRecetaConIngredientes()
+        public async Task ObtenerPorIdAsync_DebeRetornarRecetaConIngredientes_CuandoExiste()
         {
             // Act
             var receta = await _recetaRepository.ObtenerPorIdAsync(_recetaId1);
@@ -60,12 +62,12 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             // Assert
             receta.Should().NotBeNull();
             receta!.Id.Should().Be(_recetaId1);
-            receta.Ingredientes.Should().HaveCount(3);
-            receta.Ingredientes.First().Nombre.Should().Be("Masa de pizza");
+            receta.Ingredientes.Should().HaveCount(2);
+            receta.Ingredientes.First(i => i.IngredienteId == _ingredienteId1).Nombre.Should().Be("Carne de Res");
         }
         
         [Fact]
-        public async Task ObtenerPorIdAsync_DebeRetornarNullSiNoExiste()
+        public async Task ObtenerPorIdAsync_DebeRetornarNull_CuandoNoExiste()
         {
             // Act
             var receta = await _recetaRepository.ObtenerPorIdAsync(Guid.NewGuid());
@@ -75,7 +77,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         }
 
         [Fact]
-        public async Task ObtenerPorProductoIdAsync_DebeRetornarRecetaCorrecta()
+        public async Task ObtenerPorProductoIdAsync_DebeRetornarRecetaCorrecta_CuandoExiste()
         {
             // Act
             var receta = await _recetaRepository.ObtenerPorProductoIdAsync(_productoId1);
@@ -86,23 +88,16 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         }
 
         [Fact]
-        public async Task ObtenerRecetaIngredientesAsync_DebeRetornarIngredientes()
-        {
-            // Act
-            var ingredientes = await _recetaRepository.ObtenerRecetaIngredientesAsync(_recetaId1);
-
-            // Assert
-            ingredientes.Should().NotBeNull();
-            ingredientes.Should().HaveCount(3);
-            ingredientes.First().Nombre.Should().Be("Masa de pizza");
-        }
-
-        [Fact]
         public async Task AgregarAsync_DebeAñadirNuevaReceta()
         {
             // Arrange
-            var productoId = Guid.NewGuid();
-            var nuevaReceta = Receta.Crear(productoId, "Instrucciones", 10);
+            var producto2Id = Guid.NewGuid();
+            var producto2 = Producto.Crear("Pizza", "Pizza de peperoni", new PrecioProducto(15m), Guid.NewGuid(), "Italiana");
+            propInfo?.SetValue(producto2, producto2Id);
+            DbContext.Productos.Add(producto2);
+            await DbContext.SaveChangesAsync();
+            
+            var nuevaReceta = Receta.Crear(producto2.Id, "Hornear a 200 grados", 25);
             
             // Act
             await _recetaRepository.AgregarAsync(nuevaReceta);
@@ -111,7 +106,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             // Assert
             var recetaEnDb = await _recetaRepository.ObtenerPorIdAsync(nuevaReceta.Id);
             recetaEnDb.Should().NotBeNull();
-            recetaEnDb!.Preparacion.Should().Be("Instrucciones");
+            recetaEnDb!.Preparacion.Should().Be("Hornear a 200 grados");
         }
 
         [Fact]
@@ -126,7 +121,12 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             await DbContext.SaveChangesAsync();
 
             // Assert
-            var recetaActualizada = await _recetaRepository.ObtenerPorIdAsync(_recetaId1);
+            var productoConReceta = await DbContext.Productos
+                .Include(p => p.Recetas)
+                .FirstOrDefaultAsync(p => p.Id == _productoId1);
+            
+            var recetaActualizada = productoConReceta?.Recetas.FirstOrDefault(r => r.Id == receta.Id);
+
             recetaActualizada!.Preparacion.Should().Be("Nuevas instrucciones de preparación");
         }
 

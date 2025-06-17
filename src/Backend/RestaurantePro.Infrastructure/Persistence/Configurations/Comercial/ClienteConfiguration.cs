@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 
 namespace RestaurantePro.Infrastructure.Persistence.Configurations.Comercial;
 
@@ -22,14 +24,17 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         builder.OwnsOne(p => p.Nombre, nombre =>
         {
             nombre.Property(n => n.Nombre)
-                .HasColumnName("Nombres")
+                .HasColumnName("Nombre")
                 .IsRequired()
-                .HasMaxLength(100);
-                
+                .HasMaxLength(50);
+
             nombre.Property(n => n.Apellido)
-                .HasColumnName("Apellidos")
+                .HasColumnName("Apellido")
                 .IsRequired()
-                .HasMaxLength(100);
+                .HasMaxLength(50);
+
+            nombre.HasIndex(nameof(ClienteNombre.Nombre), nameof(ClienteNombre.Apellido))
+                .HasDatabaseName("IX_Clientes_NombreCompleto");
         });
         
         // Configurar el valor objeto Email como propiedad de navegación poseída
@@ -39,6 +44,7 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
                 .HasColumnName("Email")
                 .IsRequired()
                 .HasMaxLength(150);
+
             email.HasIndex(e => e.Value).IsUnique();
         });
         
@@ -49,7 +55,8 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
                 .HasColumnName("Telefono")
                 .IsRequired()
                 .HasMaxLength(20);
-            telefono.HasIndex(t => t.Value);
+
+            telefono.HasIndex(t => t.Value).IsUnique(false);
         });
         
         builder.Property(p => p.FechaNacimiento)
@@ -68,7 +75,7 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
             .HasDefaultValue(0);
             
         builder.Property(p => p.TarjetaFidelizacionPrincipalId);
-            
+        
         builder.Property(p => p.Segmento)
             .IsRequired()
             .HasConversion<string>();
@@ -84,17 +91,10 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
             .HasDefaultValue(false);
         
         // Configurar índices
-        builder.HasIndex(p => p.Email.Value)
-            .HasDatabaseName("IX_Clientes_Email")
-            .IsUnique();
-            
-        builder.HasIndex(p => new { p.Nombre.Nombre, p.Nombre.Apellido })
-            .HasDatabaseName("IX_Clientes_NombreCompleto");
-            
-        builder.HasIndex(p => p.Telefono.Value)
-            .HasDatabaseName("IX_Clientes_Telefono");
-            
         builder.HasIndex(p => p.TarjetaFidelizacionPrincipalId)
             .HasDatabaseName("IX_Clientes_TarjetaFidelizacionId");
+            
+        // NOTA: No hay relación de navegación directa a TarjetaFidelizacion en la entidad Cliente.
+        // La relación es unidireccional desde TarjetaFidelizacion.
     }
 } 

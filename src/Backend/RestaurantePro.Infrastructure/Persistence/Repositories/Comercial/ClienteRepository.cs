@@ -24,32 +24,32 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
 
         public override async Task<Cliente?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+            return await _dbSet.Where(c => !c.EstaEliminado).FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
         }
 
         public async Task<Cliente?> ObtenerPorEmailAsync(string email, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.FirstOrDefaultAsync(c => c.Email.Value == email, cancellationToken);
+            return await _dbSet.Where(c => !c.EstaEliminado).FirstOrDefaultAsync(c => c.Email.Value == email, cancellationToken);
         }
 
-        public async Task<List<Cliente>> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Cliente>> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default)
         {
             // Simplificado para compatibilidad con In-Memory
-            var todos = await _dbSet.ToListAsync(cancellationToken);
-            return todos.Where(c => (c.Nombre.Nombre + " " + c.Nombre.Apellido).Contains(nombre, StringComparison.OrdinalIgnoreCase)).ToList();
+            var clientes = await _dbSet.ToListAsync(cancellationToken);
+            return clientes.Where(c => (c.Nombre.Nombre + " " + c.Nombre.Apellido).Contains(nombre, StringComparison.OrdinalIgnoreCase));
         }
 
         public async Task<IEnumerable<Cliente>> ObtenerPorSegmentoAsync(SegmentoCliente segmento, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Where(c => c.Segmento == segmento)
+                .Where(c => c.Segmento == segmento && !c.EstaEliminado)
                 .ToListAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<Cliente>> ObtenerPorEstadoActivoAsync(bool activo, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Where(c => c.EstaActivo == activo)
+                .Where(c => c.EstaActivo == activo && !c.EstaEliminado)
                 .ToListAsync(cancellationToken);
         }
 
@@ -75,20 +75,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<List<Cliente>> ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken = default)
-        {
-            return await _dbSet
-                .OrderBy(c => c.Nombre.Nombre)
-                .ThenBy(c => c.Nombre.Apellido)
-                .Skip((pagina - 1) * elementosPorPagina)
-                .Take(elementosPorPagina)
-                .ToListAsync(cancellationToken);
-        }
-
         async Task<(IEnumerable<Cliente> Clientes, int Total)> IClienteRepository.ObtenerPaginadoAsync(int pagina, int elementosPorPagina, CancellationToken cancellationToken)
         {
-            var (items, total) = await ObtenerPaginadoAsync(pagina, elementosPorPagina, cancellationToken);
-            return (Clientes: items, Total: total);
+            var (items, total) = await base.ObtenerPaginadoAsync(pagina, elementosPorPagina, cancellationToken);
+            return (items, total);
         }
 
         public async Task<IEnumerable<Cliente>> ObtenerPorRangoFechasRegistroAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default)

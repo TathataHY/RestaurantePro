@@ -71,21 +71,18 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         /// <returns>Número de notificaciones eliminadas</returns>
         public async Task<int> EliminarAnterioresAFechaAsync(DateTime fecha, CancellationToken cancellationToken = default)
         {
-            var notificacionesAntiguasQuery = _dbSet
-                .Where(n => n.FechaCreacion < fecha);
-                
-            var count = await notificacionesAntiguasQuery.CountAsync(cancellationToken);
+            var notificacionesAntiguas = await _dbSet
+                .Where(n => n.FechaCreacion < fecha)
+                .ToListAsync(cancellationToken);
             
-            if (count > 0)
+            if (notificacionesAntiguas.Any())
             {
-                var notificacionesAntiguas = await notificacionesAntiguasQuery.ToListAsync(cancellationToken);
                 _dbSet.RemoveRange(notificacionesAntiguas);
-                
-                _logger.LogInformation("Eliminando {Count} notificaciones antiguas anteriores a {Fecha}", count, fecha);
+                _logger.LogInformation("Eliminando {Count} notificaciones antiguas anteriores a {Fecha}", notificacionesAntiguas.Count, fecha);
                 await GuardarCambiosAsync(cancellationToken);
             }
             
-            return count;
+            return notificacionesAntiguas.Count;
         }
 
         public async Task<IEnumerable<Notificacion>> ObtenerNotificacionesNoLeidasAsync(string usuarioId)

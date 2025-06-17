@@ -14,7 +14,7 @@ namespace RestaurantePro.Domain.Core.Base
         /// <summary>
         /// Identificador único de la entidad
         /// </summary>
-        public Guid Id { get; protected set; }
+        public virtual Guid Id { get; protected set; }
 
         /// <summary>
         /// Fecha de creación del registro
@@ -27,9 +27,19 @@ namespace RestaurantePro.Domain.Core.Base
         public DateTime? FechaActualizacion { get; protected set; }
 
         /// <summary>
+        /// Usuario que creó el registro
+        /// </summary>
+        public string? CreatedBy { get; protected set; }
+
+        /// <summary>
+        /// Usuario que realizó la última modificación
+        /// </summary>
+        public string? LastModifiedBy { get; protected set; }
+
+        /// <summary>
         /// Indica si el registro ha sido eliminado lógicamente
         /// </summary>
-        public bool EstaEliminado { get; protected set; }
+        public virtual bool EstaEliminado { get; protected set; }
 
         /// <summary>
         /// Eventos de dominio pendientes de publicación

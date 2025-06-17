@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using RestaurantePro.Domain.Core.Base;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -69,10 +70,18 @@ public class Repository<T> : IRepository<T> where T : class
     /// <summary>
     /// Elimina una entidad
     /// </summary>
-    public virtual async Task EliminarAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual Task EliminarAsync(T entity, CancellationToken cancellationToken = default)
     {
-        _dbSet.Remove(entity);
-        await Task.CompletedTask;
+        if (entity is EntityBase entityBase)
+        {
+            entityBase.MarkAsDeleted();
+            _dbSet.Update(entity);
+        }
+        else
+        {
+            _dbSet.Remove(entity);
+        }
+        return Task.CompletedTask;
     }
 
     /// <summary>

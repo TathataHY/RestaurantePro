@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace RestaurantePro.Domain.Core.SharedKernel.Exceptions;
 
 /// <summary>
@@ -9,17 +11,39 @@ public class BusinessRuleViolationException : DomainException
     /// <summary>
     /// Nombre de la regla de negocio que fue violada
     /// </summary>
-    public string RuleName { get; }
+    public string RuleName { get; private set; }
     
     /// <summary>
     /// Entidad o agregado donde ocurrió la violación
     /// </summary>
-    public string EntityName { get; }
+    public string EntityName { get; private set; }
     
     /// <summary>
     /// ID de la entidad donde ocurrió la violación (si aplica)
     /// </summary>
-    public Guid? EntityId { get; }
+    public Guid? EntityId { get; private set; }
+
+    /// <summary>
+    /// Constructor para deserialización JSON.
+    /// </summary>
+    [JsonConstructor]
+    public BusinessRuleViolationException(string message, string errorCode, string domainContext, Dictionary<string, object> additionalData, DateTime occurredAt, string ruleName, string entityName, Guid? entityId)
+        : base(message, errorCode, domainContext, additionalData, occurredAt)
+    {
+        RuleName = ruleName;
+        EntityName = entityName;
+        EntityId = entityId;
+    }
+
+    /// <summary>
+    /// Constructor para deserialización
+    /// </summary>
+    public BusinessRuleViolationException() 
+        : base("Se violó una regla de negocio.", "BUSINESS_RULE_VIOLATION", "Desconocido")
+    {
+        RuleName = "Desconocida";
+        EntityName = "Desconocida";
+    }
 
     /// <summary>
     /// Constructor para violación de regla de negocio
@@ -37,7 +61,7 @@ public class BusinessRuleViolationException : DomainException
         string domainContext,
         Guid? entityId = null,
         string? errorCode = null) 
-        : base(message, errorCode ?? "BUSINESS_RULE_VIOLATION", domainContext)
+        : base(message, errorCode ?? "BUSINESS_RULE_VIOLATION", domainContext, null)
     {
         RuleName = ruleName ?? throw new ArgumentNullException(nameof(ruleName));
         EntityName = entityName ?? throw new ArgumentNullException(nameof(entityName));

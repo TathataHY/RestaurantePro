@@ -45,6 +45,7 @@ public class ReservacionConfiguration : IEntityTypeConfiguration<Reservacion>
             .HasMaxLength(150);
             
         builder.Property(p => p.Observaciones)
+            .IsRequired(false)
             .HasMaxLength(500);
             
         builder.Property(p => p.Estado)
@@ -52,6 +53,7 @@ public class ReservacionConfiguration : IEntityTypeConfiguration<Reservacion>
             .HasConversion<string>();
             
         builder.Property(p => p.MotivoCancelacion)
+            .IsRequired(false)
             .HasMaxLength(200);
             
         builder.Property(p => p.EstaEliminado)

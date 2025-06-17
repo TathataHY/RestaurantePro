@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RestaurantePro.Domain.Proveedores.Entities;
 using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+using RestaurantePro.Domain.Proveedores.ValueObjects;
 
 namespace RestaurantePro.Infrastructure.Persistence.Configurations.Proveedores
 {
@@ -77,6 +78,26 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Proveedores
                 .WithOne()
                 .HasForeignKey("ProveedorId")
                 .OnDelete(DeleteBehavior.Cascade);
+                
+            // Configuración para la colección de Value Objects ProveedorCategoria
+            builder.OwnsMany(p => p.Categorias, categoriaBuilder =>
+            {
+                categoriaBuilder.ToTable("ProveedorCategorias", "Proveedores");
+                
+                categoriaBuilder.WithOwner().HasForeignKey("ProveedorId");
+
+                // Clave primaria compuesta por ProveedorId y Categoria
+                categoriaBuilder.HasKey("ProveedorId", nameof(ProveedorCategoria.Categoria));
+
+                categoriaBuilder.Property(c => c.Categoria)
+                    .HasConversion<string>()
+                    .HasMaxLength(50);
+                
+                categoriaBuilder.Property(c => c.PorcentajeDescuento)
+                    .HasPrecision(5, 2);
+
+                categoriaBuilder.Property(c => c.EsProveedorPrincipal);
+            });
                 
             // Índices
             builder.HasIndex(p => p.Nombre)

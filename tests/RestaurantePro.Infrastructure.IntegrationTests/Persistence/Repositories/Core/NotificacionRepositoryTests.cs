@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using Microsoft.EntityFrameworkCore;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Core
 {
@@ -29,38 +30,27 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             _repository = new NotificacionRepository(DbContext, _loggerMock.Object);
         }
 
-        protected override void SeedDatabase()
+        protected override async Task SeedDataAsync()
         {
-            base.SeedDatabase();
+            _usuarioId1 = Guid.NewGuid();
+            _usuarioId2 = Guid.NewGuid();
 
-            var usuario1 = Usuario.Crear("user1", "User One", "user1@test.com", RolUsuario.Mesero);
-            usuario1.ConfirmarCuenta();
-            usuario1.Activar();
-            _usuarioId1 = usuario1.Id;
-
-            var usuario2 = Usuario.Crear("user2", "User Two", "user2@test.com", RolUsuario.Cajero);
-            usuario2.ConfirmarCuenta();
-            usuario2.Activar();
-            _usuarioId2 = usuario2.Id;
-
-            DbContext.Set<Usuario>().AddRange(usuario1, usuario2);
-
+            var notificacionAntigua = Notificacion.Crear("Antigua", "Mensaje Antiguo", TipoNotificacion.Informativa, _usuarioId1);
+            typeof(Notificacion).GetProperty(nameof(Notificacion.FechaCreacion))!.SetValue(notificacionAntigua, DateTime.UtcNow.AddDays(-10));
+            
             var notificaciones = new List<Notificacion>
             {
-                Notificacion.Crear("Titulo 1", "Mensaje 1", TipoNotificacion.Informativa, _usuarioId1),
-                Notificacion.Crear("Titulo 2", "Mensaje 2", TipoNotificacion.Advertencia, _usuarioId1),
-                Notificacion.Crear("Titulo 3", "Mensaje 3", TipoNotificacion.Informativa, _usuarioId2),
-                Notificacion.Crear("Titulo 4", "Mensaje 4", TipoNotificacion.Alerta, _usuarioId1),
+                notificacionAntigua,
+                Notificacion.Crear("Test 2", "Mensaje 2", TipoNotificacion.Alerta, _usuarioId1),
+                Notificacion.Crear("Test 3", "Mensaje 3", TipoNotificacion.Error, _usuarioId2),
+                Notificacion.Crear("Test 4", "Mensaje 4", TipoNotificacion.Informativa, _usuarioId1),
+                Notificacion.Crear("Test 5", "Mensaje 5", TipoNotificacion.Alerta, _usuarioId2)
             };
-
-            notificaciones[1].MarcarComoLeida();
             
-            var notificacionAntigua = Notificacion.Crear("Titulo Antiguo", "Mensaje antiguo", TipoNotificacion.Error, _usuarioId2);
-            notificacionAntigua.SetFechaCreacionForTesting(DateTime.UtcNow.AddDays(-10));
-            notificaciones.Add(notificacionAntigua);
+            notificaciones[2].MarcarComoLeida();
 
-            DbContext.Set<Notificacion>().AddRange(notificaciones);
-            DbContext.SaveChanges();
+            await DbContext.Notificaciones.AddRangeAsync(notificaciones);
+            await DbContext.SaveChangesAsync();
         }
 
         [Fact]
@@ -106,8 +96,8 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
             // Assert
             notificaciones.Should().NotBeNull();
-            notificaciones.Should().HaveCount(1);
-            notificaciones.First().Tipo.Should().Be(tipo);
+            notificaciones.Should().HaveCount(2);
+            notificaciones.All(n => n.Tipo == tipo).Should().BeTrue();
         }
 
         [Fact]
@@ -121,7 +111,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
             // Assert
             notificaciones.Should().NotBeNull();
-            notificaciones.Should().HaveCount(2);
+            notificaciones.Should().HaveCount(3);
             notificaciones.All(n => !n.EstaLeida).Should().BeTrue();
         }
 
@@ -133,7 +123,6 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
             // Act
             var cantidadEliminada = await _repository.EliminarAnterioresAFechaAsync(fechaLimite);
-            await DbContext.SaveChangesAsync();
 
             // Assert
             cantidadEliminada.Should().Be(1);

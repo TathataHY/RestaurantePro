@@ -66,7 +66,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration.WithinContext.Core
             
             _usuarioRepositoryMock
                 .Setup(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
+                .Returns((Usuario u, CancellationToken ct) => Task.FromResult(u));
             
             // 4. Capturar el evento UsuarioCreado
             var eventoUsuarioCreado = new UsuarioCreado(
@@ -154,7 +154,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration.WithinContext.Core
             
             _usuarioRepositoryMock
                 .Setup(r => r.ActualizarAsync(It.IsAny<Usuario>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask);
+                .Returns((Usuario u, CancellationToken ct) => Task.FromResult(u));
             
             // 4. Capturar el evento UsuarioCreado con tipo administrador
             var eventoUsuarioCreado = new UsuarioCreado(

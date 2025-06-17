@@ -1,3 +1,21 @@
+using FluentAssertions;
+using Moq;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ModificarReservacion;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Xunit;
+using Microsoft.EntityFrameworkCore;
+
 namespace RestaurantePro.Application.UnitTests.Operaciones.Reservaciones.Validators;
 
 /// <summary>
@@ -709,95 +727,28 @@ public class ModificarReservacionValidatorTests
 
     private Mesa CrearMesaMock(Guid id, int numero, int capacidad, EstadoMesa estado)
     {
-        // Usar reflection para crear la entidad con constructor privado
-        var mesa = (Mesa)Activator.CreateInstance(typeof(Mesa), true)!;
-        
-        typeof(Mesa).GetProperty("Id")?.SetValue(mesa, id);
-        typeof(Mesa).GetProperty("Numero")?.SetValue(mesa, numero);
-        typeof(Mesa).GetProperty("Capacidad")?.SetValue(mesa, capacidad);
-        typeof(Mesa).GetProperty("Estado")?.SetValue(mesa, estado);
-        typeof(Mesa).GetProperty("Ubicacion")?.SetValue(mesa, "Interior");
-        typeof(Mesa).GetProperty("FechaCreacion")?.SetValue(mesa, DateTime.Now);
-        
-        return mesa;
+        var mock = new Mock<Mesa>();
+        mock.Setup(m => m.Id).Returns(id);
+        mock.Setup(m => m.Numero).Returns(numero);
+        mock.Setup(m => m.Capacidad).Returns(capacidad);
+        mock.Setup(m => m.Estado).Returns(estado);
+        return mock.Object;
     }
 
     private Cliente CrearClienteMock(Guid id, string nombre, string email, bool activo)
     {
-        // Usar reflection para crear la entidad con constructor privado
-        var cliente = (Cliente)Activator.CreateInstance(typeof(Cliente), true)!;
-        
-        // Crear ValueObjects básicos usando reflection
-        var clienteNombre = CrearClienteNombreMock(nombre, "Test");
-        var emailVO = CrearEmailMock(email);
-        var telefonoVO = CrearPhoneNumberMock("555-1234");
-        
-        typeof(Cliente).GetProperty("Id")?.SetValue(cliente, id);
-        typeof(Cliente).GetProperty("Nombre")?.SetValue(cliente, clienteNombre);
-        typeof(Cliente).GetProperty("Email")?.SetValue(cliente, emailVO);
-        typeof(Cliente).GetProperty("Telefono")?.SetValue(cliente, telefonoVO);
-        typeof(Cliente).GetProperty("EstaActivo")?.SetValue(cliente, activo);
-        typeof(Cliente).GetProperty("FechaNacimiento")?.SetValue(cliente, DateTime.Now.AddYears(-25));
-        typeof(Cliente).GetProperty("FechaCreacion")?.SetValue(cliente, DateTime.Now);
-        
-        return cliente;
-    }
+        var mock = new Mock<Cliente>();
+        var nombreCompleto = ClienteNombre.Crear(nombre, "Test");
+        var emailVO = Email.Create(email);
+        var telefono = PhoneNumber.Create("123456789");
 
-    private object CrearClienteNombreMock(string nombre, string apellido)
-    {
-        // Usar reflection para crear el ValueObject con constructor privado
-        var clienteNombreType = typeof(Cliente).Assembly.GetTypes()
-            .FirstOrDefault(t => t.Name == "ClienteNombre");
+        mock.Setup(c => c.Id).Returns(id);
+        mock.Setup(c => c.Nombre).Returns(nombreCompleto);
+        mock.Setup(c => c.Email).Returns(emailVO);
+        mock.Setup(c => c.Telefono).Returns(telefono);
+        mock.Setup(c => c.EstaActivo).Returns(activo);
         
-        if (clienteNombreType != null)
-        {
-            var constructor = clienteNombreType.GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance).FirstOrDefault();
-            if (constructor != null)
-            {
-                return constructor.Invoke(new object[] { nombre, apellido });
-            }
-        }
-        
-        // Fallback: crear objeto dinámico
-        return new { Nombre = nombre, Apellido = apellido, NombreCompleto = $"{nombre} {apellido}" };
-    }
-
-    private object CrearEmailMock(string email)
-    {
-        // Usar reflection para crear el ValueObject Email con constructor privado
-        var emailType = typeof(Cliente).Assembly.GetTypes()
-            .FirstOrDefault(t => t.Name == "Email");
-        
-        if (emailType != null)
-        {
-            var constructor = emailType.GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance).FirstOrDefault();
-            if (constructor != null)
-            {
-                return constructor.Invoke(new object[] { email });
-            }
-        }
-        
-        // Fallback: crear objeto dinámico
-        return new { Value = email };
-    }
-
-    private object CrearPhoneNumberMock(string telefono)
-    {
-        // Usar reflection para crear el ValueObject PhoneNumber con constructor privado
-        var phoneType = typeof(Cliente).Assembly.GetTypes()
-            .FirstOrDefault(t => t.Name == "PhoneNumber");
-        
-        if (phoneType != null)
-        {
-            var constructor = phoneType.GetConstructors(BindingFlags.NonPublic | BindingFlags.Instance).FirstOrDefault();
-            if (constructor != null)
-            {
-                return constructor.Invoke(new object[] { telefono });
-            }
-        }
-        
-        // Fallback: crear objeto dinámico
-        return new { Value = telefono };
+        return mock.Object;
     }
 
     #endregion

@@ -61,16 +61,10 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         public bool EstaActivo { get; private set; }
 
         /// <summary>
-        /// Movimientos de inventario asociados a este ingrediente.
-        /// Esta colección interna mantiene un registro de todos los movimientos que afectan al stock.
-        /// </summary>
-        private readonly List<MovimientoInventario> _movimientos = new List<MovimientoInventario>();
-
-        /// <summary>
         /// Acceso de solo lectura a los movimientos de inventario.
         /// Proporciona visibilidad a la colección interna sin permitir su modificación directa.
         /// </summary>
-        public IReadOnlyCollection<MovimientoInventario> Movimientos => _movimientos.AsReadOnly();
+        public virtual ICollection<MovimientoInventario> Movimientos { get; protected set; } = new List<MovimientoInventario>();
 
         // 🔥 NAVEGACIONES AGREGADAS para queries más eficientes
         /// <summary>
@@ -78,12 +72,6 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// Facilita acceso a información del proveedor para órdenes de compra automáticas
         /// </summary>
         public virtual Proveedor? ProveedorPrincipal { get; set; }
-
-        /// <summary>
-        /// Navegación hacia los movimientos de inventario de este ingrediente.
-        /// Importante para la auditoría y trazabilidad del stock.
-        /// </summary>
-        public virtual ICollection<MovimientoInventario> MovimientosNavegacion { get; set; } = new List<MovimientoInventario>();
 
         /// <summary>
         /// Proveedor principal para este ingrediente.
@@ -231,7 +219,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             MarkAsModified();
 
             // Agregar a la colección de movimientos
-            _movimientos.Add(movimiento);
+            Movimientos.Add(movimiento);
 
             // Verificar invariantes después de la modificación
             ValidarInvariantes();
@@ -259,15 +247,15 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             Guard.AgainstNegativeOrZero(cantidad, nameof(cantidad));
             Guard.AgainstNullOrWhiteSpace(motivo, nameof(motivo));
 
-            // Usar nuestra excepción específica para stock insuficiente
             if (cantidad > Stock)
             {
                 throw new StockInsuficienteException(
-                    Id, 
-                    Nombre, 
-                    cantidad, 
-                    Stock, 
-                    $"decrementar stock por {motivo}");
+                    Id,
+                    Nombre,
+                    cantidad,
+                    Stock,
+                    $"decrementar stock por {motivo}"
+                );
             }
 
             var movimiento = MovimientoInventario.CrearEgreso(Id, cantidad, motivo);
@@ -277,7 +265,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             MarkAsModified();
 
             // Agregar a la colección de movimientos
-            _movimientos.Add(movimiento);
+            Movimientos.Add(movimiento);
 
             // Verificar invariantes después de la modificación
             ValidarInvariantes();
@@ -285,7 +273,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             // Emitir evento de stock actualizado
             AddDomainEvent(new Events.Ingrediente.StockActualizado(Id, Nombre, Stock));
 
-            // Verificar si el stock está por debajo del mínimo
+            // Si el stock cae por debajo del mínimo, generar evento
             if (Stock < StockMinimo)
             {
                 AddDomainEvent(new Events.Ingrediente.StockBajoMinimo(Id, Nombre, Stock, StockMinimo));

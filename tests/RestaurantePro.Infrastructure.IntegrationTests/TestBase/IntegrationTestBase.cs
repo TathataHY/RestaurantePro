@@ -1,186 +1,98 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using RestaurantePro.Domain.Core.Notificaciones.Entities;
-using RestaurantePro.Domain.Core.Productos.Entities;
-using RestaurantePro.Domain.Core.Productos.ValueObjects;
-using RestaurantePro.Domain.Core.SharedKernel;
-using RestaurantePro.Domain.Core.Usuarios.Entities;
-using RestaurantePro.Domain.Comercial.Clientes.Entities;
-using RestaurantePro.Domain.Comercial.Facturacion.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Infrastructure.Persistence.Interceptors;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using System;
-using System.Threading.Tasks;
+using Scrutor;
 using Xunit;
+using System.Threading.Tasks;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 {
-    public class TestDbContext : DbContext
-    {
-        public TestDbContext(DbContextOptions<TestDbContext> options)
-            : base(options)
-        {
-        }
-
-        public DbSet<Producto> Productos { get; set; }
-        public DbSet<ProductoCategoria> Categorias { get; set; }
-        public DbSet<Usuario> Usuarios { get; set; }
-        public DbSet<Notificacion> Notificaciones { get; set; }
-        public DbSet<Receta> Recetas { get; set; }
-        public DbSet<Cliente> Clientes { get; set; }
-        public DbSet<TarjetaFidelizacion> TarjetasFidelizacion { get; set; }
-        public DbSet<Factura> Facturas { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            modelBuilder.Ignore<RestaurantePro.Domain.Core.Base.Events.DomainEvent>();
-            modelBuilder.Ignore<PersonalizacionItem>();
-            modelBuilder.Ignore<TotalComanda>();
-
-            base.OnModelCreating(modelBuilder);
-
-            // Configuraciones mínimas para las pruebas
-            modelBuilder.Entity<Producto>(entity =>
-            {
-                entity.ToTable("Productos");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Nombre).IsRequired();
-                entity.Property(e => e.CategoriaId).IsRequired();
-                entity.HasOne<ProductoCategoria>().WithMany().HasForeignKey(e => e.CategoriaId);
-                entity.Ignore(e => e.DomainEvents);
-
-                // Configurar PrecioProducto como tipo de propiedad poseída (owned)
-                entity.OwnsOne(
-                    e => e.Precio,
-                    builder =>
-                    {
-                        builder.Property(p => p.Valor)
-                            .HasColumnName("Precio")
-                            .IsRequired();
-                    });
-            });
-
-            modelBuilder.Entity<ProductoCategoria>(entity =>
-            {
-                entity.ToTable("Categorias");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Nombre).IsRequired();
-                entity.Ignore(e => e.DomainEvents);
-            });
-
-            modelBuilder.Entity<Usuario>(entity =>
-            {
-                entity.ToTable("Usuarios");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.NombreUsuario).IsRequired();
-                entity.Property(e => e.Email).IsRequired();
-                entity.Ignore(e => e.DomainEvents);
-                entity.Ignore(e => e.Roles);
-            });
-
-            modelBuilder.Entity<Notificacion>(entity =>
-            {
-                entity.ToTable("Notificaciones", "Test");
-                entity.HasKey(e => e.Id);
-                entity.Ignore(e => e.DomainEvents);
-            });
-
-            modelBuilder.Entity<Receta>(entity =>
-            {
-                entity.ToTable("Recetas", "Core");
-                entity.HasKey(e => e.Id);
-                entity.OwnsMany(e => e.Ingredientes, ownedNavigationBuilder =>
-                {
-                    ownedNavigationBuilder.ToJson();
-                });
-            });
-
-            modelBuilder.Entity<Cliente>(entity =>
-            {
-                entity.ToTable("Clientes", "Comercial");
-                entity.HasKey(e => e.Id);
-                entity.OwnsOne(e => e.Nombre);
-                entity.OwnsOne(e => e.Email);
-                entity.OwnsOne(e => e.Telefono);
-            });
-
-            modelBuilder.Entity<TarjetaFidelizacion>(entity =>
-            {
-                entity.ToTable("TarjetasFidelizacion", "Comercial");
-                entity.HasKey(e => e.Id);
-            });
-
-            modelBuilder.Entity<Factura>(entity =>
-            {
-                entity.ToTable("Facturas", "Comercial");
-                entity.HasKey(e => e.Id);
-            });
-        }
-
-        public async Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTransactionAsync()
-        {
-            return await Database.BeginTransactionAsync();
-        }
-    }
-
-    // Para manejar la interacción entre TestDbContext y ProductoRepository
-    public class TestRepositories
-    {
-        public static TestDbContext DbContext { get; set; }
-    }
-
     public abstract class IntegrationTestBase : IDisposable
     {
         protected readonly IServiceProvider ServiceProvider;
-        protected readonly TestDbContext DbContext;
-        protected readonly ILogger<IntegrationTestBase> Logger;
+        protected readonly RestauranteProDbContext DbContext;
 
         protected IntegrationTestBase()
         {
             var services = new ServiceCollection();
 
-            // Registrar servicios para pruebas
-            services.AddLogging(builder => builder.AddConsole());
-            
-            // Usamos un contexto personalizado para pruebas
-            services.AddDbContext<TestDbContext>(options =>
-                options.UseInMemoryDatabase(Guid.NewGuid().ToString())
-                       .ConfigureWarnings(warnings => warnings.Ignore(
-                           Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning)));
+            // Mocks
+            var currentUserServiceMock = new Mock<ICurrentUserService>();
+            currentUserServiceMock.Setup(m => m.UserId).Returns("test-user");
 
-            // Registrar otros servicios necesarios para las pruebas
-            ConfigureServices(services);
+            var dateTimeServiceMock = new Mock<IDateTimeService>();
+            dateTimeServiceMock.Setup(m => m.Now).Returns(DateTime.UtcNow);
+            
+            var domainEventDispatcherMock = new Mock<IDomainEventDispatcher>();
+
+            services.AddSingleton(currentUserServiceMock.Object);
+            services.AddSingleton(dateTimeServiceMock.Object);
+            services.AddSingleton(domainEventDispatcherMock.Object);
+
+            // Logging
+            services.AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance);
+            services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
+
+            // Interceptors
+            services.AddScoped<AuditableEntityInterceptor>();
+            services.AddScoped<SoftDeleteInterceptor>();
+            services.AddScoped<DomainEventInterceptor>();
+            
+            // Configure DbContext
+            services.AddDbContext<RestauranteProDbContext>((sp, options) =>
+            {
+                options.UseInMemoryDatabase(Guid.NewGuid().ToString())
+                       .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+                       .AddInterceptors(
+                           sp.GetRequiredService<AuditableEntityInterceptor>(),
+                           sp.GetRequiredService<SoftDeleteInterceptor>(),
+                           sp.GetRequiredService<DomainEventInterceptor>()
+                       );
+            });
+            
+            services.AddScoped<DbContext>(provider => provider.GetRequiredService<RestauranteProDbContext>());
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            
+            // Add repositories
+            services.Scan(scan => scan
+                .FromAssemblyOf<UnitOfWork>()
+                .AddClasses(classes => classes.Where(type => type.Name.EndsWith("Repository")))
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
 
             ServiceProvider = services.BuildServiceProvider();
-            Logger = ServiceProvider.GetRequiredService<ILogger<IntegrationTestBase>>();
-            DbContext = ServiceProvider.GetRequiredService<TestDbContext>();
             
-            // Configurar un DbContext estático para poder ser usado por los repositorios
-            TestRepositories.DbContext = DbContext;
+            DbContext = ServiceProvider.GetRequiredService<RestauranteProDbContext>();
 
-            // Inicializar la base de datos con datos de prueba
-            SeedDatabase();
+            // Inicializar y sembrar la base de datos para cada prueba
+            ResetDatabaseAsync().GetAwaiter().GetResult();
         }
 
-        // Método para registrar servicios adicionales (a ser implementado por clases derivadas)
-        protected virtual void RegisterServices(IServiceCollection services)
+        protected virtual async Task SeedDataAsync()
         {
+            // Este método puede ser sobreescrito por clases de prueba para sembrar datos específicos.
+            await Task.CompletedTask;
         }
 
-        // Método para sembrar datos de prueba (a ser implementado por clases derivadas)
-        protected virtual void SeedDatabase()
+        public async Task ResetDatabaseAsync()
         {
-        }
-
-        // Método para que las clases derivadas configuren servicios adicionales
-        protected virtual void ConfigureServices(IServiceCollection services)
-        {
-            RegisterServices(services);
+            await DbContext.Database.EnsureDeletedAsync();
+            await DbContext.Database.EnsureCreatedAsync();
+            await SeedDataAsync();
         }
 
         public void Dispose()
         {
-            DbContext.Database.EnsureDeleted();
             DbContext.Dispose();
             (ServiceProvider as IDisposable)?.Dispose();
         }

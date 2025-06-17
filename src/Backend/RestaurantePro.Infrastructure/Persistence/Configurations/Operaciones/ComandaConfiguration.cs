@@ -66,6 +66,15 @@ public class ComandaConfiguration : IEntityTypeConfiguration<Comanda>
         builder.HasIndex(p => p.Estado)
             .HasDatabaseName("IX_Comandas_Estado");
         
+        // Configurar el Value Object TotalComanda como propiedad poseída
+        builder.OwnsOne(p => p.Total, total =>
+        {
+            total.Property(t => t.Subtotal).HasColumnName("Subtotal").HasPrecision(18, 2);
+            total.Property(t => t.Impuestos).HasColumnName("Impuestos").HasPrecision(18, 2);
+            total.Property(t => t.Descuento).HasColumnName("Descuento").HasPrecision(18, 2);
+            total.Property(t => t.Total).HasColumnName("Total").HasPrecision(18, 2);
+        });
+        
         // Configurar relaciones
         builder.HasMany(p => p.Items)
             .WithOne()

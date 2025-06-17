@@ -24,27 +24,27 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
         /// <summary>
         /// Número asignado a la mesa (visible para los clientes)
         /// </summary>
-        public int Numero { get; private set; }
+        public virtual int Numero { get; private set; }
 
         /// <summary>
         /// Capacidad máxima de personas que pueden ocupar la mesa
         /// </summary>
-        public int Capacidad { get; private set; }
+        public virtual int Capacidad { get; private set; }
 
         /// <summary>
         /// Ubicación de la mesa en el restaurante (e.g., Terraza, Interior, etc.)
         /// </summary>
-        public string Ubicacion { get; private set; }
+        public virtual string Ubicacion { get; private set; }
 
         /// <summary>
         /// Estado actual de la mesa
         /// </summary>
-        public EstadoMesa Estado { get; private set; }
+        public virtual EstadoMesa Estado { get; private set; }
 
         /// <summary>
         /// Constructor privado para EF Core
         /// </summary>
-        private Mesa() { }
+        protected Mesa() { }
 
         /// <summary>
         /// Método de fábrica para crear una nueva mesa

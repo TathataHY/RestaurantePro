@@ -122,10 +122,10 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities
             {
                 if (stockActual < Cantidad)
                     throw new InvalidOperationException("No hay stock suficiente para completar el movimiento");
-                    
+                
                 nuevoStock = stockActual - Cantidad;
             }
-            
+
             CantidadFinal = nuevoStock;
             EstaAplicado = true;
             MarkAsModified();

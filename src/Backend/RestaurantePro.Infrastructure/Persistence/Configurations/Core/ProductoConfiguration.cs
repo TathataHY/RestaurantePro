@@ -32,9 +32,24 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
                     .IsRequired();
             });
 
+            builder.Property(p => p.CategoriaId)
+                .IsRequired();
+
+            builder.Property(p => p.CategoriaNombre)
+                .HasMaxLength(100);
+
+            builder.Property(p => p.Popularidad)
+                .HasDefaultValue(0);
+
             builder.Property(p => p.EstaActivo)
                 .IsRequired()
                 .HasDefaultValue(true);
+
+            // Relaciones
+            builder.HasMany(p => p.Recetas)
+                .WithOne()
+                .HasForeignKey("ProductoId")
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Configurar fechas de auditoría
             builder.Property(p => p.FechaCreacion)
@@ -45,6 +60,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
             // Configurar índices
             builder.HasIndex(p => p.Nombre)
                 .HasDatabaseName("IX_Productos_Nombre");
+
+            builder.HasIndex(p => new { p.CategoriaId, p.EstaActivo })
+                .HasDatabaseName("IX_Productos_Categoria_Activo");
 
             // Query Filters para soft delete
             builder.HasQueryFilter(p => !p.EstaEliminado);

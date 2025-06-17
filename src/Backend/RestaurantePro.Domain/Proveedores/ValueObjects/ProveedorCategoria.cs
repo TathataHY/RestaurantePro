@@ -8,17 +8,19 @@ namespace RestaurantePro.Domain.Proveedores.ValueObjects
         /// <summary>
         /// Categoría del proveedor
         /// </summary>
-        public CategoriaProveedor Categoria { get; }
+        public CategoriaProveedor Categoria { get; private set; }
         
         /// <summary>
         /// Porcentaje de descuento acordado para esta categoría
         /// </summary>
-        public decimal PorcentajeDescuento { get; }
+        public decimal PorcentajeDescuento { get; private set; }
         
         /// <summary>
         /// Indica si este proveedor es considerado el principal para esta categoría
         /// </summary>
-        public bool EsProveedorPrincipal { get; }
+        public bool EsProveedorPrincipal { get; private set; }
+
+        private ProveedorCategoria() {}
         
         /// <summary>
         /// Constructor para crear una categoría de proveedor

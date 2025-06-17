@@ -22,57 +22,57 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// <summary>
         /// Nombre completo del cliente
         /// </summary>
-        public ClienteNombre Nombre { get; private set; }
+        public virtual ClienteNombre Nombre { get; private set; }
 
         /// <summary>
         /// Email del cliente.
         /// Utilizado como medio de contacto principal y para identificación.
         /// </summary>
-        public Email Email { get; private set; }
+        public virtual Email Email { get; private set; }
 
         /// <summary>
         /// Teléfono del cliente.
         /// Medio de contacto alternativo para notificaciones.
         /// </summary>
-        public PhoneNumber Telefono { get; private set; }
+        public virtual PhoneNumber Telefono { get; private set; }
 
         /// <summary>
         /// Fecha de nacimiento del cliente
         /// </summary>
-        public DateTime FechaNacimiento { get; private set; }
+        public virtual DateTime FechaNacimiento { get; private set; }
 
         /// <summary>
         /// Indica si el cliente está activo en el sistema.
         /// Un cliente inactivo no puede acumular puntos ni asociar tarjetas.
         /// </summary>
-        public bool EstaActivo { get; private set; }
+        public virtual bool EstaActivo { get; private set; }
 
         /// <summary>
         /// Puntos acumulados por el cliente en el programa de fidelización.
         /// Se actualiza mediante operaciones de acumulación y utilización de puntos.
         /// </summary>
-        public int PuntosAcumulados { get; private set; }
+        public virtual int PuntosAcumulados { get; private set; }
 
         /// <summary>
         /// Cantidad de visitas registradas del cliente.
         /// Se incrementa cada vez que el cliente realiza una visita al restaurante.
         /// </summary>
-        public int CantidadVisitas { get; private set; }
+        public virtual int CantidadVisitas { get; private set; }
 
         /// <summary>
         /// ID de la tarjeta de fidelización principal del cliente.
         /// La relación se mantiene por ID para preservar los límites del agregado.
         /// </summary>
-        public Guid? TarjetaFidelizacionPrincipalId { get; private set; }
+        public virtual Guid? TarjetaFidelizacionPrincipalId { get; private set; }
 
         /// <summary>
         /// Segmento al que pertenece el cliente según su comportamiento y patrones de consumo.
         /// Se actualiza mediante análisis de comportamiento de compra y visitación.
         /// </summary>
-        public SegmentoCliente Segmento { get; private set; }
+        public virtual SegmentoCliente Segmento { get; private set; }
 
         // Constructor privado para EF Core
-        private Cliente() { }
+        protected Cliente() { }
 
         /// <summary>
         /// Factory Method para crear una nueva instancia de cliente.

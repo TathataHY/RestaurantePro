@@ -62,10 +62,14 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
             builder.HasIndex(o => o.ProveedorId)
                 .HasDatabaseName("IX_OrdenesCompra_ProveedorId");
                 
-            // Configurar relación con ItemOrdenCompra como una colección
-            builder.HasMany<ItemOrdenCompra>("_items")
+            // Configurar relación con ItemOrdenCompra, especificando el backing field
+            // para la propiedad de navegación 'Items'.
+            var navigation = builder.Metadata.FindNavigation(nameof(OrdenCompra.Items));
+            navigation?.SetPropertyAccessMode(PropertyAccessMode.Field);
+
+            builder.HasMany(o => o.Items)
                 .WithOne()
-                .HasForeignKey(i => i.OrdenCompraId)
+                .HasForeignKey("OrdenCompraId")
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

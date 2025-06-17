@@ -183,7 +183,7 @@ namespace RestaurantePro.Domain.Core.Services
         /// <param name="rol">Rol inicial del usuario</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Resultado con el usuario creado</returns>
-        Task<Result<Usuarios.Entities.Usuario>> CrearUsuarioAsync(string nombreUsuario, string nombreCompleto, string email, string rol, CancellationToken cancellationToken = default);
+        Task<Result<Usuarios.Entities.Usuario>> CrearUsuarioAsync(string nombreUsuario, string nombreCompleto, string email, Usuarios.Enums.RolUsuario rol, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Actualizar el nombre de un usuario

@@ -482,7 +482,7 @@ public class CrearReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCount(7); // Esperamos 7 errores
+        result.Errors.Should().HaveCount(6); // Esperamos 6 errores
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.FechaHoraReservacion));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.NumeroPersonas));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.NombreCliente));

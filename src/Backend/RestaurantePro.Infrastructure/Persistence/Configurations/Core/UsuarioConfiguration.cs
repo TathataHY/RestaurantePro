@@ -40,7 +40,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
 
             builder.Property(p => p.Estado)
                 .IsRequired()
-                .HasConversion<string>();
+                .HasConversion(
+                    v => v.ToString(),
+                    v => (EstadoUsuario)System.Enum.Parse(typeof(EstadoUsuario), v));
 
             // Configurar fechas de auditoría
             builder.Property(p => p.FechaCreacion)
@@ -60,7 +62,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
             // Configurar propiedades adicionales
             builder.Property(p => p.TipoUsuario)
                 .IsRequired()
-                .HasConversion<string>();
+                .HasConversion(
+                    v => v.ToString(),
+                    v => (TipoUsuario)System.Enum.Parse(typeof(TipoUsuario), v));
 
             builder.Property(p => p.IdentityId)
                 .HasMaxLength(128);
@@ -101,6 +105,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
                 .HasConversion(
                     v => string.Join(',', v),
                     v => v.Split(',', System.StringSplitOptions.RemoveEmptyEntries).ToList());
+
+            // Relaciones
+            builder.HasOne<Usuario>()
+                .WithMany()
+                .HasForeignKey(u => u.SupervisorId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Query Filter para soft delete
             builder.HasQueryFilter(p => !p.EstaEliminado);

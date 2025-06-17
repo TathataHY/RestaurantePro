@@ -65,6 +65,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         {
             base.OnModelCreating(modelBuilder);
             
+            // Ignorar la clase base de eventos de dominio para que no se cree una tabla
+            modelBuilder.Ignore<Domain.Core.Base.Events.DomainEvent>();
+            
             // Aplicar configuraciones de entidades
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
             

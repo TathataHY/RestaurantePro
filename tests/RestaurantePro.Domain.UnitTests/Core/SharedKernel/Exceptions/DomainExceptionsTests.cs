@@ -1,3 +1,13 @@
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+using RestaurantePro.Domain.Core.SharedKernel;
+using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
+using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
+using System.Text.Json;
+using Xunit;
+
 namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Exceptions
 {
     /// <summary>
@@ -247,83 +257,80 @@ namespace RestaurantePro.Domain.UnitTests.Core.SharedKernel.Exceptions
             resultado.HasErrors.Should().BeTrue();
             resultado.Error.Should().Be($"[{excepcion.ErrorCode}] {excepcion.Message}");
         }
-
+        
         [Fact]
         public void DomainException_ToResult_ConTipo_DebeConvertirCorrectamente()
         {
             // Arrange
-            var excepcion = new StockInsuficienteException(
-                Guid.NewGuid(), "Test", 10, 5, "test");
-
+            var excepcion = BusinessRuleViolationException.ForOperationNotAllowed(
+                "Test", "Entity", "Reason", "Context");
+            
             // Act
-            var resultado = excepcion.ToResult<string>();
-
+            var resultado = excepcion.ToResult<int>();
+            
             // Assert
             resultado.Should().NotBeNull();
             resultado.Succeeded.Should().BeFalse();
-            resultado.HasErrors.Should().BeTrue();
+            resultado.Value.Should().Be(default);
             resultado.Error.Should().Be($"[{excepcion.ErrorCode}] {excepcion.Message}");
-            resultado.Value.Should().BeNull();
         }
-
+        
         [Fact]
         public void DomainException_DebeSerializable()
         {
             // Arrange
-            var excepcion = new StockInsuficienteException(
-                Guid.NewGuid(), "Test Ingredient", 10.5m, 3.2m, "test operation");
-
-            // Act & Assert
-            // Verificar que la excepción puede ser serializada
-            excepcion.Should().NotBeNull();
-            excepcion.AdditionalData.Should().NotBeNull();
-            excepcion.ErrorCode.Should().NotBeNullOrEmpty();
-            excepcion.DomainContext.Should().NotBeNullOrEmpty();
+            var excepcionOriginal = BusinessRuleViolationException.ForInactiveEntity("Test", "Context", Guid.NewGuid());
+            
+            // Act
+            var json = JsonSerializer.Serialize(excepcionOriginal);
+            var excepcionDeserializada = JsonSerializer.Deserialize<BusinessRuleViolationException>(json);
+            
+            // Assert
+            excepcionDeserializada.Should().NotBeNull();
+            excepcionDeserializada.Message.Should().Be(excepcionOriginal.Message);
+            excepcionDeserializada.ErrorCode.Should().Be(excepcionOriginal.ErrorCode);
+            excepcionDeserializada.DomainContext.Should().Be(excepcionOriginal.DomainContext);
         }
-
+        
         #endregion
 
-        #region Integration with Guard Clauses Tests
-
+        #region Guard Clause Integration Tests
+        
         [Fact]
-        public void Guard_DebeIntegramConExcepciones_ClienteInactivo()
+        public void Guard_DebeIntegrarConExcepciones_ClienteInactivo()
         {
             // Arrange
-            var clienteId = Guid.NewGuid();
-            var cliente = Cliente.Crear(
-                ClienteNombre.Crear("Test", "User"), 
-                "test@example.com", 
-                "123456789", 
-                DateTime.Now.AddYears(-25));
-            
-            // Desactivar cliente
+            var cliente = Cliente.Crear(Guid.NewGuid(), ClienteNombre.Crear("Juan", "Perez"),
+                Email.Create("test@test.com"), PhoneNumber.Create("123456789"), DateTime.Now.AddYears(-20));
             cliente.Desactivar();
 
             // Act & Assert
-            var excepcion = Assert.Throws<ClienteInactivoException>(() => 
-                cliente.AgregarPuntos(100));
-                
-            excepcion.Should().NotBeNull();
-            excepcion.ErrorCode.Should().Be("CLIENT_INACTIVE");
+            Assert.Throws<ClienteInactivoException>(() =>
+            {
+                cliente.AgregarPuntos(10);
+            });
         }
 
         [Fact]
-        public void Guard_DebeIntegramConExcepciones_StockInsuficiente()
+        public void Guard_DebeIntegrarConExcepciones_StockInsuficiente()
         {
             // Arrange
             var ingrediente = Ingrediente.Crear(
-                "Tomate", "TOM001", "Tomate fresco", 
-                UnidadMedida.Kilogramo, 5.0m, 10.0m);
+                "Tomate",
+                "TOM-001",
+                "Tomate fresco",
+                UnidadMedida.Unidad,
+                stockMinimo: 5.0m,
+                stockActual: 5.0m
+            );
 
             // Act & Assert
-            var excepcion = Assert.Throws<StockInsuficienteException>(() => 
-                ingrediente.DecrementarStock(15.0m, "Uso en cocina"));
-                
-            excepcion.Should().NotBeNull();
-            excepcion.ErrorCode.Should().Be("INSUFFICIENT_STOCK");
-            excepcion.AdditionalData["Deficit"].Should().Be(5.0m);
+            Assert.Throws<StockInsuficienteException>(() =>
+            {
+                // Intentar usar 10 unidades cuando solo hay 5
+                ingrediente.DecrementarStock(10, "Consumo para prueba");
+            });
         }
-
         #endregion
     }
 } 

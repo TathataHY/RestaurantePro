@@ -10,65 +10,43 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
     {
         public void Configure(EntityTypeBuilder<Receta> builder)
         {
-            builder.ToTable("Recetas");
+            builder.ToTable("Recetas", "Core");
 
             builder.HasKey(r => r.Id);
+            
+            builder.Property(r => r.Id)
+                .ValueGeneratedNever();
 
             builder.Property(r => r.ProductoId)
                 .IsRequired();
 
             builder.Property(r => r.Preparacion)
                 .IsRequired()
-                .HasMaxLength(2000)
-                .HasColumnName("Instrucciones");
+                .HasMaxLength(2000);
 
             builder.Property(r => r.TiempoPreparacionMinutos)
                 .IsRequired();
+            
+            builder.OwnsMany(r => r.Ingredientes, ownedBuilder =>
+            {
+                ownedBuilder.ToTable("IngredientesRecetas", "Core");
+                
+                ownedBuilder.WithOwner().HasForeignKey("RecetaId");
+                
+                ownedBuilder.Property(i => i.IngredienteId).IsRequired();
+                ownedBuilder.Property(i => i.Nombre).IsRequired().HasMaxLength(100);
+                ownedBuilder.Property(i => i.Cantidad).IsRequired().HasColumnType("decimal(18,2)");
+                ownedBuilder.Property(i => i.UnidadMedida).IsRequired().HasMaxLength(50).HasConversion<string>();
+                ownedBuilder.Property(i => i.EsOpcional).IsRequired();
 
-            // Relaciones
-            builder.HasOne<Producto>()
-                .WithOne()
-                .HasForeignKey<Receta>(r => r.ProductoId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Relación con ingredientes
-            builder.HasMany(r => r.Ingredientes)
-                .WithOne()
-                .HasForeignKey("RecetaId")
-                .OnDelete(DeleteBehavior.Cascade);
+                ownedBuilder.HasKey("RecetaId", "IngredienteId");
+            });
 
             // Índices
-            builder.HasIndex(r => r.ProductoId).IsUnique();
+            builder.HasIndex(r => r.ProductoId);
             
             // Query Filters para soft delete
             builder.HasQueryFilter(r => !r.EstaEliminado);
-        }
-    }
-
-    public class IngredienteRecetaConfiguration : IEntityTypeConfiguration<IngredienteReceta>
-    {
-        public void Configure(EntityTypeBuilder<IngredienteReceta> builder)
-        {
-            builder.ToTable("IngredientesRecetas");
-
-            builder.HasKey(ir => ir.IngredienteId);
-
-            builder.Property("RecetaId")
-                .IsRequired();
-
-            builder.Property(ir => ir.IngredienteId)
-                .IsRequired();
-
-            builder.Property(ir => ir.Cantidad)
-                .IsRequired();
-
-            builder.Property(ir => ir.UnidadMedida)
-                .IsRequired()
-                .HasMaxLength(50);
-
-            // Índices
-            builder.HasIndex("RecetaId");
-            builder.HasIndex(new[] { "IngredienteId", "RecetaId" }).IsUnique();
         }
     }
 } 

@@ -1,7 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using RestaurantePro.Infrastructure.Persistence;
+using Microsoft.Extensions.Logging;
+using Moq;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Infrastructure.Persistence.Interceptors;
 using System;
 using Xunit;
 
@@ -17,10 +21,23 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
         {
             _databaseName = $"RestauranteProTest_{Guid.NewGuid()}";
             var services = new ServiceCollection();
+            
+            var mockCurrentUserService = new Mock<ICurrentUserService>();
+            var mockDateTimeService = new Mock<IDateTimeService>();
+            var mockDomainEventDispatcher = new Mock<IDomainEventDispatcher>();
+
+            services.AddSingleton(mockCurrentUserService.Object);
+            services.AddSingleton(mockDateTimeService.Object);
+            services.AddSingleton(mockDomainEventDispatcher.Object);
+
+            // Registrar Interceptor y Logger
+            services.AddSingleton<AuditableEntityInterceptor>();
+            services.AddSingleton(Mock.Of<ILogger<RestauranteProDbContext>>());
 
             // Configuración de la base de datos en memoria para pruebas
-            services.AddDbContext<RestauranteProDbContext>(options =>
-                options.UseInMemoryDatabase(_databaseName));
+            services.AddDbContext<RestauranteProDbContext>((sp, options) =>
+                options.UseInMemoryDatabase(_databaseName)
+                       .AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>()));
 
             // Registrar servicios adicionales necesarios
             ConfigureServices(services);

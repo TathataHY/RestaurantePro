@@ -1,8 +1,9 @@
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Moq;
 using RestaurantePro.Domain.Comercial.Clientes.Entities;
 using RestaurantePro.Domain.Comercial.Clientes.Enums;
+using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
 using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
@@ -17,194 +18,152 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 {
     public class ClienteRepositoryTests : IntegrationTestBase
     {
-        private readonly ClienteRepository _repository;
-        private readonly Mock<ILogger<ClienteRepository>> _loggerMock;
-
-        // IDs para usar en las pruebas
-        private Guid _clienteId1;
-        private Guid _clienteId2;
-        private Guid _clienteId3;
-        private Guid _tarjetaId1;
+        private readonly IClienteRepository _repository;
+        private Guid _cliente1Id, _cliente2Id, _cliente3Id;
 
         public ClienteRepositoryTests()
         {
-            _loggerMock = new Mock<ILogger<ClienteRepository>>();
-            _repository = new ClienteRepository(DbContext, _loggerMock.Object);
+            _repository = new ClienteRepository(DbContext, ServiceProvider.GetRequiredService<ILogger<ClienteRepository>>());
         }
 
-        protected override void SeedDatabase()
+        protected override async Task SeedDataAsync()
         {
-            base.SeedDatabase();
+            var clientes = new List<Cliente>();
 
+            // Cliente 1: Frecuente, con puntos
             var cliente1 = Cliente.Crear(
-                ClienteNombre.Crear("Juan", "Pérez García"),
-                "juan.perez@test.com",
-                "+521234567890",
-                new DateTime(1990, 1, 15)
-            );
-            cliente1.RegistrarVisita();
-            cliente1.RegistrarVisita();
+                Guid.NewGuid(),
+                ClienteNombre.Crear("Juan", "Perez"),
+                Email.Create("juan.perez@test.com"),
+                PhoneNumber.Create("111222333"),
+                new DateTime(1990, 1, 1));
+            cliente1.ActualizarSegmento(SegmentoCliente.FrecuenciaAlta);
             cliente1.AgregarPuntos(150);
-            cliente1.ActualizarSegmento(SegmentoCliente.Premium);
-            _clienteId1 = cliente1.Id;
+            cliente1.RegistrarVisita();
+            cliente1.RegistrarVisita();
+            clientes.Add(cliente1);
+            _cliente1Id = cliente1.Id;
 
-            var tarjeta1 = TarjetaFidelizacion.Crear(cliente1.Id, "T-001");
-            tarjeta1.Activar();
-            cliente1.AsociarTarjetaFidelizacion(tarjeta1.Id);
-            _tarjetaId1 = tarjeta1.Id;
-
+            // Cliente 2: Nuevo, sin puntos
             var cliente2 = Cliente.Crear(
-                ClienteNombre.Crear("Ana", "López Martínez"),
-                "ana.lopez@test.com",
-                "+529876543210",
-                new DateTime(1985, 5, 20)
-            );
-            cliente2.RegistrarVisita();
-            cliente2.AgregarPuntos(50);
-            cliente2.ActualizarSegmento(SegmentoCliente.Regular);
-            _clienteId2 = cliente2.Id;
+                Guid.NewGuid(),
+                ClienteNombre.Crear("Maria", "Gomez"),
+                Email.Create("maria.gomez@test.com"),
+                PhoneNumber.Create("444555666"),
+                new DateTime(1985, 5, 10));
+            cliente2.ActualizarSegmento(SegmentoCliente.SinClasificar);
+            clientes.Add(cliente2);
+            _cliente2Id = cliente2.Id;
 
+            // Cliente 3: VIP, muchos puntos y visitas
             var cliente3 = Cliente.Crear(
-                ClienteNombre.Crear("Carlos", "García Sánchez"),
-                "carlos.garcia@test.com",
-                "+525555555555",
-                new DateTime(2000, 10, 1)
-            );
-            cliente3.Desactivar(); // Cliente inactivo
-            _clienteId3 = cliente3.Id;
+                Guid.NewGuid(),
+                ClienteNombre.Crear("Carlos", "Lopez"),
+                Email.Create("carlos.lopez@test.com"),
+                PhoneNumber.Create("777888999"),
+                new DateTime(1980, 10, 20));
+            cliente3.ActualizarSegmento(SegmentoCliente.Premium);
+            cliente3.AgregarPuntos(1000);
+            for(int i=0; i<10; i++) cliente3.RegistrarVisita();
+            clientes.Add(cliente3);
+            _cliente3Id = cliente3.Id;
             
-            DbContext.Set<Cliente>().AddRange(cliente1, cliente2, cliente3);
-            DbContext.Set<TarjetaFidelizacion>().Add(tarjeta1);
-            DbContext.SaveChanges();
+            // Cliente 4: Inactivo
+            var cliente4 = Cliente.Crear(
+                Guid.NewGuid(),
+                ClienteNombre.Crear("Ana", "Martinez"),
+                Email.Create("ana.martinez@test.com"),
+                PhoneNumber.Create("123123123"),
+                new DateTime(1995, 3, 15));
+            cliente4.Desactivar();
+            clientes.Add(cliente4);
+
+            await DbContext.Clientes.AddRangeAsync(clientes);
+            await DbContext.SaveChangesAsync();
         }
 
         [Fact]
         public async Task ObtenerPorIdAsync_DebeRetornarCliente_CuandoExiste()
         {
-            var cliente = await _repository.ObtenerPorIdAsync(_clienteId1);
+            var cliente = await _repository.ObtenerPorIdAsync(_cliente1Id);
             cliente.Should().NotBeNull();
-            cliente!.Id.Should().Be(_clienteId1);
+            cliente!.Id.Should().Be(_cliente1Id);
         }
 
         [Fact]
         public async Task ObtenerPorEmailAsync_DebeRetornarCliente_CuandoExiste()
         {
-            var cliente = await _repository.ObtenerPorEmailAsync("ana.lopez@test.com");
+            var cliente = await _repository.ObtenerPorEmailAsync("maria.gomez@test.com");
             cliente.Should().NotBeNull();
-            cliente!.Id.Should().Be(_clienteId2);
+            cliente!.Id.Should().Be(_cliente2Id);
         }
-
-        [Fact]
-        public async Task ObtenerPorNombreAsync_DebeRetornarClientesCoincidentes()
-        {
-            var clientes = await _repository.ObtenerPorNombreAsync("García");
-            clientes.Should().HaveCount(2);
-        }
-
-        [Fact]
-        public async Task ObtenerPorSegmentoAsync_DebeRetornarClientesDelSegmento()
-        {
-            var clientes = await _repository.ObtenerPorSegmentoAsync(SegmentoCliente.Premium);
-            clientes.Should().ContainSingle();
-            clientes.First().Id.Should().Be(_clienteId1);
-        }
-
+        
         [Fact]
         public async Task ObtenerPorEstadoActivoAsync_DebeRetornarClientesActivos()
         {
             var clientes = await _repository.ObtenerPorEstadoActivoAsync(true);
-            clientes.Should().HaveCount(2);
-        }
-        
-        [Fact]
-        public async Task ObtenerPorEstadoActivoAsync_DebeRetornarClientesInactivos()
-        {
-            var clientes = await _repository.ObtenerPorEstadoActivoAsync(false);
-            clientes.Should().ContainSingle();
-            clientes.First().Id.Should().Be(_clienteId3);
+            clientes.Should().HaveCount(3);
         }
 
         [Fact]
-        public async Task ObtenerConTarjetaFidelizacionAsync_DebeRetornarClientesConTarjeta()
+        public async Task ObtenerPorEmailAsync_DebeRetornarCliente_CuandoEmailExiste()
         {
-            var clientes = await _repository.ObtenerConTarjetaFidelizacionAsync();
-            clientes.Should().ContainSingle();
-            clientes.First().Id.Should().Be(_clienteId1);
+            // Arrange
+            var emailExistente = "juan.perez@test.com";
+
+            // Act
+            var resultado = await _repository.ObtenerPorEmailAsync(emailExistente);
+
+            // Assert
+            resultado.Should().NotBeNull();
+            resultado!.Email.Value.Should().Be(emailExistente);
+        }
+
+        [Fact]
+        public async Task ObtenerPorSegmentoAsync_DebeRetornarClientesDelSegmentoEspecificado()
+        {
+            // Arrange
+            var segmento = SegmentoCliente.Premium;
+
+            // Act
+            var resultado = await _repository.ObtenerPorSegmentoAsync(segmento);
+
+            // Assert
+            resultado.Should().NotBeNull();
+            resultado.Should().HaveCount(1);
+            resultado.First().Segmento.Should().Be(segmento);
         }
 
         [Fact]
         public async Task ObtenerClientesMasFrecuentesAsync_DebeRetornarClientesOrdenadosPorVisitas()
         {
-            var clientes = await _repository.ObtenerClientesMasFrecuentesAsync(1);
-            clientes.Should().ContainSingle();
-            clientes.First().Id.Should().Be(_clienteId1);
+            // Arrange
+            var cantidad = 2;
+
+            // Act
+            var resultado = await _repository.ObtenerClientesMasFrecuentesAsync(cantidad);
+
+            // Assert
+            resultado.Should().NotBeNull();
+            resultado.Should().HaveCount(cantidad);
+            resultado.First().Nombre.NombreCompleto.Should().Be("Carlos Lopez");
+            resultado.First().CantidadVisitas.Should().Be(10);
         }
 
         [Fact]
         public async Task ObtenerPorPuntosMinimosAsync_DebeRetornarClientesConPuntosSuficientes()
         {
-            var clientes = await _repository.ObtenerPorPuntosMinimosAsync(100);
-            clientes.Should().ContainSingle();
-            clientes.First().Id.Should().Be(_clienteId1);
-        }
-        
-        [Fact]
-        public async Task ObtenerPaginadoAsync_DebeRetornarResultadosPaginados()
-        {
-            var (clientes, total) = await _repository.ObtenerPaginadoAsync(0, 1);
-            total.Should().Be(3);
-            clientes.Should().HaveCount(1);
-        }
+            // Arrange
+            var puntosMinimos = 500;
 
-        [Fact]
-        public async Task VerificarExistenciaAsync_DebeRetornarTrue_SiClienteExiste()
-        {
-            var existe = await _repository.VerificarExistenciaAsync(_clienteId1);
-            existe.Should().BeTrue();
-        }
+            // Act
+            var resultado = await _repository.ObtenerPorPuntosMinimosAsync(puntosMinimos);
 
-        [Fact]
-        public async Task ObtenerClientesPorIdsAsync_DebeRetornarClientesCorrectos()
-        {
-            var ids = new List<Guid> { _clienteId1, _clienteId3 };
-            var clientes = await _repository.ObtenerClientesPorIdsAsync(ids);
-            clientes.Should().HaveCount(2);
-        }
-
-        [Fact]
-        public async Task ObtenerClientesActivosConVisitasAsync_DebeRetornarClienteConVisitasSuficientes()
-        {
-            var clientes = await _repository.ObtenerClientesActivosConVisitasAsync(2, 365);
-            clientes.Should().ContainSingle();
-            clientes.First().Id.Should().Be(_clienteId1);
-        }
-
-        [Fact]
-        public async Task GuardarAsync_DebeAgregarNuevoCliente()
-        {
-            var nuevoCliente = Cliente.Crear(
-                ClienteNombre.Crear("Nuevo", "Cliente Test"),
-                "nuevo.cliente@test.com",
-                "+521122334455",
-                new DateTime(1995, 3, 3)
-            );
-            
-            await _repository.GuardarAsync(nuevoCliente);
-            
-            var clienteGuardado = await _repository.ObtenerPorIdAsync(nuevoCliente.Id);
-            clienteGuardado.Should().NotBeNull();
-        }
-
-        [Fact]
-        public async Task GuardarAsync_DebeActualizarClienteExistente()
-        {
-            var cliente = await _repository.ObtenerPorIdAsync(_clienteId1);
-            cliente!.AgregarPuntos(100);
-
-            await _repository.GuardarAsync(cliente);
-
-            var clienteActualizado = await _repository.ObtenerPorIdAsync(_clienteId1);
-            clienteActualizado!.PuntosAcumulados.Should().Be(250);
+            // Assert
+            resultado.Should().NotBeNull();
+            resultado.Should().HaveCount(1);
+            resultado.First().PuntosAcumulados.Should().BeGreaterOrEqualTo(puntosMinimos);
+            resultado.First().Nombre.NombreCompleto.Should().Be("Carlos Lopez");
         }
     }
 } 

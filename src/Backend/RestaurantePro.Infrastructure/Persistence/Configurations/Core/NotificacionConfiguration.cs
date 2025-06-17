@@ -30,17 +30,19 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
             builder.Property(p => p.Tipo)
                 .IsRequired()
                 .HasMaxLength(50)
-                .HasConversion<string>();
+                .HasConversion(
+                    v => v.ToString(),
+                    v => (RestaurantePro.Domain.Core.Notificaciones.Enums.TipoNotificacion)System.Enum.Parse(typeof(RestaurantePro.Domain.Core.Notificaciones.Enums.TipoNotificacion), v));
 
             builder.Property(p => p.DestinatarioId)
-                .IsRequired();
-
-            builder.Property(p => p.FechaCreacion)
                 .IsRequired();
 
             builder.Property(p => p.FechaLectura);
 
             builder.Property(p => p.EntidadRelacionadaId);
+
+            // Ignorar propiedad computada
+            builder.Ignore(p => p.EstaLeida);
 
             // Configurar fechas de auditoría
             builder.Property(p => p.FechaCreacion)

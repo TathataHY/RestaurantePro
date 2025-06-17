@@ -58,14 +58,14 @@ namespace RestaurantePro.Domain.Core.Usuarios.Interfaces
         /// </summary>
         /// <param name="usuario">Usuario a agregar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        Task AgregarAsync(Usuario usuario, CancellationToken cancellationToken = default);
+        Task<Usuario> AgregarAsync(Usuario usuario, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Actualiza un usuario existente
         /// </summary>
         /// <param name="usuario">Usuario con los cambios</param>
         /// <param name="cancellationToken">Token de cancelación</param>
-        Task ActualizarAsync(Usuario usuario, CancellationToken cancellationToken = default);
+        Task<Usuario> ActualizarAsync(Usuario usuario, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Verifica si existe un usuario con el nombre de usuario especificado
@@ -82,5 +82,26 @@ namespace RestaurantePro.Domain.Core.Usuarios.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>True si existe, False en caso contrario</returns>
         Task<bool> ExisteEmailAsync(string email, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene todos los usuarios con estado Activo
+        /// </summary>
+        /// <returns>Colección de usuarios activos</returns>
+        Task<IEnumerable<Usuario>> ObtenerUsuariosActivos();
+        
+        /// <summary>
+        /// Busca un usuario por su email.
+        /// </summary>
+        /// <param name="email">Email del usuario a buscar</param>
+        /// <returns>El usuario si se encuentra, de lo contrario null.</returns>
+        Task<Usuario?> BuscarPorEmailAsync(string email);
+
+        /// <summary>
+        /// Verifica si existe un usuario con el email especificado.
+        /// </summary>
+        /// <param name="email">Email del usuario a verificar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>True si el usuario existe, de lo contrario false</returns>
+        Task<bool> ExisteUsuarioConEmailAsync(string email, CancellationToken cancellationToken);
     }
 } 

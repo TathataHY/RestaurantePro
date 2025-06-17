@@ -36,7 +36,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
             if (incluirMovimientos)
             {
                 return await _dbSet
-                    .Include(i => i.MovimientosNavegacion)
+                    .Include(i => i.Movimientos)
                     .FirstOrDefaultAsync(i => i.Id == id && !i.EstaEliminado, cancellationToken);
             }
             

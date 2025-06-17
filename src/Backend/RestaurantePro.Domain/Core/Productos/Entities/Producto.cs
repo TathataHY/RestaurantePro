@@ -55,6 +55,11 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         /// </summary>
         public int Popularidad { get; private set; }
 
+        /// <summary>
+        /// Receta asociada al producto
+        /// </summary>
+        public ICollection<Receta> Recetas { get; private set; } = new List<Receta>();
+
         protected Producto() { }
 
         private Producto(string nombre, string descripcion, PrecioProducto precio, Guid categoriaId, string? categoriaNombre = null)
@@ -173,6 +178,15 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
 
             ValidarInvariantes();
             AddDomainEvent(new ProductoActivado(Id));
+        }
+
+        /// <summary>
+        /// Marca la entidad como eliminada lógicamente, y la desactiva.
+        /// </summary>
+        public override void MarkAsDeleted()
+        {
+            base.MarkAsDeleted();
+            Desactivar();
         }
 
         /// <summary>
