@@ -48,7 +48,7 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 
 #### Inventario
 - `✅/✅` IngredienteConfiguration - Configuración para la entidad Ingrediente
-- `✅/✅` MovimientoInventarioConfiguration - Configuración para la entidad MovimientoInventario
+- `✅/❌` MovimientoInventarioConfiguration - Configuración para la entidad MovimientoInventario
 - `✅/✅` OrdenCompraConfiguration - Configuración para la entidad OrdenCompra
 
 #### Proveedores
@@ -69,25 +69,102 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 
 #### Comercial
 - `✅/✅` ClienteRepository - Repositorio para la entidad Cliente
-- `✅/✅` FacturaRepository - Repositorio para la entidad Factura
-- `✅/✅` TarjetaFidelizacionRepository - Repositorio para la entidad TarjetaFidelización
+- `✅/⬜` FacturaRepository - Repositorio para la entidad Factura
+- `✅/⬜` TarjetaFidelizacionRepository - Repositorio para la entidad TarjetaFidelización
 
 #### Operaciones
-- `✅/✅` ComandaRepository - Repositorio para la entidad Comanda
-- `✅/✅` ReservacionRepository - Repositorio para la entidad Reservación
-- `✅/✅` MesaRepository - Repositorio para la entidad Mesa
-- `✅/✅` PreparacionDiariaRepository - Repositorio para la entidad PreparaciónDiaria
+- `✅/⬜` ComandaRepository - Repositorio para la entidad Comanda
+- `✅/⬜` ReservacionRepository - Repositorio para la entidad Reservación
+- `✅/⬜` MesaRepository - Repositorio para la entidad Mesa
+- `✅/⬜` PreparacionDiariaRepository - Repositorio para la entidad PreparaciónDiaria
 
 #### Inventario
-- `✅/✅` IngredienteRepository - Repositorio para la entidad Ingrediente
-- `✅/✅` MovimientoInventarioRepository - Repositorio para la entidad MovimientoInventario
-- `✅/✅` OrdenCompraRepository - Repositorio para la entidad OrdenCompra
+- `✅/⬜` IngredienteRepository - Repositorio para la entidad Ingrediente
+- `✅/⬜` MovimientoInventarioRepository - Repositorio para la entidad MovimientoInventario
+- `✅/⬜` OrdenCompraRepository - Repositorio para la entidad OrdenCompra
 
 #### Proveedores
-- `✅/✅` ProveedorRepository - Repositorio para la entidad Proveedor
-- `✅/✅` ContactoProveedorRepository - Repositorio para la entidad ContactoProveedor
+- `✅/⬜` ProveedorRepository - Repositorio para la entidad Proveedor
+- `✅/⬜` ContactoProveedorRepository - Repositorio para la entidad ContactoProveedor
 
-| `IUnitOfWork` | `UnitOfWork.cs` | ✅ | `UnitOfWorkTests.cs` | ✅ |
-| `IRepository<T>` | `Repository.cs` | ✅ | `RepositoryTests.cs` | ✅ |
-| `IProductoRepository` | `ProductoRepository.cs` | ✅ | `ProductoRepositoryTests.cs` | ✅ |
-| `IProductoCategoriaRepository` | `ProductoCategoriaRepository.cs` | ✅ | `CategoriaRepositoryTests.cs` | ✅ |
+## Identity
+
+### Models
+- `✅/⬜` ApplicationUser - Modelo de usuario para Identity
+- `✅/⬜` ApplicationRole - Modelo de rol para Identity
+- `✅/⬜` ApplicationUserRole - Modelo de relación usuario-rol para Identity
+
+### Services
+- `✅/⬜` IdentityService - Servicio para gestionar la identidad
+- `✅/⬜` JwtTokenService - Servicio para generar y validar tokens JWT
+- `✅/⬜` PermissionService - Servicio para gestionar permisos
+
+### Configuration
+- `✅/⬜` IdentityConfiguration - Configuración de Identity
+- `✅/⬜` JwtConfiguration - Configuración de JWT
+
+### Extensions
+- `✅/⬜` ClaimsPrincipalExtensions - Extensiones para ClaimsPrincipal
+- `✅/⬜` IdentityResultExtensions - Extensiones para IdentityResult
+
+## ExternalServices
+
+### Payment
+- `✅/⬜` PayPalService - Servicio para pagos con PayPal
+- `✅/⬜` StripeService - Servicio para pagos con Stripe
+
+### Email
+- `✅/⬜` EmailService - Servicio para envío de correos electrónicos
+- `✅/⬜` SendGridService - Servicio para envío de correos electrónicos con SendGrid
+
+### SMS
+- `✅/⬜` TwilioService - Servicio para envío de SMS con Twilio
+
+### FileStorage
+- `✅/⬜` LocalFileService - Servicio para almacenamiento local de archivos
+- `✅/⬜` AzureBlobService - Servicio para almacenamiento en Azure Blob Storage
+
+## BackgroundTasks
+
+### Jobs
+- `✅/⬜` NotificationCleanupJob - Trabajo para limpieza de notificaciones
+- `✅/⬜` UserInactivityJob - Trabajo para detectar usuarios inactivos
+- `✅/⬜` LoyaltyPointsExpirationJob - Trabajo para expiración de puntos de fidelización
+- `✅/⬜` InvoiceReminderJob - Trabajo para recordatorios de facturas
+- `✅/⬜` TableCleanupJob - Trabajo para limpieza de mesas
+- `✅/⬜` ReservationReminderJob - Trabajo para recordatorios de reservaciones
+- `✅/⬜` LowStockAlertJob - Trabajo para alertas de bajo stock
+- `✅/⬜` ExpirationCheckJob - Trabajo para verificación de expiración
+
+### Workers
+- `✅/⬜` EmailWorker - Worker para procesamiento de correos electrónicos
+- `✅/⬜` NotificationWorker - Worker para procesamiento de notificaciones
+- `✅/⬜` ReportGenerationWorker - Worker para generación de reportes
+
+## Caching
+
+### Services
+- `✅/✅` RedisCacheService - Servicio de caché con Redis
+- `✅/✅` MemoryCacheService - Servicio de caché en memoria
+
+## Logging
+
+### Providers
+- `✅/⬜` SerilogProvider - Proveedor de logging con Serilog
+- `✅/⬜` ApplicationInsightsProvider - Proveedor de logging con Application Insights
+
+## Monitoring
+
+### HealthChecks
+- `✅/⬜` DatabaseHealthCheck - Health check para la base de datos
+- `✅/⬜` ExternalServiceHealthCheck - Health check para servicios externos
+- `✅/⬜` CacheHealthCheck - Health check para caché
+
+## DependencyInjection
+- `✅/⬜` InfrastructureSetup - Configuración general de infraestructura
+- `✅/⬜` PersistenceSetup - Configuración de persistencia
+- `✅/⬜` IdentitySetup - Configuración de identidad
+- `✅/⬜` ExternalServicesSetup - Configuración de servicios externos
+- `✅/⬜` CachingSetup - Configuración de caché
+- `✅/⬜` LoggingSetup - Configuración de logging
+- `✅/⬜` BackgroundTasksSetup - Configuración de tareas en segundo plano

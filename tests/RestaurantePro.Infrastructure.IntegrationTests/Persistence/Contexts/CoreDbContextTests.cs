@@ -9,6 +9,10 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Contexts
 {
     public class CoreDbContextTests : IntegrationTestBase
     {
+        public CoreDbContextTests(DatabaseFixture fixture) : base(fixture)
+        {
+        }
+
         [Fact]
         public async Task CoreDbContext_DebeGuardarUsuarioCorrectamente()
         {

@@ -15,10 +15,11 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
         /// </summary>
         public static IServiceCollection AddInfrastructureServices(
             this IServiceCollection services,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            bool isTestEnvironment = false)
         {
             // Registrar servicios de persistencia
-            services.AddPersistenceServices(configuration);
+            services.AddPersistenceServices(configuration, isTestEnvironment);
             
             // Registrar servicios de identidad
             IdentitySetup.AddIdentityServices(services, configuration);

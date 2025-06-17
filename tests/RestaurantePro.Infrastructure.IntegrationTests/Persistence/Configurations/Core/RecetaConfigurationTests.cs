@@ -11,6 +11,10 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Configurati
 {
     public class RecetaConfigurationTests : IntegrationTestBase
     {
+        public RecetaConfigurationTests(DatabaseFixture fixture) : base(fixture)
+        {
+        }
+
         [Fact]
         public void Receta_Configuration_ShouldBeAppliedCorrectly()
         {

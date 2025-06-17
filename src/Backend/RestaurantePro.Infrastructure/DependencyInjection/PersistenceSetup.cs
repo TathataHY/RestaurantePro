@@ -33,10 +33,12 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
         /// </summary>
         /// <param name="services">Colección de servicios</param>
         /// <param name="configuration">Configuración de la aplicación</param>
+        /// <param name="isTestEnvironment">Indica si es un entorno de prueba</param>
         /// <returns>Colección de servicios con los servicios de persistencia registrados</returns>
         public static IServiceCollection AddPersistenceServices(
             this IServiceCollection services,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            bool isTestEnvironment = false)
         {
             // Registrar interceptores
             services.AddScoped<AuditableEntityInterceptor>();
@@ -44,7 +46,10 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<SoftDeleteInterceptor>();
 
             // Registrar contextos de base de datos por dominio
-            RegisterDbContexts(services, configuration);
+            if (!isTestEnvironment)
+            {
+                RegisterDbContexts(services, configuration);
+            }
 
             // Registrar UnitOfWork
             services.AddScoped<IUnitOfWork, UnitOfWork>();

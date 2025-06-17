@@ -41,11 +41,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         /// </summary>
         public async Task<IEnumerable<Factura>> ObtenerPorComandaAsync(Guid comandaId, CancellationToken cancellationToken = default)
         {
-            return await _dbSet
-                .Where(f => f.ComandasIds.Contains(comandaId))
+            return await Task.FromResult(_dbSet
                 .Include(f => f.Detalles)
+                .AsEnumerable()
+                .Where(f => f.ComandasIds.Contains(comandaId))
                 .OrderByDescending(f => f.FechaEmision)
-                .ToListAsync(cancellationToken);
+                .ToList());
         }
 
         /// <summary>

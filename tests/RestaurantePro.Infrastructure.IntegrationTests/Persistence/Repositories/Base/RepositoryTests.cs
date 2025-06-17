@@ -14,7 +14,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         private readonly Repository<TestEntity> _repository;
         private readonly Repository<NonAuditableTestEntity> _nonAuditableRepository;
         
-        public RepositoryTests()
+        public RepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
             var loggerMock = new Mock<ILogger<Repository<TestEntity>>>();
             _repository = new Repository<TestEntity>(DbContext, loggerMock.Object);

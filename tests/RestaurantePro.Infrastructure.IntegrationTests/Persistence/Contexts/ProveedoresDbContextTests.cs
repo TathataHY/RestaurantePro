@@ -8,6 +8,10 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Contexts
 {
     public class ProveedoresDbContextTests : IntegrationTestBase
     {
+        public ProveedoresDbContextTests(DatabaseFixture fixture) : base(fixture)
+        {
+        }
+
         [Fact]
         public async Task ProveedoresDbContext_DebeGuardarProveedorCorrectamente()
         {

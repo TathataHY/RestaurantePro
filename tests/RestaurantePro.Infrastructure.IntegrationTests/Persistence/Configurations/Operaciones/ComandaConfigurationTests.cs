@@ -10,9 +10,8 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Configurati
 {
     public class ComandaConfigurationTests : IntegrationTestBase
     {
-        public ComandaConfigurationTests()
+        public ComandaConfigurationTests(DatabaseFixture fixture) : base(fixture)
         {
-            // El constructor de IntegrationTestBase ya se encarga de inicializar el DbContext
         }
 
         [Fact]

@@ -64,5 +64,13 @@ namespace RestaurantePro.Domain.Core.Productos.Interfaces
         /// <param name="id">ID del producto a eliminar</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         Task EliminarAsync(Guid id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Verifica si un producto existe por su nombre
+        /// </summary>
+        /// <param name="nombre">Nombre del producto</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>True si el producto existe, false en caso contrario</returns>
+        Task<bool> ExisteProductoPorNombre(string nombre, CancellationToken cancellationToken = default);
     }
 } 

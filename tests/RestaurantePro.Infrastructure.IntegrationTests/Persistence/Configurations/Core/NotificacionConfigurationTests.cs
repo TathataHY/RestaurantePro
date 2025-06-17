@@ -10,6 +10,10 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Configurati
 {
     public class NotificacionConfigurationTests : IntegrationTestBase
     {
+        public NotificacionConfigurationTests(DatabaseFixture fixture) : base(fixture)
+        {
+        }
+
         [Fact]
         public void Notificacion_Configuration_ShouldBeAppliedCorrectly()
         {

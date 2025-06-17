@@ -11,7 +11,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Configurati
 {
     public class UsuarioConfigurationTests : IntegrationTestBase
     {
-        public UsuarioConfigurationTests()
+        public UsuarioConfigurationTests(DatabaseFixture fixture) : base(fixture)
         {
         }
 

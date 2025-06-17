@@ -8,20 +8,35 @@ using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Interceptors;
 using System;
 using Xunit;
+using Microsoft.Extensions.Configuration;
+using RestaurantePro.Infrastructure.DependencyInjection;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 {
     public class DatabaseFixture : IDisposable
     {
         public readonly IServiceProvider ServiceProvider;
-        public readonly RestauranteProDbContext DbContext;
+        public readonly IServiceScopeFactory ScopeFactory;
+        public readonly TestDbContext DbContext;
         private readonly string _databaseName;
+        private readonly IConfiguration _configuration;
 
         public DatabaseFixture()
         {
-            _databaseName = $"RestauranteProTest_{Guid.NewGuid()}";
+            _databaseName = $"TestDb_{Guid.NewGuid()}";
+
             var services = new ServiceCollection();
             
+            _configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    { "JwtSettings:Secret", "super-secret-key-for-jwt-that-is-long" },
+                    { "JwtSettings:Issuer", "RestaurantePro.Test" },
+                    { "JwtSettings:Audience", "RestaurantePro.Test" }
+                }!).Build();
+
             var mockCurrentUserService = new Mock<ICurrentUserService>();
             var mockDateTimeService = new Mock<IDateTimeService>();
             var mockDomainEventDispatcher = new Mock<IDomainEventDispatcher>();
@@ -32,18 +47,28 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 
             // Registrar Interceptor y Logger
             services.AddSingleton<AuditableEntityInterceptor>();
+            services.AddSingleton(Mock.Of<ILogger<AuditableEntityInterceptor>>());
             services.AddSingleton(Mock.Of<ILogger<RestauranteProDbContext>>());
 
             // Configuración de la base de datos en memoria para pruebas
-            services.AddDbContext<RestauranteProDbContext>((sp, options) =>
+            services.AddDbContext<TestDbContext>((sp, options) =>
                 options.UseInMemoryDatabase(_databaseName)
-                       .AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>()));
+                    .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+                    .AddInterceptors(sp.GetRequiredService<AuditableEntityInterceptor>()));
+
+            // Registrar DbContext base para que UnitOfWork pueda resolverlo
+            services.AddScoped<DbContext>(sp => sp.GetRequiredService<TestDbContext>());
+            services.AddScoped<RestauranteProDbContext>(sp => sp.GetRequiredService<TestDbContext>());
+
+            // Registrar servicios de infraestructura
+            services.AddInfrastructureServices(_configuration, isTestEnvironment: true);
 
             // Registrar servicios adicionales necesarios
             ConfigureServices(services);
 
             ServiceProvider = services.BuildServiceProvider();
-            DbContext = ServiceProvider.GetRequiredService<RestauranteProDbContext>();
+            ScopeFactory = ServiceProvider.GetRequiredService<IServiceScopeFactory>();
+            DbContext = ServiceProvider.GetRequiredService<TestDbContext>();
 
             // Inicializar con datos de prueba
             SeedDatabase();

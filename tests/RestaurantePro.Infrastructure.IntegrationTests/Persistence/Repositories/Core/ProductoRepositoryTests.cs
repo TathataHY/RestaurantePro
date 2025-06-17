@@ -12,24 +12,33 @@ using Xunit;
 using FluentAssertions;
 using System;
 using RestaurantePro.Domain.Core.Productos.ValueObjects;
+using Microsoft.EntityFrameworkCore;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Core
 {
-    public class ProductoRepositoryTests : IntegrationTestBase
+    public class ProductoRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly ProductoRepository _repository;
-        private readonly IUnitOfWork _unitOfWork;
+        private IProductoRepository _repository;
+        private IUnitOfWork _unitOfWork;
         private Guid _categoriaId1;
         private Guid _categoriaId2;
         private Guid _productoId1;
 
-        public ProductoRepositoryTests()
+        public ProductoRepositoryTests(DatabaseFixture fixture) : base(fixture)
+        {
+        }
+
+        public async Task InitializeAsync()
         {
             _repository = new ProductoRepository(DbContext, Mock.Of<ILogger<ProductoRepository>>());
             _unitOfWork = ServiceProvider.GetRequiredService<IUnitOfWork>();
+            await ResetDatabaseAsync();
+            await SeedProductosAsync();
         }
 
-        protected override async Task SeedDataAsync()
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        private async Task SeedProductosAsync()
         {
             _categoriaId1 = Guid.NewGuid();
             _categoriaId2 = Guid.NewGuid();

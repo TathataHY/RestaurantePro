@@ -19,6 +19,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
             _logger = logger;
         }
         
+        protected RestauranteProDbContext(
+            DbContextOptions options,
+            ILogger<RestauranteProDbContext> logger) : base(options)
+        {
+            _logger = logger;
+        }
+        
         // Core - Productos
         public DbSet<Domain.Core.Productos.Entities.Producto> Productos { get; set; }
         

@@ -13,20 +13,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Comercial
 {
-    public class ClienteRepositoryTests : IntegrationTestBase
+    public class ClienteRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly IClienteRepository _repository;
+        private IClienteRepository _repository;
         private Guid _cliente1Id, _cliente2Id, _cliente3Id;
 
-        public ClienteRepositoryTests()
+        public ClienteRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
-            _repository = new ClienteRepository(DbContext, ServiceProvider.GetRequiredService<ILogger<ClienteRepository>>());
         }
 
-        protected override async Task SeedDataAsync()
+        public async Task InitializeAsync()
+        {
+            _repository = new ClienteRepository(DbContext, ServiceProvider.GetRequiredService<ILogger<ClienteRepository>>());
+            await ResetDatabaseAsync();
+            await SeedClientesAsync();
+        }
+
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        private async Task SeedClientesAsync()
         {
             var clientes = new List<Cliente>();
 

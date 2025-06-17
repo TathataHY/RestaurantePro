@@ -13,24 +13,34 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using System.Reflection;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Core
 {
-    public class RecetaRepositoryTests : IntegrationTestBase
+    public class RecetaRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly RecetaRepository _recetaRepository;
+        private RecetaRepository _recetaRepository;
         private Guid _productoId1;
         private Guid _recetaId1;
         private Guid _ingredienteId1;
         private Guid _ingredienteId2;
         private readonly PropertyInfo? propInfo = typeof(EntityBase).GetProperty(nameof(EntityBase.Id));
 
-        public RecetaRepositoryTests()
+        public RecetaRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
-            _recetaRepository = new RecetaRepository(DbContext, Mock.Of<ILogger<RecetaRepository>>());
         }
 
-        protected override async Task SeedDataAsync()
+        public async Task InitializeAsync()
+        {
+            _recetaRepository = new RecetaRepository(DbContext, Mock.Of<ILogger<RecetaRepository>>());
+            await ResetDatabaseAsync();
+            await SeedRecetasAsync();
+        }
+
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        private async Task SeedRecetasAsync()
         {
             _productoId1 = Guid.NewGuid();
             _ingredienteId1 = Guid.NewGuid();

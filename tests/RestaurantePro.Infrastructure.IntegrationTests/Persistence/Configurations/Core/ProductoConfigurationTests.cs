@@ -10,6 +10,10 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Configurati
 {
     public class ProductoConfigurationTests : IntegrationTestBase
     {
+        public ProductoConfigurationTests(DatabaseFixture fixture) : base(fixture)
+        {
+        }
+
         [Fact]
         public void Producto_Configuration_ShouldBeAppliedCorrectly()
         {

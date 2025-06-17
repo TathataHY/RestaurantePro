@@ -1,62 +1,53 @@
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Moq;
 using RestaurantePro.Domain.Core.Productos.Entities;
 using RestaurantePro.Domain.Core.Productos.Interfaces;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Core
 {
-    public class ProductoCategoriaRepositoryTests : IntegrationTestBase, IAsyncLifetime
+    public class ProductoCategoriaRepositoryTests : IntegrationTestBase
     {
-        private IProductoCategoriaRepository _repository;
-        private IUnitOfWork _unitOfWork;
-        private Guid _categoriaId1;
+        private readonly IProductoCategoriaRepository _repository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public async Task InitializeAsync()
+        public ProductoCategoriaRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
             _repository = ServiceProvider.GetRequiredService<IProductoCategoriaRepository>();
             _unitOfWork = ServiceProvider.GetRequiredService<IUnitOfWork>();
-            
-            var categoria1 = ProductoCategoria.Crear("Bebidas", "Gaseosas, jugos y más", 1);
-            var categoria2 = ProductoCategoria.Crear("Postres", "Dulces y pasteles", 2);
-            categoria2.Desactivar();
-
-            _categoriaId1 = categoria1.Id;
-
-            await DbContext.Set<ProductoCategoria>().AddRangeAsync(categoria1, categoria2);
-            await DbContext.SaveChangesAsync();
-        }
-
-        public Task DisposeAsync()
-        {
-            return Task.CompletedTask;
         }
 
         [Fact]
         public async Task ObtenerPorIdAsync_DebeRetornarCategoria_CuandoExiste()
         {
+            // Arrange
+            var categoria1 = ProductoCategoria.Crear("Bebidas", "Gaseosas, jugos y más", 1);
+            await _repository.AgregarAsync(categoria1, default);
+            await _unitOfWork.SaveChangesAsync(default);
+
             // Act
-            var categoria = await _repository.ObtenerPorIdAsync(_categoriaId1);
+            var categoria = await _repository.ObtenerPorIdAsync(categoria1.Id);
 
             // Assert
             categoria.Should().NotBeNull();
-            categoria.Id.Should().Be(_categoriaId1);
+            categoria.Id.Should().Be(categoria1.Id);
         }
 
         [Fact]
         public async Task ObtenerActivasAsync_DebeRetornarSoloCategoriasActivas()
         {
+            // Arrange
+            var categoria1 = ProductoCategoria.Crear("Bebidas", "Gaseosas, jugos y más", 1);
+            var categoria2 = ProductoCategoria.Crear("Postres", "Dulces y pasteles", 2);
+            categoria2.Desactivar();
+            await _repository.AgregarAsync(categoria1, default);
+            await _repository.AgregarAsync(categoria2, default);
+            await _unitOfWork.SaveChangesAsync(default);
+
             // Act
             var categorias = await _repository.ObtenerActivasAsync();
 
@@ -69,6 +60,13 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         [Fact]
         public async Task ObtenerTodasAsync_DebeRetornarTodasLasCategorias()
         {
+            // Arrange
+            var categoria1 = ProductoCategoria.Crear("Bebidas", "Gaseosas, jugos y más", 1);
+            var categoria2 = ProductoCategoria.Crear("Postres", "Dulces y pasteles", 2);
+            await _repository.AgregarAsync(categoria1, default);
+            await _repository.AgregarAsync(categoria2, default);
+            await _unitOfWork.SaveChangesAsync(default);
+            
             // Act
             var categorias = await _repository.ObtenerTodasAsync();
 
@@ -97,7 +95,10 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         public async Task ActualizarAsync_DebeModificarLaCategoriaEnLaBaseDeDatos()
         {
             // Arrange
-            var categoria = await _repository.ObtenerPorIdAsync(_categoriaId1);
+            var categoria1 = ProductoCategoria.Crear("Bebidas", "Gaseosas, jugos y más", 1);
+            await _repository.AgregarAsync(categoria1, default);
+            await _unitOfWork.SaveChangesAsync(default);
+            var categoria = await _repository.ObtenerPorIdAsync(categoria1.Id);
             categoria.Should().NotBeNull();
 
             // Act
@@ -106,7 +107,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             await _unitOfWork.SaveChangesAsync(default);
 
             // Assert
-            var categoriaActualizada = await _repository.ObtenerPorIdAsync(_categoriaId1);
+            var categoriaActualizada = await _repository.ObtenerPorIdAsync(categoria1.Id);
             categoriaActualizada.Should().NotBeNull();
             categoriaActualizada.Nombre.Should().Be("Bebidas Frias");
             categoriaActualizada.Descripcion.Should().Be("Solo bebidas sin alcohol");

@@ -13,19 +13,28 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using RestaurantePro.Domain.Core.Usuarios.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Core
 {
-    public class UsuarioRepositoryTests : IntegrationTestBase
+    public class UsuarioRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly IUsuarioRepository _repository;
+        private IUsuarioRepository _repository;
 
-        public UsuarioRepositoryTests()
+        public UsuarioRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
-            _repository = new UsuarioRepository(DbContext, Mock.Of<ILogger<UsuarioRepository>>());
         }
 
-        protected override async Task SeedDataAsync()
+        public async Task InitializeAsync()
+        {
+            _repository = new UsuarioRepository(DbContext, Mock.Of<ILogger<UsuarioRepository>>());
+            await ResetDatabaseAsync();
+            await SeedUsuariosAsync();
+        }
+
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        private async Task SeedUsuariosAsync()
         {
             var usuarios = new List<Usuario>();
 

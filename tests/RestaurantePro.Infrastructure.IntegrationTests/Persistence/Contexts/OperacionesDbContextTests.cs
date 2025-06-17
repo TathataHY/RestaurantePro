@@ -9,6 +9,9 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Contexts
 {
     public class OperacionesDbContextTests : IntegrationTestBase
     {
+        public OperacionesDbContextTests(DatabaseFixture fixture) : base(fixture)
+        {
+        }
         [Fact]
         public async Task OperacionesDbContext_DebeGuardarReservacionCorrectamente()
         {

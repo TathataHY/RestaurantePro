@@ -13,24 +13,33 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Core
 {
-    public class NotificacionRepositoryTests : IntegrationTestBase
+    public class NotificacionRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly NotificacionRepository _repository;
+        private NotificacionRepository _repository;
         private readonly Mock<ILogger<NotificacionRepository>> _loggerMock;
 
         private Guid _usuarioId1;
         private Guid _usuarioId2;
 
-        public NotificacionRepositoryTests()
+        public NotificacionRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
             _loggerMock = new Mock<ILogger<NotificacionRepository>>();
-            _repository = new NotificacionRepository(DbContext, _loggerMock.Object);
         }
 
-        protected override async Task SeedDataAsync()
+        public async Task InitializeAsync()
+        {
+            _repository = new NotificacionRepository(DbContext, _loggerMock.Object);
+            await ResetDatabaseAsync();
+            await SeedNotificacionesAsync();
+        }
+
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        private async Task SeedNotificacionesAsync()
         {
             _usuarioId1 = Guid.NewGuid();
             _usuarioId2 = Guid.NewGuid();
