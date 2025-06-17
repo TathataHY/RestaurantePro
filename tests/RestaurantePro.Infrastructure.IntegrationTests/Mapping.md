@@ -43,13 +43,13 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 #### Operaciones
 - `✅/✅` ComandaConfiguration - Configuración para la entidad Comanda
 - `✅/✅` ReservacionConfiguration - Configuración para la entidad Reservación
-- `✅/❌` MesaConfiguration - Configuración para la entidad Mesa
-- `✅/❌` PreparacionDiariaConfiguration - Configuración para la entidad PreparaciónDiaria
+- `✅/✅` MesaConfiguration - Configuración para la entidad Mesa
+- `✅/✅` PreparacionDiariaConfiguration - Configuración para la entidad PreparaciónDiaria
 
 #### Inventario
-- `✅/❌` IngredienteConfiguration - Configuración para la entidad Ingrediente
-- `✅/❌` MovimientoInventarioConfiguration - Configuración para la entidad MovimientoInventario
-- `✅/❌` OrdenCompraConfiguration - Configuración para la entidad OrdenCompra
+- `✅/✅` IngredienteConfiguration - Configuración para la entidad Ingrediente
+- `✅/✅` MovimientoInventarioConfiguration - Configuración para la entidad MovimientoInventario
+- `✅/✅` OrdenCompraConfiguration - Configuración para la entidad OrdenCompra
 
 #### Proveedores
 - `✅/❌` ProveedorConfiguration - Configuración para la entidad Proveedor

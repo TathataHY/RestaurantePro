@@ -73,6 +73,33 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
                 
             builder.HasIndex(i => i.ProveedorPrincipalId)
                 .HasDatabaseName("IX_Ingredientes_ProveedorPrincipalId");
+
+            // Configurar la colección de movimientos de inventario como una entidad poseída
+            builder.OwnsMany(i => i.Movimientos, ownedBuilder =>
+            {
+                ownedBuilder.ToTable("MovimientosInventario", "Inventario");
+
+                // Clave primaria para la tabla de movimientos (EF Core la necesita)
+                ownedBuilder.HasKey("Id");
+
+                ownedBuilder.Property(m => m.Fecha)
+                    .IsRequired();
+
+                ownedBuilder.Property(m => m.TipoMovimiento)
+                    .IsRequired()
+                    .HasConversion<string>()
+                    .HasMaxLength(50);
+
+                ownedBuilder.Property(m => m.Cantidad)
+                    .IsRequired()
+                    .HasPrecision(10, 2);
+
+                ownedBuilder.Property(m => m.Motivo)
+                    .HasMaxLength(100);
+
+                // Relación de vuelta al ingrediente (clave externa)
+                ownedBuilder.WithOwner().HasForeignKey("IngredienteId");
+            });
         }
     }
 }
