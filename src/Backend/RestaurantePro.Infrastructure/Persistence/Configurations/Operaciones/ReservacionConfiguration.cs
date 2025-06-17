@@ -85,6 +85,17 @@ public class ReservacionConfiguration : IEntityTypeConfiguration<Reservacion>
         builder.HasIndex(p => p.MesaId)
             .HasDatabaseName("IX_Reservaciones_MesaId");
             
+        // Configurar relaciones
+        builder.HasOne(r => r.Mesa)
+            .WithMany()
+            .HasForeignKey(r => r.MesaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(r => r.Cliente)
+            .WithMany()
+            .HasForeignKey(r => r.ClienteId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         // Configurar navegaciones
         builder.Navigation(p => p.Mesa).AutoInclude();
         builder.Navigation(p => p.Cliente).AutoInclude();

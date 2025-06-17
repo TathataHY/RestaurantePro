@@ -42,7 +42,7 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 
 #### Operaciones
 - `✅/✅` ComandaConfiguration - Configuración para la entidad Comanda
-- `✅/❌` ReservacionConfiguration - Configuración para la entidad Reservación
+- `✅/✅` ReservacionConfiguration - Configuración para la entidad Reservación
 - `✅/❌` MesaConfiguration - Configuración para la entidad Mesa
 - `✅/❌` PreparacionDiariaConfiguration - Configuración para la entidad PreparaciónDiaria
 
