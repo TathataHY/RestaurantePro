@@ -114,7 +114,7 @@ namespace RestaurantePro.Domain.Core.Base
         /// <summary>
         /// Establece el ID (solo para pruebas)
         /// </summary>
-        protected internal void SetIdForTesting(Guid id)
+        internal void SetIdForTesting(Guid id)
         {
             Id = id;
         }

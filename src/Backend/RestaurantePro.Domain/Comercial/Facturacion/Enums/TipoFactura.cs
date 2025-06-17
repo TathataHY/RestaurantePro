@@ -43,6 +43,11 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Enums
         /// <summary>
         /// Nota de débito
         /// </summary>
-        NotaDebito = 8
+        NotaDebito = 8,
+
+        /// <summary>
+        /// Factura de compra a proveedores
+        /// </summary>
+        Compra = 9
     }
 } 

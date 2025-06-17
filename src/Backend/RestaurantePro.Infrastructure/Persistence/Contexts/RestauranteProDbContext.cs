@@ -5,6 +5,8 @@ using RestaurantePro.Application.Common.Interfaces;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq.Expressions;
+using System.Linq;
 
 namespace RestaurantePro.Infrastructure.Persistence.Contexts
 {
@@ -80,6 +82,17 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
             
             // Configurar convenciones globales
             ConfigurarConvencionesGlobales(modelBuilder);
+
+            // Filtro global para entidades con borrado lógico (soft-delete)
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (!entityType.IsOwned() && typeof(Domain.Core.Base.EntityBase).IsAssignableFrom(entityType.ClrType))
+                {
+                    modelBuilder.Entity(entityType.ClrType)
+                        .HasQueryFilter(ConvertFilterExpression<Domain.Core.Base.EntityBase>(
+                            e => !e.EstaEliminado, entityType.ClrType));
+                }
+            }
         }
         
         private void ConfigurarConvencionesGlobales(ModelBuilder modelBuilder)
@@ -106,6 +119,37 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
             {
                 property.SetPrecision(18);
                 property.SetScale(2);
+            }
+        }
+
+        private static LambdaExpression ConvertFilterExpression<TInterface>(
+            Expression<Func<TInterface, bool>> filterExpression,
+            Type entityType)
+        {
+            var newParam = Expression.Parameter(entityType);
+            var newBody = ReplacingExpressionVisitor.Replace(filterExpression.Parameters.Single(), newParam, filterExpression.Body);
+            return Expression.Lambda(newBody, newParam);
+        }
+
+        private class ReplacingExpressionVisitor : ExpressionVisitor
+        {
+            private readonly Expression _oldExpression;
+            private readonly Expression _newExpression;
+
+            private ReplacingExpressionVisitor(Expression oldExpression, Expression newExpression)
+            {
+                _oldExpression = oldExpression;
+                _newExpression = newExpression;
+            }
+
+            public override Expression? Visit(Expression? node)
+            {
+                return node == _oldExpression ? _newExpression : base.Visit(node);
+            }
+
+            public static Expression Replace(Expression oldExpression, Expression newExpression, Expression body)
+            {
+                return new ReplacingExpressionVisitor(oldExpression, newExpression).Visit(body);
             }
         }
         

@@ -251,3 +251,5 @@ global using RestaurantePro.Domain.Core.Base.Services;
 
 // Alias para Result para evitar errores de tipado
 global using r = RestaurantePro.Domain.Core.SharedKernel.Results.Result;
+
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("RestaurantePro.Infrastructure.IntegrationTests")]

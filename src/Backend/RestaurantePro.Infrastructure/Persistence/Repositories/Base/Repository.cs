@@ -29,7 +29,7 @@ public class Repository<T> : IRepository<T> where T : class
     }
 
     /// <summary>
-    /// Obtiene una entidad por su identificador
+    /// Obtiene una entidad por su ID
     /// </summary>
     public virtual async Task<T?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
     {

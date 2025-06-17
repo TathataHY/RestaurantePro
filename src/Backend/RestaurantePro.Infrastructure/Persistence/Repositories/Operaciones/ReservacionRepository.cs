@@ -46,11 +46,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         public async Task<IEnumerable<Reservacion>> ObtenerPorFechaAsync(DateTime fecha, CancellationToken cancellationToken = default)
         {
             // Filtrar por día, independientemente de la hora
-            var fechaInicio = fecha.Date;
-            var fechaFin = fechaInicio.AddDays(1).AddTicks(-1);
+            var fechaBusqueda = fecha.Date;
             
             return await _dbSet
-                .Where(r => r.FechaReservacion >= fechaInicio && r.FechaReservacion <= fechaFin)
+                .Where(r => r.Fecha == fechaBusqueda)
                 .ToListAsync(cancellationToken);
         }
 
@@ -166,14 +165,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
                 .ToListAsync(cancellationToken);
                 
             // 2. Filtrar las mesas que ya tienen reservaciones en ese horario
-            var fechaHoraInicio = fecha.Date.Add(hora);
             var duracion = TimeSpan.FromMinutes(duracionMinutos);
-            var fechaHoraFin = fechaHoraInicio.Add(duracion);
             
             var mesasReservadas = await _dbSet
                 .Where(r => mesasPosibles.Contains(r.MesaId) &&
-                          (r.Estado == EstadoReservacion.Confirmada || r.Estado == EstadoReservacion.Pendiente) &&
-                          ((r.FechaReservacion <= fechaHoraFin && r.FechaReservacion.Add(r.DuracionEstimada) >= fechaHoraInicio)))
+                            r.Fecha == fecha.Date &&
+                           (r.Estado == EstadoReservacion.Confirmada || r.Estado == EstadoReservacion.Pendiente) &&
+                           (r.Hora < hora.Add(duracion) && r.Hora.Add(r.DuracionEstimada) > hora))
                 .Select(r => r.MesaId)
                 .Distinct()
                 .ToListAsync(cancellationToken);

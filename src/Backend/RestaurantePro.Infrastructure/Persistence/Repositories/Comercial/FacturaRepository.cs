@@ -55,7 +55,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         public async Task<IEnumerable<Factura>> ObtenerPorClienteAsync(Guid clienteId, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Where(f => f.ClienteId == clienteId)
+                .Where(f => f.ClienteId == clienteId && f.Estado != EstadoFactura.Anulada)
                 .Include(f => f.Detalles)
                 .OrderByDescending(f => f.FechaEmision)
                 .ToListAsync(cancellationToken);
@@ -78,7 +78,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         public async Task<IEnumerable<Factura>> ObtenerPorRangoFechasAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Where(f => f.FechaEmision >= fechaInicio && f.FechaEmision <= fechaFin)
+                .Where(f => f.FechaEmision >= fechaInicio && f.FechaEmision <= fechaFin && f.Estado != EstadoFactura.Anulada)
                 .OrderByDescending(f => f.FechaEmision)
                 .ToListAsync(cancellationToken);
         }
@@ -88,8 +88,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         /// </summary>
         public async Task<IEnumerable<Factura>> ObtenerPendientesPagoAsync(CancellationToken cancellationToken = default)
         {
+            var estadosPendientes = new[] { EstadoFactura.Emitida, EstadoFactura.PagadaParcialmente };
             return await _dbSet
-                .Where(f => f.Estado == EstadoFactura.Emitida && f.Total > f.TotalPagado)
+                .Where(f => estadosPendientes.Contains(f.Estado) && f.Total > f.TotalPagado)
                 .OrderBy(f => f.FechaVencimiento)
                 .ToListAsync(cancellationToken);
         }
@@ -100,30 +101,25 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         public async Task<string> ObtenerSiguienteNumeroFacturaAsync(string? prefijo = null, CancellationToken cancellationToken = default)
         {
             prefijo ??= "F";
-            
-            // Obtener el último número de factura con el prefijo especificado
-            var ultimaFactura = await _dbSet
-                .Where(f => f.NumeroFactura.StartsWith(prefijo))
-                .OrderByDescending(f => f.NumeroFactura)
-                .FirstOrDefaultAsync(cancellationToken);
+            var query = _dbSet.Where(f => f.NumeroFactura.StartsWith(prefijo));
 
-            if (ultimaFactura == null)
+            var ultimasFacturas = await query
+                .Select(f => f.NumeroFactura)
+                .ToListAsync(cancellationToken);
+
+            int maxNumero = 0;
+            foreach (var numFactura in ultimasFacturas)
             {
-                // Si no hay facturas, empezar desde 1
-                return $"{prefijo}00001";
+                if (numFactura.Length > prefijo.Length && int.TryParse(numFactura.Substring(prefijo.Length), out int numero))
+                {
+                    if (numero > maxNumero)
+                    {
+                        maxNumero = numero;
+                    }
+                }
             }
 
-            // Intentar extraer el número de la factura
-            var numeroStr = ultimaFactura.NumeroFactura.Substring(prefijo.Length);
-            if (int.TryParse(numeroStr, out int numero))
-            {
-                numero++;
-                // Formato con ceros a la izquierda (5 dígitos)
-                return $"{prefijo}{numero:D5}";
-            }
-
-            // Si no se puede extraer correctamente, usar un formato por defecto
-            return $"{prefijo}{DateTime.Now:yyyyMMdd}001";
+            return $"{prefijo}{(maxNumero + 1):D5}";
         }
 
         /// <summary>
@@ -157,6 +153,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
             return await _dbSet
                 .Include(f => f.Detalles)
                 .FirstOrDefaultAsync(f => f.Id == id, cancellationToken);
+        }
+
+        public override async Task<IEnumerable<Factura>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbSet.Where(f => f.Estado != EstadoFactura.Anulada).ToListAsync(cancellationToken);
         }
     }
 } 

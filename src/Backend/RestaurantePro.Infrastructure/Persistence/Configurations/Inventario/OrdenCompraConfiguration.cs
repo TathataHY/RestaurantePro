@@ -47,10 +47,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
                 .HasMaxLength(500);
                 
             builder.Property(o => o.ObservacionesRecepcion)
-                .HasMaxLength(500);
+                .HasMaxLength(500)
+                .IsRequired(false);
                 
             builder.Property(o => o.MotivoCancelacion)
-                .HasMaxLength(500);
+                .HasMaxLength(500)
+                .IsRequired(false);
                 
             // Índices
             builder.HasIndex(o => o.FechaEmision)

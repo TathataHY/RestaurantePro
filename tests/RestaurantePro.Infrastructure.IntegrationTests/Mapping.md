@@ -69,19 +69,20 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 
 #### Comercial
 - `✅/✅` ClienteRepository - Repositorio para la entidad Cliente
-- `✅/⬜` FacturaRepository - Repositorio para la entidad Factura
+- `✅/✅` FacturaRepository - Repositorio para la entidad Factura
 - `✅/⬜` TarjetaFidelizacionRepository - Repositorio para la entidad TarjetaFidelización
 
 #### Operaciones
-- `✅/⬜` ComandaRepository - Repositorio para la entidad Comanda
-- `✅/⬜` ReservacionRepository - Repositorio para la entidad Reservación
-- `✅/⬜` MesaRepository - Repositorio para la entidad Mesa
-- `✅/⬜` PreparacionDiariaRepository - Repositorio para la entidad PreparaciónDiaria
+- `✅/✅` ComandaRepository - Repositorio para la entidad Comanda
+- `✅/✅` ReservacionRepository - Repositorio para la entidad Reservación
+- `✅/✅` MesaRepository - Repositorio para la entidad Mesa
+- `✅/✅` PreparacionDiariaRepository - Repositorio para la entidad PreparaciónDiaria
 
 #### Inventario
-- `✅/⬜` IngredienteRepository - Repositorio para la entidad Ingrediente
-- `✅/⬜` MovimientoInventarioRepository - Repositorio para la entidad MovimientoInventario
+- `✅/✅` IngredienteRepository - Repositorio para la entidad Ingrediente
 - `✅/⬜` OrdenCompraRepository - Repositorio para la entidad OrdenCompra
+<!-- Nota: ItemOrdenCompra es una entidad poseída (Owned Entity) dentro de OrdenCompra y se gestiona a través de OrdenCompraRepository. No tiene un repositorio dedicado. -->
+<!-- Nota: MovimientoInventario es una entidad poseída (Owned Entity) dentro de Ingrediente y se gestiona a través de IngredienteRepository. No tiene un repositorio dedicado. -->
 
 #### Proveedores
 - `✅/⬜` ProveedorRepository - Repositorio para la entidad Proveedor

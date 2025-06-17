@@ -21,23 +21,25 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
     public class TarjetaFidelizacionRepository : Repository<TarjetaFidelizacion>, ITarjetaFidelizacionRepository
     {
         private readonly RestauranteProDbContext _dbContext;
+        private readonly ILogger<TarjetaFidelizacionRepository> _logger;
 
         public TarjetaFidelizacionRepository(RestauranteProDbContext dbContext, ILogger<TarjetaFidelizacionRepository> logger)
             : base(dbContext, logger)
         {
             _dbContext = dbContext;
+            _logger = logger;
         }
 
         /// <summary>
         /// Obtiene una tarjeta de fidelización por su ID
         /// </summary>
-        public new async Task<TarjetaFidelizacion?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public new async Task<TarjetaFidelizacion> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("Obteniendo tarjeta de fidelización con ID: {TarjetaId}", id);
-
-            return await _dbSet
+            var tarjeta = await _dbSet
                 .Include(t => t.HistorialPuntos)
                 .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+            
+            return tarjeta ?? throw new KeyNotFoundException($"No se encontró la tarjeta de fidelización con ID {id}");
         }
 
         /// <summary>
@@ -45,14 +47,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         /// </summary>
         public async Task<TarjetaFidelizacion> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken = default)
         {
-            var entidad = await _dbSet
+            var tarjeta = await _dbSet
                 .Include(t => t.HistorialPuntos)
                 .FirstOrDefaultAsync(t => t.Codigo == codigo, cancellationToken);
-                
-            if (entidad == null)
-                throw new KeyNotFoundException($"No se encontró la tarjeta de fidelización con código {codigo}");
-                
-            return entidad;
+
+            return tarjeta ?? throw new KeyNotFoundException($"No se encontró la tarjeta de fidelización con código {codigo}");
         }
 
         /// <summary>
@@ -68,9 +67,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         /// <summary>
         /// Verifica si existe una tarjeta con el número especificado
         /// </summary>
-        public async Task<bool> ExisteNumeroTarjetaAsync(string numero, CancellationToken cancellationToken = default)
+        public Task<bool> ExisteNumeroTarjetaAsync(string numero, CancellationToken cancellationToken = default)
         {
-            return await _dbSet.AnyAsync(t => t.Codigo == numero, cancellationToken);
+            return _dbSet.AnyAsync(t => t.Codigo == numero, cancellationToken);
         }
 
         /// <summary>
@@ -89,14 +88,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         /// </summary>
         public async Task<TarjetaFidelizacion> ObtenerTarjetaActivaPorClienteIdAsync(Guid clienteId, CancellationToken cancellationToken = default)
         {
-            var entidad = await _dbSet
-                .Include(t => t.HistorialPuntos)
+            var tarjeta = await _dbSet
                 .FirstOrDefaultAsync(t => t.ClienteId == clienteId && t.Estado == EstadoTarjeta.Activa, cancellationToken);
-                
-            if (entidad == null)
-                throw new KeyNotFoundException($"No se encontró una tarjeta de fidelización activa para el cliente con ID {clienteId}");
-                
-            return entidad;
+
+            return tarjeta ?? throw new KeyNotFoundException($"No se encontró una tarjeta de fidelización activa para el cliente con ID {clienteId}");
         }
 
         /// <summary>
@@ -116,7 +111,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         public async Task<IEnumerable<TarjetaFidelizacion>> ObtenerPorNivelAsync(NivelFidelizacion nivel, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Where(t => t.NivelFidelizacion == nivel)
+                .Where(t => t.NivelFidelizacion == nivel && t.Estado == EstadoTarjeta.Activa)
                 .OrderByDescending(t => t.PuntosAcumulados)
                 .ToListAsync(cancellationToken);
         }
@@ -127,27 +122,24 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         public async Task<IEnumerable<TarjetaFidelizacion>> ObtenerTarjetasPorNivelesAsync(IEnumerable<NivelFidelizacion> niveles, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Where(t => niveles.Contains(t.NivelFidelizacion))
+                .Where(t => niveles.Contains(t.NivelFidelizacion) && t.Estado == EstadoTarjeta.Activa)
                 .OrderByDescending(t => t.PuntosAcumulados)
                 .ToListAsync(cancellationToken);
         }
 
         /// <summary>
-        /// Agrega una nueva tarjeta de fidelización
+        /// Actualiza una tarjeta existente de forma inteligente.
+        /// Si la entidad ya está siendo rastreada, no hace nada, confiando en que el Change Tracker detectará los cambios.
+        /// Si la entidad no está rastreada, la adjunta y la marca como modificada.
         /// </summary>
-        public new async Task AgregarAsync(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken = default)
+        public override Task ActualizarAsync(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken = default)
         {
-            await _dbSet.AddAsync(tarjeta, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
-        }
-
-        /// <summary>
-        /// Actualiza una tarjeta existente
-        /// </summary>
-        public new async Task ActualizarAsync(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken = default)
-        {
-            _dbContext.Entry(tarjeta).State = EntityState.Modified;
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            var entry = _dbContext.Entry(tarjeta);
+            if (entry.State == EntityState.Detached)
+            {
+                _dbSet.Update(tarjeta);
+            }
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -156,27 +148,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         public async Task<string> GenerarCodigoUnicoAsync(string prefijo = "TF", CancellationToken cancellationToken = default)
         {
             string codigo;
-            bool codigoExiste;
-
             do
             {
-                // Generar una combinación aleatoria de números y letras
-                var bytes = new byte[4];
-                using (var rng = RandomNumberGenerator.Create())
-                {
-                    rng.GetBytes(bytes);
-                }
-                
-                // Convertir a una cadena hexadecimal y tomar los primeros 8 caracteres
-                var codigoBase = BitConverter.ToString(bytes).Replace("-", "").Substring(0, 8);
-                
-                // Añadir el prefijo
-                codigo = $"{prefijo}{codigoBase}";
-                
-                // Verificar si ya existe
-                codigoExiste = await ExisteNumeroTarjetaAsync(codigo, cancellationToken);
-            } while (codigoExiste);
-
+                codigo = $"{prefijo}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
+            } while (await ExisteNumeroTarjetaAsync(codigo, cancellationToken));
             return codigo;
         }
         
@@ -188,32 +163,23 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
             var tarjeta = await _dbSet.FindAsync(new object[] { id }, cancellationToken);
             if (tarjeta != null)
             {
-                _dbSet.Remove(tarjeta);
-                await _dbContext.SaveChangesAsync(cancellationToken);
+                tarjeta.MarkAsDeleted();
+                _dbSet.Update(tarjeta);
             }
         }
 
         /// <inheritdoc/>
-        public async Task<IEnumerable<TarjetaFidelizacion>> ObtenerConPuntosProximosAExpirarAsync(
-            DateTime fechaLimite, 
-            CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<TarjetaFidelizacion>> ObtenerConPuntosProximosAExpirarAsync(DateTime fechaExpiracion, CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("Obteniendo tarjetas de fidelización con puntos a expirar antes de: {FechaLimite}", fechaLimite);
+            _logger.LogInformation("Obteniendo tarjetas de fidelización con puntos a expirar antes de: {FechaExpiracion}", fechaExpiracion);
             
-            // Obtenemos tarjetas activas con puntos que expirarán antes de la fecha límite
             return await _dbSet
                 .AsNoTracking()
-                .Include(t => t.HistorialPuntos.Where(hp => 
-                    hp.TipoOperacion != TipoOperacionPuntos.Vencidos && 
-                    hp.FechaOperacion <= fechaLimite && 
-                    hp.FechaOperacion > DateTime.Now))
                 .Where(t => 
                     t.Estado == EstadoTarjeta.Activa &&
-                    t.PuntosDisponibles > 0 &&
-                    t.HistorialPuntos.Any(hp => 
-                        hp.TipoOperacion != TipoOperacionPuntos.Vencidos && 
-                        hp.FechaOperacion <= fechaLimite && 
-                        hp.FechaOperacion > DateTime.Now)
+                    t.FechaExpiracion != null &&
+                    t.FechaExpiracion <= fechaExpiracion &&
+                    t.FechaExpiracion > DateTime.UtcNow
                 )
                 .ToListAsync(cancellationToken);
         }

@@ -1,52 +1,60 @@
 using FluentAssertions;
-using Microsoft.Extensions.Logging;
-using Moq;
+using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Domain.Core.Notificaciones.Entities;
 using RestaurantePro.Domain.Core.Notificaciones.Enums;
+using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
 using RestaurantePro.Domain.Core.Usuarios.Entities;
 using RestaurantePro.Domain.Core.Usuarios.Enums;
+using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Core
 {
     public class NotificacionRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private NotificacionRepository _repository;
-        private readonly Mock<ILogger<NotificacionRepository>> _loggerMock;
+        private INotificacionRepository _repository;
 
         private Guid _usuarioId1;
         private Guid _usuarioId2;
 
         public NotificacionRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
-            _loggerMock = new Mock<ILogger<NotificacionRepository>>();
         }
 
-        public async Task InitializeAsync()
+        public override async Task InitializeAsync()
         {
-            _repository = new NotificacionRepository(DbContext, _loggerMock.Object);
-            await ResetDatabaseAsync();
+            await base.InitializeAsync();
+            _repository = ServiceProvider.GetRequiredService<INotificacionRepository>();
             await SeedNotificacionesAsync();
         }
 
-        public Task DisposeAsync() => Task.CompletedTask;
+        public override Task DisposeAsync() => Task.CompletedTask;
 
         private async Task SeedNotificacionesAsync()
         {
             _usuarioId1 = Guid.NewGuid();
             _usuarioId2 = Guid.NewGuid();
 
+            var usuarioRepository = ServiceProvider.GetRequiredService<IUsuarioRepository>();
+
+            var usuario1 = Usuario.Crear("user1", "Usuario Uno", "user1@test.com", RolUsuario.Mesero);
+            usuario1.SetIdForTesting(_usuarioId1);
+
+            var usuario2 = Usuario.Crear("user2", "Usuario Dos", "user2@test.com", RolUsuario.Mesero);
+            usuario2.SetIdForTesting(_usuarioId2);
+
+            await usuarioRepository.AgregarAsync(usuario1);
+            await usuarioRepository.AgregarAsync(usuario2);
+            await DbContext.SaveChangesAsync();
+
             var notificacionAntigua = Notificacion.Crear("Antigua", "Mensaje Antiguo", TipoNotificacion.Informativa, _usuarioId1);
-            typeof(Notificacion).GetProperty(nameof(Notificacion.FechaCreacion))!.SetValue(notificacionAntigua, DateTime.UtcNow.AddDays(-10));
-            
+            notificacionAntigua.SetFechaCreacionForTesting(DateTime.UtcNow.AddDays(-10));
+
             var notificaciones = new List<Notificacion>
             {
                 notificacionAntigua,

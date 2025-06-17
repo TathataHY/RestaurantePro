@@ -48,7 +48,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             var fechaActual = _dateTimeService.Now.Date;
             
             return await _dbContext.Set<PreparacionDiaria>()
-                .Where(p => p.FechaCreacion.Date == fechaActual)
+                .Where(p => p.FechaPreparacion.Date == fechaActual)
                 .ToListAsync(cancellationToken);
         }
 
@@ -86,7 +86,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             return await _dbContext.Set<PreparacionDiaria>()
                 .Where(p => p.FechaVencimiento > fechaActual && 
                             p.FechaVencimiento <= fechaLimite &&
-                            p.Estado == EstadoPreparacion.Disponible)
+                            (p.Estado == EstadoPreparacion.Disponible || p.Estado == EstadoPreparacion.PorVencer))
                 .ToListAsync(cancellationToken);
         }
         

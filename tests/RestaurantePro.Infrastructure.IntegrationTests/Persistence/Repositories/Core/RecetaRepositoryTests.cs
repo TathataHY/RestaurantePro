@@ -20,25 +20,24 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 {
     public class RecetaRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private RecetaRepository _recetaRepository;
+        private IRecetaRepository _recetaRepository;
         private Guid _productoId1;
         private Guid _recetaId1;
         private Guid _ingredienteId1;
         private Guid _ingredienteId2;
-        private readonly PropertyInfo? propInfo = typeof(EntityBase).GetProperty(nameof(EntityBase.Id));
 
         public RecetaRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
         }
 
-        public async Task InitializeAsync()
+        public override async Task InitializeAsync()
         {
-            _recetaRepository = new RecetaRepository(DbContext, Mock.Of<ILogger<RecetaRepository>>());
-            await ResetDatabaseAsync();
+            await base.InitializeAsync();
+            _recetaRepository = ServiceProvider.GetRequiredService<IRecetaRepository>();
             await SeedRecetasAsync();
         }
 
-        public Task DisposeAsync() => Task.CompletedTask;
+        public override Task DisposeAsync() => Task.CompletedTask;
 
         private async Task SeedRecetasAsync()
         {
@@ -47,8 +46,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             _ingredienteId2 = Guid.NewGuid();
 
             var producto = Producto.Crear("Hamburguesa", "Carne y queso", new PrecioProducto(12.5m), Guid.NewGuid(), "Comida Rápida");
-            // Sobrescribimos el ID para poder usarlo en los tests
-            propInfo?.SetValue(producto, _productoId1);
+            producto.SetIdForTesting(_productoId1);
 
 
             var receta = Receta.Crear(producto.Id, "Cocinar la carne y montar.", 15);
@@ -103,7 +101,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             // Arrange
             var producto2Id = Guid.NewGuid();
             var producto2 = Producto.Crear("Pizza", "Pizza de peperoni", new PrecioProducto(15m), Guid.NewGuid(), "Italiana");
-            propInfo?.SetValue(producto2, producto2Id);
+            producto2.SetIdForTesting(producto2Id);
             DbContext.Productos.Add(producto2);
             await DbContext.SaveChangesAsync();
             

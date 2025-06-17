@@ -26,14 +26,14 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         {
         }
 
-        public async Task InitializeAsync()
+        public override async Task InitializeAsync()
         {
-            _repository = new ClienteRepository(DbContext, ServiceProvider.GetRequiredService<ILogger<ClienteRepository>>());
-            await ResetDatabaseAsync();
+            await base.InitializeAsync();
+            _repository = ServiceProvider.GetRequiredService<IClienteRepository>();
             await SeedClientesAsync();
         }
 
-        public Task DisposeAsync() => Task.CompletedTask;
+        public override Task DisposeAsync() => Task.CompletedTask;
 
         private async Task SeedClientesAsync()
         {
