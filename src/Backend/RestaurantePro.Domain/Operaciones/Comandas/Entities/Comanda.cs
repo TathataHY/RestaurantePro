@@ -41,6 +41,11 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         public Guid? ClienteId { get; private set; }
 
         /// <summary>
+        /// ID de la factura asociada a la comanda
+        /// </summary>
+        public Guid? FacturaId { get; private set; }
+
+        /// <summary>
         /// Número único de la comanda para identificación
         /// </summary>
         public string NumeroComanda { get; private set; } = string.Empty;

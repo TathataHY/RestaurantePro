@@ -41,7 +41,7 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/✅` TarjetaFidelizacionConfiguration - Configuración para la entidad TarjetaFidelización
 
 #### Operaciones
-- `✅/❌` ComandaConfiguration - Configuración para la entidad Comanda
+- `✅/✅` ComandaConfiguration - Configuración para la entidad Comanda
 - `✅/❌` ReservacionConfiguration - Configuración para la entidad Reservación
 - `✅/❌` MesaConfiguration - Configuración para la entidad Mesa
 - `✅/❌` PreparacionDiariaConfiguration - Configuración para la entidad PreparaciónDiaria
@@ -73,7 +73,7 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/✅` TarjetaFidelizacionRepository - Repositorio para la entidad TarjetaFidelización
 
 #### Operaciones
-- `✅/❌` ComandaRepository - Repositorio para la entidad Comanda
+- `✅/✅` ComandaRepository - Repositorio para la entidad Comanda
 - `✅/❌` ReservacionRepository - Repositorio para la entidad Reservación
 - `✅/❌` MesaRepository - Repositorio para la entidad Mesa
 - `✅/❌` PreparacionDiariaRepository - Repositorio para la entidad PreparaciónDiaria

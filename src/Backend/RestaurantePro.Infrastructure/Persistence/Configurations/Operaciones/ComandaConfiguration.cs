@@ -80,6 +80,26 @@ public class ComandaConfiguration : IEntityTypeConfiguration<Comanda>
             .WithOne()
             .HasForeignKey("ComandaId")
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(c => c.Mesa)
+            .WithMany()
+            .HasForeignKey(c => c.MesaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(c => c.Mesero)
+            .WithMany()
+            .HasForeignKey(c => c.MeseroId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(c => c.Cliente)
+            .WithMany()
+            .HasForeignKey(c => c.ClienteId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(c => c.Factura)
+            .WithMany(f => f.Comandas)
+            .HasForeignKey(c => c.FacturaId)
+            .OnDelete(DeleteBehavior.SetNull);
             
         // Configurar navegaciones
         builder.Navigation(p => p.Mesa).AutoInclude();
