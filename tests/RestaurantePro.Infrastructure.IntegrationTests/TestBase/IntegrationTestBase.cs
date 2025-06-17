@@ -20,7 +20,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
     public abstract class IntegrationTestBase : IDisposable
     {
         protected readonly IServiceProvider ServiceProvider;
-        protected readonly RestauranteProDbContext DbContext;
+        protected readonly TestDbContext DbContext;
 
         protected IntegrationTestBase()
         {
@@ -49,18 +49,27 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             services.AddScoped<DomainEventInterceptor>();
             
             // Configure DbContext
-            services.AddDbContext<RestauranteProDbContext>((sp, options) =>
+            services.AddScoped<TestDbContext>(sp =>
             {
-                options.UseInMemoryDatabase(Guid.NewGuid().ToString())
+                var options = new DbContextOptionsBuilder<RestauranteProDbContext>()
+                       .UseInMemoryDatabase(Guid.NewGuid().ToString())
                        .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
                        .AddInterceptors(
                            sp.GetRequiredService<AuditableEntityInterceptor>(),
                            sp.GetRequiredService<SoftDeleteInterceptor>(),
                            sp.GetRequiredService<DomainEventInterceptor>()
-                       );
+                       ).Options;
+                
+                var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+
+                return new TestDbContext(
+                    options,
+                    loggerFactory.CreateLogger<RestauranteProDbContext>()
+                );
             });
             
-            services.AddScoped<DbContext>(provider => provider.GetRequiredService<RestauranteProDbContext>());
+            services.AddScoped<DbContext>(provider => provider.GetRequiredService<TestDbContext>());
+            services.AddScoped<RestauranteProDbContext>(provider => provider.GetRequiredService<TestDbContext>());
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             
             // Add repositories
@@ -72,7 +81,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 
             ServiceProvider = services.BuildServiceProvider();
             
-            DbContext = ServiceProvider.GetRequiredService<RestauranteProDbContext>();
+            DbContext = ServiceProvider.GetRequiredService<TestDbContext>();
 
             // Inicializar y sembrar la base de datos para cada prueba
             ResetDatabaseAsync().GetAwaiter().GetResult();

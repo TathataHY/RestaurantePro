@@ -52,13 +52,13 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/✅` OrdenCompraConfiguration - Configuración para la entidad OrdenCompra
 
 #### Proveedores
-- `✅/❌` ProveedorConfiguration - Configuración para la entidad Proveedor
-- `✅/❌` ContactoProveedorConfiguration - Configuración para la entidad ContactoProveedor
+- `✅/✅` ProveedorConfiguration - Configuración para la entidad Proveedor
+- `✅/✅` ContactoProveedorConfiguration - Configuración para la entidad ContactoProveedor
 
 ### Repositories
 
 #### Base
-- `✅/❌` Repository - Repositorio base genérico
+- `✅/✅` Repository - Repositorio base genérico
 - `✅/❌` UnitOfWork - Implementación de la unidad de trabajo
 
 #### Core
