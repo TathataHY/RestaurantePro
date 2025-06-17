@@ -1,0 +1,68 @@
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Domain.Core.Base.Events;
+using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Infrastructure.Persistence.Interceptors;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
+
+namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptors
+{
+    // Evento de prueba
+    public class TestDomainEvent : DomainEvent
+    {
+    }
+
+    public class DomainEventInterceptorTests
+    {
+        private readonly Mock<IDomainEventDispatcher> _dispatcherMock;
+        private readonly Mock<ILogger<DomainEventInterceptor>> _loggerInterceptorMock;
+        private readonly Mock<ILogger<TestDbContext>> _loggerDbContextMock;
+
+        public DomainEventInterceptorTests()
+        {
+            _dispatcherMock = new Mock<IDomainEventDispatcher>();
+            _loggerInterceptorMock = new Mock<ILogger<DomainEventInterceptor>>();
+            _loggerDbContextMock = new Mock<ILogger<TestDbContext>>();
+        }
+
+        private TestDbContext CreateDbContext(DomainEventInterceptor interceptor)
+        {
+            var options = new DbContextOptionsBuilder<RestauranteProDbContext>()
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+                .AddInterceptors(interceptor)
+                .Options;
+
+            return new TestDbContext(options, _loggerDbContextMock.Object);
+        }
+
+        [Fact]
+        public async Task SavingChanges_DebeDespacharEventosDeDominio()
+        {
+            // Arrange
+            var interceptor = new DomainEventInterceptor(_dispatcherMock.Object, _loggerInterceptorMock.Object);
+            var dbContext = CreateDbContext(interceptor);
+
+            var entity = AuditableTestEntity.Crear("Test");
+            entity.RegistrarEventoPrueba();
+
+
+            // Act
+            dbContext.TestEntities.Add(entity);
+            await dbContext.SaveChangesAsync();
+
+            // Assert
+            // Verificar que el dispatcher fue llamado una vez con el evento correcto
+            _dispatcherMock.Verify(d => d.Dispatch(It.IsAny<TestDomainEvent>(), It.IsAny<CancellationToken>()), Times.Once);
+            
+            // Verificar que los eventos se limpiaron de la entidad
+            entity.DomainEvents.Should().BeEmpty();
+        }
+    }
+} 

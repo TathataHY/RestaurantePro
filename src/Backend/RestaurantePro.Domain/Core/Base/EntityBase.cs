@@ -91,7 +91,7 @@ namespace RestaurantePro.Domain.Core.Base
         /// </summary>
         protected void MarkAsModified()
         {
-            FechaActualizacion = DateTime.Now;
+            // FechaActualizacion = DateTime.Now; // This will be handled by the AuditableEntityInterceptor
         }
 
         /// <summary>

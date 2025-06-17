@@ -140,6 +140,7 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             DiasCredito = diasCredito;
             Activo = true;
             FechaRegistro = DateTime.Now;
+            Observaciones = string.Empty;
             
             AddDomainEvent(new ProveedorRegistrado(Id, nombre));
             

@@ -20,12 +20,12 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/✅` ComercialDbContext - Contexto para el dominio Comercial
 - `✅/✅` OperacionesDbContext - Contexto para el dominio Operaciones
 - `✅/✅` InventarioDbContext - Contexto para el dominio Inventario
-- `✅/⬜` ProveedoresDbContext - Contexto para el dominio Proveedores
+- `✅/✅` ProveedoresDbContext - Contexto para el dominio Proveedores
 
 ### Interceptors
-- `✅/⬜` AuditableEntityInterceptor - Interceptor para auditoría de entidades
-- `✅/⬜` DomainEventInterceptor - Interceptor para eventos de dominio
-- `✅/⬜` SoftDeleteInterceptor - Interceptor para borrado lógico
+- `✅/✅` AuditableEntityInterceptor - Interceptor para auditoría de entidades
+- `✅/✅` DomainEventInterceptor - Interceptor para eventos de dominio
+- `✅/✅` SoftDeleteInterceptor - Interceptor para borrado lógico
 
 ### Configurations
 
@@ -36,9 +36,9 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/✅` RecetaConfiguration - Configuración para la entidad Receta
 
 #### Comercial
-- `✅/❌` ClienteConfiguration - Configuración para la entidad Cliente
-- `✅/❌` FacturaConfiguration - Configuración para la entidad Factura
-- `✅/❌` TarjetaFidelizacionConfiguration - Configuración para la entidad TarjetaFidelización
+- `✅/✅` ClienteConfiguration - Configuración para la entidad Cliente
+- `✅/✅` FacturaConfiguration - Configuración para la entidad Factura
+- `✅/✅` TarjetaFidelizacionConfiguration - Configuración para la entidad TarjetaFidelización
 
 #### Operaciones
 - `✅/❌` ComandaConfiguration - Configuración para la entidad Comanda
@@ -69,8 +69,8 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 
 #### Comercial
 - `✅/✅` ClienteRepository - Repositorio para la entidad Cliente
-- `✅/❌` FacturaRepository - Repositorio para la entidad Factura
-- `✅/❌` TarjetaFidelizacionRepository - Repositorio para la entidad TarjetaFidelización
+- `✅/✅` FacturaRepository - Repositorio para la entidad Factura
+- `✅/✅` TarjetaFidelizacionRepository - Repositorio para la entidad TarjetaFidelización
 
 #### Operaciones
 - `✅/❌` ComandaRepository - Repositorio para la entidad Comanda
