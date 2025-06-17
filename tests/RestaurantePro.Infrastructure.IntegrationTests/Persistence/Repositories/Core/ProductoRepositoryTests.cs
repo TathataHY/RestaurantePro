@@ -86,6 +86,56 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         }
 
         [Fact]
+        public async Task ObtenerTodosAsync_ConFiltroFalse_DebeRetornarTodosLosProductos()
+        {
+            // Act
+            var productos = await _repository.ObtenerTodosAsync(soloActivos: false);
+
+            // Assert
+            productos.Should().NotBeNull();
+            productos.Should().HaveCount(3);
+        }
+        
+        [Fact]
+        public async Task ObtenerPorCategoriaAsync_ConFiltroFalse_DebeRetornarTodosLosProductosDeEsaCategoria()
+        {
+            // Arrange
+            var productoInactivo = Producto.Crear("Producto Inactivo", "desc", new PrecioProducto(1m), _categoriaId1, "cat");
+            productoInactivo.Desactivar();
+            await _repository.AgregarAsync(productoInactivo, default);
+            await _unitOfWork.GuardarCambiosAsync(default);
+            
+            // Act
+            var productos = await _repository.ObtenerPorCategoriaAsync(_categoriaId1, soloActivos: false);
+
+            // Assert
+            productos.Should().NotBeNull();
+            productos.Should().Contain(p => !p.EstaActivo);
+        }
+
+        [Theory]
+        [InlineData("Hamburguesa", true)]
+        [InlineData("NoExiste", false)]
+        public async Task ExisteProductoPorNombre_DebeRetornarElValorEsperado(string nombre, bool expected)
+        {
+            // Act
+            var existe = await _repository.ExisteProductoPorNombre(nombre);
+
+            // Assert
+            existe.Should().Be(expected);
+        }
+
+        [Fact(Skip = "Implementación de ObtenerProductosPorIngredienteAsync pendiente en el repositorio.")]
+        public async Task ObtenerProductosPorIngredienteAsync_DebeRetornarListaVacia()
+        {
+            // Act
+            var productos = await _repository.ObtenerProductosPorIngredienteAsync(Guid.NewGuid());
+
+            // Assert
+            productos.Should().NotBeNull().And.BeEmpty();
+        }
+
+        [Fact]
         public async Task AgregarAsync_DebeAñadirElProductoALaBaseDeDatos()
         {
             // Arrange
@@ -102,7 +152,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         }
 
         [Fact]
-        public async Task EliminarAsync_DebeMarcarElProductoComoInactivoEnLaBaseDeDatos()
+        public async Task EliminarAsync_DebeMarcarElProductoComoEliminadoEnLaBaseDeDatos()
         {
             // Arrange
             var productoActivo = await DbContext.Productos.FirstAsync(p => p.EstaActivo);
@@ -114,7 +164,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             // Assert
             var productoEliminado = await DbContext.Productos.IgnoreQueryFilters().FirstOrDefaultAsync(p => p.Id == productoActivo.Id);
             productoEliminado.Should().NotBeNull();
-            productoEliminado.EstaActivo.Should().BeFalse();
+            productoEliminado.EstaEliminado.Should().BeTrue();
         }
     }
 } 

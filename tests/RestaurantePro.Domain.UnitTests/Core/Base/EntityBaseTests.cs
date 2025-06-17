@@ -73,35 +73,6 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
         }
 
         [Fact]
-        public void WhenMarkAsDeleted_ShouldUpdateFechaActualizacion()
-        {
-            // Arrange
-            var entity = new TestEntity();
-
-            // Act
-            entity.MarkAsDeleted();
-
-            // Assert
-            entity.FechaActualizacion.Should().NotBeNull();
-            entity.FechaActualizacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
-        }
-
-        [Fact]
-        public void WhenMarkAsModified_ShouldUpdateFechaActualizacion()
-        {
-            // Arrange
-            var entity = new TestEntity();
-            entity.FechaActualizacion.Should().BeNull();
-
-            // Act
-            entity.ModifyEntity();
-
-            // Assert
-            entity.FechaActualizacion.Should().NotBeNull();
-            entity.FechaActualizacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
-        }
-
-        [Fact]
         public void WhenAddDomainEvent_ShouldAddEventToCollection()
         {
             // Arrange

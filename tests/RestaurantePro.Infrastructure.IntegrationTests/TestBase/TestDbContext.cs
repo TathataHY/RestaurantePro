@@ -30,6 +30,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 
         public DbSet<TestEntity> TestEntities { get; set; }
         public DbSet<NonAuditableTestEntity> NonAuditableTestEntities { get; set; }
+        public DbSet<ProductoCategoria> ProductoCategorias { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

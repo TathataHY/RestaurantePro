@@ -59,7 +59,7 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 
 #### Base
 - `✅/✅` Repository - Repositorio base genérico
-- `✅/❌` UnitOfWork - Implementación de la unidad de trabajo
+- `✅/✅` UnitOfWork - Implementación de la unidad de trabajo
 
 #### Core
 - `✅/✅` ProductoRepository - Repositorio para la entidad Producto
@@ -74,15 +74,20 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 
 #### Operaciones
 - `✅/✅` ComandaRepository - Repositorio para la entidad Comanda
-- `✅/❌` ReservacionRepository - Repositorio para la entidad Reservación
-- `✅/❌` MesaRepository - Repositorio para la entidad Mesa
-- `✅/❌` PreparacionDiariaRepository - Repositorio para la entidad PreparaciónDiaria
+- `✅/✅` ReservacionRepository - Repositorio para la entidad Reservación
+- `✅/✅` MesaRepository - Repositorio para la entidad Mesa
+- `✅/✅` PreparacionDiariaRepository - Repositorio para la entidad PreparaciónDiaria
 
 #### Inventario
-- `✅/❌` IngredienteRepository - Repositorio para la entidad Ingrediente
-- `✅/❌` MovimientoInventarioRepository - Repositorio para la entidad MovimientoInventario
-- `✅/❌` OrdenCompraRepository - Repositorio para la entidad OrdenCompra
+- `✅/✅` IngredienteRepository - Repositorio para la entidad Ingrediente
+- `✅/✅` MovimientoInventarioRepository - Repositorio para la entidad MovimientoInventario
+- `✅/✅` OrdenCompraRepository - Repositorio para la entidad OrdenCompra
 
 #### Proveedores
-- `✅/❌` ProveedorRepository - Repositorio para la entidad Proveedor
-- `✅/❌`
+- `✅/✅` ProveedorRepository - Repositorio para la entidad Proveedor
+- `✅/✅` ContactoProveedorRepository - Repositorio para la entidad ContactoProveedor
+
+| `IUnitOfWork` | `UnitOfWork.cs` | ✅ | `UnitOfWorkTests.cs` | ✅ |
+| `IRepository<T>` | `Repository.cs` | ✅ | `RepositoryTests.cs` | ✅ |
+| `IProductoRepository` | `ProductoRepository.cs` | ✅ | `ProductoRepositoryTests.cs` | ✅ |
+| `IProductoCategoriaRepository` | `ProductoCategoriaRepository.cs` | ✅ | `CategoriaRepositoryTests.cs` | ✅ |
