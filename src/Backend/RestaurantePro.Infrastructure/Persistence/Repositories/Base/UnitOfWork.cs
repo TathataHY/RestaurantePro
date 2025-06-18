@@ -173,11 +173,6 @@ public class UnitOfWork : IUnitOfWork
         }
     }
 
-    public DbSet<TEntity> Set<TEntity>() where TEntity : class
-    {
-        return _dbContext.Set<TEntity>();
-    }
-
     public void Dispose()
     {
         Dispose(true);

@@ -79,8 +79,6 @@ public class LoyaltyPointsExpirationJob : BackgroundJobBase
                     int puntosAExpirar = tarjeta.PuntosDisponibles;
                     tarjeta.ExpirarPuntos(puntosAExpirar, "Expiración automática de puntos");
                     
-                    _unitOfWork.Set<TarjetaFidelizacion>().Update(tarjeta);
-                    
                     _logger.LogInformation("Puntos expirados automáticamente para la tarjeta {TarjetaId}", tarjeta.Id);
                     
                     // Notificar al cliente sobre la expiración
