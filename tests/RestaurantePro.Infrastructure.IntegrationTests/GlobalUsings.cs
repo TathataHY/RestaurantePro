@@ -14,4 +14,7 @@ global using RestaurantePro.Domain.Core.Base.Services;
 global using RestaurantePro.Domain.Core.Productos.Entities;
 global using RestaurantePro.Infrastructure.Persistence;
 global using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
-global using Xunit; 
+global using Xunit;
+
+// Alias para resolver ambigüedad de Identity
+global using IdentityApplicationUser = RestaurantePro.Infrastructure.Identity.Models.ApplicationUser; 

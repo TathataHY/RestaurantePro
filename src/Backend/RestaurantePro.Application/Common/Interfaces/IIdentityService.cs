@@ -1,3 +1,8 @@
+using RestaurantePro.Application.Common.Models;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
 namespace RestaurantePro.Application.Common.Interfaces;
 
 /// <summary>
@@ -13,6 +18,16 @@ public interface IIdentityService
     /// <param name="password">Contraseña</param>
     /// <returns>Resultado con el ID del usuario creado si es exitoso, o errores en caso contrario</returns>
     Task<(Result Result, string UserId)> CreateUserAsync(string userName, string email, string password);
+    
+    /// <summary>
+    /// Registra un nuevo usuario con nombre, apellidos y rol
+    /// </summary>
+    Task<Result<string>> RegisterAsync(string nombre, string apellidos, string email, string username, string password, string rol);
+    
+    /// <summary>
+    /// Crea un nuevo rol en el sistema.
+    /// </summary>
+    Task<Result> CreateRoleAsync(string roleName, string description, bool isSystemRole);
     
     /// <summary>
     /// Valida las credenciales de un usuario e inicia sesión
@@ -36,12 +51,47 @@ public interface IIdentityService
     Task<UserDto> GetUserByIdAsync(string userId);
     
     /// <summary>
-    /// Asigna un rol a un usuario
+    /// Actualiza la información de un usuario existente
+    /// </summary>
+    /// <param name="id">ID del usuario</param>
+    /// <param name="nombre">Nombre del usuario</param>
+    /// <param name="apellidos">Apellidos del usuario</param>
+    /// <param name="email">Email del usuario</param>
+    /// <param name="username">Nombre de usuario</param>
+    /// <returns>Resultado de la operación</returns>
+    Task<Result> UpdateUserAsync(string id, string nombre, string apellidos, string email, string username);
+
+    /// <summary>
+    /// Elimina un usuario del sistema
     /// </summary>
     /// <param name="userId">ID del usuario</param>
-    /// <param name="role">Rol a asignar</param>
     /// <returns>Resultado de la operación</returns>
-    Task<Result> AddUserToRoleAsync(string userId, string role);
+    Task<Result> DeleteUserAsync(string userId);
+
+    /// <summary>
+    /// Cambia la contraseña de un usuario
+    /// </summary>
+    /// <param name="userId">ID del usuario</param>
+    /// <param name="currentPassword">Contraseña actual</param>
+    /// <param name="newPassword">Nueva contraseña</param>
+    /// <returns>Resultado de la operación</returns>
+    Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
+
+    /// <summary>
+    /// Autentica un usuario y obtiene una respuesta de autenticación
+    /// </summary>
+    /// <param name="email">Email del usuario</param>
+    /// <param name="password">Contraseña</param>
+    /// <returns>Resultado de la autenticación</returns>
+    Task<Result<AuthResponse>> AuthenticateAsync(string email, string password);
+
+    /// <summary>
+    /// Actualiza el token de autenticación de un usuario
+    /// </summary>
+    /// <param name="token">Token actual</param>
+    /// <param name="refreshToken">Token de actualización</param>
+    /// <returns>Resultado de la actualización</returns>
+    Task<Result<AuthResponse>> RefreshTokenAsync(string token, string refreshToken);
 }
 
 /// <summary>

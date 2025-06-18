@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.Common.Interfaces;
+using System.Security.Claims;
 
 /// <summary>
 /// Servicio para generar y validar tokens JWT para autenticación
@@ -14,6 +15,10 @@ public interface IJwtTokenService
     /// <param name="roles">Roles del usuario</param>
     /// <returns>Token JWT generado con su información</returns>
     JwtTokenResponse GenerateToken(string userId, string userName, string email, IList<string> roles);
+
+    string GenerateRefreshToken();
+
+    ClaimsPrincipal GetPrincipalFromExpiredToken(string token);
 }
 
 /// <summary>

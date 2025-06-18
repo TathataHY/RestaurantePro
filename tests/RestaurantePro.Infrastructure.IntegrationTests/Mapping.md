@@ -85,18 +85,18 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 
 #### Proveedores
 - `✅/✅` ProveedorRepository - Repositorio para la entidad Proveedor
-- `✅/⬜` ContactoProveedorRepository - Repositorio para la entidad ContactoProveedor
+- `✅/✅` ContactoProveedorRepository - Repositorio para la entidad ContactoProveedor
 
 ## Identity
 
 ### Models
-- `✅/⬜` ApplicationUser - Modelo de usuario para Identity
-- `✅/⬜` ApplicationRole - Modelo de rol para Identity
-- `✅/⬜` ApplicationUserRole - Modelo de relación usuario-rol para Identity
+- `✅/✅` ApplicationUser - Modelo de usuario para Identity
+- `✅/✅` ApplicationRole - Modelo de rol para Identity
+- `✅/✅` ApplicationUserRole - Modelo de relación usuario-rol para Identity
 
 ### Services
-- `✅/⬜` IdentityService - Servicio para gestionar la identidad
-- `✅/⬜` JwtTokenService - Servicio para generar y validar tokens JWT
+- `✅/✅` IdentityService - Servicio para gestionar la identidad
+- `✅/✅` JwtTokenService - Servicio para generar y validar tokens JWT
 - `✅/⬜` PermissionService - Servicio para gestionar permisos
 
 ### Configuration

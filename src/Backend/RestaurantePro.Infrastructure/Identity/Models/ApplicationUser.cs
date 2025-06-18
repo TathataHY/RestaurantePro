@@ -14,5 +14,7 @@ namespace RestaurantePro.Infrastructure.Identity.Models
         public string FotoPerfil { get; set; }
         public string RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
+
+        public virtual ICollection<ApplicationUserRole> UserRoles { get; set; }
     }
 } 

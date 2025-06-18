@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
@@ -10,7 +11,7 @@ using System.Linq;
 
 namespace RestaurantePro.Infrastructure.Persistence.Contexts
 {
-    public class RestauranteProDbContext : DbContext, IApplicationDbContext
+    public class RestauranteProDbContext : IdentityDbContext<IdentityApplicationUser>, IApplicationDbContext
     {
         private readonly ILogger<RestauranteProDbContext> _logger;
         
@@ -74,6 +75,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         {
             base.OnModelCreating(modelBuilder);
             
+            // Configuración personalizada para ApplicationUser
+            modelBuilder.Entity<IdentityApplicationUser>(b =>
+            {
+                b.Property(u => u.FotoPerfil).IsRequired(false);
+                b.Property(u => u.RefreshToken).IsRequired(false);
+            });
+
             // Ignorar la clase base de eventos de dominio para que no se cree una tabla
             modelBuilder.Ignore<Domain.Core.Base.Events.DomainEvent>();
             

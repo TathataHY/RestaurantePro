@@ -83,5 +83,4 @@ global using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
 
 // Alias para resolver ambigüedad
 // Alias para tipos que pueden generar ambigüedades
-global using IdentityApplicationUser = RestaurantePro.Infrastructure.Identity.Models.ApplicationUser;
-global using DomainApplicationUser = RestaurantePro.Domain.Core.Usuarios.Entities.ApplicationUser; 
+global using IdentityApplicationUser = RestaurantePro.Infrastructure.Identity.Models.ApplicationUser; 

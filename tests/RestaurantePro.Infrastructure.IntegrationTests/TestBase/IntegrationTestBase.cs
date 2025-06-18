@@ -32,6 +32,12 @@ using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 using Xunit.Abstractions;
+using RestaurantePro.Infrastructure.Identity.Models;
+using Microsoft.AspNetCore.Identity;
+using RestaurantePro.Infrastructure.Identity.Services;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.Extensions.Options;
+using RestaurantePro.Infrastructure.Identity.Configuration;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 {
@@ -77,6 +83,19 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
                 options.AddInterceptors(auditableEntityInterceptor, softDeleteInterceptor);
             });
             
+            services.AddIdentity<IdentityApplicationUser, ApplicationRole>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = true;
+                options.Password.RequireDigit = false;
+                options.Password.RequiredLength = 6;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireLowercase = false;
+                options.Password.RequiredUniqueChars = 0;
+            })
+            .AddRoles<ApplicationRole>()
+            .AddEntityFrameworkStores<TestDbContext>();
+            
             services.AddScoped<RestauranteProDbContext>(provider => provider.GetRequiredService<TestDbContext>());
             services.AddScoped<DbContext>(provider => provider.GetRequiredService<TestDbContext>());
             
@@ -95,6 +114,19 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             services.AddSingleton(Mock.Of<ILogger<UnitOfWork>>());
             services.AddSingleton(Mock.Of<ILogger<SoftDeleteInterceptor>>());
 
+            services.AddScoped<IIdentityService, IdentityService>();
+            services.AddScoped<IJwtTokenService, JwtTokenService>();
+            services.AddSingleton<JwtSecurityTokenHandler>();
+
+            services.Configure<JwtConfiguration>(options =>
+            {
+                options.Secret = "TestSuperSecretKeyForJwtTokenGenerationLongEnough";
+                options.Issuer = "test.issuer.com";
+                options.Audience = "test.audience.com";
+                options.ExpirationInMinutes = 60;
+                options.RefreshTokenExpirationInDays = 7;
+            });
+            
             services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
             
             services.AddScoped<IUnitOfWork>(provider => 
