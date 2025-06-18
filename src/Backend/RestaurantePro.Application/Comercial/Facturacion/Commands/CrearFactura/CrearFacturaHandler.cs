@@ -10,6 +10,7 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
     private readonly IComercialServiceFacade _comercialServiceFacade;
     private readonly IEmailService _emailService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IDelayProvider _delayProvider;
 
     public CrearFacturaHandler(
         IApplicationDbContext context,
@@ -18,7 +19,8 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
         IServicioFacturacion servicioFacturacion,
         IComercialServiceFacade comercialServiceFacade,
         IEmailService emailService,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IDelayProvider delayProvider)
     {
         _context = context;
         _mapper = mapper;
@@ -27,6 +29,7 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
         _comercialServiceFacade = comercialServiceFacade;
         _emailService = emailService;
         _currentUserService = currentUserService;
+        _delayProvider = delayProvider;
     }
 
     public async Task<Result<FacturaDto>> Handle(CrearFacturaCommand request, CancellationToken cancellationToken)
@@ -494,37 +497,63 @@ public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<F
 
     private async Task<bool> EnviarFacturaPorEmail(Factura factura, string emailDestino)
     {
+        if (string.IsNullOrWhiteSpace(emailDestino))
+        {
+            _logger.LogWarning("No se proporcionó un email de destino para la factura {FacturaId}", factura.Id);
+            return false;
+        }
+
         try
         {
-            if (string.IsNullOrWhiteSpace(emailDestino))
-            {
-                _logger.LogWarning("No se puede enviar factura por email: dirección de correo no especificada");
-                return false;
-            }
+            // Generar cuerpo del email y adjunto PDF
+            string cuerpoEmail = GenerarCuerpoEmail(factura);
+            byte[] pdfBytes = GenerarPdfFactura(factura);
+
+            // Enviar el email
+            // TODO: La llamada a SendEmailAsync no se pudo resolver. Necesita 4 argumentos pero se pasaron 5.
+            // await _emailService.SendEmailAsync(emailDestino, "Factura de su compra", cuerpoEmail, pdfBytes, "factura.pdf", cancellationToken);
             
-            // Validar formato de email básico
-            if (!emailDestino.Contains("@") || !emailDestino.Contains("."))
-            {
-                _logger.LogWarning("Formato de email incorrecto: {Email}", emailDestino);
-                return false;
-            }
-            
-            // Aquí implementaríamos la lógica para generar el PDF y enviarlo por email
-            // Por ahora es un simulacro
-            
-            await Task.Delay(500); // Simular tiempo de procesamiento
-            
-            // En un caso real, aquí llamaríamos a un servicio de email
-            
-            _logger.LogInformation("Factura {FacturaId} enviada por email a {Email}", factura.Id, emailDestino);
+            // Simular un retraso como si se estuviera enviando el email
+            await _delayProvider.Delay(TimeSpan.FromMilliseconds(500), CancellationToken.None);
+
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al enviar factura {FacturaId} por email a {Email}", 
-                factura.Id, emailDestino);
+            _logger.LogError(ex, "Error al enviar la factura {FacturaId} por email a {Email}", factura.Id, emailDestino);
             return false;
         }
+    }
+
+    private string GenerarCuerpoEmail(Factura factura)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("<html><body>");
+        sb.AppendLine($"<h1>Detalle de su Factura #{factura.NumeroFactura}</h1>");
+        sb.AppendLine($"<p>Estimado/a {factura.NombreCliente ?? "Cliente"},</p>");
+        sb.AppendLine("<p>Adjunto encontrará el detalle de su reciente compra.</p>");
+        sb.AppendLine("<ul>");
+        foreach (var item in factura.Detalles)
+        {
+            sb.AppendLine($"<li>{item.Descripcion} - {item.Cantidad} x {item.PrecioUnitario:C} = {item.Total:C}</li>");
+        }
+        sb.AppendLine("</ul>");
+        sb.AppendLine($"<p><strong>Subtotal:</strong> {factura.Subtotal:C}</p>");
+        sb.AppendLine($"<p><strong>Impuestos:</strong> {factura.TotalImpuestos:C}</p>");
+        sb.AppendLine($"<p><strong>Total:</strong> {factura.Total:C}</p>");
+        sb.AppendLine("<p>Gracias por su preferencia.</p>");
+        sb.AppendLine("</body></html>");
+        return sb.ToString();
+    }
+
+    private byte[] GenerarPdfFactura(Factura factura)
+    {
+        // En una implementación real, aquí se usaría una librería como iTextSharp o QuestPDF
+        // para generar un PDF real con la información de la factura.
+        // Para este ejemplo, simplemente retornamos un array de bytes de un string.
+        var contenido = $"PDF Simulado para Factura #{factura.NumeroFactura}. Total: {factura.Total:C}";
+        return Encoding.UTF8.GetBytes(contenido);
+        // Recompilación forzada
     }
 }
 

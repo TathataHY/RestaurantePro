@@ -8,6 +8,7 @@ public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
     where TRequest : IRequest<TResponse>
 {
     private readonly ILogger<RetryBehavior<TRequest, TResponse>> _logger;
+    private readonly IDelayProvider _delayProvider;
     private readonly RetrySettings _retrySettings;
     
     // ThreadLocal para evitar problemas de concurrencia con Random
@@ -15,9 +16,11 @@ public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
 
     public RetryBehavior(
         ILogger<RetryBehavior<TRequest, TResponse>> logger,
+        IDelayProvider delayProvider,
         IOptions<RetrySettings>? retrySettings = null)
     {
         _logger = logger;
+        _delayProvider = delayProvider;
         _retrySettings = retrySettings?.Value ?? new RetrySettings();
     }
 
@@ -85,7 +88,7 @@ public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
                 
                 try
                 {
-                    await Task.Delay(delay, cancellationToken);
+                    await _delayProvider.Delay(delay, cancellationToken);
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {

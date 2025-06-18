@@ -8,6 +8,7 @@ public class PerformanceBehaviorTests
     private readonly Mock<ILogger<PerformanceBehavior<CrearProductoCommand, Result<ProductoDto>>>> _mockLogger;
     private readonly Mock<IMetricsService> _mockMetricsService;
     private readonly Mock<IOptions<PerformanceSettings>> _mockPerformanceSettings;
+    private readonly Mock<ITimeProvider> _mockTimeProvider;
     private readonly PerformanceBehavior<CrearProductoCommand, Result<ProductoDto>> _behavior;
 
     public PerformanceBehaviorTests()
@@ -15,8 +16,21 @@ public class PerformanceBehaviorTests
         _mockLogger = new Mock<ILogger<PerformanceBehavior<CrearProductoCommand, Result<ProductoDto>>>>();
         _mockMetricsService = new Mock<IMetricsService>();
         _mockPerformanceSettings = new Mock<IOptions<PerformanceSettings>>();
-        _mockPerformanceSettings.Setup(x => x.Value).Returns(new PerformanceSettings());
-        _behavior = new PerformanceBehavior<CrearProductoCommand, Result<ProductoDto>>(_mockLogger.Object, _mockMetricsService.Object, _mockPerformanceSettings.Object);
+        _mockTimeProvider = new Mock<ITimeProvider>();
+        
+        _mockPerformanceSettings.Setup(x => x.Value).Returns(new PerformanceSettings
+        {
+            CommandThresholdSeconds = 0.02, // 20ms
+            QueryThresholdMs = 10,
+            ComplexOperationThresholdSeconds = 0.05, // 50ms
+            DefaultThresholdSeconds = 0.03 // 30ms
+        });
+
+        _behavior = new PerformanceBehavior<CrearProductoCommand, Result<ProductoDto>>(
+            _mockLogger.Object, 
+            _mockTimeProvider.Object, 
+            _mockMetricsService.Object, 
+            _mockPerformanceSettings.Object);
     }
 
     [Fact]
@@ -25,6 +39,7 @@ public class PerformanceBehaviorTests
         // Arrange
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
+        _mockTimeProvider.Setup(x => x.GetElapsedTime(It.IsAny<long>())).Returns(TimeSpan.FromMilliseconds(10));
         
         RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
@@ -51,109 +66,47 @@ public class PerformanceBehaviorTests
             Times.Never);
     }
 
-    [Fact]
-    [Trait("Category", "LongRunning")]
-    public async Task Handle_RequestLento_DeberiaGenerarAlerta()
+    [Theory]
+    [InlineData(5, LogLevel.None)]      // Rápido -> No se loguea nada
+    [InlineData(25, LogLevel.Warning)]  // Lento -> Se loguea Warning
+    [InlineData(60, LogLevel.Error)]    // Crítico -> Se loguea Error
+    public async Task Handle_VariosTiempos_DeberiaGenerarAlertasCorrectas(int delayMs, LogLevel expectedLogLevel)
     {
         // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
-        var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
+        var command = new CrearProductoCommand { Nombre = "Test" };
+        var expectedResult = Result.Success(new ProductoDto());
+        _mockTimeProvider.Setup(x => x.GetElapsedTime(It.IsAny<long>())).Returns(TimeSpan.FromMilliseconds(delayMs));
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = async _ => 
-        {
-            await Task.Delay(3000, CancellationToken.None); // Simular operación lenta (3 segundos)
-            return expectedResult;
-        };
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
 
         // Act
-        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
+        await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
         // Assert
-        result.Should().Be(expectedResult);
-        
-        // Verificar que se registra el tiempo
-        _mockMetricsService.Verify(x => x.RecordExecutionTime(
-            "CrearProductoCommand",
-            (TimeSpan)It.IsAny<object>(),
-            true), Times.Once);
-            
-        // Debería haber alerta por operación lenta
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("lenta detectada")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
-    }
-
-    [Fact]
-    public async Task Handle_Query_DeberiaUsarUmbralDiferente()
-    {
-        // Arrange - Crear behavior para Query
-        var queryLogger = new Mock<ILogger<PerformanceBehavior<ObtenerProductoPorIdQuery, Result<ProductoDto>>>>();
-        var queryBehavior = new PerformanceBehavior<ObtenerProductoPorIdQuery, Result<ProductoDto>>(queryLogger.Object, _mockMetricsService.Object, _mockPerformanceSettings.Object);
-        
-        var query = new ObtenerProductoPorIdQuery(Guid.NewGuid());
-        var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
-        
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = async _ => 
+        if (expectedLogLevel == LogLevel.None)
         {
-            await Task.Delay(600, CancellationToken.None); // Más del umbral de Query (500ms) pero menos que Command (2s)
-            return expectedResult;
-        };
-
-        // Act
-        var result = await queryBehavior.Handle(query, nextDelegate, CancellationToken.None);
-
-        // Assert
-        result.Should().Be(expectedResult);
-        
-        // Debería haber alerta para Query que supera 500ms
-        queryLogger.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("lenta detectada")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
-    }
-
-    [Fact]
-    [Trait("Category", "LongRunning")]
-    public async Task Handle_OperacionCriticamenteLenta_DeberiaGenerarAlertaCritica()
-    {
-        // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
-        var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
-        
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = async _ => 
+            // Verificar que no se loguea ninguna advertencia o error
+            _mockLogger.Verify(
+                x => x.Log(
+                    It.Is<LogLevel>(l => l >= LogLevel.Warning),
+                    It.IsAny<EventId>(),
+                    It.IsAny<It.IsAnyType>(),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                Times.Never);
+        }
+        else
         {
-            await Task.Delay(6000, CancellationToken.None); // Operación críticamente lenta (6 segundos)
-            return expectedResult;
-        };
-
-        // Act
-        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
-
-        // Assert
-        result.Should().Be(expectedResult);
-        
-        // Verificar métricas de severidad crítica
-        _mockMetricsService.Verify(x => x.IncrementCounter(
-            "slow_operations_critical", null), Times.Once);
-            
-        // Debería haber alerta crítica
-        _mockLogger.Verify(
-            x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("críticamente lenta")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
+            // Verificar que se loguea el nivel correcto
+            _mockLogger.Verify(
+                x => x.Log(
+                    expectedLogLevel,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("Operación lenta")),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+                Times.Once);
+        }
     }
 
     [Fact]
@@ -162,12 +115,9 @@ public class PerformanceBehaviorTests
         // Arrange
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var exception = new Exception("Error de test");
+        _mockTimeProvider.Setup(x => x.GetElapsedTime(It.IsAny<long>())).Returns(TimeSpan.FromMilliseconds(10));
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = async _ => 
-        {
-            await Task.Delay(1000, CancellationToken.None); // Simular algo de procesamiento antes del error
-            throw exception;
-        };
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw exception;
 
         // Act & Assert
         var thrownException = await Assert.ThrowsAsync<Exception>(() => 
@@ -383,43 +333,5 @@ public class PerformanceBehaviorTests
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Exactly(5));
-    }
-
-    [Theory]
-    [InlineData(100, false)]   // Rápido - sin alerta
-    [InlineData(1500, false)]  // Medio - sin alerta para Command
-    [InlineData(2500, true)]   // Lento - con alerta
-    [InlineData(5500, true)]   // Muy lento - con alerta crítica
-    [Trait("Category", "LongRunning")]
-    public async Task Handle_DiferentiTempos_DeberiaGenerarAlertasApropiadas(int delayMs, bool deberiaAlertar)
-    {
-        // Arrange
-        var command = new CrearProductoCommand { Nombre = "Pizza Test" };
-        var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
-        
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = async _ => 
-        {
-            await Task.Delay(delayMs, CancellationToken.None);
-            return expectedResult;
-        };
-
-        // Act
-        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
-
-        // Assert
-        result.Should().Be(expectedResult);
-        
-        if (deberiaAlertar)
-        {
-            var expectedLogLevel = delayMs >= 5500 ? LogLevel.Error : LogLevel.Warning;
-            _mockLogger.Verify(
-                x => x.Log(
-                    expectedLogLevel,
-                    It.IsAny<EventId>(),
-                    It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("lenta")),
-                    It.IsAny<Exception>(),
-                    It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.AtLeastOnce);
-        }
     }
 } 

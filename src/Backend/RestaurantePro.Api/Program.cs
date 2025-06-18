@@ -31,8 +31,8 @@ namespace RestaurantePro.Api
             builder.Services.AddApiServices();
             
             // Agregar capas inferiores
-            builder.Services.AddApplicationServices();
             builder.Services.AddInfrastructureServices(builder.Configuration);
+            builder.Services.AddApplicationServices();
             
             var app = builder.Build();
             

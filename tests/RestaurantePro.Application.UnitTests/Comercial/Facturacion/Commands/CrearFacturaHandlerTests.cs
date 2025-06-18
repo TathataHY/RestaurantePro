@@ -40,6 +40,7 @@ public class CrearFacturaHandlerTests
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
     private readonly Mock<DbSet<Cliente>> _clientesDbSetMock;
     private readonly Mock<DbSet<Comanda>> _comandasDbSetMock;
+    private readonly Mock<IDelayProvider> _delayProviderMock;
     private readonly CrearFacturaHandler _handler;
 
     public CrearFacturaHandlerTests()
@@ -53,6 +54,7 @@ public class CrearFacturaHandlerTests
         _currentUserServiceMock = new Mock<ICurrentUserService>();
         _clientesDbSetMock = new Mock<DbSet<Cliente>>();
         _comandasDbSetMock = new Mock<DbSet<Comanda>>();
+        _delayProviderMock = new Mock<IDelayProvider>();
 
         // Setup DbContext
         _contextMock.Setup(x => x.Clientes).Returns(_clientesDbSetMock.Object);
@@ -66,7 +68,8 @@ public class CrearFacturaHandlerTests
             _servicioFacturacionMock.Object,
             _comercialServiceFacadeMock.Object,
             _emailServiceMock.Object,
-            _currentUserServiceMock.Object);
+            _currentUserServiceMock.Object,
+            _delayProviderMock.Object);
     }
 
     #region Tests de Factory Methods del Command

@@ -41,6 +41,7 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
     private readonly IFacturacionService _facturacionService;
     private readonly IFidelizacionService _fidelizacionService;
     private readonly IMesaService _mesaService;
+    private readonly IDelayProvider _delayProvider;
 
     public ProcesarPedidoCompletoHandler(
         IComandaRepository comandaRepository,
@@ -57,7 +58,8 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
         IComercialServiceFacade comercialServiceFacade,
         IFacturacionService facturacionService,
         IFidelizacionService fidelizacionService,
-        IMesaService mesaService)
+        IMesaService mesaService,
+        IDelayProvider delayProvider)
     {
         _comandaRepository = comandaRepository;
         _facturaRepository = facturaRepository;
@@ -74,6 +76,7 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
         _facturacionService = facturacionService;
         _fidelizacionService = fidelizacionService;
         _mesaService = mesaService;
+        _delayProvider = delayProvider;
     }
 
     public async Task<Result<ProcesarPedidoCompletoDto>> Handle(ProcesarPedidoCompletoCommand request, CancellationToken cancellationToken)
@@ -253,10 +256,10 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
                 return Result.Failure("El número de tarjeta no es válido");
             }
             
-            // Simular procesamiento con gateway de pago
-            await Task.Delay(200, cancellationToken);
+            // Simular validación con pasarela de pago
+            await _delayProvider.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
             
-            _logger.LogInformation("✅ Pago con tarjeta procesado correctamente para comanda {ComandaId}", comanda.Id);
+            _logger.LogInformation("✅ Pago con tarjeta aprobado para comanda {ComandaId}", comanda.Id);
             
             return Result.Success();
         }
@@ -273,17 +276,11 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
         {
             _logger.LogInformation("💵 Procesando pago en efectivo para comanda {ComandaId}", comanda.Id);
             
-            // Validar que el monto sea mayor a cero
-            if (infoPago.MontoTotal <= 0)
-            {
-                return Result.Failure("El monto debe ser mayor a cero");
-            }
-            
             // No podemos validar MontoRecibido porque no está en el DTO
             // Podría agregarse en futuras versiones
             
             // Simular procesamiento
-            await Task.Delay(100, cancellationToken);
+            await _delayProvider.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
             
             _logger.LogInformation("✅ Pago en efectivo procesado correctamente para comanda {ComandaId}", comanda.Id);
             
@@ -300,15 +297,10 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
     {
         try
         {
-            _logger.LogInformation("💻 Procesando pago digital para comanda {ComandaId}", comanda.Id);
-            
-            if (string.IsNullOrEmpty(infoPago.ReferenciaPago))
-            {
-                return Result.Failure("La referencia de pago es requerida para pagos digitales");
-            }
+            _logger.LogInformation("📱 Procesando pago digital para comanda {ComandaId}", comanda.Id);
             
             // Simular procesamiento
-            await Task.Delay(150, cancellationToken);
+            await _delayProvider.Delay(TimeSpan.FromMilliseconds(150), cancellationToken);
             
             _logger.LogInformation("✅ Pago digital procesado correctamente para comanda {ComandaId}", comanda.Id);
             
@@ -327,13 +319,8 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
         {
             _logger.LogInformation("🏦 Procesando pago por transferencia para comanda {ComandaId}", comanda.Id);
             
-            if (string.IsNullOrEmpty(infoPago.ReferenciaPago))
-            {
-                return Result.Failure("La referencia de transferencia es requerida para pagos por transferencia");
-            }
-            
             // Simular verificación con banco
-            await Task.Delay(300, cancellationToken);
+            await _delayProvider.Delay(TimeSpan.FromMilliseconds(300), cancellationToken);
             
             _logger.LogInformation("✅ Pago por transferencia procesado correctamente para comanda {ComandaId}", comanda.Id);
             
@@ -679,29 +666,6 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
         }
 
         return false;
-    }
-
-    // Método para validar pagos por transferencia
-    private bool ValidarPagoTransferencia(InfoPagoDto infoPago)
-    {
-        // Validación básica para transferencias
-        if (string.IsNullOrWhiteSpace(infoPago.ReferenciaPago))
-        {
-            return false;
-        }
-
-        // Verificar que la referencia de pago tenga al menos 6 caracteres
-        if (infoPago.ReferenciaPago.Length < 6)
-        {
-            return false;
-        }
-
-        // Para transferencias, se podría validar el formato según el banco o servicio
-        // En este ejemplo, hacemos una validación simple
-        
-        // La referencia debe contener al menos un número y una letra
-        return infoPago.ReferenciaPago.Any(char.IsDigit) && 
-               infoPago.ReferenciaPago.Any(char.IsLetter);
     }
 
     // Método para simular una factura existente (para pruebas)

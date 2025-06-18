@@ -37,6 +37,7 @@ public class AnularFacturaHandlerTests
     private Mock<DbSet<Usuario>> _usuarioDbSetMock;
     private readonly Mock<IFacturaRepository> _facturaRepositoryMock;
     private readonly Mock<IUsuarioRepository> _usuarioRepositoryMock;
+    private readonly Mock<IDelayProvider> _delayProviderMock;
     private readonly AnularFacturaHandler _handler;
     
     public AnularFacturaHandlerTests()
@@ -50,6 +51,7 @@ public class AnularFacturaHandlerTests
         _notificacionServiceMock = new Mock<INotificationService>();
         _facturaRepositoryMock = new Mock<IFacturaRepository>();
         _usuarioRepositoryMock = new Mock<IUsuarioRepository>();
+        _delayProviderMock = new Mock<IDelayProvider>();
         
         // Inicializar DbSets
         _facturaDbSetMock = new Mock<DbSet<Factura>>();
@@ -79,7 +81,8 @@ public class AnularFacturaHandlerTests
             _currentUserServiceMock.Object,
             _emailServiceMock.Object,
             _notificacionServiceMock.Object,
-            _usuarioRepositoryMock.Object
+            _usuarioRepositoryMock.Object,
+            _delayProviderMock.Object
         );
     }
 

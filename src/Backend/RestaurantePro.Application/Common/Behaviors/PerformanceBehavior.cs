@@ -10,13 +10,16 @@ public class PerformanceBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
     private readonly ILogger<PerformanceBehavior<TRequest, TResponse>> _logger;
     private readonly IMetricsService? _metricsService;
     private readonly PerformanceSettings _settings;
+    private readonly ITimeProvider _timeProvider;
 
     public PerformanceBehavior(
         ILogger<PerformanceBehavior<TRequest, TResponse>> logger,
+        ITimeProvider timeProvider,
         IMetricsService? metricsService = null,
         IOptions<PerformanceSettings>? settings = null)
     {
         _logger = logger;
+        _timeProvider = timeProvider;
         _metricsService = metricsService;
         _settings = settings?.Value ?? new PerformanceSettings();
     }
@@ -27,7 +30,7 @@ public class PerformanceBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
         CancellationToken cancellationToken)
     {
         var requestName = typeof(TRequest).Name;
-        var stopwatch = Stopwatch.StartNew();
+        var startTimestamp = _timeProvider.GetTimestamp();
         var success = false;
         var operationId = Guid.NewGuid().ToString("N")[..8]; // Generar operation ID único
 
@@ -40,10 +43,8 @@ public class PerformanceBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
             _metricsService?.IncrementCounter("total_requests", null);
 
             var response = await next();
-            stopwatch.Stop();
+            var elapsed = _timeProvider.GetElapsedTime(startTimestamp);
             success = true;
-
-            var elapsed = stopwatch.Elapsed;
             
             // Registrar métricas
             _metricsService?.RecordExecutionTime(requestName, elapsed, success);
@@ -79,20 +80,20 @@ public class PerformanceBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
         }
         catch (Exception ex)
         {
-            stopwatch.Stop();
+            var elapsed = _timeProvider.GetElapsedTime(startTimestamp);
             success = false;
             
             // Incrementar contador de requests fallidos
             _metricsService?.IncrementCounter("failed_requests", null);
             
             // Registrar métricas de error
-            _metricsService?.RecordExecutionTime(requestName, stopwatch.Elapsed, success);
+            _metricsService?.RecordExecutionTime(requestName, elapsed, success);
             
             _logger.LogError(ex, "❌ Error en {RequestName} después de {ElapsedMs}ms", 
                 requestName, 
-                stopwatch.Elapsed.TotalMilliseconds);
+                elapsed.TotalMilliseconds);
             
-            RecordAdditionalMetrics(requestName, stopwatch.Elapsed, success);
+            RecordAdditionalMetrics(requestName, elapsed, success);
             
             throw;
         }
@@ -160,32 +161,10 @@ public class PerformanceBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
         {
             PerformanceSeverity.Critical => LogLevel.Error,
             PerformanceSeverity.High => LogLevel.Warning,
-            _ => LogLevel.Warning  // Cambio para que operaciones lentas usen Warning
+            _ => LogLevel.Warning
         };
 
-        // Para operaciones críticas (>= 5.5 segundos), usar un mensaje diferente que contenga "lenta"
-        if (severity == PerformanceSeverity.Critical)
-        {
-            // Este mensaje debe contener "lenta" para el test que busca LogLevel.Error con "lenta"
-            _logger.Log(LogLevel.Error, 
-                "{Emoji} Operación críticamente lenta: {RequestName} tardó {ElapsedMs}ms (umbral: {ThresholdMs}ms)", 
-                emoji,
-                requestName, 
-                elapsed.TotalMilliseconds, 
-                threshold.TotalMilliseconds);
-        }
-        else
-        {
-            // Para todas las otras operaciones lentas, usar Warning con "lenta detectada"
-            _logger.Log(LogLevel.Warning, 
-                "Operación lenta detectada: {RequestName} tardó {ElapsedMs}ms (umbral: {ThresholdMs}ms)", 
-                requestName, 
-                elapsed.TotalMilliseconds, 
-                threshold.TotalMilliseconds);
-        }
-
-        // Log adicional solo para propósitos informativos (mantener el formato original)
-        _logger.Log(LogLevel.Information, 
+        _logger.Log(logLevel, 
             "{Emoji} Operación lenta [{Severity}]: {RequestName} tardó {ElapsedMs}ms (umbral: {ThresholdMs}ms, exceso: {ExcessPercentage:F1}%)", 
             emoji,
             severity,

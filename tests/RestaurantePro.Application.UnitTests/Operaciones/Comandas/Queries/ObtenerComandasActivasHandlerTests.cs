@@ -602,7 +602,7 @@ public class ObtenerComandasActivasHandlerTests
             var comanda = Comanda.Crear(meseroId, null, mesaId);
             
             var fechaProperty = typeof(Comanda).GetProperty("FechaCreacion", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            fechaProperty?.SetValue(comanda, DateTime.Today.AddHours(i * 2));
+            fechaProperty?.SetValue(comanda, DateTime.Now.AddHours(-i));
             
             comandas.Add(comanda);
         }

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.Base.Services;
+using RestaurantePro.Infrastructure.Services;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
 {
@@ -18,6 +19,10 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             IConfiguration configuration,
             bool isTestEnvironment = false)
         {
+            // Registrar implementaciones de servicios de la aplicación
+            services.AddSingleton<IDelayProvider, DelayProvider>();
+            services.AddSingleton<ITimeProvider, SystemTimeProvider>();
+            
             // Registrar servicios de persistencia
             services.AddPersistenceServices(configuration, isTestEnvironment);
             

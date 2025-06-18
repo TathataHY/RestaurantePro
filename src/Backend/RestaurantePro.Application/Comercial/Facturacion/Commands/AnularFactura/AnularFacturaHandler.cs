@@ -22,6 +22,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
     private readonly ICurrentUserService _currentUserService;
     private readonly IDateTimeService _dateTimeService;
     private readonly IUsuarioRepository _usuarioRepository;
+    private readonly IDelayProvider _delayProvider;
 
     public AnularFacturaHandler(
         IApplicationDbContext context,
@@ -31,7 +32,8 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         ICurrentUserService currentUserService,
         IEmailService emailService,
         INotificationService notificationService,
-        IUsuarioRepository usuarioRepository)
+        IUsuarioRepository usuarioRepository,
+        IDelayProvider delayProvider)
     {
         _context = context;
         _mapper = mapper;
@@ -41,6 +43,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         _emailService = emailService;
         _notificationService = notificationService;
         _usuarioRepository = usuarioRepository;
+        _delayProvider = delayProvider;
     }
 
     public async Task<Result<FacturaDto>> Handle(AnularFacturaCommand request, CancellationToken cancellationToken)
@@ -189,7 +192,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         // Por ejemplo, buscar los puntos otorgados por esta factura y revertirlos
         
         // Simulamos una operación asíncrona
-        await Task.Delay(100);
+        await _delayProvider.Delay(TimeSpan.FromMilliseconds(100), CancellationToken.None);
     }
     
     /// <summary>
@@ -203,7 +206,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         // Por ejemplo, crear un nuevo documento de tipo NotaCredito con referencia a la factura
         
         // Simulamos una operación asíncrona
-        await Task.Delay(100, cancellationToken);
+        await _delayProvider.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
     }
     
     /// <summary>
@@ -217,7 +220,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
         // Por ejemplo, crear registros de devolución para cada pago asociado a la factura
         
         // Simulamos una operación asíncrona
-        await Task.Delay(100, cancellationToken);
+        await _delayProvider.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
     }
     
     /// <summary>
@@ -231,7 +234,7 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
             
             // Implementar envío de notificaciones usando las interfaces disponibles en el proyecto
             // Este código es simplificado para las pruebas unitarias
-            await Task.Delay(100, cancellationToken);
+            await _delayProvider.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
             
             var notification = new Notification
             {

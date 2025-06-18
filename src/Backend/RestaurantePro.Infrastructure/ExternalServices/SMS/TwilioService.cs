@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
+using System.Threading;
 
 namespace RestaurantePro.Infrastructure.ExternalServices.SMS
 {
@@ -16,18 +17,21 @@ namespace RestaurantePro.Infrastructure.ExternalServices.SMS
         private readonly string _accountSid;
         private readonly string _authToken;
         private readonly string _fromNumber;
+        private readonly IDelayProvider _delayProvider;
         
         /// <summary>
         /// Constructor para TwilioService
         /// </summary>
         public TwilioService(
             IConfiguration configuration,
-            ILogger<TwilioService> logger)
+            ILogger<TwilioService> logger,
+            IDelayProvider delayProvider)
         {
             _logger = logger;
             _accountSid = configuration["Twilio:AccountSid"];
             _authToken = configuration["Twilio:AuthToken"];
             _fromNumber = configuration["Twilio:FromNumber"];
+            _delayProvider = delayProvider;
             
             // Para implementación futura:
             // TwilioClient.Init(_accountSid, _authToken);
@@ -58,7 +62,7 @@ namespace RestaurantePro.Infrastructure.ExternalServices.SMS
             */
             
             // Implementación simulada
-            await Task.Delay(300); // Simular latencia de red
+            await _delayProvider.Delay(TimeSpan.FromMilliseconds(300), CancellationToken.None); // Simular latencia de red
             var messageId = $"SM{Guid.NewGuid().ToString("N").Substring(0, 20)}";
             _logger.LogInformation("Simulación: SMS enviado con ID {MessageId}", messageId);
             
@@ -74,7 +78,7 @@ namespace RestaurantePro.Infrastructure.ExternalServices.SMS
                 phoneNumber, clienteId, tipoNotificacion);
             
             // Implementación simulada
-            await Task.Delay(300); // Simular latencia de red
+            await _delayProvider.Delay(TimeSpan.FromMilliseconds(300), CancellationToken.None); // Simular latencia de red
             var messageId = $"SM{Guid.NewGuid().ToString("N").Substring(0, 20)}";
             _logger.LogInformation("Simulación: SMS con tracking enviado con ID {MessageId}", messageId);
             
@@ -89,7 +93,7 @@ namespace RestaurantePro.Infrastructure.ExternalServices.SMS
             _logger.LogInformation("Enviando SMS masivo a {CantidadDestinatarios} destinatarios", phoneNumbers.Count);
             
             // Implementación simulada
-            await Task.Delay(500); // Simular latencia de red
+            await _delayProvider.Delay(TimeSpan.FromMilliseconds(500), CancellationToken.None); // Simular latencia de red
             _logger.LogInformation("Simulación: SMS masivo enviado a {CantidadDestinatarios} destinatarios", phoneNumbers.Count);
             
             return true;
@@ -131,7 +135,7 @@ namespace RestaurantePro.Infrastructure.ExternalServices.SMS
             */
             
             // Implementación simulada
-            await Task.Delay(200); // Simular latencia de red
+            await _delayProvider.Delay(TimeSpan.FromMilliseconds(200), CancellationToken.None); // Simular latencia de red
             var estados = new[] { "delivered", "sent", "queued", "failed" };
             var estado = estados[new Random().Next(estados.Length)];
             
