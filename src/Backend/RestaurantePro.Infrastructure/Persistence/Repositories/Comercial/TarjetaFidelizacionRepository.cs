@@ -178,8 +178,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
                 .Where(t => 
                     t.Estado == EstadoTarjeta.Activa &&
                     t.FechaExpiracion != null &&
-                    t.FechaExpiracion <= fechaExpiracion &&
-                    t.FechaExpiracion > DateTime.UtcNow
+                    t.FechaExpiracion <= fechaExpiracion
                 )
                 .ToListAsync(cancellationToken);
         }

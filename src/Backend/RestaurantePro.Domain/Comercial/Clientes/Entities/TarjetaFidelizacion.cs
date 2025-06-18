@@ -1,3 +1,7 @@
+using RestaurantePro.Domain.Comercial.Clientes.Events.TarjetaFidelizacion;
+using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Domain.Core.SharedKernel;
+
 namespace RestaurantePro.Domain.Comercial.Clientes.Entities
 {
     /// <summary>
@@ -306,12 +310,14 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
             if (puntos <= 0)
                 throw new ArgumentException("La cantidad de puntos debe ser mayor a cero", nameof(puntos));
 
-            if (PuntosDisponibles < puntos)
-                throw new InvalidOperationException($"Puntos insuficientes. Disponibles: {PuntosDisponibles}, Solicitados: {puntos}");
+            if (puntos > PuntosDisponibles)
+                puntos = PuntosDisponibles;
 
             PuntosDisponibles -= puntos;
             MarkAsModified();
             ValidarInvariantes();
+
+            // AddDomainEvent(new PuntosExpirados(Id, puntos, PuntosDisponibles));
 
             // Registramos en el historial
             var historial = Comercial.Clientes.Entities.HistorialPuntos.CrearRegistroVencidos(Id, puntos, concepto);

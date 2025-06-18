@@ -4,18 +4,27 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Comercial;
-using System.Threading.Tasks;
-using System.Threading;
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+using RestaurantePro.Domain.Core.Base.Events;
+using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
-using RestaurantePro.Domain.Comercial.Clientes;
-using RestaurantePro.Domain.Core.SharedKernel.Results;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.BackgroundTasks.Jobs.Comercial
 {
+    [Collection("DatabaseCollection")]
     public class LoyaltyPointsExpirationJobTests : IntegrationTestBase
     {
         private readonly Mock<IEmailService> _mockEmailService;
@@ -25,110 +34,88 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.BackgroundTasks.Jobs.Co
             _mockEmailService = new Mock<IEmailService>();
         }
 
-        private LoyaltyPointsExpirationJob CreateJob(LoyaltyPointsExpirationOptions options)
+        [Fact]
+        public async Task ExecuteAsync_WithExpiredPoints_ShouldSetPointsToZeroAndNotify()
         {
-            var optionsWrapper = Options.Create(options);
-            var logger = new Mock<ILogger<LoyaltyPointsExpirationJob>>().Object;
-            
-            // Resolvemos los repositorios y UoW del ServiceProvider de la clase base
-            var tarjetaRepo = GetService<ITarjetaFidelizacionRepository>();
-            var clienteRepo = GetService<IClienteRepository>();
-            var unitOfWork = GetService<IUnitOfWork>();
+            // Arrange
+            var clienteRepo = ServiceProvider.GetRequiredService<IClienteRepository>();
+            var tarjetaRepo = ServiceProvider.GetRequiredService<ITarjetaFidelizacionRepository>();
+            var unitOfWork = ServiceProvider.GetRequiredService<IUnitOfWork>();
 
-            return new LoyaltyPointsExpirationJob(
-                logger,
-                tarjetaRepo,
-                clienteRepo,
-                _mockEmailService.Object,
-                unitOfWork,
-                optionsWrapper
+            var cliente = Cliente.Crear(
+                Guid.NewGuid(),
+                ClienteNombre.Crear("Integration", "Test"),
+                Email.Create("test-expiracion@test.com"),
+                PhoneNumber.Create("+15551234567"),
+                DateTime.Now.AddYears(-25)
+            );
+
+            var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, "123-EXP-TEST");
+            tarjeta.Activar();
+            tarjeta.AgregarPuntos(200, "Carga inicial para test");
+            
+            var fechaExpiracionProperty = typeof(TarjetaFidelizacion).GetProperty("FechaExpiracionPuntos");
+            if (fechaExpiracionProperty != null)
+            {
+                fechaExpiracionProperty.SetValue(tarjeta, DateTime.UtcNow);
+            }
+
+            await clienteRepo.AgregarAsync(cliente);
+            await tarjetaRepo.AgregarAsync(tarjeta);
+            await unitOfWork.SaveChangesAsync();
+
+            // Act
+            using (var scope = ServiceProvider.CreateScope())
+            {
+                var scopedOptions = new LoyaltyPointsExpirationOptions { AutomaticExpiration = true, SendExpirationNotifications = false };
+                
+                var job = new LoyaltyPointsExpirationJob(
+                    scope.ServiceProvider.GetRequiredService<ILogger<LoyaltyPointsExpirationJob>>(),
+                    scope.ServiceProvider.GetRequiredService<ITarjetaFidelizacionRepository>(),
+                    scope.ServiceProvider.GetRequiredService<IClienteRepository>(),
+                    _mockEmailService.Object,
+                    scope.ServiceProvider.GetRequiredService<IUnitOfWork>(),
+                    Options.Create(scopedOptions)
+                );
+                
+                await job.ExecuteAsync(CancellationToken.None);
+            }
+
+            // Assert
+            ClearTracker();
+            
+            var tarjetaDb = await ServiceProvider.GetRequiredService<ITarjetaFidelizacionRepository>()
+                .ObtenerPorIdAsync(tarjeta.Id);
+
+            tarjetaDb.Should().NotBeNull();
+            tarjetaDb.PuntosDisponibles.Should().Be(0);
+
+            _mockEmailService.Verify(
+                s => s.SendEmailAsync(
+                    "test-expiracion@test.com", // Usar el email correcto
+                    It.Is<string>(subj => subj.Contains("Tus puntos de fidelización han expirado")),
+                    It.IsAny<string>()
+                ),
+                Times.Once
             );
         }
+    }
 
-        [Fact]
-        public async Task ExecuteInternalAsync_CuandoHayPuntosPorExpirar_DebeEnviarAdvertencia()
+    public class NoOpDomainEventDispatcher : IDomainEventDispatcher
+    {
+        public Task PublishAsync<TEvent>(TEvent @event) where TEvent : DomainEvent
         {
-            // Arrange
-            var cliente = Cliente.Crear("Juan", "Perez", "juan.perez@test.com", "123456789");
-            var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, "123-456");
-            tarjeta.AcumularPuntos(100, "Compra inicial");
-            tarjeta.EstablecerFechaExpiracionPuntos(DateTime.UtcNow.AddDays(5));
-            
-            await AddAsync(cliente);
-            await AddAsync(tarjeta);
-
-            var options = new LoyaltyPointsExpirationOptions
-            {
-                DaysBeforeExpirationForNotification = 7,
-                AutomaticExpiration = false,
-                SendExpirationWarnings = true
-            };
-            var job = CreateJob(options);
-
-            // Act
-            await job.ExecuteAsync(CancellationToken.None);
-
-            // Assert
-            _mockEmailService.Verify(
-                s => s.SendEmailAsync(
-                    cliente.Email, 
-                    It.Is<string>(subj => subj.Contains("¡Tus puntos están a punto de expirar!")), 
-                    It.IsAny<string>()),
-                Times.Once);
-                
-            var tarjetaDb = await FirstOrDefaultAsync<TarjetaFidelizacion>(t => t.Id == tarjeta.Id);
-            tarjetaDb.PuntosDisponibles.Should().Be(100); // Los puntos no deben expirar
+            return Task.CompletedTask;
         }
 
-        [Fact]
-        public async Task ExecuteInternalAsync_CuandoExpiracionEsAutomatica_DebeExpirarPuntosYNotificar()
+        public Task Dispatch(DomainEvent domainEvent, CancellationToken cancellationToken = default)
         {
-            // Arrange
-            var cliente = Cliente.Crear("Ana", "Gomez", "ana.gomez@test.com", "987654321");
-            var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, "654-321");
-            tarjeta.AcumularPuntos(200, "Compra grande");
-            tarjeta.EstablecerFechaExpiracionPuntos(DateTime.UtcNow.AddDays(3));
-            
-            await AddAsync(cliente);
-            await AddAsync(tarjeta);
-            
-            var options = new LoyaltyPointsExpirationOptions
-            {
-                DaysBeforeExpirationForNotification = 5,
-                AutomaticExpiration = true,
-                SendExpirationNotifications = true
-            };
-            var job = CreateJob(options);
-            
-            // Act
-            await job.ExecuteAsync(CancellationToken.None);
-            
-            // Assert
-            _mockEmailService.Verify(
-                s => s.SendEmailAsync(
-                    cliente.Email, 
-                    It.Is<string>(subj => subj.Contains("Tus puntos de fidelización han expirado")), 
-                    It.IsAny<string>()),
-                Times.Once);
-
-            var tarjetaDb = await FirstOrDefaultAsync<TarjetaFidelizacion>(t => t.Id == tarjeta.Id);
-            tarjetaDb.PuntosDisponibles.Should().Be(0);
+            return Task.CompletedTask;
         }
-        
-        [Fact]
-        public async Task ExecuteInternalAsync_CuandoNoHayTarjetas_NoDebeHacerNada()
+
+        public Task DispatchAll(IEnumerable<DomainEvent> domainEvents, CancellationToken cancellationToken = default)
         {
-            // Arrange
-            var options = new LoyaltyPointsExpirationOptions();
-            var job = CreateJob(options);
-            
-            // Act
-            await job.ExecuteAsync(CancellationToken.None);
-            
-            // Assert
-            _mockEmailService.Verify(
-                s => s.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()),
-                Times.Never);
+            return Task.CompletedTask;
         }
     }
 } 

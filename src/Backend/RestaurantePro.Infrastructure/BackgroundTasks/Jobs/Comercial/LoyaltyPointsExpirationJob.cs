@@ -78,7 +78,8 @@ public class LoyaltyPointsExpirationJob : BackgroundJobBase
                     // Expirar puntos automáticamente
                     int puntosAExpirar = tarjeta.PuntosDisponibles;
                     tarjeta.ExpirarPuntos(puntosAExpirar, "Expiración automática de puntos");
-                    await _unitOfWork.GuardarCambiosAsync(cancellationToken);
+                    
+                    _unitOfWork.Set<TarjetaFidelizacion>().Update(tarjeta);
                     
                     _logger.LogInformation("Puntos expirados automáticamente para la tarjeta {TarjetaId}", tarjeta.Id);
                     
@@ -108,6 +109,8 @@ public class LoyaltyPointsExpirationJob : BackgroundJobBase
                 _logger.LogError(ex, "Error al procesar tarjeta {TarjetaId}: {Error}", tarjeta.Id, ex.Message);
             }
         }
+        
+        await _unitOfWork.GuardarCambiosAsync(cancellationToken);
     }
 }
 

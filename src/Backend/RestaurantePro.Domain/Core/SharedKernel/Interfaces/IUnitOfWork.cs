@@ -1,3 +1,6 @@
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+
 namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
 {
     /// <summary>
@@ -86,5 +89,7 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Número de entidades afectadas</returns>
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+        DbSet<TEntity> Set<TEntity>() where TEntity : class;
     }
 }

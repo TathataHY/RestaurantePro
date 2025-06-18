@@ -65,6 +65,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 
         public virtual async Task InitializeAsync()
         {
+            _fixture.Connection.Open();
             TestEnvironment.SetTestEnvironment(true);
 
             // Construir configuración en memoria para pruebas
@@ -214,6 +215,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 
         public virtual Task DisposeAsync()
         {
+            _fixture.Connection.Close();
             _scope?.Dispose();
             return Task.CompletedTask;
         }
