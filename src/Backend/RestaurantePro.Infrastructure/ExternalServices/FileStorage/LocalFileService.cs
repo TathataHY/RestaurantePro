@@ -46,15 +46,14 @@ namespace RestaurantePro.Infrastructure.ExternalServices.FileStorage
         {
             try
             {
-                var rutaCompleta = Path.Combine(_baseDirectory, ruta.TrimStart('/'));
-                var directorio = Path.GetDirectoryName(rutaCompleta);
+                var directorioDestino = Path.Combine(_baseDirectory, ruta.TrimStart('/'));
                 
-                if (!string.IsNullOrEmpty(directorio) && !Directory.Exists(directorio))
+                if (!Directory.Exists(directorioDestino))
                 {
-                    Directory.CreateDirectory(directorio);
+                    Directory.CreateDirectory(directorioDestino);
                 }
                 
-                var archivoRuta = Path.Combine(rutaCompleta, archivo.NombreArchivo);
+                var archivoRuta = Path.Combine(directorioDestino, archivo.NombreArchivo);
                 
                 await File.WriteAllBytesAsync(archivoRuta, archivo.Contenido, cancellationToken);
                 

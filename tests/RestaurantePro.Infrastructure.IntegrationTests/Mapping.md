@@ -121,8 +121,8 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/✅` TwilioService - Servicio para envío de SMS con Twilio
 
 ### FileStorage
-- `✅/⬜` LocalFileService - Servicio para almacenamiento local de archivos
-- `✅/⬜` AzureBlobService - Servicio para almacenamiento en Azure Blob Storage
+- `✅/✅` LocalFileService - Servicio para almacenamiento local de archivos
+- `✅/✅` AzureBlobService - Servicio para almacenamiento en Azure Blob Storage
 
 ## BackgroundTasks
 
