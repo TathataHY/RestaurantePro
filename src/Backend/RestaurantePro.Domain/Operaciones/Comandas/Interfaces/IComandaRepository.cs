@@ -151,5 +151,11 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tupla con comandas activas y total de elementos</returns>
         Task<(IEnumerable<Comanda> Comandas, int Total)> ObtenerComandasActivasAsync(Dictionary<string, object> criterios, int pagina, int elementosPorPagina, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene las comandas activas
+        /// </summary>
+        /// <returns>Lista de comandas activas</returns>
+        Task<IEnumerable<Comanda>> ObtenerComandasActivasAsync(CancellationToken cancellationToken = default);
     }
 }

@@ -8,28 +8,42 @@ using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using System;
 using System.Threading.Tasks;
 using Xunit;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Base
 {
-    public class UnitOfWorkTests : IntegrationTestBase
+    public class UnitOfWorkTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly UnitOfWork _unitOfWork;
+        private UnitOfWork _unitOfWork = null!;
         private readonly Guid _categoriaId = Guid.NewGuid();
 
         public UnitOfWorkTests(DatabaseFixture fixture) : base(fixture)
         {
+        }
+
+        public override async Task InitializeAsync()
+        {
+            await base.InitializeAsync();
             _unitOfWork = ServiceProvider.GetRequiredService<IUnitOfWork>() as UnitOfWork;
+        }
+
+        public override Task DisposeAsync()
+        {
+            return base.DisposeAsync();
         }
 
         [Fact]
         public async Task SaveChangesAsync_DebeGuardarLosCambiosEnLaBaseDeDatos()
         {
             // Arrange
+            var categoria = ProductoCategoria.Crear("Bebidas", "Bebidas sin alcohol", 1);
+            await DbContext.AddAsync(categoria);
+
             var nuevoProducto = Producto.Crear(
                 "Producto de Prueba",
                 "Descripción de prueba",
                 new PrecioProducto(10.0m),
-                _categoriaId,
+                categoria.Id,
                 "Bebidas"
             );
             await DbContext.AddAsync(nuevoProducto);

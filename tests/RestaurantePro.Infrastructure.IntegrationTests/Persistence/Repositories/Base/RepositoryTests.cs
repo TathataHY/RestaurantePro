@@ -6,21 +6,32 @@ using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using System.Threading.Tasks;
 using Xunit;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Base
 {
-    public class RepositoryTests : IntegrationTestBase
+    public class RepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly Repository<TestEntity> _repository;
-        private readonly Repository<NonAuditableTestEntity> _nonAuditableRepository;
+        private Repository<TestEntity> _repository = null!;
+        private Repository<NonAuditableTestEntity> _nonAuditableRepository = null!;
         
         public RepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
+        }
+
+        public override async Task InitializeAsync()
+        {
+            await base.InitializeAsync();
             var loggerMock = new Mock<ILogger<Repository<TestEntity>>>();
             _repository = new Repository<TestEntity>(DbContext, loggerMock.Object);
 
             var nonAuditableLoggerMock = new Mock<ILogger<Repository<NonAuditableTestEntity>>>();
             _nonAuditableRepository = new Repository<NonAuditableTestEntity>(DbContext, nonAuditableLoggerMock.Object);
+        }
+
+        public override Task DisposeAsync()
+        {
+            return base.DisposeAsync();
         }
 
         [Fact]

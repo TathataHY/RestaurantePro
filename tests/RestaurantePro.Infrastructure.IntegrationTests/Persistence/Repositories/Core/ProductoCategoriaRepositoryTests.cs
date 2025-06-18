@@ -7,18 +7,29 @@ using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Core
 {
-    public class ProductoCategoriaRepositoryTests : IntegrationTestBase
+    public class ProductoCategoriaRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly IProductoCategoriaRepository _repository;
-        private readonly IUnitOfWork _unitOfWork;
+        private IProductoCategoriaRepository _repository = null!;
+        private IUnitOfWork _unitOfWork = null!;
 
         public ProductoCategoriaRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
+        }
+
+        public override async Task InitializeAsync()
+        {
+            await base.InitializeAsync();
             _repository = ServiceProvider.GetRequiredService<IProductoCategoriaRepository>();
             _unitOfWork = ServiceProvider.GetRequiredService<IUnitOfWork>();
+        }
+
+        public override Task DisposeAsync()
+        {
+            return base.DisposeAsync();
         }
 
         [Fact]

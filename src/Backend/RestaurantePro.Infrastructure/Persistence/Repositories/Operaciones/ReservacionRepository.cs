@@ -167,14 +167,17 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             // 2. Filtrar las mesas que ya tienen reservaciones en ese horario
             var duracion = TimeSpan.FromMinutes(duracionMinutos);
             
-            var mesasReservadas = await _dbSet
+            var reservacionesEnFecha = await _dbSet
                 .Where(r => mesasPosibles.Contains(r.MesaId) &&
                             r.Fecha == fecha.Date &&
-                           (r.Estado == EstadoReservacion.Confirmada || r.Estado == EstadoReservacion.Pendiente) &&
-                           (r.Hora < hora.Add(duracion) && r.Hora.Add(r.DuracionEstimada) > hora))
+                           (r.Estado == EstadoReservacion.Confirmada || r.Estado == EstadoReservacion.Pendiente))
+                .ToListAsync(cancellationToken);
+
+            var mesasReservadas = reservacionesEnFecha
+                .Where(r => r.Hora < hora.Add(duracion) && r.Hora.Add(r.DuracionEstimada) > hora)
                 .Select(r => r.MesaId)
                 .Distinct()
-                .ToListAsync(cancellationToken);
+                .ToList();
                 
             // 3. Devolver las mesas disponibles (las posibles menos las reservadas)
             return mesasPosibles.Except(mesasReservadas);

@@ -97,6 +97,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             Subtotal = cantidad * precioUnitario;
             Observaciones = observaciones ?? string.Empty;
             Estado = EstadoItemComanda.Pendiente;
+            MotivoCancelacion = string.Empty;
             
             // No emitimos evento de creación, la comanda ya lo hace
         }
@@ -113,7 +114,10 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// <returns>Nuevo ItemComanda</returns>
         public static ItemComanda Crear(Guid comandaId, Guid productoId, string nombreProducto, int cantidad, decimal precioUnitario, string observaciones = "")
         {
-            var item = new ItemComanda(comandaId, productoId, cantidad, precioUnitario, observaciones);
+            var item = new ItemComanda(comandaId, productoId, cantidad, precioUnitario, observaciones)
+            {
+                MotivoCancelacion = string.Empty
+            };
             
             // Emitir evento de ítem de comanda creado
             item.AddDomainEvent(new Events.ItemComanda.ItemComandaCreado(

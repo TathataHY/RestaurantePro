@@ -45,7 +45,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         /// </summary>
         public async Task<IEnumerable<PreparacionDiaria>> ObtenerPreparacionesDelDiaAsync(CancellationToken cancellationToken = default)
         {
-            var fechaActual = _dateTimeService.Now.Date;
+            var fechaActual = _dateTimeService.UtcNow.Date;
             
             return await _dbContext.Set<PreparacionDiaria>()
                 .Where(p => p.FechaPreparacion.Date == fechaActual)
@@ -78,15 +78,14 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         /// <summary>
         /// Obtiene preparaciones que vencen en un rango de tiempo específico
         /// </summary>
+        /// <param name="horasAnticipacion">Número de horas de anticipación para considerar una preparación como "por vencer"</param>
         public async Task<IEnumerable<PreparacionDiaria>> ObtenerPorVencerAsync(int horasAnticipacion = 2, CancellationToken cancellationToken = default)
         {
-            var fechaActual = _dateTimeService.Now;
-            var fechaLimite = fechaActual.AddHours(horasAnticipacion);
-            
+            var ahora = _dateTimeService.UtcNow;
+            var fechaLimite = ahora.AddHours(horasAnticipacion);
+
             return await _dbContext.Set<PreparacionDiaria>()
-                .Where(p => p.FechaVencimiento > fechaActual && 
-                            p.FechaVencimiento <= fechaLimite &&
-                            (p.Estado == EstadoPreparacion.Disponible || p.Estado == EstadoPreparacion.PorVencer))
+                .Where(p => (p.Estado == EstadoPreparacion.Disponible || p.Estado == EstadoPreparacion.PorVencer) && p.FechaVencimiento <= fechaLimite && p.FechaVencimiento > ahora)
                 .ToListAsync(cancellationToken);
         }
         

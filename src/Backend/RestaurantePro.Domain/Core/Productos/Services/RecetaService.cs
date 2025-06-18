@@ -5,7 +5,6 @@ namespace RestaurantePro.Domain.Core.Productos.Services
     /// </summary>
     public class RecetaService : IRecetaService
     {
-        private readonly IRecetaRepository _recetaRepository;
         private readonly IProductoRepository _productoRepository;
         private readonly IIngredienteRepository _ingredienteRepository;
         private readonly INotificationManager _notificationManager;
@@ -13,17 +12,14 @@ namespace RestaurantePro.Domain.Core.Productos.Services
         /// <summary>
         /// Constructor del servicio de recetas
         /// </summary>
-        /// <param name="recetaRepository">Repositorio de recetas</param>
         /// <param name="productoRepository">Repositorio de productos</param>
         /// <param name="ingredienteRepository">Repositorio de ingredientes</param>
         /// <param name="notificationManager">Gestor de notificaciones para validaciones</param>
         public RecetaService(
-            IRecetaRepository recetaRepository,
             IProductoRepository productoRepository,
             IIngredienteRepository ingredienteRepository,
             INotificationManager notificationManager)
         {
-            _recetaRepository = recetaRepository ?? throw new ArgumentNullException(nameof(recetaRepository));
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
             _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
@@ -48,7 +44,7 @@ namespace RestaurantePro.Domain.Core.Productos.Services
             }
 
             // Obtener la receta del producto
-            var receta = await _recetaRepository.ObtenerPorProductoIdAsync(productoId, cancellationToken);
+            var receta = producto.Recetas.FirstOrDefault();
             if (receta == null)
             {
                 // Si no hay receta, regresamos un diccionario vacío
@@ -248,7 +244,7 @@ namespace RestaurantePro.Domain.Core.Productos.Services
             }
             
             // Obtener la receta del producto
-            var receta = await _recetaRepository.ObtenerPorProductoIdAsync(productoId, cancellationToken);
+            var receta = producto.Recetas.FirstOrDefault();
             if (receta == null || !receta.Ingredientes.Any())
             {
                 // Si no hay receta o no tiene ingredientes, el costo es cero

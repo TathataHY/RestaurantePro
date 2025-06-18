@@ -7,7 +7,6 @@ namespace RestaurantePro.Domain.Core.Services
     public class CoreOperacionesIntegrationService : ICoreOperacionesIntegrationService
     {
         private readonly Productos.Interfaces.IProductoRepository _productoRepository;
-        private readonly Productos.Interfaces.IRecetaRepository _recetaRepository;
         private readonly Productos.Services.IRecetaService _recetaService;
         private readonly SharedKernel.Validation.INotificationManager _notificationManager;
         private readonly IDateTimeService _dateTimeService;
@@ -17,13 +16,11 @@ namespace RestaurantePro.Domain.Core.Services
         /// </summary>
         public CoreOperacionesIntegrationService(
             Productos.Interfaces.IProductoRepository productoRepository,
-            Productos.Interfaces.IRecetaRepository recetaRepository,
             Productos.Services.IRecetaService recetaService,
             SharedKernel.Validation.INotificationManager notificationManager,
             IDateTimeService dateTimeService)
         {
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
-            _recetaRepository = recetaRepository ?? throw new ArgumentNullException(nameof(recetaRepository));
             _recetaService = recetaService ?? throw new ArgumentNullException(nameof(recetaService));
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));

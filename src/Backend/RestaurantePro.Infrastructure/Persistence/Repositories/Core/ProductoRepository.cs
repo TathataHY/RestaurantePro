@@ -52,7 +52,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
 
         public async Task EliminarAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            await base.EliminarPorIdAsync(id, cancellationToken);
+            var producto = await _dbSet.FindAsync(new object[] { id }, cancellationToken);
+            if (producto != null)
+            {
+                // No lo eliminamos, solo lo marcamos para que el interceptor actúe
+                _dbSet.Remove(producto);
+            }
         }
     }
 } 

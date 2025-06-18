@@ -52,8 +52,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             await usuarioRepository.AgregarAsync(usuario2);
             await DbContext.SaveChangesAsync();
 
-            var notificacionAntigua = Notificacion.Crear("Antigua", "Mensaje Antiguo", TipoNotificacion.Informativa, _usuarioId1);
-            notificacionAntigua.SetFechaCreacionForTesting(DateTime.UtcNow.AddDays(-10));
+            var notificacionAntigua = Notificacion.Crear("Antigua", "Mensaje Antiguo", TipoNotificacion.Informativa, _usuarioId1, null, DateTime.UtcNow.AddDays(-10));
 
             var notificaciones = new List<Notificacion>
             {

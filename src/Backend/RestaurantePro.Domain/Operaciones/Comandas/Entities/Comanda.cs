@@ -152,17 +152,22 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// <returns>Una nueva instancia de Comanda en estado Creada</returns>
         public static Comanda Crear(Guid meseroId, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null, string? numeroComanda = null)
         {
+            return Crear(meseroId, DateTime.Now, clienteId, mesaId, observaciones, numeroComanda);
+        }
+
+        public static Comanda Crear(Guid meseroId, DateTime fechaCreacion, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null, string? numeroComanda = null)
+        {
             var comanda = new Comanda
             {
                 Id = Guid.NewGuid(),
                 MesaId = mesaId ?? Guid.Empty,
                 MeseroId = meseroId,
                 ClienteId = clienteId,
-                FechaCreacion = DateTime.Now,
+                FechaCreacion = fechaCreacion,
                 Estado = EstadoComanda.Creada,
                 Observaciones = observaciones ?? string.Empty,
                 Total = TotalComanda.Crear(0, 0),
-                NumeroComanda = numeroComanda ?? $"COM-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}"
+                NumeroComanda = numeroComanda ?? $"COM-{fechaCreacion:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}"
             };
 
             comanda.AddDomainEvent(new ComandaCreada(comanda.Id, comanda.MesaId, meseroId));

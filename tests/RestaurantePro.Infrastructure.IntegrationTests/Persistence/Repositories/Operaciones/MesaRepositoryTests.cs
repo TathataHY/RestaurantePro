@@ -13,18 +13,18 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 {
     public class MesaRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly IMesaRepository _repository;
+        private IMesaRepository _repository = null!;
         private Guid _mesaDisponibleId;
         private Guid _mesaOcupadaId;
 
         public MesaRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
-            _repository = ServiceProvider.GetRequiredService<IMesaRepository>();
         }
 
         public override async Task InitializeAsync()
         {
             await base.InitializeAsync();
+            _repository = ServiceProvider.GetRequiredService<IMesaRepository>();
             await SeedMesasAsync();
         }
 

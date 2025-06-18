@@ -168,8 +168,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
                 .GroupBy(c => c.FechaCreacion.Date)
                 .Select(g => new { Fecha = g.Key, Cantidad = g.Count() })
                 .ToListAsync(cancellationToken);
-                
-            return comandasPorDia.ToDictionary(x => x.Fecha, x => x.Cantidad);
+
+            return comandasPorDia.ToDictionary(x => DateTime.SpecifyKind(x.Fecha, DateTimeKind.Utc), x => x.Cantidad);
         }
 
         public override async Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default)

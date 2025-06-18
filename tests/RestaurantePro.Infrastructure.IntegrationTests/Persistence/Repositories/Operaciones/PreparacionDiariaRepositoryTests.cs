@@ -11,12 +11,14 @@ using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
 using System;
 using System.Threading.Tasks;
 using Xunit;
+using RestaurantePro.Application.Common.Interfaces;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositories.Operaciones
 {
     public class PreparacionDiariaRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly IPreparacionRepository _repository;
+        private IPreparacionRepository _repository = null!;
+        private IDateTimeService _dateTimeService = null!;
         private Guid _productoId;
         private Guid _chefId;
         private Guid _preparacionDisponibleId;
@@ -25,12 +27,14 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
         public PreparacionDiariaRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
-            _repository = ServiceProvider.GetRequiredService<IPreparacionRepository>();
         }
 
-        public override Task InitializeAsync()
+        public override async Task InitializeAsync()
         {
-            return base.InitializeAsync();
+            await base.InitializeAsync();
+            _repository = ServiceProvider.GetRequiredService<IPreparacionRepository>();
+            _dateTimeService = ServiceProvider.GetRequiredService<IDateTimeService>();
+            await SeedPreparacionesAsync();
         }
 
         public override Task DisposeAsync()
@@ -54,21 +58,21 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             await DbContext.AddAsync(chef);
 
             // Crear Preparaciones
-            var prepDisponible = PreparacionDiaria.Crear(_productoId, 20, _chefId, DateTime.Now.AddDays(1), "Lote de la mañana");
+            var prepDisponible = PreparacionDiaria.Crear(_productoId, 20, _chefId, _dateTimeService.UtcNow.AddDays(1), "Lote de la mañana", _dateTimeService.UtcNow);
             prepDisponible.MarcarComoDisponible();
             _preparacionDisponibleId = prepDisponible.Id;
 
-            var prepPorVencer = PreparacionDiaria.Crear(_productoId, 10, _chefId, DateTime.Now.AddHours(1), "Lote de la tarde, ¡casi se vence!");
+            var prepPorVencer = PreparacionDiaria.Crear(_productoId, 10, _chefId, _dateTimeService.UtcNow.AddHours(1), "Lote de la tarde, ¡casi se vence!", _dateTimeService.UtcNow);
             prepPorVencer.MarcarComoDisponible();
             prepPorVencer.MarcarComoPorVencer();
             _preparacionPorVencerId = prepPorVencer.Id;
             
-            var prepAgotada = PreparacionDiaria.Crear(_productoId, 5, _chefId, DateTime.Now.AddDays(2), "Lote para evento especial");
+            var prepAgotada = PreparacionDiaria.Crear(_productoId, 5, _chefId, _dateTimeService.UtcNow.AddDays(2), "Lote para evento especial", _dateTimeService.UtcNow);
             prepAgotada.MarcarComoDisponible();
             prepAgotada.ConsumirCantidad(5); // Agotarla
             _preparacionAgotadaId = prepAgotada.Id;
 
-            var prepOtroDia = PreparacionDiaria.Crear(_productoId, 15, _chefId, DateTime.Now.AddDays(3), "Preparacion para mañana", DateTime.Now.AddDays(1));
+            var prepOtroDia = PreparacionDiaria.Crear(_productoId, 15, _chefId, _dateTimeService.UtcNow.AddDays(3), "Preparacion para mañana", _dateTimeService.UtcNow.AddDays(1));
             // No la marcamos como disponible para que no aparezca en las consultas de disponibles
 
             await DbContext.AddRangeAsync(prepDisponible, prepPorVencer, prepAgotada, prepOtroDia);
@@ -96,7 +100,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             // Assert
             preparaciones.Should().NotBeNull();
             preparaciones.Should().HaveCount(3); // Disponible, Por Vencer, Agotada
-            preparaciones.Should().OnlyContain(p => p.FechaPreparacion.Date == DateTime.Today);
+            preparaciones.Should().OnlyContain(p => p.FechaPreparacion.Date == _dateTimeService.UtcNow.Date);
         }
 
         [Fact]

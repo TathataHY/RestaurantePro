@@ -1,3 +1,7 @@
+using RestaurantePro.Domain.Core.Productos.Builders;
+using RestaurantePro.Domain.Core.SharedKernel;
+using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
+
 namespace RestaurantePro.Domain.Core.Services
 {
     /// <summary>
@@ -7,10 +11,10 @@ namespace RestaurantePro.Domain.Core.Services
     {
         private readonly Productos.Interfaces.IProductoRepository _productoRepository;
         private readonly Productos.Interfaces.IProductoCategoriaRepository _productoCategoriaRepository;
-        private readonly Productos.Interfaces.IRecetaRepository _recetaRepository;
         private readonly Usuarios.Interfaces.IUsuarioRepository _usuarioRepository;
         private readonly Usuarios.Interfaces.IRolRepository _rolRepository;
         private readonly Notificaciones.Interfaces.INotificacionRepository _notificacionRepository;
+        private readonly IIngredienteRepository _ingredienteRepository;
         private readonly Productos.Services.IProductoCategoriaService _productoCategoriaService;
         private readonly Productos.Services.IRecetaService _recetaService;
         private readonly SharedKernel.Services.Notification.IEventBasedNotificationService _notificationService;
@@ -25,10 +29,10 @@ namespace RestaurantePro.Domain.Core.Services
         public CoreServiceFacade(
             Productos.Interfaces.IProductoRepository productoRepository,
             Productos.Interfaces.IProductoCategoriaRepository productoCategoriaRepository,
-            Productos.Interfaces.IRecetaRepository recetaRepository,
             Usuarios.Interfaces.IUsuarioRepository usuarioRepository,
             Usuarios.Interfaces.IRolRepository rolRepository,
             Notificaciones.Interfaces.INotificacionRepository notificacionRepository,
+            IIngredienteRepository ingredienteRepository,
             Productos.Services.IProductoCategoriaService productoCategoriaService,
             Productos.Services.IRecetaService recetaService,
             SharedKernel.Services.Notification.IEventBasedNotificationService notificationService,
@@ -39,10 +43,10 @@ namespace RestaurantePro.Domain.Core.Services
         {
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
             _productoCategoriaRepository = productoCategoriaRepository ?? throw new ArgumentNullException(nameof(productoCategoriaRepository));
-            _recetaRepository = recetaRepository ?? throw new ArgumentNullException(nameof(recetaRepository));
             _usuarioRepository = usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
             _rolRepository = rolRepository ?? throw new ArgumentNullException(nameof(rolRepository));
             _notificacionRepository = notificacionRepository ?? throw new ArgumentNullException(nameof(notificacionRepository));
+            _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
             _productoCategoriaService = productoCategoriaService ?? throw new ArgumentNullException(nameof(productoCategoriaService));
             _recetaService = recetaService ?? throw new ArgumentNullException(nameof(recetaService));
             _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
@@ -330,123 +334,59 @@ namespace RestaurantePro.Domain.Core.Services
 
         /// <inheritdoc/>
         public async Task<Result<Productos.Entities.Receta>> RegistrarRecetaProductoAsync(
-            Guid productoId, 
-            string instrucciones, 
-            int tiempoPreparacion, 
-            Dictionary<Guid, decimal> ingredientes, 
+            Guid productoId,
+            string instrucciones,
+            int tiempoPreparacion,
+            Dictionary<Guid, decimal> ingredientes,
             CancellationToken cancellationToken = default)
         {
             _notificationManager.CreateNewNotification();
-            
-            // Validaciones básicas
-            _notificationManager.Require(productoId != Guid.Empty, "El ID del producto no puede estar vacío", "ProductoId");
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(instrucciones), "Las instrucciones no pueden estar vacías", "Instrucciones");
-            _notificationManager.Require(tiempoPreparacion > 0, "El tiempo de preparación debe ser mayor a cero", "TiempoPreparacion");
-            _notificationManager.RequireNotNull(ingredientes, "La lista de ingredientes no puede ser nula", "Ingredientes");
-            
+
+            var producto = await _productoRepository.ObtenerPorIdAsync(productoId, cancellationToken);
+            if (producto == null)
+            {
+                _notificationManager.AddError($"No se encontró el producto con ID {productoId}", "ProductoId");
+                return _notificationManager.ToResult<Productos.Entities.Receta>(null);
+            }
+
+            if (producto.Recetas.Any())
+            {
+                _notificationManager.AddError("El producto ya tiene una receta asociada.", "Producto");
+                return _notificationManager.ToResult<Productos.Entities.Receta>(null);
+            }
+
+            var nuevaReceta = Productos.Entities.Receta.Crear(
+                productoId,
+                instrucciones,
+                tiempoPreparacion
+            );
+
+            if (ingredientes != null)
+            {
+                foreach (var ingrediente in ingredientes)
+                {
+                    var ingredienteDb = await _ingredienteRepository.ObtenerPorIdAsync(ingrediente.Key, false, cancellationToken);
+                    if (ingredienteDb == null)
+                    {
+                        _notificationManager.AddError($"No se encontró el ingrediente con ID {ingrediente.Key}. Será omitido.", "Ingrediente");
+                    }
+                    else
+                    {
+                        nuevaReceta.AgregarIngrediente(ingrediente.Key, ingredienteDb.Nombre, ingrediente.Value, ingredienteDb.UnidadMedida);
+                    }
+                }
+            }
+
             if (_notificationManager.HasErrors)
             {
                 return _notificationManager.ToResult<Productos.Entities.Receta>(null);
             }
             
-            try
-            {
-                // Validar que el producto existe
-                var producto = await _productoRepository.ObtenerPorIdAsync(productoId, cancellationToken);
-                if (producto == null)
-                {
-                    _notificationManager.AddError($"El producto con ID {productoId} no existe", "ProductoId");
-                    return _notificationManager.ToResult<Productos.Entities.Receta>(null);
-                }
-                
-                // Buscar si ya existe una receta para este producto
-                var receta = await _recetaRepository.ObtenerPorProductoIdAsync(productoId, cancellationToken);
-                
-                if (receta == null)
-                {
-                    // Crear nueva receta
-                    receta = Productos.Entities.Receta.Crear(productoId, instrucciones, tiempoPreparacion);
-                    
-                    // Agregar ingredientes
-                    foreach (var kvp in ingredientes)
-                    {
-                        var ingredienteId = kvp.Key;
-                        var cantidad = kvp.Value;
-                        
-                        // Verificar que la cantidad es válida
-                        if (cantidad <= 0)
-                        {
-                            _notificationManager.AddError($"La cantidad para el ingrediente {ingredienteId} debe ser mayor a cero", "Ingredientes");
-                            continue;
-                        }
-                        
-                        // Obtener nombre de ingrediente
-                        string nombreIngrediente = await ObtenerNombreIngredienteAsync(ingredienteId, cancellationToken) ?? 
-                                                  $"Ingrediente {ingredienteId.ToString().Substring(0, 4)}";
-                        
-                        // Agregar ingrediente a la receta con los parámetros requeridos
-                        receta.AgregarIngrediente(
-                            ingredienteId, 
-                            nombreIngrediente, 
-                            cantidad, 
-                            RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Gramo);
-                    }
-                    
-                    await _recetaRepository.AgregarAsync(receta, cancellationToken);
-                }
-                else
-                {
-                    // Actualizar receta existente
-                    receta.ActualizarPreparacion(instrucciones);
-                    receta.ActualizarTiempoPreparacion(tiempoPreparacion);
-                    
-                    // Eliminar ingredientes existentes uno por uno
-                    var ingredientesActuales = receta.Ingredientes.ToList();
-                    foreach (var ingrediente in ingredientesActuales)
-                    {
-                        receta.EliminarIngrediente(ingrediente.IngredienteId);
-                    }
-                    
-                    // Agregar ingredientes
-                    foreach (var kvp in ingredientes)
-                    {
-                        var ingredienteId = kvp.Key;
-                        var cantidad = kvp.Value;
-                        
-                        // Verificar que la cantidad es válida
-                        if (cantidad <= 0)
-                        {
-                            _notificationManager.AddError($"La cantidad para el ingrediente {ingredienteId} debe ser mayor a cero", "Ingredientes");
-                            continue;
-                        }
-                        
-                        // Obtener nombre de ingrediente
-                        string nombreIngrediente = await ObtenerNombreIngredienteAsync(ingredienteId, cancellationToken) ?? 
-                                                  $"Ingrediente {ingredienteId.ToString().Substring(0, 4)}";
-                        
-                        // Agregar ingrediente a la receta con los parámetros requeridos
-                        receta.AgregarIngrediente(
-                            ingredienteId, 
-                            nombreIngrediente, 
-                            cantidad, 
-                            RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Gramo);
-                    }
-                    
-                    await _recetaRepository.ActualizarAsync(receta, cancellationToken);
-                }
-                
-                if (_notificationManager.HasErrors)
-                {
-                    return _notificationManager.ToResult<Productos.Entities.Receta>(receta);
-                }
-                
-                return Result.Success(receta);
-            }
-            catch (Exception ex)
-            {
-                _notificationManager.AddError($"Error al registrar receta: {ex.Message}", "RegistrarReceta");
-                return _notificationManager.ToResult<Productos.Entities.Receta>(null);
-            }
+            producto.Recetas.Add(nuevaReceta);
+
+            await _productoRepository.ActualizarAsync(producto, cancellationToken);
+
+            return Result.Success(nuevaReceta);
         }
 
         /// <inheritdoc/>
@@ -521,6 +461,14 @@ namespace RestaurantePro.Domain.Core.Services
             // Este método podría estar en un repositorio de ingredientes, pero para simplificar lo ponemos aquí
             // Esto es solo un ejemplo, en un caso real se usaría un repositorio
             return await Task.FromResult($"Ingrediente {ingredienteId}");
+        }
+
+        // Método auxiliar para obtener unidad de medida de ingrediente
+        private async Task<RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida> ObtenerUnidadMedidaIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken)
+        {
+            // Este método podría estar en un repositorio de ingredientes, pero para simplificar lo ponemos aquí
+            // Esto es solo un ejemplo, en un caso real se usaría un repositorio
+            return RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Gramo;
         }
 
         #endregion

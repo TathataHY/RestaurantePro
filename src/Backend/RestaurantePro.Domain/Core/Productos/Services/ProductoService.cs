@@ -6,18 +6,15 @@ namespace RestaurantePro.Domain.Core.Productos.Services;
 public class ProductoService : IProductoService
 {
     private readonly IProductoRepository _productoRepository;
-    private readonly IRecetaRepository _recetaRepository;
     private readonly IIngredienteRepository _ingredienteRepository;
     private readonly ILogger<ProductoService> _logger;
 
     public ProductoService(
         IProductoRepository productoRepository,
-        IRecetaRepository recetaRepository,
         IIngredienteRepository ingredienteRepository,
         ILogger<ProductoService> logger)
     {
         _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
-        _recetaRepository = recetaRepository ?? throw new ArgumentNullException(nameof(recetaRepository));
         _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -60,7 +57,8 @@ public class ProductoService : IProductoService
         {
             _logger.LogDebug("Obteniendo receta para producto: {ProductoId}", productoId);
             
-            var receta = await _recetaRepository.ObtenerPorProductoIdAsync(productoId);
+            var producto = await _productoRepository.ObtenerPorIdAsync(productoId);
+            var receta = producto?.Recetas.FirstOrDefault();
             
             if (receta == null)
             {
@@ -151,7 +149,8 @@ public class ProductoService : IProductoService
                 productoId, cantidad);
 
             // Obtener la receta del producto
-            var receta = await _recetaRepository.ObtenerPorProductoIdAsync(productoId);
+            var producto = await _productoRepository.ObtenerPorIdAsync(productoId);
+            var receta = producto?.Recetas.FirstOrDefault();
             
             if (receta == null)
             {
@@ -302,8 +301,8 @@ public class ProductoService : IProductoService
         try
         {
             // Un producto requiere ingredientes si tiene una receta asociada
-            var receta = await _recetaRepository.ObtenerPorProductoIdAsync(productoId);
-            return receta != null && receta.Ingredientes?.Any() == true;
+            var receta = await _productoRepository.ObtenerPorIdAsync(productoId);
+            return receta != null && receta.Recetas?.Any() == true;
         }
         catch (Exception ex)
         {

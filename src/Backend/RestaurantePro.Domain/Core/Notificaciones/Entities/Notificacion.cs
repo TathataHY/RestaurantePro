@@ -57,7 +57,8 @@ namespace RestaurantePro.Domain.Core.Notificaciones.Entities
             string mensaje,
             TipoNotificacion tipo,
             Guid destinatarioId,
-            Guid? entidadRelacionadaId = null)
+            Guid? entidadRelacionadaId = null,
+            DateTime? fechaCreacion = null)
         {
             if (string.IsNullOrWhiteSpace(titulo))
                 throw new ArgumentException("El título no puede estar vacío", nameof(titulo));
@@ -72,7 +73,7 @@ namespace RestaurantePro.Domain.Core.Notificaciones.Entities
                 Tipo = tipo,
                 DestinatarioId = destinatarioId,
                 EntidadRelacionadaId = entidadRelacionadaId,
-                FechaCreacion = DateTime.UtcNow
+                FechaCreacion = fechaCreacion ?? DateTime.UtcNow
             };
             
             notificacion.AddDomainEvent(new NotificacionCreada(

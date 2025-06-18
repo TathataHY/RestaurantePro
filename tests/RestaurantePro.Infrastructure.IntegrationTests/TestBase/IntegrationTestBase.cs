@@ -30,7 +30,6 @@ using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
 using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
 using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
-using RestaurantePro.Domain.Operaciones.Recetas.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
@@ -56,7 +55,9 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             currentUserServiceMock.Setup(s => s.UserId).Returns("test-user");
 
             var dateTimeServiceMock = new Mock<IDateTimeService>();
-            dateTimeServiceMock.Setup(s => s.Now).Returns(DateTime.UtcNow);
+            var fixedDate = new DateTime(2025, 6, 18, 12, 0, 0, DateTimeKind.Utc);
+            dateTimeServiceMock.Setup(s => s.UtcNow).Returns(fixedDate);
+            dateTimeServiceMock.Setup(s => s.Now).Returns(fixedDate.ToLocalTime());
 
             var domainEventDispatcherMock = new Mock<IDomainEventDispatcher>();
             var loggerInterceptorMock = new Mock<ILogger<AuditableEntityInterceptor>>();
@@ -68,8 +69,8 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
                 options.AddInterceptors(auditableEntityInterceptor);
             });
             
-            services.AddSingleton<RestauranteProDbContext>(provider => provider.GetRequiredService<TestDbContext>());
-            services.AddSingleton<DbContext>(provider => provider.GetRequiredService<TestDbContext>());
+            services.AddScoped<RestauranteProDbContext>(provider => provider.GetRequiredService<TestDbContext>());
+            services.AddScoped<DbContext>(provider => provider.GetRequiredService<TestDbContext>());
             
             services.AddSingleton(currentUserServiceMock.Object);
             services.AddSingleton(dateTimeServiceMock.Object);
@@ -82,11 +83,13 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             services.AddSingleton(Mock.Of<ILogger<ProductoCategoriaRepository>>());
             services.AddSingleton(Mock.Of<ILogger<OrdenCompraRepository>>());
             services.AddSingleton(Mock.Of<ILogger<ProductoRepository>>());
-            services.AddSingleton(Mock.Of<ILogger<RecetaRepository>>());
+            services.AddSingleton(Mock.Of<ILogger<UnitOfWork>>());
 
             services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
             
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IUnitOfWork>(provider => 
+                new UnitOfWork(provider.GetRequiredService<TestDbContext>(), 
+                               provider.GetRequiredService<ILogger<UnitOfWork>>()));
             services.AddScoped<IClienteRepository, ClienteRepository>();
             services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
             services.AddScoped<IFacturaRepository, FacturaRepository>();
@@ -101,8 +104,10 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             services.AddScoped<IProveedorRepository, ProveedorRepository>();
             services.AddScoped<INotificacionRepository, NotificacionRepository>();
             services.AddScoped<IProductoRepository, ProductoRepository>();
-            services.AddScoped<IRecetaRepository, RecetaRepository>();
-            
+
+            services.AddSingleton<IDateTimeService>(dateTimeServiceMock.Object);
+            services.AddSingleton<ICurrentUserService>(currentUserServiceMock.Object);
+
             var serviceProviderFactory = services.BuildServiceProvider();
             _scope = serviceProviderFactory.CreateScope();
             ServiceProvider = _scope.ServiceProvider;
@@ -117,6 +122,11 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             await DbContext.Database.EnsureCreatedAsync();
         }
         
+        protected void ClearTracker()
+        {
+            DbContext.ChangeTracker.Clear();
+        }
+
         public virtual Task DisposeAsync()
         {
             _scope?.Dispose();

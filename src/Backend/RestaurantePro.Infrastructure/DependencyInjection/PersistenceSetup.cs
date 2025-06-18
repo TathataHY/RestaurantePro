@@ -108,7 +108,6 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<IProductoCategoriaRepository, ProductoCategoriaRepository>();
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddScoped<INotificacionRepository, NotificacionRepository>();
-            services.AddScoped<IRecetaRepository, RecetaRepository>();
             
             // Repositorios del dominio Comercial
             services.AddScoped<IClienteRepository, ClienteRepository>();

@@ -17,7 +17,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 {
     public class OrdenCompraRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly IOrdenCompraRepository _repository;
+        private IOrdenCompraRepository _repository = null!;
         private Guid _proveedorId;
         private Guid _ingredienteId1;
         private Guid _ingredienteId2;
@@ -27,12 +27,12 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
         public OrdenCompraRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
-            _repository = ServiceProvider.GetRequiredService<IOrdenCompraRepository>();
         }
 
         public override async Task InitializeAsync()
         {
             await base.InitializeAsync();
+            _repository = ServiceProvider.GetRequiredService<IOrdenCompraRepository>();
             await SeedDataAsync();
         }
 

@@ -16,7 +16,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 {
     public class ReservacionRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly IReservacionRepository _repository;
+        private IReservacionRepository _repository = null!;
         private Guid _clienteId;
         private Guid _mesaId1;
         private Guid _mesaId2;
@@ -24,17 +24,18 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
         public ReservacionRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
-            _repository = ServiceProvider.GetRequiredService<IReservacionRepository>();
         }
 
-        public async Task InitializeAsync()
+        public override async Task InitializeAsync()
         {
+            await base.InitializeAsync();
+            _repository = ServiceProvider.GetRequiredService<IReservacionRepository>();
             await SeedReservacionesAsync();
         }
 
-        public Task DisposeAsync()
+        public override Task DisposeAsync()
         {
-            return Task.CompletedTask;
+            return base.DisposeAsync();
         }
 
         private async Task SeedReservacionesAsync()

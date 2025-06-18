@@ -15,7 +15,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 {
     public class IngredienteRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
-        private readonly IIngredienteRepository _repository;
+        private IIngredienteRepository _repository = null!;
         private Guid _tomateId;
         private Guid _aguacateId;
         private Guid _cebollaId;
@@ -27,12 +27,12 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
         public IngredienteRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
-            _repository = ServiceProvider.GetRequiredService<IIngredienteRepository>();
         }
 
         public override async Task InitializeAsync()
         {
             await base.InitializeAsync();
+            _repository = ServiceProvider.GetRequiredService<IIngredienteRepository>();
             await SeedIngredientesAsync();
         }
 
