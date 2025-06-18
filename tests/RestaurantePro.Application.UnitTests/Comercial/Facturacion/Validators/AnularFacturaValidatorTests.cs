@@ -94,7 +94,7 @@ public class AnularFacturaValidatorTests
 
     private Factura CrearFacturaValida()
     {
-        return Factura.Crear(
+        var factura = Factura.Crear(
             "FAC-001",
             TipoFactura.Normal,
             "Cliente Test",
@@ -104,6 +104,8 @@ public class AnularFacturaValidatorTests
             new List<Guid> { Guid.NewGuid() },
             "Observaciones test"
         );
+        typeof(EntityBase).GetProperty("FechaCreacion")?.SetValue(factura, DateTime.Now);
+        return factura;
     }
 
     private Usuario CrearUsuarioValido()

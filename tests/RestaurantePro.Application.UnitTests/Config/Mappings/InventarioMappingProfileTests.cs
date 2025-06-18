@@ -366,13 +366,18 @@ public class InventarioMappingProfileTests
 
     private Ingrediente CrearIngredienteEjemplo()
     {
-        return Ingrediente.Crear(
-            "Harina de trigo",
-            "HAR-001",
-            "Harina de trigo para panadería",
+        var ingrediente = Ingrediente.Crear(
+            "Tomate",
+            "ING-001",
+            "Tomate fresco de la huerta",
             UnidadMedida.Kilogramo,
             5.0m,
-            10.0m);
+            10.0m
+        );
+        
+        typeof(RestaurantePro.Domain.Core.Base.EntityBase).GetProperty("FechaCreacion")?.SetValue(ingrediente, DateTime.UtcNow);
+
+        return ingrediente;
     }
 
     private MovimientoInventario CrearMovimientoInventarioEjemplo()

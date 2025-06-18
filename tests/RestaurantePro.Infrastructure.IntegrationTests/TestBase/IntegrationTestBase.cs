@@ -48,7 +48,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
         protected readonly DatabaseFixture _fixture;
         private IServiceScope _scope;
         protected IServiceProvider ServiceProvider;
-        protected TestDbContext DbContext;
+        protected TestDbContext DbContext = null!;
 
         protected IntegrationTestBase(DatabaseFixture fixture)
         {
@@ -77,34 +77,38 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
                 currentUserServiceMock.Object,
                 loggerSoftDeleteInterceptorMock.Object);
 
-            services.AddDbContext<TestDbContext>(options =>
-            {
-                options.UseSqlite(_fixture.Connection);
-                options.AddInterceptors(auditableEntityInterceptor, softDeleteInterceptor);
-            });
-            
-            services.AddIdentity<IdentityApplicationUser, ApplicationRole>(options =>
-            {
-                options.SignIn.RequireConfirmedAccount = true;
-                options.Password.RequireDigit = false;
-                options.Password.RequiredLength = 6;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireUppercase = false;
-                options.Password.RequireLowercase = false;
-                options.Password.RequiredUniqueChars = 0;
-            })
-            .AddRoles<ApplicationRole>()
-            .AddEntityFrameworkStores<TestDbContext>();
-            
-            services.AddScoped<RestauranteProDbContext>(provider => provider.GetRequiredService<TestDbContext>());
-            services.AddScoped<DbContext>(provider => provider.GetRequiredService<TestDbContext>());
-            
-            services.AddSingleton(currentUserServiceMock.Object);
-            services.AddSingleton(dateTimeServiceMock.Object);
-            services.AddSingleton(domainEventDispatcherMock.Object);
             services.AddSingleton(auditableEntityInterceptor);
             services.AddSingleton(softDeleteInterceptor);
+            services.AddSingleton(Mock.Of<ILogger<RestauranteProDbContext>>());
 
+            services.AddScoped(provider =>
+            {
+                var optionsBuilder = new DbContextOptionsBuilder<RestauranteProDbContext>()
+                    .UseSqlite(_fixture.Connection)
+                    .AddInterceptors(
+                        provider.GetRequiredService<AuditableEntityInterceptor>(),
+                        provider.GetRequiredService<SoftDeleteInterceptor>());
+
+                return new TestDbContext(
+                    optionsBuilder.Options,
+                    provider.GetRequiredService<ILogger<RestauranteProDbContext>>(),
+                    provider.GetRequiredService<IDomainEventDispatcher>()
+                );
+            });
+            
+            services.AddScoped<RestauranteProDbContext>(provider => provider.GetRequiredService<TestDbContext>());
+
+            services.AddIdentity<IdentityApplicationUser, ApplicationRole>()
+                .AddEntityFrameworkStores<TestDbContext>()
+                .AddRoles<ApplicationRole>()
+                .AddDefaultTokenProviders();
+            
+            services.AddScoped<DbContext>(provider => provider.GetRequiredService<TestDbContext>());
+
+            services.AddSingleton(currentUserServiceMock.Object);
+            services.AddSingleton(dateTimeServiceMock.Object);
+            services.AddScoped<IDomainEventDispatcher, TestDomainEventDispatcher>();
+            
             services.AddSingleton(Mock.Of<ILogger<UsuarioRepository>>());
             services.AddSingleton(Mock.Of<ILogger<ProveedorRepository>>());
             services.AddSingleton(Mock.Of<ILogger<NotificacionRepository>>());
@@ -113,11 +117,12 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             services.AddSingleton(Mock.Of<ILogger<ProductoRepository>>());
             services.AddSingleton(Mock.Of<ILogger<UnitOfWork>>());
             services.AddSingleton(Mock.Of<ILogger<SoftDeleteInterceptor>>());
-
+            
             services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
+            services.AddScoped<IUserPermissionService, PermissionService>();
             services.AddSingleton<JwtSecurityTokenHandler>();
-
+            
             services.Configure<JwtConfiguration>(options =>
             {
                 options.Secret = "TestSuperSecretKeyForJwtTokenGenerationLongEnough";
@@ -128,10 +133,12 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             });
             
             services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
-            
-            services.AddScoped<IUnitOfWork>(provider => 
-                new UnitOfWork(provider.GetRequiredService<TestDbContext>(), 
-                               provider.GetRequiredService<ILogger<UnitOfWork>>()));
+
+            services.AddScoped<IUnitOfWork>(provider =>
+                new UnitOfWork(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<ILogger<UnitOfWork>>()));
+
             services.AddScoped<IClienteRepository, ClienteRepository>();
             services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
             services.AddScoped<IFacturaRepository, FacturaRepository>();

@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Infrastructure.Persistence;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Interceptors;
 using System;
 using System.Threading.Tasks;
 using Xunit;
+using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
+using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptors
 {
@@ -18,14 +18,16 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptor
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
         private readonly Mock<ICurrentUserService> _currentUserServiceMock;
         private readonly Mock<ILogger<AuditableEntityInterceptor>> _loggerInterceptorMock;
-        private readonly Mock<ILogger<TestDbContext>> _loggerDbContextMock;
+        private readonly Mock<ILogger<RestauranteProDbContext>> _loggerDbContextMock;
+        private readonly Mock<IDomainEventDispatcher> _dispatcherMock;
 
         public AuditableEntityInterceptorTests()
         {
             _dateTimeServiceMock = new Mock<IDateTimeService>();
             _currentUserServiceMock = new Mock<ICurrentUserService>();
             _loggerInterceptorMock = new Mock<ILogger<AuditableEntityInterceptor>>();
-            _loggerDbContextMock = new Mock<ILogger<TestDbContext>>();
+            _loggerDbContextMock = new Mock<ILogger<RestauranteProDbContext>>();
+            _dispatcherMock = new Mock<IDomainEventDispatcher>();
         }
 
         private TestDbContext CreateDbContext(AuditableEntityInterceptor interceptor)
@@ -35,7 +37,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptor
                 .AddInterceptors(interceptor)
                 .Options;
 
-            return new TestDbContext(options, _loggerDbContextMock.Object);
+            return new TestDbContext(options, _loggerDbContextMock.Object, _dispatcherMock.Object);
         }
 
         [Fact]
@@ -50,10 +52,9 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptor
             var dbContext = CreateDbContext(interceptor);
 
             var entity = AuditableTestEntity.Crear("Test Entity");
-            entity.SetFechaCreacionForTesting(default);
-
+            
             // Act
-            dbContext.TestEntities.Add(entity);
+            dbContext.AuditableTestEntities.Add(entity);
             await dbContext.SaveChangesAsync();
 
             // Assert
@@ -76,7 +77,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptor
             var dbContext = CreateDbContext(interceptor);
 
             var entity = AuditableTestEntity.Crear("Test Entity");
-            dbContext.TestEntities.Add(entity);
+            dbContext.AuditableTestEntities.Add(entity);
             await dbContext.SaveChangesAsync(); // Guardado inicial
 
             // Act

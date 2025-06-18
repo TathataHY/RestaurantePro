@@ -46,7 +46,7 @@ namespace RestaurantePro.Domain.UnitTests.Core.Base
             var entity = new TestEntity();
 
             // Assert
-            entity.FechaCreacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+            entity.FechaCreacion.Should().Be(default(DateTime));
         }
 
         [Fact]

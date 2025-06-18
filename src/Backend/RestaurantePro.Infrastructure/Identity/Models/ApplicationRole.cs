@@ -12,11 +12,13 @@ namespace RestaurantePro.Infrastructure.Identity.Models
         public ApplicationRole() : base()
         {
             RolePermissions = new List<ApplicationRolePermission>();
+            UserRoles = new List<ApplicationUserRole>();
         }
 
         public ApplicationRole(string roleName) : base(roleName)
         {
             RolePermissions = new List<ApplicationRolePermission>();
+            UserRoles = new List<ApplicationUserRole>();
         }
 
         /// <summary>
@@ -38,5 +40,10 @@ namespace RestaurantePro.Infrastructure.Identity.Models
         /// Permisos asociados a este rol
         /// </summary>
         public virtual ICollection<ApplicationRolePermission> RolePermissions { get; set; }
+
+        /// <summary>
+        /// Usuarios asociados a este rol
+        /// </summary>
+        public virtual ICollection<ApplicationUserRole> UserRoles { get; set; }
     }
 } 

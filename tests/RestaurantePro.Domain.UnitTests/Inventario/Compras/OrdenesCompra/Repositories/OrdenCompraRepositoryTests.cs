@@ -17,16 +17,19 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
             // Crear primera orden
             var orden1 = OrdenCompra.Crear(Guid.NewGuid(), "Orden 1", fechaHoy);
             orden1.EstablecerFechaEntrega(fechaHoy.AddDays(5));
+            typeof(EntityBase).GetProperty("FechaCreacion")?.SetValue(orden1, fechaHoy);
             _ordenesCompra.Add(orden1);
             
             // Crear segunda orden
             var orden2 = OrdenCompra.Crear(Guid.NewGuid(), "Orden 2", fechaHoy);
             orden2.EstablecerFechaEntrega(fechaHoy.AddDays(7));
+            typeof(EntityBase).GetProperty("FechaCreacion")?.SetValue(orden2, fechaHoy);
             _ordenesCompra.Add(orden2);
             
             // Crear tercera orden
             var orden3 = OrdenCompra.Crear(Guid.NewGuid(), "Orden 3", fechaHoy);
             orden3.EstablecerFechaEntrega(fechaHoy.AddDays(3));
+            typeof(EntityBase).GetProperty("FechaCreacion")?.SetValue(orden3, fechaHoy);
             _ordenesCompra.Add(orden3);
             
             // Agregar algunos items a las órdenes

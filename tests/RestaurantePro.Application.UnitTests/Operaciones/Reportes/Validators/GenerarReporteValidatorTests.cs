@@ -18,6 +18,26 @@ public class GenerarReporteValidatorTests
 
     #region Helper Methods
 
+    private static Mock<DbSet<T>> BuildMockDbSetAsync<T>(List<T> sourceList) where T : class
+    {
+        var queryable = sourceList.AsQueryable();
+        var mockDbSet = new Mock<DbSet<T>>();
+
+        mockDbSet.As<IAsyncEnumerable<T>>()
+            .Setup(m => m.GetAsyncEnumerator(It.IsAny<CancellationToken>()))
+            .Returns(new TestAsyncEnumerator<T>(queryable.GetEnumerator()));
+
+        mockDbSet.As<IQueryable<T>>()
+            .Setup(m => m.Provider)
+            .Returns(new TestAsyncQueryProvider<T>(queryable.Provider));
+
+        mockDbSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(queryable.Expression);
+        mockDbSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(queryable.ElementType);
+        mockDbSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => queryable.GetEnumerator());
+
+        return mockDbSet;
+    }
+
     private GenerarReporteCommand CrearCommandValido()
     {
         return new GenerarReporteCommand
@@ -58,45 +78,23 @@ public class GenerarReporteValidatorTests
         }
 
         var usuarios = new List<Usuario> { usuario };
-        var mockDbSet = usuarios.AsQueryable().BuildMockDbSet();
+        var mockDbSet = BuildMockDbSetAsync(usuarios);
         _contextMock.Setup(x => x.Usuarios).Returns(mockDbSet.Object);
     }
 
-    private void ConfigurarDatosExistentes(DateTime fechaInicio, DateTime fechaFin, bool tieneComandas = true, bool tieneMovimientos = true)
+    private void ConfigurarDatosExistentes(
+        List<Comanda>? comandas = null, 
+        List<MovimientoInventario>? movimientos = null,
+        List<OrdenCompra>? ordenes = null)
     {
-        if (tieneComandas)
-        {
-            var comandas = new List<Comanda>
-            {
-                Comanda.Crear(Guid.NewGuid(), null, Guid.NewGuid(), "Test comanda", $"COM-{DateTime.Now:yyyyMMdd}-TEST")
-            };
+        var mockComandasDbSet = BuildMockDbSetAsync(comandas ?? new List<Comanda>());
+        _contextMock.Setup(x => x.Comandas).Returns(mockComandasDbSet.Object);
+        
+        var mockMovimientosDbSet = BuildMockDbSetAsync(movimientos ?? new List<MovimientoInventario>());
+        _contextMock.Setup(x => x.MovimientosInventario).Returns(mockMovimientosDbSet.Object);
 
-            var mockComandasDbSet = comandas.AsQueryable().BuildMockDbSet();
-            _contextMock.Setup(x => x.Comandas).Returns(mockComandasDbSet.Object);
-        }
-        else
-        {
-            var comandasVacias = new List<Comanda>();
-            var mockComandasDbSet = comandasVacias.AsQueryable().BuildMockDbSet();
-            _contextMock.Setup(x => x.Comandas).Returns(mockComandasDbSet.Object);
-        }
-
-        if (tieneMovimientos)
-        {
-            var movimientos = new List<MovimientoInventario>
-            {
-                MovimientoInventario.CrearIngreso(Guid.NewGuid(), 10.0m, "Test movimiento", fechaInicio.AddHours(12))
-            };
-
-            var mockMovimientosDbSet = movimientos.AsQueryable().BuildMockDbSet();
-            _contextMock.Setup(x => x.MovimientosInventario).Returns(mockMovimientosDbSet.Object);
-        }
-        else
-        {
-            var movimientosVacios = new List<MovimientoInventario>();
-            var mockMovimientosDbSet = movimientosVacios.AsQueryable().BuildMockDbSet();
-            _contextMock.Setup(x => x.MovimientosInventario).Returns(mockMovimientosDbSet.Object);
-        }
+        var mockOrdenesDbSet = BuildMockDbSetAsync(ordenes ?? new List<OrdenCompra>());
+        _contextMock.Setup(x => x.OrdenesCompra).Returns(mockOrdenesDbSet.Object);
     }
 
     #endregion
@@ -109,7 +107,9 @@ public class GenerarReporteValidatorTests
         // Arrange
         var command = CrearCommandValido();
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
-        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
+        ConfigurarDatosExistentes(
+            comandas: new List<Comanda> { Comanda.Crear(Guid.NewGuid(), null, Guid.NewGuid(), "Test", "COM-TEST") }
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -141,7 +141,11 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador }, true);
-        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
+        ConfigurarDatosExistentes(
+            comandas: new List<Comanda> { Comanda.Crear(Guid.NewGuid(), null, Guid.NewGuid(), "Test", "COM-TEST") },
+            movimientos: new List<MovimientoInventario> { MovimientoInventario.CrearIngreso(Guid.NewGuid(), 1, "Test", DateTime.UtcNow) },
+            ordenes: new List<OrdenCompra> { OrdenCompra.Crear(Guid.NewGuid(), "Test", DateTime.UtcNow) }
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -170,7 +174,9 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
-        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
+        ConfigurarDatosExistentes(
+            comandas: new List<Comanda> { Comanda.Crear(Guid.NewGuid(), null, Guid.NewGuid(), "Test", "COM-TEST") }
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -193,6 +199,8 @@ public class GenerarReporteValidatorTests
             UsuarioSolicitanteId = Guid.Empty
         };
 
+        ConfigurarDatosExistentes(); // Asegurar que los DbSets no son nulos
+
         // Act
         var result = await _validator.ValidateAsync(command);
 
@@ -210,8 +218,9 @@ public class GenerarReporteValidatorTests
         
         // Configurar contexto sin usuarios
         var usuariosVacios = new List<Usuario>();
-        var mockDbSet = usuariosVacios.AsQueryable().BuildMockDbSet();
+        var mockDbSet = BuildMockDbSetAsync(usuariosVacios);
         _contextMock.Setup(x => x.Usuarios).Returns(mockDbSet.Object);
+        ConfigurarDatosExistentes(); // Asegurar que los DbSets no son nulos
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -240,6 +249,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -265,6 +275,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -290,6 +301,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -315,6 +327,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -340,6 +353,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -370,6 +384,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -396,6 +411,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -428,6 +444,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -456,6 +473,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -482,6 +500,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -502,6 +521,7 @@ public class GenerarReporteValidatorTests
         // Arrange
         var command = CrearCommandValido();
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Cajero });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -527,6 +547,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -551,6 +572,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Cajero });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -576,7 +598,9 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador }, true);
-        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
+        ConfigurarDatosExistentes(
+            comandas: new List<Comanda> { Comanda.Crear(Guid.NewGuid(), null, Guid.NewGuid(), "Test", "COM-TEST") }
+        );
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -606,6 +630,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -633,6 +658,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -660,6 +686,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -687,7 +714,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
-        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -716,6 +743,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -742,6 +770,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Administrador });
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -760,7 +789,7 @@ public class GenerarReporteValidatorTests
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
         
         // Configurar contexto sin datos para el período
-        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin, tieneComandas: false, tieneMovimientos: false);
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -800,7 +829,7 @@ public class GenerarReporteValidatorTests
         };
 
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
-        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
+        ConfigurarDatosExistentes();
 
         // Act
         var result = await _validator.ValidateAsync(command);
@@ -826,6 +855,8 @@ public class GenerarReporteValidatorTests
             EmailDestino = "email-invalido" // Error: email inválido
         };
 
+        ConfigurarDatosExistentes();
+
         // Act
         var result = await _validator.ValidateAsync(command);
 
@@ -844,7 +875,9 @@ public class GenerarReporteValidatorTests
         // Arrange
         var command = CrearCommandValido();
         ConfigurarUsuarioExistente(command.UsuarioSolicitanteId, new List<RolUsuario> { RolUsuario.Gerente });
-        ConfigurarDatosExistentes(command.FechaInicio, command.FechaFin);
+        ConfigurarDatosExistentes(
+            comandas: new List<Comanda> { Comanda.Crear(Guid.NewGuid(), null, Guid.NewGuid(), "Test", "COM-TEST") }
+        );
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
@@ -861,4 +894,9 @@ public class GenerarReporteValidatorTests
     }
 
     #endregion
+
+    public async Task Validate_ConDiferentesPrioridadesEnParalelo_DeberiaValidarTodas(int prioridad)
+    {
+        // ... (existing test code)
+    }
 } 

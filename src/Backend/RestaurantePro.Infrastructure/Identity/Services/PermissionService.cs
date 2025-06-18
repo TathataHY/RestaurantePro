@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
@@ -13,11 +14,11 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 {
     public class PermissionService : IUserPermissionService
     {
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly UserManager<IdentityApplicationUser> _userManager;
 
         public PermissionService(
-            RoleManager<IdentityRole> roleManager,
+            RoleManager<ApplicationRole> roleManager,
             UserManager<IdentityApplicationUser> userManager)
         {
             _roleManager = roleManager;
@@ -199,16 +200,13 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             return Result.Success<RoleDto>(roleDto);
         }
 
-        public async Task<Result<string>> CreateRoleAsync(string name, List<string> permissions)
+        public async Task<Result<string>> CreateRoleAsync(string roleName, List<string> permissions)
         {
-            // Verificar que el nombre no esté en uso
-            var existingRole = await _roleManager.FindByNameAsync(name);
-            if (existingRole != null)
+            var role = new ApplicationRole(roleName)
             {
-                return Result.Failure<string>(new List<string> { "Ya existe un rol con este nombre" });
-            }
+                Description = $"Rol para {roleName}" 
+            };
 
-            var role = new IdentityRole(name);
             var result = await _roleManager.CreateAsync(role);
 
             if (!result.Succeeded)
@@ -225,27 +223,22 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             return Result.Success<string>(role.Id);
         }
 
-        public async Task<Result<string>> UpdateRoleAsync(string id, string name, List<string> permissions)
+        public async Task<Result> UpdateRoleAsync(string roleId, string roleName, List<string> permissions)
         {
-            var role = await _roleManager.FindByIdAsync(id);
+            var role = await _roleManager.FindByIdAsync(roleId);
             if (role == null)
             {
-                return Result.Failure<string>(new List<string> { "Rol no encontrado" });
+                return Result.Failure(new List<string> { "Rol no encontrado" });
             }
 
-            // Verificar que el nombre no esté en uso por otro rol
-            var existingRole = await _roleManager.FindByNameAsync(name);
-            if (existingRole != null && existingRole.Id != id)
-            {
-                return Result.Failure<string>(new List<string> { "Ya existe un rol con este nombre" });
-            }
+            role.Name = roleName;
+            role.Description = role.Description ?? $"Rol para {roleName}"; // Asegurar que no sea nulo
 
-            role.Name = name;
             var result = await _roleManager.UpdateAsync(role);
 
             if (!result.Succeeded)
             {
-                return Result.Failure<string>(result.Errors.Select(e => e.Description).ToList());
+                return Result.Failure(result.Errors.Select(e => e.Description).ToList());
             }
 
             // Eliminar permisos existentes
@@ -261,7 +254,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 await _roleManager.AddClaimAsync(role, new Claim(CustomClaimTypes.Permission, permission));
             }
 
-            return Result<string>.Success(role.Id);
+            return Result.Success();
         }
 
         public async Task<Result> DeleteRoleAsync(string id)

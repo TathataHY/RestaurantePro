@@ -26,7 +26,7 @@ namespace RestaurantePro.Infrastructure.Identity.Models
         /// <summary>
         /// Usuario que asignó el rol
         /// </summary>
-        public string AssignedBy { get; set; }
+        public string? AssignedBy { get; set; }
 
         /// <summary>
         /// Fecha de expiración del rol (opcional)

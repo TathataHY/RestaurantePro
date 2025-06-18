@@ -1,20 +1,23 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using RestaurantePro.Domain.Core.Productos.Entities;
+using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 {
     public class TestDbContext : RestauranteProDbContext
     {
-        public TestDbContext(DbContextOptions<TestDbContext> options, ILogger<RestauranteProDbContext> logger)
-            : base(options, logger)
+        public TestDbContext(
+            DbContextOptions<RestauranteProDbContext> options, 
+            ILogger<RestauranteProDbContext> logger,
+            IDomainEventDispatcher dispatcher)
+            : base(options, logger, dispatcher)
         {
         }
 
         public DbSet<TestEntity> TestEntities { get; set; }
         public DbSet<NonAuditableTestEntity> NonAuditableTestEntities { get; set; }
-        public DbSet<ProductoCategoria> ProductoCategorias { get; set; }
+        public DbSet<AuditableTestEntity> AuditableTestEntities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -31,6 +34,13 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             modelBuilder.Entity<NonAuditableTestEntity>(e =>
             {
                 e.ToTable("NonAuditableTestEntities", "test");
+                e.HasKey(x => x.Id);
+            });
+
+            // Configuracion para AuditableTestEntity
+            modelBuilder.Entity<AuditableTestEntity>(e =>
+            {
+                e.ToTable("AuditableTestEntities", "test");
                 e.HasKey(x => x.Id);
             });
         }

@@ -2,8 +2,6 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using RestaurantePro.Domain.Core.Base;
-using RestaurantePro.Domain.Core.Base.Events;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Interceptors;
@@ -11,25 +9,21 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptors
 {
-    // Evento de prueba
-    public class TestDomainEvent : DomainEvent
-    {
-    }
-
     public class DomainEventInterceptorTests
     {
         private readonly Mock<IDomainEventDispatcher> _dispatcherMock;
         private readonly Mock<ILogger<DomainEventInterceptor>> _loggerInterceptorMock;
-        private readonly Mock<ILogger<TestDbContext>> _loggerDbContextMock;
+        private readonly Mock<ILogger<RestauranteProDbContext>> _loggerDbContextMock;
 
         public DomainEventInterceptorTests()
         {
             _dispatcherMock = new Mock<IDomainEventDispatcher>();
             _loggerInterceptorMock = new Mock<ILogger<DomainEventInterceptor>>();
-            _loggerDbContextMock = new Mock<ILogger<TestDbContext>>();
+            _loggerDbContextMock = new Mock<ILogger<RestauranteProDbContext>>();
         }
 
         private TestDbContext CreateDbContext(DomainEventInterceptor interceptor)
@@ -39,7 +33,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptor
                 .AddInterceptors(interceptor)
                 .Options;
 
-            return new TestDbContext(options, _loggerDbContextMock.Object);
+            return new TestDbContext(options, _loggerDbContextMock.Object, _dispatcherMock.Object);
         }
 
         [Fact]
@@ -54,7 +48,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptor
 
 
             // Act
-            dbContext.TestEntities.Add(entity);
+            dbContext.AuditableTestEntities.Add(entity);
             await dbContext.SaveChangesAsync();
 
             // Assert

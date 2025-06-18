@@ -9,6 +9,8 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
+using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
+using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptors
 {
@@ -20,14 +22,16 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptor
         private readonly Mock<IDateTimeService> _dateTimeServiceMock;
         private readonly Mock<ICurrentUserService> _currentUserServiceMock;
         private readonly Mock<ILogger<SoftDeleteInterceptor>> _loggerInterceptorMock;
-        private readonly Mock<ILogger<TestDbContext>> _loggerDbContextMock;
+        private readonly Mock<ILogger<RestauranteProDbContext>> _loggerDbContextMock;
+        private readonly Mock<IDomainEventDispatcher> _dispatcherMock;
 
         public SoftDeleteInterceptorTests()
         {
             _dateTimeServiceMock = new Mock<IDateTimeService>();
             _currentUserServiceMock = new Mock<ICurrentUserService>();
             _loggerInterceptorMock = new Mock<ILogger<SoftDeleteInterceptor>>();
-            _loggerDbContextMock = new Mock<ILogger<TestDbContext>>();
+            _loggerDbContextMock = new Mock<ILogger<RestauranteProDbContext>>();
+            _dispatcherMock = new Mock<IDomainEventDispatcher>();
         }
 
         private TestDbContext CreateDbContext(SoftDeleteInterceptor interceptor)
@@ -37,7 +41,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptor
                 .AddInterceptors(interceptor)
                 .Options;
 
-            return new TestDbContext(options, _loggerDbContextMock.Object);
+            return new TestDbContext(options, _loggerDbContextMock.Object, _dispatcherMock.Object);
         }
 
         [Fact]
@@ -53,20 +57,20 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptor
             var dbContext = CreateDbContext(interceptor);
             
             var entity = AuditableTestEntity.Crear("Entidad para borrar");
-            dbContext.TestEntities.Add(entity);
+            dbContext.AuditableTestEntities.Add(entity);
             await dbContext.SaveChangesAsync(); // Guardar para que exista en la BD
 
             // Act
-            dbContext.TestEntities.Remove(entity);
+            dbContext.AuditableTestEntities.Remove(entity);
             await dbContext.SaveChangesAsync();
 
             // Assert
             // 1. La entidad todavía existe en la base de datos
-            var entityFromDb = await dbContext.TestEntities.IgnoreQueryFilters().FirstOrDefaultAsync(e => e.Id == entity.Id);
+            var entityFromDb = await dbContext.AuditableTestEntities.IgnoreQueryFilters().FirstOrDefaultAsync(e => e.Id == entity.Id);
             entityFromDb.Should().NotBeNull();
 
-            // 2. La entidad está marcada como inactiva
-            entityFromDb.IsActive.Should().BeFalse();
+            // 2. La entidad está marcada como eliminada
+            entityFromDb.EstaEliminado.Should().BeTrue();
         }
     }
 } 

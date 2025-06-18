@@ -57,7 +57,9 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 Nombre = nombre,
                 Apellidos = apellidos,
                 FechaCreacion = DateTime.UtcNow,
-                Activo = true
+                Activo = true,
+                FotoPerfil = "",
+                RefreshToken = ""
             };
 
             var result = await _userManager.CreateAsync(user, password);
@@ -133,7 +135,13 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
         public async Task<(Result Result, string UserId)> CreateUserAsync(string userName, string email, string password)
         {
-            var user = new IdentityApplicationUser { UserName = userName, Email = email };
+            var user = new IdentityApplicationUser
+            {
+                UserName = userName,
+                Email = email,
+                FotoPerfil = "",
+                RefreshToken = ""
+            };
             var result = await _userManager.CreateAsync(user, password);
             return (result.ToResult(), user.Id);
         }

@@ -19,7 +19,7 @@ namespace RestaurantePro.Domain.Core.Base
         /// <summary>
         /// Fecha de creación del registro
         /// </summary>
-        public DateTime FechaCreacion { get; protected set; } = DateTime.Now;
+        public DateTime FechaCreacion { get; protected set; }
 
         /// <summary>
         /// Fecha de última actualización del registro
