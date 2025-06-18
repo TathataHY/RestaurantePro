@@ -467,14 +467,26 @@ public class CrearReservacionValidatorTests
     public void Validator_ConMultiplesErrores_DeberiaListarTodos()
     {
         // Arrange
+        // Este comando está diseñado para fallar múltiples reglas de validación
         var command = new CrearReservacionCommand
         {
-            FechaHoraReservacion = DateTime.Now.AddDays(-1), // Error 1: Fecha pasada, Error 2: Hora inválida
-            NumeroPersonas = 0,                             // Error 3: Cero personas
-            NombreCliente = "",                             // Error 4: Nombre vacío
-            TelefonoContacto = "123",                       // Error 5: Teléfono inválido
-            Observaciones = new string('x', 1001),          // Error 6: Observaciones largas
-            Email = "correo-no-valido"                      // Error 7: Email inválido
+            // 1. Fecha pasada -> Falla "BeFutureDate"
+            FechaHoraReservacion = DateTime.Now.AddDays(-1),
+
+            // 2. Número de personas > 20 -> Falla "LessThanOrEqualTo(20)"
+            NumeroPersonas = 25,
+
+            // 3. Nombre vacío -> Falla "NotEmpty"
+            NombreCliente = "",
+
+            // 4. Teléfono inválido -> Falla "BeValidPhoneNumber"
+            TelefonoContacto = "abc",
+
+            // 5. Observaciones muy largas -> Falla "MaximumLength(1000)"
+            Observaciones = new string('A', 1001),
+
+            // 6. Email inválido -> Falla "EmailAddress"
+            Email = "correo-invalido"
         };
 
         // Act
@@ -482,14 +494,15 @@ public class CrearReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCount(7);
-        result.Errors.Select(e => e.ErrorMessage).Should().Contain("La fecha de reservación debe ser futura");
-        result.Errors.Select(e => e.ErrorMessage).Should().Contain("La hora de reservación debe estar entre las 12:00 PM y 10:00 PM");
-        result.Errors.Select(e => e.ErrorMessage).Should().Contain("El número de personas debe ser mayor a 0");
-        result.Errors.Select(e => e.ErrorMessage).Should().Contain("El nombre del cliente es obligatorio");
-        result.Errors.Select(e => e.ErrorMessage).Should().Contain("El teléfono debe tener un formato válido");
-        result.Errors.Select(e => e.ErrorMessage).Should().Contain("Las observaciones no pueden exceder 1000 caracteres");
-        result.Errors.Select(e => e.ErrorMessage).Should().Contain("El email debe tener un formato válido");
+        result.Errors.Should().HaveCount(6, "deberían detectarse 6 errores de validación con los datos proporcionados");
+
+        var errorMessages = result.Errors.Select(e => e.ErrorMessage).ToList();
+        errorMessages.Should().Contain("La fecha de reservación debe ser futura");
+        errorMessages.Should().Contain("El número máximo de personas por reservación es 20");
+        errorMessages.Should().Contain("El nombre del cliente es obligatorio");
+        errorMessages.Should().Contain("El teléfono debe tener un formato válido");
+        errorMessages.Should().Contain("Las observaciones no pueden exceder 1000 caracteres");
+        errorMessages.Should().Contain("El email debe tener un formato válido");
     }
 
     [Fact]

@@ -230,12 +230,12 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
     // Métodos de validación personalizados
     private async Task<bool> UsuarioExiste(Guid usuarioId, CancellationToken cancellationToken)
     {
-        return await _usuarioRepository.GetByIdAsync(usuarioId) != null;
+        return await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken) != null;
     }
 
     private async Task<bool> UsuarioTienePermisosReportes(Guid usuarioId, CancellationToken cancellationToken)
     {
-        var usuario = await _usuarioRepository.GetByIdAsync(usuarioId);
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
         if (usuario == null) return false;
 
         return usuario.Roles.Any(r => r == RolUsuario.Administrador || r == RolUsuario.Gerente);
@@ -243,46 +243,43 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
     
     private async Task<bool> UsuarioTienePermisosParaTipoReporte(GenerarReporteCommand command, CancellationToken cancellationToken)
     {
-        var usuario = await _usuarioRepository.GetByIdAsync(command.UsuarioSolicitanteId);
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(command.UsuarioSolicitanteId, cancellationToken);
         if (usuario == null) return false;
 
         return command.TipoReporte switch
         {
-            TipoReporte.Financiero => usuario.Roles.Contains(RolUsuario.Administrador),
-            TipoReporte.Inventario => usuario.Roles.Any(r => r == RolUsuario.Administrador || r == RolUsuario.Gerente || r == RolUsuario.Almacenista),
+            TipoReporte.Financiero => usuario.Roles.Any(r => r == RolUsuario.Administrador || r == RolUsuario.Gerente),
+            TipoReporte.Inventario => usuario.Roles.Any(r => r == RolUsuario.Administrador || r == RolUsuario.Gerente || r == RolUsuario.EncargadoInventario),
             _ => true
         };
     }
 
     private async Task<bool> UsuarioTienePermisosInventario(Guid usuarioId, CancellationToken cancellationToken)
     {
-        var usuario = await _usuarioRepository.GetByIdAsync(usuarioId);
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
         if (usuario == null) return false;
         
-        return usuario.Roles.Any(r => 
-            r == RolUsuario.Administrador || 
-            r == RolUsuario.Gerente || 
-            r == RolUsuario.Almacenista);
+        return usuario.Roles.Any(r => r == RolUsuario.Administrador || r == RolUsuario.Gerente || r == RolUsuario.EncargadoInventario);
     }
 
     private async Task<bool> UsuarioTienePermisosFinancieros(Guid usuarioId, CancellationToken cancellationToken)
     {
-        var usuario = await _usuarioRepository.GetByIdAsync(usuarioId);
+        var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
         if (usuario == null) return false;
         
-        return usuario.Roles.Contains(RolUsuario.Administrador);
+        return usuario.Roles.Any(r => r == RolUsuario.Administrador || r == RolUsuario.Gerente);
     }
 
     private async Task<bool> PeriodoTieneDatos(GenerarReporteCommand command, CancellationToken cancellationToken)
     {
         return command.TipoReporte switch
         {
-            TipoReporte.VentasDiarias or TipoReporte.VentasSemanales or TipoReporte.VentasMensuales => 
-                await _comandaRepository.AnyAsync(c => c.FechaCreacion >= command.FechaInicio && c.FechaCreacion <= command.FechaFin),
+            TipoReporte.VentasDiarias or TipoReporte.VentasSemanales or TipoReporte.VentasMensuales or TipoReporte.RendimientoMeseros or TipoReporte.EficienciaMesas or TipoReporte.ProductosMasVendidos =>
+                (await _comandaRepository.ObtenerPorRangoFechasAsync(command.FechaInicio, command.FechaFin, false, cancellationToken)).Any(),
 
-            TipoReporte.Inventario => 
-                await _movimientoInventarioRepository.AnyAsync(m => m.Fecha >= command.FechaInicio && m.Fecha <= command.FechaFin) || 
-                await _ordenCompraRepository.AnyAsync(o => o.FechaEmision >= command.FechaInicio && o.FechaEmision <= command.FechaFin),
+            TipoReporte.Inventario or TipoReporte.AnalisisCostos =>
+                (await _movimientoInventarioRepository.ObtenerPorRangoFechasAsync(command.FechaInicio, command.FechaFin, cancellationToken)).Any() ||
+                (await _ordenCompraRepository.ObtenerPorRangoFechasAsync(command.FechaInicio, command.FechaFin, cancellationToken)).Any(),
             
             _ => true
         };
@@ -290,8 +287,9 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
 
     private async Task<bool> UsuarioNoTieneMuchasGeneracionesPendientes(Guid usuarioId, CancellationToken cancellationToken)
     {
-        // Lógica para verificar reportes pendientes (a implementar)
-        await Task.CompletedTask;
+        // Lógica para verificar generaciones pendientes (ej. en un servicio de caché o BD)
+        // Por ahora, retornamos true para no bloquear.
+        await Task.Delay(10, cancellationToken); // Simular I/O
         return true;
     }
 } 

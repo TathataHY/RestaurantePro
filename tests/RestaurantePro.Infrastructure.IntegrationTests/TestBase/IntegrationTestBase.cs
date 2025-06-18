@@ -38,6 +38,7 @@ using RestaurantePro.Infrastructure.Identity.Services;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Options;
 using RestaurantePro.Infrastructure.Identity.Configuration;
+using RestaurantePro.Domain.Core.Base.Testing;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 {
@@ -57,6 +58,8 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 
         public virtual async Task InitializeAsync()
         {
+            TestEnvironment.SetTestEnvironment(true);
+
             var services = new ServiceCollection();
 
             var currentUserServiceMock = new Mock<ICurrentUserService>();
