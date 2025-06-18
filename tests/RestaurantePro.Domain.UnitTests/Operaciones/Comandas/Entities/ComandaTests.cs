@@ -390,23 +390,17 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             var meseroId = Guid.NewGuid();
             var comanda = Comanda.Crear(meseroId, null, mesaId);
             
-            // Modificamos directamente la fecha de creación para que sea en el futuro
+            // Modificamos directamente la fecha de creación para que sea en el futuro usando reflexión
             var propFechaCreacion = typeof(Comanda).GetProperty("FechaCreacion", BindingFlags.Public | BindingFlags.Instance);
-            if (propFechaCreacion != null)
-            {
-                propFechaCreacion.SetValue(comanda, DateTime.Now.AddDays(1));
-            }
             
-            // Obtenemos acceso al método ValidarInvariantes
-            var validarInvariantes = typeof(Comanda).GetMethod(
-                "ValidarInvariantes", 
-                BindingFlags.NonPublic | BindingFlags.Instance);
+            // Act & Assert
+            // La excepción debe ser lanzada por el setter, que es invocado via reflexión.
+            // La reflexión envuelve la excepción original en una TargetInvocationException.
+            Action action = () => propFechaCreacion.SetValue(comanda, DateTime.Now.AddDays(1));
             
-            // Act & Assert - Llamamos directamente
-            Action action = () => validarInvariantes.Invoke(comanda, null);
             action.Should().Throw<TargetInvocationException>()
-                .WithInnerException<InvalidOperationException>()
-                .WithMessage("*La fecha de creación no puede ser en el futuro*");
+                  .WithInnerException<InvalidOperationException>()
+                  .WithMessage("La fecha de creación de la comanda no puede ser futura");
         }
     }
 }

@@ -42,7 +42,7 @@ namespace RestaurantePro.Domain.Core.Productos.Interfaces
         /// <param name="ingredienteId">ID del ingrediente</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de productos que utilizan el ingrediente</returns>
-        Task<IEnumerable<Producto>> ObtenerProductosPorIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default);
+        Task<List<Producto>> ObtenerProductosPorIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Agrega un nuevo producto

@@ -37,16 +37,13 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
         private async Task SeedNotificacionesAsync()
         {
-            _usuarioId1 = Guid.NewGuid();
-            _usuarioId2 = Guid.NewGuid();
-
             var usuarioRepository = ServiceProvider.GetRequiredService<IUsuarioRepository>();
 
             var usuario1 = Usuario.Crear("user1", "Usuario Uno", "user1@test.com", RolUsuario.Mesero);
-            usuario1.SetIdForTesting(_usuarioId1);
-
             var usuario2 = Usuario.Crear("user2", "Usuario Dos", "user2@test.com", RolUsuario.Mesero);
-            usuario2.SetIdForTesting(_usuarioId2);
+            
+            _usuarioId1 = usuario1.Id;
+            _usuarioId2 = usuario2.Id;
 
             await usuarioRepository.AgregarAsync(usuario1);
             await usuarioRepository.AgregarAsync(usuario2);

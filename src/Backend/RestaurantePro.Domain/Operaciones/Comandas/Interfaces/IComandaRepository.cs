@@ -6,30 +6,13 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Interfaces
     public interface IComandaRepository : IRepository<Comanda>
     {
         /// <summary>
-        /// Obtiene una comanda por su ID
+        /// Obtiene una comanda por su ID, incluyendo los items.
         /// </summary>
         /// <param name="id">ID de la comanda</param>
         /// <param name="incluirItems">Indica si se deben incluir los items de la comanda</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Comanda encontrada o null si no existe</returns>
         Task<Comanda?> ObtenerPorIdAsync(Guid id, bool incluirItems = true, CancellationToken cancellationToken = default);
-        
-        /// <summary>
-        /// Obtiene comandas por estado
-        /// </summary>
-        /// <param name="estado">Estado de las comandas a buscar</param>
-        /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Lista de comandas en el estado especificado</returns>
-        Task<IEnumerable<Comanda>> ObtenerPorEstadoAsync(EstadoComanda estado, CancellationToken cancellationToken = default);
-        
-        /// <summary>
-        /// Obtiene comandas por mesa
-        /// </summary>
-        /// <param name="mesaId">ID de la mesa</param>
-        /// <param name="incluirItems">Indica si se deben incluir los items de las comandas</param>
-        /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Lista de comandas de la mesa especificada</returns>
-        Task<IEnumerable<Comanda>> ObtenerPorMesaAsync(Guid mesaId, bool incluirItems = false, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene comandas por mesero
@@ -157,5 +140,11 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Interfaces
         /// </summary>
         /// <returns>Lista de comandas activas</returns>
         Task<IEnumerable<Comanda>> ObtenerComandasActivasAsync(CancellationToken cancellationToken = default);
+
+        Task<Comanda?> ObtenerPorIdConItemsAsync(Guid comandaId, CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<Comanda>> ObtenerComandasPorEstadoAsync(EstadoComanda estado, CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<Comanda>> ObtenerComandasPorMesaAsync(Guid mesaId, CancellationToken cancellationToken = default);
     }
 }

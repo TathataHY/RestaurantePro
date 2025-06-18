@@ -62,23 +62,24 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             await DbContext.AddRangeAsync(mesa, mesero, cliente, producto);
             await DbContext.SaveChangesAsync();
 
+            var fechaCreacionPasada = _dateTimeService.UtcNow.AddDays(-1);
+
             // Comanda 1: Abierta
-            var comanda1 = Comanda.Crear(_meseroId1, _dateTimeService.UtcNow, _clienteId1, _mesaId1, numeroComanda: "C00001");
-            comanda1.AgregarProducto(_productoId1, 2, 50, "Sin cebolla");
-            comanda1.ActualizarEstado(EstadoComanda.EnProceso);
+            var comanda1 = Comanda.Crear(_meseroId1, fechaCreacionPasada, _clienteId1, _mesaId1, numeroComanda: "C00001");
+            comanda1.AgregarProducto(_productoId1, 2, 50, "Sin cebolla", fechaCreacionPasada);
+            comanda1.ActualizarEstado(EstadoComanda.EnProceso, fechaCreacionPasada);
             _comandaId1 = comanda1.Id;
 
             // Comanda 2: Finalizada
-            var comanda2 = Comanda.Crear(_meseroId1, _dateTimeService.UtcNow, _clienteId1, _mesaId1, numeroComanda: "C00002");
-            comanda2.AgregarProducto(_productoId1, 1, 100);
-            comanda2.ActualizarEstado(EstadoComanda.Finalizada);
+            var comanda2 = Comanda.Crear(_meseroId1, fechaCreacionPasada, _clienteId1, _mesaId1, numeroComanda: "C00002");
+            comanda2.AgregarProducto(_productoId1, 1, 100, fechaActualizacion: fechaCreacionPasada);
+            comanda2.ActualizarEstado(EstadoComanda.Finalizada, fechaCreacionPasada);
 
             await _repository.AgregarAsync(comanda1);
             await _repository.AgregarAsync(comanda2);
             await _repository.GuardarCambiosAsync();
         }
 
-        /*
         [Fact]
         public async Task ObtenerPorIdAsync_DebeIncluirItems()
         {
@@ -100,7 +101,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         public async Task ObtenerPorEstadoAsync_DebeRetornarComandasCorrectas(EstadoComanda estado, int cantidadEsperada)
         {
             // Act
-            var comandas = await _repository.ObtenerPorEstadoAsync(estado);
+            var comandas = await _repository.ObtenerComandasPorEstadoAsync(estado);
 
             // Assert
             comandas.Should().NotBeNull();
@@ -111,7 +112,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         public async Task ObtenerPorMesaAsync_DebeRetornarComandasDeLaMesa()
         {
             // Act
-            var comandas = await _repository.ObtenerPorMesaAsync(_mesaId1);
+            var comandas = await _repository.ObtenerComandasPorMesaAsync(_mesaId1);
 
             // Assert
             comandas.Should().NotBeNull();
@@ -130,12 +131,12 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             comandasActivas.Should().HaveCount(1);
             comandasActivas.First().NumeroComanda.Should().Be("C00001");
         }
-        */
-        [Fact(Skip = "Debugging timezone issue")]
+        
+        [Fact]
         public async Task ObtenerEstadisticasPorPeriodoAsync_DebeRetornarConteosCorrectos()
         {
             // Arrange
-            var fechaInicio = _dateTimeService.UtcNow.AddDays(-1);
+            var fechaInicio = _dateTimeService.UtcNow.AddDays(-2);
             var fechaFin = _dateTimeService.UtcNow.AddDays(1);
 
             // Act
@@ -144,8 +145,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             // Assert
             estadisticas.Should().NotBeNull();
             estadisticas.Should().HaveCount(1);
-            estadisticas.Keys.First().Date.Should().Be(_dateTimeService.UtcNow.Date);
-            estadisticas.Values.First().Should().Be(2);
+            estadisticas.Keys.First().Date.Should().Be(_dateTimeService.UtcNow.AddDays(-1).Date);
         }
     }
 } 

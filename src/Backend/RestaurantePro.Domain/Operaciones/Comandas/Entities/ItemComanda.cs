@@ -76,7 +76,11 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         public IReadOnlyCollection<PersonalizacionItem> Personalizaciones => _personalizaciones.AsReadOnly();
 
         // Constructor privado para EF Core
-        private ItemComanda() { }
+        private ItemComanda() 
+        {
+            Observaciones = string.Empty;
+            MotivoCancelacion = string.Empty;
+        }
 
         /// <summary>
         /// Constructor principal

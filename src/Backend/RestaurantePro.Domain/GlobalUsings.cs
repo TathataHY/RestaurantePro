@@ -23,6 +23,7 @@ global using Microsoft.Extensions.Logging;
 // Domain Base
 global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Interfaces;
+global using RestaurantePro.Domain.Core.Base.Services;
 
 // Domain Base - Events
 global using RestaurantePro.Domain.Core.Base.Events;
@@ -241,15 +242,3 @@ global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Exceptions;
 
 // Domain Proveedores - Exceptions
 global using RestaurantePro.Domain.Proveedores.Exceptions;
-
-// Domain core imports - SharedKernel Services
-global using RestaurantePro.Domain.Core.SharedKernel.Services;
-global using RestaurantePro.Domain.Core.SharedKernel.Services.Notification;
-
-// Domain core imports - SharedKernel Base Services
-global using RestaurantePro.Domain.Core.Base.Services;
-
-// Alias para Result para evitar errores de tipado
-global using r = RestaurantePro.Domain.Core.SharedKernel.Results.Result;
-
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("RestaurantePro.Infrastructure.IntegrationTests")]

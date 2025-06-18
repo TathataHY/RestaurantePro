@@ -10,7 +10,10 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.ValueObjects
         /// <summary>
         /// Constructor para EF Core
         /// </summary>
-        private PersonalizacionItem() { }
+        private PersonalizacionItem() 
+        {
+            NombreIngrediente = string.Empty;
+        }
 
         /// <summary>
         /// ID del ingrediente que se está personalizando

@@ -21,7 +21,11 @@ namespace RestaurantePro.Domain.Comercial.Clientes.ValueObjects
         public string NombreCompleto => $"{Nombre} {Apellido}".Trim();
 
         // Constructor para EF Core
-        private ClienteNombre() { }
+        private ClienteNombre() 
+        {
+            Nombre = string.Empty;
+            Apellido = string.Empty;
+        }
 
         /// <summary>
         /// Constructor privado

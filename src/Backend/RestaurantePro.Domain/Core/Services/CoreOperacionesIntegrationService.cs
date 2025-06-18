@@ -7,7 +7,6 @@ namespace RestaurantePro.Domain.Core.Services
     public class CoreOperacionesIntegrationService : ICoreOperacionesIntegrationService
     {
         private readonly Productos.Interfaces.IProductoRepository _productoRepository;
-        private readonly Productos.Services.IRecetaService _recetaService;
         private readonly SharedKernel.Validation.INotificationManager _notificationManager;
         private readonly IDateTimeService _dateTimeService;
         
@@ -16,12 +15,10 @@ namespace RestaurantePro.Domain.Core.Services
         /// </summary>
         public CoreOperacionesIntegrationService(
             Productos.Interfaces.IProductoRepository productoRepository,
-            Productos.Services.IRecetaService recetaService,
             SharedKernel.Validation.INotificationManager notificationManager,
             IDateTimeService dateTimeService)
         {
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
-            _recetaService = recetaService ?? throw new ArgumentNullException(nameof(recetaService));
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
         }
@@ -68,36 +65,6 @@ namespace RestaurantePro.Domain.Core.Services
                         resultado.TodosDisponibles = false;
                         resultado.ProductosNoDisponibles[productoId] = "Producto no disponible";
                         continue;
-                    }
-                    
-                    // Verificar disponibilidad de ingredientes
-                    var disponibilidadResult = await _recetaService.VerificarDisponibilidadIngredientesAsync(
-                        productoId, cantidad, cancellationToken);
-                        
-                    if (!disponibilidadResult.Succeeded || !disponibilidadResult.Value)
-                    {
-                        resultado.TodosDisponibles = false;
-                        resultado.ProductosNoDisponibles[productoId] = "Ingredientes insuficientes";
-                        
-                        // Obtener ingredientes faltantes
-                        var ingredientesFaltantesResult = await _recetaService.ObtenerIngredientesFaltantesAsync(
-                            productoId, cantidad, cancellationToken);
-                            
-                        if (ingredientesFaltantesResult.Succeeded && ingredientesFaltantesResult.Value.Any())
-                        {
-                            // Agregar ingredientes faltantes al resultado
-                            foreach (var ingrediente in ingredientesFaltantesResult.Value)
-                            {
-                                if (resultado.IngredientesFaltantes.ContainsKey(ingrediente.Key))
-                                {
-                                    resultado.IngredientesFaltantes[ingrediente.Key] += ingrediente.Value;
-                                }
-                                else
-                                {
-                                    resultado.IngredientesFaltantes[ingrediente.Key] = ingrediente.Value;
-                                }
-                            }
-                        }
                     }
                 }
                 

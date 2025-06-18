@@ -63,10 +63,16 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             var loggerInterceptorMock = new Mock<ILogger<AuditableEntityInterceptor>>();
             var auditableEntityInterceptor = new AuditableEntityInterceptor(currentUserServiceMock.Object, dateTimeServiceMock.Object, loggerInterceptorMock.Object);
 
+            var loggerSoftDeleteInterceptorMock = new Mock<ILogger<SoftDeleteInterceptor>>();
+            var softDeleteInterceptor = new SoftDeleteInterceptor(
+                dateTimeServiceMock.Object,
+                currentUserServiceMock.Object,
+                loggerSoftDeleteInterceptorMock.Object);
+
             services.AddDbContext<TestDbContext>(options =>
             {
                 options.UseSqlite(_fixture.Connection);
-                options.AddInterceptors(auditableEntityInterceptor);
+                options.AddInterceptors(auditableEntityInterceptor, softDeleteInterceptor);
             });
             
             services.AddScoped<RestauranteProDbContext>(provider => provider.GetRequiredService<TestDbContext>());
@@ -76,6 +82,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             services.AddSingleton(dateTimeServiceMock.Object);
             services.AddSingleton(domainEventDispatcherMock.Object);
             services.AddSingleton(auditableEntityInterceptor);
+            services.AddSingleton(softDeleteInterceptor);
 
             services.AddSingleton(Mock.Of<ILogger<UsuarioRepository>>());
             services.AddSingleton(Mock.Of<ILogger<ProveedorRepository>>());
@@ -84,6 +91,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             services.AddSingleton(Mock.Of<ILogger<OrdenCompraRepository>>());
             services.AddSingleton(Mock.Of<ILogger<ProductoRepository>>());
             services.AddSingleton(Mock.Of<ILogger<UnitOfWork>>());
+            services.AddSingleton(Mock.Of<ILogger<SoftDeleteInterceptor>>());
 
             services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
             

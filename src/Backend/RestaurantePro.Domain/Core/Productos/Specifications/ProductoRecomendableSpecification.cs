@@ -9,7 +9,7 @@ namespace RestaurantePro.Domain.Core.Productos.Specifications
         private readonly decimal _rentabilidadMinima;
         private readonly int _popularidadMinima;
         private readonly bool _verificarDisponibilidadIngredientes;
-        private readonly IRecetaService? _recetaService;
+        private readonly IIngredienteRepository? _ingredienteRepository;
 
         /// <summary>
         /// Crea una nueva instancia de la especificación con criterios personalizados
@@ -17,12 +17,12 @@ namespace RestaurantePro.Domain.Core.Productos.Specifications
         /// <param name="rentabilidadMinima">Rentabilidad mínima requerida en porcentaje (0-100)</param>
         /// <param name="popularidadMinima">Popularidad mínima requerida (0-10)</param>
         /// <param name="verificarDisponibilidadIngredientes">Indica si debe verificarse la disponibilidad de ingredientes</param>
-        /// <param name="recetaService">Servicio opcional para verificar disponibilidad de ingredientes</param>
+        /// <param name="ingredienteRepository">Repositorio para verificar disponibilidad y costos de ingredientes</param>
         public ProductoRecomendableSpecification(
             decimal rentabilidadMinima = 30.0m,
             int popularidadMinima = 5,
             bool verificarDisponibilidadIngredientes = false,
-            IRecetaService? recetaService = null)
+            IIngredienteRepository? ingredienteRepository = null)
         {
             if (rentabilidadMinima < 0 || rentabilidadMinima > 100)
                 throw new ArgumentOutOfRangeException(nameof(rentabilidadMinima), "La rentabilidad debe estar entre 0 y 100");
@@ -34,11 +34,10 @@ namespace RestaurantePro.Domain.Core.Productos.Specifications
             _popularidadMinima = popularidadMinima;
             _verificarDisponibilidadIngredientes = verificarDisponibilidadIngredientes;
             
-            // Solo se requiere recetaService si verificarDisponibilidadIngredientes es true
-            if (verificarDisponibilidadIngredientes && recetaService == null)
-                throw new ArgumentNullException(nameof(recetaService), "Se requiere recetaService cuando verificarDisponibilidadIngredientes es true");
-            
-            _recetaService = recetaService;
+            if (verificarDisponibilidadIngredientes && ingredienteRepository == null)
+                throw new ArgumentNullException(nameof(ingredienteRepository), "Se requiere ingredienteRepository cuando verificarDisponibilidadIngredientes es true");
+
+            _ingredienteRepository = ingredienteRepository;
         }
 
         /// <summary>
@@ -46,60 +45,49 @@ namespace RestaurantePro.Domain.Core.Productos.Specifications
         /// </summary>
         public override Expression<Func<Producto, bool>> ToExpression()
         {
-            // Criterios básicos que siempre se verifican
             return producto => 
                 producto.EstaActivo &&
                 producto.Precio != null &&
                 producto.Precio.Valor > 0 &&
                 (!string.IsNullOrEmpty(producto.CategoriaNombre) && producto.CategoriaId != Guid.Empty) &&
                 producto.Popularidad >= _popularidadMinima;
-            
-            // Nota: La verificación de rentabilidad y disponibilidad de ingredientes no se puede realizar
-            // en una expresión LINQ porque requiere cálculos complejos y consultas adicionales.
-            // Por eso, debemos implementar IsSatisfiedBy manualmente.
         }
 
         /// <summary>
         /// Verifica si la entidad satisface la especificación, incluyendo criterios complejos.
         /// </summary>
-        /// <param name="producto">Producto a verificar</param>
-        /// <returns>True si el producto cumple todos los criterios para ser recomendable</returns>
         public override bool IsSatisfiedBy(Producto producto)
         {
-            // Primero verificamos los criterios básicos usando la expresión LINQ
             if (!base.IsSatisfiedBy(producto))
                 return false;
+
+            if (_ingredienteRepository == null) return true; // No se pueden hacer más validaciones
+
+            var receta = producto.Recetas.FirstOrDefault();
+            if (receta == null) return true; // Si no hay receta, no se pueden hacer más validaciones
             
-            // Verificar rentabilidad si tenemos acceso a la información necesaria
-            if (_recetaService != null)
+            decimal costoTotal = 0;
+
+            foreach(var ingredienteReceta in receta.Ingredientes)
             {
-                try
+                var ingrediente = _ingredienteRepository.ObtenerPorIdAsync(ingredienteReceta.IngredienteId).Result;
+                if(ingrediente == null) return false; // Ingrediente no encontrado
+
+                if(_verificarDisponibilidadIngredientes)
                 {
-                    // Calcular rentabilidad de forma sincrónica
-                    // Nota: En producción sería mejor tener un método sincrónico en IRecetaService,
-                    // pero por ahora utilizamos .Result con precaución
-                    var resultadoRentabilidad = _recetaService.CalcularRentabilidadProductoAsync(producto.Id).Result;
-                    
-                    // Verificar si la rentabilidad cumple el mínimo requerido
-                    if (!resultadoRentabilidad.Succeeded || resultadoRentabilidad.Value.Rentabilidad < _rentabilidadMinima)
-                        return false;
-                    
-                    // Verificar disponibilidad de ingredientes si es necesario
-                    if (_verificarDisponibilidadIngredientes)
-                    {
-                        var resultadoDisponibilidad = _recetaService.VerificarDisponibilidadIngredientesAsync(producto.Id, 1).Result;
-                        if (!resultadoDisponibilidad.Succeeded || !resultadoDisponibilidad.Value)
-                            return false;
-                    }
+                    if(ingrediente.Stock < ingredienteReceta.Cantidad) return false; // No hay stock
                 }
-                catch (Exception)
-                {
-                    // Si ocurre algún error, asumimos que no se cumple el criterio
-                    return false;
-                }
+                
+                costoTotal += ingrediente.CostoPromedio * ingredienteReceta.Cantidad;
             }
+
+            if(producto.Precio.Valor <= 0) return false;
             
-            // Si llegamos aquí, el producto cumple todos los criterios
+            var rentabilidad = ( (producto.Precio.Valor - costoTotal) / producto.Precio.Valor ) * 100;
+
+            if (rentabilidad < _rentabilidadMinima)
+                return false;
+            
             return true;
         }
     }

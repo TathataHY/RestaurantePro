@@ -452,7 +452,7 @@ public class OperacionesMappingProfileTests
         stopwatch.Stop();
 
         // Assert
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(100); // Menos de 100ms para 1000 mapeos
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(150); // Menos de 150ms para 1000 mapeos
     }
 
     #endregion

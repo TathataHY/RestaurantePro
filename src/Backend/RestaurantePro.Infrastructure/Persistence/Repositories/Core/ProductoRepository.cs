@@ -8,13 +8,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
 {
     public class ProductoRepository : Repository<Producto>, IProductoRepository
     {
-        public ProductoRepository(DbContext dbContext, ILogger<ProductoRepository> logger) : base(dbContext, logger)
+        private readonly RestauranteProDbContext _restauranteProDbContext;
+
+        public ProductoRepository(RestauranteProDbContext dbContext, ILogger<ProductoRepository> logger) : base(dbContext, logger)
         {
+            _restauranteProDbContext = dbContext;
         }
 
         public async Task<IEnumerable<Producto>> ObtenerTodosAsync(bool soloActivos = true, CancellationToken cancellationToken = default)
@@ -37,17 +41,18 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
             return await query.ToListAsync(cancellationToken);
         }
 
-        public Task<IEnumerable<Producto>> ObtenerProductosPorIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default)
+        public async Task<List<Producto>> ObtenerProductosPorIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default)
         {
-            // Esta lógica necesita ser revisada ya que la entidad Producto no tiene una colección de Recetas directamente.
-            // Devolver una lista vacía temporalmente para permitir que el proyecto compile.
-            return Task.FromResult(Enumerable.Empty<Producto>());
+            return await _restauranteProDbContext.Productos
+                .Include(p => p.Recetas)
+                .ThenInclude(r => r.Ingredientes)
+                .Where(p => p.Recetas.Any(r => r.Ingredientes.Any(i => i.IngredienteId == ingredienteId)))
+                .ToListAsync(cancellationToken);
         }
 
         public async Task<bool> ExisteProductoPorNombre(string nombre, CancellationToken cancellationToken = default)
         {
-            var query = _dbSet.AsNoTracking();
-            return await query.AnyAsync(p => p.Nombre == nombre, cancellationToken);
+            return await _restauranteProDbContext.Productos.AnyAsync(p => p.Nombre == nombre && !p.EstaEliminado, cancellationToken);
         }
 
         public async Task EliminarAsync(Guid id, CancellationToken cancellationToken = default)

@@ -134,7 +134,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             existe.Should().Be(expected);
         }
 
-        [Fact(Skip = "Implementación de ObtenerProductosPorIngredienteAsync pendiente en el repositorio.")]
+        [Fact]
         public async Task ObtenerProductosPorIngredienteAsync_DebeRetornarListaVacia()
         {
             // Act
@@ -160,7 +160,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             productoGuardado.Nombre.Should().Be("Fanta");
         }
 
-        [Fact(Skip = "El SoftDeleteInterceptor no se está comportando como se espera en este entorno de prueba.")]
+        [Fact]
         public async Task EliminarAsync_DebeMarcarElProductoComoEliminadoEnLaBaseDeDatos()
         {
             // Arrange

@@ -1,913 +1,121 @@
-using RestaurantePro.Domain.Core.Productos.Builders;
-using RestaurantePro.Domain.Core.SharedKernel;
-using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
+using RestaurantePro.Domain.Core.Productos.Entities;
+using RestaurantePro.Domain.Core.Productos.Interfaces;
+using RestaurantePro.Domain.Core.Productos.Services;
+using RestaurantePro.Domain.Core.Usuarios.Entities;
+using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 
 namespace RestaurantePro.Domain.Core.Services
 {
-    /// <summary>
-    /// Implementación de la fachada de servicios para el contexto Core
-    /// </summary>
     public class CoreServiceFacade : ICoreServiceFacade
     {
-        private readonly Productos.Interfaces.IProductoRepository _productoRepository;
-        private readonly Productos.Interfaces.IProductoCategoriaRepository _productoCategoriaRepository;
-        private readonly Usuarios.Interfaces.IUsuarioRepository _usuarioRepository;
-        private readonly Usuarios.Interfaces.IRolRepository _rolRepository;
-        private readonly Notificaciones.Interfaces.INotificacionRepository _notificacionRepository;
-        private readonly IIngredienteRepository _ingredienteRepository;
-        private readonly Productos.Services.IProductoCategoriaService _productoCategoriaService;
-        private readonly Productos.Services.IRecetaService _recetaService;
-        private readonly SharedKernel.Services.Notification.IEventBasedNotificationService _notificationService;
-        private readonly SharedKernel.Validation.INotificationManager _notificationManager;
-        private readonly ILogger<ProductoBuilder> _productoBuilderLogger;
-        private readonly ILogger<CoreServiceFacade> _logger;
-        private readonly IDateTimeService _dateTimeService;
+        private readonly IProductoRepository _productoRepository;
+        private readonly IUsuarioRepository _usuarioRepository;
+        private readonly ICalculoRecetaService _calculoRecetaService;
+        private readonly INotificationManager _notificationManager;
 
-        /// <summary>
-        /// Constructor con inyección de dependencias
-        /// </summary>
         public CoreServiceFacade(
-            Productos.Interfaces.IProductoRepository productoRepository,
-            Productos.Interfaces.IProductoCategoriaRepository productoCategoriaRepository,
-            Usuarios.Interfaces.IUsuarioRepository usuarioRepository,
-            Usuarios.Interfaces.IRolRepository rolRepository,
-            Notificaciones.Interfaces.INotificacionRepository notificacionRepository,
-            IIngredienteRepository ingredienteRepository,
-            Productos.Services.IProductoCategoriaService productoCategoriaService,
-            Productos.Services.IRecetaService recetaService,
-            SharedKernel.Services.Notification.IEventBasedNotificationService notificationService,
-            SharedKernel.Validation.INotificationManager notificationManager,
-            ILogger<ProductoBuilder> productoBuilderLogger,
-            ILogger<CoreServiceFacade> logger,
-            IDateTimeService dateTimeService)
+            IProductoRepository productoRepository,
+            IUsuarioRepository usuarioRepository,
+            ICalculoRecetaService calculoRecetaService,
+            INotificationManager notificationManager)
         {
             _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
-            _productoCategoriaRepository = productoCategoriaRepository ?? throw new ArgumentNullException(nameof(productoCategoriaRepository));
             _usuarioRepository = usuarioRepository ?? throw new ArgumentNullException(nameof(usuarioRepository));
-            _rolRepository = rolRepository ?? throw new ArgumentNullException(nameof(rolRepository));
-            _notificacionRepository = notificacionRepository ?? throw new ArgumentNullException(nameof(notificacionRepository));
-            _ingredienteRepository = ingredienteRepository ?? throw new ArgumentNullException(nameof(ingredienteRepository));
-            _productoCategoriaService = productoCategoriaService ?? throw new ArgumentNullException(nameof(productoCategoriaService));
-            _recetaService = recetaService ?? throw new ArgumentNullException(nameof(recetaService));
-            _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+            _calculoRecetaService = calculoRecetaService ?? throw new ArgumentNullException(nameof(calculoRecetaService));
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
-            _productoBuilderLogger = productoBuilderLogger ?? throw new ArgumentNullException(nameof(productoBuilderLogger));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
         }
 
-        #region Productos
-
-        /// <inheritdoc/>
-        public async Task<Productos.Entities.Producto?> ObtenerProductoPorIdAsync(Guid id, CancellationToken cancellationToken = default)
-        {
-            return await _productoRepository.ObtenerPorIdAsync(id, cancellationToken);
-        }
-
-        /// <inheritdoc/>
-        public async Task<Result<Productos.Entities.Producto>> RegistrarProductoAsync(
-            string nombre, 
-            string descripcion, 
-            decimal precio, 
-            Guid? categoriaId = null, 
-            string? categoriaNombre = null, 
-            CancellationToken cancellationToken = default)
-        {
-            // Limpiar notificaciones previas
-            _notificationManager.ClearErrors();
-
-            try
-            {
-                // Obtener o crear categoría si es necesario
-                Guid efectivaCategoriaId;
-                string efectivaCategoriaNombre;
-                
-                if (categoriaId.HasValue)
-                {
-                    // Verificar que la categoría existe
-                    var categoriaExistente = await _productoCategoriaRepository.ObtenerPorIdAsync(categoriaId.Value);
-                    if (categoriaExistente == null)
-                    {
-                        _notificationManager.AddError($"La categoría con ID {categoriaId.Value} no existe", nameof(categoriaId));
-                        return _notificationManager.ToResult<Productos.Entities.Producto>(null);
-                    }
-                    
-                    efectivaCategoriaId = categoriaId.Value;
-                    efectivaCategoriaNombre = categoriaExistente.Nombre;
-                }
-                else if (!string.IsNullOrWhiteSpace(categoriaNombre))
-                {
-                    // Buscar categoría por nombre
-                    var categorias = await _productoCategoriaRepository.ObtenerTodasAsync(cancellationToken);
-                    var categoriaExistente = categorias.FirstOrDefault(c => c.Nombre.Equals(categoriaNombre, StringComparison.OrdinalIgnoreCase));
-                    if (categoriaExistente != null)
-                    {
-                        efectivaCategoriaId = categoriaExistente.Id;
-                        efectivaCategoriaNombre = categoriaExistente.Nombre;
-                    }
-                    else
-                    {
-                        // Crear nueva categoría
-                        var nuevaCategoria = Productos.Entities.ProductoCategoria.Crear(categoriaNombre, $"Categoría {categoriaNombre}", 0);
-                        await _productoCategoriaRepository.AgregarAsync(nuevaCategoria, cancellationToken);
-                        
-                        efectivaCategoriaId = nuevaCategoria.Id;
-                        efectivaCategoriaNombre = nuevaCategoria.Nombre;
-                        
-                        _notificationManager.AddInformation($"Nueva categoría '{categoriaNombre}' creada automáticamente");
-                    }
-                }
-                else
-                {
-                    _notificationManager.AddError("Debe especificar categoriaId o categoriaNombre", nameof(categoriaId));
-                    return _notificationManager.ToResult<Productos.Entities.Producto>(null);
-                }
-
-                // Usar ProductoBuilder para crear el producto con validaciones robustas
-                var resultado = new ProductoBuilder(_notificationManager, _productoBuilderLogger)
-                    .ConNombre(nombre)
-                    .ConDescripcion(descripcion)
-                    .ConPrecio(precio)
-                    .EnCategoria(efectivaCategoriaId, efectivaCategoriaNombre)
-                    .Construir();
-                
-                if (!resultado.Succeeded)
-                {
-                    _logger.LogWarning("Error al construir el producto: {Errores}", 
-                        string.Join(", ", _notificationManager.GetErrors()));
-                    return resultado;
-                }
-                
-                var producto = resultado.Value!;
-                
-                // Guardar el producto
-                await _productoRepository.AgregarAsync(producto, cancellationToken);
-                
-                _logger.LogInformation("Producto registrado exitosamente: {ProductoId} - {Nombre}", 
-                    producto.Id, producto.Nombre);
-                
-                return Result.Success(producto);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al registrar producto {Nombre}", nombre);
-                _notificationManager.AddError($"Error interno: {ex.Message}", "RegistrarProducto");
-                return _notificationManager.ToResult<Productos.Entities.Producto>(null);
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<Result<Productos.Entities.Producto?>> ActualizarProductoAsync(
-            Guid id, 
-            string? nombre = null, 
-            string? descripcion = null, 
-            decimal? precio = null, 
-            Guid? categoriaId = null, 
-            bool? activo = null, 
-            CancellationToken cancellationToken = default)
+        public async Task<Result<Producto>> CrearProducto(string nombre, string descripcion, decimal precio, Guid categoriaId, string? imagenUrl, CancellationToken cancellationToken)
         {
             _notificationManager.CreateNewNotification();
+
+            var producto = Producto.Crear(nombre, descripcion, new PrecioProducto(precio), categoriaId, imagenUrl);
+
+            await _productoRepository.AgregarAsync(producto, cancellationToken);
             
-            // Validar parámetros
-            _notificationManager.Require(id != Guid.Empty, "El ID del producto no puede estar vacío", "Id");
-            
-            if (precio.HasValue)
-            {
-                _notificationManager.Require(precio.Value > 0, "El precio debe ser mayor a cero", "Precio");
-            }
-            
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<Productos.Entities.Producto?>(null);
-            }
-            
-            try
-            {
-                // Verificar que el producto existe
-                var producto = await _productoRepository.ObtenerPorIdAsync(id, cancellationToken);
-                if (producto == null)
-                {
-                    _notificationManager.AddError($"No se encontró el producto con ID {id}", "Producto");
-                    return _notificationManager.ToResult<Productos.Entities.Producto?>(null);
-                }
-                
-                // Verificar que la categoría existe si se proporciona
-                if (categoriaId.HasValue)
-                {
-                    var categoria = await _productoCategoriaRepository.ObtenerPorIdAsync(categoriaId.Value, cancellationToken);
-                    if (categoria == null)
-                    {
-                        _notificationManager.AddError($"La categoría con ID {categoriaId} no existe", "CategoriaId");
-                        return _notificationManager.ToResult<Productos.Entities.Producto?>(null);
-                    }
-                }
-                
-                // Actualizar propiedades si se proporcionan valores
-                if (!string.IsNullOrWhiteSpace(nombre))
-                {
-                    producto.Actualizar(nombre, producto.Descripcion, producto.Precio);
-                }
-                
-                if (!string.IsNullOrWhiteSpace(descripcion))
-                {
-                    producto.Actualizar(producto.Nombre, descripcion, producto.Precio);
-                }
-                
-                if (precio.HasValue)
-                {
-                    var nuevoPrecio = new Productos.ValueObjects.PrecioProducto(precio.Value);
-                    producto.Actualizar(producto.Nombre, producto.Descripcion, nuevoPrecio);
-                }
-                
-                if (categoriaId.HasValue)
-                {
-                    var categoriaNombre = (await _productoCategoriaRepository.ObtenerPorIdAsync(categoriaId.Value, cancellationToken))?.Nombre ?? "General";
-                    producto.ActualizarCategoria(categoriaId.Value, categoriaNombre);
-                }
-                
-                if (activo.HasValue)
-                {
-                    if (activo.Value)
-                        producto.Activar();
-                    else
-                        producto.Desactivar();
-                }
-                
-                // Persistir los cambios
-                await _productoRepository.ActualizarAsync(producto, cancellationToken);
-                
-                return Result.Success<Productos.Entities.Producto?>(producto);
-            }
-            catch (Exception ex)
-            {
-                _notificationManager.AddError($"Error al actualizar producto: {ex.Message}", "ActualizarProducto");
-                return _notificationManager.ToResult<Productos.Entities.Producto?>(null);
-            }
+            return Result.Success(producto);
         }
 
-        /// <inheritdoc/>
-        public async Task<List<Productos.Entities.Producto>> ObtenerProductosPorCategoriaAsync(
-            Guid categoriaId, 
-            bool soloActivos = true, 
-            CancellationToken cancellationToken = default)
+        public async Task<Result<Producto>> ActualizarProducto(Guid id, string nombre, string descripcion, decimal precio, Guid categoriaId, string? imagenUrl, CancellationToken cancellationToken)
         {
-            return await _productoCategoriaService.ObtenerProductosPorCategoriaAsync(categoriaId, soloActivos, cancellationToken);
-        }
+            _notificationManager.CreateNewNotification();
 
-        /// <inheritdoc/>
-        public async Task<int> ActualizarCategoriaProductosAsync(
-            List<Guid> productosIds, 
-            Guid categoriaId, 
-            CancellationToken cancellationToken = default)
-        {
-            return await _productoCategoriaService.ActualizarCategoriaProductosAsync(productosIds, categoriaId, cancellationToken);
-        }
-
-        /// <summary>
-        /// Registra un nuevo producto usando el ProductoBuilder con opciones avanzadas
-        /// </summary>
-        /// <param name="nombre">Nombre del producto</param>
-        /// <param name="descripcion">Descripción del producto</param>
-        /// <param name="precio">Precio del producto</param>
-        /// <param name="categoriaId">ID de la categoría</param>
-        /// <param name="popularidadInicial">Popularidad inicial del producto (0-10)</param>
-        /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Resultado con el producto registrado</returns>
-        public async Task<Result<Productos.Entities.Producto>> RegistrarProductoAvanzadoAsync(
-            string nombre,
-            string descripcion,
-            decimal precio,
-            Guid categoriaId,
-            int popularidadInicial = 0,
-            CancellationToken cancellationToken = default)
-        {
-            // Limpiar notificaciones previas
-            _notificationManager.ClearErrors();
-
-            try
+            var producto = await _productoRepository.ObtenerPorIdAsync(id, cancellationToken);
+            if (producto == null)
             {
-                // Verificar que la categoría existe
-                var categoriaExistente = await _productoCategoriaRepository.ObtenerPorIdAsync(categoriaId);
-                if (categoriaExistente == null)
-                {
-                    _notificationManager.AddError($"La categoría con ID {categoriaId} no existe", nameof(categoriaId));
-                    return _notificationManager.ToResult<Productos.Entities.Producto>(null);
+                _notificationManager.AddError("El producto no existe");
+                return _notificationManager.ToResult<Producto>(null);
                 }
 
-                // Usar ProductoBuilder para crear el producto con validaciones robustas
-                var resultado = new ProductoBuilder(_notificationManager, _productoBuilderLogger)
-                    .ConNombre(nombre)
-                    .ConDescripcion(descripcion)
-                    .ConPrecio(precio)
-                    .EnCategoria(categoriaId, categoriaExistente.Nombre)
-                    .ConPopularidadInicial(popularidadInicial)
-                    .Construir();
-
-                if (!resultado.Succeeded)
-                {
-                    _logger.LogWarning("Error al construir el producto avanzado: {Errores}", 
-                        string.Join(", ", _notificationManager.GetErrors()));
-                    return resultado;
-                }
-
-                var producto = resultado.Value!;
-
-                // Guardar el producto
-                await _productoRepository.AgregarAsync(producto, cancellationToken);
-                
-                _logger.LogInformation("Producto avanzado registrado exitosamente: {ProductoId} - {Nombre} con popularidad {Popularidad}", 
-                    producto.Id, producto.Nombre, popularidadInicial);
-                
-                return Result.Success(producto);
-            }
-            catch (Exception ex)
+            producto.Actualizar(nombre, descripcion, new PrecioProducto(precio));
+            
+            if (producto.CategoriaId != categoriaId)
             {
-                _logger.LogError(ex, "Error al registrar producto avanzado {Nombre}", nombre);
-                _notificationManager.AddError($"Error interno: {ex.Message}", "RegistrarProductoAvanzado");
-                return _notificationManager.ToResult<Productos.Entities.Producto>(null);
+                producto.ActualizarCategoria(categoriaId, "Nueva Categoría"); // Placeholder
             }
+            
+            await _productoRepository.ActualizarAsync(producto, cancellationToken);
+
+            return Result.Success(producto);
         }
 
-        #endregion
-
-        #region Recetas
-
-        /// <inheritdoc/>
-        public async Task<Result<Productos.Entities.Receta>> RegistrarRecetaProductoAsync(
-            Guid productoId,
-            string instrucciones,
-            int tiempoPreparacion,
-            Dictionary<Guid, decimal> ingredientes,
-            CancellationToken cancellationToken = default)
+        public async Task<Result<Receta>> AsignarRecetaAProducto(Guid productoId, Dictionary<Guid, decimal> ingredientes, CancellationToken cancellationToken)
         {
             _notificationManager.CreateNewNotification();
 
             var producto = await _productoRepository.ObtenerPorIdAsync(productoId, cancellationToken);
             if (producto == null)
             {
-                _notificationManager.AddError($"No se encontró el producto con ID {productoId}", "ProductoId");
-                return _notificationManager.ToResult<Productos.Entities.Receta>(null);
+                _notificationManager.AddError("El producto no existe");
+                return _notificationManager.ToResult<Receta>(null);
             }
 
-            if (producto.Recetas.Any())
-            {
-                _notificationManager.AddError("El producto ya tiene una receta asociada.", "Producto");
-                return _notificationManager.ToResult<Productos.Entities.Receta>(null);
-            }
-
-            var nuevaReceta = Productos.Entities.Receta.Crear(
-                productoId,
-                instrucciones,
-                tiempoPreparacion
-            );
-
-            if (ingredientes != null)
-            {
-                foreach (var ingrediente in ingredientes)
-                {
-                    var ingredienteDb = await _ingredienteRepository.ObtenerPorIdAsync(ingrediente.Key, false, cancellationToken);
-                    if (ingredienteDb == null)
-                    {
-                        _notificationManager.AddError($"No se encontró el ingrediente con ID {ingrediente.Key}. Será omitido.", "Ingrediente");
-                    }
-                    else
-                    {
-                        nuevaReceta.AgregarIngrediente(ingrediente.Key, ingredienteDb.Nombre, ingrediente.Value, ingredienteDb.UnidadMedida);
-                    }
-                }
-            }
-
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<Productos.Entities.Receta>(null);
-            }
+            var receta = Receta.Crear(productoId, "Receta principal", 15); // Placeholder
             
-            producto.Recetas.Add(nuevaReceta);
-
+            producto.Recetas.Add(receta);
+            
             await _productoRepository.ActualizarAsync(producto, cancellationToken);
 
-            return Result.Success(nuevaReceta);
+            return Result.Success(receta);
         }
 
-        /// <inheritdoc/>
-        public async Task<bool> VerificarDisponibilidadProductoAsync(
-            Guid productoId, 
-            int cantidad, 
-            CancellationToken cancellationToken = default)
+        public Task<Result<Dictionary<Guid, decimal>>> ObtenerIngredientesParaProductoAsync(Guid productoId, CancellationToken cancellationToken)
         {
-            var resultado = await _recetaService.VerificarDisponibilidadIngredientesAsync(productoId, cantidad, cancellationToken);
-            return resultado.Succeeded && resultado.Value;
+            return _calculoRecetaService.ObtenerIngredientesParaProductoAsync(productoId, cancellationToken);
         }
 
-        /// <inheritdoc/>
-        public async Task<Dictionary<Guid, decimal>> ObtenerIngredientesFaltantesProductoAsync(
-            Guid productoId, 
-            int cantidad, 
-            CancellationToken cancellationToken = default)
+        public Task<Result<bool>> VerificarDisponibilidadIngredientesAsync(Guid productoId, int cantidad, CancellationToken cancellationToken)
         {
-            var resultado = await _recetaService.ObtenerIngredientesFaltantesAsync(productoId, cantidad, cancellationToken);
-            return resultado.Succeeded ? resultado.Value : new Dictionary<Guid, decimal>();
+            return _calculoRecetaService.VerificarDisponibilidadIngredientesAsync(productoId, cantidad, cancellationToken);
         }
 
-        /// <inheritdoc/>
-        public async Task<decimal> CalcularCostoRecetaProductoAsync(
-            Guid productoId,
-            CancellationToken cancellationToken = default)
+        public Task<Result<decimal>> CalcularCostoRecetaAsync(Guid productoId, CancellationToken cancellationToken)
         {
-            var resultado = await _recetaService.CalcularCostoRecetaAsync(productoId, cancellationToken);
-            return resultado.Succeeded ? resultado.Value : 0m;
+            return _calculoRecetaService.CalcularCostoRecetaAsync(productoId, cancellationToken);
         }
 
-        /// <inheritdoc/>
-        public async Task<Productos.ValueObjects.RentabilidadProducto> CalcularRentabilidadProductoAsync(
-            Guid productoId,
-            CancellationToken cancellationToken = default)
-        {
-            var resultado = await _recetaService.CalcularRentabilidadProductoAsync(productoId, cancellationToken);
-            return resultado.Succeeded ? resultado.Value : Productos.ValueObjects.RentabilidadProducto.Calcular(0m, 0m);
-        }
-
-        /// <inheritdoc/>
-        public async Task<Inventario.Ingredientes.Entities.Ingrediente?> BuscarSustitutoIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default)
-        {
-            var resultado = await _recetaService.BuscarSustitutoIngredienteAsync(ingredienteId, cancellationToken);
-            
-            if (!resultado.Succeeded)
-            {
-                if (resultado.Errors != null && resultado.Errors.Any())
-                {
-                    foreach (var error in resultado.Errors)
-                    {
-                        _notificationManager.AddError(error, "ERR001", "Ingrediente");
-                    }
-                }
-                else if (!string.IsNullOrEmpty(resultado.Error))
-                {
-                    _notificationManager.AddError(resultado.Error, "ERR001", "Ingrediente");
-                }
-                else
-                {
-                    _notificationManager.AddError("Error desconocido al buscar sustituto de ingrediente", "ERR001", "Ingrediente");
-                }
-                return null;
-            }
-            
-            return resultado.Value;
-        }
-
-        // Método auxiliar para obtener nombre de ingrediente
-        private async Task<string?> ObtenerNombreIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken)
-        {
-            // Este método podría estar en un repositorio de ingredientes, pero para simplificar lo ponemos aquí
-            // Esto es solo un ejemplo, en un caso real se usaría un repositorio
-            return await Task.FromResult($"Ingrediente {ingredienteId}");
-        }
-
-        // Método auxiliar para obtener unidad de medida de ingrediente
-        private async Task<RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida> ObtenerUnidadMedidaIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken)
-        {
-            // Este método podría estar en un repositorio de ingredientes, pero para simplificar lo ponemos aquí
-            // Esto es solo un ejemplo, en un caso real se usaría un repositorio
-            return RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Gramo;
-        }
-
-        #endregion
-
-        #region Usuarios
-
-        /// <inheritdoc/>
-        public async Task<Result<Usuario>> CrearUsuarioAsync(
-            string nombreUsuario, 
-            string nombreCompleto, 
-            string email, 
-            RolUsuario rol, 
-            CancellationToken cancellationToken = default)
-        {
-            _notificationManager.ClearErrors();
-
-            try
-            {
-                // Verificar si el usuario ya existe
-                var usuarioExistente = await _usuarioRepository.ObtenerPorNombreUsuarioAsync(nombreUsuario, cancellationToken);
-                if (usuarioExistente != null)
-                {
-                    _notificationManager.AddError($"El nombre de usuario '{nombreUsuario}' ya existe", nameof(nombreUsuario));
-                    return _notificationManager.ToResult<Usuario>(null);
-                }
-
-                // Crear el Value Object para el email
-                var emailVO = Email.Create(email);
-
-                // Crear la entidad de usuario a través de su factory
-                var usuario = Usuario.Crear(nombreUsuario, nombreCompleto, emailVO, rol);
-
-                // Persistir el nuevo usuario
-                await _usuarioRepository.AgregarAsync(usuario, cancellationToken);
-                
-                _logger.LogInformation("Usuario creado: {UsuarioId}, Nombre: {NombreUsuario}", usuario.Id, usuario.NombreUsuario);
-
-                return Result.Success(usuario);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al crear el usuario {NombreUsuario}", nombreUsuario);
-                _notificationManager.AddError($"Error interno al crear usuario: {ex.Message}", "CrearUsuario");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<Result<Usuario>> AsignarRolUsuarioAsync(
-            Guid usuarioId, 
-            string rol, 
-            CancellationToken cancellationToken = default)
+        public async Task<Result<Usuario>> CrearUsuario(string nombreUsuario, string email, string rol, CancellationToken cancellationToken)
         {
             _notificationManager.CreateNewNotification();
             
-            // Validar parámetros
-            _notificationManager.Require(usuarioId != Guid.Empty, "El ID del usuario no puede estar vacío", "UsuarioId");
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(rol), "El rol no puede estar vacío", "Rol");
-            
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
-            // Obtener el usuario
-            var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
-            if (usuario == null)
-            {
-                _notificationManager.AddError($"No se encontró el usuario con ID {usuarioId}", "Usuario");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
-            // Convertir el rol a enum
             if (!Enum.TryParse<RolUsuario>(rol, true, out var rolEnum))
             {
-                _notificationManager.AddError($"Rol no válido: {rol}", "Rol");
+                _notificationManager.AddError("El rol especificado no es válido.");
                 return _notificationManager.ToResult<Usuario>(null);
             }
             
-            try
-            {
-                // Asignar el rol
-                usuario.AsignarRol(rolEnum);
-                
-                // Persistir los cambios
-                await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
+            var usuario = Usuario.Crear(nombreUsuario, nombreUsuario, email, rolEnum);
+
+            var usuarioExistente = await _usuarioRepository.BuscarPorEmailAsync(email);
+            if (usuarioExistente != null)
+        {
+                _notificationManager.AddError("El email ya está en uso.");
+                return _notificationManager.ToResult<Usuario>(null);
+            }
+            
+            await _usuarioRepository.AgregarAsync(usuario, cancellationToken);
                 
                 return Result.Success(usuario);
             }
-            catch (Exception ex)
-            {
-                _notificationManager.AddError($"Error al asignar rol: {ex.Message}", "AsignarRol");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<Result<Usuario>> ActualizarNombreUsuarioAsync(
-            Guid usuarioId, 
-            string nuevoNombre, 
-            CancellationToken cancellationToken = default)
-        {
-            _notificationManager.CreateNewNotification();
-            
-            // Validar parámetros
-            _notificationManager.Require(usuarioId != Guid.Empty, "El ID del usuario no puede estar vacío", "UsuarioId");
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(nuevoNombre), "El nuevo nombre no puede estar vacío", "NuevoNombre");
-            
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
-            // Obtener el usuario
-            var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
-            if (usuario == null)
-            {
-                _notificationManager.AddError($"No se encontró el usuario con ID {usuarioId}", "Usuario");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
-            try
-            {
-                // Actualizar el nombre
-                usuario.Actualizar(nuevoNombre, usuario.Email);
-                
-                // Persistir los cambios
-                await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
-                
-                return Result.Success(usuario);
-            }
-            catch (Exception ex)
-            {
-                _notificationManager.AddError($"Error al actualizar el nombre: {ex.Message}", "ActualizarNombre");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<Result<Usuario>> ActualizarEmailUsuarioAsync(
-            Guid usuarioId, 
-            string nuevoEmail, 
-            CancellationToken cancellationToken = default)
-        {
-            _notificationManager.CreateNewNotification();
-            
-            // Validar parámetros
-            _notificationManager.Require(usuarioId != Guid.Empty, "El ID del usuario no puede estar vacío", "UsuarioId");
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(nuevoEmail), "El nuevo email no puede estar vacío", "NuevoEmail");
-            
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
-            // Obtener el usuario
-            var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
-            if (usuario == null)
-            {
-                _notificationManager.AddError($"No se encontró el usuario con ID {usuarioId}", "Usuario");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
-            try
-            {
-                // Actualizar el email
-                usuario.Actualizar(usuario.NombreCompleto, nuevoEmail);
-                
-                // Persistir los cambios
-                await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
-                
-                return Result.Success(usuario);
-            }
-            catch (Exception ex)
-            {
-                _notificationManager.AddError($"Error al actualizar el email: {ex.Message}", "ActualizarEmail");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<Result<Usuario>> CambiarEstadoUsuarioAsync(
-            Guid usuarioId, 
-            bool activar, 
-            CancellationToken cancellationToken = default)
-        {
-            _notificationManager.CreateNewNotification();
-            
-            // Validar parámetros
-            _notificationManager.Require(usuarioId != Guid.Empty, "El ID del usuario no puede estar vacío", "UsuarioId");
-            
-            // Obtener el usuario
-            var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
-            if (usuario == null)
-            {
-                _notificationManager.AddError($"No se encontró el usuario con ID {usuarioId}", "Usuario");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
-            try
-            {
-                // Cambiar el estado
-                if (activar)
-                    usuario.Activar();
-                else
-                    usuario.Desactivar();
-                
-                // Persistir los cambios
-                await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
-                
-                return Result.Success(usuario);
-            }
-            catch (Exception ex)
-            {
-                _notificationManager.AddError($"Error al cambiar estado del usuario: {ex.Message}", "CambiarEstado");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<Result<Usuario>> LimpiarRolesUsuarioAsync(
-            Guid usuarioId, 
-            string rolPredeterminado, 
-            CancellationToken cancellationToken = default)
-        {
-            _notificationManager.CreateNewNotification();
-            
-            // Validar parámetros
-            _notificationManager.Require(usuarioId != Guid.Empty, "El ID del usuario no puede estar vacío", "UsuarioId");
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(rolPredeterminado), "El rol predeterminado no puede estar vacío", "RolPredeterminado");
-            
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
-            // Obtener el usuario
-            var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
-            if (usuario == null)
-            {
-                _notificationManager.AddError($"No se encontró el usuario con ID {usuarioId}", "Usuario");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
-            // Convertir el rol predeterminado a enum
-            if (!Enum.TryParse<RolUsuario>(rolPredeterminado, true, out var rolEnum))
-            {
-                _notificationManager.AddError($"Rol no válido: {rolPredeterminado}", "RolPredeterminado");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-            
-            try
-            {
-                // Primero asegurar que el usuario tenga el rol predeterminado
-                if (!usuario.TieneRol(rolEnum))
-                    usuario.AsignarRol(rolEnum);
-                
-                // Ahora recorremos los roles actuales y eliminamos todos excepto el predeterminado
-                foreach (var rol in usuario.Roles.ToList())
-                {
-                    if (rol != rolEnum)
-                    {
-                        try
-                        {
-                            usuario.RemoverRol(rol);
-                        }
-                        catch (InvalidOperationException)
-                        {
-                            // Ignoramos la excepción si es que estamos intentando quitar el último rol
-                            break;
-                        }
-                    }
-                }
-                
-                // Persistir los cambios
-                await _usuarioRepository.ActualizarAsync(usuario, cancellationToken);
-                
-                return Result.Success(usuario);
-            }
-            catch (Exception ex)
-            {
-                _notificationManager.AddError($"Error al limpiar roles: {ex.Message}", "LimpiarRoles");
-                return _notificationManager.ToResult<Usuario>(null);
-            }
-        }
-
-        #endregion
-
-        #region Notificaciones
-
-        /// <inheritdoc/>
-        public async Task<Result<Notificaciones.Entities.Notificacion>> EnviarNotificacionAsync(
-            Guid? destinatarioId, 
-            string tipo, 
-            string titulo, 
-            string mensaje, 
-            string datos = "", 
-            int prioridad = 0, 
-            CancellationToken cancellationToken = default)
-        {
-            _notificationManager.CreateNewNotification();
-            
-            // Validaciones básicas
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(tipo), "El tipo de notificación no puede estar vacío", "Tipo");
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(titulo), "El título de la notificación no puede estar vacío", "Titulo");
-            _notificationManager.Require(!string.IsNullOrWhiteSpace(mensaje), "El mensaje de la notificación no puede estar vacío", "Mensaje");
-            
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<Notificaciones.Entities.Notificacion>(null);
-            }
-            
-            try
-            {
-                // Convertir el tipo a TipoNotificacion
-                if (!Enum.TryParse<Notificaciones.Enums.TipoNotificacion>(tipo, true, out var tipoNotificacion))
-                {
-                    tipoNotificacion = Notificaciones.Enums.TipoNotificacion.Informativa;
-                    _notificationManager.AddError($"Tipo de notificación no válido: {tipo}. Se usará 'Informativa' por defecto.", "Tipo");
-                }
-                
-                // Crear notificación
-                var notificacion = Notificaciones.Entities.Notificacion.Crear(
-                    titulo,
-                    mensaje,
-                    tipoNotificacion,
-                    destinatarioId ?? Guid.Empty);
-                
-                // Persistir
-                await _notificacionRepository.AgregarAsync(notificacion, cancellationToken);
-                
-                // Notificar a través del servicio de notificaciones si hay destinatario
-                if (destinatarioId.HasValue)
-                {
-                    await _notificationService.EnviarNotificacionAUsuarioAsync(
-                        destinatarioId.Value,
-                        titulo,
-                        mensaje,
-                        tipoNotificacion,
-                        cancellationToken);
-                }
-                
-                return Result.Success(notificacion);
-            }
-            catch (Exception ex)
-            {
-                _notificationManager.AddError($"Error al enviar notificación: {ex.Message}", "EnviarNotificacion");
-                return _notificationManager.ToResult<Notificaciones.Entities.Notificacion>(null);
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<Result<bool>> MarcarNotificacionComoLeidaAsync(
-            Guid notificacionId, 
-            CancellationToken cancellationToken = default)
-        {
-            _notificationManager.CreateNewNotification();
-            
-            // Validar parámetros
-            _notificationManager.Require(notificacionId != Guid.Empty, "El ID de la notificación no puede estar vacío", "NotificacionId");
-            
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<bool>(false);
-            }
-            
-            try
-            {
-                var notificacion = await _notificacionRepository.ObtenerPorIdAsync(notificacionId, cancellationToken);
-                if (notificacion == null)
-                {
-                    _notificationManager.AddError($"No se encontró la notificación con ID {notificacionId}", "Notificacion");
-                    return _notificationManager.ToResult<bool>(false);
-                }
-                
-                notificacion.MarcarComoLeida();
-                
-                await _notificacionRepository.ActualizarAsync(notificacion, cancellationToken);
-                
-                return Result.Success(true);
-            }
-            catch (Exception ex)
-            {
-                _notificationManager.AddError($"Error al marcar notificación como leída: {ex.Message}", "MarcarComoLeida");
-                return _notificationManager.ToResult<bool>(false);
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<Result<List<Notificaciones.Entities.Notificacion>>> ObtenerNotificacionesUsuarioAsync(
-            Guid usuarioId, 
-            bool soloNoLeidas = false, 
-            CancellationToken cancellationToken = default)
-        {
-            _notificationManager.CreateNewNotification();
-            
-            // Validar parámetros
-            _notificationManager.Require(usuarioId != Guid.Empty, "El ID del usuario no puede estar vacío", "UsuarioId");
-            
-            if (_notificationManager.HasErrors)
-            {
-                return _notificationManager.ToResult<List<Notificaciones.Entities.Notificacion>>(new List<Notificaciones.Entities.Notificacion>());
-            }
-            
-            try
-            {
-                // Verificar que el usuario existe
-                var usuario = await _usuarioRepository.ObtenerPorIdAsync(usuarioId, cancellationToken);
-                if (usuario == null)
-                {
-                    _notificationManager.AddError($"No se encontró el usuario con ID {usuarioId}", "Usuario");
-                    return _notificationManager.ToResult<List<Notificaciones.Entities.Notificacion>>(new List<Notificaciones.Entities.Notificacion>());
-                }
-                
-                // Obtener todas las notificaciones
-                var todasLasNotificaciones = await _notificacionRepository.ObtenerTodosAsync(cancellationToken);
-                
-                // Filtrar por destinatario
-                var notificacionesUsuario = todasLasNotificaciones
-                    .Where(n => n.DestinatarioId == usuarioId)
-                    .ToList();
-                    
-                // Filtrar por no leídas si es necesario
-                if (soloNoLeidas)
-                {
-                    notificacionesUsuario = notificacionesUsuario
-                        .Where(n => !n.EstaLeida)
-                        .ToList();
-                }
-                
-                return Result.Success(notificacionesUsuario);
-            }
-            catch (Exception ex)
-            {
-                _notificationManager.AddError($"Error al obtener notificaciones: {ex.Message}", "ObtenerNotificaciones");
-                return _notificationManager.ToResult<List<Notificaciones.Entities.Notificacion>>(new List<Notificaciones.Entities.Notificacion>());
-            }
-        }
-
-        #endregion
     }
-} 
+}

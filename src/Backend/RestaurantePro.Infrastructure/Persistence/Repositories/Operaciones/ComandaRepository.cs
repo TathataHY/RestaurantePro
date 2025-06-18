@@ -65,6 +65,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             return await query.ToListAsync(cancellationToken);
         }
 
+        public async Task<Comanda?> ObtenerPorIdConItemsAsync(Guid comandaId, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Include(c => c.Items)
+                .FirstOrDefaultAsync(c => c.Id == comandaId, cancellationToken);
+        }
+
         public async Task<IEnumerable<Comanda>> ObtenerPorMeseroAsync(Guid meseroId, bool incluirItems = false, CancellationToken cancellationToken = default)
         {
             var query = _dbSet

@@ -28,33 +28,12 @@ namespace RestaurantePro.Domain.UnitTests.Core
             services.AddDomainServices();
             
             // Assert
-            VerificarServiciosRegistrados(services, typeof(IDateTimeService));
-            VerificarServiciosRegistrados(services, typeof(IDomainEventDispatcher));
             VerificarServiciosRegistrados(services, typeof(IDomainEventRegistry));
             VerificarServiciosRegistrados(services, typeof(IEventSubscriptionManager));
             VerificarServiciosRegistrados(services, typeof(IClientesFrecuentesPolicy));
             VerificarServiciosRegistrados(services, typeof(IStockBajoPolicy));
             VerificarServiciosRegistrados(services, typeof(IProductoRecomendadoPolicy));
             VerificarServiciosRegistrados(services, typeof(IVisibilidadCategoriasPolicy));
-        }
-        
-        [Fact]
-        public void AddDomainServicesForTests_DebeRegistrarServiciosDePrueba()
-        {
-            // Arrange
-            var services = new ServiceCollection();
-            
-            // Act
-            services.AddDomainServicesForTests();
-            
-            // Assert
-            VerificarServiciosRegistrados(services, typeof(IDateTimeService));
-            VerificarServiciosRegistrados(services, typeof(IDomainEventDispatcher));
-            
-            // Verificar que el IDateTimeService sea una instancia de MockDateTimeService
-            var serviceProvider = services.BuildServiceProvider();
-            var dateTimeService = serviceProvider.GetService<IDateTimeService>();
-            dateTimeService.Should().BeOfType<MockDateTimeService>();
         }
         
         [Fact]
@@ -162,5 +141,14 @@ namespace RestaurantePro.Domain.UnitTests.Core
             services.Any(s => s.ServiceType == serviceType).Should().BeTrue(
                 $"El servicio {serviceType.Name} debería estar registrado");
         }
+
+        public static IEnumerable<object[]> ServiciosObligatorios =>
+            new List<object[]>
+            {
+                new object[] { typeof(INotificationManager) },
+                new object[] { typeof(IUsuarioService) },
+                new object[] { typeof(ICalculoRecetaService) },
+                new object[] { typeof(ICoreServiceFacade) },
+            };
     }
 } 

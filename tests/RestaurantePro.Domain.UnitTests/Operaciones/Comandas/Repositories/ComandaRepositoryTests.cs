@@ -60,11 +60,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
             var estado = EstadoComanda.EnProceso;
             var comandasEnProceso = _comandas.Where(c => c.Estado == estado).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorEstadoAsync(estado, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerComandasPorEstadoAsync(estado, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(comandasEnProceso);
 
             // Act
-            var resultado = await _mockRepository.Object.ObtenerPorEstadoAsync(estado);
+            var resultado = await _mockRepository.Object.ObtenerComandasPorEstadoAsync(estado);
 
             // Assert
             resultado.Should().NotBeNull();
@@ -78,11 +78,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Repositories
             // Arrange
             var comandasDeMesa = _comandas.Where(c => c.MesaId == _mesaId).ToList();
 
-            _mockRepository.Setup(repo => repo.ObtenerPorMesaAsync(_mesaId, false, It.IsAny<CancellationToken>()))
+            _mockRepository.Setup(repo => repo.ObtenerComandasPorMesaAsync(_mesaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(comandasDeMesa);
 
             // Act
-            var resultado = await _mockRepository.Object.ObtenerPorMesaAsync(_mesaId);
+            var resultado = await _mockRepository.Object.ObtenerComandasPorMesaAsync(_mesaId);
 
             // Assert
             resultado.Should().NotBeNull();

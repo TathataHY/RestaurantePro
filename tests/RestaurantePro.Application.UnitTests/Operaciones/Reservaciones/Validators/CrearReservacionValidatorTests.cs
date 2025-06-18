@@ -469,12 +469,12 @@ public class CrearReservacionValidatorTests
         // Arrange
         var command = new CrearReservacionCommand
         {
-            FechaHoraReservacion = DateTime.Now.AddDays(-1), // Error: fecha pasada
-            NumeroPersonas = 0, // Error: número inválido
-            NombreCliente = "", // Error: nombre vacío
-            TelefonoContacto = "123", // Error: teléfono inválido
-            Email = "correo.invalido", // Error: email inválido
-            Observaciones = new string('A', 1001) // Error: muy largas
+            FechaHoraReservacion = DateTime.Now.AddDays(-1), // Error 1: Fecha pasada, Error 2: Hora inválida
+            NumeroPersonas = 0,                             // Error 3: Cero personas
+            NombreCliente = "",                             // Error 4: Nombre vacío
+            TelefonoContacto = "123",                       // Error 5: Teléfono inválido
+            Observaciones = new string('x', 1001),          // Error 6: Observaciones largas
+            Email = "correo-no-valido"                      // Error 7: Email inválido
         };
 
         // Act
@@ -482,13 +482,14 @@ public class CrearReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCount(6); // Esperamos 6 errores
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.FechaHoraReservacion));
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.NumeroPersonas));
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.NombreCliente));
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.TelefonoContacto));
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.Email));
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearReservacionCommand.Observaciones));
+        result.Errors.Should().HaveCount(7);
+        result.Errors.Select(e => e.ErrorMessage).Should().Contain("La fecha de reservación debe ser futura");
+        result.Errors.Select(e => e.ErrorMessage).Should().Contain("La hora de reservación debe estar entre las 12:00 PM y 10:00 PM");
+        result.Errors.Select(e => e.ErrorMessage).Should().Contain("El número de personas debe ser mayor a 0");
+        result.Errors.Select(e => e.ErrorMessage).Should().Contain("El nombre del cliente es obligatorio");
+        result.Errors.Select(e => e.ErrorMessage).Should().Contain("El teléfono debe tener un formato válido");
+        result.Errors.Select(e => e.ErrorMessage).Should().Contain("Las observaciones no pueden exceder 1000 caracteres");
+        result.Errors.Select(e => e.ErrorMessage).Should().Contain("El email debe tener un formato válido");
     }
 
     [Fact]
