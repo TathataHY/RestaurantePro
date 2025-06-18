@@ -112,5 +112,36 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Identity.Services
             rol.Description.Should().Be(roleDescription);
             rol.IsSystemRole.Should().BeTrue();
         }
+
+        [Theory]
+        [InlineData("pass", "Passwords must be at least 8 characters.")] // Demasiado corta
+        [InlineData("password", "Passwords must have at least one non alphanumeric character.")] // Sin caracter especial
+        [InlineData("Password", "Passwords must have at least one non alphanumeric character.")] // Sin caracter especial
+        [InlineData("PASSWORD123", "Passwords must have at least one lowercase ('a'-'z').")] // Sin minúscula
+        [InlineData("password123", "Passwords must have at least one uppercase ('A'-'Z').")] // Sin mayúscula
+        [InlineData("Password!", "Passwords must have at least one digit ('0'-'9').")] // Sin número
+        public async Task RegisterAsync_NoDebeCrearUsuarioConPasswordInvalido(string password, string expectedError)
+        {
+            // Arrange
+            var roleName = "Usuario Invalido";
+            if (await _roleManager.FindByNameAsync(roleName) == null)
+            {
+                await _identityService.CreateRoleAsync(roleName, "Rol para pruebas de contraseñas invalidas", false);
+            }
+
+            // Act
+            var result = await _identityService.RegisterAsync(
+                "Test", 
+                "Invalido", 
+                $"user-{Guid.NewGuid()}@test.com", 
+                $"testuser-{Guid.NewGuid()}", 
+                password, 
+                roleName);
+
+            // Assert
+            result.Succeeded.Should().BeFalse();
+            result.Errors.Should().NotBeEmpty();
+            result.Errors.Should().Contain(e => e.Contains(expectedError));
+        }
     }
 } 

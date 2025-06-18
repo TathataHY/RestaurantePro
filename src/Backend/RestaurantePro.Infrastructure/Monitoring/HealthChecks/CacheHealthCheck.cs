@@ -64,7 +64,7 @@ public class CacheHealthCheck : IHealthCheck
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al verificar el servicio de caché: {ErrorMessage}", ex.Message);
-            return HealthCheckResult.Unhealthy($"Error en el servicio de caché: {ex.Message}");
+            return HealthCheckResult.Unhealthy($"Error en el servicio de caché: {ex.Message}", ex);
         }
     }
     

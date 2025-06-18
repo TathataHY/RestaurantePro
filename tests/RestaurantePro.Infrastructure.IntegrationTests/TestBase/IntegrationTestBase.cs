@@ -39,6 +39,13 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Options;
 using RestaurantePro.Infrastructure.Identity.Configuration;
 using RestaurantePro.Domain.Core.Base.Testing;
+using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
+using RestaurantePro.Infrastructure.DependencyInjection;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Telemetry;
+using RestaurantePro.Infrastructure.Caching.Services;
+using RestaurantePro.Infrastructure.Monitoring.HealthChecks;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 {
@@ -60,7 +67,39 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
         {
             TestEnvironment.SetTestEnvironment(true);
 
+            // Construir configuración en memoria para pruebas
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    // Identity Settings
+                    {"IdentitySettings:PasswordSettings:RequireDigit", "true"},
+                    {"IdentitySettings:PasswordSettings:RequireLowercase", "true"},
+                    {"IdentitySettings:PasswordSettings:RequireUppercase", "true"},
+                    {"IdentitySettings:PasswordSettings:RequireNonAlphanumeric", "true"},
+                    {"IdentitySettings:PasswordSettings:RequiredLength", "8"},
+                    {"IdentitySettings:PasswordSettings:RequiredUniqueChars", "1"},
+                    
+                    {"IdentitySettings:LockoutSettings:AllowedForNewUsers", "true"},
+                    {"IdentitySettings:LockoutSettings:MaxFailedAccessAttempts", "5"},
+                    {"IdentitySettings:LockoutSettings:DefaultLockoutTimeSpan", "0.00:15:00"},
+
+                    {"IdentitySettings:UserSettings:RequireUniqueEmail", "true"},
+                    {"IdentitySettings:UserSettings:RequireConfirmedEmail", "false"},
+                    {"IdentitySettings:UserSettings:RequireConfirmedPhoneNumber", "false"},
+                    {"IdentitySettings:UserSettings:RequireConfirmedAccount", "false"},
+
+                    // JWT Settings
+                    {"JwtSettings:Secret", "TestSuperSecretKeyForJwtTokenGenerationLongEnough"},
+                    {"JwtSettings:Issuer", "test.issuer.com"},
+                    {"JwtSettings:Audience", "test.audience.com"},
+                    {"JwtSettings:ExpirationInMinutes", "60"},
+                    {"JwtSettings:RefreshTokenExpirationInDays", "7"}
+                })
+                .Build();
+
             var services = new ServiceCollection();
+
+            services.AddSingleton<IConfiguration>(configuration);
 
             var currentUserServiceMock = new Mock<ICurrentUserService>();
             currentUserServiceMock.Setup(s => s.UserId).Returns("test-user");
@@ -101,10 +140,8 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             
             services.AddScoped<RestauranteProDbContext>(provider => provider.GetRequiredService<TestDbContext>());
 
-            services.AddIdentity<IdentityApplicationUser, ApplicationRole>()
-                .AddEntityFrameworkStores<TestDbContext>()
-                .AddRoles<ApplicationRole>()
-                .AddDefaultTokenProviders();
+            // Usar el setup centralizado de Identity
+            services.AddIdentityServices(configuration);
             
             services.AddScoped<DbContext>(provider => provider.GetRequiredService<TestDbContext>());
 
@@ -121,19 +158,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             services.AddSingleton(Mock.Of<ILogger<UnitOfWork>>());
             services.AddSingleton(Mock.Of<ILogger<SoftDeleteInterceptor>>());
             
-            services.AddScoped<IIdentityService, IdentityService>();
-            services.AddScoped<IJwtTokenService, JwtTokenService>();
-            services.AddScoped<IUserPermissionService, PermissionService>();
             services.AddSingleton<JwtSecurityTokenHandler>();
-            
-            services.Configure<JwtConfiguration>(options =>
-            {
-                options.Secret = "TestSuperSecretKeyForJwtTokenGenerationLongEnough";
-                options.Issuer = "test.issuer.com";
-                options.Audience = "test.audience.com";
-                options.ExpirationInMinutes = 60;
-                options.RefreshTokenExpirationInDays = 7;
-            });
             
             services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
 
@@ -161,8 +186,15 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             services.AddSingleton<IDateTimeService>(dateTimeServiceMock.Object);
             services.AddSingleton<ICurrentUserService>(currentUserServiceMock.Object);
 
-            var serviceProviderFactory = services.BuildServiceProvider();
-            _scope = serviceProviderFactory.CreateScope();
+            services.AddSingleton<ICacheTelemetry, InMemoryCacheTelemetry>();
+            services.AddSingleton<MemoryCacheService>();
+            services.AddSingleton<ICacheService>(sp => sp.GetRequiredService<MemoryCacheService>());
+
+            services.AddSingleton<DatabaseHealthCheck>();
+            
+            var serviceProvider = services.BuildServiceProvider();
+
+            _scope = serviceProvider.CreateScope();
             ServiceProvider = _scope.ServiceProvider;
             DbContext = ServiceProvider.GetRequiredService<TestDbContext>();
 

@@ -97,28 +97,28 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 ### Services
 - `✅/✅` IdentityService - Servicio para gestionar la identidad
 - `✅/✅` JwtTokenService - Servicio para generar y validar tokens JWT
-- `✅/⬜` PermissionService - Servicio para gestionar permisos
+- `✅/✅` PermissionService - Servicio para gestionar permisos
 
 ### Configuration
-- `✅/⬜` IdentityConfiguration - Configuración de Identity
-- `✅/⬜` JwtConfiguration - Configuración de JWT
+- `✅/✅` IdentityConfiguration - Configuración de Identity
+- `✅/✅` JwtConfiguration - Configuración de JWT
 
 ### Extensions
-- `✅/⬜` ClaimsPrincipalExtensions - Extensiones para ClaimsPrincipal
-- `✅/⬜` IdentityResultExtensions - Extensiones para IdentityResult
+- `✅/✅` ClaimsPrincipalExtensions - Extensiones para ClaimsPrincipal
+- `✅/✅` IdentityResultExtensions - Extensiones para IdentityResult
 
 ## ExternalServices
 
 ### Payment
-- `✅/⬜` PayPalService - Servicio para pagos con PayPal
-- `✅/⬜` StripeService - Servicio para pagos con Stripe
+- `✅/✅` PayPalService - Servicio para pagos con PayPal
+- `✅/✅` StripeService - Servicio para pagos con Stripe
 
 ### Email
-- `✅/⬜` EmailService - Servicio para envío de correos electrónicos
-- `✅/⬜` SendGridService - Servicio para envío de correos electrónicos con SendGrid
+- `✅/✅` EmailService - Servicio para envío de correos electrónicos
+- `⬜/⬜` SendGridService - Servicio para envío de correos con SendGrid
 
 ### SMS
-- `✅/⬜` TwilioService - Servicio para envío de SMS con Twilio
+- `✅/✅` TwilioService - Servicio para envío de SMS con Twilio
 
 ### FileStorage
 - `✅/⬜` LocalFileService - Servicio para almacenamiento local de archivos
@@ -144,21 +144,24 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 ## Caching
 
 ### Services
-- `✅/✅` RedisCacheService - Servicio de caché con Redis
+- `✅/⬜` RedisCacheService - Servicio de caché con Redis
 - `✅/✅` MemoryCacheService - Servicio de caché en memoria
+
+### Telemetry
+- `✅/✅` CacheTelemetry - Telemetría para el servicio de caché
 
 ## Logging
 
 ### Providers
-- `✅/⬜` SerilogProvider - Proveedor de logging con Serilog
-- `✅/⬜` ApplicationInsightsProvider - Proveedor de logging con Application Insights
+- `⬜/⬜` SerilogProvider - Proveedor de logging con Serilog
+- `⬜/⬜` ApplicationInsightsProvider - Proveedor de logging con Application Insights
 
 ## Monitoring
 
 ### HealthChecks
-- `✅/⬜` DatabaseHealthCheck - Health check para la base de datos
-- `✅/⬜` ExternalServiceHealthCheck - Health check para servicios externos
-- `✅/⬜` CacheHealthCheck - Health check para caché
+- `✅/✅` DatabaseHealthCheck - Verifica la salud de la base de datos
+- `✅/✅` ExternalServiceHealthCheck - Health check para servicios externos
+- `✅/✅` CacheHealthCheck - Health check para caché
 
 ## DependencyInjection
 - `✅/⬜` InfrastructureSetup - Configuración general de infraestructura

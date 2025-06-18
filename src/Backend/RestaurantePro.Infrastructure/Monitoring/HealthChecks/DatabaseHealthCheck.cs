@@ -46,8 +46,8 @@ public class DatabaseHealthCheck : IHealthCheck
                 _logger.LogInformation("Tiempo de espera actual de comandos: {CommandTimeout} segundos", commandTimeout.Value);
             }
 
-            // Verificamos la consistencia de la base ejecutando una consulta simple
-            var utcNow = await _dbContext.Database.ExecuteSqlRawAsync("SELECT GETUTCDATE()", cancellationToken);
+            // Verificamos la consistencia de la base ejecutando una consulta simple y universal
+            await _dbContext.Database.ExecuteSqlRawAsync("SELECT 1", cancellationToken);
             
             _logger.LogInformation("Conexión a la base de datos establecida correctamente");
             
@@ -58,7 +58,7 @@ public class DatabaseHealthCheck : IHealthCheck
             // Crear un diccionario para los datos de salud
             var data = new Dictionary<string, object>
             {
-                ["DatabaseName"] = _dbContext.Database.GetDbConnection().Database,
+                ["ProviderName"] = _dbContext.Database.ProviderName,
                 ["MigrationsApplied"] = migrationsApplied,
                 ["PendingMigrations"] = pendingMigrations
             };
@@ -68,7 +68,7 @@ public class DatabaseHealthCheck : IHealthCheck
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al verificar la salud de la base de datos: {ErrorMessage}", ex.Message);
-            return HealthCheckResult.Unhealthy($"Error en la base de datos: {ex.Message}");
+            return HealthCheckResult.Unhealthy("No se pudo establecer conexión con la base de datos", ex);
         }
     }
 } 

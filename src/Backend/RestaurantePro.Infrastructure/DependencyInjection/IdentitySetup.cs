@@ -22,30 +22,42 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.Configure<JwtConfiguration>(configuration.GetSection("JwtSettings"));
             services.AddSingleton<IConfigureOptions<JwtConfiguration>, JwtConfigurationSetup>();
 
-            // Configurar Identity
-            services.AddIdentity<IdentityApplicationUser, IdentityRole>(options =>
+            // Configurar Identity desde el archivo de configuración
+            services.Configure<IdentityConfiguration>(configuration.GetSection("IdentitySettings"));
+            var identitySettings = configuration.GetSection("IdentitySettings").Get<IdentityConfiguration>() ?? new IdentityConfiguration();
+
+            services.AddIdentity<IdentityApplicationUser, ApplicationRole>(options =>
             {
                 // Configuración de contraseñas
-                options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
-                options.Password.RequireUppercase = true;
-                options.Password.RequireNonAlphanumeric = true;
-                options.Password.RequiredLength = 8;
+                options.Password.RequireDigit = identitySettings.PasswordSettings.RequireDigit;
+                options.Password.RequireLowercase = identitySettings.PasswordSettings.RequireLowercase;
+                options.Password.RequireUppercase = identitySettings.PasswordSettings.RequireUppercase;
+                options.Password.RequireNonAlphanumeric = identitySettings.PasswordSettings.RequireNonAlphanumeric;
+                options.Password.RequiredLength = identitySettings.PasswordSettings.RequiredLength;
+                options.Password.RequiredUniqueChars = identitySettings.PasswordSettings.RequiredUniqueChars;
 
                 // Configuración de bloqueo
-                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
-                options.Lockout.MaxFailedAccessAttempts = 5;
-                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.DefaultLockoutTimeSpan = identitySettings.LockoutSettings.DefaultLockoutTimeSpan;
+                options.Lockout.MaxFailedAccessAttempts = identitySettings.LockoutSettings.MaxFailedAccessAttempts;
+                options.Lockout.AllowedForNewUsers = identitySettings.LockoutSettings.AllowedForNewUsers;
 
                 // Configuración de usuario
-                options.User.RequireUniqueEmail = true;
+                options.User.RequireUniqueEmail = identitySettings.UserSettings.RequireUniqueEmail;
+                
+                // Configuración de SignIn
+                options.SignIn.RequireConfirmedAccount = identitySettings.UserSettings.RequireConfirmedAccount;
+                options.SignIn.RequireConfirmedEmail = identitySettings.UserSettings.RequireConfirmedEmail;
+                options.SignIn.RequireConfirmedPhoneNumber = identitySettings.UserSettings.RequireConfirmedPhoneNumber;
             })
             .AddEntityFrameworkStores<RestauranteProDbContext>()
-            .AddDefaultTokenProviders();
+            .AddDefaultTokenProviders()
+            .AddRoles<ApplicationRole>() // Asegurarse que los roles son de tipo ApplicationRole
+            .AddRoleManager<RoleManager<ApplicationRole>>()
+            .AddRoleValidator<RoleValidator<ApplicationRole>>();
 
             // Configurar autenticación JWT
-            var jwtSettings = configuration.GetSection("JwtSettings");
-            var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"]);
+            var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtConfiguration>();
+            var key = Encoding.ASCII.GetBytes(jwtSettings.Secret);
             
             services.AddAuthentication(options =>
             {
@@ -62,8 +74,8 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true,
                     ValidateAudience = true,
-                    ValidIssuer = jwtSettings["Issuer"],
-                    ValidAudience = jwtSettings["Audience"],
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidAudience = jwtSettings.Audience,
                     ClockSkew = TimeSpan.Zero
                 };
             });

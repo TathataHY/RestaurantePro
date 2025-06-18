@@ -147,7 +147,7 @@ namespace RestaurantePro.Infrastructure.ExternalServices.Email
             }
         }
         
-        private SmtpClient CrearClienteSMTP()
+        protected virtual SmtpClient CrearClienteSMTP()
         {
             var cliente = new SmtpClient(_emailSettings.ServidorSMTP, _emailSettings.PuertoSMTP)
             {

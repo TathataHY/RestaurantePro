@@ -25,14 +25,14 @@ namespace RestaurantePro.Infrastructure.Identity.Extensions
         /// <summary>
         /// Convierte un IdentityResult a un Result con mensaje personalizado en caso de éxito
         /// </summary>
-        public static Result ToResult(this IdentityResult identityResult, string successMessage)
+        public static Result<string> ToResult(this IdentityResult identityResult, string successMessage)
         {
             if (identityResult == null)
-                return Result.Failure("Resultado de identidad nulo");
+                return Result.Failure<string>("Resultado de identidad nulo");
 
             return identityResult.Succeeded
                 ? Result.Success(successMessage)
-                : Result.Failure(identityResult.Errors.Select(e => e.Description).FirstOrDefault() ?? "Error de identidad");
+                : Result.Failure<string>(identityResult.Errors.Select(e => e.Description).FirstOrDefault() ?? "Error de identidad");
         }
 
         /// <summary>

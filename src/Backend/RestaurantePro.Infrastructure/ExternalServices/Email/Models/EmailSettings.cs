@@ -49,5 +49,10 @@ namespace RestaurantePro.Infrastructure.ExternalServices.Email.Models
         /// API Key de SendGrid (si se usa ese servicio)
         /// </summary>
         public string SendGridApiKey { get; set; }
+        
+        /// <summary>
+        /// Directorio de recogida (opcional)
+        /// </summary>
+        public string? PickupDirectory { get; set; }
     }
 } 
