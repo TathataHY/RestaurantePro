@@ -31,7 +31,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Proveedores
             {
                 emailBuilder.Property(e => e.Value)
                     .HasColumnName("Email")
-                    .HasMaxLength(100);
+                    .HasMaxLength(100)
+                    .IsRequired(false);
             });
             
             // Configuración para PhoneNumber como Value Object
@@ -39,7 +40,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Proveedores
             {
                 phoneBuilder.Property(p => p.Value)
                     .HasColumnName("Telefono")
-                    .HasMaxLength(20);
+                    .HasMaxLength(20)
+                    .IsRequired(false);
             });
                 
             // Índices

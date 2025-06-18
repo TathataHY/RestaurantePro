@@ -112,6 +112,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             services.AddScoped<IProductoCategoriaRepository, ProductoCategoriaRepository>();
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddScoped<IProveedorRepository, ProveedorRepository>();
+            services.AddScoped<IContactoProveedorRepository, ContactoProveedorRepository>();
             services.AddScoped<INotificacionRepository, NotificacionRepository>();
             services.AddScoped<IProductoRepository, ProductoRepository>();
 
