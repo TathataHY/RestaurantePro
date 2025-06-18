@@ -31,13 +31,15 @@ using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
 using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
+using Xunit.Abstractions;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 {
     [Collection("DatabaseCollection")]
     public abstract class IntegrationTestBase : IAsyncLifetime
     {
-        private readonly DatabaseFixture _fixture;
+        protected readonly ITestOutputHelper _output;
+        protected readonly DatabaseFixture _fixture;
         private IServiceScope _scope;
         protected IServiceProvider ServiceProvider;
         protected TestDbContext DbContext;
