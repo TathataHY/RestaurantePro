@@ -155,6 +155,8 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 ### Providers
 - `⬜/⬜` SerilogProvider - Proveedor de logging con Serilog
 - `⬜/⬜` ApplicationInsightsProvider - Proveedor de logging con Application Insights
+- `⬜/⬜` SerilogProvider - Proveedor de logging con Serilog <!-- Funcionalidad futura. Implementar sinks de pago bajo petición. -->
+- `⬜/⬜` ApplicationInsightsProvider - Proveedor de logging con Application Insights <!-- Funcionalidad futura. Requiere suscripción de Azure. -->
 
 ## Monitoring
 
