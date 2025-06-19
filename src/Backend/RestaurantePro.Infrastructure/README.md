@@ -122,8 +122,7 @@ Infrastructure/
 │   │   │   ├── NotificationCleanupJob.cs
 │   │   │   └── UserInactivityJob.cs
 │   │   ├── Comercial/
-│   │   │   ├── LoyaltyPointsExpirationJob.cs
-│   │   │   └── InvoiceReminderJob.cs
+│   │   │   ├── InvoiceReminderJob.cs
 │   │   ├── Operaciones/
 │   │   │   ├── TableCleanupJob.cs
 │   │   │   └── ReservationReminderJob.cs

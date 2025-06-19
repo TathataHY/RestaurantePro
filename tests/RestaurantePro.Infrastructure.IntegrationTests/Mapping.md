@@ -115,7 +115,7 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 
 ### Email
 - `✅/✅` EmailService - Servicio para envío de correos electrónicos
-- `⬜/⬜` SendGridService - Servicio para envío de correos con SendGrid
+- `⬜/⬜` SendGridService - Servicio para envío de correos con SendGrid <!-- Funcionalidad futura. Se implementará cuando se contrate el servicio. -->
 
 ### SMS
 - `✅/✅` TwilioService - Servicio para envío de SMS con Twilio
@@ -129,8 +129,8 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 ### Jobs
 - `✅/✅` NotificationCleanupJob - Trabajo para limpieza de notificaciones
 - `✅/✅` UserInactivityJob - Trabajo para detectar usuarios inactivos
-- `✅/⬜` LoyaltyPointsExpirationJob - Trabajo para expiración de puntos de fidelización
-- `✅/⬜` InvoiceReminderJob - Trabajo para recordatorios de facturas
+- `⬜/⬜` LoyaltyPointsExpirationJob - Trabajo para expiración de puntos de fidelización <!-- Funcionalidad futura, no prioritaria. Implementar solo bajo petición explícita. -->
+- `✅/✅` InvoiceReminderJob - Trabajo para recordatorios de facturas
 - `✅/⬜` TableCleanupJob - Trabajo para limpieza de mesas
 - `✅/⬜` ReservationReminderJob - Trabajo para recordatorios de reservaciones
 - `✅/⬜` LowStockAlertJob - Trabajo para alertas de bajo stock

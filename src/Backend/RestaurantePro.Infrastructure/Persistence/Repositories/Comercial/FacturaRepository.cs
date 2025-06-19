@@ -159,5 +159,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         {
             return await _dbSet.Where(f => f.Estado != EstadoFactura.Anulada).ToListAsync(cancellationToken);
         }
+
+        public async Task<IEnumerable<Factura>> ObtenerFacturasPendientesConVencimientoAsync(DateTime fechaVencimiento, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Set<Factura>()
+                .Include(f => f.Cliente)
+                .Where(f => (f.Estado == EstadoFactura.Emitida || f.Estado == EstadoFactura.PagadaParcialmente) && f.FechaVencimiento <= fechaVencimiento && !f.EstaEliminado)
+                .ToListAsync(cancellationToken);
+        }
     }
 } 

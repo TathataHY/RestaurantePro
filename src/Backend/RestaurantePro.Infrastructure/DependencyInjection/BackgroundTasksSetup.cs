@@ -64,8 +64,8 @@ public static class BackgroundTasksSetup
         services.Configure<UserInactivityOptions>(
             configuration.GetSection("BackgroundTasks:UserInactivity"));
             
-        services.Configure<LoyaltyPointsExpirationOptions>(
-            configuration.GetSection("BackgroundTasks:LoyaltyPointsExpiration"));
+        // services.Configure<LoyaltyPointsExpirationOptions>(
+        //     configuration.GetSection("BackgroundTasks:LoyaltyPointsExpiration"));
             
         services.Configure<LowStockAlertOptions>(
             configuration.GetSection("BackgroundTasks:LowStockAlert"));
@@ -85,7 +85,7 @@ public static class BackgroundTasksSetup
         services.AddTransient<UserInactivityJob>();
         
         // Registrar trabajos - Comercial
-        services.AddTransient<LoyaltyPointsExpirationJob>();
+        // services.AddTransient<LoyaltyPointsExpirationJob>();
         services.AddTransient<InvoiceReminderJob>();
         
         // Registrar trabajos - Operaciones
