@@ -79,7 +79,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
             {
                 _dbSet.RemoveRange(notificacionesAntiguas);
                 _logger.LogInformation("Eliminando {Count} notificaciones antiguas anteriores a {Fecha}", notificacionesAntiguas.Count, fecha);
-                await GuardarCambiosAsync(cancellationToken);
             }
             
             return notificacionesAntiguas.Count;

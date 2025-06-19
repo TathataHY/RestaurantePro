@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Domain.Core.Notificaciones.Entities;
 using RestaurantePro.Domain.Core.Notificaciones.Enums;
 using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Domain.Core.Usuarios.Entities;
 using RestaurantePro.Domain.Core.Usuarios.Enums;
 using RestaurantePro.Domain.Core.Usuarios.Interfaces;
@@ -18,6 +19,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
     public class NotificacionRepositoryTests : IntegrationTestBase, IAsyncLifetime
     {
         private INotificacionRepository _repository;
+        private IUnitOfWork _unitOfWork;
 
         private Guid _usuarioId1;
         private Guid _usuarioId2;
@@ -30,6 +32,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         {
             await base.InitializeAsync();
             _repository = ServiceProvider.GetRequiredService<INotificacionRepository>();
+            _unitOfWork = ServiceProvider.GetRequiredService<IUnitOfWork>();
             await SeedNotificacionesAsync();
         }
 
@@ -136,6 +139,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
             // Act
             var cantidadEliminada = await _repository.EliminarAnterioresAFechaAsync(fechaLimite);
+            await _unitOfWork.SaveChangesAsync();
 
             // Assert
             cantidadEliminada.Should().Be(1);
