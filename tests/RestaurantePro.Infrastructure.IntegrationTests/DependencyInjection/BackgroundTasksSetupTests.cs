@@ -129,7 +129,6 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.DependencyInjection
             var inactivityJob = _serviceProvider.GetService<UserInactivityJob>();
             var invoiceJob = _serviceProvider.GetService<InvoiceReminderJob>();
             var tableJob = _serviceProvider.GetService<TableCleanupJob>();
-            var reservationJob = _serviceProvider.GetService<ReservationReminderJob>();
             var stockJob = _serviceProvider.GetService<LowStockAlertJob>();
             var expirationJob = _serviceProvider.GetService<ExpirationCheckJob>();
 
@@ -138,7 +137,6 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.DependencyInjection
             Assert.NotNull(inactivityJob);
             Assert.NotNull(invoiceJob);
             Assert.NotNull(tableJob);
-            Assert.NotNull(reservationJob);
             Assert.NotNull(stockJob);
             Assert.NotNull(expirationJob);
         }

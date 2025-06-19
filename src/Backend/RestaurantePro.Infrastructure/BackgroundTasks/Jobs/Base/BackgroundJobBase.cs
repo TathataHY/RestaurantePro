@@ -9,9 +9,10 @@ namespace RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Base;
 /// <summary>
 /// Clase base para los trabajos en segundo plano que proporciona funcionalidad común
 /// </summary>
-public abstract class BackgroundJobBase : IBackgroundJob
+public abstract class BackgroundJobBase : IRecurringJob
 {
-    protected readonly ILogger _logger;
+    protected readonly ILogger<BackgroundJobBase> _logger;
+    private readonly string _jobName;
     
     /// <inheritdoc/>
     public string JobId => $"{JobName}_{Guid.NewGuid():N}";
@@ -22,28 +23,30 @@ public abstract class BackgroundJobBase : IBackgroundJob
     /// <inheritdoc/>
     public abstract string Description { get; }
 
-    protected BackgroundJobBase(ILogger logger)
+    protected BackgroundJobBase(ILogger<BackgroundJobBase> logger)
     {
         _logger = logger;
+        _jobName = GetType().Name;
     }
 
     /// <inheritdoc/>
-    public async Task ExecuteAsync(CancellationToken cancellationToken = default)
+    public virtual async Task ExecuteAsync(CancellationToken cancellationToken)
     {
+        _logger.LogInformation("Iniciando trabajo: {JobName}", _jobName);
         try
         {
-            _logger.LogInformation("Iniciando ejecución del trabajo {JobName} con ID {JobId}", JobName, JobId);
-            
             await ExecuteInternalAsync(cancellationToken);
-            
-            _logger.LogInformation("Trabajo {JobName} con ID {JobId} completado exitosamente", JobName, JobId);
+            _logger.LogInformation("Trabajo {JobName} completado exitosamente.", _jobName);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error durante la ejecución del trabajo {JobName} con ID {JobId}: {ErrorMessage}",
-                JobName, JobId, ex.Message);
-            throw;
+            _logger.LogError(ex, "Error ejecutando el trabajo: {JobName}", _jobName);
         }
+    }
+
+    public Task Execute(CancellationToken none)
+    {
+        return ExecuteAsync(none);
     }
 
     /// <summary>

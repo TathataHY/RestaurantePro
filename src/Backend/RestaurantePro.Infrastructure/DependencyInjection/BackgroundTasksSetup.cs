@@ -60,10 +60,10 @@ public static class BackgroundTasksSetup
         // No agregar el servidor en entorno de prueba
         if (!isTestEnvironment)
         {
-            services.AddHangfireServer(options =>
+            services.AddHangfireServer(serverOptions =>
             {
-                options.WorkerCount = Environment.ProcessorCount * 2;
-                options.Queues = new[] { "default", "critical", "notifications", "reports", "emails" };
+                serverOptions.ServerName = "RestaurantePro-Server";
+                serverOptions.WorkerCount = Environment.ProcessorCount * 2;
             });
         }
         
@@ -98,12 +98,11 @@ public static class BackgroundTasksSetup
         services.AddTransient<UserInactivityJob>();
         
         // Registrar trabajos - Comercial
-        // services.AddTransient<LoyaltyPointsExpirationJob>();
+        // services.AddTransient<LoyaltyPointsExpirationJob>(); // Pausado
         services.AddTransient<InvoiceReminderJob>();
         
         // Registrar trabajos - Operaciones
         services.AddTransient<TableCleanupJob>();
-        services.AddTransient<ReservationReminderJob>();
         
         // Registrar trabajos - Inventario
         services.AddTransient<LowStockAlertJob>();

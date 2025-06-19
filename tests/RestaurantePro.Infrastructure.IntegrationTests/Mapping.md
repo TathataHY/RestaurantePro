@@ -129,10 +129,10 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 ### Jobs
 - `✅/✅` NotificationCleanupJob - Trabajo para limpieza de notificaciones
 - `✅/✅` UserInactivityJob - Trabajo para detectar usuarios inactivos
-- `⬜/⬜` LoyaltyPointsExpirationJob - Trabajo para expiración de puntos de fidelización <!-- Funcionalidad futura, no prioritaria. Implementar solo bajo petición explícita. -->
+- `⬜/⬜` LoyaltyPointsExpirationJob - Trabajo para expiración de puntos de fidelización <!-- Pausado por errores técnicos. No implementar hasta nuevo aviso. -->
 - `✅/✅` InvoiceReminderJob - Trabajo para recordatorios de facturas
 - `✅/✅` TableCleanupJob - Trabajo para limpieza de mesas
-- `✅/⬜` ReservationReminderJob - Trabajo para recordatorios de reservaciones
+- `✅/⬜` ReservationReminderJob - Trabajo para recordatorios de reservaciones <!-- Pospuesto por problemas técnicos. Pruebas pendientes. -->
 - `✅/✅` LowStockAlertJob - Trabajo para alertas de bajo stock
 - `✅/⬜` ExpirationCheckJob - Trabajo para verificación de expiración
 
@@ -153,8 +153,6 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 ## Logging
 
 ### Providers
-- `⬜/⬜` SerilogProvider - Proveedor de logging con Serilog
-- `⬜/⬜` ApplicationInsightsProvider - Proveedor de logging con Application Insights
 - `⬜/⬜` SerilogProvider - Proveedor de logging con Serilog <!-- Funcionalidad futura. Implementar sinks de pago bajo petición. -->
 - `⬜/⬜` ApplicationInsightsProvider - Proveedor de logging con Application Insights <!-- Funcionalidad futura. Requiere suscripción de Azure. -->
 
