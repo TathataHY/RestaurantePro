@@ -117,7 +117,14 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             // Repositorios del dominio Operaciones
             services.AddScoped<IComandaRepository, ComandaRepository>();
             services.AddScoped<IReservacionRepository, ReservacionRepository>();
-            services.AddScoped<IMesaRepository, MesaRepository>();
+            
+            services.AddScoped<IMesaRepository>(provider => 
+                new MesaRepository(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<ILogger<MesaRepository>>(),
+                    provider.GetRequiredService<IDateTimeService>()
+                ));
+
             services.AddScoped<IPreparacionRepository, PreparacionRepository>();
             
             // Repositorios del dominio Inventario

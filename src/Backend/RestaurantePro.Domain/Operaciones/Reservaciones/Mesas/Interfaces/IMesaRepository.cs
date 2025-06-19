@@ -74,5 +74,12 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces
         /// Verifica si una mesa específica está disponible
         /// </summary>
         Task<bool> VerificarDisponibilidadAsync(Guid mesaId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene las mesas que han estado en estado 'PendienteLimpieza' por más tiempo que el especificado.
+        /// </summary>
+        /// <param name="minutosAntiguedad">El número de minutos para considerar una mesa como 'sucia'.</param>
+        /// <returns>Una colección de mesas sucias.</returns>
+        Task<IEnumerable<Mesa>> ObtenerMesasSuciaPorAntiguedad(int minutosAntiguedad);
     }
 }

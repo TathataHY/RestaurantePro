@@ -12,6 +12,7 @@ using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Specifications;
+using RestaurantePro.Application.Common.Interfaces;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
 {
@@ -21,11 +22,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
     public class MesaRepository : Repository<Mesa>, IMesaRepository
     {
         private readonly RestauranteProDbContext _restauranteProDbContext;
+        private readonly IDateTimeService _dateTimeService;
 
-        public MesaRepository(RestauranteProDbContext context, ILogger<MesaRepository> logger)
+        public MesaRepository(RestauranteProDbContext context, ILogger<MesaRepository> logger, IDateTimeService dateTimeService)
             : base(context, logger)
         {
             _restauranteProDbContext = context;
+            _dateTimeService = dateTimeService;
         }
 
         /// <summary>
@@ -188,6 +191,18 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         {
             var mesa = await _dbSet.FindAsync(new object[] { mesaId }, cancellationToken);
             return mesa != null && mesa.Estado == EstadoMesa.Disponible;
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<Mesa>> ObtenerMesasSuciaPorAntiguedad(int minutosAntiguedad)
+        {
+            var fechaLimite = _dateTimeService.Now.AddMinutes(-minutosAntiguedad);
+
+            var mesas = await _restauranteProDbContext.Mesas
+                .Where(m => m.Estado == EstadoMesa.EnLimpieza && m.FechaActualizacion < fechaLimite)
+                .ToListAsync();
+                
+            return mesas;
         }
 
         #region Implementación IRepository<Mesa>

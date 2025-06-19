@@ -13,6 +13,7 @@ using RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Inventario;
 using Xunit;
 using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
 using RestaurantePro.Domain.Core.Usuarios.Interfaces;
+using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.BackgroundTasks.Jobs.Inventario;
 
@@ -21,76 +22,87 @@ public class LowStockAlertJobTests
     private readonly IIngredienteRepository _ingredienteRepositoryMock;
     private readonly IUsuarioRepository _usuarioRepositoryMock;
     private readonly INotificationService _notificationServiceMock;
+    private readonly IEmailService _emailServiceMock;
     private readonly ILogger<LowStockAlertJob> _loggerMock;
+    private readonly IOptions<LowStockAlertOptions> _optionsMock;
 
     public LowStockAlertJobTests()
     {
         _ingredienteRepositoryMock = Substitute.For<IIngredienteRepository>();
         _usuarioRepositoryMock = Substitute.For<IUsuarioRepository>();
         _notificationServiceMock = Substitute.For<INotificationService>();
+        _emailServiceMock = Substitute.For<IEmailService>();
         _loggerMock = Substitute.For<ILogger<LowStockAlertJob>>();
+        _optionsMock = Options.Create(new LowStockAlertOptions { SendEmailAlerts = true, SendSystemNotifications = true });
+    }
+
+    private LowStockAlertJob CreateJob()
+    {
+        return new LowStockAlertJob(
+            _loggerMock,
+            _ingredienteRepositoryMock,
+            _emailServiceMock,
+            _notificationServiceMock,
+            _usuarioRepositoryMock,
+            _optionsMock
+        );
     }
 
     [Fact]
-    public async Task ExecuteAsync_NoLowStockIngredients_ShouldLogAndNotCreateNotifications()
+    public async Task ExecuteInternalAsync_NoLowStockIngredients_ShouldLogAndDoNothingElse()
     {
         // Arrange
-        _ingredienteRepositoryMock.GetLowStockIngredientsAsync(Arg.Any<int>()).Returns(new List<Ingrediente>());
-
-        var job = new LowStockAlertJob(
-            _ingredienteRepositoryMock,
-            _usuarioRepositoryMock,
-            _notificationServiceMock,
-            _loggerMock
-        );
+        _ingredienteRepositoryMock.ObtenerConStockBajoAsync(Arg.Any<CancellationToken>()).Returns(new List<Ingrediente>());
+        var job = CreateJob();
 
         // Act
-        await job.ExecuteAsync(null, null, null);
+        await job.DoWork(new CancellationToken());
 
         // Assert
-        _loggerMock.Received(1).LogInformation("Iniciando job de alerta de bajo stock...");
-        _loggerMock.Received(1).LogInformation("No hay ingredientes con bajo stock.");
-        await _notificationServiceMock.DidNotReceiveWithAnyArgs().CreateNotificationAsync(default, default, default);
+        _loggerMock.Received(1).LogInformation("Verificando ingredientes con stock bajo");
+        _loggerMock.Received(1).LogInformation("No se encontraron ingredientes con stock bajo");
+        await _notificationServiceMock.DidNotReceiveWithAnyArgs().EnviarNotificacionAsync(default, default, default, default);
+        await _emailServiceMock.DidNotReceiveWithAnyArgs().SendEmailAsync(default, default, default);
     }
 
     [Fact]
-    public async Task ExecuteAsync_WithLowStockIngredients_ShouldCreateNotifications()
+    public async Task ExecuteInternalAsync_WithLowStockIngredients_ShouldSendNotificationsAndEmails()
     {
         // Arrange
-        var lowStockIngredients = new List<Ingrediente>
+        var ingredientes = new List<Ingrediente>
         {
-            new Ingrediente { Id = Guid.NewGuid(), Nombre = "Tomates", StockActual = 5, StockMinimo = 10 },
-            new Ingrediente { Id = Guid.NewGuid(), Nombre = "Cebollas", StockActual = 2, StockMinimo = 5 }
+            Ingrediente.Crear("Tomates", "ING-001", "Tomates Rojos", UnidadMedida.Kilogramo, 10, 5),
+            Ingrediente.Crear("Cebollas", "ING-002", "Cebollas Blancas", UnidadMedida.Kilogramo, 5, 1)
+        };
+        
+        var usuarios = new List<Usuario>
+        {
+            Usuario.Crear("inventario_user", "Usuario de Inventario", "inventario@test.com", RolUsuario.EncargadoInventario)
         };
 
-        var usersToNotify = new List<Usuario>
-        {
-            new Usuario { Id = "user-1", Rol = RolUsuario.Administrador },
-            new Usuario { Id = "user-2", Rol = RolUsuario.Gerente }
-        };
+        _ingredienteRepositoryMock.ObtenerConStockBajoAsync(Arg.Any<CancellationToken>()).Returns(ingredientes);
+        _usuarioRepositoryMock.ObtenerPorRolAsync(RolUsuario.EncargadoInventario, Arg.Any<CancellationToken>()).Returns(usuarios);
 
-        _ingredienteRepositoryMock.GetLowStockIngredientsAsync(Arg.Any<int>()).Returns(lowStockIngredients);
-        _usuarioRepositoryMock.GetUsersByRoleAsync(Arg.Is<RolUsuario[]>(roles => roles.Contains(RolUsuario.Administrador) && roles.Contains(RolUsuario.Gerente)))
-            .Returns(usersToNotify);
-
-        var job = new LowStockAlertJob(
-            _ingredienteRepositoryMock,
-            _usuarioRepositoryMock,
-            _notificationServiceMock,
-            _loggerMock
-        );
+        var job = CreateJob();
 
         // Act
-        await job.ExecuteAsync(null, null, null);
+        await job.DoWork(new CancellationToken());
 
         // Assert
-        _loggerMock.Received(1).LogInformation("Iniciando job de alerta de bajo stock...");
-        _loggerMock.Received(1).LogWarning("Se encontraron {Count} ingredientes con bajo stock.", lowStockIngredients.Count);
+        _loggerMock.Received(1).LogInformation("Se encontraron {Cantidad} ingredientes con stock bajo", ingredientes.Count);
+        
+        // Verificar notificación de sistema
+        await _notificationServiceMock.Received(1).EnviarNotificacionAsync(
+            usuarios[0].Id, 
+            Arg.Any<string>(), 
+            Arg.Any<string>(), 
+            Arg.Any<string>());
 
-        await _notificationServiceMock.Received(usersToNotify.Count).CreateNotificationAsync(
+        // Verificar alerta de email
+        await _emailServiceMock.Received(1).SendEmailAsync(
+            usuarios[0].Email,
             Arg.Any<string>(),
-            "Alerta de Bajo Stock",
-            Arg.Is<string>(msg => msg.Contains("Los siguientes ingredientes tienen bajo stock:"))
+            Arg.Is<string>(html => html.Contains(ingredientes[0].Nombre) && html.Contains(ingredientes[1].Nombre))
         );
     }
 } 
