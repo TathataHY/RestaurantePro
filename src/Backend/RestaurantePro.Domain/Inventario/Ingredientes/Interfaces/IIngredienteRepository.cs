@@ -99,6 +99,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de ingredientes de la categoría especificada</returns>
         Task<IEnumerable<Ingrediente>> BuscarPorCategoriaAsync(string categoria, CancellationToken cancellationToken = default);
+
+        Task<List<Ingrediente>> ObtenerIngredientesBajosDeStockAsync(CancellationToken cancellationToken);
+        Task<List<Ingrediente>> BuscarAsync(Expression<Func<Ingrediente, bool>> predicate, CancellationToken cancellationToken);
     }
 }
 

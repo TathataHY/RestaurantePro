@@ -486,7 +486,10 @@ public class CrearReservacionValidatorTests
             Observaciones = new string('A', 1001),
 
             // 6. Email inválido -> Falla "EmailAddress"
-            Email = "correo-invalido"
+            Email = "correo-invalido",
+
+            // 7. Canal vacío -> Falla "NotEmpty"
+            Canal = ""
         };
 
         // Act
@@ -503,6 +506,7 @@ public class CrearReservacionValidatorTests
         errorMessages.Should().Contain("El teléfono debe tener un formato válido");
         errorMessages.Should().Contain("Las observaciones no pueden exceder 1000 caracteres");
         errorMessages.Should().Contain("El email debe tener un formato válido");
+        errorMessages.Should().Contain("El canal de reservación es obligatorio");
     }
 
     [Fact]

@@ -7,6 +7,7 @@ using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Common.Interfaces.Services;
 using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
 using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
+using RestaurantePro.Domain.Core.Productos.Interfaces;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
@@ -47,16 +48,17 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.DependencyInjection
             services.AddBackgroundTasksServices(configuration, isTestEnvironment: true);
 
             // Mocks para Jobs y Workers
-            services.AddSingleton(Substitute.For<INotificacionRepository>());
-            services.AddSingleton(Substitute.For<IUnitOfWork>());
-            services.AddSingleton(Substitute.For<IUsuarioRepository>());
+            services.AddSingleton(Substitute.For<IComandaRepository>());
             services.AddSingleton(Substitute.For<IEmailService>());
             services.AddSingleton(Substitute.For<IFacturaRepository>());
-            services.AddSingleton(Substitute.For<IComandaRepository>());
-            services.AddSingleton(Substitute.For<IReservacionRepository>());
             services.AddSingleton(Substitute.For<IIngredienteRepository>());
-            services.AddSingleton(Substitute.For<INotificationService>());
             services.AddSingleton(Substitute.For<IMesaRepository>());
+            services.AddSingleton(Substitute.For<INotificationService>());
+            services.AddSingleton(Substitute.For<INotificacionRepository>());
+            services.AddSingleton(Substitute.For<IProductoRepository>());
+            services.AddSingleton(Substitute.For<IReservacionRepository>());
+            services.AddSingleton(Substitute.For<IUnitOfWork>());
+            services.AddSingleton(Substitute.For<IUsuarioRepository>());
 
             _serviceProvider = services.BuildServiceProvider();
         }

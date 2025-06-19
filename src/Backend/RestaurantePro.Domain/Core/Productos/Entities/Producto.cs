@@ -60,6 +60,11 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         /// </summary>
         public ICollection<Receta> Recetas { get; private set; } = new List<Receta>();
 
+        /// <summary>
+        /// Fecha de expiración del producto
+        /// </summary>
+        public DateTime? FechaExpiracion { get; private set; }
+
         protected Producto() { }
 
         private Producto(string nombre, string descripcion, PrecioProducto precio, Guid categoriaId, string? categoriaNombre = null)
@@ -150,6 +155,15 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         {
             int nuevaPopularidad = Math.Max(Popularidad - decremento, 0);
             ActualizarPopularidad(nuevaPopularidad);
+        }
+
+        /// <summary>
+        /// Actualiza la fecha de expiración del producto
+        /// </summary>
+        public void ActualizarFechaExpiracion(DateTime? fechaExpiracion)
+        {
+            FechaExpiracion = fechaExpiracion;
+            MarkAsModified();
         }
 
         /// <summary>

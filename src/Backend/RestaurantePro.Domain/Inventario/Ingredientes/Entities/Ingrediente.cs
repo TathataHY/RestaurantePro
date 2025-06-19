@@ -100,6 +100,11 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// </summary>
         public decimal CostoPromedio { get; private set; }
 
+        /// <summary>
+        /// Fecha de expiración del ingrediente
+        /// </summary>
+        public DateTime? FechaExpiracion { get; private set; }
+
         // Constructor privado para EF Core
         private Ingrediente() { }
 
@@ -462,6 +467,11 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             MarkAsModified();
 
             AddDomainEvent(new Events.Ingrediente.CostoPromedioActualizado(Id, Nombre, nuevoCosto));
+        }
+
+        public void ActualizarFechaExpiracion(DateTime? fechaExpiracion)
+        {
+            FechaExpiracion = fechaExpiracion;
         }
 
         /// <summary>

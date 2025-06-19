@@ -12,6 +12,7 @@ using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Specifications;
+using System.Linq.Expressions;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
 {
@@ -214,11 +215,16 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
             }
         }
 
-        public new Task<IEnumerable<Ingrediente>> BuscarAsync(
-            Func<Ingrediente, bool> predicado, CancellationToken cancellationToken = default)
+        public async Task<List<Ingrediente>> ObtenerIngredientesBajosDeStockAsync(CancellationToken cancellationToken)
         {
-            var result = _dbContext.Set<Ingrediente>().Where(predicado).ToList();
-            return Task.FromResult<IEnumerable<Ingrediente>>(result);
+            return await _dbContext.Set<Ingrediente>()
+                .Where(i => i.Stock < i.StockMinimo && i.EstaActivo)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<Ingrediente>> BuscarAsync(Expression<Func<Ingrediente, bool>> predicate, CancellationToken cancellationToken)
+        {
+            return await _dbContext.Ingredientes.Where(predicate).ToListAsync(cancellationToken);
         }
 
         public new Task<bool> ExisteAsync(

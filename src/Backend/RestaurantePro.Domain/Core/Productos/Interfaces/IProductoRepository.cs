@@ -3,13 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq.Expressions;
 
 namespace RestaurantePro.Domain.Core.Productos.Interfaces
 {
     /// <summary>
     /// Interfaz para el repositorio de productos
     /// </summary>
-    public interface IProductoRepository
+    public interface IProductoRepository : IRepository<Producto>
     {
         /// <summary>
         /// Obtiene un producto por su ID
@@ -72,5 +73,9 @@ namespace RestaurantePro.Domain.Core.Productos.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>True si el producto existe, false en caso contrario</returns>
         Task<bool> ExisteProductoPorNombre(string nombre, CancellationToken cancellationToken = default);
+
+        Task<List<Producto>> ObtenerProductosPorCategoriaAsync(Guid categoriaId, CancellationToken cancellationToken);
+        Task<bool> ExisteProductoConNombreAsync(string nombre, CancellationToken cancellationToken);
+        Task<List<Producto>> BuscarAsync(Expression<Func<Producto, bool>> predicate, CancellationToken cancellationToken);
     }
 } 

@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
+using System.Linq.Expressions;
 
 namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
 {
@@ -63,6 +64,21 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
                 producto.MarkAsDeleted();
                 _dbSet.Update(producto);
             }
+        }
+
+        public async Task<List<Producto>> BuscarAsync(Expression<Func<Producto, bool>> predicate, CancellationToken cancellationToken)
+        {
+            return await _restauranteProDbContext.Productos.Where(predicate).ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<Producto>> ObtenerProductosPorCategoriaAsync(Guid categoriaId, CancellationToken cancellationToken)
+        {
+            return await ObtenerPorCategoriaAsync(categoriaId, true, cancellationToken);
+        }
+
+        public async Task<bool> ExisteProductoConNombreAsync(string nombre, CancellationToken cancellationToken)
+        {
+            return await ExisteProductoPorNombre(nombre, cancellationToken);
         }
     }
 } 
