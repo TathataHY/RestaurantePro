@@ -104,5 +104,78 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.BackgroundTasks.Jobs.Co
                 "No se esperaba que se enviara un correo al usuario activo."
             );
         }
+
+        [Fact]
+        public async Task ExecuteInternalAsync_NoDebeEnviarCorreos_SiOpcionEstaDesactivada()
+        {
+            // Arrange
+            var options = Options.Create(new UserInactivityOptions
+            {
+                InactivityThresholdDays = 30,
+                SendReminderEmails = false
+            });
+
+            var job = new UserInactivityJob(
+                _logger,
+                _usuarioRepository,
+                _emailServiceMock.Object,
+                _unitOfWork,
+                options
+            );
+            
+            var jobCancellationToken = new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token;
+
+            // Act
+            await job.ExecuteAsync(jobCancellationToken);
+
+            // Assert
+            _emailServiceMock.Verify(
+                email => email.SendEmailAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>()
+                ),
+                Times.Never,
+                "No se debería enviar ningún correo si la opción está desactivada."
+            );
+        }
+
+        [Fact]
+        public async Task ExecuteInternalAsync_NoDebeEnviarCorreo_AUsuarioInactivoDesactivado()
+        {
+            // Arrange
+            _usuarioInactivo.Desactivar();
+            await _unitOfWork.SaveChangesAsync();
+            
+            var options = Options.Create(new UserInactivityOptions
+            {
+                InactivityThresholdDays = 30,
+                SendReminderEmails = true
+            });
+
+            var job = new UserInactivityJob(
+                _logger,
+                _usuarioRepository,
+                _emailServiceMock.Object,
+                _unitOfWork,
+                options
+            );
+            
+            var jobCancellationToken = new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token;
+
+            // Act
+            await job.ExecuteAsync(jobCancellationToken);
+
+            // Assert
+            _emailServiceMock.Verify(
+                email => email.SendEmailAsync(
+                    _usuarioInactivo.Email,
+                    It.IsAny<string>(),
+                    It.IsAny<string>()
+                ),
+                Times.Never,
+                "No se debería enviar correo a un usuario que ya está desactivado."
+            );
+        }
     }
 } 

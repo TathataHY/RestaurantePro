@@ -127,8 +127,8 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 ## BackgroundTasks
 
 ### Jobs
-- `✅/⬜` NotificationCleanupJob - Trabajo para limpieza de notificaciones
-- `✅/⬜` UserInactivityJob - Trabajo para detectar usuarios inactivos
+- `✅/✅` NotificationCleanupJob - Trabajo para limpieza de notificaciones
+- `✅/✅` UserInactivityJob - Trabajo para detectar usuarios inactivos
 - `✅/⬜` LoyaltyPointsExpirationJob - Trabajo para expiración de puntos de fidelización
 - `✅/⬜` InvoiceReminderJob - Trabajo para recordatorios de facturas
 - `✅/⬜` TableCleanupJob - Trabajo para limpieza de mesas
@@ -144,7 +144,7 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 ## Caching
 
 ### Services
-- `✅/⬜` RedisCacheService - Servicio de caché con Redis
+- `✅/⬜` RedisCacheService - Servicio de caché con Redis <!-- Pos-puesto (requiere servicio externo/costo) -->
 - `✅/✅` MemoryCacheService - Servicio de caché en memoria
 
 ### Telemetry
