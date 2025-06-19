@@ -23,36 +23,49 @@ public static class BackgroundTasksSetup
     /// </summary>
     /// <param name="services">Colección de servicios</param>
     /// <param name="configuration">Configuración de la aplicación</param>
+    /// <param name="isTestEnvironment">Indica si el entorno es de prueba</param>
     /// <returns>La colección de servicios actualizada</returns>
     public static IServiceCollection AddBackgroundTasksServices(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        bool isTestEnvironment = false)
     {
         // Configurar Hangfire para la gestión de tareas en segundo plano
         services.AddHangfire(config =>
         {
-            // Configurar provider de almacenamiento
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            if (!isTestEnvironment)
+            {
+                // Configurar provider de almacenamiento
+                var connectionString = configuration.GetConnectionString("DefaultConnection");
             
-            config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
-                  .UseSimpleAssemblyNameTypeSerializer()
-                  .UseRecommendedSerializerSettings()
-                  .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
-                  {
-                      CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-                      SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-                      QueuePollInterval = TimeSpan.FromSeconds(15),
-                      UseRecommendedIsolationLevel = true,
-                      DisableGlobalLocks = true
-                  });
+                config.SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
+                      .UseSimpleAssemblyNameTypeSerializer()
+                      .UseRecommendedSerializerSettings()
+                      .UseSqlServerStorage(connectionString, new SqlServerStorageOptions
+                      {
+                          CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+                          SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+                          QueuePollInterval = TimeSpan.FromSeconds(15),
+                          UseRecommendedIsolationLevel = true,
+                          DisableGlobalLocks = true
+                      });
+            }
+            else
+            {
+                // Usar almacenamiento en memoria para pruebas
+                config.UseInMemoryStorage();
+            }
         });
 
-        // Agregar servidor Hangfire
-        services.AddHangfireServer(options =>
+        // No agregar el servidor en entorno de prueba
+        if (!isTestEnvironment)
         {
-            options.WorkerCount = Environment.ProcessorCount * 2;
-            options.Queues = new[] { "default", "critical", "notifications", "reports", "emails" };
-        });
+            services.AddHangfireServer(options =>
+            {
+                options.WorkerCount = Environment.ProcessorCount * 2;
+                options.Queues = new[] { "default", "critical", "notifications", "reports", "emails" };
+            });
+        }
         
         // Registrar planificador de trabajos
         services.AddScoped<IJobScheduler, HangfireScheduler>();

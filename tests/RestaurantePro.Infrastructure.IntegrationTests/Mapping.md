@@ -165,9 +165,9 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 
 ## DependencyInjection
 - `✅/⬜` InfrastructureSetup - Configuración general de infraestructura
-- `✅/⬜` PersistenceSetup - Configuración de persistencia
-- `✅/⬜` IdentitySetup - Configuración de identidad
-- `✅/⬜` ExternalServicesSetup - Configuración de servicios externos
-- `✅/⬜` CachingSetup - Configuración de caché
-- `✅/⬜` LoggingSetup - Configuración de logging
-- `✅/⬜` BackgroundTasksSetup - Configuración de tareas en segundo plano
+- `✅/✅` PersistenceSetup - Configuración de persistencia
+- `✅/✅` IdentitySetup - Configuración de identidad
+- `✅/✅` ExternalServicesSetup - Configuración de servicios externos
+- `✅/✅` CachingSetup - Configuración de caché
+- `✅/✅` LoggingSetup - Configuración de logging
+- `✅/✅` BackgroundTasksSetup - Configuración de tareas en segundo plano

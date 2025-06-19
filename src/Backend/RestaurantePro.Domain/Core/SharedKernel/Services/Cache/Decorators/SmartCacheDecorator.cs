@@ -33,6 +33,12 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Decorators
             _ttlStrategy = ttlStrategy ?? throw new ArgumentNullException(nameof(ttlStrategy));
         }
         
+        /// <summary>
+        /// Obtiene el servicio de caché base. Usado solo para propósitos de prueba.
+        /// </summary>
+        /// <returns>El servicio de caché subyacente.</returns>
+        public ICacheService GetBaseCacheService() => _innerCache;
+        
         /// <inheritdoc />
         public T Get<T>(string key)
         {
