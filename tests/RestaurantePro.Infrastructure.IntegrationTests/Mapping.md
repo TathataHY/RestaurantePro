@@ -134,7 +134,7 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/✅` TableCleanupJob - Trabajo para limpieza de mesas
 - `✅/⬜` ReservationReminderJob - Trabajo para recordatorios de reservaciones <!-- Pospuesto por problemas técnicos. Pruebas pendientes. -->
 - `✅/✅` LowStockAlertJob - Trabajo para alertas de bajo stock
-- `✅/⬜` ExpirationCheckJob - Trabajo para verificación de expiración
+- `✅/✅` ExpirationCheckJob - Trabajo para verificación de expiración
 
 ### Workers
 - `✅/⬜` EmailWorker - Worker para procesamiento de correos electrónicos
