@@ -494,7 +494,7 @@ public class CrearReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCount(6, "deberían detectarse 6 errores de validación con los datos proporcionados");
+        result.Errors.Should().HaveCount(7, "deberían detectarse 7 errores de validación con los datos proporcionados");
 
         var errorMessages = result.Errors.Select(e => e.ErrorMessage).ToList();
         errorMessages.Should().Contain("La fecha de reservación debe ser futura");
