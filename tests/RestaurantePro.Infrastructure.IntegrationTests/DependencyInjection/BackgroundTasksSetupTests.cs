@@ -12,6 +12,7 @@ using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 using RestaurantePro.Infrastructure.BackgroundTasks.Interfaces;
 using RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Comercial;
 using RestaurantePro.Infrastructure.BackgroundTasks.Jobs.Core;
@@ -55,6 +56,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.DependencyInjection
             services.AddSingleton(Substitute.For<IReservacionRepository>());
             services.AddSingleton(Substitute.For<IIngredienteRepository>());
             services.AddSingleton(Substitute.For<INotificationService>());
+            services.AddSingleton(Substitute.For<IMesaRepository>());
 
             _serviceProvider = services.BuildServiceProvider();
         }

@@ -89,7 +89,12 @@ public class LowStockAlertJobTests
         await job.DoWork(new CancellationToken());
 
         // Assert
-        _loggerMock.Received(1).LogInformation("Se encontraron {Cantidad} ingredientes con stock bajo", ingredientes.Count);
+        _loggerMock.Received(1).Log(
+            LogLevel.Information,
+            Arg.Any<EventId>(),
+            Arg.Is<object>(o => o.ToString().Contains($"Se encontraron {ingredientes.Count} ingredientes con stock bajo")),
+            null,
+            Arg.Any<Func<object, Exception, string>>());
         
         // Verificar notificación de sistema
         await _notificationServiceMock.Received(1).EnviarNotificacionAsync(
