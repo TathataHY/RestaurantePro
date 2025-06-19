@@ -137,9 +137,9 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/✅` ExpirationCheckJob - Trabajo para verificación de expiración
 
 ### Workers
-- `✅/⬜` EmailWorker - Worker para procesamiento de correos electrónicos
-- `✅/⬜` NotificationWorker - Worker para procesamiento de notificaciones
-- `✅/⬜` ReportGenerationWorker - Worker para generación de reportes
+- `✅/✅` EmailWorker - Worker para procesamiento de correos electrónicos
+- `✅/✅` NotificationWorker - Worker para procesamiento de notificaciones
+- `✅/✅` ReportGenerationWorker - Worker para generación de reportes
 
 ## Caching
 
@@ -164,7 +164,7 @@ El formato es `[Estado en Código]/[Estado en Pruebas]`
 - `✅/✅` CacheHealthCheck - Health check para caché
 
 ## DependencyInjection
-- `✅/⬜` InfrastructureSetup - Configuración general de infraestructura
+- `✅/✅` InfrastructureSetup - Configuración general de infraestructura
 - `✅/✅` PersistenceSetup - Configuración de persistencia
 - `✅/✅` IdentitySetup - Configuración de identidad
 - `✅/✅` ExternalServicesSetup - Configuración de servicios externos

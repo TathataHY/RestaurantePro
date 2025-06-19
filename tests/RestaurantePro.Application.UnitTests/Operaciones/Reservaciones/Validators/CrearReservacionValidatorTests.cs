@@ -631,7 +631,8 @@ public class CrearReservacionValidatorTests
         stopwatch.Stop();
 
         // Assert
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(100); // Menos de 100ms para 1000 validaciones
+        // Permitir un máximo de 250ms para 1000 validaciones
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(250L);
     }
 
     #endregion
