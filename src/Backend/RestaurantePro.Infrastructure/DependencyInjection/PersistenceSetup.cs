@@ -24,6 +24,10 @@ using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
+using RestaurantePro.Infrastructure.Persistence.SeedData.Extensions;
+using RestaurantePro.Infrastructure.Persistence.SeedData.Critical;
+using RestaurantePro.Infrastructure.Persistence.SeedData.Demo;
+using RestaurantePro.Infrastructure.Persistence.SeedData.Testing;
 
 namespace RestaurantePro.Infrastructure.DependencyInjection
 {
@@ -177,6 +181,40 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<Application.Comercial.Facturacion.Interfaces.IFacturacionService, Services.FacturacionService>();
             services.AddScoped<Application.Comercial.Fidelizacion.Interfaces.IFidelizacionService, Services.FidelizacionService>();
             services.AddScoped<Application.Operaciones.Mesas.Interfaces.IMesaService, Services.MesaService>();
+            
+            // Registrar sistema de SeedData
+            RegisterSeedDataServices(services);
+        }
+        
+        private static void RegisterSeedDataServices(IServiceCollection services)
+        {
+            // La configuración de SeedData se bindea desde appsettings.json en Program.cs
+            // Estos son valores por defecto que pueden ser sobrescritos
+            
+            // Registrar SeedDataRunner
+            services.AddScoped<SeedDataRunner>();
+            
+            // SEEDERS CRÍTICOS
+            services.AddScoped<ISeedData, RolesSeeder>();
+            services.AddScoped<ISeedData, UnidadesMedidaSeeder>();
+            services.AddScoped<ISeedData, PermisosSeeder>();
+            services.AddScoped<ISeedData, ConfiguracionSeeder>();
+            services.AddScoped<ISeedData, EstadosSeeder>();
+            services.AddScoped<ISeedData, UsuarioAdminSeeder>();
+            
+            // SEEDERS DEMO  
+            services.AddScoped<ISeedData, ProductoCategoriasSeeder>();
+            services.AddScoped<ISeedData, ProductosSeeder>();
+            services.AddScoped<ISeedData, IngredientesSeeder>();
+            services.AddScoped<ISeedData, ProveedoresSeeder>();
+            services.AddScoped<ISeedData, ClientesSeeder>();
+            services.AddScoped<ISeedData, MesasSeeder>();
+            services.AddScoped<ISeedData, EscenariosDemoSeeder>();
+            
+            // SEEDERS TESTING
+            services.AddScoped<ISeedData, DatosPruebasUnitarias>();
+            services.AddScoped<ISeedData, DatosPruebasIntegracion>();
+            services.AddScoped<ISeedData, DatosRendimiento>();
         }
     }
 } 

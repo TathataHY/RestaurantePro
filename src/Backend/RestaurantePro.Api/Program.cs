@@ -30,6 +30,10 @@ namespace RestaurantePro.Api
             // Configuración específica para la API
             builder.Services.AddApiServices();
             
+            // Configurar SeedData desde appsettings
+            builder.Services.Configure<RestaurantePro.Infrastructure.Persistence.SeedData.Extensions.SeedDataConfiguration>(
+                builder.Configuration.GetSection("SeedData"));
+            
             // Agregar capas inferiores
             builder.Services.AddDomainServices();
             builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -38,8 +42,11 @@ namespace RestaurantePro.Api
             var app = builder.Build();
             
             // 🔧 CONFIGURAR BASE DE DATOS Y SEED DATA
-            // Los seeders se ejecutan automáticamente al iniciar la aplicación
-            await app.UseSeedDataForEnvironmentsAsync("Development", "Staging");
+            // Ejecutar solo seed data SIN migraciones (las tablas ya existen)
+            if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+            {
+                await app.UseSeedDataAsync(shouldMigrate: false); // Solo datos, NO migraciones
+            }
             
             // Configurar el pipeline de solicitudes HTTP
             if (app.Environment.IsDevelopment())
