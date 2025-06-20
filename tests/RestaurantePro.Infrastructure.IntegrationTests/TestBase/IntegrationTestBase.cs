@@ -192,6 +192,9 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 
             services.AddSingleton<DatabaseHealthCheck>();
             
+            // Registrar SeedDataRunner para tests
+            services.AddSingleton<RestaurantePro.Infrastructure.Persistence.SeedData.Extensions.SeedDataRunner>();
+            
             var serviceProvider = services.BuildServiceProvider();
 
             _scope = serviceProvider.CreateScope();

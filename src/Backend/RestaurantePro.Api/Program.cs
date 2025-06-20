@@ -20,7 +20,7 @@ namespace RestaurantePro.Api
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +36,10 @@ namespace RestaurantePro.Api
             builder.Services.AddApplicationServices();
             
             var app = builder.Build();
+            
+            // 🔧 CONFIGURAR BASE DE DATOS Y SEED DATA
+            // Los seeders se ejecutan automáticamente al iniciar la aplicación
+            await app.UseSeedDataForEnvironmentsAsync("Development", "Staging");
             
             // Configurar el pipeline de solicitudes HTTP
             if (app.Environment.IsDevelopment())
@@ -65,7 +69,7 @@ namespace RestaurantePro.Api
             
             app.MapControllers();
             
-            app.Run();
+            await app.RunAsync();
         }
     }
 }
