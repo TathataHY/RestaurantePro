@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using RestaurantePro.Api.Extensions;
+using RestaurantePro.Api.Configuration;
 using RestaurantePro.Api.Middleware;
 using RestaurantePro.Application;
 using RestaurantePro.Infrastructure;
@@ -27,6 +28,9 @@ namespace RestaurantePro.Api
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             
+            // Configurar Swagger usando la clase de configuración
+            builder.Services.ConfigureSwagger();
+            
             // Configuración específica para la API
             builder.Services.AddApiServices();
             
@@ -36,7 +40,18 @@ namespace RestaurantePro.Api
             
             // Agregar capas inferiores
             builder.Services.AddDomainServices();
-            builder.Services.AddInfrastructureServices(builder.Configuration);
+            
+            // ⚠️ DETECTAR MODO TESTING para evitar conflictos de DbContext
+            var isTestingMode = Environment.GetEnvironmentVariable("TESTING_MODE") == "true" ||
+                               builder.Environment.EnvironmentName == "Testing";
+            
+            if (!isTestingMode)
+            {
+                // En producción/desarrollo: usar Infrastructure completa
+                builder.Services.AddInfrastructureServices(builder.Configuration);
+            }
+            // En testing: Infrastructure será configurada por TestWebApplicationFactory
+            
             builder.Services.AddApplicationServices(builder.Configuration);
             
             var app = builder.Build();
@@ -51,9 +66,8 @@ namespace RestaurantePro.Api
             // Configurar el pipeline de solicitudes HTTP
             if (app.Environment.IsDevelopment())
             {
-                // TODO: Agregar paquetes de Swagger
-                // app.UseSwagger();
-                // app.UseSwaggerUI();
+                app.UseSwagger();
+                app.ConfigureSwaggerUI();
             }
             
             // Middleware global para manejo de excepciones

@@ -43,27 +43,33 @@ public abstract class ApiIntegrationTestBase : IClassFixture<TestWebApplicationF
     }
 
     /// <summary>
-    /// Limpia todas las tablas de la base de datos
+    /// Limpia todas las tablas de la base de datos usando estrategia compatible con InMemory
     /// </summary>
     protected virtual async Task LimpiarBaseDeDatos()
     {
         try
         {
-            // Obtener todas las entidades del contexto
-            var entityTypes = DbContext.Model.GetEntityTypes();
+            // 🚀 ESTRATEGIA COMPATIBLE CON INMEMORY: Limpiar usando RemoveRange
             
-            foreach (var entityType in entityTypes)
+            // Limpiar entidades principales (orden importante por las FK)
+            if (DbContext.Productos.Any())
             {
-                var tableName = entityType.GetTableName();
-                if (!string.IsNullOrEmpty(tableName))
-                {
-                    // Ejecutar DELETE para cada tabla
-                    await DbContext.Database.ExecuteSqlRawAsync($"DELETE FROM [{tableName}]");
-                }
+                DbContext.Productos.RemoveRange(DbContext.Productos.ToList());
             }
             
+            if (DbContext.Clientes.Any())
+            {
+                DbContext.Clientes.RemoveRange(DbContext.Clientes.ToList());
+            }
+            
+            // TODO: Agregar otras entidades cuando se implementen
+            // if (DbContext.Comandas.Any())
+            // {
+            //     DbContext.Comandas.RemoveRange(DbContext.Comandas.ToList());
+            // }
+            
             await DbContext.SaveChangesAsync();
-            Logger.LogInformation("Base de datos limpiada correctamente");
+            Logger.LogInformation("Base de datos limpiada correctamente (InMemory)");
         }
         catch (Exception ex)
         {
@@ -132,11 +138,12 @@ public abstract class ApiIntegrationTestBase : IClassFixture<TestWebApplicationF
     /// </summary>
     protected async Task<Cliente> CrearClientePrueba(string nombre = "Cliente Test", string email = "test@example.com")
     {
+        var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
         var cliente = Cliente.Crear(
-            nombre: nombre,
-            email: email,
-            telefono: "555-1234",
-            direccion: "Dirección Test"
+            clienteNombre,
+            email,
+            "555-1234",
+            DateTime.Now.AddYears(-25)
         );
 
         DbContext.Clientes.Add(cliente);
@@ -150,11 +157,11 @@ public abstract class ApiIntegrationTestBase : IClassFixture<TestWebApplicationF
     protected async Task<Producto> CrearProductoPrueba(string nombre = "Producto Test", decimal precio = 100.00m)
     {
         var producto = Producto.Crear(
-            nombre: nombre,
-            descripcion: "Descripción de prueba",
-            precio: precio,
-            categoria: "Categoria Test",
-            disponible: true
+            nombre,
+            "Descripción de prueba",
+            new PrecioProducto(precio),
+            Guid.NewGuid(),
+            "Categoria Test"
         );
 
         DbContext.Productos.Add(producto);

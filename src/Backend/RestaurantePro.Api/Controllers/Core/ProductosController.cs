@@ -185,9 +185,9 @@ public class ProductosController : ControllerBase
     /// </summary>
     /// <param name="id">ID del producto</param>
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> EliminarProducto(Guid id)
+    public async Task<ActionResult> EliminarProducto(Guid id)
     {
         _logger.LogInformation("🗑️ DELETE /api/core/productos/{Id}", id);
 
@@ -196,7 +196,7 @@ public class ProductosController : ControllerBase
 
         if (result.Succeeded)
         {
-            return Ok(ApiResponse<object>.SuccessResponse(null, "Producto eliminado exitosamente"));
+            return NoContent(); // ✅ Corregido: retornar 204 NoContent para DELETE exitoso
         }
 
         return NotFound(ApiResponse<object>.ErrorResponse(

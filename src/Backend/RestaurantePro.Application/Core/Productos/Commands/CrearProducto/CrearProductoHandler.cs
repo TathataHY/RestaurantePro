@@ -47,6 +47,7 @@ public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result
             
             // 2. Persistir en repositorio
             await _repository.AgregarAsync(producto);
+            await _repository.GuardarCambiosAsync(); // ✅ AGREGAR: Guardar cambios en BD
 
             // 3. Mapear a DTO para respuesta
             var productoDto = _mapper.Map<ProductoDto>(producto);

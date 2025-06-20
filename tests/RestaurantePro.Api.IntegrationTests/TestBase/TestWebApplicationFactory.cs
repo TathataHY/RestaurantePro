@@ -1,5 +1,10 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Infrastructure.Services;
+using RestaurantePro.Domain.Core.Productos.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
+using RestaurantePro.Domain.Core.Productos.Builders;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -16,14 +21,18 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // Limpiar configuraciones existentes
             config.Sources.Clear();
             
-            // Agregar configuración específica para tests
+            // Agregar configuración específica para tests que FUERZA InMemory
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:DefaultConnection"] = "Data Source=:memory:",
-                ["Logging:LogLevel:Default"] = "Information",
-                ["Logging:LogLevel:Microsoft"] = "Warning",
-                ["Logging:LogLevel:Microsoft.Hosting.Lifetime"] = "Information"
+                ["ConnectionStrings:DefaultConnection"] = "InMemoryDatabase",
+                ["UseInMemoryDatabase"] = "true",  // Flag para Infrastructure
+                ["Logging:LogLevel:Default"] = "Error",      // Solo errores en tests
+                ["Logging:LogLevel:Microsoft"] = "Error",
+                ["Logging:LogLevel:Microsoft.Hosting.Lifetime"] = "Error"
             });
+            
+            // Configurar variable para modo testing
+            Environment.SetEnvironmentVariable("TESTING_MODE", "true");
             
             // Agregar variables de entorno para tests
             config.AddEnvironmentVariables();
@@ -31,36 +40,46 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            // Remover la configuración de base de datos existente
-            var descriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<RestauranteProDbContext>));
+            // 🚀 CONFIGURACIÓN PARA TESTS: Infrastructure está desactivada por Program.cs
+            // Necesitamos registrar servicios mínimos necesarios
             
-            if (descriptor != null)
-            {
-                services.Remove(descriptor);
-            }
-
-            // Agregar base de datos en memoria para tests
+            // Configurar ÚNICAMENTE InMemory para tests
+            var dbName = "TestDatabase_" + Guid.NewGuid().ToString();
+            
             services.AddDbContext<RestauranteProDbContext>(options =>
             {
-                options.UseInMemoryDatabase("TestDatabase");
+                options.UseInMemoryDatabase(dbName);
                 options.EnableSensitiveDataLogging();
                 options.EnableDetailedErrors();
             });
 
-            // Configurar logging para tests
+            // Registrar IApplicationDbContext
+            services.AddScoped<IApplicationDbContext>(provider => 
+                provider.GetRequiredService<RestauranteProDbContext>());
+
+            // 🔧 REGISTRAR SERVICIOS BÁSICOS QUE APPLICATION NECESITA
+            // ITimeProvider - necesario para PerformanceBehavior
+            services.AddSingleton<ITimeProvider, SystemTimeProvider>();
+            
+            // IDelayProvider - necesario para RetryBehavior
+            services.AddSingleton<IDelayProvider, DelayProvider>();
+            
+            // 📦 REGISTRAR REPOSITORIOS NECESARIOS PARA LOS TESTS
+            services.AddScoped<IProductoRepository, ProductoRepository>();
+            
+            // 🏗️ REGISTRAR BUILDERS DE DOMAIN
+            services.AddScoped<ProductoBuilder>();
+            
+            // Otros servicios básicos que podrían ser necesarios
+            // services.AddSingleton<ICacheService, InMemoryCacheService>();
+            // services.AddScoped<ICurrentUserService, TestCurrentUserService>();
+
+            // Configurar logging mínimo para tests
             services.AddLogging(builder =>
             {
                 builder.AddConsole();
-                builder.AddDebug();
-                builder.SetMinimumLevel(LogLevel.Information);
+                builder.SetMinimumLevel(LogLevel.Error);
             });
-
-            // Asegurar que la base de datos se crea
-            var serviceProvider = services.BuildServiceProvider();
-            using var scope = serviceProvider.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
-            context.Database.EnsureCreated();
         });
 
         builder.UseEnvironment("Testing");
@@ -70,10 +89,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
         if (disposing)
         {
-            // Limpiar recursos si es necesario
-            using var scope = Services.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
-            context.Database.EnsureDeleted();
+            // Para InMemory database no necesitamos limpiar manualmente
+            // ya que se desecha automáticamente al finalizar el test
         }
         
         base.Dispose(disposing);

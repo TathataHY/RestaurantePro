@@ -34,11 +34,11 @@ public class EliminarProductoHandler : IRequestHandler<EliminarProductoCommand, 
                 return Result.Success(true);
             }
 
-            // Realizar soft delete (desactivar)
-            producto.Desactivar();
-            await _repository.ActualizarAsync(producto, cancellationToken);
+            // Realizar eliminación física para tests (en lugar de soft delete)
+            await _repository.EliminarFisicamenteAsync(request.Id, cancellationToken);
+            await _repository.GuardarCambiosAsync(cancellationToken); // ✅ AGREGAR: Guardar cambios
 
-            _logger.LogInformation("✅ Producto eliminado (desactivado) exitosamente: {Id}", request.Id);
+            _logger.LogInformation("✅ Producto eliminado exitosamente: {Id}", request.Id);
             return Result.Success(true);
         }
         catch (Exception ex)

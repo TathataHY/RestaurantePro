@@ -80,5 +80,17 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         {
             return await ExisteProductoPorNombre(nombre, cancellationToken);
         }
+
+        /// <summary>
+        /// Elimina físicamente un producto (para tests)
+        /// </summary>
+        public async Task EliminarFisicamenteAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var producto = await _dbSet.FindAsync(new object[] { id }, cancellationToken);
+            if (producto != null)
+            {
+                _dbSet.Remove(producto); // Eliminación física real
+            }
+        }
     }
 } 

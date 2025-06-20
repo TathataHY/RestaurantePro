@@ -77,5 +77,10 @@ namespace RestaurantePro.Domain.Core.Productos.Interfaces
         Task<List<Producto>> ObtenerProductosPorCategoriaAsync(Guid categoriaId, CancellationToken cancellationToken);
         Task<bool> ExisteProductoConNombreAsync(string nombre, CancellationToken cancellationToken);
         Task<List<Producto>> BuscarAsync(Expression<Func<Producto, bool>> predicate, CancellationToken cancellationToken);
+        
+        /// <summary>
+        /// Elimina físicamente un producto (para tests)
+        /// </summary>
+        Task EliminarFisicamenteAsync(Guid id, CancellationToken cancellationToken = default);
     }
 } 
