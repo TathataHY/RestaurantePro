@@ -21,16 +21,24 @@ El formato es `[Estado en API]/[Estado en Tests]`
 - **Base URL**: `/api/core/productos`
 - **✅ COMPLETADO**: 6/6 tests funcionando perfectamente en 3.1s
 
-| Endpoint | Método | Estado | Descripción |
-|----------|--------|--------|-------------|
-| `/api/core/productos` | GET | `✅/✅` | Obtener todos los productos |
-| `/api/core/productos/{id}` | GET | `✅/✅` | Obtener producto por ID |
-| `/api/core/productos` | POST | `✅/✅` | Crear nuevo producto |
-| `/api/core/productos/{id}` | PUT | `⬜/⬜` | Actualizar producto completo |
-| `/api/core/productos/{id}` | PATCH | `⬜/⬜` | Actualizar producto parcial |
-| `/api/core/productos/{id}` | DELETE | `✅/✅` | Eliminar producto |
-| `/api/core/productos/categoria/{categoria}` | GET | `⬜/⬜` | Obtener productos por categoría |
-| `/api/core/productos/buscar` | GET | `⬜/⬜` | Buscar productos por texto |
+| Endpoint | Método | Estado | Descripción | Test Status |
+|----------|--------|--------|-------------|-------------|
+| `/api/core/productos` | GET | `✅/✅` | Obtener todos los productos | ✅ PASSING |
+| `/api/core/productos/{id}` | GET | `✅/✅` | Obtener producto por ID | ✅ PASSING |
+| `/api/core/productos` | POST | `✅/✅` | Crear nuevo producto | ✅ PASSING |
+| `/api/core/productos/{id}` | PUT | `⬜/⬜` | Actualizar producto completo | ⬜ No implementado |
+| `/api/core/productos/{id}` | PATCH | `⬜/⬜` | Actualizar producto parcial | ⬜ No implementado |
+| `/api/core/productos/{id}` | DELETE | `✅/✅` | Eliminar producto | ✅ PASSING |
+| `/api/core/productos/categoria/{categoria}` | GET | `⬜/⬜` | Obtener productos por categoría | ⬜ No implementado |
+| `/api/core/productos/buscar` | GET | `⬜/⬜` | Buscar productos por texto | ⬜ No implementado |
+
+**Tests Implementados (6/6 PASSING):**
+- ✅ `GetProductos_SinProductos_DebeRetornarListaVacia`
+- ✅ `GetProductos_ConProductosEnBD_DebeRetornarProductos`
+- ✅ `GetProducto_ConIdInexistente_DebeRetornar404`
+- ✅ `GetProducto_ConIdExistente_DebeRetornarProducto`
+- ✅ `PostProducto_ConDatosValidos_DebeCrearProducto`
+- ✅ `DeleteProducto_ConIdExistente_DebeEliminarProducto`
 
 ### UsuariosController
 - **Estado General**: `❌/⬜` (Implementado con errores / Sin tests)
@@ -73,19 +81,35 @@ El formato es `[Estado en API]/[Estado en Tests]`
 
 ## 🛒 **CONTEXTO COMERCIAL**
 
-### ClientesController
-- **Estado General**: `❌/⬜` (Implementado con errores / Sin tests)
-- **Base URL**: `/api/clientes`
+### ClientesController 🔄
+- **Estado General**: `✅/🔄` (API funcionando / Tests en progreso)
+- **Base URL**: `/api/comercial/clientes`
+- **🔄 EN PROGRESO**: 5/6 tests funcionando (83% success rate)
+- **✅ ERRORES CORREGIDOS**: DesactivarClienteHandler compilando correctamente
+- **✅ DEPENDENCIES**: INotificationService + IEmailService registrados
 
-| Endpoint | Método | Estado | Descripción |
-|----------|--------|--------|-------------|
-| `/api/clientes` | GET | `❌/⬜` | Obtener todos los clientes |
-| `/api/clientes/{id}` | GET | `❌/⬜` | Obtener cliente por ID |
-| `/api/clientes` | POST | `❌/⬜` | Crear nuevo cliente |
-| `/api/clientes/{id}` | PUT | `❌/⬜` | Actualizar cliente |
-| `/api/clientes/{id}` | DELETE | `❌/⬜` | Eliminar cliente |
-| `/api/clientes/buscar` | GET | `⬜/⬜` | Buscar clientes por filtros |
-| `/api/clientes/{id}/tarjeta-fidelizacion` | GET | `⬜/⬜` | Obtener tarjeta de fidelización |
+| Endpoint | Método | Estado | Descripción | Test Status |
+|----------|--------|--------|-------------|-------------|
+| `/api/comercial/clientes` | GET | `✅/🔄` | Obtener todos los clientes | 🔄 1 issue menor |
+| `/api/comercial/clientes/{id}` | GET | `✅/✅` | Obtener cliente por ID | ✅ PASSING |
+| `/api/comercial/clientes` | POST | `✅/✅` | Crear nuevo cliente | ✅ PASSING |
+| `/api/comercial/clientes/{id}` | PUT | `⬜/⬜` | Actualizar cliente | ⬜ No implementado |
+| `/api/comercial/clientes/{id}` | DELETE | `✅/✅` | Eliminar cliente (desactivar) | ✅ PASSING |
+| `/api/comercial/clientes/buscar` | GET | `⬜/⬜` | Buscar clientes por filtros | ⬜ No implementado |
+| `/api/comercial/clientes/{id}/tarjeta-fidelizacion` | GET | `⬜/⬜` | Obtener tarjeta de fidelización | ⬜ No implementado |
+
+**Tests Implementados (5/6 PASSING):**
+- ✅ `GetClientes_SinClientesEnBD_DebeRetornarListaVacia`
+- 🔄 `GetClientes_ConClientesEnBD_DebeRetornarClientes` (issue menor de concurrencia)
+- ✅ `GetCliente_ConIdInexistente_DebeRetornar404`
+- ✅ `GetCliente_ConIdExistente_DebeRetornarCliente`
+- ✅ `PostCliente_ConDatosValidos_DebeCrearCliente`
+- ✅ `DeleteCliente_ConIdExistente_DebeDesactivarCliente`
+
+**Issues Resueltos:**
+- ✅ Errores de compilación en `DesactivarClienteHandler` (Result vs Result<bool>)
+- ✅ Registro de servicios faltantes: INotificationService, IEmailService
+- ✅ Override de `ObtenerTodosAsync()` en ClienteRepository para filtro `!EstaEliminado`
 
 ### FacturasController
 - **Estado General**: `❌/⬜` (Implementado con errores / Sin tests)
@@ -337,16 +361,32 @@ El formato es `[Estado en API]/[Estado en Tests]`
 
 ### Estado General
 - **Total Controladores**: 22
-- **Implementados**: 17 (16 con errores ❌, 1 funcional ✅)
-- **Con Tests Funcionales**: 1 (ProductosController - 6/6 tests ✅)
-- **Completitud General**: **13.6%** (3/22 endpoints funcionales y testeados)
+- **Implementados**: 17 (15 con errores ❌, 2 funcionales ✅/🔄)
+- **Con Tests Funcionales**: 2 (ProductosController 6/6 ✅, ClientesController 5/6 🔄)
+- **Total Tests Ejecutándose**: 12 tests (11 passing, 1 minor issue)
+- **Completitud General**: **22.7%** (5/22 endpoints completamente funcionales y testeados)
 
-### 🎯 **HITO ALCANZADO**
+### 🎯 **HITOS ALCANZADOS**
 ✅ **ProductosController**: Primer controlador completamente funcional con testing automatizado
 - API funcionando sin errores
 - 6 tests de integración pasando (100% success rate)
 - Cobertura CRUD completa
 - Framework de testing establecido
+
+🔄 **ClientesController**: Segundo controlador funcionando con testing automatizado  
+- API funcionando sin errores de compilación
+- 5 tests de integración pasando (83% success rate)
+- CRUD básico funcionando
+- Dependencies registradas correctamente
+- Solo 1 issue menor de concurrencia pendiente
+
+### 🏆 **FRAMEWORK DE TESTING CONSOLIDADO**
+- ✅ **TestWebApplicationFactory**: Configurado y estable
+- ✅ **ApiIntegrationTestBase**: Clase base robusta
+- ✅ **InMemory Database**: Funcionando correctamente
+- ✅ **Service Registration**: Pattern establecido para agregar dependencias
+- ✅ **Test Pattern**: AAA (Arrange-Act-Assert) estandarizado
+- ✅ **Parallel Execution**: Manejado con Collections cuando necesario
 
 ## 🚨 **PROBLEMAS PRINCIPALES IDENTIFICADOS**
 

@@ -1,4 +1,5 @@
 global using Xunit;
+global using Xunit.Abstractions;
 global using FluentAssertions;
 global using Microsoft.AspNetCore.Mvc.Testing;
 global using Microsoft.Extensions.DependencyInjection;
@@ -15,4 +16,15 @@ global using RestaurantePro.Domain.Comercial.Clientes.Entities;
 global using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
 global using RestaurantePro.Domain.Operaciones.Comandas.Entities;
 global using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
-global using RestaurantePro.Api.Common; 
+global using RestaurantePro.Api.Common;
+
+// Application Commands & Queries - Comercial
+global using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente;
+global using RestaurantePro.Application.Comercial.Clientes.DTOs;
+
+// Application Common
+global using RestaurantePro.Application.Common.Models;
+global using RestaurantePro.Application.Common.DTOs;
+
+// Test Base Classes
+global using RestaurantePro.Api.IntegrationTests.TestBase; 

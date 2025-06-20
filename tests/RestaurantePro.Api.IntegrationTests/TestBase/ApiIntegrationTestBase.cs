@@ -4,7 +4,7 @@ namespace RestaurantePro.Api.IntegrationTests.TestBase;
 /// Clase base para todos los tests de integración de la API.
 /// Proporciona infraestructura común para testing HTTP con base de datos en memoria.
 /// </summary>
-public abstract class ApiIntegrationTestBase : IClassFixture<TestWebApplicationFactory>, IAsyncLifetime
+public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
 {
     protected readonly TestWebApplicationFactory Factory;
     protected readonly HttpClient HttpClient;
@@ -40,6 +40,15 @@ public abstract class ApiIntegrationTestBase : IClassFixture<TestWebApplicationF
     {
         await LimpiarBaseDeDatos();
         ServiceScope?.Dispose();
+    }
+
+    /// <summary>
+    /// Limpieza síncrona para IDisposable
+    /// </summary>
+    public virtual void Dispose()
+    {
+        ServiceScope?.Dispose();
+        HttpClient?.Dispose();
     }
 
     /// <summary>

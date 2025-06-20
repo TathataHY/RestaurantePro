@@ -2,9 +2,12 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Infrastructure.Services;
+using RestaurantePro.Infrastructure.ExternalServices.Email;
 using RestaurantePro.Domain.Core.Productos.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using RestaurantePro.Domain.Core.Productos.Builders;
+using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -14,6 +17,10 @@ namespace RestaurantePro.Api.IntegrationTests.TestBase;
 /// </summary>
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
+    // 🔧 BD única por test para evitar contaminación de datos
+    private readonly string _databaseName = $"TestDatabase_{Guid.NewGuid()}";
+    
+    public string DatabaseName => _databaseName;
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureAppConfiguration((context, config) =>
@@ -43,12 +50,11 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // 🚀 CONFIGURACIÓN PARA TESTS: Infrastructure está desactivada por Program.cs
             // Necesitamos registrar servicios mínimos necesarios
             
-            // Configurar ÚNICAMENTE InMemory para tests
-            var dbName = "TestDatabase_" + Guid.NewGuid().ToString();
-            
+            // 🔧 SOLUCIÓN: BD única por test para total aislamiento
+            // Cada instancia del factory usa una BD InMemory diferente
             services.AddDbContext<RestauranteProDbContext>(options =>
             {
-                options.UseInMemoryDatabase(dbName);
+                options.UseInMemoryDatabase(_databaseName);
                 options.EnableSensitiveDataLogging();
                 options.EnableDetailedErrors();
             });
@@ -64,8 +70,20 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // IDelayProvider - necesario para RetryBehavior
             services.AddSingleton<IDelayProvider, DelayProvider>();
             
+            // 🔔 INotificationService - necesario para Commands como DesactivarCliente
+            services.AddScoped<INotificationService, NotificationService>();
+            
+            // 📧 IEmailService - necesario para Commands como DesactivarCliente
+            services.AddScoped<IEmailService, EmailService>();
+            
             // 📦 REGISTRAR REPOSITORIOS NECESARIOS PARA LOS TESTS
             services.AddScoped<IProductoRepository, ProductoRepository>();
+            
+            // 📦 REGISTRAR REPOSITORIOS COMERCIAL
+            services.AddScoped<IClienteRepository>(provider => 
+                new ClienteRepository(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<ILogger<ClienteRepository>>()));
             
             // 🏗️ REGISTRAR BUILDERS DE DOMAIN
             services.AddScoped<ProductoBuilder>();

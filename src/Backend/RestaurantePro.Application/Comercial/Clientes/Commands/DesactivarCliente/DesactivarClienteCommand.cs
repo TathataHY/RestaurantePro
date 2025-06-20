@@ -8,7 +8,7 @@ namespace RestaurantePro.Application.Comercial.Clientes.Commands.DesactivarClien
 /// Command para desactivar un cliente del sistema
 /// Mantiene el registro pero lo marca como inactivo para auditoría
 /// </summary>
-public class DesactivarClienteCommand : IRequest<Result>
+public class DesactivarClienteCommand : IRequest<Result<bool>>
 {
     /// <summary>
     /// ID único del cliente a desactivar

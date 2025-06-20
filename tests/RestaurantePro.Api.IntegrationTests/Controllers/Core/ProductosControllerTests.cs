@@ -6,10 +6,20 @@ namespace RestaurantePro.Api.IntegrationTests.Controllers.Core;
 /// Tests de integración para el controlador de productos.
 /// Ejemplos de tests HTTP completos con base de datos en memoria.
 /// </summary>
-public class ProductosControllerTests : ApiIntegrationTestBase
+[Collection("Sequential")]
+public class ProductosControllerTests : ApiIntegrationTestBase, IDisposable
 {
-    public ProductosControllerTests(TestWebApplicationFactory factory) : base(factory)
+    private readonly TestWebApplicationFactory _factory;
+    
+    public ProductosControllerTests() : base(new TestWebApplicationFactory())
     {
+        _factory = (TestWebApplicationFactory)Factory;
+    }
+    
+    public new void Dispose()
+    {
+        _factory?.Dispose();
+        base.Dispose();
     }
 
     [Fact]

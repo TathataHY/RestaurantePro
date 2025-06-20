@@ -27,6 +27,15 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
             return await _dbSet.Where(c => !c.EstaEliminado).FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
         }
 
+        /// <summary>
+        /// Obtiene todos los clientes no eliminados
+        /// Override para aplicar filtro de eliminación lógica
+        /// </summary>
+        public override async Task<IEnumerable<Cliente>> ObtenerTodosAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbSet.Where(c => !c.EstaEliminado).ToListAsync(cancellationToken);
+        }
+
         public async Task<Cliente?> ObtenerPorEmailAsync(string email, CancellationToken cancellationToken = default)
         {
             return await _dbSet.Where(c => !c.EstaEliminado).FirstOrDefaultAsync(c => c.Email.Value == email, cancellationToken);
