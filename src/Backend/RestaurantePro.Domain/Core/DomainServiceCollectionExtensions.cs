@@ -55,8 +55,17 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<Comercial.Services.IServicioFidelizacion, Comercial.Services.ServicioFidelizacion>();
             services.AddScoped<Comercial.Services.IComercialServiceFacade, Comercial.Services.ComercialServiceFacade>();
             services.AddScoped<Comercial.Facturacion.Services.IServicioFacturacion, Comercial.Facturacion.Services.ServicioFacturacion>();
+            services.AddScoped<Comercial.Promociones.Services.IServicioPromociones, Comercial.Promociones.Services.ServicioPromociones>();
             services.AddScoped<Comercial.Services.ICalculadoraPuntosService, Comercial.Services.CalculadoraPuntosService>();
-            services.AddScoped<Comercial.Promociones.Services.ICalculadoraPromocionesService, Comercial.Promociones.Services.CalculadoraPromocionesService>();
+            
+            // Calculadora de Promociones - usar factory para resolver ambigüedad de constructores
+            services.AddScoped<Comercial.Promociones.Services.ICalculadoraPromocionesService>(sp =>
+            {
+                var servicioPromociones = sp.GetRequiredService<Comercial.Promociones.Services.IServicioPromociones>();
+                var logger = sp.GetRequiredService<ILogger<Comercial.Promociones.Services.CalculadoraPromocionesService>>();
+                return new Comercial.Promociones.Services.CalculadoraPromocionesService(servicioPromociones, logger);
+            });
+            
             services.AddScoped<Comercial.Services.IGeneradorNumeroTarjetaService, Comercial.Services.GeneradorNumeroTarjetaService>();
             
             // Servicios de Operaciones
@@ -70,6 +79,7 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<Inventario.Services.IServicioNotificacionesInventario, Inventario.Services.ServicioNotificacionesInventario>();
             services.AddScoped<Inventario.Services.IAlertaStockService, Inventario.Services.AlertaStockService>();
             services.AddScoped<Inventario.Services.IGeneradorOrdenesCompra, Inventario.Services.GeneradorOrdenesCompra>();
+            services.AddScoped<Inventario.Services.IVerificadorStock, Inventario.Services.VerificadorStock>();
             
             // Servicios de Core
             services.AddScoped<Core.Productos.Services.IProductoService, Core.Productos.Services.ProductoService>();

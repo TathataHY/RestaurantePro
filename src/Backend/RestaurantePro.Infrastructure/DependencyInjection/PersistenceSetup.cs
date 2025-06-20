@@ -8,6 +8,7 @@ using RestaurantePro.Domain.Core.Base.Services;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
 using RestaurantePro.Domain.Core.Notificaciones.Services;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
@@ -121,6 +122,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
             services.AddScoped<IHistorialPuntosRepository, HistorialPuntosRepository>();
             services.AddScoped<ITransaccionPuntosRepository, TransaccionPuntosRepository>();
+            services.AddScoped<IPromocionRepository, PromocionRepository>();
             
             // Repositorios del dominio Operaciones
             services.AddScoped<IComandaRepository, ComandaRepository>();
@@ -170,6 +172,11 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<ICommunicationService, Services.CommunicationService>();
             services.AddScoped<INotificationService, Services.NotificationService>();
             services.AddScoped<IAuditService, Services.AuditService>();
+            
+            // Registrar servicios de Application layer que implementan en Infrastructure
+            services.AddScoped<Application.Comercial.Facturacion.Interfaces.IFacturacionService, Services.FacturacionService>();
+            services.AddScoped<Application.Comercial.Fidelizacion.Interfaces.IFidelizacionService, Services.FidelizacionService>();
+            services.AddScoped<Application.Operaciones.Mesas.Interfaces.IMesaService, Services.MesaService>();
         }
     }
 } 
