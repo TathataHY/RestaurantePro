@@ -46,7 +46,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         {
             // Crear Producto
             var precioProducto = new PrecioProducto(15.50m);
-            var producto = Producto.Crear("Tacos al Pastor", "Tacos de cerdo marinado", precioProducto, Guid.NewGuid(), "Comida Mexicana");
+            var producto = Producto.Crear("Empanadas de Pino", "Empanadas chilenas rellenas de pino tradicional", precioProducto, Guid.NewGuid(), "Comida Chilena");
             _productoId = producto.Id;
 
             // Crear Chef (Usuario)

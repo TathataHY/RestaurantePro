@@ -29,12 +29,12 @@ public class CrearProveedorHandler : IRequestHandler<CrearProveedorCommand, Resu
 
         try
         {
-            // 1. Validar que el proveedor no exista (RFC único)
-            var proveedorExistentePorRfc = await ValidarRfcUnico(request.RFC, cancellationToken);
-            if (!proveedorExistentePorRfc.Succeeded)
+            // 1. Validar que el proveedor no exista (RUT único)
+            var proveedorExistentePorRut = await ValidarRutUnico(request.RUT, cancellationToken);
+            if (!proveedorExistentePorRut.Succeeded)
             {
-                _logger.LogWarning("❌ RFC ya existe: {RFC}", request.RFC);
-                return Result.Failure<ProveedorDto>(proveedorExistentePorRfc.Error ?? "Error al validar RFC");
+                _logger.LogWarning("❌ RUT ya existe: {RUT}", request.RUT);
+                return Result.Failure<ProveedorDto>(proveedorExistentePorRut.Error ?? "Error al validar RUT");
             }
 
             // 2. Validar que el email no esté en uso
@@ -74,26 +74,25 @@ public class CrearProveedorHandler : IRequestHandler<CrearProveedorCommand, Resu
     }
 
     /// <summary>
-    /// Valida que el RFC sea único en el sistema
+    /// Valida que el RUT sea único en el sistema
     /// </summary>
-    private async Task<Result> ValidarRfcUnico(string rfc, CancellationToken cancellationToken)
+    private async Task<Result> ValidarRutUnico(string rut, CancellationToken cancellationToken)
     {
         try
         {
-            var proveedoresConRfc = await _proveedorRepository.ObtenerPorRFCAsync(rfc, cancellationToken);
+            var proveedorConRut = await _proveedorRepository.ObtenerPorRUTAsync(rut, cancellationToken);
             
-            if (proveedoresConRfc.Any())
+            if (proveedorConRut != null)
             {
-                var proveedor = proveedoresConRfc.First();
-                return Result.Failure($"Ya existe un proveedor con el RFC {rfc}: {proveedor.Nombre}");
+                return Result.Failure($"Ya existe un proveedor con el RUT {rut}: {proveedorConRut.Nombre}");
             }
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al validar RFC único: {RFC}", rfc);
-            return Result.Failure("Error al validar el RFC en el sistema");
+            _logger.LogError(ex, "Error al validar RUT único: {RUT}", rut);
+            return Result.Failure("Error al validar el RUT en el sistema");
         }
     }
 
@@ -141,7 +140,7 @@ public class CrearProveedorHandler : IRequestHandler<CrearProveedorCommand, Resu
                 ciudad: request.Ciudad,
                 codigoPostal: request.CodigoPostal,
                 pais: request.Pais,
-                rfc: request.RFC,
+                rfc: request.RUT,
                 informacionBancaria: request.InformacionBancaria,
                 diasCredito: request.DiasCredito
             );
@@ -159,7 +158,7 @@ public class CrearProveedorHandler : IRequestHandler<CrearProveedorCommand, Resu
             }
 
             // Registrar evento si es un proveedor internacional
-            if (!request.Pais.Equals("México", StringComparison.OrdinalIgnoreCase))
+            if (!request.Pais.Equals("Chile", StringComparison.OrdinalIgnoreCase))
             {
                 _logger.LogInformation("🌍 Proveedor internacional creado: {Pais}", request.Pais);
             }

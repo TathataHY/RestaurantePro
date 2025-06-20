@@ -41,7 +41,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             // 1. Crear Proveedor
             var proveedor = Proveedor.Crear(
                 "Proveedor de Prueba", "Contacto", "contacto@proveedor.com", "123456789",
-                "Direccion 123", "Ciudad", "12345", "Pais", "PROV010101XYZ", "Info Bancaria", 30);
+                "Direccion 123", "Ciudad", "1234567", "Pais", "PROV010101XYZ", "Info Bancaria", 30);
             _proveedorId = proveedor.Id;
 
             // 2. Crear Ingredientes

@@ -11,7 +11,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
 {
     /// <summary>
     /// Seeder que crea clientes de demostración con datos realistas
-    /// Usa las entidades reales del sistema y datos típicos de clientes mexicanos
+    /// Usa las entidades reales del sistema y datos típicos de clientes chilenos
     /// </summary>
     public class ClientesSeeder : ISeedData
     {
@@ -69,7 +69,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
                     Cliente.Crear(
                         Guid.Parse("44444444-4444-4444-4444-444444444444"),
                         ClienteNombre.Crear("Roberto", "Fernández Castillo"),
-                        Email.Create("roberto.fernandez@empresa.mx"),
+                        Email.Create("roberto.fernandez@empresa.cl"),
                         PhoneNumber.Create("+52-55-5555-3456"),
                         new DateTime(1982, 1, 30),
                         true
@@ -119,7 +119,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
                     Cliente.Crear(
                         Guid.Parse("99999999-9999-9999-9999-999999999999"),
                         ClienteNombre.Crear("Valeria", "Castro Delgado"),
-                        Email.Create("valeria.castro@estudiante.mx"),
+                        Email.Create("valeria.castro@estudiante.cl"),
                         PhoneNumber.Create("+52-33-3333-4567"),
                         new DateTime(1998, 8, 14),
                         true
@@ -129,7 +129,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
                     Cliente.Crear(
                         Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
                         ClienteNombre.Crear("Alejandro", "Vargas Mendoza"),
-                        Email.Create("alejandro.vargas@corporativo.mx"),
+                        Email.Create("alejandro.vargas@corporativo.cl"),
                         PhoneNumber.Create("+52-55-5555-8901"),
                         new DateTime(1987, 6, 9),
                         true

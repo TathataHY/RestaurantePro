@@ -52,9 +52,9 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Configurati
             categoriasNavigation.TargetEntityType.GetTableName().Should().Be("ProveedorCategorias");
             
             // Índices
-            var rfcIndex = entityType.GetIndexes().FirstOrDefault(i => i.Properties.Any(p => p.Name == "RFC"));
-            rfcIndex.Should().NotBeNull();
-            rfcIndex.IsUnique.Should().BeTrue();
+            var rutIndex = entityType.GetIndexes().FirstOrDefault(i => i.Properties.Any(p => p.Name == "RFC"));
+            rutIndex.Should().NotBeNull();
+            rutIndex.IsUnique.Should().BeTrue();
         }
     }
 } 

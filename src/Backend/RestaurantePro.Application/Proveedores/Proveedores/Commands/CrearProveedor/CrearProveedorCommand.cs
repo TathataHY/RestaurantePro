@@ -42,14 +42,19 @@ public class CrearProveedorCommand : IRequest<Result<ProveedorDto>>
     public string CodigoPostal { get; set; } = string.Empty;
 
     /// <summary>
-    /// País (opcional, por defecto México)
+    /// País (opcional, por defecto Chile)
     /// </summary>
-    public string Pais { get; set; } = "México";
+    public string Pais { get; set; } = "Chile";
 
     /// <summary>
     /// RFC del proveedor (obligatorio)
     /// </summary>
     public string RFC { get; set; } = string.Empty;
+
+    /// <summary>
+    /// RUT del proveedor (obligatorio para Chile)
+    /// </summary>
+    public string RUT { get; set; } = string.Empty;
 
     /// <summary>
     /// Información bancaria (opcional)
@@ -115,7 +120,7 @@ public class CrearProveedorCommand : IRequest<Result<ProveedorDto>>
             Direccion = $"Dirección en {ciudad}",
             Ciudad = ciudad,
             RFC = rfc,
-            Pais = "México",
+            Pais = "Chile",
             DiasCredito = 0,
             UsuarioId = usuarioId
         };

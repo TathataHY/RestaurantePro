@@ -265,7 +265,7 @@ public class ActualizarClienteValidatorTests
 
     [Theory]
     [InlineData("cliente@restaurante.com")]
-    [InlineData("maria.jose@empresa.com.mx")]
+    [InlineData("maria.jose@empresa.cl")]
     [InlineData("test+cliente@sistema.net")]
     [InlineData("a@b.co")]  // Mínimo válido
     public async Task Validate_ConEmailValido_NoDeberiaRetornarErrorDeEmail(string emailValido)
@@ -499,7 +499,7 @@ public class ActualizarClienteValidatorTests
         {
             Id = Guid.NewGuid(),
             Nombre = "Cliente Completamente Actualizado",
-            Email = "cliente.completo@restaurante.com.mx",
+            Email = "cliente.completo@restaurante.cl",
             Telefono = "+521234567890",
             FechaNacimiento = DateTime.Now.AddYears(-30),
             EstaActivo = true
@@ -723,7 +723,7 @@ public class ActualizarClienteValidatorTests
 
     [Theory]
     [InlineData("cliente@gmail.com")]
-    [InlineData("maria.jose@empresa.com.mx")]
+    [InlineData("maria.jose@empresa.cl")]
     [InlineData("juan.carlos+personal@correo.org")]
     [InlineData("cliente123@restaurante.net")]
     public async Task Validate_ConEmailsRealistasDeClientes_DeberiaSerValido(string email)
@@ -740,7 +740,7 @@ public class ActualizarClienteValidatorTests
     }
 
     [Theory]
-    [InlineData("+521234567890")]      // Celular México
+    [InlineData("+56987654321")]      // Celular Chile
     [InlineData("5551234567")]         // Local
     [InlineData("+1234567890")]        // Internacional
     [InlineData("(555) 123-4567")]     // Con formato

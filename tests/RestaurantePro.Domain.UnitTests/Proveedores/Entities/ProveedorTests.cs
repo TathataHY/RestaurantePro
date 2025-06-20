@@ -6,17 +6,19 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
         public void CrearProveedor_ConParametrosValidos_DebeCrearProveedorActivo()
         {
             // Arrange
-            var nombre = "Distribuidora XYZ";
+            var nombre = "Alimentos Frescos Chile";
             var nombreContacto = "Juan Pérez";
             var rfc = "XYZ123456ABC";
-            var telefono = "555-123-4567";
-            var email = "contacto@xyz.com";
-            var direccion = "Calle Principal 123";
-            var ciudad = "Ciudad de México";
-            var codigoPostal = "12345";
-            var pais = "México";
-            var informacionBancaria = "Cuenta 12345-67890";
+            var telefono = "+56 2 2345 6789";
+            var email = "contacto@alimentosfrescos.cl";
+            var direccion = "Av. Providencia 1234";
+            var ciudad = "Santiago";
+            var codigoPostal = "7500000";
+            var pais = "Chile";
             var diasCredito = 30;
+            var rut = "12345678-9";
+            var informacionBancaria = "Banco de Chile - Cuenta Corriente 123456789";
+            var notas = "Proveedor confiable de productos frescos";
             var expectedEmail = Email.Create(email);
             var expectedTelefono = PhoneNumber.Create(telefono);
 
@@ -64,9 +66,9 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             var telefono = "555-123-4567";
             var email = "contacto@xyz.com";
             var direccion = "Calle Principal 123";
-            var ciudad = "Ciudad de México";
-            var codigoPostal = "12345";
-            var pais = "México";
+            var ciudad = "Santiago";
+            var codigoPostal = "1234567";
+            var pais = "Chile";
             var informacionBancaria = "Cuenta 12345-67890";
             var diasCredito = 30;
 
@@ -99,9 +101,9 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             var telefono = "555-123-4567";
             var email = "contacto@xyz.com";
             var direccion = "Calle Principal 123";
-            var ciudad = "Ciudad de México";
-            var codigoPostal = "12345";
-            var pais = "México";
+            var ciudad = "Santiago";
+            var codigoPostal = "1234567";
+            var pais = "Chile";
             var informacionBancaria = "Cuenta 12345-67890";
             var diasCredito = 30;
 
@@ -134,9 +136,9 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             var telefono = "555-123-4567";
             var emailInvalido = "esto-no-es-un-email";
             var direccion = "Calle Principal 123";
-            var ciudad = "Ciudad de México";
-            var codigoPostal = "12345";
-            var pais = "México";
+            var ciudad = "Santiago";
+            var codigoPostal = "1234567";
+            var pais = "Chile";
             var informacionBancaria = "Cuenta 12345-67890";
             var diasCredito = 30;
 
@@ -169,9 +171,9 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
                 "original@xyz.com",
                 "555-123-4567",
                 "Dirección Original",
-                "Ciudad Original",
-                "12345",
-                "País Original",
+                "Santiago",
+                "1234567",
+                "Chile",
                 "XYZ123456ABC",
                 "Cuenta Original",
                 30);
@@ -182,7 +184,7 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
             var nuevoEmail = "actualizado@xyz.com";
             var nuevaDireccion = "Nueva Dirección 456";
             var nuevaCiudad = "Nueva Ciudad";
-            var nuevoCodigoPostal = "54321";
+            var nuevoCodigoPostal = "7654321";
             var nuevoPais = "Nuevo País";
             var nuevoRfc = "ABC987654XYZ";
             var nuevaInformacionBancaria = "Nueva Cuenta";
@@ -229,9 +231,9 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
                 "contacto@xyz.com",
                 "555-123-4567",
                 "Calle Principal 123",
-                "Ciudad de México",
+                "Santiago",
                 "12345",
-                "México",
+                "Chile",
                 "XYZ123456ABC",
                 "Cuenta 12345-67890",
                 30);
@@ -258,9 +260,9 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
                 "contacto@xyz.com",
                 "555-123-4567",
                 "Calle Principal 123",
-                "Ciudad de México",
+                "Santiago",
                 "12345",
-                "México",
+                "Chile",
                 "XYZ123456ABC",
                 "Cuenta 12345-67890",
                 30);
@@ -289,9 +291,9 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
                 "contacto@xyz.com",
                 "555-123-4567",
                 "Calle Principal 123",
-                "Ciudad de México",
+                "Santiago",
                 "12345",
-                "México",
+                "Chile",
                 "XYZ123456ABC",
                 "Cuenta 12345-67890",
                 30);
@@ -332,9 +334,9 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
                 "contacto@xyz.com",
                 "555-123-4567",
                 "Calle Principal 123",
-                "Ciudad de México",
+                "Santiago",
                 "12345",
-                "México",
+                "Chile",
                 "XYZ123456ABC",
                 "Cuenta 12345-67890",
                 30);
@@ -365,9 +367,9 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Entities
                 "contacto@xyz.com",
                 "555-123-4567",
                 "Calle Principal 123",
-                "Ciudad de México",
+                "Santiago",
                 "12345",
-                "México",
+                "Chile",
                 "XYZ123456ABC",
                 "Cuenta 12345-67890",
                 30);

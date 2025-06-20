@@ -38,7 +38,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.ExternalServices.Paymen
         {
             // Arrange
             var monto = 250.75m;
-            var moneda = "MXN";
+            var moneda = "CLP";
             var descripcion = "Pago de prueba Stripe";
 
             // Act

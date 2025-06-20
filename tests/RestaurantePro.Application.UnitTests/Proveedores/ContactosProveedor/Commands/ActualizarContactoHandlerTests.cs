@@ -279,7 +279,7 @@ public class ActualizarContactoHandlerTests
             "Calle Test 123",             // direccion
             "Ciudad Test",                // ciudad
             "12345",                      // codigoPostal
-            "México",                     // pais
+            "Chile",                     // pais
             "XAXX010101000",              // rfc
             "Banco Test - 1234567890",    // informacionBancaria
             30                            // diasCredito

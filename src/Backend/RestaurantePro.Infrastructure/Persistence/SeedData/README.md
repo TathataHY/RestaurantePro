@@ -15,7 +15,7 @@ Este directorio contiene todos los datos semilla necesarios para inicializar la 
 - **ProductoCategoriasSeeder** (Orden: 170): 12 categorías típicas de restaurante
 - **ProductosSeeder** (Orden: 180): 25 productos realistas con precios
 - **IngredientesSeeder** (Orden: 190): 30 ingredientes con stocks y costos
-- **ProveedoresSeeder** (Orden: 200): 5 proveedores mexicanos con contactos
+- **ProveedoresSeeder** (Orden: 200): 5 proveedores chilenos con contactos
 - **ClientesSeeder** (Orden: 210): 10 clientes con segmentos
 - **MesasSeeder** (Orden: 220): 29 mesas distribuidas por áreas
 - **Integración con API**: Configuración automática en Program.cs
@@ -58,7 +58,7 @@ SeedData/
 │   ├── ProductoCategoriasSeeder.cs ✅ 12 categorías típicas de restaurante
 │   ├── ProductosSeeder.cs  ✅ 25 productos del menú con precios realistas
 │   ├── IngredientesSeeder.cs ✅ 30 ingredientes con stocks y costos
-│   ├── ProveedoresSeeder.cs ✅ 5 proveedores mexicanos con contactos
+│   ├── ProveedoresSeeder.cs ✅ 5 proveedores chilenos con contactos
 │   ├── ClientesSeeder.cs   ✅ 10 clientes con segmentos Premium/Frecuente/Regular
 │   ├── MesasSeeder.cs      ✅ 29 mesas distribuidas por áreas (Interior/Terraza/VIP/etc.)
 │   └── EscenariosDemoSeeder.cs ✅ Escenarios completos de demo
@@ -123,12 +123,12 @@ SeedData/
 - **Lácteos**: Leche (stock: 50L), Queso Manchego (stock: 5kg), Mantequilla (stock: 3kg)
 - **Especias**: Sal (stock: 2kg), Pimienta (stock: 500g), Ajo (stock: 3kg)
 
-### **🏭 Proveedores (5 proveedores mexicanos)**
-- **Carnes Premium S.A. de C.V.** (RFC: CAR850315ABC) - Carnes y embutidos
-- **Distribuidora La Huerta** (RFC: DLH920720DEF) - Frutas y verduras frescas
-- **Lácteos San Miguel** (RFC: LSM880912GHI) - Productos lácteos artesanales
-- **Abarrotes El Buen Precio** (RFC: AEB950125JKL) - Abarrotes y productos secos
-- **RestauTech Solutions** (RFC: RTS010308MNO) - Equipamiento y tecnología
+### **🏭 Proveedores (5 proveedores chilenos)**
+- **Carnes Premium S.A.** (RUT: CAR850315ABC) - Carnes y embutidos
+- **Distribuidora La Huerta** (RUT: DLH920720DEF) - Frutas y verduras frescas
+- **Lácteos San Miguel** (RUT: LSM880912GHI) - Productos lácteos artesanales
+- **Abarrotes El Buen Precio** (RUT: AEB950125JKL) - Abarrotes y productos secos
+- **RestauTech Solutions** (RUT: RTS010308MNO) - Equipamiento y tecnología
 
 ### **👥 Clientes (10 clientes con segmentos)**
 - **Premium**: María García López, Carlos Rodríguez Sánchez

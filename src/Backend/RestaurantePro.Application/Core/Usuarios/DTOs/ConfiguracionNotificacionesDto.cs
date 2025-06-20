@@ -136,7 +136,7 @@ public class ConfiguracionNotificacionesDto
     /// <summary>
     /// Zona horaria para las notificaciones
     /// </summary>
-    public string ZonaHoraria { get; set; } = "America/Mexico_City";
+    public string ZonaHoraria { get; set; } = "America/Santiago";
 
     // === CONFIGURACIÓN DE FRECUENCIA ===
 
@@ -175,7 +175,7 @@ public class ConfiguracionNotificacionesDto
     /// <summary>
     /// Idioma para las notificaciones
     /// </summary>
-    public string Idioma { get; set; } = "es-MX";
+    public string Idioma { get; set; } = "es-CL";
 
     /// <summary>
     /// Notificaciones solo durante horario laboral

@@ -100,7 +100,7 @@ public class ProveedoresMappingProfileTests
             "Direccion Test",
             "Ciudad Test",
             "12345",
-            "México",
+            "Chile",
             "RFC123456789",
             "Banco Test",
             0);
@@ -388,9 +388,9 @@ public class ProveedoresMappingProfileTests
             "contacto@distribuidoraabc.com",
             "555-1234567",
             "Av. Principal 123",
-            "Ciudad de México",
-            "12345",
-            "México",
+            "Santiago",
+            "7640000",
+            "Chile",
             "DABC123456789",
             "Cuenta bancaria ABC",
             30);

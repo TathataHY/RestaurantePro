@@ -435,9 +435,9 @@ public class ActualizarProveedorHandlerTests
             Email = "actualizado@abc.com",
             Telefono = "555-999-8888",
             Direccion = "Nueva Dirección Principal 789",
-            Ciudad = "Guadalajara",
-            CodigoPostal = "44100",
-            Pais = "México",
+            Ciudad = "Concepción",
+            CodigoPostal = "4070000",
+            Pais = "Chile",
             RFC = "XAXX010101000",
             InformacionBancaria = "BBVA - 1234567890",
             DiasCredito = 30,
@@ -456,9 +456,9 @@ public class ActualizarProveedorHandlerTests
             "original@abc.com",            // email
             "555-123-4567",                // telefono
             "Dirección Original 456",      // direccion
-            "Monterrey",                   // ciudad
-            "64000",                       // codigoPostal
-            "México",                      // pais
+            "Temuco",                   // ciudad
+            "4810000",                   // codigoPostal
+            "Chile",                      // pais
             "XAXX010101000",               // rfc
             "BBVA - 1234567890",           // informacionBancaria
             30                             // diasCredito

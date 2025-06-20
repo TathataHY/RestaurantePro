@@ -23,7 +23,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Contexts
                 "1234567890",
                 "Calle Falsa 123",
                 "Ciudad Prueba",
-                "12345",
+                "12345678",
                 "País Prueba",
                 "PROV123456789",
                 "Cuenta Bancaria 123",

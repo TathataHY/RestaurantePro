@@ -36,13 +36,13 @@ public class CrearProveedorHandlerTests
             "Juan Pérez",
             "contacto@abc.com",
             "555-123-4567",
-            "México",
+            "Chile",
             "XAXX010101000",
             Guid.NewGuid()
         );
 
-        _mockRepository.Setup(r => r.ObtenerPorRFCAsync("XAXX010101000", CancellationToken.None))
-                      .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
+        _mockRepository.Setup(r => r.ObtenerPorRUTAsync("XAXX010101000", CancellationToken.None))
+                      .ReturnsAsync((Domain.Proveedores.Entities.Proveedor)null);
 
         _mockRepository.Setup(r => r.BuscarAsync("contacto@abc.com", CancellationToken.None))
                       .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
@@ -62,20 +62,20 @@ public class CrearProveedorHandlerTests
         result.Value.Should().NotBeNull();
         result.Value.Should().BeEquivalentTo(_proveedorDtoEjemplo);
 
-        _mockRepository.Verify(r => r.ObtenerPorRFCAsync(command.RFC, CancellationToken.None), Times.Once);
+        _mockRepository.Verify(r => r.ObtenerPorRUTAsync(command.RUT, CancellationToken.None), Times.Once);
         _mockRepository.Verify(r => r.BuscarAsync(command.Email, CancellationToken.None), Times.Once);
         _mockRepository.Verify(r => r.AgregarAsync(It.IsAny<Domain.Proveedores.Entities.Proveedor>(), CancellationToken.None), Times.Once);
     }
 
     [Fact]
-    public async Task Handle_ConRFCDuplicado_DeberiaRetornarError()
+    public async Task Handle_ConRUTDuplicado_DeberiaRetornarError()
     {
         // Arrange
         var command = _commandValido;
         var proveedorExistente = CrearProveedorEjemplo();
         
-        _mockRepository.Setup(r => r.ObtenerPorRFCAsync(command.RFC, CancellationToken.None))
-                      .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor> { proveedorExistente });
+        _mockRepository.Setup(r => r.ObtenerPorRUTAsync(command.RUT, CancellationToken.None))
+                      .ReturnsAsync(proveedorExistente);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -83,10 +83,10 @@ public class CrearProveedorHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Contain("Ya existe un proveedor con el RFC");
-        result.Error.Should().Contain(command.RFC);
+        result.Error.Should().Contain("Ya existe un proveedor con el RUT");
+        result.Error.Should().Contain(command.RUT);
 
-        _mockRepository.Verify(r => r.ObtenerPorRFCAsync(command.RFC, CancellationToken.None), Times.Once);
+        _mockRepository.Verify(r => r.ObtenerPorRUTAsync(command.RUT, CancellationToken.None), Times.Once);
         _mockRepository.Verify(r => r.AgregarAsync(It.IsAny<Domain.Proveedores.Entities.Proveedor>(), CancellationToken.None), Times.Never);
     }
 
@@ -97,8 +97,8 @@ public class CrearProveedorHandlerTests
         var command = _commandValido;
         var proveedorExistente = CrearProveedorEjemplo();
         
-        _mockRepository.Setup(r => r.ObtenerPorRFCAsync(command.RFC, CancellationToken.None))
-                      .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
+        _mockRepository.Setup(r => r.ObtenerPorRUTAsync(command.RUT, CancellationToken.None))
+                      .ReturnsAsync((Domain.Proveedores.Entities.Proveedor)null);
 
         _mockRepository.Setup(r => r.BuscarAsync(command.Email, CancellationToken.None))
                       .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor> { proveedorExistente });
@@ -126,15 +126,15 @@ public class CrearProveedorHandlerTests
             "maria@proveedor.com",
             "555-987-6543",
             "Calle Principal 123",
-            "Guadalajara",
+            "Santiago",
             "XAXX010102000",
             45, // días de crédito
             "Banco Azteca - 1234567890",
             Guid.NewGuid()
         );
 
-        _mockRepository.Setup(r => r.ObtenerPorRFCAsync("XAXX010102000", CancellationToken.None))
-                      .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
+        _mockRepository.Setup(r => r.ObtenerPorRUTAsync("XAXX010102000", CancellationToken.None))
+                      .ReturnsAsync((Domain.Proveedores.Entities.Proveedor)null);
 
         _mockRepository.Setup(r => r.BuscarAsync("maria@proveedor.com", CancellationToken.None))
                       .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
@@ -165,14 +165,14 @@ public class CrearProveedorHandlerTests
             "john@supplier.com",
             "555-555-0123",
             "123 Main Street",
-            "New York",
+            "Santiago",
             "Estados Unidos",
             "TAX123456789",
             Guid.NewGuid()
         );
 
-        _mockRepository.Setup(r => r.ObtenerPorRFCAsync("TAX123456789", CancellationToken.None))
-                      .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
+        _mockRepository.Setup(r => r.ObtenerPorRUTAsync("TAX123456789", CancellationToken.None))
+                      .ReturnsAsync((Domain.Proveedores.Entities.Proveedor)null);
 
         _mockRepository.Setup(r => r.BuscarAsync("john@supplier.com", CancellationToken.None))
                       .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
@@ -189,17 +189,17 @@ public class CrearProveedorHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
-        command.Pais.Should().NotBe("México");
+        command.Pais.Should().NotBe("Chile");
         command.DiasCredito.Should().Be(30); // Default para internacionales
     }
 
     [Fact]
-    public async Task Handle_ConErrorEnValidacionRFC_DeberiaRetornarError()
+    public async Task Handle_ConErrorEnValidacionRUT_DeberiaRetornarError()
     {
         // Arrange
         var command = _commandValido;
         
-        _mockRepository.Setup(r => r.ObtenerPorRFCAsync(command.RFC, CancellationToken.None))
+        _mockRepository.Setup(r => r.ObtenerPorRUTAsync(command.RUT, CancellationToken.None))
                       .ThrowsAsync(new Exception("Error en base de datos"));
 
         // Act
@@ -208,7 +208,7 @@ public class CrearProveedorHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Contain("Error al validar el RFC en el sistema");
+        result.Error.Should().Contain("Error al validar el RUT en el sistema");
 
         _mockRepository.Verify(r => r.AgregarAsync(It.IsAny<Domain.Proveedores.Entities.Proveedor>(), CancellationToken.None), Times.Never);
     }
@@ -219,8 +219,8 @@ public class CrearProveedorHandlerTests
         // Arrange
         var command = _commandValido;
         
-        _mockRepository.Setup(r => r.ObtenerPorRFCAsync(command.RFC, CancellationToken.None))
-                      .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
+        _mockRepository.Setup(r => r.ObtenerPorRUTAsync(command.RUT, CancellationToken.None))
+                      .ReturnsAsync((Domain.Proveedores.Entities.Proveedor)null);
 
         _mockRepository.Setup(r => r.BuscarAsync(command.Email, CancellationToken.None))
                       .ThrowsAsync(new Exception("Error en búsqueda"));
@@ -242,8 +242,8 @@ public class CrearProveedorHandlerTests
         // Arrange
         var command = _commandValido;
         
-        _mockRepository.Setup(r => r.ObtenerPorRFCAsync(command.RFC, CancellationToken.None))
-                      .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
+        _mockRepository.Setup(r => r.ObtenerPorRUTAsync(command.RUT, CancellationToken.None))
+                      .ReturnsAsync((Domain.Proveedores.Entities.Proveedor)null);
 
         _mockRepository.Setup(r => r.BuscarAsync(command.Email, CancellationToken.None))
                       .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
@@ -271,18 +271,18 @@ public class CrearProveedorHandlerTests
             Email = "dto@proveedor.com",
             Telefono = "555-999-8888",
             Direccion = "Dirección DTO",
-            Ciudad = "Ciudad DTO",
+            Ciudad = "Santiago",
             CodigoPostal = "12345",
-            Pais = "México",
-            RFC = "XAXX010103000",
+            Pais = "Chile",
+            RUT = "XAXX010103000",
             InformacionBancaria = "Banco DTO",
             DiasCredito = 15
         };
 
         var command = CrearProveedorCommand.DesdeDto(dto, Guid.NewGuid());
 
-        _mockRepository.Setup(r => r.ObtenerPorRFCAsync("XAXX010103000", CancellationToken.None))
-                      .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
+        _mockRepository.Setup(r => r.ObtenerPorRUTAsync("XAXX010103000", CancellationToken.None))
+                      .ReturnsAsync((Domain.Proveedores.Entities.Proveedor)null);
 
         _mockRepository.Setup(r => r.BuscarAsync("dto@proveedor.com", CancellationToken.None))
                       .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
@@ -312,8 +312,8 @@ public class CrearProveedorHandlerTests
         var command = _commandValido;
         
         // Configurar validaciones exitosas
-        _mockRepository.Setup(r => r.ObtenerPorRFCAsync(command.RFC, CancellationToken.None))
-                      .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
+        _mockRepository.Setup(r => r.ObtenerPorRUTAsync(command.RUT, CancellationToken.None))
+                      .ReturnsAsync((Domain.Proveedores.Entities.Proveedor)null);
 
         _mockRepository.Setup(r => r.BuscarAsync(command.Email, CancellationToken.None))
                       .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
@@ -342,14 +342,14 @@ public class CrearProveedorHandlerTests
             Email = "minimo@proveedor.com",
             Telefono = "555-000-0000",
             Direccion = "Dirección",
-            Ciudad = "Ciudad",
-            RFC = "XAXX010104000",
+            Ciudad = "Santiago",
+            RUT = "XAXX010104000",
             UsuarioId = Guid.NewGuid()
             // Campos opcionales no establecidos
         };
 
-        _mockRepository.Setup(r => r.ObtenerPorRFCAsync("XAXX010104000", CancellationToken.None))
-                      .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
+        _mockRepository.Setup(r => r.ObtenerPorRUTAsync("XAXX010104000", CancellationToken.None))
+                      .ReturnsAsync((Domain.Proveedores.Entities.Proveedor)null);
 
         _mockRepository.Setup(r => r.BuscarAsync("minimo@proveedor.com", CancellationToken.None))
                       .ReturnsAsync(new List<Domain.Proveedores.Entities.Proveedor>());
@@ -366,7 +366,7 @@ public class CrearProveedorHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
-        command.Pais.Should().Be("México"); // Default
+        command.Pais.Should().Be("Chile"); // Default
         command.DiasCredito.Should().Be(0); // Default (contado)
         command.CodigoPostal.Should().BeEmpty(); // Opcional
         command.InformacionBancaria.Should().BeEmpty(); // Opcional
@@ -383,10 +383,10 @@ public class CrearProveedorHandlerTests
             Email = "carlos@xyz.com",
             Telefono = "555-123-4567",
             Direccion = "Av. Principal 456",
-            Ciudad = "Monterrey",
+            Ciudad = "Santiago",
             CodigoPostal = "64000",
-            Pais = "México",
-            RFC = "XAXX010101000",
+            Pais = "Chile",
+            RUT = "XAXX010101000",
             InformacionBancaria = "BBVA - 1234567890",
             DiasCredito = 30,
             UsuarioId = Guid.NewGuid()
@@ -403,10 +403,10 @@ public class CrearProveedorHandlerTests
             Email = "carlos@xyz.com",
             Telefono = "555-123-4567",
             Direccion = "Av. Principal 456",
-            Ciudad = "Monterrey",
+            Ciudad = "Santiago",
             CodigoPostal = "64000",
-            Pais = "México",
-            RFC = "XAXX010101000",
+            Pais = "Chile",
+            RUT = "XAXX010101000",
             InformacionBancaria = "BBVA - 1234567890",
             DiasCredito = 30,
             Activo = true,
@@ -424,10 +424,10 @@ public class CrearProveedorHandlerTests
             "carlos@xyz.com",              // email
             "555-123-4567",                // telefono
             "Av. Principal 456",           // direccion
-            "Monterrey",                   // ciudad
+            "Santiago",                   // ciudad
             "64000",                       // codigoPostal
-            "México",                      // pais
-            "XAXX010101000",               // rfc
+            "Chile",                       // pais
+            "XAXX010101000",               // rut
             "BBVA - 1234567890",           // informacionBancaria
             30                             // diasCredito
         );

@@ -80,6 +80,14 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores
         }
 
         /// <summary>
+        /// Obtiene un proveedor por su RUT (método alternativo para compatibilidad)
+        /// </summary>
+        public async Task<Proveedor?> ObtenerPorRUTAsync(string rut, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet.FirstOrDefaultAsync(p => p.RFC == rut, cancellationToken);
+        }
+
+        /// <summary>
         /// Obtiene todos los proveedores
         /// </summary>
         public override async Task<IEnumerable<Proveedor>> ObtenerTodosAsync(CancellationToken cancellationToken = default)

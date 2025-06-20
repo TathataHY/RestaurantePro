@@ -32,7 +32,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         {
             var proveedor = Proveedor.Crear(
                 "Proveedor para Contactos", "Contacto P", "contactos@proveedor.com", "333333333",
-                "Direccion P", "Ciudad P", "33333", "Pais P", "P3P3P3P3P3P3", "Info Bancaria P", 30);
+                "Direccion P", "Ciudad P", "3333333", "Pais P", "P3P3P3P3P3P3", "Info Bancaria P", 30);
             
             _proveedorId = proveedor.Id;
 

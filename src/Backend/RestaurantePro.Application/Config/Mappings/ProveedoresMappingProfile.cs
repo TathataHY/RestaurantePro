@@ -10,6 +10,7 @@ public class ProveedoresMappingProfile : Profile
     {
         // Proveedor mappings
         CreateMap<Proveedor, ProveedorDto>()
+            .ForMember(dest => dest.RUT, opt => opt.MapFrom(src => src.RFC)) // Mapear RFC del dominio a RUT del DTO
             .ForMember(dest => dest.Descripcion, opt => opt.Ignore()) // No existe en el dominio actual
             .ForMember(dest => dest.Categoria, opt => opt.Ignore()) // No existe en el dominio actual
             .ForMember(dest => dest.CalificacionPromedio, opt => opt.Ignore()) // No existe en el dominio actual

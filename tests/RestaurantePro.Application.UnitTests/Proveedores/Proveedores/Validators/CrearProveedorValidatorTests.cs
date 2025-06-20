@@ -157,14 +157,14 @@ public class CrearProveedorValidatorTests
 
     // #endregion
 
-    #region RFC Validations
+    #region RUT Validations
 
     [Fact]
-    public void Validator_ConRfcValido_DeberiaSerValido()
+    public void Validator_ConRutValido_DeberiaSerValido()
     {
         // Arrange
         var command = CrearComandoValido();
-        command.RFC = "ABC123456789";
+        command.RUT = "12345678-9";
 
         // Act
         var result = _validator.Validate(command);
@@ -174,42 +174,42 @@ public class CrearProveedorValidatorTests
     }
 
     [Fact]
-    public void Validator_ConRfcVacio_DeberiaSerValido()
+    public void Validator_ConRutVacio_DeberiaSerValido()
     {
         // Arrange
         var command = CrearComandoValido();
-        command.RFC = "";
+        command.RUT = "";
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
-        result.IsValid.Should().BeTrue(); // RFC es opcional
+        result.IsValid.Should().BeTrue(); // RUT es opcional
     }
 
     [Fact]
-    public void Validator_ConRfcNull_DeberiaSerValido()
+    public void Validator_ConRutNull_DeberiaSerValido()
     {
         // Arrange
         var command = CrearComandoValido();
-        command.RFC = null!;
+        command.RUT = null!;
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
-        result.IsValid.Should().BeTrue(); // RFC es opcional
+        result.IsValid.Should().BeTrue(); // RUT es opcional
     }
 
     [Theory]
-    [InlineData("ABC123456789")]
-    [InlineData("XAXX010101000")]
-    [InlineData("GODE561231GR8")]
-    public void Validator_ConRfcsValidos_DeberiaSerValido(string rfc)
+    [InlineData("12345678-9")]
+    [InlineData("98765432-1")]
+    [InlineData("11111111-1")]
+    public void Validator_ConRutsValidos_DeberiaSerValido(string rut)
     {
         // Arrange
         var command = CrearComandoValido();
-        command.RFC = rfc;
+        command.RUT = rut;
 
         // Act
         var result = _validator.Validate(command);
@@ -219,22 +219,23 @@ public class CrearProveedorValidatorTests
     }
 
     [Theory]
-    [InlineData("ABC12")]  // Muy corto
-    [InlineData("ABC12345678901234")]  // Muy largo
-    [InlineData("abc123456789")]  // Minúsculas
-    [InlineData("123456789ABC")]  // Formato inválido
-    public void Validator_ConRfcsInvalidos_DeberiaFallar(string rfcInvalido)
+    [InlineData("123456789")]     // Sin guión
+    [InlineData("1234567-8")]     // Muy corto
+    [InlineData("123456789-0")]   // Muy largo
+    [InlineData("ABCDEFGH-9")]    // Letras en número
+    [InlineData("12345678-A")]    // Letra inválida en DV
+    public void Validator_ConRutsInvalidos_DeberiaFallar(string rutInvalido)
     {
         // Arrange
         var command = CrearComandoValido();
-        command.RFC = rfcInvalido;
+        command.RUT = rutInvalido;
 
         // Act
         var result = _validator.Validate(command);
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProveedorCommand.RFC));
+        result.Errors.Should().ContainSingle(x => x.PropertyName == nameof(CrearProveedorCommand.RUT));
     }
 
     #endregion
@@ -246,7 +247,7 @@ public class CrearProveedorValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.Email = "ventas@distribuidoraabc.com.mx";
+        command.Email = "ventas@distribuidoraabc.cl";
 
         // Act
         var result = _validator.Validate(command);
@@ -369,7 +370,7 @@ public class CrearProveedorValidatorTests
     {
         // Arrange
         var command = CrearComandoValido();
-        command.Direccion = "Av. Insurgentes Sur 1234, Col. Del Valle, CDMX";
+        command.Direccion = "Av. Providencia 1234, Las Condes, Santiago";
 
         // Act
         var result = _validator.Validate(command);
@@ -470,10 +471,10 @@ public class CrearProveedorValidatorTests
         var command = new CrearProveedorCommand
         {
             Nombre = "Distribuidora de Alimentos del Bajío S.A. de C.V.",
-            RFC = "DAB123456789",
-            Email = "ventas@distribuidorabajio.com.mx",
+            RUT = "12345678-9",
+            Email = "ventas@distribuidorabajio.cl",
             Telefono = "+52-462-123-4567",
-            Direccion = "Carretera Panamericana Km 15.5, Parque Industrial, León, Guanajuato, México"
+            Direccion = "Camino La Dehesa Km 15.5, Parque Industrial, Santiago, Chile"
         };
 
         // Act
@@ -491,7 +492,7 @@ public class CrearProveedorValidatorTests
         var command = new CrearProveedorCommand
         {
             Nombre = "", // Error: vacío
-            RFC = "abc123", // Error: formato inválido
+            RUT = "123456", // Error: formato inválido
             Email = "email_invalido", // Error: formato inválido
             Telefono = "", // Error: vacío
             Direccion = new string('A', 501) // Error: muy larga
@@ -504,7 +505,7 @@ public class CrearProveedorValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().HaveCountGreaterThan(3);
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.Nombre));
-        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.RFC));
+        result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.RUT));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.Email));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.Telefono));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearProveedorCommand.Direccion));
@@ -542,12 +543,12 @@ public class CrearProveedorValidatorTests
         {
             Nombre = "Distribuidora ABC S.A.",
             NombreContacto = "Juan Pérez",
-            RFC = "ABC123456789",
-            Email = "ventas@distribuidoraabc.com",
+            RUT = "12345678-9",
+            Email = "ventas@distribuidoraabc.cl",
             Telefono = "+52-55-1234-5678",
-            Direccion = "Av. Insurgentes Sur 1234, Col. Del Valle, CDMX",
-            Ciudad = "Ciudad de México",
-            Pais = "México",
+            Direccion = "Av. Providencia 1234, Las Condes, Santiago",
+            Ciudad = "Santiago",
+            Pais = "Chile",
             CodigoPostal = "12345",
             InformacionBancaria = "Banco ABC - Cuenta 1234567890",
             DiasCredito = 30,

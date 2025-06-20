@@ -38,7 +38,7 @@ namespace RestaurantePro.Domain.Proveedores.Services
         /// <param name="direccion">Dirección completa</param>
         /// <param name="ciudad">Ciudad</param>
         /// <param name="codigoPostal">Código postal</param>
-        /// <param name="pais">País (default: México)</param>
+        /// <param name="pais">País (default: Chile)</param>
         /// <param name="rfc">RFC del proveedor</param>
         /// <param name="informacionBancaria">Información bancaria (opcional)</param>
         /// <param name="diasCredito">Días de crédito (default: 30)</param>
@@ -53,7 +53,7 @@ namespace RestaurantePro.Domain.Proveedores.Services
             string direccion,
             string ciudad,
             string codigoPostal,
-            string pais = "México",
+            string pais = "Chile",
             string? rfc = null,
             string? informacionBancaria = null,
             int diasCredito = 30,

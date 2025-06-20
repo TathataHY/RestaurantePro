@@ -43,7 +43,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration.WithinContext.Inventario
                 "Calle Principal 123",
                 "Ciudad Test",
                 "12345",
-                "México",
+                "Chile",
                 "PROV12345678",
                 "BBVA 123456789",
                 30); // 30 días de plazo pago
@@ -154,7 +154,7 @@ namespace RestaurantePro.Domain.UnitTests.Integration.WithinContext.Inventario
                 "Calle Principal 123",
                 "Ciudad Test",
                 "12345",
-                "México",
+                "Chile",
                 "PROV12345678",
                 "BBVA 123456789",
                 30); // 30 días de plazo pago

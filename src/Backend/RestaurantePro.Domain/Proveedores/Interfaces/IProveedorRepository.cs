@@ -40,6 +40,14 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces
         Task<Proveedor?> ObtenerPorRutAsync(string rut, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Obtiene un proveedor por su RUT (método alternativo para compatibilidad)
+        /// </summary>
+        /// <param name="rut">RUT del proveedor</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Proveedor encontrado o null si no existe</returns>
+        Task<Proveedor?> ObtenerPorRUTAsync(string rut, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Obtiene todos los proveedores
         /// </summary>
         /// <param name="incluirContactos">Indica si se deben incluir los contactos de los proveedores</param>

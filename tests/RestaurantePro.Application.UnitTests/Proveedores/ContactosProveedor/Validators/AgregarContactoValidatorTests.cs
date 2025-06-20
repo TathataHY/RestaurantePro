@@ -25,8 +25,8 @@ public class AgregarContactoValidatorTests
             Apellidos = "Ramírez López",
             Cargo = "Director de Compras",
             Departamento = "Adquisiciones",
-            Email = "carlos.ramirez@proveedor.com",
-            EmailSecundario = "cramirez@proveedor.com",
+            Email = "carlos.ramirez@proveedor.cl",
+            EmailSecundario = "cramirez@proveedor.cl",
             Telefono = "555-789-0123",
             TelefonoMovil = "555-456-7890",
             Extension = "9876",
@@ -350,8 +350,8 @@ public class AgregarContactoValidatorTests
     }
 
     [Theory]
-    [InlineData("carlos.ramirez@proveedor.com")]
-    [InlineData("director.compras@empresa.com.mx")]
+    [InlineData("carlos.ramirez@proveedor.cl")]
+    [InlineData("director.compras@empresa.cl")]
     [InlineData("compras+info@distribuidor.net")]
     [InlineData("a@b.co")]  // Mínimo válido
     public async Task Validate_ConEmailValido_NoDeberiaRetornarErrorDeEmail(string emailValido)
@@ -458,7 +458,7 @@ public class AgregarContactoValidatorTests
     [Theory]
     [InlineData(null)]             // Válido - opcional
     [InlineData("")]               // Válido - opcional
-    [InlineData("backup@proveedor.com")]
+    [InlineData("backup@proveedor.cl")]
     [InlineData("alternativo@empresa.net")]
     public async Task Validate_ConEmailSecundarioValido_NoDeberiaRetornarErrorDeEmailSecundario(string emailSecundario)
     {
@@ -805,8 +805,8 @@ public class AgregarContactoValidatorTests
             Apellidos = "Ramírez López",
             Cargo = "Director Regional de Compras y Adquisiciones",
             Departamento = "Adquisiciones y Logística",
-            Email = "carlos.ramirez@proveedor.com.mx",
-            EmailSecundario = "cramirez.backup@proveedor.com.mx",
+            Email = "carlos.ramirez@proveedor.cl",
+            EmailSecundario = "cramirez.backup@proveedor.cl",
             Telefono = "+52 (55) 789-0123",
             TelefonoMovil = "+52 (55) 456-7890",
             Extension = "9876",

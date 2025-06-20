@@ -367,8 +367,8 @@ public class CoreMappingProfileTests
         dto.IntentosFallidos.Should().Be(0);
         dto.DebeResetearPassword.Should().BeFalse();
         dto.SucursalesAcceso.Should().BeEmpty();
-        dto.ZonaHoraria.Should().Be("America/Mexico_City");
-        dto.Idioma.Should().Be("es-MX");
+        dto.ZonaHoraria.Should().Be("America/Santiago");
+        dto.Idioma.Should().Be("es-CL");
         dto.RolesAdicionales.Should().BeEmpty();
         dto.CantidadSubordinados.Should().Be(0);
     }

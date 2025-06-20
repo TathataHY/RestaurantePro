@@ -145,9 +145,9 @@ public class ProveedorBuilder
     /// <param name="direccion">Dirección</param>
     /// <param name="ciudad">Ciudad</param>
     /// <param name="codigoPostal">Código postal</param>
-    /// <param name="pais">País (default: México)</param>
+    /// <param name="pais">País (default: Chile)</param>
     /// <returns>Builder para encadenamiento fluido</returns>
-    public ProveedorBuilder ConDireccion(string direccion, string ciudad, string codigoPostal, string pais = "México")
+    public ProveedorBuilder ConDireccion(string direccion, string ciudad, string codigoPostal, string pais = "Chile")
     {
         if (string.IsNullOrWhiteSpace(direccion))
         {
@@ -167,11 +167,11 @@ public class ProveedorBuilder
             return this;
         }
 
-        // Validar formato de código postal para México
-        if (pais.Equals("México", StringComparison.OrdinalIgnoreCase) && 
-            (!codigoPostal.All(char.IsDigit) || codigoPostal.Length != 5))
+        // Validar formato de código postal para Chile
+        if (pais.Equals("Chile", StringComparison.OrdinalIgnoreCase) && 
+            (!codigoPostal.All(char.IsDigit) || codigoPostal.Length != 7))
         {
-            _notificationManager.AddError("El código postal debe tener 5 dígitos para México", "CodigoPostal", nameof(codigoPostal));
+            _notificationManager.AddError("El código postal debe tener 7 dígitos para Chile", "CodigoPostal", nameof(codigoPostal));
             return this;
         }
 
@@ -186,36 +186,27 @@ public class ProveedorBuilder
     }
 
     /// <summary>
-    /// Establece el RFC del proveedor
+    /// Establece el RUT del proveedor
     /// </summary>
-    /// <param name="rfc">RFC del proveedor</param>
+    /// <param name="rut">RUT del proveedor</param>
     /// <returns>Builder para encadenamiento fluido</returns>
-    public ProveedorBuilder ConRFC(string rfc)
+    public ProveedorBuilder ConRUT(string rut)
     {
-        if (string.IsNullOrWhiteSpace(rfc))
+        if (string.IsNullOrWhiteSpace(rut))
         {
-            _notificationManager.AddError("El RFC del proveedor no puede estar vacío", "RFC", nameof(rfc));
+            _notificationManager.AddError("El RUT del proveedor no puede estar vacío", "RUT", nameof(rut));
             return this;
         }
 
-        // Validaciones básicas de RFC
-        var rfcLimpio = rfc.Trim().ToUpperInvariant();
-        
-        if (rfcLimpio.Length < 10 || rfcLimpio.Length > 13)
+        // Usar la validación completa de RUT chileno
+        if (!RestaurantePro.Domain.Core.SharedKernel.ValueObjects.Rut.TryParse(rut, out var rutValidado))
         {
-            _notificationManager.AddError("El RFC debe tener entre 10 y 13 caracteres", "RFC", nameof(rfc));
+            _notificationManager.AddError("El formato del RUT no es válido", "RUT", nameof(rut));
             return this;
         }
 
-        // Validación básica de formato RFC (letras seguidas de números)
-        if (!Regex.IsMatch(rfcLimpio, @"^[A-Z&Ñ]{3,4}[0-9]{6}[A-Z0-9]{3}$"))
-        {
-            _notificationManager.AddError("El formato del RFC no es válido", "RFC", nameof(rfc));
-            return this;
-        }
-
-        _rfc = rfcLimpio;
-        _logger.LogDebug("RFC establecido: {RFC}", _rfc);
+        _rfc = rutValidado.FormatoSinPuntos;
+        _logger.LogDebug("RUT establecido: {RUT}", _rfc);
         return this;
     }
 
@@ -424,7 +415,7 @@ public class ProveedorBuilder
                 _direccion ?? string.Empty,
                 _ciudad ?? string.Empty,
                 _codigoPostal ?? string.Empty,
-                _pais ?? "México",
+                _pais ?? "Chile",
                 _rfc ?? string.Empty,
                 _informacionBancaria ?? string.Empty,
                 _diasCredito!.Value);

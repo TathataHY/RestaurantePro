@@ -315,7 +315,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Testing
 
             var tiposEmpresa = new[] { "S.A. de C.V.", "S.R.L.", "S.A.", "Ltda.", "Corp.", "Inc." };
             var sectores = new[] { "Alimentos", "Bebidas", "Equipos", "Limpieza", "Servicios", "Tecnología" };
-            var ciudades = new[] { "México", "Guadalajara", "Monterrey", "Puebla", "Tijuana", "León", "Juárez" };
+            var ciudades = new[] { "Santiago", "Valparaíso", "Concepción", "La Serena", "Antofagasta", "Temuco", "Rancagua" };
 
             for (int i = 1; i <= PROVEEDORES_COUNT; i++)
             {
@@ -327,12 +327,12 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Testing
                 var proveedor = Proveedor.Crear(
                     $"{sector} Rendimiento {i:D3} {tipoEmpresa}",
                     $"Contacto Rendimiento {i:D3}",
-                    $"contacto.{i:D3}@rendimiento-{sector.ToLower()}.mx",
+                    $"contacto.{i:D3}@rendimiento-{sector.ToLower()}.cl",
                     $"+52-{random.Next(100, 999)}-{random.Next(100, 999)}-{random.Next(1000, 9999)}",
                     $"Dirección Rendimiento {i} No. {random.Next(1, 9999)}",
                     ciudad,
                     $"{random.Next(10000, 99999)}",
-                    "México",
+                    "Chile",
                     $"REN{i:D3}{random.Next(100000, 999999)}",
                     $"Banco Rendimiento - Cuenta: {random.Next(1000000000, int.MaxValue)}",
                     random.Next(1, 90)

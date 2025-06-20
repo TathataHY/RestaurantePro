@@ -375,7 +375,7 @@ public class CrearUsuarioValidatorTests
 
     [Theory]
     [InlineData("usuario@restaurante.com")]
-    [InlineData("test.email@empresa.com.mx")]
+    [InlineData("test.email@empresa.cl")]
     [InlineData("admin+info@sistema.net")]
     [InlineData("a@b.co")]  // Mínimo válido
     public async Task Validate_ConEmailValido_NoDeberiaRetornarErrorDeEmail(string emailValido)
@@ -646,7 +646,7 @@ public class CrearUsuarioValidatorTests
         {
             NombreUsuario = "usuario.completo",
             NombreCompleto = "Usuario Completo de Prueba",
-            Email = "usuario.completo@restaurante.com.mx",
+            Email = "usuario.completo@restaurante.cl",
             Password = "PasswordCompleto123!",
             ConfirmarPassword = "PasswordCompleto123!",
             Rol = "Supervisor",

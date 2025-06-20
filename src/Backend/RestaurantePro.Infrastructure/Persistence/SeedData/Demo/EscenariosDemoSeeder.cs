@@ -48,7 +48,7 @@ public class EscenariosDemoSeeder : ISeedData
             }
 
             // ===========================================
-            // ESCENARIO 1: RESTAURANTE "EL BUEN SABOR" - OPERACIÓN COMPLETA
+            // ESCENARIO 1: RESTAURANTE "LA COCINA AUSTRAL" - OPERACIÓN COMPLETA
             // ===========================================
 
             // 👨‍💼 EQUIPO DE TRABAJO COMPLETO
@@ -58,7 +58,7 @@ public class EscenariosDemoSeeder : ISeedData
                 Usuario.Crear(
                     "gerente.general",
                     "Roberto Mendoza García",
-                    "gerente@elbuensabor.com",
+                    "gerente@lacocinaustral.cl",
                     RolUsuario.Administrador
                 ),
 
@@ -66,7 +66,7 @@ public class EscenariosDemoSeeder : ISeedData
                 Usuario.Crear(
                     "chef.principal",
                     "Carmen Rodríguez Vega",
-                    "chef@elbuensabor.com",
+                    "chef@lacocinaustral.cl",
                     RolUsuario.Cocinero
                 ),
 
@@ -74,14 +74,14 @@ public class EscenariosDemoSeeder : ISeedData
                 Usuario.Crear(
                     "mesero.matutino1",
                     "Luis Alberto Hernández",
-                    "luis.mesero@elbuensabor.com",
+                    "luis.mesero@lacocinaustral.cl",
                     RolUsuario.Mesero
                 ),
 
                 Usuario.Crear(
                     "mesero.matutino2",
                     "Ana María Jiménez",
-                    "ana.mesero@elbuensabor.com",
+                    "ana.mesero@lacocinaustral.cl",
                     RolUsuario.Mesero
                 ),
 
@@ -89,7 +89,7 @@ public class EscenariosDemoSeeder : ISeedData
                 Usuario.Crear(
                     "cajero.principal",
                     "Miguel Ángel Torres",
-                    "cajero@elbuensabor.com",
+                    "cajero@lacocinaustral.cl",
                     RolUsuario.Cajero
                 )
             };
@@ -101,12 +101,12 @@ public class EscenariosDemoSeeder : ISeedData
 
             var categoriasNuevas = new[]
             {
-                ("Entradas y Aperitivos", "Deliciosos aperitivos para comenzar", 1),
-                ("Platos Fuertes", "Especialidades de la casa", 2),
-                ("Postres Caseros", "Dulces tentaciones hechas en casa", 3),
-                ("Bebidas Naturales", "Aguas frescas y jugos naturales", 4),
-                ("Bebidas Calientes", "Café, té y chocolate", 5),
-                ("Cócteles sin Alcohol", "Bebidas especiales de la casa", 6)
+                ("Entradas Chilenas", "Aperitivos y picoteos tradicionales", 1),
+                ("Platos de Fondo", "Especialidades de la cocina chilena", 2),
+                ("Postres Caseros", "Dulces tradicionales hechos en casa", 3),
+                ("Bebidas Tradicionales", "Jugos naturales y aguas frescas", 4),
+                ("Bebidas Calientes", "Café, té y once chilena", 5),
+                ("Tragos y Pisco", "Cócteles con pisco y tragos nacionales", 6)
             };
 
             var categoriasMenu = new List<ProductoCategoria>();
@@ -131,70 +131,70 @@ public class EscenariosDemoSeeder : ISeedData
             // 🍽️ MENÚ COMPLETO DEL RESTAURANTE
             var menuCompleto = new[]
             {
-                // === ENTRADAS Y APERITIVOS ===
+                // === ENTRADAS CHILENAS ===
                 Producto.Crear(
-                    "Nachos El Buen Sabor",
-                    "Totopos caseros con queso derretido, jalapeños, frijoles y guacamole",
-                    new PrecioProducto(145.00m),
+                    "Palta Pura La Cocina Austral",
+                    "Palta molida con tostadas artesanales, tomate cherry y merkén",
+                    new PrecioProducto(6500m),
                     categoriasMenu[0].Id,
                     categoriasMenu[0].Nombre
                 ),
 
                 Producto.Crear(
-                    "Quesadillas de Flor de Calabaza",
-                    "Tortillas de maíz rellenas de flor de calabaza y queso Oaxaca",
-                    new PrecioProducto(95.00m),
+                    "Empanadas de Pino",
+                    "Empanadas de horno rellenas de pino tradicional con aceitunas y huevo",
+                    new PrecioProducto(5800m),
                     categoriasMenu[0].Id,
                     categoriasMenu[0].Nombre
                 ),
 
-                // === PLATOS FUERTES ===
+                // === PLATOS DE FONDO ===
                 Producto.Crear(
-                    "Mole Poblano de la Casa",
-                    "Pollo en mole poblano tradicional con arroz mexicano y tortillas",
-                    new PrecioProducto(285.00m),
+                    "Cazuela de Cordero Austral",
+                    "Cazuela tradicional con cordero magallánico, zapallo, choclo y papas",
+                    new PrecioProducto(12500m),
                     categoriasMenu[1].Id,
                     categoriasMenu[1].Nombre
                 ),
 
                 Producto.Crear(
-                    "Arrachera a la Parrilla",
-                    "Carne de res marinada con guacamole, frijoles charros y tortillas",
-                    new PrecioProducto(320.00m),
+                    "Asado de Tira a la Parrilla",
+                    "Asado de tira con pebre casero, papas doradas y ensalada chilena",
+                    new PrecioProducto(14800m),
                     categoriasMenu[1].Id,
                     categoriasMenu[1].Nombre
                 ),
 
                 Producto.Crear(
-                    "Pescado a la Veracruzana",
-                    "Huachinango fresco en salsa veracruzana con arroz blanco",
-                    new PrecioProducto(275.00m),
+                    "Reineta a la Plancha",
+                    "Reineta fresca del Pacífico con papas mayo y verduras de temporada",
+                    new PrecioProducto(11200m),
                     categoriasMenu[1].Id,
                     categoriasMenu[1].Nombre
                 ),
 
                 // === POSTRES CASEROS ===
                 Producto.Crear(
-                    "Flan Napolitano de la Abuela",
-                    "Flan casero con caramelo y crema batida",
-                    new PrecioProducto(75.00m),
+                    "Leche Asada de la Casa",
+                    "Leche asada tradicional con canela y manjar",
+                    new PrecioProducto(3800m),
                     categoriasMenu[2].Id,
                     categoriasMenu[2].Nombre
                 ),
 
                 Producto.Crear(
-                    "Tres Leches Especial",
-                    "Pastel tres leches con fresas naturales",
-                    new PrecioProducto(85.00m),
+                    "Sopaipillas Pasadas",
+                    "Sopaipillas con chancaca y cáscara de naranja",
+                    new PrecioProducto(3200m),
                     categoriasMenu[2].Id,
                     categoriasMenu[2].Nombre
                 ),
 
                 // === BEBIDAS ===
                 Producto.Crear(
-                    "Agua Fresca de Horchata",
-                    "Horchata de arroz con canela, servida bien fría",
-                    new PrecioProducto(45.00m),
+                    "Mote con Huesillo",
+                    "Bebida tradicional con duraznos secos y mote cocido",
+                    new PrecioProducto(1800m),
                     categoriasMenu[3].Id,
                     categoriasMenu[3].Nombre
                 ),
@@ -247,9 +247,9 @@ public class EscenariosDemoSeeder : ISeedData
                 // Pescados y Mariscos
                 Ingrediente.Crear(
                     Guid.NewGuid(),
-                    "Huachinango Fresco",
-                    "DEMO-HUACHINANGO-001",
-                    "Huachinango fresco del Golfo de México",
+                    "Salmón fresco del sur de Chile",
+                    "DEMO-SALMON-001",
+                    "Salmón fresco del sur de Chile",
                     UnidadMedida.Kilogramo,
                     1.0m,
                     12.0m,
@@ -360,7 +360,7 @@ public class EscenariosDemoSeeder : ISeedData
                     "Mercado Central Local 45-47",
                     "Centro",
                     "45000",
-                    "México",
+                    "Chile",
                     "CSM240101XYZ",
                     "Banco Azteca - Cuenta: 1234567890",
                     30
@@ -375,7 +375,7 @@ public class EscenariosDemoSeeder : ISeedData
                     "Puerto Pesquero Km 12",
                     "Zona Costera",
                     "45100",
-                    "México",
+                    "Chile",
                     "MFG240101ABC",
                     "Bancomer - Cuenta: 2345678901",
                     15
@@ -390,7 +390,7 @@ public class EscenariosDemoSeeder : ISeedData
                     "Zona Rural Km 25",
                     "Ejido La Esperanza",
                     "45200",
-                    "México",
+                    "Chile",
                     "HOE240101DEF",
                     "Banamex - Cuenta: 3456789012",
                     20
@@ -405,7 +405,7 @@ public class EscenariosDemoSeeder : ISeedData
                     "Rancho Lechero Km 18",
                     "Carretera Norte",
                     "45300",
-                    "México",
+                    "Chile",
                     "LAD240101GHI",
                     "Santander - Cuenta: 4567890123",
                     25
@@ -471,7 +471,7 @@ public class EscenariosDemoSeeder : ISeedData
             await context.SaveChangesAsync(cancellationToken);
 
             logger.LogInformation("✅ Escenarios completos de demo creados exitosamente");
-            logger.LogInformation("🎭 Restaurante 'El Buen Sabor' configurado completamente:");
+            logger.LogInformation("🎭 Restaurante 'La Cocina Austral' configurado completamente:");
             logger.LogInformation("👥 {Equipo} miembros del equipo", equipoTrabajo.Length);
             logger.LogInformation("📋 {Categorias} categorías de menú", categoriasMenu.Count);
             logger.LogInformation("🍽️ {Menu} productos en el menú", menuCompleto.Length);

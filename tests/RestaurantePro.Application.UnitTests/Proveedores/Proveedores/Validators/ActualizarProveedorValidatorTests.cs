@@ -25,7 +25,7 @@ public class ActualizarProveedorValidatorTests
             Descripcion = "Proveedor especializado en ingredientes frescos y de alta calidad",
             Email = "contacto@alimentospremium.com",
             Telefono = "555-123-4567",
-            Direccion = "Av. Principal 123, Col. Centro, Ciudad de México",
+            Direccion = "Av. Principal 123, Santiago Centro",
             Categoria = CategoriaProveedor.AlimentosBasicos,
             Activo = true
         };
@@ -291,7 +291,7 @@ public class ActualizarProveedorValidatorTests
     [Theory]
     [InlineData("test@example.com")]
     [InlineData("usuario.test@dominio.co")]
-    [InlineData("email_test@empresa.com.mx")]
+    [InlineData("email_test@empresa.cl")]
     [InlineData("contacto+info@proveedor.net")]
     [InlineData("a@b.co")]  // Mínimo válido
     public async Task Validate_ConEmailValido_NoDeberiaRetornarErrorDeEmail(string emailValido)
@@ -527,9 +527,9 @@ public class ActualizarProveedorValidatorTests
             Id = Guid.NewGuid(),
             Nombre = "Distribuidora de Alimentos Frescos S.A. de C.V.",
             Descripcion = "Empresa dedicada a la distribución de alimentos frescos y productos orgánicos para restaurantes de alta gama. Contamos con certificaciones de calidad ISO 9001 y HACCP.",
-            Email = "ventas@alimentosfrescos.com.mx",
+            Email = "ventas@alimentosfrescos.cl",
             Telefono = "+52 (55) 1234-5678",
-            Direccion = "Av. Insurgentes Sur 1234, Col. Del Valle, Ciudad de México, CP 03100",
+            Direccion = "Av. Providencia 1234, Las Condes, Santiago, CP 7640000",
             Categoria = CategoriaProveedor.FrutasVerduras,
             Activo = true
         };

@@ -9,7 +9,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
 {
     /// <summary>
     /// Seeder que crea proveedores de demostración con contactos y datos realistas
-    /// Usa las entidades reales del sistema y datos típicos de proveedores mexicanos
+    /// Usa las entidades reales del sistema y datos típicos de proveedores chilenos
     /// </summary>
     public class ProveedoresSeeder : ISeedData
     {
@@ -37,59 +37,59 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
                     Proveedor.Crear(
                         "Carnes Premium del Norte S.A. de C.V.",
                         "María González Hernández",
-                        "ventas@carnespremium.mx",
-                        "+52-81-8888-1234",
-                        "Av. Industrial 1250, Zona Industrial",
-                        "Monterrey",
-                        "64700",
-                        "México",
-                        "CPN850315A47",
-                        "BBVA Bancomer - Cuenta: 0123456789",
-                        15
+                        "ventas@carnespremium.cl",
+                        "555-0101",
+                        "Av. Ganaderos 234",
+                        "Santiago",
+                        "7640000",
+                        "Chile",
+                        "CAR890123456",
+                        "Banco Estado - 1122334455",
+                        45
                     ),
 
                     // 🥬 Proveedor de Verduras
                     Proveedor.Crear(
                         "Distribuidora de Verduras Frescas La Huerta",
                         "José Luis Ramírez Castro",
-                        "pedidos@lahuerta.com.mx",
-                        "+52-33-3456-7890",
-                        "Mercado de Abastos Local 45-47",
-                        "Guadalajara",
-                        "44100",
-                        "México",
-                        "DVF920708B23",
-                        "Santander - Cuenta: 9876543210",
-                        7
+                        "pedidos@lahuerta.cl",
+                        "555-0102",
+                        "Camino Rural Sur 567",
+                        "Valparaíso",
+                        "2340000",
+                        "Chile",
+                        "VER456789012",
+                        "BancoChile - 2233445566",
+                        30
                     ),
 
                     // 🥛 Proveedor de Lácteos
                     Proveedor.Crear(
                         "Lácteos y Derivados San Miguel S.A.",
                         "Ana Patricia Morales Vega",
-                        "contacto@lacteossanmiguel.mx",
-                        "+52-55-5555-2468",
-                        "Carretera Federal México-Querétaro Km 45",
-                        "Tepotzotlán",
-                        "54600",
-                        "México",
-                        "LDS780420C89",
-                        "Banorte - Cuenta: 1357924680",
-                        10
+                        "contacto@lacteossanmiguel.cl",
+                        "555-0103",
+                        "Ruta 5 Sur Km 45",
+                        "Concepción",
+                        "4070000",
+                        "Chile",
+                        "LAC234567890",
+                        "Santander - 3344556677",
+                        15
                     ),
 
                     // 🍺 Proveedor de Bebidas
                     Proveedor.Crear(
                         "Bebidas y Licores El Barril Dorado",
                         "Roberto Carlos Mendoza Silva",
-                        "ventas@barrildorado.mx",
-                        "+52-55-1234-5678",
-                        "Av. Revolución 2890, Col. San Ángel",
-                        "Ciudad de México",
-                        "01000",
-                        "México",
-                        "BLD941212D56",
-                        "HSBC - Cuenta: 2468135790",
+                        "ventas@barrildorado.cl",
+                        "555-0104",
+                        "Av. Providencia 890",
+                        "Santiago",
+                        "7500000",
+                        "Chile",
+                        "BEB567890123",
+                        "BCI - 4455667788",
                         30
                     ),
 
@@ -97,90 +97,122 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
                     Proveedor.Crear(
                         "Productos de Limpieza Profesional CleanMax",
                         "Carmen Elena Jiménez Torres",
-                        "pedidos@cleanmax.com.mx",
-                        "+52-81-9999-3333",
-                        "Blvd. Díaz Ordaz 1875, Santa María",
-                        "Monterrey",
-                        "64650",
-                        "México",
-                        "PLP860925E71",
-                        "Banamex - Cuenta: 8024681357",
+                        "pedidos@cleanmax.cl",
+                        "555-0105",
+                        "Av. Industrial Norte 875",
+                        "Temuco",
+                        "4810000",
+                        "Chile",
+                        "CLM345678901",
+                        "Banco Estado - 5566778899",
                         20
                     ),
 
                     // 🍞 Proveedor de Panadería
                     Proveedor.Crear(
-                        "Panadería Artesanal Don Pancho",
-                        "Francisco Javier Ruiz Domínguez",
-                        "ordenes@donpancho.mx",
-                        "+52-33-7777-8888",
-                        "Calle Independencia 567, Centro Histórico",
-                        "Guadalajara",
-                        "44100",
-                        "México",
-                        "PAD930818F94",
+                        "Panadería Artesanal Los Andes",
+                        "Francisco Javier Ruiz",
+                        "ordenes@panaderialosandes.cl",
+                        "555-0109",
+                        "Calle Independencia 567, Centro",
+                        "Valparaíso",
+                        "2340000",
+                        "Chile",
+                        "PAN930818F94",
                         "Scotiabank - Cuenta: 5791346820",
                         3
                     ),
 
                     // 🌶️ Proveedor de Especias
                     Proveedor.Crear(
-                        "Especias y Condimentos Tradición Mexicana",
-                        "Guadalupe Esperanza Flores Mendoza",
-                        "info@tradicionmexicana.mx",
-                        "+52-55-8888-9999",
-                        "Mercado de San Juan, Local 123-125",
-                        "Ciudad de México",
-                        "06050",
-                        "México",
+                        "Especias y Condimentos del Sur",
+                        "Guadalupe Esperanza Flores",
+                        "info@especiasdelsur.cl",
+                        "555-0110",
+                        "Mercado Central, Local 123-125",
+                        "Santiago",
+                        "8320000",
+                        "Chile",
                         "ECT870304G15",
-                        "Banco Azteca - Cuenta: 3691472580",
+                        "BancoChile - Cuenta: 3691472580",
                         14
                     ),
 
                     // 🥤 Proveedor de Desechables
                     Proveedor.Crear(
-                        "Empaques y Desechables EcoPack Solutions",
-                        "Miguel Ángel Herrera López",
-                        "ventas@ecopacksolutions.mx",
-                        "+52-81-6666-7777",
-                        "Parque Industrial Apodaca, Nave 15",
-                        "Apodaca",
-                        "66600",
-                        "México",
+                        "Empaques y Desechables EcoPack Chile",
+                        "Miguel Ángel Herrera",
+                        "ventas@ecopackchile.cl",
+                        "555-0111",
+                        "Parque Industrial Quilicura, Nave 15",
+                        "Santiago",
+                        "8700000",
+                        "Chile",
                         "EDS901127H82",
-                        "Inbursa - Cuenta: 7410258369",
+                        "BCI - Cuenta: 7410258369",
                         21
                     ),
 
                     // 🔧 Proveedor de Equipos
                     Proveedor.Crear(
-                        "Equipos de Cocina Profesional RestauTech",
-                        "Carlos Eduardo Sánchez Moreno",
-                        "contacto@restautech.mx",
-                        "+52-33-4444-5555",
-                        "Av. Américas 1640, Providencia",
-                        "Guadalajara",
-                        "44630",
-                        "México",
+                        "Equipos de Cocina Profesional RestauTech Chile",
+                        "Carlos Eduardo Sánchez",
+                        "contacto@restautechcl.cl",
+                        "555-0112",
+                        "Av. Providencia 1640",
+                        "Santiago",
+                        "7500000",
+                        "Chile",
                         "ECP820615I37",
-                        "Citibanamex - Cuenta: 9517534682",
+                        "Santander - Cuenta: 9517534682",
                         45
                     ),
 
-                    // 🐟 Proveedor Local de Mariscos
+
+
+                    // Proveedor 6: Mariscos y Pescados del Pacífico
                     Proveedor.Crear(
-                        "Mariscos Frescos del Pacífico",
-                        "Raúl Octavio Castillo Rivera",
-                        "pedidos@mariscospacifico.mx",
-                        "+52-33-2222-3333",
-                        "Av. López Mateos Sur 2500",
-                        "Guadalajara",
-                        "45050",
-                        "México",
-                        "MFP890523J64",
-                        "Banregio - Cuenta: 1593574680",
-                        2
+                        "Mariscos y Pescados del Pacífico",
+                        "Fernando Soto",
+                        "ventas@mariscospacifico.cl",
+                        "555-0106",
+                        "Puerto Pesquero Local 12",
+                        "Valparaíso",
+                        "2340000",
+                        "Chile",
+                        "MAR678901234",
+                        "BCI - 6677889900",
+                        7
+                    ),
+
+                    // Proveedor 7: Panadería Artesanal Los Andes
+                    Proveedor.Crear(
+                        "Panadería Artesanal Los Andes",
+                        "Sofía Herrera",
+                        "contacto@panaderialosandes.cl",
+                        "555-0107",
+                        "Calle Artesanos 456",
+                        "Concepción",
+                        "4070000",
+                        "Chile",
+                        "PAN789012345",
+                        "Santander - 7788990011",
+                        5
+                    ),
+
+                    // Proveedor 8: Especias y Condimentos del Sur
+                    Proveedor.Crear(
+                        "Especias y Condimentos del Sur",
+                        "Diego Morales",
+                        "pedidos@especiasdelsur.cl",
+                        "555-0108",
+                        "Mercado Central Local 123-125",
+                        "Santiago",
+                        "8320000",
+                        "Chile",
+                        "ESP890123456",
+                        "BancoChile - 8899001122",
+                        14
                     )
                 };
 
@@ -215,8 +247,8 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
                 carnesPremium.AgregarContacto(
                     "Pedro Alejandro García Ruiz",
                     "Ejecutivo de Ventas",
-                    "+52-81-8888-1235",
-                    "pedro.garcia@carnespremium.mx"
+                    "555-0201",
+                    "pedro.garcia@carnespremium.cl"
                 );
 
                 // La Huerta - Contacto de logística
@@ -224,8 +256,8 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
                 laHuerta.AgregarContacto(
                     "Sandra Beatriz López Martínez",
                     "Coordinadora de Logística",
-                    "+52-33-3456-7891",
-                    "logistica@lahuerta.com.mx"
+                    "555-0202",
+                    "logistica@lahuerta.cl"
                 );
 
                 // Lácteos San Miguel - Contacto técnico
@@ -233,8 +265,8 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
                 lacteosSanMiguel.AgregarContacto(
                     "Dr. Fernando Javier Rodríguez Peña",
                     "Director Técnico",
-                    "+52-55-5555-2469",
-                    "tecnico@lacteossanmiguel.mx"
+                    "555-0203",
+                    "tecnico@lacteossanmiguel.cl"
                 );
 
                 // RestauTech - Contacto de soporte técnico
@@ -242,8 +274,8 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
                 restauTech.AgregarContacto(
                     "Ing. Diana Cristina Morales Vázquez",
                     "Jefa de Soporte Técnico",
-                    "+52-33-4444-5556",
-                    "soporte@restautech.mx"
+                    "555-0204",
+                    "soporte@restautechcl.cl"
                 );
 
                 logger.LogInformation("✅ Contactos adicionales agregados exitosamente");

@@ -515,7 +515,7 @@ public class ObtenerProveedorPorIdHandlerTests
             "Calle Test 123",             // direccion
             "Ciudad Test",                // ciudad
             "12345",                      // codigoPostal
-            "México",                     // pais
+            "Chile",                     // pais
             "XAXX010101000",              // rfc
             "Banco Test - 1234567890",    // informacionBancaria
             30                            // diasCredito
@@ -536,7 +536,7 @@ public class ObtenerProveedorPorIdHandlerTests
             "Avenida Inactivo 456",       // direccion
             "Ciudad Inactivo",            // ciudad
             "54321",                      // codigoPostal
-            "México",                     // pais
+            "Chile",                     // pais
             "XAXX010101001",              // rfc
             "Banco Inactivo - 0987654321", // informacionBancaria
             15                            // diasCredito
@@ -559,7 +559,7 @@ public class ObtenerProveedorPorIdHandlerTests
             Direccion = "Calle Test 123",
             Ciudad = "Ciudad Test",
             CodigoPostal = "12345",
-            Pais = "México",
+            Pais = "Chile",
             RFC = "XAXX010101000",
             InformacionBancaria = "Banco Test - 1234567890",
             DiasCredito = 30,

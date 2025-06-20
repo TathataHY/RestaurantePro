@@ -9,7 +9,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
 {
     /// <summary>
     /// Seeder que crea mesas de demostración con distribución realista
-    /// Usa las entidades reales del sistema y simula un restaurante típico mexicano
+    /// Usa las entidades reales del sistema y simula un restaurante típico chileno
     /// </summary>
     public class MesasSeeder : ISeedData
     {

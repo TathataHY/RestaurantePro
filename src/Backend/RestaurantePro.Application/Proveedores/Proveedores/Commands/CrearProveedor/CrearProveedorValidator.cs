@@ -82,7 +82,7 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
 
         RuleFor(x => x.CodigoPostal)
             .MaximumLength(10).WithMessage("El código postal no puede exceder 10 caracteres")
-            .Must(BeValidPostalCode).WithMessage("El código postal debe contener solo números y letras")
+            .Must(BeValidPostalCodeForCountry).WithMessage("El código postal debe tener 7 dígitos para Chile")
             .When(x => !string.IsNullOrWhiteSpace(x.CodigoPostal));
     }
 
@@ -91,10 +91,10 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     /// </summary>
     private void ConfigurarValidacionesFiscales()
     {
-        // RFC es opcional, pero si se proporciona debe ser válido
-        RuleFor(x => x.RFC)
-            .Must(BeValidRFC).WithMessage("El RFC no tiene un formato válido")
-            .When(x => !string.IsNullOrWhiteSpace(x.RFC));
+        // RUT es opcional, pero si se proporciona debe ser válido
+        RuleFor(x => x.RUT)
+            .Must(BeValidRUT).WithMessage("El RUT no tiene un formato válido")
+            .When(x => !string.IsNullOrWhiteSpace(x.RUT));
 
         RuleFor(x => x.InformacionBancaria)
             .MaximumLength(500).WithMessage("La información bancaria no puede exceder 500 caracteres")
@@ -118,7 +118,7 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
         // Validación para proveedores internacionales
         RuleFor(x => x.DiasCredito)
             .LessThanOrEqualTo(90).WithMessage("Para proveedores internacionales, el crédito máximo es 90 días")
-            .When(x => !string.IsNullOrWhiteSpace(x.Pais) && !x.Pais.Equals("México", StringComparison.OrdinalIgnoreCase));
+            .When(x => !string.IsNullOrWhiteSpace(x.Pais) && !x.Pais.Equals("Chile", StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
@@ -144,9 +144,9 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
         var phonePattern = @"^[\d\s\-\(\)\+]+$";
         var isValidFormat = System.Text.RegularExpressions.Regex.IsMatch(telefono, phonePattern);
         
-        // Verificar que tenga al menos 10 dígitos
+        // Verificar que tenga al menos 7 dígitos (más flexible)
         var digitsOnly = System.Text.RegularExpressions.Regex.Replace(telefono, @"[^\d]", "");
-        var hasMinDigits = digitsOnly.Length >= 10;
+        var hasMinDigits = digitsOnly.Length >= 7;
         
         return isValidFormat && hasMinDigits;
     }
@@ -158,35 +158,28 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     {
         if (string.IsNullOrWhiteSpace(email)) return false;
         
-        // Expresión regular más estricta para validación de email
-        // Esta versión mejorada rechaza puntos consecutivos y dominios que empiezan o terminan con punto
-        var regex = new Regex(@"^[a-zA-Z0-9](?:[a-zA-Z0-9_%+-]+(?:\.[a-zA-Z0-9_%+-]+)*)?@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$");
-        return regex.IsMatch(email);
+        try
+        {
+            // Usar MailAddress para validación más simple y confiable
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     /// <summary>
-    /// Valida que el RFC sea válido (mexicano o genérico)
+    /// Valida que el RUT chileno sea válido
     /// </summary>
-    private bool BeValidRFC(string rfc)
+    private bool BeValidRUT(string rut)
     {
-        if (string.IsNullOrWhiteSpace(rfc)) return true; // Es opcional
+        if (string.IsNullOrWhiteSpace(rut)) return true; // Es opcional
         
-        // Validar formato básico primero (rechazar muy cortos o muy largos)
-        if (rfc.Length < 12 || rfc.Length > 13) return false;
-        
-        // Validar que esté en mayúsculas
-        if (rfc != rfc.ToUpper()) return false;
-        
-        // RFC para personas físicas: 4 letras + 6 números + 3 alfanuméricos
-        // RFC para personas morales: 3 letras + 6 números + 3 alfanuméricos
-        var rfcPattern = @"^[A-Z&Ñ]{3,4}[0-9]{6}[A-Z0-9]{3}$";
-        
-        // Validar que los primeros caracteres sean letras
-        var inicioLetras = rfc.Substring(0, rfc.Length == 13 ? 4 : 3);
-        if (!inicioLetras.All(c => char.IsLetter(c) || c == '&' || c == 'Ñ'))
-            return false;
-        
-        return System.Text.RegularExpressions.Regex.IsMatch(rfc, rfcPattern);
+        // Validación de formato chileno: exactamente 8 dígitos, guión, 1 dígito o K
+        var rutPattern = @"^\d{8}-[\dK]$";
+        return System.Text.RegularExpressions.Regex.IsMatch(rut, rutPattern, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     }
 
     /// <summary>
@@ -194,7 +187,7 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     /// </summary>
     private bool BeValidCityName(string ciudad)
     {
-        if (string.IsNullOrWhiteSpace(ciudad)) return false;
+        if (string.IsNullOrWhiteSpace(ciudad)) return true; // Es opcional
         
         var allowedChars = @"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s\.\-']+$";
         return System.Text.RegularExpressions.Regex.IsMatch(ciudad, allowedChars);
@@ -205,20 +198,21 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
     /// </summary>
     private bool BeValidCountryName(string pais)
     {
-        if (string.IsNullOrWhiteSpace(pais)) return false;
+        if (string.IsNullOrWhiteSpace(pais)) return true; // Es opcional
         
         var allowedChars = @"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s\.\-']+$";
         return System.Text.RegularExpressions.Regex.IsMatch(pais, allowedChars);
     }
 
     /// <summary>
-    /// Valida que el código postal sea válido
+    /// Valida que el código postal sea válido según el país
     /// </summary>
-    private bool BeValidPostalCode(string codigoPostal)
+    private bool BeValidPostalCodeForCountry(string codigoPostal)
     {
         if (string.IsNullOrWhiteSpace(codigoPostal)) return true; // Es opcional
         
-        var allowedChars = @"^[a-zA-Z0-9\s\-]+$";
-        return System.Text.RegularExpressions.Regex.IsMatch(codigoPostal, allowedChars);
+        // Ser más flexible: permitir códigos postales de 4-10 caracteres alfanuméricos
+        return codigoPostal.Length >= 4 && codigoPostal.Length <= 10 && 
+               System.Text.RegularExpressions.Regex.IsMatch(codigoPostal, @"^[a-zA-Z0-9\s\-]+$");
     }
 } 

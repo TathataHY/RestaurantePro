@@ -26,7 +26,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Proveedores
                 
             builder.Property(p => p.RFC)
                 .IsRequired()
-                .HasMaxLength(20);
+                .HasMaxLength(20)
+                .HasColumnName("RUT"); // Mapear columna RFC a RUT para Chile
                 
             builder.Property(p => p.Direccion)
                 .HasMaxLength(200);
@@ -104,7 +105,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Proveedores
                 .HasDatabaseName("IX_Proveedores_Nombre");
                 
             builder.HasIndex(p => p.RFC)
-                .HasDatabaseName("IX_Proveedores_RFC")
+                .HasDatabaseName("IX_Proveedores_RUT")
                 .IsUnique();
         }
     }

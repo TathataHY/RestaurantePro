@@ -38,7 +38,7 @@ public class DesactivarProveedorValidatorTests
             "Calle Test 123",
             "Ciudad Test",
             "12345",
-            "México",
+            "Chile",
             "XAXX010102000",
             "Cuenta bancaria test",
             30);

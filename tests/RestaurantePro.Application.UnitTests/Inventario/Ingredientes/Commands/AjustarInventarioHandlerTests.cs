@@ -467,9 +467,9 @@ public class AjustarInventarioHandlerTests
             "contacto@carnespremium.com",
             "555-123-4567",
             "Av. Industrial 123",
-            "Ciudad de México",
-            "12345",
-            "México", 
+            "Santiago",
+            "7640000",
+            "Chile", 
             "CAPR800101ABC",
             "Información bancaria",
             30);

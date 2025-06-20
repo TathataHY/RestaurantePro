@@ -219,12 +219,12 @@ public class UsuarioDto : BaseDto
     /// <summary>
     /// Zona horaria preferida del usuario
     /// </summary>
-    public string ZonaHoraria { get; set; } = "America/Mexico_City";
+    public string ZonaHoraria { get; set; } = "America/Santiago";
 
     /// <summary>
     /// Idioma preferido del usuario
     /// </summary>
-    public string Idioma { get; set; } = "es-MX";
+    public string Idioma { get; set; } = "es-CL";
 
     /// <summary>
     /// Roles adicionales del usuario

@@ -4,7 +4,7 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
 {
     private readonly IApplicationDbContext _context;
     private readonly string[] _tiposFacturaValidos = { "Normal", "Fiscal", "Global", "NotaCredito", "NotaDebito" };
-    private readonly string[] _monedasValidas = { "MXN", "USD", "EUR", "CAD" };
+    private readonly string[] _monedasValidas = { "CLP", "USD", "EUR", "CAD" };
     private readonly string[] _metodosPagoValidos = { "Efectivo", "TarjetaCredito", "TarjetaDebito", "Transferencia", "Cheque" };
 
     public CrearFacturaValidator(IApplicationDbContext context)
@@ -107,14 +107,12 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
 
     private void ConfigurarValidacionesFiscales()
     {
-        // Para facturas fiscales, el RFC es obligatorio solo si es fiscal
+        // Para facturas fiscales, el RUT es obligatorio solo si es fiscal
         RuleFor(v => v.IdentificacionFiscal)
             .NotEmpty()
-            .WithMessage("El RFC es obligatorio para facturas fiscales.")
-            .Length(12, 13)
-            .WithMessage("El RFC debe tener 12 o 13 caracteres.")
-            .Must(BeValidRFC)
-            .WithMessage("El RFC no tiene un formato válido.")
+            .WithMessage("El RUT es obligatorio para facturas fiscales.")
+            .Must(BeValidRUT)
+            .WithMessage("El RUT no tiene un formato válido.")
             .When(v => EsFacturaFiscal(v.TipoFactura));
 
         // Para facturas fiscales, la dirección es obligatoria solo si es fiscal
@@ -281,13 +279,12 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
             .AnyAsync(c => c.Id == clienteId.Value, cancellationToken);
     }
 
-    private static bool BeValidRFC(string? rfc)
+    private static bool BeValidRUT(string? rut)
     {
-        if (string.IsNullOrWhiteSpace(rfc)) return false;
+        if (string.IsNullOrWhiteSpace(rut)) return false;
 
-        // Validación básica de RFC mexicano
-        var rfcPattern = @"^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$";
-        return System.Text.RegularExpressions.Regex.IsMatch(rfc.ToUpper(), rfcPattern);
+        // Usar la clase Rut completa que ya existe en el dominio
+        return RestaurantePro.Domain.Core.SharedKernel.ValueObjects.Rut.TryParse(rut, out _);
     }
 
     private async Task<bool> BeValidBusinessLogic(CrearFacturaCommand command, CancellationToken cancellationToken)
@@ -298,10 +295,10 @@ public class CrearFacturaValidator : AbstractValidator<CrearFacturaCommand>
             return false;
         }
 
-        // Si hay tipo de cambio, la moneda no debe ser MXN
+        // Si hay tipo de cambio, la moneda no debe ser CLP
         if (command.TipoCambio.HasValue && 
             !string.IsNullOrWhiteSpace(command.Moneda) &&
-            string.Equals(command.Moneda, "MXN", StringComparison.OrdinalIgnoreCase))
+            string.Equals(command.Moneda, "CLP", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }

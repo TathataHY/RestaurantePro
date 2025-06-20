@@ -82,9 +82,9 @@ public class CrearFacturaCommand : IRequest<Result<FacturaDto>>
     public string? MetodoPagoPreferido { get; set; }
 
     /// <summary>
-    /// Moneda de la factura (por defecto MXN)
+    /// Moneda de la factura (por defecto CLP)
     /// </summary>
-    public string Moneda { get; set; } = "MXN";
+    public string Moneda { get; set; } = "CLP";
 
     /// <summary>
     /// Tipo de cambio si es diferente a la moneda base

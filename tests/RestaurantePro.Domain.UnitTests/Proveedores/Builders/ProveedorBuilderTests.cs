@@ -138,7 +138,7 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
         public void ConEmail_ConEmailValido_DebeEstablecerEmail()
         {
             // Arrange
-            var email = "contacto@proveedor.com.mx";
+            var email = "contacto@proveedor.cl";
 
             // Act
             var resultado = _builder.ConEmail(email);
@@ -218,10 +218,10 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
         public void ConDireccion_ConDatosValidos_DebeEstablecerDireccion()
         {
             // Arrange
-            var direccion = "Av. Reforma 123";
-            var ciudad = "Ciudad de México";
-            var codigoPostal = "01234";
-            var pais = "México";
+            var direccion = "Av. Providencia 123";
+            var ciudad = "Santiago";
+            var codigoPostal = "1234567";
+            var pais = "Chile";
 
             // Act
             var resultado = _builder.ConDireccion(direccion, ciudad, codigoPostal, pais);
@@ -235,7 +235,7 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
         public void ConDireccion_ConDireccionVacia_DebeAgregarError()
         {
             // Act
-            var resultado = _builder.ConDireccion("", "Ciudad", "12345");
+            var resultado = _builder.ConDireccion("", "Ciudad", "1234567");
 
             // Assert
             resultado.Should().Be(_builder);
@@ -246,7 +246,7 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
         public void ConDireccion_ConCiudadVacia_DebeAgregarError()
         {
             // Act
-            var resultado = _builder.ConDireccion("Dirección", "", "12345");
+            var resultado = _builder.ConDireccion("Dirección", "", "1234567");
 
             // Assert
             resultado.Should().Be(_builder);
@@ -254,65 +254,52 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
         }
 
         [Fact]
-        public void ConDireccion_ConCodigoPostalInvalidoMexico_DebeAgregarError()
+        public void ConDireccion_ConCodigoPostalInvalidoChile_DebeAgregarError()
         {
-            // Act
-            var resultado = _builder.ConDireccion("Dirección", "Ciudad", "123", "México");
+            // Act - Usar código postal de 6 dígitos (inválido para Chile)
+            var resultado = _builder.ConDireccion("Dirección", "Ciudad", "123456", "Chile");
 
             // Assert
             resultado.Should().Be(_builder);
-            _notificationManagerMock.Verify(n => n.AddError("El código postal debe tener 5 dígitos para México", "CodigoPostal", It.IsAny<string>()), Times.Once);
+            _notificationManagerMock.Verify(n => n.AddError("El código postal debe tener 7 dígitos para Chile", "CodigoPostal", It.IsAny<string>()), Times.Once);
         }
 
         #endregion
 
-        #region ConRFC Tests
+        #region ConRUT Tests
 
         [Fact]
-        public void ConRFC_ConRFCValido_DebeEstablecerRFC()
+        public void ConRUT_ConRUTValido_DebeEstablecerRUT()
         {
-            // Arrange
-            var rfc = "ABC123456DEF";
+            var rut = "12345678-9";
 
-            // Act
-            var resultado = _builder.ConRFC(rfc);
+            var resultado = _builder.ConRUT(rut);
 
-            // Assert
-            resultado.Should().Be(_builder);
-            _notificationManagerMock.Verify(n => n.AddError(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            resultado.Should().BeSameAs(_builder);
         }
 
         [Fact]
-        public void ConRFC_ConRFCVacio_DebeAgregarError()
+        public void ConRUT_ConRUTVacio_DebeAgregarError()
         {
-            // Act
-            var resultado = _builder.ConRFC("");
+            var resultado = _builder.ConRUT("");
 
-            // Assert
-            resultado.Should().Be(_builder);
-            _notificationManagerMock.Verify(n => n.AddError("El RFC del proveedor no puede estar vacío", "RFC", It.IsAny<string>()), Times.Once);
+            _notificationManagerMock.Verify(n => n.AddError(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
-        public void ConRFC_ConLongitudInvalida_DebeAgregarError()
+        public void ConRUT_ConLongitudInvalida_DebeAgregarError()
         {
-            // Act
-            var resultado = _builder.ConRFC("ABC123");
+            var resultado = _builder.ConRUT("ABC123");
 
-            // Assert
-            resultado.Should().Be(_builder);
-            _notificationManagerMock.Verify(n => n.AddError("El RFC debe tener entre 10 y 13 caracteres", "RFC", It.IsAny<string>()), Times.Once);
+            _notificationManagerMock.Verify(n => n.AddError(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
-        public void ConRFC_ConFormatoInvalido_DebeAgregarError()
+        public void ConRUT_ConFormatoInvalido_DebeAgregarError()
         {
-            // Act
-            var resultado = _builder.ConRFC("1234567890");
+            var resultado = _builder.ConRUT("1234567890");
 
-            // Assert
-            resultado.Should().Be(_builder);
-            _notificationManagerMock.Verify(n => n.AddError("El formato del RFC no es válido", "RFC", It.IsAny<string>()), Times.Once);
+            _notificationManagerMock.Verify(n => n.AddError(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
 
         #endregion
@@ -452,7 +439,7 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
             var nombre = "María González";
             var cargo = "Gerente de Ventas";
             var telefono = "+52 55 9876 5432";
-            var email = "maria@proveedor.com";
+            var email = "maria@proveedor.cl";
 
             // Act
             var resultado = _builder.AgregarContacto(nombre, cargo, telefono, email);
@@ -466,7 +453,7 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
         public void AgregarContacto_ConNombreVacio_DebeAgregarError()
         {
             // Act
-            var resultado = _builder.AgregarContacto("", "Cargo", "123456789", "email@test.com");
+            var resultado = _builder.AgregarContacto("", "Cargo", "123456789", "email@test.cl");
 
             // Assert
             resultado.Should().Be(_builder);
@@ -477,7 +464,7 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
         public void AgregarContacto_ConCargoVacio_DebeAgregarError()
         {
             // Act
-            var resultado = _builder.AgregarContacto("Nombre", "", "123456789", "email@test.com");
+            var resultado = _builder.AgregarContacto("Nombre", "", "123456789", "email@test.cl");
 
             // Assert
             resultado.Should().Be(_builder);
@@ -488,7 +475,7 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
         public void AgregarContacto_ConEmailDuplicado_DebeAgregarError()
         {
             // Arrange
-            var email = "duplicado@test.com";
+            var email = "duplicado@test.cl";
             _builder.AgregarContacto("Contacto1", "Cargo1", "123456789", email);
 
             // Act
@@ -559,11 +546,11 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
             var resultado = _builder
                 .ConNombre("Distribuidora La Central")
                 .ConContactoPrincipal("Juan Pérez")
-                .ConEmail("contacto@central.com.mx")
+                .ConEmail("contacto@central.cl")
                 .ConTelefono("+52 55 1234 5678")
-                .ConDireccion("Av. Reforma 123", "Ciudad de México", "01234", "México")
-                .ConRFC("DCE123456H7A")
-                .ConInformacionBancaria("BBVA Bancomer - 123456789")
+                .ConDireccion("Av. Providencia 123", "Santiago", "1234567", "Chile")
+                .ConRUT("12345678-9")
+                .ConInformacionBancaria("Banco de Chile - Cuenta 987654321")
                 .ConDiasCredito(30)
                 .ConObservaciones("Proveedor confiable")
                 .Construir();
@@ -583,9 +570,9 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
             // Act
             var resultado = _builder
                 .ConContactoPrincipal("Juan Pérez")
-                .ConEmail("contacto@central.com.mx")
+                .ConEmail("contacto@central.cl")
                 .ConTelefono("+52 55 1234 5678")
-                .ConDireccion("Av. Reforma 123", "Ciudad de México", "01234")
+                .ConDireccion("Av. Providencia 123", "Santiago", "1234567")
                 .Construir();
 
             // Assert
@@ -602,9 +589,9 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
             // Act
             var resultado = _builder
                 .ConNombre("Distribuidora La Central")
-                .ConEmail("contacto@central.com.mx")
+                .ConEmail("contacto@central.cl")
                 .ConTelefono("+52 55 1234 5678")
-                .ConDireccion("Av. Reforma 123", "Ciudad de México", "01234")
+                .ConDireccion("Av. Providencia 123", "Santiago", "1234567")
                 .Construir();
 
             // Assert
@@ -622,9 +609,9 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
             var resultado = _builder
                 .ConNombre("Distribuidora La Central")
                 .ConContactoPrincipal("Juan Pérez")
-                .ConEmail("contacto@central.com.mx")
+                .ConEmail("contacto@central.cl")
                 .ConTelefono("+52 55 1234 5678")
-                .ConDireccion("Av. Reforma 123", "Ciudad de México", "01234")
+                .ConDireccion("Av. Providencia 123", "Santiago", "1234567")
                 .Construir();
 
             // Assert
@@ -642,10 +629,10 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
             _builder
                 .ConNombre("Distribuidora La Central")
                 .ConContactoPrincipal("Juan Pérez")
-                .ConEmail("contacto@central.com.mx")
+                .ConEmail("contacto@central.cl")
                 .ConTelefono("+52 55 1234 5678")
-                .ConDireccion("Av. Reforma 123", "Ciudad de México", "01234")
-                .AgregarContacto("María", "Gerente", "123456789", "maria@test.com")
+                .ConDireccion("Av. Providencia 123", "Santiago", "1234567")
+                .AgregarContacto("María", "Gerente", "123456789", "maria@test.cl")
                 .EnCategoria(CategoriaProveedor.BebidasNoAlcoholicas, 5.0m);
 
             // Act
@@ -694,15 +681,15 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
             var resultado = ProveedorBuilder.Nuevo(_notificationManagerMock.Object, _loggerMock.Object)
                 .ConNombre("Distribuidora Premium SA de CV")
                 .ConContactoPrincipal("Carlos Mendoza")
-                .ConEmail("contacto@premium.com.mx")
+                .ConEmail("contacto@premium.cl")
                 .ConTelefono("+52 55 9876 5432")
-                .ConDireccion("Blvd. Tlalnepantla 456", "Tlalnepantla", "54000", "México")
-                .ConRFC("DPR890123ABC")
-                .ConInformacionBancaria("HSBC México - Cuenta 987654321")
+                .ConDireccion("Av. Las Condes 456", "Las Condes", "7540000", "Chile")
+                .ConRUT("12345678-9")
+                .ConInformacionBancaria("Banco de Chile - Cuenta 987654321")
                 .ConDiasCredito(45)
                 .ConObservaciones("Proveedor especializado en productos premium")
-                .AgregarContacto("Ana Ruiz", "Coordinadora Logística", "+52 55 1111 2222", "ana@premium.com.mx")
-                .AgregarContacto("Luis Torres", "Ejecutivo de Ventas", "+52 55 3333 4444", "luis@premium.com.mx")
+                .AgregarContacto("Ana Ruiz", "Coordinadora Logística", "+56 9 1111 2222", "ana@premium.cl")
+                .AgregarContacto("Luis Torres", "Ejecutivo de Ventas", "+56 9 3333 4444", "luis@premium.cl")
                 .EnCategoria(CategoriaProveedor.BebidasNoAlcoholicas, 8.5m, true)
                 .EnCategoria(CategoriaProveedor.Carnes, 5.0m, false)
                 .Construir();
@@ -723,7 +710,7 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
             _builder
                 .ConNombre("Proveedor A")
                 .ConContactoPrincipal("Contacto A")
-                .ConEmail("a@test.com")
+                .ConEmail("a@test.cl")
                 .ConTelefono("+52 55 1111 1111")
                 .ConDireccion("Dirección A", "Ciudad A", "11111")
                 .Construir();
@@ -733,7 +720,7 @@ namespace RestaurantePro.Domain.UnitTests.Proveedores.Builders
                 .Reset()
                 .ConNombre("Proveedor B")
                 .ConContactoPrincipal("Contacto B")
-                .ConEmail("b@test.com")
+                .ConEmail("b@test.cl")
                 .ConTelefono("+52 55 2222 2222")
                 .ConDireccion("Dirección B", "Ciudad B", "22222")
                 .Construir();

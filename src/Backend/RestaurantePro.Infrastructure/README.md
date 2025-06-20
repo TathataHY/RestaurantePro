@@ -109,8 +109,8 @@ Infrastructure/
 │   │   └── Interfaces/
 │   │       └── IFileStorageService.cs
 │   └── Integrations/        # Integraciones específicas por contexto
-│       ├── SAT/             # Integración con SAT (facturación México)
-│       │   ├── SATService.cs
+│       ├── SII/             # Integración con SII (facturación Chile)
+│       │   ├── SIIService.cs
 │       │   └── Models/
 │       └── POS/             # Integración con sistemas POS
 │           ├── POSService.cs

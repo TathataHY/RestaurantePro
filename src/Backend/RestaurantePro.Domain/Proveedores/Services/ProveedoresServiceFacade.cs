@@ -53,7 +53,7 @@ namespace RestaurantePro.Domain.Proveedores.Services
                 .ConEmail(email)
                 .ConTelefono(telefono)
                 .ConDireccion(direccion, ciudad, codigoPostal, pais)
-                .ConRFC(rut) // RFC en México, RUT en Chile
+                .ConRUT(rut) // RUT en Chile
                 .ConInformacionBancaria(string.Empty) // Valor predeterminado
                 .ConDiasCredito(30) // Valor predeterminado: 30 días
                 .ConObservaciones(notas ?? string.Empty)
@@ -225,7 +225,7 @@ namespace RestaurantePro.Domain.Proveedores.Services
         /// <param name="direccion">Dirección completa</param>
         /// <param name="ciudad">Ciudad</param>
         /// <param name="codigoPostal">Código postal</param>
-        /// <param name="pais">País (default: México)</param>
+        /// <param name="pais">País (default: Chile)</param>
         /// <param name="rfc">RFC del proveedor</param>
         /// <param name="informacionBancaria">Información bancaria (opcional)</param>
         /// <param name="diasCredito">Días de crédito (default: 30)</param>
@@ -240,7 +240,7 @@ namespace RestaurantePro.Domain.Proveedores.Services
             string direccion,
             string ciudad,
             string codigoPostal,
-            string pais = "México",
+            string pais = "Chile",
             string? rfc = null,
             string? informacionBancaria = null,
             int diasCredito = 30,
@@ -272,7 +272,7 @@ namespace RestaurantePro.Domain.Proveedores.Services
             // Agregar RFC si se proporcionó
             if (!string.IsNullOrEmpty(rfc))
             {
-                builderResult = builderResult.ConRFC(rfc);
+                builderResult = builderResult.ConRUT(rfc);
             }
             
             // Agregar información bancaria si se proporcionó

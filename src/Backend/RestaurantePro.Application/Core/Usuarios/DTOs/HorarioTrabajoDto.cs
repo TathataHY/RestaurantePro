@@ -83,7 +83,7 @@ public class HorarioTrabajoDto
     /// <summary>
     /// Zona horaria del horario
     /// </summary>
-    public string ZonaHoraria { get; set; } = "America/Mexico_City";
+    public string ZonaHoraria { get; set; } = "America/Santiago";
 
     /// <summary>
     /// Constructor por defecto

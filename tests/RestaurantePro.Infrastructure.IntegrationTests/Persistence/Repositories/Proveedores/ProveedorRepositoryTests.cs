@@ -17,7 +17,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         private IProveedorRepository _repository = null!;
         private Guid _proveedorId1;
         private Guid _proveedorId2;
-        private string _proveedorRfc1 = "P1P1P1P1P1P1";
+        private string _proveedorRut1 = "12345678-9";
 
         public ProveedorRepositoryTests(DatabaseFixture fixture) : base(fixture)
         {
@@ -34,18 +34,18 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         {
             var proveedor1 = Proveedor.Crear(
                 "Proveedor Test 1", "Contacto 1", "test1@proveedor.com", "111111111",
-                "Direccion 1", "Ciudad 1", "11111", "Pais 1", _proveedorRfc1, "Info Bancaria 1", 30);
+                "Direccion 1", "Ciudad 1", "1111111", "Pais 1", _proveedorRut1, "Info Bancaria 1", 30);
             _proveedorId1 = proveedor1.Id;
 
             var proveedor2 = Proveedor.Crear(
                 "Proveedor Test 2", "Contacto 2", "test2@proveedor.com", "222222222",
-                "Direccion 2", "Ciudad 2", "22222", "Pais 2", "P2P2P2P2P2P2", "Info Bancaria 2", 60);
+                "Direccion 2", "Ciudad 2", "2222222", "Pais 2", "P2P2P2P2P2P2", "Info Bancaria 2", 60);
             proveedor2.AgregarCategoria(CategoriaProveedor.AlimentosBasicos);
             _proveedorId2 = proveedor2.Id;
 
             var proveedorInactivo = Proveedor.Crear(
                 "Proveedor Inactivo", "Contacto 3", "test3@proveedor.com", "333333333",
-                "Direccion 3", "Ciudad 1", "33333", "Pais 1", "P3P3P3P3P3P3", "Info Bancaria 3", 15);
+                "Direccion 3", "Ciudad 1", "3333333", "Pais 1", "P3P3P3P3P3P3", "Info Bancaria 3", 15);
             proveedorInactivo.Desactivar("Ya no se usa");
 
 
@@ -79,14 +79,14 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         }
 
         [Fact]
-        public async Task ObtenerPorRFCAsync_DebeRetornarProveedor_CuandoExiste()
+        public async Task ObtenerPorRUTAsync_DebeRetornarProveedor_CuandoExiste()
         {
             // Act
-            var proveedores = await _repository.ObtenerPorRFCAsync(_proveedorRfc1);
+            var proveedores = await _repository.ObtenerPorRUTAsync(_proveedorRut1);
 
             // Assert
-            proveedores.Should().ContainSingle();
-            proveedores.First().Id.Should().Be(_proveedorId1);
+            proveedores.Should().NotBeNull();
+            proveedores.RFC.Should().Be(_proveedorRut1);
         }
 
         [Fact]

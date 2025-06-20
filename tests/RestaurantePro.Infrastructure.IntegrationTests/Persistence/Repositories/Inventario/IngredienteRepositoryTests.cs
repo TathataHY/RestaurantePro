@@ -45,9 +45,9 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
                 "contacto@lacteos.com",
                 "555-123-4567",
                 "Calle Falsa 123",
-                "Guadalajara",
-                "44100",
-                "Mexico",
+                "Santiago",
+                "7640000",
+                "Chile",
                 "LACSA990101XXX",
                 "Cuenta 12345",
                 30

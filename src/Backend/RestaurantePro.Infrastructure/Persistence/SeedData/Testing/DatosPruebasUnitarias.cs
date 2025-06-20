@@ -354,7 +354,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Testing
                     "Dirección Extremadamente Larga Para Testing De Validaciones Y Límites Del Sistema",
                     "Ciudad Con Nombre Muy Largo",
                     "99999",
-                    "País Testing",
+                    "Chile",
                     "TEST999999XXX",
                     "Información Bancaria Muy Larga Para Testing",
                     365
@@ -384,7 +384,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Testing
                     "Dirección Testing 123",
                     "Ciudad Testing",
                     "12345",
-                    "México",
+                    "Chile",
                     "STD123456789",
                     "Banco Testing - Cuenta: 123456789",
                     30
@@ -399,7 +399,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Testing
                     "Dirección Inactiva",
                     "Ciudad Inactiva",
                     "00000",
-                    "México",
+                    "Chile",
                     "INA000000000",
                     "Banco Inactivo",
                     0
@@ -414,7 +414,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Testing
                     "Dirección Multi-Categoría",
                     "Ciudad Multi",
                     "77777",
-                    "México",
+                    "Chile",
                     "MUL777777777",
                     "Banco Multi",
                     45

@@ -146,7 +146,7 @@ public class CrearFacturaValidatorTests
         // Si es factura fiscal, agregar los campos necesarios
         if (tipoFactura == "Fiscal")
         {
-            command.IdentificacionFiscal = "ABC123456789";
+            command.IdentificacionFiscal = "12345678-5"; // RUT válido con dígito verificador correcto
             command.DireccionCliente = "Av. Principal 123, Col. Centro";
         }
 
@@ -265,7 +265,7 @@ public class CrearFacturaValidatorTests
     #region Moneda Validations
 
     [Theory]
-    [InlineData("MXN")]
+    [InlineData("CLP")]
     [InlineData("USD")]
     [InlineData("EUR")]
     [InlineData("CAD")]
@@ -286,7 +286,7 @@ public class CrearFacturaValidatorTests
     [InlineData("JPY")]
     [InlineData("GBP")]
     [InlineData("COP")]
-    [InlineData("mxn")]
+    [InlineData("clp")]
     [InlineData("")]
     [InlineData(null)]
     public async Task Validator_ConMonedasInvalidas_DeberiaFallar(string? monedaInvalida)
@@ -393,9 +393,9 @@ public class CrearFacturaValidatorTests
             ComandasIds = new List<Guid> { Guid.NewGuid() },
             TipoFactura = "Fiscal",
             NombreCliente = "Empresa ABC S.A. de C.V.",
-            IdentificacionFiscal = "ABC123456789",
+            IdentificacionFiscal = "12345678-5", // RUT válido con dígito verificador correcto
             DireccionCliente = "Av. Principal 123, Col. Centro",
-            Moneda = "MXN",
+            Moneda = "CLP",
             MetodoPagoPreferido = "Transferencia",
             Observaciones = "Factura fiscal empresarial"
         };
@@ -418,7 +418,7 @@ public class CrearFacturaValidatorTests
             TipoFactura = "NotaCredito",
             NombreCliente = "Cliente Ejemplo",
             Observaciones = "Devolución de producto defectuoso",
-            Moneda = "MXN",
+            Moneda = "CLP",
             MetodoPagoPreferido = "Efectivo"
         };
 
@@ -510,7 +510,7 @@ public class CrearFacturaValidatorTests
             ComandasIds = new List<Guid> { Guid.NewGuid() },
             TipoFactura = "Normal",
             NombreCliente = "Cliente Ejemplo",
-            Moneda = "MXN",
+            Moneda = "CLP",
             MetodoPagoPreferido = "Efectivo",
             Observaciones = "Factura de ejemplo"
         };

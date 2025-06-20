@@ -426,9 +426,9 @@ public class DesactivarProveedorHandlerTests
             "maria@activa.com",            // email
             "555-111-2222",                // telefono
             "Calle Principal 123",         // direccion
-            "Ciudad de México",            // ciudad
-            "01000",                       // codigoPostal
-            "México",                      // pais
+            "Santiago",            // ciudad
+            "7640000",                   // codigoPostal
+            "Chile",                      // pais
             "XAXX010101000",               // rfc
             "Santander - 9876543210",      // informacionBancaria
             45                             // diasCredito
@@ -448,9 +448,9 @@ public class DesactivarProveedorHandlerTests
             "pedro@inactiva.com",          // email
             "555-333-4444",                // telefono
             "Avenida Secundaria 456",      // direccion
-            "Guadalajara",                 // ciudad
-            "44100",                       // codigoPostal
-            "México",                      // pais
+            "Valparaíso",                 // ciudad
+            "2340000",                   // codigoPostal
+            "Chile",                      // pais
             "XAXX010101001",               // rfc
             "BBVA - 1234567890",           // informacionBancaria
             30                             // diasCredito

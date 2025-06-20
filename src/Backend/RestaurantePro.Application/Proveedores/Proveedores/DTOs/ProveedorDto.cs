@@ -62,6 +62,11 @@ public class ProveedorDto : BaseDto
     public string RFC { get; set; } = string.Empty;
 
     /// <summary>
+    /// RUT del proveedor (para Chile)
+    /// </summary>
+    public string RUT { get; set; } = string.Empty;
+
+    /// <summary>
     /// Información bancaria del proveedor
     /// </summary>
     public string InformacionBancaria { get; set; } = string.Empty;

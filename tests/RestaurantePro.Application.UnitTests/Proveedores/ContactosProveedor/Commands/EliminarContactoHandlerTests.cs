@@ -548,7 +548,7 @@ public class EliminarContactoHandlerTests
             "Calle Test 123",             // direccion
             "Ciudad Test",                // ciudad
             "12345",                      // codigoPostal
-            "México",                     // pais
+            "Chile",                     // pais
             "XAXX010101000",              // rfc
             "Banco Test - 1234567890",    // informacionBancaria
             30                            // diasCredito
@@ -589,7 +589,7 @@ public class EliminarContactoHandlerTests
             "Avenida Única 456",          // direccion
             "Ciudad Única",               // ciudad
             "54321",                      // codigoPostal
-            "México",                     // pais
+            "Chile",                     // pais
             "XAXX010101001",              // rfc
             "Banco Único - 0987654321",   // informacionBancaria
             15                            // diasCredito

@@ -60,10 +60,10 @@ public class ProductosControllerTests : ApiIntegrationTestBase
         // Arrange
         var nuevoProducto = new
         {
-            Nombre = "Tacos",
-            Descripcion = "Tacos mexicanos deliciosos",
+            Nombre = "Empanadas",
+            Descripcion = "Empanadas chilenas tradicionales",
             Precio = 80.00m,
-            Categoria = "Comida Mexicana",
+            Categoria = "Comida Chilena",
             Disponible = true
         };
 
@@ -76,7 +76,7 @@ public class ProductosControllerTests : ApiIntegrationTestBase
         // Verificar que el producto se creó en la base de datos
         var productosEnBD = await DbContext.Productos.ToListAsync();
         productosEnBD.Should().HaveCount(1);
-        productosEnBD[0].Nombre.Should().Be("Tacos");
+        productosEnBD[0].Nombre.Should().Be("Empanadas");
         productosEnBD[0].Precio.Should().Be(80.00m);
     }
 

@@ -35,99 +35,99 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
             var productos = new List<(string nombre, string descripcion, decimal precio, string categoria, int popularidad)>
             {
                 // ENTRADAS
-                ("Nachos Supreme", "Totopos crujientes con queso fundido, jalapeños, guacamole y crema", 185.00m, "Entradas", 8),
-                ("Alitas Buffalo", "12 alitas de pollo con salsa buffalo picante y aderezo ranch", 225.00m, "Entradas", 9),
-                ("Quesadillas de Pollo", "Tortillas de harina con pollo desmenuzado y queso Oaxaca", 165.00m, "Entradas", 7),
-                ("Dedos de Mozzarella", "Bastones de queso mozzarella empanizados con salsa marinara", 175.00m, "Entradas", 6),
-                ("Camarones al Coco", "Camarones gigantes empanizados con coco y salsa agridulce", 285.00m, "Entradas", 8),
+                ("Palta Pura Chilena", "Palta molida con tostadas crujientes, tomate cherry y merkén", 6500m, "Entradas", 8),
+                ("Alitas al Merkén", "12 alitas de pollo con salsa de merkén picante y pebre", 8500m, "Entradas", 9),
+                ("Empanadas de Pino", "Empanadas de horno rellenas de pino tradicional con aceitunas", 6200m, "Entradas", 7),
+                ("Palitos de Queso", "Bastones de queso chanco empanizados con salsa americana", 6800m, "Entradas", 6),
+                ("Machas a la Parmesana", "Machas gratinadas con queso parmesano al horno", 12500m, "Entradas", 8),
 
                 // SOPAS
-                ("Sopa de Tortilla", "Caldo de jitomate con tiras de tortilla, aguacate y queso fresco", 125.00m, "Sopas", 8),
-                ("Crema de Poblano", "Cremosa sopa de chile poblano con granos de elote", 135.00m, "Sopas", 7),
-                ("Sopa de Mariscos", "Caldo de pescado con camarones, pulpo y mejillones", 195.00m, "Sopas", 6),
-                ("Consomé de Pollo", "Caldo casero de pollo con verduras y arroz", 115.00m, "Sopas", 5),
+                ("Cazuela de Cordero", "Caldo de cordero con zapallo, choclo y papas", 4800m, "Sopas", 8),
+                ("Crema de Zapallo", "Cremosa sopa de zapallo con jengibre y semillas de zapallo", 4200m, "Sopas", 7),
+                ("Parihuela Chilena", "Caldo de mariscos con congrio, cholgas y almejas", 7200m, "Sopas", 6),
+                ("Consomé de Ave", "Caldo casero de pollo con verduras y fideos", 3800m, "Sopas", 5),
 
                 // ENSALADAS
-                ("Ensalada César", "Lechuga romana, crotones, queso parmesano y aderezo césar", 165.00m, "Ensaladas", 7),
-                ("Ensalada de Arúgula", "Arúgula con pera, nuez, queso de cabra y vinagreta balsámica", 185.00m, "Ensaladas", 6),
-                ("Ensalada Griega", "Tomate, pepino, cebolla, aceitunas, queso feta y aceite de oliva", 175.00m, "Ensaladas", 5),
-                ("Ensalada de Pollo", "Mix de lechugas con pollo a la plancha, aguacate y vinagreta", 205.00m, "Ensaladas", 8),
+                ("Ensalada Chilena", "Tomate, cebolla y cilantro con aceite de oliva y limón", 4800m, "Ensaladas", 7),
+                ("Ensalada de Palta y Rúcula", "Rúcula con palta, pera, nuez y vinagreta de limón", 6500m, "Ensaladas", 6),
+                ("Ensalada Mediterránea", "Tomate, pepino, cebolla, aceitunas negras y queso de cabra", 6200m, "Ensaladas", 5),
+                ("Ensalada de Pollo Palta", "Mix de lechugas con pollo grillado, palta y vinagreta", 7800m, "Ensaladas", 8),
 
                 // CARNES
-                ("Rib Eye Premium", "Corte de 350g al carbón con papas gajo y verduras asadas", 485.00m, "Carnes", 9),
-                ("Filete New York", "Corte de 300g con mantequilla de hierbas y puré de papa", 425.00m, "Carnes", 8),
-                ("Arrachera Marinada", "Arrachera de res con chimichurri y elote asado", 325.00m, "Carnes", 9),
-                ("Costillas BBQ", "Costillas de cerdo con salsa barbacoa y ensalada de col", 285.00m, "Carnes", 8),
-                ("Hamburguesa Gourmet", "Carne Angus con queso manchego, tocino y papas fritas", 245.00m, "Carnes", 10),
+                ("Bife de Chorizo Premium", "Corte de 350g a la parrilla con papas doradas y ensalada", 18500m, "Carnes", 9),
+                ("Lomo Vetado", "Corte de 300g con mantequilla de hierbas y puré de papas", 16200m, "Carnes", 8),
+                ("Asado de Tira", "Asado de tira marinado con pebre y choclo asado", 12800m, "Carnes", 9),
+                ("Costillar de Cerdo", "Costillas de cerdo con salsa barbacoa y ensalada de repollo", 11200m, "Carnes", 8),
+                ("Chacarero Completo", "Hamburguesa con palta, tomate, porotos verdes y mayo", 9800m, "Carnes", 10),
 
                 // POLLO
-                ("Pollo a la Plancha", "Pechuga de pollo con arroz salvaje y vegetales al vapor", 225.00m, "Pollo", 7),
-                ("Pollo en Mole", "Muslo de pollo en mole poblano tradicional con arroz", 245.00m, "Pollo", 8),
-                ("Pollo Teriyaki", "Pechuga glasada con salsa teriyaki y arroz frito", 235.00m, "Pollo", 6),
-                ("Pollo Parmesano", "Pechuga empanizada con salsa pomodoro y queso mozzarella", 255.00m, "Pollo", 7),
+                ("Pollo Grillado", "Pechuga de pollo con arroz pilaf y verduras al vapor", 8500m, "Pollo", 7),
+                ("Pollo al Ají", "Muslo de pollo en salsa de ají amarillo con arroz", 9200m, "Pollo", 8),
+                ("Pollo Teriyaki", "Pechuga glasada con salsa teriyaki y arroz frito", 8800m, "Pollo", 6),
+                ("Pollo a la Parmesana", "Pechuga empanizada con salsa de tomate y queso derretido", 9800m, "Pollo", 7),
 
                 // PESCADOS Y MARISCOS
-                ("Salmón a la Plancha", "Filete de salmón con quinoa y espárragos", 345.00m, "Pescados y Mariscos", 8),
-                ("Tacos de Pescado", "Tacos de mahi-mahi con col morada y salsa de mango", 225.00m, "Pescados y Mariscos", 9),
-                ("Camarones al Ajillo", "Camarones gigantes salteados en aceite de oliva y ajo", 285.00m, "Pescados y Mariscos", 8),
-                ("Pescado Zarandeado", "Huachinango entero a las brasas con salsa de chile", 385.00m, "Pescados y Mariscos", 7),
-                ("Pulpo a la Parrilla", "Tentáculos de pulpo con papas cambray y aceite de oliva", 325.00m, "Pescados y Mariscos", 6),
+                ("Salmón a la Plancha", "Filete de salmón del sur con quinoa y espárragos", 13500m, "Pescados y Mariscos", 8),
+                ("Reineta a la Plancha", "Reineta fresca con papas mayo y ensalada chilena", 8500m, "Pescados y Mariscos", 9),
+                ("Camarones al Pil Pil", "Camarones ecuatorianos salteados en aceite de oliva y ajo", 11200m, "Pescados y Mariscos", 8),
+                ("Congrio Frito", "Congrio en trozos frito con papas fritas y pebre", 14800m, "Pescados y Mariscos", 7),
+                ("Pulpo al Olivo", "Tentáculos de pulpo con papas cocidas y salsa de olivo", 12800m, "Pescados y Mariscos", 6),
 
                 // PASTA
-                ("Spaghetti Carbonara", "Pasta con pancetta, huevo, queso parmesano y pimienta negra", 195.00m, "Pasta", 8),
-                ("Penne Arrabbiata", "Pasta con salsa de tomate picante y albahaca fresca", 175.00m, "Pasta", 7),
-                ("Lasagna de Carne", "Lasagna casera con carne bolognesa y queso ricotta", 225.00m, "Pasta", 9),
-                ("Ravioles de Espinaca", "Pasta rellena de espinaca y ricotta con salsa de mantequilla", 205.00m, "Pasta", 6),
-                ("Fettuccine Alfredo", "Pasta plana con salsa alfredo cremosa y pollo", 215.00m, "Pasta", 8),
+                ("Spaghetti Carbonara", "Pasta con tocino, huevo, queso parmesano y pimienta negra", 7500m, "Pasta", 8),
+                ("Penne Arrabbiata", "Pasta con salsa de tomate picante y albahaca fresca", 6800m, "Pasta", 7),
+                ("Lasagna de Carne", "Lasagna casera con carne molida y salsa blanca", 8500m, "Pasta", 9),
+                ("Ravioles de Ricotta", "Pasta rellena de ricotta y espinaca con salsa de mantequilla", 7800m, "Pasta", 6),
+                ("Fettuccine Alfredo", "Pasta plana con salsa alfredo cremosa y pollo", 8200m, "Pasta", 8),
 
                 // PIZZA
-                ("Pizza Margherita", "Salsa de tomate, mozzarella fresca y albahaca", 245.00m, "Pizza", 8),
-                ("Pizza Pepperoni", "Salsa de tomate, mozzarella y pepperoni premium", 265.00m, "Pizza", 10),
-                ("Pizza Hawaiana", "Salsa de tomate, mozzarella, jamón y piña", 255.00m, "Pizza", 7),
-                ("Pizza Quattro Stagioni", "Cuatro estaciones con champiñones, jamón, alcachofas y aceitunas", 285.00m, "Pizza", 6),
-                ("Pizza de Pollo BBQ", "Salsa barbacoa, pollo, cebolla morada y mozzarella", 275.00m, "Pizza", 8),
+                ("Pizza Margherita", "Salsa de tomate, mozzarella fresca y albahaca", 9500m, "Pizza", 8),
+                ("Pizza Pepperoni", "Salsa de tomate, mozzarella y pepperoni italiano", 10200m, "Pizza", 10),
+                ("Pizza Italiana", "Salsa de tomate, mozzarella, jamón y piña", 9800m, "Pizza", 7),
+                ("Pizza Quattro Stagioni", "Cuatro estaciones con champiñones, jamón, alcachofas y aceitunas", 11200m, "Pizza", 6),
+                ("Pizza BBQ", "Salsa barbacoa, pollo, cebolla morada y mozzarella", 10500m, "Pizza", 8),
 
                 // VEGETARIANO
-                ("Bowl de Quinoa", "Quinoa con verduras asadas, aguacate y vinagreta de limón", 185.00m, "Vegetariano", 7),
-                ("Burger Vegetariana", "Hamburguesa de lentejas con queso vegano y papas", 205.00m, "Vegetariano", 6),
-                ("Curry de Verduras", "Curry aromático con coconut milk y arroz basmati", 195.00m, "Vegetariano", 5),
-                ("Tacos Veganos", "Tacos de jackfruit con salsa verde y aguacate", 175.00m, "Vegetariano", 6),
+                ("Bowl de Quinoa", "Quinoa con verduras asadas, palta y vinagreta de limón", 7200m, "Vegetariano", 7),
+                ("Burger Vegana", "Hamburguesa de lentejas con queso vegano y papas", 7800m, "Vegetariano", 6),
+                ("Curry de Verduras", "Curry aromático con leche de coco y arroz basmati", 7500m, "Vegetariano", 5),
+                ("Tacos Veganos", "Tacos de hongos con salsa verde y palta", 6800m, "Vegetariano", 6),
 
                 // POSTRES
-                ("Cheesecake NY", "Pastel de queso estilo Nueva York con coulis de frutos rojos", 145.00m, "Postres", 9),
-                ("Tiramisu", "Postre italiano con café, mascarpone y cacao", 135.00m, "Postres", 8),
-                ("Brownie con Helado", "Brownie de chocolate caliente con helado de vainilla", 125.00m, "Postres", 10),
-                ("Flan Napolitano", "Flan casero con caramelo y crema batida", 105.00m, "Postres", 7),
-                ("Tres Leches", "Pastel esponjoso bañado en tres tipos de leche", 115.00m, "Postres", 8),
+                ("Cheesecake de Berries", "Pastel de queso con coulis de berries del sur", 5500m, "Postres", 9),
+                ("Tiramisu", "Postre italiano con café, mascarpone y cacao", 5200m, "Postres", 8),
+                ("Brownie con Helado", "Brownie de chocolate caliente con helado de manjar", 4800m, "Postres", 10),
+                ("Flan con Manjar", "Flan casero con manjar y crema batida", 4200m, "Postres", 7),
+                ("Tres Leches", "Pastel esponjoso bañado en tres tipos de leche", 4500m, "Postres", 8),
 
                 // BEBIDAS CALIENTES
-                ("Café Americano", "Café de grano selecto servido negro", 45.00m, "Bebidas Calientes", 8),
-                ("Cappuccino", "Espresso con leche vaporizada y espuma", 55.00m, "Bebidas Calientes", 9),
-                ("Chocolate Caliente", "Chocolate artesanal con malvaviscos", 65.00m, "Bebidas Calientes", 7),
-                ("Té Verde", "Té verde premium con miel de abeja", 35.00m, "Bebidas Calientes", 5),
+                ("Café Americano", "Café de grano selecto servido negro", 1800m, "Bebidas Calientes", 8),
+                ("Cappuccino", "Espresso con leche vaporizada y espuma", 2200m, "Bebidas Calientes", 9),
+                ("Chocolate Caliente", "Chocolate artesanal con marshmallows", 2500m, "Bebidas Calientes", 7),
+                ("Té de Boldo", "Té de boldo premium con miel de ulmo", 1500m, "Bebidas Calientes", 5),
 
                 // BEBIDAS FRÍAS
-                ("Agua Fresca de Horchata", "Bebida tradicional de arroz con canela", 45.00m, "Bebidas Frías", 8),
-                ("Limonada Mineral", "Limonada con agua mineral y hierbabuena", 55.00m, "Bebidas Frías", 9),
-                ("Smoothie de Mango", "Batido de mango con yogurt griego", 75.00m, "Bebidas Frías", 7),
-                ("Coca Cola", "Refresco de cola en botella de vidrio", 35.00m, "Bebidas Frías", 10),
+                ("Mote con Huesillo", "Bebida tradicional de duraznos secos con mote", 1800m, "Bebidas Frías", 8),
+                ("Limonada Mineral", "Limonada con agua mineral y menta", 2200m, "Bebidas Frías", 9),
+                ("Smoothie de Chirimoya", "Batido de chirimoya con yogurt griego", 2800m, "Bebidas Frías", 7),
+                ("Coca Cola", "Refresco de cola en botella de vidrio", 1500m, "Bebidas Frías", 10),
 
                 // COCTELES
-                ("Margarita Clásica", "Tequila blanco, triple sec y jugo de limón", 145.00m, "Cocteles", 9),
-                ("Mojito Tradicional", "Ron blanco, hierbabuena, limón y agua mineral", 135.00m, "Cocteles", 8),
-                ("Piña Colada", "Ron, crema de coco y jugo de piña", 155.00m, "Cocteles", 7),
-                ("Old Fashioned", "Whiskey bourbon con azúcar y bitter de angostura", 175.00m, "Cocteles", 6),
+                ("Pisco Sour", "Pisco chileno, jugo de limón, clara de huevo y azúcar", 5500m, "Cocteles", 9),
+                ("Mojito Tradicional", "Ron blanco, hierbabuena, limón y agua mineral", 5200m, "Cocteles", 8),
+                ("Piña Colada", "Ron, crema de coco y jugo de piña", 5800m, "Cocteles", 7),
+                ("Old Fashioned", "Whiskey bourbon con azúcar y bitter de angostura", 6500m, "Cocteles", 6),
 
                 // ESPECIALIDADES DE LA CASA
-                ("Molcajete Mar y Tierra", "Carne asada, camarones, nopales y salsa en molcajete de piedra", 485.00m, "Especialidades de la Casa", 10),
-                ("Cochinita Pibil", "Cerdo deshebrado en achiote con cebolla morada y tortillas", 285.00m, "Especialidades de la Casa", 9),
-                ("Paella Valenciana", "Arroz con mariscos, pollo y azafrán para dos personas", 565.00m, "Especialidades de la Casa", 8),
+                ("Parrillada Completa", "Asado de tira, longaniza, morcilla y pollo con ensaladas", 18500m, "Especialidades de la Casa", 10),
+                ("Curanto en Olla", "Curanto tradicional con mariscos, carnes y papas", 11200m, "Especialidades de la Casa", 9),
+                ("Paella Chilena", "Arroz con mariscos del Pacífico y pollo para dos personas", 21500m, "Especialidades de la Casa", 8),
 
                 // MENU INFANTIL
-                ("Nuggets de Pollo", "Dedos de pollo empanizados con papas fritas", 125.00m, "Menu Infantil", 10),
-                ("Mini Hamburguesa", "Hamburguesa pequeña con queso y papas", 115.00m, "Menu Infantil", 9),
-                ("Quesadilla Sencilla", "Quesadilla de queso con guacamole", 95.00m, "Menu Infantil", 8),
-                ("Espagueti con Mantequilla", "Pasta sencilla con mantequilla y queso parmesano", 105.00m, "Menu Infantil", 7)
+                ("Nuggets de Pollo", "Dedos de pollo empanizados con papas fritas", 4800m, "Menu Infantil", 10),
+                ("Mini Hamburguesa", "Hamburguesa pequeña con queso chanco y papas", 4500m, "Menu Infantil", 9),
+                ("Empanada de Queso", "Empanada pequeña de queso con ketchup", 3500m, "Menu Infantil", 8),
+                ("Tallarines con Mantequilla", "Pasta sencilla con mantequilla y queso rallado", 4200m, "Menu Infantil", 7)
             };
 
             var productosAgregados = 0;

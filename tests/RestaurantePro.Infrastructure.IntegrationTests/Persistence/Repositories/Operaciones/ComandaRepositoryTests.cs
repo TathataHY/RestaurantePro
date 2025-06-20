@@ -56,7 +56,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             var cliente = Cliente.Crear(ClienteNombre.Crear("Ana", "Gomez"), "ana.gomez@test.com", "5551112233", new DateTime(1995, 1, 1));
             _clienteId1 = cliente.Id;
 
-            var producto = Producto.Crear("Taco", "Taco de prueba", new PrecioProducto(25.0m), Guid.NewGuid(), "Tacos");
+            var producto = Producto.Crear("Empanada", "Empanada de prueba", new PrecioProducto(25.0m), Guid.NewGuid(), "Empanadas");
             _productoId1 = producto.Id;
 
             await DbContext.AddRangeAsync(mesa, mesero, cliente, producto);

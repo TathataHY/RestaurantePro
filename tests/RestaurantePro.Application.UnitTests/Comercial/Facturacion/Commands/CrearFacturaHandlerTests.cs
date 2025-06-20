@@ -100,7 +100,7 @@ public class CrearFacturaHandlerTests
         var comandasIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
         var nombreCliente = "Empresa ABC S.A. de C.V.";
         var rfc = "EAB123456789";
-        var direccion = "Av. Principal 123, México";
+        var direccion = "Av. Principal 123, Santiago";
         var email = "facturacion@empresaabc.com";
 
         // Act
