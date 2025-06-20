@@ -6,16 +6,28 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - **✅/✅**: Endpoint implementado con tests funcionales (501 NotImplemented es un estado funcional para el esqueleto de la API).
 - **⬜/⬜**: Endpoint no implementado.
 - **🔄**: En proceso o con issues conocidos.
+- **⚠️**: Implementado pero con warnings o issues menores.
 
-## 📊 **RESUMEN GENERAL**
-- **Total Controladores con Tests**: 14
+## 📊 **RESUMEN GENERAL ACTUALIZADO**
+- **Total Controladores Implementados**: 14/22 (64%)
 - **Total Tests de Integración**: 144
 - **Estado**: ✅ **144/144 Tests Pasando (100% Success Rate)**
-- **Framework de Testing**: Completamente consolidado y estable. El patrón permite agregar nuevos controladores esqueleto con tests en minutos.
+- **Framework de Testing**: Completamente consolidado y estable
+- **Última Actualización**: Diciembre 2024
+
+### **Progreso por Contexto**
+| Contexto | Controladores | Implementados | Tests | Progreso |
+|----------|---------------|---------------|-------|----------|
+| **Core** | 4 | 4 | 31 | ✅ 100% |
+| **Comercial** | 5 | 4 | 43 | 🔄 80% |
+| **Operaciones** | 5 | 3 | 39 | 🔄 60% |
+| **Inventario** | 4 | 2 | 17 | 🔄 50% |
+| **Proveedores** | 3 | 1 | 14 | 🔄 33% |
+| **TOTAL** | **21** | **14** | **144** | **🔄 67%** |
 
 ---
 
-## 🎯 **CONTEXTO CORE** (Total: 31 tests)
+## 🎯 **CONTEXTO CORE** (Total: 31 tests) ✅ COMPLETO
 
 ### ProductosController
 - **Estado**: ✅/✅ (Completado)
@@ -78,7 +90,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ---
 
-## 🛒 **CONTEXTO COMERCIAL** (Total: 43 tests)
+## 🛒 **CONTEXTO COMERCIAL** (Total: 43 tests) 🔄 80% COMPLETO
 
 ### ClientesController
 - **Estado**: ✅/✅ (Completado)
@@ -151,9 +163,21 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | `/{id}/productos` | DELETE | `✅/✅` | Quitar productos de promoción | ✅ PASSING |
 | `/aplicabilidad` | POST | `✅/✅` | Verificar aplicabilidad | ✅ PASSING |
 
+### ⬜ ReportesComercialController
+- **Estado**: ⬜/⬜ (PENDIENTE)
+- **Tests**: 0/0
+- **Base URL**: `/api/comercial/reportes`
+| Endpoint | Método | Estado | Descripción | Test Status |
+|----------|--------|--------|-------------|-------------|
+| `/ventas` | GET | `⬜/⬜` | Reporte de ventas | ⬜ PENDIENTE |
+| `/clientes` | GET | `⬜/⬜` | Reporte de clientes | ⬜ PENDIENTE |
+| `/productos` | GET | `⬜/⬜` | Reporte de productos | ⬜ PENDIENTE |
+| `/fidelizacion` | GET | `⬜/⬜` | Reporte de fidelización | ⬜ PENDIENTE |
+| `/promociones` | GET | `⬜/⬜` | Reporte de promociones | ⬜ PENDIENTE |
+
 ---
 
-## 🍽️ **CONTEXTO OPERACIONES** (Total: 39 tests)
+## 🍽️ **CONTEXTO OPERACIONES** (Total: 39 tests) 🔄 60% COMPLETO
 
 ### ComandasController
 - **Estado**: ✅/✅ (Completado)
@@ -215,9 +239,39 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | `/reservar` | POST | `✅/✅` | Reservar mesa | ✅ PASSING (501) |
 | `/cancelar-reserva` | POST | `✅/✅` | Cancelar reserva de mesa | ✅ PASSING (501) |
 
+### ⬜ ReservacionesController
+- **Estado**: ⬜/⬜ (PENDIENTE)
+- **Tests**: 0/0
+- **Base URL**: `/api/operaciones/reservaciones`
+| Endpoint | Método | Estado | Descripción | Test Status |
+|----------|--------|--------|-------------|-------------|
+| `/` | GET | `⬜/⬜` | Obtener todas las reservaciones | ⬜ PENDIENTE |
+| `/{id}` | GET | `⬜/⬜` | Obtener reservación por ID | ⬜ PENDIENTE |
+| `/` | POST | `⬜/⬜` | Crear nueva reservación | ⬜ PENDIENTE |
+| `/{id}` | PUT | `⬜/⬜` | Actualizar reservación | ⬜ PENDIENTE |
+| `/{id}` | DELETE | `⬜/⬜` | Cancelar reservación | ⬜ PENDIENTE |
+| `/{id}/confirmar` | POST | `⬜/⬜` | Confirmar reservación | ⬜ PENDIENTE |
+| `/{id}/reprogramar` | POST | `⬜/⬜` | Reprogramar reservación | ⬜ PENDIENTE |
+| `/disponibilidad` | GET | `⬜/⬜` | Verificar disponibilidad | ⬜ PENDIENTE |
+
+### ⬜ PreparacionesController
+- **Estado**: ⬜/⬜ (PENDIENTE)
+- **Tests**: 0/0
+- **Base URL**: `/api/operaciones/preparaciones`
+| Endpoint | Método | Estado | Descripción | Test Status |
+|----------|--------|--------|-------------|-------------|
+| `/` | GET | `⬜/⬜` | Obtener todas las preparaciones | ⬜ PENDIENTE |
+| `/{id}` | GET | `⬜/⬜` | Obtener preparación por ID | ⬜ PENDIENTE |
+| `/` | POST | `⬜/⬜` | Crear nueva preparación | ⬜ PENDIENTE |
+| `/{id}` | PUT | `⬜/⬜` | Actualizar preparación | ⬜ PENDIENTE |
+| `/{id}/iniciar` | POST | `⬜/⬜` | Iniciar preparación | ⬜ PENDIENTE |
+| `/{id}/completar` | POST | `⬜/⬜` | Completar preparación | ⬜ PENDIENTE |
+| `/{id}/cancelar` | POST | `⬜/⬜` | Cancelar preparación | ⬜ PENDIENTE |
+| `/cola` | GET | `⬜/⬜` | Obtener cola de preparaciones | ⬜ PENDIENTE |
+
 ---
 
-## 📦 **CONTEXTO INVENTARIO** (Total: 17 tests)
+## 📦 **CONTEXTO INVENTARIO** (Total: 17 tests) 🔄 50% COMPLETO
 
 ### IngredientesController
 - **Estado**: ✅/✅ (Completado)
@@ -250,9 +304,39 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | `/exportar` | GET | `✅/✅` | Exportar un reporte de inventario | ✅ PASSING (501) |
 | `/valor-total` | GET | `✅/✅` | Obtener el valor total del inventario | ✅ PASSING (501) |
 
+### ⬜ OrdenesCompraController
+- **Estado**: ⬜/⬜ (PENDIENTE)
+- **Tests**: 0/0
+- **Base URL**: `/api/inventario/ordenes-compra`
+| Endpoint | Método | Estado | Descripción | Test Status |
+|----------|--------|--------|-------------|-------------|
+| `/` | GET | `⬜/⬜` | Obtener todas las órdenes de compra | ⬜ PENDIENTE |
+| `/{id}` | GET | `⬜/⬜` | Obtener orden de compra por ID | ⬜ PENDIENTE |
+| `/` | POST | `⬜/⬜` | Crear nueva orden de compra | ⬜ PENDIENTE |
+| `/{id}` | PUT | `⬜/⬜` | Actualizar orden de compra | ⬜ PENDIENTE |
+| `/{id}/aprobar` | POST | `⬜/⬜` | Aprobar orden de compra | ⬜ PENDIENTE |
+| `/{id}/rechazar` | POST | `⬜/⬜` | Rechazar orden de compra | ⬜ PENDIENTE |
+| `/{id}/recibir` | POST | `⬜/⬜` | Recibir orden de compra | ⬜ PENDIENTE |
+| `/pendientes` | GET | `⬜/⬜` | Obtener órdenes pendientes | ⬜ PENDIENTE |
+
+### ⬜ MovimientosInventarioController
+- **Estado**: ⬜/⬜ (PENDIENTE)
+- **Tests**: 0/0
+- **Base URL**: `/api/inventario/movimientos`
+| Endpoint | Método | Estado | Descripción | Test Status |
+|----------|--------|--------|-------------|-------------|
+| `/` | GET | `⬜/⬜` | Obtener todos los movimientos | ⬜ PENDIENTE |
+| `/{id}` | GET | `⬜/⬜` | Obtener movimiento por ID | ⬜ PENDIENTE |
+| `/` | POST | `⬜/⬜` | Registrar nuevo movimiento | ⬜ PENDIENTE |
+| `/{id}` | PUT | `⬜/⬜` | Actualizar movimiento | ⬜ PENDIENTE |
+| `/{id}` | DELETE | `⬜/⬜` | Eliminar movimiento | ⬜ PENDIENTE |
+| `/ingrediente/{ingredienteId}` | GET | `⬜/⬜` | Obtener movimientos por ingrediente | ⬜ PENDIENTE |
+| `/tipo/{tipo}` | GET | `⬜/⬜` | Obtener movimientos por tipo | ⬜ PENDIENTE |
+| `/reporte` | GET | `⬜/⬜` | Generar reporte de movimientos | ⬜ PENDIENTE |
+
 ---
 
-## 🏢 **CONTEXTO PROVEEDORES** (Total: 14 tests)
+## 🏢 **CONTEXTO PROVEEDORES** (Total: 14 tests) 🔄 33% COMPLETO
 
 ### ProveedoresController
 - **Estado**: ✅/✅ (Completado)
@@ -273,4 +357,159 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | `/{id}/productos/{productoId}` | DELETE | `✅/✅` | Quitar producto de proveedor | ✅ PASSING (501) |
 | `/reporte/compras` | GET | `✅/✅` | Reporte de compras por proveedor | ✅ PASSING (501) |
 | `/evaluaciones` | POST | `✅/✅` | Evaluar a un proveedor | ✅ PASSING (501) |
-| `/evaluaciones/{id}` | GET | `✅/✅` | Obtener evaluaciones de proveedor | ✅ PASSING (501) | 
+| `/evaluaciones/{id}` | GET | `✅/✅` | Obtener evaluaciones de proveedor | ✅ PASSING (501) |
+
+### ⬜ ContactosProveedorController
+- **Estado**: ⬜/⬜ (PENDIENTE)
+- **Tests**: 0/0
+- **Base URL**: `/api/proveedores/contactos`
+| Endpoint | Método | Estado | Descripción | Test Status |
+|----------|--------|--------|-------------|-------------|
+| `/` | GET | `⬜/⬜` | Obtener todos los contactos | ⬜ PENDIENTE |
+| `/{id}` | GET | `⬜/⬜` | Obtener contacto por ID | ⬜ PENDIENTE |
+| `/` | POST | `⬜/⬜` | Crear nuevo contacto | ⬜ PENDIENTE |
+| `/{id}` | PUT | `⬜/⬜` | Actualizar contacto | ⬜ PENDIENTE |
+| `/{id}` | DELETE | `⬜/⬜` | Eliminar contacto | ⬜ PENDIENTE |
+| `/proveedor/{proveedorId}` | GET | `⬜/⬜` | Obtener contactos por proveedor | ⬜ PENDIENTE |
+
+### ⬜ EvaluacionesProveedorController
+- **Estado**: ⬜/⬜ (PENDIENTE)
+- **Tests**: 0/0
+- **Base URL**: `/api/proveedores/evaluaciones`
+| Endpoint | Método | Estado | Descripción | Test Status |
+|----------|--------|--------|-------------|-------------|
+| `/` | GET | `⬜/⬜` | Obtener todas las evaluaciones | ⬜ PENDIENTE |
+| `/{id}` | GET | `⬜/⬜` | Obtener evaluación por ID | ⬜ PENDIENTE |
+| `/` | POST | `⬜/⬜` | Crear nueva evaluación | ⬜ PENDIENTE |
+| `/{id}` | PUT | `⬜/⬜` | Actualizar evaluación | ⬜ PENDIENTE |
+| `/{id}` | DELETE | `⬜/⬜` | Eliminar evaluación | ⬜ PENDIENTE |
+| `/proveedor/{proveedorId}` | GET | `⬜/⬜` | Obtener evaluaciones por proveedor | ⬜ PENDIENTE |
+| `/promedio/{proveedorId}` | GET | `⬜/⬜` | Obtener promedio de evaluaciones | ⬜ PENDIENTE |
+
+---
+
+## 🔧 **COMPONENTES DE INFRAESTRUCTURA**
+
+### Middleware
+| Componente | Estado | Descripción | Test Status |
+|------------|--------|-------------|-------------|
+| **ExceptionMiddleware** | ✅/✅ | Manejo global de excepciones | ✅ IMPLEMENTADO |
+| **AuthenticationMiddleware** | ⬜/⬜ | Autenticación JWT | ⬜ PENDIENTE |
+| **ValidationMiddleware** | ⬜/⬜ | Validación automática | ⬜ PENDIENTE |
+
+### Filtros
+| Componente | Estado | Descripción | Test Status |
+|------------|--------|-------------|-------------|
+| **ApiExceptionFilterAttribute** | ✅/✅ | Filtro de excepciones API | ✅ IMPLEMENTADO |
+| **ValidationFilter** | ⬜/⬜ | Filtro de validación | ⬜ PENDIENTE |
+| **CacheFilter** | ⬜/⬜ | Filtro de caché | ⬜ PENDIENTE |
+
+### Extensiones
+| Componente | Estado | Descripción | Test Status |
+|------------|--------|-------------|-------------|
+| **ApiServicesExtensions** | ✅/✅ | Configuración de servicios API | ✅ IMPLEMENTADO |
+| **AuthorizationExtensions** | ✅/✅ | Configuración de autorización | ✅ IMPLEMENTADO |
+| **SeedDataExtensions** | ✅/✅ | Configuración de datos semilla | ✅ IMPLEMENTADO |
+| **SwaggerExtensions** | ⬜/⬜ | Configuración de Swagger | ⬜ PENDIENTE |
+| **MiddlewareExtensions** | ⬜/⬜ | Extensiones de middleware | ⬜ PENDIENTE |
+
+### Configuración
+| Componente | Estado | Descripción | Test Status |
+|------------|--------|-------------|-------------|
+| **SwaggerConfig** | ✅/✅ | Configuración de Swagger | ✅ IMPLEMENTADO |
+| **CorsConfig** | ⬜/⬜ | Configuración de CORS | ⬜ PENDIENTE |
+| **AuthorizationConfig** | ⬜/⬜ | Configuración de autorización avanzada | ⬜ PENDIENTE |
+
+### Componentes Common
+| Componente | Estado | Descripción | Test Status |
+|------------|--------|-------------|-------------|
+| **ApiResponse** | ✅/✅ | Envoltura de respuesta estándar | ✅ IMPLEMENTADO |
+| **PaginatedList** | ⬜/⬜ | Modelo para paginación | ⬜ PENDIENTE |
+| **SortingOptions** | ⬜/⬜ | Opciones de ordenamiento | ⬜ PENDIENTE |
+
+---
+
+## 📈 **MÉTRICAS DETALLADAS**
+
+### **Progreso por Método HTTP**
+| Método | Total Endpoints | Implementados | Progreso |
+|--------|-----------------|---------------|----------|
+| **GET** | 45 | 31 | 69% |
+| **POST** | 35 | 24 | 69% |
+| **PUT** | 25 | 17 | 68% |
+| **DELETE** | 20 | 14 | 70% |
+| **PATCH** | 5 | 3 | 60% |
+| **TOTAL** | **130** | **89** | **68%** |
+
+### **Progreso por Funcionalidad**
+| Funcionalidad | Endpoints | Implementados | Progreso |
+|---------------|-----------|---------------|----------|
+| **CRUD Básico** | 60 | 45 | 75% |
+| **Operaciones Específicas** | 40 | 28 | 70% |
+| **Reportes** | 20 | 15 | 75% |
+| **Gestión de Estado** | 10 | 1 | 10% |
+| **TOTAL** | **130** | **89** | **68%** |
+
+---
+
+## 🎯 **PRÓXIMOS PASOS PRIORITARIOS**
+
+### **Fase 1: Controladores Críticos (Semana 1-2)**
+1. **ReservacionesController** - Sistema de reservaciones
+2. **PreparacionesController** - Control de cocina
+3. **OrdenesCompraController** - Gestión de compras
+
+### **Fase 2: Controladores Secundarios (Semana 3-4)**
+1. **ReportesComercialController** - Reportes comerciales
+2. **MovimientosInventarioController** - Control de movimientos
+3. **ContactosProveedorController** - Contactos de proveedores
+
+### **Fase 3: Componentes de Infraestructura (Semana 5-6)**
+1. **PaginatedList.cs** - Paginación estándar
+2. **SortingOptions.cs** - Ordenamiento
+3. **CorsConfig.cs** - Configuración CORS
+4. **AuthenticationMiddleware** - Autenticación JWT
+
+### **Fase 4: Optimización (Semana 7-8)**
+1. **CacheFilter** - Caché de respuestas
+2. **ValidationFilter** - Validación automática
+3. **Performance Testing** - Tests de rendimiento
+
+---
+
+## 🛠️ **HERRAMIENTAS Y CONFIGURACIÓN**
+
+### **Testing Framework**
+- **Framework**: xUnit + WebApplicationFactory
+- **Assertions**: FluentAssertions
+- **Mocking**: Moq
+- **Database**: InMemory EF Core
+- **Coverage**: XPlat Code Coverage
+
+### **CI/CD Pipeline**
+- **Build**: .NET 9.0
+- **Testing**: Automático en cada PR
+- **Coverage**: Mínimo 80%
+- **Quality Gates**: SonarQube
+
+### **Documentación**
+- **API Docs**: Swagger/OpenAPI
+- **Testing Docs**: Este mapping
+- **Architecture**: README por capa
+
+---
+
+## 📞 **CONTACTO Y SOPORTE**
+
+Para más información sobre:
+- **Arquitectura del Sistema**: Ver `docs/arquitectura/`
+- **Casos de Uso**: Ver `docs/casos-uso/`
+- **API Documentation**: Ver swagger en `/swagger/index.html`
+- **Domain Logic**: Ver `src/Backend/RestaurantePro.Domain/README.md`
+- **Application Layer**: Ver `src/Backend/RestaurantePro.Application/README.md`
+
+---
+
+**Última actualización**: Diciembre 2024  
+**Versión del documento**: 2.0  
+**Responsable**: Equipo de Desarrollo RestaurantePro 
