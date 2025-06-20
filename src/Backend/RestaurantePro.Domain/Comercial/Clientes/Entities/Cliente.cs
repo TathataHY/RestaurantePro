@@ -275,6 +275,27 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         }
 
         /// <summary>
+        /// Actualiza el nombre del cliente.
+        /// Solo se genera un evento de actualización si el nombre cambia.
+        /// </summary>
+        /// <param name="nuevoNombre">Nuevo nombre como ValueObject</param>
+        public void ActualizarNombre(ClienteNombre nuevoNombre)
+        {
+            Guard.AgainstNull(nuevoNombre, nameof(nuevoNombre));
+            
+            if (Nombre.NombreCompleto == nuevoNombre.NombreCompleto)
+                return;
+
+            var nombreAnterior = Nombre.NombreCompleto;
+
+            Nombre = nuevoNombre;
+            MarkAsModified();
+            ValidarInvariantes();
+
+            AddDomainEvent(new NombreClienteActualizado(Id, nombreAnterior, nuevoNombre.NombreCompleto));
+        }
+
+        /// <summary>
         /// Registra una visita del cliente al restaurante.
         /// Incrementa el contador de visitas y genera el evento correspondiente.
         /// </summary>

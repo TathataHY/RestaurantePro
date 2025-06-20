@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+
 namespace RestaurantePro.Application.Comercial.Clientes.Commands.ActualizarCliente;
 
 /// <summary>
@@ -76,21 +78,30 @@ public class ActualizarClienteHandler : IRequestHandler<ActualizarClienteCommand
                 }
             }
 
-            // 5. Log para campos que no se pueden actualizar actualmente
+            // 5. Actualizar nombre si se proporciona
             if (!string.IsNullOrWhiteSpace(request.Nombre))
             {
-                _logger.LogWarning("⚠️ Actualización de nombre no implementada aún para cliente: {ClienteId}", request.Id);
+                // Parsear el nombre completo en nombre y apellido
+                var partesNombre = request.Nombre.Trim().Split(' ', 2);
+                var nombre = partesNombre[0];
+                var apellidos = partesNombre.Length > 1 ? partesNombre[1] : string.Empty;
+                
+                var nuevoNombre = ClienteNombre.Crear(nombre, apellidos);
+                cliente.ActualizarNombre(nuevoNombre);
+                
+                _logger.LogInformation("👤 Nombre actualizado para cliente: {ClienteId}", request.Id);
             }
 
+            // 6. Log para campos que no se pueden actualizar actualmente
             if (request.FechaNacimiento.HasValue)
             {
                 _logger.LogWarning("⚠️ Actualización de fecha de nacimiento no implementada aún para cliente: {ClienteId}", request.Id);
             }
 
-            // 6. Guardar cambios
+            // 7. Guardar cambios
             await _repository.GuardarAsync(cliente, cancellationToken);
 
-            // 7. Mapear a DTO y retornar
+            // 8. Mapear a DTO y retornar
             var clienteDto = _mapper.Map<ClienteDto>(cliente);
 
             _logger.LogInformation("✅ Cliente actualizado exitosamente: {ClienteId}", request.Id);
