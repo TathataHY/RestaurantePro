@@ -63,6 +63,7 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
         entry.AbsoluteExpirationRelativeToNow = cacheOptions.AbsoluteExpirationRelativeToNow;
         entry.SlidingExpiration = cacheOptions.SlidingExpiration;
         entry.Priority = cacheOptions.Priority;
+        entry.Size = 1; // Especificar tamaño para que funcione con SizeLimit
         
         _logger.LogDebug("💾 Guardado en caché: {RequestName}", requestName);
 
