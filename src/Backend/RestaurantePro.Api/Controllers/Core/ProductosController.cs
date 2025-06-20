@@ -126,9 +126,9 @@ public class ProductosController : ControllerBase
     /// </summary>
     /// <param name="command">Datos del producto a crear</param>
     [HttpPost]
-    [ProducesResponseType(typeof(ApiResponse<Guid>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<ProductoDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<Guid>>> CrearProducto([FromBody] CrearProductoCommand command)
+    public async Task<ActionResult<ApiResponse<ProductoDto>>> CrearProducto([FromBody] CrearProductoCommand command)
     {
         _logger.LogInformation("➕ POST /api/productos - Creando producto: {Nombre}", command.Nombre);
 
@@ -136,7 +136,7 @@ public class ProductosController : ControllerBase
 
         if (result.Succeeded)
         {
-            var response = ApiResponse<Guid>.SuccessResponse(result.Value, "Producto creado exitosamente");
+            var response = ApiResponse<ProductoDto>.SuccessResponse(result.Value, "Producto creado exitosamente");
             response.StatusCode = StatusCodes.Status201Created;
             
             return CreatedAtAction(

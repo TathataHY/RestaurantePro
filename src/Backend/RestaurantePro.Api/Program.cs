@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RestaurantePro.Application.Config.DependencyInjection;
 using RestaurantePro.Infrastructure.DependencyInjection;
+using RestaurantePro.Domain.Core;
 using Hangfire.Dashboard;
 
 namespace RestaurantePro.Api
@@ -30,20 +31,23 @@ namespace RestaurantePro.Api
             builder.Services.AddApiServices();
             
             // Agregar capas inferiores
+            builder.Services.AddDomainServices();
             builder.Services.AddInfrastructureServices(builder.Configuration);
-            builder.Services.AddApplicationServices();
+            builder.Services.AddApplicationServices(builder.Configuration);
             
             var app = builder.Build();
             
             // 🔧 CONFIGURAR BASE DE DATOS Y SEED DATA
+            // TODO: Corregir método de seeders
             // Los seeders se ejecutan automáticamente al iniciar la aplicación
-            await app.UseSeedDataForEnvironmentsAsync("Development", "Staging");
+            // await app.UseSeedDataForEnvironmentsAsync("Development", "Staging");
             
             // Configurar el pipeline de solicitudes HTTP
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                // TODO: Agregar paquetes de Swagger
+                // app.UseSwagger();
+                // app.UseSwaggerUI();
             }
             
             // Middleware global para manejo de excepciones
@@ -56,14 +60,15 @@ namespace RestaurantePro.Api
             app.UseAuthentication();
             app.UseAuthorization();
             
+            // TODO: Agregar paquetes de Hangfire  
             // Habilitar dashboard de Hangfire (opcional)
-            app.UseHangfireDashboard("/hangfire", new DashboardOptions
-            {
-                Authorization = new[] { new HangfireAuthorizationFilter() }
-            });
+            // app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            // {
+            //     Authorization = new[] { new HangfireAuthorizationFilter() }
+            // });
             
             // Programar los trabajos recurrentes
-            app.UseHangfireJobs();
+            // app.UseHangfireJobs();
             
             app.MapControllers();
             

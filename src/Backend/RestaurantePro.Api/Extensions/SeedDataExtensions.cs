@@ -36,7 +36,7 @@ public static class SeedDataExtensions
             
             // 2. EJECUTAR SEED DATA
             var seedRunner = scope.ServiceProvider.GetRequiredService<SeedDataRunner>();
-            await seedRunner.RunSeedersAsync();
+            await seedRunner.RunAsync();
             
             logger.LogInformation("🎉 Base de datos y seed data configurados exitosamente");
         }

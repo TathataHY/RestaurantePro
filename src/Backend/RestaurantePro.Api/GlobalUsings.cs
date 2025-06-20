@@ -46,6 +46,7 @@ global using AppValidationException = RestaurantePro.Application.Common.Exceptio
 
 // RestaurantePro - Domain Common
 global using RestaurantePro.Domain.Core.SharedKernel.Results;
+global using RestaurantePro.Domain.Core;
 
 // RestaurantePro - API Common
 global using RestaurantePro.Api.Common; 

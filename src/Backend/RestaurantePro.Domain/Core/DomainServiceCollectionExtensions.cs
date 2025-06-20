@@ -48,6 +48,50 @@ namespace RestaurantePro.Domain.Core
             services.AddTransient<IProductoRecomendadoPolicy, ProductoRecomendadoPolicy>();
             services.AddTransient<IVisibilidadCategoriasPolicy, VisibilidadCategoriasPolicy>();
 
+            // ✨ SERVICIOS ADICIONALES NECESARIOS PARA LA API EN PRODUCCIÓN
+            
+            // Servicios de Comercial
+            services.AddScoped<Comercial.Services.ServicioFidelizacion>();
+            services.AddScoped<Comercial.Services.IServicioFidelizacion, Comercial.Services.ServicioFidelizacion>();
+            services.AddScoped<Comercial.Services.IComercialServiceFacade, Comercial.Services.ComercialServiceFacade>();
+            services.AddScoped<Comercial.Facturacion.Services.IServicioFacturacion, Comercial.Facturacion.Services.ServicioFacturacion>();
+            services.AddScoped<Comercial.Services.ICalculadoraPuntosService, Comercial.Services.CalculadoraPuntosService>();
+            services.AddScoped<Comercial.Promociones.Services.ICalculadoraPromocionesService, Comercial.Promociones.Services.CalculadoraPromocionesService>();
+            services.AddScoped<Comercial.Services.IGeneradorNumeroTarjetaService, Comercial.Services.GeneradorNumeroTarjetaService>();
+            
+            // Servicios de Operaciones
+            services.AddScoped<Operaciones.Preparaciones.Services.IServicioPreparaciones, Operaciones.Preparaciones.Services.ServicioPreparaciones>();
+            services.AddScoped<Operaciones.Services.IGeneradorNumeroComandaService, Operaciones.Services.GeneradorNumeroComandaService>();
+            services.AddScoped<Operaciones.Services.IOperacionesInventarioIntegrationService, Operaciones.Services.OperacionesInventarioIntegrationService>();
+            
+            // Servicios de Inventario
+            services.AddScoped<Inventario.Services.IInventarioServiceFacade, Inventario.Services.InventarioServiceFacade>();
+            services.AddScoped<Inventario.Services.IValidacionInventarioService, Inventario.Services.ValidacionInventarioService>();
+            services.AddScoped<Inventario.Services.IServicioNotificacionesInventario, Inventario.Services.ServicioNotificacionesInventario>();
+            services.AddScoped<Inventario.Services.IAlertaStockService, Inventario.Services.AlertaStockService>();
+            services.AddScoped<Inventario.Services.IGeneradorOrdenesCompra, Inventario.Services.GeneradorOrdenesCompra>();
+            
+            // Servicios de Core
+            services.AddScoped<Core.Productos.Services.IProductoService, Core.Productos.Services.ProductoService>();
+            services.AddScoped<Core.Productos.Services.ProductoCategoriaService>();
+            services.AddScoped<Core.Productos.Services.IProductoCategoriaService, Core.Productos.Services.ProductoCategoriaService>();
+            services.AddScoped<Core.Services.ICoreOperacionesIntegrationService, Core.Services.CoreOperacionesIntegrationService>();
+            
+            // Servicios de Core Notificaciones
+            services.AddScoped<Core.Notificaciones.Services.IServicioNotificaciones, Core.Notificaciones.Services.ServicioNotificaciones>();
+            
+            // Builders del Domain
+            services.AddScoped<Core.Productos.Builders.ProductoBuilder>();
+            services.AddScoped<Comercial.Clientes.Builders.TarjetaFidelizacionBuilder>();
+            
+            // Especificaciones reutilizables
+            services.AddTransient<Comercial.Clientes.Specifications.ClienteFrecuenteSpecification>();
+            services.AddTransient<Inventario.Ingredientes.Specifications.IngredienteRotacionAltaSpecification>();
+            services.AddTransient<Core.Productos.Specifications.ProductoDisponibleSpecification>();
+            
+            // Event Handlers críticos
+            services.AddScoped<IDomainEventHandler<Operaciones.Comandas.Events.Comanda.ComandaCreada>, Operaciones.EventHandlers.ComandaCreada_VerificarPreparacionesHandler>();
+
             return services;
         }
         

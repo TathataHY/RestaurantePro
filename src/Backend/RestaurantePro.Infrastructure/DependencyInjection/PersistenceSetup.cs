@@ -4,8 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Domain.Core.Base.Services;
+using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+using RestaurantePro.Domain.Core.Notificaciones.Services;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
@@ -56,6 +59,9 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
 
             // Registrar repositorios por dominio
             RegisterRepositories(services);
+
+            // Registrar servicios adicionales necesarios
+            RegisterAdditionalServices(services);
 
             return services;
         }
@@ -113,6 +119,8 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<IClienteRepository, ClienteRepository>();
             services.AddScoped<IFacturaRepository, FacturaRepository>();
             services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
+            services.AddScoped<IHistorialPuntosRepository, HistorialPuntosRepository>();
+            services.AddScoped<ITransaccionPuntosRepository, TransaccionPuntosRepository>();
             
             // Repositorios del dominio Operaciones
             services.AddScoped<IComandaRepository, ComandaRepository>();
@@ -131,10 +139,37 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<IIngredienteRepository, IngredienteRepository>();
             services.AddScoped<IMovimientoInventarioRepository, MovimientoInventarioRepository>();
             services.AddScoped<IOrdenCompraRepository, OrdenCompraRepository>();
+            services.AddScoped<IInventarioIngredientesRepository, InventarioIngredientesRepository>();
             
             // Repositorios del dominio Proveedores
             services.AddScoped<IProveedorRepository, ProveedorRepository>();
             services.AddScoped<IContactoProveedorRepository, ContactoProveedorRepository>();
+        }
+
+        private static void RegisterAdditionalServices(IServiceCollection services)
+        {
+            // Registrar IApplicationDbContext usando RestauranteProDbContext
+            services.AddScoped<IApplicationDbContext>(provider => 
+                provider.GetRequiredService<RestauranteProDbContext>());
+
+            // Registrar DbContext base para repositorios que lo necesitan directamente
+            services.AddScoped<DbContext>(provider => 
+                provider.GetRequiredService<RestauranteProDbContext>());
+
+            // Registrar servicios base requeridos por los contextos
+            services.AddScoped<ICurrentUserService, Services.CurrentUserService>();
+            services.AddScoped<IDateTimeService, DateTimeService>();
+            
+            // Registrar domain event dispatcher
+            services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
+
+            // Registrar HttpContextAccessor necesario para CurrentUserService
+            services.AddHttpContextAccessor();
+
+            // Registrar servicios stub para Application layer
+            services.AddScoped<ICommunicationService, Services.CommunicationService>();
+            services.AddScoped<INotificationService, Services.NotificationService>();
+            services.AddScoped<IAuditService, Services.AuditService>();
         }
     }
 } 

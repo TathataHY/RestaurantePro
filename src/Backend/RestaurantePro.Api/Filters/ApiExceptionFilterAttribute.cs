@@ -22,7 +22,7 @@ namespace RestaurantePro.Api.Filters
             _logger = logger;
             _exceptionHandlers = new Dictionary<Type, Action<ExceptionContext>>
             {
-                { typeof(ValidationException), HandleValidationException },
+                { typeof(AppValidationException), HandleValidationException },
                 { typeof(NotFoundException), HandleNotFoundException },
                 { typeof(UnauthorizedAccessException), HandleUnauthorizedAccessException },
                 { typeof(ForbiddenAccessException), HandleForbiddenAccessException }
@@ -55,9 +55,9 @@ namespace RestaurantePro.Api.Filters
 
         private void HandleValidationException(ExceptionContext context)
         {
-            var exception = (ValidationException)context.Exception;
+            var exception = (AppValidationException)context.Exception;
             var details = ApiResponse<object>.ErrorResponse(
-                exception.Errors, 
+                exception.Errors.SelectMany(kvp => kvp.Value).ToList(), 
                 "Error de validación", 
                 StatusCodes.Status400BadRequest);
 
