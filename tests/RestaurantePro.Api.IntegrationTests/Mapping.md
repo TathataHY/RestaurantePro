@@ -292,18 +292,25 @@ El formato es `[Estado en API]/[Estado en Tests]`
 ## 🏢 **CONTEXTO PROVEEDORES**
 
 ### ProveedoresController
-- **Estado General**: `❌/⬜` (Implementado con errores / Sin tests)
+- **Estado General**: `✅/✅` (Completamente funcional / Tests completos)
 - **Base URL**: `/api/proveedores`
+- **✅ COMPLETADO**: 14/14 tests funcionando perfectamente
 
-| Endpoint | Método | Estado | Descripción |
-|----------|--------|--------|-------------|
-| `/api/proveedores` | GET | `❌/⬜` | Obtener todos los proveedores |
-| `/api/proveedores/{id}` | GET | `❌/⬜` | Obtener proveedor por ID |
-| `/api/proveedores` | POST | `❌/⬜` | Crear nuevo proveedor |
-| `/api/proveedores/{id}` | PUT | `❌/⬜` | Actualizar proveedor |
-| `/api/proveedores/{id}` | DELETE | `❌/⬜` | Eliminar proveedor |
-| `/api/proveedores/{id}/contactos` | GET | `⬜/⬜` | Obtener contactos del proveedor |
-| `/api/proveedores/{id}/evaluaciones` | GET | `⬜/⬜` | Obtener evaluaciones |
+| Endpoint | Método | Estado | Descripción | Test Status |
+|----------|--------|--------|-------------|-------------|
+| `/api/proveedores` | GET | `✅/✅` | Obtener todos los proveedores | ✅ PASSING |
+| `/api/proveedores/{id}` | GET | `✅/✅` | Obtener proveedor por ID | ✅ PASSING |
+| `/api/proveedores` | POST | `✅/✅` | Crear nuevo proveedor | ✅ PASSING |
+| `/api/proveedores/{id}` | PUT | `✅/✅` | Actualizar proveedor | ✅ PASSING |
+| `/api/proveedores/{id}` | DELETE | `✅/✅` | Eliminar proveedor | ✅ PASSING |
+| `/api/proveedores/{id}/contactos` | GET | `✅/✅` | Obtener contactos del proveedor | ✅ PASSING |
+| `/api/proveedores/{id}/contactos` | POST | `✅/✅` | Agregar contacto al proveedor | ✅ PASSING |
+| `/api/proveedores/{id}/contactos/{contactoId}` | PUT | `✅/✅` | Actualizar contacto del proveedor | ✅ PASSING |
+| `/api/proveedores/{id}/contactos/{contactoId}` | DELETE | `✅/✅` | Eliminar contacto del proveedor | ✅ PASSING |
+| `/api/proveedores/{id}/evaluaciones` | GET | `✅/✅` | Obtener evaluaciones del proveedor | ✅ PASSING |
+| `/api/proveedores/{id}/evaluaciones` | POST | `✅/✅` | Crear evaluación para el proveedor | ✅ PASSING |
+| `/api/proveedores/{id}/activar` | PATCH | `✅/✅` | Activar proveedor | ✅ PASSING |
+| `/api/proveedores/{id}/desactivar` | PATCH | `✅/✅` | Desactivar proveedor | ✅ PASSING |
 
 ### ContactosProveedorController
 - **Estado General**: `⬜/⬜` (No implementado)
@@ -367,15 +374,15 @@ El formato es `[Estado en API]/[Estado en Tests]`
 | **Comercial** | 5 | 4 (❌) | 0 | 0% |
 | **Operaciones** | 5 | 5 (❌) | 0 | 0% |
 | **Inventario** | 4 | 3 (❌) | 0 | 0% |
-| **Proveedores** | 3 | 1 (❌) | 0 | 0% |
+| **Proveedores** | 3 | 1 (✅) + 2 (⬜) | 1 (✅) | 33% |
 | **Auth** | 1 | 1 (❌) | 0 | 0% |
 
 ### Estado General
 - **Total Controladores**: 22
-- **Implementados**: 17 (15 con errores ❌, 2 funcionales ✅)
-- **Con Tests Funcionales**: 2 (ProductosController 6/6 ✅, UsuariosController 8/8 ✅)
-- **Total Tests Ejecutándose**: 20 tests (20 passing, 100% success rate)
-- **Completitud General**: **36.4%** (8/22 endpoints completamente funcionales y testeados)
+- **Implementados**: 18 (15 con errores ❌, 3 funcionales ✅)
+- **Con Tests Funcionales**: 3 (ProductosController 6/6 ✅, UsuariosController 8/8 ✅, ProveedoresController 14/14 ✅)
+- **Total Tests Ejecutándose**: 34 tests (34 passing, 100% success rate)
+- **Completitud General**: **40.9%** (9/22 endpoints completamente funcionales y testeados)
 
 ### 🎯 **HITOS ALCANZADOS**
 ✅ **ProductosController**: Primer controlador completamente funcional con testing automatizado
@@ -390,6 +397,12 @@ El formato es `[Estado en API]/[Estado en Tests]`
 - POST funcional, otros endpoints con 501 NotImplemented (correcto)
 - Autenticación fake configurada exitosamente
 - Validaciones estrictas resueltas (roles, niveles de acceso, usuarios activos)
+
+✅ **ProveedoresController**: Tercer controlador completamente funcional con testing automatizado
+- API funcionando sin errores
+- 14 tests de integración pasando (100% success rate)
+- Cobertura CRUD completa para proveedores y sus sub-recursos (contactos, evaluaciones)
+- Infraestructura de proveedores validada
 
 ### 🏆 **FRAMEWORK DE TESTING CONSOLIDADO**
 - ✅ **TestWebApplicationFactory**: Configurado y estable
