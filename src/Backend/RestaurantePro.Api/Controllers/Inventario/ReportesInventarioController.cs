@@ -3,30 +3,29 @@ using Microsoft.AspNetCore.Authorization;
 namespace RestaurantePro.Api.Controllers.Inventario;
 
 /// <summary>
-/// Controlador para la gestión de inventario de ingredientes
-/// Endpoints para CRUD completo de inventario y control de stock
+/// Controlador para la generación de reportes y análisis de inventario
 /// </summary>
 [ApiController]
-[Route("api/inventario/ingredientes")]
+[Route("api/inventario/reportes")]
 [Produces("application/json")]
 [Authorize]
-public class InventarioController : ControllerBase
+public class ReportesInventarioController : ControllerBase
 {
-    private readonly ILogger<InventarioController> _logger;
+    private readonly ILogger<ReportesInventarioController> _logger;
 
-    public InventarioController(ILogger<InventarioController> logger)
+    public ReportesInventarioController(ILogger<ReportesInventarioController> logger)
     {
         _logger = logger;
     }
 
     /// <summary>
-    /// Obtiene todo el inventario de ingredientes con filtros opcionales
+    /// Obtiene un reporte general del inventario con filtros opcionales
     /// </summary>
     /// <param name="categoria">Filtrar por categoría de ingrediente</param>
     /// <param name="stockBajo">Filtrar solo ingredientes con stock bajo</param>
     /// <param name="stockCritico">Filtrar solo ingredientes con stock crítico</param>
-    /// <returns>Lista de ingredientes con información de inventario</returns>
-    [HttpGet]
+    /// <returns>Reporte de inventario</returns>
+    [HttpGet("general")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<object>>> GetInventario(
@@ -34,96 +33,8 @@ public class InventarioController : ControllerBase
         [FromQuery] bool stockBajo = false,
         [FromQuery] bool stockCritico = false)
     {
-        _logger.LogInformation("📦 GET /api/inventario/ingredientes - Categoria: {Categoria}, StockBajo: {StockBajo}, StockCritico: {StockCritico}", 
+        _logger.LogInformation("📦 GET /api/inventario/reportes/general - Categoria: {Categoria}, StockBajo: {StockBajo}, StockCritico: {StockCritico}", 
             categoria, stockBajo, stockCritico);
-
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Este endpoint será implementado próximamente",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
-    }
-
-    /// <summary>
-    /// Obtiene el inventario de un ingrediente específico por ID
-    /// </summary>
-    /// <param name="id">ID del ingrediente</param>
-    /// <returns>Información detallada del inventario del ingrediente</returns>
-    [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> GetInventarioIngrediente(Guid id)
-    {
-        _logger.LogInformation("🔍 GET /api/inventario/ingredientes/{Id}", id);
-
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Este endpoint será implementado próximamente",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
-    }
-
-    /// <summary>
-    /// Actualiza el stock de un ingrediente
-    /// </summary>
-    /// <param name="id">ID del ingrediente</param>
-    /// <param name="command">Datos para actualizar el stock</param>
-    /// <returns>Información actualizada del inventario</returns>
-    [HttpPut("{id:guid}/stock")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> ActualizarStock(Guid id, [FromBody] object command)
-    {
-        _logger.LogInformation("✏️ PUT /api/inventario/ingredientes/{Id}/stock", id);
-
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Este endpoint será implementado próximamente",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
-    }
-
-    /// <summary>
-    /// Registra un ajuste de inventario (entrada, salida o ajuste)
-    /// </summary>
-    /// <param name="command">Datos del ajuste de inventario</param>
-    /// <returns>Confirmación del ajuste registrado</returns>
-    [HttpPost("ajuste")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> RegistrarAjuste([FromBody] object command)
-    {
-        _logger.LogInformation("📝 POST /api/inventario/ingredientes/ajuste");
-
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Este endpoint será implementado próximamente",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
-    }
-
-    /// <summary>
-    /// Obtiene el historial de movimientos de un ingrediente
-    /// </summary>
-    /// <param name="id">ID del ingrediente</param>
-    /// <param name="fechaInicio">Fecha de inicio del período</param>
-    /// <param name="fechaFin">Fecha de fin del período</param>
-    /// <returns>Lista de movimientos del ingrediente</returns>
-    [HttpGet("{id:guid}/movimientos")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> GetMovimientosIngrediente(
-        Guid id,
-        [FromQuery] DateTime? fechaInicio = null,
-        [FromQuery] DateTime? fechaFin = null)
-    {
-        _logger.LogInformation("📊 GET /api/inventario/ingredientes/{Id}/movimientos - Desde: {FechaInicio}, Hasta: {FechaFin}", 
-            id, fechaInicio, fechaFin);
 
         var response = ApiResponse<object>.ErrorResponse(
             new List<string> { "Endpoint no implementado aún" },
@@ -143,7 +54,7 @@ public class InventarioController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<object>>> GetAlertas([FromQuery] bool soloUrgentes = false)
     {
-        _logger.LogInformation("🚨 GET /api/inventario/ingredientes/alertas - SoloUrgentes: {SoloUrgentes}", soloUrgentes);
+        _logger.LogInformation("🚨 GET /api/inventario/reportes/alertas - SoloUrgentes: {SoloUrgentes}", soloUrgentes);
 
         var response = ApiResponse<object>.ErrorResponse(
             new List<string> { "Endpoint no implementado aún" },
@@ -168,7 +79,7 @@ public class InventarioController : ControllerBase
         [FromQuery] DateTime? fechaFin = null,
         [FromQuery] bool incluirTendencias = true)
     {
-        _logger.LogInformation("📈 GET /api/inventario/ingredientes/analisis - Desde: {FechaInicio}, Hasta: {FechaFin}, Tendencias: {IncluirTendencias}", 
+        _logger.LogInformation("📈 GET /api/inventario/reportes/analisis - Desde: {FechaInicio}, Hasta: {FechaFin}, Tendencias: {IncluirTendencias}", 
             fechaInicio, fechaFin, incluirTendencias);
 
         var response = ApiResponse<object>.ErrorResponse(
@@ -189,7 +100,7 @@ public class InventarioController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<object>>> GetRecomendacionesCompra([FromQuery] int diasProyeccion = 30)
     {
-        _logger.LogInformation("💡 GET /api/inventario/ingredientes/recomendaciones-compra - DiasProyeccion: {DiasProyeccion}", diasProyeccion);
+        _logger.LogInformation("💡 GET /api/inventario/reportes/recomendaciones-compra - DiasProyeccion: {DiasProyeccion}", diasProyeccion);
 
         var response = ApiResponse<object>.ErrorResponse(
             new List<string> { "Endpoint no implementado aún" },
@@ -209,7 +120,7 @@ public class InventarioController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<object>>> RealizarInventarioFisico([FromBody] object command)
     {
-        _logger.LogInformation("🔢 POST /api/inventario/ingredientes/inventario-fisico");
+        _logger.LogInformation("🔢 POST /api/inventario/reportes/inventario-fisico");
 
         var response = ApiResponse<object>.ErrorResponse(
             new List<string> { "Endpoint no implementado aún" },
@@ -232,7 +143,7 @@ public class InventarioController : ControllerBase
         [FromQuery] string formato = "PDF",
         [FromQuery] bool incluirMovimientos = false)
     {
-        _logger.LogInformation("📄 GET /api/inventario/ingredientes/exportar - Formato: {Formato}, IncluirMovimientos: {IncluirMovimientos}", 
+        _logger.LogInformation("📄 GET /api/inventario/reportes/exportar - Formato: {Formato}, IncluirMovimientos: {IncluirMovimientos}", 
             formato, incluirMovimientos);
 
         var response = ApiResponse<object>.ErrorResponse(
@@ -253,7 +164,7 @@ public class InventarioController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<object>>> GetValorTotalInventario([FromQuery] DateTime? fecha = null)
     {
-        _logger.LogInformation("💰 GET /api/inventario/ingredientes/valor-total - Fecha: {Fecha}", fecha);
+        _logger.LogInformation("💰 GET /api/inventario/reportes/valor-total - Fecha: {Fecha}", fecha);
 
         var response = ApiResponse<object>.ErrorResponse(
             new List<string> { "Endpoint no implementado aún" },

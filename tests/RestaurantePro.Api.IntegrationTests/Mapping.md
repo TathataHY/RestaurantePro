@@ -8,9 +8,9 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - **🔄**: En proceso o con issues conocidos.
 
 ## 📊 **RESUMEN GENERAL**
-- **Total Controladores con Tests**: 13
-- **Total Tests de Integración**: 139
-- **Estado**: ✅ **139/139 Tests Pasando (100% Success Rate)**
+- **Total Controladores con Tests**: 14
+- **Total Tests de Integración**: 144
+- **Estado**: ✅ **144/144 Tests Pasando (100% Success Rate)**
 - **Framework de Testing**: Completamente consolidado y estable. El patrón permite agregar nuevos controladores esqueleto con tests en minutos.
 
 ---
@@ -217,26 +217,38 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ---
 
-## 📦 **CONTEXTO INVENTARIO** (Total: 12 tests)
+## 📦 **CONTEXTO INVENTARIO** (Total: 17 tests)
 
-### InventarioController
+### IngredientesController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 12/12
-- **Base URL**: `/api/inventario`
+- **Tests**: 10/10
+- **Base URL**: `/api/inventario/ingredientes`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Consultar estado del inventario | ✅ PASSING (501) |
-| `/{productoId}` | GET | `✅/✅` | Consultar stock de un producto | ✅ PASSING (501) |
-| `/movimientos` | GET | `✅/✅` | Listar movimientos de inventario | ✅ PASSING (501) |
-| `/movimientos` | POST | `✅/✅` | Registrar movimiento de inventario | ✅ PASSING (501) |
-| `/ajustes` | POST | `✅/✅` | Realizar ajuste de inventario | ✅ PASSING (501) |
-| `/alertas` | GET | `✅/✅` | Obtener alertas de stock bajo | ✅ PASSING (501) |
-| `/{productoId}/reaprovisionar` | POST | `✅/✅` | Marcar producto para reaprovisionar | ✅ PASSING (501) |
-| `/reporte/valorizado` | GET | `✅/✅` | Generar reporte de inventario valorizado | ✅ PASSING (501) |
-| `/reporte/rotacion` | GET | `✅/✅` | Generar reporte de rotación | ✅ PASSING (501) |
-| `/auditoria` | GET | `✅/✅` | Obtener historial de auditoría | ✅ PASSING (501) |
-| `/transferencias` | POST | `✅/✅` | Registrar transferencia entre almacenes | ✅ PASSING (501) |
-| `/conteo-ciclico` | POST | `✅/✅` | Iniciar un conteo cíclico | ✅ PASSING (501) |
+| `/` | GET | `✅/✅` | Obtener todos los ingredientes | ✅ PASSING (501) |
+| `/{id}` | GET | `✅/✅` | Obtener ingrediente por ID | ✅ PASSING (501) |
+| `/` | POST | `✅/✅` | Crear nuevo ingrediente | ✅ PASSING (501) |
+| `/{id}` | PUT | `✅/✅` | Actualizar ingrediente | ✅ PASSING (501) |
+| `/{id}` | DELETE | `✅/✅` | Eliminar ingrediente | ✅ PASSING (501) |
+| `/{id}/stock` | POST | `✅/✅` | Registrar movimiento de stock | ✅ PASSING (501) |
+| `/stock-bajo` | GET | `✅/✅` | Obtener ingredientes con stock bajo | ✅ PASSING (501) |
+| `/{id}/proveedores` | GET | `✅/✅` | Obtener proveedores de un ingrediente | ✅ PASSING (501) |
+| `/{id}/proveedores/{proveedorId}` | POST | `✅/✅` | Asociar un proveedor a un ingrediente | ✅ PASSING (501) |
+| `/reporte` | GET | `✅/✅` | Generar reporte de ingredientes | ✅ PASSING (501) |
+
+### ReportesInventarioController
+- **Estado**: ✅/✅ (Refactorizado)
+- **Tests**: 7/7
+- **Base URL**: `/api/inventario/reportes`
+| Endpoint | Método | Estado | Descripción | Test Status |
+|----------|--------|--------|-------------|-------------|
+| `/general` | GET | `✅/✅` | Reporte general del inventario | ✅ PASSING (501) |
+| `/alertas` | GET | `✅/✅` | Obtener alertas de stock | ✅ PASSING (501) |
+| `/analisis` | GET | `✅/✅` | Obtener análisis de rotación y consumo | ✅ PASSING (501) |
+| `/recomendaciones-compra` | GET | `✅/✅` | Obtener recomendaciones de compra | ✅ PASSING (501) |
+| `/inventario-fisico` | POST | `✅/✅` | Registrar un inventario físico | ✅ PASSING (501) |
+| `/exportar` | GET | `✅/✅` | Exportar un reporte de inventario | ✅ PASSING (501) |
+| `/valor-total` | GET | `✅/✅` | Obtener el valor total del inventario | ✅ PASSING (501) |
 
 ---
 
@@ -248,28 +260,17 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - **Base URL**: `/api/proveedores`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todos los proveedores | ✅ PASSING |
-| `/{id}` | GET | `✅/✅` | Obtener proveedor por ID | ✅ PASSING |
-| `/` | POST | `✅/✅` | Crear nuevo proveedor | ✅ PASSING |
-| `/{id}` | PUT | `✅/✅` | Actualizar proveedor | ✅ PASSING |
-| `/{id}` | DELETE | `✅/✅` | Eliminar proveedor | ✅ PASSING |
-| `/{id}/contactos` | GET | `✅/✅` | Obtener contactos del proveedor | ✅ PASSING |
-| `/{id}/contactos` | POST | `✅/✅` | Agregar contacto al proveedor | ✅ PASSING |
-| `/{id}/contactos/{contactoId}` | PUT | `✅/✅` | Actualizar contacto del proveedor | ✅ PASSING |
-| `/{id}/contactos/{contactoId}` | DELETE | `✅/✅` | Eliminar contacto del proveedor | ✅ PASSING |
-| `/{id}/evaluaciones` | GET | `✅/✅` | Obtener evaluaciones del proveedor | ✅ PASSING |
-| `/{id}/evaluaciones` | POST | `✅/✅` | Crear evaluación para el proveedor | ✅ PASSING |
-| `/{id}/activar` | PATCH | `✅/✅` | Activar proveedor | ✅ PASSING |
-| `/{id}/desactivar` | PATCH | `✅/✅` | Desactivar proveedor | ✅ PASSING |
-| `/reporte/desempeno` | GET | `✅/✅` | Generar reporte de desempeño | ✅ PASSING |
-
----
-
-## 📝 **CONTROLADORES PENDIENTES**
-
-- **Comercial**: `ReportesComercialController`
-- **Operaciones**: `ReservacionesController`, `PreparacionesController`
-- **Inventario**: `IngredientesController`, `OrdenesCompraController`, `MovimientosInventarioController`, `ReportesInventarioController`
-- **Proveedores**: `ContactosProveedorController`, `EvaluacionesProveedorController`
-- **Auth**: `AuthController`
-- **Middleware y Filtros** 
+| `/` | GET | `✅/✅` | Obtener todos los proveedores | ✅ PASSING (501) |
+| `/{id}` | GET | `✅/✅` | Obtener proveedor por ID | ✅ PASSING (501) |
+| `/` | POST | `✅/✅` | Crear nuevo proveedor | ✅ PASSING (501) |
+| `/{id}` | PUT | `✅/✅` | Actualizar proveedor | ✅ PASSING (501) |
+| `/{id}` | DELETE | `✅/✅` | Eliminar proveedor | ✅ PASSING (501) |
+| `/buscar` | GET | `✅/✅` | Buscar proveedores | ✅ PASSING (501) |
+| `/{id}/activar` | POST | `✅/✅` | Activar proveedor | ✅ PASSING (501) |
+| `/{id}/desactivar` | POST | `✅/✅` | Desactivar proveedor | ✅ PASSING (501) |
+| `/{id}/productos` | GET | `✅/✅` | Listar productos del proveedor | ✅ PASSING (501) |
+| `/{id}/productos` | POST | `✅/✅` | Asignar producto a proveedor | ✅ PASSING (501) |
+| `/{id}/productos/{productoId}` | DELETE | `✅/✅` | Quitar producto de proveedor | ✅ PASSING (501) |
+| `/reporte/compras` | GET | `✅/✅` | Reporte de compras por proveedor | ✅ PASSING (501) |
+| `/evaluaciones` | POST | `✅/✅` | Evaluar a un proveedor | ✅ PASSING (501) |
+| `/evaluaciones/{id}` | GET | `✅/✅` | Obtener evaluaciones de proveedor | ✅ PASSING (501) | 
