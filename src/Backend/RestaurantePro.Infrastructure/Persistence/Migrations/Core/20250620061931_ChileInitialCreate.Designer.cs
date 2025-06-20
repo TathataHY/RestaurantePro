@@ -9,11 +9,11 @@ using RestaurantePro.Infrastructure.Persistence.Contexts;
 
 #nullable disable
 
-namespace RestaurantePro.Infrastructure.Persistence.Migrations
+namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
 {
     [DbContext(typeof(RestauranteProDbContext))]
-    [Migration("20250620001646_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250620061931_ChileInitialCreate")]
+    partial class ChileInitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1540,7 +1540,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
                     b.Property<string>("RFC")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("RUT");
 
                     b.Property<DateTime?>("UltimaOrden")
                         .HasColumnType("datetime2");
@@ -1552,7 +1553,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("RFC")
                         .IsUnique()
-                        .HasDatabaseName("IX_Proveedores_RFC");
+                        .HasDatabaseName("IX_Proveedores_RUT");
 
                     b.ToTable("Proveedores", "Proveedores");
                 });

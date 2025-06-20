@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace RestaurantePro.Infrastructure.Persistence.Migrations
+namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class ChileInitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -236,7 +236,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
                     Ciudad = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     CodigoPostal = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     Pais = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    RFC = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    RUT = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     InformacionBancaria = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     DiasCredito = table.Column<int>(type: "int", nullable: false),
                     Activo = table.Column<bool>(type: "bit", nullable: false),
@@ -1287,10 +1287,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
                 column: "Nombre");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Proveedores_RFC",
+                name: "IX_Proveedores_RUT",
                 schema: "Proveedores",
                 table: "Proveedores",
-                column: "RFC",
+                column: "RUT",
                 unique: true);
 
             migrationBuilder.CreateIndex(

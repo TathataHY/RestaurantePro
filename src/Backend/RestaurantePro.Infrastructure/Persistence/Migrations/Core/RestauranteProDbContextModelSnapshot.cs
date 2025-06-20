@@ -8,7 +8,7 @@ using RestaurantePro.Infrastructure.Persistence.Contexts;
 
 #nullable disable
 
-namespace RestaurantePro.Infrastructure.Persistence.Migrations
+namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
 {
     [DbContext(typeof(RestauranteProDbContext))]
     partial class RestauranteProDbContextModelSnapshot : ModelSnapshot
@@ -215,7 +215,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TarjetaFidelizacionId");
 
-                    b.ToTable("HistorialPuntos", (string)null);
+                    b.ToTable("HistorialPuntos");
                 });
 
             modelBuilder.Entity("RestaurantePro.Domain.Comercial.Clientes.Entities.TarjetaFidelizacion", b =>
@@ -363,7 +363,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("FacturaId");
 
-                    b.ToTable("DetalleFactura", (string)null);
+                    b.ToTable("DetalleFactura");
                 });
 
             modelBuilder.Entity("RestaurantePro.Domain.Comercial.Facturacion.Entities.Factura", b =>
@@ -531,7 +531,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("FacturaId");
 
-                    b.ToTable("Pago", (string)null);
+                    b.ToTable("Pago");
                 });
 
             modelBuilder.Entity("RestaurantePro.Domain.Core.Notificaciones.Entities.Notificacion", b =>
@@ -686,7 +686,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProductoCategorias", (string)null);
+                    b.ToTable("ProductoCategorias");
                 });
 
             modelBuilder.Entity("RestaurantePro.Domain.Core.Productos.Entities.Receta", b =>
@@ -1537,7 +1537,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
                     b.Property<string>("RFC")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("RUT");
 
                     b.Property<DateTime?>("UltimaOrden")
                         .HasColumnType("datetime2");
@@ -1549,7 +1550,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("RFC")
                         .IsUnique()
-                        .HasDatabaseName("IX_Proveedores_RFC");
+                        .HasDatabaseName("IX_Proveedores_RUT");
 
                     b.ToTable("Proveedores", "Proveedores");
                 });
@@ -1615,7 +1616,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("ApplicationRolePermission", (string)null);
+                    b.ToTable("ApplicationRolePermission");
                 });
 
             modelBuilder.Entity("RestaurantePro.Infrastructure.Identity.Models.ApplicationUser", b =>
@@ -1798,6 +1799,27 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
                                 .HasForeignKey("ClienteId");
                         });
 
+                    b.OwnsOne("RestaurantePro.Domain.Core.SharedKernel.ValueObjects.PhoneNumber", "Telefono", b1 =>
+                        {
+                            b1.Property<Guid>("ClienteId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(20)
+                                .HasColumnType("nvarchar(20)")
+                                .HasColumnName("Telefono");
+
+                            b1.HasKey("ClienteId");
+
+                            b1.HasIndex("Value");
+
+                            b1.ToTable("Clientes", "Comercial");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ClienteId");
+                        });
+
                     b.OwnsOne("RestaurantePro.Domain.Comercial.Clientes.ValueObjects.ClienteNombre", "Nombre", b1 =>
                         {
                             b1.Property<Guid>("ClienteId")
@@ -1819,27 +1841,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
 
                             b1.HasIndex("Nombre", "Apellido")
                                 .HasDatabaseName("IX_Clientes_NombreCompleto");
-
-                            b1.ToTable("Clientes", "Comercial");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ClienteId");
-                        });
-
-                    b.OwnsOne("RestaurantePro.Domain.Core.SharedKernel.ValueObjects.PhoneNumber", "Telefono", b1 =>
-                        {
-                            b1.Property<Guid>("ClienteId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<string>("Value")
-                                .IsRequired()
-                                .HasMaxLength(20)
-                                .HasColumnType("nvarchar(20)")
-                                .HasColumnName("Telefono");
-
-                            b1.HasKey("ClienteId");
-
-                            b1.HasIndex("Value");
 
                             b1.ToTable("Clientes", "Comercial");
 
@@ -2251,30 +2252,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("RestaurantePro.Domain.Proveedores.Entities.Proveedor", b =>
                 {
-                    b.OwnsMany("RestaurantePro.Domain.Proveedores.ValueObjects.ProveedorCategoria", "Categorias", b1 =>
-                        {
-                            b1.Property<Guid>("ProveedorId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<string>("Categoria")
-                                .HasMaxLength(50)
-                                .HasColumnType("nvarchar(50)");
-
-                            b1.Property<bool>("EsProveedorPrincipal")
-                                .HasColumnType("bit");
-
-                            b1.Property<decimal>("PorcentajeDescuento")
-                                .HasPrecision(5, 2)
-                                .HasColumnType("decimal(5,2)");
-
-                            b1.HasKey("ProveedorId", "Categoria");
-
-                            b1.ToTable("ProveedorCategorias", "Proveedores");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ProveedorId");
-                        });
-
                     b.OwnsOne("RestaurantePro.Domain.Core.SharedKernel.ValueObjects.Email", "Email", b1 =>
                         {
                             b1.Property<Guid>("ProveedorId")
@@ -2308,6 +2285,30 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations
                             b1.HasKey("ProveedorId");
 
                             b1.ToTable("Proveedores", "Proveedores");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ProveedorId");
+                        });
+
+                    b.OwnsMany("RestaurantePro.Domain.Proveedores.ValueObjects.ProveedorCategoria", "Categorias", b1 =>
+                        {
+                            b1.Property<Guid>("ProveedorId")
+                                .HasColumnType("uniqueidentifier");
+
+                            b1.Property<string>("Categoria")
+                                .HasMaxLength(50)
+                                .HasColumnType("nvarchar(50)");
+
+                            b1.Property<bool>("EsProveedorPrincipal")
+                                .HasColumnType("bit");
+
+                            b1.Property<decimal>("PorcentajeDescuento")
+                                .HasPrecision(5, 2)
+                                .HasColumnType("decimal(5,2)");
+
+                            b1.HasKey("ProveedorId", "Categoria");
+
+                            b1.ToTable("ProveedorCategorias", "Proveedores");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProveedorId");
