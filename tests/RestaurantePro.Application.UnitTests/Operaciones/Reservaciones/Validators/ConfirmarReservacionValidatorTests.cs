@@ -463,8 +463,7 @@ public class ConfirmarReservacionValidatorTests
             ReservacionId = Guid.NewGuid(),
             MetodoConfirmacion = "Manual",
             ConfirmadoPor = "Juan Pérez",
-            NotasConfirmacion = "Confirmación exitosa",
-            NotificarCliente = true
+            NotasConfirmacion = "Confirmación exitosa"
         };
     }
 

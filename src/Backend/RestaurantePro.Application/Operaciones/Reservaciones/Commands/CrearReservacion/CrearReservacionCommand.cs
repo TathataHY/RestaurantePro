@@ -166,6 +166,21 @@ public class CrearReservacionCommand : IRequest<Result<ReservacionDto>>
     /// Datos adicionales de la reservación
     /// </summary>
     public Dictionary<string, object>? DatosAdicionales { get; set; }
+
+    /// <summary>
+    /// Fecha de la reservación
+    /// </summary>
+    public DateTime FechaReservacion { get; set; }
+
+    /// <summary>
+    /// Hora de la reservación
+    /// </summary>
+    public TimeSpan HoraReservacion { get; set; }
+
+    /// <summary>
+    /// ID del usuario que realiza la reservación
+    /// </summary>
+    public Guid? UsuarioId { get; set; }
 }
 
 /// <summary>

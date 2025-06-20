@@ -6,8 +6,9 @@ namespace RestaurantePro.Application.Operaciones.Reservaciones.Commands.Cancelar
 /// </summary>
 public class CancelarReservacionCommand : IRequest<Result<ReservacionDto>>
 {
-    public Guid ReservacionId { get; init; }
-    public Guid UsuarioId { get; init; }
+    public Guid Id { get; set; }
+    public string? MotivoTexto { get; set; }
+    public Guid? UsuarioId { get; set; }
     public MotivoCancelacion Motivo { get; init; }
     public string? MotivoDetalle { get; init; }
     public bool NotificarCliente { get; init; } = true;
@@ -18,16 +19,19 @@ public class CancelarReservacionCommand : IRequest<Result<ReservacionDto>>
     /// Indica el tipo de entorno (Test/Produccion) para comportamiento específico en validaciones
     /// </summary>
     public string? TipoEntorno { get; init; }
+    
+    // Propiedad adicional que el validator espera
+    public Guid ReservacionId { get; set; }
 
     /// <summary>
     /// Motivo de cancelación como string para el validator
     /// </summary>
-    public string MotivoTexto => MotivoDetalle ?? Motivo.ToString();
+    public string MotivoTextoCompleto => MotivoDetalle ?? Motivo.ToString();
 
     /// <summary>
     /// Usuario que realiza la cancelación
     /// </summary>
-    public string CanceladoPor => UsuarioId.ToString();
+    public string CanceladoPor => UsuarioId?.ToString() ?? string.Empty;
 
     /// <summary>
     /// Factory method para cancelación por cliente
@@ -39,6 +43,7 @@ public class CancelarReservacionCommand : IRequest<Result<ReservacionDto>>
     {
         return new CancelarReservacionCommand
         {
+            Id = reservacionId,
             ReservacionId = reservacionId,
             UsuarioId = usuarioId,
             Motivo = MotivoCancelacion.ClienteSolicita,
@@ -60,6 +65,7 @@ public class CancelarReservacionCommand : IRequest<Result<ReservacionDto>>
     {
         return new CancelarReservacionCommand
         {
+            Id = reservacionId,
             ReservacionId = reservacionId,
             UsuarioId = usuarioId,
             Motivo = MotivoCancelacion.NoSePresento,
@@ -82,6 +88,7 @@ public class CancelarReservacionCommand : IRequest<Result<ReservacionDto>>
     {
         return new CancelarReservacionCommand
         {
+            Id = reservacionId,
             ReservacionId = reservacionId,
             UsuarioId = usuarioId,
             Motivo = motivo,
@@ -103,6 +110,7 @@ public class CancelarReservacionCommand : IRequest<Result<ReservacionDto>>
     {
         return new CancelarReservacionCommand
         {
+            Id = reservacionId,
             ReservacionId = reservacionId,
             UsuarioId = usuarioId,
             Motivo = MotivoCancelacion.Emergencia,
@@ -124,6 +132,7 @@ public class CancelarReservacionCommand : IRequest<Result<ReservacionDto>>
     {
         return new CancelarReservacionCommand
         {
+            Id = reservacionId,
             ReservacionId = reservacionId,
             UsuarioId = usuarioId,
             Motivo = MotivoCancelacion.CancelacionTardia,

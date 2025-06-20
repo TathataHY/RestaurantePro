@@ -56,7 +56,6 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerPr
             // Calcular horas para vencer para cada preparación
             foreach (var preparacionDto in preparacionesDto)
             {
-                // No usamos HasValue porque FechaVencimiento no es nullable
                 var ahora = _dateTimeService.Now;
                 if (preparacionDto.FechaVencimiento <= ahora)
                 {
@@ -65,7 +64,7 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerPr
                 else
                 {
                     var tiempoRestante = preparacionDto.FechaVencimiento - ahora;
-                    preparacionDto.HorasParaVencer = System.Math.Round(tiempoRestante.TotalHours, 1);
+                    preparacionDto.HorasParaVencer = System.Math.Round(((TimeSpan)tiempoRestante).TotalHours, 1);
                 }
             }
 

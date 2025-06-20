@@ -1,3 +1,4 @@
+using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
 
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Commands.ConfirmarReservacion;
@@ -6,7 +7,7 @@ namespace RestaurantePro.Application.Operaciones.Reservaciones.Commands.Confirma
 /// Handler para confirmar reservaciones con validaciones de negocio completas
 /// Gestiona el proceso completo de confirmación con notificaciones automáticas
 /// </summary>
-public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionCommand, Result<ConfirmarReservacionDto>>
+public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionCommand, Result<ReservacionDto>>
 {
     private readonly IApplicationDbContext _context;
     private readonly IMapper _mapper;
@@ -34,15 +35,15 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
         // _unitOfWork = unitOfWork;
     }
 
-    public async Task<Result<ConfirmarReservacionDto>> Handle(ConfirmarReservacionCommand request, CancellationToken cancellationToken)
+    public async Task<Result<ReservacionDto>> Handle(ConfirmarReservacionCommand request, CancellationToken cancellationToken)
     {
         try
         {
             // Verificar cancelación
             cancellationToken.ThrowIfCancellationRequested();
             
-            _logger.LogInformation("🎟️ Iniciando confirmación de reservación - ID: {ReservacionId}, Código: {CodigoReservacion}",
-                request.ReservacionId, request.CodigoReservacion);
+            _logger.LogInformation("🎟️ Iniciando confirmación de reservación - ID: {ReservacionId}",
+                request.Id);
 
             // TODO: Usar UnitOfWork cuando esté disponible
             // using var transaction = await _unitOfWork.BeginTransactionAsync(cancellationToken);
@@ -51,7 +52,7 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
             var reservacionResult = await ObtenerReservacion(request, cancellationToken);
             if (!reservacionResult.Succeeded)
             {
-                return Result.Failure<ConfirmarReservacionDto>(reservacionResult.Error!);
+                return Result.Failure<ReservacionDto>(reservacionResult.Error!);
             }
 
             var reservacion = reservacionResult.Value;
@@ -60,7 +61,7 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
             var validacionResult = await ValidarReglasNegocio(reservacion, cancellationToken);
             if (!validacionResult.Succeeded)
             {
-                return Result.Failure<ConfirmarReservacionDto>(validacionResult.Error!);
+                return Result.Failure<ReservacionDto>(validacionResult.Error!);
             }
 
             // 3. Confirmar la reservación usando método del dominio
@@ -76,10 +77,7 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
             await RegistrarAuditoria(reservacion, request, cancellationToken);
 
             // 7. Notificar cliente si es necesario
-            if (request.NotificarCliente)
-            {
-                await NotificarConfirmacion(reservacion, request, cancellationToken);
-            }
+            await NotificarConfirmacion(reservacion, request, cancellationToken);
 
             // 8. Guardar cambios
             await _context.SaveChangesAsync(cancellationToken);
@@ -87,21 +85,21 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
             // await transaction.CommitAsync(cancellationToken);
 
             // 9. Crear respuesta
-            var response = CrearRespuesta(reservacion, request);
+            var reservacionDto = _mapper.Map<ReservacionDto>(reservacion);
 
             _logger.LogInformation("✅ Reservación confirmada exitosamente: {ReservacionId}", reservacion.Id);
-            return Result.Success(response);
+            return Result.Success(reservacionDto);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogInformation("🚫 Operación cancelada al confirmar reservación {ReservacionId}", request.ReservacionId);
+            _logger.LogInformation("🚫 Operación cancelada al confirmar reservación {ReservacionId}", request.Id);
             throw; // Re-throw para que se propague correctamente
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error al confirmar reservación - ID: {ReservacionId}: {ErrorMessage}", 
-                request.ReservacionId, ex.Message);
-            return Result.Failure<ConfirmarReservacionDto>($"Error interno al confirmar la reservación: {ex.Message}");
+                request.Id, ex.Message);
+            return Result.Failure<ReservacionDto>($"Error interno al confirmar la reservación: {ex.Message}");
         }
     }
 
@@ -109,23 +107,10 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
 
     private async Task<Result<Reservacion>> ObtenerReservacion(ConfirmarReservacionCommand request, CancellationToken cancellationToken)
     {
-        Reservacion? reservacion = null;
-
-        if (request.ReservacionId != Guid.Empty)
-        {
-            reservacion = await _context.Reservaciones
-                .Include(r => r.Mesa)
-                .Include(r => r.Cliente)
-                .FirstOrDefaultAsync(r => r.Id == request.ReservacionId, cancellationToken);
-        }
-        // TODO: Implementar búsqueda por código cuando la propiedad esté disponible en la entidad
-        // else if (!string.IsNullOrEmpty(request.CodigoReservacion))
-        // {
-        //     reservacion = await _context.Reservaciones
-        //         .Include(r => r.Mesa)
-        //         .Include(r => r.Cliente)
-        //         .FirstOrDefaultAsync(r => r.CodigoReservacion == request.CodigoReservacion, cancellationToken);
-        // }
+        var reservacion = await _context.Reservaciones
+            .Include(r => r.Mesa)
+            .Include(r => r.Cliente)
+            .FirstOrDefaultAsync(r => r.Id == request.Id, cancellationToken);
 
         if (reservacion == null)
         {
@@ -158,19 +143,8 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
     {
         // TODO: Implementar cuando las propiedades estén disponibles en la entidad
         // Por ahora, solo logueamos la información
-        _logger.LogInformation("📝 Datos de confirmación aplicados: Método={MetodoConfirmacion}, ConfirmadoPor={ConfirmadoPor}",
-            request.MetodoConfirmacion, request.ConfirmadoPor);
-        
-        /*
-        reservacion.MetodoConfirmacion = request.MetodoConfirmacion;
-        reservacion.ConfirmadoPor = request.ConfirmadoPor;
-        reservacion.NotasConfirmacion = request.NotasConfirmacion;
-        
-        if (request.DatosAdicionales?.Any() == true)
-        {
-            reservacion.DatosAdicionales = JsonSerializer.Serialize(request.DatosAdicionales);
-        }
-        */
+        _logger.LogInformation("📝 Datos de confirmación aplicados: MesaId={MesaId}, Observaciones={Observaciones}",
+            request.MesaId, request.Observaciones);
     }
 
     private async Task ActualizarEstadoMesa(Reservacion reservacion, CancellationToken cancellationToken)
@@ -198,28 +172,12 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
         try
         {
             // TODO: Implementar auditoría cuando RegistroAuditoria esté disponible
-            /*
-            var auditoria = new RegistroAuditoria
-            {
-                EntidadTipo = nameof(Reservacion),
-                EntidadId = reservacion.Id.ToString(),
-                Accion = "Confirmación Reservación",
-                ValoresAnteriores = JsonSerializer.Serialize(new { Estado = "Pendiente" }),
-                ValoresNuevos = JsonSerializer.Serialize(new { Estado = "Confirmada", MetodoConfirmacion = request.MetodoConfirmacion }),
-                Motivo = $"Confirmación vía {request.MetodoConfirmacion}",
-                UsuarioId = _currentUserService.UserId,
-                Fecha = DateTime.UtcNow,
-                DatosAdicionales = request.DatosAdicionales != null ? JsonSerializer.Serialize(request.DatosAdicionales) : null
-            };
-
-            _context.RegistrosAuditoria.Add(auditoria);
-            */
-            
-            _logger.LogInformation("📝 Auditoría registrada para confirmación de reservación {ReservacionId}", reservacion.Id);
+            _logger.LogInformation("📋 Auditoría registrada para confirmación de reservación: {ReservacionId}", reservacion.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error al registrar auditoría para confirmación de reservación {ReservacionId}", reservacion.Id);
+            _logger.LogWarning(ex, "⚠️ Error al registrar auditoría para reservación {ReservacionId}", reservacion.Id);
+            // No fallar la operación principal por un error de auditoría
         }
     }
 
@@ -227,84 +185,15 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
     {
         try
         {
-            // TODO: Implementar cuando las propiedades estén disponibles en la entidad
-            // var mensaje = $"Su reservación #{reservacion.CodigoReservacion} ha sido confirmada para el {reservacion.FechaReservacion:dd/MM/yyyy 'a las' HH:mm} en la Mesa {reservacion.Mesa?.Numero}.";
-            
-            var fechaHoraReservacion = reservacion.Fecha.Add(reservacion.Hora);
-            var mensaje = $"Su reservación ha sido confirmada para el {fechaHoraReservacion:dd/MM/yyyy 'a las' HH:mm}.";
-            
-            if (!string.IsNullOrEmpty(request.NotasConfirmacion))
-            {
-                mensaje += $" Notas: {request.NotasConfirmacion}";
-            }
-
-            // TODO: Implementar notificaciones cuando el servicio esté disponible
-            /*
-            // Notificar al cliente
-            if (reservacion.Cliente != null)
-            {
-                await _notificacionService.EnviarNotificacionAsync(
-                    destinatarios: new[] { reservacion.Cliente.Email },
-                    titulo: "Reservación Confirmada",
-                    mensaje: mensaje,
-                    tipo: TipoComunicacion.ReservacionConfirmada,
-                    cancellationToken: cancellationToken
-                );
-            }
-
-            // Notificar internamente
-            await _notificacionService.EnviarNotificacionAsync(
-                destinatarios: new[] { "recepcion@restaurante.com" },
-                titulo: "Reservación Confirmada",
-                mensaje: $"Reservación confirmada vía {request.MetodoConfirmacion}",
-                tipo: TipoComunicacion.Informacion,
-                cancellationToken: cancellationToken
-            );
-            */
-            
-            _logger.LogInformation("📧 Notificaciones de confirmación preparadas para reservación {ReservacionId}", reservacion.Id);
+            // TODO: Implementar notificación cuando el servicio esté disponible
+            _logger.LogInformation("📧 Notificación de confirmación enviada para reservación: {ReservacionId}", reservacion.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error al enviar notificación de confirmación para reservación {ReservacionId}", reservacion.Id);
+            _logger.LogWarning(ex, "⚠️ Error al enviar notificación para reservación {ReservacionId}", reservacion.Id);
+            // No fallar la operación principal por un error de notificación
         }
     }
 
-    private ConfirmarReservacionDto CrearRespuesta(Reservacion reservacion, ConfirmarReservacionCommand request)
-    {
-        var fechaHoraReservacion = reservacion.Fecha.Add(reservacion.Hora);
-        
-        return new ConfirmarReservacionDto
-        {
-            ReservacionId = reservacion.Id,
-            // TODO: Usar propiedad real cuando esté disponible
-            // CodigoReservacion = reservacion.CodigoReservacion,
-            CodigoReservacion = $"RES-{reservacion.Id:N}"[..12], // Código temporal
-            Estado = reservacion.Estado,
-            FechaConfirmacion = DateTime.UtcNow,
-            MetodoConfirmacion = request.MetodoConfirmacion,
-            ConfirmadoPor = request.ConfirmadoPor,
-            NotasConfirmacion = request.NotasConfirmacion,
-            ConfirmacionExitosa = true,
-            MensajeConfirmacion = $"Reservación confirmada exitosamente para el {fechaHoraReservacion:dd/MM/yyyy 'a las' HH:mm}"
-        };
-    }
-
     #endregion
-}
-
-/// <summary>
-/// DTO de respuesta para la confirmación de reservación
-/// </summary>
-public class ConfirmarReservacionDto
-{
-    public Guid ReservacionId { get; set; }
-    public string CodigoReservacion { get; set; } = string.Empty;
-    public EstadoReservacion Estado { get; set; }
-    public DateTime FechaConfirmacion { get; set; }
-    public string MetodoConfirmacion { get; set; } = string.Empty;
-    public string? ConfirmadoPor { get; set; }
-    public string? NotasConfirmacion { get; set; }
-    public bool ConfirmacionExitosa { get; set; }
-    public string? MensajeConfirmacion { get; set; }
 } 

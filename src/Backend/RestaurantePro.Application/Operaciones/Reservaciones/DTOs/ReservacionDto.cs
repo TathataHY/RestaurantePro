@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
+
 namespace RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
 
 /// <summary>
@@ -68,7 +70,7 @@ public class ReservacionDto
     /// <summary>
     /// Estado de la reservación
     /// </summary>
-    public EstadoReservacionDomain Estado { get; set; }
+    public EstadoReservacion Estado { get; set; }
 
     /// <summary>
     /// Tipo de ocasión especial

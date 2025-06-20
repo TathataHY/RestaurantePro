@@ -59,7 +59,8 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Preparaciones.Command
             var result = await _handler.Handle(command, CancellationToken.None);
 
             // Assert
-            Assert.NotEqual(Guid.Empty, result);
+            Assert.NotNull(result);
+            Assert.True(result.Succeeded);
             _contextMock.Verify(c => c.Preparaciones.AddAsync(It.IsAny<PreparacionDiaria>(), It.IsAny<CancellationToken>()), Times.Once);
             _contextMock.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }

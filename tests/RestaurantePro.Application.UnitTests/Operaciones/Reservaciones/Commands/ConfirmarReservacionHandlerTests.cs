@@ -40,9 +40,10 @@ public class ConfirmarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = Guid.NewGuid();
-        var command = new ConfirmarReservacionCommand(reservacionId)
-        {
-            TiempoConfirmacion = TimeSpan.FromMinutes(30)
+        var command = new ConfirmarReservacionCommand 
+        { 
+            Id = reservacionId,
+            ReservacionId = reservacionId
         };
 
         var reservacion = CrearReservacion(reservacionId, EstadoReservacion.Pendiente, "RES-2024-001");
@@ -77,7 +78,11 @@ public class ConfirmarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = Guid.NewGuid();
-        var command = new ConfirmarReservacionCommand(reservacionId);
+        var command = new ConfirmarReservacionCommand 
+        { 
+            Id = reservacionId,
+            ReservacionId = reservacionId
+        };
 
         // Mock del DbSet para que no encuentre la reservación
         var mockDbSet = MockDbSetHelper.CreateEmptyMockDbSet<Reservacion>();
@@ -97,7 +102,11 @@ public class ConfirmarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = Guid.NewGuid();
-        var command = new ConfirmarReservacionCommand(reservacionId);
+        var command = new ConfirmarReservacionCommand 
+        { 
+            Id = reservacionId,
+            ReservacionId = reservacionId
+        };
 
         var reservacion = CrearReservacion(reservacionId, EstadoReservacion.Confirmada, "RES-2024-002");
         var reservaciones = new List<Reservacion> { reservacion };
@@ -119,7 +128,11 @@ public class ConfirmarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = Guid.NewGuid();
-        var command = new ConfirmarReservacionCommand(reservacionId);
+        var command = new ConfirmarReservacionCommand 
+        { 
+            Id = reservacionId,
+            ReservacionId = reservacionId
+        };
 
         var reservacion = CrearReservacion(reservacionId, EstadoReservacion.Cancelada, "RES-2024-003");
         var reservaciones = new List<Reservacion> { reservacion };
@@ -141,7 +154,11 @@ public class ConfirmarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = Guid.NewGuid();
-        var command = new ConfirmarReservacionCommand(reservacionId);
+        var command = new ConfirmarReservacionCommand 
+        { 
+            Id = reservacionId,
+            ReservacionId = reservacionId
+        };
 
         var reservacion = CrearReservacion(
             reservacionId, 
@@ -169,9 +186,10 @@ public class ConfirmarReservacionHandlerTests
         // Arrange
         var reservacionId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var command = new ConfirmarReservacionCommand(reservacionId)
-        {
-            NotificarCliente = true
+        var command = new ConfirmarReservacionCommand 
+        { 
+            Id = reservacionId,
+            ReservacionId = reservacionId
         };
 
         var reservacion = CrearReservacion(reservacionId, EstadoReservacion.Pendiente, "RES-2024-005", 
@@ -203,10 +221,10 @@ public class ConfirmarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = Guid.NewGuid();
-        var tiempoConfirmacion = TimeSpan.FromMinutes(30);
-        var command = new ConfirmarReservacionCommand(reservacionId)
-        {
-            TiempoConfirmacion = tiempoConfirmacion
+        var command = new ConfirmarReservacionCommand 
+        { 
+            Id = reservacionId,
+            ReservacionId = reservacionId
         };
 
         var reservacion = CrearReservacion(reservacionId, EstadoReservacion.Pendiente, "RES-2024-006");
@@ -229,7 +247,11 @@ public class ConfirmarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = Guid.NewGuid();
-        var command = new ConfirmarReservacionCommand(reservacionId);
+        var command = new ConfirmarReservacionCommand 
+        { 
+            Id = reservacionId,
+            ReservacionId = reservacionId
+        };
 
         // CORREGIDO: Configurar el DbSet para lanzar excepción
         var mockDbSet = new Mock<DbSet<Reservacion>>();
@@ -283,7 +305,11 @@ public class ConfirmarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = Guid.NewGuid();
-        var command = new ConfirmarReservacionCommand(reservacionId);
+        var command = new ConfirmarReservacionCommand 
+        { 
+            Id = reservacionId,
+            ReservacionId = reservacionId
+        };
 
         var reservacion = CrearReservacion(reservacionId, estado, $"RES-ESTADO-{estado}");
         var reservaciones = new List<Reservacion> { reservacion };
@@ -306,10 +332,10 @@ public class ConfirmarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = Guid.NewGuid();
-        var tiempoConfirmacion = TimeSpan.FromMinutes(15);
-        var command = new ConfirmarReservacionCommand(reservacionId)
-        {
-            TiempoConfirmacion = tiempoConfirmacion
+        var command = new ConfirmarReservacionCommand 
+        { 
+            Id = reservacionId,
+            ReservacionId = reservacionId
         };
 
         var reservacion = CrearReservacion(reservacionId, EstadoReservacion.Pendiente, "RES-2024-008");
@@ -332,7 +358,11 @@ public class ConfirmarReservacionHandlerTests
     {
         // Arrange
         var reservacionId = Guid.NewGuid();
-        var command = new ConfirmarReservacionCommand(reservacionId);
+        var command = new ConfirmarReservacionCommand 
+        { 
+            Id = reservacionId,
+            ReservacionId = reservacionId
+        };
 
         var reservacion = CrearReservacion(reservacionId, EstadoReservacion.Pendiente, "RES-LOGGING");
         var reservaciones = new List<Reservacion> { reservacion };
@@ -375,7 +405,11 @@ public class ConfirmarReservacionHandlerTests
         // Arrange
         var reservacionId = Guid.NewGuid();
         var clienteId = Guid.NewGuid();
-        var command = new ConfirmarReservacionCommand(reservacionId);
+        var command = new ConfirmarReservacionCommand 
+        { 
+            Id = reservacionId,
+            ReservacionId = reservacionId
+        };
 
         var reservacion = CrearReservacion(reservacionId, EstadoReservacion.Pendiente, "RES-2024-009", clienteId: clienteId);
         var reservaciones = new List<Reservacion> { reservacion };

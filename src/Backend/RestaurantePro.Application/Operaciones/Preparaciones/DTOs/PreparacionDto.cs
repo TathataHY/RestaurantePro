@@ -5,7 +5,7 @@ using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
 namespace RestaurantePro.Application.Operaciones.Preparaciones.DTOs
 {
     /// <summary>
-    /// DTO para representar una preparación diaria
+    /// DTO para representar una preparación de cocina
     /// </summary>
     public class PreparacionDto
     {
@@ -15,6 +15,16 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.DTOs
         public Guid Id { get; set; }
 
         /// <summary>
+        /// ID de la comanda
+        /// </summary>
+        public Guid ComandaId { get; set; }
+
+        /// <summary>
+        /// Número de la comanda
+        /// </summary>
+        public string NumeroComanda { get; set; } = string.Empty;
+
+        /// <summary>
         /// ID del producto preparado
         /// </summary>
         public Guid ProductoId { get; set; }
@@ -22,27 +32,12 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.DTOs
         /// <summary>
         /// Nombre del producto (se popula mediante joins)
         /// </summary>
-        public string? NombreProducto { get; set; }
+        public string NombreProducto { get; set; } = string.Empty;
 
         /// <summary>
         /// Cantidad total preparada
         /// </summary>
-        public int CantidadPreparada { get; set; }
-
-        /// <summary>
-        /// Cantidad disponible actualmente
-        /// </summary>
-        public int CantidadDisponible { get; set; }
-
-        /// <summary>
-        /// Fecha y hora de preparación
-        /// </summary>
-        public DateTime FechaPreparacion { get; set; }
-
-        /// <summary>
-        /// Fecha y hora de vencimiento
-        /// </summary>
-        public DateTime FechaVencimiento { get; set; }
+        public int Cantidad { get; set; }
 
         /// <summary>
         /// Estado actual de la preparación
@@ -50,14 +45,29 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.DTOs
         public EstadoPreparacion Estado { get; set; }
 
         /// <summary>
-        /// Nombre del estado (para mostrar en UI)
+        /// Fecha y hora de preparación
         /// </summary>
-        public string EstadoNombre => Estado.ToString();
+        public DateTime FechaCreacion { get; set; }
+
+        /// <summary>
+        /// Fecha y hora de inicio de la preparación
+        /// </summary>
+        public DateTime? FechaInicio { get; set; }
+
+        /// <summary>
+        /// Fecha y hora de finalización de la preparación
+        /// </summary>
+        public DateTime? FechaCompletado { get; set; }
+
+        /// <summary>
+        /// Fecha y hora de cancelación de la preparación
+        /// </summary>
+        public DateTime? FechaCancelacion { get; set; }
 
         /// <summary>
         /// ID del chef que realizó la preparación
         /// </summary>
-        public Guid ChefId { get; set; }
+        public Guid? ChefId { get; set; }
 
         /// <summary>
         /// Nombre del chef (se popula mediante joins)
@@ -67,33 +77,48 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.DTOs
         /// <summary>
         /// Observaciones sobre la preparación
         /// </summary>
-        public string Observaciones { get; set; }
+        public string? Observaciones { get; set; }
 
         /// <summary>
-        /// Alias para Cantidad - usado en los tests
+        /// Prioridad de la preparación
         /// </summary>
-        public int Cantidad => CantidadPreparada;
+        public int Prioridad { get; set; }
 
         /// <summary>
-        /// Alias para FechaPreparacion - usado en los tests
+        /// Tiempo estimado para la preparación
         /// </summary>
-        public DateTime FechaCreacion => FechaPreparacion;
+        public TimeSpan? TiempoEstimado { get; set; }
 
         /// <summary>
-        /// Tiempo restante antes de vencer (en horas)
+        /// Tiempo real de la preparación
         /// </summary>
-        public double? HorasParaVencer { get; set; }
+        public TimeSpan? TiempoReal { get; set; }
 
         /// <summary>
-        /// Porcentaje de producto consumido
+        /// Motivo de cancelación de la preparación
         /// </summary>
-        public int PorcentajeConsumido => CantidadPreparada > 0 
-            ? (int)Math.Round(((double)(CantidadPreparada - CantidadDisponible) / CantidadPreparada) * 100) 
-            : 0;
-
+        public string? MotivoCancelacion { get; set; }
+        
         /// <summary>
-        /// Indica si la preparación está por vencer (menos de 2 horas)
+        /// Fecha de vencimiento de la preparación
         /// </summary>
-        public bool EstaPorVencer => HorasParaVencer.HasValue && HorasParaVencer.Value <= 2 && HorasParaVencer.Value > 0;
+        public DateTime? FechaVencimiento { get; set; }
+        
+        /// <summary>
+        /// Horas restantes para que venza la preparación
+        /// </summary>
+        public double HorasParaVencer { get; set; }
+    }
+
+    /// <summary>
+    /// Estados posibles de una preparación
+    /// </summary>
+    public enum PreparacionEstado
+    {
+        Pendiente = 1,
+        EnPreparacion = 2,
+        Completada = 3,
+        Cancelada = 4,
+        Entregada = 5
     }
 } 

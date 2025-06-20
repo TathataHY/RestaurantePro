@@ -91,12 +91,11 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Preparaciones.Queries
             {
                 Id = p.Id,
                 ProductoId = p.ProductoId,
-                CantidadPreparada = p.CantidadPreparada,
-                CantidadDisponible = p.CantidadDisponible,
+                Cantidad = p.CantidadPreparada,
                 ChefId = p.ChefId,
                 FechaVencimiento = p.FechaVencimiento,
-                FechaPreparacion = p.FechaCreacion,
-                Observaciones = p.Observaciones ?? string.Empty, // Aseguramos que no sea null
+                FechaCreacion = p.FechaPreparacion,
+                Observaciones = p.Observaciones ?? string.Empty,
                 Estado = p.Estado,
                 NombreProducto = "Producto de prueba"
             }).ToList();

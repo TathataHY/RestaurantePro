@@ -124,7 +124,7 @@ public class VerificarDisponibilidadProductoHandler : IRequestHandler<VerificarD
                         producto.Nombre,
                         Precio = producto.Precio.Valor,
                         EstaDisponible = disponibilidadBasica.Succeeded && disponibilidadBasica.Value,
-                        MotivoNoDisponibilidad = !disponibilidadBasica.Succeeded || !disponibilidadBasica.Value
+                        MotivoNoDisponibilidad = (!disponibilidadBasica.Succeeded || !disponibilidadBasica.Value)
                             ? "Stock insuficiente o ingredientes faltantes"
                             : string.Empty
                     },

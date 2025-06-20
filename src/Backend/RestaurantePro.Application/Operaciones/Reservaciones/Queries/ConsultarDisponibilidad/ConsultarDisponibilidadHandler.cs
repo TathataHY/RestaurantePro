@@ -151,7 +151,8 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
         }
 
         // 6. Calcular estadísticas
-        disponibilidad.EstadisticasOcupacion = await CalcularEstadisticasOcupacion(request.FechaHora, cancellationToken);
+        var estadisticas = await CalcularEstadisticasOcupacion(request.FechaHora, cancellationToken);
+        disponibilidad.EstadisticasOcupacion = estadisticas;
 
         return disponibilidad;
     }
@@ -206,9 +207,9 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
         return new MesaDisponibleDto
         {
             MesaId = mesa.Id,
-            Numero = mesa.Numero,
+            Numero = mesa.Numero.ToString(),
             Capacidad = mesa.Capacidad,
-            // TODO: Mesa debería tener propiedades Zona, Caracteristicas, PrecioBase, TieneVentana
+            // TODO: Mesa debería tener propiedades Zo  na, Caracteristicas, PrecioBase, TieneVentana
             // Zona = mesa.Zona,
             Zona = "General", // Temporal
             Disponible = disponible,
@@ -331,14 +332,14 @@ public class ConsultarDisponibilidadHandler : IRequestHandler<ConsultarDisponibi
             TotalMesas = totalMesas,
             MesasOcupadas = mesasOcupadas,
             MesasDisponibles = totalMesas - mesasOcupadas,
-            PorcentajeOcupacion = porcentajeOcupacion,
+            PorcentajeOcupacion = (double)porcentajeOcupacion,
             NivelOcupacion = porcentajeOcupacion switch
             {
-                >= 90 => "Muy Alto",
-                >= 70 => "Alto", 
-                >= 50 => "Medio",
-                >= 30 => "Bajo",
-                _ => "Muy Bajo"
+                >= 90 => 5.0, // Muy Alto
+                >= 70 => 4.0, // Alto
+                >= 50 => 3.0, // Medio
+                >= 30 => 2.0, // Bajo
+                _ => 1.0      // Muy Bajo
             }
         };
     }

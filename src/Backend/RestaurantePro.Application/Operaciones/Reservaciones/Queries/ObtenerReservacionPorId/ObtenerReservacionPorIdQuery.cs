@@ -1,7 +1,7 @@
 namespace RestaurantePro.Application.Operaciones.Reservaciones.Queries.ObtenerReservacionPorId;
 
 /// <summary>
-/// Query para obtener una reservación específica por su ID
+/// Query para obtener una reservación específica por ID
 /// </summary>
 public class ObtenerReservacionPorIdQuery : IRequest<Result<ReservacionDto>>
 {
