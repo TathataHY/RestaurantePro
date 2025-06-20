@@ -133,10 +133,10 @@ public class ProductosControllerTests : ApiIntegrationTestBase, IDisposable
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         
-        // Verificar que el producto ya no existe en la base de datos
-        // ✅ Refrescar el contexto para obtener datos actualizados de la BD
-        DbContext.ChangeTracker.Clear(); // Limpiar el caché
+        // Verificar que el producto fue desactivado (soft delete)
+        DbContext.ChangeTracker.Clear(); 
         var productoEnBD = await DbContext.Productos.FirstOrDefaultAsync(p => p.Id == producto.Id);
-        productoEnBD.Should().BeNull();
+        productoEnBD.Should().NotBeNull();
+        productoEnBD.EstaActivo.Should().BeFalse();
     }
 } 

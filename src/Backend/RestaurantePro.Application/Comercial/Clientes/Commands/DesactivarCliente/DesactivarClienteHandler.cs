@@ -90,7 +90,7 @@ public class DesactivarClienteHandler : IRequestHandler<DesactivarClienteCommand
             }
 
             // 7. Guardar cambios usando el repositorio
-            await _clienteRepository.GuardarAsync(cliente, cancellationToken);
+            await _clienteRepository.ActualizarAsync(cliente, cancellationToken);
 
             // 8. Notificar al cliente si se solicita
             if (request.NotificarCliente)
