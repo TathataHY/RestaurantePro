@@ -1,0 +1,16 @@
+global using Xunit;
+global using FluentAssertions;
+global using Microsoft.AspNetCore.Mvc.Testing;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging;
+global using Microsoft.EntityFrameworkCore;
+global using System.Net;
+global using System.Net.Http.Json;
+global using System.Text.Json;
+global using RestaurantePro.Api;
+global using RestaurantePro.Infrastructure.Persistence.Contexts;
+global using RestaurantePro.Domain.Core.Productos.Entities;
+global using RestaurantePro.Domain.Comercial.Clientes.Entities;
+global using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+global using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
+global using RestaurantePro.Api.Common; 
