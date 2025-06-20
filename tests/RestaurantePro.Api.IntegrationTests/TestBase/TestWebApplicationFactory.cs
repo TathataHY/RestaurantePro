@@ -8,6 +8,11 @@ using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using RestaurantePro.Domain.Core.Productos.Builders;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
+using Microsoft.Extensions.Options;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -63,6 +68,19 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IApplicationDbContext>(provider => 
                 provider.GetRequiredService<RestauranteProDbContext>());
 
+            // 🔐 CONFIGURACIÓN DE AUTENTICACIÓN FAKE PARA TESTS
+            services.AddAuthentication("Test")
+                .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
+                    "Test", options => { });
+            
+            services.AddAuthorization(options =>
+            {
+                options.DefaultPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .AddAuthenticationSchemes("Test")
+                    .Build();
+            });
+
             // 🔧 REGISTRAR SERVICIOS BÁSICOS QUE APPLICATION NECESITA
             // ITimeProvider - necesario para PerformanceBehavior
             services.AddSingleton<ITimeProvider, SystemTimeProvider>();
@@ -75,6 +93,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             
             // 📧 IEmailService - necesario para Commands como DesactivarCliente
             services.AddScoped<IEmailService, EmailService>();
+            
+            // 👤 ICurrentUserService - necesario para CrearUsuarioHandler
+            services.AddScoped<ICurrentUserService, TestCurrentUserService>();
             
             // 📦 REGISTRAR REPOSITORIOS NECESARIOS PARA LOS TESTS
             services.AddScoped<IProductoRepository, ProductoRepository>();
@@ -113,4 +134,48 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         
         base.Dispose(disposing);
     }
-} 
+}
+
+/// <summary>
+/// Authentication handler personalizado para tests que bypasa la autenticación real
+/// </summary>
+public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
+{
+    public TestAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
+        ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock)
+        : base(options, logger, encoder, clock)
+    {
+    }
+
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.Name, "TestUser"),
+            new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+            new Claim(ClaimTypes.Email, "test@test.com"),
+            new Claim(ClaimTypes.Role, "Administrador") // Dar rol de Administrador para tests
+        };
+
+        var identity = new ClaimsIdentity(claims, "Test");
+        var principal = new ClaimsPrincipal(identity);
+        var ticket = new AuthenticationTicket(principal, "Test");
+
+        return Task.FromResult(AuthenticateResult.Success(ticket));
+    }
+}
+
+/// <summary>
+/// Implementación mock de ICurrentUserService para tests
+/// </summary>
+public class TestCurrentUserService : ICurrentUserService
+{
+    public string? UserId => "test-user-id";
+    public string? UserName => "TestUser";
+    public string? Email => "test@test.com";
+    public bool IsAuthenticated => true;
+    public IEnumerable<string> Roles => new[] { "Administrador" };
+    public string? Rol => "Administrador";
+
+    public bool IsInRole(string role) => Roles.Contains(role, StringComparer.OrdinalIgnoreCase);
+}
