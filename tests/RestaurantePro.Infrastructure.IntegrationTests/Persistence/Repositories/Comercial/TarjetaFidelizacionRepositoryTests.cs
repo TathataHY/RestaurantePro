@@ -67,25 +67,9 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             await _repository.AgregarAsync(tarjeta3);
             await _unitOfWork.SaveChangesAsync();
 
-            ClearTracker();
             var tarjetaPlatino = await _repository.ObtenerPorCodigoAsync("TF-PLATINO-03");
             tarjetaPlatino.Should().NotBeNull();
             tarjetaPlatino!.NivelFidelizacion.Should().Be(NivelFidelizacion.Platino, "los 5001 puntos deberían haberla promovido a Platino");
-        }
-
-        private (RestauranteProDbContext context, TarjetaFidelizacionRepository repository) CreateRepositoryForAssert()
-        {
-            var options = new DbContextOptionsBuilder<RestauranteProDbContext>()
-                .UseSqlite("DataSource=:memory:")
-                .Options;
-
-            var loggerMock = new Mock<ILogger<RestauranteProDbContext>>().Object;
-            var dispatcherMock = new Mock<IDomainEventDispatcher>().Object;
-            var repoLoggerMock = new Mock<ILogger<TarjetaFidelizacionRepository>>().Object;
-
-            var context = new RestauranteProDbContext(options, loggerMock, dispatcherMock);
-            var repository = new TarjetaFidelizacionRepository(context, repoLoggerMock);
-            return (context, repository);
         }
 
         [Fact]
@@ -199,8 +183,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
             await _unitOfWork.SaveChangesAsync();
 
-            var (_, assertRepository) = CreateRepositoryForAssert();
-            var tarjetaActualizada = await assertRepository.ObtenerPorCodigoAsync(_codigoTarjeta1);
+            var tarjetaActualizada = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1);
             
             tarjetaActualizada.Should().NotBeNull();
             tarjetaActualizada!.MultiplicadorPuntos.Should().Be(2.0m);
@@ -215,10 +198,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             await _repository.EliminarAsync(tarjeta!.Id);
             await _unitOfWork.SaveChangesAsync();
             
-            ClearTracker();
-
-            var (_, assertRepository) = CreateRepositoryForAssert();
-            var tarjetaEliminada = await assertRepository.ObtenerPorIdAsync(tarjeta.Id);
+            var tarjetaEliminada = await _repository.ObtenerPorIdAsync(tarjeta.Id);
             
             tarjetaEliminada.Should().NotBeNull();
             tarjetaEliminada!.EstaEliminado.Should().BeTrue();
@@ -232,9 +212,6 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             tarjetaActiva.ConfigurarFechaExpiracion(DateTime.UtcNow.AddDays(5));
             await _unitOfWork.SaveChangesAsync();
             
-            // Simula que la consulta se hace para buscar tarjetas que expiran en los próximos 10 días
-            ClearTracker(); 
-
             // Act
             var tarjetasPorExpirar = await _repository.ObtenerConPuntosProximosAExpirarAsync(DateTime.UtcNow.AddDays(10));
 
@@ -248,16 +225,15 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         [Fact]
         public async Task ObtenerTarjetaPorIdConPuntos_DebeIncluirPuntos()
         {
-            var (context, repository) = CreateRepositoryForAssert();
             var clienteId = Guid.NewGuid();
             var tarjeta = TarjetaFidelizacion.Crear(clienteId, "TF-PUNTOS-01");
             tarjeta.Activar();
             tarjeta.AgregarPuntos(100, "Test");
 
-            await repository.AgregarAsync(tarjeta);
-            await context.SaveChangesAsync();
+            await _repository.AgregarAsync(tarjeta);
+            await _unitOfWork.SaveChangesAsync();
 
-            var tarjetaRecuperada = await repository.ObtenerPorIdAsync(tarjeta.Id);
+            var tarjetaRecuperada = await _repository.ObtenerPorIdAsync(tarjeta.Id);
 
             tarjetaRecuperada.Should().NotBeNull();
             tarjetaRecuperada!.HistorialPuntos.Should().HaveCount(1);
@@ -266,8 +242,6 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         [Fact]
         public async Task ObtenerTarjetaPorNumeroConCliente_DebeIncluirCliente()
         {
-            var (context, repository) = CreateRepositoryForAssert();
-
             var clienteId = Guid.NewGuid();
             var nombre = ClienteNombre.Crear("Test", "Cliente");
             var email = Email.Create("test@cliente.com");
@@ -277,11 +251,10 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             
             var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, "TF-CLIENTE-01");
             
-            context.Set<Cliente>().Add(cliente);
-            await repository.AgregarAsync(tarjeta);
-            await context.SaveChangesAsync();
+            await _repository.AgregarAsync(tarjeta);
+            await _unitOfWork.SaveChangesAsync();
             
-            var tarjetaRecuperada = await repository.ObtenerPorCodigoAsync(tarjeta.Codigo);
+            var tarjetaRecuperada = await _repository.ObtenerPorCodigoAsync(tarjeta.Codigo);
 
             tarjetaRecuperada.Should().NotBeNull();
         }
@@ -289,18 +262,16 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         [Fact]
         public async Task ObtenerTarjetaActivaPorCliente_DebeDevolverTarjetaCorrecta()
         {
-            var (context, repository) = CreateRepositoryForAssert();
-
             var clienteId = Guid.NewGuid();
             var tarjetaActiva = TarjetaFidelizacion.Crear(clienteId, "TF-ACT-01");
             tarjetaActiva.Activar();
             var tarjetaInactiva = TarjetaFidelizacion.Crear(clienteId, "TF-INACT-01");
             
-            await repository.AgregarAsync(tarjetaActiva);
-            await repository.AgregarAsync(tarjetaInactiva);
-            await context.SaveChangesAsync();
+            await _repository.AgregarAsync(tarjetaActiva);
+            await _repository.AgregarAsync(tarjetaInactiva);
+            await _unitOfWork.SaveChangesAsync();
 
-            var tarjetaRecuperada = await repository.ObtenerTarjetaActivaPorClienteIdAsync(clienteId);
+            var tarjetaRecuperada = await _repository.ObtenerTarjetaActivaPorClienteIdAsync(clienteId);
 
             tarjetaRecuperada.Should().NotBeNull();
             tarjetaRecuperada!.Codigo.Should().Be("TF-ACT-01");

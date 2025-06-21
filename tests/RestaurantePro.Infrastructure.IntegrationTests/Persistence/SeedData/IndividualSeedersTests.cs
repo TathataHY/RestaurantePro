@@ -276,51 +276,51 @@ public class IndividualSeedersTests : IntegrationTestBase
 
     private async Task LimpiarUsuarios(RestauranteProDbContext context)
     {
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Usuarios");
+        context.Usuarios.RemoveRange(context.Usuarios);
         await context.SaveChangesAsync();
     }
 
     private async Task LimpiarProductos(RestauranteProDbContext context)
     {
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Productos");
+        context.Productos.RemoveRange(context.Productos);
         await context.SaveChangesAsync();
     }
 
     private async Task LimpiarIngredientes(RestauranteProDbContext context)
     {
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Ingredientes");
+        context.Ingredientes.RemoveRange(context.Ingredientes);
         await context.SaveChangesAsync();
     }
 
     private async Task LimpiarClientes(RestauranteProDbContext context)
     {
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Clientes");
+        context.Clientes.RemoveRange(context.Clientes);
         await context.SaveChangesAsync();
     }
 
     private async Task LimpiarMesas(RestauranteProDbContext context)
     {
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Mesas");
+        context.Mesas.RemoveRange(context.Mesas);
         await context.SaveChangesAsync();
     }
 
     private async Task LimpiarProveedores(RestauranteProDbContext context)
     {
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM ContactosProveedores");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Proveedores");
+        context.ContactosProveedor.RemoveRange(context.ContactosProveedor);
+        context.Proveedores.RemoveRange(context.Proveedores);
         await context.SaveChangesAsync();
     }
 
     private async Task LimpiarTodo(RestauranteProDbContext context)
     {
-        // Orden inverso de dependencias
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Mesas");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Clientes");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM ContactosProveedores");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Proveedores");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Ingredientes");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Productos");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Usuarios");
+        // Orden inverso de dependencias usando EF Core
+        context.Mesas.RemoveRange(context.Mesas);
+        context.Clientes.RemoveRange(context.Clientes);
+        context.ContactosProveedor.RemoveRange(context.ContactosProveedor);
+        context.Proveedores.RemoveRange(context.Proveedores);
+        context.Ingredientes.RemoveRange(context.Ingredientes);
+        context.Productos.RemoveRange(context.Productos);
+        context.Usuarios.RemoveRange(context.Usuarios);
         await context.SaveChangesAsync();
     }
 

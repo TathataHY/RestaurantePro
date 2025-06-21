@@ -30,14 +30,14 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptor
             _dispatcherMock = new Mock<IDomainEventDispatcher>();
         }
 
-        private TestDbContext CreateDbContext(AuditableEntityInterceptor interceptor)
+        private TestInterceptorDbContext CreateDbContext(AuditableEntityInterceptor interceptor)
         {
-            var options = new DbContextOptionsBuilder<RestauranteProDbContext>()
+            var options = new DbContextOptionsBuilder<TestInterceptorDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .AddInterceptors(interceptor)
                 .Options;
 
-            return new TestDbContext(options, _loggerDbContextMock.Object, _dispatcherMock.Object);
+            return new TestInterceptorDbContext(options);
         }
 
         [Fact]

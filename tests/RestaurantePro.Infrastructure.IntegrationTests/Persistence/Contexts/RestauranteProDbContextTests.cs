@@ -13,9 +13,9 @@ using Xunit;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Contexts;
 
-public class TestDbContextTests : IntegrationTestBase
+public class RestauranteProDbContextTests : IntegrationTestBase
 {
-    public TestDbContextTests(DatabaseFixture fixture) : base(fixture)
+    public RestauranteProDbContextTests(DatabaseFixture fixture) : base(fixture)
     {
     }
 

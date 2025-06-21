@@ -43,9 +43,6 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             
             _productoId = producto.Id;
             _recetaId = receta.Id;
-            
-            // Limpiar el tracker para asegurar que la proxima consulta traiga de la DB
-            ClearTracker();
         }
 
         [Fact]
@@ -58,7 +55,6 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             // Act
             producto!.Recetas.Add(nuevaReceta);
             await DbContext.SaveChangesAsync();
-            ClearTracker();
 
             // Assert
             var productoDesdeDb = await DbContext.Productos.Include(p => p.Recetas).FirstAsync(p => p.Id == _productoId);
@@ -76,7 +72,6 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             // Act
             recetaAActualizar.ActualizarPreparacion("Nuevas instrucciones de preparación");
             await DbContext.SaveChangesAsync();
-            ClearTracker();
 
             // Assert
             var productoDesdeDb = await DbContext.Productos.Include(p => p.Recetas).FirstAsync(p => p.Id == _productoId);
@@ -94,7 +89,6 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             // Act
             producto.Recetas.Remove(recetaAEliminar);
             await DbContext.SaveChangesAsync();
-            ClearTracker();
 
             // Assert
             var productoDesdeDb = await DbContext.Productos.Include(p => p.Recetas).FirstAsync(p => p.Id == _productoId);

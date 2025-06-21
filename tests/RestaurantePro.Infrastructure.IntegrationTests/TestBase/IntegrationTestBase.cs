@@ -1,62 +1,30 @@
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Moq;
-using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
-using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Infrastructure.Persistence.Interceptors;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
+using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+using NSubstitute;
+using System.Security.Claims;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Core.Usuarios.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
+using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
-using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
-using System;
-using Xunit;
-using System.Threading.Tasks;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
-using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
-using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
-using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
-using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
-using RestaurantePro.Domain.Core.Productos.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
-using RestaurantePro.Domain.Core.Usuarios.Interfaces;
-using RestaurantePro.Domain.Proveedores.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
-using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
-using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
-using Xunit.Abstractions;
-using RestaurantePro.Infrastructure.Identity.Models;
-using Microsoft.AspNetCore.Identity;
-using RestaurantePro.Infrastructure.Identity.Services;
-using System.IdentityModel.Tokens.Jwt;
-using Microsoft.Extensions.Options;
-using RestaurantePro.Infrastructure.Identity.Configuration;
-using RestaurantePro.Domain.Core.Base.Testing;
-using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
-using RestaurantePro.Infrastructure.DependencyInjection;
-using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
-using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Telemetry;
-using RestaurantePro.Infrastructure.Caching.Services;
-using RestaurantePro.Infrastructure.Monitoring.HealthChecks;
 
-namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
-{
+namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase;
+
+/// <summary>
+/// Clase base para tests de integración de infraestructura
+/// Proporciona una base de datos SQLite in-memory única para cada test
+/// </summary>
     [Collection("DatabaseCollection")]
     public abstract class IntegrationTestBase : IAsyncLifetime
     {
-        protected readonly ITestOutputHelper _output;
         protected readonly DatabaseFixture _fixture;
-        private IServiceScope _scope;
-        protected IServiceProvider ServiceProvider;
-        protected TestDbContext DbContext = null!;
+    protected RestauranteProDbContext DbContext = null!;
+    protected IServiceProvider ServiceProvider = null!;
 
         protected IntegrationTestBase(DatabaseFixture fixture)
         {
@@ -65,160 +33,179 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
 
         public virtual async Task InitializeAsync()
         {
-            TestEnvironment.SetTestEnvironment(true);
-
-            // Construir configuración en memoria para pruebas
-            var configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string>
-                {
-                    // Identity Settings
-                    {"IdentitySettings:PasswordSettings:RequireDigit", "true"},
-                    {"IdentitySettings:PasswordSettings:RequireLowercase", "true"},
-                    {"IdentitySettings:PasswordSettings:RequireUppercase", "true"},
-                    {"IdentitySettings:PasswordSettings:RequireNonAlphanumeric", "true"},
-                    {"IdentitySettings:PasswordSettings:RequiredLength", "8"},
-                    {"IdentitySettings:PasswordSettings:RequiredUniqueChars", "1"},
-                    
-                    {"IdentitySettings:LockoutSettings:AllowedForNewUsers", "true"},
-                    {"IdentitySettings:LockoutSettings:MaxFailedAccessAttempts", "5"},
-                    {"IdentitySettings:LockoutSettings:DefaultLockoutTimeSpan", "0.00:15:00"},
-
-                    {"IdentitySettings:UserSettings:RequireUniqueEmail", "true"},
-                    {"IdentitySettings:UserSettings:RequireConfirmedEmail", "false"},
-                    {"IdentitySettings:UserSettings:RequireConfirmedPhoneNumber", "false"},
-                    {"IdentitySettings:UserSettings:RequireConfirmedAccount", "false"},
-
-                    // JWT Settings
-                    {"JwtSettings:Secret", "TestSuperSecretKeyForJwtTokenGenerationLongEnough"},
-                    {"JwtSettings:Issuer", "test.issuer.com"},
-                    {"JwtSettings:Audience", "test.audience.com"},
-                    {"JwtSettings:ExpirationInMinutes", "60"},
-                    {"JwtSettings:RefreshTokenExpirationInDays", "7"}
-                })
-                .Build();
-
-            var services = new ServiceCollection();
-
-            services.AddSingleton<IConfiguration>(configuration);
-
-            var currentUserServiceMock = new Mock<ICurrentUserService>();
-            currentUserServiceMock.Setup(s => s.UserId).Returns("test-user");
-
-            var dateTimeServiceMock = new Mock<IDateTimeService>();
-            var fixedDate = new DateTime(2025, 6, 18, 12, 0, 0, DateTimeKind.Utc);
-            dateTimeServiceMock.Setup(s => s.UtcNow).Returns(fixedDate);
-            dateTimeServiceMock.Setup(s => s.Now).Returns(fixedDate.ToLocalTime());
-
-            var domainEventDispatcherMock = new Mock<IDomainEventDispatcher>();
-            var loggerInterceptorMock = new Mock<ILogger<AuditableEntityInterceptor>>();
-            var auditableEntityInterceptor = new AuditableEntityInterceptor(currentUserServiceMock.Object, dateTimeServiceMock.Object, loggerInterceptorMock.Object);
-
-            var loggerSoftDeleteInterceptorMock = new Mock<ILogger<SoftDeleteInterceptor>>();
-            var softDeleteInterceptor = new SoftDeleteInterceptor(
-                dateTimeServiceMock.Object,
-                currentUserServiceMock.Object,
-                loggerSoftDeleteInterceptorMock.Object);
-
-            services.AddSingleton(auditableEntityInterceptor);
-            services.AddSingleton(softDeleteInterceptor);
-            services.AddSingleton(Mock.Of<ILogger<RestauranteProDbContext>>());
-
-            services.AddScoped(provider =>
-            {
-                var optionsBuilder = new DbContextOptionsBuilder<RestauranteProDbContext>()
-                    .UseSqlite("DataSource=:memory:")
-                    .AddInterceptors(
-                        provider.GetRequiredService<AuditableEntityInterceptor>(),
-                        provider.GetRequiredService<SoftDeleteInterceptor>());
-
-                return new TestDbContext(
-                    optionsBuilder.Options,
-                    provider.GetRequiredService<ILogger<RestauranteProDbContext>>(),
-                    provider.GetRequiredService<IDomainEventDispatcher>()
-                );
-            });
-            
-            services.AddScoped<RestauranteProDbContext>(provider => provider.GetRequiredService<TestDbContext>());
-
-            // Usar el setup centralizado de Identity
-            services.AddIdentityServices(configuration);
-            
-            services.AddScoped<DbContext>(provider => provider.GetRequiredService<TestDbContext>());
-
-            services.AddSingleton(currentUserServiceMock.Object);
-            services.AddSingleton(dateTimeServiceMock.Object);
-            services.AddScoped<IDomainEventDispatcher, TestDomainEventDispatcher>();
-            
-            services.AddSingleton(Mock.Of<ILogger<UsuarioRepository>>());
-            services.AddSingleton(Mock.Of<ILogger<ProveedorRepository>>());
-            services.AddSingleton(Mock.Of<ILogger<NotificacionRepository>>());
-            services.AddSingleton(Mock.Of<ILogger<ProductoCategoriaRepository>>());
-            services.AddSingleton(Mock.Of<ILogger<OrdenCompraRepository>>());
-            services.AddSingleton(Mock.Of<ILogger<ProductoRepository>>());
-            services.AddSingleton(Mock.Of<ILogger<UnitOfWork>>());
-            services.AddSingleton(Mock.Of<ILogger<SoftDeleteInterceptor>>());
-            
-            services.AddSingleton<JwtSecurityTokenHandler>();
-            
-            services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
-
-            services.AddScoped<IUnitOfWork>(provider =>
-                new UnitOfWork(
-                    provider.GetRequiredService<RestauranteProDbContext>(),
-                    provider.GetRequiredService<ILogger<UnitOfWork>>()));
-
-            services.AddScoped<IClienteRepository, ClienteRepository>();
-            services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
-            services.AddScoped<IFacturaRepository, FacturaRepository>();
-            services.AddScoped<IMesaRepository, MesaRepository>();
-            services.AddScoped<IReservacionRepository, ReservacionRepository>();
-            services.AddScoped<IIngredienteRepository, IngredienteRepository>();
-            services.AddScoped<IOrdenCompraRepository, OrdenCompraRepository>();
-            services.AddScoped<IComandaRepository, ComandaRepository>();
-            services.AddScoped<IPreparacionRepository, PreparacionRepository>();
-            services.AddScoped<IProductoCategoriaRepository, ProductoCategoriaRepository>();
-            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
-            services.AddScoped<IProveedorRepository, ProveedorRepository>();
-            services.AddScoped<IContactoProveedorRepository, ContactoProveedorRepository>();
-            services.AddScoped<INotificacionRepository, NotificacionRepository>();
-            services.AddScoped<IProductoRepository, ProductoRepository>();
-
-            services.AddSingleton<IDateTimeService>(dateTimeServiceMock.Object);
-            services.AddSingleton<ICurrentUserService>(currentUserServiceMock.Object);
-
-            services.AddSingleton<ICacheTelemetry, InMemoryCacheTelemetry>();
-            services.AddSingleton<MemoryCacheService>();
-            services.AddSingleton<ICacheService>(sp => sp.GetRequiredService<MemoryCacheService>());
-
-            services.AddSingleton<DatabaseHealthCheck>();
-            
-            // Registrar SeedDataRunner para tests
-            services.AddSingleton<RestaurantePro.Infrastructure.Persistence.SeedData.Extensions.SeedDataRunner>();
-            
-            var serviceProvider = services.BuildServiceProvider();
-
-            _scope = serviceProvider.CreateScope();
-            ServiceProvider = _scope.ServiceProvider;
-            DbContext = ServiceProvider.GetRequiredService<TestDbContext>();
-
-            await ResetDatabaseAsync();
-        }
-
-        protected async Task ResetDatabaseAsync()
-        {
-            await DbContext.Database.EnsureDeletedAsync();
-            await DbContext.Database.EnsureCreatedAsync();
-        }
+        // Crear una base de datos única para este test
+        DbContext = _fixture.CreateDbContext();
         
-        protected void ClearTracker()
-        {
-            DbContext.ChangeTracker.Clear();
-        }
+        // Configurar servicios para este test
+            var services = new ServiceCollection();
+        ConfigureServices(services);
+        ServiceProvider = services.BuildServiceProvider();
+    }
 
-        public virtual Task DisposeAsync()
+    protected virtual void ConfigureServices(IServiceCollection services)
+    {
+        // Registrar el contexto de base de datos único para este test
+        services.AddScoped(provider => DbContext);
+        
+        // Registrar interceptores
+        services.AddScoped<AuditableEntityInterceptor>();
+        services.AddScoped<SoftDeleteInterceptor>();
+        
+        // Registrar dispatcher de eventos de dominio
+        services.AddScoped<IDomainEventDispatcher>(provider => 
+            Substitute.For<IDomainEventDispatcher>());
+
+        // Repositorios Core
+        services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+        services.AddScoped<INotificacionRepository, NotificacionRepository>();
+        // Repositorios Comercial
+            services.AddScoped<IClienteRepository, ClienteRepository>();
+        // Servicios de dominio y utilidades
+        services.AddScoped<IDateTimeService, FakeDateTimeService>();
+        services.AddScoped<IIdentityService, FakeIdentityService>();
+        services.AddScoped<IJwtTokenService, FakeJwtTokenService>();
+        services.AddScoped<IUserPermissionService, FakeUserPermissionService>();
+    }
+
+    /// <summary>
+    /// Limpia la base de datos después de cada test
+    /// </summary>
+    protected async Task ResetDatabaseAsync()
+    {
+        try
         {
-            _scope?.Dispose();
-            return Task.CompletedTask;
+            // 1. Limpiar entidades hijas primero (más dependientes)
+            DbContext.ItemsComanda.RemoveRange(DbContext.ItemsComanda);
+            DbContext.MovimientosInventario.RemoveRange(DbContext.MovimientosInventario);
+            DbContext.Notificaciones.RemoveRange(DbContext.Notificaciones);
+            await DbContext.SaveChangesAsync();
+
+            // 2. Limpiar entidades intermedias
+            DbContext.Comandas.RemoveRange(DbContext.Comandas);
+            DbContext.Reservaciones.RemoveRange(DbContext.Reservaciones);
+            DbContext.Preparaciones.RemoveRange(DbContext.Preparaciones);
+            DbContext.Facturas.RemoveRange(DbContext.Facturas);
+            DbContext.TarjetasFidelizacion.RemoveRange(DbContext.TarjetasFidelizacion);
+            DbContext.Promociones.RemoveRange(DbContext.Promociones);
+            DbContext.OrdenesCompra.RemoveRange(DbContext.OrdenesCompra);
+            DbContext.ContactosProveedor.RemoveRange(DbContext.ContactosProveedor);
+            await DbContext.SaveChangesAsync();
+
+            // 3. Limpiar entidades principales (menos dependientes)
+            DbContext.Mesas.RemoveRange(DbContext.Mesas);
+            DbContext.Clientes.RemoveRange(DbContext.Clientes);
+            DbContext.Proveedores.RemoveRange(DbContext.Proveedores);
+            DbContext.Ingredientes.RemoveRange(DbContext.Ingredientes);
+            DbContext.Productos.RemoveRange(DbContext.Productos);
+            DbContext.Usuarios.RemoveRange(DbContext.Usuarios);
+            DbContext.ProductoCategorias.RemoveRange(DbContext.ProductoCategorias);
+            await DbContext.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            // Si hay error, intentar limpiar de forma más agresiva
+            await CleanupDatabaseAggressively();
         }
     }
+
+    /// <summary>
+    /// Método de limpieza agresiva cuando el método normal falla
+    /// </summary>
+    private async Task CleanupDatabaseAggressively()
+    {
+        try
+        {
+            // Deshabilitar temporalmente las restricciones de clave foránea
+            await DbContext.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=OFF");
+            
+            // Limpiar todas las tablas en cualquier orden
+            var entityTypes = DbContext.Model.GetEntityTypes();
+            foreach (var entityType in entityTypes)
+            {
+                var tableName = entityType.GetTableName();
+                if (!string.IsNullOrEmpty(tableName))
+                {
+                    await DbContext.Database.ExecuteSqlRawAsync($"DELETE FROM \"{tableName}\"");
+                }
+            }
+            
+            // Rehabilitar las restricciones
+            await DbContext.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=ON");
+        }
+        catch (Exception ex)
+        {
+            // Si todo falla, al menos intentar limpiar las tablas principales
+            try
+            {
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM \"Usuarios\"");
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM \"Productos\"");
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM \"Clientes\"");
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM \"Mesas\"");
+            }
+            catch
+            {
+                // Si incluso esto falla, no hacer nada más
+            }
+        }
+    }
+
+    public virtual async Task DisposeAsync()
+    {
+        await ResetDatabaseAsync();
+        DbContext?.Dispose();
+    }
+}
+
+// Fakes para servicios de dominio
+public class FakeDateTimeService : IDateTimeService
+{
+    public DateTime Now => DateTime.Now;
+    public DateTime UtcNow => DateTime.UtcNow;
+    public DateTime Today => DateTime.Today;
+}
+
+public class FakeIdentityService : IIdentityService
+{
+    public Task<(Result Result, string UserId)> CreateUserAsync(string userName, string email, string password)
+        => Task.FromResult((Result.Success(), "fake-user-id"));
+    public Task<Result<string>> RegisterAsync(string nombre, string apellidos, string email, string username, string password, string rol)
+        => Task.FromResult(Result<string>.Success("fake-user-id"));
+    public Task<Result> CreateRoleAsync(string roleName, string description, bool isSystemRole)
+        => Task.FromResult(Result.Success());
+    public Task<AuthResponse> LoginAsync(string email, string password)
+        => Task.FromResult(new AuthResponse { Success = true, Message = "OK", Token = "fake-token", Expiration = DateTime.UtcNow.AddHours(1), UserId = "fake-user-id", UserName = "FakeUser", Roles = new List<string> { "Admin" } });
+    public Task<List<UserDto>> GetUsersAsync()
+        => Task.FromResult(new List<UserDto>());
+    public Task<UserDto> GetUserByIdAsync(string userId)
+        => Task.FromResult(new UserDto { Id = userId, UserName = "FakeUser", Email = "fake@email.com", EmailConfirmed = true, Roles = new List<string> { "Admin" } });
+    public Task<Result> UpdateUserAsync(string id, string nombre, string apellidos, string email, string username)
+        => Task.FromResult(Result.Success());
+    public Task<Result> DeleteUserAsync(string userId)
+        => Task.FromResult(Result.Success());
+    public Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        => Task.FromResult(Result.Success());
+    public Task<Result<AuthResponse>> AuthenticateAsync(string email, string password)
+        => Task.FromResult(Result<AuthResponse>.Success(new AuthResponse { Success = true, Message = "OK", Token = "fake-token", Expiration = DateTime.UtcNow.AddHours(1), UserId = "fake-user-id", UserName = "FakeUser", Roles = new List<string> { "Admin" } }));
+    public Task<Result<AuthResponse>> RefreshTokenAsync(string token, string refreshToken)
+        => Task.FromResult(Result<AuthResponse>.Success(new AuthResponse { Success = true, Message = "OK", Token = "fake-token", Expiration = DateTime.UtcNow.AddHours(1), UserId = "fake-user-id", UserName = "FakeUser", Roles = new List<string> { "Admin" } }));
+}
+
+public class FakeJwtTokenService : IJwtTokenService
+{
+    public JwtTokenResponse GenerateToken(string userId, string userName, string email, IList<string> roles)
+        => new JwtTokenResponse { AccessToken = "fake-jwt-token", TokenType = "Bearer", ExpiresIn = 3600, RequiresRefresh = false };
+    public string GenerateRefreshToken() => "fake-refresh-token";
+    public ClaimsPrincipal GetPrincipalFromExpiredToken(string token) => new ClaimsPrincipal();
+}
+
+public class FakeUserPermissionService : IUserPermissionService
+{
+    public Task<bool> UsuarioTienePermisoAsync(Guid usuarioId, string permiso) => Task.FromResult(true);
+    public Task<bool> UsuarioTieneRolAsync(Guid usuarioId, string rol) => Task.FromResult(true);
+    public Task<bool> UsuarioTieneNivelAccesoAsync(Guid usuarioId, int nivelRequerido) => Task.FromResult(true);
+    public Task<List<string>> ObtenerPermisosUsuarioAsync(Guid usuarioId) => Task.FromResult(new List<string>());
+    public Task<List<Guid>> ObtenerSubordinadosAsync(Guid supervisorId) => Task.FromResult(new List<Guid>());
+    public Task<bool> PuedeSupervisarAsync(Guid supervisorId, Guid subordinadoId) => Task.FromResult(true);
+    public Task<List<Guid>> ObtenerUsuariosMismoDepartamentoAsync(Guid usuarioId) => Task.FromResult(new List<Guid>());
+    public Task<bool> EsAdministradorAsync(Guid usuarioId) => Task.FromResult(true);
 } 

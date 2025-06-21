@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
@@ -7,31 +8,45 @@ using NSubstitute;
 namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase;
 
 /// <summary>
-/// Fixture para proporcionar una base de datos de prueba compartida
+/// Fixture para proporcionar una base de datos de prueba única por test
 /// </summary>
 public class DatabaseFixture : IDisposable
 {
-    public RestauranteProDbContext DbContext { get; }
+    private SqliteConnection? _connection;
+    private RestauranteProDbContext? _dbContext;
 
-    public DatabaseFixture()
+    public RestauranteProDbContext CreateDbContext()
     {
-        // Configurar SQLite in-memory para soporte de transacciones reales
+        // Crear una conexión SQLite in-memory única para cada test
+        _connection = new SqliteConnection($"DataSource=test_{Guid.NewGuid()}.db;Mode=Memory;Cache=Shared");
+        _connection.Open();
+
         var options = new DbContextOptionsBuilder<RestauranteProDbContext>()
-            .UseSqlite("DataSource=:memory:")
+            .UseSqlite(_connection)
             .Options;
 
         // Crear mocks para los servicios requeridos
         var logger = Substitute.For<ILogger<RestauranteProDbContext>>();
         var dispatcher = Substitute.For<IDomainEventDispatcher>();
 
-        DbContext = new RestauranteProDbContext(options, logger, dispatcher);
-        DbContext.Database.OpenConnection();
-        DbContext.Database.EnsureCreated();
+        _dbContext = new RestauranteProDbContext(options, logger, dispatcher);
+        _dbContext.Database.EnsureCreated();
+        
+        return _dbContext;
+    }
+
+    public SqliteConnection CreateConnection()
+    {
+        // Crear una conexión SQLite in-memory única para cada test
+        _connection = new SqliteConnection($"DataSource=test_{Guid.NewGuid()}.db;Mode=Memory;Cache=Shared");
+        _connection.Open();
+        return _connection;
     }
 
     public void Dispose()
     {
-        DbContext?.Dispose();
+        _dbContext?.Dispose();
+        _connection?.Dispose();
     }
 }
 

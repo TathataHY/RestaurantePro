@@ -35,6 +35,19 @@ using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 using RestaurantePro.Domain.Core.Usuarios.Services;
 using Microsoft.Data.Sqlite;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
+using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
+using RestaurantePro.Domain.Operaciones.Mesas.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
+using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
+using RestaurantePro.Domain.Core.Base.UnitOfWork;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -126,8 +139,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // 🔔 INotificationService - necesario para Commands como DesactivarCliente
             services.AddScoped<INotificationService, NotificationService>();
             
-            // 📧 IEmailService - necesario para Commands como DesactivarCliente
-            services.AddScoped<IEmailService, EmailService>();
+            // 📧 IEmailService - Mock para evitar errores en tests
+            services.AddScoped<IEmailService, TestEmailService>();
             
             // 👤 ICurrentUserService - necesario para CrearUsuarioHandler
             services.AddScoped<ICurrentUserService, TestCurrentUserService>();
@@ -136,16 +149,12 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IProductoRepository, ProductoRepository>();
             
             // 📦 REGISTRAR REPOSITORIOS CORE
-            services.AddScoped<IUsuarioRepository>(provider => 
-                new UsuarioRepository(
-                    provider.GetRequiredService<RestauranteProDbContext>(),
-                    provider.GetRequiredService<ILogger<UsuarioRepository>>()));
+            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             
             // 📦 REGISTRAR REPOSITORIOS COMERCIAL
-            services.AddScoped<IClienteRepository>(provider => 
-                new ClienteRepository(
-                    provider.GetRequiredService<RestauranteProDbContext>(),
-                    provider.GetRequiredService<ILogger<ClienteRepository>>()));
+            services.AddScoped<IClienteRepository, ClienteRepository>();
+            services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
+            services.AddScoped<IFacturaRepository, FacturaRepository>();
             
             // 📦 REGISTRAR REPOSITORIOS INVENTARIO
             services.AddScoped<IOrdenCompraRepository>(provider => 
@@ -177,10 +186,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // 📦 REGISTRAR SERVICIOS DE USUARIOS
             services.AddScoped<IUsuarioService, UsuarioService>();
             
-            services.AddScoped<INotificacionRepository>(provider => 
-                new NotificacionRepository(
-                    provider.GetRequiredService<RestauranteProDbContext>(),
-                    provider.GetRequiredService<ILogger<NotificacionRepository>>()));
+            services.AddScoped<INotificacionRepository, NotificacionRepository>();
             
             // 📦 REGISTRAR REPOSITORIOS OPERACIONES
             services.AddScoped<IPreparacionRepository>(provider => 
@@ -223,6 +229,17 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 db.Database.EnsureCreated();
                 // db.Database.Migrate(); // Si tienes migraciones
             }
+
+            // Repositorios Base
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            // Servicios de dominio y utilidades
+            services.AddScoped<IDateTimeService, DateTimeService>();
+
+            // Fakes para servicios de identidad y permisos
+            services.AddScoped<IIdentityService, FakeIdentityService>();
+            services.AddScoped<IJwtTokenService, FakeJwtTokenService>();
+            services.AddScoped<IUserPermissionService, FakeUserPermissionService>();
         });
 
         builder.UseEnvironment("Testing");
@@ -285,6 +302,80 @@ public class TestCurrentUserService : ICurrentUserService
 }
 
 /// <summary>
+/// Mock del servicio de email para tests de integración
+/// Evita errores de dirección nula y no envía correos reales
+/// </summary>
+public class TestEmailService : IEmailService
+{
+    private readonly ILogger<TestEmailService> _logger;
+
+    public TestEmailService(ILogger<TestEmailService> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<bool> SendEmailAsync(string to, string subject, string body)
+    {
+        // En tests, solo loguear que se intentó enviar el email
+        _logger.LogInformation("📧 [TEST] Email simulado enviado a {To} con asunto: {Subject}", to, subject);
+        
+        // Simular un pequeño delay para hacer el método async
+        await Task.Delay(1);
+        
+        // Siempre retornar true para simular éxito
+        return true;
+    }
+
+    public async Task<bool> SendEmailAsync(string to, string subject, string body, string? attachmentPath = null)
+    {
+        // En tests, solo loguear que se intentó enviar el email con adjunto
+        _logger.LogInformation("📧 [TEST] Email con adjunto simulado enviado a {To} con asunto: {Subject}", to, subject);
+        
+        // Simular un pequeño delay para hacer el método async
+        await Task.Delay(1);
+        
+        // Siempre retornar true para simular éxito
+        return true;
+    }
+
+    public async Task<bool> SendHtmlEmailAsync(string to, string subject, string htmlBody)
+    {
+        // En tests, solo loguear que se intentó enviar el email HTML
+        _logger.LogInformation("📧 [TEST] Email HTML simulado enviado a {To} con asunto: {Subject}", to, subject);
+        
+        // Simular un pequeño delay para hacer el método async
+        await Task.Delay(1);
+        
+        // Siempre retornar true para simular éxito
+        return true;
+    }
+
+    public async Task<bool> SendBulkEmailAsync(List<string> toAddresses, string subject, string body)
+    {
+        // En tests, solo loguear que se intentó enviar el email masivo
+        _logger.LogInformation("📧 [TEST] Email masivo simulado enviado a {Count} destinatarios con asunto: {Subject}", toAddresses.Count, subject);
+        
+        // Simular un pequeño delay para hacer el método async
+        await Task.Delay(1);
+        
+        // Siempre retornar true para simular éxito
+        return true;
+    }
+
+    public async Task<bool> SendEmailWithAttachmentAsync(string to, string subject, string body, string attachmentPath)
+    {
+        // En tests, solo loguear que se intentó enviar el email con adjunto
+        _logger.LogInformation("📧 [TEST] Email con adjunto simulado enviado a {To} con asunto: {Subject}", to, subject);
+        
+        // Simular un pequeño delay para hacer el método async
+        await Task.Delay(1);
+        
+        // Siempre retornar true para simular éxito
+        return true;
+    }
+}
+
+/// <summary>
 /// Definición de la colección Sequential para tests de integración de API
 /// Permite que xUnit inyecte correctamente el TestWebApplicationFactory
 /// </summary>
@@ -293,4 +384,65 @@ public class SequentialCollection : ICollectionFixture<TestWebApplicationFactory
 {
     // Esta clase no necesita implementación
     // Solo define la colección para xUnit
+}
+
+// Fake para IIdentityService
+public class FakeIdentityService : IIdentityService
+{
+    public Task<(Result Result, string UserId)> CreateUserAsync(string userName, string email, string password)
+        => Task.FromResult((Result.Success(), "fake-user-id"));
+    
+    public Task<Result<string>> RegisterAsync(string nombre, string apellidos, string email, string username, string password, string rol)
+        => Task.FromResult(Result.Success("fake-user-id"));
+    
+    public Task<Result> CreateRoleAsync(string roleName, string description, bool isSystemRole)
+        => Task.FromResult(Result.Success());
+    
+    public Task<AuthResponse> LoginAsync(string email, string password)
+        => Task.FromResult(new AuthResponse { Success = true, Message = "OK", Token = "fake-token", Expiration = DateTime.UtcNow.AddHours(1), UserId = "fake-user-id", UserName = "FakeUser", Roles = new List<string> { "Admin" } });
+    
+    public Task<List<UserDto>> GetUsersAsync()
+        => Task.FromResult(new List<UserDto>());
+    
+    public Task<UserDto> GetUserByIdAsync(string userId)
+        => Task.FromResult(new UserDto { Id = userId, UserName = "FakeUser", Email = "fake@email.com", EmailConfirmed = true, Roles = new List<string> { "Admin" } });
+    
+    public Task<Result> UpdateUserAsync(string id, string nombre, string apellidos, string email, string username)
+        => Task.FromResult(Result.Success());
+    
+    public Task<Result> DeleteUserAsync(string userId)
+        => Task.FromResult(Result.Success());
+    
+    public Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        => Task.FromResult(Result.Success());
+    
+    public Task<Result<AuthResponse>> AuthenticateAsync(string email, string password)
+        => Task.FromResult(Result.Success(new AuthResponse { Success = true, Message = "OK", Token = "fake-token", Expiration = DateTime.UtcNow.AddHours(1), UserId = "fake-user-id", UserName = "FakeUser", Roles = new List<string> { "Admin" } }));
+    
+    public Task<Result<AuthResponse>> RefreshTokenAsync(string token, string refreshToken)
+        => Task.FromResult(Result.Success(new AuthResponse { Success = true, Message = "OK", Token = "fake-token", Expiration = DateTime.UtcNow.AddHours(1), UserId = "fake-user-id", UserName = "FakeUser", Roles = new List<string> { "Admin" } }));
+}
+
+// Fake para IJwtTokenService
+public class FakeJwtTokenService : IJwtTokenService
+{
+    public JwtTokenResponse GenerateToken(string userId, string userName, string email, IList<string> roles)
+        => new JwtTokenResponse { AccessToken = "fake-jwt-token", TokenType = "Bearer", ExpiresIn = 3600, RequiresRefresh = false };
+    
+    public string GenerateRefreshToken() => "fake-refresh-token";
+    
+    public ClaimsPrincipal GetPrincipalFromExpiredToken(string token) => new ClaimsPrincipal();
+}
+
+// Fake para IUserPermissionService
+public class FakeUserPermissionService : IUserPermissionService
+{
+    public Task<bool> UsuarioTienePermisoAsync(Guid usuarioId, string permiso) => Task.FromResult(true);
+    public Task<bool> UsuarioTieneRolAsync(Guid usuarioId, string rol) => Task.FromResult(true);
+    public Task<bool> UsuarioTieneNivelAccesoAsync(Guid usuarioId, int nivelRequerido) => Task.FromResult(true);
+    public Task<List<string>> ObtenerPermisosUsuarioAsync(Guid usuarioId) => Task.FromResult(new List<string>());
+    public Task<List<Guid>> ObtenerSubordinadosAsync(Guid supervisorId) => Task.FromResult(new List<Guid>());
+    public Task<bool> PuedeSupervisarAsync(Guid supervisorId, Guid subordinadoId) => Task.FromResult(true);
+    public Task<List<Guid>> ObtenerUsuariosMismoDepartamentoAsync(Guid usuarioId) => Task.FromResult(new List<Guid>());
+    public Task<bool> EsAdministradorAsync(Guid usuarioId) => Task.FromResult(true);
 }

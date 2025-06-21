@@ -157,14 +157,14 @@ public class SeedDataIntegrationTests : IntegrationTestBase
 
     private async Task LimpiarBaseDeDatos(RestauranteProDbContext context)
     {
-        // Limpiar en orden inverso de dependencias
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Mesas");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Clientes");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM ContactosProveedores");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Proveedores");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Ingredientes");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Productos");
-        await context.Database.ExecuteSqlRawAsync("DELETE FROM Usuarios");
+        // Limpiar en orden inverso de dependencias usando EF Core
+        context.Mesas.RemoveRange(context.Mesas);
+        context.Clientes.RemoveRange(context.Clientes);
+        context.ContactosProveedor.RemoveRange(context.ContactosProveedor);
+        context.Proveedores.RemoveRange(context.Proveedores);
+        context.Ingredientes.RemoveRange(context.Ingredientes);
+        context.Productos.RemoveRange(context.Productos);
+        context.Usuarios.RemoveRange(context.Usuarios);
         
         await context.SaveChangesAsync();
     }
