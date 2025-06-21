@@ -298,20 +298,30 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ### IngredientesController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 10/10 (🟢 Tests Completos)
+- **Tests**: 10/10 (🟢 Parcialmente Completos, 🟡 Parcialmente Básicos)
 - **Base URL**: `/api/inventario/ingredientes`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
 | `/` | GET | `✅/✅` | Obtener todos los ingredientes | ✅ PASSING (🟢 Completo) |
 | `/{id}` | GET | `✅/✅` | Obtener ingrediente por ID | ✅ PASSING (🟢 Completo) |
 | `/` | POST | `✅/✅` | Crear nuevo ingrediente | ✅ PASSING (🟢 Completo) |
-| `/{id}` | PUT | `✅/✅` | Actualizar ingrediente | ✅ PASSING (501) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar ingrediente | ✅ PASSING (501) |
-| `/{id}/movimientos` | GET | `✅/✅` | Obtener movimientos de ingrediente | ✅ PASSING (501) |
-| `/{id}/movimientos` | POST | `✅/✅` | Registrar movimiento de stock | ✅ PASSING (501) |
+| `/{id}` | PUT | `✅/✅` | Actualizar ingrediente | ✅ PASSING (🟡 Básico) |
+| `/{id}` | DELETE | `✅/✅` | Eliminar ingrediente | ✅ PASSING (🟡 Básico) |
+| `/{id}/movimientos` | GET | `✅/✅` | Obtener movimientos de ingrediente | ✅ PASSING (🟡 Básico) |
+| `/{id}/movimientos` | POST | `✅/✅` | Registrar movimiento de stock | ✅ PASSING (🟡 Básico) |
 | `/bajo-stock` | GET | `✅/✅` | Obtener ingredientes con stock bajo | ✅ PASSING (🟢 Completo) |
-| `/{id}/asociar-proveedor/{proveedorId}` | POST | `✅/✅` | Asociar un proveedor a un ingrediente | ✅ PASSING (501) |
-| `/reporte/valoracion` | GET | `✅/✅` | Generar reporte de valoración | ✅ PASSING (501) |
+| `/{id}/asociar-proveedor/{proveedorId}` | POST | `✅/✅` | Asociar un proveedor a un ingrediente | ✅ PASSING (🟡 Básico) |
+| `/reporte/valoracion` | GET | `✅/✅` | Generar reporte de valoración | ✅ PASSING (🟡 Básico) |
+
+#### **Checklist de migración a tests completos pendientes:**
+- [ ] PUT `/{id}` (Actualizar ingrediente)
+- [ ] DELETE `/{id}` (Eliminar ingrediente)
+- [ ] GET `/{id}/movimientos` (Obtener movimientos)
+- [ ] POST `/{id}/movimientos` (Registrar movimiento)
+- [ ] POST `/{id}/asociar-proveedor/{proveedorId}` (Asociar proveedor)
+- [ ] GET `/reporte/valoracion` (Reporte valoración)
+
+> **Nota:** Solo los endpoints de listado, detalle, creación y bajo stock tienen tests completos. El resto requieren migración a tests completos para validar interacción real con la BD y lógica de negocio.
 
 ### ReportesInventarioController
 - **Estado**: ✅/✅ (Refactorizado)

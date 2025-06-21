@@ -40,6 +40,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         public DbSet<Domain.Comercial.Clientes.Entities.Cliente> Clientes { get; set; }
         public DbSet<Domain.Comercial.Clientes.Entities.TarjetaFidelizacion> TarjetasFidelizacion { get; set; }
         public DbSet<Domain.Comercial.Facturacion.Entities.Factura> Facturas { get; set; }
+        public DbSet<Domain.Comercial.Promociones.Entities.Promocion> Promociones { get; set; }
         public DbSet<Domain.Operaciones.Comandas.Entities.Comanda> Comandas { get; set; }
         public DbSet<Domain.Operaciones.Comandas.Entities.ItemComanda> ItemsComanda { get; set; }
         public DbSet<Domain.Operaciones.Reservaciones.Entities.Reservacion> Reservaciones { get; set; }

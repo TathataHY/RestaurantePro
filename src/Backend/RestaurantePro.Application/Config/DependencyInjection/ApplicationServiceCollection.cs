@@ -64,8 +64,8 @@ public static class ApplicationServiceCollection
     /// </summary>
     private static IServiceCollection AddMediatrServices(this IServiceCollection services)
     {
-        // Registrar MediatR desde el assembly actual
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+        // Registrar MediatR desde el assembly actual (versión 11.x compatible)
+        services.AddMediatR(Assembly.GetExecutingAssembly());
 
         // Registrar behaviors del pipeline (en orden de ejecución)
         // 1. Exception Handling - Para capturar y convertir excepciones

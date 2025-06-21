@@ -26,7 +26,7 @@ public class AuditingBehaviorTests
         _mockCurrentUserService.Setup(x => x.UserId).Returns("user123");
         _mockCurrentUserService.Setup(x => x.UserName).Returns("testuser");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -55,7 +55,7 @@ public class AuditingBehaviorTests
         _mockCurrentUserService.Setup(x => x.UserId).Returns("user123");
         _mockCurrentUserService.Setup(x => x.UserName).Returns("testuser");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -84,7 +84,7 @@ public class AuditingBehaviorTests
         _mockCurrentUserService.Setup(x => x.UserId).Returns("user123");
         _mockCurrentUserService.Setup(x => x.UserName).Returns("testuser");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw exception;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
 
         // Act & Assert
         await Assert.ThrowsAsync<Exception>(() => 
@@ -111,7 +111,7 @@ public class AuditingBehaviorTests
         var query = new ObtenerProductoPorIdQuery(Guid.NewGuid());
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await queryBehavior.Handle(query, nextDelegate, CancellationToken.None);
@@ -139,7 +139,7 @@ public class AuditingBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await behaviorSinUser.Handle(command, nextDelegate, CancellationToken.None);
@@ -169,7 +169,7 @@ public class AuditingBehaviorTests
         _mockCurrentUserService.Setup(x => x.UserName).Returns("testuser");
         _mockCurrentUserService.Setup(x => x.IsAuthenticated).Returns(true);
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -197,7 +197,7 @@ public class AuditingBehaviorTests
         
         _mockCurrentUserService.Setup(x => x.UserId).Returns("user123");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -229,7 +229,7 @@ public class AuditingBehaviorTests
         
         _mockCurrentUserService.Setup(x => x.UserId).Returns("user123");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -260,7 +260,7 @@ public class AuditingBehaviorTests
         
         _mockCurrentUserService.Setup(x => x.UserId).Returns("user123");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -291,7 +291,7 @@ public class AuditingBehaviorTests
         
         _mockCurrentUserService.Setup(x => x.UserId).Returns("user123");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -324,7 +324,7 @@ public class AuditingBehaviorTests
         
         _mockCurrentUserService.Setup(x => x.UserId).Returns("user123");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         await _behavior.Handle(command1, nextDelegate, CancellationToken.None);

@@ -26,7 +26,15 @@ namespace RestaurantePro.Application.Common.Behaviors
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error en solicitud {RequestName}: {ErrorMessage}", requestName, ex.Message);
+                // Las ValidationException son parte normal del flujo de validación, no errores del sistema
+                if (ex is RestaurantePro.Application.Common.Exceptions.ValidationException)
+                {
+                    _logger.LogWarning(ex, "Validación fallida en solicitud {RequestName}: {ErrorMessage}", requestName, ex.Message);
+                }
+                else
+                {
+                    _logger.LogError(ex, "Error en solicitud {RequestName}: {ErrorMessage}", requestName, ex.Message);
+                }
                 throw;
             }
         }

@@ -62,7 +62,7 @@ public class UsuariosController : ControllerBase
         if (!result.Succeeded)
         {
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                new List<string> { result.Error },
+                new List<string> { result.Error ?? "Error desconocido" },
                 "Error al obtener usuarios",
                 StatusCodes.Status400BadRequest);
             return BadRequest(errorResponse);
@@ -90,7 +90,7 @@ public class UsuariosController : ControllerBase
         if (!result.Succeeded)
         {
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                new List<string> { result.Error },
+                new List<string> { result.Error ?? "Error desconocido" },
                 "Usuario no encontrado",
                 StatusCodes.Status404NotFound);
             return NotFound(errorResponse);
@@ -126,7 +126,7 @@ public class UsuariosController : ControllerBase
         }
 
         return BadRequest(ApiResponse<object>.ErrorResponse(
-            new List<string> { result.Error },
+            new List<string> { result.Error ?? "Error desconocido" },
             "Error al crear usuario",
             StatusCodes.Status400BadRequest));
     }
@@ -184,7 +184,7 @@ public class UsuariosController : ControllerBase
         if (!result.Succeeded)
         {
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                new List<string> { result.Error },
+                new List<string> { result.Error ?? "Error desconocido" },
                 "Error al eliminar usuario",
                 StatusCodes.Status404NotFound);
             return NotFound(errorResponse);
@@ -215,7 +215,7 @@ public class UsuariosController : ControllerBase
         if (!result.Succeeded)
         {
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                new List<string> { result.Error },
+                new List<string> { result.Error ?? "Error desconocido" },
                 "Perfil no encontrado",
                 StatusCodes.Status404NotFound);
             return NotFound(errorResponse);
@@ -245,12 +245,12 @@ public class UsuariosController : ControllerBase
 
         if (!result.Succeeded)
         {
-            var statusCode = result.Error.Contains("no encontrado") 
+            var statusCode = result.Error?.Contains("no encontrado") == true
                 ? StatusCodes.Status404NotFound 
                 : StatusCodes.Status400BadRequest;
                 
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                new List<string> { result.Error }, "Error al cambiar rol", statusCode);
+                new List<string> { result.Error ?? "Error desconocido" }, "Error al cambiar rol", statusCode);
             return StatusCode(statusCode, errorResponse);
         }
 
@@ -279,7 +279,7 @@ public class UsuariosController : ControllerBase
         if (!result.Succeeded)
         {
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                new List<string> { result.Error },
+                new List<string> { result.Error ?? "Error desconocido" },
                 "Error al resetear contraseña",
                 StatusCodes.Status404NotFound);
             return NotFound(errorResponse);

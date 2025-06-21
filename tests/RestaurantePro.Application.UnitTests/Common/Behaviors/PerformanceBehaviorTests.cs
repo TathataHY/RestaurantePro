@@ -41,7 +41,7 @@ public class PerformanceBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         _mockTimeProvider.Setup(x => x.GetElapsedTime(It.IsAny<long>())).Returns(TimeSpan.FromMilliseconds(10));
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -77,7 +77,7 @@ public class PerformanceBehaviorTests
         var expectedResult = Result.Success(new ProductoDto());
         _mockTimeProvider.Setup(x => x.GetElapsedTime(It.IsAny<long>())).Returns(TimeSpan.FromMilliseconds(delayMs));
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -117,7 +117,7 @@ public class PerformanceBehaviorTests
         var exception = new Exception("Error de test");
         _mockTimeProvider.Setup(x => x.GetElapsedTime(It.IsAny<long>())).Returns(TimeSpan.FromMilliseconds(10));
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw exception;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
 
         // Act & Assert
         var thrownException = await Assert.ThrowsAsync<Exception>(() => 
@@ -143,7 +143,7 @@ public class PerformanceBehaviorTests
         };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Especial" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -167,7 +167,7 @@ public class PerformanceBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -202,7 +202,7 @@ public class PerformanceBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act - Ejecutar múltiples veces
         await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -224,7 +224,7 @@ public class PerformanceBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -245,7 +245,7 @@ public class PerformanceBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -268,7 +268,7 @@ public class PerformanceBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var exception = new Exception("Error de test");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw exception;
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw exception;
 
         // Act & Assert
         await Assert.ThrowsAsync<Exception>(() => 
@@ -286,7 +286,7 @@ public class PerformanceBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -312,7 +312,7 @@ public class PerformanceBehaviorTests
         var command = new CrearProductoCommand { Nombre = "Pizza Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act - Ejecutar operaciones simultáneas
         var tasks = Enumerable.Range(0, 5)

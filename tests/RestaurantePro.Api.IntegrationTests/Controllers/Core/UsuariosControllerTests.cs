@@ -226,7 +226,6 @@ public class UsuariosControllerTests : ApiIntegrationTestBase, IDisposable
     {
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: PostUsuario_ConDatosInvalidos_DebeRetornar400");
-        
         var command = new UsuarioTestDataBuilder().BuildUsuarioInvalido();
 
         // Act
@@ -237,8 +236,9 @@ public class UsuariosControllerTests : ApiIntegrationTestBase, IDisposable
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
-        VerificarRespuestaError(response, apiResponse);
-        
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeFalse();
+        apiResponse.Errors.Should().NotBeEmpty();
         Logger.LogInformation("✅ Test completado - datos inválidos correctamente rechazados");
     }
 

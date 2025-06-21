@@ -48,7 +48,15 @@ public class TransactionBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error en transacción para {RequestName}. Realizando rollback.", requestName);
+            // Las ValidationException son parte normal del flujo de validación, no errores del sistema
+            if (ex is RestaurantePro.Application.Common.Exceptions.ValidationException)
+            {
+                _logger.LogWarning(ex, "Validación fallida en transacción para {RequestName}. Realizando rollback.", requestName);
+            }
+            else
+            {
+                _logger.LogError(ex, "Error en transacción para {RequestName}. Realizando rollback.", requestName);
+            }
             
             // TODO: Descomentar cuando se implemente DbContext
             // await transaction.RollbackAsync(cancellationToken);

@@ -29,10 +29,10 @@ namespace RestaurantePro.Application.Common.Behaviors
 
                 if (failures.Any())
                 {
-                    _logger.LogError("❌ Errores de validación en {RequestType}:", typeof(TRequest).Name);
+                    _logger.LogWarning("⚠️ Errores de validación en {RequestType}:", typeof(TRequest).Name);
                     foreach (var failure in failures)
                     {
-                        _logger.LogError("   - {PropertyName}: {ErrorMessage}", failure.PropertyName, failure.ErrorMessage);
+                        _logger.LogWarning("   - {PropertyName}: {ErrorMessage}", failure.PropertyName, failure.ErrorMessage);
                     }
                     
                     throw new RestaurantePro.Application.Common.Exceptions.ValidationException(failures);

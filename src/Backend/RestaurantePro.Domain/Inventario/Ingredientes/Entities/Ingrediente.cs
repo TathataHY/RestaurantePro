@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Inventario.Ingredientes.Events.Ingrediente;
+
 namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
 {
     /// <summary>
@@ -180,7 +182,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
                 CostoPromedio = 0
             };
 
-            ingrediente.AddDomainEvent(new Events.Ingrediente.IngredienteCreado(ingrediente.Id, nombre));
+            ingrediente.AddDomainEvent(new IngredienteCreado(ingrediente.Id, nombre));
 
             return ingrediente;
         }
@@ -230,7 +232,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             ValidarInvariantes();
 
             // Emitir evento de stock actualizado
-            AddDomainEvent(new Events.Ingrediente.StockActualizado(Id, Nombre, Stock));
+            AddDomainEvent(new StockActualizado(Id, Nombre, Stock));
 
             return movimiento;
         }
@@ -276,12 +278,12 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             ValidarInvariantes();
 
             // Emitir evento de stock actualizado
-            AddDomainEvent(new Events.Ingrediente.StockActualizado(Id, Nombre, Stock));
+            AddDomainEvent(new StockActualizado(Id, Nombre, Stock));
 
             // Si el stock cae por debajo del mínimo, generar evento
             if (Stock < StockMinimo)
             {
-                AddDomainEvent(new Events.Ingrediente.StockBajoMinimo(Id, Nombre, Stock, StockMinimo));
+                AddDomainEvent(new StockBajoMinimo(Id, Nombre, Stock, StockMinimo));
             }
 
             return movimiento;
@@ -309,7 +311,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             // Emitir evento de reserva (no modifica stock físico)
             // TODO: Implementar evento StockReservado
             // AddDomainEvent(new Events.Ingrediente.StockReservado(Id, Nombre, cantidad, motivo));
-            AddDomainEvent(new Events.Ingrediente.StockReservado(Id, Nombre, cantidad, motivo));
+            AddDomainEvent(new StockReservado(Id, Nombre, cantidad, motivo));
         }
 
         /// <summary>
@@ -333,12 +335,12 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             // TODO: Implementar evento StockMinimoActualizado
             // AddDomainEvent(new Events.Ingrediente.StockMinimoActualizado(Id, Nombre, stockMinimoAnterior, nuevoStockMinimo));
 
-            AddDomainEvent(new Events.Ingrediente.StockMinimoActualizado(Id, Nombre, stockMinimoAnterior, nuevoStockMinimo));
+            AddDomainEvent(new StockMinimoActualizado(Id, Nombre, stockMinimoAnterior, nuevoStockMinimo));
 
             // Verificar si el stock actual está por debajo del nuevo mínimo
             if (Stock < StockMinimo)
             {
-                AddDomainEvent(new Events.Ingrediente.StockBajoMinimo(Id, Nombre, Stock, StockMinimo));
+                AddDomainEvent(new StockBajoMinimo(Id, Nombre, Stock, StockMinimo));
             }
         }
 
@@ -355,7 +357,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             MarkAsModified();
             ValidarInvariantes();
 
-            AddDomainEvent(new Events.Ingrediente.IngredienteDesactivado(Id, Nombre));
+            AddDomainEvent(new IngredienteDesactivado(Id, Nombre));
         }
 
         /// <summary>
@@ -371,7 +373,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             MarkAsModified();
             ValidarInvariantes();
 
-            AddDomainEvent(new Events.Ingrediente.IngredienteActivado(Id, Nombre));
+            AddDomainEvent(new IngredienteActivado(Id, Nombre));
         }
 
         /// <summary>
@@ -389,7 +391,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             ProveedorPrincipalId = proveedorId;
             MarkAsModified();
 
-            AddDomainEvent(new Events.Ingrediente.ProveedorPrincipalAsociado(Id, proveedorId));
+            AddDomainEvent(new ProveedorPrincipalAsociado(Id, proveedorId));
         }
 
         /// <summary>
@@ -408,7 +410,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             // TODO: Implementar evento RotacionActualizada
             // AddDomainEvent(new Events.Ingrediente.RotacionActualizada(Id, Nombre, rotacionAnterior, rotacion));
 
-            AddDomainEvent(new Events.Ingrediente.RotacionIngredienteActualizada(Id, Nombre, rotacion));
+            AddDomainEvent(new RotacionIngredienteActualizada(Id, Nombre, rotacion));
         }
 
         /// <summary>
@@ -427,7 +429,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             // TODO: Implementar evento TemporadaActualizada
             // AddDomainEvent(new Events.Ingrediente.TemporadaActualizada(Id, Nombre, temporadaAnterior, temporada));
             
-            AddDomainEvent(new Events.Ingrediente.TemporadaIngredienteActualizada(Id, Nombre, temporada));
+            AddDomainEvent(new TemporadaIngredienteActualizada(Id, Nombre, temporada));
         }
 
         /// <summary>
@@ -448,7 +450,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             // TODO: Implementar evento BloqueoControlCalidadActualizado
             // AddDomainEvent(new Events.Ingrediente.BloqueoControlCalidadActualizado(Id, Nombre, bloqueado, motivo));
             
-            AddDomainEvent(new Events.Ingrediente.BloqueoControlCalidadActualizado(Id, Nombre, bloqueado, motivo));
+            AddDomainEvent(new BloqueoControlCalidadActualizado(Id, Nombre, bloqueado, motivo));
         }
 
         /// <summary>
@@ -466,12 +468,52 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
             CostoPromedio = nuevoCosto;
             MarkAsModified();
 
-            AddDomainEvent(new Events.Ingrediente.CostoPromedioActualizado(Id, Nombre, nuevoCosto));
+            AddDomainEvent(new CostoPromedioActualizado(Id, Nombre, nuevoCosto));
         }
 
         public void ActualizarFechaExpiracion(DateTime? fechaExpiracion)
         {
             FechaExpiracion = fechaExpiracion;
+        }
+
+        /// <summary>
+        /// Actualiza el nombre del ingrediente.
+        /// </summary>
+        /// <param name="nuevoNombre">Nuevo nombre del ingrediente</param>
+        public void ActualizarNombre(string nuevoNombre)
+        {
+            Guard.AgainstNullOrWhiteSpace(nuevoNombre, nameof(nuevoNombre));
+            Guard.AgainstTooLong(nuevoNombre, 200, nameof(nuevoNombre));
+
+            if (Nombre == nuevoNombre)
+                return;
+
+            var nombreAnterior = Nombre;
+            Nombre = nuevoNombre;
+            MarkAsModified();
+
+            // Usar evento existente en lugar de uno que no existe
+            AddDomainEvent(new IngredienteActualizado(Id, Nombre));
+        }
+
+        /// <summary>
+        /// Actualiza la descripción del ingrediente.
+        /// </summary>
+        /// <param name="nuevaDescripcion">Nueva descripción del ingrediente</param>
+        public void ActualizarDescripcion(string nuevaDescripcion)
+        {
+            Guard.AgainstNullOrWhiteSpace(nuevaDescripcion, nameof(nuevaDescripcion));
+            Guard.AgainstTooLong(nuevaDescripcion, 500, nameof(nuevaDescripcion));
+
+            if (Descripcion == nuevaDescripcion)
+                return;
+
+            var descripcionAnterior = Descripcion;
+            Descripcion = nuevaDescripcion;
+            MarkAsModified();
+
+            // Usar evento existente en lugar de uno que no existe
+            AddDomainEvent(new IngredienteActualizado(Id, Nombre));
         }
 
         /// <summary>

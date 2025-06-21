@@ -427,9 +427,9 @@ public class ObtenerIngredientePorIdHandlerTests
             movimientos.Add(new MovimientoInventarioDto
             {
                 Id = Guid.NewGuid(),
-                TipoMovimiento = "Ingreso",
+                TipoMovimiento = TipoMovimientoInventario.Ingreso,
                 Cantidad = 5m,
-                Fecha = DateTime.Now.AddDays(-i),
+                FechaCreacion = DateTime.Now.AddDays(-i),
                 Motivo = $"Movimiento test {i + 1}"
             });
         }

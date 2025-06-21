@@ -37,7 +37,7 @@ public class CachingBehaviorTests
         var query = new ObtenerProductoPorIdQuery(Guid.NewGuid());
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         object? outValue = null;
         _mockMemoryCache.Setup(x => x.TryGetValue(It.IsAny<object>(), out outValue))
@@ -77,7 +77,7 @@ public class CachingBehaviorTests
             .Returns(true);
 
         bool nextCalled = false;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
         {
             nextCalled = true;
             return Task.FromResult(Result.Success(new ProductoDto()));
@@ -111,7 +111,7 @@ public class CachingBehaviorTests
         var command = new CrearProductoCommand();
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Creada" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _commandBehavior.Handle(command, nextDelegate, CancellationToken.None);
@@ -166,7 +166,7 @@ public class CachingBehaviorTests
         var query2 = new ObtenerProductoPorIdQuery(query1.ProductoId); // Mismo ID
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Setup para que ambas queries sean cache miss
         object? outValue = null;
@@ -206,7 +206,7 @@ public class CachingBehaviorTests
         var query = new ObtenerProductoPorIdQuery(Guid.NewGuid());
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         object? outValue = null;
         _mockMemoryCache.Setup(x => x.TryGetValue(It.IsAny<object>(), out outValue))
@@ -266,7 +266,7 @@ public class CachingBehaviorTests
         // Arrange
         var query = new ObtenerProductoPorIdQuery(Guid.NewGuid());
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => throw new Exception("Error en handler");
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => throw new Exception("Error en handler");
 
         object? outValue = null;
         _mockMemoryCache.Setup(x => x.TryGetValue(It.IsAny<object>(), out outValue))
@@ -295,7 +295,7 @@ public class CachingBehaviorTests
         var expectedResult = Result.Success(new PaginatedList<ProductoDto>(new List<ProductoDto>(), 0, 1, 20));
         var queryBehaviorPaginado = new CachingBehavior<ObtenerProductosPaginadosQuery, Result<PaginatedList<ProductoDto>>>(_mockPaginatedLogger.Object, _mockMemoryCache.Object);
         
-        RequestHandlerDelegate<Result<PaginatedList<ProductoDto>>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<PaginatedList<ProductoDto>>> nextDelegate = () => Task.FromResult(expectedResult);
 
         object? outValue = null;
         _mockMemoryCache.Setup(x => x.TryGetValue(It.IsAny<object>(), out outValue))
@@ -325,7 +325,7 @@ public class CachingBehaviorTests
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Pizza Test" });
         
         int nextCallCount = 0;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
         {
             nextCallCount++;
             return Task.FromResult(expectedResult);
@@ -399,7 +399,7 @@ public class CachingBehaviorTests
         var query = new ObtenerProductoPorIdQuery(Guid.NewGuid());
         var errorResult = Result.Failure<ProductoDto>("Producto no encontrado");
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(errorResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(errorResult);
 
         object? outValue = null;
         _mockMemoryCache.Setup(x => x.TryGetValue(It.IsAny<object>(), out outValue))

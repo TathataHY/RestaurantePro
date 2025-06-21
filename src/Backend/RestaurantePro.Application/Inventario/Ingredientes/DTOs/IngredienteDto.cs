@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
+
 namespace RestaurantePro.Application.Inventario.Ingredientes.DTOs;
 
 /// <summary>
@@ -209,7 +211,7 @@ public class IngredienteDto : BaseDto
     /// Días desde el último movimiento
     /// </summary>
     public int? DiasSinMovimiento => MovimientosRecientes.Count > 0 ? 
-        (int?)(DateTime.Now - MovimientosRecientes.First().Fecha).TotalDays : null;
+        (int?)(DateTime.Now - MovimientosRecientes.First().FechaCreacion).TotalDays : null;
 
     /// <summary>
     /// Indica si el ingrediente está inactivo por mucho tiempo

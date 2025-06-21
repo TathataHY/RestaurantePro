@@ -1,3 +1,19 @@
+using FluentValidation;
+using FluentValidation.Results;
+using Microsoft.Extensions.Logging;
+using Moq;
+using RestaurantePro.Application.Common.Behaviors;
+using RestaurantePro.Application.Common.Exceptions;
+using RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
+using RestaurantePro.Application.Core.Productos.DTOs;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using FluentAssertions;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Common.Behaviors;
 
 /// <summary>
@@ -6,24 +22,28 @@ namespace RestaurantePro.Application.UnitTests.Common.Behaviors;
 public class ValidationBehaviorTests
 {
     private readonly Mock<IValidator<CrearProductoCommand>> _mockValidator;
+    private readonly Mock<ILogger<ValidationBehavior<CrearProductoCommand, Result<ProductoDto>>>> _mockLogger;
     private readonly ValidationBehavior<CrearProductoCommand, Result<ProductoDto>> _behavior;
 
     public ValidationBehaviorTests()
     {
         _mockValidator = new Mock<IValidator<CrearProductoCommand>>();
+        _mockLogger = new Mock<ILogger<ValidationBehavior<CrearProductoCommand, Result<ProductoDto>>>>();
         var validators = new List<IValidator<CrearProductoCommand>> { _mockValidator.Object };
-        _behavior = new ValidationBehavior<CrearProductoCommand, Result<ProductoDto>>(validators);
+        _behavior = new ValidationBehavior<CrearProductoCommand, Result<ProductoDto>>(validators, _mockLogger.Object);
     }
 
     [Fact]
     public async Task Handle_SinValidadores_DeberiaEjecutarSinValidacion()
     {
         // Arrange
-        var behaviorSinValidadores = new ValidationBehavior<CrearProductoCommand, Result<ProductoDto>>(new List<IValidator<CrearProductoCommand>>());
+        var behaviorSinValidadores = new ValidationBehavior<CrearProductoCommand, Result<ProductoDto>>(
+            new List<IValidator<CrearProductoCommand>>(), 
+            _mockLogger.Object);
         var command = new CrearProductoCommand { Nombre = "Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Test" });
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await behaviorSinValidadores.Handle(command, nextDelegate, CancellationToken.None);
@@ -44,7 +64,7 @@ public class ValidationBehaviorTests
             .ReturnsAsync(validationResult);
         
         var nextCalled = false;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
         {
             nextCalled = true;
             return Task.FromResult(expectedResult);
@@ -76,7 +96,7 @@ public class ValidationBehaviorTests
             .ReturnsAsync(validationResult);
         
         var nextCalled = false;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
         {
             nextCalled = true;
             return Task.FromResult(Result.Success(new ProductoDto()));
@@ -105,7 +125,7 @@ public class ValidationBehaviorTests
             _mockValidator.Object, 
             mockValidator2.Object 
         };
-        var behaviorMultiple = new ValidationBehavior<CrearProductoCommand, Result<ProductoDto>>(validators);
+        var behaviorMultiple = new ValidationBehavior<CrearProductoCommand, Result<ProductoDto>>(validators, _mockLogger.Object);
         
         var command = new CrearProductoCommand { Nombre = "Test" };
         var expectedResult = Result.Success(new ProductoDto { Nombre = "Test" });
@@ -117,7 +137,7 @@ public class ValidationBehaviorTests
         mockValidator2.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(validationResult);
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await behaviorMultiple.Handle(command, nextDelegate, CancellationToken.None);
@@ -138,7 +158,7 @@ public class ValidationBehaviorTests
             _mockValidator.Object, 
             mockValidator2.Object 
         };
-        var behaviorMultiple = new ValidationBehavior<CrearProductoCommand, Result<ProductoDto>>(validators);
+        var behaviorMultiple = new ValidationBehavior<CrearProductoCommand, Result<ProductoDto>>(validators, _mockLogger.Object);
         
         var command = new CrearProductoCommand { Nombre = "" };
         
@@ -163,7 +183,7 @@ public class ValidationBehaviorTests
         mockValidator2.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(validationResult2);
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(Result.Success(new ProductoDto()));
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(Result.Success(new ProductoDto()));
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
@@ -188,7 +208,7 @@ public class ValidationBehaviorTests
         _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), cancellationToken))
             .ReturnsAsync(validationResult);
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(expectedResult);
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(expectedResult);
 
         // Act
         var result = await _behavior.Handle(command, nextDelegate, cancellationToken);
@@ -208,7 +228,7 @@ public class ValidationBehaviorTests
             .ThrowsAsync(new InvalidOperationException("Error en validador"));
         
         var nextCalled = false;
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => 
         {
             nextCalled = true;
             return Task.FromResult(Result.Success(new ProductoDto()));
@@ -239,7 +259,7 @@ public class ValidationBehaviorTests
         _mockValidator.Setup(v => v.ValidateAsync(It.IsAny<ValidationContext<CrearProductoCommand>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(validationResult);
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(Result.Success(new ProductoDto()));
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(Result.Success(new ProductoDto()));
 
         // Act & Assert
         var exception = await Assert.ThrowsAsync<ValidationException>(() =>
@@ -266,7 +286,7 @@ public class ValidationBehaviorTests
             })
             .ReturnsAsync(validationResult);
         
-        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = _ => Task.FromResult(Result.Success(new ProductoDto { Nombre = "Test" }));
+        RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(Result.Success(new ProductoDto { Nombre = "Test" }));
 
         // Act
         await _behavior.Handle(command, nextDelegate, CancellationToken.None);

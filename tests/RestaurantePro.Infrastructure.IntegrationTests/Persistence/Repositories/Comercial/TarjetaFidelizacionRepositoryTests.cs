@@ -76,7 +76,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         private (RestauranteProDbContext context, TarjetaFidelizacionRepository repository) CreateRepositoryForAssert()
         {
             var options = new DbContextOptionsBuilder<RestauranteProDbContext>()
-                .UseSqlite(_fixture.Connection)
+                .UseSqlite("DataSource=:memory:")
                 .Options;
 
             var loggerMock = new Mock<ILogger<RestauranteProDbContext>>().Object;

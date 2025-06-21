@@ -1,3 +1,9 @@
+using System.Net;
+using System.Net.Http.Json;
+using FluentAssertions;
+using RestaurantePro.Api.IntegrationTests.TestBase;
+using Xunit;
+
 namespace RestaurantePro.Api.IntegrationTests.Controllers.Comercial;
 
 /// <summary>

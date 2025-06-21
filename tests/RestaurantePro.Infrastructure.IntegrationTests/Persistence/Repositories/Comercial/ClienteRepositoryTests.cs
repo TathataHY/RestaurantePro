@@ -171,7 +171,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             // Assert
             resultado.Should().NotBeNull();
             resultado.Should().HaveCount(1);
-            resultado.First().PuntosAcumulados.Should().BeGreaterOrEqualTo(puntosMinimos);
+            resultado.First().PuntosAcumulados.Should().BeGreaterThanOrEqualTo(puntosMinimos);
             resultado.First().Nombre.NombreCompleto.Should().Be("Carlos Lopez");
         }
     }

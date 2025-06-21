@@ -96,20 +96,15 @@ public class ObtenerIngredientePorIdHandler : IRequestHandler<ObtenerIngrediente
     /// </summary>
     private void EnriquecerMovimientoDto(MovimientoInventarioDto dto)
     {
-        // Determinar color e icono según tipo de movimiento
-        (dto.ColorTipo, dto.IconoTipo) = dto.TipoMovimiento.ToLower() switch
-        {
-            "ingreso" => ("#4CAF50", "arrow_upward"),
-            "egreso" => ("#F44336", "arrow_downward"),
-            "ajuste" => ("#FF9800", "tune"),
-            _ => ("#9E9E9E", "sync")
-        };
-
-        // Formatear fecha
-        dto.FechaTexto = dto.Fecha.ToString("dd/MM/yyyy HH:mm");
-
-        // Formatear cantidad con signo
-        var signo = dto.TipoMovimiento.ToLower() == "egreso" ? "-" : "+";
-        dto.CantidadTexto = $"{signo}{dto.Cantidad:F2}";
+        // Las propiedades de UI ya están disponibles como calculadas en MovimientoInventarioDto:
+        // - CantidadFormateada (propiedad calculada)
+        // - StockAnteriorFormateado (propiedad calculada)
+        // - StockPosteriorFormateado (propiedad calculada)
+        // - FechaFormateada (propiedad calculada)
+        // - EsEntrada (propiedad calculada)
+        // - EsSalida (propiedad calculada)
+        
+        _logger.LogDebug("Movimiento enriquecido: {Tipo} - {Cantidad} - {Fecha}", 
+            dto.TipoMovimientoTexto, dto.CantidadFormateada, dto.FechaFormateada);
     }
 } 

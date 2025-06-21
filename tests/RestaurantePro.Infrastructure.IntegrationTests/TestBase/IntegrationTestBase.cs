@@ -126,7 +126,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
             services.AddScoped(provider =>
             {
                 var optionsBuilder = new DbContextOptionsBuilder<RestauranteProDbContext>()
-                    .UseSqlite(_fixture.Connection)
+                    .UseSqlite("DataSource=:memory:")
                     .AddInterceptors(
                         provider.GetRequiredService<AuditableEntityInterceptor>(),
                         provider.GetRequiredService<SoftDeleteInterceptor>());

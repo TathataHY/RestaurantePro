@@ -25,9 +25,19 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
             var requestName = typeof(TRequest).Name;
             var requestId = Guid.NewGuid();
 
-            _logger.LogError(exception, 
-                "Error no controlado procesando {RequestName} con ID {RequestId}: {ErrorMessage}", 
-                requestName, requestId, exception.Message);
+            // Las ValidationException son parte normal del flujo de validación, no errores del sistema
+            if (exception is RestaurantePro.Application.Common.Exceptions.ValidationException)
+            {
+                _logger.LogWarning(exception, 
+                    "Validación fallida procesando {RequestName} con ID {RequestId}: {ErrorMessage}", 
+                    requestName, requestId, exception.Message);
+            }
+            else
+            {
+                _logger.LogError(exception, 
+                    "Error no controlado procesando {RequestName} con ID {RequestId}: {ErrorMessage}", 
+                    requestName, requestId, exception.Message);
+            }
 
             // Convertir excepciones de dominio a excepciones de aplicación
             throw MapDomainExceptionToApplicationException(exception, requestName, requestId);

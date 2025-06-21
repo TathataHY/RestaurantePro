@@ -127,9 +127,19 @@ public class AuditingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest,
         {
             var userId = GetCurrentUserId();
             
-            _logger.LogError(
-                "AUDIT_FAILURE: {AuditId} | Usuario: {UserId} | Operación: {Operation} | Error: {ErrorMessage} | Duración: {ElapsedMs}ms | Timestamp: {Timestamp}",
-                auditId, userId, requestName, exception.Message, elapsedMs, DateTime.UtcNow);
+            // Las ValidationException son parte normal del flujo de validación, no errores del sistema
+            if (exception is RestaurantePro.Application.Common.Exceptions.ValidationException)
+            {
+                _logger.LogWarning(
+                    "AUDIT_FAILURE: {AuditId} | Usuario: {UserId} | Operación: {Operation} | Error: {ErrorMessage} | Duración: {ElapsedMs}ms | Timestamp: {Timestamp}",
+                    auditId, userId, requestName, exception.Message, elapsedMs, DateTime.UtcNow);
+            }
+            else
+            {
+                _logger.LogError(
+                    "AUDIT_FAILURE: {AuditId} | Usuario: {UserId} | Operación: {Operation} | Error: {ErrorMessage} | Duración: {ElapsedMs}ms | Timestamp: {Timestamp}",
+                    auditId, userId, requestName, exception.Message, elapsedMs, DateTime.UtcNow);
+            }
         }
         catch (Exception ex)
         {

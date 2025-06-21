@@ -1,34 +1,44 @@
-using Microsoft.Data.Sqlite;
-using System;
-using System.Data.Common;
-using Xunit;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+using NSubstitute;
 
-namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase
+namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase;
+
+/// <summary>
+/// Fixture para proporcionar una base de datos de prueba compartida
+/// </summary>
+public class DatabaseFixture : IDisposable
 {
-    public class DatabaseFixture : IDisposable
+    public RestauranteProDbContext DbContext { get; }
+
+    public DatabaseFixture()
     {
-        private readonly DbConnection _connection;
-        public DbConnection Connection => _connection;
+        // Configurar SQLite in-memory para soporte de transacciones reales
+        var options = new DbContextOptionsBuilder<RestauranteProDbContext>()
+            .UseSqlite("DataSource=:memory:")
+            .Options;
 
-        public DatabaseFixture()
-        {
-            // Using a shared in-memory database ensures the database persists as long as one connection is open.
-            _connection = new SqliteConnection("DataSource=TestDatabase;Mode=Memory;Cache=Shared");
-            _connection.Open();
-        }
+        // Crear mocks para los servicios requeridos
+        var logger = Substitute.For<ILogger<RestauranteProDbContext>>();
+        var dispatcher = Substitute.For<IDomainEventDispatcher>();
 
-        public void Dispose()
-        {
-            _connection.Close();
-            _connection.Dispose();
-        }
+        DbContext = new RestauranteProDbContext(options, logger, dispatcher);
+        DbContext.Database.OpenConnection();
+        DbContext.Database.EnsureCreated();
     }
 
-    [CollectionDefinition("DatabaseCollection")]
-    public class DatabaseCollection : ICollectionFixture<DatabaseFixture>
+    public void Dispose()
     {
-        // This class has no code, and is never created. Its purpose is simply
-        // to be the place to apply [CollectionDefinition] and all the
-        // ICollectionFixture<> interfaces.
+        DbContext?.Dispose();
     }
+}
+
+[CollectionDefinition("DatabaseCollection")]
+public class DatabaseCollection : ICollectionFixture<DatabaseFixture>
+{
+    // This class has no code, and is never created. Its purpose is simply
+    // to be the place to apply [CollectionDefinition] and all the
+    // ICollectionFixture<> interfaces.
 } 

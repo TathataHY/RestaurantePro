@@ -62,7 +62,7 @@ public class RetryBehaviorTests
         var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => {
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = () => {
             callCount++;
             return Task.FromResult(expectedResult);
         };
@@ -87,7 +87,7 @@ public class RetryBehaviorTests
         var expectedResult = Result.Success(new FacturaDto { Id = Guid.NewGuid() });
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = () => 
         {
             callCount++;
             if (callCount == 1)
@@ -113,7 +113,7 @@ public class RetryBehaviorTests
         command.TipoFactura = "Normal";
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = () => 
         {
             callCount++;
             throw new ArgumentException("Parámetro inválido");
@@ -137,7 +137,7 @@ public class RetryBehaviorTests
         command.TipoFactura = "Normal";
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = () => 
         {
             callCount++;
             throw new TimeoutException("Timeout persistente");
@@ -172,7 +172,7 @@ public class RetryBehaviorTests
             : (Exception)Activator.CreateInstance(exceptionType, "Error transitorio")!;
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = () => 
         {
             callCount++;
             if (callCount == 1)
@@ -216,7 +216,7 @@ public class RetryBehaviorTests
             _mockRetrySettings.Object);
 
         int callCount = 0;
-        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = () => 
         {
             callCount++;
             if (callCount <= 3) // Fallar 3 veces para tener 3 delays
@@ -244,7 +244,7 @@ public class RetryBehaviorTests
         var cancellationTokenSource = new CancellationTokenSource();
         
         int callCount = 0;
-        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = _ => 
+        RequestHandlerDelegate<Result<FacturaDto>> nextDelegate = () => 
         {
             callCount++;
             if (callCount == 1)

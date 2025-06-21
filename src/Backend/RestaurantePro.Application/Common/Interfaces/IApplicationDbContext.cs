@@ -25,8 +25,8 @@ public interface IApplicationDbContext
     DbSet<Factura> Facturas { get; }
     
     // Comercial - Promociones  
+    DbSet<Promocion> Promociones { get; }
     // TODO: Agregar cuando las entidades estén disponibles en el dominio
-    // DbSet<Promocion> Promociones { get; }
     // DbSet<AplicacionPromocion> AplicacionesPromocion { get; }
     // DbSet<DescuentoFactura> DescuentosFactura { get; }
     // DbSet<DescuentoComanda> DescuentosComanda { get; }

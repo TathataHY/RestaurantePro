@@ -270,10 +270,11 @@ public class MovimientosInventarioControllerTests : ApiIntegrationTestBase
     // Métodos auxiliares para crear datos de prueba usando la API de dominio correcta
     private async Task<Ingrediente> CrearIngredientePrueba(string nombre, decimal stockInicial)
     {
+        var codigoUnico = $"COD-{nombre.ToUpper()}-{Guid.NewGuid().ToString("N")[..8]}";
         var ingrediente = Ingrediente.Crear(
             Guid.NewGuid(),
             nombre,
-            $"COD-{nombre.ToUpper()}",
+            codigoUnico,
             $"Descripción de {nombre}",
             RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
             stockInicial * 0.1m, // 10% del stock como mínimo
@@ -287,10 +288,11 @@ public class MovimientosInventarioControllerTests : ApiIntegrationTestBase
 
     private async Task<Ingrediente> CrearIngredienteConMovimientos(string nombre, decimal stockInicial, decimal cantidad, TipoMovimientoInventario tipo, string motivo)
     {
+        var codigoUnico = $"COD-{nombre.ToUpper()}-{Guid.NewGuid().ToString("N")[..8]}";
         var ingrediente = Ingrediente.Crear(
             Guid.NewGuid(),
             nombre,
-            $"COD-{nombre.ToUpper()}",
+            codigoUnico,
             $"Descripción de {nombre}",
             RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
             stockInicial * 0.1m, // 10% del stock como mínimo

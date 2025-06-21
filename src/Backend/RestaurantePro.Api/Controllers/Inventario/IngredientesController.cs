@@ -1,8 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using MediatR;
 using RestaurantePro.Application.Inventario.Ingredientes.Commands.CrearIngrediente;
+using RestaurantePro.Application.Inventario.Ingredientes.Commands.ActualizarIngrediente;
+using RestaurantePro.Application.Inventario.Ingredientes.Commands.EliminarIngrediente;
+using RestaurantePro.Application.Inventario.Ingredientes.Commands.RegistrarMovimiento;
+using RestaurantePro.Application.Inventario.Ingredientes.Commands.AsociarProveedor;
 using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientePorId;
 using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesPaginados;
+using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerMovimientosIngrediente;
+using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerReporteValoracion;
 using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
 using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesBajoStock;
@@ -95,48 +101,103 @@ public class IngredientesController : ControllerBase
     /// Actualiza un ingrediente existente
     /// </summary>
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), 501)]
+    [ProducesResponseType(typeof(ApiResponse<IngredienteDto>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 400)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     [ProducesResponseType(401)]
-    public IActionResult ActualizarIngrediente(Guid id, [FromBody] object ingredienteDto)
+    public async Task<IActionResult> ActualizarIngrediente(Guid id, [FromBody] ActualizarIngredienteCommand command)
     {
         _logger.LogInformation("➡️ Actualizando ingrediente: {Id}", id);
-        return StatusCode(501, ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado" }, "Endpoint no implementado", 501));
+        
+        // Asignar el ID de la URL al comando
+        command = command with { Id = id };
+        
+        var result = await _mediator.Send(command);
+
+        if (result.Succeeded)
+        {
+            return Ok(ApiResponse<IngredienteDto>.SuccessResponse(result.Value, "Ingrediente actualizado exitosamente"));
+        }
+        
+        var statusCode = result.Error?.Contains("no encontrado") == true ? 404 : 400;
+        return StatusCode(statusCode, ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al actualizar ingrediente", statusCode));
     }
 
     /// <summary>
     /// Elimina un ingrediente (soft delete)
     /// </summary>
     [HttpDelete("{id}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), 501)]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     [ProducesResponseType(401)]
-    public IActionResult EliminarIngrediente(Guid id)
+    public async Task<IActionResult> EliminarIngrediente(Guid id)
     {
         _logger.LogInformation("➡️ Eliminando ingrediente: {Id}", id);
-        return StatusCode(501, ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado" }, "Endpoint no implementado", 501));
+        
+        var command = new EliminarIngredienteCommand { Id = id };
+        var result = await _mediator.Send(command);
+
+        if (result.Succeeded)
+        {
+            return NoContent();
+        }
+        
+        return NotFound(ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al eliminar ingrediente", 404));
     }
 
     /// <summary>
     /// Obtiene los movimientos de inventario para un ingrediente
     /// </summary>
     [HttpGet("{id}/movimientos")]
-    [ProducesResponseType(typeof(ApiResponse<object>), 501)]
+    [ProducesResponseType(typeof(ApiResponse<List<MovimientoInventarioDto>>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     [ProducesResponseType(401)]
-    public IActionResult ObtenerMovimientosDeIngrediente(Guid id)
+    public async Task<IActionResult> ObtenerMovimientosDeIngrediente(Guid id, [FromQuery] DateTime? fechaDesde, [FromQuery] DateTime? fechaHasta, [FromQuery] int? limite)
     {
         _logger.LogInformation("➡️ Obteniendo movimientos para el ingrediente: {Id}", id);
-        return StatusCode(501, ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado" }, "Endpoint no implementado", 501));
+        
+        var query = new ObtenerMovimientosIngredienteQuery
+        {
+            IngredienteId = id,
+            FechaDesde = fechaDesde,
+            FechaHasta = fechaHasta,
+            Limite = limite
+        };
+        
+        var result = await _mediator.Send(query);
+
+        if (result.Succeeded)
+        {
+            return Ok(ApiResponse<List<MovimientoInventarioDto>>.SuccessResponse(result.Value, "Movimientos obtenidos exitosamente"));
+        }
+        
+        return NotFound(ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al obtener movimientos", 404));
     }
 
     /// <summary>
     /// Registra un nuevo movimiento de inventario (ajuste manual)
     /// </summary>
     [HttpPost("{id}/movimientos")]
-    [ProducesResponseType(typeof(ApiResponse<object>), 501)]
+    [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 400)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     [ProducesResponseType(401)]
-    public IActionResult RegistrarMovimiento(Guid id, [FromBody] object movimientoDto)
+    public async Task<IActionResult> RegistrarMovimiento(Guid id, [FromBody] RegistrarMovimientoCommand command)
     {
         _logger.LogInformation("➡️ Registrando movimiento para el ingrediente: {Id}", id);
-        return StatusCode(501, ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado" }, "Endpoint no implementado", 501));
+        
+        // Asignar el ID del ingrediente al comando
+        command = command with { IngredienteId = id };
+        
+        var result = await _mediator.Send(command);
+
+        if (result.Succeeded)
+        {
+            return Ok(ApiResponse<bool>.SuccessResponse(result.Value, "Movimiento registrado exitosamente"));
+        }
+        
+        var statusCode = result.Error?.Contains("no encontrado") == true ? 404 : 400;
+        return StatusCode(statusCode, ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al registrar movimiento", statusCode));
     }
 
     /// <summary>
@@ -162,23 +223,49 @@ public class IngredientesController : ControllerBase
     /// Asocia un proveedor principal a un ingrediente
     /// </summary>
     [HttpPost("{id}/asociar-proveedor/{proveedorId}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), 501)]
+    [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 400)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     [ProducesResponseType(401)]
-    public IActionResult AsociarProveedor(Guid id, Guid proveedorId)
+    public async Task<IActionResult> AsociarProveedor(Guid id, Guid proveedorId, [FromBody] AsociarProveedorCommand? command = null)
     {
         _logger.LogInformation("➡️ Asociando proveedor {ProveedorId} a ingrediente {Id}", proveedorId, id);
-        return StatusCode(501, ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado" }, "Endpoint no implementado", 501));
+        
+        var asociarCommand = command ?? new AsociarProveedorCommand
+        {
+            IngredienteId = id,
+            ProveedorId = proveedorId,
+            EsProveedorPrincipal = true
+        };
+        
+        var result = await _mediator.Send(asociarCommand);
+
+        if (result.Succeeded)
+        {
+            return Ok(ApiResponse<bool>.SuccessResponse(result.Value, "Proveedor asociado exitosamente"));
+        }
+        
+        var statusCode = result.Error?.Contains("no encontrado") == true ? 404 : 400;
+        return StatusCode(statusCode, ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al asociar proveedor", statusCode));
     }
     
     /// <summary>
     /// Genera un reporte de valoración de inventario para los ingredientes
     /// </summary>
     [HttpGet("reporte/valoracion")]
-    [ProducesResponseType(typeof(ApiResponse<object>), 501)]
+    [ProducesResponseType(typeof(ApiResponse<ReporteValoracionDto>), 200)]
     [ProducesResponseType(401)]
-    public IActionResult GenerarReporteValoracion()
+    public async Task<IActionResult> GenerarReporteValoracion([FromQuery] ObtenerReporteValoracionQuery query)
     {
         _logger.LogInformation("➡️ Generando reporte de valoración de ingredientes...");
-        return StatusCode(501, ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado" }, "Endpoint no implementado", 501));
+        
+        var result = await _mediator.Send(query);
+
+        if (result.Succeeded)
+        {
+            return Ok(ApiResponse<ReporteValoracionDto>.SuccessResponse(result.Value, "Reporte de valoración generado exitosamente"));
+        }
+        
+        return BadRequest(ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al generar reporte de valoración"));
     }
 } 

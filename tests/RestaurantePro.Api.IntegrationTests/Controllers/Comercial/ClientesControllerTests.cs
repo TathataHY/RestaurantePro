@@ -217,7 +217,6 @@ public class ClientesControllerTests : ApiIntegrationTestBase, IDisposable
     {
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: PostCliente_ConDatosInvalidos_DebeRetornar400");
-        
         var command = new CrearClienteCommand
         {
             Nombre = "", // Nombre vacío - inválido
@@ -236,7 +235,7 @@ public class ClientesControllerTests : ApiIntegrationTestBase, IDisposable
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
         apiResponse.Should().NotBeNull();
         apiResponse!.Success.Should().BeFalse();
-        
+        apiResponse.Errors.Should().NotBeEmpty();
         Logger.LogInformation("✅ Test completado - datos inválidos correctamente rechazados");
     }
 

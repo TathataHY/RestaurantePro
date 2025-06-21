@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Comercial.Clientes.Entities;
 using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+using RestaurantePro.Domain.Comercial.Promociones.Entities;
 using RestaurantePro.Domain.Core.Base;
 using RestaurantePro.Domain.Core.Productos.Entities;
 using RestaurantePro.Domain.Core.Usuarios.Entities;
@@ -36,6 +37,7 @@ public class TestDbContext : DbContext, IApplicationDbContext
     public DbSet<Cliente> Clientes { get; set; }
     public DbSet<TarjetaFidelizacion> TarjetasFidelizacion { get; set; }
     public DbSet<Factura> Facturas { get; set; }
+    public DbSet<Promocion> Promociones { get; set; }
     public DbSet<Comanda> Comandas { get; set; }
     public DbSet<ItemComanda> ItemsComanda { get; set; }
     public DbSet<Reservacion> Reservaciones { get; set; }
@@ -71,6 +73,7 @@ public class TestDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<Notificacion>().HasKey(n => n.Id);
         modelBuilder.Entity<TarjetaFidelizacion>().HasKey(t => t.Id);
         modelBuilder.Entity<Factura>().HasKey(f => f.Id);
+        modelBuilder.Entity<Promocion>().HasKey(p => p.Id);
         modelBuilder.Entity<Comanda>().HasKey(c => c.Id);
         modelBuilder.Entity<ItemComanda>().HasKey(i => i.Id);
         modelBuilder.Entity<Reservacion>().HasKey(r => r.Id);

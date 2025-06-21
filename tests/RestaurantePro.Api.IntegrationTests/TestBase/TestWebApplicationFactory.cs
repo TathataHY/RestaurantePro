@@ -34,6 +34,7 @@ using RestaurantePro.Domain.Core.Notificaciones.Services;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 using RestaurantePro.Domain.Core.Usuarios.Services;
+using Microsoft.Data.Sqlite;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -43,6 +44,7 @@ namespace RestaurantePro.Api.IntegrationTests.TestBase;
 /// </summary>
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
+    private SqliteConnection? _connection;
     // 🔧 BD única por test para evitar contaminación de datos
     private readonly string _databaseName = $"TestDatabase_{Guid.NewGuid()}";
     
@@ -54,14 +56,19 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // Limpiar configuraciones existentes
             config.Sources.Clear();
             
-            // Agregar configuración específica para tests que FUERZA InMemory
+            // Agregar configuración específica para tests con SQLite in-memory
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["ConnectionStrings:DefaultConnection"] = "InMemoryDatabase",
-                ["UseInMemoryDatabase"] = "true",  // Flag para Infrastructure
-                ["Logging:LogLevel:Default"] = "Error",      // Solo errores en tests
+                ["ConnectionStrings:DefaultConnection"] = "DataSource=:memory:",
+                ["UseInMemoryDatabase"] = "false", // Usar SQLite en lugar de EF InMemory
+                ["Logging:LogLevel:Default"] = "Error",      // Solo errores reales
                 ["Logging:LogLevel:Microsoft"] = "Error",
-                ["Logging:LogLevel:Microsoft.Hosting.Lifetime"] = "Error"
+                ["Logging:LogLevel:Microsoft.Hosting.Lifetime"] = "Error",
+                ["Logging:LogLevel:RestaurantePro.Application.Common.Behaviors"] = "None", // Deshabilitar behaviors
+                ["Logging:LogLevel:RestaurantePro.Application.Common.Exceptions.ValidationException"] = "None", // Deshabilitar validaciones
+                ["Logging:Console:FormatterName"] = "json",
+                ["Logging:Console:FormatterOptions:IncludeScopes"] = "true",
+                ["Logging:Console:FormatterOptions:TimestampFormat"] = "yyyy-MM-dd HH:mm:ss "
             });
             
             // Configurar variable para modo testing
@@ -73,14 +80,18 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            // 🚀 CONFIGURACIÓN PARA TESTS: Infrastructure está desactivada por Program.cs
-            // Necesitamos registrar servicios mínimos necesarios
-            
-            // 🔧 SOLUCIÓN: BD única por test para total aislamiento
-            // Cada instancia del factory usa una BD InMemory diferente
+            // Eliminar el registro previo de DbContext
+            var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<RestauranteProDbContext>));
+            if (descriptor != null)
+                services.Remove(descriptor);
+
+            // Crear y abrir la conexión SQLite in-memory
+            _connection = new SqliteConnection("DataSource=:memory:");
+            _connection.Open();
+
             services.AddDbContext<RestauranteProDbContext>(options =>
             {
-                options.UseInMemoryDatabase(_databaseName);
+                options.UseSqlite(_connection);
                 options.EnableSensitiveDataLogging();
                 options.EnableDetailedErrors();
             });
@@ -203,6 +214,15 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 builder.AddConsole();
                 builder.SetMinimumLevel(LogLevel.Error);
             });
+
+            // Build el provider y aplicar migraciones
+            var sp = services.BuildServiceProvider();
+            using (var scope = sp.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
+                db.Database.EnsureCreated();
+                // db.Database.Migrate(); // Si tienes migraciones
+            }
         });
 
         builder.UseEnvironment("Testing");
@@ -210,13 +230,13 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing)
-        {
-            // Para InMemory database no necesitamos limpiar manualmente
-            // ya que se desecha automáticamente al finalizar el test
-        }
-        
         base.Dispose(disposing);
+        if (_connection != null)
+        {
+            _connection.Close();
+            _connection.Dispose();
+            _connection = null;
+        }
     }
 }
 

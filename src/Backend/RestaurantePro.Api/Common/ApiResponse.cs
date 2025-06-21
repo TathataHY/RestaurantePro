@@ -16,12 +16,12 @@ namespace RestaurantePro.Api.Common
         /// <summary>
         /// Datos de respuesta
         /// </summary>
-        public T Data { get; set; }
+        public T? Data { get; set; }
         
         /// <summary>
         /// Mensaje informativo
         /// </summary>
-        public string Message { get; set; }
+        public string Message { get; set; } = string.Empty;
         
         /// <summary>
         /// Lista de errores (si los hay)
@@ -36,7 +36,7 @@ namespace RestaurantePro.Api.Common
         /// <summary>
         /// Crea una respuesta exitosa
         /// </summary>
-        public static ApiResponse<T> SuccessResponse(T data, string message = null)
+        public static ApiResponse<T> SuccessResponse(T data, string message = "")
         {
             return new ApiResponse<T>
             {

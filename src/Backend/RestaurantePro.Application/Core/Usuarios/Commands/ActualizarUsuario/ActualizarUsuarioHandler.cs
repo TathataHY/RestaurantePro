@@ -244,7 +244,7 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
     {
         try
         {
-            // Aplicar cambios básicos
+        // Aplicar cambios básicos
             if (!string.IsNullOrWhiteSpace(request.Nombre))
             {
                 usuario.Actualizar(request.Nombre, usuario.Email);
@@ -255,7 +255,7 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
                 usuario.Actualizar(usuario.NombreCompleto, request.Email);
             }
 
-            // Aplicar cambios de rol y permisos
+        // Aplicar cambios de rol y permisos
             if (!string.IsNullOrWhiteSpace(request.Rol))
             {
                 if (Enum.TryParse<RolUsuario>(request.Rol, true, out var nuevoRol))
@@ -287,7 +287,7 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
                     usuario.Email, request.Activo.Value ? "Activo" : "Inactivo");
             }
 
-            // Aplicar permisos específicos
+        // Aplicar permisos específicos
             if (request.PermisosEspecificos.Any())
             {
                 foreach (var permiso in request.PermisosEspecificos)
@@ -296,7 +296,7 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
                 }
             }
 
-            // Aplicar cambios jerárquicos
+        // Aplicar cambios jerárquicos
             if (request.SupervisorId.HasValue)
             {
                 usuario.EstablecerInformacionOrganizacional(request.SupervisorId.Value, usuario.Departamento, usuario.Posicion);
@@ -314,7 +314,7 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
             }
 
             _logger.LogInformation("Cambios aplicados exitosamente al usuario {Email}", usuario.Email);
-            return Result.Success(true);
+        return Result.Success(true);
         }
         catch (Exception ex)
         {

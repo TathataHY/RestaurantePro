@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
+
 namespace RestaurantePro.Application.Inventario.Ingredientes.DTOs;
 
 /// <summary>
@@ -17,9 +19,9 @@ public class MovimientoInventarioDto
     public Guid IngredienteId { get; set; }
 
     /// <summary>
-    /// Tipo de movimiento (Ingreso, Egreso, Ajuste)
+    /// Nombre del ingrediente afectado
     /// </summary>
-    public string TipoMovimiento { get; set; } = string.Empty;
+    public string NombreIngrediente { get; set; } = string.Empty;
 
     /// <summary>
     /// Cantidad del movimiento (positiva para ingresos, negativa para egresos)
@@ -27,9 +29,14 @@ public class MovimientoInventarioDto
     public decimal Cantidad { get; set; }
 
     /// <summary>
-    /// Fecha del movimiento
+    /// Tipo de movimiento (Ingreso, Egreso, Ajuste)
     /// </summary>
-    public DateTime Fecha { get; set; }
+    public TipoMovimientoInventario TipoMovimiento { get; set; }
+
+    /// <summary>
+    /// Texto del tipo de movimiento
+    /// </summary>
+    public string TipoMovimientoTexto => TipoMovimiento.ToString();
 
     /// <summary>
     /// Motivo del movimiento
@@ -37,39 +44,68 @@ public class MovimientoInventarioDto
     public string Motivo { get; set; } = string.Empty;
 
     /// <summary>
-    /// Stock resultante después del movimiento
+    /// Observaciones del movimiento
     /// </summary>
-    public decimal? StockResultante { get; set; }
+    public string? Observaciones { get; set; }
 
     /// <summary>
-    /// Indica si el movimiento está aplicado
+    /// ID del usuario que realizó el movimiento
     /// </summary>
-    public bool EstaAplicado { get; set; }
+    public Guid? UsuarioId { get; set; }
 
     /// <summary>
-    /// Usuario que realizó el movimiento
+    /// Nombre del usuario que realizó el movimiento
     /// </summary>
-    public string? UsuarioMovimiento { get; set; }
+    public string? NombreUsuario { get; set; }
+
+    /// <summary>
+    /// Fecha de creación del movimiento
+    /// </summary>
+    public DateTime FechaCreacion { get; set; }
+
+    /// <summary>
+    /// Stock anterior del ingrediente
+    /// </summary>
+    public decimal StockAnterior { get; set; }
+
+    /// <summary>
+    /// Stock posterior del ingrediente
+    /// </summary>
+    public decimal StockPosterior { get; set; }
 
     // === PROPIEDADES DE UI ===
 
     /// <summary>
-    /// Color del tipo de movimiento para UI
+    /// Cantidad formateada para mostrar
     /// </summary>
-    public string ColorTipo { get; set; } = string.Empty;
+    public string CantidadFormateada => $"{Cantidad:N2}";
 
     /// <summary>
-    /// Icono del tipo de movimiento
+    /// Stock anterior formateado para mostrar
     /// </summary>
-    public string IconoTipo { get; set; } = string.Empty;
+    public string StockAnteriorFormateado => $"{StockAnterior:N2}";
+
+    /// <summary>
+    /// Stock posterior formateado para mostrar
+    /// </summary>
+    public string StockPosteriorFormateado => $"{StockPosterior:N2}";
 
     /// <summary>
     /// Fecha formateada para mostrar
     /// </summary>
-    public string FechaTexto { get; set; } = string.Empty;
+    public string FechaFormateada => FechaCreacion.ToString("dd/MM/yyyy HH:mm");
 
     /// <summary>
-    /// Cantidad formateada con signo
+    /// Indica si el movimiento es de entrada
     /// </summary>
-    public string CantidadTexto { get; set; } = string.Empty;
+    public bool EsEntrada => TipoMovimiento == TipoMovimientoInventario.Ingreso || 
+                             TipoMovimiento == TipoMovimientoInventario.Entrada ||
+                             TipoMovimiento == TipoMovimientoInventario.Incremento;
+
+    /// <summary>
+    /// Indica si el movimiento es de salida
+    /// </summary>
+    public bool EsSalida => TipoMovimiento == TipoMovimientoInventario.Egreso || 
+                           TipoMovimiento == TipoMovimientoInventario.Salida ||
+                           TipoMovimiento == TipoMovimientoInventario.Decremento;
 } 

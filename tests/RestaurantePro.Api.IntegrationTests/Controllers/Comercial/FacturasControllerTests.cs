@@ -48,7 +48,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: PostFactura_ConDatosValidos_DebeCrearFactura");
         
         var cliente = await CrearClientePrueba("Cliente Factura", "factura@email.com");
-        var comanda = await CrearComandaPrueba(cliente.Id);
+        var comanda = await CrearComandaPrueba(clienteId: cliente.Id);
         
         var facturaRequest = new FacturaTestDataBuilder()
             .ConClienteId(cliente.Id)
@@ -120,7 +120,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: GetFactura_ConIdExistente_DebeRetornarFactura");
         
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
-        var comanda = await CrearComandaPrueba(cliente.Id);
+        var comanda = await CrearComandaPrueba(clienteId: cliente.Id);
         
         var facturaRequest = new FacturaTestDataBuilder()
             .ConClienteId(cliente.Id)
@@ -154,7 +154,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: PutFactura_ConDatosValidos_DebeActualizarFactura");
         
         var cliente = await CrearClientePrueba("Cliente Update", "update@test.com");
-        var comanda = await CrearComandaPrueba(cliente.Id);
+        var comanda = await CrearComandaPrueba(clienteId: cliente.Id);
         
         var facturaRequest = new FacturaTestDataBuilder()
             .ConClienteId(cliente.Id)
@@ -195,7 +195,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: AnularFactura_ConDatosValidos_DebeAnularFactura");
         
         var cliente = await CrearClientePrueba("Cliente Anula", "anula@test.com");
-        var comanda = await CrearComandaPrueba(cliente.Id);
+        var comanda = await CrearComandaPrueba(clienteId: cliente.Id);
         
         var facturaRequest = new FacturaTestDataBuilder()
             .ConClienteId(cliente.Id)
@@ -229,7 +229,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: EnviarFacturaEmail_ConFacturaExistente_DebeEnviarEmail");
         
         var cliente = await CrearClientePrueba("Cliente Email", "email@test.com");
-        var comanda = await CrearComandaPrueba(cliente.Id);
+        var comanda = await CrearComandaPrueba(clienteId: cliente.Id);
         
         var facturaRequest = new FacturaTestDataBuilder()
             .ConClienteId(cliente.Id)
@@ -290,7 +290,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: DescargarFacturaPdf_ConFacturaExistente_DebeRetornarPdf");
         
         var cliente = await CrearClientePrueba("Cliente PDF", "pdf@test.com");
-        var comanda = await CrearComandaPrueba(cliente.Id);
+        var comanda = await CrearComandaPrueba(clienteId: cliente.Id);
         
         var facturaRequest = new FacturaTestDataBuilder()
             .ConClienteId(cliente.Id)
@@ -323,7 +323,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: CambiarEstadoFactura_ConEstadoValido_DebeCambiarEstado");
         
         var cliente = await CrearClientePrueba("Cliente Estado", "estado@test.com");
-        var comanda = await CrearComandaPrueba(cliente.Id);
+        var comanda = await CrearComandaPrueba(clienteId: cliente.Id);
         
         var facturaRequest = new FacturaTestDataBuilder()
             .ConClienteId(cliente.Id)
@@ -359,7 +359,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: AplicarDescuento_ConDescuentoValido_DebeAplicarDescuento");
         
         var cliente = await CrearClientePrueba("Cliente Descuento", "descuento@test.com");
-        var comanda = await CrearComandaPrueba(cliente.Id);
+        var comanda = await CrearComandaPrueba(clienteId: cliente.Id);
         
         var facturaRequest = new FacturaTestDataBuilder()
             .ConClienteId(cliente.Id)

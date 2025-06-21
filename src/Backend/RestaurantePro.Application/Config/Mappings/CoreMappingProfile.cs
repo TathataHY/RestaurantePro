@@ -69,7 +69,7 @@ public class CoreMappingProfile : Profile
             .ForMember(dest => dest.TipoUsuario, opt => opt.MapFrom(src => src.TipoUsuario))
             .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol))
             .ForMember(dest => dest.NivelAcceso, opt => opt.MapFrom(src => src.NivelAcceso))
-            .ForMember(dest => dest.Permisos, opt => opt.MapFrom(src => src.Permisos.ToList()))
+            .ForMember(dest => dest.Permisos, opt => opt.MapFrom(src => src.Permisos))
             .ForMember(dest => dest.SupervisorId, opt => opt.MapFrom(src => src.SupervisorId))
             .ForMember(dest => dest.Departamento, opt => opt.MapFrom(src => src.Departamento))
             .ForMember(dest => dest.Posicion, opt => opt.MapFrom(src => src.Posicion))
@@ -77,7 +77,13 @@ public class CoreMappingProfile : Profile
             .ForMember(dest => dest.UltimoAcceso, opt => opt.MapFrom(src => src.UltimoAcceso))
             .ForMember(dest => dest.MotivoBloqueo, opt => opt.MapFrom(src => src.MotivoBloqueo))
             .ForMember(dest => dest.EsAdministrador, opt => opt.MapFrom(src => src.EsAdministrador))
-            .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Select(r => r.ToString()).ToList()));
+            .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Select(r => r.ToString())))
+            .ForMember(dest => dest.Telefono, opt => opt.Ignore()) // No existe en la entidad Usuario
+            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
+            .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore()) // No existe en la entidad Usuario
+            .ForMember(dest => dest.CreadoPor, opt => opt.Ignore()) // No existe en la entidad Usuario
+            .ForMember(dest => dest.ModificadoPor, opt => opt.Ignore()) // No existe en la entidad Usuario
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.Estado == EstadoUsuario.Activo));
     }
 
     /// <summary>

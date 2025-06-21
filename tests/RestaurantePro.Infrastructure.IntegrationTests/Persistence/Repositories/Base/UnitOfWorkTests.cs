@@ -5,6 +5,7 @@ using RestaurantePro.Domain.Core.Productos.ValueObjects;
 using RestaurantePro.Infrastructure.IntegrationTests.TestBase;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System;
 using System.Threading.Tasks;
 using Xunit;
@@ -82,7 +83,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             productoGuardado.Should().NotBeNull();
         }
 
-        [Fact(Skip = "In-memory provider does not support transactions")]
+        [Fact]
         public async Task RollbackTransactionAsync_DebeRevertirLosCambios()
         {
             // Arrange
@@ -103,7 +104,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
             // Assert
             using var scope = ServiceProvider.CreateScope();
-            var scopedDbContext = scope.ServiceProvider.GetRequiredService<TestDbContext>();
+            var scopedDbContext = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
             var productoGuardado = await scopedDbContext.FindAsync<Producto>(nuevoProducto.Id);
             productoGuardado.Should().BeNull();
         }
@@ -132,7 +133,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             productoGuardado.Should().NotBeNull();
         }
 
-        [Fact(Skip = "In-memory provider does not support transactions")]
+        [Fact]
         public async Task EjecutarEnTransaccionAsync_DebeRevertirSiHayExcepcion()
         {
             // Arrange
@@ -153,10 +154,9 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             });
 
             // Assert
-            await act.Should().ThrowAsync<InvalidOperationException>();
-
+            await Assert.ThrowsAsync<InvalidOperationException>(act);
             using var scope = ServiceProvider.CreateScope();
-            var scopedDbContext = scope.ServiceProvider.GetRequiredService<TestDbContext>();
+            var scopedDbContext = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
             var productoGuardado = await scopedDbContext.FindAsync<Producto>(nuevoProducto.Id);
             productoGuardado.Should().BeNull();
         }

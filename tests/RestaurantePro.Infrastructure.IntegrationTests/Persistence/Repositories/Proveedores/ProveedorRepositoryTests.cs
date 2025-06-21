@@ -97,7 +97,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
             // Assert
             // 3 seeded + others that might be in the db from other tests
-            proveedores.Count().Should().BeGreaterOrEqualTo(3);
+            proveedores.Count().Should().BeGreaterThanOrEqualTo(3);
         }
         
         [Fact]
