@@ -2,6 +2,7 @@
 using RestaurantePro.Application.Comercial.Clientes.Commands.ActualizarCliente;
 using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
 using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente;
 
 namespace RestaurantePro.Api.IntegrationTests.Controllers.Comercial;
 

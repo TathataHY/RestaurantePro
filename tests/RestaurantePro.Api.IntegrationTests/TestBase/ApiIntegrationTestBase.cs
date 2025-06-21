@@ -177,4 +177,84 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         await DbContext.SaveChangesAsync();
         return producto;
     }
+
+    /// <summary>
+    /// Crea un usuario de prueba en la base de datos
+    /// </summary>
+    protected async Task<Usuario> CrearUsuarioPrueba(
+        string nombreUsuario = "usuario.test", 
+        string nombreCompleto = "Usuario Test", 
+        string email = "usuario@test.com",
+        RolUsuario rol = RolUsuario.Mesero)
+    {
+        var usuario = Usuario.Crear(
+            nombreUsuario,
+            nombreCompleto,
+            email,
+            rol
+        );
+
+        // Confirmar la cuenta para que esté activo
+        usuario.ConfirmarCuenta();
+
+        DbContext.Usuarios.Add(usuario);
+        await DbContext.SaveChangesAsync();
+        return usuario;
+    }
+
+    /// <summary>
+    /// Crea una mesa de prueba en la base de datos
+    /// </summary>
+    protected async Task<Mesa> CrearMesaPrueba(
+        string numero = "Mesa 1", 
+        int capacidad = 4, 
+        string ubicacion = "Interior",
+        EstadoMesa estado = EstadoMesa.Disponible)
+    {
+        // Convertir el string numero a int para la entidad Mesa
+        var numeroInt = int.Parse(numero.Replace("Mesa ", ""));
+        
+        var mesa = Mesa.Crear(
+            numeroInt,
+            capacidad,
+            ubicacion
+        );
+
+        // Establecer el estado si es diferente al por defecto
+        if (estado != EstadoMesa.Disponible)
+        {
+            // Aquí deberías usar el método correspondiente para cambiar el estado
+            // Por ahora, asumimos que se crea en estado Disponible
+        }
+
+        DbContext.Mesas.Add(mesa);
+        await DbContext.SaveChangesAsync();
+        return mesa;
+    }
+
+    /// <summary>
+    /// Crea una comanda de prueba en la base de datos
+    /// </summary>
+    protected async Task<Comanda> CrearComandaPrueba(
+        Guid? meseroId = null,
+        Guid? clienteId = null,
+        Guid? mesaId = null,
+        string observaciones = "Comanda de prueba")
+    {
+        // Crear entidades dependientes si no se proporcionan
+        var mesero = meseroId.HasValue ? null : await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
+        var cliente = clienteId.HasValue ? null : await CrearClientePrueba("Cliente Comanda", "cliente@test.com");
+        var mesa = mesaId.HasValue ? null : await CrearMesaPrueba("Mesa Comanda", 4);
+
+        var comanda = Comanda.Crear(
+            meseroId ?? mesero!.Id,
+            clienteId ?? cliente!.Id,
+            mesaId ?? mesa!.Id,
+            observaciones
+        );
+
+        DbContext.Comandas.Add(comanda);
+        await DbContext.SaveChangesAsync();
+        return comanda;
+    }
 } 

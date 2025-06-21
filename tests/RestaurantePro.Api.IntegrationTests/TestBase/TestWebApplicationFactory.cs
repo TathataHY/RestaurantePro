@@ -222,3 +222,14 @@ public class TestCurrentUserService : ICurrentUserService
 
     public bool IsInRole(string role) => Roles.Contains(role, StringComparer.OrdinalIgnoreCase);
 }
+
+/// <summary>
+/// Definición de la colección Sequential para tests de integración de API
+/// Permite que xUnit inyecte correctamente el TestWebApplicationFactory
+/// </summary>
+[CollectionDefinition("Sequential")]
+public class SequentialCollection : ICollectionFixture<TestWebApplicationFactory>
+{
+    // Esta clase no necesita implementación
+    // Solo define la colección para xUnit
+}
