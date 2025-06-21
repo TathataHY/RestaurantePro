@@ -3,6 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
 using RestaurantePro.Application.Core.Usuarios.Commands.ActualizarUsuario;
+using RestaurantePro.Application.Core.Usuarios.Commands.EliminarUsuario;
+using RestaurantePro.Application.Core.Usuarios.Commands.CambiarRolUsuario;
+using RestaurantePro.Application.Core.Usuarios.Commands.ResetPasswordUsuario;
+using RestaurantePro.Application.Core.Usuarios.Queries.ObtenerUsuariosPaginados;
+using RestaurantePro.Application.Core.Usuarios.Queries.ObtenerUsuarioPorId;
 using RestaurantePro.Application.Core.Usuarios.DTOs;
 
 namespace RestaurantePro.Api.Controllers.Core;
@@ -31,23 +36,41 @@ public class UsuariosController : ControllerBase
     [HttpGet]
     // [Authorize(Roles = "Administrador,Gerente")] // TEMPORAL: Deshabilitado para testing
     [ProducesResponseType(typeof(ApiResponse<List<UsuarioDto>>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<List<UsuarioDto>>>> GetUsuarios(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? filtro = null,
         [FromQuery] bool soloActivos = true,
-        [FromQuery] string orderBy = "Nombre",
+        [FromQuery] string orderBy = "NombreCompleto",
         [FromQuery] string orderDirection = "asc")
     {
         _logger.LogInformation("👥 GET /api/core/usuarios - Página: {PageNumber}, Tamaño: {PageSize}", pageNumber, pageSize);
 
-        // TODO: Implementar query para obtener usuarios
-        return StatusCode(StatusCodes.Status501NotImplemented, 
-            ApiResponse<object>.ErrorResponse(
-                new List<string> { "Funcionalidad pendiente de implementación" },
-                "Obtener usuarios no implementado",
-                StatusCodes.Status501NotImplemented));
+        var query = new ObtenerUsuariosPaginadosQuery
+        {
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            Filtro = filtro,
+            SoloActivos = soloActivos,
+            OrderBy = orderBy,
+            OrderDirection = orderDirection
+        };
+
+        var result = await _mediator.Send(query);
+
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Error al obtener usuarios",
+                StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        var response = ApiResponse<List<UsuarioDto>>.SuccessResponse(
+            result.Value, "Usuarios obtenidos exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -61,12 +84,21 @@ public class UsuariosController : ControllerBase
     {
         _logger.LogInformation("👤 GET /api/core/usuarios/{Id}", id);
 
-        // TODO: Implementar query para obtener usuario por ID
-        return StatusCode(StatusCodes.Status501NotImplemented,
-            ApiResponse<object>.ErrorResponse(
-                new List<string> { "Funcionalidad pendiente de implementación" },
-                "Obtener usuario por ID no implementado",
-                StatusCodes.Status501NotImplemented));
+        var query = ObtenerUsuarioPorIdQuery.Create(id);
+        var result = await _mediator.Send(query);
+
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Usuario no encontrado",
+                StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<UsuarioDto>.SuccessResponse(
+            result.Value, "Usuario obtenido exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -100,39 +132,67 @@ public class UsuariosController : ControllerBase
     }
 
     /// <summary>
-    /// Actualiza un usuario existente (Pendiente de implementación)
+    /// Actualiza un usuario existente
     /// </summary>
     [HttpPut("{id:guid}")]
     [Authorize]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
-    public async Task<ActionResult<ApiResponse<object>>> ActualizarUsuario(Guid id)
+    [ProducesResponseType(typeof(ApiResponse<UsuarioDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<UsuarioDto>>> ActualizarUsuario(Guid id, [FromBody] ActualizarUsuarioCommand command)
     {
         _logger.LogInformation("✏️ PUT /api/core/usuarios/{Id}", id);
 
-        // TODO: Implementar actualización de usuario
-        return StatusCode(StatusCodes.Status501NotImplemented,
-            ApiResponse<object>.ErrorResponse(
-                new List<string> { "Funcionalidad pendiente de implementación" },
-                "Actualizar usuario no implementado",
-                StatusCodes.Status501NotImplemented));
+        // Asignar el ID de la URL al comando
+        command.UsuarioId = id;
+
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no encontrado")) 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Error al actualizar usuario", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<UsuarioDto>.SuccessResponse(
+            result.Value, "Usuario actualizado exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
-    /// Elimina un usuario (Pendiente de implementación)
+    /// Elimina un usuario
     /// </summary>
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Administrador")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
-    public async Task<ActionResult<ApiResponse<object>>> EliminarUsuario(Guid id)
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<bool>>> EliminarUsuario(Guid id)
     {
         _logger.LogInformation("🗑️ DELETE /api/core/usuarios/{Id}", id);
 
-        // TODO: Implementar eliminación de usuario
-        return StatusCode(StatusCodes.Status501NotImplemented,
-            ApiResponse<object>.ErrorResponse(
-                new List<string> { "Funcionalidad pendiente de implementación" },
-                "Eliminar usuario no implementado",
-                StatusCodes.Status501NotImplemented));
+        // TODO: Obtener el ID del usuario actual del token JWT
+        var usuarioEliminadorId = Guid.NewGuid(); // Temporal para testing
+
+        var command = EliminarUsuarioCommand.Create(id, usuarioEliminadorId);
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Error al eliminar usuario",
+                StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<bool>.SuccessResponse(
+            result.Value, "Usuario eliminado exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -141,15 +201,92 @@ public class UsuariosController : ControllerBase
     [HttpGet("perfil")]
     [Authorize]
     [ProducesResponseType(typeof(ApiResponse<UsuarioDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<UsuarioDto>>> ObtenerPerfilActual()
     {
         _logger.LogInformation("👤 GET /api/core/usuarios/perfil");
 
-        // TODO: Implementar obtener usuario actual del token JWT
-        return StatusCode(StatusCodes.Status501NotImplemented,
-            ApiResponse<object>.ErrorResponse(
-                new List<string> { "Funcionalidad pendiente de implementación" },
-                "Obtener perfil actual no implementado",
-                StatusCodes.Status501NotImplemented));
+        // TODO: Obtener el ID del usuario actual del token JWT
+        var usuarioId = Guid.NewGuid(); // Temporal para testing
+
+        var query = ObtenerUsuarioPorIdQuery.Create(usuarioId);
+        var result = await _mediator.Send(query);
+
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Perfil no encontrado",
+                StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<UsuarioDto>.SuccessResponse(
+            result.Value, "Perfil obtenido exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Cambia el rol de un usuario
+    /// </summary>
+    [HttpPost("{id:guid}/cambiar-rol")]
+    [Authorize(Roles = "Administrador")]
+    [ProducesResponseType(typeof(ApiResponse<UsuarioDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<UsuarioDto>>> CambiarRol(Guid id, [FromBody] CambiarRolUsuarioCommand command)
+    {
+        _logger.LogInformation("🔄 POST /api/core/usuarios/{Id}/cambiar-rol", id);
+
+        // Asignar el ID de la URL al comando
+        command.Id = id;
+
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Error.Contains("no encontrado") 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error }, "Error al cambiar rol", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<UsuarioDto>.SuccessResponse(
+            result.Value, "Rol cambiado exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Resetea la contraseña de un usuario
+    /// </summary>
+    [HttpPost("{id:guid}/reset-password")]
+    [Authorize(Roles = "Administrador")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<bool>>> ResetPassword(Guid id)
+    {
+        _logger.LogInformation("🔑 POST /api/core/usuarios/{Id}/reset-password", id);
+
+        // TODO: Obtener el ID del usuario actual del token JWT
+        var usuarioReseteadorId = Guid.NewGuid(); // Temporal para testing
+
+        var command = ResetPasswordUsuarioCommand.Create(id, usuarioReseteadorId);
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Error al resetear contraseña",
+                StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<bool>.SuccessResponse(
+            result.Value, "Contraseña reseteada exitosamente");
+        return Ok(response);
     }
 } 
