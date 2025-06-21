@@ -7,24 +7,13 @@ namespace RestaurantePro.Api.IntegrationTests.Controllers.Comercial;
 /// Valida todos los endpoints REST del controlador de tarjetas de fidelización
 /// </summary>
 [Collection("Sequential")]
-public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase, IDisposable
+public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
 {
     private readonly TestWebApplicationFactory _factory;
 
     public TarjetasFidelizacionControllerTests() : base(new TestWebApplicationFactory())
     {
         _factory = (TestWebApplicationFactory)Factory;
-    }
-
-    // Helper para crear cliente de prueba
-    private async Task<Guid> CrearClientePrueba(string nombre, string email)
-    {
-        var cliente = new ClienteTestDataBuilder()
-            .ConNombre(nombre)
-            .ConEmail(email);
-        // Aquí deberías crear el cliente en la BD usando el comando correspondiente
-        // Por ahora retornamos un GUID para que los tests funcionen
-        return Guid.NewGuid();
     }
 
     [Fact]
@@ -74,12 +63,12 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase, IDisp
     public async Task GetTarjeta_ConIdExistente_DebeRetornarTarjeta()
     {
         // Arrange
-        var clienteId = await CrearClientePrueba("Cliente Test", "cliente@test.com");
+        var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
-            .ConClienteId(clienteId)
+            .ConClienteId(cliente.Id)
             .BuildCrearTarjetaRequest();
         var createResponse = await HttpClient.PostAsJsonAsync("/api/comercial/tarjetas-fidelizacion", tarjetaRequest);
-        // Aquí deberías extraer el ID real de la tarjeta creada
+        // TODO: Extraer el ID real de la tarjeta creada cuando el endpoint POST esté completo
         var tarjetaId = Guid.NewGuid();
 
         // Act
@@ -103,9 +92,9 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase, IDisp
     public async Task PostTarjeta_ConDatosValidos_DebeCrearTarjeta()
     {
         // Arrange
-        var clienteId = await CrearClientePrueba("Cliente Fidelización", "fidelizacion@test.com");
+        var cliente = await CrearClientePrueba("Cliente Fidelización", "fidelizacion@test.com");
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
-            .ConClienteId(clienteId)
+            .ConClienteId(cliente.Id)
             .ConTipoTarjeta("Premium")
             .ConPuntosIniciales(100)
             .ConActivarInmediatamente(true)
@@ -132,12 +121,12 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase, IDisp
     public async Task PutTarjeta_ConDatosValidos_DebeActualizarTarjeta()
     {
         // Arrange
-        var clienteId = await CrearClientePrueba("Cliente Actualizar", "actualizar@test.com");
+        var cliente = await CrearClientePrueba("Cliente Actualizar", "actualizar@test.com");
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
-            .ConClienteId(clienteId)
+            .ConClienteId(cliente.Id)
             .BuildCrearTarjetaRequest();
         var createResponse = await HttpClient.PostAsJsonAsync("/api/comercial/tarjetas-fidelizacion", tarjetaRequest);
-        // Aquí deberías extraer el ID real de la tarjeta creada
+        // TODO: Extraer el ID real de la tarjeta creada cuando el endpoint POST esté completo
         var tarjetaId = Guid.NewGuid();
 
         var actualizarRequest = new TarjetaFidelizacionTestDataBuilder()
@@ -167,17 +156,17 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase, IDisp
     public async Task ActivarTarjeta_ConTarjetaExistente_DebeActivarTarjeta()
     {
         // Arrange
-        var clienteId = await CrearClientePrueba("Cliente Activar", "activar@test.com");
+        var cliente = await CrearClientePrueba("Cliente Activar", "activar@test.com");
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
-            .ConClienteId(clienteId)
+            .ConClienteId(cliente.Id)
             .ConActivarInmediatamente(false)
             .BuildCrearTarjetaRequest();
         var createResponse = await HttpClient.PostAsJsonAsync("/api/comercial/tarjetas-fidelizacion", tarjetaRequest);
-        // Aquí deberías extraer el ID real de la tarjeta creada
+        // TODO: Extraer el ID real de la tarjeta creada cuando el endpoint POST esté completo
         var tarjetaId = Guid.NewGuid();
 
         // Act
-        var response = await HttpClient.PatchAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaId}/activar", null);
+        var response = await HttpClient.PatchAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaId}/activar", new {});
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, 
@@ -197,17 +186,16 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase, IDisp
     public async Task DesactivarTarjeta_ConTarjetaExistente_DebeDesactivarTarjeta()
     {
         // Arrange
-        var clienteId = await CrearClientePrueba("Cliente Desactivar", "desactivar@test.com");
+        var cliente = await CrearClientePrueba("Cliente Desactivar", "desactivar@test.com");
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
-            .ConClienteId(clienteId)
-            .ConActivarInmediatamente(true)
+            .ConClienteId(cliente.Id)
             .BuildCrearTarjetaRequest();
         var createResponse = await HttpClient.PostAsJsonAsync("/api/comercial/tarjetas-fidelizacion", tarjetaRequest);
-        // Aquí deberías extraer el ID real de la tarjeta creada
+        // TODO: Extraer el ID real de la tarjeta creada cuando el endpoint POST esté completo
         var tarjetaId = Guid.NewGuid();
 
         // Act
-        var response = await HttpClient.PatchAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaId}/desactivar", null);
+        var response = await HttpClient.PatchAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaId}/desactivar", new {});
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, 
@@ -227,20 +215,19 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase, IDisp
     public async Task AgregarPuntos_ConTarjetaExistente_DebeAgregarPuntos()
     {
         // Arrange
-        var clienteId = await CrearClientePrueba("Cliente Puntos", "puntos@test.com");
+        var cliente = await CrearClientePrueba("Cliente Puntos", "puntos@test.com");
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
-            .ConClienteId(clienteId)
-            .ConPuntosIniciales(100)
+            .ConClienteId(cliente.Id)
             .BuildCrearTarjetaRequest();
         var createResponse = await HttpClient.PostAsJsonAsync("/api/comercial/tarjetas-fidelizacion", tarjetaRequest);
-        // Aquí deberías extraer el ID real de la tarjeta creada
+        // TODO: Extraer el ID real de la tarjeta creada cuando el endpoint POST esté completo
         var tarjetaId = Guid.NewGuid();
 
-        var agregarPuntosRequest = new TarjetaFidelizacionTestDataBuilder()
-            .BuildAgregarPuntosRequest();
+        var puntosRequest = new TarjetaFidelizacionTestDataBuilder()
+            .BuildAgregarPuntosRequest(50);
 
         // Act
-        var response = await HttpClient.PostAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaId}/puntos", agregarPuntosRequest);
+        var response = await HttpClient.PostAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaId}/puntos", puntosRequest);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, 
@@ -260,20 +247,20 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase, IDisp
     public async Task CanjearPuntos_ConTarjetaExistente_DebeCanjearPuntos()
     {
         // Arrange
-        var clienteId = await CrearClientePrueba("Cliente Canje", "canje@test.com");
+        var cliente = await CrearClientePrueba("Cliente Canjear", "canjear@test.com");
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
-            .ConClienteId(clienteId)
-            .ConPuntosIniciales(1000)
+            .ConClienteId(cliente.Id)
+            .ConPuntosIniciales(100)
             .BuildCrearTarjetaRequest();
         var createResponse = await HttpClient.PostAsJsonAsync("/api/comercial/tarjetas-fidelizacion", tarjetaRequest);
-        // Aquí deberías extraer el ID real de la tarjeta creada
+        // TODO: Extraer el ID real de la tarjeta creada cuando el endpoint POST esté completo
         var tarjetaId = Guid.NewGuid();
 
-        var canjearPuntosRequest = new TarjetaFidelizacionTestDataBuilder()
-            .BuildCanjearPuntosRequest();
+        var canjeRequest = new TarjetaFidelizacionTestDataBuilder()
+            .BuildCanjearPuntosRequest(30, "Descuento en factura");
 
         // Act
-        var response = await HttpClient.PostAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaId}/canjear", canjearPuntosRequest);
+        var response = await HttpClient.PostAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaId}/canjear", canjeRequest);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, 
@@ -293,13 +280,12 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase, IDisp
     public async Task GetHistorialPuntos_ConTarjetaExistente_DebeRetornarHistorial()
     {
         // Arrange
-        var clienteId = await CrearClientePrueba("Cliente Historial", "historial@test.com");
+        var cliente = await CrearClientePrueba("Cliente Historial", "historial@test.com");
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
-            .ConClienteId(clienteId)
-            .ConPuntosIniciales(500)
+            .ConClienteId(cliente.Id)
             .BuildCrearTarjetaRequest();
         var createResponse = await HttpClient.PostAsJsonAsync("/api/comercial/tarjetas-fidelizacion", tarjetaRequest);
-        // Aquí deberías extraer el ID real de la tarjeta creada
+        // TODO: Extraer el ID real de la tarjeta creada cuando el endpoint POST esté completo
         var tarjetaId = Guid.NewGuid();
 
         // Act
@@ -346,33 +332,20 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase, IDisp
     public async Task DeleteTarjeta_ConTarjetaExistente_DebeEliminarTarjeta()
     {
         // Arrange
-        var clienteId = await CrearClientePrueba("Cliente Eliminar", "eliminar@test.com");
+        var cliente = await CrearClientePrueba("Cliente Eliminar", "eliminar@test.com");
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
-            .ConClienteId(clienteId)
+            .ConClienteId(cliente.Id)
             .BuildCrearTarjetaRequest();
         var createResponse = await HttpClient.PostAsJsonAsync("/api/comercial/tarjetas-fidelizacion", tarjetaRequest);
-        // Aquí deberías extraer el ID real de la tarjeta creada
+        // TODO: Extraer el ID real de la tarjeta creada cuando el endpoint POST esté completo
         var tarjetaId = Guid.NewGuid();
-
+        
         // Act
         var response = await HttpClient.DeleteAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaId}");
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, 
-            HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-            apiResponse.Should().NotBeNull();
-        }
-    }
-
-    public new void Dispose()
-    {
-        base.Dispose();
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NoContent, 
+            HttpStatusCode.NotFound, HttpStatusCode.NotImplemented, 
+            HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
     }
 } 

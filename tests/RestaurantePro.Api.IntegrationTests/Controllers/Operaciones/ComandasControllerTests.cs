@@ -57,7 +57,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
-        var mesa = await CrearMesaPrueba("Mesa 1", 4);
+        var mesa = await CrearMesaPrueba(1, 4);
         var comanda1 = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda 1");
         var comanda2 = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda 2");
 
@@ -93,7 +93,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
-        var mesa = await CrearMesaPrueba("Mesa 1", 4);
+        var mesa = await CrearMesaPrueba(1, 4);
         var producto = await CrearProductoPrueba("Hamburguesa", 12.50m);
         
         var comandaRequest = new ComandaTestDataBuilder()
@@ -170,7 +170,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
-        var mesa = await CrearMesaPrueba("Mesa 1", 4);
+        var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda específica");
 
         // Act
@@ -222,7 +222,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
-        var mesa = await CrearMesaPrueba("Mesa 1", 4);
+        var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda original");
         
         var actualizarRequest = new ComandaTestDataBuilder()
@@ -260,7 +260,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
-        var mesa = await CrearMesaPrueba("Mesa 1", 4);
+        var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para cambiar estado");
         
         var estadoRequest = new ComandaTestDataBuilder()
@@ -297,7 +297,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
-        var mesa = await CrearMesaPrueba("Mesa 1", 4);
+        var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para agregar producto");
         var producto = await CrearProductoPrueba("Pizza Margherita", 18.00m);
         
@@ -330,7 +330,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
-        var mesa = await CrearMesaPrueba("Mesa 1", 4);
+        var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para remover producto");
         var detalleId = Guid.NewGuid(); // Esto debería venir de un detalle real
 
@@ -352,7 +352,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
-        var mesa = await CrearMesaPrueba("Mesa 1", 4);
+        var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para aplicar descuento");
         
         var descuentoRequest = new ComandaTestDataBuilder()
@@ -385,7 +385,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
-        var mesa = await CrearMesaPrueba("Mesa 1", 4);
+        var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para cerrar");
         
         var cerrarRequest = new ComandaTestDataBuilder()

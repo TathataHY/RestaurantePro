@@ -55,8 +55,8 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: ObtenerMesas_ConMesasEnBD_DebeRetornarMesas");
         
-        var mesa1 = await CrearMesaPrueba("Mesa 1", 4);
-        var mesa2 = await CrearMesaPrueba("Mesa 2", 6);
+        var mesa1 = await CrearMesaPrueba(1, 4);
+        var mesa2 = await CrearMesaPrueba(2, 6);
 
         // Act
         var response = await HttpClient.GetAsync("/api/operaciones/mesas");
@@ -158,7 +158,7 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: ObtenerMesa_ConIdExistente_DebeRetornarMesa");
         
-        var mesa = await CrearMesaPrueba("Mesa 3", 6);
+        var mesa = await CrearMesaPrueba(3, 4);
 
         // Act
         var response = await HttpClient.GetAsync($"/api/operaciones/mesas/{mesa.Id}");
@@ -207,7 +207,7 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: ActualizarMesa_ConDatosValidos_DebeActualizarMesa");
         
-        var mesa = await CrearMesaPrueba("Mesa 4", 4);
+        var mesa = await CrearMesaPrueba(4, 4);
         var updateRequest = new MesaTestDataBuilder()
             .ConCapacidad(8)
             .ConUbicacion("Terraza VIP")
@@ -241,7 +241,7 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: CambiarEstadoMesa_ConEstadoValido_DebeActualizarEstado");
         
-        var mesa = await CrearMesaPrueba("Mesa 5", 4);
+        var mesa = await CrearMesaPrueba(5, 4);
         var estadoRequest = new MesaTestDataBuilder()
             .BuildCambiarEstadoRequest(EstadoMesa.Ocupada.ToString());
 
@@ -273,7 +273,7 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: AsignarCliente_ConClienteValido_DebeAsignarCliente");
         
-        var mesa = await CrearMesaPrueba("Mesa 6", 4);
+        var mesa = await CrearMesaPrueba(6, 4);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var asignarRequest = new MesaTestDataBuilder()
             .BuildAsignarClienteRequest(cliente.Id);
@@ -302,7 +302,7 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: LiberarMesa_ConMesaAsignada_DebeLiberarMesa");
         
-        var mesa = await CrearMesaPrueba("Mesa 7", 4);
+        var mesa = await CrearMesaPrueba(7, 4);
         var liberarRequest = new MesaTestDataBuilder()
             .BuildLiberarMesaRequest();
 
@@ -334,7 +334,7 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: ReservarMesa_ConDatosValidos_DebeReservarMesa");
         
-        var mesa = await CrearMesaPrueba("Mesa 8", 4);
+        var mesa = await CrearMesaPrueba(8, 4);
         var cliente = await CrearClientePrueba("Cliente Reserva", "reserva@test.com");
         var reservaRequest = new MesaTestDataBuilder()
             .BuildReservarMesaRequest(cliente.Id, DateTime.Now.AddHours(2), 4);
@@ -363,8 +363,8 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: ObtenerPlanoMesas_DebeRetornarPlano");
         
-        var mesa1 = await CrearMesaPrueba("Mesa 9", 4);
-        var mesa2 = await CrearMesaPrueba("Mesa 10", 6);
+        var mesa1 = await CrearMesaPrueba(9, 4);
+        var mesa2 = await CrearMesaPrueba(10, 6);
 
         // Act
         var response = await HttpClient.GetAsync("/api/operaciones/mesas/plano");

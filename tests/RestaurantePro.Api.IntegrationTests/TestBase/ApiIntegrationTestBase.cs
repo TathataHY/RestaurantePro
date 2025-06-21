@@ -206,16 +206,13 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// Crea una mesa de prueba en la base de datos
     /// </summary>
     protected async Task<Mesa> CrearMesaPrueba(
-        string numero = "Mesa 1", 
+        int numero = 1, 
         int capacidad = 4, 
         string ubicacion = "Interior",
         EstadoMesa estado = EstadoMesa.Disponible)
     {
-        // Convertir el string numero a int para la entidad Mesa
-        var numeroInt = int.Parse(numero.Replace("Mesa ", ""));
-        
         var mesa = Mesa.Crear(
-            numeroInt,
+            numero,
             capacidad,
             ubicacion
         );
@@ -244,7 +241,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         // Crear entidades dependientes si no se proporcionan
         var mesero = meseroId.HasValue ? null : await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = clienteId.HasValue ? null : await CrearClientePrueba("Cliente Comanda", "cliente@test.com");
-        var mesa = mesaId.HasValue ? null : await CrearMesaPrueba("Mesa Comanda", 4);
+        var mesa = mesaId.HasValue ? null : await CrearMesaPrueba(99, 4); // Usar un número de mesa por defecto
 
         var comanda = Comanda.Crear(
             meseroId ?? mesero!.Id,
