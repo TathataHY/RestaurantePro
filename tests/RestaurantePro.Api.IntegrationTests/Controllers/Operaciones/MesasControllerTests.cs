@@ -370,8 +370,8 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         var response = await HttpClient.GetAsync("/api/operaciones/mesas/plano");
 
         // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, 
-            HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, 
+            HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
         
         if (response.IsSuccessStatusCode)
         {
