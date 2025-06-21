@@ -26,6 +26,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
             _dbContext = dbContext;
         }
 
+        // TODO: Este método es incorrecto para un tipo de entidad poseída.
+        // Los movimientos deben obtenerse a través de su Ingrediente propietario.
+        // Comentado para evitar su uso. Se necesita un rediseño si se requiere esta funcionalidad.
+        /*
         /// <summary>
         /// Obtiene un movimiento por su ID
         /// </summary>
@@ -38,18 +42,30 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
                 
             return entidad;
         }
+        */
 
         /// <summary>
         /// Obtiene todos los movimientos de un ingrediente
         /// </summary>
         public async Task<IEnumerable<MovimientoInventario>> ObtenerPorIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default)
         {
-            return await _dbSet
-                .Where(m => m.IngredienteId == ingredienteId)
-                .OrderByDescending(m => m.Fecha)
-                .ToListAsync(cancellationToken);
+            var ingrediente = await _dbContext.Ingredientes
+                                          .Include(i => i.Movimientos)
+                                          .AsNoTracking()
+                                          .FirstOrDefaultAsync(i => i.Id == ingredienteId, cancellationToken);
+
+            if (ingrediente == null)
+            {
+                return Enumerable.Empty<MovimientoInventario>();
+            }
+
+            return ingrediente.Movimientos.OrderByDescending(m => m.Fecha);
         }
 
+        // TODO: Este método es incorrecto para un tipo de entidad poseída (owned entity type).
+        // No se puede consultar una entidad poseída directamente a nivel global.
+        // Se debe consultar a través de los Ingredientes. Comentado para evitar su uso.
+        /*
         /// <summary>
         /// Obtiene los movimientos de inventario en un rango de fechas
         /// </summary>
@@ -71,7 +87,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
                 .OrderByDescending(m => m.Fecha)
                 .ToListAsync(cancellationToken);
         }
+        */
 
+        // TODO: Incorrecto para un tipo poseído. El registro debe hacerse en el agregado raíz (Ingrediente).
+        /*
         /// <summary>
         /// Registra un nuevo movimiento de inventario
         /// </summary>
@@ -81,7 +100,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
             await _dbContext.SaveChangesAsync(cancellationToken);
             return movimiento;
         }
+        */
 
+        // TODO: Incorrecto para un tipo poseído. La actualización debe hacerse en el agregado raíz (Ingrediente).
+        /*
         /// <summary>
         /// Actualiza un movimiento existente
         /// </summary>
@@ -90,15 +112,22 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
             _dbContext.Entry(movimiento).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
+        */
 
         /// <summary>
         /// Calcula el stock actual de un ingrediente basado en sus movimientos
         /// </summary>
         public async Task<decimal> CalcularStockActualAsync(Guid ingredienteId)
         {
-            var movimientos = await _dbSet
-                .Where(m => m.IngredienteId == ingredienteId && m.EstaAplicado)
+            var movimientos = await _dbContext.Ingredientes
+                .Where(i => i.Id == ingredienteId)
+                .SelectMany(i => i.Movimientos.Where(m => m.EstaAplicado))
                 .ToListAsync();
+
+            if (!movimientos.Any())
+            {
+                return 0;
+            }
 
             decimal stock = 0;
 
@@ -122,7 +151,23 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
         /// </summary>
         public async Task AgregarAsync(MovimientoInventario movimiento)
         {
-            await _dbSet.AddAsync(movimiento);
+            // Esta implementación es inherentemente incorrecta para un tipo poseído.
+            // La entidad poseída debe ser agregada a su propietario (Ingrediente)
+            // y luego el propietario debe ser guardado.
+            // Se necesita refactorizar el código que llama a este método.
+            var ingrediente = await _dbContext.Ingredientes
+                                          .Include(i => i.Movimientos)
+                                          .FirstOrDefaultAsync(i => i.Id == movimiento.IngredienteId);
+
+            if (ingrediente != null)
+            {
+                ingrediente.AgregarMovimiento(movimiento);
+            }
+            else
+            {
+                // Lanzar una excepción o manejar el caso donde el ingrediente no existe
+                throw new InvalidOperationException($"No se puede agregar movimiento a un ingrediente inexistente: {movimiento.IngredienteId}");
+            }
         }
 
         /// <summary>

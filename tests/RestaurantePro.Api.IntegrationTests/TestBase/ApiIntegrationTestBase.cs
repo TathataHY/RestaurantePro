@@ -1,4 +1,10 @@
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
+using RestaurantePro.Domain.Core.Usuarios;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
+using RestaurantePro.Domain.Operaciones.Comandas;
+using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
+using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
 
 /// <summary>
 /// Clase base para todos los tests de integración de la API.
@@ -227,6 +233,29 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         DbContext.Mesas.Add(mesa);
         await DbContext.SaveChangesAsync();
         return mesa;
+    }
+
+    /// <summary>
+    /// Crea un ingrediente de prueba en la base de datos
+    /// </summary>
+    protected async Task<Ingrediente> CrearIngredientePrueba(
+        string nombre = "Tomate",
+        string codigo = "TOM-001",
+        decimal stockInicial = 10,
+        decimal stockMinimo = 5)
+    {
+        var ingrediente = Ingrediente.Crear(
+            nombre,
+            codigo,
+            "Ingrediente de prueba",
+            UnidadMedida.Unidad,
+            stockMinimo,
+            stockInicial
+        );
+
+        DbContext.Ingredientes.Add(ingrediente);
+        await DbContext.SaveChangesAsync();
+        return ingrediente;
     }
 
     /// <summary>

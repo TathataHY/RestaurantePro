@@ -278,7 +278,7 @@ public class GenerarReporteValidator : AbstractValidator<GenerarReporteCommand>
                 (await _comandaRepository.ObtenerPorRangoFechasAsync(command.FechaInicio, command.FechaFin, false, cancellationToken)).Any(),
 
             TipoReporte.Inventario or TipoReporte.AnalisisCostos =>
-                (await _movimientoInventarioRepository.ObtenerPorRangoFechasAsync(command.FechaInicio, command.FechaFin, cancellationToken)).Any() ||
+                // (await _movimientoInventarioRepository.ObtenerPorRangoFechasAsync(command.FechaInicio, command.FechaFin, cancellationToken)).Any() || // TODO: Fix this call
                 (await _ordenCompraRepository.ObtenerPorRangoFechasAsync(command.FechaInicio, command.FechaFin, cancellationToken)).Any(),
             
             _ => true

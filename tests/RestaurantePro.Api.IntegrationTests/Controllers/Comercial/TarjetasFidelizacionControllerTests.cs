@@ -224,7 +224,7 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
         var tarjetaId = Guid.NewGuid();
 
         var puntosRequest = new TarjetaFidelizacionTestDataBuilder()
-            .BuildAgregarPuntosRequest(50);
+            .BuildAgregarPuntosRequest();
 
         // Act
         var response = await HttpClient.PostAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaId}/puntos", puntosRequest);
@@ -247,7 +247,7 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     public async Task CanjearPuntos_ConTarjetaExistente_DebeCanjearPuntos()
     {
         // Arrange
-        var cliente = await CrearClientePrueba("Cliente Canjear", "canjear@test.com");
+        var cliente = await CrearClientePrueba("Cliente Canjear", "canje@test.com");
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
             .ConClienteId(cliente.Id)
             .ConPuntosIniciales(100)
@@ -257,7 +257,7 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
         var tarjetaId = Guid.NewGuid();
 
         var canjeRequest = new TarjetaFidelizacionTestDataBuilder()
-            .BuildCanjearPuntosRequest(30, "Descuento en factura");
+            .BuildCanjearPuntosRequest();
 
         // Act
         var response = await HttpClient.PostAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaId}/canjear", canjeRequest);

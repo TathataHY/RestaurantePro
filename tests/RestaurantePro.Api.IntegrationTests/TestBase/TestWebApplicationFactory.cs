@@ -23,6 +23,15 @@ using Microsoft.Extensions.Options;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
+using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces;
+using RestaurantePro.Domain.Inventario.Services;
+using RestaurantePro.Domain.Proveedores.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
+using RestaurantePro.Domain.Core.SharedKernel.Validation;
+using RestaurantePro.Domain.Inventario.Policies;
+using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
+using RestaurantePro.Domain.Core.Notificaciones.Services;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -129,6 +138,27 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 new IngredienteRepository(
                     provider.GetRequiredService<RestauranteProDbContext>(),
                     provider.GetRequiredService<ILogger<IngredienteRepository>>()));
+            
+            services.AddScoped<IMovimientoInventarioRepository>(provider => 
+                new MovimientoInventarioRepository(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<ILogger<MovimientoInventarioRepository>>()));
+            
+            services.AddScoped<IProveedorRepository>(provider => 
+                new ProveedorRepository(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<ILogger<ProveedorRepository>>()));
+
+            // 📦 REGISTRAR SERVICIOS DE DOMINIO NECESARIOS
+            services.AddScoped<INotificationManager, NotificationManager>();
+            services.AddScoped<IStockBajoPolicy, StockBajoPolicy>();
+            services.AddScoped<IInventarioServiceFacade, InventarioServiceFacade>();
+            services.AddScoped<IServicioNotificaciones, ServicioNotificaciones>();
+            
+            services.AddScoped<INotificacionRepository>(provider => 
+                new NotificacionRepository(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<ILogger<NotificacionRepository>>()));
             
             // 📦 REGISTRAR REPOSITORIOS OPERACIONES
             services.AddScoped<IPreparacionRepository>(provider => 

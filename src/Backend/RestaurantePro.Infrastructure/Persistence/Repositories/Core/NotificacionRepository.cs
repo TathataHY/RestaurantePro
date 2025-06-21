@@ -18,7 +18,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
     /// </summary>
     public class NotificacionRepository : Repository<Notificacion>, INotificacionRepository
     {
-        public NotificacionRepository(DbContext dbContext, ILogger<NotificacionRepository> logger)
+        public NotificacionRepository(RestauranteProDbContext dbContext, ILogger<NotificacionRepository> logger)
             : base(dbContext, logger)
         {
         }

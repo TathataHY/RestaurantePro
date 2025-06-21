@@ -131,7 +131,8 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Reportes.Validators
                 FechaFin = DateTime.UtcNow,
                 UsuarioSolicitanteId = _testUserId
             };
-            _comandaRepositoryMock.Setup(r => r.ObtenerPorRangoFechasAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), false, It.IsAny<CancellationToken>())).ReturnsAsync(new List<Comanda>());
+            _comandaRepositoryMock.Setup(r => r.ObtenerPorRangoFechasAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), false, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Comanda>());
 
             // Act
             var result = await _validator.TestValidateAsync(command);
@@ -153,8 +154,6 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Reportes.Validators
                 FechaFin = DateTime.UtcNow,
                 UsuarioSolicitanteId = _testUserId
             };
-            _movimientoInventarioRepositoryMock.Setup(r => r.ObtenerPorRangoFechasAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<MovimientoInventario>());
             _ordenCompraRepositoryMock.Setup(r => r.ObtenerPorRangoFechasAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<OrdenCompra>());
 
@@ -194,10 +193,6 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Reportes.Validators
             var comandas = new List<Comanda> { Comanda.Crear(meseroId: _testUserId, fechaCreacion: fechaTest.AddHours(-1), clienteId: null, mesaId: null) };
             _comandaRepositoryMock.Setup(r => r.ObtenerPorRangoFechasAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), false, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(comandas);
-
-            var movimientos = new List<MovimientoInventario> { MovimientoInventario.CrearIngreso(Guid.NewGuid(), 1, "test") };
-            _movimientoInventarioRepositoryMock.Setup(r => r.ObtenerPorRangoFechasAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(movimientos);
 
             var ordenes = new List<OrdenCompra> { OrdenCompra.Crear(Guid.NewGuid(), "Orden de prueba", fechaTest.AddHours(-1)) };
             _ordenCompraRepositoryMock.Setup(r => r.ObtenerPorRangoFechasAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))

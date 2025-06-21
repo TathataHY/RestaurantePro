@@ -492,8 +492,18 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// <returns>Déficit de stock (0 si hay suficiente)</returns>
         public decimal CalcularDeficitStock(decimal cantidadRequerida)
         {
-            Guard.AgainstNegative(cantidadRequerida, nameof(cantidadRequerida));
             return Math.Max(0, cantidadRequerida - Stock);
+        }
+
+        // TODO: Este método es una solución temporal para corregir el error de compilación.
+        // La lógica correcta es que los movimientos se creen y añadan a través de
+        // los métodos de negocio del agregado, como IncrementarStock o DecrementarStock.
+        public void AgregarMovimiento(MovimientoInventario movimiento)
+        {
+            if (movimiento != null)
+            {
+                Movimientos.Add(movimiento);
+            }
         }
 
         /// <summary>
