@@ -67,15 +67,16 @@ namespace RestaurantePro.Domain.UnitTests.Inventario.Compras.OrdenesCompra.Repos
         {
             // Arrange
             _mockRepository.Setup(repo => repo.ObtenerTodasAsync(CancellationToken.None))
-                .ReturnsAsync(_ordenesCompra);
+                .ReturnsAsync(_ordenesCompra.AsQueryable());
 
             // Act
             var resultado = await _mockRepository.Object.ObtenerTodasAsync();
 
             // Assert
             resultado.Should().NotBeNull();
-            resultado.Should().HaveCount(3);
-            resultado.Should().BeEquivalentTo(_ordenesCompra);
+            var listaResultado = resultado.ToList();
+            listaResultado.Should().HaveCount(3);
+            listaResultado.Should().BeEquivalentTo(_ordenesCompra);
         }
 
         [Fact]

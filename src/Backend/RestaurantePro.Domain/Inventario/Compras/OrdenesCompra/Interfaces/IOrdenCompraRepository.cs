@@ -1,4 +1,3 @@
-
 namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces
 {
     /// <summary>
@@ -18,8 +17,8 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces
         /// Obtiene todas las órdenes de compra
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Lista de órdenes de compra</returns>
-        Task<IEnumerable<OrdenCompra>> ObtenerTodasAsync(CancellationToken cancellationToken = default);
+        /// <returns>Queryable de órdenes de compra</returns>
+        Task<IQueryable<OrdenCompra>> ObtenerTodasAsync(CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene órdenes de compra por su estado

@@ -9,8 +9,8 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces
         /// Obtiene todas las reservaciones
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
-        /// <returns>Lista de todas las reservaciones</returns>
-        Task<IEnumerable<Reservacion>> ObtenerTodasAsync(CancellationToken cancellationToken = default);
+        /// <returns>Queryable de todas las reservaciones</returns>
+        Task<IQueryable<Reservacion>> ObtenerTodasAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Obtiene una reservación por su ID

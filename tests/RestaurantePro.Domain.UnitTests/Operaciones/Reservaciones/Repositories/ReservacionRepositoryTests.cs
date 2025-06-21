@@ -33,15 +33,16 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Repositories
         {
             // Arrange
             _mockRepository.Setup(repo => repo.ObtenerTodasAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(_reservaciones);
+                .ReturnsAsync(_reservaciones.AsQueryable());
 
             // Act
             var resultado = await _mockRepository.Object.ObtenerTodasAsync();
 
             // Assert
             resultado.Should().NotBeNull();
-            resultado.Should().HaveCount(3);
-            resultado.Should().BeEquivalentTo(_reservaciones);
+            var listaResultado = resultado.ToList();
+            listaResultado.Should().HaveCount(3);
+            listaResultado.Should().BeEquivalentTo(_reservaciones);
         }
 
         [Fact]

@@ -30,9 +30,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             _mesaRepository = mesaRepository ?? throw new ArgumentNullException(nameof(mesaRepository));
         }
 
-        public async Task<IEnumerable<Reservacion>> ObtenerTodasAsync(CancellationToken cancellationToken = default)
+        public async Task<IQueryable<Reservacion>> ObtenerTodasAsync(CancellationToken cancellationToken = default)
         {
-            return await _dbSet.ToListAsync(cancellationToken);
+            return _dbSet
+                .Include(r => r.Mesa)
+                .Include(r => r.Cliente)
+                .OrderByDescending(r => r.Fecha);
         }
 
         public override async Task<Reservacion?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -55,13 +58,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
 
         public async Task<IEnumerable<Reservacion>> ObtenerReservacionesActivasPorMesaYFechaAsync(Guid mesaId, DateTime fecha, CancellationToken cancellationToken = default)
         {
-            var fechaInicio = fecha.Date;
-            var fechaFin = fechaInicio.AddDays(1).AddTicks(-1);
+            var fechaBusqueda = fecha.Date;
             
             return await _dbSet
                 .Where(r => r.MesaId == mesaId &&
-                           r.FechaReservacion >= fechaInicio &&
-                           r.FechaReservacion <= fechaFin &&
+                           r.Fecha == fechaBusqueda &&
                            (r.Estado == EstadoReservacion.Pendiente || r.Estado == EstadoReservacion.Confirmada))
                 .ToListAsync(cancellationToken);
         }
@@ -117,14 +118,14 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
 
         public async Task<bool> ExisteReservacionEnRangoHorarioAsync(Guid mesaId, DateTime fecha, TimeSpan horaInicio, TimeSpan horaFin, CancellationToken cancellationToken = default)
         {
-            var fechaInicio = fecha.Date.Add(horaInicio);
-            var fechaFin = fecha.Date.Add(horaFin);
+            var fechaBusqueda = fecha.Date;
             
             // Verificar si hay alguna reservación confirmada o pendiente que se solape con el rango de tiempo
             return await _dbSet
                 .AnyAsync(r => r.MesaId == mesaId &&
+                              r.Fecha == fechaBusqueda &&
                               (r.Estado == EstadoReservacion.Confirmada || r.Estado == EstadoReservacion.Pendiente) &&
-                              ((r.FechaReservacion.TimeOfDay <= horaFin && r.FechaReservacion.TimeOfDay.Add(r.DuracionEstimada) >= horaInicio)),
+                              ((r.Hora <= horaFin && r.Hora.Add(r.DuracionEstimada) >= horaInicio)),
                               cancellationToken);
         }
 
@@ -138,21 +139,22 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         public async Task<IEnumerable<Reservacion>> ObtenerPorRangoFechasAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Where(r => r.FechaReservacion >= fechaInicio && r.FechaReservacion <= fechaFin)
+                .Where(r => r.Fecha >= fechaInicio.Date && r.Fecha <= fechaFin.Date)
                 .ToListAsync(cancellationToken);
         }
 
         public async Task<bool> VerificarDisponibilidadMesaAsync(Guid mesaId, DateTime fecha, TimeSpan hora, int duracionMinutos = 90, CancellationToken cancellationToken = default)
         {
-            var fechaHoraInicio = fecha.Date.Add(hora);
+            var fechaBusqueda = fecha.Date;
             var duracion = TimeSpan.FromMinutes(duracionMinutos);
-            var fechaHoraFin = fechaHoraInicio.Add(duracion);
+            var horaFin = hora.Add(duracion);
             
             // Verificar si hay alguna reservación confirmada o pendiente que se solape con el rango de tiempo
             return !await _dbSet
                 .AnyAsync(r => r.MesaId == mesaId &&
+                              r.Fecha == fechaBusqueda &&
                               (r.Estado == EstadoReservacion.Confirmada || r.Estado == EstadoReservacion.Pendiente) &&
-                              ((r.FechaReservacion <= fechaHoraFin && r.FechaReservacion.Add(r.DuracionEstimada) >= fechaHoraInicio)), 
+                              ((r.Hora <= horaFin && r.Hora.Add(r.DuracionEstimada) >= hora)), 
                         cancellationToken);
         }
 

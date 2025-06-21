@@ -8,11 +8,21 @@ using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using RestaurantePro.Domain.Core.Productos.Builders;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
+using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
+using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Domain.Core.Base.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.Extensions.Options;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -88,6 +98,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // IDelayProvider - necesario para RetryBehavior
             services.AddSingleton<IDelayProvider, DelayProvider>();
             
+            // IDateTimeService - necesario para PreparacionRepository
+            services.AddScoped<IDateTimeService, DateTimeService>();
+            
             // 🔔 INotificationService - necesario para Commands como DesactivarCliente
             services.AddScoped<INotificationService, NotificationService>();
             
@@ -105,6 +118,36 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 new ClienteRepository(
                     provider.GetRequiredService<RestauranteProDbContext>(),
                     provider.GetRequiredService<ILogger<ClienteRepository>>()));
+            
+            // 📦 REGISTRAR REPOSITORIOS INVENTARIO
+            services.AddScoped<IOrdenCompraRepository>(provider => 
+                new OrdenCompraRepository(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<ILogger<OrdenCompraRepository>>()));
+            
+            services.AddScoped<IIngredienteRepository>(provider => 
+                new IngredienteRepository(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<ILogger<IngredienteRepository>>()));
+            
+            // 📦 REGISTRAR REPOSITORIOS OPERACIONES
+            services.AddScoped<IPreparacionRepository>(provider => 
+                new PreparacionRepository(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<IDateTimeService>(),
+                    provider.GetRequiredService<ILogger<PreparacionRepository>>()));
+            
+            services.AddScoped<IReservacionRepository>(provider => 
+                new ReservacionRepository(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<IMesaRepository>(),
+                    provider.GetRequiredService<ILogger<ReservacionRepository>>()));
+            
+            services.AddScoped<IMesaRepository>(provider => 
+                new MesaRepository(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<ILogger<MesaRepository>>(),
+                    provider.GetRequiredService<IDateTimeService>()));
             
             // 🏗️ REGISTRAR BUILDERS DE DOMAIN
             services.AddScoped<ProductoBuilder>();

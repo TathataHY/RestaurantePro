@@ -103,6 +103,8 @@ global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 global using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 global using RestaurantePro.Domain.Operaciones.Preparaciones.Entities;
+global using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
+global using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
 global using RestaurantePro.Domain.Operaciones.Services;
 
 // Domain - Inventario (Según estructura real)
@@ -141,10 +143,12 @@ global using RestaurantePro.Application.Comercial.Promociones.DTOs;
 global using RestaurantePro.Application.Operaciones.Comandas.DTOs;
 global using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
 global using RestaurantePro.Application.Operaciones.Mesas.DTOs;
+global using RestaurantePro.Application.Operaciones.Preparaciones.DTOs;
 global using RestaurantePro.Application.Operaciones.Reportes.DTOs;
 
 // Application - Inventario DTOs
 global using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
+global using RestaurantePro.Application.Inventario.OrdenesCompra.DTOs;
 global using RestaurantePro.Application.Inventario.Reportes.DTOs;
 
 // Application - Proveedores DTOs  
@@ -169,14 +173,24 @@ global using RestaurantePro.Application.Comercial.Promociones.Commands.AplicarPr
 global using RestaurantePro.Application.Operaciones.Mesas.Commands.AsignarMesa;
 global using RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
 global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.CrearReservacion;
+global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ActualizarReservacion;
+global using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ReprogramarReservacion;
 global using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
 global using RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
 global using RestaurantePro.Application.Operaciones.Comandas.Commands.ProcesarPedidoCompleto;
 global using RestaurantePro.Application.Operaciones.Comandas.Commands.UnificarComandas;
+global using RestaurantePro.Application.Operaciones.Preparaciones.Commands.ActualizarPreparacion;
+global using RestaurantePro.Application.Operaciones.Preparaciones.Commands.CompletarPreparacion;
+global using RestaurantePro.Application.Operaciones.Preparaciones.Commands.CancelarPreparacion;
+global using RestaurantePro.Application.Operaciones.Preparaciones.Commands.IniciarPreparacion;
 
 // Application - Commands (Inventario)
 global using RestaurantePro.Application.Inventario.Ingredientes.Commands.CrearIngrediente;
 global using RestaurantePro.Application.Inventario.Ingredientes.Commands.ActualizarStock;
+global using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.ActualizarOrdenCompra;
+global using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.AprobarOrdenCompra;
+global using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.RechazarOrdenCompra;
+global using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.RecibirOrdenCompra;
 
 // Application - Commands (Proveedores)
 global using RestaurantePro.Application.Proveedores.Proveedores.Commands.CrearProveedor;

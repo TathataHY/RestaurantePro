@@ -134,33 +134,35 @@ public class InventarioMappingProfile : Profile
     /// </summary>
     private void ConfigurarMapeosOrdenesCompra()
     {
-        // TODO: Implementar cuando los DTOs estén disponibles
-        // OrdenCompraDto y DetalleOrdenCompraDto no existen actualmente
-        
-        /*
         // OrdenCompra Entity -> OrdenCompraDto
-        CreateMap<OrdenCompra, OrdenCompraDto>()
-            .ForMember(dest => dest.NumeroOrden, opt => opt.MapFrom(src => src.NumeroOrden.Value))
-            .ForMember(dest => dest.FechaOrden, opt => opt.MapFrom(src => src.FechaOrden))
-            .ForMember(dest => dest.FechaEntregaEsperada, opt => opt.MapFrom(src => src.FechaEntregaEsperada))
-            .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => src.Estado.ToString()))
-            .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total.Amount))
+        CreateMap<RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra, RestaurantePro.Application.Inventario.OrdenesCompra.DTOs.OrdenCompraDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.NumeroOrden, opt => opt.MapFrom(src => src.Id.ToString())) // Usar ID como número de orden
             .ForMember(dest => dest.ProveedorId, opt => opt.MapFrom(src => src.ProveedorId))
-            .ForMember(dest => dest.ProveedorNombre, opt => opt.MapFrom(src => "")) // TODO: Mapear cuando tengamos navegación
+            .ForMember(dest => dest.NombreProveedor, opt => opt.MapFrom(src => string.Empty)) // Se llenará desde el handler
+            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaEmision))
+            .ForMember(dest => dest.FechaEntregaEsperada, opt => opt.MapFrom(src => src.FechaEntregaEstimada))
+            .ForMember(dest => dest.FechaEntregaReal, opt => opt.MapFrom(src => src.FechaRecepcion))
+            .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado))
+            .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Total))
             .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones))
-            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
-            .ForMember(dest => dest.CantidadItems, opt => opt.MapFrom(src => src.Detalles.Count));
+            .ForMember(dest => dest.UsuarioId, opt => opt.MapFrom(src => (Guid?)null)) // No existe en la entidad
+            .ForMember(dest => dest.NombreUsuario, opt => opt.MapFrom(src => string.Empty)) // No existe en la entidad
+            .ForMember(dest => dest.FechaAprobacion, opt => opt.MapFrom(src => (DateTime?)null)) // No existe en la entidad
+            .ForMember(dest => dest.FechaRechazo, opt => opt.MapFrom(src => (DateTime?)null)) // No existe en la entidad
+            .ForMember(dest => dest.MotivoRechazo, opt => opt.MapFrom(src => (string?)null)) // No existe en la entidad
+            .ForMember(dest => dest.FechaRecepcion, opt => opt.MapFrom(src => src.FechaRecepcion))
+            .ForMember(dest => dest.NotasRecepcion, opt => opt.MapFrom(src => src.ObservacionesRecepcion))
+            .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
 
-        // DetalleOrdenCompra Entity -> DetalleOrdenCompraDto
-        CreateMap<DetalleOrdenCompra, DetalleOrdenCompraDto>()
+        // OrdenCompraItem Entity -> OrdenCompraItemDto
+        CreateMap<RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities.ItemOrdenCompra, RestaurantePro.Application.Inventario.OrdenesCompra.DTOs.OrdenCompraItemDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.IngredienteId, opt => opt.MapFrom(src => src.IngredienteId))
-            .ForMember(dest => dest.IngredienteNombre, opt => opt.MapFrom(src => "")) // TODO: Mapear cuando tengamos navegación
-            .ForMember(dest => dest.CantidadSolicitada, opt => opt.MapFrom(src => src.CantidadSolicitada))
-            .ForMember(dest => dest.PrecioUnitario, opt => opt.MapFrom(src => src.PrecioUnitario.Amount))
-            .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.Subtotal.Amount))
-            .ForMember(dest => dest.CantidadRecibida, opt => opt.MapFrom(src => src.CantidadRecibida))
-            .ForMember(dest => dest.EstaPendiente, opt => opt.MapFrom(src => src.CantidadRecibida < src.CantidadSolicitada))
-            .ForMember(dest => dest.EstaCompleto, opt => opt.MapFrom(src => src.CantidadRecibida >= src.CantidadSolicitada));
-        */
+            .ForMember(dest => dest.NombreIngrediente, opt => opt.MapFrom(src => src.NombreIngrediente))
+            .ForMember(dest => dest.Cantidad, opt => opt.MapFrom(src => (int)src.Cantidad))
+            .ForMember(dest => dest.PrecioUnitario, opt => opt.MapFrom(src => src.PrecioUnitario))
+            .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.Subtotal))
+            .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => (string?)null)); // No existe en la entidad
     }
 } 

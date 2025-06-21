@@ -42,11 +42,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
         /// <summary>
         /// Obtiene todas las órdenes de compra
         /// </summary>
-        public async Task<IEnumerable<OrdenCompra>> ObtenerTodasAsync(CancellationToken cancellationToken = default)
+        public async Task<IQueryable<OrdenCompra>> ObtenerTodasAsync(CancellationToken cancellationToken = default)
         {
-            return await _dbSet
-                .OrderByDescending(o => o.FechaEmision)
-                .ToListAsync(cancellationToken);
+            return _dbSet
+                .Include(o => o.Items)
+                .OrderByDescending(o => o.FechaEmision);
         }
 
         /// <summary>
