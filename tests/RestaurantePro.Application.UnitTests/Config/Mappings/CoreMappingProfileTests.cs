@@ -240,66 +240,6 @@ public class CoreMappingProfileTests
         dto.EsAdministrador.Should().Be(usuario.EsAdministrador);
     }
 
-    [Fact]
-    public void Map_UsuarioToUsuarioDto_ConNombreCompleto_DeberiaMapearNombreYApellido()
-    {
-        // Arrange
-        var usuario = CrearUsuarioEjemplo();
-        typeof(Usuario).GetProperty("NombreCompleto")?.SetValue(usuario, "Juan Carlos Pérez García");
-
-        // Act
-        var dto = _mapper.Map<UsuarioDto>(usuario);
-
-        // Assert
-        dto.Nombre.Should().Be("Juan");
-        dto.Apellido.Should().Be("Carlos Pérez García");
-    }
-
-    [Fact]
-    public void Map_UsuarioToUsuarioDto_ConNombreCompletoSoloNombre_DeberiaMapearCorrectamente()
-    {
-        // Arrange
-        var usuario = CrearUsuarioEjemplo();
-        typeof(Usuario).GetProperty("NombreCompleto")?.SetValue(usuario, "Juan");
-
-        // Act
-        var dto = _mapper.Map<UsuarioDto>(usuario);
-
-        // Assert
-        dto.Nombre.Should().Be("Juan");
-        dto.Apellido.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void Map_UsuarioToUsuarioDto_ConNombreCompletoNull_DeberiaMapearVacio()
-    {
-        // Arrange
-        var usuario = CrearUsuarioEjemplo();
-        typeof(Usuario).GetProperty("NombreCompleto")?.SetValue(usuario, null);
-
-        // Act
-        var dto = _mapper.Map<UsuarioDto>(usuario);
-
-        // Assert
-        dto.Nombre.Should().BeEmpty();
-        dto.Apellido.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void Map_UsuarioToUsuarioDto_ConNombreCompletoVacio_DeberiaMapearVacio()
-    {
-        // Arrange
-        var usuario = CrearUsuarioEjemplo();
-        typeof(Usuario).GetProperty("NombreCompleto")?.SetValue(usuario, "");
-
-        // Act
-        var dto = _mapper.Map<UsuarioDto>(usuario);
-
-        // Assert
-        dto.Nombre.Should().BeEmpty();
-        dto.Apellido.Should().BeEmpty();
-    }
-
     [Theory]
     [InlineData(EstadoUsuario.Activo, true, true)]
     [InlineData(EstadoUsuario.Inactivo, false, false)]
@@ -318,59 +258,6 @@ public class CoreMappingProfileTests
         // Assert
         dto.Estado.Should().Be(estado);
         dto.Activo.Should().Be(expectedActivo);
-        dto.Verificado.Should().Be(expectedVerificado);
-    }
-
-    [Fact]
-    public void Map_UsuarioToUsuarioDto_ConEstadoBloqueado_DeberiaMapearFechaBloqueado()
-    {
-        // Arrange
-        var usuario = CrearUsuarioEjemplo();
-        typeof(Usuario).GetProperty("Estado")?.SetValue(usuario, EstadoUsuario.Bloqueado);
-
-        // Act
-        var dto = _mapper.Map<UsuarioDto>(usuario);
-
-        // Assert
-        dto.FechaBloqueado.Should().NotBeNull();
-        dto.FechaBloqueado.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
-    }
-
-    [Fact]
-    public void Map_UsuarioToUsuarioDto_ConEstadoActivo_NoDeberiaMapearFechaBloqueado()
-    {
-        // Arrange
-        var usuario = CrearUsuarioEjemplo();
-        typeof(Usuario).GetProperty("Estado")?.SetValue(usuario, EstadoUsuario.Activo);
-
-        // Act
-        var dto = _mapper.Map<UsuarioDto>(usuario);
-
-        // Assert
-        dto.FechaBloqueado.Should().BeNull();
-    }
-
-    [Fact]
-    public void Map_UsuarioToUsuarioDto_PropiedadesCalculadas_DeberianTenerValoresPorDefecto()
-    {
-        // Arrange
-        var usuario = CrearUsuarioEjemplo();
-
-        // Act
-        var dto = _mapper.Map<UsuarioDto>(usuario);
-
-        // Assert
-        dto.NumeroIdentificacion.Should().Be(usuario.Identificacion);
-        dto.Cargo.Should().Be(usuario.Posicion);
-        dto.FechaUltimaConexion.Should().Be(usuario.UltimoAcceso);
-        dto.EsTemporal.Should().BeFalse();
-        dto.IntentosFallidos.Should().Be(0);
-        dto.DebeResetearPassword.Should().BeFalse();
-        dto.SucursalesAcceso.Should().BeEmpty();
-        dto.ZonaHoraria.Should().Be("America/Santiago");
-        dto.Idioma.Should().Be("es-CL");
-        dto.RolesAdicionales.Should().BeEmpty();
-        dto.CantidadSubordinados.Should().Be(0);
     }
 
     [Fact]

@@ -129,8 +129,7 @@ public class ActualizarUsuarioHandlerTests
         {
             Id = Guid.NewGuid(),
             NombreUsuario = "usuario.actualizado",
-            Nombre = "Usuario",
-            Apellido = "Actualizado",
+            NombreCompleto = "Usuario Actualizado",
             Email = "usuario.actualizado@restaurantepro.com",
             Rol = "Mesero",
             Activo = true,

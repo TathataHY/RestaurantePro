@@ -242,99 +242,85 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
         Usuario usuario, 
         CancellationToken cancellationToken)
     {
-        // TODO: Implementar cuando Usuario tenga todas las propiedades requeridas
-        // Aplicar cambios básicos
-        // if (!string.IsNullOrWhiteSpace(request.Nombre))
-        //     usuario.Nombre = request.Nombre;
+        try
+        {
+            // Aplicar cambios básicos
+            if (!string.IsNullOrWhiteSpace(request.Nombre))
+            {
+                usuario.Actualizar(request.Nombre, usuario.Email);
+            }
 
-        // if (!string.IsNullOrWhiteSpace(request.Email))
-        //     usuario.Email = request.Email; // Email es read-only
+            if (!string.IsNullOrWhiteSpace(request.Email))
+            {
+                usuario.Actualizar(usuario.NombreCompleto, request.Email);
+            }
 
-        // if (!string.IsNullOrWhiteSpace(request.Telefono))
-        //     usuario.Telefono = request.Telefono;
+            // Aplicar cambios de rol y permisos
+            if (!string.IsNullOrWhiteSpace(request.Rol))
+            {
+                if (Enum.TryParse<RolUsuario>(request.Rol, true, out var nuevoRol))
+                {
+                    usuario.EstablecerRol(request.Rol, request.NivelAcceso ?? usuario.NivelAcceso);
+                    _logger.LogInformation("Cambio de rol: {Email} a {RolNuevo}",
+                        usuario.Email, request.Rol);
+                }
+            }
 
-        // if (!string.IsNullOrWhiteSpace(request.Identificacion))
-        //     usuario.Identificacion = request.Identificacion;
+            if (request.NivelAcceso.HasValue)
+            {
+                usuario.EstablecerRol(usuario.Rol, request.NivelAcceso.Value);
+            }
 
-        // if (!string.IsNullOrWhiteSpace(request.Direccion))
-        //     usuario.Direccion = request.Direccion;
+            // Aplicar cambios de estado
+            if (request.Activo.HasValue)
+            {
+                if (request.Activo.Value)
+                {
+                    usuario.Activar();
+                }
+                else
+                {
+                    usuario.Desactivar();
+                }
+                
+                _logger.LogInformation("Cambio de estado: {Email} -> {EstadoNuevo}",
+                    usuario.Email, request.Activo.Value ? "Activo" : "Inactivo");
+            }
 
-        // Aplicar cambios de rol y permisos
-        // if (!string.IsNullOrWhiteSpace(request.Rol))
-        // {
-        //     var rolAnterior = usuario.Rol;
-        //     usuario.Rol = request.Rol;
-        //     usuario.FechaCambioRol = DateTime.UtcNow;
-        //     
-        //     _logger.LogInformation("Cambio de rol: {Email} de {RolAnterior} a {RolNuevo}",
-        //         usuario.Email, rolAnterior, request.Rol);
-        // }
+            // Aplicar permisos específicos
+            if (request.PermisosEspecificos.Any())
+            {
+                foreach (var permiso in request.PermisosEspecificos)
+                {
+                    usuario.AgregarPermiso(permiso);
+                }
+            }
 
-        // if (request.NivelAcceso.HasValue)
-        //     usuario.NivelAcceso = request.NivelAcceso.Value;
+            // Aplicar cambios jerárquicos
+            if (request.SupervisorId.HasValue)
+            {
+                usuario.EstablecerInformacionOrganizacional(request.SupervisorId.Value, usuario.Departamento, usuario.Posicion);
+            }
 
-        // if (request.Activo.HasValue)
-        // {
-        //     var estadoAnterior = usuario.Activo;
-        //     usuario.Activo = request.Activo.Value;
-        //     
-        //     if (estadoAnterior != request.Activo.Value)
-        //     {
-        //         usuario.FechaCambioEstado = DateTime.UtcNow;
-        //         _logger.LogInformation("Cambio de estado: {Email} {EstadoAnterior} -> {EstadoNuevo}",
-        //             usuario.Email, estadoAnterior ? "Activo" : "Inactivo", request.Activo.Value ? "Activo" : "Inactivo");
-        //     }
-        // }
+            if (!string.IsNullOrWhiteSpace(request.Departamento) || !string.IsNullOrWhiteSpace(request.Posicion))
+            {
+                usuario.EstablecerInformacionOrganizacional(usuario.SupervisorId, request.Departamento, request.Posicion);
+            }
 
-        // Aplicar permisos específicos
-        // if (request.PermisosEspecificos.Any())
-        // {
-        //     usuario.Permisos = request.PermisosEspecificos;
-        //     usuario.FechaActualizacionPermisos = DateTime.UtcNow;
-        // }
+            // Aplicar identificación
+            if (!string.IsNullOrWhiteSpace(request.Identificacion))
+            {
+                usuario.EstablecerIdentificacion(request.Identificacion);
+            }
 
-        // Aplicar cambios jerárquicos
-        // if (request.SupervisorId.HasValue)
-        //     usuario.SupervisorId = request.SupervisorId.Value;
-
-        // if (!string.IsNullOrWhiteSpace(request.Departamento))
-        //     usuario.Departamento = request.Departamento;
-
-        // if (!string.IsNullOrWhiteSpace(request.Posicion))
-        //     usuario.Posicion = request.Posicion;
-
-        // Aplicar cambios laborales
-        // if (request.FechaIngreso.HasValue)
-        //     usuario.FechaIngreso = request.FechaIngreso.Value;
-
-        // if (request.SalarioBase.HasValue)
-        // {
-        //     var salarioAnterior = usuario.SalarioBase;
-        //     usuario.SalarioBase = request.SalarioBase.Value;
-        //     usuario.FechaActualizacionSalario = DateTime.UtcNow;
-        //     
-        //     _logger.LogInformation("Cambio de salario: {Email} de {SalarioAnterior:C} a {SalarioNuevo:C}",
-        //         usuario.Email, salarioAnterior, request.SalarioBase.Value);
-        // }
-
-        // Aplicar configuraciones
-        // if (request.ConfiguracionNotificaciones != null)
-        // {
-        //     usuario.ConfiguracionNotificaciones = JsonSerializer.Serialize(request.ConfiguracionNotificaciones);
-        // }
-
-        // if (request.Preferencias.Any())
-        // {
-        //     usuario.Preferencias = request.Preferencias;
-        // }
-
-        // Actualizar metadatos de auditoría
-        // usuario.FechaUltimaActualizacion = DateTime.UtcNow;
-        // usuario.UsuarioUltimaActualizacion = request.UsuarioAutorizaId;
-        // usuario.MotivoUltimaActualizacion = request.MotivoActualizacion;
-
-        _logger.LogInformation("TODO: Implementar actualización de Usuario - propiedades no disponibles aún");
-        return Result.Success(true);
+            _logger.LogInformation("Cambios aplicados exitosamente al usuario {Email}", usuario.Email);
+            return Result.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al aplicar cambios al usuario {Email}", usuario.Email);
+            return Result.Failure<bool>($"Error al aplicar cambios: {ex.Message}");
+        }
     }
 
     private async Task ProcesarCambiosJerarquicos(ActualizarUsuarioCommand request, Usuario usuario)
@@ -687,24 +673,28 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
 
     private async Task<UsuarioDto> MapearUsuarioADto(Usuario usuario)
     {
-        // Usar solo propiedades que SÍ existen en Usuario y UsuarioDto
-        return new UsuarioDto
+        var usuarioDto = new UsuarioDto
         {
             Id = usuario.Id,
-            // TODO: Verificar si estas propiedades son correctas en UsuarioDto
-            Nombre = usuario.NombreCompleto, // Cambiado de NombreCompleto a Nombre
-            Apellido = "", // TODO: Implementar cuando Usuario tenga Apellido
+            NombreCompleto = usuario.NombreCompleto,
             Email = usuario.Email,
-            Rol = usuario.Roles.FirstOrDefault().ToString(),
-            Activo = usuario.Estado == EstadoUsuario.Activo,
-            FechaCreacion = usuario.FechaCreacion,
-            // TODO: Usar UltimoAcceso cuando no sea de solo lectura en DTO
-            // UltimoAcceso = usuario.UltimoAcceso,
-            DebeResetearPassword = false,
-            Verificado = usuario.Estado == EstadoUsuario.Activo
-            // TODO: Implementar cuando UsuarioDto tenga EsAdministrador
-            // EsAdministrador = usuario.EsAdministrador
+            NombreUsuario = usuario.NombreUsuario,
+            Estado = usuario.Estado,
+            TipoUsuario = usuario.TipoUsuario,
+            Rol = usuario.Rol,
+            NivelAcceso = usuario.NivelAcceso,
+            Permisos = usuario.Permisos.ToList(),
+            SupervisorId = usuario.SupervisorId,
+            Departamento = usuario.Departamento,
+            Posicion = usuario.Posicion,
+            Identificacion = usuario.Identificacion,
+            UltimoAcceso = usuario.UltimoAcceso,
+            MotivoBloqueo = usuario.MotivoBloqueo,
+            EsAdministrador = usuario.EsAdministrador,
+            Roles = usuario.Roles.Select(r => r.ToString()).ToList()
         };
+
+        return usuarioDto;
     }
 
     private async Task<bool> ValidarDepartamentoAsync(string departamento)

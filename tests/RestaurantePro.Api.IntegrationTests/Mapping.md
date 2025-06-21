@@ -21,8 +21,8 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - **Última Actualización**: Diciembre 2024
 
 ### **Resumen de Integración de Tests**
-- **🟢 Tests Completos**: 1 controlador (IngredientesController)
-- **🟡 Tests Básicos**: 20 controladores (solo verificación de endpoints)
+- **🟢 Tests Completos**: 2 controladores (IngredientesController, UsuariosController)
+- **🟡 Tests Básicos**: 19 controladores (solo verificación de endpoints)
 - **🔄 Tests en Progreso**: 0 controladores
 - **🔴 Tests Pendientes**: 0 controladores
 - **🎯 OBJETIVO CRÍTICO**: Convertir todos los tests básicos a completos (interacción real con BD)
@@ -31,7 +31,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | Fase | Controladores | Objetivo | Estado |
 |------|---------------|----------|--------|
 | **Fase 1** | IngredientesController | Migrar a tests completos | ✅ **COMPLETADO** |
-| **Fase 2** | UsuariosController, NotificacionesController | Migrar a tests completos | 🔄 **EN PROGRESO** |
+| **Fase 2** | UsuariosController, NotificacionesController | Migrar a tests completos | 🔄 **EN PROGRESO** (UsuariosController ✅) |
 | **Fase 3** | ComandasController, MesasController | Migrar a tests completos | ⬜ **PENDIENTE** |
 | **Fase 4** | FacturasController, TarjetasFidelizacionController | Migrar a tests completos | ⬜ **PENDIENTE** |
 | **Fase 5** | ProveedoresController, PromocionesController | Migrar a tests completos | ⬜ **PENDIENTE** |
@@ -40,12 +40,12 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 ### **Progreso por Contexto**
 | Contexto | Controladores | Implementados | Tests | Progreso |
 |----------|---------------|---------------|-------|----------|
-| **Core** | 4 | 4 | 31 | ✅ 100% (🟡 4/4 básicos) |
+| **Core** | 4 | 4 | 31 | ✅ 100% (🟢 1/4 completos, 🟡 3/4 básicos) |
 | **Comercial** | 5 | 5 | 48 | ✅ 100% (🟡 5/5 básicos) |
 | **Operaciones** | 5 | 5 | 56 | ✅ 100% (🟡 5/5 básicos) |
 | **Inventario** | 4 | 4 | 34 | ✅ 100% (🟢 1/4 completos, 🟡 3/4 básicos) |
 | **Proveedores** | 3 | 3 | 27 | ✅ 100% (🟡 3/3 básicos) |
-| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 1/21 completos, 🟡 20/21 básicos)** |
+| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 2/21 completos, 🟡 19/21 básicos)** |
 
 ---
 
@@ -66,18 +66,18 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ### UsuariosController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 8/8 (🟡 Tests Básicos)
+- **Tests**: 8/8 (🟢 Tests Completos)
 - **Base URL**: `/api/core/usuarios`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todos los usuarios | ✅ PASSING (🟡 Básico) |
-| `/{id}` | GET | `✅/✅` | Obtener usuario por ID | ✅ PASSING (🟡 Básico) |
-| `/` | POST | `✅/✅` | Crear nuevo usuario | ✅ PASSING (🟡 Básico) |
-| `/{id}` | PUT | `✅/✅` | Actualizar usuario | ✅ PASSING (🟡 Básico) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar usuario | ✅ PASSING (🟡 Básico) |
-| `/perfil` | GET | `✅/✅` | Obtener perfil actual | ✅ PASSING (🟡 Básico) |
-| `/{id}/cambiar-rol` | POST | `✅/✅` | Cambiar rol de usuario | ✅ PASSING (🟡 Básico) |
-| `/{id}/reset-password` | POST | `✅/✅` | Resetear contraseña | ✅ PASSING (🟡 Básico) |
+| `/` | GET | `✅/✅` | Obtener todos los usuarios | ✅ PASSING (🟢 Completo) |
+| `/{id}` | GET | `✅/✅` | Obtener usuario por ID | ✅ PASSING (🟢 Completo) |
+| `/` | POST | `✅/✅` | Crear nuevo usuario | ✅ PASSING (🟢 Completo) |
+| `/{id}` | PUT | `✅/✅` | Actualizar usuario | ✅ PASSING (🟢 Completo) |
+| `/{id}` | DELETE | `✅/✅` | Eliminar usuario | ✅ PASSING (🟢 Completo) |
+| `/perfil` | GET | `✅/✅` | Obtener perfil actual | ✅ PASSING (🟢 Completo) |
+| `/{id}/cambiar-rol` | POST | `✅/✅` | Cambiar rol de usuario | ✅ PASSING (🟢 Completo) |
+| `/{id}/reset-password` | POST | `✅/✅` | Resetear contraseña | ✅ PASSING (🟢 Completo) |
 
 ### NotificacionesController
 - **Estado**: ✅/✅ (Completado)
@@ -133,41 +133,41 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ### FacturasController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 12/12 (🟢 Tests Completos)
+- **Tests**: 12/12 (🟡 Tests Básicos)
 - **Base URL**: `/api/comercial/facturas`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las facturas | ✅ PASSING (🟢 Completo) |
-| `/{id}` | GET | `✅/✅` | Obtener factura por ID | ✅ PASSING (🟢 Completo) |
-| `/` | POST | `✅/✅` | Crear nueva factura | ✅ PASSING (🟢 Completo) |
-| `/{id}` | PUT | `✅/✅` | Actualizar factura | ✅ PASSING (🟢 Completo) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar factura | ✅ PASSING (🟢 Completo) |
-| `/{id}/anular` | PATCH | `✅/✅` | Anular factura | ✅ PASSING (🟢 Completo) |
-| `/{id}/pagar` | POST | `✅/✅` | Registrar pago de factura | ✅ PASSING (🟢 Completo) |
-| `/{id}/enviar-email` | POST | `✅/✅` | Enviar factura por email | ✅ PASSING (🟢 Completo) |
-| `/buscar` | GET | `✅/✅` | Buscar facturas por criterios | ✅ PASSING (🟢 Completo) |
-| `/reporte` | GET | `✅/✅` | Generar reporte de facturas | ✅ PASSING (🟢 Completo) |
-| `/{id}/pdf` | GET | `✅/✅` | Descargar factura en PDF | ✅ PASSING (🟢 Completo) |
-| `/cliente/{clienteId}` | GET | `✅/✅` | Obtener facturas de un cliente | ✅ PASSING (🟢 Completo) |
+| `/` | GET | `✅/✅` | Obtener todas las facturas | ✅ PASSING (🟡 Básico) |
+| `/{id}` | GET | `✅/✅` | Obtener factura por ID | ✅ PASSING (🟡 Básico) |
+| `/` | POST | `✅/✅` | Crear nueva factura | ✅ PASSING (🟡 Básico) |
+| `/{id}` | PUT | `✅/✅` | Actualizar factura | ✅ PASSING (🟡 Básico) |
+| `/{id}` | DELETE | `✅/✅` | Eliminar factura | ✅ PASSING (🟡 Básico) |
+| `/{id}/anular` | PATCH | `✅/✅` | Anular factura | ✅ PASSING (🟡 Básico) |
+| `/{id}/pagar` | POST | `✅/✅` | Registrar pago de factura | ✅ PASSING (🟡 Básico) |
+| `/{id}/enviar-email` | POST | `✅/✅` | Enviar factura por email | ✅ PASSING (🟡 Básico) |
+| `/buscar` | GET | `✅/✅` | Buscar facturas por criterios | ✅ PASSING (🟡 Básico) |
+| `/reporte` | GET | `✅/✅` | Generar reporte de facturas | ✅ PASSING (🟡 Básico) |
+| `/{id}/pdf` | GET | `✅/✅` | Descargar factura en PDF | ✅ PASSING (🟡 Básico) |
+| `/cliente/{clienteId}` | GET | `✅/✅` | Obtener facturas de un cliente | ✅ PASSING (🟡 Básico) |
 
 ### TarjetasFidelizacionController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 12/12 (🟢 Tests Completos)
+- **Tests**: 12/12 (🟡 Tests Básicos)
 - **Base URL**: `/api/comercial/tarjetas-fidelizacion`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las tarjetas | ✅ PASSING (🟢 Completo) |
-| `/{id}` | GET | `✅/✅` | Obtener tarjeta por ID | ✅ PASSING (🟢 Completo) |
-| `/` | POST | `✅/✅` | Crear nueva tarjeta | ✅ PASSING (🟢 Completo) |
-| `/{id}` | PUT | `✅/✅` | Actualizar tarjeta | ✅ PASSING (🟢 Completo) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar tarjeta | ✅ PASSING (🟢 Completo) |
-| `/{id}/activar` | PATCH | `✅/✅` | Activar tarjeta | ✅ PASSING (🟢 Completo) |
-| `/{id}/desactivar` | PATCH | `✅/✅` | Desactivar tarjeta | ✅ PASSING (🟢 Completo) |
-| `/{id}/puntos` | POST | `✅/✅` | Agregar puntos a tarjeta | ✅ PASSING (🟢 Completo) |
-| `/{id}/canjear` | POST | `✅/✅` | Canjear puntos de tarjeta | ✅ PASSING (🟢 Completo) |
-| `/{id}/historial` | GET | `✅/✅` | Obtener historial de puntos | ✅ PASSING (🟢 Completo) |
-| `/estadisticas` | GET | `✅/✅` | Obtener estadísticas de tarjetas | ✅ PASSING (🟢 Completo) |
-| `/cliente/{clienteId}` | GET | `✅/✅` | Obtener tarjeta por ID de cliente | ✅ PASSING (🟢 Completo) |
+| `/` | GET | `✅/✅` | Obtener todas las tarjetas | ✅ PASSING (🟡 Básico) |
+| `/{id}` | GET | `✅/✅` | Obtener tarjeta por ID | ✅ PASSING (🟡 Básico) |
+| `/` | POST | `✅/✅` | Crear nueva tarjeta | ✅ PASSING (🟡 Básico) |
+| `/{id}` | PUT | `✅/✅` | Actualizar tarjeta | ✅ PASSING (🟡 Básico) |
+| `/{id}` | DELETE | `✅/✅` | Eliminar tarjeta | ✅ PASSING (🟡 Básico) |
+| `/{id}/activar` | PATCH | `✅/✅` | Activar tarjeta | ✅ PASSING (🟡 Básico) |
+| `/{id}/desactivar` | PATCH | `✅/✅` | Desactivar tarjeta | ✅ PASSING (🟡 Básico) |
+| `/{id}/puntos` | POST | `✅/✅` | Agregar puntos a tarjeta | ✅ PASSING (🟡 Básico) |
+| `/{id}/canjear` | POST | `✅/✅` | Canjear puntos de tarjeta | ✅ PASSING (🟡 Básico) |
+| `/{id}/historial` | GET | `✅/✅` | Obtener historial de puntos | ✅ PASSING (🟡 Básico) |
+| `/estadisticas` | GET | `✅/✅` | Obtener estadísticas de tarjetas | ✅ PASSING (🟡 Básico) |
+| `/cliente/{clienteId}` | GET | `✅/✅` | Obtener tarjeta por ID de cliente | ✅ PASSING (🟡 Básico) |
 
 ### PromocionesController
 - **Estado**: ✅/✅ (Completado)
@@ -298,20 +298,20 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ### IngredientesController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 10/10
+- **Tests**: 10/10 (🟢 Tests Completos)
 - **Base URL**: `/api/inventario/ingredientes`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todos los ingredientes | ✅ PASSING (501) |
-| `/{id}` | GET | `✅/✅` | Obtener ingrediente por ID | ✅ PASSING (501) |
-| `/` | POST | `✅/✅` | Crear nuevo ingrediente | ✅ PASSING (501) |
+| `/` | GET | `✅/✅` | Obtener todos los ingredientes | ✅ PASSING (🟢 Completo) |
+| `/{id}` | GET | `✅/✅` | Obtener ingrediente por ID | ✅ PASSING (🟢 Completo) |
+| `/` | POST | `✅/✅` | Crear nuevo ingrediente | ✅ PASSING (🟢 Completo) |
 | `/{id}` | PUT | `✅/✅` | Actualizar ingrediente | ✅ PASSING (501) |
 | `/{id}` | DELETE | `✅/✅` | Eliminar ingrediente | ✅ PASSING (501) |
-| `/{id}/stock` | POST | `✅/✅` | Registrar movimiento de stock | ✅ PASSING (501) |
-| `/stock-bajo` | GET | `✅/✅` | Obtener ingredientes con stock bajo | ✅ PASSING (501) |
-| `/{id}/proveedores` | GET | `✅/✅` | Obtener proveedores de un ingrediente | ✅ PASSING (501) |
-| `/{id}/proveedores/{proveedorId}` | POST | `✅/✅` | Asociar un proveedor a un ingrediente | ✅ PASSING (501) |
-| `/reporte` | GET | `✅/✅` | Generar reporte de ingredientes | ✅ PASSING (501) |
+| `/{id}/movimientos` | GET | `✅/✅` | Obtener movimientos de ingrediente | ✅ PASSING (501) |
+| `/{id}/movimientos` | POST | `✅/✅` | Registrar movimiento de stock | ✅ PASSING (501) |
+| `/bajo-stock` | GET | `✅/✅` | Obtener ingredientes con stock bajo | ✅ PASSING (🟢 Completo) |
+| `/{id}/asociar-proveedor/{proveedorId}` | POST | `✅/✅` | Asociar un proveedor a un ingrediente | ✅ PASSING (501) |
+| `/reporte/valoracion` | GET | `✅/✅` | Generar reporte de valoración | ✅ PASSING (501) |
 
 ### ReportesInventarioController
 - **Estado**: ✅/✅ (Refactorizado)

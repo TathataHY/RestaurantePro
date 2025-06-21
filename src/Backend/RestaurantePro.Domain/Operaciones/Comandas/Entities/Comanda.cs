@@ -1,3 +1,11 @@
+using RestaurantePro.Domain.Core.SharedKernel;
+using RestaurantePro.Domain.Core.Usuarios.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Events;
+using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
+
 namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
 {
     /// <summary>

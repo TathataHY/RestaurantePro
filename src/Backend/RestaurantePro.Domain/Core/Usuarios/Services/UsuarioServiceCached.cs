@@ -1,3 +1,7 @@
+using RestaurantePro.Domain.Core.Usuarios.Entities;
+using RestaurantePro.Domain.Core.Usuarios.Enums;
+using RestaurantePro.Domain.Core.Usuarios.Interfaces;
+
 namespace RestaurantePro.Domain.Core.Usuarios.Services
 {
     /// <summary>
@@ -241,6 +245,53 @@ namespace RestaurantePro.Domain.Core.Usuarios.Services
                 async ct => await _usuarioService.ExisteEmailAsync(email, ct),
                 TTL_VERIFICACIONES,
                 cancellationToken);
+        }
+        
+        /// <inheritdoc />
+        public async Task<bool> EliminarAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            // Operación de escritura, no se cachea pero se invalida la caché
+            bool resultado = await _usuarioService.EliminarAsync(id, cancellationToken);
+            
+            if (resultado)
+            {
+                // Invalidar caché del usuario específico y listas
+                InvalidarCacheUsuario(id);
+                _cacheService.InvalidatePattern(CACHE_KEY_USUARIOS_TODOS);
+            }
+            
+            return resultado;
+        }
+        
+        /// <inheritdoc />
+        public async Task<bool> CambiarRolAsync(Guid id, RolUsuario nuevoRol, CancellationToken cancellationToken = default)
+        {
+            // Operación de escritura, no se cachea pero se invalida la caché
+            bool resultado = await _usuarioService.CambiarRolAsync(id, nuevoRol, cancellationToken);
+            
+            if (resultado)
+            {
+                // Invalidar caché del usuario específico y listas por rol
+                InvalidarCacheUsuario(id);
+                _cacheService.InvalidatePattern(CACHE_KEY_USUARIOS_ROL);
+            }
+            
+            return resultado;
+        }
+        
+        /// <inheritdoc />
+        public async Task<bool> ResetearPasswordAsync(Guid id, string nuevaPassword, CancellationToken cancellationToken = default)
+        {
+            // Operación de escritura, no se cachea pero se invalida la caché
+            bool resultado = await _usuarioService.ResetearPasswordAsync(id, nuevaPassword, cancellationToken);
+            
+            if (resultado)
+            {
+                // Invalidar caché del usuario específico
+                InvalidarCacheUsuario(id);
+            }
+            
+            return resultado;
         }
         
         /// <inheritdoc />

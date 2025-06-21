@@ -232,13 +232,21 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
         /// </summary>
         public void Desactivar()
         {
-            if (Estado != EstadoUsuario.Activo)
+            // Log de debugging
+            Console.WriteLine($"🔍 Desactivar() llamado - Estado actual: {Estado}");
+            
+            if (Estado == EstadoUsuario.Inactivo || Estado == EstadoUsuario.Bloqueado)
+            {
+                Console.WriteLine($"🔍 Usuario ya está {Estado}, retornando sin cambios");
                 return;
+            }
                 
+            Console.WriteLine($"🔍 Cambiando estado de {Estado} a Inactivo");
             Estado = EstadoUsuario.Inactivo;
             MarkAsModified();
             
             AddDomainEvent(new UsuarioDesactivado(Id));
+            Console.WriteLine($"🔍 Usuario desactivado exitosamente - Nuevo estado: {Estado}");
         }
         
         /// <summary>

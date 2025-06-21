@@ -2,6 +2,8 @@ using Bogus;
 using RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
 using RestaurantePro.Application.Core.Usuarios.Commands.ActualizarUsuario;
 using RestaurantePro.Domain.Core.Usuarios.Enums;
+using CrearUsuarioHorarioDto = RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario.HorarioTrabajoDto;
+using RestaurantePro.Application.Core.Usuarios.DTOs;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase.TestDataBuilders.Core;
 
@@ -21,6 +23,9 @@ public class UsuarioTestDataBuilder
     private int? _nivelAcceso;
     private string? _telefono;
     private Guid? _usuarioCreadorId;
+    private bool? _requiereAprobacion;
+    private Guid? _usuarioCambiadorId;
+    private Guid? _usuarioReseteadorId;
 
     /// <summary>
     /// Establece el nombre de usuario
@@ -104,10 +109,42 @@ public class UsuarioTestDataBuilder
     }
 
     /// <summary>
+    /// Establece si la actualización requiere aprobación
+    /// </summary>
+    public UsuarioTestDataBuilder ConRequiereAprobacion(bool requiereAprobacion)
+    {
+        _requiereAprobacion = requiereAprobacion;
+        return this;
+    }
+
+    /// <summary>
+    /// Establece el ID del usuario que realiza el cambio de rol
+    /// </summary>
+    public UsuarioTestDataBuilder ConUsuarioCambiadorId(Guid usuarioCambiadorId)
+    {
+        _usuarioCambiadorId = usuarioCambiadorId;
+        return this;
+    }
+
+    /// <summary>
+    /// Establece el ID del usuario que realiza el reset de contraseña
+    /// </summary>
+    public UsuarioTestDataBuilder ConUsuarioReseteadorId(Guid usuarioReseteadorId)
+    {
+        _usuarioReseteadorId = usuarioReseteadorId;
+        return this;
+    }
+
+    /// <summary>
     /// Construye el comando para crear un usuario
     /// </summary>
     public CrearUsuarioCommand BuildCrearUsuarioCommand()
     {
+        if (!_usuarioCreadorId.HasValue || _usuarioCreadorId.Value == Guid.Empty)
+        {
+            throw new InvalidOperationException("UsuarioCreadorId es requerido y debe ser un GUID válido. Use ConUsuarioCreadorId() para especificarlo.");
+        }
+
         return new CrearUsuarioCommand
         {
             NombreUsuario = _nombreUsuario ?? _faker.Internet.UserName(),
@@ -115,10 +152,56 @@ public class UsuarioTestDataBuilder
             Email = _email ?? _faker.Internet.Email(),
             Password = _password ?? "Password123!",
             ConfirmarPassword = _confirmarPassword ?? "Password123!",
-            Rol = _rol ?? "Mesero",
+            Rol = _rol ?? "Empleado",
             NivelAcceso = _nivelAcceso ?? 5,
             Telefono = _telefono ?? _faker.Phone.PhoneNumber("+569########"),
-            UsuarioCreadorId = _usuarioCreadorId ?? Guid.NewGuid()
+            UsuarioCreadorId = _usuarioCreadorId.Value,
+            
+            // Campos adicionales requeridos por el validador
+            RolesAdicionales = new List<string>(),
+            PermisosEspecificos = new List<string>(),
+            HorariosTrabajo = new List<CrearUsuarioHorarioDto>
+            {
+                new CrearUsuarioHorarioDto
+                {
+                    DiaSemana = "Lunes",
+                    HoraInicio = TimeSpan.Parse("08:00"),
+                    HoraFin = TimeSpan.Parse("17:00"),
+                    EsDiaLibre = false
+                },
+                new CrearUsuarioHorarioDto
+                {
+                    DiaSemana = "Martes",
+                    HoraInicio = TimeSpan.Parse("08:00"),
+                    HoraFin = TimeSpan.Parse("17:00"),
+                    EsDiaLibre = false
+                },
+                new CrearUsuarioHorarioDto
+                {
+                    DiaSemana = "Miércoles",
+                    HoraInicio = TimeSpan.Parse("08:00"),
+                    HoraFin = TimeSpan.Parse("17:00"),
+                    EsDiaLibre = false
+                },
+                new CrearUsuarioHorarioDto
+                {
+                    DiaSemana = "Jueves",
+                    HoraInicio = TimeSpan.Parse("08:00"),
+                    HoraFin = TimeSpan.Parse("17:00"),
+                    EsDiaLibre = false
+                },
+                new CrearUsuarioHorarioDto
+                {
+                    DiaSemana = "Viernes",
+                    HoraInicio = TimeSpan.Parse("08:00"),
+                    HoraFin = TimeSpan.Parse("17:00"),
+                    EsDiaLibre = false
+                }
+            },
+            Departamento = "Cocina",
+            Puesto = "Cocinero",
+            SucursalId = null,
+            SupervisorId = null
         };
     }
 
@@ -127,16 +210,25 @@ public class UsuarioTestDataBuilder
     /// </summary>
     public ActualizarUsuarioCommand BuildActualizarUsuarioCommand(Guid usuarioId, Guid? usuarioAutorizaId = null)
     {
+        if (!usuarioAutorizaId.HasValue || usuarioAutorizaId.Value == Guid.Empty)
+        {
+            throw new InvalidOperationException("UsuarioAutorizaId es requerido y debe ser un GUID válido. Pase un usuario autorizador válido como parámetro.");
+        }
+
         return new ActualizarUsuarioCommand
         {
             UsuarioId = usuarioId,
             Nombre = _nombreCompleto ?? _faker.Name.FullName(),
             Email = _email ?? _faker.Internet.Email(),
             Telefono = _telefono ?? _faker.Phone.PhoneNumber("+569########"),
-            Rol = _rol ?? "Mesero",
-            NivelAcceso = _nivelAcceso ?? 5,
-            UsuarioAutorizaId = usuarioAutorizaId ?? Guid.NewGuid(),
-            MotivoActualizacion = "Actualización de datos de prueba"
+            Rol = _rol ?? "Gerente",
+            NivelAcceso = _nivelAcceso ?? 6,
+            UsuarioAutorizaId = usuarioAutorizaId.Value,
+            MotivoActualizacion = "Actualización de datos de prueba para tests de integración",
+            Prioridad = 2, // Prioridad normal
+            RequiereAprobacion = _requiereAprobacion ?? false,
+            NotificarUsuario = true,
+            NotificarSupervisor = false
         };
     }
 
@@ -145,9 +237,15 @@ public class UsuarioTestDataBuilder
     /// </summary>
     public object BuildCambiarRolRequest(string? nuevoRol = null)
     {
+        if (!_usuarioCambiadorId.HasValue || _usuarioCambiadorId.Value == Guid.Empty)
+        {
+            throw new InvalidOperationException("UsuarioCambiadorId es requerido y debe ser un GUID válido. Use ConUsuarioCambiadorId() para especificarlo.");
+        }
+
         return new
         {
             NuevoRol = nuevoRol ?? _faker.PickRandom("Administrador", "Gerente", "Cajero", "Mesero", "Cocinero", "EncargadoInventario"),
+            UsuarioCambiadorId = _usuarioCambiadorId.Value,
             Motivo = _faker.Lorem.Sentence(3, 5)
         };
     }
@@ -157,10 +255,15 @@ public class UsuarioTestDataBuilder
     /// </summary>
     public object BuildResetPasswordRequest()
     {
+        if (!_usuarioReseteadorId.HasValue || _usuarioReseteadorId.Value == Guid.Empty)
+        {
+            throw new InvalidOperationException("UsuarioReseteadorId es requerido y debe ser un GUID válido. Use ConUsuarioReseteadorId() para especificarlo.");
+        }
+
         return new
         {
-            NuevaPassword = "NuevaPassword123!",
-            ConfirmarNuevaPassword = "NuevaPassword123!",
+            UsuarioReseteadorId = _usuarioReseteadorId.Value,
+            NuevaPasswordTemporal = "NuevaPassword123!",
             Motivo = _faker.Lorem.Sentence(3, 5)
         };
     }
@@ -197,6 +300,11 @@ public class UsuarioTestDataBuilder
     /// </summary>
     public CrearUsuarioCommand BuildUsuarioValido()
     {
+        if (!_usuarioCreadorId.HasValue || _usuarioCreadorId.Value == Guid.Empty)
+        {
+            throw new InvalidOperationException("UsuarioCreadorId es requerido y debe ser un GUID válido. Use ConUsuarioCreadorId() para especificarlo.");
+        }
+
         return new CrearUsuarioCommand
         {
             NombreUsuario = _faker.Internet.UserName(),
@@ -207,7 +315,7 @@ public class UsuarioTestDataBuilder
             Rol = "Mesero",
             NivelAcceso = 5,
             Telefono = _faker.Phone.PhoneNumber("+569########"),
-            UsuarioCreadorId = _usuarioCreadorId ?? Guid.NewGuid()
+            UsuarioCreadorId = _usuarioCreadorId.Value
         };
     }
 
@@ -216,6 +324,11 @@ public class UsuarioTestDataBuilder
     /// </summary>
     public CrearUsuarioCommand BuildUsuarioAdministrador()
     {
+        if (!_usuarioCreadorId.HasValue || _usuarioCreadorId.Value == Guid.Empty)
+        {
+            throw new InvalidOperationException("UsuarioCreadorId es requerido y debe ser un GUID válido. Use ConUsuarioCreadorId() para especificarlo.");
+        }
+
         return new CrearUsuarioCommand
         {
             NombreUsuario = _faker.Internet.UserName(),
@@ -226,7 +339,7 @@ public class UsuarioTestDataBuilder
             Rol = "Administrador",
             NivelAcceso = 8,
             Telefono = _faker.Phone.PhoneNumber("+569########"),
-            UsuarioCreadorId = _usuarioCreadorId ?? Guid.NewGuid()
+            UsuarioCreadorId = _usuarioCreadorId.Value
         };
     }
 
@@ -263,6 +376,9 @@ public class UsuarioTestDataBuilder
         _nivelAcceso = null;
         _telefono = null;
         _usuarioCreadorId = null;
+        _requiereAprobacion = null;
+        _usuarioCambiadorId = null;
+        _usuarioReseteadorId = null;
         return this;
     }
 

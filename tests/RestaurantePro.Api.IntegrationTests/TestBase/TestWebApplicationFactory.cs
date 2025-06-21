@@ -32,6 +32,8 @@ using RestaurantePro.Domain.Inventario.Policies;
 using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
 using RestaurantePro.Domain.Core.Notificaciones.Services;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
+using RestaurantePro.Domain.Core.Usuarios.Interfaces;
+using RestaurantePro.Domain.Core.Usuarios.Services;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -122,6 +124,12 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // 📦 REGISTRAR REPOSITORIOS NECESARIOS PARA LOS TESTS
             services.AddScoped<IProductoRepository, ProductoRepository>();
             
+            // 📦 REGISTRAR REPOSITORIOS CORE
+            services.AddScoped<IUsuarioRepository>(provider => 
+                new UsuarioRepository(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<ILogger<UsuarioRepository>>()));
+            
             // 📦 REGISTRAR REPOSITORIOS COMERCIAL
             services.AddScoped<IClienteRepository>(provider => 
                 new ClienteRepository(
@@ -154,6 +162,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IStockBajoPolicy, StockBajoPolicy>();
             services.AddScoped<IInventarioServiceFacade, InventarioServiceFacade>();
             services.AddScoped<IServicioNotificaciones, ServicioNotificaciones>();
+            
+            // 📦 REGISTRAR SERVICIOS DE USUARIOS
+            services.AddScoped<IUsuarioService, UsuarioService>();
             
             services.AddScoped<INotificacionRepository>(provider => 
                 new NotificacionRepository(

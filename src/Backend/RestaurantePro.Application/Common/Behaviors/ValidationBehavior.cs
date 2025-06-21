@@ -4,10 +4,12 @@ namespace RestaurantePro.Application.Common.Behaviors
         where TRequest : IRequest<TResponse>
     {
         private readonly IEnumerable<IValidator<TRequest>> _validators;
+        private readonly ILogger<ValidationBehavior<TRequest, TResponse>> _logger;
 
-        public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
+        public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators, ILogger<ValidationBehavior<TRequest, TResponse>> logger)
         {
             _validators = validators;
+            _logger = logger;
         }
 
         public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
@@ -27,6 +29,12 @@ namespace RestaurantePro.Application.Common.Behaviors
 
                 if (failures.Any())
                 {
+                    _logger.LogError("❌ Errores de validación en {RequestType}:", typeof(TRequest).Name);
+                    foreach (var failure in failures)
+                    {
+                        _logger.LogError("   - {PropertyName}: {ErrorMessage}", failure.PropertyName, failure.ErrorMessage);
+                    }
+                    
                     throw new RestaurantePro.Application.Common.Exceptions.ValidationException(failures);
                 }
             }

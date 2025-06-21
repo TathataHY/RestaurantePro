@@ -1,3 +1,6 @@
+using RestaurantePro.Domain.Core.Usuarios.Entities;
+using RestaurantePro.Domain.Core.Usuarios.Enums;
+
 namespace RestaurantePro.Domain.Core.Usuarios.Services
 {
     /// <summary>
@@ -132,5 +135,31 @@ namespace RestaurantePro.Domain.Core.Usuarios.Services
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>True si existe, False en caso contrario</returns>
         Task<bool> ExisteEmailAsync(string email, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Elimina un usuario (soft delete)
+        /// </summary>
+        /// <param name="id">ID del usuario</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>True si se eliminó correctamente, False si no se encontró el usuario</returns>
+        Task<bool> EliminarAsync(Guid id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Cambia el rol de un usuario
+        /// </summary>
+        /// <param name="id">ID del usuario</param>
+        /// <param name="nuevoRol">Nuevo rol a asignar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>True si se cambió correctamente, False si no se encontró el usuario</returns>
+        Task<bool> CambiarRolAsync(Guid id, RolUsuario nuevoRol, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Resetea la contraseña de un usuario
+        /// </summary>
+        /// <param name="id">ID del usuario</param>
+        /// <param name="nuevaPassword">Nueva contraseña temporal</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>True si se reseteó correctamente, False si no se encontró el usuario</returns>
+        Task<bool> ResetearPasswordAsync(Guid id, string nuevaPassword, CancellationToken cancellationToken = default);
     }
 } 

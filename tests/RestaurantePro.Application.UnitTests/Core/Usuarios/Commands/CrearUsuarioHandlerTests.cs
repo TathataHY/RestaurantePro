@@ -57,8 +57,7 @@ public class CrearUsuarioHandlerTests
         {
             Id = Guid.NewGuid(),
             NombreUsuario = "juan.perez",
-            Nombre = "Juan",
-            Apellido = "Pérez",
+            NombreCompleto = "Juan Pérez",
             Email = "juan.perez@restaurantepro.com",
             Rol = "Mesero", // CrearEmpleado asigna rol "Mesero", no "Empleado"
             Activo = true,
@@ -220,8 +219,7 @@ public class CrearUsuarioHandlerTests
         {
             Id = Guid.NewGuid(),
             NombreUsuario = "supervisor.cocina",
-            Nombre = "Supervisor",
-            Apellido = "Cocina",
+            NombreCompleto = "Supervisor Cocina",
             Email = "supervisor.cocina@restaurantepro.com",
             Rol = "Gerente", // CrearSupervisor asigna rol "Gerente", no "Supervisor"
             Activo = true,
@@ -298,8 +296,7 @@ public class CrearUsuarioHandlerTests
         {
             Id = Guid.NewGuid(),
             NombreUsuario = "usuario.horarios",
-            Nombre = "Usuario",
-            Apellido = "con Horarios",
+            NombreCompleto = "Usuario con Horarios",
             Email = "usuario.horarios@restaurantepro.com",
             Rol = "Gerente",
             Activo = true,
@@ -524,8 +521,7 @@ public class CrearUsuarioHandlerTests
         {
             Id = Guid.NewGuid(),
             NombreUsuario = $"usuario.{rol.ToLower()}",
-            Nombre = "Usuario",
-            Apellido = rol,
+            NombreCompleto = $"Usuario {rol}",
             Email = $"usuario.{rol.ToLower()}@restaurantepro.com",
             Rol = rol,
             Activo = true,
@@ -685,8 +681,7 @@ public class CrearUsuarioHandlerTests
         {
             Id = Guid.NewGuid(),
             NombreUsuario = "usuario.test",
-            Nombre = "Usuario",
-            Apellido = "Test",
+            NombreCompleto = "Usuario Test",
             Email = "usuario.test@restaurantepro.com",
             Rol = "Mesero",
             Activo = true,

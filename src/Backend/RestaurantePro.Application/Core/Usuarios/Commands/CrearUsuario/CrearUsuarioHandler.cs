@@ -357,27 +357,22 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
         return new UsuarioDto
         {
             Id = usuario.Id,
-            // Propiedades que SÍ existen en Usuario dominio
-            Nombre = usuario.NombreCompleto, // UsuarioDto espera Nombre, Usuario tiene NombreCompleto
+            NombreCompleto = usuario.NombreCompleto,
             Email = usuario.Email,
-            Activo = usuario.Estado == EstadoUsuario.Activo,
-            FechaCreacion = usuario.FechaCreacion,
-            
-            // Asignar el nombre de usuario
             NombreUsuario = usuario.NombreUsuario,
-            
-            // Usuario dominio tiene Roles (colección), usar el primer rol como principal
+            Estado = usuario.Estado,
+            TipoUsuario = usuario.TipoUsuario,
             Rol = usuario.Roles.FirstOrDefault().ToString(),
-            
-            // Usar solo propiedades que existen en UsuarioDto y son settables
-            // TODO: Verificar qué propiedades tiene realmente UsuarioDto
-            
-            // Configuraciones por defecto para propiedades requeridas en DTO
-            Apellido = "", // UsuarioDto tiene Apellido separado, Usuario tiene NombreCompleto
-            DebeResetearPassword = true, // TODO: usar valor real cuando exista
-            Verificado = usuario.Estado == EstadoUsuario.Activo,
-            Permisos = new List<string>(), // TODO: implementar cuando exista
-            RolesAdicionales = new List<string>() // TODO: implementar cuando exista
+            NivelAcceso = usuario.NivelAcceso,
+            Permisos = usuario.Permisos.ToList(),
+            SupervisorId = usuario.SupervisorId,
+            Departamento = usuario.Departamento,
+            Posicion = usuario.Posicion,
+            Identificacion = usuario.Identificacion,
+            UltimoAcceso = usuario.UltimoAcceso,
+            MotivoBloqueo = usuario.MotivoBloqueo,
+            EsAdministrador = usuario.EsAdministrador,
+            Roles = usuario.Roles.Select(r => r.ToString()).ToList()
         };
     }
 }

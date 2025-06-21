@@ -61,72 +61,23 @@ public class CoreMappingProfile : Profile
     {
         // 🔄 Entidad → DTO Principal (Response)
         CreateMap<Usuario, UsuarioDto>()
-            // Propiedades básicas
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.NombreCompleto, opt => opt.MapFrom(src => src.NombreCompleto))
             .ForMember(dest => dest.NombreUsuario, opt => opt.MapFrom(src => src.NombreUsuario))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
             .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado))
             .ForMember(dest => dest.TipoUsuario, opt => opt.MapFrom(src => src.TipoUsuario))
-            
-            // Propiedades organizacionales nuevas
             .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol))
             .ForMember(dest => dest.NivelAcceso, opt => opt.MapFrom(src => src.NivelAcceso))
             .ForMember(dest => dest.Permisos, opt => opt.MapFrom(src => src.Permisos.ToList()))
             .ForMember(dest => dest.SupervisorId, opt => opt.MapFrom(src => src.SupervisorId))
-            .ForMember(dest => dest.NombreSupervisor, opt => opt.MapFrom(src => string.Empty))
             .ForMember(dest => dest.Departamento, opt => opt.MapFrom(src => src.Departamento))
             .ForMember(dest => dest.Posicion, opt => opt.MapFrom(src => src.Posicion))
             .ForMember(dest => dest.Identificacion, opt => opt.MapFrom(src => src.Identificacion))
-            
-            // Estado y acceso
             .ForMember(dest => dest.UltimoAcceso, opt => opt.MapFrom(src => src.UltimoAcceso))
             .ForMember(dest => dest.MotivoBloqueo, opt => opt.MapFrom(src => src.MotivoBloqueo))
             .ForMember(dest => dest.EsAdministrador, opt => opt.MapFrom(src => src.EsAdministrador))
-            
-            // Mapear NombreCompleto a Nombre y Apellido (split básico)
-            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => 
-                MapearPrimerNombre(src.NombreCompleto)))
-            .ForMember(dest => dest.Apellido, opt => opt.MapFrom(src => 
-                MapearApellidos(src.NombreCompleto)))
-                    
-            // Propiedades calculadas y de compatibilidad
-            .ForMember(dest => dest.NumeroIdentificacion, opt => opt.MapFrom(src => src.Identificacion))
-            .ForMember(dest => dest.Cargo, opt => opt.MapFrom(src => src.Posicion))
-            .ForMember(dest => dest.FechaUltimaConexion, opt => opt.MapFrom(src => src.UltimoAcceso))
-            .ForMember(dest => dest.Verificado, opt => opt.MapFrom(src => src.Estado == EstadoUsuario.Activo))
-            
-            // Propiedades por implementar (valores por defecto)
-            .ForMember(dest => dest.Telefono, opt => opt.Ignore())
-            .ForMember(dest => dest.FechaNacimiento, opt => opt.Ignore())
-            .ForMember(dest => dest.Direccion, opt => opt.Ignore())
-            .ForMember(dest => dest.Ciudad, opt => opt.Ignore())
-            .ForMember(dest => dest.Pais, opt => opt.Ignore())
-            .ForMember(dest => dest.FechaContratacion, opt => opt.Ignore())
-            .ForMember(dest => dest.SalarioBase, opt => opt.Ignore())
-            .ForMember(dest => dest.EsTemporal, opt => opt.MapFrom(src => false))
-            .ForMember(dest => dest.IntentosFallidos, opt => opt.MapFrom(src => 0))
-            .ForMember(dest => dest.FechaBloqueado, opt => opt.MapFrom(src => 
-                src.Estado == EstadoUsuario.Bloqueado ? DateTime.UtcNow : (DateTime?)null))
-            .ForMember(dest => dest.FechaExpiracionPassword, opt => opt.Ignore())
-            .ForMember(dest => dest.DebeResetearPassword, opt => opt.MapFrom(src => false))
-            .ForMember(dest => dest.SucursalesAcceso, opt => opt.MapFrom(src => new List<Guid>()))
-            .ForMember(dest => dest.HorariosTrabajo, opt => opt.Ignore())
-            .ForMember(dest => dest.ConfiguracionNotificaciones, opt => opt.Ignore())
-            .ForMember(dest => dest.Observaciones, opt => opt.Ignore())
-            .ForMember(dest => dest.Avatar, opt => opt.Ignore())
-            .ForMember(dest => dest.Preferencias, opt => opt.Ignore())
-            .ForMember(dest => dest.ZonaHoraria, opt => opt.MapFrom(src => "America/Santiago"))
-            .ForMember(dest => dest.Idioma, opt => opt.MapFrom(src => "es-CL"))
-            .ForMember(dest => dest.RolesAdicionales, opt => opt.MapFrom(src => new List<string>()))
-            .ForMember(dest => dest.FechaUltimaActualizacion, opt => opt.Ignore())
-            .ForMember(dest => dest.UsuarioUltimaActualizacion, opt => opt.Ignore())
-            .ForMember(dest => dest.CantidadSubordinados, opt => opt.MapFrom(src => 0))
-            
-            // Heredadas de BaseDto - Usuario hereda de EntityBase
-            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.Estado == EstadoUsuario.Activo))
-            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
-            .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore())
-            .ForMember(dest => dest.CreadoPor, opt => opt.Ignore())
-            .ForMember(dest => dest.ModificadoPor, opt => opt.Ignore());
+            .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Select(r => r.ToString()).ToList()));
     }
 
     /// <summary>
