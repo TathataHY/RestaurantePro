@@ -272,6 +272,8 @@ public class CrearComandaValidatorTests
 
     #region Personalizaciones Validations
 
+    // COMENTADO: Personalizaciones no existe en AgregarProductoDto
+    /*
     [Fact]
     public void Validator_ConPersonalizacionesValidas_DeberiaSerValido()
     {
@@ -280,8 +282,14 @@ public class CrearComandaValidatorTests
         var item = CrearItemValido();
         item.Personalizaciones = new List<PersonalizacionCreateDto>
         {
-            CrearPersonalizacionValida(),
-            CrearPersonalizacionValida()
+            new PersonalizacionCreateDto
+            {
+                Tipo = "Extra",
+                IngredienteId = Guid.NewGuid(),
+                Cantidad = 1,
+                Detalles = "Queso extra mozzarella",
+                PrecioAdicional = 5.50m
+            }
         };
         command.Items = new List<AgregarProductoDto> { item };
 
@@ -324,10 +332,6 @@ public class CrearComandaValidatorTests
         result.IsValid.Should().BeTrue();
     }
 
-    #endregion
-
-    #region Personalizacion - Nombre Validations
-
     [Fact]
     public void Validator_ConPersonalizacionNombreValido_DeberiaSerValido()
     {
@@ -335,7 +339,6 @@ public class CrearComandaValidatorTests
         var command = CrearComandoValido();
         var item = CrearItemValido();
         var personalizacion = CrearPersonalizacionValida();
-        personalizacion.Tipo = "Extra"; // Tipo válido según el validador
         item.Personalizaciones = new List<PersonalizacionCreateDto> { personalizacion };
         command.Items = new List<AgregarProductoDto> { item };
 
@@ -364,10 +367,6 @@ public class CrearComandaValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(x => x.PropertyName.Contains("Tipo"));
     }
-
-    #endregion
-
-    #region Personalizacion - Costo Validations
 
     [Theory]
     [InlineData(0)]
@@ -409,6 +408,7 @@ public class CrearComandaValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(x => x.PropertyName.Contains("PrecioAdicional"));
     }
+    */
 
     #endregion
 
@@ -428,27 +428,13 @@ public class CrearComandaValidatorTests
                 {
                     ProductoId = Guid.NewGuid(),
                     Cantidad = 2,
-                    PrecioUnitario = 15.50m,
-                    Observaciones = "Término medio",
-                    Personalizaciones = new List<PersonalizacionCreateDto>
-                    {
-                        new PersonalizacionCreateDto
-                        {
-                            Tipo = "Extra",
-                            IngredienteId = Guid.NewGuid(),
-                            Cantidad = 1,
-                            Detalles = "Salsa BBQ extra",
-                            PrecioAdicional = 3.50m
-                        }
-                    }
+                    Observaciones = "Sin cebolla"
                 },
                 new AgregarProductoDto
                 {
                     ProductoId = Guid.NewGuid(),
                     Cantidad = 1,
-                    PrecioUnitario = 12.00m,
-                    Observaciones = "Sin cebolla",
-                    Personalizaciones = new List<PersonalizacionCreateDto>()
+                    Observaciones = "Bien cocido"
                 }
             }
         };
@@ -475,17 +461,7 @@ public class CrearComandaValidatorTests
                 {
                     ProductoId = Guid.Empty, // Error: producto vacío
                     Cantidad = 0, // Error: cantidad inválida
-                    PrecioUnitario = 0, // Error: precio debe ser mayor a 0
-                    Observaciones = new string('A', 201), // Error: muy largo (límite 200)
-                    Personalizaciones = new List<PersonalizacionCreateDto>
-                    {
-                        new PersonalizacionCreateDto
-                        {
-                            Tipo = "", // Error: nombre vacío
-                            IngredienteId = Guid.Empty, // Error: ingrediente vacío
-                            PrecioAdicional = -5.00m // Error: costo negativo
-                        }
-                    }
+                    Observaciones = new string('A', 201) // Error: muy largo (límite 200)
                 }
             }
         };
@@ -495,15 +471,12 @@ public class CrearComandaValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCountGreaterThan(6);
+        result.Errors.Should().HaveCount(5);
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearComandaCommand.MesaId));
         result.Errors.Should().Contain(x => x.PropertyName == nameof(CrearComandaCommand.MeseroId));
         result.Errors.Should().Contain(x => x.PropertyName.Contains("ProductoId"));
         result.Errors.Should().Contain(x => x.PropertyName.Contains("Cantidad"));
-        result.Errors.Should().Contain(x => x.PropertyName.Contains("PrecioUnitario"));
         result.Errors.Should().Contain(x => x.PropertyName.Contains("Observaciones"));
-        result.Errors.Should().Contain(x => x.PropertyName.Contains("Tipo"));
-        result.Errors.Should().Contain(x => x.PropertyName.Contains("PrecioAdicional"));
     }
 
     [Fact]
@@ -520,6 +493,8 @@ public class CrearComandaValidatorTests
         result.IsValid.Should().BeTrue();
     }
 
+    // COMENTADO: Personalizaciones no existe en AgregarProductoDto
+    /*
     [Fact]
     public void Validator_ConItemsConMuchasPersonalizaciones_DeberiaSerValido()
     {
@@ -543,6 +518,7 @@ public class CrearComandaValidatorTests
         // Assert
         result.IsValid.Should().BeTrue();
     }
+    */
 
     #endregion
 
@@ -570,6 +546,8 @@ public class CrearComandaValidatorTests
 
     #region Edge Cases
 
+    // COMENTADO: Personalizaciones no existe en AgregarProductoDto
+    /*
     [Fact]
     public void Validator_ConPersonalizacionDescripcionMuyLarga_DeberiaFallar()
     {
@@ -588,6 +566,7 @@ public class CrearComandaValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(x => x.PropertyName.Contains("Detalles"));
     }
+    */
 
     [Fact]
     public void Validator_ConCaracteresEspecialesEnObservaciones_DeberiaSerValido()
@@ -628,12 +607,7 @@ public class CrearComandaValidatorTests
         {
             ProductoId = Guid.NewGuid(),
             Cantidad = 1,
-            PrecioUnitario = 15.50m, // Requerido por el validador
-            Observaciones = "Observaciones test",
-            Personalizaciones = new List<PersonalizacionCreateDto>
-            {
-                CrearPersonalizacionValida()
-            }
+            Observaciones = "Bien cocido"
         };
     }
 
@@ -659,16 +633,7 @@ public class CrearComandaValidatorTests
             {
                 ProductoId = Guid.NewGuid(),
                 Cantidad = i,
-                PrecioUnitario = 10.00m + (i * 5.00m), // Requerido por el validador
-                Observaciones = $"Observaciones para item {i}",
-                Personalizaciones = Enumerable.Range(1, 3).Select(j => new PersonalizacionCreateDto
-                {
-                    Tipo = "Extra", // Tipo válido
-                    IngredienteId = Guid.NewGuid(), // Requerido
-                    Cantidad = 1, // Requerido para tipo Extra
-                    Detalles = $"Descripción detallada {j}",
-                    PrecioAdicional = j * 2.5m
-                }).ToList()
+                Observaciones = $"Observaciones para item {i}"
             }).ToList()
         };
     }

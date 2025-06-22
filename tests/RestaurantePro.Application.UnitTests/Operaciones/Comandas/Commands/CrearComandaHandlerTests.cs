@@ -162,7 +162,6 @@ public class CrearComandaHandlerTests
                 {
                     ProductoId = productoId,
                     Cantidad = 1,
-                    PrecioUnitario = 15000m,
                     Observaciones = "Sin cebolla"
                 }
             }

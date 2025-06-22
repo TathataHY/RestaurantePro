@@ -45,7 +45,17 @@ public class AplicarDescuentoCommandHandler : IRequestHandler<AplicarDescuentoCo
         // 4. Aplicar descuento
         try
         {
-            comanda.AplicarDescuento(request.PorcentajeDescuento, request.Motivo);
+            // Calcular el monto del descuento basado en el porcentaje
+            decimal subtotal = comanda.Total?.Subtotal ?? 0;
+            if (subtotal <= 0)
+                return Result.Failure<ComandaDto>("No se puede aplicar descuento a una comanda sin subtotal");
+            
+            decimal montoDescuento = subtotal * (request.PorcentajeDescuento / 100m);
+            
+            // Usar el método que acepta monto fijo
+            bool descuentoAplicado = comanda.AplicarDescuento(montoDescuento, request.Motivo);
+            if (!descuentoAplicado)
+                return Result.Failure<ComandaDto>("No se pudo aplicar el descuento a la comanda");
         }
         catch (Exception ex)
         {

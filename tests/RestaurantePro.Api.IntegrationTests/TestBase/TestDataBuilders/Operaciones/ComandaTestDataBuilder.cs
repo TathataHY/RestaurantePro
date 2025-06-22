@@ -96,7 +96,7 @@ public class ComandaTestDataBuilder
             ClienteId = _clienteId,
             MesaId = _mesaId ?? Guid.NewGuid(),
             Observaciones = _observaciones ?? _faker.Lorem.Sentence(5, 10),
-            Productos = _productos.Any() ? _productos : new List<dynamic> { new { ProductoId = Guid.NewGuid(), Cantidad = 1, Observaciones = "Test product" } }
+            ProductosIniciales = _productos.Any() ? _productos : new List<dynamic> { new { ProductoId = Guid.NewGuid(), Cantidad = 1, Observaciones = "Test product" } }
         };
     }
 

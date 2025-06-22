@@ -45,7 +45,7 @@ public class AgregarProductoCommandHandler : IRequestHandler<AgregarProductoComm
         var producto = await _productoRepository.ObtenerPorIdAsync(request.ProductoId, cancellationToken);
         if (producto == null)
             return Result.Failure<ComandaDto>($"No se encontró el producto con ID {request.ProductoId}");
-        if (!producto.Activo)
+        if (!producto.EstaActivo)
             return Result.Failure<ComandaDto>($"El producto '{producto.Nombre}' no está activo");
 
         // 4. Agregar producto a la comanda
@@ -55,7 +55,7 @@ public class AgregarProductoCommandHandler : IRequestHandler<AgregarProductoComm
                 producto.Id,
                 producto.Nombre,
                 request.Cantidad,
-                producto.Precio,
+                producto.Precio.Valor,
                 request.Observaciones
             );
         }

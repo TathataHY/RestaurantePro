@@ -45,6 +45,10 @@ public class OperacionesMappingProfile : Profile
             .ForMember(dest => dest.FechaApertura, opt => opt.MapFrom(src => src.FechaCreacion))
             .ForMember(dest => dest.FechaCierre, opt => opt.MapFrom(src => src.FechaActualizacion))
             .ForMember(dest => dest.Descuentos, opt => opt.MapFrom(src => src.Total != null ? src.Total.Descuento ?? 0 : 0))
+            .ForMember(dest => dest.UsuarioId, opt => opt.MapFrom(src => src.MeseroId))
+            .ForMember(dest => dest.MesaId, opt => opt.MapFrom(src => src.MesaId))
+            .ForMember(dest => dest.ClienteId, opt => opt.MapFrom(src => src.ClienteId))
+            .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones))
             // TODO: Reactivar cuando existan estas propiedades en ComandaDto
             //.ForMember(dest => dest.TieneDescuentoFidelizacion, opt => opt.MapFrom(src => src.TieneDescuentoFidelizacion()))
             //.ForMember(dest => dest.PuedeModificar, opt => opt.MapFrom(src => PuedeModificarComanda(src.Estado)))

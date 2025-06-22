@@ -58,7 +58,7 @@ public class FinalizarServicioCompletoValidator : AbstractValidator<FinalizarSer
                 var estadosValidos = new[] { 
                     Domain.Operaciones.Comandas.Enums.EstadoComanda.EnProceso,
                     Domain.Operaciones.Comandas.Enums.EstadoComanda.Lista,
-                    Domain.Operaciones.Comandas.Enums.EstadoComanda.Servida
+                    Domain.Operaciones.Comandas.Enums.EstadoComanda.Entregada
                 };
 
                 return estadosValidos.Contains(comanda.Estado);

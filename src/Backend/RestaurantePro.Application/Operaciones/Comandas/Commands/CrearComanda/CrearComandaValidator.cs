@@ -56,22 +56,9 @@ public class AgregarProductoValidator : AbstractValidator<AgregarProductoDto>
             .GreaterThan(0).WithMessage("La cantidad debe ser mayor a 0")
             .LessThanOrEqualTo(100).WithMessage("La cantidad no puede exceder 100 unidades");
 
-        RuleFor(x => x.PrecioUnitario)
-            .GreaterThan(0).WithMessage("El precio unitario debe ser mayor a 0")
-            .LessThanOrEqualTo(10000).WithMessage("El precio unitario no puede exceder $10,000");
-
         RuleFor(x => x.Observaciones)
             .MaximumLength(200).WithMessage("Las observaciones del producto no pueden exceder 200 caracteres")
             .When(x => !string.IsNullOrEmpty(x.Observaciones));
-
-        // Personalizaciones - opcional
-        RuleForEach(x => x.Personalizaciones)
-            .SetValidator(new PersonalizacionValidator())
-            .When(x => x.Personalizaciones != null);
-
-        RuleFor(x => x.Personalizaciones)
-            .Must(personalizaciones => personalizaciones == null || personalizaciones.Count <= 10)
-            .WithMessage("No se pueden agregar más de 10 personalizaciones por producto");
     }
 }
 

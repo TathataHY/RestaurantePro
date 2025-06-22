@@ -112,22 +112,14 @@ public class CrearComandaHandler : IRequestHandler<CrearComandaCommand, Result<C
                     throw new InvalidOperationException($"El producto {productoDto.ProductoId} no está disponible");
                 }
 
-                // Validar que el precio es correcto (tolerancia de $0.01)
-                if (Math.Abs(producto.Precio.Valor - productoDto.PrecioUnitario) > 0.01m)
-                {
-                    _logger.LogWarning("💰 Precio diferente detectado - Producto: {ProductoId}, Esperado: {PrecioEsperado:C}, Recibido: {PrecioRecibido:C}", 
-                        productoDto.ProductoId, producto.Precio.Valor, productoDto.PrecioUnitario);
-                    
-                    // Usar el precio del producto registrado para mantener consistencia
-                    productoDto.PrecioUnitario = producto.Precio.Valor;
-                    _logger.LogInformation("💰 Precio corregido a: {PrecioCorregido:C}", producto.Precio.Valor);
-                }
+                // Obtener el precio del producto desde el repositorio
+                var precioUnitario = producto.Precio.Valor;
 
                 // Agregar el producto a la comanda usando el método del dominio
                 comanda.AgregarProducto(
                     productoDto.ProductoId,
                     productoDto.Cantidad,
-                    productoDto.PrecioUnitario,
+                    precioUnitario,
                     productoDto.Observaciones);
 
                 // TODO: Agregar personalizaciones si las hay
@@ -136,7 +128,7 @@ public class CrearComandaHandler : IRequestHandler<CrearComandaCommand, Result<C
                 _logger.LogInformation("✅ Producto agregado: {ProductoId} x{Cantidad} = ${Total:F2}", 
                     productoDto.ProductoId, 
                     productoDto.Cantidad, 
-                    productoDto.Cantidad * productoDto.PrecioUnitario);
+                    productoDto.Cantidad * precioUnitario);
             }
             catch (Exception ex)
             {
@@ -206,7 +198,7 @@ public class CrearComandaHandler : IRequestHandler<CrearComandaCommand, Result<C
         if (request.ProductosIniciales.Any())
         {
             var productosInvalidos = request.ProductosIniciales
-                .Where(p => p.ProductoId == Guid.Empty || p.Cantidad <= 0 || p.PrecioUnitario < 0)
+                .Where(p => p.ProductoId == Guid.Empty || p.Cantidad <= 0)
                 .ToList();
                 
             if (productosInvalidos.Any())

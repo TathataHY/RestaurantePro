@@ -47,7 +47,7 @@ public class CambiarEstadoComandaCommandHandler : IRequestHandler<CambiarEstadoC
             switch (request.NuevoEstado.ToLower())
             {
                 case "enproceso":
-                    cambioExitoso = comanda.MarcarEnProceso();
+                    cambioExitoso = comanda.MarcarEnPreparacion();
                     break;
                 case "lista":
                     cambioExitoso = comanda.MarcarLista();

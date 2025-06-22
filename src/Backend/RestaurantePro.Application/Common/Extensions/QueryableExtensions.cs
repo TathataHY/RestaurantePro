@@ -47,7 +47,10 @@ public static class QueryableExtensions
         // Aplicar ordenamiento
         if (!string.IsNullOrWhiteSpace(filter.SortBy))
         {
-            result = result.ApplyOrdering(filter.SortBy, filter.SortDirection);
+            var sortDirection = filter.SortDirection?.ToLower() == "desc" 
+                ? SortDirection.Descending 
+                : SortDirection.Ascending;
+            result = result.ApplyOrdering(filter.SortBy, sortDirection);
         }
 
         return result;

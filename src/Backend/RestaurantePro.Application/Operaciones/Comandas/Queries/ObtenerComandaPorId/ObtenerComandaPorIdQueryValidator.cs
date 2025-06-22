@@ -9,13 +9,13 @@ public class ObtenerComandaPorIdQueryValidator : AbstractValidator<ObtenerComand
 {
     public ObtenerComandaPorIdQueryValidator()
     {
-        // 🎯 Validar Id
-        RuleFor(x => x.Id)
+        // 🎯 Validar ComandaId
+        RuleFor(x => x.ComandaId)
             .NotEmpty()
             .WithMessage("🚫 El ID de la comanda es obligatorio");
 
-        // 🎯 Validar que el ID es un GUID válido
-        RuleFor(x => x.Id)
+        // 🎯 Validar que el ComandaId es un GUID válido
+        RuleFor(x => x.ComandaId)
             .Must(id => id != Guid.Empty)
             .WithMessage("🚫 El ID de la comanda no puede estar vacío");
     }

@@ -25,15 +25,6 @@ public class EliminarComandaCommandValidator : AbstractValidator<EliminarComanda
             })
             .WithMessage("🚫 La comanda especificada no existe");
 
-        // 🎯 Validar que la comanda no está eliminada
-        RuleFor(x => x.ComandaId)
-            .MustAsync(async (comandaId, cancellation) =>
-            {
-                var comanda = await context.Comandas.FindAsync(new object[] { comandaId }, cancellation);
-                return comanda != null && !comanda.EstaEliminada;
-            })
-            .WithMessage("🚫 La comanda ya ha sido eliminada");
-
         // 🎯 Validar estado de la comanda
         RuleFor(x => x.ComandaId)
             .MustAsync(async (comandaId, cancellation) =>
@@ -44,13 +35,13 @@ public class EliminarComandaCommandValidator : AbstractValidator<EliminarComanda
                 // Estados que no permiten eliminación
                 var estadosNoEliminables = new[] 
                 { 
-                    EstadoComanda.Facturada, 
-                    EstadoComanda.Cerrada 
+                    EstadoComanda.Finalizada, 
+                    EstadoComanda.Cancelada 
                 };
 
                 return !estadosNoEliminables.Contains(comanda.Estado);
             })
-            .WithMessage("🚫 No se puede eliminar una comanda que ya ha sido facturada o cerrada");
+            .WithMessage("🚫 No se puede eliminar una comanda que ya ha sido finalizada o cancelada");
 
         // 🎯 Validar que no hay items en preparación
         RuleFor(x => x.ComandaId)
@@ -63,7 +54,7 @@ public class EliminarComandaCommandValidator : AbstractValidator<EliminarComanda
                 if (comanda == null) return false;
 
                 // Verificar que no hay items en preparación
-                return !comanda.Items.Any(i => i.Estado == Domain.Operaciones.Comandas.Enums.EstadoItem.EnPreparacion);
+                return !comanda.Items.Any(i => i.Estado == EstadoItemComanda.EnPreparacion);
             })
             .WithMessage("🚫 No se puede eliminar una comanda con items en preparación");
     }

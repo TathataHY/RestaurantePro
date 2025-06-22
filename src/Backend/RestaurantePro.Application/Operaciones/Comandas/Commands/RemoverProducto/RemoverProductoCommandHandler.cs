@@ -55,12 +55,13 @@ public class RemoverProductoCommandHandler : IRequestHandler<RemoverProductoComm
             if (request.Cantidad == item.Cantidad)
             {
                 // Remover todo el item
-                comanda.RemoverItem(request.ItemId);
+                comanda.RemoverProducto(request.ItemId);
             }
             else
             {
-                // Remover cantidad parcial
-                comanda.ModificarCantidadItem(request.ItemId, item.Cantidad - request.Cantidad);
+                // Remover cantidad parcial - primero remover el item completo y luego agregar la cantidad restante
+                comanda.RemoverProducto(request.ItemId);
+                comanda.AgregarProducto(item.ProductoId, item.Cantidad - request.Cantidad, item.PrecioUnitario, item.Observaciones);
             }
         }
         catch (Exception ex)

@@ -117,7 +117,7 @@ public class ObtenerComandasPaginadasQueryHandler : IRequestHandler<ObtenerComan
         // Filtrar solo activas
         if (request.SoloActivas)
         {
-            var estadosActivos = new[] { EstadoComanda.Creada, EstadoComanda.EnProceso, EstadoComanda.Lista, EstadoComanda.Servida };
+            var estadosActivos = new[] { EstadoComanda.Creada, EstadoComanda.EnProceso, EstadoComanda.Lista, EstadoComanda.Entregada };
             query = query.Where(c => estadosActivos.Contains(c.Estado));
         }
 
@@ -165,8 +165,8 @@ public class ObtenerComandasPaginadasQueryHandler : IRequestHandler<ObtenerComan
                 : query.OrderByDescending(c => c.Mesa.Numero),
                 
             "mesero" => direccion == "asc"
-                ? query.OrderBy(c => c.Mesero.Nombre)
-                : query.OrderByDescending(c => c.Mesero.Nombre),
+                ? query.OrderBy(c => c.Mesero.NombreCompleto)
+                : query.OrderByDescending(c => c.Mesero.NombreCompleto),
                 
             "cliente" => direccion == "asc"
                 ? query.OrderBy(c => c.Cliente.Nombre)

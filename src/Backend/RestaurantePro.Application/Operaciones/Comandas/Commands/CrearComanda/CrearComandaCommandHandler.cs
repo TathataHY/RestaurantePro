@@ -55,7 +55,7 @@ public class CrearComandaCommandHandler : IRequestHandler<CrearComandaCommand, R
             var producto = await _productoRepository.ObtenerPorIdAsync(prod.ProductoId, cancellationToken);
             if (producto == null)
                 return Result.Failure<ComandaDto>($"El producto con ID {prod.ProductoId} no existe");
-            if (!producto.Activo)
+            if (!producto.EstaActivo)
                 return Result.Failure<ComandaDto>($"El producto '{producto.Nombre}' no está activo");
             if (prod.Cantidad <= 0)
                 return Result.Failure<ComandaDto>($"La cantidad para el producto '{producto.Nombre}' debe ser mayor a cero");
@@ -67,7 +67,7 @@ public class CrearComandaCommandHandler : IRequestHandler<CrearComandaCommand, R
                     producto.Id,
                     producto.Nombre,
                     prod.Cantidad,
-                    producto.Precio,
+                    producto.Precio.Valor,
                     prod.Observaciones
                 );
             }

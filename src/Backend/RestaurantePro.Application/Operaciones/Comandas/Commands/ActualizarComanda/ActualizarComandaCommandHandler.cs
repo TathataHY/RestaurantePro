@@ -38,13 +38,9 @@ public class ActualizarComandaCommandHandler : IRequestHandler<ActualizarComanda
 
         // 3. Actualizar campos permitidos
         if (request.MesaId.HasValue && request.MesaId.Value != Guid.Empty)
-            comanda.CambiarMesa(request.MesaId.Value);
-        if (request.ClienteId.HasValue)
-            comanda.CambiarCliente(request.ClienteId);
+            comanda.TransferirAMesa(request.MesaId.Value);
         if (!string.IsNullOrWhiteSpace(request.Observaciones))
-            comanda.CambiarObservaciones(request.Observaciones);
-        if (request.MeseroId.HasValue && request.MeseroId.Value != Guid.Empty)
-            comanda.CambiarMesero(request.MeseroId.Value);
+            comanda.ActualizarObservaciones(request.Observaciones);
 
         // 4. Guardar cambios
         await _comandaRepository.ActualizarAsync(comanda, cancellationToken);

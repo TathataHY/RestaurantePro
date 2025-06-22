@@ -18,7 +18,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - **Total Tests de Integración**: 195
 - **Estado**: ✅ **195/195 Tests Pasando (100% Success Rate)**
 - **Framework de Testing**: Completamente consolidado y estable
-- **Última Actualización**: Diciembre 2024
+- **Última Actualización**: Junio 2024
 - **🎯 Progreso Tests Completos**: 4/21 controladores (19.0%) - **¡TERCERA FASE COMPLETADA!**
 
 ### **Resumen de Integración de Tests**
@@ -42,7 +42,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 1. **UsuariosController** - Tests completamente completos con interacción real de BD
 2. **IngredientesController** - Tests completamente completos con interacción real de BD
 3. **NotificacionesController** - Tests completamente completos con interacción real de BD
-4. **ComandasController** - Tests completamente completos con interacción real de BD
+4. **ComandasController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: todos los endpoints, flujos y reglas de negocio cubiertos, validación estricta de BD, sin tests básicos ni pendientes**)
 
 #### **🟡 Tests Básicos (17 controladores)**
 **Características confirmadas:**
@@ -326,3 +326,9 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | `/{id}/ingredientes` | POST | `✅/✅` | Agregar ingrediente a preparación | ✅ PASSING (501) |
 | `/{id}/ingredientes/{ingredienteId}` | PUT | `✅/✅` | Actualizar ingrediente de preparación | ✅ PASSING (501) |
 | `/{id}/ingredientes/{ingredienteId}` | DELETE | `✅/✅` | Eliminar ingrediente de preparación | ✅ PASSING (501) |
+
+---
+
+> **Actualización junio 2024:**
+> - **ComandasController** migrado a tests completos (🟢). Todos los endpoints validados con interacción real de BD y reglas de negocio. Se cierra la Fase 3 del plan de migración.
+> - Próximo objetivo: migrar MesasController y FacturasController a tests completos.

@@ -290,7 +290,7 @@ public class ComandasController : ControllerBase
     }
 
     /// <summary>
-    /// Cierra una comanda y genera la factura
+    /// Cierra una comanda y genera la factura correspondiente
     /// </summary>
     [HttpPost("{id:guid}/cerrar")]
     [ProducesResponseType(typeof(ApiResponse<ComandaDto>), StatusCodes.Status200OK)]
@@ -298,10 +298,17 @@ public class ComandasController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<ComandaDto>>> CerrarComanda(Guid id, [FromBody] CerrarComandaCommand command)
     {
-        _logger.LogInformation("🏁 POST /api/operaciones/comandas/{Id}/cerrar", id);
+        _logger.LogInformation("🏁 POST /api/operaciones/comandas/{Id}/cerrar - Iniciando cierre de comanda", id);
+        _logger.LogInformation("📋 Comando recibido - ComandaId: {ComandaId}, MétodoPago: {MetodoPago}, MontoPagado: {MontoPagado}", 
+            command.ComandaId, command.MetodoPago, command.MontoPagado);
 
         var commandWithId = command.WithComandaId(id);
+        _logger.LogInformation("🔄 Comando actualizado - ComandaId: {ComandaId}", commandWithId.ComandaId);
+        
+        _logger.LogInformation("📤 Enviando comando al mediator...");
         var result = await _mediator.Send(commandWithId);
+        _logger.LogInformation("📥 Resultado recibido del mediator - Success: {Success}, Error: {Error}", 
+            result.Succeeded, result.Error);
 
         if (!result.Succeeded)
         {
@@ -309,12 +316,17 @@ public class ComandasController : ControllerBase
                 ? StatusCodes.Status404NotFound 
                 : StatusCodes.Status400BadRequest;
                 
+            _logger.LogError("❌ Error al cerrar comanda {ComandaId}: {Error}", id, result.Error);
+            
             var errorResponse = ApiResponse<object>.ErrorResponse(
                 new List<string> { result.Error ?? "Error desconocido" }, 
                 "Error al cerrar comanda", 
                 statusCode);
             return StatusCode(statusCode, errorResponse);
         }
+
+        _logger.LogInformation("✅ Comanda {ComandaId} cerrada exitosamente. Estado en respuesta: {Estado}", 
+            id, result.Value?.Estado);
 
         var response = ApiResponse<ComandaDto>.SuccessResponse(
             result.Value, "Comanda cerrada exitosamente");
@@ -423,10 +435,18 @@ public class ComandasController : ControllerBase
         _logger.LogInformation("🍽️ POST /api/operaciones/comandas/{Id}/finalizar - Usuario: {UsuarioId}", 
             id, command.UsuarioId);
 
-        // Asignar el ID de la comanda desde la URL
-        command = command with { ComandaId = id };
+        // Crear nueva instancia con el ID de la comanda desde la URL
+        var finalizarCommand = new FinalizarComandaCommand
+        {
+            ComandaId = id,
+            UsuarioId = command.UsuarioId,
+            ObservacionesFinalizacion = command.ObservacionesFinalizacion,
+            ValidarTodosItemsListos = command.ValidarTodosItemsListos,
+            NotificarMesero = command.NotificarMesero,
+            FechaFinalizacion = command.FechaFinalizacion
+        };
         
-        var result = await _mediator.Send(command);
+        var result = await _mediator.Send(finalizarCommand);
 
         if (!result.Succeeded)
         {
@@ -459,10 +479,22 @@ public class ComandasController : ControllerBase
         _logger.LogInformation("🚀 POST /api/operaciones/comandas/{Id}/finalizar-servicio-completo - Tipo: {TipoFinalizacion}", 
             id, command.TipoFinalizacion);
 
-        // Asignar el ID de la comanda desde la URL
-        command = command with { ComandaId = id };
+        // Crear nueva instancia con el ID de la comanda desde la URL
+        var finalizarCommand = new FinalizarServicioCompletoCommand
+        {
+            ComandaId = id,
+            ClienteId = command.ClienteId,
+            TipoFinalizacion = command.TipoFinalizacion,
+            PropinaSugerida = command.PropinaSugerida,
+            GenerarFacturaInmediata = command.GenerarFacturaInmediata,
+            AplicarDescuentoFidelizacion = command.AplicarDescuentoFidelizacion,
+            LiberarMesaAutomaticamente = command.LiberarMesaAutomaticamente,
+            EnviarNotificacionCliente = command.EnviarNotificacionCliente,
+            RegistrarEstadisticas = command.RegistrarEstadisticas,
+            ObservacionesFinalizacion = command.ObservacionesFinalizacion
+        };
         
-        var result = await _mediator.Send(command);
+        var result = await _mediator.Send(finalizarCommand);
 
         if (!result.Succeeded)
         {

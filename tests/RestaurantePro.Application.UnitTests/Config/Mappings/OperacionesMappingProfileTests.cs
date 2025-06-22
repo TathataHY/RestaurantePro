@@ -190,7 +190,7 @@ public class OperacionesMappingProfileTests
             Observaciones = "Sin cebolla",
             ProductosIniciales = new List<AgregarProductoDto>
             {
-                new() { ProductoId = Guid.NewGuid(), Cantidad = 2, PrecioUnitario = 25.00m }
+                new() { ProductoId = Guid.NewGuid(), Cantidad = 2 }
             }
         };
 

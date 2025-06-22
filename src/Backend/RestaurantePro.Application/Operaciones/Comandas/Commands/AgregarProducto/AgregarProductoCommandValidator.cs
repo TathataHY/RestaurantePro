@@ -27,7 +27,7 @@ public class AgregarProductoCommandValidator : AbstractValidator<AgregarProducto
             .MustAsync(async (productoId, ct) =>
             {
                 var producto = await productoRepository.ObtenerPorIdAsync(productoId, ct);
-                return producto != null && producto.Activo;
+                return producto != null && producto.EstaActivo;
             }).WithMessage("El producto no existe o no está activo");
 
         RuleFor(x => x.Cantidad)

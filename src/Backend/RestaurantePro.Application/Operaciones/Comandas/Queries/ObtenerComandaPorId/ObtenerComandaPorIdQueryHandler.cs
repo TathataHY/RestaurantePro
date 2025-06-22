@@ -30,7 +30,7 @@ public class ObtenerComandaPorIdQueryHandler : IRequestHandler<ObtenerComandaPor
         try
         {
             _logger.LogInformation("🔍 Obteniendo comanda por ID: {ComandaId}, IncluirItems: {IncluirItems}", 
-                request.Id, request.IncluirItems);
+                request.ComandaId, request.IncluirItems);
 
             // Construir query base
             var query = _context.Comandas
@@ -46,27 +46,24 @@ public class ObtenerComandaPorIdQueryHandler : IRequestHandler<ObtenerComandaPor
             }
 
             // Buscar la comanda
-            var comanda = await query.FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
+            var comanda = await query.FirstOrDefaultAsync(c => c.Id == request.ComandaId, cancellationToken);
 
             if (comanda == null)
             {
-                _logger.LogWarning("⚠️ Comanda no encontrada con ID: {ComandaId}", request.Id);
-                return Result.Failure<ComandaDto>($"Comanda con ID {request.Id} no encontrada");
+                _logger.LogWarning("⚠️ Comanda no encontrada: {ComandaId}", request.ComandaId);
+                return Result.Failure<ComandaDto>($"No se encontró una comanda con el ID {request.ComandaId}");
             }
 
             // Mapear a DTO
             var comandaDto = _mapper.Map<ComandaDto>(comanda);
 
-            _logger.LogInformation("✅ Comanda obtenida exitosamente - ID: {ComandaId}, Número: {NumeroComanda}, Estado: {Estado}",
-                comanda.Id, comanda.NumeroComanda, comanda.Estado);
-
+            _logger.LogInformation("✅ Comanda obtenida exitosamente: {ComandaId}", request.ComandaId);
             return Result.Success(comandaDto);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error obteniendo comanda por ID {ComandaId}: {ErrorMessage}", 
-                request.Id, ex.Message);
-            return Result.Failure<ComandaDto>($"Error obteniendo comanda: {ex.Message}");
+            _logger.LogError(ex, "❌ Error obteniendo comanda por ID: {ComandaId}", request.ComandaId);
+            return Result.Failure<ComandaDto>($"Error interno al obtener la comanda: {ex.Message}");
         }
     }
 } 
