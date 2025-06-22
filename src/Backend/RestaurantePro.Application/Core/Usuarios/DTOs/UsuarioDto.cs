@@ -7,11 +7,6 @@ namespace RestaurantePro.Application.Core.Usuarios.DTOs;
 public class UsuarioDto : BaseDto
 {
     /// <summary>
-    /// ID del usuario
-    /// </summary>
-    public Guid Id { get; set; }
-
-    /// <summary>
     /// Nombre completo del usuario
     /// </summary>
     public string NombreCompleto { get; set; } = string.Empty;

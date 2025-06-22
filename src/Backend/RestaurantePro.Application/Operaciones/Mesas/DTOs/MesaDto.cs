@@ -1,4 +1,5 @@
 using System;
+using RestaurantePro.Application.Common.DTOs;
 
 namespace RestaurantePro.Application.Operaciones.Mesas.DTOs;
 
@@ -7,11 +8,6 @@ namespace RestaurantePro.Application.Operaciones.Mesas.DTOs;
 /// </summary>
 public class MesaDto : BaseDto
 {
-    /// <summary>
-    /// ID de la mesa
-    /// </summary>
-    public Guid Id { get; set; }
-    
     /// <summary>
     /// Número de la mesa
     /// </summary>

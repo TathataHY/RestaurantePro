@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using RestaurantePro.Application.Common.Behaviors;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Comercial.Facturacion.Commands;
+using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
 using RestaurantePro.Application.Common.DTOs;
 using RestaurantePro.Application.Common.Models;
 using System.Collections.Concurrent;

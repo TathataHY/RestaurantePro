@@ -1,5 +1,10 @@
+using RestaurantePro.Domain.Comercial.Facturacion.Enums;
+
 namespace RestaurantePro.Application.Comercial.Facturacion.DTOs;
 
+/// <summary>
+/// DTO para representar una factura
+/// </summary>
 public class FacturaDto : BaseDto
 {
     public string Numero { get; set; } = string.Empty;

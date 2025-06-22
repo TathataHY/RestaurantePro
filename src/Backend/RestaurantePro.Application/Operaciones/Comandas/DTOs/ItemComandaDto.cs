@@ -6,11 +6,6 @@ namespace RestaurantePro.Application.Operaciones.Comandas.DTOs;
 public class ItemComandaDto : BaseDto
 {
     /// <summary>
-    /// ID único del item en la comanda
-    /// </summary>
-    public Guid Id { get; set; }
-
-    /// <summary>
     /// ID de la comanda
     /// </summary>
     public Guid ComandaId { get; set; }

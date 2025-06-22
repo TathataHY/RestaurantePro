@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientePorId;
+using RestaurantePro.Application.Inventario.MovimientosInventario.DTOs;
 
 /// <summary>
 /// Handler para obtener un ingrediente por ID
@@ -96,15 +97,11 @@ public class ObtenerIngredientePorIdHandler : IRequestHandler<ObtenerIngrediente
     /// </summary>
     private void EnriquecerMovimientoDto(MovimientoInventarioDto dto)
     {
-        // Las propiedades de UI ya están disponibles como calculadas en MovimientoInventarioDto:
-        // - CantidadFormateada (propiedad calculada)
-        // - StockAnteriorFormateado (propiedad calculada)
-        // - StockPosteriorFormateado (propiedad calculada)
-        // - FechaFormateada (propiedad calculada)
-        // - EsEntrada (propiedad calculada)
-        // - EsSalida (propiedad calculada)
+        // Según mejores prácticas, el backend solo debe devolver datos crudos
+        // El formateo debe hacerse en el frontend/UI
+        // Por eso eliminamos las propiedades formateadas del DTO
         
         _logger.LogDebug("Movimiento enriquecido: {Tipo} - {Cantidad} - {Fecha}", 
-            dto.TipoMovimientoTexto, dto.CantidadFormateada, dto.FechaFormateada);
+            dto.TipoMovimientoTexto, dto.Cantidad, dto.FechaCreacion);
     }
 } 

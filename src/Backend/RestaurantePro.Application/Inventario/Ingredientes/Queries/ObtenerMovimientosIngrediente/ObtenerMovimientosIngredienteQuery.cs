@@ -1,6 +1,7 @@
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
+using RestaurantePro.Application.Inventario.MovimientosInventario.DTOs;
 
 namespace RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerMovimientosIngrediente;
 

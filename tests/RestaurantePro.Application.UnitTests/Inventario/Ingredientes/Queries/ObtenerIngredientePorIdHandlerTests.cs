@@ -1,3 +1,4 @@
+using RestaurantePro.Application.Inventario.MovimientosInventario.DTOs;
 namespace RestaurantePro.Application.UnitTests.Inventario.Ingredientes.Queries;
 
 public class ObtenerIngredientePorIdHandlerTests
@@ -427,7 +428,7 @@ public class ObtenerIngredientePorIdHandlerTests
             movimientos.Add(new MovimientoInventarioDto
             {
                 Id = Guid.NewGuid(),
-                TipoMovimiento = TipoMovimientoInventario.Ingreso,
+                Tipo = TipoMovimientoInventario.Ingreso,
                 Cantidad = 5m,
                 FechaCreacion = DateTime.Now.AddDays(-i),
                 Motivo = $"Movimiento test {i + 1}"

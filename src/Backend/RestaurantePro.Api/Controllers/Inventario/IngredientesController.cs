@@ -14,6 +14,7 @@ using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesBajoStock;
 using RestaurantePro.Application.Common.DTOs;
 using RestaurantePro.Application.Common.Models;
+using RestaurantePro.Application.Inventario.MovimientosInventario.DTOs;
 
 namespace RestaurantePro.Api.Controllers.Inventario;
 

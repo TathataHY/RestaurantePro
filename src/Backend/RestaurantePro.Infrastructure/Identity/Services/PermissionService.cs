@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using RestaurantePro.Application.Core.Usuarios.DTOs;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
 using RestaurantePro.Infrastructure.Identity.Models;
 using System;
@@ -9,20 +9,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace RestaurantePro.Infrastructure.Identity.Services
 {
+    /// <summary>
+    /// Servicio para gestión de permisos y roles
+    /// </summary>
     public class PermissionService : IUserPermissionService
     {
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly UserManager<IdentityApplicationUser> _userManager;
+        private readonly ILogger<PermissionService> _logger;
 
         public PermissionService(
             RoleManager<ApplicationRole> roleManager,
-            UserManager<IdentityApplicationUser> userManager)
+            UserManager<IdentityApplicationUser> userManager,
+            ILogger<PermissionService> logger)
         {
             _roleManager = roleManager;
             _userManager = userManager;
+            _logger = logger;
         }
 
         public async Task<bool> UsuarioTienePermisoAsync(Guid usuarioId, string permiso)
@@ -154,55 +161,79 @@ namespace RestaurantePro.Infrastructure.Identity.Services
         // Métodos internos para gestión de roles y permisos
         public async Task<Result<List<RoleDto>>> GetRolesAsync()
         {
-            var roles = await _roleManager.Roles.ToListAsync();
-            var roleDtos = new List<RoleDto>();
-
-            foreach (var role in roles)
+            try
             {
+                var roles = await _roleManager.Roles.ToListAsync();
+
+                var roleDtos = new List<RoleDto>();
+                foreach (var role in roles)
+                {
+                    // Obtener permisos desde los claims de Identity
+                    var claims = await _roleManager.GetClaimsAsync(role);
+                    var permissions = claims
+                        .Where(c => c.Type == CustomClaimTypes.Permission)
+                        .Select(c => c.Value)
+                        .ToList();
+
+                    roleDtos.Add(new RoleDto
+                    {
+                        Id = role.Id.ToString(),
+                        Name = role.Name ?? string.Empty,
+                        Permissions = permissions
+                    });
+                }
+
+                return Result.Success<List<RoleDto>>(roleDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al obtener roles");
+                return Result.Failure<List<RoleDto>>(new List<string> { "Error interno del servidor" });
+            }
+        }
+
+        public async Task<Result<RoleDto>> GetRoleByIdAsync(string id)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(id))
+                {
+                    return Result.Failure<RoleDto>(new List<string> { "ID de rol inválido" });
+                }
+
+                if (!Guid.TryParse(id, out var guidId))
+                {
+                    return Result.Failure<RoleDto>(new List<string> { "ID de rol inválido" });
+                }
+
+                var role = await _roleManager.FindByIdAsync(guidId.ToString());
+
+                if (role == null)
+                {
+                    return Result.Failure<RoleDto>(new List<string> { "Rol no encontrado" });
+                }
+
+                // Obtener permisos desde los claims de Identity
                 var claims = await _roleManager.GetClaimsAsync(role);
                 var permissions = claims
                     .Where(c => c.Type == CustomClaimTypes.Permission)
                     .Select(c => c.Value)
                     .ToList();
 
-                roleDtos.Add(new RoleDto
+                var roleDto = new RoleDto
                 {
                     Id = role.Id.ToString(),
-                    Name = role.Name,
+                    Name = role.Name ?? string.Empty,
                     Permissions = permissions
-                });
+                };
+
+                return Result.Success<RoleDto>(roleDto);
             }
-
-            return Result.Success<List<RoleDto>>(roleDtos);
-        }
-
-        public async Task<Result<RoleDto>> GetRoleByIdAsync(string id)
-        {
-            if (!Guid.TryParse(id, out var roleId))
+            catch (Exception ex)
             {
-                return Result.Failure<RoleDto>(new List<string> { "ID de rol inválido" });
+                _logger.LogError(ex, "Error al obtener rol por ID: {RoleId}", id);
+                return Result.Failure<RoleDto>(new List<string> { "Error interno del servidor" });
             }
-
-            var role = await _roleManager.FindByIdAsync(roleId.ToString());
-            if (role == null)
-            {
-                return Result.Failure<RoleDto>(new List<string> { "Rol no encontrado" });
-            }
-
-            var claims = await _roleManager.GetClaimsAsync(role);
-            var permissions = claims
-                .Where(c => c.Type == CustomClaimTypes.Permission)
-                .Select(c => c.Value)
-                .ToList();
-
-            var roleDto = new RoleDto
-            {
-                Id = role.Id.ToString(),
-                Name = role.Name,
-                Permissions = permissions
-            };
-
-            return Result.Success<RoleDto>(roleDto);
         }
 
         public async Task<Result<string>> CreateRoleAsync(string roleName, List<string> permissions)

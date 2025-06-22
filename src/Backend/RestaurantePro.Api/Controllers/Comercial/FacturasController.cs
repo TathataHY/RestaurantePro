@@ -1,4 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using RestaurantePro.Application.Comercial.Facturacion.DTOs;
+using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
+using RestaurantePro.Application.Comercial.Facturacion.Commands.ActualizarFactura;
+using RestaurantePro.Application.Comercial.Facturacion.Commands.AnularFactura;
+using RestaurantePro.Application.Comercial.Facturacion.Commands.RegistrarPagoFactura;
 
 namespace RestaurantePro.Api.Controllers.Comercial;
 
@@ -36,7 +42,7 @@ public class FacturasController : ControllerBase
         [FromQuery] DateTime? fechaDesde = null,
         [FromQuery] DateTime? fechaHasta = null)
     {
-        _logger.LogInformation("💰 GET /api/comercial/facturas - Estado: {Estado}, ClienteId: {ClienteId}, FechaDesde: {FechaDesde}, FechaHasta: {FechaHasta}", 
+        _logger.LogInformation("📄 GET /api/comercial/facturas?estado={Estado}&clienteId={ClienteId}&fechaDesde={FechaDesde}&fechaHasta={FechaHasta}", 
             estado, clienteId, fechaDesde, fechaHasta);
 
         var response = ApiResponse<List<FacturaDto>>.ErrorResponse(
@@ -58,7 +64,7 @@ public class FacturasController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
     public async Task<ActionResult<ApiResponse<FacturaDto>>> GetFactura(Guid id)
     {
-        _logger.LogInformation("🔍 GET /api/comercial/facturas/{Id}", id);
+        _logger.LogInformation("📄 GET /api/comercial/facturas/{Id}", id);
 
         var response = ApiResponse<FacturaDto>.ErrorResponse(
             new List<string> { "Endpoint no implementado aún" },
@@ -81,8 +87,8 @@ public class FacturasController : ControllerBase
     public async Task<ActionResult<ApiResponse<FacturaDto>>> CrearFactura(
         [FromBody] CrearFacturaCommand command)
     {
-        _logger.LogInformation("➕ POST /api/comercial/facturas - TipoFactura: {TipoFactura}, ComandasIds: {ComandasIds}", 
-            command?.TipoFactura, command?.ComandasIds?.Count);
+        _logger.LogInformation("➕ POST /api/comercial/facturas - Comandas: {ComandasCount}", 
+            command?.ComandasIds?.Count ?? 0);
 
         var response = ApiResponse<FacturaDto>.ErrorResponse(
             new List<string> { "Endpoint no implementado aún" },
@@ -254,81 +260,4 @@ public class FacturasController : ControllerBase
 
         return StatusCode(StatusCodes.Status501NotImplemented, response);
     }
-}
-
-// DTOs temporales para compilación
-public class FacturaDto
-{
-    public Guid Id { get; set; }
-    public string NumeroFactura { get; set; } = string.Empty;
-    public string TipoFactura { get; set; } = string.Empty;
-    public string Estado { get; set; } = string.Empty;
-    public DateTime FechaEmision { get; set; }
-    public DateTime? FechaVencimiento { get; set; }
-    public DateTime? FechaPago { get; set; }
-    public Guid? ClienteId { get; set; }
-    public string NombreCliente { get; set; } = string.Empty;
-    public decimal Subtotal { get; set; }
-    public decimal TotalImpuestos { get; set; }
-    public decimal TotalDescuentos { get; set; }
-    public decimal Total { get; set; }
-    public decimal TotalPagado { get; set; }
-    public decimal Saldo => Total - TotalPagado;
-    public List<string> ComandasIds { get; set; } = new();
-    public DateTime FechaCreacion { get; set; }
-    public DateTime? FechaModificacion { get; set; }
-}
-
-public class CrearFacturaCommand
-{
-    public List<Guid> ComandasIds { get; set; } = new();
-    public string TipoFactura { get; set; } = string.Empty;
-    public string NombreCliente { get; set; } = string.Empty;
-    public Guid? ClienteId { get; set; }
-    public string? IdentificacionFiscal { get; set; }
-    public string? DireccionCliente { get; set; }
-    public string? EmailCliente { get; set; }
-    public string? Observaciones { get; set; }
-    public DateTime? FechaEmision { get; set; }
-    public int DiasCredito { get; set; } = 0;
-}
-
-public class ActualizarFacturaCommand
-{
-    public Guid Id { get; set; }
-    public string? NombreCliente { get; set; }
-    public string? IdentificacionFiscal { get; set; }
-    public string? DireccionCliente { get; set; }
-    public string? EmailCliente { get; set; }
-    public string? Observaciones { get; set; }
-    public int? DiasCredito { get; set; }
-}
-
-public class AnularFacturaCommand
-{
-    public string Motivo { get; set; } = string.Empty;
-    public string? DescripcionDetallada { get; set; }
-    public bool RevertirInventario { get; set; } = true;
-    public bool GenerarNotaCredito { get; set; } = false;
-}
-
-public class RegistrarPagoFacturaCommand
-{
-    public decimal Monto { get; set; }
-    public string MetodoPago { get; set; } = string.Empty;
-    public string? ReferenciaPago { get; set; }
-    public DateTime? FechaPago { get; set; }
-    public string? Observaciones { get; set; }
-}
-
-public class PagoFacturaDto
-{
-    public Guid Id { get; set; }
-    public Guid FacturaId { get; set; }
-    public decimal Monto { get; set; }
-    public string MetodoPago { get; set; } = string.Empty;
-    public string? ReferenciaPago { get; set; }
-    public DateTime FechaPago { get; set; }
-    public string? Observaciones { get; set; }
-    public DateTime FechaCreacion { get; set; }
 } 

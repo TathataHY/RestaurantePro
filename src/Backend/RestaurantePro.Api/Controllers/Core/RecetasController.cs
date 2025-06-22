@@ -1,9 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using RestaurantePro.Application.Core.Productos.DTOs;
+using RestaurantePro.Application.Core.Productos.Commands.CrearReceta;
+using RestaurantePro.Application.Core.Productos.Commands.ActualizarReceta;
 
 namespace RestaurantePro.Api.Controllers.Core;
 
 /// <summary>
-/// Controlador para la gestión de recetas de productos
+/// Controlador para gestión de recetas de productos
 /// Endpoints para CRUD completo de recetas y gestión de ingredientes
 /// </summary>
 [ApiController]
@@ -20,7 +24,7 @@ public class RecetasController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene todas las recetas con filtros opcionales
+    /// Obtiene todas las recetas disponibles
     /// </summary>
     /// <param name="soloActivas">Filtrar solo recetas activas</param>
     /// <param name="productoId">Filtrar por producto específico</param>
@@ -32,7 +36,7 @@ public class RecetasController : ControllerBase
         [FromQuery] bool? soloActivas = null,
         [FromQuery] Guid? productoId = null)
     {
-        _logger.LogInformation("📋 GET /api/core/recetas - SoloActivas: {SoloActivas}, ProductoId: {ProductoId}", 
+        _logger.LogInformation("🍕 GET /api/core/recetas?soloActivas={SoloActivas}&productoId={ProductoId}", 
             soloActivas, productoId);
 
         var response = ApiResponse<List<RecetaDto>>.ErrorResponse(
@@ -47,14 +51,14 @@ public class RecetasController : ControllerBase
     /// Obtiene una receta específica por ID
     /// </summary>
     /// <param name="id">ID de la receta</param>
-    /// <returns>Datos de la receta</returns>
+    /// <returns>Receta encontrada</returns>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ApiResponse<RecetaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
     public async Task<ActionResult<ApiResponse<RecetaDto>>> GetReceta(Guid id)
     {
-        _logger.LogInformation("🔍 GET /api/core/recetas/{Id}", id);
+        _logger.LogInformation("🍕 GET /api/core/recetas/{Id}", id);
 
         var response = ApiResponse<RecetaDto>.ErrorResponse(
             new List<string> { "Endpoint no implementado aún" },
@@ -198,60 +202,4 @@ public class RecetasController : ControllerBase
 
         return StatusCode(StatusCodes.Status501NotImplemented, response);
     }
-}
-
-// DTOs temporales para compilación
-public class RecetaDto
-{
-    public Guid Id { get; set; }
-    public Guid ProductoId { get; set; }
-    public string NombreProducto { get; set; } = string.Empty;
-    public string Preparacion { get; set; } = string.Empty;
-    public int TiempoPreparacionMinutos { get; set; }
-    public List<IngredienteRecetaDto> Ingredientes { get; set; } = new();
-    public decimal CostoTotal { get; set; }
-    public bool EstaActiva { get; set; }
-    public DateTime FechaCreacion { get; set; }
-    public DateTime? FechaModificacion { get; set; }
-}
-
-public class IngredienteRecetaDto
-{
-    public Guid IngredienteId { get; set; }
-    public string Nombre { get; set; } = string.Empty;
-    public decimal Cantidad { get; set; }
-    public string UnidadMedida { get; set; } = string.Empty;
-    public bool EsOpcional { get; set; }
-    public decimal CostoUnitario { get; set; }
-    public decimal CostoTotal { get; set; }
-}
-
-public class CrearRecetaCommand
-{
-    public Guid ProductoId { get; set; }
-    public string Preparacion { get; set; } = string.Empty;
-    public int TiempoPreparacionMinutos { get; set; }
-    public List<AgregarIngredienteDto> Ingredientes { get; set; } = new();
-}
-
-public class ActualizarRecetaCommand
-{
-    public Guid Id { get; set; }
-    public string Preparacion { get; set; } = string.Empty;
-    public int TiempoPreparacionMinutos { get; set; }
-    public List<AgregarIngredienteDto> Ingredientes { get; set; } = new();
-}
-
-public class AgregarIngredienteDto
-{
-    public Guid IngredienteId { get; set; }
-    public decimal Cantidad { get; set; }
-    public bool EsOpcional { get; set; }
-}
-
-public class DisponibilidadRecetaDto
-{
-    public bool EstaDisponible { get; set; }
-    public List<string> IngredientesFaltantes { get; set; } = new();
-    public int MaximaPorcionesDisponibles { get; set; }
 } 

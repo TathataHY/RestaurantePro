@@ -10,7 +10,7 @@ using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
 using RestaurantePro.Application.Proveedores.Proveedores.DTOs;
 using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
 using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
-// using RestaurantePro.Application.Inventario.MovimientosInventario.DTOs; // Eliminado para evitar ambigüedad
+using RestaurantePro.Application.Inventario.MovimientosInventario.DTOs;
 
 namespace RestaurantePro.Api.IntegrationTests.Controllers.Inventario;
 
