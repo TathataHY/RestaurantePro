@@ -413,25 +413,3 @@ public class NotificacionesControllerTests : ApiIntegrationTestBase, IDisposable
         base.Dispose();
     }
 }
-
-// DTOs para las pruebas
-public class NotificacionDto
-{
-    public Guid Id { get; set; }
-    public string Titulo { get; set; } = string.Empty;
-    public string Mensaje { get; set; } = string.Empty;
-    public string Tipo { get; set; } = string.Empty;
-    public DateTime FechaCreacion { get; set; }
-    public DateTime? FechaLectura { get; set; }
-    public bool EstaLeida { get; set; }
-    public Guid? EntidadRelacionadaId { get; set; }
-}
-
-public class CrearNotificacionCommand
-{
-    public string Titulo { get; set; } = string.Empty;
-    public string Mensaje { get; set; } = string.Empty;
-    public string Tipo { get; set; } = "Informativa";
-    public Guid DestinatarioId { get; set; }
-    public Guid? EntidadRelacionadaId { get; set; }
-}

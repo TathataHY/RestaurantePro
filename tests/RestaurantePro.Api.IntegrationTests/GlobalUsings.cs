@@ -32,6 +32,8 @@ global using RestaurantePro.Domain.Comercial.Promociones.Enums;
 global using RestaurantePro.Application.Common.DTOs;
 global using RestaurantePro.Application.Core.Productos.DTOs;
 global using RestaurantePro.Application.Core.Usuarios.DTOs;
+global using RestaurantePro.Application.Core.Notificaciones.DTOs;
+global using RestaurantePro.Application.Core.Notificaciones.Commands.CrearNotificacion;
 global using RestaurantePro.Application.Comercial.Clientes.DTOs;
 global using RestaurantePro.Application.Operaciones.Comandas.DTOs;
 global using RestaurantePro.Application.Operaciones.Mesas.DTOs;
