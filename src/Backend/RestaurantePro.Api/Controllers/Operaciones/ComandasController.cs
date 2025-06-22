@@ -1,4 +1,23 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using RestaurantePro.Api.Common;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.ActualizarComanda;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.EliminarComanda;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.CambiarEstadoComanda;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.AgregarProducto;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.RemoverProducto;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.AplicarDescuento;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.CerrarComanda;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.DividirComanda;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.UnificarComandas;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.ProcesarPedidoCompleto;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
+using RestaurantePro.Application.Operaciones.Commands.FinalizarServicioCompleto;
+using RestaurantePro.Application.Operaciones.Comandas.Queries.ObtenerComandasPaginadas;
+using RestaurantePro.Application.Operaciones.Comandas.Queries.ObtenerComandaPorId;
+using RestaurantePro.Application.Operaciones.Comandas.DTOs;
+using RestaurantePro.Application.Common.DTOs;
 
 namespace RestaurantePro.Api.Controllers.Operaciones;
 
@@ -12,299 +31,481 @@ namespace RestaurantePro.Api.Controllers.Operaciones;
 [Authorize]
 public class ComandasController : ControllerBase
 {
+    private readonly IMediator _mediator;
     private readonly ILogger<ComandasController> _logger;
 
-    public ComandasController(ILogger<ComandasController> logger)
+    public ComandasController(IMediator mediator, ILogger<ComandasController> logger)
     {
-        _logger = logger;
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
     /// Obtiene todas las comandas con filtros opcionales
     /// </summary>
-    /// <param name="estado">Filtrar por estado de comanda</param>
-    /// <param name="mesaId">Filtrar por mesa específica</param>
-    /// <param name="meseroId">Filtrar por mesero específico</param>
-    /// <param name="clienteId">Filtrar por cliente específico</param>
-    /// <param name="soloActivas">Mostrar solo comandas activas</param>
-    /// <param name="fechaDesde">Fecha desde para filtrar comandas</param>
-    /// <param name="fechaHasta">Fecha hasta para filtrar comandas</param>
-    /// <returns>Lista de comandas según filtros aplicados</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(ApiResponse<PaginatedList<object>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PaginatedList<ComandaDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<PaginatedList<object>>>> GetComandas(
-        [FromQuery] string? estado = null,
-        [FromQuery] Guid? mesaId = null,
-        [FromQuery] Guid? meseroId = null,
-        [FromQuery] Guid? clienteId = null,
-        [FromQuery] bool soloActivas = false,
-        [FromQuery] DateTime? fechaDesde = null,
-        [FromQuery] DateTime? fechaHasta = null)
+    public async Task<ActionResult<ApiResponse<PaginatedList<ComandaDto>>>> GetComandas(
+        [FromQuery] ObtenerComandasPaginadasQuery query)
     {
-        _logger.LogInformation("🍽️ GET /api/operaciones/comandas - Estado: {Estado}, Mesa: {MesaId}, Mesero: {MeseroId}, Cliente: {ClienteId}, SoloActivas: {SoloActivas}", 
-            estado, mesaId, meseroId, clienteId, soloActivas);
+        _logger.LogInformation("🍽️ GET /api/operaciones/comandas - Estado: {Estado}, Mesa: {MesaId}, Mesero: {MeseroId}", 
+            query.Estado, query.MesaId, query.MeseroId);
 
-        // Simular respuesta para desarrollo
-        var response = ApiResponse<PaginatedList<object>>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" },
+                "Error al obtener comandas",
+                StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        var response = ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(
+            result.Value, "Comandas obtenidas exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
     /// Obtiene una comanda específica por ID
     /// </summary>
-    /// <param name="id">ID de la comanda</param>
-    /// <param name="incluirItems">Incluir items de la comanda</param>
-    /// <returns>Detalles completos de la comanda</returns>
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ComandaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> GetComanda(Guid id, [FromQuery] bool incluirItems = true)
+    public async Task<ActionResult<ApiResponse<ComandaDto>>> GetComanda(Guid id, [FromQuery] bool incluirItems = true)
     {
         _logger.LogInformation("🔍 GET /api/operaciones/comandas/{Id} - IncluirItems: {IncluirItems}", id, incluirItems);
 
-        // Simular respuesta para desarrollo
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        var query = ObtenerComandaPorIdQuery.Create(id, incluirItems);
+        var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" },
+                "Comanda no encontrada",
+                StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<ComandaDto>.SuccessResponse(
+            result.Value, "Comanda obtenida exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
     /// Crea una nueva comanda
     /// </summary>
-    /// <param name="command">Datos de la comanda a crear</param>
-    /// <returns>Comanda creada con número asignado</returns>
     [HttpPost]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<ComandaDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> PostComanda([FromBody] object command)
+    public async Task<ActionResult<ApiResponse<ComandaDto>>> PostComanda([FromBody] CrearComandaCommand command)
     {
-        _logger.LogInformation("➕ POST /api/operaciones/comandas");
+        _logger.LogInformation("➕ POST /api/operaciones/comandas - Cliente: {ClienteId}, Mesa: {MesaId}", 
+            command.ClienteId, command.MesaId);
 
-        // Simular respuesta para desarrollo
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        var result = await _mediator.Send(command);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        if (result.Succeeded)
+        {
+            var response = ApiResponse<ComandaDto>.SuccessResponse(result.Value, "Comanda creada exitosamente");
+            response.StatusCode = StatusCodes.Status201Created;
+            
+            return CreatedAtAction(
+                nameof(GetComanda),
+                new { id = result.Value.Id },
+                response);
+        }
+
+        return BadRequest(ApiResponse<object>.ErrorResponse(
+            new List<string> { result.Error ?? "Error desconocido" },
+            "Error al crear comanda",
+            StatusCodes.Status400BadRequest));
     }
 
     /// <summary>
     /// Actualiza una comanda existente
     /// </summary>
-    /// <param name="id">ID de la comanda</param>
-    /// <param name="command">Datos actualizados de la comanda</param>
-    /// <returns>Comanda actualizada</returns>
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ComandaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> PutComanda(Guid id, [FromBody] object command)
+    public async Task<ActionResult<ApiResponse<ComandaDto>>> PutComanda(Guid id, [FromBody] ActualizarComandaCommand command)
     {
         _logger.LogInformation("✏️ PUT /api/operaciones/comandas/{Id}", id);
 
-        // Simular respuesta para desarrollo
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        // Crear una nueva instancia del comando con el ID de la URL
+        var commandWithId = command.WithId(id);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        var result = await _mediator.Send(commandWithId);
+
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Error?.Contains("no encontrada") == true 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" }, 
+                "Error al actualizar comanda", 
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<ComandaDto>.SuccessResponse(
+            result.Value, "Comanda actualizada exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
-    /// Confirma una comanda y la envía a cocina
+    /// Cambia el estado de una comanda
     /// </summary>
-    /// <param name="id">ID de la comanda</param>
-    /// <param name="command">Datos de confirmación</param>
-    /// <returns>Comanda confirmada</returns>
-    [HttpPatch("{id:guid}/confirmar")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [HttpPatch("{id:guid}/estado")]
+    [ProducesResponseType(typeof(ApiResponse<ComandaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> ConfirmarComanda(Guid id, [FromBody] object command)
+    public async Task<ActionResult<ApiResponse<ComandaDto>>> CambiarEstadoComanda(Guid id, [FromBody] CambiarEstadoComandaCommand command)
     {
-        _logger.LogInformation("✅ PATCH /api/operaciones/comandas/{Id}/confirmar", id);
+        _logger.LogInformation("🔄 PATCH /api/operaciones/comandas/{Id}/estado - NuevoEstado: {NuevoEstado}", id, command.NuevoEstado);
 
-        // Simular respuesta para desarrollo
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        var commandWithId = command.WithComandaId(id);
+        var result = await _mediator.Send(commandWithId);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Error?.Contains("no encontrada") == true 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" }, 
+                "Error al cambiar estado de comanda", 
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<ComandaDto>.SuccessResponse(
+            result.Value, "Estado de comanda cambiado exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
-    /// Cancela una comanda
+    /// Agrega un producto a una comanda
     /// </summary>
-    /// <param name="id">ID de la comanda</param>
-    /// <param name="command">Datos de cancelación</param>
-    /// <returns>Comanda cancelada</returns>
-    [HttpPatch("{id:guid}/cancelar")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> CancelarComanda(Guid id, [FromBody] object command)
-    {
-        _logger.LogInformation("❌ PATCH /api/operaciones/comandas/{Id}/cancelar", id);
-
-        // Simular respuesta para desarrollo
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
-    }
-
-    /// <summary>
-    /// Marca una comanda como entregada
-    /// </summary>
-    /// <param name="id">ID de la comanda</param>
-    /// <param name="command">Datos de entrega</param>
-    /// <returns>Comanda marcada como entregada</returns>
-    [HttpPatch("{id:guid}/entregar")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> EntregarComanda(Guid id, [FromBody] object command)
-    {
-        _logger.LogInformation("🚚 PATCH /api/operaciones/comandas/{Id}/entregar", id);
-
-        // Simular respuesta para desarrollo
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
-    }
-
-    /// <summary>
-    /// Obtiene comandas por mesa específica
-    /// </summary>
-    /// <param name="mesaId">ID de la mesa</param>
-    /// <param name="soloActivas">Mostrar solo comandas activas</param>
-    /// <returns>Lista de comandas de la mesa</returns>
-    [HttpGet("mesa/{mesaId:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<List<object>>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<List<object>>>> GetComandasPorMesa(Guid mesaId, [FromQuery] bool soloActivas = true)
-    {
-        _logger.LogInformation("🪑 GET /api/operaciones/comandas/mesa/{MesaId} - SoloActivas: {SoloActivas}", mesaId, soloActivas);
-
-        // Simular respuesta para desarrollo
-        var response = ApiResponse<List<object>>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
-    }
-
-    /// <summary>
-    /// Obtiene comandas por mesero específico
-    /// </summary>
-    /// <param name="meseroId">ID del mesero</param>
-    /// <param name="fechaDesde">Fecha desde para filtrar</param>
-    /// <param name="fechaHasta">Fecha hasta para filtrar</param>
-    /// <returns>Lista de comandas del mesero</returns>
-    [HttpGet("mesero/{meseroId:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<List<object>>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<List<object>>>> GetComandasPorMesero(
-        Guid meseroId, 
-        [FromQuery] DateTime? fechaDesde = null, 
-        [FromQuery] DateTime? fechaHasta = null)
-    {
-        _logger.LogInformation("👨‍💼 GET /api/operaciones/comandas/mesero/{MeseroId} - Desde: {FechaDesde}, Hasta: {FechaHasta}", 
-            meseroId, fechaDesde, fechaHasta);
-
-        // Simular respuesta para desarrollo
-        var response = ApiResponse<List<object>>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
-    }
-
-    /// <summary>
-    /// Obtiene comandas activas para el dashboard de cocina
-    /// </summary>
-    /// <param name="soloEnProceso">Mostrar solo comandas en proceso</param>
-    /// <param name="ordenarPorPrioridad">Ordenar por prioridad/tiempo</param>
-    /// <returns>Lista de comandas activas para cocina</returns>
-    [HttpGet("activas")]
-    [ProducesResponseType(typeof(ApiResponse<List<object>>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ApiResponse<List<object>>>> GetComandasActivas(
-        [FromQuery] bool soloEnProceso = false,
-        [FromQuery] bool ordenarPorPrioridad = true)
-    {
-        _logger.LogInformation("🔥 GET /api/operaciones/comandas/activas - SoloEnProceso: {SoloEnProceso}, OrdenarPorPrioridad: {OrdenarPorPrioridad}", 
-            soloEnProceso, ordenarPorPrioridad);
-
-        // Simular respuesta para desarrollo
-        var response = ApiResponse<List<object>>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
-    }
-
-    /// <summary>
-    /// Agregar producto a una comanda existente
-    /// </summary>
-    /// <param name="id">ID de la comanda</param>
-    /// <param name="command">Datos del producto a agregar</param>
-    /// <returns>Comanda actualizada con el nuevo producto</returns>
     [HttpPost("{id:guid}/productos")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ComandaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> AgregarProducto(Guid id, [FromBody] object command)
+    public async Task<ActionResult<ApiResponse<ComandaDto>>> AgregarProducto(Guid id, [FromBody] AgregarProductoCommand command)
     {
-        _logger.LogInformation("🍕 POST /api/operaciones/comandas/{Id}/productos", id);
+        _logger.LogInformation("➕ POST /api/operaciones/comandas/{Id}/productos - Producto: {ProductoId}, Cantidad: {Cantidad}", 
+            id, command.ProductoId, command.Cantidad);
 
-        // Simular respuesta para desarrollo
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        var commandWithId = command.WithComandaId(id);
+        var result = await _mediator.Send(commandWithId);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Error?.Contains("no encontrada") == true 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" }, 
+                "Error al agregar producto", 
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<ComandaDto>.SuccessResponse(
+            result.Value, "Producto agregado exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
-    /// Remover producto de una comanda
+    /// Remueve un producto de una comanda
     /// </summary>
-    /// <param name="id">ID de la comanda</param>
-    /// <param name="itemId">ID del item a remover</param>
-    /// <returns>Comanda actualizada sin el producto</returns>
     [HttpDelete("{id:guid}/productos/{itemId:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ComandaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> RemoverProducto(Guid id, Guid itemId)
+    public async Task<ActionResult<ApiResponse<ComandaDto>>> RemoverProducto(Guid id, Guid itemId)
     {
-        _logger.LogInformation("🗑️ DELETE /api/operaciones/comandas/{Id}/productos/{ItemId}", id, itemId);
+        _logger.LogInformation("➖ DELETE /api/operaciones/comandas/{Id}/productos/{ItemId}", id, itemId);
 
-        // Simular respuesta para desarrollo
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        var command = new RemoverProductoCommand { ComandaId = id, ItemId = itemId };
+        var result = await _mediator.Send(command);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Error?.Contains("no encontrada") == true 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" }, 
+                "Error al remover producto", 
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<ComandaDto>.SuccessResponse(
+            result.Value, "Producto removido exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Aplica un descuento a una comanda
+    /// </summary>
+    [HttpPost("{id:guid}/descuento")]
+    [ProducesResponseType(typeof(ApiResponse<ComandaDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<ComandaDto>>> AplicarDescuento(Guid id, [FromBody] AplicarDescuentoCommand command)
+    {
+        _logger.LogInformation("💰 POST /api/operaciones/comandas/{Id}/descuento - Porcentaje: {PorcentajeDescuento}%", 
+            id, command.PorcentajeDescuento);
+
+        var commandWithId = command.WithComandaId(id);
+        var result = await _mediator.Send(commandWithId);
+
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Error?.Contains("no encontrada") == true 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" }, 
+                "Error al aplicar descuento", 
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<ComandaDto>.SuccessResponse(
+            result.Value, "Descuento aplicado exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Cierra una comanda y genera la factura
+    /// </summary>
+    [HttpPost("{id:guid}/cerrar")]
+    [ProducesResponseType(typeof(ApiResponse<ComandaDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<ComandaDto>>> CerrarComanda(Guid id, [FromBody] CerrarComandaCommand command)
+    {
+        _logger.LogInformation("🏁 POST /api/operaciones/comandas/{Id}/cerrar", id);
+
+        var commandWithId = command.WithComandaId(id);
+        var result = await _mediator.Send(commandWithId);
+
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Error?.Contains("no encontrada") == true 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" }, 
+                "Error al cerrar comanda", 
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<ComandaDto>.SuccessResponse(
+            result.Value, "Comanda cerrada exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Divide una comanda en múltiples comandas separadas
+    /// </summary>
+    [HttpPost("{id:guid}/dividir")]
+    [ProducesResponseType(typeof(ApiResponse<DividirComandaDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<DividirComandaDto>>> DividirComanda(Guid id, [FromBody] DividirComandaCommand command)
+    {
+        _logger.LogInformation("✂️ POST /api/operaciones/comandas/{Id}/dividir - Tipo: {TipoDivision}, Motivo: {Motivo}", 
+            id, command.TipoDivision, command.MotivoDivision);
+
+        // Asignar el ID de la comanda original desde la URL
+        command.ComandaOriginalId = id;
+        
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Error?.Contains("no encontrada") == true 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" }, 
+                "Error al dividir comanda", 
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<DividirComandaDto>.SuccessResponse(
+            result.Value, "Comanda dividida exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Unifica múltiples comandas en una sola comanda
+    /// </summary>
+    [HttpPost("unificar")]
+    [ProducesResponseType(typeof(ApiResponse<UnificarComandasDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<UnificarComandasDto>>> UnificarComandas([FromBody] UnificarComandasCommand command)
+    {
+        _logger.LogInformation("🔗 POST /api/operaciones/comandas/unificar - Comandas: {ComandasCount}, Mesa: {MesaId}, Motivo: {Motivo}", 
+            command.ComandasIds.Count, command.MesaDestinoId, command.MotivoUnificacion);
+        
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" }, 
+                "Error al unificar comandas", 
+                StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        var response = ApiResponse<UnificarComandasDto>.SuccessResponse(
+            result.Value, "Comandas unificadas exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Procesa un pedido completo que cruza múltiples bounded contexts
+    /// Orquesta: Comanda + Inventario + Promociones + Facturación + Fidelización
+    /// </summary>
+    [HttpPost("procesar-pedido-completo")]
+    [ProducesResponseType(typeof(ApiResponse<PedidoCompletoResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<PedidoCompletoResult>>> ProcesarPedidoCompleto([FromBody] ProcesarPedidoCompletoCommand command)
+    {
+        _logger.LogInformation("🚀 POST /api/operaciones/comandas/procesar-pedido-completo - Items: {ItemsCount}, Cliente: {ClienteId}, Mesa: {MesaId}", 
+            command.Items.Count, command.ClienteId, command.MesaId);
+        
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" }, 
+                "Error al procesar pedido completo", 
+                StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        var response = ApiResponse<PedidoCompletoResult>.SuccessResponse(
+            result.Value, "Pedido completo procesado exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Finaliza una comanda específica
+    /// </summary>
+    [HttpPost("{id:guid}/finalizar")]
+    [ProducesResponseType(typeof(ApiResponse<ComandaDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<ComandaDto>>> FinalizarComanda(Guid id, [FromBody] FinalizarComandaCommand command)
+    {
+        _logger.LogInformation("🍽️ POST /api/operaciones/comandas/{Id}/finalizar - Usuario: {UsuarioId}", 
+            id, command.UsuarioId);
+
+        // Asignar el ID de la comanda desde la URL
+        command = command with { ComandaId = id };
+        
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Error?.Contains("no encontrada") == true 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" }, 
+                "Error al finalizar comanda", 
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<ComandaDto>.SuccessResponse(
+            result.Value, "Comanda finalizada exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Finaliza el servicio completo implementando patrón Saga
+    /// Orquesta: Comanda + Facturación + Fidelización + Mesa + Notificaciones + Analytics
+    /// </summary>
+    [HttpPost("{id:guid}/finalizar-servicio-completo")]
+    [ProducesResponseType(typeof(ApiResponse<ServicioCompletoResult>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<ServicioCompletoResult>>> FinalizarServicioCompleto(Guid id, [FromBody] FinalizarServicioCompletoCommand command)
+    {
+        _logger.LogInformation("🚀 POST /api/operaciones/comandas/{Id}/finalizar-servicio-completo - Tipo: {TipoFinalizacion}", 
+            id, command.TipoFinalizacion);
+
+        // Asignar el ID de la comanda desde la URL
+        command = command with { ComandaId = id };
+        
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Error?.Contains("no encontrada") == true 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" }, 
+                "Error al finalizar servicio completo", 
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<ServicioCompletoResult>.SuccessResponse(
+            result.Value, "Servicio completo finalizado exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Elimina una comanda
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<bool>>> EliminarComanda(Guid id)
+    {
+        _logger.LogInformation("🗑️ DELETE /api/operaciones/comandas/{Id}", id);
+
+        var command = EliminarComandaCommand.Create(id);
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" },
+                "Error al eliminar comanda",
+                StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<bool>.SuccessResponse(
+            result.Value, "Comanda eliminada exitosamente");
+        return Ok(response);
     }
 } 

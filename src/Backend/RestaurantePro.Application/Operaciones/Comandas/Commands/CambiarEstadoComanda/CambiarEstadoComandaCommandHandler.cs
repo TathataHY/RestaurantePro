@@ -1,0 +1,82 @@
+using MediatR;
+using RestaurantePro.Application.Operaciones.Comandas.DTOs;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+
+namespace RestaurantePro.Application.Operaciones.Comandas.Commands.CambiarEstadoComanda;
+
+public class CambiarEstadoComandaCommandHandler : IRequestHandler<CambiarEstadoComandaCommand, Result<ComandaDto>>
+{
+    private readonly IComandaRepository _comandaRepository;
+    private readonly IMapper _mapper;
+    private readonly ILogger<CambiarEstadoComandaCommandHandler> _logger;
+
+    public CambiarEstadoComandaCommandHandler(
+        IComandaRepository comandaRepository,
+        IMapper mapper,
+        ILogger<CambiarEstadoComandaCommandHandler> logger)
+    {
+        _comandaRepository = comandaRepository;
+        _mapper = mapper;
+        _logger = logger;
+    }
+
+    public async Task<Result<ComandaDto>> Handle(CambiarEstadoComandaCommand request, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("🔄 Cambiando estado de comanda {ComandaId} a {NuevoEstado}", 
+            request.ComandaId, request.NuevoEstado);
+
+        // 1. Buscar la comanda
+        var comanda = await _comandaRepository.ObtenerPorIdAsync(request.ComandaId, true, cancellationToken);
+        if (comanda == null)
+            return Result.Failure<ComandaDto>($"No se encontró la comanda con ID {request.ComandaId}");
+
+        // 2. Validar que no esté cancelada o finalizada
+        if (comanda.Estado == EstadoComanda.Cancelada)
+            return Result.Failure<ComandaDto>("No se puede cambiar el estado de una comanda cancelada");
+        if (comanda.Estado == EstadoComanda.Finalizada)
+            return Result.Failure<ComandaDto>("No se puede cambiar el estado de una comanda finalizada");
+
+        // 3. Cambiar estado según el nuevo estado solicitado
+        bool cambioExitoso = false;
+        try
+        {
+            switch (request.NuevoEstado.ToLower())
+            {
+                case "enproceso":
+                    cambioExitoso = comanda.MarcarEnProceso();
+                    break;
+                case "lista":
+                    cambioExitoso = comanda.MarcarLista();
+                    break;
+                case "entregada":
+                    cambioExitoso = comanda.MarcarEntregada();
+                    break;
+                case "finalizada":
+                    cambioExitoso = comanda.MarcarPagada();
+                    break;
+                default:
+                    return Result.Failure<ComandaDto>($"Estado '{request.NuevoEstado}' no válido");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al cambiar estado de comanda");
+            return Result.Failure<ComandaDto>($"Error al cambiar estado: {ex.Message}");
+        }
+
+        if (!cambioExitoso)
+            return Result.Failure<ComandaDto>($"No se puede cambiar de '{comanda.Estado}' a '{request.NuevoEstado}'");
+
+        // 4. Guardar cambios
+        await _comandaRepository.ActualizarAsync(comanda, cancellationToken);
+        await _comandaRepository.GuardarCambiosAsync(cancellationToken);
+
+        // 5. Mapear a DTO y retornar
+        var dto = _mapper.Map<ComandaDto>(comanda);
+        return Result.Success(dto);
+    }
+} 

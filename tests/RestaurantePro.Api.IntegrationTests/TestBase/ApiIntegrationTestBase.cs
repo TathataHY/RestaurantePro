@@ -505,6 +505,54 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     }
 
     /// <summary>
+    /// Crea un detalle de comanda de prueba en la base de datos
+    /// </summary>
+    protected async Task<ItemComanda> CrearDetalleComandaPrueba(
+        Guid comandaId,
+        Guid productoId,
+        int cantidad = 1,
+        string observaciones = "Detalle de prueba")
+    {
+        // Verificar que la comanda existe
+        var comanda = await DbContext.Comandas.FindAsync(comandaId);
+        if (comanda == null)
+        {
+            throw new InvalidOperationException($"La comanda con ID {comandaId} no existe en la base de datos");
+        }
+
+        // Verificar que el producto existe
+        var producto = await DbContext.Productos.FindAsync(productoId);
+        if (producto == null)
+        {
+            throw new InvalidOperationException($"El producto con ID {productoId} no existe en la base de datos");
+        }
+
+        // Verificar que el producto tiene nombre y precio válidos
+        if (string.IsNullOrEmpty(producto.Nombre))
+        {
+            throw new InvalidOperationException($"El producto con ID {productoId} no tiene un nombre válido");
+        }
+
+        if (producto.Precio == null)
+        {
+            throw new InvalidOperationException($"El producto con ID {productoId} no tiene un precio válido");
+        }
+
+        var detalle = ItemComanda.Crear(
+            comandaId,
+            productoId,
+            producto.Nombre,
+            cantidad,
+            producto.Precio.Valor,
+            observaciones
+        );
+
+        DbContext.ItemsComanda.Add(detalle);
+        await DbContext.SaveChangesAsync();
+        return detalle;
+    }
+
+    /// <summary>
     /// Crea un proveedor de prueba en la base de datos
     /// </summary>
     protected async Task<Proveedor> CrearProveedorPrueba(string nombre = "Proveedor Test")

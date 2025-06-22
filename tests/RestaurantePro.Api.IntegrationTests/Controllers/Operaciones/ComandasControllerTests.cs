@@ -4,17 +4,34 @@ using RestaurantePro.Api.IntegrationTests.TestBase.TestDataBuilders.Operaciones;
 using System.Net;
 using System.Linq;
 using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
 using RestaurantePro.Application.Operaciones.Comandas.DTOs;
 using RestaurantePro.Domain.Operaciones.Comandas.Entities;
 using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Common.DTOs;
+using RestaurantePro.Application.Operaciones.Comandas.Queries.ObtenerComandasPaginadas;
+using RestaurantePro.Application.Operaciones.Comandas.Queries.ObtenerComandaPorId;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.ActualizarComanda;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.EliminarComanda;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.CambiarEstadoComanda;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.AgregarProducto;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.RemoverProducto;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.AplicarDescuento;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.CerrarComanda;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.DividirComanda;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.UnificarComandas;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.ProcesarPedidoCompleto;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
+using RestaurantePro.Application.Operaciones.Commands.FinalizarServicioCompleto;
 
 namespace RestaurantePro.Api.IntegrationTests.Controllers.Operaciones;
 
 /// <summary>
 /// Tests de integración para ComandasController
 /// Valida todos los endpoints REST del controlador de comandas del restaurante
+/// Tests COMPLETOS con interacción real de base de datos
 /// </summary>
 [Collection("Sequential")]
 public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
@@ -32,21 +49,30 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: GetComandas_SinComandasEnBD_DebeRetornarListaVacia");
         
+        // Limpiar BD antes del test
+        await LimpiarTablaComandas();
+        
         // Act
         var response = await HttpClient.GetAsync("/api/operaciones/comandas");
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, 
-            HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-            Logger.LogInformation("✅ Test completado: GetComandas_SinComandasEnBD_DebeRetornarListaVacia");
-        }
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedList<ComandaDto>>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data.Items.Should().BeEmpty();
+        apiResponse.Data.TotalCount.Should().Be(0);
+        
+        // Verificar que realmente no hay comandas en BD
+        var comandasEnBD = await DbContext.Comandas.ToListAsync();
+        comandasEnBD.Should().BeEmpty();
+        
+        Logger.LogInformation("✅ Test completado: GetComandas_SinComandasEnBD_DebeRetornarListaVacia");
     }
 
     [Fact]
@@ -54,6 +80,9 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
     {
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: GetComandas_ConComandasEnBD_DebeRetornarComandas");
+        
+        // Limpiar BD antes del test
+        await LimpiarTablaComandas();
         
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
@@ -64,23 +93,31 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Act
         var response = await HttpClient.GetAsync("/api/operaciones/comandas");
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, 
-            HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-            
-            // Verificar que los datos coinciden con la BD
-            var comandasEnBD = await DbContext.Comandas.ToListAsync();
-            comandasEnBD.Should().HaveCount(2);
-            comandasEnBD.Should().Contain(c => c.Id == comanda1.Id);
-            comandasEnBD.Should().Contain(c => c.Id == comanda2.Id);
-        }
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedList<ComandaDto>>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data.Items.Should().HaveCount(2);
+        apiResponse.Data.TotalCount.Should().Be(2);
+        
+        // Verificar que los datos coinciden con la BD
+        var comandasEnBD = await DbContext.Comandas.ToListAsync();
+        comandasEnBD.Should().HaveCount(2);
+        comandasEnBD.Should().Contain(c => c.Id == comanda1.Id);
+        comandasEnBD.Should().Contain(c => c.Id == comanda2.Id);
+        
+        // Verificar que los datos de la respuesta coinciden con la BD
+        var comanda1Response = apiResponse.Data.Items.FirstOrDefault(c => c.Id == comanda1.Id);
+        comanda1Response.Should().NotBeNull();
+        comanda1Response!.ClienteId.Should().Be(cliente.Id);
+        comanda1Response.MesaId.Should().Be(mesa.Id);
+        comanda1Response.UsuarioId.Should().Be(mesero.Id);
         
         Logger.LogInformation("✅ Test completado: GetComandas_ConComandasEnBD_DebeRetornarComandas");
     }
@@ -91,43 +128,60 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: PostComanda_ConDatosValidos_DebeCrearComanda");
         
+        // Limpiar BD antes del test
+        await LimpiarTablaComandas();
+        
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
-        var producto = await CrearProductoPrueba("Hamburguesa", 12.50m);
+        var producto = await CrearProductoPrueba("Pizza Margherita", 15.00m);
         
         var comandaRequest = new ComandaTestDataBuilder()
             .ConMesero(mesero.Id)
             .ConCliente(cliente.Id)
             .ConMesa(mesa.Id)
-            .ConProducto(producto.Id, 2, "Sin cebolla")
             .ConObservaciones("Mesa cerca de la ventana")
+            .ConProducto(producto.Id, 2, "Sin cebolla")
             .BuildCrearComandaRequest();
 
         // Act
         var response = await HttpClient.PostAsJsonAsync("/api/operaciones/comandas", comandaRequest);
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.OK, 
-            HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
         
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-            
-            // Verificar que se creó en la BD
-            var comandasEnBD = await DbContext.Comandas.ToListAsync();
-            comandasEnBD.Should().HaveCount(1);
-            
-            var comandaCreada = comandasEnBD[0];
-            comandaCreada.MeseroId.Should().Be(mesero.Id);
-            comandaCreada.ClienteId.Should().Be(cliente.Id);
-            comandaCreada.MesaId.Should().Be(mesa.Id);
-            comandaCreada.Estado.Should().Be(EstadoComanda.Creada);
-        }
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<ComandaDto>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data.Id.Should().NotBeEmpty();
+        apiResponse.Data.ClienteId.Should().Be(cliente.Id);
+        apiResponse.Data.MesaId.Should().Be(mesa.Id);
+        apiResponse.Data.UsuarioId.Should().Be(mesero.Id);
+        apiResponse.Data.Estado.Should().Be(EstadoComanda.Creada);
+        apiResponse.Data.Observaciones.Should().Be("Mesa cerca de la ventana");
+        
+        // Verificar que se creó en la BD
+        var comandasEnBD = await DbContext.Comandas.ToListAsync();
+        comandasEnBD.Should().HaveCount(1);
+        
+        var comandaCreada = comandasEnBD[0];
+        comandaCreada.Id.Should().Be(apiResponse.Data.Id);
+        comandaCreada.MeseroId.Should().Be(mesero.Id);
+        comandaCreada.ClienteId.Should().Be(cliente.Id);
+        comandaCreada.MesaId.Should().Be(mesa.Id);
+        comandaCreada.Estado.Should().Be(EstadoComanda.Creada);
+        comandaCreada.Observaciones.Should().Be("Mesa cerca de la ventana");
+        
+        // Verificar que se crearon los detalles de la comanda
+        var detallesEnBD = await DbContext.ItemsComanda.Where(d => d.ComandaId == comandaCreada.Id).ToListAsync();
+        detallesEnBD.Should().HaveCount(1);
+        detallesEnBD[0].ProductoId.Should().Be(producto.Id);
+        detallesEnBD[0].Cantidad.Should().Be(2);
+        detallesEnBD[0].Observaciones.Should().Be("Sin cebolla");
         
         Logger.LogInformation("✅ Test completado: PostComanda_ConDatosValidos_DebeCrearComanda");
     }
@@ -146,18 +200,21 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Act
         var response = await HttpClient.PostAsJsonAsync("/api/operaciones/comandas", comandaRequest);
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.NotImplemented, 
-            HttpStatusCode.InternalServerError);
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         
-        if (response.StatusCode == HttpStatusCode.BadRequest)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var errorResponse = await response.Content.ReadFromJsonAsync<object>();
-            // Verificar que contiene errores de validación
-        }
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var errorResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+        errorResponse.Should().NotBeNull();
+        errorResponse!.Success.Should().BeFalse();
+        errorResponse.Errors.Should().NotBeEmpty();
+        errorResponse.Errors.Should().Contain(e => e.Contains("ClienteId") || e.Contains("MesaId"));
+        
+        // Verificar que no se creó nada en BD
+        var comandasEnBD = await DbContext.Comandas.ToListAsync();
+        comandasEnBD.Should().BeEmpty();
         
         Logger.LogInformation("✅ Test completado: PostComanda_ConDatosInvalidos_DebeRetornar400");
     }
@@ -168,6 +225,9 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: GetComanda_ConIdExistente_DebeRetornarComanda");
         
+        // Limpiar BD antes del test
+        await LimpiarTablaComandas();
+        
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
@@ -176,22 +236,30 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Act
         var response = await HttpClient.GetAsync($"/api/operaciones/comandas/{comanda.Id}");
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, 
-            HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError, HttpStatusCode.NotFound);
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-            
-            // Verificar que la comanda existe en la BD
-            var comandaEnBD = await DbContext.Comandas.FindAsync(comanda.Id);
-            comandaEnBD.Should().NotBeNull();
-            comandaEnBD!.Id.Should().Be(comanda.Id);
-        }
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<ComandaDto>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data.Id.Should().Be(comanda.Id);
+        apiResponse.Data.ClienteId.Should().Be(cliente.Id);
+        apiResponse.Data.MesaId.Should().Be(mesa.Id);
+        apiResponse.Data.UsuarioId.Should().Be(mesero.Id);
+        apiResponse.Data.Estado.Should().Be(EstadoComanda.Creada);
+        apiResponse.Data.Observaciones.Should().Be("Comanda específica");
+        
+        // Verificar que los datos coinciden con la BD
+        var comandaEnBD = await DbContext.Comandas.FirstOrDefaultAsync(c => c.Id == comanda.Id);
+        comandaEnBD.Should().NotBeNull();
+        comandaEnBD!.Id.Should().Be(apiResponse.Data.Id);
+        comandaEnBD.MeseroId.Should().Be(mesero.Id);
+        comandaEnBD.ClienteId.Should().Be(cliente.Id);
+        comandaEnBD.MesaId.Should().Be(mesa.Id);
         
         Logger.LogInformation("✅ Test completado: GetComanda_ConIdExistente_DebeRetornarComanda");
     }
@@ -207,9 +275,16 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Act
         var response = await HttpClient.GetAsync($"/api/operaciones/comandas/{idInexistente}");
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.OK, 
-            HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var errorResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+        errorResponse.Should().NotBeNull();
+        errorResponse!.Success.Should().BeFalse();
+        errorResponse.Errors.Should().NotBeEmpty();
         
         Logger.LogInformation("✅ Test completado: GetComanda_ConIdInexistente_DebeRetornar404");
     }
@@ -220,34 +295,40 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: PutComanda_ConDatosValidos_DebeActualizarComanda");
         
+        // Limpiar BD antes del test
+        await LimpiarTablaComandas();
+        
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda original");
         
-        var actualizarRequest = new ComandaTestDataBuilder()
-            .ConObservaciones("Comanda actualizada")
-            .ConEstado(EstadoComanda.EnProceso)
-            .BuildActualizarComandaRequest();
+        var actualizarRequest = new ActualizarComandaCommand
+        {
+            Id = comanda.Id,
+            Observaciones = "Comanda actualizada con nuevas observaciones"
+        };
 
         // Act
         var response = await HttpClient.PutAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}", actualizarRequest);
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, 
-            HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError, HttpStatusCode.NotFound);
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-            
-            // Verificar que se actualizó en la BD
-            var comandaActualizada = await DbContext.Comandas.FindAsync(comanda.Id);
-            comandaActualizada.Should().NotBeNull();
-        }
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<ComandaDto>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data.Id.Should().Be(comanda.Id);
+        apiResponse.Data.Observaciones.Should().Be("Comanda actualizada con nuevas observaciones");
+        
+        // Verificar que se actualizó en la BD
+        var comandaActualizada = await DbContext.Comandas.FirstOrDefaultAsync(c => c.Id == comanda.Id);
+        comandaActualizada.Should().NotBeNull();
+        comandaActualizada!.Observaciones.Should().Be("Comanda actualizada con nuevas observaciones");
         
         Logger.LogInformation("✅ Test completado: PutComanda_ConDatosValidos_DebeActualizarComanda");
     }
@@ -258,33 +339,40 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: CambiarEstadoComanda_ConEstadoValido_DebeActualizarEstado");
         
+        // Limpiar BD antes del test
+        await LimpiarTablaComandas();
+        
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para cambiar estado");
         
-        var estadoRequest = new ComandaTestDataBuilder()
-            .ConEstado(EstadoComanda.EnProceso)
-            .BuildCambiarEstadoRequest("EnProceso");
+        var cambiarEstadoRequest = new CambiarEstadoComandaCommand
+        {
+            ComandaId = comanda.Id,
+            NuevoEstado = "EnProceso"
+        };
 
         // Act
-        var response = await HttpClient.PutAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", estadoRequest);
+        var response = await HttpClient.PutAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", cambiarEstadoRequest);
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, 
-            HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError, HttpStatusCode.NotFound);
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-            
-            // Verificar que el estado se actualizó en la BD
-            var comandaActualizada = await DbContext.Comandas.FindAsync(comanda.Id);
-            comandaActualizada.Should().NotBeNull();
-        }
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<ComandaDto>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data.Id.Should().Be(comanda.Id);
+        apiResponse.Data.Estado.Should().Be(EstadoComanda.EnProceso);
+        
+        // Verificar que se actualizó en la BD
+        var comandaActualizada = await DbContext.Comandas.FirstOrDefaultAsync(c => c.Id == comanda.Id);
+        comandaActualizada.Should().NotBeNull();
+        comandaActualizada!.Estado.Should().Be(EstadoComanda.EnProceso);
         
         Logger.LogInformation("✅ Test completado: CambiarEstadoComanda_ConEstadoValido_DebeActualizarEstado");
     }
@@ -295,29 +383,48 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: AgregarProducto_ConProductoValido_DebeAgregarProducto");
         
+        // Limpiar BD antes del test
+        await LimpiarTablaComandas();
+        
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para agregar producto");
-        var producto = await CrearProductoPrueba("Pizza Margherita", 18.00m);
+        var producto = await CrearProductoPrueba("Hamburguesa", 12.50m);
         
-        var productoRequest = new ComandaTestDataBuilder()
-            .BuildAgregarProductoRequest(producto.Id, 2);
+        var agregarProductoRequest = new AgregarProductoCommand
+        {
+            ComandaId = comanda.Id,
+            ProductoId = producto.Id,
+            Cantidad = 2,
+            Observaciones = "Sin tomate"
+        };
 
         // Act
-        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/productos", productoRequest);
+        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/productos", agregarProductoRequest);
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Created, 
-            HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError, HttpStatusCode.NotFound);
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-        }
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<ComandaDto>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data.Id.Should().Be(comanda.Id);
+        apiResponse.Data.Items.Should().HaveCount(1);
+        apiResponse.Data.Items[0].ProductoId.Should().Be(producto.Id);
+        apiResponse.Data.Items[0].Cantidad.Should().Be(2);
+        apiResponse.Data.Items[0].Observaciones.Should().Be("Sin tomate");
+        
+        // Verificar que se agregó en la BD
+        var detallesEnBD = await DbContext.ItemsComanda.Where(d => d.ComandaId == comanda.Id).ToListAsync();
+        detallesEnBD.Should().HaveCount(1);
+        detallesEnBD[0].ProductoId.Should().Be(producto.Id);
+        detallesEnBD[0].Cantidad.Should().Be(2);
+        detallesEnBD[0].Observaciones.Should().Be("Sin tomate");
         
         Logger.LogInformation("✅ Test completado: AgregarProducto_ConProductoValido_DebeAgregarProducto");
     }
@@ -328,18 +435,37 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: RemoverProducto_ConDetalleExistente_DebeRemoverProducto");
         
+        // Limpiar BD antes del test
+        await LimpiarTablaComandas();
+        
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para remover producto");
-        var detalleId = Guid.NewGuid(); // Esto debería venir de un detalle real
-
+        var producto = await CrearProductoPrueba("Pizza", 18.00m);
+        
+        // Agregar producto primero
+        var detalle = await CrearDetalleComandaPrueba(comanda.Id, producto.Id, 1, "Extra queso");
+        
         // Act
-        var response = await HttpClient.DeleteAsync($"/api/operaciones/comandas/{comanda.Id}/productos/{detalleId}");
+        var response = await HttpClient.DeleteAsync($"/api/operaciones/comandas/{comanda.Id}/productos/{detalle.Id}");
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NoContent, 
-            HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError, HttpStatusCode.NotFound);
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<ComandaDto>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data.Id.Should().Be(comanda.Id);
+        apiResponse.Data.Items.Should().BeEmpty();
+        
+        // Verificar que se removió de la BD
+        var detallesEnBD = await DbContext.ItemsComanda.Where(d => d.ComandaId == comanda.Id).ToListAsync();
+        detallesEnBD.Should().BeEmpty();
         
         Logger.LogInformation("✅ Test completado: RemoverProducto_ConDetalleExistente_DebeRemoverProducto");
     }
@@ -350,29 +476,43 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: AplicarDescuento_ConDescuentoValido_DebeAplicarDescuento");
         
+        // Limpiar BD antes del test
+        await LimpiarTablaComandas();
+        
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para aplicar descuento");
+        var producto = await CrearProductoPrueba("Pasta", 16.00m);
+        await CrearDetalleComandaPrueba(comanda.Id, producto.Id, 2, "Al dente");
         
-        var descuentoRequest = new ComandaTestDataBuilder()
-            .ConDescuentoFidelizacion(10.00m)
-            .BuildAplicarDescuentoRequest(10.00m);
+        var aplicarDescuentoRequest = new AplicarDescuentoCommand
+        {
+            ComandaId = comanda.Id,
+            MontoDescuento = 5.00m,
+            Motivo = "Cliente frecuente"
+        };
 
         // Act
-        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/descuento", descuentoRequest);
+        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/descuento", aplicarDescuentoRequest);
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, 
-            HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError, HttpStatusCode.NotFound);
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-        }
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<ComandaDto>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data.Id.Should().Be(comanda.Id);
+        apiResponse.Data.Descuentos.Should().Be(5.00m);
+        
+        // Verificar que se aplicó el descuento en la BD
+        var comandaActualizada = await DbContext.Comandas.FirstOrDefaultAsync(c => c.Id == comanda.Id);
+        comandaActualizada.Should().NotBeNull();
+        // Nota: La verificación del descuento en BD dependerá de cómo se implemente en la entidad
         
         Logger.LogInformation("✅ Test completado: AplicarDescuento_ConDescuentoValido_DebeAplicarDescuento");
     }
@@ -383,34 +523,101 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: CerrarComanda_ConDatosValidos_DebeCerrarComanda");
         
+        // Limpiar BD antes del test
+        await LimpiarTablaComandas();
+        
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para cerrar");
+        var producto = await CrearProductoPrueba("Ensalada", 8.50m);
+        await CrearDetalleComandaPrueba(comanda.Id, producto.Id, 1, "Sin aderezo");
         
-        var cerrarRequest = new ComandaTestDataBuilder()
-            .BuildCerrarComandaRequest();
+        var cerrarComandaRequest = new CerrarComandaCommand
+        {
+            ComandaId = comanda.Id,
+            MetodoPago = "Efectivo",
+            MontoPagado = 8.50m
+        };
 
         // Act
-        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/cerrar", cerrarRequest);
+        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/cerrar", cerrarComandaRequest);
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, 
-            HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError, HttpStatusCode.NotFound);
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-            
-            // Verificar que la comanda se cerró en la BD
-            var comandaCerrada = await DbContext.Comandas.FindAsync(comanda.Id);
-            comandaCerrada.Should().NotBeNull();
-        }
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<ComandaDto>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data.Id.Should().Be(comanda.Id);
+        apiResponse.Data.Estado.Should().Be(EstadoComanda.Finalizada);
+        
+        // Verificar que se cerró en la BD
+        var comandaCerrada = await DbContext.Comandas.FirstOrDefaultAsync(c => c.Id == comanda.Id);
+        comandaCerrada.Should().NotBeNull();
+        comandaCerrada!.Estado.Should().Be(EstadoComanda.Finalizada);
         
         Logger.LogInformation("✅ Test completado: CerrarComanda_ConDatosValidos_DebeCerrarComanda");
+    }
+
+    [Fact]
+    public async Task EliminarComanda_ConIdExistente_DebeEliminarComanda()
+    {
+        // Arrange
+        Logger.LogInformation("🧪 Iniciando test: EliminarComanda_ConIdExistente_DebeEliminarComanda");
+        
+        // Limpiar BD antes del test
+        await LimpiarTablaComandas();
+        
+        var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
+        var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
+        var mesa = await CrearMesaPrueba(1, 4);
+        var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para eliminar");
+
+        // Act
+        var response = await HttpClient.DeleteAsync($"/api/operaciones/comandas/{comanda.Id}");
+
+        // Assert - Validación estricta para tests completos
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrEmpty();
+        
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().BeTrue();
+        
+        // Verificar que se eliminó de la BD (soft delete)
+        var comandaEliminada = await DbContext.Comandas.FirstOrDefaultAsync(c => c.Id == comanda.Id);
+        comandaEliminada.Should().NotBeNull();
+        comandaEliminada!.EstaEliminado.Should().BeTrue();
+        
+        Logger.LogInformation("✅ Test completado: EliminarComanda_ConIdExistente_DebeEliminarComanda");
+    }
+
+    private async Task LimpiarTablaComandas()
+    {
+        try
+        {
+            // Limpiar items de comanda primero (por FK)
+            var itemsComanda = await DbContext.ItemsComanda.ToListAsync();
+            DbContext.ItemsComanda.RemoveRange(itemsComanda);
+            
+            // Limpiar comandas
+            var comandas = await DbContext.Comandas.ToListAsync();
+            DbContext.Comandas.RemoveRange(comandas);
+            
+            await DbContext.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning("⚠️ Error al limpiar tabla comandas: {Message}", ex.Message);
+        }
     }
 
     public new void Dispose()

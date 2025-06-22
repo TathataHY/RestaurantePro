@@ -28,37 +28,6 @@ public class ComandaCreateDto
 }
 
 /// <summary>
-/// DTO para agregar un producto a una comanda
-/// </summary>
-public class AgregarProductoDto
-{
-    /// <summary>
-    /// ID del producto a agregar
-    /// </summary>
-    public Guid ProductoId { get; set; }
-
-    /// <summary>
-    /// Cantidad del producto
-    /// </summary>
-    public int Cantidad { get; set; }
-
-    /// <summary>
-    /// Precio unitario del producto (será validado contra el precio actual)
-    /// </summary>
-    public decimal PrecioUnitario { get; set; }
-
-    /// <summary>
-    /// Observaciones específicas para este producto
-    /// </summary>
-    public string? Observaciones { get; set; }
-
-    /// <summary>
-    /// Lista de personalizaciones para el producto
-    /// </summary>
-    public List<PersonalizacionCreateDto> Personalizaciones { get; set; } = new();
-}
-
-/// <summary>
 /// DTO para crear personalizaciones en un producto
 /// </summary>
 public class PersonalizacionCreateDto

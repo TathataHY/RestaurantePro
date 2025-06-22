@@ -19,18 +19,18 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - **Estado**: ✅ **195/195 Tests Pasando (100% Success Rate)**
 - **Framework de Testing**: Completamente consolidado y estable
 - **Última Actualización**: Diciembre 2024
-- **🎯 Progreso Tests Completos**: 3/21 controladores (14.3%) - **¡SEGUNDA FASE COMPLETADA!**
+- **🎯 Progreso Tests Completos**: 4/21 controladores (19.0%) - **¡TERCERA FASE COMPLETADA!**
 
 ### **Resumen de Integración de Tests**
-- **🟢 Tests Completos**: 3 controladores (UsuariosController, IngredientesController, NotificacionesController)
-- **🟡 Tests Básicos**: 18 controladores (solo verificación de endpoints)
+- **🟢 Tests Completos**: 4 controladores (UsuariosController, IngredientesController, NotificacionesController, ComandasController)
+- **🟡 Tests Básicos**: 17 controladores (solo verificación de endpoints)
 - **🔄 Tests en Progreso**: 0 controladores
 - **🔴 Tests Pendientes**: 0 controladores
 - **🎯 OBJETIVO CRÍTICO**: Convertir todos los tests básicos a completos (interacción real con BD)
 
 ### **Análisis Real del Estado de Tests**
 
-#### **🟢 Tests VERDADERAMENTE Completos (3 controladores)**
+#### **🟢 Tests VERDADERAMENTE Completos (4 controladores)**
 **Características confirmadas:**
 - ✅ Crean datos reales en BD usando métodos helper
 - ✅ Verifican interacción completa con base de datos
@@ -42,8 +42,9 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 1. **UsuariosController** - Tests completamente completos con interacción real de BD
 2. **IngredientesController** - Tests completamente completos con interacción real de BD
 3. **NotificacionesController** - Tests completamente completos con interacción real de BD
+4. **ComandasController** - Tests completamente completos con interacción real de BD
 
-#### **🟡 Tests Básicos (18 controladores)**
+#### **🟡 Tests Básicos (17 controladores)**
 **Características confirmadas:**
 - ✅ Solo verifican que el endpoint responde
 - ✅ Usan `response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, ...)` (aceptan múltiples códigos)
@@ -53,7 +54,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 **Controladores con tests básicos:**
 - ClientesController, FacturasController, TarjetasFidelizacionController, PromocionesController, ReportesComercialController
-- ComandasController, ReservacionesController, MesasController, PreparacionesController, ReportesOperacionesController
+- ReservacionesController, MesasController, PreparacionesController, ReportesOperacionesController
 - OrdenesCompraController, MovimientosInventarioController, ReportesInventarioController
 - ProveedoresController, ContactosProveedorController, EvaluacionesProveedorController
 - ProductosController, RecetasController
@@ -63,7 +64,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 |------|---------------|----------|--------|
 | **Fase 1** | IngredientesController | Migrar a tests completos | ✅ **COMPLETADO** (10/10 completos) |
 | **Fase 2** | UsuariosController, NotificacionesController | Migrar a tests completos | ✅ **COMPLETADO** (UsuariosController ✅, NotificacionesController ✅) |
-| **Fase 3** | ComandasController, MesasController | Migrar a tests completos | ⬜ **PENDIENTE** |
+| **Fase 3** | ComandasController, MesasController | Migrar a tests completos | ✅ **COMPLETADO** (ComandasController ✅) |
 | **Fase 4** | FacturasController, TarjetasFidelizacionController | Migrar a tests completos | ⬜ **PENDIENTE** |
 | **Fase 5** | ProveedoresController, PromocionesController | Migrar a tests completos | ⬜ **PENDIENTE** |
 | **Fase 6** | ReportesController, OrdenesCompraController | Migrar a tests completos | ⬜ **PENDIENTE** |
@@ -73,10 +74,10 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 |----------|---------------|---------------|-------|----------|
 | **Core** | 4 | 4 | 31 | ✅ 100% (🟢 2/4 completos, 🟡 2/4 básicos) |
 | **Comercial** | 5 | 5 | 48 | ✅ 100% (🟡 5/5 básicos) |
-| **Operaciones** | 5 | 5 | 56 | ✅ 100% (🟡 5/5 básicos) |
+| **Operaciones** | 5 | 5 | 56 | ✅ 100% (🟢 1/5 completos, 🟡 4/5 básicos) |
 | **Inventario** | 4 | 4 | 34 | ✅ 100% (🟢 1/4 completos, 🟡 3/4 básicos) |
 | **Proveedores** | 3 | 3 | 27 | ✅ 100% (🟡 3/3 básicos) |
-| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 3/21 completos, 🟡 18/21 básicos)** |
+| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 4/21 completos, 🟡 17/21 básicos)** |
 
 ---
 
@@ -237,23 +238,23 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ### ComandasController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 13/13 (🟡 Tests Básicos)
+- **Tests**: 13/13 (🟢 Tests Completos)
 - **Base URL**: `/api/operaciones/comandas`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las comandas | ✅ PASSING (🟡 Básico) |
-| `/{id}` | GET | `✅/✅` | Obtener comanda por ID | ✅ PASSING (🟡 Básico) |
-| `/` | POST | `✅/✅` | Crear nueva comanda | ✅ PASSING (🟡 Básico) |
-| `/{id}` | PUT | `✅/✅` | Actualizar comanda | ✅ PASSING (🟡 Básico) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar comanda | ✅ PASSING (🟡 Básico) |
-| `/{id}/estado` | PUT | `✅/✅` | Cambiar estado de comanda | ✅ PASSING (🟡 Básico) |
-| `/{id}/asignar-mesa` | POST | `✅/✅` | Asignar mesa a comanda | ✅ PASSING (🟡 Básico) |
-| `/{id}/productos` | POST | `✅/✅` | Agregar producto a comanda | ✅ PASSING (🟡 Básico) |
-| `/{id}/productos/{detalleId}` | PUT | `✅/✅` | Modificar producto de comanda | ✅ PASSING (🟡 Básico) |
-| `/{id}/productos/{detalleId}` | DELETE | `✅/✅` | Remover producto de comanda | ✅ PASSING (🟡 Básico) |
-| `/{id}/descuento` | POST | `✅/✅` | Aplicar descuento a comanda | ✅ PASSING (🟡 Básico) |
-| `/{id}/dividir` | POST | `✅/✅` | Dividir cuenta de comanda | ✅ PASSING (🟡 Básico) |
-| `/{id}/cerrar` | POST | `✅/✅` | Cerrar comanda y facturar | ✅ PASSING (🟡 Básico) |
+| `/` | GET | `✅/✅` | Obtener todas las comandas | ✅ PASSING (🟢 Completo) |
+| `/{id}` | GET | `✅/✅` | Obtener comanda por ID | ✅ PASSING (🟢 Completo) |
+| `/` | POST | `✅/✅` | Crear nueva comanda | ✅ PASSING (🟢 Completo) |
+| `/{id}` | PUT | `✅/✅` | Actualizar comanda | ✅ PASSING (🟢 Completo) |
+| `/{id}` | DELETE | `✅/✅` | Eliminar comanda | ✅ PASSING (🟢 Completo) |
+| `/{id}/estado` | PUT | `✅/✅` | Cambiar estado de comanda | ✅ PASSING (🟢 Completo) |
+| `/{id}/asignar-mesa` | POST | `✅/✅` | Asignar mesa a comanda | ✅ PASSING (🟢 Completo) |
+| `/{id}/productos` | POST | `✅/✅` | Agregar producto a comanda | ✅ PASSING (🟢 Completo) |
+| `/{id}/productos/{detalleId}` | PUT | `✅/✅` | Modificar producto de comanda | ✅ PASSING (🟢 Completo) |
+| `/{id}/productos/{detalleId}` | DELETE | `✅/✅` | Remover producto de comanda | ✅ PASSING (🟢 Completo) |
+| `/{id}/descuento` | POST | `✅/✅` | Aplicar descuento a comanda | ✅ PASSING (🟢 Completo) |
+| `/{id}/dividir` | POST | `✅/✅` | Dividir cuenta de comanda | ✅ PASSING (🟢 Completo) |
+| `/{id}/cerrar` | POST | `✅/✅` | Cerrar comanda y facturar | ✅ PASSING (🟢 Completo) |
 
 ### ReportesController (Operaciones)
 - **Estado**: ✅/✅ (Completado)

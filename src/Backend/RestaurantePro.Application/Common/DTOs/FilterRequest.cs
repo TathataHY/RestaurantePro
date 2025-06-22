@@ -29,7 +29,7 @@ public class FilterRequest
     /// <summary>
     /// Dirección del ordenamiento (asc/desc)
     /// </summary>
-    public SortDirection SortDirection { get; set; } = SortDirection.Ascending;
+    public string SortDirection { get; set; } = "asc";
 
     /// <summary>
     /// Filtrar solo elementos activos

@@ -31,4 +31,12 @@ public class ObtenerComandaPorIdQuery : IRequest<Result<ComandaDto>>
     public ObtenerComandaPorIdQuery()
     {
     }
+
+    /// <summary>
+    /// Factory method para crear el query
+    /// </summary>
+    public static ObtenerComandaPorIdQuery Create(Guid comandaId, bool incluirItems = true)
+    {
+        return new ObtenerComandaPorIdQuery(comandaId, incluirItems);
+    }
 } 
