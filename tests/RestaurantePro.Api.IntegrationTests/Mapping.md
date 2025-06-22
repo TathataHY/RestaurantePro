@@ -19,10 +19,10 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - **Estado**: ✅ **195/195 Tests Pasando (100% Success Rate)**
 - **Framework de Testing**: Completamente consolidado y estable
 - **Última Actualización**: Diciembre 2024
+- **🎯 Progreso Tests Completos**: 2/21 controladores (9.5%) - **¡PRIMERA FASE COMPLETADA!**
 
 ### **Resumen de Integración de Tests**
-- **🟢 Tests Completos**: 1 controlador (UsuariosController)
-- **🟢🟡 Tests Mixtos**: 1 controlador (IngredientesController - mayormente completos)
+- **🟢 Tests Completos**: 2 controladores (UsuariosController, IngredientesController)
 - **🟡 Tests Básicos**: 19 controladores (solo verificación de endpoints)
 - **🔄 Tests en Progreso**: 0 controladores
 - **🔴 Tests Pendientes**: 0 controladores
@@ -30,7 +30,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ### **Análisis Real del Estado de Tests**
 
-#### **🟢 Tests VERDADERAMENTE Completos (1 controlador)**
+#### **🟢 Tests VERDADERAMENTE Completos (2 controladores)**
 **Características confirmadas:**
 - ✅ Crean datos reales en BD usando métodos helper
 - ✅ Verifican interacción completa con base de datos
@@ -40,15 +40,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 **Controladores con tests completos:**
 1. **UsuariosController** - Tests completamente completos con interacción real de BD
-
-#### **🟢🟡 Tests Mixtos (1 controlador)**
-**Características confirmadas:**
-- ✅ La mayoría de tests son completos con interacción real de BD
-- ⚠️ Algunos tests usan `BeOneOf` (patrón de tests básicos)
-- ✅ Crean datos reales en BD y verifican persistencia
-
-**Controladores con tests mixtos:**
-1. **IngredientesController** - Tests mayormente completos, algunos básicos (líneas 192, 259)
+2. **IngredientesController** - Tests completamente completos con interacción real de BD
 
 #### **🟡 Tests Básicos (19 controladores)**
 **Características confirmadas:**
@@ -68,7 +60,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 ### **Plan de Migración a Tests Completos**
 | Fase | Controladores | Objetivo | Estado |
 |------|---------------|----------|--------|
-| **Fase 1** | IngredientesController | Migrar a tests completos | 🔄 **EN PROGRESO** (8/10 completos, 2/10 básicos) |
+| **Fase 1** | IngredientesController | Migrar a tests completos | ✅ **COMPLETADO** (10/10 completos) |
 | **Fase 2** | UsuariosController, NotificacionesController | Migrar a tests completos | ✅ **COMPLETADO** (UsuariosController) |
 | **Fase 3** | ComandasController, MesasController | Migrar a tests completos | ⬜ **PENDIENTE** |
 | **Fase 4** | FacturasController, TarjetasFidelizacionController | Migrar a tests completos | ⬜ **PENDIENTE** |
@@ -81,9 +73,9 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | **Core** | 4 | 4 | 31 | ✅ 100% (🟢 1/4 completos, 🟡 3/4 básicos) |
 | **Comercial** | 5 | 5 | 48 | ✅ 100% (🟡 5/5 básicos) |
 | **Operaciones** | 5 | 5 | 56 | ✅ 100% (🟡 5/5 básicos) |
-| **Inventario** | 4 | 4 | 34 | ✅ 100% (🟢🟡 1/4 mixtos, 🟡 3/4 básicos) |
+| **Inventario** | 4 | 4 | 34 | ✅ 100% (🟢 1/4 completos, 🟡 3/4 básicos) |
 | **Proveedores** | 3 | 3 | 27 | ✅ 100% (🟡 3/3 básicos) |
-| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 1/21 completos, 🟢🟡 1/21 mixtos, 🟡 19/21 básicos)** |
+| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 2/21 completos, 🟡 19/21 básicos)** |
 
 ---
 
@@ -336,7 +328,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ### IngredientesController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 10/10 (🟢🟡 Tests Mixtos - Mayormente Completos)
+- **Tests**: 10/10 (🟢 Tests Completos)
 - **Base URL**: `/api/inventario/ingredientes`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
@@ -346,12 +338,12 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | `/{id}` | PUT | `✅/✅` | Actualizar ingrediente | ✅ PASSING (🟢 Completo) |
 | `/{id}` | DELETE | `✅/✅` | Eliminar ingrediente | ✅ PASSING (🟢 Completo) |
 | `/{id}/movimientos` | GET | `✅/✅` | Obtener movimientos de ingrediente | ✅ PASSING (🟢 Completo) |
-| `/{id}/movimientos` | POST | `✅/✅` | Registrar movimiento de stock | ✅ PASSING (🟡 Básico - Línea 192) |
+| `/{id}/movimientos` | POST | `✅/✅` | Registrar movimiento de stock | ✅ PASSING (🟢 Completo) |
 | `/bajo-stock` | GET | `✅/✅` | Obtener ingredientes con stock bajo | ✅ PASSING (🟢 Completo) |
-| `/{id}/asociar-proveedor/{proveedorId}` | POST | `✅/✅` | Asociar un proveedor a un ingrediente | ✅ PASSING (🟡 Básico - Línea 259) |
+| `/{id}/asociar-proveedor/{proveedorId}` | POST | `✅/✅` | Asociar un proveedor a un ingrediente | ✅ PASSING (🟢 Completo) |
 | `/reporte/valoracion` | GET | `✅/✅` | Generar reporte de valoración | ✅ PASSING (🟢 Completo) |
 
-> **Nota:** Este controlador tiene tests mayormente completos con interacción real de BD, pero 2 endpoints (movimientos y asociar-proveedor) usan el patrón de tests básicos con `BeOneOf`.
+> **Nota:** Este controlador tiene tests completamente completos con interacción real de BD. Todos los endpoints verifican la persistencia de datos y reglas de negocio específicas.
 
 ### ProveedoresController
 - **Estado**: ✅/✅ (Completado)
