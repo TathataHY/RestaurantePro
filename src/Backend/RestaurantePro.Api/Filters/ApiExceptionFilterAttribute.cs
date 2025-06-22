@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -10,21 +11,21 @@ using RestaurantePro.Application.Common.Exceptions;
 namespace RestaurantePro.Api.Filters
 {
     /// <summary>
-    /// Filtro que maneja excepciones de los controladores y las convierte en respuestas HTTP adecuadas
+    /// Filtro para manejar excepciones específicas de la API
     /// </summary>
     public class ApiExceptionFilterAttribute : ExceptionFilterAttribute
     {
         private readonly ILogger<ApiExceptionFilterAttribute> _logger;
-        private readonly IDictionary<Type, Action<ExceptionContext>> _exceptionHandlers;
+        private readonly Dictionary<Type, Action<ExceptionContext>> _exceptionHandlers;
 
         public ApiExceptionFilterAttribute(ILogger<ApiExceptionFilterAttribute> logger)
         {
             _logger = logger;
             _exceptionHandlers = new Dictionary<Type, Action<ExceptionContext>>
             {
-                { typeof(AppValidationException), HandleValidationException },
+                { typeof(RestaurantePro.Application.Common.Exceptions.ValidationException), HandleValidationException },
                 { typeof(NotFoundException), HandleNotFoundException },
-                { typeof(UnauthorizedAccessException), HandleUnauthorizedAccessException },
+                { typeof(ConflictException), HandleConflictException },
                 { typeof(ForbiddenAccessException), HandleForbiddenAccessException }
             };
         }
@@ -37,7 +38,7 @@ namespace RestaurantePro.Api.Filters
 
         private void HandleException(ExceptionContext context)
         {
-            Type type = context.Exception.GetType();
+            var type = context.Exception.GetType();
             if (_exceptionHandlers.ContainsKey(type))
             {
                 _exceptionHandlers[type].Invoke(context);
@@ -55,50 +56,60 @@ namespace RestaurantePro.Api.Filters
 
         private void HandleValidationException(ExceptionContext context)
         {
-            var exception = (AppValidationException)context.Exception;
-            var details = ApiResponse<object>.ErrorResponse(
-                exception.Errors.SelectMany(kvp => kvp.Value).ToList(), 
-                "Error de validación", 
-                StatusCodes.Status400BadRequest);
+            var exception = (RestaurantePro.Application.Common.Exceptions.ValidationException)context.Exception;
+            var errors = exception.Errors.SelectMany(kvp => kvp.Value).ToList();
 
-            context.Result = new BadRequestObjectResult(details);
+            _logger.LogWarning("Error de validación: {Errors}", string.Join(", ", errors));
+
+            var response = ApiResponse<object>.ErrorResponse(
+                errors, "Error de validación", StatusCodes.Status400BadRequest);
+
+            context.Result = new BadRequestObjectResult(response);
             context.ExceptionHandled = true;
         }
 
         private void HandleNotFoundException(ExceptionContext context)
         {
             var exception = (NotFoundException)context.Exception;
-            var details = ApiResponse<object>.ErrorResponse(
-                exception.Message, 
+
+            _logger.LogWarning("Recurso no encontrado: {Message}", exception.Message);
+
+            var response = ApiResponse<object>.ErrorResponse(
+                new List<string> { exception.Message }, 
                 "Recurso no encontrado", 
                 StatusCodes.Status404NotFound);
 
-            context.Result = new NotFoundObjectResult(details);
+            context.Result = new NotFoundObjectResult(response);
             context.ExceptionHandled = true;
         }
 
-        private void HandleUnauthorizedAccessException(ExceptionContext context)
+        private void HandleConflictException(ExceptionContext context)
         {
-            var details = ApiResponse<object>.ErrorResponse(
-                "No tiene autorización para realizar esta acción", 
-                "Acceso no autorizado", 
-                StatusCodes.Status401Unauthorized);
+            var exception = (ConflictException)context.Exception;
 
-            context.Result = new ObjectResult(details)
-            {
-                StatusCode = StatusCodes.Status401Unauthorized
-            };
+            _logger.LogWarning("Conflicto detectado: {Message}", exception.Message);
+
+            var response = ApiResponse<object>.ErrorResponse(
+                new List<string> { exception.Message }, 
+                "Conflicto detectado", 
+                StatusCodes.Status409Conflict);
+
+            context.Result = new ConflictObjectResult(response);
             context.ExceptionHandled = true;
         }
 
         private void HandleForbiddenAccessException(ExceptionContext context)
         {
-            var details = ApiResponse<object>.ErrorResponse(
-                "No tiene permisos para realizar esta acción", 
-                "Acceso prohibido", 
+            var exception = (ForbiddenAccessException)context.Exception;
+
+            _logger.LogWarning("Acceso denegado: {Message}", exception.Message);
+
+            var response = ApiResponse<object>.ErrorResponse(
+                new List<string> { exception.Message }, 
+                "Acceso denegado", 
                 StatusCodes.Status403Forbidden);
 
-            context.Result = new ObjectResult(details)
+            context.Result = new ObjectResult(response)
             {
                 StatusCode = StatusCodes.Status403Forbidden
             };
@@ -107,34 +118,30 @@ namespace RestaurantePro.Api.Filters
 
         private void HandleInvalidModelStateException(ExceptionContext context)
         {
-            var errors = new List<string>();
-            foreach (var key in context.ModelState.Keys)
-            {
-                foreach (var error in context.ModelState[key].Errors)
-                {
-                    errors.Add($"{key}: {error.ErrorMessage}");
-                }
-            }
+            var errors = context.ModelState
+                .Where(x => x.Value.Errors.Count > 0)
+                .SelectMany(x => x.Value.Errors.Select(e => e.ErrorMessage))
+                .ToList();
 
-            var details = ApiResponse<object>.ErrorResponse(
-                errors, 
-                "Datos de entrada inválidos", 
-                StatusCodes.Status400BadRequest);
+            _logger.LogWarning("Estado del modelo inválido: {Errors}", string.Join(", ", errors));
 
-            context.Result = new BadRequestObjectResult(details);
+            var response = ApiResponse<object>.ErrorResponse(
+                errors, "Datos de entrada inválidos", StatusCodes.Status400BadRequest);
+
+            context.Result = new BadRequestObjectResult(response);
             context.ExceptionHandled = true;
         }
 
         private void HandleUnknownException(ExceptionContext context)
         {
-            _logger.LogError(context.Exception, "Error no manejado: {Exception}", context.Exception.Message);
+            _logger.LogError(context.Exception, "Error no manejado: {Message}", context.Exception.Message);
 
-            var details = ApiResponse<object>.ErrorResponse(
-                "Ha ocurrido un error inesperado. Por favor, inténtelo de nuevo más tarde.", 
-                "Error del servidor", 
+            var response = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Ocurrió un error interno del servidor" }, 
+                "Error interno", 
                 StatusCodes.Status500InternalServerError);
 
-            context.Result = new ObjectResult(details)
+            context.Result = new ObjectResult(response)
             {
                 StatusCode = StatusCodes.Status500InternalServerError
             };

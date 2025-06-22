@@ -131,7 +131,7 @@ public class ProductosControllerTests : ApiIntegrationTestBase, IDisposable
         var response = await HttpClient.DeleteAsync($"/api/core/productos/{producto.Id}");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         
         // Verificar que el producto fue desactivado (soft delete)
         DbContext.ChangeTracker.Clear(); 

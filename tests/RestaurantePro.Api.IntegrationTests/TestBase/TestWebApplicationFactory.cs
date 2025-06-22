@@ -218,13 +218,12 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 builder.SetMinimumLevel(LogLevel.Error);
             });
 
-            // Build el provider y aplicar migraciones
+            // Crear el esquema de la base de datos en memoria
             var sp = services.BuildServiceProvider();
             using (var scope = sp.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
-                db.Database.EnsureCreated();
-                // db.Database.Migrate(); // Si tienes migraciones
+                db.Database.EnsureCreated(); // O usa db.Database.Migrate() si usas migraciones
             }
 
             // Repositorios Base

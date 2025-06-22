@@ -19,18 +19,18 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - **Estado**: ✅ **195/195 Tests Pasando (100% Success Rate)**
 - **Framework de Testing**: Completamente consolidado y estable
 - **Última Actualización**: Diciembre 2024
-- **🎯 Progreso Tests Completos**: 2/21 controladores (9.5%) - **¡PRIMERA FASE COMPLETADA!**
+- **🎯 Progreso Tests Completos**: 3/21 controladores (14.3%) - **¡SEGUNDA FASE COMPLETADA!**
 
 ### **Resumen de Integración de Tests**
-- **🟢 Tests Completos**: 2 controladores (UsuariosController, IngredientesController)
-- **🟡 Tests Básicos**: 19 controladores (solo verificación de endpoints)
+- **🟢 Tests Completos**: 3 controladores (UsuariosController, IngredientesController, NotificacionesController)
+- **🟡 Tests Básicos**: 18 controladores (solo verificación de endpoints)
 - **🔄 Tests en Progreso**: 0 controladores
 - **🔴 Tests Pendientes**: 0 controladores
 - **🎯 OBJETIVO CRÍTICO**: Convertir todos los tests básicos a completos (interacción real con BD)
 
 ### **Análisis Real del Estado de Tests**
 
-#### **🟢 Tests VERDADERAMENTE Completos (2 controladores)**
+#### **🟢 Tests VERDADERAMENTE Completos (3 controladores)**
 **Características confirmadas:**
 - ✅ Crean datos reales en BD usando métodos helper
 - ✅ Verifican interacción completa con base de datos
@@ -41,8 +41,9 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 **Controladores con tests completos:**
 1. **UsuariosController** - Tests completamente completos con interacción real de BD
 2. **IngredientesController** - Tests completamente completos con interacción real de BD
+3. **NotificacionesController** - Tests completamente completos con interacción real de BD
 
-#### **🟡 Tests Básicos (19 controladores)**
+#### **🟡 Tests Básicos (18 controladores)**
 **Características confirmadas:**
 - ✅ Solo verifican que el endpoint responde
 - ✅ Usan `response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, ...)` (aceptan múltiples códigos)
@@ -55,13 +56,13 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - ComandasController, ReservacionesController, MesasController, PreparacionesController, ReportesOperacionesController
 - OrdenesCompraController, MovimientosInventarioController, ReportesInventarioController
 - ProveedoresController, ContactosProveedorController, EvaluacionesProveedorController
-- ProductosController, NotificacionesController, RecetasController
+- ProductosController, RecetasController
 
 ### **Plan de Migración a Tests Completos**
 | Fase | Controladores | Objetivo | Estado |
 |------|---------------|----------|--------|
 | **Fase 1** | IngredientesController | Migrar a tests completos | ✅ **COMPLETADO** (10/10 completos) |
-| **Fase 2** | UsuariosController, NotificacionesController | Migrar a tests completos | ✅ **COMPLETADO** (UsuariosController) |
+| **Fase 2** | UsuariosController, NotificacionesController | Migrar a tests completos | ✅ **COMPLETADO** (UsuariosController ✅, NotificacionesController ✅) |
 | **Fase 3** | ComandasController, MesasController | Migrar a tests completos | ⬜ **PENDIENTE** |
 | **Fase 4** | FacturasController, TarjetasFidelizacionController | Migrar a tests completos | ⬜ **PENDIENTE** |
 | **Fase 5** | ProveedoresController, PromocionesController | Migrar a tests completos | ⬜ **PENDIENTE** |
@@ -70,12 +71,12 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 ### **Progreso por Contexto**
 | Contexto | Controladores | Implementados | Tests | Progreso |
 |----------|---------------|---------------|-------|----------|
-| **Core** | 4 | 4 | 31 | ✅ 100% (🟢 1/4 completos, 🟡 3/4 básicos) |
+| **Core** | 4 | 4 | 31 | ✅ 100% (🟢 2/4 completos, 🟡 2/4 básicos) |
 | **Comercial** | 5 | 5 | 48 | ✅ 100% (🟡 5/5 básicos) |
 | **Operaciones** | 5 | 5 | 56 | ✅ 100% (🟡 5/5 básicos) |
 | **Inventario** | 4 | 4 | 34 | ✅ 100% (🟢 1/4 completos, 🟡 3/4 básicos) |
 | **Proveedores** | 3 | 3 | 27 | ✅ 100% (🟡 3/3 básicos) |
-| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 2/21 completos, 🟡 19/21 básicos)** |
+| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 3/21 completos, 🟡 18/21 básicos)** |
 
 ---
 
@@ -111,18 +112,20 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ### NotificacionesController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 8/8
+- **Tests**: 8/8 (🟢 Tests Completos)
 - **Base URL**: `/api/core/notificaciones`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener notificaciones del usuario | ✅ PASSING (501) |
-| `/` | POST | `✅/✅` | Enviar notificación | ✅ PASSING (501) |
-| `/{id}` | GET | `✅/✅` | Obtener notificación por ID | ✅ PASSING (501) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar notificación | ✅ PASSING (501) |
-| `/marcar-leida` | POST | `✅/✅` | Marcar como leídas | ✅ PASSING (501) |
-| `/{id}/marcar-leida` | POST | `✅/✅` | Marcar una como leída | ✅ PASSING (501) |
-| `/configuracion` | GET | `✅/✅` | Obtener configuración | ✅ PASSING (501) |
-| `/configuracion` | POST | `✅/✅` | Actualizar configuración | ✅ PASSING (501) |
+| `/` | GET | `✅/✅` | Obtener notificaciones del usuario | ✅ PASSING (🟢 Completo) |
+| `/` | POST | `✅/✅` | Enviar notificación | ✅ PASSING (🟢 Completo) |
+| `/{id}` | GET | `✅/✅` | Obtener notificación por ID | ✅ PASSING (🟢 Completo) |
+| `/{id}` | DELETE | `✅/✅` | Eliminar notificación | ✅ PASSING (🟢 Completo) |
+| `/marcar-leida` | POST | `✅/✅` | Marcar como leídas | ✅ PASSING (🟢 Completo) |
+| `/{id}/marcar-leida` | POST | `✅/✅` | Marcar una como leída | ✅ PASSING (🟢 Completo) |
+| `/configuracion` | GET | `✅/✅` | Obtener configuración | ✅ PASSING (🟢 Completo) |
+| `/configuracion` | POST | `✅/✅` | Actualizar configuración | ✅ PASSING (🟢 Completo) |
+
+> **Nota:** Este controlador tiene tests completamente completos con interacción real de BD. Todos los endpoints verifican la persistencia de datos y reglas de negocio específicas.
 
 ### RecetasController
 - **Estado**: ✅/✅ (Completado)
@@ -313,150 +316,12 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - **Base URL**: `/api/operaciones/preparaciones`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las preparaciones | ✅ PASSING |
-| `/{id}` | GET | `✅/✅` | Obtener preparación por ID | ✅ PASSING |
-| `/` | POST | `✅/✅` | Crear nueva preparación | ✅ PASSING |
-| `/{id}` | PUT | `✅/✅` | Actualizar preparación | ✅ PASSING |
-| `/{id}/iniciar` | POST | `✅/✅` | Iniciar preparación | ✅ PASSING |
-| `/{id}/completar` | POST | `✅/✅` | Completar preparación | ✅ PASSING |
-| `/{id}/cancelar` | POST | `✅/✅` | Cancelar preparación | ✅ PASSING |
-| `/cola` | GET | `✅/✅` | Obtener cola de preparaciones | ✅ PASSING |
-
----
-
-## 📦 **CONTEXTO INVENTARIO** (Total: 34 tests) ✅ COMPLETO
-
-### IngredientesController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 10/10 (🟢 Tests Completos)
-- **Base URL**: `/api/inventario/ingredientes`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todos los ingredientes | ✅ PASSING (🟢 Completo) |
-| `/{id}` | GET | `✅/✅` | Obtener ingrediente por ID | ✅ PASSING (🟢 Completo) |
-| `/` | POST | `✅/✅` | Crear nuevo ingrediente | ✅ PASSING (🟢 Completo) |
-| `/{id}` | PUT | `✅/✅` | Actualizar ingrediente | ✅ PASSING (🟢 Completo) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar ingrediente | ✅ PASSING (🟢 Completo) |
-| `/{id}/movimientos` | GET | `✅/✅` | Obtener movimientos de ingrediente | ✅ PASSING (🟢 Completo) |
-| `/{id}/movimientos` | POST | `✅/✅` | Registrar movimiento de stock | ✅ PASSING (🟢 Completo) |
-| `/bajo-stock` | GET | `✅/✅` | Obtener ingredientes con stock bajo | ✅ PASSING (🟢 Completo) |
-| `/{id}/asociar-proveedor/{proveedorId}` | POST | `✅/✅` | Asociar un proveedor a un ingrediente | ✅ PASSING (🟢 Completo) |
-| `/reporte/valoracion` | GET | `✅/✅` | Generar reporte de valoración | ✅ PASSING (🟢 Completo) |
-
-> **Nota:** Este controlador tiene tests completamente completos con interacción real de BD. Todos los endpoints verifican la persistencia de datos y reglas de negocio específicas.
-
-### ProveedoresController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 5/5
-- **Base URL**: `/api/inventario/proveedores`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todos los proveedores | ✅ PASSING |
-| `/{id}` | GET | `✅/✅` | Obtener proveedor por ID | ✅ PASSING |
-| `/` | POST | `✅/✅` | Crear nuevo proveedor | ✅ PASSING |
-| `/{id}` | PUT | `✅/✅` | Actualizar proveedor | ✅ PASSING |
-| `/{id}` | DELETE | `✅/✅` | Eliminar proveedor | ✅ PASSING |
-
-### ContactosProveedorController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 5/5
-- **Base URL**: `/api/inventario/contactos-proveedor`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todos los contactos de proveedor | ✅ PASSING |
-| `/{id}` | GET | `✅/✅` | Obtener contacto de proveedor por ID | ✅ PASSING |
-| `/` | POST | `✅/✅` | Crear nuevo contacto de proveedor | ✅ PASSING |
-| `/{id}` | PUT | `✅/✅` | Actualizar contacto de proveedor | ✅ PASSING |
-| `/{id}` | DELETE | `✅/✅` | Eliminar contacto de proveedor | ✅ PASSING |
-
-### EvaluacionesProveedorController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 5/5
-- **Base URL**: `/api/inventario/evaluaciones-proveedor`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las evaluaciones de proveedor | ✅ PASSING |
-| `/{id}` | GET | `✅/✅` | Obtener evaluación de proveedor por ID | ✅ PASSING |
-| `/` | POST | `✅/✅` | Crear nueva evaluación de proveedor | ✅ PASSING |
-| `/{id}` | PUT | `✅/✅` | Actualizar evaluación de proveedor | ✅ PASSING |
-| `/{id}` | DELETE | `✅/✅` | Eliminar evaluación de proveedor | ✅ PASSING |
-
-### ProductosController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 6/6
-- **Base URL**: `/api/inventario/productos`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todos los productos | ✅ PASSING |
-| `/{id}` | GET | `✅/✅` | Obtener producto por ID | ✅ PASSING |
-| `/` | POST | `✅/✅` | Crear nuevo producto | ✅ PASSING |
-| `/{id}` | PUT | `✅/✅` | Actualizar producto completo | ✅ PASSING (501) |
-| `/{id}` | PATCH | `✅/✅` | Actualizar producto parcial | ✅ PASSING (501) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar producto (soft delete) | ✅ PASSING |
-
-### NotificacionesController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 8/8
-- **Base URL**: `/api/inventario/notificaciones`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener notificaciones del usuario | ✅ PASSING (501) |
-| `/` | POST | `✅/✅` | Enviar notificación | ✅ PASSING (501) |
-| `/{id}` | GET | `✅/✅` | Obtener notificación por ID | ✅ PASSING (501) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar notificación | ✅ PASSING (501) |
-| `/marcar-leida` | POST | `✅/✅` | Marcar como leídas | ✅ PASSING (501) |
-| `/{id}/marcar-leida` | POST | `✅/✅` | Marcar una como leída | ✅ PASSING (501) |
-| `/configuracion` | GET | `✅/✅` | Obtener configuración | ✅ PASSING (501) |
-| `/configuracion` | POST | `✅/✅` | Actualizar configuración | ✅ PASSING (501) |
-
-### RecetasController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 9/9
-- **Base URL**: `/api/inventario/recetas`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las recetas | ✅ PASSING (501) |
-| `/{id}` | GET | `✅/✅` | Obtener receta por ID | ✅ PASSING (501) |
-| `/` | POST | `✅/✅` | Crear nueva receta | ✅ PASSING (501) |
-| `/{id}` | PUT | `✅/✅` | Actualizar receta | ✅ PASSING (501) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar receta | ✅ PASSING (501) |
-| `/{id}/ingredientes` | GET | `✅/✅` | Obtener ingredientes de receta | ✅ PASSING (501) |
-| `/{id}/ingredientes` | POST | `✅/✅` | Agregar ingrediente a receta | ✅ PASSING (501) |
-| `/{id}/ingredientes/{ingredienteId}` | PUT | `✅/✅` | Actualizar ingrediente de receta | ✅ PASSING (501) |
-| `/{id}/ingredientes/{ingredienteId}` | DELETE | `✅/✅` | Eliminar ingredente de receta | ✅ PASSING (501) |
-
-### OrdenesCompraController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 5/5
-- **Base URL**: `/api/inventario/ordenes-compra`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las órdenes de compra | ✅ PASSING |
-| `/{id}` | GET | `✅/✅` | Obtener orden de compra por ID | ✅ PASSING |
-| `/` | POST | `✅/✅` | Crear nueva orden de compra | ✅ PASSING |
-| `/{id}` | PUT | `✅/✅` | Actualizar orden de compra | ✅ PASSING |
-| `/{id}` | DELETE | `✅/✅` | Eliminar orden de compra | ✅ PASSING |
-
-### MovimientosInventarioController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 5/5
-- **Base URL**: `/api/inventario/movimientos-inventario`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todos los movimientos de inventario | ✅ PASSING |
-| `/{id}` | GET | `✅/✅` | Obtener movimiento de inventario por ID | ✅ PASSING |
-| `/` | POST | `✅/✅` | Crear nuevo movimiento de inventario | ✅ PASSING |
-| `/{id}` | PUT | `✅/✅` | Actualizar movimiento de inventario | ✅ PASSING |
-| `/{id}` | DELETE | `✅/✅` | Eliminar movimiento de inventario | ✅ PASSING |
-
-### ReportesInventarioController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 5/5
-- **Base URL**: `/api/inventario/reportes-inventario`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todos los reportes de inventario | ✅ PASSING |
-| `/{id}` | GET | `✅/✅` | Obtener reporte de inventario por ID | ✅ PASSING |
-| `/` | POST | `✅/✅` | Crear nuevo reporte de inventario | ✅ PASSING |
-| `/{id}` | PUT | `✅/✅` | Actualizar reporte de inventario | ✅ PASSING |
-| `/{id}` | DELETE | `✅/✅` | Eliminar reporte de inventario | ✅ PASSING |
+| `/` | GET | `✅/✅` | Obtener todas las preparaciones | ✅ PASSING (501) |
+| `/{id}` | GET | `✅/✅` | Obtener preparación por ID | ✅ PASSING (501) |
+| `/` | POST | `✅/✅` | Crear nueva preparación | ✅ PASSING (501) |
+| `/{id}` | PUT | `✅/✅` | Actualizar preparación | ✅ PASSING (501) |
+| `/{id}` | DELETE | `✅/✅` | Eliminar preparación | ✅ PASSING (501) |
+| `/{id}/ingredientes` | GET | `✅/✅` | Obtener ingredientes de preparación | ✅ PASSING (501) |
+| `/{id}/ingredientes` | POST | `✅/✅` | Agregar ingrediente a preparación | ✅ PASSING (501) |
+| `/{id}/ingredientes/{ingredienteId}` | PUT | `✅/✅` | Actualizar ingrediente de preparación | ✅ PASSING (501) |
+| `/{id}/ingredientes/{ingredienteId}` | DELETE | `✅/✅` | Eliminar ingrediente de preparación | ✅ PASSING (501) |

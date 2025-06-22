@@ -132,6 +132,7 @@ global using RestaurantePro.Domain.Operaciones.Reservaciones.Events.Reservacion;
 // Application - Core DTOs
 global using RestaurantePro.Application.Core.Productos.DTOs;
 global using RestaurantePro.Application.Core.Usuarios.DTOs;
+global using RestaurantePro.Application.Core.Notificaciones.DTOs;
 
 // Application - Comercial DTOs
 global using RestaurantePro.Application.Comercial.Clientes.DTOs;
@@ -160,6 +161,10 @@ global using RestaurantePro.Application.Comercial.Reportes.DTOs;
 // Application - Commands (Core)
 global using RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
 global using RestaurantePro.Application.Core.Productos.Commands.ActualizarProducto;
+global using RestaurantePro.Application.Core.Notificaciones.Commands.CrearNotificacion;
+global using RestaurantePro.Application.Core.Notificaciones.Commands.MarcarComoLeida;
+global using RestaurantePro.Application.Core.Notificaciones.Commands.MarcarTodasComoLeidas;
+global using RestaurantePro.Application.Core.Notificaciones.Commands.EliminarNotificacion;
 
 // Application - Commands (Comercial)
 global using RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente;
@@ -203,6 +208,9 @@ global using RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnali
 global using RestaurantePro.Application.Comercial.Reportes.Queries.ObtenerAnalisisFidelizacion;
 global using RestaurantePro.Application.Operaciones.Reportes.Queries.ObtenerReporteVentasDiaria;
 global using RestaurantePro.Application.Proveedores.Proveedores.Queries.ObtenerProveedoresPaginados;
+global using RestaurantePro.Application.Core.Notificaciones.Queries.ObtenerNotificaciones;
+global using RestaurantePro.Application.Core.Notificaciones.Queries.ObtenerNotificacionPorId;
+global using RestaurantePro.Application.Core.Notificaciones.Queries.ObtenerContadorNoLeidas;
 
 // Application - Event Handlers
 global using RestaurantePro.Application.Operaciones.Reservaciones.EventHandlers.ReservacionCreada;

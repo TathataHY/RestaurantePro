@@ -44,7 +44,7 @@ namespace RestaurantePro.Api.Middleware
             
             var response = exception switch
             {
-                AppValidationException validationEx => 
+                RestaurantePro.Application.Common.Exceptions.ValidationException validationEx => 
                     ApiResponse<object>.ErrorResponse(
                         validationEx.Errors.SelectMany(kvp => kvp.Value).ToList(), 
                         "Error de validación", 
