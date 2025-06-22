@@ -309,16 +309,22 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         {
             // Arrange
             var item = new ItemComanda(_comandaId, _productoId, 1, 100m);
+            var ingredienteId = Guid.NewGuid();
+            var nombreIngrediente = "Queso";
 
             // Act
-            item.AgregarPersonalizacionExtra(Guid.NewGuid(), "Queso", 1m);
+            item.AgregarPersonalizacionExtra(ingredienteId, nombreIngrediente, 1m);
 
             // Assert
             item.DomainEvents.Should().ContainSingle(e => e is PersonalizacionAgregadaAItem);
             var evento = item.DomainEvents.OfType<PersonalizacionAgregadaAItem>().First();
             evento.ItemId.Should().Be(item.Id);
             evento.ComandaId.Should().Be(_comandaId);
-            evento.Personalizacion.Should().NotBeNull();
+            evento.IngredienteId.Should().Be(ingredienteId);
+            evento.NombreIngrediente.Should().Be(nombreIngrediente);
+            evento.Accion.Should().Be(AccionPersonalizacion.Agregar);
+            evento.Cantidad.Should().Be(1m);
+            evento.PrecioAdicional.Should().Be(0m);
         }
 
         [Fact]
@@ -326,7 +332,10 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
         {
             // Arrange
             var item = new ItemComanda(_comandaId, _productoId, 1, 100m);
-            item.AgregarPersonalizacionExtra(Guid.NewGuid(), "Queso", 1m);
+            var ingredienteId = Guid.NewGuid();
+            var nombreIngrediente = "Queso";
+            
+            item.AgregarPersonalizacionExtra(ingredienteId, nombreIngrediente, 1m);
             var personalizacion = item.Personalizaciones.First();
             item.ClearDomainEvents(); // Limpiar eventos existentes
 
@@ -338,7 +347,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Comandas.Entities
             var evento = item.DomainEvents.OfType<PersonalizacionEliminadaDeItem>().First();
             evento.ItemId.Should().Be(item.Id);
             evento.ComandaId.Should().Be(_comandaId);
-            evento.Personalizacion.Should().NotBeNull();
+            evento.IngredienteId.Should().Be(ingredienteId);
+            evento.NombreIngrediente.Should().Be(nombreIngrediente);
+            evento.Accion.Should().Be(AccionPersonalizacion.Agregar);
+            evento.Cantidad.Should().Be(1m);
+            evento.PrecioAdicional.Should().Be(0m);
         }
     }
 } 

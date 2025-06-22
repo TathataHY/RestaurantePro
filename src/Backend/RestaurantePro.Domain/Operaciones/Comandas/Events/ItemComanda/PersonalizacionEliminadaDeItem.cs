@@ -16,18 +16,63 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda
         public Guid ComandaId { get; }
 
         /// <summary>
-        /// Datos de la personalización eliminada
+        /// ID del ingrediente personalizado
         /// </summary>
-        public PersonalizacionItemDto Personalizacion { get; }
+        public Guid IngredienteId { get; }
+
+        /// <summary>
+        /// Nombre del ingrediente
+        /// </summary>
+        public string NombreIngrediente { get; }
+
+        /// <summary>
+        /// Acción de personalización
+        /// </summary>
+        public AccionPersonalizacion Accion { get; }
+
+        /// <summary>
+        /// Cantidad de la personalización
+        /// </summary>
+        public decimal Cantidad { get; }
+
+        /// <summary>
+        /// Precio adicional de la personalización
+        /// </summary>
+        public decimal PrecioAdicional { get; }
+
+        /// <summary>
+        /// ID del ingrediente de sustitución (si aplica)
+        /// </summary>
+        public Guid? IngredienteSustitucionId { get; }
+
+        /// <summary>
+        /// Nombre del ingrediente de sustitución (si aplica)
+        /// </summary>
+        public string? NombreIngredienteSustitucion { get; }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public PersonalizacionEliminadaDeItem(Guid itemId, Guid comandaId, PersonalizacionItemDto personalizacion)
+        public PersonalizacionEliminadaDeItem(
+            Guid itemId,
+            Guid comandaId,
+            Guid ingredienteId,
+            string nombreIngrediente,
+            AccionPersonalizacion accion,
+            decimal cantidad,
+            decimal precioAdicional,
+            Guid? ingredienteSustitucionId = null,
+            string? nombreIngredienteSustitucion = null)
         {
             ItemId = itemId;
             ComandaId = comandaId;
-            Personalizacion = personalizacion;
+            IngredienteId = ingredienteId;
+            NombreIngrediente = nombreIngrediente;
+            Accion = accion;
+            Cantidad = cantidad;
+            PrecioAdicional = precioAdicional;
+            IngredienteSustitucionId = ingredienteSustitucionId;
+            NombreIngredienteSustitucion = nombreIngredienteSustitucion;
         }
     }
 } 

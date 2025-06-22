@@ -312,7 +312,15 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 RecalcularSubtotal();
             }
 
-            AddDomainEvent(new PersonalizacionAgregadaAItem(Id, ComandaId, PersonalizacionItemDto.FromPersonalizacionItem(personalizacion)));
+            AddDomainEvent(new PersonalizacionAgregadaAItem(
+                Id, ComandaId,
+                personalizacion.IngredienteId,
+                personalizacion.NombreIngrediente,
+                personalizacion.Accion,
+                personalizacion.Cantidad,
+                personalizacion.PrecioAdicional,
+                personalizacion.IngredienteSustitucionId,
+                personalizacion.NombreIngredienteSustitucion));
 
             return this;
         }
@@ -333,7 +341,15 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             var personalizacion = PersonalizacionItem.CrearQuitar(ingredienteId, nombreIngrediente);
             _personalizaciones.Add(personalizacion);
 
-            AddDomainEvent(new PersonalizacionAgregadaAItem(Id, ComandaId, PersonalizacionItemDto.FromPersonalizacionItem(personalizacion)));
+            AddDomainEvent(new PersonalizacionAgregadaAItem(
+                Id, ComandaId,
+                personalizacion.IngredienteId,
+                personalizacion.NombreIngrediente,
+                personalizacion.Accion,
+                personalizacion.Cantidad,
+                personalizacion.PrecioAdicional,
+                personalizacion.IngredienteSustitucionId,
+                personalizacion.NombreIngredienteSustitucion));
 
             return this;
         }
@@ -376,7 +392,15 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 RecalcularSubtotal();
             }
 
-            AddDomainEvent(new PersonalizacionAgregadaAItem(Id, ComandaId, PersonalizacionItemDto.FromPersonalizacionItem(personalizacion)));
+            AddDomainEvent(new PersonalizacionAgregadaAItem(
+                Id, ComandaId,
+                personalizacion.IngredienteId,
+                personalizacion.NombreIngrediente,
+                personalizacion.Accion,
+                personalizacion.Cantidad,
+                personalizacion.PrecioAdicional,
+                personalizacion.IngredienteSustitucionId,
+                personalizacion.NombreIngredienteSustitucion));
 
             return this;
         }
@@ -402,7 +426,15 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                     RecalcularSubtotal();
                 }
 
-                AddDomainEvent(new PersonalizacionEliminadaDeItem(Id, ComandaId, PersonalizacionItemDto.FromPersonalizacionItem(personalizacion)));
+                AddDomainEvent(new PersonalizacionEliminadaDeItem(
+                    Id, ComandaId,
+                    personalizacion.IngredienteId,
+                    personalizacion.NombreIngrediente,
+                    personalizacion.Accion,
+                    personalizacion.Cantidad,
+                    personalizacion.PrecioAdicional,
+                    personalizacion.IngredienteSustitucionId,
+                    personalizacion.NombreIngredienteSustitucion));
             }
 
             return this;

@@ -240,7 +240,7 @@ public class CalculadoraPromocionesService : ICalculadoraPromocionesService
     /// </summary>
     public async Task<Result<List<PromocionAplicable>>> EvaluarPromocionesAsync(
         Guid clienteId, 
-        IEnumerable<ProductoCompraDto> productos, 
+        IEnumerable<DatosProductoPromocion> productos, 
         CancellationToken cancellationToken = default)
     {
         try
@@ -311,8 +311,8 @@ public class CalculadoraPromocionesService : ICalculadoraPromocionesService
     /// Calcula el mejor combo de promociones basado en productos y reglas (método para tests)
     /// </summary>
     public async Task<Result<ComboPromociones>> CalcularMejorComboAsync(
-        IEnumerable<ProductoCompraDto> productos, 
-        IEnumerable<ReglaComboDto> reglasCombo, 
+        IEnumerable<DatosProductoPromocion> productos, 
+        IEnumerable<ReglasComboPromocion> reglasCombo, 
         CancellationToken cancellationToken = default)
     {
         try

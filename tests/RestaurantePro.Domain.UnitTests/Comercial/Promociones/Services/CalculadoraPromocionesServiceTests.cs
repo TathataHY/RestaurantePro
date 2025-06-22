@@ -31,7 +31,7 @@ public class CalculadoraPromocionesServiceTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var productosCompra = new List<ProductoCompraDto>
+        var productosCompra = new List<DatosProductoPromocion>
         {
             new() { ProductoId = Guid.NewGuid(), Cantidad = 2, PrecioUnitario = 25.00m }
         };
@@ -59,7 +59,7 @@ public class CalculadoraPromocionesServiceTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var productosCompra = new List<ProductoCompraDto>
+        var productosCompra = new List<DatosProductoPromocion>
         {
             new() { ProductoId = Guid.NewGuid(), Cantidad = 1, PrecioUnitario = 20.00m }
         };
@@ -78,7 +78,7 @@ public class CalculadoraPromocionesServiceTests
 
     [Theory]
     [InlineData(null)]
-    public async Task EvaluarPromocionesAsync_ConListaProductosInvalida_DeberiaRetornarError(IEnumerable<ProductoCompraDto>? productos)
+    public async Task EvaluarPromocionesAsync_ConListaProductosInvalida_DeberiaRetornarError(IEnumerable<DatosProductoPromocion>? productos)
     {
         // Arrange
         var clienteId = Guid.NewGuid();
@@ -99,14 +99,14 @@ public class CalculadoraPromocionesServiceTests
     public async Task CalcularMejorComboAsync_ConProductosCompatibles_DeberiaRetornarMejorCombinacion()
     {
         // Arrange
-        var productosCompra = new List<ProductoCompraDto>
+        var productosCompra = new List<DatosProductoPromocion>
         {
             new() { ProductoId = Guid.NewGuid(), Cantidad = 2, PrecioUnitario = 15.00m, Nombre = "Hamburguesa" },
             new() { ProductoId = Guid.NewGuid(), Cantidad = 2, PrecioUnitario = 5.00m, Nombre = "Papas Fritas" },
             new() { ProductoId = Guid.NewGuid(), Cantidad = 2, PrecioUnitario = 3.00m, Nombre = "Gaseosa" }
         };
 
-        var reglasCombo = new List<ReglaComboDto>
+        var reglasCombo = new List<ReglasComboPromocion>
         {
             new()
             {
@@ -128,12 +128,12 @@ public class CalculadoraPromocionesServiceTests
     public async Task CalcularMejorComboAsync_SinProductosSuficientes_DeberiaRetornarComboVacio()
     {
         // Arrange
-        var productosCompra = new List<ProductoCompraDto>
+        var productosCompra = new List<DatosProductoPromocion>
         {
             new() { ProductoId = Guid.NewGuid(), Cantidad = 1, PrecioUnitario = 15.00m, Nombre = "Hamburguesa" }
         };
 
-        var reglasCombo = new List<ReglaComboDto>
+        var reglasCombo = new List<ReglasComboPromocion>
         {
             new()
             {
@@ -230,7 +230,7 @@ public class CalculadoraPromocionesServiceTests
     {
         // Arrange
         var promocion = CrearPromocionMock(Guid.NewGuid(), "Test", tipo, valor);
-        var productosCompra = new List<ProductoCompraDto>
+        var productosCompra = new List<DatosProductoPromocion>
         {
             new() { ProductoId = Guid.NewGuid(), Cantidad = 1, PrecioUnitario = montoCompra }
         };
@@ -251,7 +251,7 @@ public class CalculadoraPromocionesServiceTests
     {
         // Arrange
         var promocion = CrearPromocionMock(Guid.NewGuid(), "2x1", TipoPromocion.ProductoGratis, 50m);
-        var productosCompra = new List<ProductoCompraDto>
+        var productosCompra = new List<DatosProductoPromocion>
         {
             new() { ProductoId = Guid.NewGuid(), Cantidad = 4, PrecioUnitario = 20.00m } // 4 productos, paga 2
         };
@@ -273,7 +273,7 @@ public class CalculadoraPromocionesServiceTests
         // Arrange
         var productogratiId = Guid.NewGuid();
         var promocion = CrearPromocionMock(Guid.NewGuid(), "Producto Gratis", TipoPromocion.ProductoGratis, 0m);
-        var productosCompra = new List<ProductoCompraDto>
+        var productosCompra = new List<DatosProductoPromocion>
         {
             new() { ProductoId = productogratiId, Cantidad = 1, PrecioUnitario = 25.00m }
         };
@@ -301,7 +301,7 @@ public class CalculadoraPromocionesServiceTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var historialCompras = new List<HistorialCompraDto>
+        var historialCompras = new List<DatosHistorialCompra>
         {
             new() { ProductoId = Guid.NewGuid(), Cantidad = 5, MontoTotal = 100.00m },
             new() { ProductoId = Guid.NewGuid(), Cantidad = 3, MontoTotal = 75.00m }
@@ -334,7 +334,7 @@ public class CalculadoraPromocionesServiceTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var historialCompras = new List<HistorialCompraDto>(); // Cliente nuevo
+        var historialCompras = new List<DatosHistorialCompra>(); // Cliente nuevo
 
         // Mock de métodos que pueden no existir
         // _promocionRepositoryMock
@@ -368,7 +368,7 @@ public class CalculadoraPromocionesServiceTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var productosCompra = new List<ProductoCompraDto>
+        var productosCompra = new List<DatosProductoPromocion>
         {
             new() { ProductoId = Guid.NewGuid(), Cantidad = 1, PrecioUnitario = 20.00m }
         };
@@ -405,7 +405,7 @@ public class CalculadoraPromocionesServiceTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        var productosCompra = new List<ProductoCompraDto>
+        var productosCompra = new List<DatosProductoPromocion>
         {
             new() { ProductoId = Guid.NewGuid(), Cantidad = 3, PrecioUnitario = 20.00m, Nombre = "Producto A" },
             new() { ProductoId = Guid.NewGuid(), Cantidad = 2, PrecioUnitario = 15.00m, Nombre = "Producto B" },

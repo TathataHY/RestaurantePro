@@ -16,35 +16,46 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda
         public Guid ComandaId { get; }
 
         /// <summary>
-        /// Datos de la personalización agregada
+        /// ID del ingrediente personalizado
         /// </summary>
-        public PersonalizacionItemDto Personalizacion { get; }
+        public Guid IngredienteId { get; }
+
+        /// <summary>
+        /// Nombre del ingrediente
+        /// </summary>
+        public string NombreIngrediente { get; }
+
+        /// <summary>
+        /// Acción de personalización
+        /// </summary>
+        public AccionPersonalizacion Accion { get; }
+
+        /// <summary>
+        /// Cantidad de la personalización
+        /// </summary>
+        public decimal Cantidad { get; }
+
+        /// <summary>
+        /// Precio adicional de la personalización
+        /// </summary>
+        public decimal PrecioAdicional { get; }
+
+        /// <summary>
+        /// ID del ingrediente de sustitución (si aplica)
+        /// </summary>
+        public Guid? IngredienteSustitucionId { get; }
+
+        /// <summary>
+        /// Nombre del ingrediente de sustitución (si aplica)
+        /// </summary>
+        public string? NombreIngredienteSustitucion { get; }
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public PersonalizacionAgregadaAItem(Guid itemId, Guid comandaId, PersonalizacionItemDto personalizacion)
-        {
-            ItemId = itemId;
-            ComandaId = comandaId;
-            Personalizacion = personalizacion;
-        }
-    }
-
-    /// <summary>
-    /// DTO para transferir datos de personalización en eventos
-    /// </summary>
-    public class PersonalizacionItemDto
-    {
-        public Guid IngredienteId { get; }
-        public string NombreIngrediente { get; }
-        public AccionPersonalizacion Accion { get; }
-        public decimal Cantidad { get; }
-        public decimal PrecioAdicional { get; }
-        public Guid? IngredienteSustitucionId { get; }
-        public string? NombreIngredienteSustitucion { get; }
-
-        public PersonalizacionItemDto(
+        public PersonalizacionAgregadaAItem(
+            Guid itemId, 
+            Guid comandaId, 
             Guid ingredienteId,
             string nombreIngrediente,
             AccionPersonalizacion accion,
@@ -53,6 +64,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda
             Guid? ingredienteSustitucionId = null,
             string? nombreIngredienteSustitucion = null)
         {
+            ItemId = itemId;
+            ComandaId = comandaId;
             IngredienteId = ingredienteId;
             NombreIngrediente = nombreIngrediente;
             Accion = accion;
@@ -60,22 +73,6 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Events.ItemComanda
             PrecioAdicional = precioAdicional;
             IngredienteSustitucionId = ingredienteSustitucionId;
             NombreIngredienteSustitucion = nombreIngredienteSustitucion;
-        }
-
-        /// <summary>
-        /// Crea un DTO a partir de un objeto PersonalizacionItem
-        /// </summary>
-        public static PersonalizacionItemDto FromPersonalizacionItem(PersonalizacionItem personalizacion)
-        {
-            return new PersonalizacionItemDto(
-                personalizacion.IngredienteId,
-                personalizacion.NombreIngrediente,
-                personalizacion.Accion,
-                personalizacion.Cantidad,
-                personalizacion.PrecioAdicional,
-                personalizacion.IngredienteSustitucionId,
-                personalizacion.NombreIngredienteSustitucion
-            );
         }
     }
 } 
