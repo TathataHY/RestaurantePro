@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
+namespace RestaurantePro.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class ChileInitialCreate : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,7 +30,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
                 name: "AspNetRoles",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsSystemRole = table.Column<bool>(type: "bit", nullable: false),
@@ -47,7 +47,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
                 name: "AspNetUsers",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Apellidos = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -223,6 +223,38 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
                 });
 
             migrationBuilder.CreateTable(
+                name: "Promociones",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Codigo = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Tipo = table.Column<int>(type: "int", nullable: false),
+                    ValorDescuento = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    MontoMinimo = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    PuntosRequeridos = table.Column<int>(type: "int", nullable: false),
+                    FechaInicio = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaFin = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    MaximoUsos = table.Column<int>(type: "int", nullable: true),
+                    VecesUsada = table.Column<int>(type: "int", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false),
+                    EsAcumulable = table.Column<bool>(type: "bit", nullable: false),
+                    DiasValidos = table.Column<int>(type: "int", nullable: true),
+                    Prioridad = table.Column<int>(type: "int", nullable: false),
+                    Condiciones = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaActualizacion = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EstaEliminado = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Promociones", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Proveedores",
                 schema: "Proveedores",
                 columns: table => new
@@ -330,7 +362,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Permission = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false)
@@ -352,7 +384,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
@@ -373,7 +405,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
@@ -395,7 +427,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
                     LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -412,8 +444,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
                 name: "AspNetUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     AssignedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
                     AssignedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ExpiresOn = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -440,7 +472,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
@@ -1435,6 +1467,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Migrations.Core
 
             migrationBuilder.DropTable(
                 name: "ProductoCategorias");
+
+            migrationBuilder.DropTable(
+                name: "Promociones");
 
             migrationBuilder.DropTable(
                 name: "ProveedorCategorias",
