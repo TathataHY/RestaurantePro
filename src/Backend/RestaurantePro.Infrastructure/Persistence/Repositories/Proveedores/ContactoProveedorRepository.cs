@@ -100,11 +100,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores
         }
 
         /// <summary>
-        /// Elimina un contacto
+        /// Elimina un contacto (soft delete)
         /// </summary>
         public override async Task EliminarAsync(ContactoProveedor entity, CancellationToken cancellationToken = default)
         {
-            _dbSet.Remove(entity);
+            entity.MarcarComoEliminado();
+            _dbContext.Entry(entity).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
     }

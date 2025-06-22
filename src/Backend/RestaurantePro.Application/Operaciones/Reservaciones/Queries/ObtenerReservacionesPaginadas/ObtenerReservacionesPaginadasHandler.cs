@@ -44,20 +44,23 @@ public class ObtenerReservacionesPaginadasHandler : IRequestHandler<ObtenerReser
             // Aplicar filtros
             query = AplicarFiltros(query, request);
 
-            // Aplicar ordenamiento
-            query = AplicarOrdenamiento(query, request);
-
-            // Contar total de registros
+            // Contar total de registros antes de ordenar
             var totalCount = await query.CountAsync(cancellationToken);
 
+            // Aplicar ordenamiento en memoria para evitar problemas con SQLite
+            var items = await query.ToListAsync(cancellationToken);
+            
+            // Ordenar en memoria
+            items = AplicarOrdenamientoEnMemoria(items, request);
+
             // Aplicar paginación
-            var items = await query
+            var itemsPaginados = items
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
-                .ToListAsync(cancellationToken);
+                .ToList();
 
             // Mapear a DTOs
-            var reservacionesDto = _mapper.Map<List<ReservacionDto>>(items);
+            var reservacionesDto = _mapper.Map<List<ReservacionDto>>(itemsPaginados);
 
             // Crear resultado paginado
             var resultado = new PaginatedList<ReservacionDto>(
@@ -104,13 +107,13 @@ public class ObtenerReservacionesPaginadasHandler : IRequestHandler<ObtenerReser
         // Filtro por fecha desde
         if (request.FechaDesde.HasValue)
         {
-            query = query.Where(r => r.FechaReservacion >= request.FechaDesde.Value);
+            query = query.Where(r => r.Fecha >= request.FechaDesde.Value.Date);
         }
 
         // Filtro por fecha hasta
         if (request.FechaHasta.HasValue)
         {
-            query = query.Where(r => r.FechaReservacion <= request.FechaHasta.Value);
+            query = query.Where(r => r.Fecha <= request.FechaHasta.Value.Date);
         }
 
         // Filtro por estado
@@ -139,8 +142,8 @@ public class ObtenerReservacionesPaginadasHandler : IRequestHandler<ObtenerReser
         return request.SortBy?.ToLower() switch
         {
             "fecha" => request.SortDirection == "desc" 
-                ? query.OrderByDescending(r => r.FechaReservacion)
-                : query.OrderBy(r => r.FechaReservacion),
+                ? query.OrderByDescending(r => r.Fecha).ThenByDescending(r => r.Hora.TotalMinutes)
+                : query.OrderBy(r => r.Fecha).ThenBy(r => r.Hora.TotalMinutes),
             "cliente" => request.SortDirection == "desc"
                 ? query.OrderByDescending(r => r.Cliente != null ? r.Cliente.Nombre.NombreCompleto : "")
                 : query.OrderBy(r => r.Cliente != null ? r.Cliente.Nombre.NombreCompleto : ""),
@@ -153,7 +156,30 @@ public class ObtenerReservacionesPaginadasHandler : IRequestHandler<ObtenerReser
             "personas" => request.SortDirection == "desc"
                 ? query.OrderByDescending(r => r.CantidadPersonas)
                 : query.OrderBy(r => r.CantidadPersonas),
-            _ => query.OrderByDescending(r => r.FechaReservacion) // Ordenamiento por defecto
+            _ => query.OrderByDescending(r => r.Fecha).ThenByDescending(r => r.Hora.TotalMinutes) // Ordenamiento por defecto
+        };
+    }
+
+    private List<Domain.Operaciones.Reservaciones.Entities.Reservacion> AplicarOrdenamientoEnMemoria(List<Domain.Operaciones.Reservaciones.Entities.Reservacion> items, ObtenerReservacionesPaginadasQuery request)
+    {
+        return request.SortBy?.ToLower() switch
+        {
+            "fecha" => request.SortDirection == "desc" 
+                ? items.OrderByDescending(r => r.Fecha).ThenByDescending(r => r.Hora.TotalMinutes).ToList()
+                : items.OrderBy(r => r.Fecha).ThenBy(r => r.Hora.TotalMinutes).ToList(),
+            "cliente" => request.SortDirection == "desc"
+                ? items.OrderByDescending(r => r.Cliente != null ? r.Cliente.Nombre.NombreCompleto : "").ToList()
+                : items.OrderBy(r => r.Cliente != null ? r.Cliente.Nombre.NombreCompleto : "").ToList(),
+            "mesa" => request.SortDirection == "desc"
+                ? items.OrderByDescending(r => r.Mesa != null ? r.Mesa.Numero : 0).ToList()
+                : items.OrderBy(r => r.Mesa != null ? r.Mesa.Numero : 0).ToList(),
+            "estado" => request.SortDirection == "desc"
+                ? items.OrderByDescending(r => r.Estado).ToList()
+                : items.OrderBy(r => r.Estado).ToList(),
+            "personas" => request.SortDirection == "desc"
+                ? items.OrderByDescending(r => r.CantidadPersonas).ToList()
+                : items.OrderBy(r => r.CantidadPersonas).ToList(),
+            _ => items.OrderByDescending(r => r.Fecha).ThenByDescending(r => r.Hora.TotalMinutes).ToList() // Ordenamiento por defecto
         };
     }
 } 

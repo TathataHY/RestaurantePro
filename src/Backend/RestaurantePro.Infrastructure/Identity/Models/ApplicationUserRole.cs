@@ -6,7 +6,7 @@ namespace RestaurantePro.Infrastructure.Identity.Models
     /// <summary>
     /// Modelo para la relación entre usuarios y roles con propiedades extendidas
     /// </summary>
-    public class ApplicationUserRole : IdentityUserRole<string>
+    public class ApplicationUserRole : IdentityUserRole<Guid>
     {
         /// <summary>
         /// Usuario asociado

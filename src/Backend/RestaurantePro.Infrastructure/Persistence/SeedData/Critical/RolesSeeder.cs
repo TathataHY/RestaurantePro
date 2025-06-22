@@ -205,12 +205,12 @@ public class RolesSeeder : ISeedData
     /// <summary>
     /// Genera un ID determinístico para el rol basado en el tipo de usuario
     /// </summary>
-    private static string GenerateRoleId(TipoUsuario tipoUsuario)
+    private static Guid GenerateRoleId(TipoUsuario tipoUsuario)
     {
         // Usar hash determinístico para IDs consistentes entre entornos
         var bytes = System.Text.Encoding.UTF8.GetBytes($"ROLE_{tipoUsuario}_{typeof(RolesSeeder).Assembly.GetName().Version}");
         var hash = System.Security.Cryptography.SHA256.HashData(bytes);
-        return new Guid(hash.Take(16).ToArray()).ToString();
+        return new Guid(hash.Take(16).ToArray());
     }
 
     /// <summary>

@@ -22,7 +22,6 @@ using System.Text.Encodings.Web;
 using Microsoft.Extensions.Options;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces;
 using RestaurantePro.Domain.Inventario.Services;
 using RestaurantePro.Domain.Proveedores.Interfaces;
@@ -31,23 +30,13 @@ using RestaurantePro.Domain.Core.SharedKernel.Validation;
 using RestaurantePro.Domain.Inventario.Policies;
 using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
 using RestaurantePro.Domain.Core.Notificaciones.Services;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 using RestaurantePro.Domain.Core.Usuarios.Services;
 using Microsoft.Data.Sqlite;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
-using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
-using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
-using RestaurantePro.Domain.Operaciones.Mesas.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
-using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
-using RestaurantePro.Domain.Core.Base.UnitOfWork;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
+using Microsoft.EntityFrameworkCore;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -113,6 +102,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IApplicationDbContext>(provider => 
                 provider.GetRequiredService<RestauranteProDbContext>());
 
+            // 🔧 REGISTRAR DBCONTEXT GENÉRICO PARA REPOSITORIOS
+            services.AddScoped<DbContext>(provider => 
+                provider.GetRequiredService<RestauranteProDbContext>());
+
             // 🔐 CONFIGURACIÓN DE AUTENTICACIÓN FAKE PARA TESTS
             services.AddAuthentication("Test")
                 .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
@@ -153,8 +146,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             
             // 📦 REGISTRAR REPOSITORIOS COMERCIAL
             services.AddScoped<IClienteRepository, ClienteRepository>();
-            services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
-            services.AddScoped<IFacturaRepository, FacturaRepository>();
             
             // 📦 REGISTRAR REPOSITORIOS INVENTARIO
             services.AddScoped<IOrdenCompraRepository>(provider => 
@@ -206,6 +197,12 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     provider.GetRequiredService<RestauranteProDbContext>(),
                     provider.GetRequiredService<ILogger<MesaRepository>>(),
                     provider.GetRequiredService<IDateTimeService>()));
+            
+            // 📦 REGISTRAR REPOSITORIOS DE COMANDAS
+            services.AddScoped<IComandaRepository>(provider => 
+                new ComandaRepository(
+                    provider.GetRequiredService<RestauranteProDbContext>(),
+                    provider.GetRequiredService<ILogger<ComandaRepository>>()));
             
             // 🏗️ REGISTRAR BUILDERS DE DOMAIN
             services.AddScoped<ProductoBuilder>();

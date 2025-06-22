@@ -33,18 +33,21 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
         public async Task<Result<string>> RegisterAsync(string nombre, string apellidos, string email, string username, string password, string rol)
         {
-            var existingUser = await _userManager.FindByEmailAsync(email);
-            if (existingUser != null)
+            // Validar email duplicado
+            var existingUserByEmail = await _userManager.FindByEmailAsync(email);
+            if (existingUserByEmail != null)
             {
                 return Result.Failure<string>(new List<string> { "El email ya está en uso" });
             }
 
-            existingUser = await _userManager.FindByNameAsync(username);
-            if (existingUser != null)
+            // Validar username duplicado
+            var existingUserByUsername = await _userManager.FindByNameAsync(username);
+            if (existingUserByUsername != null)
             {
                 return Result.Failure<string>(new List<string> { "El nombre de usuario ya está en uso" });
             }
 
+            // Validar que el rol existe
             if (!await _roleManager.RoleExistsAsync(rol))
             {
                 return Result.Failure<string>(new List<string> { $"El rol '{rol}' no existe" });
@@ -75,7 +78,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 return Result.Failure<string>(result.GetErrors().ToList());
             }
 
-            return Result.Success(user.Id);
+            return Result.Success<string>(user.Id.ToString());
         }
 
         public async Task<Result> CreateRoleAsync(string roleName, string description, bool isSystemRole)
@@ -99,7 +102,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
         public async Task<Result> AddUserToRoleAsync(string userId, string roleName)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            if (!Guid.TryParse(userId, out var userGuid))
+            {
+                return Result.Failure(new List<string> { "ID de usuario inválido." });
+            }
+
+            var user = await _userManager.FindByIdAsync(userGuid.ToString());
             if (user == null)
             {
                 return Result.Failure(new List<string> { "Usuario no encontrado." });
@@ -117,7 +125,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
         public async Task<Result> RemoveUserFromRoleAsync(string userId, string roleName)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            if (!Guid.TryParse(userId, out var userGuid))
+            {
+                return Result.Failure(new List<string> { "ID de usuario inválido." });
+            }
+
+            var user = await _userManager.FindByIdAsync(userGuid.ToString());
             if (user == null)
             {
                 return Result.Failure(new List<string> { "Usuario no encontrado." });
@@ -143,7 +156,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 RefreshToken = ""
             };
             var result = await _userManager.CreateAsync(user, password);
-            return (result.ToResult(), user.Id);
+            return (result.ToResult(), user.Id.ToString());
         }
 
         public async Task<AuthResponse> LoginAsync(string email, string password)
@@ -171,12 +184,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             }
 
             var roles = await _userManager.GetRolesAsync(user);
-            var tokenResponse = _jwtTokenService.GenerateToken(user.Id, user.UserName, user.Email, roles);
+            var tokenResponse = _jwtTokenService.GenerateToken(user.Id.ToString(), user.UserName, user.Email, roles);
             
             return Result.Success(new AuthResponse
             {
                 Success = true,
-                UserId = user.Id,
+                UserId = user.Id.ToString(),
                 UserName = user.UserName,
                 Token = tokenResponse.AccessToken,
                 Expiration = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn),
@@ -192,7 +205,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
         
         public async Task<Result> UpdateUserAsync(string id, string nombre, string apellidos, string email, string username)
         {
-            var user = await _userManager.FindByIdAsync(id);
+            if (!Guid.TryParse(id, out var userGuid))
+            {
+                return Result.Failure("ID de usuario inválido");
+            }
+
+            var user = await _userManager.FindByIdAsync(userGuid.ToString());
             if (user == null) return Result.Failure("Usuario no encontrado");
 
             user.Nombre = nombre;
@@ -206,7 +224,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
         public async Task<Result> DeleteUserAsync(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            if (!Guid.TryParse(userId, out var userGuid))
+            {
+                return Result.Failure("ID de usuario inválido");
+            }
+
+            var user = await _userManager.FindByIdAsync(userGuid.ToString());
             if (user == null) return Result.Failure("Usuario no encontrado");
 
             var result = await _userManager.DeleteAsync(user);
@@ -215,7 +238,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
         public async Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            if (!Guid.TryParse(userId, out var userGuid))
+            {
+                return Result.Failure("ID de usuario inválido");
+            }
+
+            var user = await _userManager.FindByIdAsync(userGuid.ToString());
             if (user == null) return Result.Failure("Usuario no encontrado");
 
             var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
@@ -224,16 +252,21 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
         public async Task<UserDto> GetUserByIdAsync(string userId)
         {
+            if (!Guid.TryParse(userId, out var userGuid))
+            {
+                return null;
+            }
+
             var user = await _userManager.Users
                 .Include(u => u.UserRoles)
                 .ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u => u.Id == userId);
+                .FirstOrDefaultAsync(u => u.Id == userGuid);
 
             if (user == null) return null;
 
             return new UserDto
             {
-                Id = user.Id,
+                Id = user.Id.ToString(),
                 UserName = user.UserName,
                 Email = user.Email,
                 Roles = user.UserRoles.Select(ur => ur.Role.Name).ToList()
@@ -245,7 +278,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             return await _userManager.Users
                 .Select(user => new UserDto
                 {
-                    Id = user.Id,
+                    Id = user.Id.ToString(),
                     UserName = user.UserName,
                     Email = user.Email,
                     Roles = user.UserRoles.Select(ur => ur.Role.Name).ToList()

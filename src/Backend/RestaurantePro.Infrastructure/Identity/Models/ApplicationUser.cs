@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace RestaurantePro.Infrastructure.Identity.Models
 {
-    public class ApplicationUser : IdentityUser
+    public class ApplicationUser : IdentityUser<Guid>
     {
         public string Nombre { get; set; }
         public string Apellidos { get; set; }

@@ -17,7 +17,7 @@ using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 
 namespace RestaurantePro.Infrastructure.Persistence.Contexts
 {
-    public class RestauranteProDbContext : IdentityDbContext<IdentityApplicationUser, ApplicationRole, string, IdentityUserClaim<string>, ApplicationUserRole, IdentityUserLogin<string>, IdentityRoleClaim<string>, IdentityUserToken<string>>,
+    public class RestauranteProDbContext : IdentityDbContext<IdentityApplicationUser, ApplicationRole, Guid, IdentityUserClaim<Guid>, ApplicationUserRole, IdentityUserLogin<Guid>, IdentityRoleClaim<Guid>, IdentityUserToken<Guid>>,
         IApplicationDbContext
     {
         private readonly ILogger<RestauranteProDbContext> _logger;

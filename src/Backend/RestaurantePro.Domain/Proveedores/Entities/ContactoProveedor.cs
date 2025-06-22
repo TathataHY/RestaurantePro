@@ -100,5 +100,14 @@ namespace RestaurantePro.Domain.Proveedores.Entities
             Email = emailVO;
             MarkAsModified();
         }
+
+        /// <summary>
+        /// Marca el contacto como eliminado (soft delete)
+        /// </summary>
+        public void MarcarComoEliminado()
+        {
+            EstaEliminado = true;
+            MarkAsModified();
+        }
     }
 } 

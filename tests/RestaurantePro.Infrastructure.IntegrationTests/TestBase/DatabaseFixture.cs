@@ -13,9 +13,9 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase;
 public class DatabaseFixture : IDisposable
 {
     private SqliteConnection? _connection;
-    private RestauranteProDbContext? _dbContext;
+    private TestRestauranteProDbContext? _dbContext;
 
-    public RestauranteProDbContext CreateDbContext()
+    public TestRestauranteProDbContext CreateDbContext()
     {
         // Crear una conexión SQLite in-memory única para cada test
         _connection = new SqliteConnection($"DataSource=test_{Guid.NewGuid()}.db;Mode=Memory;Cache=Shared");
@@ -29,7 +29,7 @@ public class DatabaseFixture : IDisposable
         var logger = Substitute.For<ILogger<RestauranteProDbContext>>();
         var dispatcher = Substitute.For<IDomainEventDispatcher>();
 
-        _dbContext = new RestauranteProDbContext(options, logger, dispatcher);
+        _dbContext = new TestRestauranteProDbContext(options);
         _dbContext.Database.EnsureCreated();
         
         return _dbContext;

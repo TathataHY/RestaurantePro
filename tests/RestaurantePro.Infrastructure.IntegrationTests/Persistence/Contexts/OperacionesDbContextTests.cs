@@ -33,7 +33,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Contexts
             await DbContext.SaveChangesAsync();
         }
 
-        public Task DisposeAsync() => Task.CompletedTask;
+        public override Task DisposeAsync() => Task.CompletedTask;
 
 
         [Fact]

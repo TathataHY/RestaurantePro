@@ -12,6 +12,27 @@ using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Core;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
+using RestaurantePro.Domain.Core.Productos.Interfaces;
+using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
+using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Interfaces;
+using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
+using RestaurantePro.Domain.Proveedores.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Inventario;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores;
+using RestaurantePro.Infrastructure.Identity.Services;
+using RestaurantePro.Infrastructure.Monitoring.HealthChecks;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
+using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using RestaurantePro.Infrastructure.Identity.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using RestaurantePro.Infrastructure.Identity.Configuration;
 
 namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase;
 
@@ -23,7 +44,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase;
     public abstract class IntegrationTestBase : IAsyncLifetime
     {
         protected readonly DatabaseFixture _fixture;
-    protected RestauranteProDbContext DbContext = null!;
+    protected TestRestauranteProDbContext DbContext = null!;
     protected IServiceProvider ServiceProvider = null!;
 
         protected IntegrationTestBase(DatabaseFixture fixture)
@@ -46,6 +67,10 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase;
     {
         // Registrar el contexto de base de datos único para este test
         services.AddScoped(provider => DbContext);
+        // Registrar el contexto de test como todos los tipos base
+        services.AddScoped<TestRestauranteProDbContext>(provider => DbContext);
+        services.AddScoped<RestauranteProDbContext>(provider => DbContext);
+        services.AddScoped<DbContext>(provider => DbContext);
         
         // Registrar interceptores
         services.AddScoped<AuditableEntityInterceptor>();
@@ -55,16 +80,82 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase;
         services.AddScoped<IDomainEventDispatcher>(provider => 
             Substitute.For<IDomainEventDispatcher>());
 
-        // Repositorios Core
+        // 🔧 REGISTRAR UNIT OF WORK
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        // 🔧 REPOSITORIOS CORE
         services.AddScoped<IUsuarioRepository, UsuarioRepository>();
         services.AddScoped<INotificacionRepository, NotificacionRepository>();
-        // Repositorios Comercial
-            services.AddScoped<IClienteRepository, ClienteRepository>();
+        services.AddScoped<IProductoRepository, ProductoRepository>();
+        services.AddScoped<IProductoCategoriaRepository, ProductoCategoriaRepository>();
+        
+        // 🔧 REPOSITORIOS COMERCIAL
+        services.AddScoped<IClienteRepository, ClienteRepository>();
+        services.AddScoped<IFacturaRepository, FacturaRepository>();
+        services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
+        services.AddScoped<IPromocionRepository, PromocionRepository>();
+        
+        // 🔧 REPOSITORIOS OPERACIONES
+        services.AddScoped<IComandaRepository, ComandaRepository>();
+        services.AddScoped<IReservacionRepository, ReservacionRepository>();
+        services.AddScoped<IPreparacionRepository, PreparacionRepository>();
+        services.AddScoped<IMesaRepository, MesaRepository>();
+        
+        // 🔧 REPOSITORIOS INVENTARIO
+        services.AddScoped<IIngredienteRepository, IngredienteRepository>();
+        services.AddScoped<IOrdenCompraRepository, OrdenCompraRepository>();
+        
+        // 🔧 REPOSITORIOS PROVEEDORES
+        services.AddScoped<IProveedorRepository, ProveedorRepository>();
+        services.AddScoped<RestaurantePro.Domain.Proveedores.Interfaces.IContactoProveedorRepository, RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores.ContactoProveedorRepository>();
+        
+        // 🔧 CONFIGURACIÓN DE IDENTITY REAL
+        services.AddIdentity<IdentityApplicationUser, ApplicationRole>(options =>
+        {
+            // Configuración de contraseñas
+            options.Password.RequireDigit = true;
+            options.Password.RequireLowercase = true;
+            options.Password.RequireUppercase = true;
+            options.Password.RequireNonAlphanumeric = true;
+            options.Password.RequiredLength = 8;
+            options.Password.RequiredUniqueChars = 1;
+
+            // Configuración de usuario
+            options.User.RequireUniqueEmail = true;
+        })
+        .AddEntityFrameworkStores<TestRestauranteProDbContext>()
+        .AddDefaultTokenProviders();
+
+        // 🔧 CONFIGURACIÓN DE JWT PARA TESTS
+        services.Configure<RestaurantePro.Infrastructure.Identity.Configuration.JwtConfiguration>(options =>
+        {
+            options.Secret = "TestSecretKeyForJwtTokenGenerationInIntegrationTests123456789";
+            options.Issuer = "RestaurantePro.Test";
+            options.Audience = "RestaurantePro.Test";
+            options.ExpirationInMinutes = 60;
+            options.RefreshTokenExpirationInDays = 7;
+        });
+
+        // 🔧 SERVICIOS DE IDENTITY REALES
+        services.AddScoped<IIdentityService, RestaurantePro.Infrastructure.Identity.Services.IdentityService>();
+        services.AddScoped<IJwtTokenService, RestaurantePro.Infrastructure.Identity.Services.JwtTokenService>();
+        services.AddScoped<IUserPermissionService, RestaurantePro.Infrastructure.Identity.Services.PermissionService>();
+        
+        // 🔧 SERVICIOS DE MONITORING
+        services.AddScoped<RestaurantePro.Infrastructure.Monitoring.HealthChecks.DatabaseHealthCheck>();
+        
         // Servicios de dominio y utilidades
         services.AddScoped<IDateTimeService, FakeDateTimeService>();
-        services.AddScoped<IIdentityService, FakeIdentityService>();
-        services.AddScoped<IJwtTokenService, FakeJwtTokenService>();
-        services.AddScoped<IUserPermissionService, FakeUserPermissionService>();
+        
+        // Registrar loggers necesarios para los repositorios
+        services.AddLogging(builder =>
+        {
+            builder.AddConsole();
+            builder.SetMinimumLevel(LogLevel.Debug);
+        });
+
+        // 🔧 SEED DATA
+        services.AddScoped<RestaurantePro.Infrastructure.Persistence.SeedData.Extensions.SeedDataRunner>();
     }
 
     /// <summary>
@@ -74,85 +165,93 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase;
     {
         try
         {
-            // 1. Limpiar entidades hijas primero (más dependientes)
-            DbContext.ItemsComanda.RemoveRange(DbContext.ItemsComanda);
-            DbContext.MovimientosInventario.RemoveRange(DbContext.MovimientosInventario);
-            DbContext.Notificaciones.RemoveRange(DbContext.Notificaciones);
-            await DbContext.SaveChangesAsync();
-
-            // 2. Limpiar entidades intermedias
-            DbContext.Comandas.RemoveRange(DbContext.Comandas);
-            DbContext.Reservaciones.RemoveRange(DbContext.Reservaciones);
-            DbContext.Preparaciones.RemoveRange(DbContext.Preparaciones);
-            DbContext.Facturas.RemoveRange(DbContext.Facturas);
-            DbContext.TarjetasFidelizacion.RemoveRange(DbContext.TarjetasFidelizacion);
-            DbContext.Promociones.RemoveRange(DbContext.Promociones);
-            DbContext.OrdenesCompra.RemoveRange(DbContext.OrdenesCompra);
-            DbContext.ContactosProveedor.RemoveRange(DbContext.ContactosProveedor);
-            await DbContext.SaveChangesAsync();
-
-            // 3. Limpiar entidades principales (menos dependientes)
-            DbContext.Mesas.RemoveRange(DbContext.Mesas);
-            DbContext.Clientes.RemoveRange(DbContext.Clientes);
-            DbContext.Proveedores.RemoveRange(DbContext.Proveedores);
-            DbContext.Ingredientes.RemoveRange(DbContext.Ingredientes);
-            DbContext.Productos.RemoveRange(DbContext.Productos);
-            DbContext.Usuarios.RemoveRange(DbContext.Usuarios);
-            DbContext.ProductoCategorias.RemoveRange(DbContext.ProductoCategorias);
-            await DbContext.SaveChangesAsync();
+            // Método principal: Recrear la base de datos completa
+            // Esto es más rápido y confiable que intentar limpiar tablas una por una
+            await DbContext.Database.EnsureDeletedAsync();
+            await DbContext.Database.EnsureCreatedAsync();
+            
+            Console.WriteLine("✅ Base de datos recreada exitosamente");
         }
         catch (Exception ex)
         {
-            // Si hay error, intentar limpiar de forma más agresiva
-            await CleanupDatabaseAggressively();
+            Console.WriteLine($"❌ Error al recrear base de datos: {ex.Message}");
+            
+            // Fallback: Intentar limpieza manual si la recreación falla
+            try
+            {
+                await CleanupDatabaseManually();
+            }
+            catch (Exception cleanupEx)
+            {
+                Console.WriteLine($"❌ Error en limpieza manual: {cleanupEx.Message}");
+                // Si ambos métodos fallan, no hacer nada más
+                // Los tests continuarán con el estado actual de la BD
+            }
         }
     }
 
-    /// <summary>
-    /// Método de limpieza agresiva cuando el método normal falla
-    /// </summary>
-    private async Task CleanupDatabaseAggressively()
+    private async Task CleanupDatabaseManually()
     {
-        try
-        {
-            // Deshabilitar temporalmente las restricciones de clave foránea
-            await DbContext.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=OFF");
-            
-            // Limpiar todas las tablas en cualquier orden
-            var entityTypes = DbContext.Model.GetEntityTypes();
-            foreach (var entityType in entityTypes)
-            {
-                var tableName = entityType.GetTableName();
-                if (!string.IsNullOrEmpty(tableName))
-                {
-                    await DbContext.Database.ExecuteSqlRawAsync($"DELETE FROM \"{tableName}\"");
-                }
-            }
-            
-            // Rehabilitar las restricciones
-            await DbContext.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=ON");
-        }
-        catch (Exception ex)
-        {
-            // Si todo falla, al menos intentar limpiar las tablas principales
-            try
-            {
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM \"Usuarios\"");
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM \"Productos\"");
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM \"Clientes\"");
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM \"Mesas\"");
-            }
-            catch
-            {
-                // Si incluso esto falla, no hacer nada más
-            }
-        }
+        // Solo usar este método como fallback
+        // Limpiar en orden de dependencia (hijos primero, padres después)
+        
+        // 1. Limpiar entidades hijas (más dependientes)
+        DbContext.ItemsComanda.RemoveRange(DbContext.ItemsComanda);
+        DbContext.MovimientosInventario.RemoveRange(DbContext.MovimientosInventario);
+        DbContext.Notificaciones.RemoveRange(DbContext.Notificaciones);
+        await DbContext.SaveChangesAsync();
+        
+        // 2. Limpiar entidades intermedias
+        DbContext.Comandas.RemoveRange(DbContext.Comandas);
+        DbContext.Reservaciones.RemoveRange(DbContext.Reservaciones);
+        DbContext.Preparaciones.RemoveRange(DbContext.Preparaciones);
+        DbContext.Facturas.RemoveRange(DbContext.Facturas);
+        DbContext.TarjetasFidelizacion.RemoveRange(DbContext.TarjetasFidelizacion);
+        DbContext.Promociones.RemoveRange(DbContext.Promociones);
+        DbContext.OrdenesCompra.RemoveRange(DbContext.OrdenesCompra);
+        DbContext.ContactosProveedor.RemoveRange(DbContext.ContactosProveedor);
+        await DbContext.SaveChangesAsync();
+        
+        // 3. Limpiar entidades principales
+        DbContext.Mesas.RemoveRange(DbContext.Mesas);
+        DbContext.Clientes.RemoveRange(DbContext.Clientes);
+        DbContext.Proveedores.RemoveRange(DbContext.Proveedores);
+        DbContext.Ingredientes.RemoveRange(DbContext.Ingredientes);
+        DbContext.Productos.RemoveRange(DbContext.Productos);
+        DbContext.Usuarios.RemoveRange(DbContext.Usuarios);
+        DbContext.ProductoCategorias.RemoveRange(DbContext.ProductoCategorias);
+        await DbContext.SaveChangesAsync();
+        
+        // 4. Limpiar entidades de Identity (al final)
+        DbContext.Set<ApplicationRole>().RemoveRange(DbContext.Set<ApplicationRole>());
+        DbContext.Set<IdentityApplicationUser>().RemoveRange(DbContext.Set<IdentityApplicationUser>());
+        await DbContext.SaveChangesAsync();
+        
+        Console.WriteLine("✅ Limpieza manual completada");
     }
 
     public virtual async Task DisposeAsync()
     {
-        await ResetDatabaseAsync();
-        DbContext?.Dispose();
+        try
+        {
+            // Intentar limpiar la base de datos
+            await ResetDatabaseAsync();
+        }
+        catch (Exception ex)
+        {
+            // Capturar cualquier error durante la limpieza y solo loguearlo
+            // No permitir que errores de limpieza afecten el resultado de los tests
+            Console.WriteLine($"⚠️ Advertencia: Error durante limpieza de BD: {ex.Message}");
+        }
+        finally
+        {
+            // Siempre liberar recursos del contexto
+            try
+            {
+                DbContext?.Dispose();
+            }
+            catch { }
+        }
     }
 }
 
@@ -208,4 +307,21 @@ public class FakeUserPermissionService : IUserPermissionService
     public Task<bool> PuedeSupervisarAsync(Guid supervisorId, Guid subordinadoId) => Task.FromResult(true);
     public Task<List<Guid>> ObtenerUsuariosMismoDepartamentoAsync(Guid usuarioId) => Task.FromResult(new List<Guid>());
     public Task<bool> EsAdministradorAsync(Guid usuarioId) => Task.FromResult(true);
-} 
+}
+
+public class FakeUserManager : Microsoft.AspNetCore.Identity.UserManager<RestaurantePro.Infrastructure.Identity.Models.ApplicationUser>
+{
+    public FakeUserManager() : base(
+        Substitute.For<Microsoft.AspNetCore.Identity.IUserStore<RestaurantePro.Infrastructure.Identity.Models.ApplicationUser>>(),
+        null, null, null, null, null, null, null, null)
+    { }
+}
+
+// Si tienes un DbContext de test, agrega este método para entidades de prueba y keyless:
+// protected override void OnModelCreating(ModelBuilder modelBuilder)
+// {
+//     base.OnModelCreating(modelBuilder);
+//     modelBuilder.Entity<RestaurantePro.Domain.Core.Base.Events.DomainEvent>().HasNoKey();
+//     modelBuilder.Entity<TestEntity>();
+//     modelBuilder.Entity<NonAuditableTestEntity>();
+// } 

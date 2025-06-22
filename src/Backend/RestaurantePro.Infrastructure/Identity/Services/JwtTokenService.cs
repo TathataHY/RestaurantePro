@@ -63,7 +63,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
         // Método interno para usar con IdentityApplicationUser
         internal JwtTokenResponse GenerateToken(IdentityApplicationUser user, IList<string> roles)
         {
-            return GenerateToken(user.Id, user.UserName, user.Email, roles);
+            return GenerateToken(user.Id.ToString(), user.UserName, user.Email, roles);
         }
 
         public string GenerateRefreshToken()

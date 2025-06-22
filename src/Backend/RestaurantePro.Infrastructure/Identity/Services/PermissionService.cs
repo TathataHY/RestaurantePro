@@ -154,7 +154,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
         // Métodos internos para gestión de roles y permisos
         public async Task<Result<List<RoleDto>>> GetRolesAsync()
         {
-            var roles = await Task.FromResult(_roleManager.Roles.ToList());
+            var roles = await _roleManager.Roles.ToListAsync();
             var roleDtos = new List<RoleDto>();
 
             foreach (var role in roles)
@@ -167,7 +167,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
                 roleDtos.Add(new RoleDto
                 {
-                    Id = role.Id,
+                    Id = role.Id.ToString(),
                     Name = role.Name,
                     Permissions = permissions
                 });
@@ -178,7 +178,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
         public async Task<Result<RoleDto>> GetRoleByIdAsync(string id)
         {
-            var role = await _roleManager.FindByIdAsync(id);
+            if (!Guid.TryParse(id, out var roleId))
+            {
+                return Result.Failure<RoleDto>(new List<string> { "ID de rol inválido" });
+            }
+
+            var role = await _roleManager.FindByIdAsync(roleId.ToString());
             if (role == null)
             {
                 return Result.Failure<RoleDto>(new List<string> { "Rol no encontrado" });
@@ -192,7 +197,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
             var roleDto = new RoleDto
             {
-                Id = role.Id,
+                Id = role.Id.ToString(),
                 Name = role.Name,
                 Permissions = permissions
             };
@@ -220,12 +225,17 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 await _roleManager.AddClaimAsync(role, new Claim(CustomClaimTypes.Permission, permission));
             }
 
-            return Result.Success<string>(role.Id);
+            return Result.Success<string>(role.Id.ToString());
         }
 
         public async Task<Result> UpdateRoleAsync(string roleId, string roleName, List<string> permissions)
         {
-            var role = await _roleManager.FindByIdAsync(roleId);
+            if (!Guid.TryParse(roleId, out var guidRoleId))
+            {
+                return Result.Failure(new List<string> { "ID de rol inválido" });
+            }
+
+            var role = await _roleManager.FindByIdAsync(guidRoleId.ToString());
             if (role == null)
             {
                 return Result.Failure(new List<string> { "Rol no encontrado" });
@@ -259,7 +269,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
         public async Task<Result> DeleteRoleAsync(string id)
         {
-            var role = await _roleManager.FindByIdAsync(id);
+            if (!Guid.TryParse(id, out var roleId))
+            {
+                return Result.Failure(new List<string> { "ID de rol inválido" });
+            }
+
+            var role = await _roleManager.FindByIdAsync(roleId.ToString());
             if (role == null)
             {
                 return Result.Failure(new List<string> { "Rol no encontrado" });
@@ -284,7 +299,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
         public async Task<Result<List<string>>> GetUserPermissionsAsync(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            if (!Guid.TryParse(userId, out var userGuid))
+            {
+                return Result.Failure<List<string>>(new List<string> { "ID de usuario inválido" });
+            }
+
+            var user = await _userManager.FindByIdAsync(userGuid.ToString());
             if (user == null)
             {
                 return Result.Failure<List<string>>(new List<string> { "Usuario no encontrado" });
@@ -310,7 +330,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
         public async Task<Result> AddUserToRoleAsync(string userId, string roleName)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            if (!Guid.TryParse(userId, out var userGuid))
+            {
+                return Result.Failure(new List<string> { "ID de usuario inválido" });
+            }
+
+            var user = await _userManager.FindByIdAsync(userGuid.ToString());
             if (user == null)
             {
                 return Result.Failure(new List<string> { "Usuario no encontrado" });
@@ -333,7 +358,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
         public async Task<Result> RemoveUserFromRoleAsync(string userId, string roleName)
         {
-            var user = await _userManager.FindByIdAsync(userId);
+            if (!Guid.TryParse(userId, out var userGuid))
+            {
+                return Result.Failure(new List<string> { "ID de usuario inválido" });
+            }
+
+            var user = await _userManager.FindByIdAsync(userGuid.ToString());
             if (user == null)
             {
                 return Result.Failure(new List<string> { "Usuario no encontrado" });

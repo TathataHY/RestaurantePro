@@ -30,7 +30,6 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
 
         public override Task DisposeAsync()
         {
-            // La limpieza se maneja en el Dispose de la clase base
             return base.DisposeAsync();
         }
 

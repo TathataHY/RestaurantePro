@@ -7,7 +7,7 @@ namespace RestaurantePro.Infrastructure.Identity.Models
     /// <summary>
     /// Modelo de rol para Identity con propiedades extendidas
     /// </summary>
-    public class ApplicationRole : IdentityRole
+    public class ApplicationRole : IdentityRole<Guid>
     {
         public ApplicationRole() : base()
         {

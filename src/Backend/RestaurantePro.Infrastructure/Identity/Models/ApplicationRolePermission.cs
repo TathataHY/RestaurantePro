@@ -15,7 +15,7 @@ namespace RestaurantePro.Infrastructure.Identity.Models
         /// <summary>
         /// ID del rol
         /// </summary>
-        public string RoleId { get; set; }
+        public Guid RoleId { get; set; }
 
         /// <summary>
         /// Rol asociado
