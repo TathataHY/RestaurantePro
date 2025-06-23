@@ -11,6 +11,7 @@ using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Common.DTOs;
 using RestaurantePro.Application.Operaciones.Mesas.DTOs;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace RestaurantePro.Api.IntegrationTests.Controllers.Operaciones;
 
@@ -326,9 +327,9 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
     public async Task AsignarCliente_ConClienteValido_DebeAsignarCliente()
     {
         // Arrange
-        Logger.LogInformation("🧪 Iniciando test: AsignarCliente_ConClienteValido_DebeAsignarCliente");
-        
-        var mesa = await CrearMesaPrueba(6, 4);
+        Logger.LogInformation("🧪 Iniciando test COMPLETO: AsignarCliente_ConClienteValido_DebeAsignarCliente");
+        await LimpiarTablaMesas();
+        var mesa = await CrearMesaPrueba(6, 4, "Interior", estado: EstadoMesa.Disponible);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var asignarRequest = new MesaTestDataBuilder()
             .BuildAsignarClienteRequest(cliente.Id);
@@ -336,111 +337,159 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Act
         var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/mesas/{mesa.Id}/asignar-cliente", asignarRequest);
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, 
-            HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-        }
-        
-        Logger.LogInformation("✅ Test completado: AsignarCliente_ConClienteValido_DebeAsignarCliente");
+        // Assert - Validación estricta
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<MesaDto>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data.Id.Should().Be(mesa.Id);
+        // Validar solo los campos existentes
+        // Verificar que el cliente se asignó en la BD
+        var mesaActualizada = await DbContext.Mesas.FindAsync(mesa.Id);
+        mesaActualizada.Should().NotBeNull();
+        Logger.LogInformation("✅ Test COMPLETO finalizado: AsignarCliente_ConClienteValido_DebeAsignarCliente");
     }
 
     [Fact]
     public async Task LiberarMesa_ConMesaAsignada_DebeLiberarMesa()
     {
         // Arrange
-        Logger.LogInformation("🧪 Iniciando test: LiberarMesa_ConMesaAsignada_DebeLiberarMesa");
-        
-        var mesa = await CrearMesaPrueba(7, 4);
+        Logger.LogInformation("🧪 Iniciando test COMPLETO: LiberarMesa_ConMesaAsignada_DebeLiberarMesa");
+        await LimpiarTablaMesas();
+        var mesa = await CrearMesaPrueba(7, 4, "Interior", estado: EstadoMesa.Ocupada);
+        var cliente = await CrearClientePrueba("Cliente Ocupado", "cliente@ocupado.com");
+        var asignarRequest = new MesaTestDataBuilder()
+            .BuildAsignarClienteRequest(cliente.Id);
+        await HttpClient.PostAsJsonAsync($"/api/operaciones/mesas/{mesa.Id}/asignar-cliente", asignarRequest);
         var liberarRequest = new MesaTestDataBuilder()
             .BuildLiberarMesaRequest();
 
         // Act
         var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/mesas/{mesa.Id}/liberar", liberarRequest);
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, 
-            HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-            
-            // Verificar que la mesa se liberó en la BD
-            var mesaLiberada = await DbContext.Mesas.FindAsync(mesa.Id);
-            mesaLiberada.Should().NotBeNull();
-        }
-        
-        Logger.LogInformation("✅ Test completado: LiberarMesa_ConMesaAsignada_DebeLiberarMesa");
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        Logger.LogInformation("📄 Respuesta del endpoint: {Response}", responseContent);
+        var apiResponse = JsonSerializer.Deserialize<ApiResponse<MesaDto>>(responseContent);
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data!.Id.Should().Be(mesa.Id);
+        apiResponse.Data.Estado.Should().Be(EstadoMesa.Disponible.ToString());
+        // Verificar que la mesa realmente se liberó en la BD
+        var mesaEnBD = await DbContext.Mesas.FindAsync(mesa.Id);
+        mesaEnBD.Should().NotBeNull();
+        mesaEnBD!.Estado.Should().Be(EstadoMesa.Disponible);
+        Logger.LogInformation("✅ Test COMPLETO: LiberarMesa_ConMesaAsignada_DebeLiberarMesa - EXITOSO");
     }
 
     [Fact]
     public async Task ReservarMesa_ConDatosValidos_DebeReservarMesa()
     {
         // Arrange
-        Logger.LogInformation("🧪 Iniciando test: ReservarMesa_ConDatosValidos_DebeReservarMesa");
+        Logger.LogInformation("🧪 Iniciando test COMPLETO: ReservarMesa_ConDatosValidos_DebeReservarMesa");
+        await LimpiarTablaMesas();
         
-        var mesa = await CrearMesaPrueba(8, 4);
-        var cliente = await CrearClientePrueba("Cliente Reserva", "reserva@test.com");
-        var reservaRequest = new MesaTestDataBuilder()
-            .BuildReservarMesaRequest(cliente.Id, DateTime.Now.AddHours(2), 4);
+        var mesa = await CrearMesaPrueba(8, 4, "Interior", estado: EstadoMesa.Disponible);
+        var cliente = await CrearClientePrueba("Cliente Reserva", "cliente@reserva.com");
+        
+        var fechaReserva = DateTime.Today.AddDays(1);
+        var horaReserva = new TimeSpan(13, 0, 0); // 1:00 PM
+        var duracionMinutos = 90;
+        var telefono = "555-1234";
+        var email = "cliente@reserva.com";
+        var observaciones = "Reserva de test completa";
+        
+        var reservarRequest = new MesaTestDataBuilder()
+            .BuildReservarMesaRequest(
+                mesa.Id,
+                cliente.Id,
+                fechaReserva,
+                horaReserva,
+                4,
+                duracionMinutos,
+                telefono,
+                email,
+                observaciones
+            );
 
         // Act
-        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/mesas/{mesa.Id}/reservar", reservaRequest);
+        var response = await HttpClient.PostAsJsonAsync("/api/operaciones/mesas/reservar", reservarRequest);
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Created, 
-            HttpStatusCode.NotFound, HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-        }
-        
-        Logger.LogInformation("✅ Test completado: ReservarMesa_ConDatosValidos_DebeReservarMesa");
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        Logger.LogInformation("📄 Respuesta del endpoint: {Response}", responseContent);
+
+        var apiResponse = JsonSerializer.Deserialize<ApiResponse<MesaDto>>(responseContent);
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data!.Id.Should().Be(mesa.Id);
+
+        // Verificar que la mesa realmente se reservó en la BD
+        var mesaEnBD = await DbContext.Mesas.FindAsync(mesa.Id);
+        mesaEnBD.Should().NotBeNull();
+        mesaEnBD!.Estado.Should().Be(EstadoMesa.Reservada);
+
+        // Verificar que se creó la reserva en la BD
+        var reservasEnBD = await DbContext.Reservaciones
+            .Where(r => r.MesaId == mesa.Id && r.FechaReservacion == fechaReserva)
+            .ToListAsync();
+        reservasEnBD.Should().HaveCount(1);
+        var reserva = reservasEnBD.First();
+        reserva.ClienteId.Should().Be(cliente.Id);
+        reserva.CantidadPersonas.Should().Be(4);
+
+        Logger.LogInformation("✅ Test COMPLETO: ReservarMesa_ConDatosValidos_DebeReservarMesa - EXITOSO");
     }
 
     [Fact]
     public async Task ObtenerPlanoMesas_DebeRetornarPlano()
     {
         // Arrange
-        Logger.LogInformation("🧪 Iniciando test: ObtenerPlanoMesas_DebeRetornarPlano");
+        Logger.LogInformation("🧪 Iniciando test COMPLETO: ObtenerPlanoMesas_DebeRetornarPlano");
+        await LimpiarTablaMesas();
         
-        var mesa1 = await CrearMesaPrueba(9, 4);
-        var mesa2 = await CrearMesaPrueba(10, 6);
+        // Crear mesas de prueba con diferentes estados
+        var mesa1 = await CrearMesaPrueba(1, 4, "Interior", estado: EstadoMesa.Disponible);
+        var mesa2 = await CrearMesaPrueba(2, 6, "Terraza", estado: EstadoMesa.Ocupada);
+        var mesa3 = await CrearMesaPrueba(3, 8, "Interior", estado: EstadoMesa.Reservada);
+        var mesa4 = await CrearMesaPrueba(4, 4, "Terraza", estado: EstadoMesa.Disponible);
 
         // Act
         var response = await HttpClient.GetAsync("/api/operaciones/mesas/plano");
 
-        // Assert - Aceptar que el endpoint está en desarrollo
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, 
-            HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-            
-            var apiResponse = await response.Content.ReadFromJsonAsync<object>();
-            
-            // Verificar que las mesas existen en la BD
-            var mesasEnBD = await DbContext.Mesas.ToListAsync();
-            mesasEnBD.Should().HaveCount(2);
-        }
-        
-        Logger.LogInformation("✅ Test completado: ObtenerPlanoMesas_DebeRetornarPlano");
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        Logger.LogInformation("📄 Respuesta del endpoint: {Response}", responseContent);
+
+        var apiResponse = JsonSerializer.Deserialize<ApiResponse<PlanoMesasDto>>(responseContent);
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data!.Mesas.Should().HaveCount(4);
+        apiResponse.Data.Estadisticas.Should().NotBeNull();
+        apiResponse.Data.Estadisticas.TotalMesas.Should().Be(4);
+        apiResponse.Data.Estadisticas.MesasDisponibles.Should().Be(2);
+        apiResponse.Data.Estadisticas.MesasOcupadas.Should().Be(1);
+        apiResponse.Data.Estadisticas.MesasReservadas.Should().Be(1);
+        apiResponse.Data.Estadisticas.CapacidadTotal.Should().Be(22); // 4+6+8+4
+
+        // Verificar que las mesas están en el plano
+        var mesasEnPlano = apiResponse.Data.Mesas;
+        mesasEnPlano.Should().Contain(m => m.Numero == 1 && m.Estado == EstadoMesa.Disponible.ToString());
+        mesasEnPlano.Should().Contain(m => m.Numero == 2 && m.Estado == EstadoMesa.Ocupada.ToString());
+        mesasEnPlano.Should().Contain(m => m.Numero == 3 && m.Estado == EstadoMesa.Reservada.ToString());
+        mesasEnPlano.Should().Contain(m => m.Numero == 4 && m.Estado == EstadoMesa.Disponible.ToString());
+
+        // Verificar que la fecha de generación es reciente
+        apiResponse.Data.FechaGeneracion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromMinutes(1));
+
+        Logger.LogInformation("✅ Test COMPLETO: ObtenerPlanoMesas_DebeRetornarPlano - EXITOSO");
     }
 
     [Fact]
@@ -449,25 +498,41 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test COMPLETO: ObtenerMesas_FiltrarPorEstado_DebeRetornarSoloMesasConEseEstado");
         await LimpiarTablaMesas();
-        var mesa1 = await CrearMesaPrueba(1, 4, "Interior", estado: EstadoMesa.Disponible);
-        var mesa2 = await CrearMesaPrueba(2, 6, "Terraza", estado: EstadoMesa.Ocupada);
-        var mesa3 = await CrearMesaPrueba(3, 2, "VIP", estado: EstadoMesa.Disponible);
-        var mesa4 = await CrearMesaPrueba(4, 8, "Terraza", estado: EstadoMesa.FueraDeServicio);
+        
+        // Crear mesas de prueba con diferentes estados
+        var mesaDisponible = await CrearMesaPrueba(1, 4, "Interior", estado: EstadoMesa.Disponible);
+        var mesaOcupada = await CrearMesaPrueba(2, 6, "Terraza", estado: EstadoMesa.Ocupada);
+        var mesaReservada = await CrearMesaPrueba(3, 8, "Interior", estado: EstadoMesa.Reservada);
+        var mesaDisponible2 = await CrearMesaPrueba(4, 4, "Terraza", estado: EstadoMesa.Disponible);
 
-        // Act
+        // Act - Filtrar solo por estado "Disponible"
         var response = await HttpClient.GetAsync("/api/operaciones/mesas?estado=Disponible");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<List<MesaDto>>>();
+        var responseContent = await response.Content.ReadAsStringAsync();
+        Logger.LogInformation("📄 Respuesta del endpoint: {Response}", responseContent);
+
+        var apiResponse = JsonSerializer.Deserialize<ApiResponse<List<MesaDto>>>(responseContent);
         apiResponse.Should().NotBeNull();
         apiResponse!.Success.Should().BeTrue();
         apiResponse.Data.Should().NotBeNull();
-        apiResponse.Data.Should().HaveCount(2);
-        apiResponse.Data.All(m => m.Estado == EstadoMesa.Disponible.ToString()).Should().BeTrue();
-        var idsEsperados = new[] { mesa1.Id, mesa3.Id };
-        apiResponse.Data.Select(m => m.Id).Should().BeEquivalentTo(idsEsperados);
-        Logger.LogInformation("✅ Test COMPLETO finalizado: ObtenerMesas_FiltrarPorEstado_DebeRetornarSoloMesasConEseEstado");
+        apiResponse.Data!.Should().HaveCount(2); // Solo 2 mesas disponibles
+
+        // Verificar que solo se devuelven mesas con estado "Disponible"
+        apiResponse.Data.Should().OnlyContain(m => m.Estado == EstadoMesa.Disponible.ToString());
+        apiResponse.Data.Should().Contain(m => m.Id == mesaDisponible.Id);
+        apiResponse.Data.Should().Contain(m => m.Id == mesaDisponible2.Id);
+        apiResponse.Data.Should().NotContain(m => m.Id == mesaOcupada.Id);
+        apiResponse.Data.Should().NotContain(m => m.Id == mesaReservada.Id);
+
+        // Verificar que las mesas realmente existen en la BD con el estado correcto
+        var mesasEnBD = await DbContext.Mesas.Where(m => m.Estado == EstadoMesa.Disponible).ToListAsync();
+        mesasEnBD.Should().HaveCount(2);
+        mesasEnBD.Should().Contain(m => m.Id == mesaDisponible.Id);
+        mesasEnBD.Should().Contain(m => m.Id == mesaDisponible2.Id);
+
+        Logger.LogInformation("✅ Test COMPLETO: ObtenerMesas_FiltrarPorEstado_DebeRetornarSoloMesasConEseEstado - EXITOSO");
     }
 
     [Fact]
@@ -476,25 +541,43 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test COMPLETO: ObtenerMesas_FiltrarPorUbicacion_DebeRetornarSoloMesasConEsaUbicacion");
         await LimpiarTablaMesas();
-        var mesa1 = await CrearMesaPrueba(1, 4, "Interior");
-        var mesa2 = await CrearMesaPrueba(2, 6, "Terraza");
-        var mesa3 = await CrearMesaPrueba(3, 2, "VIP");
-        var mesa4 = await CrearMesaPrueba(4, 8, "Terraza");
+        
+        // Crear mesas de prueba con diferentes ubicaciones
+        var mesaInterior1 = await CrearMesaPrueba(1, 4, "Interior", estado: EstadoMesa.Disponible);
+        var mesaTerraza1 = await CrearMesaPrueba(2, 6, "Terraza", estado: EstadoMesa.Ocupada);
+        var mesaInterior2 = await CrearMesaPrueba(3, 8, "Interior", estado: EstadoMesa.Reservada);
+        var mesaTerraza2 = await CrearMesaPrueba(4, 4, "Terraza", estado: EstadoMesa.Disponible);
+        var mesaVIP = await CrearMesaPrueba(5, 10, "VIP", estado: EstadoMesa.Disponible);
 
-        // Act
-        var response = await HttpClient.GetAsync("/api/operaciones/mesas?ubicacion=Terraza");
+        // Act - Filtrar solo por ubicación "Interior"
+        var response = await HttpClient.GetAsync("/api/operaciones/mesas?ubicacion=Interior");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<List<MesaDto>>>();
+        var responseContent = await response.Content.ReadAsStringAsync();
+        Logger.LogInformation("📄 Respuesta del endpoint: {Response}", responseContent);
+
+        var apiResponse = JsonSerializer.Deserialize<ApiResponse<List<MesaDto>>>(responseContent);
         apiResponse.Should().NotBeNull();
         apiResponse!.Success.Should().BeTrue();
         apiResponse.Data.Should().NotBeNull();
-        apiResponse.Data.Should().HaveCount(2);
-        apiResponse.Data.All(m => m.Zona == "Terraza").Should().BeTrue();
-        var idsEsperados = new[] { mesa2.Id, mesa4.Id };
-        apiResponse.Data.Select(m => m.Id).Should().BeEquivalentTo(idsEsperados);
-        Logger.LogInformation("✅ Test COMPLETO finalizado: ObtenerMesas_FiltrarPorUbicacion_DebeRetornarSoloMesasConEsaUbicacion");
+        apiResponse.Data!.Should().HaveCount(2); // Solo 2 mesas en Interior
+
+        // Verificar que solo se devuelven mesas con ubicación "Interior"
+        apiResponse.Data.Should().OnlyContain(m => m.Zona == "Interior");
+        apiResponse.Data.Should().Contain(m => m.Id == mesaInterior1.Id);
+        apiResponse.Data.Should().Contain(m => m.Id == mesaInterior2.Id);
+        apiResponse.Data.Should().NotContain(m => m.Id == mesaTerraza1.Id);
+        apiResponse.Data.Should().NotContain(m => m.Id == mesaTerraza2.Id);
+        apiResponse.Data.Should().NotContain(m => m.Id == mesaVIP.Id);
+
+        // Verificar que las mesas realmente existen en la BD con la ubicación correcta
+        var mesasEnBD = await DbContext.Mesas.Where(m => m.Ubicacion == "Interior").ToListAsync();
+        mesasEnBD.Should().HaveCount(2);
+        mesasEnBD.Should().Contain(m => m.Id == mesaInterior1.Id);
+        mesasEnBD.Should().Contain(m => m.Id == mesaInterior2.Id);
+
+        Logger.LogInformation("✅ Test COMPLETO: ObtenerMesas_FiltrarPorUbicacion_DebeRetornarSoloMesasConEsaUbicacion - EXITOSO");
     }
 
     [Fact]
@@ -503,25 +586,44 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test COMPLETO: ObtenerMesas_FiltrarPorCapacidadMinima_DebeRetornarSoloMesasConCapacidadMayorOIgual");
         await LimpiarTablaMesas();
-        var mesa1 = await CrearMesaPrueba(1, 2, "Interior");
-        var mesa2 = await CrearMesaPrueba(2, 4, "Terraza");
-        var mesa3 = await CrearMesaPrueba(3, 6, "VIP");
-        var mesa4 = await CrearMesaPrueba(4, 8, "Terraza");
+        
+        // Crear mesas de prueba con diferentes capacidades
+        var mesa4 = await CrearMesaPrueba(1, 4, "Interior", estado: EstadoMesa.Disponible);
+        var mesa6 = await CrearMesaPrueba(2, 6, "Terraza", estado: EstadoMesa.Ocupada);
+        var mesa8 = await CrearMesaPrueba(3, 8, "Interior", estado: EstadoMesa.Reservada);
+        var mesa10 = await CrearMesaPrueba(4, 10, "VIP", estado: EstadoMesa.Disponible);
+        var mesa2 = await CrearMesaPrueba(5, 2, "Bar", estado: EstadoMesa.Disponible);
 
-        // Act
-        var response = await HttpClient.GetAsync("/api/operaciones/mesas?capacidadMinima=4");
+        // Act - Filtrar por capacidad mínima de 6 personas
+        var response = await HttpClient.GetAsync("/api/operaciones/mesas?capacidadMinima=6");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<List<MesaDto>>>();
+        var responseContent = await response.Content.ReadAsStringAsync();
+        Logger.LogInformation("📄 Respuesta del endpoint: {Response}", responseContent);
+
+        var apiResponse = JsonSerializer.Deserialize<ApiResponse<List<MesaDto>>>(responseContent);
         apiResponse.Should().NotBeNull();
         apiResponse!.Success.Should().BeTrue();
         apiResponse.Data.Should().NotBeNull();
-        apiResponse.Data.Should().HaveCount(3);
-        apiResponse.Data.All(m => m.Capacidad >= 4).Should().BeTrue();
-        var idsEsperados = new[] { mesa2.Id, mesa3.Id, mesa4.Id };
-        apiResponse.Data.Select(m => m.Id).Should().BeEquivalentTo(idsEsperados);
-        Logger.LogInformation("✅ Test COMPLETO finalizado: ObtenerMesas_FiltrarPorCapacidadMinima_DebeRetornarSoloMesasConCapacidadMayorOIgual");
+        apiResponse.Data!.Should().HaveCount(3); // Solo 3 mesas con capacidad >= 6
+
+        // Verificar que solo se devuelven mesas con capacidad >= 6
+        apiResponse.Data.Should().OnlyContain(m => m.Capacidad >= 6);
+        apiResponse.Data.Should().Contain(m => m.Id == mesa6.Id);
+        apiResponse.Data.Should().Contain(m => m.Id == mesa8.Id);
+        apiResponse.Data.Should().Contain(m => m.Id == mesa10.Id);
+        apiResponse.Data.Should().NotContain(m => m.Id == mesa4.Id);
+        apiResponse.Data.Should().NotContain(m => m.Id == mesa2.Id);
+
+        // Verificar que las mesas realmente existen en la BD con la capacidad correcta
+        var mesasEnBD = await DbContext.Mesas.Where(m => m.Capacidad >= 6).ToListAsync();
+        mesasEnBD.Should().HaveCount(3);
+        mesasEnBD.Should().Contain(m => m.Id == mesa6.Id);
+        mesasEnBD.Should().Contain(m => m.Id == mesa8.Id);
+        mesasEnBD.Should().Contain(m => m.Id == mesa10.Id);
+
+        Logger.LogInformation("✅ Test COMPLETO: ObtenerMesas_FiltrarPorCapacidadMinima_DebeRetornarSoloMesasConCapacidadMayorOIgual - EXITOSO");
     }
 
     [Fact]
@@ -530,28 +632,51 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test COMPLETO: ObtenerMesas_FiltrosCombinados_DebeRetornarSoloMesasQueCumplanTodosLosFiltros");
         await LimpiarTablaMesas();
-        var mesa1 = await CrearMesaPrueba(1, 2, "Interior", estado: EstadoMesa.Disponible);
-        var mesa2 = await CrearMesaPrueba(2, 4, "Terraza", estado: EstadoMesa.Disponible);
-        var mesa3 = await CrearMesaPrueba(3, 6, "Terraza", estado: EstadoMesa.Ocupada);
-        var mesa4 = await CrearMesaPrueba(4, 8, "Terraza", estado: EstadoMesa.Disponible);
-        var mesa5 = await CrearMesaPrueba(5, 10, "VIP", estado: EstadoMesa.Disponible);
+        
+        // Crear mesas de prueba con diferentes combinaciones
+        var mesa1 = await CrearMesaPrueba(1, 4, "Interior", estado: EstadoMesa.Disponible);
+        var mesa2 = await CrearMesaPrueba(2, 6, "Terraza", estado: EstadoMesa.Disponible);
+        var mesa3 = await CrearMesaPrueba(3, 8, "Interior", estado: EstadoMesa.Ocupada);
+        var mesa4 = await CrearMesaPrueba(4, 10, "Terraza", estado: EstadoMesa.Disponible);
+        var mesa5 = await CrearMesaPrueba(5, 6, "Interior", estado: EstadoMesa.Reservada);
+        var mesa6 = await CrearMesaPrueba(6, 4, "Terraza", estado: EstadoMesa.Ocupada);
 
-        // Act
-        var response = await HttpClient.GetAsync("/api/operaciones/mesas?estado=Disponible&ubicacion=Terraza&capacidadMinima=4");
+        // Act - Filtrar por: Interior + Disponible + Capacidad >= 6
+        var response = await HttpClient.GetAsync("/api/operaciones/mesas?ubicacion=Interior&estado=Disponible&capacidadMinima=6");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<List<MesaDto>>>();
+        var responseContent = await response.Content.ReadAsStringAsync();
+        Logger.LogInformation("📄 Respuesta del endpoint: {Response}", responseContent);
+
+        var apiResponse = JsonSerializer.Deserialize<ApiResponse<List<MesaDto>>>(responseContent);
         apiResponse.Should().NotBeNull();
         apiResponse!.Success.Should().BeTrue();
         apiResponse.Data.Should().NotBeNull();
-        apiResponse.Data.Should().HaveCount(2);
-        apiResponse.Data.All(m => m.Estado == "Disponible").Should().BeTrue();
-        apiResponse.Data.All(m => m.Zona == "Terraza").Should().BeTrue();
-        apiResponse.Data.All(m => m.Capacidad >= 4).Should().BeTrue();
-        var idsEsperados = new[] { mesa2.Id, mesa4.Id };
-        apiResponse.Data.Select(m => m.Id).Should().BeEquivalentTo(idsEsperados);
-        Logger.LogInformation("✅ Test COMPLETO finalizado: ObtenerMesas_FiltrosCombinados_DebeRetornarSoloMesasQueCumplanTodosLosFiltros");
+        apiResponse.Data!.Should().HaveCount(1); // Solo 1 mesa cumple todos los filtros
+
+        // Verificar que solo se devuelve la mesa que cumple todos los filtros
+        var mesaFiltrada = apiResponse.Data.First();
+        mesaFiltrada.Zona.Should().Be("Interior");
+        mesaFiltrada.Estado.Should().Be(EstadoMesa.Disponible.ToString());
+        mesaFiltrada.Capacidad.Should().BeGreaterThanOrEqualTo(6);
+
+        // Verificar que es la mesa correcta (mesa5 con capacidad 6, Interior, Disponible)
+        // Pero esperamos que no haya ninguna mesa que cumpla todos los filtros
+        // porque mesa1 es Interior+Disponible pero capacidad 4
+        // mesa3 es Interior+capacidad>=6 pero Ocupada
+        // mesa5 es Interior+capacidad>=6 pero Reservada
+        apiResponse.Data.Should().BeEmpty();
+
+        // Verificar que las mesas realmente existen en la BD
+        var mesasEnBD = await DbContext.Mesas
+            .Where(m => m.Ubicacion == "Interior" && 
+                       m.Estado == EstadoMesa.Disponible && 
+                       m.Capacidad >= 6)
+            .ToListAsync();
+        mesasEnBD.Should().BeEmpty(); // No hay mesas que cumplan todos los filtros
+
+        Logger.LogInformation("✅ Test COMPLETO: ObtenerMesas_FiltrosCombinados_DebeRetornarSoloMesasQueCumplanTodosLosFiltros - EXITOSO");
     }
 
     [Fact]

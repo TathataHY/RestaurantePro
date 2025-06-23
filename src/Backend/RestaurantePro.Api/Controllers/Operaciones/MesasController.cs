@@ -1,9 +1,14 @@
 using Microsoft.AspNetCore.Authorization;
 using RestaurantePro.Application.Operaciones.Mesas.DTOs;
 using RestaurantePro.Application.Operaciones.Mesas.Queries.ObtenerMesas;
+using RestaurantePro.Application.Operaciones.Mesas.Queries.ObtenerPlanoMesas;
+using RestaurantePro.Application.Operaciones.Mesas.Queries.ObtenerMesaPorId;
 using RestaurantePro.Application.Operaciones.Mesas.Commands.CrearMesa;
 using RestaurantePro.Application.Operaciones.Mesas.Commands.ActualizarMesa;
 using RestaurantePro.Application.Operaciones.Mesas.Commands.CambiarEstadoMesa;
+using RestaurantePro.Application.Operaciones.Mesas.Commands.AsignarCliente;
+using RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
+using RestaurantePro.Application.Operaciones.Mesas.Commands.ReservarMesa;
 using RestaurantePro.Api.Common;
 using AutoMapper;
 using MediatR;
@@ -192,47 +197,73 @@ public class MesasController : ControllerBase
     }
 
     /// <summary>
-    /// Libera una mesa ocupada
+    /// Libera una mesa (la marca como disponible)
     /// </summary>
     /// <param name="id">ID de la mesa</param>
-    /// <param name="request">Datos de la liberación</param>
+    /// <param name="command">Datos de la liberación</param>
     [HttpPost("{id:guid}/liberar")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<MesaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<object>>> LiberarMesa(Guid id, [FromBody] object request)
+    public async Task<ActionResult<ApiResponse<MesaDto>>> LiberarMesa(Guid id, [FromBody] LiberarMesaCommand command)
     {
-        _logger.LogInformation("🔓 POST /api/operaciones/mesas/{Id}/liberar", id);
+        _logger.LogInformation("🆓 POST /api/operaciones/mesas/{Id}/liberar", id);
+        command.MesaId = id;
+        var result = await _mediator.Send(command);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado" },
-            "Esta funcionalidad estará disponible próximamente",
-            StatusCodes.Status501NotImplemented);
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no encontrada"))
+                ? StatusCodes.Status404NotFound
+                : StatusCodes.Status400BadRequest;
+            var errorResponse = ApiResponse<object>.ErrorResponse(result.Errors, "Error al liberar la mesa", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        // Obtener la mesa actualizada para devolver el DTO
+        var mesaActualizadaResult = await _mediator.Send(new ObtenerMesaPorIdQuery { Id = id });
+        if (!mesaActualizadaResult.Succeeded || mesaActualizadaResult.Value == null)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(new List<string> { "No se pudo obtener la mesa actualizada" }, "Error al obtener la mesa actualizada", StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+
+        var response = ApiResponse<MesaDto>.SuccessResponse(mesaActualizadaResult.Value, "Mesa liberada exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
-    /// Reserva una mesa
+    /// Reserva una mesa para una fecha y hora específica
     /// </summary>
-    /// <param name="id">ID de la mesa</param>
-    /// <param name="request">Datos de la reservación</param>
-    [HttpPost("{id:guid}/reservar")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    /// <param name="command">Datos de la reserva</param>
+    [HttpPost("reservar")]
+    [ProducesResponseType(typeof(ApiResponse<MesaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<object>>> ReservarMesa(Guid id, [FromBody] object request)
+    public async Task<ActionResult<ApiResponse<MesaDto>>> ReservarMesa([FromBody] ReservarMesaCommand command)
     {
-        _logger.LogInformation("📅 POST /api/operaciones/mesas/{Id}/reservar", id);
+        _logger.LogInformation("📅 POST /api/operaciones/mesas/reservar");
+        var result = await _mediator.Send(command);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado" },
-            "Esta funcionalidad estará disponible próximamente",
-            StatusCodes.Status501NotImplemented);
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no existe"))
+                ? StatusCodes.Status404NotFound
+                : StatusCodes.Status400BadRequest;
+            var errorResponse = ApiResponse<object>.ErrorResponse(result.Errors, "Error al reservar la mesa", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        // Obtener la mesa actualizada para devolver el DTO
+        var mesaActualizadaResult = await _mediator.Send(new ObtenerMesaPorIdQuery { Id = command.MesaId });
+        if (!mesaActualizadaResult.Succeeded || mesaActualizadaResult.Value == null)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(new List<string> { "No se pudo obtener la mesa actualizada" }, "Error al obtener la mesa actualizada", StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+
+        var response = ApiResponse<MesaDto>.SuccessResponse(mesaActualizadaResult.Value, "Mesa reservada exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -357,6 +388,64 @@ public class MesasController : ControllerBase
         }
 
         var response = ApiResponse<MesaDto>.SuccessResponse(mesaActualizadaResult.Value, "Estado de la mesa actualizado exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Asigna un cliente a una mesa
+    /// </summary>
+    /// <param name="id">ID de la mesa</param>
+    /// <param name="command">Datos de la asignación</param>
+    [HttpPost("{id:guid}/asignar-cliente")]
+    [ProducesResponseType(typeof(ApiResponse<MesaDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<MesaDto>>> AsignarClienteAMesa(Guid id, [FromBody] AsignarClienteAMesaCommand command)
+    {
+        _logger.LogInformation("👤 POST /api/operaciones/mesas/{Id}/asignar-cliente", id);
+        command.MesaId = id;
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no encontrada") || e.Contains("no encontrado"))
+                ? StatusCodes.Status404NotFound
+                : StatusCodes.Status400BadRequest;
+            var errorResponse = ApiResponse<object>.ErrorResponse(result.Errors, "Error al asignar cliente a la mesa", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        // Obtener la mesa actualizada para devolver el DTO
+        var mesaActualizadaResult = await _mediator.Send(new ObtenerMesaPorIdQuery { Id = id });
+        if (!mesaActualizadaResult.Succeeded || mesaActualizadaResult.Value == null)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(new List<string> { "No se pudo obtener la mesa actualizada" }, "Error al obtener la mesa actualizada", StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+
+        var response = ApiResponse<MesaDto>.SuccessResponse(mesaActualizadaResult.Value, "Cliente asignado a la mesa exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Obtiene el plano completo de mesas del restaurante
+    /// </summary>
+    /// <param name="query">Filtros para el plano</param>
+    [HttpGet("plano")]
+    [ProducesResponseType(typeof(ApiResponse<PlanoMesasDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<PlanoMesasDto>>> ObtenerPlanoMesas([FromQuery] ObtenerPlanoMesasQuery query)
+    {
+        _logger.LogInformation("🗺️ GET /api/operaciones/mesas/plano");
+        var result = await _mediator.Send(query);
+
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(result.Errors, "Error al obtener el plano de mesas", StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        var response = ApiResponse<PlanoMesasDto>.SuccessResponse(result.Value, "Plano de mesas obtenido exitosamente");
         return Ok(response);
     }
 } 

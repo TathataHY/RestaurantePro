@@ -50,26 +50,16 @@ public class ActualizarMesaCommandHandler : IRequestHandler<ActualizarMesaComman
             }
         }
 
-        // Actualizar propiedades de la mesa
-        // Nota: Como las propiedades son privadas, necesitamos métodos públicos para actualizarlas
-        // Por ahora, vamos a recrear la mesa con los nuevos valores
-        var mesaActualizada = RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(
-            numeroMesa, 
-            request.Capacidad, 
-            request.Ubicacion);
+        // Actualizar propiedades de la mesa usando el método de dominio
+        mesa.ActualizarDatos(numeroMesa, request.Capacidad, request.Ubicacion);
 
-        // Copiar el ID y estado original
-        mesaActualizada.Id = mesa.Id;
-        mesaActualizada.FechaCreacion = mesa.FechaCreacion;
-        
-        // Actualizar en el repositorio
-        await _mesaRepository.ActualizarAsync(mesaActualizada);
+        await _mesaRepository.ActualizarAsync(mesa);
         await _mesaRepository.GuardarCambiosAsync();
 
         _logger.LogInformation("Mesa actualizada correctamente: {Id}", request.Id);
 
         // Mapear a DTO y retornar
-        var mesaDto = _mapper.Map<MesaDto>(mesaActualizada);
+        var mesaDto = _mapper.Map<MesaDto>(mesa);
         return Result.Success(mesaDto);
     }
 } 

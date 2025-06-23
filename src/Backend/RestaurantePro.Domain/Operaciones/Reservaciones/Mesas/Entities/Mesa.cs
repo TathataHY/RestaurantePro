@@ -151,6 +151,53 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
         }
 
         /// <summary>
+        /// Actualiza los datos editables de la mesa
+        /// </summary>
+        public void ActualizarDatos(int numero, int capacidad, string ubicacion)
+        {
+            if (numero <= 0)
+                throw new ArgumentException("El número de mesa debe ser mayor que cero", nameof(numero));
+            if (capacidad <= 0)
+                throw new ArgumentException("La capacidad debe ser mayor que cero", nameof(capacidad));
+            if (string.IsNullOrWhiteSpace(ubicacion))
+                throw new ArgumentException("La ubicación no puede estar vacía", nameof(ubicacion));
+
+            Numero = numero;
+            Capacidad = capacidad;
+            Ubicacion = ubicacion;
+            FechaActualizacion = DateTime.Now;
+
+            ValidarInvariantes();
+
+            // Disparar evento de dominio
+            AddDomainEvent(new MesaActualizada(Id, numero, capacidad, ubicacion));
+        }
+
+        /// <summary>
+        /// Asigna un cliente a la mesa
+        /// </summary>
+        public void AsignarCliente(Guid clienteId, string? observaciones = null)
+        {
+            if (clienteId == Guid.Empty)
+                throw new ArgumentException("El ID del cliente no puede estar vacío", nameof(clienteId));
+
+            if (Estado != EstadoMesa.Disponible && Estado != EstadoMesa.Reservada)
+                throw new InvalidOperationException($"No se puede asignar cliente a una mesa en estado {Estado}");
+
+            // Cambiar estado a ocupada
+            Estado = EstadoMesa.Ocupada;
+
+            // Actualizar fecha de modificación
+            FechaActualizacion = DateTime.UtcNow;
+
+            // Validar invariantes después de los cambios
+            ValidarInvariantes();
+
+            // Disparar evento de dominio
+            AddDomainEvent(new MesaAsignada(Id, clienteId, observaciones));
+        }
+
+        /// <summary>
         /// Valida las invariantes del agregado Mesa
         /// </summary>
         private void ValidarInvariantes()

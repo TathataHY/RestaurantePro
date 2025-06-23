@@ -149,13 +149,19 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             var duracion = TimeSpan.FromMinutes(duracionMinutos);
             var horaFin = hora.Add(duracion);
             
-            // Verificar si hay alguna reservación confirmada o pendiente que se solape con el rango de tiempo
-            return !await _dbSet
-                .AnyAsync(r => r.MesaId == mesaId &&
-                              r.Fecha == fechaBusqueda &&
-                              (r.Estado == EstadoReservacion.Confirmada || r.Estado == EstadoReservacion.Pendiente) &&
-                              ((r.Hora <= horaFin && r.Hora.Add(r.DuracionEstimada) >= hora)), 
-                        cancellationToken);
+            // Traer solo las reservaciones relevantes de la BD
+            var reservaciones = await _dbSet
+                .Where(r => r.MesaId == mesaId &&
+                            r.Fecha == fechaBusqueda &&
+                            (r.Estado == EstadoReservacion.Confirmada || r.Estado == EstadoReservacion.Pendiente))
+                .ToListAsync(cancellationToken);
+
+            // Verificar en memoria si alguna reservación se solapa con el rango solicitado
+            var haySolapamiento = reservaciones.Any(r =>
+                r.Hora <= horaFin && r.Hora.Add(r.DuracionEstimada) >= hora
+            );
+
+            return !haySolapamiento;
         }
 
         public async Task<IEnumerable<Guid>> ObtenerMesasDisponiblesAsync(DateTime fecha, TimeSpan hora, int cantidadPersonas, int duracionMinutos = 90, CancellationToken cancellationToken = default)

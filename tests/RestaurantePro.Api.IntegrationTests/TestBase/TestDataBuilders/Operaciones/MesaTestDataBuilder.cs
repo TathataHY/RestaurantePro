@@ -125,16 +125,21 @@ public class MesaTestDataBuilder
     }
 
     /// <summary>
-    /// Construye un request para reservar una mesa
+    /// Construye un request para reservar una mesa (completo)
     /// </summary>
-    public object BuildReservarMesaRequest(Guid clienteId, DateTime fechaReservacion, int numeroPersonas)
+    public object BuildReservarMesaRequest(Guid mesaId, Guid clienteId, DateTime fechaReservacion, TimeSpan horaReserva, int numeroPersonas, int duracionMinutos, string telefono, string email, string? observaciones = null)
     {
         return new
         {
+            MesaId = mesaId,
             ClienteId = clienteId,
-            FechaReservacion = fechaReservacion,
+            FechaReserva = fechaReservacion,
+            HoraReserva = horaReserva,
             NumeroPersonas = numeroPersonas,
-            Observaciones = "Reserva creada desde tests"
+            DuracionMinutos = duracionMinutos,
+            Telefono = telefono,
+            Email = email,
+            Observaciones = observaciones ?? "Reserva creada desde tests"
         };
     }
 
