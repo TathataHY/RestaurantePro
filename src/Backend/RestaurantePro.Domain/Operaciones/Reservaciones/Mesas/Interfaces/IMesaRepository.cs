@@ -13,7 +13,12 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces
         /// <summary>
         /// Obtiene una mesa por su ID
         /// </summary>
-        Task<Mesa> ObtenerPorIdAsync(Guid id);
+        Task<Mesa?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene una mesa por su ID sin tracking (para consultas de solo lectura)
+        /// </summary>
+        Task<Mesa?> ObtenerPorIdSinTrackingAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Obtiene una mesa por su número

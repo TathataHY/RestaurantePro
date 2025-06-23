@@ -42,9 +42,31 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         /// <summary>
         /// Obtiene una mesa por su ID
         /// </summary>
-        public async Task<Mesa> ObtenerPorIdAsync(Guid id)
+        public override async Task<Mesa?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
-            var mesa = await _dbSet.FindAsync(id);
+            var mesa = await _dbSet.FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+            if (mesa != null)
+            {
+                // Si está siendo trackeada, forzar recarga desde la base de datos
+                var entry = _dbContext.Entry(mesa);
+                if (entry.State != EntityState.Detached)
+                {
+                    await entry.ReloadAsync(cancellationToken);
+                }
+            }
+            if (mesa == null)
+            {
+                throw new KeyNotFoundException($"Mesa con ID {id} no encontrada");
+            }
+            return mesa;
+        }
+
+        /// <summary>
+        /// Obtiene una mesa por su ID sin tracking (para consultas de solo lectura)
+        /// </summary>
+        public async Task<Mesa?> ObtenerPorIdSinTrackingAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var mesa = await _dbSet.AsNoTracking().FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
             if (mesa == null)
             {
                 throw new KeyNotFoundException($"Mesa con ID {id} no encontrada");
@@ -303,11 +325,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             return await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        Task<Mesa?> IRepository<Mesa>.ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken)
-        {
-            return ObtenerPorIdAsync(id, cancellationToken);
-        }
-
         Task IRepository<Mesa>.AgregarAsync(Mesa entity, CancellationToken cancellationToken)
         {
             return AgregarAsync(entity);
@@ -319,5 +336,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         }
 
         #endregion
+
+        public async Task<Mesa?> ObtenerPorIdAsync(Guid id)
+        {
+            return await ObtenerPorIdAsync(id, CancellationToken.None);
+        }
     }
 } 

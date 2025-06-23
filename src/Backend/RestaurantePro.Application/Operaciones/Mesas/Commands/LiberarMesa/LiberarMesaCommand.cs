@@ -3,7 +3,7 @@ namespace RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
 /// <summary>
 /// Command para liberar una mesa (marcarla como disponible)
 /// </summary>
-public class LiberarMesaCommand : IRequest<Result<Unit>>
+public class LiberarMesaCommand : IRequest<Result<MesaDto>>
 {
     /// <summary>
     /// ID de la mesa a liberar

@@ -79,19 +79,30 @@ public class MesasController : ControllerBase
     /// </summary>
     /// <param name="id">ID de la mesa</param>
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<MesaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<object>>> ObtenerMesa(Guid id)
+    public async Task<ActionResult<ApiResponse<MesaDto>>> ObtenerMesa(Guid id)
     {
         _logger.LogInformation("🔍 GET /api/operaciones/mesas/{Id}", id);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado" },
-            "Esta funcionalidad estará disponible próximamente",
-            StatusCodes.Status501NotImplemented);
+        var query = new ObtenerMesaPorIdQuery { Id = id };
+        var result = await _mediator.Send(query);
+        
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no existe")) 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status500InternalServerError;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Error al obtener la mesa", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        var response = ApiResponse<MesaDto>.SuccessResponse(
+            result.Value, "Mesa obtenida exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -209,10 +220,13 @@ public class MesasController : ControllerBase
     {
         _logger.LogInformation("🆓 POST /api/operaciones/mesas/{Id}/liberar", id);
         command.MesaId = id;
+        
+        _logger.LogInformation("🔄 Ejecutando comando LiberarMesaCommand para mesa {MesaId}", id);
         var result = await _mediator.Send(command);
 
         if (!result.Succeeded)
         {
+            _logger.LogWarning("⚠️ Comando LiberarMesaCommand falló para mesa {MesaId}: {Error}", id, result.Error);
             var statusCode = result.Errors.Any(e => e.Contains("no encontrada"))
                 ? StatusCodes.Status404NotFound
                 : StatusCodes.Status400BadRequest;
@@ -220,15 +234,10 @@ public class MesasController : ControllerBase
             return StatusCode(statusCode, errorResponse);
         }
 
-        // Obtener la mesa actualizada para devolver el DTO
-        var mesaActualizadaResult = await _mediator.Send(new ObtenerMesaPorIdQuery { Id = id });
-        if (!mesaActualizadaResult.Succeeded || mesaActualizadaResult.Value == null)
-        {
-            var errorResponse = ApiResponse<object>.ErrorResponse(new List<string> { "No se pudo obtener la mesa actualizada" }, "Error al obtener la mesa actualizada", StatusCodes.Status500InternalServerError);
-            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
-        }
+        _logger.LogInformation("✅ Comando LiberarMesaCommand exitoso para mesa {MesaId}. Estado final: {Estado}", 
+            id, result.Value.Estado);
 
-        var response = ApiResponse<MesaDto>.SuccessResponse(mesaActualizadaResult.Value, "Mesa liberada exitosamente");
+        var response = ApiResponse<MesaDto>.SuccessResponse(result.Value, "Mesa liberada exitosamente");
         return Ok(response);
     }
 

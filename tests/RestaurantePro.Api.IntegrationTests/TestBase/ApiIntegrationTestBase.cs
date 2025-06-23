@@ -72,6 +72,20 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     }
 
     /// <summary>
+    /// Crea un nuevo contexto de base de datos para evitar problemas de tracking
+    /// Útil para verificar cambios en la BD después de operaciones
+    /// </summary>
+    protected RestauranteProDbContext CreateNewDbContext()
+    {
+        var scope = Factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
+        // Configurar para evitar tracking
+        context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+        context.ChangeTracker.AutoDetectChangesEnabled = false;
+        return context;
+    }
+
+    /// <summary>
     /// Limpia todas las tablas de la base de datos usando estrategia robusta para SQLite in-memory
     /// </summary>
     protected virtual async Task LimpiarBaseDeDatos()

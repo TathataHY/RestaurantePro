@@ -3,6 +3,7 @@ using RestaurantePro.Domain.Core.SharedKernel.Results;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace RestaurantePro.Application.Operaciones.Mesas.Commands.ReservarMesa;
@@ -12,17 +13,20 @@ public class ReservarMesaCommandHandler : IRequestHandler<ReservarMesaCommand, R
     private readonly IMesaRepository _mesaRepository;
     private readonly IClienteRepository _clienteRepository;
     private readonly IReservacionRepository _reservacionRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<ReservarMesaCommandHandler> _logger;
 
     public ReservarMesaCommandHandler(
         IMesaRepository mesaRepository,
         IClienteRepository clienteRepository,
         IReservacionRepository reservacionRepository,
+        IUnitOfWork unitOfWork,
         ILogger<ReservarMesaCommandHandler> logger)
     {
         _mesaRepository = mesaRepository;
         _clienteRepository = clienteRepository;
         _reservacionRepository = reservacionRepository;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -60,10 +64,11 @@ public class ReservarMesaCommandHandler : IRequestHandler<ReservarMesaCommand, R
             }
 
             // Crear la reservación usando el método de fábrica
+            var fechaHoraReserva = request.FechaReserva.Date.Add(request.HoraReserva);
             var reservacion = RestaurantePro.Domain.Operaciones.Reservaciones.Entities.Reservacion.Crear(
                 mesa.Id,
                 cliente.Id,
-                request.FechaReserva,
+                fechaHoraReserva,
                 TimeSpan.FromMinutes(request.DuracionMinutos),
                 request.NumeroPersonas,
                 request.Telefono,
@@ -74,9 +79,12 @@ public class ReservarMesaCommandHandler : IRequestHandler<ReservarMesaCommand, R
             // Cambiar estado de la mesa a reservada
             mesa.MarcarComoReservada();
 
-            // Guardar reservación y mesa
-            await _reservacionRepository.AgregarAsync(reservacion, cancellationToken);
-            await _mesaRepository.ActualizarAsync(mesa, cancellationToken);
+            // Guardar reservación y mesa en una transacción
+            await _unitOfWork.EjecutarEnTransaccionAsync(async () =>
+            {
+                await _reservacionRepository.AgregarAsync(reservacion, cancellationToken);
+                await _mesaRepository.ActualizarAsync(mesa, cancellationToken);
+            }, cancellationToken);
 
             _logger.LogInformation("Reserva creada exitosamente para mesa {MesaId} el {Fecha} a las {Hora}", 
                 request.MesaId, request.FechaReserva, request.HoraReserva);

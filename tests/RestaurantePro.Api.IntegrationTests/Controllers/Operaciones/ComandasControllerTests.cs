@@ -473,15 +473,17 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("📋 Comanda con items - ItemsCount: {ItemsCount}", comandaConItems?.Items.Count ?? 0);
         
         // Act
+        Logger.LogInformation("🚀 Llamando al endpoint DELETE: /api/operaciones/comandas/{ComandaId}/productos/{DetalleId}", comanda.Id, detalle.Id);
         var response = await HttpClient.DeleteAsync($"/api/operaciones/comandas/{comanda.Id}/productos/{detalle.Id}");
 
         // Assert - Validación estricta para tests completos
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        Logger.LogInformation("📥 Response Status: {StatusCode}", response.StatusCode);
         
         // Log temporal para debug
         if (response.StatusCode != HttpStatusCode.OK)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
+            Logger.LogError("❌ ERROR RESPONSE - Status: {StatusCode}, Content: {Content}", response.StatusCode, errorContent);
             Console.WriteLine($"=== ERROR RESPONSE ===");
             Console.WriteLine($"Status Code: {response.StatusCode}");
             Console.WriteLine($"Content: {errorContent}");

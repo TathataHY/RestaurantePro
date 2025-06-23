@@ -24,7 +24,7 @@ public class RemoverProductoCommandValidator : AbstractValidator<RemoverProducto
             .NotEmpty().WithMessage("El ID del item es obligatorio");
 
         RuleFor(x => x.Cantidad)
-            .GreaterThan(0).WithMessage("La cantidad a remover debe ser mayor a cero");
+            .GreaterThanOrEqualTo(0).WithMessage("La cantidad a remover debe ser mayor o igual a cero");
 
         RuleFor(x => x.Observaciones)
             .MaximumLength(200).WithMessage("Las observaciones no pueden exceder los 200 caracteres");
@@ -38,6 +38,9 @@ public class RemoverProductoCommandValidator : AbstractValidator<RemoverProducto
                 // Validar que el item existe en la comanda
                 var item = comanda.Items.FirstOrDefault(i => i.Id == command.ItemId);
                 if (item == null) return false;
+
+                // Si cantidad es 0, se remueve todo (válido)
+                if (command.Cantidad == 0) return true;
 
                 // Validar que la cantidad a remover no exceda la disponible
                 return command.Cantidad <= item.Cantidad;

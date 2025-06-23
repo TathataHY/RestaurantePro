@@ -91,9 +91,20 @@ public class MesaTestDataBuilder
     /// </summary>
     public object BuildCambiarEstadoRequest(string nuevoEstado)
     {
+        // Convertir el string del estado al valor numérico del enum
+        var estadoNumerico = nuevoEstado switch
+        {
+            "Disponible" => 1,
+            "Ocupada" => 2,
+            "Reservada" => 3,
+            "FueraDeServicio" => 4,
+            "EnLimpieza" => 5,
+            _ => 1 // Default a Disponible si no se reconoce
+        };
+        
         return new
         {
-            Estado = nuevoEstado,
+            NuevoEstado = estadoNumerico,
             Observaciones = $"Cambio de estado a {nuevoEstado}"
         };
     }

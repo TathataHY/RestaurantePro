@@ -32,8 +32,8 @@ public class ObtenerMesaPorIdQueryHandler : IRequestHandler<ObtenerMesaPorIdQuer
 
         try
         {
-            var mesa = await _mesaRepository.ObtenerPorIdAsync(request.Id, cancellationToken);
-            
+            var mesa = await _mesaRepository.ObtenerPorIdSinTrackingAsync(request.Id, cancellationToken);
+            _logger.LogWarning("[DEBUG] Estado de la mesa al consultar en query: {Estado}", mesa?.Estado);
             if (mesa == null)
             {
                 _logger.LogWarning("Mesa con ID {MesaId} no encontrada", request.Id);

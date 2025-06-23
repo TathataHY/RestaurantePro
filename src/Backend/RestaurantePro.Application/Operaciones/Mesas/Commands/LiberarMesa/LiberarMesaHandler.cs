@@ -3,27 +3,33 @@ namespace RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
 /// <summary>
 /// Handler para LiberarMesaCommand
 /// </summary>
-public class LiberarMesaHandler : IRequestHandler<LiberarMesaCommand, Result<Unit>>
+public class LiberarMesaHandler : IRequestHandler<LiberarMesaCommand, Result<MesaDto>>
 {
     private readonly IMesaRepository _mesaRepository;
     private readonly ILogger<LiberarMesaHandler> _logger;
     private readonly ICurrentUserService _currentUser;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
 
     public LiberarMesaHandler(
         IMesaRepository mesaRepository,
         ILogger<LiberarMesaHandler> logger,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        IUnitOfWork unitOfWork,
+        IMapper mapper)
     {
         _mesaRepository = mesaRepository;
         _logger = logger;
         _currentUser = currentUser;
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
     }
 
-    public async Task<Result<Unit>> Handle(LiberarMesaCommand request, CancellationToken cancellationToken)
+    public async Task<Result<MesaDto>> Handle(LiberarMesaCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogInformation("🆓 Iniciando liberación de mesa {MesaId} por usuario {UserId}", 
+            _logger.LogInformation("🔄 Iniciando liberación de mesa {MesaId} por usuario {UserId}", 
                 request.MesaId, _currentUser.UserId);
 
             // Obtener la mesa
@@ -31,40 +37,66 @@ public class LiberarMesaHandler : IRequestHandler<LiberarMesaCommand, Result<Uni
             if (mesa == null)
             {
                 _logger.LogWarning("⚠️ Mesa {MesaId} no encontrada", request.MesaId);
-                return Result.Failure<Unit>("Mesa no encontrada");
+                return Result.Failure<MesaDto>("Mesa no encontrada");
             }
 
             // Verificar estado actual de la mesa
-            _logger.LogDebug("Mesa {MesaId} encontrada. Estado actual: {Estado}, Capacidad: {Capacidad}, Ubicación: {Ubicacion}", 
-                mesa.Id, mesa.Estado, mesa.Capacidad, mesa.Ubicacion);
+            _logger.LogDebug("Mesa {MesaId} encontrada. Estado actual: {EstadoActual}", 
+                mesa.Id, mesa.Estado);
 
-            // Marcar como disponible usando la lógica de dominio
+            // Verificar que la mesa no esté fuera de servicio
+            if (mesa.Estado == EstadoMesa.FueraDeServicio)
+            {
+                _logger.LogWarning("⚠️ Mesa {MesaId} está fuera de servicio y no puede ser liberada. Estado actual: {EstadoActual}", 
+                    mesa.Id, mesa.Estado);
+                return Result.Failure<MesaDto>($"La mesa está fuera de servicio y no puede ser liberada. Estado actual: {mesa.Estado}");
+            }
+
+            // Si la mesa ya está disponible, devolver el DTO actual
+            if (mesa.Estado == EstadoMesa.Disponible)
+            {
+                _logger.LogInformation("ℹ️ Mesa {MesaId} ya está disponible. No se requiere acción.", mesa.Id);
+                var mesaDtoActual = _mapper.Map<MesaDto>(mesa);
+                return Result.Success(mesaDtoActual);
+            }
+
+            // Marcar la mesa como disponible
             mesa.MarcarComoDisponible();
+            
+            _logger.LogDebug("Mesa {MesaId} marcada como disponible. Estado después del cambio: {NuevoEstado}", 
+                mesa.Id, mesa.Estado);
 
             // Actualizar en el repositorio
             await _mesaRepository.ActualizarAsync(mesa);
-            await _mesaRepository.GuardarCambiosAsync();
-
-            _logger.LogInformation("✅ Mesa {NumeroMesa} (ID: {MesaId}) liberada correctamente y marcada como disponible", 
-                mesa.Numero, mesa.Id);
-
-            if (!string.IsNullOrEmpty(request.Observaciones))
+            
+            // Guardar cambios usando UnitOfWork
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            
+            // Obtener la mesa actualizada sin tracking para devolver el DTO
+            var mesaActualizada = await _mesaRepository.ObtenerPorIdSinTrackingAsync(request.MesaId);
+            if (mesaActualizada == null)
             {
-                _logger.LogInformation("📝 Observaciones de liberación: {Observaciones}", request.Observaciones);
+                _logger.LogError("❌ Error al obtener mesa actualizada después de liberar {MesaId}", request.MesaId);
+                return Result.Failure<MesaDto>("Error al obtener la mesa actualizada");
             }
+            
+            var mesaDtoActualizada = _mapper.Map<MesaDto>(mesaActualizada);
+            
+            _logger.LogInformation("✅ Mesa {NumeroMesa} (ID: {MesaId}) liberada correctamente. Estado final: {EstadoFinal}", 
+                mesaActualizada.Numero, mesa.Id, mesaActualizada.Estado);
 
-            return Result.Success(Unit.Value);
+            return Result.Success(mesaDtoActualizada);
         }
         catch (InvalidOperationException ex)
         {
             _logger.LogWarning("⚠️ Error de negocio al liberar mesa {MesaId}: {Error}", 
                 request.MesaId, ex.Message);
-            return Result.Failure<Unit>($"Error al liberar mesa: {ex.Message}");
+            return Result.Failure<MesaDto>($"Error al liberar mesa: {ex.Message}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error interno al liberar mesa {MesaId}", request.MesaId);
-            return Result.Failure<Unit>($"Error liberando mesa: {ex.Message}");
+            return Result.Failure<MesaDto>("Error interno del servidor al liberar la mesa");
         }
     }
 } 

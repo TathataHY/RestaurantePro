@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,12 +14,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 /// </summary>
 public class UnitOfWork : IUnitOfWork
 {
-    private readonly DbContext _dbContext;
+    private readonly RestauranteProDbContext _dbContext;
     private readonly ILogger<UnitOfWork> _logger;
     private IDbContextTransaction? _currentTransaction;
     private bool _disposed;
 
-    public UnitOfWork(DbContext dbContext, ILogger<UnitOfWork> logger)
+    public UnitOfWork(RestauranteProDbContext dbContext, ILogger<UnitOfWork> logger)
     {
         _dbContext = dbContext;
         _logger = logger;
@@ -126,6 +127,9 @@ public class UnitOfWork : IUnitOfWork
             }
 
             await accion();
+            
+            // Guardar los cambios en la base de datos
+            await SaveChangesAsync(cancellationToken);
 
             if (transaccionIniciada)
             {
@@ -155,6 +159,9 @@ public class UnitOfWork : IUnitOfWork
             }
 
             var resultado = await funcion();
+            
+            // Guardar los cambios en la base de datos
+            await SaveChangesAsync(cancellationToken);
 
             if (transaccionIniciada)
             {

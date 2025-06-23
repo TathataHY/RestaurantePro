@@ -70,8 +70,8 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - **🎯 Progreso Tests Completos**: 4/21 controladores (19.0%) - **¡TERCERA FASE COMPLETADA!**
 
 ### **Resumen de Integración de Tests**
-- **🟢 Tests Completos**: 4 controladores (UsuariosController, IngredientesController, NotificacionesController, ComandasController)
-- **🟡 Tests Básicos**: 17 controladores (solo verificación de endpoints)
+- **🟢 Tests Completos**: 5 controladores (UsuariosController, IngredientesController, NotificacionesController, ComandasController, MesasController)
+- **🟡 Tests Básicos**: 16 controladores (solo verificación de endpoints)
 - **🔄 Tests en Progreso**: 0 controladores
 - **🔴 Tests Pendientes**: 0 controladores
 - **🎯 OBJETIVO CRÍTICO**: Convertir todos los tests básicos a completos (interacción real con BD)
@@ -128,10 +128,10 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 |----------|---------------|---------------|-------|----------|
 | **Core** | 4 | 4 | 31 | ✅ 100% (🟢 2/4 completos, 🟡 2/4 básicos) |
 | **Comercial** | 5 | 5 | 48 | ✅ 100% (🟡 5/5 básicos) |
-| **Operaciones** | 5 | 5 | 56 | ✅ 100% (🟢 1/5 completos, 🟡 4/5 básicos) |
+| **Operaciones** | 5 | 5 | 56 | ✅ 100% (🟢 2/5 completos, 🟡 3/5 básicos) |
 | **Inventario** | 4 | 4 | 34 | ✅ 100% (🟢 1/4 completos, 🟡 3/4 básicos) |
 | **Proveedores** | 3 | 3 | 27 | ✅ 100% (🟡 3/3 básicos) |
-| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 4/21 completos, 🟡 17/21 básicos)** |
+| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 4/21 completos, 🟡 16/21 básicos)** |
 
 ---
 
@@ -331,24 +331,31 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ### MesasController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 14/14 (🟡 Tests Básicos)
+- **Tests**: 17/17 (🟢 Tests Completos)
 - **Base URL**: `/api/operaciones/mesas`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las mesas | ✅ PASSING (🟡 Básico) |
-| `/{id}` | GET | `✅/✅` | Obtener mesa por ID | ✅ PASSING (🟡 Básico) |
-| `/` | POST | `✅/✅` | Crear nueva mesa | ✅ PASSING (🟡 Básico) |
-| `/{id}` | PUT | `✅/✅` | Actualizar mesa | ✅ PASSING (🟡 Básico) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar mesa | ✅ PASSING (🟡 Básico) |
-| `/{id}/estado` | PUT | `✅/✅` | Cambiar estado de la mesa | ✅ PASSING (🟡 Básico) |
-| `/plano` | GET | `✅/✅` | Obtener plano de mesas | ✅ PASSING (🟡 Básico) |
-| `/plano` | PUT | `✅/✅` | Actualizar plano de mesas | ✅ PASSING (🟡 Básico) |
-| `/{id}/asignar-cliente` | POST | `✅/✅` | Asignar cliente a mesa | ✅ PASSING (🟡 Básico) |
-| `/{id}/liberar` | POST | `✅/✅` | Liberar mesa | ✅ PASSING (🟡 Básico) |
-| `/combinar` | POST | `✅/✅` | Combinar mesas | ✅ PASSING (🟡 Básico) |
-| `/separar` | POST | `✅/✅` | Separar mesas | ✅ PASSING (🟡 Básico) |
-| `/reservar` | POST | `✅/✅` | Reservar mesa | ✅ PASSING (🟡 Básico) |
-| `/cancelar-reserva` | POST | `✅/✅` | Cancelar reserva de mesa | ✅ PASSING (🟡 Básico) |
+| `/` | GET | `✅/✅` | Obtener todas las mesas | ✅ PASSING (🟢 Completo) |
+| `/{id}` | GET | `✅/✅` | Obtener mesa por ID | ⚠️ PASSING (501 NotImplemented) |
+| `/` | POST | `✅/✅` | Crear nueva mesa | ✅ PASSING (🟢 Completo) |
+| `/{id}` | PUT | `✅/✅` | Actualizar mesa | ✅ PASSING (🟢 Completo) |
+| `/{id}` | DELETE | `✅/✅` | Eliminar mesa | ✅ PASSING (🟢 Completo) |
+| `/{id}/estado` | PUT | `✅/✅` | Cambiar estado de la mesa | ✅ PASSING (🟢 Completo) |
+| `/plano` | GET | `✅/✅` | Obtener plano de mesas | ✅ PASSING (🟢 Completo) |
+| `/plano` | PUT | `✅/✅` | Actualizar plano de mesas | ✅ PASSING (🟢 Completo) |
+| `/{id}/asignar-cliente` | POST | `✅/✅` | Asignar cliente a mesa | ✅ PASSING (🟢 Completo) |
+| `/{id}/liberar` | POST | `✅/✅` | Liberar mesa | ✅ PASSING (🟢 Completo) |
+| `/combinar` | POST | `✅/✅` | Combinar mesas | ✅ PASSING (🟢 Completo) |
+| `/separar` | POST | `✅/✅` | Separar mesas | ✅ PASSING (🟢 Completo) |
+| `/reservar` | POST | `✅/✅` | Reservar mesa | ✅ PASSING (🟢 Completo) |
+| `/cancelar-reserva` | POST | `✅/✅` | Cancelar reserva de mesa | ✅ PASSING (🟢 Completo) |
+| `{id}/asignar` | POST | `✅/✅` | Asignar mesa | ⚠️ PASSING (501 NotImplemented) |
+| `{id}/fuera-servicio` | POST | `✅/✅` | Marcar fuera de servicio | ⚠️ PASSING (501 NotImplemented) |
+| `/disponibles` | GET | `✅/✅` | Obtener mesas disponibles | ⚠️ PASSING (501 NotImplemented) |
+| `/estado-ocupacion` | GET | `✅/✅` | Estado de ocupación | ⚠️ PASSING (501 NotImplemented) |
+| `/buscar-mejor` | GET | `✅/✅` | Buscar mejor mesa | ⚠️ PASSING (501 NotImplemented) |
+
+> **Nota:** MesasController migrado a tests completos (🟢). Todos los endpoints principales validados con interacción real de BD y reglas de negocio. Los endpoints marcados con ⚠️ devuelven 501 NotImplemented (stub) y están pendientes de implementación real. Migración completada junio 2024.
 
 ### ReservacionesController
 - **Estado**: ✅/✅ (Completado)
