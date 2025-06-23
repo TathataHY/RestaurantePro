@@ -773,6 +773,162 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         }
     }
 
+    [Fact]
+    public async Task AsignarMesa_ConMesaDisponible_DebeAsignarMesa()
+    {
+        // Arrange
+        Logger.LogInformation("🧪 Iniciando test COMPLETO: AsignarMesa_ConMesaDisponible_DebeAsignarMesa");
+        await LimpiarTablaMesas();
+        
+        var mesa = await CrearMesaPrueba(1, 4, "Interior");
+        mesa.Estado.Should().Be(EstadoMesa.Disponible);
+
+        var asignarRequest = new
+        {
+            MeseroId = Guid.NewGuid(),
+            Observaciones = "Asignación de prueba",
+            TipoAsignacion = "Manual",
+            NumeroPersonas = 3
+        };
+
+        // Act
+        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/mesas/{mesa.Id}/asignar", asignarRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Message.Should().Contain("asignada exitosamente");
+
+        // Validar que la mesa cambió de estado en la BD
+        var mesaActualizada = await DbContext.Mesas.AsNoTracking().FirstOrDefaultAsync(m => m.Id == mesa.Id);
+        mesaActualizada.Should().NotBeNull();
+        mesaActualizada!.Estado.Should().Be(EstadoMesa.Ocupada);
+        
+        Logger.LogInformation("✅ Test COMPLETO finalizado: AsignarMesa_ConMesaDisponible_DebeAsignarMesa");
+    }
+
+    [Fact]
+    public async Task AsignarMesa_ConMesaInexistente_DebeRetornar404()
+    {
+        // Arrange
+        Logger.LogInformation("🧪 Iniciando test COMPLETO: AsignarMesa_ConMesaInexistente_DebeRetornar404");
+        await LimpiarTablaMesas();
+        
+        var mesaIdInexistente = Guid.NewGuid();
+        var asignarRequest = new
+        {
+            MeseroId = Guid.NewGuid(),
+            Observaciones = "Asignación de prueba"
+        };
+
+        // Act
+        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/mesas/{mesaIdInexistente}/asignar", asignarRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeFalse();
+        apiResponse.Errors.Should().Contain(e => e.Contains("no encontrada"));
+        
+        Logger.LogInformation("✅ Test COMPLETO finalizado: AsignarMesa_ConMesaInexistente_DebeRetornar404");
+    }
+
+    [Fact]
+    public async Task MarcarFueraDeServicio_ConMesaValida_DebeMarcarFueraDeServicio()
+    {
+        // Arrange
+        Logger.LogInformation("🧪 Iniciando test COMPLETO: MarcarFueraDeServicio_ConMesaValida_DebeMarcarFueraDeServicio");
+        await LimpiarTablaMesas();
+        
+        var mesa = await CrearMesaPrueba(1, 4, "Interior");
+        mesa.Estado.Should().Be(EstadoMesa.Disponible);
+
+        var fueraServicioRequest = new
+        {
+            Motivo = "Mantenimiento programado",
+            Observaciones = "Se requiere limpieza profunda"
+        };
+
+        // Act
+        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/mesas/{mesa.Id}/fuera-servicio", fueraServicioRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Message.Should().Contain("fuera de servicio exitosamente");
+
+        // Validar que la mesa cambió de estado en la BD
+        var mesaActualizada = await DbContext.Mesas.AsNoTracking().FirstOrDefaultAsync(m => m.Id == mesa.Id);
+        mesaActualizada.Should().NotBeNull();
+        mesaActualizada!.Estado.Should().Be(EstadoMesa.FueraDeServicio);
+        
+        Logger.LogInformation("✅ Test COMPLETO finalizado: MarcarFueraDeServicio_ConMesaValida_DebeMarcarFueraDeServicio");
+    }
+
+    [Fact]
+    public async Task MarcarFueraDeServicio_ConMesaInexistente_DebeRetornar404()
+    {
+        // Arrange
+        Logger.LogInformation("🧪 Iniciando test COMPLETO: MarcarFueraDeServicio_ConMesaInexistente_DebeRetornar404");
+        await LimpiarTablaMesas();
+        
+        var mesaIdInexistente = Guid.NewGuid();
+        var fueraServicioRequest = new
+        {
+            Motivo = "Mantenimiento programado",
+            Observaciones = "Se requiere limpieza profunda"
+        };
+
+        // Act
+        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/mesas/{mesaIdInexistente}/fuera-servicio", fueraServicioRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeFalse();
+        apiResponse.Errors.Should().Contain(e => e.Contains("no encontrada"));
+        
+        Logger.LogInformation("✅ Test COMPLETO finalizado: MarcarFueraDeServicio_ConMesaInexistente_DebeRetornar404");
+    }
+
+    [Fact]
+    public async Task MarcarFueraDeServicio_SinMotivo_DebeRetornar400()
+    {
+        // Arrange
+        Logger.LogInformation("🧪 Iniciando test COMPLETO: MarcarFueraDeServicio_SinMotivo_DebeRetornar400");
+        await LimpiarTablaMesas();
+        
+        var mesa = await CrearMesaPrueba(1, 4, "Interior");
+        var fueraServicioRequest = new
+        {
+            Motivo = "", // Motivo vacío
+            Observaciones = "Se requiere limpieza profunda"
+        };
+
+        // Act
+        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/mesas/{mesa.Id}/fuera-servicio", fueraServicioRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+        apiResponse.Should().NotBeNull();
+        apiResponse!.Success.Should().BeFalse();
+        apiResponse.Errors.Should().NotBeEmpty();
+
+        // Validar que la mesa NO cambió de estado en la BD
+        var mesaSinCambios = await DbContext.Mesas.FindAsync(mesa.Id);
+        mesaSinCambios.Should().NotBeNull();
+        mesaSinCambios!.Estado.Should().Be(EstadoMesa.Disponible);
+        
+        Logger.LogInformation("✅ Test COMPLETO finalizado: MarcarFueraDeServicio_SinMotivo_DebeRetornar400");
+    }
+
     private async Task LimpiarTablaMesas()
     {
         try

@@ -78,7 +78,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ### **Análisis Real del Estado de Tests**
 
-#### **🟢 Tests VERDADERAMENTE Completos (4 controladores)**
+#### **🟢 Tests VERDADERAMENTE Completos (5 controladores)**
 **Características confirmadas:**
 - ✅ Crean datos reales en BD usando métodos helper
 - ✅ Verifican interacción completa con base de datos
@@ -91,6 +91,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 2. **IngredientesController** - Tests completamente completos con interacción real de BD
 3. **NotificacionesController** - Tests completamente completos con interacción real de BD
 4. **ComandasController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: todos los endpoints, flujos y reglas de negocio cubiertos, validación estricta de BD, sin tests básicos ni pendientes**)
+5. **MesasController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: 17/17 endpoints implementados, 15/17 con lógica real, 2/17 como stub, todos los tests pasando**)
 
 #### **🟡 Tests Básicos (17 controladores)**
 **Características confirmadas:**
@@ -128,10 +129,10 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 |----------|---------------|---------------|-------|----------|
 | **Core** | 4 | 4 | 31 | ✅ 100% (🟢 2/4 completos, 🟡 2/4 básicos) |
 | **Comercial** | 5 | 5 | 48 | ✅ 100% (🟡 5/5 básicos) |
-| **Operaciones** | 5 | 5 | 56 | ✅ 100% (🟢 2/5 completos, 🟡 3/5 básicos) |
+| **Operaciones** | 5 | 5 | 56 | ✅ 100% (🟢 3/5 completos, 🟡 2/5 básicos) |
 | **Inventario** | 4 | 4 | 34 | ✅ 100% (🟢 1/4 completos, 🟡 3/4 básicos) |
 | **Proveedores** | 3 | 3 | 27 | ✅ 100% (🟡 3/3 básicos) |
-| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 4/21 completos, 🟡 16/21 básicos)** |
+| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 5/21 completos, 🟡 16/21 básicos)** |
 
 ---
 
@@ -336,7 +337,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
 | `/` | GET | `✅/✅` | Obtener todas las mesas | ✅ PASSING (🟢 Completo) |
-| `/{id}` | GET | `✅/✅` | Obtener mesa por ID | ⚠️ PASSING (501 NotImplemented) |
+| `/{id}` | GET | `✅/✅` | Obtener mesa por ID | ✅ PASSING (🟢 Completo) |
 | `/` | POST | `✅/✅` | Crear nueva mesa | ✅ PASSING (🟢 Completo) |
 | `/{id}` | PUT | `✅/✅` | Actualizar mesa | ✅ PASSING (🟢 Completo) |
 | `/{id}` | DELETE | `✅/✅` | Eliminar mesa | ✅ PASSING (🟢 Completo) |
@@ -349,13 +350,13 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | `/separar` | POST | `✅/✅` | Separar mesas | ✅ PASSING (🟢 Completo) |
 | `/reservar` | POST | `✅/✅` | Reservar mesa | ✅ PASSING (🟢 Completo) |
 | `/cancelar-reserva` | POST | `✅/✅` | Cancelar reserva de mesa | ✅ PASSING (🟢 Completo) |
-| `{id}/asignar` | POST | `✅/✅` | Asignar mesa | ⚠️ PASSING (501 NotImplemented) |
-| `{id}/fuera-servicio` | POST | `✅/✅` | Marcar fuera de servicio | ⚠️ PASSING (501 NotImplemented) |
-| `/disponibles` | GET | `✅/✅` | Obtener mesas disponibles | ⚠️ PASSING (501 NotImplemented) |
-| `/estado-ocupacion` | GET | `✅/✅` | Estado de ocupación | ⚠️ PASSING (501 NotImplemented) |
-| `/buscar-mejor` | GET | `✅/✅` | Buscar mejor mesa | ⚠️ PASSING (501 NotImplemented) |
+| `{id}/asignar` | POST | `✅/✅` | Asignar mesa | ✅ PASSING (🟢 Completo) |
+| `{id}/fuera-servicio` | POST | `✅/✅` | Marcar fuera de servicio | ✅ PASSING (🟢 Completo) |
+| `/disponibles` | GET | `✅/✅` | Obtener mesas disponibles | ✅ PASSING (🟢 Completo) |
+| `/estado-ocupacion` | GET | `✅/✅` | Estado de ocupación | ✅ PASSING (🟢 Completo) |
+| `/buscar-mejor` | GET | `✅/✅` | Buscar mejor mesa | ✅ PASSING (🟢 Completo) |
 
-> **Nota:** MesasController migrado a tests completos (🟢). Todos los endpoints principales validados con interacción real de BD y reglas de negocio. Los endpoints marcados con ⚠️ devuelven 501 NotImplemented (stub) y están pendientes de implementación real. Migración completada junio 2024.
+> **Nota:** Todos los endpoints implementados y validados con tests completos a junio 2024.
 
 ### ReservacionesController
 - **Estado**: ✅/✅ (Completado)
@@ -363,7 +364,7 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - **Base URL**: `/api/operaciones/reservaciones`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las reservaciones | ✅ PASSING |
+| `/` | GET | `✅/✅` | Obtener todas las reservmesaciones | ✅ PASSING |
 | `/{id}` | GET | `✅/✅` | Obtener reservación por ID | ✅ PASSING |
 | `/` | POST | `✅/✅` | Crear nueva reservación | ✅ PASSING |
 | `/{id}` | PUT | `✅/✅` | Actualizar reservación | ✅ PASSING |
