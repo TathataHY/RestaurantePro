@@ -12,11 +12,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace RestaurantePro.Application.Comercial.Facturacion.Commands.AnularFactura;
 
-public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result<FacturaDto>>
+public class AnularFacturaCommandHandler : IRequestHandler<AnularFacturaCommand, Result<FacturaDto>>
 {
     private readonly IApplicationDbContext _context;
     private readonly IMapper _mapper;
-    private readonly ILogger<AnularFacturaHandler> _logger;
+    private readonly ILogger<AnularFacturaCommandHandler> _logger;
     private readonly INotificationService _notificationService;
     private readonly IEmailService _emailService;
     private readonly ICurrentUserService _currentUserService;
@@ -24,10 +24,10 @@ public class AnularFacturaHandler : IRequestHandler<AnularFacturaCommand, Result
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IDelayProvider _delayProvider;
 
-    public AnularFacturaHandler(
+    public AnularFacturaCommandHandler(
         IApplicationDbContext context,
         IMapper mapper,
-        ILogger<AnularFacturaHandler> logger,
+        ILogger<AnularFacturaCommandHandler> logger,
         IDateTimeService dateTimeService,
         ICurrentUserService currentUserService,
         IEmailService emailService,

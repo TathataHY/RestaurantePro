@@ -1,16 +1,16 @@
 namespace RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturaPorId;
 
-public class ObtenerFacturaPorIdHandler : IRequestHandler<ObtenerFacturaPorIdQuery, Result<FacturaDto>>
+public class ObtenerFacturaPorIdQueryHandler : IRequestHandler<ObtenerFacturaPorIdQuery, Result<FacturaDto>>
 {
     private readonly IApplicationDbContext _context;
     private readonly IMapper _mapper;
-    private readonly ILogger<ObtenerFacturaPorIdHandler> _logger;
+    private readonly ILogger<ObtenerFacturaPorIdQueryHandler> _logger;
     private readonly ICurrentUserService _currentUserService;
 
-    public ObtenerFacturaPorIdHandler(
+    public ObtenerFacturaPorIdQueryHandler(
         IApplicationDbContext context,
         IMapper mapper,
-        ILogger<ObtenerFacturaPorIdHandler> logger,
+        ILogger<ObtenerFacturaPorIdQueryHandler> logger,
         ICurrentUserService currentUserService)
     {
         _context = context;

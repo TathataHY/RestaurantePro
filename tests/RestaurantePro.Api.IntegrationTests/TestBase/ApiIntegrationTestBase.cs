@@ -46,11 +46,34 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// </summary>
     public virtual async Task InitializeAsync()
     {
-        // Limpiar la base de datos antes de cada test
-        await LimpiarBaseDeDatos();
+        // Configurar autenticación por defecto
+        ConfigurarAutenticacionPorDefecto();
         
-        // Configurar datos base necesarios para los tests
+        // Limpiar completamente la base de datos antes de cada test
+        await LimpiarBaseDeDatosCompletamente();
+        
+        // Configurar datos base si es necesario
         await ConfigurarDatosBase();
+        
+        Logger.LogInformation("✅ Test inicializado correctamente");
+    }
+
+    /// <summary>
+    /// Configura autenticación automática con rol de Administrador para todos los tests
+    /// </summary>
+    protected virtual void ConfigurarAutenticacionPorDefecto()
+    {
+        HttpClient.DefaultRequestHeaders.Authorization = 
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Test", "AuthenticatedUser");
+    }
+
+    /// <summary>
+    /// Configura autenticación con un rol específico para el test
+    /// </summary>
+    protected virtual void ConfigurarAutenticacionConRol(string rol)
+    {
+        HttpClient.DefaultRequestHeaders.Authorization = 
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Test", $"AuthenticatedUser-{rol}");
     }
 
     /// <summary>
@@ -92,86 +115,62 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     {
         try
         {
-            // 🚀 ESTRATEGIA ROBUSTA PARA SQLITE IN-MEMORY: 
-            // 1. Usar un nuevo contexto para evitar problemas de tracking
-            // 2. Eliminar en orden correcto (dependientes primero)
-            // 3. Manejar errores de concurrencia sin fallar los tests
-            // 4. Usar transacciones para consistencia
+            Logger.LogInformation("🧹 Iniciando limpieza de base de datos...");
             
-            using var scope = Factory.Services.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
+            // Desactivar detección de cambios para mejorar rendimiento
+            DbContext.ChangeTracker.AutoDetectChangesEnabled = false;
             
-            // Desactivar el tracking para evitar problemas de concurrencia
-            context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-            context.ChangeTracker.AutoDetectChangesEnabled = false;
+            // Limpiar en orden específico para evitar problemas de FK
+            await EliminarEntidadesSafely(DbContext, DbContext.Facturas, "Facturas");
+            await EliminarEntidadesSafely(DbContext, DbContext.ItemsComanda, "ItemsComanda");
+            await EliminarEntidadesSafely(DbContext, DbContext.Comandas, "Comandas");
+            await EliminarEntidadesSafely(DbContext, DbContext.Reservaciones, "Reservaciones");
+            await EliminarEntidadesSafely(DbContext, DbContext.Mesas, "Mesas");
+            await EliminarEntidadesSafely(DbContext, DbContext.Clientes, "Clientes");
+            await EliminarEntidadesSafely(DbContext, DbContext.Usuarios, "Usuarios");
+            await EliminarEntidadesSafely(DbContext, DbContext.Productos, "Productos");
+            await EliminarEntidadesSafely(DbContext, DbContext.Ingredientes, "Ingredientes");
+            await EliminarEntidadesSafely(DbContext, DbContext.Proveedores, "Proveedores");
+            await EliminarEntidadesSafely(DbContext, DbContext.Notificaciones, "Notificaciones");
             
-            // 🗑️ ELIMINAR EN ORDEN CORRECTO (dependientes primero)
-            // Usar transacciones para consistencia
+            // Guardar cambios
+            await GuardarCambiosConRetry(DbContext, "Limpieza general");
             
-            using var transaction = await context.Database.BeginTransactionAsync();
-            try
-            {
-                // 1. Items de comandas (dependen de Comanda y Producto)
-                await EliminarEntidadesSafely(context, context.Set<ItemComanda>(), "items de comanda");
-                
-                // 2. Preparaciones (dependen de Comanda)
-                await EliminarEntidadesSafely(context, context.Preparaciones, "preparaciones");
-                
-                // 3. Comandas (dependen de Usuario, Cliente, Mesa)
-                await EliminarEntidadesSafely(context, context.Comandas, "comandas");
-                
-                // 4. Reservaciones (dependen de Cliente, Mesa)
-                await EliminarEntidadesSafely(context, context.Reservaciones, "reservaciones");
-                
-                // 5. Facturas (dependen de Cliente)
-                await EliminarEntidadesSafely(context, context.Facturas, "facturas");
-                
-                // 6. Tarjetas de fidelización (dependen de Cliente)
-                await EliminarEntidadesSafely(context, context.TarjetasFidelizacion, "tarjetas de fidelización");
-                
-                // 7. Notificaciones (dependen de Usuario)
-                await EliminarEntidadesSafely(context, context.Notificaciones, "notificaciones");
-                
-                // 8. Órdenes de compra (dependen de Proveedor)
-                await EliminarEntidadesSafely(context, context.OrdenesCompra, "órdenes de compra");
-                
-                // 9. Promociones
-                await EliminarEntidadesSafely(context, context.Promociones, "promociones");
-                
-                // 10. Ingredientes (contienen owned entities de movimientos)
-                await EliminarEntidadesSafely(context, context.Ingredientes, "ingredientes");
-                
-                // 11. Productos (pueden tener relaciones con recetas)
-                await EliminarEntidadesSafely(context, context.Productos, "productos");
-                
-                // 12. Mesas (dependen de Usuario para asignaciones)
-                await EliminarEntidadesSafely(context, context.Mesas, "mesas");
-                
-                // 13. Clientes (dependen de Usuario para creación)
-                await EliminarEntidadesSafely(context, context.Clientes, "clientes");
-                
-                // 14. Proveedores (pueden tener contactos)
-                await EliminarEntidadesSafely(context, context.Proveedores, "proveedores");
-                
-                // 15. Usuarios (entidad raíz, se elimina al final)
-                await EliminarEntidadesSafely(context, context.Usuarios, "usuarios");
-                
-                await transaction.CommitAsync();
-                Logger.LogInformation("✅ Base de datos limpiada correctamente (SQLite in-memory)");
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
+            // Reactivar detección de cambios
+            DbContext.ChangeTracker.AutoDetectChangesEnabled = true;
+            
+            Logger.LogInformation("✅ Base de datos limpiada correctamente");
         }
         catch (Exception ex)
         {
-            // 🛡️ NO FALLAR LOS TESTS POR ERRORES DE LIMPIEZA
-            Logger.LogWarning(ex, "⚠️ Error al limpiar la base de datos, pero continuando con el test: {Message}", ex.Message);
-            
-            // Intentar limpieza alternativa más agresiva
+            Logger.LogError(ex, "❌ Error durante la limpieza de base de datos");
             await LimpiezaAlternativa();
+        }
+    }
+    
+    /// <summary>
+    /// Limpieza más agresiva que elimina y recrea la base de datos
+    /// </summary>
+    protected virtual async Task LimpiarBaseDeDatosCompletamente()
+    {
+        try
+        {
+            Logger.LogInformation("🧹 Iniciando limpieza completa de base de datos...");
+            
+            // Cerrar conexión actual
+            await DbContext.Database.CloseConnectionAsync();
+            
+            // Eliminar y recrear la base de datos
+            await DbContext.Database.EnsureDeletedAsync();
+            await DbContext.Database.EnsureCreatedAsync();
+            
+            Logger.LogInformation("✅ Base de datos recreada completamente");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Error durante la limpieza completa de base de datos");
+            // Fallback a limpieza normal
+            await LimpiarBaseDeDatos();
         }
     }
     
@@ -349,7 +348,8 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// </summary>
     protected async Task<Cliente> CrearClientePrueba(string nombre = "Cliente Test", string? email = null)
     {
-        var emailUnico = email ?? $"test_{Guid.NewGuid().ToString("N")[..8]}@example.com";
+        var timestamp = DateTimeOffset.UtcNow.Ticks.ToString()[^8..];
+        var emailUnico = email ?? $"test_{timestamp}@example.com";
         var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
         var cliente = Cliente.Crear(
             clienteNombre,
@@ -390,7 +390,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         string? email = null,
         RolUsuario rol = RolUsuario.Mesero)
     {
-        var sufijo = Guid.NewGuid().ToString("N")[..8];
+        var sufijo = Guid.NewGuid().ToString("N")[..8] + DateTimeOffset.UtcNow.Ticks.ToString()[^4..];
         var usuarioUnico = nombreUsuario ?? $"usuario_{sufijo}";
         var emailUnico = email ?? $"usuario_{sufijo}@test.com";
         var usuario = Usuario.Crear(
@@ -478,6 +478,19 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         Guid? mesaId = null,
         string observaciones = "Comanda de prueba")
     {
+        return await CrearComandaPrueba(meseroId: meseroId, clienteId: clienteId, mesaId: mesaId, observaciones: observaciones, estado: EstadoComanda.Creada);
+    }
+
+    /// <summary>
+    /// Crea una comanda de prueba en la base de datos con estado específico
+    /// </summary>
+    protected async Task<Comanda> CrearComandaPrueba(
+        Guid? meseroId = null,
+        Guid? clienteId = null,
+        Guid? mesaId = null,
+        string observaciones = "Comanda de prueba",
+        EstadoComanda estado = EstadoComanda.Creada)
+    {
         // Crear entidades dependientes si NO se proporcionan los IDs
         var mesero = meseroId.HasValue ? null : await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = clienteId.HasValue ? null : await CrearClientePrueba("Cliente Comanda", "cliente@test.com");
@@ -522,6 +535,17 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
             mesaIdFinal,
             observaciones
         );
+
+        // Cambiar el estado si es diferente al por defecto
+        if (estado != EstadoComanda.Creada)
+        {
+            // Usar reflection para cambiar el estado ya que es una propiedad privada
+            var estadoProperty = typeof(Comanda).GetProperty("Estado");
+            if (estadoProperty != null)
+            {
+                estadoProperty.SetValue(comanda, estado);
+            }
+        }
 
         DbContext.Comandas.Add(comanda);
         await DbContext.SaveChangesAsync();
@@ -597,5 +621,187 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         DbContext.Proveedores.Add(proveedor);
         await DbContext.SaveChangesAsync();
         return proveedor;
+    }
+
+    /// <summary>
+    /// Crea una factura de prueba en la base de datos
+    /// </summary>
+    protected async Task<Factura> CrearFacturaPrueba(
+        Guid? clienteId = null,
+        List<Guid>? comandasIds = null,
+        string numeroFactura = null,
+        TipoFactura tipoFactura = TipoFactura.Normal,
+        string nombreCliente = "Cliente Factura Test",
+        string observaciones = "Factura de prueba")
+    {
+        // Crear cliente si no se proporciona
+        if (!clienteId.HasValue)
+        {
+            var cliente = await CrearClientePrueba(nombreCliente, "factura@test.com");
+            clienteId = cliente.Id;
+        }
+
+        // Crear comanda si no se proporciona
+        if (comandasIds == null || !comandasIds.Any())
+        {
+            var comanda = await CrearComandaPrueba(meseroId: null, clienteId: clienteId.Value, mesaId: null, observaciones: "Comanda de prueba");
+            comandasIds = new List<Guid> { comanda.Id };
+        }
+
+        // Generar número de factura si no se proporciona
+        if (string.IsNullOrEmpty(numeroFactura))
+        {
+            numeroFactura = $"FAC-TEST-{Guid.NewGuid().ToString().Substring(0, 8)}";
+        }
+
+        // Crear la factura usando el factory method
+        var factura = Factura.Crear(
+            clienteId.Value,
+            null, // identificacionFiscal
+            null, // direccionCliente
+            comandasIds,
+            observaciones,
+            DateTime.Now);
+
+        // Guardar en la base de datos
+        DbContext.Facturas.Add(factura);
+        await DbContext.SaveChangesAsync();
+
+        Logger.LogInformation("✅ Factura de prueba creada: {NumeroFactura} (ID: {Id})", factura.NumeroFactura, factura.Id);
+
+        return factura;
+    }
+
+    /// <summary>
+    /// Crea una factura con detalles de productos
+    /// </summary>
+    protected async Task<Factura> CrearFacturaConDetallesPrueba(
+        Guid? clienteId = null,
+        List<Guid>? comandasIds = null,
+        string numeroFactura = null,
+        TipoFactura tipoFactura = TipoFactura.Normal)
+    {
+        // Crear cliente si no se proporciona
+        if (!clienteId.HasValue)
+        {
+            var cliente = await CrearClientePrueba("Cliente Detalles Test", "detalles@test.com");
+            clienteId = cliente.Id;
+        }
+
+        // Crear comanda con productos si no se proporciona
+        if (comandasIds == null || !comandasIds.Any())
+        {
+            var comanda = await CrearComandaPrueba(meseroId: null, clienteId: clienteId.Value, mesaId: null, observaciones: "Comanda de prueba");
+            // Agregar productos a la comanda
+            var producto1 = await CrearProductoPrueba("Producto 1", 100.00m);
+            var producto2 = await CrearProductoPrueba("Producto 2", 150.00m);
+            await CrearDetalleComandaPrueba(comanda.Id, producto1.Id, 2);
+            await CrearDetalleComandaPrueba(comanda.Id, producto2.Id, 1);
+            comandasIds = new List<Guid> { comanda.Id };
+        }
+
+        // Generar número de factura si no se proporciona
+        if (string.IsNullOrEmpty(numeroFactura))
+        {
+            numeroFactura = $"FAC-DET-{Guid.NewGuid().ToString().Substring(0, 8)}";
+        }
+
+        // Crear la factura
+        var factura = await CrearFacturaPrueba(clienteId, comandasIds, numeroFactura, tipoFactura);
+
+        // Agregar detalles de factura usando los productos de la comanda
+        var comandaConItems = await DbContext.Comandas
+            .Include(c => c.Items)
+            .FirstOrDefaultAsync(c => comandasIds!.Contains(c.Id));
+            
+        if (comandaConItems != null && comandaConItems.Items.Any())
+        {
+            // Usar los items de la comanda para crear los detalles de la factura
+            foreach (var item in comandaConItems.Items)
+            {
+                // Obtener el producto para conseguir el nombre
+                var producto = await DbContext.Productos.FindAsync(item.ProductoId);
+                var nombreProducto = producto?.Nombre ?? "Producto Sin Nombre";
+                
+                var detalle = DetalleFactura.Crear(
+                    factura.Id,
+                    item.ProductoId,
+                    nombreProducto,
+                    item.Cantidad,
+                    item.PrecioUnitario,
+                    16.0m, // 16% IVA
+                    0.0m); // Sin descuento
+
+                DbContext.Set<DetalleFactura>().Add(detalle);
+            }
+            
+            await DbContext.SaveChangesAsync();
+            
+            // Recalcular el total de la factura
+            await RecalcularTotalFactura(factura);
+            
+            Logger.LogInformation("✅ Detalles de factura agregados: {CantidadDetalles} productos", comandaConItems.Items.Count);
+        }
+        else
+        {
+            // Si no hay items en la comanda, crear productos por defecto
+            var producto1 = await CrearProductoPrueba("Producto Factura 1", 100.00m);
+            var producto2 = await CrearProductoPrueba("Producto Factura 2", 150.00m);
+            
+            var detalle1 = DetalleFactura.Crear(
+                factura.Id,
+                producto1.Id,
+                producto1.Nombre,
+                2,
+                producto1.Precio!.Valor,
+                16.0m, // 16% IVA
+                0.0m); // Sin descuento
+
+            var detalle2 = DetalleFactura.Crear(
+                factura.Id,
+                producto2.Id,
+                producto2.Nombre,
+                1,
+                producto2.Precio!.Valor,
+                16.0m, // 16% IVA
+                0.0m); // Sin descuento
+
+            DbContext.Set<DetalleFactura>().AddRange(detalle1, detalle2);
+            await DbContext.SaveChangesAsync();
+            
+            // Recalcular el total de la factura
+            await RecalcularTotalFactura(factura);
+
+            Logger.LogInformation("✅ Detalles de factura agregados: {CantidadDetalles} productos por defecto", 2);
+        }
+
+        return factura;
+    }
+
+    /// <summary>
+    /// Recalcula el total de una factura basado en sus detalles
+    /// </summary>
+    private async Task RecalcularTotalFactura(Factura factura)
+    {
+        var detalles = await DbContext.Set<DetalleFactura>()
+            .Where(d => d.FacturaId == factura.Id)
+            .ToListAsync();
+            
+        if (detalles.Any())
+        {
+            var subtotal = detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
+            var impuestos = detalles.Sum(d => (d.Cantidad * d.PrecioUnitario) * (d.PorcentajeImpuesto / 100));
+            var descuentos = detalles.Sum(d => (d.Cantidad * d.PrecioUnitario) * (d.PorcentajeDescuento / 100));
+            var total = subtotal + impuestos - descuentos;
+            
+            // Usar reflection para establecer el total (ya que es privado)
+            var totalProperty = typeof(Factura).GetProperty("Total");
+            if (totalProperty != null)
+            {
+                totalProperty.SetValue(factura, total);
+                await DbContext.SaveChangesAsync();
+                Logger.LogInformation("✅ Total de factura recalculado: {Total:C}", total);
+            }
+        }
     }
 } 

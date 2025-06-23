@@ -1,6 +1,6 @@
 namespace RestaurantePro.Application.Comercial.Facturacion.Commands.ActualizarFactura;
 
-public class ActualizarFacturaCommand
+public class ActualizarFacturaCommand : IRequest<Result<FacturaDto>>
 {
     public Guid Id { get; set; }
     public string? NombreCliente { get; set; }

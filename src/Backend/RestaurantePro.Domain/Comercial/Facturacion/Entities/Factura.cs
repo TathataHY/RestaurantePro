@@ -517,5 +517,22 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Entities
             // Emitir evento de dominio
             AddDomainEvent(new FacturaVencida(Id, NumeroFactura, FechaVencimiento.Value, fechaActual));
         }
+
+        /// <summary>
+        /// Modifica las observaciones de la factura si aún está en borrador
+        /// </summary>
+        /// <param name="observaciones">Nuevas observaciones</param>
+        public void ModificarObservaciones(string observaciones)
+        {
+            if (Estado != EstadoFactura.Borrador)
+            {
+                throw new InvalidOperationException("Solo se pueden modificar las observaciones en facturas en estado Borrador");
+            }
+            if (string.IsNullOrWhiteSpace(observaciones))
+            {
+                throw new ArgumentException("Las observaciones no pueden estar vacías", nameof(observaciones));
+            }
+            Observaciones = observaciones;
+        }
     }
 } 

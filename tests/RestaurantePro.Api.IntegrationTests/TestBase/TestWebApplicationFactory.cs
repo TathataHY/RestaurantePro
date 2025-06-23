@@ -266,13 +266,43 @@ public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSch
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        var claims = new[]
+        // Verificar si hay un header de autorización
+        if (!Request.Headers.ContainsKey("Authorization"))
+        {
+            return Task.FromResult(AuthenticateResult.Fail("No authorization header"));
+        }
+
+        var authHeader = Request.Headers["Authorization"].ToString();
+        if (!authHeader.StartsWith("Test "))
+        {
+            return Task.FromResult(AuthenticateResult.Fail("Invalid authentication scheme"));
+        }
+
+        // Extraer el rol del header si está presente
+        var role = "Administrador"; // Rol por defecto
+        if (authHeader.Contains("-"))
+        {
+            var parts = authHeader.Split('-');
+            if (parts.Length > 1)
+            {
+                role = parts[1];
+            }
+        }
+
+        var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, "TestUser"),
             new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
             new Claim(ClaimTypes.Email, "test@test.com"),
-            new Claim(ClaimTypes.Role, "Administrador") // Dar rol de Administrador para tests
+            new Claim(ClaimTypes.Role, role)
         };
+
+        // Agregar múltiples roles para cubrir todos los endpoints
+        var allRoles = new[] { "Administrador", "Cajero", "Gerente", "Mesero", "Cocinero" };
+        foreach (var r in allRoles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, r));
+        }
 
         var identity = new ClaimsIdentity(claims, "Test");
         var principal = new ClaimsPrincipal(identity);

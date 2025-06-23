@@ -1,21 +1,21 @@
 namespace RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
 using System.Text;
 
-public class CrearFacturaHandler : IRequestHandler<CrearFacturaCommand, Result<FacturaDto>>
+public class CrearFacturaCommandHandler : IRequestHandler<CrearFacturaCommand, Result<FacturaDto>>
 {
     private readonly IApplicationDbContext _context;
     private readonly IMapper _mapper;
-    private readonly ILogger<CrearFacturaHandler> _logger;
+    private readonly ILogger<CrearFacturaCommandHandler> _logger;
     private readonly IServicioFacturacion _servicioFacturacion;
     private readonly IComercialServiceFacade _comercialServiceFacade;
     private readonly IEmailService _emailService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IDelayProvider _delayProvider;
 
-    public CrearFacturaHandler(
+    public CrearFacturaCommandHandler(
         IApplicationDbContext context,
         IMapper mapper,
-        ILogger<CrearFacturaHandler> logger,
+        ILogger<CrearFacturaCommandHandler> logger,
         IServicioFacturacion servicioFacturacion,
         IComercialServiceFacade comercialServiceFacade,
         IEmailService emailService,

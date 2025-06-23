@@ -5,6 +5,13 @@ using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
 using RestaurantePro.Application.Comercial.Facturacion.Commands.ActualizarFactura;
 using RestaurantePro.Application.Comercial.Facturacion.Commands.AnularFactura;
 using RestaurantePro.Application.Comercial.Facturacion.Commands.RegistrarPagoFactura;
+using RestaurantePro.Application.Comercial.Facturacion.Commands.EliminarFactura;
+using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturaPorId;
+using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturas;
+using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturasPorCliente;
+using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturasPorComanda;
+using RestaurantePro.Api.Common;
+using RestaurantePro.Application.Common.Interfaces;
 
 namespace RestaurantePro.Api.Controllers.Comercial;
 
@@ -18,11 +25,15 @@ namespace RestaurantePro.Api.Controllers.Comercial;
 [Authorize]
 public class FacturasController : ControllerBase
 {
+    private readonly IMediator _mediator;
     private readonly ILogger<FacturasController> _logger;
+    private readonly ICurrentUserService _currentUserService;
 
-    public FacturasController(ILogger<FacturasController> logger)
+    public FacturasController(IMediator mediator, ILogger<FacturasController> logger, ICurrentUserService currentUserService)
     {
+        _mediator = mediator;
         _logger = logger;
+        _currentUserService = currentUserService;
     }
 
     /// <summary>
@@ -35,22 +46,33 @@ public class FacturasController : ControllerBase
     /// <returns>Lista de facturas</returns>
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<List<FacturaDto>>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<List<FacturaDto>>>> GetFacturas(
         [FromQuery] string? estado = null,
         [FromQuery] Guid? clienteId = null,
         [FromQuery] DateTime? fechaDesde = null,
         [FromQuery] DateTime? fechaHasta = null)
     {
-        _logger.LogInformation("📄 GET /api/comercial/facturas?estado={Estado}&clienteId={ClienteId}&fechaDesde={FechaDesde}&fechaHasta={FechaHasta}", 
-            estado, clienteId, fechaDesde, fechaHasta);
-
-        var response = ApiResponse<List<FacturaDto>>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        _logger.LogInformation("📋 GET /api/comercial/facturas");
+        var query = new ObtenerFacturasQuery
+        {
+            Estado = estado,
+            ClienteId = clienteId,
+            FechaDesde = fechaDesde,
+            FechaHasta = fechaHasta
+        };
+        var result = await _mediator.Send(query);
+        if (!result.IsSuccess())
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { "Error al obtener facturas" },
+                "Error al obtener facturas",
+                StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+        var response = ApiResponse<List<FacturaDto>>.SuccessResponse(
+            result.Value, "Facturas obtenidas exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -61,17 +83,22 @@ public class FacturasController : ControllerBase
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ApiResponse<FacturaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
     public async Task<ActionResult<ApiResponse<FacturaDto>>> GetFactura(Guid id)
     {
-        _logger.LogInformation("📄 GET /api/comercial/facturas/{Id}", id);
-
-        var response = ApiResponse<FacturaDto>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        _logger.LogInformation("🔍 GET /api/comercial/facturas/{Id}", id);
+        var query = ObtenerFacturaPorIdQuery.ConsultaBasica(id);
+        var result = await _mediator.Send(query);
+        if (!result.IsSuccess())
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { "Factura no encontrada" },
+                "Factura no encontrada",
+                StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+        var response = ApiResponse<FacturaDto>.SuccessResponse(
+            result.Value, "Factura obtenida exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -83,69 +110,55 @@ public class FacturasController : ControllerBase
     [Authorize(Roles = "Administrador,Cajero,Gerente")]
     [ProducesResponseType(typeof(ApiResponse<FacturaDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
     public async Task<ActionResult<ApiResponse<FacturaDto>>> CrearFactura(
         [FromBody] CrearFacturaCommand command)
     {
-        _logger.LogInformation("➕ POST /api/comercial/facturas - Comandas: {ComandasCount}", 
-            command?.ComandasIds?.Count ?? 0);
-
-        var response = ApiResponse<FacturaDto>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        _logger.LogInformation("➕ POST /api/comercial/facturas");
+        var result = await _mediator.Send(command);
+        if (!result.IsSuccess())
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { "Error al crear factura" },
+                "Error al crear factura",
+                StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+        var response = ApiResponse<FacturaDto>.SuccessResponse(
+            result.Value, "Factura creada exitosamente");
+        return CreatedAtAction(nameof(GetFactura), new { id = result.Value.Id }, response);
     }
 
     /// <summary>
-    /// Actualiza una factura existente (solo en estado borrador)
+    /// Actualiza una factura existente
     /// </summary>
     /// <param name="id">ID de la factura</param>
-    /// <param name="command">Datos actualizados de la factura</param>
+    /// <param name="command">Datos de actualización</param>
     /// <returns>Factura actualizada</returns>
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "Administrador,Cajero,Gerente")]
     [ProducesResponseType(typeof(ApiResponse<FacturaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
     public async Task<ActionResult<ApiResponse<FacturaDto>>> ActualizarFactura(
         Guid id, [FromBody] ActualizarFacturaCommand command)
     {
         _logger.LogInformation("✏️ PUT /api/comercial/facturas/{Id}", id);
-
-        var response = ApiResponse<FacturaDto>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
-    }
-
-    /// <summary>
-    /// Anula una factura emitida
-    /// </summary>
-    /// <param name="id">ID de la factura a anular</param>
-    /// <param name="command">Datos de anulación</param>
-    /// <returns>Confirmación de anulación</returns>
-    [HttpPatch("{id:guid}/anular")]
-    [Authorize(Roles = "Administrador,Gerente")]
-    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
-    public async Task<ActionResult<ApiResponse<bool>>> AnularFactura(
-        Guid id, [FromBody] AnularFacturaCommand command)
-    {
-        _logger.LogInformation("❌ PATCH /api/comercial/facturas/{Id}/anular", id);
-
-        var response = ApiResponse<bool>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        command.Id = id;
+        var result = await _mediator.Send(command);
+        if (!result.IsSuccess())
+        {
+            var statusCode = result.Errors != null && result.Errors.Any(e => e.Contains("no encontrada"))
+                ? StatusCodes.Status404NotFound
+                : StatusCodes.Status400BadRequest;
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { "Error al actualizar factura" },
+                "Error al actualizar factura",
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+        var response = ApiResponse<FacturaDto>.SuccessResponse(
+            result.Value, "Factura actualizada exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -157,19 +170,24 @@ public class FacturasController : ControllerBase
     [HttpGet("cliente/{clienteId:guid}")]
     [ProducesResponseType(typeof(ApiResponse<List<FacturaDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
     public async Task<ActionResult<ApiResponse<List<FacturaDto>>>> GetFacturasPorCliente(
         Guid clienteId, [FromQuery] bool soloActivas = true)
     {
-        _logger.LogInformation("👤 GET /api/comercial/facturas/cliente/{ClienteId}?soloActivas={SoloActivas}", 
-            clienteId, soloActivas);
-
-        var response = ApiResponse<List<FacturaDto>>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        _logger.LogInformation("📄 GET /api/comercial/facturas/cliente/{ClienteId}", clienteId);
+        var query = new ObtenerFacturasPorClienteQuery { ClienteId = clienteId, SoloActivas = soloActivas };
+        var result = await _mediator.Send(query);
+        if (!result.IsSuccess())
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { "Error desconocido" },
+                "No se encontraron facturas para el cliente",
+                StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+        var response = ApiResponse<List<FacturaDto>>.SuccessResponse(
+            result.Value,
+            "Facturas del cliente obtenidas exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -180,17 +198,24 @@ public class FacturasController : ControllerBase
     [HttpGet("comanda/{comandaId:guid}")]
     [ProducesResponseType(typeof(ApiResponse<List<FacturaDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
-    public async Task<ActionResult<ApiResponse<List<FacturaDto>>>> GetFacturasPorComanda(Guid comandaId)
+    public async Task<ActionResult<ApiResponse<List<FacturaDto>>>> GetFacturasPorComanda(
+        Guid comandaId)
     {
-        _logger.LogInformation("📋 GET /api/comercial/facturas/comanda/{ComandaId}", comandaId);
-
-        var response = ApiResponse<List<FacturaDto>>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        _logger.LogInformation("📄 GET /api/comercial/facturas/comanda/{ComandaId}", comandaId);
+        var query = new ObtenerFacturasPorComandaQuery { ComandaId = comandaId };
+        var result = await _mediator.Send(query);
+        if (!result.IsSuccess())
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { "Error desconocido" },
+                "No se encontraron facturas para la comanda",
+                StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+        var response = ApiResponse<List<FacturaDto>>.SuccessResponse(
+            result.Value,
+            "Facturas de la comanda obtenidas exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -201,39 +226,51 @@ public class FacturasController : ControllerBase
     [HttpGet("{id:guid}/pdf")]
     [ProducesResponseType(typeof(FileResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
     public async Task<ActionResult> DescargarFacturaPdf(Guid id)
     {
         _logger.LogInformation("📄 GET /api/comercial/facturas/{Id}/pdf", id);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
+        // Aquí deberías invocar una Query/Handler que genere el PDF y devuelva el archivo o un error
+        // Por ahora, devolvemos 501 NotImplemented
+        var errorResponse = ApiResponse<object>.ErrorResponse(
+            new List<string> { "Funcionalidad no implementada" }, 
+            "Descarga de PDF no implementada", 
             StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        return StatusCode(StatusCodes.Status501NotImplemented, errorResponse);
     }
 
     /// <summary>
-    /// Obtiene las facturas pendientes de pago
+    /// Obtiene facturas pendientes de pago
     /// </summary>
-    /// <param name="diasVencimiento">Días de vencimiento máximo</param>
+    /// <param name="diasVencimiento">Filtrar por días de vencimiento</param>
     /// <returns>Lista de facturas pendientes</returns>
     [HttpGet("pendientes")]
     [Authorize(Roles = "Administrador,Gerente,Cajero")]
     [ProducesResponseType(typeof(ApiResponse<List<FacturaDto>>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
     public async Task<ActionResult<ApiResponse<List<FacturaDto>>>> GetFacturasPendientes(
         [FromQuery] int? diasVencimiento = null)
     {
-        _logger.LogInformation("⏰ GET /api/comercial/facturas/pendientes?diasVencimiento={DiasVencimiento}", diasVencimiento);
+        _logger.LogInformation("📄 GET /api/comercial/facturas/pendientes?diasVencimiento={DiasVencimiento}", diasVencimiento);
 
-        var response = ApiResponse<List<FacturaDto>>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        var query = new ObtenerFacturasQuery
+        {
+            Estado = "Pendiente",
+            DiasVencimiento = diasVencimiento
+        };
+        var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        if (!result.IsSuccess())
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { "Error desconocido" }, 
+                "Error al obtener facturas pendientes", 
+                StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        var response = ApiResponse<List<FacturaDto>>.SuccessResponse(
+            result.Value, "Facturas pendientes obtenidas exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -241,23 +278,250 @@ public class FacturasController : ControllerBase
     /// </summary>
     /// <param name="id">ID de la factura</param>
     /// <param name="command">Datos del pago</param>
-    /// <returns>Confirmación del pago registrado</returns>
-    [HttpPost("{id:guid}/pagos")]
-    [Authorize(Roles = "Administrador,Cajero,Gerente")]
-    [ProducesResponseType(typeof(ApiResponse<PagoFacturaDto>), StatusCodes.Status201Created)]
+    /// <returns>Confirmación del pago</returns>
+    [HttpPost("{id:guid}/pagar")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
-    public async Task<ActionResult<ApiResponse<PagoFacturaDto>>> RegistrarPago(
+    public async Task<ActionResult<ApiResponse<bool>>> RegistrarPago(
         Guid id, [FromBody] RegistrarPagoFacturaCommand command)
     {
-        _logger.LogInformation("💳 POST /api/comercial/facturas/{Id}/pagos", id);
+        _logger.LogInformation("💳 POST /api/comercial/facturas/{Id}/pagar", id);
+        command.FacturaId = id;
+        var result = await _mediator.Send(command);
+        if (!result.IsSuccess())
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { "Error al registrar el pago" },
+                "No se pudo registrar el pago",
+                StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+        var response = ApiResponse<bool>.SuccessResponse(
+            result.Value,
+            "Pago registrado exitosamente");
+        return Ok(response);
+    }
 
-        var response = ApiResponse<PagoFacturaDto>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
+    /// <summary>
+    /// Anula una factura existente
+    /// </summary>
+    /// <param name="id">ID de la factura</param>
+    /// <returns>Confirmación de anulación</returns>
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Administrador,Cajero,Gerente")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<bool>>> AnularFactura(Guid id)
+    {
+        _logger.LogInformation("❌ DELETE /api/comercial/facturas/{Id}", id);
+        
+        // Obtener el usuario actual para la autorización
+        var usuarioActualId = _currentUserService.UserId;
+        if (string.IsNullOrEmpty(usuarioActualId))
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Usuario no autenticado" },
+                "Error de autenticación",
+                StatusCodes.Status401Unauthorized);
+            return Unauthorized(errorResponse);
+        }
+        
+        // Convertir el string UserId a Guid
+        if (!Guid.TryParse(usuarioActualId, out var usuarioId))
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "ID de usuario inválido" },
+                "Error de autenticación",
+                StatusCodes.Status401Unauthorized);
+            return Unauthorized(errorResponse);
+        }
+        
+        var command = new EliminarFacturaCommand
+        {
+            FacturaId = id,
+            Motivo = "Anulación solicitada desde API",
+            UsuarioAutorizaId = usuarioId
+        };
+        
+        var result = await _mediator.Send(command);
+        if (!result.IsSuccess())
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { "Error al anular factura" },
+                "Error al anular factura",
+                StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+        var response = ApiResponse<bool>.SuccessResponse(
+            result.Value, "Factura anulada exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Anula una factura existente (método alternativo con PATCH)
+    /// </summary>
+    /// <param name="id">ID de la factura</param>
+    /// <param name="motivo">Motivo de la anulación</param>
+    /// <returns>Confirmación de anulación</returns>
+    [HttpPatch("{id:guid}/anular")]
+    [Authorize(Roles = "Administrador,Cajero,Gerente")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<bool>>> AnularFacturaPatch(
+        Guid id, [FromBody] string? motivo = null)
+    {
+        _logger.LogInformation("❌ PATCH /api/comercial/facturas/{Id}/anular", id);
+        
+        // Obtener el usuario actual para la autorización
+        var usuarioActualId = _currentUserService.UserId;
+        if (string.IsNullOrEmpty(usuarioActualId))
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Usuario no autenticado" },
+                "Error de autenticación",
+                StatusCodes.Status401Unauthorized);
+            return Unauthorized(errorResponse);
+        }
+        
+        // Convertir el string UserId a Guid
+        if (!Guid.TryParse(usuarioActualId, out var usuarioId))
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "ID de usuario inválido" },
+                "Error de autenticación",
+                StatusCodes.Status401Unauthorized);
+            return Unauthorized(errorResponse);
+        }
+        
+        var command = new EliminarFacturaCommand
+        {
+            FacturaId = id,
+            Motivo = motivo ?? "Anulación solicitada desde API",
+            UsuarioAutorizaId = usuarioId
+        };
+        
+        var result = await _mediator.Send(command);
+        if (!result.IsSuccess())
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { "Error al anular factura" },
+                "Error al anular factura",
+                StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+        var response = ApiResponse<bool>.SuccessResponse(
+            result.Value, "Factura anulada exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Envía una factura por email al cliente
+    /// </summary>
+    /// <param name="id">ID de la factura</param>
+    /// <param name="emailDestino">Email de destino (opcional, usa el del cliente si no se especifica)</param>
+    /// <returns>Confirmación del envío</returns>
+    [HttpPost("{id:guid}/enviar-email")]
+    [Authorize(Roles = "Administrador,Cajero,Gerente")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<bool>>> EnviarFacturaPorEmail(
+        Guid id, [FromBody] string? emailDestino = null)
+    {
+        _logger.LogInformation("📧 POST /api/comercial/facturas/{Id}/enviar-email", id);
+
+        // Por ahora, devolvemos 501 NotImplemented ya que no tenemos el servicio de email implementado
+        var errorResponse = ApiResponse<object>.ErrorResponse(
+            new List<string> { "Funcionalidad no implementada" }, 
+            "Envío de email no implementado", 
             StatusCodes.Status501NotImplemented);
+        return StatusCode(StatusCodes.Status501NotImplemented, errorResponse);
+    }
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+    /// <summary>
+    /// Busca facturas por criterios específicos
+    /// </summary>
+    /// <param name="numeroFactura">Número de factura</param>
+    /// <param name="clienteId">ID del cliente</param>
+    /// <param name="estado">Estado de la factura</param>
+    /// <param name="tipoFactura">Tipo de factura</param>
+    /// <param name="fechaDesde">Fecha desde</param>
+    /// <param name="fechaHasta">Fecha hasta</param>
+    /// <param name="montoMinimo">Monto mínimo</param>
+    /// <param name="montoMaximo">Monto máximo</param>
+    /// <returns>Lista de facturas que coinciden con los criterios</returns>
+    [HttpGet("buscar")]
+    [ProducesResponseType(typeof(ApiResponse<List<FacturaDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<List<FacturaDto>>>> BuscarFacturas(
+        [FromQuery] string? numeroFactura = null,
+        [FromQuery] Guid? clienteId = null,
+        [FromQuery] string? estado = null,
+        [FromQuery] string? tipoFactura = null,
+        [FromQuery] DateTime? fechaDesde = null,
+        [FromQuery] DateTime? fechaHasta = null,
+        [FromQuery] decimal? montoMinimo = null,
+        [FromQuery] decimal? montoMaximo = null)
+    {
+        _logger.LogInformation("🔍 GET /api/comercial/facturas/buscar");
+        
+        var query = new ObtenerFacturasQuery
+        {
+            Estado = estado,
+            ClienteId = clienteId,
+            FechaDesde = fechaDesde,
+            FechaHasta = fechaHasta,
+            TipoFactura = tipoFactura,
+            // TODO: Agregar filtros adicionales cuando se implementen en el Query
+        };
+        
+        var result = await _mediator.Send(query);
+        if (!result.IsSuccess())
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { "Error al buscar facturas" },
+                "Error al buscar facturas",
+                StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+        
+        // Filtrar por número de factura si se especifica
+        var facturasFiltradas = result.Value;
+        if (!string.IsNullOrWhiteSpace(numeroFactura))
+        {
+            facturasFiltradas = facturasFiltradas.Where(f => f.Numero.Contains(numeroFactura)).ToList();
+        }
+        
+        var response = ApiResponse<List<FacturaDto>>.SuccessResponse(
+            facturasFiltradas, "Búsqueda de facturas completada exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Genera un reporte de facturas según criterios específicos
+    /// </summary>
+    /// <param name="tipoReporte">Tipo de reporte (ventas, clientes, productos, etc.)</param>
+    /// <param name="fechaDesde">Fecha desde</param>
+    /// <param name="fechaHasta">Fecha hasta</param>
+    /// <param name="formato">Formato del reporte (pdf, excel, json)</param>
+    /// <returns>Reporte generado</returns>
+    [HttpGet("reporte")]
+    [Authorize(Roles = "Administrador,Gerente")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<object>>> GenerarReporteFacturas(
+        [FromQuery] string tipoReporte = "ventas",
+        [FromQuery] DateTime? fechaDesde = null,
+        [FromQuery] DateTime? fechaHasta = null,
+        [FromQuery] string formato = "json")
+    {
+        _logger.LogInformation("📊 GET /api/comercial/facturas/reporte?tipoReporte={TipoReporte}", tipoReporte);
+
+        // Por ahora, devolvemos 501 NotImplemented ya que no tenemos el servicio de reportes implementado
+        var errorResponse = ApiResponse<object>.ErrorResponse(
+            new List<string> { "Funcionalidad no implementada" }, 
+            "Generación de reportes no implementada", 
+            StatusCodes.Status501NotImplemented);
+        return StatusCode(StatusCodes.Status501NotImplemented, errorResponse);
     }
 } 

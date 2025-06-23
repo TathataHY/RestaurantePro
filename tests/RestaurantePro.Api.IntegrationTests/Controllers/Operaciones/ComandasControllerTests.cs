@@ -87,8 +87,8 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
-        var comanda1 = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda 1");
-        var comanda2 = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda 2");
+        var comanda1 = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda 1");
+        var comanda2 = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda 2");
 
         // Act
         var response = await HttpClient.GetAsync("/api/operaciones/comandas");
@@ -232,7 +232,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
-        var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda específica");
+        var comanda = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda específica");
 
         // Act
         var response = await HttpClient.GetAsync($"/api/operaciones/comandas/{comanda.Id}");
@@ -302,7 +302,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
-        var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda original");
+        var comanda = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda original");
         
         var actualizarRequest = new ActualizarComandaCommand
         {
@@ -347,7 +347,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
-        var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para cambiar estado");
+        var comanda = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda para cambiar estado");
         
         var cambiarEstadoRequest = new CambiarEstadoComandaCommand
         {
@@ -392,7 +392,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
-        var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para agregar producto");
+        var comanda = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda para agregar producto");
         var producto = await CrearProductoPrueba("Hamburguesa", 12.50m);
         
         var agregarProductoRequest = new AgregarProductoCommand
@@ -444,7 +444,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
-        var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para remover producto");
+        var comanda = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda para remover producto");
         var producto = await CrearProductoPrueba("Pizza", 18.00m);
         
         // Agregar producto primero usando el endpoint de la API
@@ -519,7 +519,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
-        var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para aplicar descuento");
+        var comanda = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda para aplicar descuento");
         var producto = await CrearProductoPrueba("Pasta", 16.00m);
         
         // Agregar producto correctamente a la comanda usando el método del dominio
@@ -577,7 +577,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
-        var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para cerrar");
+        var comanda = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda para cerrar");
         var producto = await CrearProductoPrueba("Ensalada", 8.50m);
         
         // Agregar producto usando el endpoint de la API
@@ -649,7 +649,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
         var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
-        var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para eliminar");
+        var comanda = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda para eliminar");
 
         // Act
         var response = await HttpClient.DeleteAsync($"/api/operaciones/comandas/{comanda.Id}");

@@ -1,18 +1,18 @@
 namespace RestaurantePro.Application.Comercial.Facturacion.Commands.AplicarDescuento;
 
-public class AplicarDescuentoHandler : IRequestHandler<AplicarDescuentoCommand, Result<FacturaDto>>
+public class AplicarDescuentoCommandHandler : IRequestHandler<AplicarDescuentoCommand, Result<FacturaDto>>
 {
     private readonly IApplicationDbContext _context;
     private readonly IMapper _mapper;
-    private readonly ILogger<AplicarDescuentoHandler> _logger;
+    private readonly ILogger<AplicarDescuentoCommandHandler> _logger;
     private readonly IServicioFacturacion _servicioFacturacion;
     private readonly ICurrentUserService _currentUserService;
     private readonly IEmailService _emailService;
 
-    public AplicarDescuentoHandler(
+    public AplicarDescuentoCommandHandler(
         IApplicationDbContext context,
         IMapper mapper,
-        ILogger<AplicarDescuentoHandler> logger,
+        ILogger<AplicarDescuentoCommandHandler> logger,
         IServicioFacturacion servicioFacturacion,
         ICurrentUserService currentUserService,
         IEmailService emailService)
