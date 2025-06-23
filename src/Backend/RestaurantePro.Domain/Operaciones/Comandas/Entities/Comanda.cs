@@ -900,6 +900,40 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         }
 
         /// <summary>
+        /// Elimina la comanda (soft delete)
+        /// </summary>
+        /// <param name="usuarioId">ID del usuario que realiza la eliminación</param>
+        /// <param name="fechaEliminacion">Fecha de eliminación (opcional)</param>
+        /// <exception cref="InvalidOperationException">Si la comanda no se puede eliminar</exception>
+        public void Eliminar(string usuarioId, DateTime? fechaEliminacion = null)
+        {
+            // Validar que la comanda se puede eliminar
+            if (Estado == EstadoComanda.Finalizada)
+            {
+                throw new InvalidOperationException("No se puede eliminar una comanda que ya ha sido finalizada");
+            }
+
+            if (Estado == EstadoComanda.Cancelada)
+            {
+                throw new InvalidOperationException("No se puede eliminar una comanda que ya ha sido cancelada");
+            }
+
+            // Verificar que no hay items en preparación
+            if (_items.Any(i => i.Estado == EstadoItemComanda.EnPreparacion))
+            {
+                throw new InvalidOperationException("No se puede eliminar una comanda con items en preparación");
+            }
+
+            // Realizar soft delete
+            MarkAsDeleted();
+            LastModifiedBy = usuarioId;
+            FechaActualizacion = fechaEliminacion ?? DateTime.Now;
+
+            // Agregar evento de dominio
+            AddDomainEvent(new ComandaEliminada(Id, usuarioId));
+        }
+
+        /// <summary>
         /// Actualiza las observaciones de la comanda
         /// </summary>
         /// <param name="observaciones">Nuevas observaciones</param>

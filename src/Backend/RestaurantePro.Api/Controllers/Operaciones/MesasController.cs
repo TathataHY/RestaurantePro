@@ -1,4 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
+using RestaurantePro.Application.Operaciones.Mesas.DTOs;
+using RestaurantePro.Application.Operaciones.Mesas.Queries.ObtenerMesas;
+using RestaurantePro.Application.Operaciones.Mesas.Commands.CrearMesa;
+using RestaurantePro.Application.Operaciones.Mesas.Commands.ActualizarMesa;
+using RestaurantePro.Application.Operaciones.Mesas.Commands.CambiarEstadoMesa;
+using RestaurantePro.Api.Common;
+using AutoMapper;
+using MediatR;
 
 namespace RestaurantePro.Api.Controllers.Operaciones;
 
@@ -13,10 +21,14 @@ namespace RestaurantePro.Api.Controllers.Operaciones;
 public class MesasController : ControllerBase
 {
     private readonly ILogger<MesasController> _logger;
+    private readonly IMediator _mediator;
+    private readonly IMapper _mapper;
 
-    public MesasController(ILogger<MesasController> logger)
+    public MesasController(ILogger<MesasController> logger, IMediator mediator, IMapper mapper)
     {
         _logger = logger;
+        _mediator = mediator;
+        _mapper = mapper;
     }
 
     /// <summary>
@@ -26,10 +38,10 @@ public class MesasController : ControllerBase
     /// <param name="ubicacion">Filtro opcional por ubicación</param>
     /// <param name="capacidadMinima">Filtro opcional por capacidad mínima</param>
     [HttpGet]
-    [ProducesResponseType(typeof(ApiResponse<List<object>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<List<MesaDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<List<object>>>> ObtenerMesas(
+    public async Task<ActionResult<ApiResponse<List<MesaDto>>>> ObtenerMesas(
         [FromQuery] string? estado = null,
         [FromQuery] string? ubicacion = null,
         [FromQuery] int? capacidadMinima = null)
@@ -37,12 +49,24 @@ public class MesasController : ControllerBase
         _logger.LogInformation("🍽️ GET /api/operaciones/mesas - Filtros: Estado={Estado}, Ubicacion={Ubicacion}, CapacidadMinima={CapacidadMinima}", 
             estado, ubicacion, capacidadMinima);
 
-        var response = ApiResponse<List<object>>.ErrorResponse(
-            new List<string> { "Endpoint no implementado" },
-            "Esta funcionalidad estará disponible próximamente",
-            StatusCodes.Status501NotImplemented);
+        var query = new ObtenerMesasQuery 
+        { 
+            Estado = estado, 
+            Ubicacion = ubicacion, 
+            CapacidadMinima = capacidadMinima 
+        };
+        
+        var result = await _mediator.Send(query);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<List<MesaDto>>.ErrorResponse(
+                result.Errors, "Error al obtener mesas", StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        var response = ApiResponse<List<MesaDto>>.SuccessResponse(result.Value, "Mesas obtenidas exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -68,63 +92,81 @@ public class MesasController : ControllerBase
     /// <summary>
     /// Crea una nueva mesa
     /// </summary>
-    /// <param name="request">Datos de la nueva mesa</param>
     [HttpPost]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<MesaDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<object>>> CrearMesa([FromBody] object request)
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<ApiResponse<MesaDto>>> CrearMesa([FromBody] CrearMesaCommand command)
     {
-        _logger.LogInformation("➕ POST /api/operaciones/mesas");
+        var result = await _mediator.Send(command);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado" },
-            "Esta funcionalidad estará disponible próximamente",
-            StatusCodes.Status501NotImplemented);
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("Ya existe una mesa"))
+                ? StatusCodes.Status409Conflict
+                : StatusCodes.Status400BadRequest;
+            var errorResponse = ApiResponse<object>.ErrorResponse(result.Errors, "Error al crear mesa", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        var response = ApiResponse<MesaDto>.SuccessResponse(result.Value, "Mesa creada exitosamente");
+        return CreatedAtAction(nameof(ObtenerMesa), new { id = result.Value.Id }, response);
     }
 
     /// <summary>
     /// Actualiza una mesa existente
     /// </summary>
     /// <param name="id">ID de la mesa</param>
-    /// <param name="request">Datos actualizados de la mesa</param>
+    /// <param name="command">Datos actualizados de la mesa</param>
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<MesaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<object>>> ActualizarMesa(Guid id, [FromBody] object request)
+    public async Task<ActionResult<ApiResponse<MesaDto>>> ActualizarMesa(Guid id, [FromBody] ActualizarMesaCommand command)
     {
         _logger.LogInformation("✏️ PUT /api/operaciones/mesas/{Id}", id);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado" },
-            "Esta funcionalidad estará disponible próximamente",
-            StatusCodes.Status501NotImplemented);
+        // Asignar el ID de la URL al comando
+        command.Id = id;
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no encontrada"))
+                ? StatusCodes.Status404NotFound
+                : StatusCodes.Status400BadRequest;
+            var errorResponse = ApiResponse<object>.ErrorResponse(result.Errors, "Error al actualizar mesa", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<MesaDto>.SuccessResponse(result.Value, "Mesa actualizada exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
-    /// Elimina una mesa
+    /// Elimina una mesa por ID
     /// </summary>
-    /// <param name="id">ID de la mesa</param>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<ApiResponse<bool>>> EliminarMesa(Guid id)
     {
-        _logger.LogInformation("🗑️ DELETE /api/operaciones/mesas/{Id}", id);
+        var command = new Application.Operaciones.Mesas.Commands.EliminarMesa.EliminarMesaCommand { Id = id };
+        var result = await _mediator.Send(command);
 
-        var response = ApiResponse<bool>.ErrorResponse(
-            new List<string> { "Endpoint no implementado" },
-            "Esta funcionalidad estará disponible próximamente",
-            StatusCodes.Status501NotImplemented);
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no encontrada"))
+                ? StatusCodes.Status404NotFound
+                : StatusCodes.Status400BadRequest;
+            var errorResponse = ApiResponse<object>.ErrorResponse(result.Errors, "Error al eliminar mesa", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        var response = ApiResponse<bool>.SuccessResponse(true, "Mesa eliminada exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -280,5 +322,41 @@ public class MesasController : ControllerBase
             StatusCodes.Status501NotImplemented);
 
         return StatusCode(StatusCodes.Status501NotImplemented, response);
+    }
+
+    /// <summary>
+    /// Cambia el estado de una mesa
+    /// </summary>
+    /// <param name="id">ID de la mesa</param>
+    /// <param name="command">Datos del cambio de estado</param>
+    [HttpPut("{id:guid}/estado")]
+    [ProducesResponseType(typeof(ApiResponse<MesaDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<MesaDto>>> CambiarEstadoMesa(Guid id, [FromBody] CambiarEstadoMesaCommand command)
+    {
+        _logger.LogInformation("🔄 PUT /api/operaciones/mesas/{Id}/estado", id);
+        command.MesaId = id;
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no encontrada"))
+                ? StatusCodes.Status404NotFound
+                : StatusCodes.Status400BadRequest;
+            var errorResponse = ApiResponse<object>.ErrorResponse(result.Errors, "Error al cambiar estado de la mesa", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        // Obtener la mesa actualizada para devolver el DTO
+        var mesaActualizadaResult = await _mediator.Send(new ObtenerMesaPorIdQuery { Id = id });
+        if (!mesaActualizadaResult.Succeeded || mesaActualizadaResult.Value == null)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(new List<string> { "No se pudo obtener la mesa actualizada" }, "Error al obtener la mesa actualizada", StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+
+        var response = ApiResponse<MesaDto>.SuccessResponse(mesaActualizadaResult.Value, "Estado de la mesa actualizado exitosamente");
+        return Ok(response);
     }
 } 

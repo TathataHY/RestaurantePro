@@ -39,20 +39,33 @@ public class RemoverProductoCommandHandler : IRequestHandler<RemoverProductoComm
             return Result.Failure<ComandaDto>($"No se puede remover productos de una comanda en estado '{comanda.Estado}'");
 
         // 3. Buscar el item
+        _logger.LogInformation("🔍 Buscando item {ItemId} en comanda {ComandaId}", request.ItemId, request.ComandaId);
+        _logger.LogInformation("📋 Items en comanda: {ItemsCount}", comanda.Items.Count);
+        foreach (var itemInComanda in comanda.Items)
+        {
+            _logger.LogInformation("📦 Item: ID={ItemId}, ProductoId={ProductoId}, Cantidad={Cantidad}", 
+                itemInComanda.Id, itemInComanda.ProductoId, itemInComanda.Cantidad);
+        }
+        
         var item = comanda.Items.FirstOrDefault(i => i.Id == request.ItemId);
         if (item == null)
+        {
+            _logger.LogError("❌ No se encontró el item {ItemId} en la comanda {ComandaId}", request.ItemId, request.ComandaId);
             return Result.Failure<ComandaDto>($"No se encontró el item con ID {request.ItemId} en la comanda");
+        }
+        
+        _logger.LogInformation("✅ Item encontrado: ID={ItemId}, Cantidad={Cantidad}", item.Id, item.Cantidad);
 
         // 4. Validar cantidad a remover
-        if (request.Cantidad <= 0)
-            return Result.Failure<ComandaDto>("La cantidad a remover debe ser mayor a cero");
+        if (request.Cantidad < 0)
+            return Result.Failure<ComandaDto>("La cantidad a remover no puede ser negativa");
         if (request.Cantidad > item.Cantidad)
             return Result.Failure<ComandaDto>($"No se puede remover más cantidad ({request.Cantidad}) de la disponible ({item.Cantidad})");
 
         // 5. Remover el producto
         try
         {
-            if (request.Cantidad == item.Cantidad)
+            if (request.Cantidad == 0 || request.Cantidad == item.Cantidad)
             {
                 // Remover todo el item
                 comanda.RemoverProducto(request.ItemId);

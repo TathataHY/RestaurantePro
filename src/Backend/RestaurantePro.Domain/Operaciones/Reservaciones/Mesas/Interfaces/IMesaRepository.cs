@@ -21,6 +21,11 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces
         Task<Mesa> ObtenerPorNumeroAsync(int numero);
 
         /// <summary>
+        /// Verifica si existe una mesa con el número especificado
+        /// </summary>
+        Task<bool> ExisteNumeroAsync(int numero);
+
+        /// <summary>
         /// Busca mesas por ubicación
         /// </summary>
         Task<IEnumerable<Mesa>> BuscarPorUbicacionAsync(string ubicacion);

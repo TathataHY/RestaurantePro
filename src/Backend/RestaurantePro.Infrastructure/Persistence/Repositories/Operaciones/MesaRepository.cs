@@ -66,6 +66,14 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         }
 
         /// <summary>
+        /// Verifica si existe una mesa con el número especificado
+        /// </summary>
+        public async Task<bool> ExisteNumeroAsync(int numero)
+        {
+            return await _dbSet.AnyAsync(m => m.Numero == numero);
+        }
+
+        /// <summary>
         /// Busca mesas por ubicación
         /// </summary>
         public async Task<IEnumerable<Mesa>> BuscarPorUbicacionAsync(string ubicacion)

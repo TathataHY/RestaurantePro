@@ -55,13 +55,19 @@ public class MesaTestDataBuilder
     /// </summary>
     public object BuildCrearMesaRequest()
     {
+        // Manejar valores inválidos sin lanzar excepción
+        int numero;
+        if (string.IsNullOrWhiteSpace(_numero) || !int.TryParse(_numero, out numero))
+        {
+            numero = 0; // Valor inválido que será capturado por el validador
+        }
+        
         return new
         {
-            Numero = _numero,
+            Numero = numero,
             Capacidad = _capacidad,
-            Ubicacion = _ubicacion,
-            Descripcion = _descripcion,
-            Tipo = _tipo
+            Zona = _ubicacion,
+            Descripcion = _descripcion
         };
     }
 

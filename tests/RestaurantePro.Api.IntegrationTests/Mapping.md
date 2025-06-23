@@ -1,3 +1,51 @@
+<!--
+================================================================================
+GUÍA DE FLUJO PROFESIONAL PARA ENDPOINTS Y CQRS EN RESTAURANTEPRO
+================================================================================
+
+🎯 **OBJETIVO PRINCIPAL**: Implementar endpoints completos con CQRS Y tests completos
+
+1. **Tests de Integración**
+   - Antes de implementar un endpoint, crea/migra los tests de integración completos.
+   - Los tests deben:
+     - Crear datos reales en la BD de test.
+     - Validar status code y estructura de respuesta.
+     - Verificar persistencia y reglas de negocio.
+     - Usar helpers/builders y el patrón AAA.
+
+2. **Controlador API**
+   - El controlador NUNCA debe acceder directamente a la infraestructura ni a la lógica de dominio.
+   - Debe inyectar IMediator y enviar Commands/Queries.
+   - Debe usar el wrapper ApiResponse<T> para todas las respuestas.
+   - Debe manejar correctamente los status codes (200, 201, 400, 404, 501, etc).
+
+3. **CQRS (Command/Query + Handler)**
+   - Cada endpoint debe tener su propio Command/Query y Handler (vertical slice).
+   - El Command/Query define solo los datos necesarios para la operación.
+   - El Handler:
+     - Inyecta los repositorios/interfaces necesarios.
+     - Aplica la lógica de negocio y validaciones.
+     - Retorna Result<T> (éxito o error con mensajes claros).
+   - Los Handlers NUNCA deben retornar entidades de dominio, solo DTOs o valores simples.
+
+4. **Validadores**
+   - Cada Command/Query debe tener su propio Validator (FluentValidation).
+   - El validador se registra automáticamente si sigue la convención.
+   - Todas las validaciones de datos de entrada van en el Validator, NO en el Handler.
+
+5. **Reglas de oro**
+   - No mezclar lógica de infraestructura, dominio y aplicación.
+   - No acceder a la BD desde el controlador.
+   - No retornar entidades de dominio en la API.
+   - Los tests deben ser estrictos y validar todo el flujo real.
+   - **IMPLEMENTAR ENDPOINTS COMPLETOS**: Si un endpoint no existe, implementarlo con CQRS completo.
+   - **TESTS COMPLETOS**: Todos los tests deben validar interacción real con BD.
+
+================================================================================
+¡Sigue este flujo para mantener la calidad y escalabilidad del proyecto!
+================================================================================
+-->
+
 # Mapa de Implementación y Testing de la API - RestaurantePro
 
 Este documento mapea todos los controladores y endpoints de la API REST de RestaurantePro, junto con su estado de implementación y testing.
@@ -59,15 +107,21 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - ProveedoresController, ContactosProveedorController, EvaluacionesProveedorController
 - ProductosController, RecetasController
 
-### **Plan de Migración a Tests Completos**
+### **Plan de Implementación Completa (Endpoints + Tests)**
 | Fase | Controladores | Objetivo | Estado |
 |------|---------------|----------|--------|
-| **Fase 1** | IngredientesController | Migrar a tests completos | ✅ **COMPLETADO** (10/10 completos) |
-| **Fase 2** | UsuariosController, NotificacionesController | Migrar a tests completos | ✅ **COMPLETADO** (UsuariosController ✅, NotificacionesController ✅) |
-| **Fase 3** | ComandasController, MesasController | Migrar a tests completos | ✅ **COMPLETADO** (ComandasController ✅) |
-| **Fase 4** | FacturasController, TarjetasFidelizacionController | Migrar a tests completos | ⬜ **PENDIENTE** |
-| **Fase 5** | ProveedoresController, PromocionesController | Migrar a tests completos | ⬜ **PENDIENTE** |
-| **Fase 6** | ReportesController, OrdenesCompraController | Migrar a tests completos | ⬜ **PENDIENTE** |
+| **Fase 1** | IngredientesController | Implementar endpoints + tests completos | ✅ **COMPLETADO** (10/10 completos) |
+| **Fase 2** | UsuariosController, NotificacionesController | Implementar endpoints + tests completos | ✅ **COMPLETADO** (UsuariosController ✅, NotificacionesController ✅) |
+| **Fase 3** | ComandasController, MesasController | Implementar endpoints + tests completos | ✅ **COMPLETADO** (ComandasController ✅) |
+| **Fase 4** | FacturasController, TarjetasFidelizacionController | Implementar endpoints + tests completos | ⬜ **PENDIENTE** |
+| **Fase 5** | ProveedoresController, PromocionesController | Implementar endpoints + tests completos | ⬜ **PENDIENTE** |
+| **Fase 6** | ReportesController, OrdenesCompraController | Implementar endpoints + tests completos | ⬜ **PENDIENTE** |
+
+**Nota**: Cada fase incluye:
+- ✅ Implementar endpoints completos con CQRS (Commands/Queries/Handlers/Validators)
+- ✅ Migrar tests básicos a tests completos con validación estricta
+- ✅ Verificar interacción real con base de datos
+- ✅ Validar reglas de negocio específicas
 
 ### **Progreso por Contexto**
 | Contexto | Controladores | Implementados | Tests | Progreso |

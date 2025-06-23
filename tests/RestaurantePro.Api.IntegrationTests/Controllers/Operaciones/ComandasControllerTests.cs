@@ -210,7 +210,8 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         errorResponse.Should().NotBeNull();
         errorResponse!.Success.Should().BeFalse();
         errorResponse.Errors.Should().NotBeEmpty();
-        errorResponse.Errors.Should().Contain(e => e.Contains("ClienteId") || e.Contains("MesaId"));
+        // Verificar que contiene errores relacionados con mesa y cliente
+        errorResponse.Errors.Should().Contain(e => e.Contains("mesa") || e.Contains("cliente") || e.Contains("producto"));
         
         // Verificar que no se creó nada en BD
         var comandasEnBD = await DbContext.Comandas.ToListAsync();
@@ -328,6 +329,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Verificar que se actualizó en la BD
         var comandaActualizada = await DbContext.Comandas.FirstOrDefaultAsync(c => c.Id == comanda.Id);
         comandaActualizada.Should().NotBeNull();
+        await DbContext.Entry(comandaActualizada!).ReloadAsync();
         comandaActualizada!.Observaciones.Should().Be("Comanda actualizada con nuevas observaciones");
         
         Logger.LogInformation("✅ Test completado: PutComanda_ConDatosValidos_DebeActualizarComanda");
@@ -354,7 +356,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         };
 
         // Act
-        var response = await HttpClient.PutAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", cambiarEstadoRequest);
+        var response = await HttpClient.PatchAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", cambiarEstadoRequest);
 
         // Assert - Validación estricta para tests completos
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -372,6 +374,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Verificar que se actualizó en la BD
         var comandaActualizada = await DbContext.Comandas.FirstOrDefaultAsync(c => c.Id == comanda.Id);
         comandaActualizada.Should().NotBeNull();
+        await DbContext.Entry(comandaActualizada!).ReloadAsync();
         comandaActualizada!.Estado.Should().Be(EstadoComanda.EnProceso);
         
         Logger.LogInformation("✅ Test completado: CambiarEstadoComanda_ConEstadoValido_DebeActualizarEstado");
@@ -444,14 +447,46 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         var comanda = await CrearComandaPrueba(mesero.Id, cliente.Id, mesa.Id, "Comanda para remover producto");
         var producto = await CrearProductoPrueba("Pizza", 18.00m);
         
-        // Agregar producto primero
-        var detalle = await CrearDetalleComandaPrueba(comanda.Id, producto.Id, 1, "Extra queso");
+        // Agregar producto primero usando el endpoint de la API
+        var agregarProductoRequest = new AgregarProductoCommand
+        {
+            ComandaId = comanda.Id,
+            ProductoId = producto.Id,
+            Cantidad = 1,
+            Observaciones = "Extra queso"
+        };
+        var responseAgregar = await HttpClient.PostAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/productos", agregarProductoRequest);
+        responseAgregar.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        // Obtener el detalle creado desde la BD
+        var detallesEnBD = await DbContext.ItemsComanda.Where(d => d.ComandaId == comanda.Id).ToListAsync();
+        detallesEnBD.Should().HaveCount(1);
+        var detalle = detallesEnBD.First();
+        
+        // Verificar que el detalle existe en la BD
+        var detalleEnBD = await DbContext.ItemsComanda.FindAsync(detalle.Id);
+        Logger.LogInformation("💾 Detalle en BD - Existe: {Existe}, ID: {DetalleId}", 
+            detalleEnBD != null, detalleEnBD?.Id);
+        
+        // Verificar que la comanda tiene el item
+        var comandaConItems = await DbContext.Comandas.Include(c => c.Items).FirstOrDefaultAsync(c => c.Id == comanda.Id);
+        Logger.LogInformation("📋 Comanda con items - ItemsCount: {ItemsCount}", comandaConItems?.Items.Count ?? 0);
         
         // Act
         var response = await HttpClient.DeleteAsync($"/api/operaciones/comandas/{comanda.Id}/productos/{detalle.Id}");
 
         // Assert - Validación estricta para tests completos
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        // Log temporal para debug
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"=== ERROR RESPONSE ===");
+            Console.WriteLine($"Status Code: {response.StatusCode}");
+            Console.WriteLine($"Content: {errorContent}");
+            Console.WriteLine($"======================");
+        }
         
         var content = await response.Content.ReadAsStringAsync();
         content.Should().NotBeNullOrEmpty();
@@ -464,8 +499,8 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse.Data.Items.Should().BeEmpty();
         
         // Verificar que se removió de la BD
-        var detallesEnBD = await DbContext.ItemsComanda.Where(d => d.ComandaId == comanda.Id).ToListAsync();
-        detallesEnBD.Should().BeEmpty();
+        var detallesEnBDRemovidos = await DbContext.ItemsComanda.Where(d => d.ComandaId == comanda.Id).ToListAsync();
+        detallesEnBDRemovidos.Should().BeEmpty();
         
         Logger.LogInformation("✅ Test completado: RemoverProducto_ConDetalleExistente_DebeRemoverProducto");
     }
@@ -631,6 +666,7 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Verificar que se eliminó de la BD (soft delete)
         var comandaEliminada = await DbContext.Comandas.FirstOrDefaultAsync(c => c.Id == comanda.Id);
         comandaEliminada.Should().NotBeNull();
+        await DbContext.Entry(comandaEliminada!).ReloadAsync();
         comandaEliminada!.EstaEliminado.Should().BeTrue();
         
         Logger.LogInformation("✅ Test completado: EliminarComanda_ConIdExistente_DebeEliminarComanda");

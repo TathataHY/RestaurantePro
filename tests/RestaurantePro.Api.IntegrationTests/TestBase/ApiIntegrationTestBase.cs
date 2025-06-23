@@ -413,8 +413,18 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         // Establecer el estado si es diferente al por defecto
         if (estado != EstadoMesa.Disponible)
         {
-            // Aquí deberías usar el método correspondiente para cambiar el estado
-            // Por ahora, asumimos que se crea en estado Disponible
+            switch (estado)
+            {
+                case EstadoMesa.Ocupada:
+                    mesa.MarcarComoOcupada();
+                    break;
+                case EstadoMesa.Reservada:
+                    mesa.MarcarComoReservada();
+                    break;
+                case EstadoMesa.FueraDeServicio:
+                    mesa.MarcarComoFueraDeServicio("Test automatizado");
+                    break;
+            }
         }
 
         DbContext.Mesas.Add(mesa);

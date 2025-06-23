@@ -30,12 +30,6 @@ public class EliminarComandaCommandHandler : IRequestHandler<EliminarComandaComm
 
     public async Task<Result<bool>> Handle(EliminarComandaCommand request, CancellationToken cancellationToken)
     {
-        // TODO: Implementar cuando las dependencias estén disponibles
-        _logger.LogInformation("🗑️ EliminarComandaCommandHandler - Temporalmente comentado");
-        
-        return Result.Failure<bool>("Funcionalidad temporalmente deshabilitada");
-        
-        /*
         try
         {
             _logger.LogInformation("🗑️ Eliminando comanda con ID: {ComandaId}", request.ComandaId);
@@ -53,7 +47,7 @@ public class EliminarComandaCommandHandler : IRequestHandler<EliminarComandaComm
 
             // Validar que la comanda se puede eliminar
             var validacionResult = ValidarEliminacion(comanda);
-            if (!validacionResult.IsSuccess)
+            if (validacionResult.IsFailure())
             {
                 return Result.Failure<bool>(validacionResult.Error ?? "Error validando eliminación");
             }
@@ -75,7 +69,6 @@ public class EliminarComandaCommandHandler : IRequestHandler<EliminarComandaComm
                 request.ComandaId, ex.Message);
             return Result.Failure<bool>($"Error eliminando comanda: {ex.Message}");
         }
-        */
     }
 
     /// <summary>
