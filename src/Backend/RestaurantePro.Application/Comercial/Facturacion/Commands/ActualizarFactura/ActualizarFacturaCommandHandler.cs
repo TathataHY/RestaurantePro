@@ -50,6 +50,22 @@ public class ActualizarFacturaCommandHandler : IRequestHandler<ActualizarFactura
                 return Result.Failure<FacturaDto>(mensajeError);
             }
 
+            // Verificar que una factura emitida no se pueda actualizar en campos críticos
+            if (factura.Estado == Domain.Comercial.Facturacion.Enums.EstadoFactura.Emitida)
+            {
+                // Solo permitir actualizar observaciones en facturas emitidas
+                if (!string.IsNullOrWhiteSpace(request.NombreCliente) || 
+                    !string.IsNullOrWhiteSpace(request.IdentificacionFiscal) || 
+                    !string.IsNullOrWhiteSpace(request.DireccionCliente) ||
+                    !string.IsNullOrWhiteSpace(request.EmailCliente) ||
+                    request.DiasCredito.HasValue)
+                {
+                    var mensajeError = "No se puede actualizar información fiscal o días de crédito en una factura emitida";
+                    _logger.LogWarning(mensajeError);
+                    return Result.Failure<FacturaDto>(mensajeError);
+                }
+            }
+
             // Aplicar las actualizaciones disponibles en el Command
             if (!string.IsNullOrWhiteSpace(request.NombreCliente))
             {

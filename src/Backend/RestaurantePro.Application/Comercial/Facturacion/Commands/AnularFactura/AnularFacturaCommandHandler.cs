@@ -59,7 +59,10 @@ public class AnularFacturaCommandHandler : IRequestHandler<AnularFacturaCommand,
             {
                 string mensajeError = $"La factura con ID {request.FacturaId} no encontrada";
                 _logger.LogWarning(mensajeError);
-                return Result.Failure<FacturaDto>(mensajeError);
+                var result = Result.Failure<FacturaDto>(mensajeError);
+                _logger.LogInformation("🔍 AnularFactura - Devolviendo Result.Failure: IsSuccess={IsSuccess}, Errors={@Errors}", 
+                    result.IsSuccess(), result.Errors);
+                return result;
             }
             
             // Verificar si la factura ya está anulada

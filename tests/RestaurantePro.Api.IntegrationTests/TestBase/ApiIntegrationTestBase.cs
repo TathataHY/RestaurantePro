@@ -369,7 +369,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         var telefono = "+1234567890";
         
         var cliente = Cliente.Crear(clienteNombre, emailValido, telefono, DateTime.Now.AddYears(-25));
-        
+
         await DbContext.Clientes.AddAsync(cliente);
         await DbContext.SaveChangesAsync();
         

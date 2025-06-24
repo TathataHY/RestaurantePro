@@ -18,29 +18,33 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
     {
         try
         {
-            return await next();
+            var result = await next();
+            
+            // Si el resultado es un Result<T> y es un failure con mensaje de "no encontrada",
+            // NO lo convirtamos en excepción para que el controlador pueda manejarlo correctamente
+            if (result is Result resultBase && !resultBase.IsSuccess())
+            {
+                var errors = resultBase.Errors ?? new List<string>();
+                var isNotFoundError = errors.Any(e => e != null && 
+                    (e.ToLower().Contains("no encontrada") || 
+                     e.ToLower().Contains("no existe") ||
+                     e.ToLower().Contains("no se encontró") ||
+                     e.ToLower().Contains("no se encontro")));
+                
+                if (isNotFoundError)
+                {
+                    // Para errores de "no encontrada", devolvemos el Result<T> directamente
+                    // para que el controlador pueda manejarlo y devolver 404
+                    return result;
+                }
+            }
+            
+            return result;
         }
-        catch (Exception exception)
+        catch (Exception ex)
         {
-            var requestName = typeof(TRequest).Name;
-            var requestId = Guid.NewGuid();
-
-            // Las ValidationException son parte normal del flujo de validación, no errores del sistema
-            if (exception is RestaurantePro.Application.Common.Exceptions.ValidationException)
-            {
-                _logger.LogWarning(exception, 
-                    "Validación fallida procesando {RequestName} con ID {RequestId}: {ErrorMessage}", 
-                    requestName, requestId, exception.Message);
-            }
-            else
-            {
-                _logger.LogError(exception, 
-                    "Error no controlado procesando {RequestName} con ID {RequestId}: {ErrorMessage}", 
-                    requestName, requestId, exception.Message);
-            }
-
-            // Convertir excepciones de dominio a excepciones de aplicación
-            throw MapDomainExceptionToApplicationException(exception, requestName, requestId);
+            _logger.LogError(ex, "Error no manejado en el handler: {Message}", ex.Message);
+            throw;
         }
     }
 

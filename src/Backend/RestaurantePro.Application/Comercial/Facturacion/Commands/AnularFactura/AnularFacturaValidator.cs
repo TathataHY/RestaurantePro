@@ -241,17 +241,32 @@ public class AnularFacturaValidator : AbstractValidator<AnularFacturaCommand>
     private async Task<bool> FacturaExiste(Guid facturaId, CancellationToken cancellationToken)
     {
         // Validación null-safe para context
-        if (_context?.Facturas == null) return false;
+        if (_context?.Facturas == null) 
+        {
+            throw NotFoundException.ForFactura(facturaId);
+        }
 
         try
         {
-            return await _context.Facturas
+            var existe = await _context.Facturas
                 .AnyAsync(f => f.Id == facturaId, cancellationToken);
+            
+            if (!existe)
+            {
+                throw NotFoundException.ForFactura(facturaId);
+            }
+            
+            return true;
+        }
+        catch (NotFoundException)
+        {
+            // Re-lanzar NotFoundException
+            throw;
         }
         catch
         {
             // En caso de error, asumir que no existe
-            return false;
+            throw NotFoundException.ForFactura(facturaId);
         }
     }
 

@@ -91,11 +91,15 @@ public class FacturasController : ControllerBase
         var result = await _mediator.Send(query);
         if (!result.IsSuccess())
         {
-            var statusCode = result.Errors != null && result.Errors.Any(e => e.Contains("no encontrada"))
+            var errors = result.Errors ?? new List<string>();
+            _logger.LogInformation("🔍 GetFactura - Errores recibidos: {@Errors}", errors);
+            _logger.LogWarning("[DEBUG] Errores recibidos para determinar statusCode: {Errors}", string.Join(" | ", errors));
+            var statusCode = errors.Any(e => e != null && (e.ToLower().Contains("no encontrada") || e.ToLower().Contains("no existe")))
                 ? StatusCodes.Status404NotFound
                 : StatusCodes.Status400BadRequest;
+            _logger.LogInformation("🔍 GetFactura - StatusCode determinado: {StatusCode}", statusCode);
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                result.Errors ?? new List<string> { "Factura no encontrada" },
+                errors.Count > 0 ? errors : new List<string> { "Factura no encontrada" },
                 "Factura no encontrada",
                 statusCode);
             return StatusCode(statusCode, errorResponse);
@@ -232,15 +236,52 @@ public class FacturasController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult> DescargarFacturaPdf(Guid id)
     {
-        _logger.LogInformation("📄 GET /api/comercial/facturas/{Id}/pdf", id);
+        _logger.LogInformation("📄 GET /api/comercial/facturas/{Id}/pdf - INICIO", id);
+
+        // Primero verificar si la factura existe
+        var facturaQuery = ObtenerFacturaPorIdQuery.ConsultaBasica(id);
+        _logger.LogInformation("📄 GET /api/comercial/facturas/{Id}/pdf - Enviando query al mediator", id);
+        var facturaResult = await _mediator.Send(facturaQuery);
+        _logger.LogInformation("📄 GET /api/comercial/facturas/{Id}/pdf - Resultado recibido: IsSuccess={IsSuccess}", id, facturaResult.IsSuccess());
+        
+        if (!facturaResult.IsSuccess())
+        {
+            _logger.LogInformation("📄 GET /api/comercial/facturas/{Id}/pdf - Factura no encontrada, devolviendo 404", id);
+            var errorsPdf = facturaResult.Errors ?? new List<string>();
+            _logger.LogInformation("🔍 PDF - IsSuccess: {IsSuccess}, Errors count: {ErrorsCount}", facturaResult.IsSuccess(), errorsPdf.Count);
+            _logger.LogInformation("🔍 PDF - Errores recibidos: {@Errors}", errorsPdf);
+            _logger.LogWarning("[DEBUG] Errores recibidos para determinar statusCode (PDF): {Errors}", string.Join(" | ", errorsPdf));
+            var statusCodePdf = errorsPdf.Any(e => e != null && 
+                (e.ToLower().Contains("no encontrada") || 
+                 e.ToLower().Contains("no existe") ||
+                 e == "La factura especificada no existe." ||
+                 e.ToLower().Contains("factura")))
+                ? StatusCodes.Status404NotFound
+                : StatusCodes.Status400BadRequest;
+            _logger.LogInformation("🔍 PDF - StatusCode determinado: {StatusCode}", statusCodePdf);
+            _logger.LogInformation("🔍 PDF - Evaluación de errores:");
+            foreach (var error in errorsPdf)
+            {
+                var containsNoEncontrada = error?.ToLower().Contains("no encontrada") ?? false;
+                var containsNoExiste = error?.ToLower().Contains("no existe") ?? false;
+                _logger.LogInformation("🔍 PDF - Error: '{Error}' | Contains 'no encontrada': {ContainsNoEncontrada} | Contains 'no existe': {ContainsNoExiste}", 
+                    error, containsNoEncontrada, containsNoExiste);
+            }
+            var notFoundResponse = ApiResponse<object>.ErrorResponse(
+                errorsPdf.Count > 0 ? errorsPdf : new List<string> { "Factura no encontrada" },
+                "Factura no encontrada",
+                statusCodePdf);
+            // TEMPORAL: devolver directamente el status code sin ApiResponse
+            return StatusCode(statusCodePdf, new { message = "Factura no encontrada", errors = errorsPdf });
+        }
 
         // Aquí deberías invocar una Query/Handler que genere el PDF y devuelva el archivo o un error
         // Por ahora, devolvemos 501 NotImplemented
-        var errorResponse = ApiResponse<object>.ErrorResponse(
+        var notImplementedResponse = ApiResponse<object>.ErrorResponse(
             new List<string> { "Funcionalidad no implementada" }, 
             "Descarga de PDF no implementada", 
             StatusCodes.Status501NotImplemented);
-        return StatusCode(StatusCodes.Status501NotImplemented, errorResponse);
+        return StatusCode(StatusCodes.Status501NotImplemented, notImplementedResponse);
     }
 
     /// <summary>
@@ -350,11 +391,19 @@ public class FacturasController : ControllerBase
         var result = await _mediator.Send(command);
         if (!result.IsSuccess())
         {
+            var errors = result.Errors ?? new List<string>();
+            _logger.LogInformation("🔍 AnularFactura - IsSuccess: {IsSuccess}, Errors count: {ErrorsCount}", result.IsSuccess(), errors.Count);
+            _logger.LogInformation("🔍 AnularFactura - Errores recibidos: {@Errors}", errors);
+            _logger.LogWarning("[DEBUG] Errores recibidos para determinar statusCode (AnularFactura): {Errors}", string.Join(" | ", errors));
+            var statusCode = errors.Any(e => e != null && (e.ToLower().Contains("no encontrada") || e.ToLower().Contains("no existe")))
+                ? StatusCodes.Status404NotFound
+                : StatusCodes.Status400BadRequest;
+            _logger.LogInformation("🔍 AnularFactura - StatusCode determinado: {StatusCode}", statusCode);
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                result.Errors ?? new List<string> { "Error al anular factura" },
+                errors.Count > 0 ? errors : new List<string> { "Error al anular factura" },
                 "Error al anular factura",
-                StatusCodes.Status404NotFound);
-            return NotFound(errorResponse);
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
         }
         var response = ApiResponse<bool>.SuccessResponse(
             result.Value, "Factura anulada exitosamente");
@@ -375,36 +424,14 @@ public class FacturasController : ControllerBase
     public async Task<ActionResult<ApiResponse<bool>>> AnularFacturaPatch(
         Guid id, [FromBody] AnularFacturaRequest request)
     {
-        _logger.LogInformation("❌ PATCH /api/comercial/facturas/{Id}/anular", id);
-        
-        // Obtener el usuario actual para la autorización
-        var usuarioActualId = _currentUserService.UserId;
-        if (string.IsNullOrEmpty(usuarioActualId))
-        {
-            var errorResponse = ApiResponse<object>.ErrorResponse(
-                new List<string> { "Usuario no autenticado" },
-                "Error de autenticación",
-                StatusCodes.Status401Unauthorized);
-            return Unauthorized(errorResponse);
-        }
-        
-        // Convertir el string UserId a Guid
-        if (!Guid.TryParse(usuarioActualId, out var usuarioId))
-        {
-            var errorResponse = ApiResponse<object>.ErrorResponse(
-                new List<string> { "ID de usuario inválido" },
-                "Error de autenticación",
-                StatusCodes.Status401Unauthorized);
-            return Unauthorized(errorResponse);
-        }
-        
-        // Crear el comando de anulación con todos los datos requeridos
+        _logger.LogInformation("🔄 PATCH /api/comercial/facturas/{Id}/anular - INICIO", id);
+
         var command = new AnularFacturaCommand
         {
             FacturaId = id,
             Motivo = request.Motivo,
             DescripcionDetallada = request.DescripcionDetallada,
-            UsuarioAutorizaId = usuarioId,
+            UsuarioAutorizaId = Guid.TryParse(_currentUserService.UserId, out var userId) ? userId : Guid.Empty,
             TipoAnulacion = request.TipoAnulacion,
             ObservacionesAdicionales = request.ObservacionesAdicionales,
             GenerarNotaCredito = request.GenerarNotaCredito,
@@ -415,16 +442,23 @@ public class FacturasController : ControllerBase
             CancelarPuntosFidelizacion = request.CancelarPuntosFidelizacion,
             Prioridad = 2 // Prioridad normal por defecto
         };
-        
+        _logger.LogInformation("🔄 PATCH /api/comercial/facturas/{Id}/anular - Enviando command al mediator", id);
         var result = await _mediator.Send(command);
+        _logger.LogInformation("🔄 PATCH /api/comercial/facturas/{Id}/anular - Resultado recibido: IsSuccess={IsSuccess}", id, result.IsSuccess());
+        
         if (!result.IsSuccess())
         {
-            var statusCode = result.Errors.Any(e => e.Contains("no encontrada")) 
-                ? StatusCodes.Status404NotFound 
+            _logger.LogInformation("🔄 PATCH /api/comercial/facturas/{Id}/anular - Error en anulación, procesando respuesta", id);
+            var errors = result.Errors ?? new List<string>();
+            _logger.LogInformation("🔍 AnularFactura - IsSuccess: {IsSuccess}, Errors count: {ErrorsCount}", result.IsSuccess(), errors.Count);
+            _logger.LogInformation("🔍 AnularFactura - Errores recibidos: {@Errors}", errors);
+            _logger.LogWarning("[DEBUG] Errores recibidos para determinar statusCode (AnularFacturaPatch): {Errors}", string.Join(" | ", errors));
+            var statusCode = errors.Any(e => e != null && (e.ToLower().Contains("no encontrada") || e.ToLower().Contains("no existe")))
+                ? StatusCodes.Status404NotFound
                 : StatusCodes.Status400BadRequest;
-                
+            _logger.LogInformation("🔍 AnularFactura - StatusCode determinado: {StatusCode}", statusCode);
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                result.Errors ?? new List<string> { "Error al anular factura" },
+                errors.Count > 0 ? errors : new List<string> { "Error al anular factura" },
                 "Error al anular factura",
                 statusCode);
             return StatusCode(statusCode, errorResponse);

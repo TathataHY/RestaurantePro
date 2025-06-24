@@ -1,3 +1,5 @@
+using RestaurantePro.Application.Common.Exceptions;
+
 namespace RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturaPorId;
 
 public class ObtenerFacturaPorIdValidator : AbstractValidator<ObtenerFacturaPorIdQuery>
@@ -110,6 +112,7 @@ public class ObtenerFacturaPorIdValidator : AbstractValidator<ObtenerFacturaPorI
         RuleFor(v => v)
             .MustAsync(FacturaNoEstaRestringida)
             .WithMessage("Esta factura tiene restricciones de acceso.")
+            .When(v => v.ValidarPermisos)
             .WithName("FacturaNoRestringida");
 
         // Validar límites de consultas por usuario
@@ -145,8 +148,15 @@ public class ObtenerFacturaPorIdValidator : AbstractValidator<ObtenerFacturaPorI
     // Métodos de validación personalizados
     private async Task<bool> FacturaExiste(Guid facturaId, CancellationToken cancellationToken)
     {
-        return await _context.Facturas
+        var existe = await _context.Facturas
             .AnyAsync(f => f.Id == facturaId, cancellationToken);
+        
+        if (!existe)
+        {
+            throw NotFoundException.ForFactura(facturaId);
+        }
+        
+        return true;
     }
 
     private async Task<bool> UsuarioExiste(Guid? usuarioId, CancellationToken cancellationToken)

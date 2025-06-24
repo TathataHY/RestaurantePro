@@ -67,9 +67,9 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 var reservacion = await _reservacionRepository.ObtenerPorIdAsync(reservacionId, cancellationToken);
                 if (reservacion == null)
                 {
-                    return Result<Reservacion>.Failure("Reservación no encontrada");
+                    return Result.Failure<Reservacion>("Reservación no encontrada");
                 }
-                return Result<Reservacion>.Success(reservacion);
+                return Result.Success(reservacion);
             }
 
             public async Task<Result<bool>> AsignarMesaAReservacionAsync(
@@ -81,24 +81,24 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 var reservacion = await _reservacionRepository.ObtenerPorIdAsync(reservacionId, cancellationToken);
                 if (reservacion == null)
                 {
-                    return Result<bool>.Failure("Reservación no encontrada");
+                    return Result.Failure<bool>("Reservación no encontrada");
                 }
 
                 var mesa = await _mesaRepository.ObtenerPorIdAsync(mesaId, cancellationToken);
                 if (mesa == null)
                 {
-                    return Result<bool>.Failure("Mesa no encontrada");
+                    return Result.Failure<bool>("Mesa no encontrada");
                 }
 
                 // Simular asignación exitosa
-                return Result<bool>.Success(true);
+                return Result.Success(true);
             }
             
             public Task<Result<Comanda>> CrearNuevaComandaAsync(Guid? mesaId, Guid? reservacionId, Guid empleadoId, string observaciones, CancellationToken cancellationToken = default)
             {
                 // Implementación simulada - corregir orden de parámetros según Comanda.Crear(meseroId, clienteId, mesaId, observaciones)
                 var comanda = Comanda.Crear(empleadoId, null, mesaId, observaciones);
-                return Task.FromResult(Result<Comanda>.Success(comanda));
+                return Task.FromResult(Result.Success(comanda));
             }
             
             public async Task<Result<Comanda>> AgregarProductoAComandaAsync(Guid comandaId, Guid productoId, int cantidad, string observaciones, CancellationToken cancellationToken = default)
@@ -107,45 +107,45 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 var comanda = await _comandaRepository.ObtenerPorIdAsync(comandaId, true, cancellationToken);
                 if (comanda == null)
                 {
-                    return Result<Comanda>.Failure("Comanda no encontrada");
+                    return Result.Failure<Comanda>("Comanda no encontrada");
                 }
                 
                 // Obtener el producto
                 var producto = await _productoRepository.ObtenerPorIdAsync(productoId, cancellationToken);
                 if (producto == null)
                 {
-                    return Result<Comanda>.Failure("Producto no encontrado");
+                    return Result.Failure<Comanda>("Producto no encontrado");
                 }
 
                 // Agregar el producto a la comanda
                 comanda.AgregarItem(productoId, producto.Nombre, cantidad, producto.Precio.Valor, observaciones);
                 
-                return Result<Comanda>.Success(comanda);
+                return Result.Success(comanda);
             }
             
             public Task<Result<bool>> AgregarPersonalizacionExtraAItemAsync(Guid comandaId, Guid itemId, Guid ingredienteId, string descripcion, decimal cantidad, decimal precioExtra, CancellationToken cancellationToken = default)
             {
-                return Task.FromResult(Result<bool>.Success(true));
+                return Task.FromResult(Result.Success(true));
             }
             
             public Task<Result<bool>> AgregarPersonalizacionQuitarAItemAsync(Guid comandaId, Guid itemId, Guid ingredienteId, string descripcion, CancellationToken cancellationToken = default)
             {
-                return Task.FromResult(Result<bool>.Success(true));
+                return Task.FromResult(Result.Success(true));
             }
             
             public Task<Result<bool>> AgregarPersonalizacionSustituirAItemAsync(Guid comandaId, Guid itemId, Guid ingredienteOriginalId, string descripcionOriginal, Guid ingredienteSustitutoId, string descripcionSustituto, decimal cantidad, decimal precioExtra, CancellationToken cancellationToken = default)
             {
-                return Task.FromResult(Result<bool>.Success(true));
+                return Task.FromResult(Result.Success(true));
             }
             
             public Task<Result<bool>> ActualizarEstadoComandaAsync(Guid comandaId, EstadoComanda nuevoEstado, CancellationToken cancellationToken = default)
             {
-                return Task.FromResult(Result<bool>.Success(true));
+                return Task.FromResult(Result.Success(true));
             }
             
             public Task<Result<bool>> AplicarDescuentoComandaAsync(Guid comandaId, decimal porcentajeDescuento, string motivo, CancellationToken cancellationToken = default)
             {
-                return Task.FromResult(Result<bool>.Success(true));
+                return Task.FromResult(Result.Success(true));
             }
             
             public Task<Result<Reservacion>> CrearReservacionAsync(Guid clienteId, DateTime fechaHora, int cantidadPersonas, string observaciones, CancellationToken cancellationToken = default)
@@ -153,13 +153,13 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 // Validar que la fecha sea futura
                 if (fechaHora.Date < DateTime.Now.Date)
                 {
-                    return Task.FromResult(Result<Reservacion>.Failure("La fecha de reservación debe ser futura"));
+                    return Task.FromResult(Result.Failure<Reservacion>("La fecha de reservación debe ser futura"));
                 }
                 
                 // Validar disponibilidad de mesas (simulado)
                 if (fechaHora.Day == 15 || cantidadPersonas > 10)
                 {
-                    return Task.FromResult(Result<Reservacion>.Failure("No hay mesas disponibles para la fecha y cantidad de personas seleccionadas"));
+                    return Task.FromResult(Result.Failure<Reservacion>("No hay mesas disponibles para la fecha y cantidad de personas seleccionadas"));
                 }
                 
                 try {
@@ -174,11 +174,11 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                         "cliente@ejemplo.com", // email (requerido)
                         observaciones);
                         
-                    return Task.FromResult(Result<Reservacion>.Success(reservacion));
+                    return Task.FromResult(Result.Success(reservacion));
                 }
                 catch (ArgumentException ex) when (ex.Message.Contains("fecha"))
                 {
-                    return Task.FromResult(Result<Reservacion>.Failure(ex.Message));
+                    return Task.FromResult(Result.Failure<Reservacion>(ex.Message));
                 }
             }
             
@@ -188,7 +188,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 var reservacion = await _reservacionRepository.ObtenerPorIdAsync(reservacionId, cancellationToken);
                 if (reservacion == null)
                 {
-                    return Result<bool>.Failure("La reservación no existe");
+                    return Result.Failure<bool>("La reservación no existe");
                 }
                 
                 // Actualizar el estado usando los métodos específicos
@@ -210,14 +210,14 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                             reservacion.MarcarNoAsistio();
                             break;
                         default:
-                            return Result<bool>.Failure($"Estado '{nuevoEstado}' no soportado");
+                            return Result.Failure<bool>($"Estado '{nuevoEstado}' no soportado");
                     }
                     
-                    return Result<bool>.Success(true);
+                    return Result.Success(true);
                 }
                 catch (InvalidOperationException ex)
                 {
-                    return Result<bool>.Failure(ex.Message);
+                    return Result.Failure<bool>(ex.Message);
                 }
             }
             
@@ -226,22 +226,22 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 // Validación básica de parámetros
                 if (fechaHora < DateTime.Now)
                 {
-                    return Task.FromResult(Result<IEnumerable<Guid>>.Failure("La fecha debe ser futura"));
+                    return Task.FromResult(Result.Failure<IEnumerable<Guid>>("La fecha debe ser futura"));
                 }
                 
                 if (cantidadPersonas <= 0)
                 {
-                    return Task.FromResult(Result<IEnumerable<Guid>>.Failure("La cantidad de personas debe ser mayor que cero"));
+                    return Task.FromResult(Result.Failure<IEnumerable<Guid>>("La cantidad de personas debe ser mayor que cero"));
                 }
                 
                 // Simulamos que no hay mesas disponibles para fechas específicas
                 if (fechaHora.Day == 15 || cantidadPersonas > 10)
                 {
-                    return Task.FromResult(Result<IEnumerable<Guid>>.Success(new List<Guid>()));
+                    return Task.FromResult(Result.Success<IEnumerable<Guid>>(new List<Guid>()));
                 }
                 
                 // Para otros casos, devolvemos una lista con un ID de mesa
-                return Task.FromResult(Result<IEnumerable<Guid>>.Success(new List<Guid> { Guid.NewGuid() }));
+                return Task.FromResult(Result.Success<IEnumerable<Guid>>(new List<Guid> { Guid.NewGuid() }));
             }
             
             public Task<Result<IEnumerable<Reservacion>>> ObtenerReservacionesPorRangoFechasAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default)
@@ -268,7 +268,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                         "Observaciones 2")
                 };
                 
-                return Task.FromResult(Result<IEnumerable<Reservacion>>.Success(reservaciones));
+                return Task.FromResult(Result.Success<IEnumerable<Reservacion>>(reservaciones));
             }
             
             public async Task<Result<Comanda>> ConvertirReservacionAComandaAsync(Guid reservacionId, Guid empleadoId, CancellationToken cancellationToken = default)
@@ -277,13 +277,13 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 var reservacion = await _reservacionRepository.ObtenerPorIdAsync(reservacionId, cancellationToken);
                 if (reservacion == null)
                 {
-                    return Result<Comanda>.Failure("Reservación no encontrada");
+                    return Result.Failure<Comanda>("Reservación no encontrada");
                 }
 
                 // Verificar que la reservación esté confirmada
                 if (reservacion.Estado != EstadoReservacion.Confirmada)
                 {
-                    return Result<Comanda>.Failure("La reservación debe estar confirmada para convertirla a comanda");
+                    return Result.Failure<Comanda>("La reservación debe estar confirmada para convertirla a comanda");
                 }
 
                 // Crear la comanda
@@ -293,35 +293,35 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                     reservacion.MesaId,
                     $"Comanda creada desde reservación {reservacionId}");
 
-                return Result<Comanda>.Success(comanda);
+                return Result.Success(comanda);
             }
             
             // Implementaciones stub para métodos de gestión de mesas
             public Task<Result<Mesa>> RegistrarMesaAsync(int numero, int capacidad, string ubicacion, CancellationToken cancellationToken = default)
             {
                 var mesa = RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(numero, capacidad, ubicacion);
-                return Task.FromResult(Result<Mesa>.Success(mesa));
+                return Task.FromResult(Result.Success<Mesa>(mesa));
             }
             
             public Task<Result<Mesa>> ActualizarMesaAsync(Guid mesaId, int capacidad, string ubicacion, CancellationToken cancellationToken = default)
             {
                 var mesa = RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(1, capacidad, ubicacion);
-                return Task.FromResult(Result<Mesa>.Success(mesa));
+                return Task.FromResult(Result.Success<Mesa>(mesa));
             }
             
             public Task<Result<bool>> CambiarEstadoMesaAsync(Guid mesaId, EstadoMesa nuevoEstado, CancellationToken cancellationToken = default)
             {
-                return Task.FromResult(Result<bool>.Success(true));
+                return Task.FromResult(Result.Success(true));
             }
             
             public Task<Result<bool>> PonerMesaFueraDeServicioAsync(Guid mesaId, string motivo, CancellationToken cancellationToken = default)
             {
-                return Task.FromResult(Result<bool>.Success(true));
+                return Task.FromResult(Result.Success(true));
             }
             
             public Task<Result<bool>> LiberarMesaAsync(Guid mesaId, CancellationToken cancellationToken = default)
             {
-                return Task.FromResult(Result<bool>.Success(true));
+                return Task.FromResult(Result.Success(true));
             }
             
             public Task<Result<IEnumerable<Mesa>>> ObtenerMesasDisponiblesAsync(int capacidadMinima = 1, CancellationToken cancellationToken = default)
@@ -331,7 +331,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                     RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(1, 4, "Terraza"),
                     RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(2, 6, "Interior")
                 };
-                return Task.FromResult(Result<IEnumerable<Mesa>>.Success(mesas));
+                return Task.FromResult(Result.Success<IEnumerable<Mesa>>(mesas));
             }
 
             #region Preparaciones
@@ -345,13 +345,13 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             public async Task<Result<IEnumerable<PreparacionDiaria>>> ObtenerPreparacionesDelDiaAsync(CancellationToken cancellationToken = default)
             {
                 var preparaciones = await _servicioPreparaciones.ObtenerPreparacionesDelDiaAsync();
-                return Result<IEnumerable<PreparacionDiaria>>.Success(preparaciones.Value.AsEnumerable());
+                return Result.Success<IEnumerable<PreparacionDiaria>>(preparaciones.Value.AsEnumerable());
             }
 
             public async Task<Result<IEnumerable<PreparacionDiaria>>> ObtenerPreparacionesPorProductoAsync(Guid productoId, CancellationToken cancellationToken = default)
             {
                 var preparaciones = await _servicioPreparaciones.ObtenerPreparacionesPorProductoAsync(productoId);
-                return Result<IEnumerable<PreparacionDiaria>>.Success(preparaciones.Value.AsEnumerable());
+                return Result.Success<IEnumerable<PreparacionDiaria>>(preparaciones.Value.AsEnumerable());
             }
 
             public async Task<Result<bool>> VerificarDisponibilidadPreparacionAsync(Guid productoId, int cantidadRequerida, CancellationToken cancellationToken = default)
@@ -373,7 +373,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 // Validar que hay productos
                 if (!productos.Any())
                 {
-                    return Result<Comanda>.Failure("Debe especificar al menos un producto");
+                    return Result.Failure<Comanda>("Debe especificar al menos un producto");
                 }
 
                 // Crear la comanda
@@ -391,7 +391,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                     comanda.AgregarItem(productoId, producto.Nombre, cantidad, producto.Precio.Valor, observaciones);
                 }
 
-                return Result<Comanda>.Success(comanda);
+                return Result.Success(comanda);
             }
         }
         
@@ -515,7 +515,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 "test@example.com", // Agregar email
                 "Observaciones");
 
-            var mesa = Mesa.Crear(1, 4, "Terraza");
+            var mesa = RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa.Crear(1, 4, "Terraza");
 
             // Configuramos correctamente los mocks
             _reservacionRepositoryMock
@@ -682,7 +682,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 producto1Id,
                 2,
                 It.IsAny<Guid?>()))
-                .Returns(Task.FromResult(Result<bool>.Success(true)));
+                .Returns(Task.FromResult(Result.Success(true)));
                 
             _servicioPreparacionesMock.Setup(x => x.ConsumirPreparacionAsync(
                 producto1Id,
@@ -693,7 +693,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 producto2Id,
                 1,
                 It.IsAny<Guid?>()))
-                .Returns(Task.FromResult(Result<bool>.Success(false)));
+                .Returns(Task.FromResult(Result.Success(false)));
 
             // Act
             var resultado = await _sut.CrearComandaConProductosAsync(
@@ -776,7 +776,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 productoId,
                 1,
                 It.IsAny<Guid?>()))
-                .Returns(Task.FromResult(Result<bool>.Success(true)));
+                .Returns(Task.FromResult(Result.Success(true)));
                 
                 _servicioPreparacionesMock.Setup(x => x.ConsumirPreparacionAsync(
         productoId,
@@ -843,7 +843,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                     producto1Id,
                     1,
                     It.IsAny<Guid?>()))
-                .Returns(Task.FromResult(Result<bool>.Success(false))); // Al momento
+                .Returns(Task.FromResult(Result.Success(false))); // Al momento
 
             // Act
             var resultado = await _sut.CrearComandaConProductosAsync(
@@ -875,7 +875,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                     productoId,
                     cantidadRequerida,
                     It.IsAny<Guid?>()))
-                .Returns(Task.FromResult(Result<bool>.Success(true)));
+                .Returns(Task.FromResult(Result.Success(true)));
 
             // Act
             var resultado = await _sut.VerificarDisponibilidadPreparacionAsync(productoId, cantidadRequerida);
@@ -905,7 +905,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                     productoId,
                     cantidadRequerida,
                     It.IsAny<Guid?>()))
-                .Returns(Task.FromResult(Result<bool>.Success(false)));
+                .Returns(Task.FromResult(Result.Success(false)));
 
             // Act
             var resultado = await _sut.VerificarDisponibilidadPreparacionAsync(productoId, cantidadRequerida);
