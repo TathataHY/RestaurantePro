@@ -723,17 +723,10 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
     public async Task GetFacturaPdf_ConIdInexistente_DebeRetornar404()
     {
         // Arrange
-        Console.WriteLine("🧪 Iniciando test: GetFacturaPdf_ConIdInexistente_DebeRetornar404");
-
         var facturaIdInexistente = Guid.Parse("99999999-9999-9999-9999-999999999999");
 
         // Act
         var response = await HttpClient.GetAsync($"/api/comercial/facturas/{facturaIdInexistente}/pdf");
-
-        // Debug: Imprimir contenido ANTES del assert
-        var content = await response.Content.ReadAsStringAsync();
-        Console.WriteLine($"[DEBUG TEST] Status Code: {response.StatusCode}");
-        Console.WriteLine($"[DEBUG TEST] Body de respuesta: {content}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

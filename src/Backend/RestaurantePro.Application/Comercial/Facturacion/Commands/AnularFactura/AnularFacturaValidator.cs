@@ -1,3 +1,5 @@
+using RestaurantePro.Application.Common.Exceptions;
+
 namespace RestaurantePro.Application.Comercial.Facturacion.Commands.AnularFactura;
 
 public class AnularFacturaValidator : AbstractValidator<AnularFacturaCommand>
