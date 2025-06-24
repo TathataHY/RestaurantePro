@@ -290,7 +290,7 @@ public class CrearFacturaCommandHandler : IRequestHandler<CrearFacturaCommand, R
                         comanda.Id,
                         tipoFactura,
                         informacionCliente.NombreCliente,
-                        request.ClienteId,
+            request.ClienteId,
                         informacionCliente.IdentificacionFiscal,
                         informacionCliente.DireccionCliente,
                         request.Observaciones,
@@ -315,13 +315,13 @@ public class CrearFacturaCommandHandler : IRequestHandler<CrearFacturaCommand, R
                 try
                 {
                     var facturaResult = await _servicioFacturacion.GenerarFacturaParaComandasAsync(
-                        request.ComandasIds,
+            request.ComandasIds,
                         tipoFactura,
                         informacionCliente.NombreCliente,
                         request.ClienteId,
                         informacionCliente.IdentificacionFiscal,
                         informacionCliente.DireccionCliente,
-                        request.Observaciones,
+            request.Observaciones,
                         cancellationToken);
                         
                     if (!facturaResult.Succeeded)

@@ -23,13 +23,19 @@ public class ObtenerFacturasQueryHandler : IRequestHandler<ObtenerFacturasQuery,
     {
         try
         {
-            _logger.LogInformation("🔍 Obteniendo facturas con filtros: Estado={Estado}, ClienteId={ClienteId}, FechaDesde={FechaDesde}, FechaHasta={FechaHasta}",
-                request.Estado, request.ClienteId, request.FechaDesde, request.FechaHasta);
+            _logger.LogInformation("🔍 Obteniendo facturas con filtros: Estado={Estado}, ClienteId={ClienteId}, FechaDesde={FechaDesde}, FechaHasta={FechaHasta}, SoloPendientesPago={SoloPendientesPago}",
+                request.Estado, request.ClienteId, request.FechaDesde, request.FechaHasta, request.SoloPendientesPago);
 
             var query = _context.Facturas
                 .Include(f => f.Cliente)
                 .Include(f => f.Detalles)
                 .AsQueryable();
+
+            // Filtro especial: solo pendientes de pago
+            if (request.SoloPendientesPago)
+            {
+                query = query.Where(f => (f.Estado == EstadoFactura.Emitida || f.Estado == EstadoFactura.PagadaParcialmente) && f.Total > f.TotalPagado);
+            }
 
             // Aplicar filtros
             query = AplicarFiltros(query, request);

@@ -78,10 +78,13 @@ public class FacturaConfiguration : IEntityTypeConfiguration<Factura>
         // Configurar ComandasIds como un valor convertible
         builder.Property(p => p.ComandasIds)
             .HasConversion(
-                v => string.Join(',', v),
-                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(id => Guid.Parse(id))
-                    .ToList());
+                v => v.Count > 0 ? string.Join(',', v) : "",
+                v => string.IsNullOrEmpty(v) 
+                    ? new List<Guid>() 
+                    : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Where(id => !string.IsNullOrWhiteSpace(id))
+                        .Select(id => Guid.Parse(id.Trim()))
+                        .ToList());
         
         builder.Property(p => p.EstaEliminado)
             .IsRequired()

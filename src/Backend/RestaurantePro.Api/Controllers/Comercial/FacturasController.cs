@@ -12,6 +12,7 @@ using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturasPo
 using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturasPorComanda;
 using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Api.Models.Requests;
 
 namespace RestaurantePro.Api.Controllers.Comercial;
 
@@ -90,11 +91,14 @@ public class FacturasController : ControllerBase
         var result = await _mediator.Send(query);
         if (!result.IsSuccess())
         {
+            var statusCode = result.Errors != null && result.Errors.Any(e => e.Contains("no encontrada"))
+                ? StatusCodes.Status404NotFound
+                : StatusCodes.Status400BadRequest;
             var errorResponse = ApiResponse<object>.ErrorResponse(
                 result.Errors ?? new List<string> { "Factura no encontrada" },
                 "Factura no encontrada",
-                StatusCodes.Status404NotFound);
-            return NotFound(errorResponse);
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
         }
         var response = ApiResponse<FacturaDto>.SuccessResponse(
             result.Value, "Factura obtenida exitosamente");
@@ -147,7 +151,7 @@ public class FacturasController : ControllerBase
         var result = await _mediator.Send(command);
         if (!result.IsSuccess())
         {
-            var statusCode = result.Errors != null && result.Errors.Any(e => e.Contains("no encontrada"))
+            var statusCode = result.Errors != null && result.Errors.Any(e => e.Contains("no encontrada") || e.Contains("no existe"))
                 ? StatusCodes.Status404NotFound
                 : StatusCodes.Status400BadRequest;
             var errorResponse = ApiResponse<object>.ErrorResponse(
@@ -254,7 +258,7 @@ public class FacturasController : ControllerBase
 
         var query = new ObtenerFacturasQuery
         {
-            Estado = "Pendiente",
+            SoloPendientesPago = true,
             DiasVencimiento = diasVencimiento
         };
         var result = await _mediator.Send(query);
@@ -361,14 +365,15 @@ public class FacturasController : ControllerBase
     /// Anula una factura existente (método alternativo con PATCH)
     /// </summary>
     /// <param name="id">ID de la factura</param>
-    /// <param name="motivo">Motivo de la anulación</param>
+    /// <param name="request">Datos de la anulación</param>
     /// <returns>Confirmación de anulación</returns>
     [HttpPatch("{id:guid}/anular")]
     [Authorize(Roles = "Administrador,Cajero,Gerente")]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<bool>>> AnularFacturaPatch(
-        Guid id, [FromBody] string? motivo = null)
+        Guid id, [FromBody] AnularFacturaRequest request)
     {
         _logger.LogInformation("❌ PATCH /api/comercial/facturas/{Id}/anular", id);
         
@@ -393,24 +398,40 @@ public class FacturasController : ControllerBase
             return Unauthorized(errorResponse);
         }
         
-        var command = new EliminarFacturaCommand
+        // Crear el comando de anulación con todos los datos requeridos
+        var command = new AnularFacturaCommand
         {
             FacturaId = id,
-            Motivo = motivo ?? "Anulación solicitada desde API",
-            UsuarioAutorizaId = usuarioId
+            Motivo = request.Motivo,
+            DescripcionDetallada = request.DescripcionDetallada,
+            UsuarioAutorizaId = usuarioId,
+            TipoAnulacion = request.TipoAnulacion,
+            ObservacionesAdicionales = request.ObservacionesAdicionales,
+            GenerarNotaCredito = request.GenerarNotaCredito,
+            NotificarCliente = request.NotificarCliente,
+            ProcesarDevolucionPago = request.ProcesarDevolucionPago,
+            MetodoDevolucion = request.MetodoDevolucion,
+            RevertirInventario = request.RevertirInventario,
+            CancelarPuntosFidelizacion = request.CancelarPuntosFidelizacion,
+            Prioridad = 2 // Prioridad normal por defecto
         };
         
         var result = await _mediator.Send(command);
         if (!result.IsSuccess())
         {
+            var statusCode = result.Errors.Any(e => e.Contains("no encontrada")) 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
             var errorResponse = ApiResponse<object>.ErrorResponse(
                 result.Errors ?? new List<string> { "Error al anular factura" },
                 "Error al anular factura",
-                StatusCodes.Status404NotFound);
-            return NotFound(errorResponse);
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
         }
+        
         var response = ApiResponse<bool>.SuccessResponse(
-            result.Value, "Factura anulada exitosamente");
+            true, "Factura anulada exitosamente");
         return Ok(response);
     }
 

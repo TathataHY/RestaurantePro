@@ -37,7 +37,7 @@ public class ActualizarFacturaCommandHandler : IRequestHandler<ActualizarFactura
 
             if (factura == null)
             {
-                var mensajeError = $"No se encontró la factura con ID {request.Id}";
+                var mensajeError = $"La factura especificada no encontrada.";
                 _logger.LogWarning(mensajeError);
                 return Result.Failure<FacturaDto>(mensajeError);
             }
@@ -53,8 +53,8 @@ public class ActualizarFacturaCommandHandler : IRequestHandler<ActualizarFactura
             // Aplicar las actualizaciones disponibles en el Command
             if (!string.IsNullOrWhiteSpace(request.NombreCliente))
             {
-                // Actualizar datos del cliente si es necesario
-                // factura.ActualizarDatosCliente(...) 
+                // Actualizar el nombre del cliente en la factura
+                factura.ModificarInformacionFiscal(request.NombreCliente, factura.IdentificacionFiscal, factura.DireccionCliente);
             }
 
             if (!string.IsNullOrWhiteSpace(request.Observaciones))

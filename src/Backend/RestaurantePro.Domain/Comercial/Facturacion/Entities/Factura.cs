@@ -101,6 +101,11 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Entities
         public string? Observaciones { get; private set; }
 
         /// <summary>
+        /// Fecha de creación de la factura
+        /// </summary>
+        public DateTime FechaCreacion { get; private set; }
+
+        /// <summary>
         /// Lista de IDs de comandas asociadas a esta factura
         /// </summary>
         public IReadOnlyList<Guid> ComandasIds { get; private set; } = new List<Guid>();
@@ -184,6 +189,7 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Entities
                 TipoFactura = tipoFactura,
                 Estado = EstadoFactura.Borrador,
                 FechaEmision = fechaEmisionReal,
+                FechaCreacion = fechaEmisionReal,
                 ClienteId = clienteId,
                 NombreCliente = nombreCliente,
                 IdentificacionFiscal = identificacionFiscal,
@@ -367,7 +373,7 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Entities
         /// <summary>
         /// Recalcula los totales de la factura basados en los detalles
         /// </summary>
-        private void RecalcularTotales()
+        public void RecalcularTotales()
         {
             Subtotal = _detalles.Sum(d => d.Subtotal);
             TotalImpuestos = _detalles.Sum(d => d.ImporteImpuesto);

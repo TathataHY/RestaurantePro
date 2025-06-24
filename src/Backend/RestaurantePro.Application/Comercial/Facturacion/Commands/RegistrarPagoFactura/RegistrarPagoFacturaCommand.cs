@@ -11,6 +11,11 @@ public class RegistrarPagoFacturaCommand : IRequest<Result<bool>>
     public Guid FacturaId { get; set; }
     
     /// <summary>
+    /// Monto del pago a registrar
+    /// </summary>
+    public decimal Monto { get; set; }
+    
+    /// <summary>
     /// Método de pago utilizado
     /// </summary>
     public string MetodoPago { get; set; }

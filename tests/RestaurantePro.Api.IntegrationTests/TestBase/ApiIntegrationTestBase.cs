@@ -19,6 +19,7 @@ using RestaurantePro.Domain.Comercial.Clientes.Entities;
 using RestaurantePro.Domain.Comercial.Promociones.Entities;
 using RestaurantePro.Domain.Core.Notificaciones;
 using RestaurantePro.Domain.Proveedores;
+using RestaurantePro.Domain.Core.Base.Services;
 
 /// <summary>
 /// Clase base para todos los tests de integración de la API.
@@ -31,6 +32,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     protected readonly IServiceScope ServiceScope;
     protected readonly RestauranteProDbContext DbContext;
     protected readonly ILogger Logger;
+    protected readonly IDateTimeService DateTimeService;
 
     protected ApiIntegrationTestBase(TestWebApplicationFactory factory)
     {
@@ -39,6 +41,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         ServiceScope = factory.Services.CreateScope();
         DbContext = ServiceScope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
         Logger = ServiceScope.ServiceProvider.GetRequiredService<ILogger<ApiIntegrationTestBase>>();
+        DateTimeService = ServiceScope.ServiceProvider.GetRequiredService<IDateTimeService>();
     }
 
     /// <summary>
@@ -74,6 +77,15 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     {
         HttpClient.DefaultRequestHeaders.Authorization = 
             new System.Net.Http.Headers.AuthenticationHeaderValue("Test", $"AuthenticatedUser-{rol}");
+    }
+
+    /// <summary>
+    /// Configura autenticación con un usuario específico que pase el ID del usuario en el header de autorización.
+    /// </summary>
+    protected virtual void ConfigurarAutenticacionConUsuario(Guid usuarioId, string rol = "Administrador")
+    {
+        HttpClient.DefaultRequestHeaders.Authorization = 
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Test", $"User_{usuarioId}_{rol}");
     }
 
     /// <summary>
@@ -348,8 +360,12 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// </summary>
     protected async Task<Cliente> CrearClientePrueba(string nombre = "Cliente Test", string? email = null)
     {
-        var timestamp = DateTimeOffset.UtcNow.Ticks.ToString()[^8..];
-        var emailUnico = email ?? $"test_{timestamp}@example.com";
+        var sufijo = Guid.NewGuid().ToString("N")[..8] + DateTimeOffset.UtcNow.Ticks.ToString()[^4..];
+        var emailBase = email ?? $"cliente@test.com";
+        var atIdx = emailBase.IndexOf("@");
+        var emailUnico = atIdx > 0
+            ? emailBase.Insert(atIdx, $"_{sufijo}")
+            : $"{emailBase}_{sufijo}@test.com";
         var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
         var cliente = Cliente.Crear(
             clienteNombre,
@@ -385,26 +401,27 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// Crea un usuario de prueba en la base de datos
     /// </summary>
     protected async Task<Usuario> CrearUsuarioPrueba(
-        string? nombreUsuario = null, 
-        string nombreCompleto = "Usuario Test", 
-        string? email = null,
+        string nombreUsuario = "test.user",
+        string nombreCompleto = null,
+        string email = null,
         RolUsuario rol = RolUsuario.Mesero)
     {
-        var sufijo = Guid.NewGuid().ToString("N")[..8] + DateTimeOffset.UtcNow.Ticks.ToString()[^4..];
-        var usuarioUnico = nombreUsuario ?? $"usuario_{sufijo}";
-        var emailUnico = email ?? $"usuario_{sufijo}@test.com";
+        // Generar un nombre de usuario único para evitar conflictos de constraint UNIQUE
+        var nombreUsuarioUnico = $"{nombreUsuario}.{Guid.NewGuid():N}";
+        var nombreCompletoFinal = nombreCompleto ?? $"Usuario {nombreUsuarioUnico}";
+        var emailFinal = email ?? $"{nombreUsuarioUnico}@test.com";
+        
+        // Usar el factory method de la entidad Usuario
         var usuario = Usuario.Crear(
-            usuarioUnico,
-            nombreCompleto,
-            emailUnico,
+            nombreUsuarioUnico,
+            nombreCompletoFinal,
+            emailFinal,
             rol
         );
-
-        // Confirmar la cuenta para que esté activo
-        usuario.ConfirmarCuenta();
-
+        
         DbContext.Usuarios.Add(usuario);
         await DbContext.SaveChangesAsync();
+        
         return usuario;
     }
 
@@ -417,7 +434,12 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         string ubicacion = "Interior",
         EstadoMesa estado = EstadoMesa.Disponible)
     {
-        var numeroUnico = numero ?? new Random().Next(1000, 9999);
+        // Generar un número único de mesa, incluso si se pasa explícitamente
+        var sufijo = int.Parse(Guid.NewGuid().ToString("N").Substring(0, 6), System.Globalization.NumberStyles.HexNumber) % 1000000;
+        var numeroBase = numero ?? new Random().Next(1000, 9999);
+        var numeroUnico = int.Parse($"{numeroBase}{sufijo}");
+        // Si el número es demasiado largo, recortar a 8 dígitos
+        if (numeroUnico > 99999999) numeroUnico = numeroUnico % 100000000;
         var mesa = Mesa.Crear(
             numeroUnico,
             capacidad,
@@ -492,8 +514,8 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         EstadoComanda estado = EstadoComanda.Creada)
     {
         // Crear entidades dependientes si NO se proporcionan los IDs
-        var mesero = meseroId.HasValue ? null : await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
-        var cliente = clienteId.HasValue ? null : await CrearClientePrueba("Cliente Comanda", "cliente@test.com");
+        var mesero = meseroId.HasValue ? null : await CrearUsuarioPrueba("mesero.test", "Mesero Test", null, RolUsuario.Mesero);
+        var cliente = clienteId.HasValue ? null : await CrearClientePrueba("Cliente Comanda", null);
         var mesa = mesaId.HasValue ? null : await CrearMesaPrueba(99, 4); // Usar un número de mesa por defecto
 
         // Usar los IDs proporcionados o los de las entidades creadas
@@ -632,12 +654,15 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         string numeroFactura = null,
         TipoFactura tipoFactura = TipoFactura.Normal,
         string nombreCliente = "Cliente Factura Test",
-        string observaciones = "Factura de prueba")
+        string observaciones = "Factura de prueba",
+        DateTime? fechaCreacion = null)
     {
         // Crear cliente si no se proporciona
         if (!clienteId.HasValue)
         {
-            var cliente = await CrearClientePrueba(nombreCliente, "factura@test.com");
+            var sufijo = Guid.NewGuid().ToString("N")[..8];
+            var emailUnico = $"cliente.factura.{sufijo}@test.com";
+            var cliente = await CrearClientePrueba(nombreCliente, emailUnico);
             clienteId = cliente.Id;
         }
 
@@ -656,12 +681,15 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
 
         // Crear la factura usando el factory method
         var factura = Factura.Crear(
-            clienteId.Value,
+            numeroFactura,
+            tipoFactura,
+            nombreCliente,
+            clienteId,
             null, // identificacionFiscal
             null, // direccionCliente
             comandasIds,
             observaciones,
-            DateTime.Now);
+            fechaCreacion ?? DateTimeService.Now);
 
         // Guardar en la base de datos
         DbContext.Facturas.Add(factura);
@@ -679,12 +707,15 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         Guid? clienteId = null,
         List<Guid>? comandasIds = null,
         string numeroFactura = null,
-        TipoFactura tipoFactura = TipoFactura.Normal)
+        TipoFactura tipoFactura = TipoFactura.Normal,
+        DateTime? fechaCreacion = null)
     {
         // Crear cliente si no se proporciona
         if (!clienteId.HasValue)
         {
-            var cliente = await CrearClientePrueba("Cliente Detalles Test", "detalles@test.com");
+            var sufijo = Guid.NewGuid().ToString("N")[..8];
+            var emailUnico = $"cliente.detalles.{sufijo}@test.com";
+            var cliente = await CrearClientePrueba("Cliente Detalles Test", emailUnico);
             clienteId = cliente.Id;
         }
 
@@ -707,44 +738,12 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         }
 
         // Crear la factura
-        var factura = await CrearFacturaPrueba(clienteId, comandasIds, numeroFactura, tipoFactura);
+        var factura = await CrearFacturaPrueba(clienteId, comandasIds, numeroFactura, tipoFactura, "Cliente Factura Test", "Factura de prueba", fechaCreacion);
 
-        // Agregar detalles de factura usando los productos de la comanda
-        var comandaConItems = await DbContext.Comandas
-            .Include(c => c.Items)
-            .FirstOrDefaultAsync(c => comandasIds!.Contains(c.Id));
-            
-        if (comandaConItems != null && comandaConItems.Items.Any())
+        // Si no hay detalles, agregarlos
+        var detalles = await DbContext.Set<DetalleFactura>().Where(d => d.FacturaId == factura.Id).ToListAsync();
+        if (detalles == null || !detalles.Any())
         {
-            // Usar los items de la comanda para crear los detalles de la factura
-            foreach (var item in comandaConItems.Items)
-            {
-                // Obtener el producto para conseguir el nombre
-                var producto = await DbContext.Productos.FindAsync(item.ProductoId);
-                var nombreProducto = producto?.Nombre ?? "Producto Sin Nombre";
-                
-                var detalle = DetalleFactura.Crear(
-                    factura.Id,
-                    item.ProductoId,
-                    nombreProducto,
-                    item.Cantidad,
-                    item.PrecioUnitario,
-                    16.0m, // 16% IVA
-                    0.0m); // Sin descuento
-
-                DbContext.Set<DetalleFactura>().Add(detalle);
-            }
-            
-            await DbContext.SaveChangesAsync();
-            
-            // Recalcular el total de la factura
-            await RecalcularTotalFactura(factura);
-            
-            Logger.LogInformation("✅ Detalles de factura agregados: {CantidadDetalles} productos", comandaConItems.Items.Count);
-        }
-        else
-        {
-            // Si no hay items en la comanda, crear productos por defecto
             var producto1 = await CrearProductoPrueba("Producto Factura 1", 100.00m);
             var producto2 = await CrearProductoPrueba("Producto Factura 2", 150.00m);
             
@@ -768,10 +767,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
 
             DbContext.Set<DetalleFactura>().AddRange(detalle1, detalle2);
             await DbContext.SaveChangesAsync();
-            
-            // Recalcular el total de la factura
             await RecalcularTotalFactura(factura);
-
             Logger.LogInformation("✅ Detalles de factura agregados: {CantidadDetalles} productos por defecto", 2);
         }
 
@@ -781,7 +777,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// <summary>
     /// Recalcula el total de una factura basado en sus detalles
     /// </summary>
-    private async Task RecalcularTotalFactura(Factura factura)
+    protected async Task RecalcularTotalFactura(Factura factura)
     {
         var detalles = await DbContext.Set<DetalleFactura>()
             .Where(d => d.FacturaId == factura.Id)
@@ -794,14 +790,24 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
             var descuentos = detalles.Sum(d => (d.Cantidad * d.PrecioUnitario) * (d.PorcentajeDescuento / 100));
             var total = subtotal + impuestos - descuentos;
             
-            // Usar reflection para establecer el total (ya que es privado)
+            // Usar reflection para establecer todas las propiedades (ya que son privadas)
+            var subtotalProperty = typeof(Factura).GetProperty("Subtotal");
+            var impuestosProperty = typeof(Factura).GetProperty("TotalImpuestos");
+            var descuentosProperty = typeof(Factura).GetProperty("TotalDescuentos");
             var totalProperty = typeof(Factura).GetProperty("Total");
+            
+            if (subtotalProperty != null)
+                subtotalProperty.SetValue(factura, subtotal);
+            if (impuestosProperty != null)
+                impuestosProperty.SetValue(factura, impuestos);
+            if (descuentosProperty != null)
+                descuentosProperty.SetValue(factura, descuentos);
             if (totalProperty != null)
-            {
                 totalProperty.SetValue(factura, total);
-                await DbContext.SaveChangesAsync();
-                Logger.LogInformation("✅ Total de factura recalculado: {Total:C}", total);
-            }
+                
+            await DbContext.SaveChangesAsync();
+            Logger.LogInformation("✅ Total de factura recalculado: Subtotal={Subtotal:C}, Impuestos={Impuestos:C}, Descuentos={Descuentos:C}, Total={Total:C}", 
+                subtotal, impuestos, descuentos, total);
         }
     }
 } 

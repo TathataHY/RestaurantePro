@@ -41,7 +41,7 @@ public class ObtenerFacturaPorIdQueryHandler : IRequestHandler<ObtenerFacturaPor
             if (factura == null)
             {
                 _logger.LogWarning("Factura {FacturaId} no encontrada", request.FacturaId);
-                return Result.Failure<FacturaDto>("La factura especificada no existe.");
+                return Result.Failure<FacturaDto>("La factura especificada no encontrada.");
             }
 
             // 2. Crear el DTO usando el DTO existente

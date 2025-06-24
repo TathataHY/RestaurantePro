@@ -37,7 +37,7 @@ public class RegistrarPagoFacturaCommandHandler : IRequestHandler<RegistrarPagoF
 
             if (factura == null)
             {
-                var mensajeError = $"No se encontró la factura con ID {request.FacturaId}";
+                var mensajeError = $"La factura con ID {request.FacturaId} no encontrada";
                 _logger.LogWarning(mensajeError);
                 return Result.Failure<bool>(mensajeError);
             }
@@ -60,8 +60,8 @@ public class RegistrarPagoFacturaCommandHandler : IRequestHandler<RegistrarPagoF
             // Registrar el pago
             var pagoId = Guid.NewGuid(); // Generar un ID único para el pago
             
-            // El método RegistrarPago de la entidad solo acepta: monto, pagoId y dateTimeService
-            factura.RegistrarPago(factura.Total, pagoId, _dateTimeService);
+            // Usar el monto del comando en lugar del total de la factura
+            factura.RegistrarPago(request.Monto, pagoId, _dateTimeService);
 
             // Guardar cambios
             await _context.SaveChangesAsync(cancellationToken);

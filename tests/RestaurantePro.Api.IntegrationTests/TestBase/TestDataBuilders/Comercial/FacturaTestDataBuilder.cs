@@ -1,3 +1,5 @@
+using RestaurantePro.Application.Comercial.Facturacion.Commands.CrearFactura;
+
 namespace RestaurantePro.Api.IntegrationTests.TestBase.TestDataBuilders.Comercial;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace RestaurantePro.Api.IntegrationTests.TestBase.TestDataBuilders.Comercia
 /// </summary>
 public class FacturaTestDataBuilder
 {
-    private List<Guid> _comandasIds = new();
+    private List<Guid> _comandasIds = new() { Guid.NewGuid() };
     private string _tipoFactura = "Normal";
     private string _nombreCliente = "Cliente Test";
     private Guid _clienteId = Guid.NewGuid();
@@ -14,6 +16,8 @@ public class FacturaTestDataBuilder
     private string _emailCliente = "cliente@test.com";
     private string _observaciones = "Factura de prueba";
     private int _diasCredito = 30;
+    private string _metodoPagoPreferido = "Efectivo";
+    private string _moneda = "CLP";
 
     public FacturaTestDataBuilder ConComandasIds(params Guid[] comandasIds)
     {
@@ -69,12 +73,24 @@ public class FacturaTestDataBuilder
         return this;
     }
 
+    public FacturaTestDataBuilder ConMetodoPagoPreferido(string metodoPago)
+    {
+        _metodoPagoPreferido = metodoPago;
+        return this;
+    }
+
+    public FacturaTestDataBuilder ConMoneda(string moneda)
+    {
+        _moneda = moneda;
+        return this;
+    }
+
     /// <summary>
     /// Construye un request para crear una factura
     /// </summary>
-    public object BuildCrearFacturaRequest()
+    public CrearFacturaCommand BuildCrearFacturaRequest()
     {
-        return new
+        return new CrearFacturaCommand
         {
             ComandasIds = _comandasIds,
             TipoFactura = _tipoFactura,
@@ -84,7 +100,13 @@ public class FacturaTestDataBuilder
             DireccionCliente = _direccionCliente,
             EmailCliente = _emailCliente,
             Observaciones = _observaciones,
-            DiasCredito = _diasCredito
+            DiasCredito = _diasCredito,
+            MetodoPagoPreferido = _metodoPagoPreferido,
+            Moneda = _moneda,
+            EmitirInmediatamente = true,
+            EnviarPorEmail = false,
+            DescuentosAdicionales = new List<DescuentoAdicionalDto>(),
+            TipoCambio = null
         };
     }
 } 

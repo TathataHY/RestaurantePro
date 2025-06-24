@@ -18,10 +18,15 @@ public class ObtenerFacturasPorComandaHandler : IRequestHandler<ObtenerFacturasP
     {
         try
         {
-            var facturas = await _context.Facturas
+            // Traer todas las facturas candidatas a memoria (puedes optimizar con filtros adicionales si lo deseas)
+            var facturasEnMemoria = await _context.Facturas
                 .Include(f => f.Cliente)
-                .Where(f => f.ComandasIds.Contains(request.ComandaId))
                 .OrderByDescending(f => f.FechaEmision)
+                .ToListAsync(cancellationToken);
+
+            // Filtrar en memoria por ComandaId
+            var facturas = facturasEnMemoria
+                .Where(f => f.ComandasIds != null && f.ComandasIds.Contains(request.ComandaId))
                 .Select(f => new FacturaDto
                 {
                     Id = f.Id,
@@ -45,7 +50,7 @@ public class ObtenerFacturasPorComandaHandler : IRequestHandler<ObtenerFacturasP
                     MetodoPago = null, // Se puede obtener de los pagos si es necesario
                     ReferenciaPago = null // Se puede obtener de los pagos si es necesario
                 })
-                .ToListAsync(cancellationToken);
+                .ToList();
 
             return Result<List<FacturaDto>>.Success(facturas);
         }

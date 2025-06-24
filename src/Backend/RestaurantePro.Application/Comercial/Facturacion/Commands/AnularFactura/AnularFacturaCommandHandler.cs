@@ -57,7 +57,7 @@ public class AnularFacturaCommandHandler : IRequestHandler<AnularFacturaCommand,
             
             if (factura == null)
             {
-                string mensajeError = $"No se encontró la factura con ID {request.FacturaId}";
+                string mensajeError = $"La factura con ID {request.FacturaId} no encontrada";
                 _logger.LogWarning(mensajeError);
                 return Result.Failure<FacturaDto>(mensajeError);
             }

@@ -42,6 +42,11 @@ public class ObtenerFacturasQuery : IRequest<Result<List<FacturaDto>>>
     public bool SoloActivas { get; set; } = true;
 
     /// <summary>
+    /// Incluir solo facturas pendientes de pago
+    /// </summary>
+    public bool SoloPendientesPago { get; set; } = false;
+
+    /// <summary>
     /// Ordenar por campo específico
     /// </summary>
     public string OrdenarPor { get; set; } = "FechaEmision";

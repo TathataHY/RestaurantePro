@@ -37,6 +37,11 @@ using RestaurantePro.Domain.Core.SharedKernel.Results;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using Microsoft.EntityFrameworkCore;
+using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
+using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
+using RestaurantePro.Domain.Comercial.Facturacion.Services;
+using RestaurantePro.Domain.Comercial.Services;
+using Microsoft.AspNetCore.Http;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -119,6 +124,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     .Build();
             });
 
+            // 🔧 REGISTRAR IHttpContextAccessor PARA TestCurrentUserService
+            services.AddHttpContextAccessor();
+
             // 🔧 REGISTRAR SERVICIOS BÁSICOS QUE APPLICATION NECESITA
             // ITimeProvider - necesario para PerformanceBehavior
             services.AddSingleton<ITimeProvider, SystemTimeProvider>();
@@ -127,7 +135,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddSingleton<IDelayProvider, DelayProvider>();
             
             // IDateTimeService - necesario para PreparacionRepository
-            services.AddScoped<IDateTimeService, DateTimeService>();
+            services.AddScoped<IDateTimeService>(provider => 
+                new MockDateTimeService(DateTime.Now)); // Usar fecha actual para tests
             
             // 🔔 INotificationService - necesario para Commands como DesactivarCliente
             services.AddScoped<INotificationService, NotificationService>();
@@ -146,6 +155,12 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             
             // 📦 REGISTRAR REPOSITORIOS COMERCIAL
             services.AddScoped<IClienteRepository, ClienteRepository>();
+            
+            // 📦 REGISTRAR REPOSITORIOS DE FACTURACIÓN
+            services.AddScoped<IFacturaRepository, FacturaRepository>();
+            services.AddScoped<IComandaRepository, ComandaRepository>();
+            services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
+            services.AddScoped<IHistorialPuntosRepository, HistorialPuntosRepository>();
             
             // 📦 REGISTRAR REPOSITORIOS INVENTARIO
             services.AddScoped<IOrdenCompraRepository>(provider => 
@@ -198,12 +213,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     provider.GetRequiredService<ILogger<MesaRepository>>(),
                     provider.GetRequiredService<IDateTimeService>()));
             
-            // 📦 REGISTRAR REPOSITORIOS DE COMANDAS
-            services.AddScoped<IComandaRepository>(provider => 
-                new ComandaRepository(
-                    provider.GetRequiredService<RestauranteProDbContext>(),
-                    provider.GetRequiredService<ILogger<ComandaRepository>>()));
-            
             // 🏗️ REGISTRAR BUILDERS DE DOMAIN
             services.AddScoped<ProductoBuilder>();
             
@@ -236,6 +245,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IIdentityService, FakeIdentityService>();
             services.AddScoped<IJwtTokenService, FakeJwtTokenService>();
             services.AddScoped<IUserPermissionService, FakeUserPermissionService>();
+
+            // 📦 REGISTRAR SERVICIOS DE FACTURACIÓN
+            services.AddScoped<IServicioFacturacion, ServicioFacturacion>();
+            services.AddScoped<IComercialServiceFacade, ComercialServiceFacade>();
         });
 
         builder.UseEnvironment("Testing");
@@ -273,6 +286,8 @@ public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSch
         }
 
         var authHeader = Request.Headers["Authorization"].ToString();
+        Console.WriteLine($"🔍 TestAuthenticationHandler: Header recibido: {authHeader}");
+        
         if (!authHeader.StartsWith("Test "))
         {
             return Task.FromResult(AuthenticateResult.Fail("Invalid authentication scheme"));
@@ -280,19 +295,44 @@ public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSch
 
         // Extraer el rol del header si está presente
         var role = "Administrador"; // Rol por defecto
-        if (authHeader.Contains("-"))
+        var userId = Guid.NewGuid().ToString(); // ID por defecto
+        
+        // Remover el prefijo "Test " para procesar el resto
+        var authValue = authHeader.Substring(5); // "Test " tiene 5 caracteres
+        Console.WriteLine($"🔍 TestAuthenticationHandler: Valor de autorización: {authValue}");
+        
+        if (authValue.StartsWith("User_"))
         {
-            var parts = authHeader.Split('-');
-            if (parts.Length > 1)
+            // Formato: "User_{userId}_{rol}"
+            var userPart = authValue.Substring(5); // Remover "User_"
+            var parts = userPart.Split('_');
+            Console.WriteLine($"🔍 TestAuthenticationHandler: Parts encontrados: {string.Join(", ", parts)}");
+            
+            if (parts.Length >= 2)
             {
+                if (Guid.TryParse(parts[0], out var parsedUserId))
+                {
+                    userId = parsedUserId.ToString();
+                    Console.WriteLine($"🔍 TestAuthenticationHandler: UserId parseado correctamente: {userId}");
+                }
+                else
+                {
+                    Console.WriteLine($"🔍 TestAuthenticationHandler: Error al parsear UserId: {parts[0]}");
+                }
                 role = parts[1];
             }
+        }
+        else if (authValue.StartsWith("AuthenticatedUser-"))
+        {
+            // Formato: "AuthenticatedUser-{rol}"
+            role = authValue.Substring(17); // Remover "AuthenticatedUser-"
+            Console.WriteLine($"🔍 TestAuthenticationHandler: Formato AuthenticatedUser detectado, rol: {role}");
         }
 
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, "TestUser"),
-            new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+            new Claim(ClaimTypes.NameIdentifier, userId),
             new Claim(ClaimTypes.Email, "test@test.com"),
             new Claim(ClaimTypes.Role, role)
         };
@@ -317,11 +357,39 @@ public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSch
 /// </summary>
 public class TestCurrentUserService : ICurrentUserService
 {
-    public string? UserId => "test-user-id";
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public TestCurrentUserService(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    public string? UserId 
+    {
+        get
+        {
+            // Intentar obtener el ID del usuario del contexto HTTP
+            var user = _httpContextAccessor?.HttpContext?.User;
+            if (user?.Identity?.IsAuthenticated == true)
+            {
+                var nameIdentifier = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(nameIdentifier))
+                {
+                    Console.WriteLine($"🔍 TestCurrentUserService: Obtenido UserId del contexto HTTP: {nameIdentifier}");
+                    return nameIdentifier;
+                }
+            }
+            
+            // Fallback al ID fijo si no se puede obtener del contexto
+            Console.WriteLine($"🔍 TestCurrentUserService: Usando UserId fallback: 12345678-1234-1234-1234-123456789012");
+            return "12345678-1234-1234-1234-123456789012";
+        }
+    }
+    
     public string? UserName => "TestUser";
     public string? Email => "test@test.com";
     public bool IsAuthenticated => true;
-    public IEnumerable<string> Roles => new[] { "Administrador" };
+    public IEnumerable<string> Roles => new[] { "Administrador", "Cajero", "Gerente" };
     public string? Rol => "Administrador";
 
     public bool IsInRole(string role) => Roles.Contains(role, StringComparer.OrdinalIgnoreCase);
