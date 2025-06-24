@@ -33,7 +33,7 @@ public class CrearFacturaHandlerTests
 {
     private readonly Mock<IApplicationDbContext> _contextMock;
     private readonly Mock<IMapper> _mapperMock;
-    private readonly Mock<ILogger<CrearFacturaHandler>> _loggerMock;
+    private readonly Mock<ILogger<CrearFacturaCommandHandler>> _loggerMock;
     private readonly Mock<IServicioFacturacion> _servicioFacturacionMock;
     private readonly Mock<IComercialServiceFacade> _comercialServiceFacadeMock;
     private readonly Mock<IEmailService> _emailServiceMock;
@@ -41,13 +41,13 @@ public class CrearFacturaHandlerTests
     private readonly Mock<DbSet<Cliente>> _clientesDbSetMock;
     private readonly Mock<DbSet<Comanda>> _comandasDbSetMock;
     private readonly Mock<IDelayProvider> _delayProviderMock;
-    private readonly CrearFacturaHandler _handler;
+    private readonly CrearFacturaCommandHandler _handler;
 
     public CrearFacturaHandlerTests()
     {
         _contextMock = new Mock<IApplicationDbContext>();
         _mapperMock = new Mock<IMapper>();
-        _loggerMock = new Mock<ILogger<CrearFacturaHandler>>();
+        _loggerMock = new Mock<ILogger<CrearFacturaCommandHandler>>();
         _servicioFacturacionMock = new Mock<IServicioFacturacion>();
         _comercialServiceFacadeMock = new Mock<IComercialServiceFacade>();
         _emailServiceMock = new Mock<IEmailService>();
@@ -61,7 +61,7 @@ public class CrearFacturaHandlerTests
         _contextMock.Setup(x => x.Comandas).Returns(_comandasDbSetMock.Object);
         _currentUserServiceMock.Setup(x => x.UserId).Returns(Guid.NewGuid().ToString());
 
-        _handler = new CrearFacturaHandler(
+        _handler = new CrearFacturaCommandHandler(
             _contextMock.Object,
             _mapperMock.Object,
             _loggerMock.Object,

@@ -21,14 +21,14 @@ using RestaurantePro.Application.Comercial.Facturacion.DTOs;
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Commands;
 
 /// <summary>
-/// Tests unitarios para AnularFacturaHandler
+/// Tests unitarios para AnularFacturaCommandHandler
 /// Valida la lógica completa de anulación de facturas con procesos empresariales
 /// </summary>
 public class AnularFacturaHandlerTests
 {
     private readonly Mock<IApplicationDbContext> _contextMock;
     private readonly Mock<IMapper> _mapperMock;
-    private readonly Mock<ILogger<AnularFacturaHandler>> _loggerMock;
+    private readonly Mock<ILogger<AnularFacturaCommandHandler>> _loggerMock;
     private readonly Mock<IDateTimeService> _dateTimeServiceMock;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
     private readonly Mock<IEmailService> _emailServiceMock;
@@ -38,13 +38,13 @@ public class AnularFacturaHandlerTests
     private readonly Mock<IFacturaRepository> _facturaRepositoryMock;
     private readonly Mock<IUsuarioRepository> _usuarioRepositoryMock;
     private readonly Mock<IDelayProvider> _delayProviderMock;
-    private readonly AnularFacturaHandler _handler;
+    private readonly AnularFacturaCommandHandler _handler;
     
     public AnularFacturaHandlerTests()
     {
         _contextMock = new Mock<IApplicationDbContext>();
         _mapperMock = new Mock<IMapper>();
-        _loggerMock = new Mock<ILogger<AnularFacturaHandler>>();
+        _loggerMock = new Mock<ILogger<AnularFacturaCommandHandler>>();
         _dateTimeServiceMock = new Mock<IDateTimeService>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
         _emailServiceMock = new Mock<IEmailService>();
@@ -71,9 +71,9 @@ public class AnularFacturaHandlerTests
         _handler = CreateHandler();
     }
 
-    private AnularFacturaHandler CreateHandler()
+    private AnularFacturaCommandHandler CreateHandler()
     {
-        return new AnularFacturaHandler(
+        return new AnularFacturaCommandHandler(
             _contextMock.Object,
             _mapperMock.Object,
             _loggerMock.Object,

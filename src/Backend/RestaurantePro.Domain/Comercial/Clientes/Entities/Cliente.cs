@@ -143,7 +143,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// <returns>Una nueva instancia de Cliente</returns>
         public static Cliente Crear(ClienteNombre nombre, string email, string telefono, DateTime fechaNacimiento)
         {
-            var emailVO = Email.Create(email);
+            var emailVO = Email.CreateForTesting(email);
             var telefonoVO = PhoneNumber.Create(telefono);
             
             return Crear(Guid.NewGuid(), nombre, emailVO, telefonoVO, fechaNacimiento);

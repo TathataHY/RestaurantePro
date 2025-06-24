@@ -439,13 +439,13 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
         await LimpiarTablaMesas();
         
         var mesa = await CrearMesaPrueba(8, 4, "Interior", estado: EstadoMesa.Disponible);
-        var cliente = await CrearClientePrueba("Cliente Reserva", "cliente@reserva.com");
+        var cliente = await CrearClientePrueba($"ClienteReserva_{Guid.NewGuid().ToString("N")[..8]}", $"reserva_{Guid.NewGuid().ToString("N")[..8]}@test.com");
         
         var fechaReserva = DateTime.Today.AddDays(1);
         var horaReserva = new TimeSpan(13, 0, 0); // 1:00 PM
         var duracionMinutos = 90;
         var telefono = "555-1234";
-        var email = "cliente@reserva.com";
+        var email = $"reserva_{Guid.NewGuid().ToString("N")[..8]}@test.com";
         var observaciones = "Reserva de test completa";
         
         var reservarRequest = new MesaTestDataBuilder()

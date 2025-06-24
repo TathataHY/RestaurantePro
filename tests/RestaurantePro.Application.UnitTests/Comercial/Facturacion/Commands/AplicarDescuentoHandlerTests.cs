@@ -28,23 +28,23 @@ public class AplicarDescuentoHandlerTests
 {
     private readonly Mock<IApplicationDbContext> _contextMock;
     private readonly Mock<IMapper> _mapperMock;
-    private readonly Mock<ILogger<AplicarDescuentoHandler>> _loggerMock;
+    private readonly Mock<ILogger<AplicarDescuentoCommandHandler>> _loggerMock;
     private readonly Mock<IServicioFacturacion> _servicioFacturacionMock;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
     private readonly Mock<IEmailService> _emailServiceMock;
-    private readonly AplicarDescuentoHandler _handler;
+    private readonly AplicarDescuentoCommandHandler _handler;
 
     public AplicarDescuentoHandlerTests()
     {
         _contextMock = new Mock<IApplicationDbContext>();
         _mapperMock = new Mock<IMapper>();
-        _loggerMock = new Mock<ILogger<AplicarDescuentoHandler>>();
+        _loggerMock = new Mock<ILogger<AplicarDescuentoCommandHandler>>();
         _servicioFacturacionMock = new Mock<IServicioFacturacion>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
         _emailServiceMock = new Mock<IEmailService>();
         
         // Crear el handler con los mocks
-        _handler = new AplicarDescuentoHandler(
+        _handler = new AplicarDescuentoCommandHandler(
             _contextMock.Object,
             _mapperMock.Object,
             _loggerMock.Object,

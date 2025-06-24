@@ -43,8 +43,11 @@ public class ComandaFinalizadaMesaHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
+        // Ejemplo de MesaDto válido para los mocks
+        var mesaDto = new MesaDto { Id = Guid.NewGuid(), Numero = "1", Estado = "Disponible", Capacidad = 4, Zona = "Interior" };
+
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(Unit.Value));
+            .ReturnsAsync(Result.Success(mesaDto));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -141,8 +144,11 @@ public class ComandaFinalizadaMesaHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
+        // Ejemplo de MesaDto válido para los mocks
+        var mesaDto = new MesaDto { Id = Guid.NewGuid(), Numero = "1", Estado = "Disponible", Capacidad = 4, Zona = "Interior" };
+
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(Unit.Value));
+            .ReturnsAsync(Result.Success(mesaDto));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -187,8 +193,11 @@ public class ComandaFinalizadaMesaHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
+        // Ejemplo de MesaDto válido para los mocks
+        var mesaDto = new MesaDto { Id = Guid.NewGuid(), Numero = "1", Estado = "Disponible", Capacidad = 4, Zona = "Interior" };
+
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(Unit.Value));
+            .ReturnsAsync(Result.Success(mesaDto));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -224,7 +233,7 @@ public class ComandaFinalizadaMesaHandlerTests
             .ReturnsAsync(mesa);
 
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure<Unit>("Error en liberación"));
+            .ReturnsAsync(Result.Failure<MesaDto>("Error en liberación"));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -310,8 +319,11 @@ public class ComandaFinalizadaMesaHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
+        // Ejemplo de MesaDto válido para los mocks
+        var mesaDto = new MesaDto { Id = Guid.NewGuid(), Numero = "1", Estado = "Disponible", Capacidad = 8, Zona = "Interior" };
+
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(Unit.Value));
+            .ReturnsAsync(Result.Success(mesaDto));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -346,8 +358,11 @@ public class ComandaFinalizadaMesaHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
+        // Ejemplo de MesaDto válido para los mocks
+        var mesaDto = new MesaDto { Id = Guid.NewGuid(), Numero = "1", Estado = "Disponible", Capacidad = 6, Zona = "Interior" };
+
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(Unit.Value));
+            .ReturnsAsync(Result.Success(mesaDto));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -380,8 +395,11 @@ public class ComandaFinalizadaMesaHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
+        // Ejemplo de MesaDto válido para los mocks
+        var mesaDto = new MesaDto { Id = Guid.NewGuid(), Numero = "1", Estado = "Disponible", Capacidad = 4, Zona = "Interior" };
+
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(Unit.Value));
+            .ReturnsAsync(Result.Success(mesaDto));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -453,13 +471,16 @@ public class ComandaFinalizadaMesaHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
+        // Ejemplo de MesaDto válido para los mocks
+        var mesaDto = new MesaDto { Id = Guid.NewGuid(), Numero = "1", Estado = "Disponible", Capacidad = 4, Zona = "Interior" };
+
         LiberarMesaCommand? capturedCommand = null;
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
             .Callback<IRequest<Result>, CancellationToken>((cmd, _) => 
             {
                 capturedCommand = cmd as LiberarMesaCommand;
             })
-            .ReturnsAsync(Result.Success(Unit.Value));
+            .ReturnsAsync(Result.Success(mesaDto));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);
@@ -492,8 +513,11 @@ public class ComandaFinalizadaMesaHandlerTests
         _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
+        // Ejemplo de MesaDto válido para los mocks
+        var mesaDto = new MesaDto { Id = Guid.NewGuid(), Numero = "1", Estado = "Disponible", Capacidad = capacidad, Zona = "Interior" };
+
         _mockMediator.Setup(x => x.Send(It.IsAny<LiberarMesaCommand>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Success(Unit.Value));
+            .ReturnsAsync(Result.Success(mesaDto));
 
         // Act
         await _handler.Handle(evento, CancellationToken.None);

@@ -30,7 +30,7 @@ public class CambiarEstadoMesaHandlerTests
         mesa.MarcarComoOcupada(); // Estado inicial: Ocupada
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Disponible);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -54,7 +54,7 @@ public class CambiarEstadoMesaHandlerTests
         // Estado inicial: Disponible
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Ocupada);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -75,7 +75,7 @@ public class CambiarEstadoMesaHandlerTests
         // Estado inicial: Disponible
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Reservada);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -96,7 +96,7 @@ public class CambiarEstadoMesaHandlerTests
         var motivo = "Mesa dañada - reparación necesaria";
         var command = CambiarEstadoMesaCommand.MarcarFueraDeServicio(mesaId, motivo);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -115,7 +115,7 @@ public class CambiarEstadoMesaHandlerTests
         var mesaId = Guid.NewGuid();
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Ocupada);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Mesa)null!);
 
         // Act
@@ -139,7 +139,7 @@ public class CambiarEstadoMesaHandlerTests
         mesa.MarcarComoOcupada(); // Mesa ocupada
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Reservada); // Transición inválida
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -158,7 +158,7 @@ public class CambiarEstadoMesaHandlerTests
         var mesaId = Guid.NewGuid();
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Ocupada);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Error de base de datos"));
 
         // Act
@@ -178,7 +178,7 @@ public class CambiarEstadoMesaHandlerTests
         var mesa = Mesa.Crear(1, 4, "Terraza");
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Ocupada);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
         _mockMesaRepository.Setup(x => x.GuardarCambiosAsync())
             .ThrowsAsync(new Exception("Error al guardar"));
@@ -201,7 +201,7 @@ public class CambiarEstadoMesaHandlerTests
         var motivo = "Limpieza profunda programada";
         var command = CambiarEstadoMesaCommand.MarcarFueraDeServicio(mesaId, motivo);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -231,7 +231,7 @@ public class CambiarEstadoMesaHandlerTests
         var observaciones = "Cambio solicitado por gerente de turno";
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Ocupada, observaciones: observaciones);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -263,7 +263,7 @@ public class CambiarEstadoMesaHandlerTests
         var mesa = Mesa.Crear(1, 4, "Terraza");
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, nuevoEstado);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -293,7 +293,7 @@ public class CambiarEstadoMesaHandlerTests
         var mesa = Mesa.Crear(5, 6, "Salón Principal");
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Ocupada);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -331,7 +331,7 @@ public class CambiarEstadoMesaHandlerTests
         var mesaId = Guid.NewGuid();
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Ocupada);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Mesa)null!);
 
         // Act
@@ -358,7 +358,7 @@ public class CambiarEstadoMesaHandlerTests
         var mesaId = Guid.NewGuid();
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Ocupada);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Error crítico"));
 
         // Act
@@ -387,7 +387,7 @@ public class CambiarEstadoMesaHandlerTests
         var mesa = Mesa.Crear(1, 4, "Terraza");
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Ocupada, usuarioId);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -411,7 +411,7 @@ public class CambiarEstadoMesaHandlerTests
         var mesa = Mesa.Crear(numero, capacidad, ubicacion);
         var command = CambiarEstadoMesaCommand.CambiarA(mesaId, EstadoMesa.Ocupada);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -437,7 +437,7 @@ public class CambiarEstadoMesaHandlerTests
         var observaciones = "Programado para esta semana";
         var command = CambiarEstadoMesaCommand.MarcarFueraDeServicio(mesaId, motivo, usuarioId, observaciones);
 
-        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mockMesaRepository.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act

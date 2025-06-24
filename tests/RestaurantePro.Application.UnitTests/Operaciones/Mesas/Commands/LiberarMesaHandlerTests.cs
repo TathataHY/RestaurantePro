@@ -9,6 +9,8 @@ public class LiberarMesaHandlerTests
     private readonly Mock<IMesaRepository> _mesaRepositoryMock;
     private readonly Mock<ILogger<LiberarMesaHandler>> _loggerMock;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+    private readonly Mock<IMapper> _mapperMock;
     private readonly LiberarMesaHandler _handler;
 
     public LiberarMesaHandlerTests()
@@ -16,11 +18,15 @@ public class LiberarMesaHandlerTests
         _mesaRepositoryMock = new Mock<IMesaRepository>();
         _loggerMock = new Mock<ILogger<LiberarMesaHandler>>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _mapperMock = new Mock<IMapper>();
 
         _handler = new LiberarMesaHandler(
             _mesaRepositoryMock.Object,
             _loggerMock.Object,
-            _currentUserServiceMock.Object);
+            _currentUserServiceMock.Object,
+            _unitOfWorkMock.Object,
+            _mapperMock.Object);
     }
 
     #region Tests de Factory Methods del Command
@@ -91,7 +97,7 @@ public class LiberarMesaHandlerTests
         };
 
         var mesa = CreateMockMesa(mesaId, EstadoMesa.Ocupada);
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         _currentUserServiceMock.Setup(x => x.UserId)
@@ -120,7 +126,7 @@ public class LiberarMesaHandlerTests
         };
 
         var mesa = CreateMockMesa(mesaId, EstadoMesa.Ocupada);
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         _currentUserServiceMock.Setup(x => x.UserId)
@@ -149,7 +155,7 @@ public class LiberarMesaHandlerTests
         };
 
         var mesa = CreateMockMesa(mesaId, EstadoMesa.Ocupada);
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         _currentUserServiceMock.Setup(x => x.UserId)
@@ -180,7 +186,7 @@ public class LiberarMesaHandlerTests
             Observaciones = "Test"
         };
 
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new KeyNotFoundException($"Mesa con ID {mesaId} no encontrada"));
 
         _currentUserServiceMock.Setup(x => x.UserId)
@@ -230,7 +236,7 @@ public class LiberarMesaHandlerTests
             Observaciones = "Test"
         };
 
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Error de base de datos"));
 
         _currentUserServiceMock.Setup(x => x.UserId)
@@ -262,7 +268,7 @@ public class LiberarMesaHandlerTests
         };
 
         var mesa = CreateMockMesa(mesaId, EstadoMesa.Ocupada);
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         _currentUserServiceMock.Setup(x => x.UserId)

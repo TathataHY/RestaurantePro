@@ -20,6 +20,7 @@ using RestaurantePro.Domain.Comercial.Promociones.Entities;
 using RestaurantePro.Domain.Core.Notificaciones;
 using RestaurantePro.Domain.Proveedores;
 using RestaurantePro.Domain.Core.Base.Services;
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 
 /// <summary>
 /// Clase base para todos los tests de integración de la API.
@@ -33,6 +34,8 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     protected readonly RestauranteProDbContext DbContext;
     protected readonly ILogger Logger;
     protected readonly IDateTimeService DateTimeService;
+
+    private static readonly HashSet<string> _emailsGeneradosEnEjecucion = new();
 
     protected ApiIntegrationTestBase(TestWebApplicationFactory factory)
     {
@@ -127,7 +130,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     {
         try
         {
-            Logger.LogInformation("🧹 Iniciando limpieza de base de datos...");
+            Logger.LogInformation("�� Iniciando limpieza de base de datos...");
             
             // Desactivar detección de cambios para mejorar rendimiento
             DbContext.ChangeTracker.AutoDetectChangesEnabled = false;
@@ -360,23 +363,68 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// </summary>
     protected async Task<Cliente> CrearClientePrueba(string nombre = "Cliente Test", string? email = null)
     {
-        var sufijo = Guid.NewGuid().ToString("N")[..8] + DateTimeOffset.UtcNow.Ticks.ToString()[^4..];
-        var emailBase = email ?? $"cliente@test.com";
-        var atIdx = emailBase.IndexOf("@");
-        var emailUnico = atIdx > 0
-            ? emailBase.Insert(atIdx, $"_{sufijo}")
-            : $"{emailBase}_{sufijo}@test.com";
+        // Generar un email siempre válido sin patrones repetitivos
+        var emailValido = GenerarEmailValido(email);
         var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
-        var cliente = Cliente.Crear(
-            clienteNombre,
-            emailUnico,
-            "555-1234",
-            DateTime.Now.AddYears(-25)
-        );
-
-        DbContext.Clientes.Add(cliente);
+        var telefono = "+1234567890";
+        
+        var cliente = Cliente.Crear(clienteNombre, emailValido, telefono, DateTime.Now.AddYears(-25));
+        
+        await DbContext.Clientes.AddAsync(cliente);
         await DbContext.SaveChangesAsync();
+        
         return cliente;
+    }
+
+    /// <summary>
+    /// Genera un email válido sin patrones repetitivos, incluso si se pasa un email explícito
+    /// </summary>
+    protected static string GenerarEmailValido(string? emailBase = null)
+    {
+        var random = new Random();
+        var palabras = new[] { "usuario", "cliente", "test", "demo", "admin", "user", "guest", "visitor", "member", "customer" };
+        var sufijos = new[] { "2024", "2025", "test", "demo", "dev", "qa", "prod", "stage", "local", "temp" };
+        var dominios = new[] { "testmail.com", "example.com", "test.com", "demo.com", "local.com" };
+        
+        string ObtenerSufijoDiferente(string palabra)
+        {
+            var sufijosValidos = sufijos.Where(s => !s.Equals(palabra, StringComparison.OrdinalIgnoreCase)).ToArray();
+            return sufijosValidos[random.Next(sufijosValidos.Length)];
+        }
+        
+        string GenerarEmail()
+        {
+            var palabra = palabras[random.Next(palabras.Length)];
+            var sufijo = ObtenerSufijoDiferente(palabra);
+            var dominio = dominios[random.Next(dominios.Length)];
+            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() % 10000;
+            var guid = Guid.NewGuid().ToString("N")[..6];
+            
+            return $"{palabra}.{sufijo}.{timestamp}{guid}@{dominio}";
+        }
+        
+        // Usar Email.CreateForTesting() que está diseñado específicamente para tests
+        // y omite las validaciones estrictas de patrones repetitivos
+        for (int i = 0; i < 50; i++) // Máximo 50 intentos (por seguridad extrema)
+        {
+            var email = GenerarEmail();
+            
+            // Verificar que no esté duplicado en esta ejecución
+            if (_emailsGeneradosEnEjecucion.Contains(email))
+                continue;
+                
+            // Usar CreateForTesting() que es más permisivo para tests
+            if (Email.TryCreateForTesting(email, out _))
+            {
+                _emailsGeneradosEnEjecucion.Add(email);
+                return email;
+            }
+        }
+        
+        // Fallback: generar un email simple y único
+        var fallbackEmail = $"test.{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}.{Guid.NewGuid():N}@test.com";
+        _emailsGeneradosEnEjecucion.Add(fallbackEmail);
+        return fallbackEmail;
     }
 
     /// <summary>
@@ -434,14 +482,23 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         string ubicacion = "Interior",
         EstadoMesa estado = EstadoMesa.Disponible)
     {
-        // Generar un número único de mesa, incluso si se pasa explícitamente
-        var sufijo = int.Parse(Guid.NewGuid().ToString("N").Substring(0, 6), System.Globalization.NumberStyles.HexNumber) % 1000000;
-        var numeroBase = numero ?? new Random().Next(1000, 9999);
-        var numeroUnico = int.Parse($"{numeroBase}{sufijo}");
-        // Si el número es demasiado largo, recortar a 8 dígitos
-        if (numeroUnico > 99999999) numeroUnico = numeroUnico % 100000000;
+        // Si se proporciona un número específico, usarlo directamente
+        // Solo generar un número único si no se proporciona número
+        int numeroFinal;
+        if (numero.HasValue)
+        {
+            numeroFinal = numero.Value;
+        }
+        else
+        {
+            // Generar un número único más simple y seguro
+            var random = new Random();
+            var numeroBase = random.Next(1000, 9999);
+            var sufijo = random.Next(1000, 9999);
+            numeroFinal = numeroBase * 10000 + sufijo; // Máximo: 99999999
+        }
         var mesa = Mesa.Crear(
-            numeroUnico,
+            numeroFinal,
             capacidad,
             ubicacion
         );
@@ -515,8 +572,8 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     {
         // Crear entidades dependientes si NO se proporcionan los IDs
         var mesero = meseroId.HasValue ? null : await CrearUsuarioPrueba("mesero.test", "Mesero Test", null, RolUsuario.Mesero);
-        var cliente = clienteId.HasValue ? null : await CrearClientePrueba("Cliente Comanda", null);
-        var mesa = mesaId.HasValue ? null : await CrearMesaPrueba(99, 4); // Usar un número de mesa por defecto
+        var cliente = clienteId.HasValue ? null : await CrearClientePrueba($"ClienteCmd_{Guid.NewGuid().ToString("N")[..8]}", $"cmd_{Guid.NewGuid().ToString("N")[..8]}@test.com");
+        var mesa = mesaId.HasValue ? null : await CrearMesaPrueba(null, 4); // Usar número generado automáticamente
 
         // Usar los IDs proporcionados o los de las entidades creadas
         var meseroIdFinal = meseroId ?? mesero!.Id;

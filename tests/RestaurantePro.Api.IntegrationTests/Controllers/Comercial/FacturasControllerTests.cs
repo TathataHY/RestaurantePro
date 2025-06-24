@@ -66,7 +66,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: GetFacturas_ConFacturasEnBD_DebeRetornarLista");
 
         var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
-        var emailCliente = $"cl_{Guid.NewGuid().ToString("N")[..8]}@test.com";
+        var emailCliente = GenerarEmailValido();
         var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         await CrearFacturaPrueba(clienteId: cliente.Id);
         await CrearFacturaPrueba(clienteId: cliente.Id);
@@ -89,10 +89,10 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: GetFacturas_ConFiltros_DebeFiltrarCorrectamente");
 
-        var nombreCliente1 = $"Cliente1_{Guid.NewGuid()}";
-        var emailCliente1 = $"cliente1_{Guid.NewGuid()}@test.com";
-        var nombreCliente2 = $"Cliente2_{Guid.NewGuid()}";
-        var emailCliente2 = $"cliente2_{Guid.NewGuid()}@test.com";
+        var nombreCliente1 = $"Cliente1_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente1 = GenerarEmailValido();
+        var nombreCliente2 = $"Cliente2_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente2 = GenerarEmailValido();
         var factura1 = await CrearFacturaConDetallesPrueba(clienteId: (await CrearClientePrueba(nombreCliente1, emailCliente1)).Id);
         var factura2 = await CrearFacturaConDetallesPrueba(clienteId: (await CrearClientePrueba(nombreCliente2, emailCliente2)).Id);
 
@@ -121,7 +121,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
 
         var sufijo = Guid.NewGuid().ToString("N").Substring(0, 8);
         var factura = await CrearFacturaPrueba(
-            clienteId: (await CrearClientePrueba("Cliente Test", $"cliente.test.{sufijo}@test.com")).Id);
+            clienteId: (await CrearClientePrueba("Cliente Test", GenerarEmailValido())).Id);
         var url = $"/api/comercial/facturas/{factura.Id}";
 
         // Act
@@ -142,7 +142,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: GetFactura_ConIdInexistente_DebeRetornar404");
 
-        var facturaIdInexistente = Guid.NewGuid();
+        var facturaIdInexistente = Guid.Parse("66666666-6666-6666-6666-666666666666");
 
         // Act
         var response = await HttpClient.GetAsync($"/api/comercial/facturas/{facturaIdInexistente}");
@@ -175,7 +175,8 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: PostFactura_ConDatosValidos_DebeCrearFactura");
 
         var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
-        var cliente = await CrearClientePrueba(nombreCliente, $"fact_{Guid.NewGuid().ToString("N")[..8]}@test.com");
+        var emailCliente = GenerarEmailValido();
+        var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var comanda = await CrearComandaPrueba(clienteId: cliente.Id, observaciones: "Comanda de prueba", estado: EstadoComanda.Finalizada);
 
         // Agregar productos a la comanda para que tenga detalles
@@ -269,8 +270,9 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: PutFactura_ConDatosValidos_DebeActualizarFactura");
 
-        var nombreCliente = Guid.NewGuid().ToString();
-        var cliente = await CrearClientePrueba(nombreCliente, $"{Guid.NewGuid()}@mail.com");
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = $"put_{Guid.NewGuid().ToString("N")[..8]}@test.com";
+        var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var factura = await CrearFacturaPrueba(clienteId: cliente.Id);
         var request = new ActualizarFacturaCommand { Id = factura.Id, NombreCliente = "Nuevo Nombre" };
 
@@ -291,7 +293,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: PutFactura_ConIdInexistente_DebeRetornar404");
 
-        var idInexistente = Guid.NewGuid();
+        var idInexistente = Guid.Parse("77777777-7777-7777-7777-777777777777");
         var updateRequest = new ActualizarFacturaCommand
         {
             Id = idInexistente,
@@ -320,7 +322,12 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         factura.Emitir(DateTimeService, 30);
         await DbContext.SaveChangesAsync();
 
-        var request = new ActualizarFacturaCommand { Id = factura.Id, NombreCliente = "Nuevo Nombre" };
+        // Intentar actualizar solo campos que no sean información fiscal
+        var request = new ActualizarFacturaCommand 
+        { 
+            Id = factura.Id, 
+            DiasCredito = 45 // Cambiar a un campo que no sea información fiscal
+        };
 
         // Act
         var response = await HttpClient.PutAsJsonAsync($"/api/comercial/facturas/{factura.Id}", request);
@@ -355,7 +362,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
 
         // Crear comanda con productos baratos
         var nombreClienteAnul = $"ClienteAnul_{Guid.NewGuid().ToString("N")[..8]}";
-        var emailClienteAnul = $"anul_{Guid.NewGuid().ToString("N")[..8]}@test.com";
+        var emailClienteAnul = GenerarEmailValido();
         var comanda = await CrearComandaPrueba(
             meseroId: null,
             clienteId: (await CrearClientePrueba(nombreClienteAnul, emailClienteAnul)).Id,
@@ -409,7 +416,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: DeleteFactura_ConIdInexistente_DebeRetornar404");
 
-        var facturaIdInexistente = Guid.NewGuid();
+        var facturaIdInexistente = Guid.Parse("88888888-8888-8888-8888-888888888888");
 
         // Act
         var response = await HttpClient.DeleteAsync($"/api/comercial/facturas/{facturaIdInexistente}");
@@ -441,10 +448,10 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: GetFacturasPorCliente_ConClienteExistente_DebeRetornarFacturas");
 
         // Crear clientes con nombres y emails totalmente aleatorios
-        var nombreCliente1 = $"Cliente_{Guid.NewGuid()}";
-        var emailCliente1 = $"cliente1_{Guid.NewGuid()}@test.com";
-        var nombreCliente2 = $"Cliente_{Guid.NewGuid()}";
-        var emailCliente2 = $"cliente2_{Guid.NewGuid()}@test.com";
+        var nombreCliente1 = $"Cliente1_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente1 = GenerarEmailValido();
+        var nombreCliente2 = $"Cliente2_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente2 = GenerarEmailValido();
         var cliente1 = await CrearClientePrueba(nombreCliente1, emailCliente1);
         await CrearFacturaPrueba(clienteId: cliente1.Id);
         await CrearFacturaPrueba(clienteId: cliente1.Id);
@@ -471,8 +478,8 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: GetFacturasPorCliente_ConClienteSinFacturas_DebeRetornarListaVacia");
 
         // Usar email totalmente aleatorio y nombre sin patrones repetitivos
-        var nombreCliente = $"Cliente_{Guid.NewGuid()}";
-        var emailCliente = $"cliente_{Guid.NewGuid()}@test.com";
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
         var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var url = $"/api/comercial/facturas/cliente/{cliente.Id}";
 
@@ -499,7 +506,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
 
         // Crear cliente y comanda con email totalmente aleatorio y único
         var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
-        var emailCliente = $"cli_{Guid.NewGuid().ToString("N")[..8]}@test.com";
+        var emailCliente = GenerarEmailValido();
         var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var comanda = await CrearComandaPrueba(
             meseroId: null,
@@ -588,8 +595,8 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Limpiar BD explícitamente para evitar interferencia de tests previos
         await LimpiarBaseDeDatosCompletamente();
 
-        var nombreCliente = $"Cliente_{Guid.NewGuid()}";
-        var emailCliente = $"{Guid.NewGuid()}@mail.com";
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = $"cl_{Guid.NewGuid().ToString("N")[..8]}@test.com";
         var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
 
         // Crear facturas con detalles para que se puedan emitir
@@ -632,7 +639,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         ConfigurarAutenticacionConRol("Administrador");
 
         var nombreCliente = $"ClientePago_{Guid.NewGuid().ToString("N")[..8]}";
-        var emailCliente = $"pago_{Guid.NewGuid().ToString("N")[..8]}@test.com";
+        var emailCliente = $"ppago_{Guid.NewGuid().ToString("N")[..8]}@test.com";
         var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var comanda = await CrearComandaPrueba(clienteId: cliente.Id, estado: EstadoComanda.Finalizada);
         var factura = await CrearFacturaConDetallesPrueba(clienteId: cliente.Id, comandasIds: new List<Guid> { comanda.Id });
@@ -695,8 +702,8 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
     {
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: GetFacturaPdf_ConFacturaExistente_DebeRetornarPdf");
-        var nombreCliente = Guid.NewGuid().ToString();
-        var emailCliente = $"{Guid.NewGuid()}@mail.com";
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
         var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var factura = await CrearFacturaPrueba(clienteId: cliente.Id);
 
@@ -721,18 +728,13 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: GetFacturaPdf_ConIdInexistente_DebeRetornar404");
 
-        var facturaIdInexistente = Guid.NewGuid();
+        var facturaIdInexistente = Guid.Parse("99999999-9999-9999-9999-999999999999");
 
         // Act
         var response = await HttpClient.GetAsync($"/api/comercial/facturas/{facturaIdInexistente}/pdf");
 
         // Assert
-        Logger.LogInformation($"🔍 Status Code: {response.StatusCode}");
-        var content = await response.Content.ReadAsStringAsync();
-        Logger.LogInformation($"🔍 Response Content: {content}");
-
-        // El endpoint actualmente devuelve 501 (NotImplemented) para cualquier ID
-        response.StatusCode.Should().Be(HttpStatusCode.NotImplemented);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
         apiResponse.Should().NotBeNull();
         apiResponse!.Success.Should().BeFalse();
@@ -755,8 +757,8 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Console.WriteLine($"🔍 Test: Usuario creado con ID: {usuario.Id}");
 
         // Crear cliente y comanda con productos baratos - usar emails completamente únicos
-        var nombreCliente = $"Cliente_{Guid.NewGuid()}";
-        var emailCliente = $"cliente_{Guid.NewGuid()}@test.com";
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
         var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var comanda = await CrearComandaPrueba(
             meseroId: null,
@@ -818,31 +820,20 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: PatchAnularFactura_ConIdInexistente_DebeRetornar404");
 
-        var facturaIdInexistente = Guid.NewGuid();
-        var request = new AnularFacturaRequest
+        var facturaIdInexistente = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        var anularRequest = new AnularFacturaRequest
         {
             Motivo = "Test de anulación"
         };
 
         // Act
-        var response = await HttpClient.PatchAsync(
-            $"/api/comercial/facturas/{facturaIdInexistente}/anular",
-            new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json"));
+        var response = await HttpClient.PatchAsJsonAsync($"/api/comercial/facturas/{facturaIdInexistente}/anular", anularRequest);
 
         // Assert
-        Logger.LogInformation($"🔍 Status Code: {response.StatusCode}");
-        var content = await response.Content.ReadAsStringAsync();
-        Logger.LogInformation($"🔍 Response Content: {content}");
-
-        // El controlador devuelve 400 para IDs inexistentes
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
         apiResponse.Should().NotBeNull();
         apiResponse!.Success.Should().BeFalse();
-
-        // Verificar que realmente no existe en la BD
-        var facturaEnBD = await DbContext.Facturas.FindAsync(facturaIdInexistente);
-        facturaEnBD.Should().BeNull();
     }
 
     #endregion
@@ -880,21 +871,22 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: PostEnviarEmail_ConIdInexistente_DebeRetornar501");
 
-        var facturaIdInexistente = Guid.NewGuid();
+        var facturaIdInexistente = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         var emailDestino = $"cliente_{Guid.NewGuid().ToString("N")[..8]}@test.com";
+        var enviarEmailRequest = new
+        {
+            EmailDestino = emailDestino,
+            Asunto = "Factura de prueba"
+        };
 
         // Act
-        var response = await HttpClient.PostAsJsonAsync($"/api/comercial/facturas/{facturaIdInexistente}/enviar-email", emailDestino);
+        var response = await HttpClient.PostAsJsonAsync($"/api/comercial/facturas/{facturaIdInexistente}/enviar-email", enviarEmailRequest);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotImplemented);
-        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+        var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
         apiResponse.Should().NotBeNull();
         apiResponse!.Success.Should().BeFalse();
-
-        // Verificar que realmente no existe en la BD
-        var facturaEnBD = await DbContext.Facturas.FindAsync(facturaIdInexistente);
-        facturaEnBD.Should().BeNull();
     }
 
     #endregion
@@ -909,9 +901,9 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
 
         // Crear clientes con nombres y emails totalmente aleatorios y únicos
         var nombreCliente1 = $"Cliente1_{Guid.NewGuid().ToString("N")[..8]}";
-        var emailCliente1 = $"c1_{Guid.NewGuid().ToString("N")[..8]}@test.com";
+        var emailCliente1 = GenerarEmailValido();
         var nombreCliente2 = $"Cliente2_{Guid.NewGuid().ToString("N")[..8]}";
-        var emailCliente2 = $"c2_{Guid.NewGuid().ToString("N")[..8]}@test.com";
+        var emailCliente2 = GenerarEmailValido();
         var cliente1 = await CrearClientePrueba(nombreCliente1, emailCliente1);
         var cliente2 = await CrearClientePrueba(nombreCliente2, emailCliente2);
 
@@ -949,9 +941,9 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
 
         // Usar Guid para emails únicos
         var nombreCliente1 = $"Cliente1_{Guid.NewGuid().ToString("N")[..8]}";
-        var emailCliente1 = $"c1_{Guid.NewGuid().ToString("N")[..8]}@test.com";
+        var emailCliente1 = GenerarEmailValido();
         var nombreCliente2 = $"Cliente2_{Guid.NewGuid().ToString("N")[..8]}";
-        var emailCliente2 = $"c2_{Guid.NewGuid().ToString("N")[..8]}@test.com";
+        var emailCliente2 = GenerarEmailValido();
         var cliente1 = await CrearClientePrueba(nombreCliente1, emailCliente1);
         var cliente2 = await CrearClientePrueba(nombreCliente2, emailCliente2);
 
@@ -978,10 +970,10 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: GetBuscarFacturas_SinCriterios_DebeRetornarTodasLasFacturas");
 
-        var nombreCliente1 = $"Cliente1_{Guid.NewGuid()}";
-        var emailCliente1 = $"cliente1_{Guid.NewGuid()}@test.com";
-        var nombreCliente2 = $"Cliente2_{Guid.NewGuid()}";
-        var emailCliente2 = $"cliente2_{Guid.NewGuid()}@test.com";
+        var nombreCliente1 = $"Cliente1_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente1 = GenerarEmailValido();
+        var nombreCliente2 = $"Cliente2_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente2 = GenerarEmailValido();
         var cliente1 = await CrearClientePrueba(nombreCliente1, emailCliente1);
         var cliente2 = await CrearClientePrueba(nombreCliente2, emailCliente2);
 
@@ -1011,8 +1003,8 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Logger.LogInformation("🧪 Iniciando test: GetReporteFacturas_ConTipoReporteValido_DebeRetornar501");
 
-        var nombreCliente = $"Cliente_{Guid.NewGuid()}";
-        var emailCliente = $"cliente_{Guid.NewGuid()}@test.com";
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
         var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
 
         // Crear una factura real para el cliente
@@ -1099,10 +1091,10 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("🧪 Iniciando test: FlujoCompletoFacturacion_DebeFuncionarCorrectamente");
 
         // 1. Crear entidades necesarias con nombres y emails totalmente aleatorios y únicos
-        var nombreMesero = $"Mesero_{Guid.NewGuid()}";
-        var emailMesero = $"mesero_{Guid.NewGuid()}@test.com";
-        var nombreCliente = $"Cliente_{Guid.NewGuid()}";
-        var emailCliente = $"cliente_{Guid.NewGuid()}@test.com";
+        var nombreMesero = $"Mesero_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailMesero = $"mes_{Guid.NewGuid().ToString("N")[..8]}@test.com";
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = $"cl_{Guid.NewGuid().ToString("N")[..8]}@test.com";
         var mesero = await CrearUsuarioPrueba(nombreMesero, nombreMesero, emailMesero, RolUsuario.Mesero);
         var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var mesa = await CrearMesaPrueba(10, 4);

@@ -122,7 +122,7 @@ public class AsignarMesaHandlerTests
 
         var mesa = CreateMockMesaDisponible(mesaId, 4, "Zona Central");
 
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -154,7 +154,7 @@ public class AsignarMesaHandlerTests
 
         var mesa = CreateMockMesaDisponible(mesaId, 4, "Zona VIP");
 
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -182,7 +182,7 @@ public class AsignarMesaHandlerTests
 
         var mesa = CreateMockMesaDisponible(mesaId, 4, "Terraza");
 
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -210,7 +210,7 @@ public class AsignarMesaHandlerTests
 
         var mesa = CreateMockMesaVIP(mesaId, 6, "Zona VIP");
 
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act
@@ -232,7 +232,7 @@ public class AsignarMesaHandlerTests
         var mesaId = Guid.NewGuid();
         var command = AsignarMesaCommand.Crear(mesaId);
 
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Mesa)null!);
 
         // Act
@@ -253,7 +253,7 @@ public class AsignarMesaHandlerTests
 
         var mesaOcupada = CreateMockMesaOcupada(mesaId, 4, "Zona Central");
 
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesaOcupada);
 
         // Act
@@ -272,7 +272,7 @@ public class AsignarMesaHandlerTests
         var mesaId = Guid.NewGuid();
         var command = AsignarMesaCommand.Crear(mesaId);
 
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Error de base de datos"));
 
         // Act
@@ -293,7 +293,7 @@ public class AsignarMesaHandlerTests
 
         var mesa = CreateMockMesaDisponible(mesaId, 4, "Zona Accesible");
 
-        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId))
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
 
         // Act

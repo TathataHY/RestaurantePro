@@ -48,7 +48,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Reposi
             var mesaId = _mesas[0].Id;
             var mesaEsperada = _mesas[0];
 
-            _mockRepository.Setup(repo => repo.ObtenerPorIdAsync(mesaId))
+            _mockRepository.Setup(repo => repo.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(mesaEsperada);
 
             // Act
@@ -57,7 +57,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Reservaciones.Mesas.Reposi
             // Assert
             resultado.Should().NotBeNull();
             resultado.Should().BeSameAs(mesaEsperada);
-            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(mesaId), Times.Once());
+            _mockRepository.Verify(repo => repo.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()), Times.Once());
         }
 
         [Fact]

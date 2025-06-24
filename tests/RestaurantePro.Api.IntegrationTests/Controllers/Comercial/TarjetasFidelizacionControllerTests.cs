@@ -63,7 +63,9 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     public async Task GetTarjeta_ConIdExistente_DebeRetornarTarjeta()
     {
         // Arrange
-        var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
+        var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
             .ConClienteId(cliente.Id)
             .BuildCrearTarjetaRequest();
@@ -92,7 +94,9 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     public async Task PostTarjeta_ConDatosValidos_DebeCrearTarjeta()
     {
         // Arrange
-        var cliente = await CrearClientePrueba("Cliente Fidelización", "fidelizacion@test.com");
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
+        var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
             .ConClienteId(cliente.Id)
             .ConTipoTarjeta("Premium")
@@ -121,7 +125,9 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     public async Task PutTarjeta_ConDatosValidos_DebeActualizarTarjeta()
     {
         // Arrange
-        var cliente = await CrearClientePrueba("Cliente Actualizar", "actualizar@test.com");
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
+        var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
             .ConClienteId(cliente.Id)
             .BuildCrearTarjetaRequest();
@@ -156,7 +162,9 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     public async Task ActivarTarjeta_ConTarjetaExistente_DebeActivarTarjeta()
     {
         // Arrange
-        var cliente = await CrearClientePrueba("Cliente Activar", "activar@test.com");
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
+        var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
             .ConClienteId(cliente.Id)
             .ConActivarInmediatamente(false)
@@ -186,7 +194,9 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     public async Task DesactivarTarjeta_ConTarjetaExistente_DebeDesactivarTarjeta()
     {
         // Arrange
-        var cliente = await CrearClientePrueba("Cliente Desactivar", "desactivar@test.com");
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
+        var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
             .ConClienteId(cliente.Id)
             .BuildCrearTarjetaRequest();
@@ -215,7 +225,9 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     public async Task AgregarPuntos_ConTarjetaExistente_DebeAgregarPuntos()
     {
         // Arrange
-        var cliente = await CrearClientePrueba("Cliente Puntos", "puntos@test.com");
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
+        var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
             .ConClienteId(cliente.Id)
             .BuildCrearTarjetaRequest();
@@ -247,7 +259,9 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     public async Task CanjearPuntos_ConTarjetaExistente_DebeCanjearPuntos()
     {
         // Arrange
-        var cliente = await CrearClientePrueba("Cliente Canjear", "canje@test.com");
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
+        var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
             .ConClienteId(cliente.Id)
             .ConPuntosIniciales(100)
@@ -280,7 +294,9 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     public async Task GetHistorialPuntos_ConTarjetaExistente_DebeRetornarHistorial()
     {
         // Arrange
-        var cliente = await CrearClientePrueba("Cliente Historial", "historial@test.com");
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
+        var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
             .ConClienteId(cliente.Id)
             .BuildCrearTarjetaRequest();
@@ -332,7 +348,9 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     public async Task DeleteTarjeta_ConTarjetaExistente_DebeEliminarTarjeta()
     {
         // Arrange
-        var cliente = await CrearClientePrueba("Cliente Eliminar", "eliminar@test.com");
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
+        var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var tarjetaRequest = new TarjetaFidelizacionTestDataBuilder()
             .ConClienteId(cliente.Id)
             .BuildCrearTarjetaRequest();

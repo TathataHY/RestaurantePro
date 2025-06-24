@@ -1,3 +1,19 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Moq;
+using Xunit;
+using Microsoft.Extensions.Logging;
+using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturaPorId;
+using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+using RestaurantePro.Domain.Comercial.Facturacion.Enums;
+using RestaurantePro.Application.Comercial.Facturacion.DTOs;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Queries;
 
 /// <summary>
@@ -6,26 +22,26 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Facturacion.Queries;
 /// </summary>
 public class ObtenerFacturaPorIdHandlerTests
 {
-    private readonly Mock<IApplicationDbContext> _mockContext;
-    private readonly Mock<IMapper> _mockMapper;
-    private readonly Mock<ILogger<ObtenerFacturaPorIdHandler>> _mockLogger;
+    private readonly Mock<IApplicationDbContext> _contextMock;
+    private readonly Mock<IMapper> _mapperMock;
+    private readonly Mock<ILogger<ObtenerFacturaPorIdQueryHandler>> _loggerMock;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
     private readonly Mock<DbSet<Factura>> _mockFacturasDbSet;
-    private readonly ObtenerFacturaPorIdHandler _handler;
+    private readonly ObtenerFacturaPorIdQueryHandler _handler;
     private readonly List<Factura> _facturasEjemplo;
 
     public ObtenerFacturaPorIdHandlerTests()
     {
-        _mockContext = new Mock<IApplicationDbContext>();
-        _mockMapper = new Mock<IMapper>();
-        _mockLogger = new Mock<ILogger<ObtenerFacturaPorIdHandler>>();
+        _contextMock = new Mock<IApplicationDbContext>();
+        _mapperMock = new Mock<IMapper>();
+        _loggerMock = new Mock<ILogger<ObtenerFacturaPorIdQueryHandler>>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
         
         _facturasEjemplo = CrearFacturasEjemplo();
         _mockFacturasDbSet = MockDbSetHelper.CreateMockDbSet(_facturasEjemplo.AsQueryable());
-        _mockContext.Setup(c => c.Facturas).Returns(_mockFacturasDbSet.Object);
+        _contextMock.Setup(c => c.Facturas).Returns(_mockFacturasDbSet.Object);
 
-        _mockMapper.Setup(m => m.Map<FacturaDto>(It.IsAny<Factura>()))
+        _mapperMock.Setup(m => m.Map<FacturaDto>(It.IsAny<Factura>()))
                    .Returns((Factura factura) => new FacturaDto
                    {
                        Id = factura.Id,
@@ -45,7 +61,7 @@ public class ObtenerFacturaPorIdHandlerTests
                        FechaCreacion = factura.FechaCreacion
                    });
 
-        _handler = new ObtenerFacturaPorIdHandler(_mockContext.Object, _mockMapper.Object, _mockLogger.Object, _mockCurrentUserService.Object);
+        _handler = new ObtenerFacturaPorIdQueryHandler(_contextMock.Object, _mapperMock.Object, _loggerMock.Object, _mockCurrentUserService.Object);
     }
 
     [Fact]
@@ -70,7 +86,7 @@ public class ObtenerFacturaPorIdHandlerTests
         resultado.Value.Estado.Should().Be(EstadoFactura.Pagada);
 
         // Verificar logging
-        _mockLogger.Verify(
+        _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
@@ -79,7 +95,7 @@ public class ObtenerFacturaPorIdHandlerTests
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
 
-        _mockLogger.Verify(
+        _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Information,
                 It.IsAny<EventId>(),
@@ -105,7 +121,7 @@ public class ObtenerFacturaPorIdHandlerTests
         resultado.Error.Should().Be("La factura especificada no existe.");
 
         // Verificar logging de advertencia
-        _mockLogger.Verify(
+        _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
@@ -274,7 +290,7 @@ public class ObtenerFacturaPorIdHandlerTests
         var query = new ObtenerFacturaPorIdQuery { FacturaId = Guid.NewGuid() };
 
         // Configurar el contexto para lanzar excepción al acceder a Facturas
-        _mockContext.Setup(c => c.Facturas)
+        _contextMock.Setup(c => c.Facturas)
             .Throws(new Exception("Error de base de datos"));
 
         // Act
@@ -286,7 +302,7 @@ public class ObtenerFacturaPorIdHandlerTests
         resultado.Error.Should().Be("Error interno al consultar la factura.");
 
         // Verificar logging de error
-        _mockLogger.Verify(
+        _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Error,
                 It.IsAny<EventId>(),
@@ -437,13 +453,13 @@ public class ObtenerFacturaPorIdHandlerTests
     private void ConfigurarMockDbSet()
     {
         var mockDbSet = MockDbSetHelper.CreateMockDbSet(_facturasEjemplo.AsQueryable());
-        _mockContext.Setup(c => c.Facturas).Returns(mockDbSet.Object);
+        _contextMock.Setup(c => c.Facturas).Returns(mockDbSet.Object);
     }
 
     private void ConfigurarMockDbSetConFacturas(List<Factura> facturas)
     {
         var mockDbSet = MockDbSetHelper.CreateMockDbSet(facturas.AsQueryable());
-        _mockContext.Setup(c => c.Facturas).Returns(mockDbSet.Object);
+        _contextMock.Setup(c => c.Facturas).Returns(mockDbSet.Object);
     }
 
     private List<Factura> CrearFacturasEjemplo()

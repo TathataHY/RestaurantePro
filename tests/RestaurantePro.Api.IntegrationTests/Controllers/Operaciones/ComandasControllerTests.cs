@@ -132,7 +132,9 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         await LimpiarTablaComandas();
         
         var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
-        var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
+        var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
+        var emailCliente = GenerarEmailValido();
+        var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
         var mesa = await CrearMesaPrueba(1, 4);
         var producto = await CrearProductoPrueba("Pizza Margherita", 15.00m);
         
@@ -344,8 +346,8 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Limpiar BD antes del test
         await LimpiarTablaComandas();
         
-        var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
-        var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
+        var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", $"mesero_{Guid.NewGuid().ToString("N")[..8]}@test.com", RolUsuario.Mesero);
+        var cliente = await CrearClientePrueba($"Cliente_{Guid.NewGuid().ToString("N")[..8]}", GenerarEmailValido());
         var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda para cambiar estado");
         
@@ -516,8 +518,8 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Limpiar BD antes del test
         await LimpiarTablaComandas();
         
-        var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
-        var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
+        var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", $"mes_{Guid.NewGuid().ToString("N")[..8]}@test.com", RolUsuario.Mesero);
+        var cliente = await CrearClientePrueba($"Cliente_{Guid.NewGuid().ToString("N")[..8]}", GenerarEmailValido());
         var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda para aplicar descuento");
         var producto = await CrearProductoPrueba("Pasta", 16.00m);
@@ -574,8 +576,8 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Limpiar BD antes del test
         await LimpiarTablaComandas();
         
-        var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
-        var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
+        var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", $"mesero_{Guid.NewGuid().ToString("N")[..8]}@test.com", RolUsuario.Mesero);
+        var cliente = await CrearClientePrueba($"Cliente_{Guid.NewGuid().ToString("N")[..8]}", GenerarEmailValido());
         var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda para cerrar");
         var producto = await CrearProductoPrueba("Ensalada", 8.50m);
@@ -646,8 +648,8 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         // Limpiar BD antes del test
         await LimpiarTablaComandas();
         
-        var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", "mesero@test.com", RolUsuario.Mesero);
-        var cliente = await CrearClientePrueba("Cliente Test", "cliente@test.com");
+        var mesero = await CrearUsuarioPrueba("mesero.test", "Mesero Test", $"mesero_{Guid.NewGuid().ToString("N")[..8]}@test.com", RolUsuario.Mesero);
+        var cliente = await CrearClientePrueba($"Cliente_{Guid.NewGuid().ToString("N")[..8]}", $"cli_{Guid.NewGuid().ToString("N")[..8]}@test.com");
         var mesa = await CrearMesaPrueba(1, 4);
         var comanda = await CrearComandaPrueba(meseroId: mesero.Id, clienteId: cliente.Id, mesaId: mesa.Id, observaciones: "Comanda para eliminar");
 
