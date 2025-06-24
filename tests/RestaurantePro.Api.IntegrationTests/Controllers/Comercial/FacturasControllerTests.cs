@@ -148,9 +148,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         var response = await HttpClient.GetAsync($"/api/comercial/facturas/{facturaIdInexistente}");
 
         // Assert
-        Console.WriteLine($"🔍 Status Code: {response.StatusCode}");
-        var content = await response.Content.ReadAsStringAsync();
-        Console.WriteLine($"[DEBUG TEST] Body de respuesta: {content}");
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<FacturaDto>>();
         apiResponse.Should().NotBeNull();
         apiResponse!.Success.Should().BeFalse();
@@ -523,11 +521,6 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
             clienteId: cliente.Id,
             comandasIds: new List<Guid> { comanda.Id });
 
-        // Debug: Verificar que la factura se creó correctamente
-        Console.WriteLine("🔍 Debug - Factura creada con ID: {FacturaId}", factura.Id);
-        Console.WriteLine("🔍 Debug - Comanda ID: {ComandaId}", comanda.Id);
-        Console.WriteLine("🔍 Debug - Factura ComandasIds: {ComandasIds}", string.Join(", ", factura.ComandasIds));
-
         // Verificar que la factura está en la BD con la asociación correcta
         var facturaEnBD = await DbContext.Facturas
             .Include(f => f.Cliente)
@@ -535,12 +528,10 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
 
         facturaEnBD.Should().NotBeNull();
         facturaEnBD!.ComandasIds.Should().Contain(comanda.Id);
-        Console.WriteLine("🔍 Debug - Factura en BD ComandasIds: {ComandasIds}", string.Join(", ", facturaEnBD.ComandasIds));
 
         // Verificar que la comanda existe en la BD
         var comandaEnBD = await DbContext.Comandas.FindAsync(comanda.Id);
         comandaEnBD.Should().NotBeNull();
-        Console.WriteLine("🔍 Debug - Comanda en BD: {ComandaId} - Estado: {Estado}", comandaEnBD!.Id, comandaEnBD.Estado);
 
         // Act
         var response = await HttpClient.GetAsync($"/api/comercial/facturas/comanda/{comanda.Id}");
@@ -656,10 +647,6 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
             MetodoPago = "Efectivo"
         };
 
-        // Debug: Log de valores para diagnóstico
-        Console.WriteLine("🔍 Debug - Factura Total (BD): {Total}, TotalPagado antes: {TotalPagado}, Estado: {Estado}",
-            factura.Total, factura.TotalPagado, factura.Estado);
-
         // Act
         var response = await HttpClient.PostAsJsonAsync($"/api/comercial/facturas/{factura.Id}/pagar", request);
 
@@ -675,10 +662,6 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Verificar que la factura está pagada en la BD
         var facturaEnBD = await DbContext.Facturas.FindAsync(factura.Id);
         facturaEnBD.Should().NotBeNull();
-
-        // Debug: Log de valores después del pago
-        Console.WriteLine("🔍 Debug - Factura en BD - Total: {Total}, TotalPagado: {TotalPagado}, Estado: {Estado}",
-            facturaEnBD!.Total, facturaEnBD.TotalPagado, facturaEnBD.Estado);
 
         // Verificar que el estado cambió a pagada
         facturaEnBD!.Estado.Should().Be(EstadoFactura.Pagada);
@@ -1120,12 +1103,10 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
 
         facturaEnBD.Should().NotBeNull();
         facturaEnBD!.ComandasIds.Should().Contain(comanda.Id);
-        Console.WriteLine("🔍 Debug - Factura en BD ComandasIds: {ComandasIds}", string.Join(", ", facturaEnBD.ComandasIds));
 
         // 6. Verificar que la comanda existe en la BD
         var comandaEnBD = await DbContext.Comandas.FindAsync(comanda.Id);
         comandaEnBD.Should().NotBeNull();
-        Console.WriteLine("🔍 Debug - Comanda en BD: {ComandaId} - Estado: {Estado}", comandaEnBD!.Id, comandaEnBD.Estado);
     }
 
     #endregion
