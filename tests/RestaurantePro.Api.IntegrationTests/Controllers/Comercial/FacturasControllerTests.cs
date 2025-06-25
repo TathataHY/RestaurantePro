@@ -797,9 +797,6 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
     public async Task PatchAnularFactura_ConIdInexistente_DebeRetornar404()
     {
         // Arrange
-        Console.WriteLine("🧪 Iniciando test: PatchAnularFactura_ConIdInexistente_DebeRetornar404");
-
-        // Configurar autenticación con un usuario válido
         var usuarioId = Guid.NewGuid();
         ConfigurarAutenticacionConUsuario(usuarioId, "Administrador");
 
@@ -812,31 +809,6 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
 
         // Act
         var response = await HttpClient.PatchAsJsonAsync($"/api/comercial/facturas/{facturaIdInexistente}/anular", anularRequest);
-
-        // Debug: Mostrar errores si el test falla
-        if (response.StatusCode != HttpStatusCode.NotFound)
-        {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"🔍 Status Code: {response.StatusCode}");
-            Console.WriteLine($"🔍 Response Content: {errorContent}");
-            
-            try
-            {
-                var apiError = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<object>>(errorContent);
-                if (apiError?.Errors != null && apiError.Errors.Count > 0)
-                {
-                    Console.WriteLine("🔍 Errores de validación:");
-                    foreach (var err in apiError.Errors)
-                    {
-                        Console.WriteLine($"   - {err}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"🔍 No se pudo deserializar el error: {ex.Message}");
-            }
-        }
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
