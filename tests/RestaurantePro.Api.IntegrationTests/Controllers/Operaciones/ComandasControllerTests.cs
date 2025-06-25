@@ -203,7 +203,8 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         var response = await HttpClient.PostAsJsonAsync("/api/operaciones/comandas", comandaRequest);
 
         // Assert - Validación estricta para tests completos
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        // Como estamos usando Guid.Empty (recursos inexistentes), debería devolver 404
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         
         var content = await response.Content.ReadAsStringAsync();
         content.Should().NotBeNullOrEmpty();
@@ -212,8 +213,8 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         errorResponse.Should().NotBeNull();
         errorResponse!.Success.Should().BeFalse();
         errorResponse.Errors.Should().NotBeEmpty();
-        // Verificar que contiene errores relacionados con mesa y cliente
-        errorResponse.Errors.Should().Contain(e => e.Contains("mesa") || e.Contains("cliente") || e.Contains("producto"));
+        // Verificar que contiene errores relacionados con recursos no encontrados
+        errorResponse.Errors.Should().Contain(e => e.Contains("no existe") || e.Contains("no encontrada"));
         
         // Verificar que no se creó nada en BD
         var comandasEnBD = await DbContext.Comandas.ToListAsync();

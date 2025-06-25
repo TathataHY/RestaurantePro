@@ -74,10 +74,32 @@ namespace RestaurantePro.Api.Filters
 
             _logger.LogWarning("Error de validación: {Errors}", string.Join(", ", errors));
 
-            var response = ApiResponse<object>.ErrorResponse(
-                errors, "Error de validación", StatusCodes.Status400BadRequest);
+            // Robustecer la detección de mensajes de "no encontrada" o "no existe"
+            var hasNotFoundMessage = errors.Any(error =>
+                error != null && (
+                    error.ToLower().Contains("no encontrada") ||
+                    error.ToLower().Contains("no existe") ||
+                    error.ToLower().Contains("no se encontró") ||
+                    error.ToLower().Contains("no se encontro") ||
+                    error.ToLower().Contains("especificada no existe")
+                )
+            );
 
-            context.Result = new BadRequestObjectResult(response);
+            if (hasNotFoundMessage)
+            {
+                var response = ApiResponse<object>.ErrorResponse(
+                    errors, "Recurso no encontrado", StatusCodes.Status404NotFound);
+
+                context.Result = new NotFoundObjectResult(response);
+            }
+            else
+            {
+                var response = ApiResponse<object>.ErrorResponse(
+                    errors, "Error de validación", StatusCodes.Status400BadRequest);
+
+                context.Result = new BadRequestObjectResult(response);
+            }
+
             context.ExceptionHandled = true;
         }
 

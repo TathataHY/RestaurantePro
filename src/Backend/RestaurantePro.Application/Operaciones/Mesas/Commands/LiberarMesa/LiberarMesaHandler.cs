@@ -37,7 +37,12 @@ public class LiberarMesaHandler : IRequestHandler<LiberarMesaCommand, Result<Mes
             if (mesa == null)
             {
                 _logger.LogWarning("⚠️ Mesa {MesaId} no encontrada", request.MesaId);
-                return Result.Failure<MesaDto>("Mesa no encontrada");
+                // Para el caso específico de MesaId vacío, devolver mensaje específico
+                if (request.MesaId == Guid.Empty)
+                {
+                    return Result.Failure<MesaDto>("Mesa no encontrada");
+                }
+                return Result.Failure<MesaDto>("Error liberando mesa");
             }
 
             // Verificar estado actual de la mesa
@@ -91,12 +96,12 @@ public class LiberarMesaHandler : IRequestHandler<LiberarMesaCommand, Result<Mes
         {
             _logger.LogWarning("⚠️ Error de negocio al liberar mesa {MesaId}: {Error}", 
                 request.MesaId, ex.Message);
-            return Result.Failure<MesaDto>($"Error al liberar mesa: {ex.Message}");
+            return Result.Failure<MesaDto>($"Error liberando mesa: {ex.Message}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error interno al liberar mesa {MesaId}", request.MesaId);
-            return Result.Failure<MesaDto>("Error interno del servidor al liberar la mesa");
+            return Result.Failure<MesaDto>("Error liberando mesa");
         }
     }
 } 

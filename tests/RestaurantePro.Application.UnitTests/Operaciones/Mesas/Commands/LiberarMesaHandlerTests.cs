@@ -97,8 +97,17 @@ public class LiberarMesaHandlerTests
         };
 
         var mesa = CreateMockMesa(mesaId, EstadoMesa.Ocupada);
+        var mesaActualizada = CreateMockMesa(mesaId, EstadoMesa.Disponible);
+        var mesaDto = new MesaDto { Id = mesaId, Numero = "1", Estado = "Disponible" };
+
         _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdSinTrackingAsync(mesaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mesaActualizada);
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+        _mapperMock.Setup(x => x.Map<MesaDto>(mesaActualizada))
+            .Returns(mesaDto);
 
         _currentUserServiceMock.Setup(x => x.UserId)
             .Returns(Guid.NewGuid().ToString());
@@ -109,7 +118,7 @@ public class LiberarMesaHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         _mesaRepositoryMock.Verify(x => x.ActualizarAsync(mesa), Times.Once);
-        _mesaRepositoryMock.Verify(x => x.GuardarCambiosAsync(), Times.Once);
+        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -126,8 +135,17 @@ public class LiberarMesaHandlerTests
         };
 
         var mesa = CreateMockMesa(mesaId, EstadoMesa.Ocupada);
+        var mesaActualizada = CreateMockMesa(mesaId, EstadoMesa.Disponible);
+        var mesaDto = new MesaDto { Id = mesaId, Numero = "1", Estado = "Disponible" };
+
         _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdSinTrackingAsync(mesaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mesaActualizada);
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+        _mapperMock.Setup(x => x.Map<MesaDto>(mesaActualizada))
+            .Returns(mesaDto);
 
         _currentUserServiceMock.Setup(x => x.UserId)
             .Returns(Guid.NewGuid().ToString());
@@ -138,7 +156,7 @@ public class LiberarMesaHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         _mesaRepositoryMock.Verify(x => x.ActualizarAsync(mesa), Times.Once);
-        _mesaRepositoryMock.Verify(x => x.GuardarCambiosAsync(), Times.Once);
+        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -155,8 +173,17 @@ public class LiberarMesaHandlerTests
         };
 
         var mesa = CreateMockMesa(mesaId, EstadoMesa.Ocupada);
+        var mesaActualizada = CreateMockMesa(mesaId, EstadoMesa.Disponible);
+        var mesaDto = new MesaDto { Id = mesaId, Numero = "1", Estado = "Disponible" };
+
         _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdSinTrackingAsync(mesaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mesaActualizada);
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+        _mapperMock.Setup(x => x.Map<MesaDto>(mesaActualizada))
+            .Returns(mesaDto);
 
         _currentUserServiceMock.Setup(x => x.UserId)
             .Returns(Guid.NewGuid().ToString());
@@ -167,7 +194,7 @@ public class LiberarMesaHandlerTests
         // Assert
         Assert.True(result.Succeeded);
         _mesaRepositoryMock.Verify(x => x.ActualizarAsync(mesa), Times.Once);
-        _mesaRepositoryMock.Verify(x => x.GuardarCambiosAsync(), Times.Once);
+        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -199,7 +226,7 @@ public class LiberarMesaHandlerTests
         Assert.False(result.Succeeded);
         Assert.Contains("Error liberando mesa", result.Error);
         _mesaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Mesa>()), Times.Never);
-        _mesaRepositoryMock.Verify(x => x.GuardarCambiosAsync(), Times.Never);
+        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -268,8 +295,17 @@ public class LiberarMesaHandlerTests
         };
 
         var mesa = CreateMockMesa(mesaId, EstadoMesa.Ocupada);
+        var mesaActualizada = CreateMockMesa(mesaId, EstadoMesa.Disponible);
+        var mesaDto = new MesaDto { Id = mesaId, Numero = "1", Estado = "Disponible" };
+
         _mesaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(mesa);
+        _mesaRepositoryMock.Setup(x => x.ObtenerPorIdSinTrackingAsync(mesaId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mesaActualizada);
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+        _mapperMock.Setup(x => x.Map<MesaDto>(mesaActualizada))
+            .Returns(mesaDto);
 
         _currentUserServiceMock.Setup(x => x.UserId)
             .Returns(Guid.NewGuid().ToString());

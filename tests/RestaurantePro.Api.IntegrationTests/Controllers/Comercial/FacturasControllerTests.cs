@@ -421,8 +421,8 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         var content = await response.Content.ReadAsStringAsync();
         Console.WriteLine($"🔍 Response Content: {content}");
 
-        // El controlador devuelve 400 para IDs inexistentes
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        // El controlador devuelve 404 para IDs inexistentes (comportamiento correcto)
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
         apiResponse.Should().NotBeNull();
         apiResponse!.Success.Should().BeFalse();
