@@ -69,9 +69,9 @@ public class AcumularPuntosHandler : IRequestHandler<AcumularPuntosCommand, Resu
 
             // 3. Verificar promoción (si aplica)
             Promocion? promocion = null;
-            if (request.PromocionId.HasValue)
+            if (!string.IsNullOrEmpty(request.CodigoPromocion))
             {
-                var promocionResult = await ValidarPromocion(request.PromocionId.Value, request.TipoTransaccion);
+                var promocionResult = await ValidarPromocion(request.CodigoPromocion, request.TipoTransaccion);
                 if (!promocionResult.Succeeded)
                 {
                     return Result.Failure<AcumulacionPuntosDto>(promocionResult.Error);
@@ -174,17 +174,17 @@ public class AcumularPuntosHandler : IRequestHandler<AcumularPuntosCommand, Resu
         return tarjeta;
     }
 
-    private async Task<Result<Promocion>> ValidarPromocion(int promocionId, TipoTransaccionPuntos tipoTransaccion)
+    private async Task<Result<Promocion>> ValidarPromocion(string codigoPromocion, TipoTransaccionPuntos tipoTransaccion)
     {
-        var promocion = await _promocionRepository.ObtenerPorIdAsync(promocionId);
+        var promocion = await _promocionRepository.ObtenerPorCodigoAsync(codigoPromocion);
         if (promocion == null)
         {
-            return Result.Failure<Promocion>($"Promoción con ID {promocionId} no existe");
+            return Result.Failure<Promocion>($"Promoción con código '{codigoPromocion}' no existe");
         }
 
         if (!promocion.EstaVigente())
         {
-            return Result.Failure<Promocion>($"Promoción con ID {promocionId} no está activo o ha expirado");
+            return Result.Failure<Promocion>($"Promoción con código '{codigoPromocion}' no está activo o ha expirado");
         }
 
         // TODO: Implementar validación de tipo de transacción en Promocion

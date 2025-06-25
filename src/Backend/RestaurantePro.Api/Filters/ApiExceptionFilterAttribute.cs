@@ -45,13 +45,26 @@ namespace RestaurantePro.Api.Filters
                 return;
             }
 
+            // Siempre verificar el ModelState, incluso cuando no hay excepciones
             if (!context.ModelState.IsValid)
             {
                 HandleInvalidModelStateException(context);
                 return;
             }
 
-            HandleUnknownException(context);
+            // Manejar excepciones no mapeadas
+            _logger.LogError(context.Exception, "Excepción no manejada: {Message}", context.Exception.Message);
+            
+            var response = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno del servidor",
+                StatusCodes.Status500InternalServerError);
+
+            context.Result = new ObjectResult(response)
+            {
+                StatusCode = StatusCodes.Status500InternalServerError
+            };
+            context.ExceptionHandled = true;
         }
 
         private void HandleValidationException(ExceptionContext context)
@@ -125,26 +138,34 @@ namespace RestaurantePro.Api.Filters
 
             _logger.LogWarning("Estado del modelo inválido: {Errors}", string.Join(", ", errors));
 
-            var response = ApiResponse<object>.ErrorResponse(
-                errors, "Datos de entrada inválidos", StatusCodes.Status400BadRequest);
+            // Robustecer la detección de mensajes de "no encontrada" o "no existe"
+            var hasNotFoundMessage = errors.Any(error =>
+                error != null && (
+                    error.ToLower().Contains("no encontrada") ||
+                    error.ToLower().Contains("no existe")
+                )
+            );
 
-            context.Result = new BadRequestObjectResult(response);
-            context.ExceptionHandled = true;
-        }
+            _logger.LogInformation("🔍 FILTRO - Errores encontrados: {Errors}", string.Join(", ", errors));
+            _logger.LogInformation("🔍 FILTRO - ¿Contiene mensaje de no encontrada/no existe? {HasNotFound}", hasNotFoundMessage);
 
-        private void HandleUnknownException(ExceptionContext context)
-        {
-            _logger.LogError(context.Exception, "Error no manejado: {Message}", context.Exception.Message);
-
-            var response = ApiResponse<object>.ErrorResponse(
-                new List<string> { "Ocurrió un error interno del servidor" }, 
-                "Error interno", 
-                StatusCodes.Status500InternalServerError);
-
-            context.Result = new ObjectResult(response)
+            if (hasNotFoundMessage)
             {
-                StatusCode = StatusCodes.Status500InternalServerError
-            };
+                _logger.LogInformation("🔍 FILTRO - Devolviendo 404 para mensaje de no encontrada/no existe");
+                var response = ApiResponse<object>.ErrorResponse(
+                    errors, "Recurso no encontrado", StatusCodes.Status404NotFound);
+
+                context.Result = new NotFoundObjectResult(response);
+            }
+            else
+            {
+                _logger.LogInformation("🔍 FILTRO - Devolviendo 400 para errores de validación");
+                var response = ApiResponse<object>.ErrorResponse(
+                    errors, "Datos de entrada inválidos", StatusCodes.Status400BadRequest);
+
+                context.Result = new BadRequestObjectResult(response);
+            }
+
             context.ExceptionHandled = true;
         }
     }

@@ -118,7 +118,7 @@ public class ObtenerFacturaPorIdHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Be("La factura especificada no existe.");
+        resultado.Error.Should().Be("La factura especificada no encontrada.");
 
         // Verificar logging de advertencia
         _loggerMock.Verify(

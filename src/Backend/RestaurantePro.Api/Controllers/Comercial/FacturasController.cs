@@ -89,24 +89,55 @@ public class FacturasController : ControllerBase
         _logger.LogInformation("🔍 GET /api/comercial/facturas/{Id}", id);
         var query = ObtenerFacturaPorIdQuery.ConsultaBasica(id);
         var result = await _mediator.Send(query);
+        
         if (!result.IsSuccess())
         {
             var errors = result.Errors ?? new List<string>();
             _logger.LogInformation("🔍 GetFactura - Errores recibidos: {@Errors}", errors);
-            _logger.LogWarning("[DEBUG] Errores recibidos para determinar statusCode: {Errors}", string.Join(" | ", errors));
-            var statusCode = errors.Any(e => e != null && (e.ToLower().Contains("no encontrada") || e.ToLower().Contains("no existe")))
-                ? StatusCodes.Status404NotFound
-                : StatusCodes.Status400BadRequest;
-            _logger.LogInformation("🔍 GetFactura - StatusCode determinado: {StatusCode}", statusCode);
-            var errorResponse = ApiResponse<object>.ErrorResponse(
-                errors.Count > 0 ? errors : new List<string> { "Factura no encontrada" },
-                "Factura no encontrada",
+            
+            // Lógica profesional: el controlador decide el status code según el mensaje
+            var statusCode = DetermineStatusCodeFromErrors(errors);
+            var errorResponse = ApiResponse<FacturaDto>.ErrorResponse(
+                errors, 
+                statusCode == StatusCodes.Status404NotFound ? "Recurso no encontrado" : "Error de validación",
                 statusCode);
-            return StatusCode(statusCode, errorResponse);
+            
+            return statusCode == StatusCodes.Status404NotFound 
+                ? NotFound(errorResponse) 
+                : BadRequest(errorResponse);
         }
-        var response = ApiResponse<FacturaDto>.SuccessResponse(
-            result.Value, "Factura obtenida exitosamente");
+
+        var response = ApiResponse<FacturaDto>.SuccessResponse(result.Value, "Factura obtenida exitosamente");
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Determina el status code apropiado basándose en los mensajes de error.
+    /// Sigue las mejores prácticas: 404 para recursos no encontrados, 400 para errores de validación.
+    /// </summary>
+    private static int DetermineStatusCodeFromErrors(List<string> errors)
+    {
+        if (errors == null || !errors.Any())
+            return StatusCodes.Status400BadRequest;
+
+        // Buscar mensajes que indiquen "recurso no encontrado"
+        var notFoundIndicators = new[]
+        {
+            "no encontrada",
+            "no existe", 
+            "no encontrado",
+            "especificada no encontrada",
+            "especificada no existe"
+        };
+
+        var hasNotFoundMessage = errors.Any(error =>
+            error != null && notFoundIndicators.Any(indicator => 
+                error.ToLower().Contains(indicator.ToLower()))
+        );
+
+        return hasNotFoundMessage 
+            ? StatusCodes.Status404NotFound 
+            : StatusCodes.Status400BadRequest;
     }
 
     /// <summary>
@@ -155,14 +186,18 @@ public class FacturasController : ControllerBase
         var result = await _mediator.Send(command);
         if (!result.IsSuccess())
         {
-            var statusCode = result.Errors != null && result.Errors.Any(e => e.Contains("no encontrada") || e.Contains("no existe"))
-                ? StatusCodes.Status404NotFound
-                : StatusCodes.Status400BadRequest;
+            var errors = result.Errors ?? new List<string>();
+            
+            // Lógica profesional: el controlador decide el status code según el mensaje
+            var statusCode = DetermineStatusCodeFromErrors(errors);
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                result.Errors ?? new List<string> { "Error al actualizar factura" },
-                "Error al actualizar factura",
+                errors,
+                statusCode == StatusCodes.Status404NotFound ? "Recurso no encontrado" : "Error de validación",
                 statusCode);
-            return StatusCode(statusCode, errorResponse);
+            
+            return statusCode == StatusCodes.Status404NotFound 
+                ? NotFound(errorResponse) 
+                : BadRequest(errorResponse);
         }
         var response = ApiResponse<FacturaDto>.SuccessResponse(
             result.Value, "Factura actualizada exitosamente");
@@ -246,18 +281,18 @@ public class FacturasController : ControllerBase
         
         if (!facturaResult.IsSuccess())
         {
-            _logger.LogInformation("📄 GET /api/comercial/facturas/{Id}/pdf - Factura no encontrada, devolviendo 404", id);
             var errorsPdf = facturaResult.Errors ?? new List<string>();
-            var statusCodePdf = errorsPdf.Any(e => e != null && 
-                (e.ToLower().Contains("no encontrada") || 
-                 e.ToLower().Contains("no existe")))
-                ? StatusCodes.Status404NotFound
-                : StatusCodes.Status400BadRequest;
-            var notFoundResponse = ApiResponse<object>.ErrorResponse(
-                errorsPdf.Count > 0 ? errorsPdf : new List<string> { "Factura no encontrada" },
-                "Factura no encontrada",
+            
+            // Lógica profesional: el controlador decide el status code según el mensaje
+            var statusCodePdf = DetermineStatusCodeFromErrors(errorsPdf);
+            var errorResponsePdf = ApiResponse<object>.ErrorResponse(
+                errorsPdf,
+                statusCodePdf == StatusCodes.Status404NotFound ? "Recurso no encontrado" : "Error de validación",
                 statusCodePdf);
-            return StatusCode(statusCodePdf, notFoundResponse);
+            
+            return statusCodePdf == StatusCodes.Status404NotFound 
+                ? NotFound(errorResponsePdf) 
+                : BadRequest(errorResponsePdf);
         }
 
         // Aquí deberías invocar una Query/Handler que genere el PDF y devuelva el archivo o un error
@@ -377,14 +412,17 @@ public class FacturasController : ControllerBase
         if (!result.IsSuccess())
         {
             var errors = result.Errors ?? new List<string>();
-            var statusCode = errors.Any(e => e != null && (e.ToLower().Contains("no encontrada") || e.ToLower().Contains("no existe")))
-                ? StatusCodes.Status404NotFound
-                : StatusCodes.Status400BadRequest;
+            
+            // Lógica profesional: el controlador decide el status code según el mensaje
+            var statusCode = DetermineStatusCodeFromErrors(errors);
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                errors.Count > 0 ? errors : new List<string> { "Error al anular factura" },
-                "Error al anular factura",
+                errors,
+                statusCode == StatusCodes.Status404NotFound ? "Recurso no encontrado" : "Error de validación",
                 statusCode);
-            return StatusCode(statusCode, errorResponse);
+            
+            return statusCode == StatusCodes.Status404NotFound 
+                ? NotFound(errorResponse) 
+                : BadRequest(errorResponse);
         }
         var response = ApiResponse<bool>.SuccessResponse(
             result.Value, "Factura anulada exitosamente");
@@ -428,14 +466,17 @@ public class FacturasController : ControllerBase
         if (!result.IsSuccess())
         {
             var errors = result.Errors ?? new List<string>();
-            var statusCode = errors.Any(e => e != null && (e.ToLower().Contains("no encontrada") || e.ToLower().Contains("no existe")))
-                ? StatusCodes.Status404NotFound
-                : StatusCodes.Status400BadRequest;
+            
+            // Lógica profesional: el controlador decide el status code según el mensaje
+            var statusCode = DetermineStatusCodeFromErrors(errors);
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                errors.Count > 0 ? errors : new List<string> { "Error al anular factura" },
-                "Error al anular factura",
+                errors,
+                statusCode == StatusCodes.Status404NotFound ? "Recurso no encontrado" : "Error de validación",
                 statusCode);
-            return StatusCode(statusCode, errorResponse);
+            
+            return statusCode == StatusCodes.Status404NotFound 
+                ? NotFound(errorResponse) 
+                : BadRequest(errorResponse);
         }
         
         var response = ApiResponse<bool>.SuccessResponse(

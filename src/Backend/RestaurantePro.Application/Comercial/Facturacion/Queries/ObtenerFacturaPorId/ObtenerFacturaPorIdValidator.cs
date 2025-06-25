@@ -1,4 +1,5 @@
 using RestaurantePro.Application.Common.Exceptions;
+using FluentValidation;
 
 namespace RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturaPorId;
 
@@ -20,18 +21,20 @@ public class ObtenerFacturaPorIdValidator : AbstractValidator<ObtenerFacturaPorI
 
     private void ConfigurarValidacionesBasicas()
     {
-        RuleFor(v => v.FacturaId)
-            .NotEqual(Guid.Empty)
-            .WithMessage("El ID de la factura es requerido.")
-            .WithErrorCode("FACTURA_ID_REQUERIDO")
-            .MustAsync(FacturaExiste)
-            .WithMessage("La factura especificada no existe.");
+        RuleFor(x => x.FacturaId)
+            .NotEmpty()
+            .WithMessage("El ID de la factura es requerido.");
 
         RuleFor(v => v.FormatoRespuesta)
             .NotEmpty()
             .WithMessage("El formato de respuesta es requerido.")
-            .Must(formato => _formatosValidos.Contains(formato, StringComparer.OrdinalIgnoreCase))
-            .WithMessage($"El formato de respuesta debe ser uno de: {string.Join(", ", _formatosValidos)}.");
+            .Must(formato => new[] { "Completo", "Resumido", "Basico" }.Contains(formato, StringComparer.OrdinalIgnoreCase))
+            .WithMessage("El formato de respuesta debe ser: Completo, Resumido o Basico.");
+
+        RuleFor(v => v.UsuarioConsultaId)
+            .MustAsync(UsuarioExiste)
+            .WithMessage("El usuario consultante no existe.")
+            .When(v => v.UsuarioConsultaId.HasValue && v.UsuarioConsultaId.Value != Guid.Empty);
 
         RuleFor(v => v.MotivoConsulta)
             .MaximumLength(200)
@@ -112,7 +115,7 @@ public class ObtenerFacturaPorIdValidator : AbstractValidator<ObtenerFacturaPorI
         RuleFor(v => v)
             .MustAsync(FacturaNoEstaRestringida)
             .WithMessage("Esta factura tiene restricciones de acceso.")
-            .When(v => v.ValidarPermisos)
+            .When(v => v.ValidarPermisos && v.UsuarioConsultaId.HasValue)
             .WithName("FacturaNoRestringida");
 
         // Validar límites de consultas por usuario
@@ -146,19 +149,6 @@ public class ObtenerFacturaPorIdValidator : AbstractValidator<ObtenerFacturaPorI
     }
 
     // Métodos de validación personalizados
-    private async Task<bool> FacturaExiste(Guid facturaId, CancellationToken cancellationToken)
-    {
-        var existe = await _context.Facturas
-            .AnyAsync(f => f.Id == facturaId, cancellationToken);
-        
-        if (!existe)
-        {
-            throw NotFoundException.ForFactura(facturaId);
-        }
-        
-        return true;
-    }
-
     private async Task<bool> UsuarioExiste(Guid? usuarioId, CancellationToken cancellationToken)
     {
         if (!usuarioId.HasValue) return false;
@@ -264,7 +254,8 @@ public class ObtenerFacturaPorIdValidator : AbstractValidator<ObtenerFacturaPorI
         var factura = await _context.Facturas
             .FirstOrDefaultAsync(f => f.Id == query.FacturaId, cancellationToken);
 
-        if (factura == null) return false;
+        // Si la factura no existe, no aplicar esta validación (dejar que FacturaExiste maneje el error)
+        if (factura == null) return true;
 
         // TODO: Descomentar cuando Factura tenga EsConfidencial
         // Verificar si la factura está marcada como confidencial

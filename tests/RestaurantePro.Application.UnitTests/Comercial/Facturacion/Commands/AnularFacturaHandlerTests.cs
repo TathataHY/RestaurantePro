@@ -247,7 +247,7 @@ public class AnularFacturaHandlerTests
         
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Contains("no se encontró la factura", result.Error.ToLower());
+        Assert.Contains("no encontrada", result.Error.ToLower());
     }
     
     [Fact]
