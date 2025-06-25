@@ -43,6 +43,16 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         }
 
         /// <summary>
+        /// Obtiene una tarjeta de fidelización por su ID (retorna null si no existe)
+        /// </summary>
+        public async Task<TarjetaFidelizacion?> ObtenerPorIdSinExcepcionAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return await _dbSet
+                .Include(t => t.HistorialPuntos)
+                .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+        }
+
+        /// <summary>
         /// Obtiene una tarjeta de fidelización por su código
         /// </summary>
         public async Task<TarjetaFidelizacion> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken = default)
@@ -132,14 +142,14 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         /// Si la entidad ya está siendo rastreada, no hace nada, confiando en que el Change Tracker detectará los cambios.
         /// Si la entidad no está rastreada, la adjunta y la marca como modificada.
         /// </summary>
-        public override Task ActualizarAsync(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken = default)
+        public override async Task ActualizarAsync(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken = default)
         {
             var entry = _dbContext.Entry(tarjeta);
             if (entry.State == EntityState.Detached)
             {
                 _dbSet.Update(tarjeta);
             }
-            return Task.CompletedTask;
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         /// <summary>
@@ -165,6 +175,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
             {
                 tarjeta.MarkAsDeleted();
                 _dbSet.Update(tarjeta);
+                await _dbContext.SaveChangesAsync(cancellationToken);
             }
         }
 

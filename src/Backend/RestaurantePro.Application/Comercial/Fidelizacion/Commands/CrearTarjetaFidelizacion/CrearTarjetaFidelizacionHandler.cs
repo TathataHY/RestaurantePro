@@ -209,18 +209,14 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
 
     private async Task<string> GenerarCodigoTarjeta(TipoTarjetaFidelizacion tipoTarjeta, CancellationToken cancellationToken)
     {
-        // Generar un código basado en el tipo y timestamp
-        var timestamp = _dateTimeService.Now.ToString("yyyyMMddHHmmss");
-        var prefijo = tipoTarjeta.ToString().ToUpper().Take(3).Aggregate("", (current, c) => current + c);
-        var codigo = $"{prefijo}-{timestamp}-{Random.Shared.Next(1000, 9999)}";
-
-        // Verificar que el código sea único
-        var existente = await _tarjetaRepository.ObtenerPorCodigoAsync(codigo, cancellationToken);
-        if (existente != null)
+        string codigo;
+        do
         {
-            // Si existe, agregar un sufijo adicional
-            codigo += $"-{Random.Shared.Next(100, 999)}";
-        }
+            // Generar un código basado en el tipo y timestamp
+            var timestamp = _dateTimeService.Now.ToString("yyyyMMddHHmmss");
+            var prefijo = tipoTarjeta.ToString().ToUpper().Take(3).Aggregate("", (current, c) => current + c);
+            codigo = $"{prefijo}-{timestamp}-{Random.Shared.Next(1000, 9999)}";
+        } while (await _tarjetaRepository.ExisteNumeroTarjetaAsync(codigo, cancellationToken));
 
         return codigo;
     }

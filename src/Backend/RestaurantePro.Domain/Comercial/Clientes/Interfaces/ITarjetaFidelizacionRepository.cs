@@ -21,6 +21,14 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         new Task<TarjetaFidelizacion> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Obtiene una tarjeta de fidelización por su ID (retorna null si no existe)
+        /// </summary>
+        /// <param name="id">ID de la tarjeta</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Tarjeta encontrada o null si no existe</returns>
+        Task<TarjetaFidelizacion?> ObtenerPorIdSinExcepcionAsync(Guid id, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Obtiene una tarjeta de fidelización por su código
         /// </summary>
         /// <param name="codigo">Código de la tarjeta</param>

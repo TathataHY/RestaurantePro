@@ -21,6 +21,7 @@ using RestaurantePro.Domain.Core.Notificaciones;
 using RestaurantePro.Domain.Proveedores;
 using RestaurantePro.Domain.Core.Base.Services;
 using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
 
 /// <summary>
 /// Clase base para todos los tests de integración de la API.
@@ -866,5 +867,81 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
             Logger.LogInformation("✅ Total de factura recalculado: Subtotal={Subtotal:C}, Impuestos={Impuestos:C}, Descuentos={Descuentos:C}, Total={Total:C}", 
                 subtotal, impuestos, descuentos, total);
         }
+    }
+
+    /// <summary>
+    /// Crea una tarjeta de fidelización de prueba en la base de datos
+    /// </summary>
+    protected async Task<TarjetaFidelizacion> CrearTarjetaFidelizacionPrueba(
+        Guid? clienteId = null,
+        string codigo = null,
+        EstadoTarjeta estado = EstadoTarjeta.Activa,
+        NivelFidelizacion nivelFidelizacion = NivelFidelizacion.Basico,
+        int puntosIniciales = 0,
+        decimal multiplicadorPuntos = 1.0m,
+        int? limiteMensual = null,
+        DateTime? fechaEmision = null,
+        DateTime? fechaActivacion = null,
+        DateTime? fechaExpiracion = null)
+    {
+        // Crear cliente si no se proporciona
+        if (!clienteId.HasValue)
+        {
+            var sufijo = Guid.NewGuid().ToString("N")[..8];
+            var emailUnico = $"cliente.tarjeta.{sufijo}@test.com";
+            var cliente = await CrearClientePrueba($"Cliente Tarjeta {sufijo}", emailUnico);
+            clienteId = cliente.Id;
+        }
+
+        // Generar código si no se proporciona
+        if (string.IsNullOrEmpty(codigo))
+        {
+            codigo = $"TARJ-{Guid.NewGuid().ToString().Substring(0, 8)}";
+        }
+
+        // Crear la tarjeta usando el factory method
+        var tarjeta = TarjetaFidelizacion.Crear(clienteId.Value, codigo);
+
+        // Configurar propiedades adicionales
+        if (multiplicadorPuntos != 1.0m)
+        {
+            tarjeta.ConfigurarMultiplicadorPuntos(multiplicadorPuntos);
+        }
+
+        if (limiteMensual.HasValue)
+        {
+            tarjeta.ConfigurarLimiteMensual(limiteMensual.Value);
+        }
+
+        if (fechaExpiracion.HasValue)
+        {
+            tarjeta.ConfigurarFechaExpiracion(fechaExpiracion.Value);
+        }
+
+        // Establecer estado
+        if (estado == EstadoTarjeta.Activa)
+        {
+            tarjeta.Activar();
+        }
+        else if (estado == EstadoTarjeta.Suspendida)
+        {
+            // Primero activar la tarjeta, luego suspenderla
+            tarjeta.Activar();
+            tarjeta.Suspender("Suspensión de prueba");
+        }
+
+        // Agregar puntos iniciales si se especifican
+        if (puntosIniciales > 0)
+        {
+            tarjeta.AgregarPuntos(puntosIniciales, "Puntos iniciales de prueba");
+        }
+
+        // Guardar en la base de datos
+        DbContext.TarjetasFidelizacion.Add(tarjeta);
+        await DbContext.SaveChangesAsync();
+
+        Logger.LogInformation("✅ Tarjeta de fidelización de prueba creada: {Codigo} (ID: {Id})", tarjeta.Codigo, tarjeta.Id);
+
+        return tarjeta;
     }
 } 
