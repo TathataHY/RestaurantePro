@@ -96,6 +96,11 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// </summary>
         public IReadOnlyCollection<HistorialPuntos> HistorialPuntos => _historialPuntos.AsReadOnly();
 
+        /// <summary>
+        /// Indica si la tarjeta está eliminada (soft delete)
+        /// </summary>
+        public bool EstaEliminada { get; private set; } = false;
+
         // Constructor privado para EF Core
         private TarjetaFidelizacion() { }
 
@@ -456,6 +461,18 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
                 MarkAsModified();
                 
                 AddDomainEvent(new TarjetaFidelizacionEtiquetaAgregada(Id, ClienteId, etiqueta));
+            }
+        }
+
+        /// <summary>
+        /// Marca la tarjeta como eliminada (soft delete)
+        /// </summary>
+        public void Eliminar()
+        {
+            if (!EstaEliminada)
+            {
+                EstaEliminada = true;
+                MarkAsModified();
             }
         }
     }

@@ -37,17 +37,34 @@ public class DesactivarTarjetaFidelizacionCommandHandler : IRequestHandler<Desac
                 return Result.Failure<TarjetaFidelizacionDto>("Tarjeta de fidelización no encontrada");
             }
 
+            // Debug: Verificar estado inicial
+            Console.WriteLine($"DEBUG HANDLER DESACTIVAR: Estado inicial de tarjeta: {tarjeta.Estado}");
+
             // Verificar que la tarjeta no esté ya cancelada
             if (tarjeta.Estado == EstadoTarjeta.Cancelada)
             {
                 return Result.Failure<TarjetaFidelizacionDto>("La tarjeta ya está cancelada");
             }
 
-            // Desactivar la tarjeta (cancelar)
-            tarjeta.Cancelar("Desactivación solicitada");
+            // Si la tarjeta está activa, suspender; si está emitida, cancelar
+            if (tarjeta.Estado == EstadoTarjeta.Activa)
+            {
+                tarjeta.Suspender("Desactivación solicitada");
+            }
+            else
+            {
+                tarjeta.Cancelar("Desactivación solicitada");
+            }
+
+            // Debug: Verificar estado después de desactivar
+            Console.WriteLine($"DEBUG HANDLER DESACTIVAR: Estado después de desactivar: {tarjeta.Estado}");
 
             // Actualizar la tarjeta en el repositorio
             await _tarjetaRepository.ActualizarAsync(tarjeta, cancellationToken);
+            await _unitOfWork.GuardarCambiosAsync(cancellationToken);
+
+            // Debug: Verificar estado después de guardar
+            Console.WriteLine($"DEBUG HANDLER DESACTIVAR: Estado después de guardar: {tarjeta.Estado}");
 
             // Obtener el cliente para el DTO
             var cliente = await _clienteRepository.ObtenerPorIdAsync(tarjeta.ClienteId, cancellationToken);

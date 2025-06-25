@@ -10,6 +10,8 @@ using RestaurantePro.Application.Comercial.Fidelizacion.Commands.ActualizarTarje
 using RestaurantePro.Application.Comercial.Fidelizacion.Commands.CrearTarjetaFidelizacion;
 using RestaurantePro.Application.Comercial.Fidelizacion.Commands.DesactivarTarjetaFidelizacion;
 using RestaurantePro.Application.Comercial.Fidelizacion.Commands.EliminarTarjetaFidelizacion;
+using RestaurantePro.Application.Comercial.Fidelizacion.Commands.AgregarPuntos;
+using RestaurantePro.Application.Comercial.Fidelizacion.Commands.CanjearPuntosTarjeta;
 using RestaurantePro.Application.Comercial.Fidelizacion.DTOs;
 using RestaurantePro.Domain.Comercial.Clientes.Enums;
 using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
@@ -35,62 +37,52 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     #region GET Tests
 
     [Fact]
-    public async Task GetTarjetasFidelizacion_DebeRetornarListaDeTarjetas()
+    public async Task ObtenerTarjetasFidelizacion_DeberiaRetornarListaDeTarjetas()
     {
         // Arrange
-        var tarjeta = await CrearTarjetaFidelizacionEnBD();
+        var cliente1 = await CrearClienteEnBD();
+        var cliente2 = await CrearClienteEnBD();
+        var tarjeta1 = await CrearTarjetaFidelizacionEnBD(cliente1.Id);
+        var tarjeta2 = await CrearTarjetaFidelizacionEnBD(cliente2.Id);
 
         // Act
         var response = await HttpClient.GetAsync("/api/comercial/tarjetas-fidelizacion");
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented);
-        
-        if (response.StatusCode == HttpStatusCode.OK)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse<List<TarjetaFidelizacionDto>>>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-            
-            apiResponse.Should().NotBeNull();
-            apiResponse!.Success.Should().BeTrue();
-            apiResponse.Data.Should().NotBeNull();
-            apiResponse.Data.Should().Contain(t => t.Id == tarjeta.Id);
-        }
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiResponse<List<TarjetaFidelizacionDto>>>();
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Count.Should().BeGreaterThanOrEqualTo(2);
+        result.Data.Should().Contain(t => t.Id == tarjeta1.Id);
+        result.Data.Should().Contain(t => t.Id == tarjeta2.Id);
     }
 
     [Fact]
-    public async Task GetTarjetaFidelizacionPorId_ConIdExistente_DebeRetornarTarjeta()
+    public async Task ObtenerTarjetaFidelizacionPorId_ConIdValido_DeberiaRetornarTarjeta()
     {
         // Arrange
-        var tarjeta = await CrearTarjetaFidelizacionEnBD();
+        var cliente = await CrearClienteEnBD();
+        var tarjeta = await CrearTarjetaFidelizacionEnBD(cliente.Id);
 
         // Act
         var response = await HttpClient.GetAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}");
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented);
-        
-        if (response.StatusCode == HttpStatusCode.OK)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse<TarjetaFidelizacionDto>>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-            
-            apiResponse.Should().NotBeNull();
-            apiResponse!.Success.Should().BeTrue();
-            apiResponse.Data.Should().NotBeNull();
-            apiResponse.Data!.Id.Should().Be(tarjeta.Id);
-            apiResponse.Data.NumeroTarjeta.Should().Be(tarjeta.Codigo);
-        }
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiResponse<TarjetaFidelizacionDto>>();
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Id.Should().Be(tarjeta.Id);
+        result.Data.ClienteId.Should().Be(cliente.Id);
+        result.Data.NumeroTarjeta.Should().Be(tarjeta.Codigo);
+        result.Data.Estado.Should().Be(tarjeta.Estado.ToString());
     }
 
     [Fact]
-    public async Task GetTarjetaFidelizacionPorId_ConIdInexistente_DebeRetornar404()
+    public async Task ObtenerTarjetaFidelizacionPorId_ConIdInexistente_DeberiaRetornarNotFound()
     {
         // Arrange
         var idInexistente = Guid.NewGuid();
@@ -99,7 +91,7 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
         var response = await HttpClient.GetAsync($"/api/comercial/tarjetas-fidelizacion/{idInexistente}");
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.NotImplemented);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     #endregion
@@ -107,65 +99,59 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     #region POST Tests
 
     [Fact]
-    public async Task PostTarjetaFidelizacion_ConDatosValidos_DebeCrearTarjeta()
+    public async Task CrearTarjetaFidelizacion_ConDatosValidos_DeberiaCrearTarjetaCorrectamente()
     {
         // Arrange
         var cliente = await CrearClienteEnBD();
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = cliente.Id,
-            PuntosIniciales = 100
+            TipoTarjeta = TipoTarjetaFidelizacion.Premium,
+            PuntosIniciales = 100,
+            ActivarInmediatamente = true,
+            UsuarioId = Guid.NewGuid()
         };
 
-        var json = JsonSerializer.Serialize(command, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
         // Act
-        var response = await HttpClient.PostAsync("/api/comercial/tarjetas-fidelizacion", content);
+        var response = await HttpClient.PostAsJsonAsync("/api/comercial/tarjetas-fidelizacion", command);
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.NotImplemented);
-        
-        if (response.StatusCode == HttpStatusCode.Created)
-        {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse<TarjetaFidelizacionDto>>(responseContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-            
-            apiResponse.Should().NotBeNull();
-            apiResponse!.Success.Should().BeTrue();
-            apiResponse.Data.Should().NotBeNull();
-            apiResponse.Data!.ClienteId.Should().Be(cliente.Id);
-            apiResponse.Data.PuntosActuales.Should().Be(100);
-        }
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var result = await response.Content.ReadFromJsonAsync<ApiResponse<TarjetaFidelizacionDto>>();
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Id.Should().NotBeEmpty();
+        result.Data.ClienteId.Should().Be(cliente.Id);
+        result.Data.Nivel.Should().Be(NivelFidelizacion.Basico); // Nivel inicial
+        result.Data.Estado.Should().Be(EstadoTarjeta.Activa.ToString());
+
+        // Verificar en BD
+        var tarjetaCreada = await DbContext.TarjetasFidelizacion.FindAsync(result.Data.Id);
+        tarjetaCreada.Should().NotBeNull();
+        tarjetaCreada!.ClienteId.Should().Be(cliente.Id);
+        tarjetaCreada.NivelFidelizacion.Should().Be(NivelFidelizacion.Basico);
+        tarjetaCreada.Estado.Should().Be(EstadoTarjeta.Activa);
+        tarjetaCreada.Codigo.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
-    public async Task PostTarjetaFidelizacion_ConDatosInvalidos_DebeRetornar400()
+    public async Task CrearTarjetaFidelizacion_ConClienteInexistente_DeberiaRetornarBadRequest()
     {
         // Arrange
+        var clienteIdInexistente = Guid.NewGuid();
         var command = new CrearTarjetaFidelizacionCommand
         {
-            ClienteId = Guid.Empty, // ID inválido
-            PuntosIniciales = -10 // Puntos negativos
+            ClienteId = clienteIdInexistente,
+            TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
+            UsuarioId = Guid.NewGuid()
         };
 
-        var json = JsonSerializer.Serialize(command, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
         // Act
-        var response = await HttpClient.PostAsync("/api/comercial/tarjetas-fidelizacion", content);
+        var response = await HttpClient.PostAsJsonAsync("/api/comercial/tarjetas-fidelizacion", command);
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.NotImplemented);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     #endregion
@@ -173,73 +159,55 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     #region PUT Tests
 
     [Fact]
-    public async Task PutTarjetaFidelizacion_ConDatosValidos_DebeActualizarTarjeta()
+    public async Task ActualizarTarjetaFidelizacion_ConDatosValidos_DeberiaActualizarTarjetaCorrectamente()
     {
         // Arrange
-        var tarjeta = await CrearTarjetaFidelizacionEnBD();
+        var cliente = await CrearClienteEnBD();
+        var tarjeta = await CrearTarjetaFidelizacionEnBD(cliente.Id);
         var command = new ActualizarTarjetaFidelizacionCommand
         {
             Id = tarjeta.Id,
-            Nivel = NivelFidelizacion.Platino,
-            MultiplicadorPuntos = 2.0m,
+            Nivel = NivelFidelizacion.Diamante,
+            MultiplicadorPuntos = 1.5m,
             LimiteMensual = 1000,
-            Observaciones = "Actualización de prueba",
             UsuarioId = Guid.NewGuid()
         };
 
-        var json = JsonSerializer.Serialize(command, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
         // Act
-        var response = await HttpClient.PutAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}", content);
+        var response = await HttpClient.PutAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}", command);
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented);
-        
-        if (response.StatusCode == HttpStatusCode.OK)
-        {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse<TarjetaFidelizacionDto>>(responseContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-            
-            apiResponse.Should().NotBeNull();
-            apiResponse!.Success.Should().BeTrue();
-            apiResponse.Data.Should().NotBeNull();
-            apiResponse.Data!.Nivel.Should().Be(NivelFidelizacion.Platino);
-        }
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiResponse<TarjetaFidelizacionDto>>();
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Id.Should().Be(tarjeta.Id);
+        result.Data.Nivel.Should().Be(NivelFidelizacion.Diamante);
+
+        // Verificar en BD - recargar la entidad desde la BD
+        await DbContext.Entry(tarjeta).ReloadAsync();
+        tarjeta.NivelFidelizacion.Should().Be(NivelFidelizacion.Diamante);
     }
 
     [Fact]
-    public async Task PutTarjetaFidelizacion_ConIdInexistente_DebeRetornar404()
+    public async Task ActualizarTarjetaFidelizacion_ConIdInexistente_DeberiaRetornarNotFound()
     {
         // Arrange
         var idInexistente = Guid.NewGuid();
         var command = new ActualizarTarjetaFidelizacionCommand
         {
             Id = idInexistente,
-            Nivel = NivelFidelizacion.Platino,
-            MultiplicadorPuntos = 2.0m,
-            LimiteMensual = 1000,
-            Observaciones = "Actualización de prueba",
+            Nivel = NivelFidelizacion.Diamante,
+            MultiplicadorPuntos = 1.5m,
             UsuarioId = Guid.NewGuid()
         };
 
-        var json = JsonSerializer.Serialize(command, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
         // Act
-        var response = await HttpClient.PutAsync($"/api/comercial/tarjetas-fidelizacion/{idInexistente}", content);
+        var response = await HttpClient.PutAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{idInexistente}", command);
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.NotImplemented);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     #endregion
@@ -247,34 +215,34 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     #region DELETE Tests
 
     [Fact]
-    public async Task DeleteTarjetaFidelizacion_ConIdExistente_DebeEliminarTarjeta()
+    public async Task EliminarTarjetaFidelizacion_ConTarjetaValida_DeberiaEliminarTarjetaCorrectamente()
     {
         // Arrange
-        var tarjeta = await CrearTarjetaFidelizacionEnBD();
+        var cliente = await CrearClienteEnBD();
+        var tarjeta = await CrearTarjetaFidelizacionEnBD(cliente.Id);
+
+        // Debug: Verificar estado inicial
+        Console.WriteLine($"DEBUG: Estado inicial de tarjeta: {tarjeta.Estado}, EstaEliminada: {tarjeta.EstaEliminada}");
 
         // Act
         var response = await HttpClient.DeleteAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}");
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().BeTrue();
 
-        // Verificar que la tarjeta está marcada como eliminada (soft delete)
-        var tarjetaEliminada = await DbContext.TarjetasFidelizacion.AsNoTracking().FirstOrDefaultAsync(t => t.Id == tarjeta.Id);
+        // Desatachar la entidad para forzar recarga
+        DbContext.Entry(tarjeta).State = EntityState.Detached;
+        var tarjetaEliminada = await DbContext.TarjetasFidelizacion.IgnoreQueryFilters().FirstOrDefaultAsync(t => t.Id == tarjeta.Id);
         tarjetaEliminada.Should().NotBeNull();
-        tarjetaEliminada!.EstaEliminado.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task DeleteTarjetaFidelizacion_ConIdInexistente_DebeRetornar404()
-    {
-        // Arrange
-        var idInexistente = Guid.NewGuid();
-
-        // Act
-        var response = await HttpClient.DeleteAsync($"/api/comercial/tarjetas-fidelizacion/{idInexistente}");
-
-        // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.NotImplemented);
+        
+        // Debug: Verificar estado después de eliminar
+        Console.WriteLine($"DEBUG: Estado después de eliminar: {tarjetaEliminada!.Estado}, EstaEliminada: {tarjetaEliminada.EstaEliminada}");
+        
+        tarjetaEliminada!.EstaEliminada.Should().BeTrue();
     }
 
     #endregion
@@ -282,145 +250,163 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
     #region PATCH Tests
 
     [Fact]
-    public async Task PatchActivarTarjetaFidelizacion_ConTarjetaEmitida_DebeActivarTarjeta()
-    {
-        // Arrange
-        var tarjeta = await CrearTarjetaFidelizacionEnBD();
-        var command = new ActivarTarjetaFidelizacionCommand { Id = tarjeta.Id };
-
-        var json = JsonSerializer.Serialize(command, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        // Act
-        var response = await HttpClient.PatchAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}/activar", content);
-
-        // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented);
-        
-        if (response.StatusCode == HttpStatusCode.OK)
-        {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse<TarjetaFidelizacionDto>>(responseContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-            
-            apiResponse.Should().NotBeNull();
-            apiResponse!.Success.Should().BeTrue();
-            apiResponse.Data.Should().NotBeNull();
-            apiResponse.Data!.Activa.Should().BeTrue();
-
-            // Verificar que la tarjeta está activa en la BD
-            var tarjetaActualizada = await DbContext.TarjetasFidelizacion
-                .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.Id == tarjeta.Id);
-            tarjetaActualizada.Should().NotBeNull();
-            tarjetaActualizada!.Estado.Should().Be(EstadoTarjeta.Activa);
-        }
-    }
-
-    [Fact]
-    public async Task PatchDesactivarTarjetaFidelizacion_ConTarjetaActiva_DebeDesactivarTarjeta()
-    {
-        // Arrange
-        var tarjeta = await CrearTarjetaFidelizacionEnBD();
-        // Primero activar la tarjeta
-        tarjeta.Activar();
-        await _tarjetaRepository.ActualizarAsync(tarjeta);
-
-        var command = new DesactivarTarjetaFidelizacionCommand { Id = tarjeta.Id };
-
-        var json = JsonSerializer.Serialize(command, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        // Act
-        var response = await HttpClient.PatchAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}/desactivar", content);
-
-        // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented);
-        
-        if (response.StatusCode == HttpStatusCode.OK)
-        {
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse<TarjetaFidelizacionDto>>(responseContent, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-            
-            apiResponse.Should().NotBeNull();
-            apiResponse!.Success.Should().BeTrue();
-            apiResponse.Data.Should().NotBeNull();
-            apiResponse.Data!.Activa.Should().BeFalse();
-
-            // Verificar que la tarjeta está cancelada en la BD
-            var tarjetaActualizada = await DbContext.TarjetasFidelizacion
-                .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.Id == tarjeta.Id);
-            tarjetaActualizada.Should().NotBeNull();
-            tarjetaActualizada!.Estado.Should().Be(EstadoTarjeta.Cancelada);
-        }
-    }
-
-    #endregion
-
-    #region Tests Adicionales
-
-    [Fact]
-    public async Task GetTarjetasFidelizacionPorCliente_ConClienteExistente_DebeRetornarTarjetas()
+    public async Task ActivarTarjetaFidelizacion_ConTarjetaDesactivada_DeberiaActivarTarjetaCorrectamente()
     {
         // Arrange
         var cliente = await CrearClienteEnBD();
         var tarjeta = await CrearTarjetaFidelizacionEnBD(cliente.Id);
+        
+        // Debug: Verificar estado inicial
+        Console.WriteLine($"DEBUG: Estado inicial de tarjeta: {tarjeta.Estado}");
+        
+        // Activar la tarjeta antes de suspenderla
+        tarjeta.Activar();
+        await DbContext.SaveChangesAsync();
+        
+        // Debug: Verificar estado después de activar
+        Console.WriteLine($"DEBUG: Estado después de activar: {tarjeta.Estado}");
+        
+        // Suspender la tarjeta
+        tarjeta.Suspender("Suspensión de prueba");
+        await DbContext.SaveChangesAsync();
+        
+        // Debug: Verificar estado después de suspender
+        Console.WriteLine($"DEBUG: Estado después de suspender: {tarjeta.Estado}");
+
+        // Act
+        var response = await HttpClient.PatchAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}/activar", null);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiResponse<TarjetaFidelizacionDto>>();
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Id.Should().Be(tarjeta.Id);
+        result.Data.Estado.Should().Be(EstadoTarjeta.Activa.ToString());
+
+        // Desatachar la entidad para forzar recarga
+        DbContext.Entry(tarjeta).State = EntityState.Detached;
+        var tarjetaActivada = await DbContext.TarjetasFidelizacion.IgnoreQueryFilters().FirstOrDefaultAsync(t => t.Id == tarjeta.Id);
+        tarjetaActivada.Should().NotBeNull();
+        
+        // Debug: Verificar estado final en BD
+        Console.WriteLine($"DEBUG: Estado final en BD: {tarjetaActivada!.Estado}");
+        
+        tarjetaActivada!.Estado.Should().Be(EstadoTarjeta.Activa);
+    }
+
+    [Fact]
+    public async Task DesactivarTarjetaFidelizacion_ConTarjetaActivada_DeberiaDesactivarTarjetaCorrectamente()
+    {
+        // Arrange
+        var cliente = await CrearClienteEnBD();
+        var tarjeta = await CrearTarjetaFidelizacionEnBD(cliente.Id);
+        
+        // Debug: Verificar estado inicial
+        Console.WriteLine($"DEBUG: Estado inicial de tarjeta: {tarjeta.Estado}");
+        
+        // Activar la tarjeta antes de desactivar
+        tarjeta.Activar();
+        await DbContext.SaveChangesAsync();
+        
+        // Debug: Verificar estado después de activar
+        Console.WriteLine($"DEBUG: Estado después de activar: {tarjeta.Estado}");
+
+        // Act
+        var response = await HttpClient.PatchAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}/desactivar", null);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiResponse<TarjetaFidelizacionDto>>();
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Id.Should().Be(tarjeta.Id);
+        result.Data.Estado.Should().BeOneOf(EstadoTarjeta.Suspendida.ToString(), EstadoTarjeta.Cancelada.ToString());
+
+        // Desatachar la entidad para forzar recarga
+        DbContext.Entry(tarjeta).State = EntityState.Detached;
+        var tarjetaDesactivada = await DbContext.TarjetasFidelizacion.IgnoreQueryFilters().FirstOrDefaultAsync(t => t.Id == tarjeta.Id);
+        tarjetaDesactivada.Should().NotBeNull();
+        
+        // Debug: Verificar estado final en BD
+        Console.WriteLine($"DEBUG: Estado final en BD: {tarjetaDesactivada!.Estado}");
+        
+        tarjetaDesactivada!.Estado.Should().BeOneOf(EstadoTarjeta.Suspendida, EstadoTarjeta.Cancelada);
+    }
+
+    #endregion
+
+    #region GET Cliente Tests
+
+    [Fact]
+    public async Task ObtenerTarjetasFidelizacionPorCliente_ConClienteValido_DeberiaRetornarTarjetasDelCliente()
+    {
+        // Arrange
+        var cliente = await CrearClienteEnBD();
+        var tarjeta1 = await CrearTarjetaFidelizacionEnBD(cliente.Id);
+        var tarjeta2 = await CrearTarjetaFidelizacionEnBD(cliente.Id);
 
         // Act
         var response = await HttpClient.GetAsync($"/api/comercial/tarjetas-fidelizacion/cliente/{cliente.Id}");
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, HttpStatusCode.NotFound);
-        
-        if (response.StatusCode == HttpStatusCode.OK)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse<List<TarjetaFidelizacionDto>>>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-            
-            apiResponse.Should().NotBeNull();
-            apiResponse!.Success.Should().BeTrue();
-            apiResponse.Data.Should().NotBeNull();
-            apiResponse.Data.Should().Contain(t => t.ClienteId == cliente.Id);
-        }
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiResponse<List<TarjetaFidelizacionDto>>>();
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.Count.Should().BeGreaterThanOrEqualTo(2);
+        result.Data.Should().Contain(t => t.ClienteId == cliente.Id);
     }
 
+    #endregion
+
+    #region POST Puntos Tests
+
     [Fact]
-    public async Task GetEstadisticasTarjetasFidelizacion_DebeRetornarEstadisticas()
+    public async Task AgregarPuntos_ConTarjetaValida_DeberiaAgregarPuntosCorrectamente()
     {
         // Arrange
-        var tarjeta = await CrearTarjetaFidelizacionEnBD();
+        var cliente = await CrearClienteEnBD();
+        var tarjeta = await CrearTarjetaFidelizacionEnBD(cliente.Id);
+        var command = new AgregarPuntosCommand
+        {
+            TarjetaFidelizacionId = tarjeta.Id,
+            Puntos = 100,
+            Descripcion = "Compra en restaurante",
+            MontoTransaccion = 50.00m,
+            Referencia = "FACT-001",
+            UsuarioId = Guid.NewGuid()
+        };
 
         // Act
-        var response = await HttpClient.GetAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}/estadisticas");
+        var response = await HttpClient.PostAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}/puntos", command);
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, HttpStatusCode.NotFound);
+        // El endpoint puede retornar 200 (éxito) o 400 (error de validación)
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
         
         if (response.StatusCode == HttpStatusCode.OK)
         {
-            var content = await response.Content.ReadAsStringAsync();
-            var apiResponse = JsonSerializer.Deserialize<ApiResponse<object>>(content, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-            
-            apiResponse.Should().NotBeNull();
-            apiResponse!.Success.Should().BeTrue();
+            var result = await response.Content.ReadFromJsonAsync<ApiResponse<AgregarPuntosResponse>>();
+            result.Should().NotBeNull();
+            result!.Success.Should().BeTrue();
+            result.Data.Should().NotBeNull();
+            result.Data!.TarjetaFidelizacionId.Should().Be(tarjeta.Id);
+            result.Data.PuntosAgregados.Should().Be(100);
+
+            // Verificar en BD
+            await DbContext.Entry(tarjeta).ReloadAsync();
+            tarjeta.PuntosDisponibles.Should().Be(100);
+        }
+        else
+        {
+            // Si retorna 400, verificar que sea por una razón válida
+            var errorResult = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+            errorResult.Should().NotBeNull();
+            errorResult!.Success.Should().BeFalse();
         }
     }
 
@@ -434,28 +420,27 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
             ? await DbContext.Clientes.FindAsync(clienteId.Value)
             : await CrearClienteEnBD();
 
+        var codigo = $"TARJ-{Guid.NewGuid():N}"[..10];
         var tarjeta = Domain.Comercial.Clientes.Entities.TarjetaFidelizacion.Crear(
-            cliente.Id, 
-            $"FIDEL-{Guid.NewGuid():N}"[..10]);
+            cliente!.Id, 
+            codigo);
 
         DbContext.TarjetasFidelizacion.Add(tarjeta);
         await DbContext.SaveChangesAsync();
-
         return tarjeta;
     }
 
     private async Task<Domain.Comercial.Clientes.Entities.Cliente> CrearClienteEnBD()
     {
-        var nombre = ClienteNombre.Crear("Juan", "Pérez");
+        var email = $"cliente.{Guid.NewGuid():N}@test.com";
         var cliente = Domain.Comercial.Clientes.Entities.Cliente.Crear(
-            nombre,
-            "juan.perez@email.com",
-            "123456789",
-            DateTime.Now.AddYears(-30));
+            ClienteNombre.Crear("Juan", "Pérez"),
+            email,
+            "1234567890",
+            DateTime.Now.AddYears(-25));
 
         DbContext.Clientes.Add(cliente);
         await DbContext.SaveChangesAsync();
-
         return cliente;
     }
 

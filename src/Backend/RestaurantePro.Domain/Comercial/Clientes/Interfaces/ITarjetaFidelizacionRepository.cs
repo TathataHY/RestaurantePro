@@ -131,6 +131,42 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de tarjetas con puntos próximos a expirar</returns>
         Task<IEnumerable<TarjetaFidelizacion>> ObtenerConPuntosProximosAExpirarAsync(DateTime fechaExpiracion, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene el historial de puntos de una tarjeta
+        /// </summary>
+        /// <param name="tarjetaFidelizacionId">ID de la tarjeta</param>
+        /// <param name="pageNumber">Número de página</param>
+        /// <param name="pageSize">Tamaño de página</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de movimientos de puntos</returns>
+        Task<List<HistorialPuntos>> ObtenerHistorialPuntosAsync(
+            Guid tarjetaFidelizacionId,
+            int pageNumber = 1,
+            int pageSize = 50,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene las estadísticas de una tarjeta
+        /// </summary>
+        /// <param name="tarjetaFidelizacionId">ID de la tarjeta</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Estadísticas de la tarjeta</returns>
+        Task<EstadisticasTarjeta> ObtenerEstadisticasAsync(
+            Guid tarjetaFidelizacionId,
+            CancellationToken cancellationToken = default);
+    }
+
+    /// <summary>
+    /// DTO para estadísticas de tarjeta
+    /// </summary>
+    public class EstadisticasTarjeta
+    {
+        public int PuntosAcumulados { get; set; }
+        public int PuntosCanjeados { get; set; }
+        public int TotalMovimientos { get; set; }
+        public decimal MontoTotalGastado { get; set; }
+        public DateTime? UltimaActividad { get; set; }
     }
 }
 

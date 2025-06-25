@@ -215,8 +215,6 @@ global using RestaurantePro.Application.Comercial.Facturacion.EventHandlers.Fact
 global using RestaurantePro.Application.Comercial.Facturacion.Events;
 
 // Application - Fidelización
-global using RestaurantePro.Application.Comercial.Fidelizacion.Commands.CanjearPuntos;
-global using RestaurantePro.Application.Comercial.Fidelizacion.Commands.CrearTarjetaFidelizacion;
 global using RestaurantePro.Application.Comercial.Fidelizacion.Commands.AcumularPuntos;
 global using RestaurantePro.Application.Comercial.Fidelizacion.DTOs;
 

@@ -37,6 +37,9 @@ public class ActivarTarjetaFidelizacionCommandHandler : IRequestHandler<ActivarT
                 return Result.Failure<TarjetaFidelizacionDto>("Tarjeta de fidelización no encontrada");
             }
 
+            // Debug: Verificar estado inicial
+            Console.WriteLine($"DEBUG HANDLER ACTIVAR: Estado inicial de tarjeta: {tarjeta.Estado}");
+
             // Verificar que la tarjeta no esté ya activa
             if (tarjeta.Estado == EstadoTarjeta.Activa)
             {
@@ -46,8 +49,15 @@ public class ActivarTarjetaFidelizacionCommandHandler : IRequestHandler<ActivarT
             // Activar la tarjeta
             tarjeta.Activar();
 
+            // Debug: Verificar estado después de activar
+            Console.WriteLine($"DEBUG HANDLER ACTIVAR: Estado después de activar: {tarjeta.Estado}");
+
             // Actualizar la tarjeta en el repositorio
             await _tarjetaRepository.ActualizarAsync(tarjeta, cancellationToken);
+            await _unitOfWork.GuardarCambiosAsync(cancellationToken);
+
+            // Debug: Verificar estado después de guardar
+            Console.WriteLine($"DEBUG HANDLER ACTIVAR: Estado después de guardar: {tarjeta.Estado}");
 
             // Obtener el cliente para el DTO
             var cliente = await _clienteRepository.ObtenerPorIdAsync(tarjeta.ClienteId, cancellationToken);

@@ -51,11 +51,12 @@ namespace RestaurantePro.Api.IntegrationTests.TestBase;
 /// </summary>
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private SqliteConnection? _connection;
-    // 🔧 BD única por test para evitar contaminación de datos
-    private readonly string _databaseName = $"TestDatabase_{Guid.NewGuid()}";
+    private static SqliteConnection? _connection;
+    // 🔧 BD compartida para todos los tests para evitar problemas de contexto
+    private static readonly string _databaseName = "TestDatabase_Shared";
     
     public string DatabaseName => _databaseName;
+    
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureAppConfiguration((context, config) =>
@@ -92,9 +93,12 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             if (descriptor != null)
                 services.Remove(descriptor);
 
-            // Crear y abrir la conexión SQLite in-memory
-            _connection = new SqliteConnection("DataSource=:memory:");
-            _connection.Open();
+            // 🔧 Crear conexión SQLite in-memory compartida para todos los tests
+            if (_connection == null)
+            {
+                _connection = new SqliteConnection("DataSource=:memory:");
+                _connection.Open();
+            }
 
             services.AddDbContext<RestauranteProDbContext>(options =>
             {
@@ -257,6 +261,13 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
+        // 🔧 No cerrar la conexión estática aquí para evitar problemas entre tests
+        // La conexión se mantendrá abierta durante toda la ejecución de tests
+    }
+
+    // 🔧 Método estático para limpiar la conexión al final de todos los tests
+    public static void CleanupConnection()
+    {
         if (_connection != null)
         {
             _connection.Close();

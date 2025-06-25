@@ -173,7 +173,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
             var tarjeta = await _dbSet.FindAsync(new object[] { id }, cancellationToken);
             if (tarjeta != null)
             {
-                tarjeta.MarkAsDeleted();
+                tarjeta.Eliminar();
                 _dbSet.Update(tarjeta);
                 await _dbContext.SaveChangesAsync(cancellationToken);
             }
@@ -192,6 +192,54 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
                     t.FechaExpiracion <= fechaExpiracion
                 )
                 .ToListAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Obtiene el historial de puntos de una tarjeta
+        /// </summary>
+        public async Task<List<HistorialPuntos>> ObtenerHistorialPuntosAsync(
+            Guid tarjetaFidelizacionId,
+            int pageNumber = 1,
+            int pageSize = 50,
+            CancellationToken cancellationToken = default)
+        {
+            var skip = (pageNumber - 1) * pageSize;
+            return await _dbContext.Set<HistorialPuntos>()
+                .Where(h => h.TarjetaFidelizacionId == tarjetaFidelizacionId)
+                .OrderByDescending(h => h.FechaOperacion)
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Obtiene las estadísticas de una tarjeta
+        /// </summary>
+        public async Task<EstadisticasTarjeta> ObtenerEstadisticasAsync(
+            Guid tarjetaFidelizacionId,
+            CancellationToken cancellationToken = default)
+        {
+            var tarjeta = await _dbSet
+                .Include(t => t.HistorialPuntos)
+                .FirstOrDefaultAsync(t => t.Id == tarjetaFidelizacionId, cancellationToken);
+
+            if (tarjeta == null)
+                throw new KeyNotFoundException($"No se encontró la tarjeta de fidelización con ID {tarjetaFidelizacionId}");
+
+            var historial = await _dbContext.Set<HistorialPuntos>()
+                .Where(h => h.TarjetaFidelizacionId == tarjetaFidelizacionId)
+                .ToListAsync(cancellationToken);
+
+            var estadisticas = new EstadisticasTarjeta
+            {
+                PuntosAcumulados = historial.Where(h => h.Puntos > 0).Sum(h => h.Puntos),
+                PuntosCanjeados = historial.Where(h => h.Puntos < 0).Sum(h => Math.Abs(h.Puntos)),
+                TotalMovimientos = historial.Count,
+                MontoTotalGastado = historial.Sum(h => h.MontoCompra ?? 0),
+                UltimaActividad = historial.OrderByDescending(h => h.FechaOperacion).FirstOrDefault()?.FechaOperacion
+            };
+
+            return estadisticas;
         }
     }
 } 

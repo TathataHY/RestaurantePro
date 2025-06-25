@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using RestaurantePro.Application.Comercial.Fidelizacion.Queries.ObtenerTarjetasFidelizacion;
 using RestaurantePro.Application.Comercial.Fidelizacion.Queries.ObtenerTarjetaFidelizacionPorId;
+using RestaurantePro.Application.Comercial.Fidelizacion.Queries.ObtenerHistorialPuntos;
+using RestaurantePro.Application.Comercial.Fidelizacion.Queries.ObtenerEstadisticasTarjeta;
 using RestaurantePro.Application.Comercial.Fidelizacion.DTOs;
 using RestaurantePro.Application.Comercial.Fidelizacion.Commands;
 using RestaurantePro.Application.Comercial.Fidelizacion.Commands.ActualizarTarjetaFidelizacion;
 using RestaurantePro.Application.Comercial.Fidelizacion.Commands.ActivarTarjetaFidelizacion;
 using RestaurantePro.Application.Comercial.Fidelizacion.Commands.DesactivarTarjetaFidelizacion;
 using RestaurantePro.Application.Comercial.Fidelizacion.Commands.EliminarTarjetaFidelizacion;
+using RestaurantePro.Application.Comercial.Fidelizacion.Commands.AgregarPuntos;
+using RestaurantePro.Application.Comercial.Fidelizacion.Commands.CanjearPuntosTarjeta;
 using RestaurantePro.Domain.Comercial.Clientes.Enums;
 using RestaurantePro.Application.Comercial.Fidelizacion.Commands.CrearTarjetaFidelizacion;
 
@@ -239,19 +243,30 @@ public class TarjetasFidelizacionController : ControllerBase
     /// <param name="command">Datos de los puntos a agregar</param>
     /// <returns>Resultado de la operación</returns>
     [HttpPost("{id:guid}/puntos")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<AgregarPuntosResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> AgregarPuntos(Guid id, [FromBody] object command)
+    public async Task<ActionResult<ApiResponse<AgregarPuntosResponse>>> AgregarPuntos(Guid id, [FromBody] AgregarPuntosCommand command)
     {
         _logger.LogInformation("➕ POST /api/comercial/tarjetas-fidelizacion/{Id}/puntos", id);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        command.TarjetaFidelizacionId = id;
+        var result = await _mediator.Send(command);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no encontrada")) 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Error al agregar puntos a la tarjeta de fidelización", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<AgregarPuntosResponse>.SuccessResponse(
+            result.Value, "Puntos agregados a la tarjeta de fidelización exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -261,19 +276,30 @@ public class TarjetasFidelizacionController : ControllerBase
     /// <param name="command">Datos del canje de puntos</param>
     /// <returns>Resultado del canje</returns>
     [HttpPost("{id:guid}/canjear")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<CanjearPuntosTarjetaResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> CanjearPuntos(Guid id, [FromBody] object command)
+    public async Task<ActionResult<ApiResponse<CanjearPuntosTarjetaResponse>>> CanjearPuntos(Guid id, [FromBody] CanjearPuntosTarjetaCommand command)
     {
         _logger.LogInformation("🎁 POST /api/comercial/tarjetas-fidelizacion/{Id}/canjear", id);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        command.TarjetaFidelizacionId = id;
+        var result = await _mediator.Send(command);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no encontrada")) 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Error al canjear puntos de la tarjeta de fidelización", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<CanjearPuntosTarjetaResponse>.SuccessResponse(
+            result.Value, "Puntos canjeados de la tarjeta de fidelización exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -282,18 +308,29 @@ public class TarjetasFidelizacionController : ControllerBase
     /// <param name="id">ID de la tarjeta</param>
     /// <returns>Historial de puntos</returns>
     [HttpGet("{id:guid}/historial")]
-    [ProducesResponseType(typeof(ApiResponse<List<object>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<List<HistorialPuntosDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<List<object>>>> GetHistorialPuntos(Guid id)
+    public async Task<ActionResult<ApiResponse<List<HistorialPuntosDto>>>> GetHistorialPuntos(Guid id)
     {
         _logger.LogInformation("📊 GET /api/comercial/tarjetas-fidelizacion/{Id}/historial", id);
 
-        var response = ApiResponse<List<object>>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        var query = new ObtenerHistorialPuntosQuery { TarjetaFidelizacionId = id };
+        var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no encontrada")) 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<List<HistorialPuntosDto>>.ErrorResponse(
+                result.Errors, "Error al obtener historial de puntos", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<List<HistorialPuntosDto>>.SuccessResponse(
+            result.Value, "Historial de puntos obtenido exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -302,18 +339,29 @@ public class TarjetasFidelizacionController : ControllerBase
     /// <param name="id">ID de la tarjeta</param>
     /// <returns>Estadísticas de la tarjeta</returns>
     [HttpGet("{id:guid}/estadisticas")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<EstadisticasTarjetaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> GetEstadisticas(Guid id)
+    public async Task<ActionResult<ApiResponse<EstadisticasTarjetaDto>>> GetEstadisticas(Guid id)
     {
         _logger.LogInformation("📈 GET /api/comercial/tarjetas-fidelizacion/{Id}/estadisticas", id);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        var query = new ObtenerEstadisticasTarjetaQuery { TarjetaFidelizacionId = id };
+        var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no encontrada")) 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<EstadisticasTarjetaDto>.ErrorResponse(
+                result.Errors, "Error al obtener estadísticas de la tarjeta", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<EstadisticasTarjetaDto>.SuccessResponse(
+            result.Value, "Estadísticas de la tarjeta obtenidas exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
