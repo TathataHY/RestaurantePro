@@ -23,7 +23,8 @@ public class ObtenerFacturaPorIdValidator : AbstractValidator<ObtenerFacturaPorI
     {
         RuleFor(x => x.FacturaId)
             .NotEmpty()
-            .WithMessage("El ID de la factura es requerido.");
+            .WithMessage("El ID de la factura es requerido.")
+            .WithErrorCode("FACTURA_ID_REQUERIDO");
 
         RuleFor(v => v.FormatoRespuesta)
             .NotEmpty()

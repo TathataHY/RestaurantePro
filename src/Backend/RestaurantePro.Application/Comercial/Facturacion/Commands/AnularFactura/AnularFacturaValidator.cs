@@ -27,17 +27,20 @@ public class AnularFacturaValidator : AbstractValidator<AnularFacturaCommand>
     {
         RuleFor(x => x.FacturaId)
             .NotEmpty()
-            .WithMessage("El ID de la factura es requerido.");
+            .WithMessage("El ID de la factura es requerido.")
+            .WithErrorCode("FACTURA_ID_REQUERIDO");
         
         RuleFor(x => x.Motivo)
             .NotEmpty()
             .WithMessage("El motivo de anulación es requerido.")
+            .MinimumLength(10)
+            .WithMessage("El motivo debe tener al menos 10 caracteres.")
             .MaximumLength(500)
             .WithMessage("El motivo no puede exceder 500 caracteres.");
         
         RuleFor(x => x.UsuarioAutorizaId)
             .NotEmpty()
-            .WithMessage("El ID del usuario autorizador es requerido.");
+            .WithMessage("El ID del usuario que autoriza es requerido.");
         
         // Removemos la validación de existencia para que el handler maneje el caso específico
         // y pueda devolver el status code correcto (404 vs 400)
@@ -60,99 +63,20 @@ public class AnularFacturaValidator : AbstractValidator<AnularFacturaCommand>
 
     private void ConfigurarValidacionesFactura()
     {
-        // Comentamos la validación de existencia para que el handler maneje el caso específico
-        // y pueda devolver el status code correcto (404 vs 400)
-        /*
         RuleFor(v => v.FacturaId)
-            .MustAsync(FacturaEstaEnEstadoAnulable)
-            .WithMessage("La factura no está en un estado que permita anulación.")
-            .WhenAsync(async (v, ct) => await FacturaExiste(v.FacturaId, ct));
-
-        RuleFor(v => v.FacturaId)
-            .MustAsync(FacturaNoEstaVencida)
-            .WithMessage("No se puede anular una factura vencida sin autorización especial.")
-            .WhenAsync(async (v, ct) => await FacturaExiste(v.FacturaId, ct));
-
-        RuleFor(v => v.FacturaId)
-            .MustAsync(FacturaNotieneMovimientosPosterior)
-            .WithMessage("No se puede anular una factura que tiene movimientos posteriores.")
-            .WhenAsync(async (v, ct) => await FacturaExiste(v.FacturaId, ct));
-
-        // Validar plazo de anulación
-        RuleFor(v => v)
-            .MustAsync(ValidarPlazoAnulacion)
-            .WithMessage("Ha excedido el plazo permitido para anular esta factura.")
-            .WhenAsync(async (v, ct) => await FacturaExiste(v.FacturaId, ct))
-            .WithName("PlazoAnulacion");
-        */
+            .MustAsync(FacturaExiste)
+            .WithMessage("La factura especificada no existe.")
+            .WithErrorCode("FACTURA_NO_EXISTE")
+            .When(v => v.FacturaId != Guid.Empty);
     }
 
     private void ConfigurarValidacionesAutorizacion()
     {
-        // Comentamos las validaciones de autorización para que el handler maneje el caso específico
-        // y pueda devolver el status code correcto (404 vs 400)
-        /*
-        RuleFor(v => v.UsuarioAutorizaId)
-            .NotEqual(Guid.Empty)
-            .WithMessage("El ID del usuario que autoriza es requerido.");
-
         RuleFor(v => v.UsuarioAutorizaId)
             .MustAsync(UsuarioAutorizadorExiste)
-            .WithMessage("El usuario autorizador no existe.")
+            .WithMessage("El usuario autorizador especificado no existe.")
+            .WithErrorCode("USUARIO_AUTORIZADOR_NO_EXISTE")
             .When(v => v.UsuarioAutorizaId != Guid.Empty);
-
-        // Validar permisos en el nivel del comando completo
-        RuleFor(v => v)
-            .MustAsync(async (command, cancellationToken) =>
-            {
-                if (command.UsuarioAutorizaId == Guid.Empty) return false;
-                
-                // Validación null-safe para context
-                if (_context?.Usuarios == null) return true; // En tests sin mock, asumir que tiene permisos
-
-                try
-                {
-                    var usuario = await _context.Usuarios
-                        .FirstOrDefaultAsync(u => u.Id == command.UsuarioAutorizaId, cancellationToken);
-                    
-                    if (usuario == null) return false;
-
-                    // En tests con mock válido, asumir que tiene permisos
-                    // TODO: Implementar cuando se definan los roles y permisos específicos
-                    return true;
-                }
-                catch (Exception)
-                {
-                    // En caso de error, asumir que tiene permisos
-                    return true;
-                }
-            })
-            .WithMessage("El usuario no tiene permisos para realizar anulaciones.")
-            .WithName("PermisosAnulacion");
-
-        // Validar autorización según monto solo si tanto factura como usuario existen
-        RuleFor(v => v)
-            .MustAsync(ValidarAutorizacionSegunMonto)
-            .WithMessage("El monto de la factura requiere autorización de nivel superior.")
-            .When(v => v.UsuarioAutorizaId != Guid.Empty && v.FacturaId != Guid.Empty)
-            .WithName("AutorizacionSegunMonto");
-
-        // Para anulaciones de emergencia es obligatorio el código
-        RuleFor(v => v.CodigoAutorizacion)
-            .NotEmpty()
-            .WithMessage("El código de autorización es obligatorio para anulaciones de emergencia.")
-            .MinimumLength(8)
-            .WithMessage("El código de autorización debe tener al menos 8 caracteres.")
-            .When(v => string.Equals(v.TipoAnulacion, "Emergencia", StringComparison.OrdinalIgnoreCase));
-
-        // Validar gerente aprobador cuando se requiere
-        RuleFor(v => v.GerenteAprobadorId)
-            .NotEqual(Guid.Empty)
-            .WithMessage("Se requiere ID del gerente aprobador.")
-            .MustAsync(GerenteEsValido)
-            .WithMessage("El gerente especificado no es válido o no tiene permisos.")
-            .When(v => v.RequiereAprobacionGerencia);
-        */
     }
 
     private void ConfigurarValidacionesDevolucion()
@@ -226,18 +150,10 @@ public class AnularFacturaValidator : AbstractValidator<AnularFacturaCommand>
 
     private void ConfigurarValidacionesDocumentacion()
     {
-        // Aquí puedes agregar validaciones de documentación si dependen de la existencia de la factura
-        // Ejemplo:
-        // RuleFor(v => v)
-        //     .MustAsync(async (command, ct) =>
-        //     {
-        //         if (!await FacturaExiste(command.FacturaId, ct))
-        //             return true;
-        //         return await ValidarDocumentacion(command, ct);
-        //     })
-        //     .WithMessage("La documentación adjunta no es válida.")
-        //     .When(v => v.DocumentosAdjuntos != null && v.DocumentosAdjuntos.Any())
-        //     .WithName("DocumentacionAdjunta");
+        RuleFor(v => v.DocumentosAdjuntos)
+            .Must(lista => lista == null || lista.Count <= 20)
+            .WithMessage("Máximo 20 documentos de soporte")
+            .WithErrorCode("MAX_DOCUMENTOS_ADJUNTOS");
     }
 
     private void ConfigurarValidacionesNegocio()

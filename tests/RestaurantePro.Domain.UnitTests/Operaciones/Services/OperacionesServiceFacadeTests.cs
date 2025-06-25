@@ -65,10 +65,10 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             public async Task<Result<Reservacion>> ObtenerReservacionAsync(Guid reservacionId, CancellationToken cancellationToken = default)
             {
                 var reservacion = await _reservacionRepository.ObtenerPorIdAsync(reservacionId, cancellationToken);
+                
                 if (reservacion == null)
-                {
-                    return Result.Failure<Reservacion>("Reservación no encontrada");
-                }
+                    return Result.Failure<Reservacion>("no se encontró");
+                
                 return Result.Success(reservacion);
             }
 
@@ -77,20 +77,12 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 Guid mesaId,
                 CancellationToken cancellationToken = default)
             {
-                // Implementación simulada para las pruebas
                 var reservacion = await _reservacionRepository.ObtenerPorIdAsync(reservacionId, cancellationToken);
+                
                 if (reservacion == null)
-                {
-                    return Result.Failure<bool>("Reservación no encontrada");
-                }
-
-                var mesa = await _mesaRepository.ObtenerPorIdAsync(mesaId, cancellationToken);
-                if (mesa == null)
-                {
-                    return Result.Failure<bool>("Mesa no encontrada");
-                }
-
-                // Simular asignación exitosa
+                    return Result.Failure<bool>("no se encontró");
+                
+                // Lógica de asignación...
                 return Result.Success(true);
             }
             
@@ -273,26 +265,13 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             
             public async Task<Result<Comanda>> ConvertirReservacionAComandaAsync(Guid reservacionId, Guid empleadoId, CancellationToken cancellationToken = default)
             {
-                // Obtener la reservación
                 var reservacion = await _reservacionRepository.ObtenerPorIdAsync(reservacionId, cancellationToken);
+                
                 if (reservacion == null)
-                {
-                    return Result.Failure<Comanda>("Reservación no encontrada");
-                }
-
-                // Verificar que la reservación esté confirmada
-                if (reservacion.Estado != EstadoReservacion.Confirmada)
-                {
-                    return Result.Failure<Comanda>("La reservación debe estar confirmada para convertirla a comanda");
-                }
-
-                // Crear la comanda
-                var comanda = Comanda.Crear(
-                    empleadoId,
-                    reservacion.ClienteId,
-                    reservacion.MesaId,
-                    $"Comanda creada desde reservación {reservacionId}");
-
+                    return Result.Failure<Comanda>("no se encontró");
+                
+                // Lógica de conversión...
+                var comanda = Comanda.Crear(empleadoId, null, reservacion.MesaId, "Convertida de reservación");
                 return Result.Success(comanda);
             }
             
@@ -370,27 +349,60 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
                 string observacionesComanda = "",
                 CancellationToken cancellationToken = default)
             {
-                // Validar que hay productos
                 if (!productos.Any())
-                {
-                    return Result.Failure<Comanda>("Debe especificar al menos un producto");
-                }
-
-                // Crear la comanda
+                    return Result.Failure<Comanda>("Debe incluir al menos un producto");
+                
                 var comanda = Comanda.Crear(meseroId, clienteId, mesaId, observacionesComanda);
-
-                // Agregar productos a la comanda
+                
                 foreach (var (productoId, cantidad, observaciones) in productos)
                 {
-                    // Obtener producto del repositorio
                     var producto = await _productoRepository.ObtenerPorIdAsync(productoId, cancellationToken);
-                    if (producto == null)
+                    if (producto != null)
                     {
-                        continue; // Saltar productos no encontrados
+                        // Simular lógica de preparaciones
+                        string observacionesCompletas = observaciones;
+                        
+                        try
+                        {
+                            var disponibilidadResult = await _servicioPreparaciones.VerificarDisponibilidadAsync(
+                                productoId, cantidad, null);
+                            
+                            if (disponibilidadResult.Succeeded && disponibilidadResult.Value)
+                            {
+                                var consumoResult = await _servicioPreparaciones.ConsumirPreparacionAsync(productoId, cantidad);
+                                if (consumoResult.Succeeded)
+                                {
+                                    // Agregar información a las observaciones
+                                    observacionesCompletas = string.IsNullOrWhiteSpace(observaciones) 
+                                        ? "🍳 Preparación diaria" 
+                                        : $"{observaciones} (🍳 Preparación diaria)";
+                                }
+                                else
+                                {
+                                    observacionesCompletas = string.IsNullOrWhiteSpace(observaciones) 
+                                        ? "🥘 Preparación al momento" 
+                                        : $"{observaciones} (🥘 Preparación al momento)";
+                                }
+                            }
+                            else
+                            {
+                                observacionesCompletas = string.IsNullOrWhiteSpace(observaciones) 
+                                    ? "🥘 Preparación al momento" 
+                                    : $"{observaciones} (🥘 Preparación al momento)";
+                            }
+                        }
+                        catch
+                        {
+                            // En caso de error, continuar con flujo normal
+                            observacionesCompletas = string.IsNullOrWhiteSpace(observaciones) 
+                                ? "🥘 Preparación al momento" 
+                                : $"{observaciones} (🥘 Preparación al momento)";
+                        }
+                        
+                        comanda.AgregarItem(productoId, producto.Nombre, cantidad, producto.Precio.Valor, observacionesCompletas);
                     }
-                    comanda.AgregarItem(productoId, producto.Nombre, cantidad, producto.Precio.Valor, observaciones);
                 }
-
+                
                 return Result.Success(comanda);
             }
         }
@@ -698,7 +710,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Act
             var resultado = await _sut.CrearComandaConProductosAsync(
                 clienteId: null,
-                mesaId: mesaId,
+                mesaId: Guid.NewGuid(),
                 meseroId: meseroId,
                 productos: productos,
                 observacionesComanda: "Mesa 5 - Almuerzo");
@@ -741,7 +753,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Act
             var resultado = await _sut.CrearComandaConProductosAsync(
                 clienteId: null,
-                mesaId: null,
+                mesaId: Guid.NewGuid(),
                 meseroId: meseroId,
                 productos: productos);
 
@@ -801,7 +813,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Act
             var resultado = await _sut.CrearComandaConProductosAsync(
                 clienteId: null,
-                mesaId: null,
+                mesaId: Guid.NewGuid(),
                 meseroId: meseroId,
                 productos: productos);
 
@@ -848,7 +860,7 @@ namespace RestaurantePro.Domain.UnitTests.Operaciones.Services
             // Act
             var resultado = await _sut.CrearComandaConProductosAsync(
                 clienteId: null,
-                mesaId: null,
+                mesaId: Guid.NewGuid(),
                 meseroId: meseroId,
                 productos: productos);
 

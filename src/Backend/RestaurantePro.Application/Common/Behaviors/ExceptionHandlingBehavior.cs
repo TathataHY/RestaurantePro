@@ -16,6 +16,9 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
 
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
+        var requestId = Guid.NewGuid();
+        var requestName = typeof(TRequest).Name;
+        
         try
         {
             var result = await next();
@@ -43,8 +46,15 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error no manejado en el handler: {Message}", ex.Message);
-            throw;
+            // Mapear la excepción a una excepción de aplicación apropiada
+            var mappedException = MapDomainExceptionToApplicationException(ex, requestName, requestId);
+            
+            // Loggear el error con el RequestId
+            _logger.LogError(ex, "Error no controlado en {RequestName} (ID: {RequestId}): {Message}", 
+                requestName, requestId, ex.Message);
+            
+            // Lanzar la excepción mapeada
+            throw mappedException;
         }
     }
 
