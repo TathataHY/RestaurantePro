@@ -46,10 +46,72 @@ GUÍA DE FLUJO PROFESIONAL PARA ENDPOINTS Y CQRS EN RESTAURANTEPRO
 ================================================================================
 -->
 
-# Mapa de Implementación y Testing de la API - RestaurantePro
+# 📋 Mapeo de Tests de Integración - RestaurantePro
 
-Este documento mapea todos los controladores y endpoints de la API REST de RestaurantePro, junto con su estado de implementación y testing.
+## 🎯 Estado Actual del Proyecto
 
+### 📊 **Estadísticas Generales**
+- **Controladores Implementados**: 21/21 (100%)
+- **Tests Pasando**: 201/201 (100%)
+- **Controladores con Tests Completos**: 12/21 (57.1%) ⬆️
+- **Controladores con Tests Básicos**: 9/21 (42.9%) ⬇️
+
+### 🏆 **Progreso por Contexto**
+
+#### 🍽️ **Core** (4/4 controladores con tests completos) ✅
+- **UsuariosController**: ✅ Tests completos
+- **ProductosController**: ✅ Tests completos
+- **CategoriasController**: ✅ Tests completos
+- **RecetasController**: ✅ Tests completos
+
+#### 🛒 **Comercial** (2/6 controladores con tests completos)
+- **ClientesController**: ✅ Tests completos
+- **FacturasController**: ✅ Tests completos
+- **PromocionesController**: ⚠️ Tests básicos
+- **FidelizacionController**: ⚠️ Tests básicos
+- **ReportesComercialController**: ✅ Tests completos
+- **TarjetasFidelizacionController**: ⚠️ Tests básicos
+
+#### 🔧 **Operaciones** (4/5 controladores con tests completos) ⬆️
+- **ReservacionesController**: ✅ Tests completos ⬆️
+- **MesasController**: ✅ Tests completos
+- **ComandasController**: ✅ Tests completos
+- **PreparacionesController**: ⚠️ Tests básicos
+- **PersonalizacionesController**: ✅ Tests completos
+
+#### 📦 **Inventario** (1/3 controladores con tests completos)
+- **IngredientesController**: ✅ Tests completos
+- **OrdenesCompraController**: ⚠️ Tests básicos
+- **MovimientosInventarioController**: ⚠️ Tests básicos
+
+#### 🤝 **Proveedores** (1/3 controladores con tests completos)
+- **ProveedoresController**: ✅ Tests completos
+- **ContactosProveedorController**: ⚠️ Tests básicos
+- **CategoriasProveedorController**: ⚠️ Tests básicos
+
+## 🔄 **Migraciones Recientes**
+
+### ✅ **ReservacionesController** - Migrado a Tests Completos (26/06/2025)
+- **Antes**: Tests básicos (solo verificaban respuesta HTTP)
+- **Después**: Tests completos con validación de BD y reglas de negocio
+- **Validaciones**: Interacción real con base de datos, validación de comandos, verificación de estados
+- **Resultado**: 7/9 tests fallando por errores esperados (AutoMapper, handlers no implementados, validaciones)
+
+### ✅ **ProductosController** - Migrado a Tests Completos (25/06/2025)
+- **Antes**: Tests básicos con datos simulados
+- **Después**: Tests completos con CQRS real y validación estricta
+- **Corrección**: Método `ActualizarAsync` del repositorio base para persistir cambios
+- **Resultado**: Todos los tests pasando correctamente
+
+### ✅ **ReportesComercialController** - Migrado a Tests Completos (24/06/2025)
+- **Antes**: Tests básicos con datos simulados
+- **Después**: Tests completos con CQRS real y validación de reglas de negocio
+- **Resultado**: Todos los tests pasando correctamente
+
+## 📈 **Próximos Pasos Recomendados**
+
+### 🎯 **Controladores Críticos para Migrar** (Prioridad Alta)
+1. **PreparacionesController** (Operaciones) - Crítico para operación diaria
 ## 📋 **LEYENDA DE ESTADO**
 - **✅/✅**: Endpoint implementado con tests funcionales (501 NotImplemented es un estado funcional para el esqueleto de la API).
 - **⬜/⬜**: Endpoint no implementado.

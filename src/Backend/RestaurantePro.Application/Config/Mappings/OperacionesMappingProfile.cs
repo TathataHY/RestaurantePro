@@ -8,6 +8,7 @@ using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
+using RestaurantePro.Domain.Comercial.Clientes.Entities;
 
 namespace RestaurantePro.Application.Config.Mappings;
 
@@ -23,8 +24,7 @@ public class OperacionesMappingProfile : Profile
         ConfigurarMapeosItemComanda();
         ConfigurarMapeosMesa();
         ConfigurarMapeosPreparacion();
-        // TODO: Uncomment when Mesa and Reservacion DTOs are created
-        // ConfigurarMapeosReservacion();
+        ConfigurarMapeosReservacion();
     }
 
     /// <summary>
@@ -185,19 +185,52 @@ public class OperacionesMappingProfile : Profile
     /// <summary>
     /// Configura los mapeos para Reservacion
     /// </summary>
-    /*
     private void ConfigurarMapeosReservacion()
     {
+        // Cliente → ClienteReservacionDto
+        CreateMap<RestaurantePro.Domain.Comercial.Clientes.Entities.Cliente, ClienteReservacionDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.NombreCompleto, opt => opt.MapFrom(src => src.Nombre.NombreCompleto))
+            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.Value))
+            .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono.Value))
+            .ForMember(dest => dest.NivelFidelizacion, opt => opt.MapFrom(src => src.Segmento.ToString()))
+            .ForMember(dest => dest.ReservacionesPrevias, opt => opt.MapFrom(src => src.CantidadVisitas))
+            .ForMember(dest => dest.Preferencias, opt => opt.MapFrom(src => new List<string>())); // Valor por defecto
+
         // Reservacion → ReservacionDto
         CreateMap<Reservacion, ReservacionDto>()
-            .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => src.Estado.ToString()))
-            .ForMember(dest => dest.NombreCliente, opt => opt.MapFrom(src => src.Cliente != null ? $"{src.Cliente.Nombre} {src.Cliente.Apellido}".Trim() : src.NombreContacto))
-            .ForMember(dest => dest.NumeroMesa, opt => opt.MapFrom(src => src.Mesa != null ? src.Mesa.Numero : (int?)null));
+            .ForMember(dest => dest.NombreCliente, opt => opt.MapFrom(src => 
+                src.Cliente != null ? src.Cliente.Nombre.NombreCompleto : string.Empty))
+            .ForMember(dest => dest.FechaHoraReservacion, opt => opt.MapFrom(src => src.Fecha.Add(src.Hora)))
+            .ForMember(dest => dest.NumeroPersonas, opt => opt.MapFrom(src => src.CantidadPersonas))
+            .ForMember(dest => dest.SolicitudesEspeciales, opt => opt.MapFrom(src => src.Observaciones))
+            .ForMember(dest => dest.MesaId, opt => opt.MapFrom(src => src.MesaId))
+            .ForMember(dest => dest.CodigoReservacion, opt => opt.MapFrom(src => src.Id.ToString()))
+            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
+            .ForMember(dest => dest.DuracionEstimada, opt => opt.MapFrom(src => (int?)src.DuracionEstimada.TotalMinutes))
+            .ForMember(dest => dest.EstaConfirmada, opt => opt.MapFrom(src => src.Estado == EstadoReservacion.Confirmada))
+            .ForMember(dest => dest.PuntosFidelizacionAcumulados, opt => opt.MapFrom(src => 0)) // Valor por defecto
+            .ForMember(dest => dest.Canal, opt => opt.MapFrom(src => "Web")) // Valor por defecto
+            .ForMember(dest => dest.Prioridad, opt => opt.MapFrom(src => "Normal")) // Valor por defecto
+            .ForMember(dest => dest.AceptaListaEspera, opt => opt.MapFrom(src => true)) // Valor por defecto
+            .ForMember(dest => dest.RestriccionesAlimentarias, opt => opt.MapFrom(src => new List<string>())) // Valor por defecto
+            .ForMember(dest => dest.ServiciosAdicionales, opt => opt.MapFrom(src => new List<ServicioAdicionalDto>())) // Valor por defecto
+            .ForMember(dest => dest.HistorialEstados, opt => opt.MapFrom(src => new List<HistorialEstadoDto>())) // Valor por defecto
+            .ForMember(dest => dest.Recordatorios, opt => opt.MapFrom(src => new List<RecordatorioDto>())); // Valor por defecto
 
         // ReservacionCreateDto → CrearReservacionCommand (DTO de entrada a comando)
         CreateMap<ReservacionCreateDto, CrearReservacionCommand>();
+
+        // Mesa → MesaReservacionDto
+        CreateMap<RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa, MesaReservacionDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.Numero, opt => opt.MapFrom(src => src.Numero.ToString()))
+            .ForMember(dest => dest.Capacidad, opt => opt.MapFrom(src => src.Capacidad))
+            .ForMember(dest => dest.Area, opt => opt.MapFrom(src => src.Ubicacion))
+            .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.GetType().Name)) // Ajustar si hay propiedad específica
+            .ForMember(dest => dest.Caracteristicas, opt => opt.MapFrom(src => new List<string>())) // Valor por defecto
+            .ForMember(dest => dest.Ubicacion, opt => opt.MapFrom(src => src.Ubicacion));
     }
-    */
 
     /// <summary>
     /// Mapea el estado de la comanda a texto amigable

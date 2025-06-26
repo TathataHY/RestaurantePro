@@ -42,9 +42,31 @@ public class ActualizarReservacionHandler : IRequestHandler<ActualizarReservacio
                 return Result.Failure<ReservacionDto>("No se puede actualizar una reservación cancelada");
             }
 
-            // Actualizar propiedades usando los métodos de la entidad
-            // Nota: Las propiedades de la entidad Reservacion son de solo lectura,
-            // por lo que necesitamos usar métodos específicos para actualizarlas
+            // NOTA: Según el diseño del dominio, las propiedades de fecha, hora, 
+            // cantidad de personas y observaciones son INMUTABLES una vez creada la reservación.
+            // Solo se pueden actualizar la mesa y el estado.
+            
+            // Actualizar mesa si se proporcionó
+            if (request.MesaId.HasValue && request.MesaId.Value != Guid.Empty && request.MesaId.Value != reservacion.MesaId)
+            {
+                try
+                {
+                    reservacion.CambiarMesa(request.MesaId.Value);
+                    _logger.LogInformation("Mesa actualizada de {MesaAnterior} a {MesaNueva}", reservacion.MesaId, request.MesaId.Value);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _logger.LogWarning("No se pudo cambiar la mesa: {Error}", ex.Message);
+                    return Result.Failure<ReservacionDto>($"No se pudo cambiar la mesa: {ex.Message}");
+                }
+            }
+            
+            // Log de propiedades que no se pueden actualizar (para información del desarrollador)
+            if (request.FechaReservacion != default || request.HoraReservacion != default || request.NumeroPersonas > 0 || !string.IsNullOrWhiteSpace(request.Observaciones))
+            {
+                _logger.LogInformation("⚠️ Propiedades solicitadas para actualización pero no implementadas en el dominio: Fecha={Fecha}, Hora={Hora}, Personas={Personas}, Observaciones={Observaciones}", 
+                    request.FechaReservacion, request.HoraReservacion, request.NumeroPersonas, request.Observaciones);
+            }
             
             // Guardar cambios
             await _reservacionRepository.ActualizarAsync(reservacion, cancellationToken);

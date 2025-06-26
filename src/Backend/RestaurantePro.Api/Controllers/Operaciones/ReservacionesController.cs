@@ -153,7 +153,45 @@ public class ReservacionesController : ControllerBase
     {
         _logger.LogInformation("🗑️ DELETE /api/operaciones/reservaciones/{Id}", id);
 
-        var command = new CancelarReservacionCommand { Id = id };
+        // Crear comando por defecto para DELETE
+        var command = new CancelarReservacionCommand
+        {
+            Id = id,
+            ReservacionId = id,
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = "Cancelación solicitada por el usuario",
+            NotificarCliente = true,
+            LiberarMesaInmediatamente = true
+        };
+        
+        var result = await _mediator.Send(command);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { result.Error ?? "Error desconocido" }, "Error al cancelar reservación", StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<ReservacionDto>.SuccessResponse(
+            result.Value, "Reservación cancelada exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Cancela una reservación con datos específicos
+    /// </summary>
+    [HttpPost("{id:guid}/cancelar")]
+    [ProducesResponseType(typeof(ApiResponse<ReservacionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<ReservacionDto>>> CancelarReservacionConComando(Guid id, [FromBody] CancelarReservacionCommand command)
+    {
+        _logger.LogInformation("🗑️ POST /api/operaciones/reservaciones/{Id}/cancelar", id);
+
+        // Asignar el ID de la URL al comando
+        command.Id = id;
+        command.ReservacionId = id;
+        
         var result = await _mediator.Send(command);
         
         if (!result.Succeeded)
@@ -174,11 +212,14 @@ public class ReservacionesController : ControllerBase
     [HttpPost("{id:guid}/confirmar")]
     [ProducesResponseType(typeof(ApiResponse<ReservacionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<ReservacionDto>>> ConfirmarReservacion(Guid id)
+    public async Task<ActionResult<ApiResponse<ReservacionDto>>> ConfirmarReservacion(Guid id, [FromBody] ConfirmarReservacionCommand command)
     {
         _logger.LogInformation("✅ POST /api/operaciones/reservaciones/{Id}/confirmar", id);
 
-        var command = new ConfirmarReservacionCommand { Id = id };
+        // Asignar el id de la URL a ambas propiedades para compatibilidad
+        command.Id = id;
+        command.ReservacionId = id;
+        
         var result = await _mediator.Send(command);
         
         if (!result.Succeeded)

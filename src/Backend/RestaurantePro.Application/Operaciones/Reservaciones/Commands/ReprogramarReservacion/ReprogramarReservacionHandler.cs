@@ -50,23 +50,39 @@ public class ReprogramarReservacionHandler : IRequestHandler<ReprogramarReservac
                 return Result.Failure<ReservacionDto>("No se puede reprogramar una reservación confirmada y pasada");
             }
 
-            // Actualizar fecha y hora usando los métodos de la entidad
-            // Nota: Las propiedades de la entidad Reservacion son de solo lectura,
-            // por lo que necesitamos usar métodos específicos para actualizarlas
+            // NOTA: Según el diseño del dominio, las propiedades de fecha y hora son INMUTABLES.
+            // Para "reprogramar" una reservación, debemos:
+            // 1. Cancelar la reservación existente
+            // 2. Crear una nueva reservación con la nueva fecha/hora
             
-            // Cambiar estado a Pendiente si estaba confirmada
-            if (reservacion.Estado == EstadoReservacion.Confirmada)
-            {
-                // Nota: El estado también es de solo lectura, necesitamos usar métodos específicos
-            }
-
-            // Guardar cambios
+            // Cancelar la reservación existente
+            reservacion.Cancelar($"Reprogramada: {request.MotivoReprogramacion}");
+            
+            // Crear una nueva reservación con la nueva fecha/hora
+            var nuevaFechaHora = request.NuevaFechaReservacion.Add(request.NuevaHoraReservacion);
+            var nuevaReservacion = Reservacion.Crear(
+                mesaId: reservacion.MesaId,
+                clienteId: reservacion.ClienteId,
+                fecha: nuevaFechaHora,
+                duracionEstimada: reservacion.DuracionEstimada,
+                cantidadPersonas: request.NuevoNumeroPersonas ?? reservacion.CantidadPersonas,
+                telefono: reservacion.Telefono,
+                email: reservacion.Email,
+                observaciones: !string.IsNullOrWhiteSpace(request.MotivoReprogramacion) 
+                    ? $"Reprogramada: {request.MotivoReprogramacion}" 
+                    : reservacion.Observaciones
+            );
+            
+            // Guardar la nueva reservación
+            await _reservacionRepository.AgregarAsync(nuevaReservacion, cancellationToken);
+            
+            // Guardar cambios de la reservación cancelada
             await _reservacionRepository.ActualizarAsync(reservacion, cancellationToken);
 
-            _logger.LogInformation("✅ Reservación reprogramada exitosamente: {ReservacionId} - Nueva fecha: {Fecha}", 
-                request.Id, request.NuevaFechaReservacion);
+            _logger.LogInformation("✅ Reservación reprogramada exitosamente: {ReservacionId} -> {NuevaReservacionId} - Nueva fecha: {Fecha}", 
+                request.Id, nuevaReservacion.Id, nuevaFechaHora);
 
-            var reservacionDto = _mapper.Map<ReservacionDto>(reservacion);
+            var reservacionDto = _mapper.Map<ReservacionDto>(nuevaReservacion);
             return Result.Success(reservacionDto);
         }
         catch (Exception ex)

@@ -52,18 +52,18 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
             // Verificar si se solicitó cancelación
             cancellationToken.ThrowIfCancellationRequested();
             
-            _logger.LogInformation("Iniciando cancelación de reservación {ReservacionId}", request.ReservacionId);
+            _logger.LogInformation("Iniciando cancelación de reservación {ReservacionId}", request.Id);
 
             // Buscar la reservación
             var reservacion = await _context.Reservaciones
                 .Include(r => r.Cliente)
                 .Include(r => r.Mesa)
-                .FirstOrDefaultAsync(r => r.Id == request.ReservacionId, cancellationToken);
+                .FirstOrDefaultAsync(r => r.Id == request.Id, cancellationToken);
 
             if (reservacion == null)
             {
-                _logger.LogWarning("Reservación {ReservacionId} no encontrada", request.ReservacionId);
-                return Result.Failure($"La reservación con ID {request.ReservacionId} no fue encontrada").ToGeneric<ReservacionDto>();
+                _logger.LogWarning("Reservación {ReservacionId} no encontrada", request.Id);
+                return Result.Failure($"La reservación con ID {request.Id} no fue encontrada").ToGeneric<ReservacionDto>();
             }
 
             // Intentar cancelar la reservación
@@ -116,13 +116,13 @@ public class CancelarReservacionHandler : IRequestHandler<CancelarReservacionCom
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning(ex, "Error al cancelar reservación {ReservacionId}: {Error}", request.ReservacionId, ex.Message);
+                _logger.LogWarning(ex, "Error al cancelar reservación {ReservacionId}: {Error}", request.Id, ex.Message);
                 return Result.Failure(ex.Message).ToGeneric<ReservacionDto>();
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Error inesperado al cancelar reservación {ReservacionId}: {Error}", request.ReservacionId, ex.Message);
+            _logger.LogError(ex, "Error inesperado al cancelar reservación {ReservacionId}: {Error}", request.Id, ex.Message);
             return Result.Failure($"Error al cancelar la reservación: {ex.Message}").ToGeneric<ReservacionDto>();
         }
     }

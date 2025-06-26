@@ -207,6 +207,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
             // 🔧 REGISTRAR SERVICIOS DE INFRAESTRUCTURA
             services.AddScoped<IEmailService, TestEmailService>();
+            services.AddScoped<ICommunicationService, CommunicationService>();
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserService, TestCurrentUserService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();

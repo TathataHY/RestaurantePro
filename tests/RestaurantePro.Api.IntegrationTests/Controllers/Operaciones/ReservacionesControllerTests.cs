@@ -3,200 +3,395 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using RestaurantePro.Api.Common;
 using RestaurantePro.Api.IntegrationTests.TestBase;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
+using RestaurantePro.Domain.Comercial.Clientes;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands.CrearReservacion;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ActualizarReservacion;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ReprogramarReservacion;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands.CancelarReservacion;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ConfirmarReservacion;
+using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
+using RestaurantePro.Application.Operaciones.Reservaciones.Queries.VerificarDisponibilidad;
+using RestaurantePro.Application.Common.Models;
+using System.Text.Json;
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 
 namespace RestaurantePro.Api.IntegrationTests.Controllers.Operaciones;
 
 /// <summary>
-/// Tests de integración para ReservacionesController
-/// Valida todos los endpoints REST del controlador de reservaciones del restaurante
+/// Tests de integración completos para el controlador de reservaciones.
+/// Valida interacción real con BD y reglas de negocio específicas.
 /// </summary>
 [Collection("Sequential")]
-public class ReservacionesControllerTests : ApiIntegrationTestBase, IDisposable
+public class ReservacionesControllerTests : ApiIntegrationTestBase
 {
-    private readonly TestWebApplicationFactory _factory;
-
-    public ReservacionesControllerTests() : base(new TestWebApplicationFactory())
+    public ReservacionesControllerTests(TestWebApplicationFactory factory) : base(factory)
     {
-        _factory = (TestWebApplicationFactory)Factory;
     }
 
     [Fact]
-    public async Task GetReservaciones_DebeRetornarRespuestaValida()
+    public async Task GetReservaciones_ConDatosExistentes_RetornaListaPaginada()
     {
+        // Arrange
+        await using var context = CreateNewDbContext();
+        
+        // Crear datos de prueba
+        var cliente = CrearClienteTest("reservaciones");
+        var mesa = CrearMesaTest("reservaciones");
+        var reservacion = CrearReservacionTest(cliente.Id, mesa.Id, "reservaciones");
+        
+        context.Clientes.Add(cliente);
+        context.Mesas.Add(mesa);
+        context.Reservaciones.Add(reservacion);
+        await context.SaveChangesAsync();
+
         // Act
         var response = await HttpClient.GetAsync("/api/operaciones/reservaciones");
 
         // Assert
-        response.Should().NotBeNull();
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-        }
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var apiResponse = await DeserializarResponse<PaginatedList<ReservacionDto>>(response);
+        apiResponse.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data!.Items.Should().NotBeEmpty();
+        apiResponse.Data.Items.Should().Contain(r => r.Id == reservacion.Id);
     }
 
     [Fact]
-    public async Task GetReservaciones_ConParametrosFiltro_DebeRetornarRespuestaValida()
+    public async Task GetReservacionPorId_ConReservacionExistente_RetornaReservacion()
     {
         // Arrange
-        var clienteId = Guid.NewGuid();
-        var mesaId = Guid.NewGuid();
-        var fechaDesde = DateTime.Now.AddDays(-7);
-        var fechaHasta = DateTime.Now.AddDays(7);
-        var url = $"/api/operaciones/reservaciones?estado=Confirmada&clienteId={clienteId}&mesaId={mesaId}&fechaDesde={fechaDesde:yyyy-MM-dd}&fechaHasta={fechaHasta:yyyy-MM-dd}";
+        await using var context = CreateNewDbContext();
+        
+        var cliente = CrearClienteTest("get");
+        var mesa = CrearMesaTest("get");
+        var reservacion = CrearReservacionTest(cliente.Id, mesa.Id, "get");
+        
+        context.Clientes.Add(cliente);
+        context.Mesas.Add(mesa);
+        context.Reservaciones.Add(reservacion);
+        await context.SaveChangesAsync();
 
         // Act
-        var response = await HttpClient.GetAsync(url);
+        var response = await HttpClient.GetAsync($"/api/operaciones/reservaciones/{reservacion.Id}");
 
         // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.NotImplemented, HttpStatusCode.OK, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var apiResponse = await DeserializarResponse<ReservacionDto>(response);
+        apiResponse.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data!.Id.Should().Be(reservacion.Id);
+        apiResponse.Data.ClienteId.Should().Be(cliente.Id);
+        apiResponse.Data.MesaId.Should().Be(mesa.Id);
+    }
+
+    [Fact]
+    public async Task GetReservacionPorId_ConReservacionInexistente_RetornaNotFound()
+    {
+        // Arrange
+        var idInexistente = Guid.NewGuid();
+
+        // Act
+        var response = await HttpClient.GetAsync($"/api/operaciones/reservaciones/{idInexistente}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var apiResponse = await DeserializarResponse<ApiResponse<object>>(response);
+        apiResponse.Should().NotBeNull();
+        apiResponse.Success.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CrearReservacion_ConDatosValidos_RetornaReservacionCreada()
+    {
+        // Arrange
+        await using var context = CreateNewDbContext();
+        
+        var cliente = CrearClienteTest("crear");
+        var mesa = CrearMesaTest("crear");
+        
+        context.Clientes.Add(cliente);
+        context.Mesas.Add(mesa);
+        await context.SaveChangesAsync();
+
+        var command = new CrearReservacionCommand
+        {
+            ClienteId = cliente.Id,
+            MesaId = mesa.Id,
+            FechaHoraReservacion = DateTime.Now.AddDays(1).Date.AddHours(19), // 7:00 PM mañana
+            NumeroPersonas = 4,
+            NombreCliente = "Cliente Test",
+            TelefonoContacto = "1234567890",
+            Email = "cliente@test.com",
+            Observaciones = "Mesa junto a la ventana",
+            Canal = "Web"
+        };
+
+        // Act
+        var response = await HttpClient.PostAsJsonAsync("/api/operaciones/reservaciones", command);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var apiResponse = await DeserializarResponse<ReservacionDto>(response);
+        apiResponse.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data!.Id.Should().NotBeEmpty();
+        apiResponse.Data.FechaHoraReservacion.Should().Be(command.FechaHoraReservacion);
+        apiResponse.Data.NumeroPersonas.Should().Be(command.NumeroPersonas);
+    }
+
+    [Fact]
+    public async Task ActualizarReservacion_ConDatosValidos_RetornaReservacionActualizada()
+    {
+        // Arrange
+        await using var context = CreateNewDbContext();
+        
+        var cliente = CrearClienteTest("actualizar");
+        var mesa = CrearMesaTest("actualizar");
+        var mesaNueva = CrearMesaTest("actualizar-nueva");
+        var reservacion = CrearReservacionTest(cliente.Id, mesa.Id, "actualizar");
+        
+        context.Clientes.Add(cliente);
+        context.Mesas.Add(mesa);
+        context.Mesas.Add(mesaNueva);
+        context.Reservaciones.Add(reservacion);
+        await context.SaveChangesAsync();
+
+        var command = new ActualizarReservacionCommand
+        {
+            Id = reservacion.Id,
+            MesaId = mesaNueva.Id,
+            Observaciones = "Reservación actualizada para mesa más grande"
+        };
+
+        // Act
+        var response = await HttpClient.PutAsJsonAsync($"/api/operaciones/reservaciones/{reservacion.Id}", command);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var apiResponse = await DeserializarResponse<ReservacionDto>(response);
+        apiResponse.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data!.Id.Should().Be(reservacion.Id);
+        apiResponse.Data.MesaId.Should().Be(mesaNueva.Id);
+        apiResponse.Data.Observaciones.Should().Be("Reservación actualizada para mesa más grande");
+    }
+
+    [Fact]
+    public async Task CancelarReservacion_ConReservacionExistente_RetornaReservacionCancelada()
+    {
+        // Arrange
+        await using var context = CreateNewDbContext();
+        
+        var cliente = CrearClienteTest("cancelar");
+        var mesa = CrearMesaTest("cancelar");
+        var reservacion = CrearReservacionTest(cliente.Id, mesa.Id, "cancelar");
+        
+        context.Clientes.Add(cliente);
+        context.Mesas.Add(mesa);
+        context.Reservaciones.Add(reservacion);
+        await context.SaveChangesAsync();
+
+        // Crear comando con los datos requeridos por el validador
+        var command = new CancelarReservacionCommand
+        {
+            Id = reservacion.Id,
+            ReservacionId = reservacion.Id,
+            Motivo = MotivoCancelacion.ClienteSolicita,
+            MotivoDetalle = "Cliente canceló por cambio de planes",
+            NotificarCliente = true,
+            LiberarMesaInmediatamente = true
+        };
+
+        // Act - Usar POST en lugar de DELETE para enviar el comando con datos
+        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/reservaciones/{reservacion.Id}/cancelar", command);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var apiResponse = await DeserializarResponse<ReservacionDto>(response);
+        apiResponse.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data!.Id.Should().Be(reservacion.Id);
+        apiResponse.Data.Estado.Should().Be(EstadoReservacion.Cancelada);
+    }
+
+    [Fact]
+    public async Task ConfirmarReservacion_ConReservacionPendiente_RetornaReservacionConfirmada()
+    {
+        // Arrange
+        await using var context = CreateNewDbContext();
+        
+        var cliente = CrearClienteTest("confirmar");
+        var mesa = CrearMesaTest("confirmar");
+        var reservacion = CrearReservacionTest(cliente.Id, mesa.Id, "confirmar");
+        
+        context.Clientes.Add(cliente);
+        context.Mesas.Add(mesa);
+        context.Reservaciones.Add(reservacion);
+        await context.SaveChangesAsync();
+
+        var command = new ConfirmarReservacionCommand
+        {
+            ReservacionId = reservacion.Id,
+            MetodoConfirmacion = "Manual",
+            ConfirmadoPor = "Empleado Test",
+            NotasConfirmacion = "Confirmación realizada por empleado"
+        };
+
+        // Act
+        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/reservaciones/{reservacion.Id}/confirmar", command);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var apiResponse = await DeserializarResponse<ReservacionDto>(response);
+        apiResponse.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data!.Id.Should().Be(reservacion.Id);
+        apiResponse.Data.Estado.Should().Be(EstadoReservacion.Confirmada);
+
+        // Verificar en la BD
+        context.ChangeTracker.Clear();
+        var reservacionConfirmada = await context.Reservaciones.FindAsync(reservacion.Id);
+        reservacionConfirmada.Should().NotBeNull();
+        reservacionConfirmada!.Estado.Should().Be(EstadoReservacion.Confirmada);
+    }
+
+    [Fact]
+    public async Task ReprogramarReservacion_ConReservacionExistente_RetornaReservacionReprogramada()
+    {
+        // Arrange
+        await using var context = CreateNewDbContext();
+        
+        var cliente = CrearClienteTest("reprogramar");
+        var mesa = CrearMesaTest("reprogramar");
+        var reservacion = CrearReservacionTest(cliente.Id, mesa.Id, "reprogramar");
+        
+        context.Clientes.Add(cliente);
+        context.Mesas.Add(mesa);
+        context.Reservaciones.Add(reservacion);
+        await context.SaveChangesAsync();
+
+        var nuevaFecha = DateTime.Now.AddDays(3);
+        var nuevaHora = TimeSpan.FromHours(21);
+        var command = new ReprogramarReservacionCommand
+        {
+            Id = reservacion.Id,
+            NuevaFechaReservacion = nuevaFecha,
+            NuevaHoraReservacion = nuevaHora,
+            NuevoNumeroPersonas = 8,
+            MotivoReprogramacion = "Cliente solicitó cambio"
+        };
+
+        // Act
+        var response = await HttpClient.PostAsJsonAsync($"/api/operaciones/reservaciones/{reservacion.Id}/reprogramar", command);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var apiResponse = await DeserializarResponse<ReservacionDto>(response);
+        apiResponse.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data.Id.Should().NotBe(reservacion.Id); // Nueva reservación con ID diferente
+        apiResponse.Data.FechaHoraReservacion.Should().Be(nuevaFecha.Add(nuevaHora));
+        apiResponse.Data.NumeroPersonas.Should().Be(8);
+
+        // Verificar que la reservación original fue cancelada
+        context.ChangeTracker.Clear();
+        var reservacionOriginal = await context.Reservaciones.FindAsync(reservacion.Id);
+        reservacionOriginal.Should().NotBeNull();
+        reservacionOriginal!.Estado.Should().Be(EstadoReservacion.Cancelada);
+        reservacionOriginal.MotivoCancelacion.Should().Contain("Reprogramada");
+
+        // Verificar que se creó la nueva reservación
+        var nuevaReservacion = await context.Reservaciones.FindAsync(apiResponse.Data.Id);
+        nuevaReservacion.Should().NotBeNull();
+        nuevaReservacion!.Fecha.Should().Be(nuevaFecha.Date);
+        nuevaReservacion.Hora.Should().Be(nuevaHora);
+        nuevaReservacion.CantidadPersonas.Should().Be(8);
+    }
+
+    [Fact]
+    public async Task VerificarDisponibilidad_ConParametrosValidos_RetornaDisponibilidad()
+    {
+        // Arrange
+        await using var context = CreateNewDbContext();
+        
+        var mesa = CrearMesaTest("disponibilidad");
+        context.Mesas.Add(mesa);
+        await context.SaveChangesAsync();
+
+        var fecha = DateTime.Now.AddDays(1);
+        var hora = TimeSpan.FromHours(19);
+
+        // Act
+        var response = await HttpClient.GetAsync($"/api/operaciones/reservaciones/disponibilidad?fecha={fecha:yyyy-MM-dd}&hora={hora}&numeroPersonas=4");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var apiResponse = await DeserializarResponse<DisponibilidadDto>(response);
+        apiResponse.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
+        apiResponse.Data!.Disponible.Should().BeTrue();
+        apiResponse.Data.MesasDisponibles.Should().NotBeEmpty();
+    }
+
+    #region Métodos Helper
+
+    private static Cliente CrearClienteTest(string? sufijo = null)
+    {
+        var guid = Guid.NewGuid();
+        var sufijoUnico = sufijo ?? guid.ToString().Substring(0, 8);
+        var nombre = ClienteNombre.Crear($"Cliente{sufijoUnico}", $"Test{sufijoUnico}");
+        var email = Email.Create($"cliente{sufijoUnico}@test.com");
+        var telefono = PhoneNumber.Create("+1234567890");
+        var fechaNacimiento = DateTime.Now.AddYears(-30);
+        
+        return Cliente.Crear(guid, nombre, email, telefono, fechaNacimiento);
+    }
+
+    private static Mesa CrearMesaTest(string? sufijo = null)
+    {
+        var guid = Guid.NewGuid();
+        var sufijoUnico = sufijo ?? guid.ToString().Substring(0, 8);
+        
+        // Generar un número de mesa válido basado en el hash del GUID
+        var numeroMesa = Math.Abs(guid.GetHashCode()) % 100 + 1; // Número entre 1 y 100
+        
+        return Mesa.Crear(
+            numeroMesa,
+            4,
+            $"Ubicación {sufijoUnico}"
+        );
+    }
+
+    private static Reservacion CrearReservacionTest(Guid clienteId, Guid mesaId, string? sufijo = null)
+    {
+        var guid = Guid.NewGuid();
+        var sufijoUnico = sufijo ?? guid.ToString().Substring(0, 8);
+        
+        return Reservacion.Crear(
+            mesaId,
+            clienteId,
+            DateTime.Now.AddDays(1),
+            TimeSpan.FromHours(2),
+            4,
+            "+1234567890",
+            $"reservacion{sufijoUnico}@test.com",
+            $"Observaciones {sufijoUnico}"
+        );
+    }
+
+    private static async Task<ApiResponse<T>> DeserializarResponse<T>(HttpResponseMessage response)
+    {
         var content = await response.Content.ReadAsStringAsync();
-        content.Should().NotBeNullOrEmpty();
-    }
-
-    [Fact]
-    public async Task GetReservacionPorId_DebeRetornarRespuestaValida()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-
-        // Act
-        var response = await HttpClient.GetAsync($"/api/operaciones/reservaciones/{id}");
-
-        // Assert
-        response.Should().NotBeNull();
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
-        
-        if (response.IsSuccessStatusCode)
+        return JsonSerializer.Deserialize<ApiResponse<T>>(content, new JsonSerializerOptions
         {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-        }
+            PropertyNameCaseInsensitive = true
+        }) ?? new ApiResponse<T> { Success = false, Data = default };
     }
 
-    [Fact]
-    public async Task PostReservacion_DebeRetornarRespuestaValida()
-    {
-        // Arrange
-        var reservacion = new { };
-
-        // Act
-        var response = await HttpClient.PostAsJsonAsync("/api/operaciones/reservaciones", reservacion);
-
-        // Assert
-        response.Should().NotBeNull();
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest, HttpStatusCode.NotImplemented, HttpStatusCode.InternalServerError, HttpStatusCode.UnsupportedMediaType);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-        }
-    }
-
-    [Fact]
-    public async Task PutReservacion_DebeRetornarRespuestaValida()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var reservacion = new { };
-
-        // Act
-        var response = await HttpClient.PutAsJsonAsync($"/api/operaciones/reservaciones/{id}", reservacion);
-
-        // Assert
-        response.Should().NotBeNull();
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.BadRequest, HttpStatusCode.NotImplemented, HttpStatusCode.InternalServerError, HttpStatusCode.UnsupportedMediaType);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-        }
-    }
-
-    [Fact]
-    public async Task DeleteReservacion_DebeRetornarRespuestaValida()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-
-        // Act
-        var response = await HttpClient.DeleteAsync($"/api/operaciones/reservaciones/{id}");
-
-        // Assert
-        response.Should().NotBeNull();
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.BadRequest, HttpStatusCode.NotImplemented, HttpStatusCode.InternalServerError);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-        }
-    }
-
-    [Fact]
-    public async Task PostConfirmarReservacion_DebeRetornarRespuestaValida()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-
-        // Act
-        var response = await HttpClient.PostAsync($"/api/operaciones/reservaciones/{id}/confirmar", null);
-
-        // Assert
-        response.Should().NotBeNull();
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.BadRequest, HttpStatusCode.NotImplemented, HttpStatusCode.InternalServerError, HttpStatusCode.UnsupportedMediaType);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-        }
-    }
-
-    [Fact]
-    public async Task PostReprogramarReservacion_DebeRetornarRespuestaValida()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-
-        // Act
-        var response = await HttpClient.PostAsync($"/api/operaciones/reservaciones/{id}/reprogramar", null);
-
-        // Assert
-        response.Should().NotBeNull();
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.BadRequest, HttpStatusCode.NotImplemented, HttpStatusCode.InternalServerError, HttpStatusCode.UnsupportedMediaType);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-        }
-    }
-
-    [Fact]
-    public async Task GetDisponibilidad_DebeRetornarRespuestaValida()
-    {
-        // Act
-        var response = await HttpClient.GetAsync("/api/operaciones/reservaciones/disponibilidad");
-
-        // Assert
-        response.Should().NotBeNull();
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, HttpStatusCode.BadRequest, HttpStatusCode.InternalServerError);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            content.Should().NotBeNullOrEmpty();
-        }
-    }
-
-    public new void Dispose()
-    {
-        _factory?.Dispose();
-        base.Dispose();
-    }
+    #endregion
 } 
