@@ -61,10 +61,10 @@ public class Repository<T> : IRepository<T> where T : class
     /// <summary>
     /// Actualiza una entidad existente
     /// </summary>
-    public virtual Task ActualizarAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual async Task ActualizarAsync(T entity, CancellationToken cancellationToken = default)
     {
         _dbSet.Update(entity);
-        return Task.CompletedTask;
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     /// <summary>

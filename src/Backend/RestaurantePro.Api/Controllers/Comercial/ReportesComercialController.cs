@@ -30,14 +30,14 @@ public class ReportesComercialController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<ReporteVentasDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse<object>), 400)]
     public async Task<IActionResult> ObtenerReporteVentas(
-        [FromQuery] DateTime fechaInicio,
+        [FromQuery] DateTime fechaInicio, 
         [FromQuery] DateTime fechaFin,
         [FromQuery] string? segmento = null,
         [FromQuery] string? tipoVenta = null,
         [FromQuery] bool incluirCanceladas = false)
     {
         try
-        {
+    {
             _logger.LogInformation("📊 Solicitando reporte de ventas desde {FechaInicio} hasta {FechaFin}", 
                 fechaInicio.ToShortDateString(), fechaFin.ToShortDateString());
 
@@ -79,7 +79,7 @@ public class ReportesComercialController : ControllerBase
         [FromQuery] DateTime? fechaRegistroHasta = null)
     {
         try
-        {
+    {
             _logger.LogInformation("👥 Solicitando reporte de clientes");
 
             var query = new ObtenerReporteClientesQuery
@@ -113,13 +113,13 @@ public class ReportesComercialController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<ReporteProductosDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse<object>), 400)]
     public async Task<IActionResult> ObtenerReporteProductos(
-        [FromQuery] DateTime fechaInicio,
+        [FromQuery] DateTime fechaInicio, 
         [FromQuery] DateTime fechaFin,
         [FromQuery] int topProductos = 10,
         [FromQuery] string? categoria = null)
     {
         try
-        {
+    {
             _logger.LogInformation("🍽️ Solicitando reporte de productos desde {FechaInicio} hasta {FechaFin}", 
                 fechaInicio.ToShortDateString(), fechaFin.ToShortDateString());
 
@@ -159,7 +159,7 @@ public class ReportesComercialController : ControllerBase
         [FromQuery] bool soloActivas = true)
     {
         try
-        {
+    {
             _logger.LogInformation("🎯 Solicitando reporte de fidelización desde {FechaInicio} hasta {FechaFin}", 
                 fechaInicio.ToShortDateString(), fechaFin.ToShortDateString());
 
@@ -193,12 +193,12 @@ public class ReportesComercialController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<ReportePromocionesDto>), 200)]
     [ProducesResponseType(typeof(ApiResponse<object>), 400)]
     public async Task<IActionResult> ObtenerReportePromociones(
-        [FromQuery] DateTime fechaInicio,
+        [FromQuery] DateTime fechaInicio, 
         [FromQuery] DateTime fechaFin,
         [FromQuery] bool soloActivas = true)
     {
         try
-        {
+    {
             _logger.LogInformation("🎉 Solicitando reporte de promociones desde {FechaInicio} hasta {FechaFin}", 
                 fechaInicio.ToShortDateString(), fechaFin.ToShortDateString());
 

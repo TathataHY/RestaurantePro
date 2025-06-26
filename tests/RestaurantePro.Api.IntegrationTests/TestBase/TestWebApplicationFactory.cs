@@ -185,6 +185,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
             // 🔧 REGISTRAR REPOSITORIOS CON SQLITE
             services.AddScoped<IProductoRepository, ProductoRepository>();
+            services.AddScoped<IProductoCategoriaRepository, ProductoCategoriaRepository>();
             services.AddScoped<IClienteRepository, ClienteRepository>();
             services.AddScoped<IComandaRepository, ComandaRepository>();
             services.AddScoped<IMesaRepository, MesaRepository>();
