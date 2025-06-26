@@ -201,7 +201,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             var tarjetaEliminada = await _repository.ObtenerPorIdAsync(tarjeta.Id);
             
             tarjetaEliminada.Should().NotBeNull();
-            tarjetaEliminada!.EstaEliminado.Should().BeTrue();
+            tarjetaEliminada!.EstaEliminada.Should().BeTrue();
         }
 
         [Fact]
