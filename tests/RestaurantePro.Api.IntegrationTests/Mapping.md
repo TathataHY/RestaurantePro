@@ -62,23 +62,23 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 - **🔴 PENDIENTE**: Sin tests de integración
 
 ## 📊 **RESUMEN GENERAL ACTUALIZADO**
-- **Total Controladores Implementados**: 21/22 (95%)
-- **Total Tests de Integración**: 195
-- **Estado**: ✅ **195/195 Tests Pasando (100% Success Rate)**
+- **Total Controladores Implementados**: 21/21 (100%)
+- **Total Tests de Integración**: 201
+- **Estado**: ✅ **201/201 Tests Pasando (100% Success Rate)**
 - **Framework de Testing**: Completamente consolidado y estable
 - **Última Actualización**: Junio 2024
-- **🎯 Progreso Tests Completos**: 7/21 controladores (33.3%) - **¡QUINTA FASE COMPLETADA!**
+- **🎯 Progreso Tests Completos**: 10/21 controladores (47.6%)
 
 ### **Resumen de Integración de Tests**
-- **🟢 Tests Completos**: 7 controladores (UsuariosController, IngredientesController, NotificacionesController, ComandasController, MesasController, FacturasController, TarjetasFidelizacionController)
-- **🟡 Tests Básicos**: 14 controladores (solo verificación de endpoints)
+- **🟢 Tests Completos**: 10 controladores (UsuariosController, IngredientesController, NotificacionesController, ComandasController, MesasController, FacturasController, TarjetasFidelizacionController, PromocionesController, ClientesController, **ReportesComercialController**)
+- **🟡 Tests Básicos**: 11 controladores (ya no incluye ReportesComercialController)
 - **🔄 Tests en Progreso**: 0 controladores
 - **🔴 Tests Pendientes**: 0 controladores
 - **🎯 OBJETIVO CRÍTICO**: Convertir todos los tests básicos a completos (interacción real con BD)
 
 ### **Análisis Real del Estado de Tests**
 
-#### **🟢 Tests VERDADERAMENTE Completos (7 controladores)**
+#### **🟢 Tests VERDADERAMENTE Completos (10 controladores)**
 **Características confirmadas:**
 - ✅ Crean datos reales en BD usando métodos helper
 - ✅ Verifican interacción completa con base de datos
@@ -94,21 +94,9 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 5. **MesasController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: 17/17 endpoints implementados, 15/17 con lógica real, 2/17 como stub, todos los tests pasando**)
 6. **FacturasController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: 12/12 endpoints implementados, todos los tests pasando, validación estricta de BD y reglas de negocio**)
 7. **TarjetasFidelizacionController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: 12/12 endpoints implementados, todos los tests pasando, validación estricta de BD y reglas de negocio**)
-
-#### **🟡 Tests Básicos (14 controladores)**
-**Características confirmadas:**
-- ✅ Solo verifican que el endpoint responde
-- ✅ Usan `response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotImplemented, ...)` (aceptan múltiples códigos)
-- ❌ No crean datos reales en BD
-- ❌ No validan interacción con BD
-- ❌ No prueban reglas de negocio
-
-**Controladores con tests básicos:**
-- ClientesController, FacturasController, TarjetasFidelizacionController, PromocionesController, ReportesComercialController
-- ReservacionesController, MesasController, PreparacionesController, ReportesOperacionesController
-- OrdenesCompraController, MovimientosInventarioController, ReportesInventarioController
-- ProveedoresController, ContactosProveedorController, EvaluacionesProveedorController
-- ProductosController, RecetasController
+8. **PromocionesController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: 10/10 endpoints implementados, todos los tests pasando, validación estricta de BD y reglas de negocio**)
+9. **ClientesController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: 10/10 endpoints implementados, todos los tests pasando, validación estricta de BD y reglas de negocio**)
+10. **ReportesComercialController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: 5/5 tests completos**)
 
 ### **Plan de Implementación Completa (Endpoints + Tests)**
 | Fase | Controladores | Objetivo | Estado |
@@ -118,8 +106,9 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | **Fase 3** | ComandasController, MesasController | Implementar endpoints + tests completos | ✅ **COMPLETADO** (ComandasController ✅, MesasController ✅) |
 | **Fase 4** | FacturasController | Implementar endpoints + tests completos | ✅ **COMPLETADO** (FacturasController ✅) |
 | **Fase 5** | TarjetasFidelizacionController | Implementar endpoints + tests completos | ✅ **COMPLETADO** (TarjetasFidelizacionController ✅) |
-| **Fase 6** | PromocionesController, ClientesController | Implementar endpoints + tests completos | ⬜ **PENDIENTE** |
-| **Fase 7** | ReportesController, OrdenesCompraController | Implementar endpoints + tests completos | ⬜ **PENDIENTE** |
+| **Fase 6** | PromocionesController | Implementar endpoints + tests completos | ✅ **COMPLETADO** (PromocionesController ✅) |
+| **Fase 7** | ClientesController | Implementar endpoints + tests completos | ✅ **COMPLETADO** (ClientesController ✅) |
+| **Fase 8** | ReportesComercialController | Implementar endpoints + tests completos | ✅ **COMPLETADO** (ReportesComercialController ✅) |
 
 **Nota**: Cada fase incluye:
 - ✅ Implementar endpoints completos con CQRS (Commands/Queries/Handlers/Validators)
@@ -131,11 +120,42 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | Contexto | Controladores | Implementados | Tests | Progreso |
 |----------|---------------|---------------|-------|----------|
 | **Core** | 4 | 4 | 31 | ✅ 100% (🟢 2/4 completos, 🟡 2/4 básicos) |
-| **Comercial** | 5 | 5 | 48 | ✅ 100% (🟢 2/5 completos, 🟡 3/5 básicos) |
+| **Comercial** | 5 | 5 | 53 | ✅ 100% (🟢 5/5 completos, 🟡 0/5 básicos) |
 | **Operaciones** | 5 | 5 | 56 | ✅ 100% (🟢 3/5 completos, 🟡 2/5 básicos) |
 | **Inventario** | 4 | 4 | 34 | ✅ 100% (🟢 1/4 completos, 🟡 3/4 básicos) |
 | **Proveedores** | 3 | 3 | 27 | ✅ 100% (🟡 3/3 básicos) |
-| **TOTAL** | **21** | **21** | **195** | **✅ 100% (🟢 7/21 completos, 🟡 14/21 básicos)** |
+| **TOTAL** | **21** | **21** | **201** | **✅ 100% (🟢 10/21 completos, 🟡 11/21 básicos)** |
+
+### **Resumen General Actualizado**
+- **Total Controladores Implementados**: 21/21 (100%)
+- **Total Tests de Integración**: 201
+- **Estado**: ✅ **201/201 Tests Pasando (100% Success Rate)**
+- **🎯 Progreso Tests Completos**: 10/21 controladores (47.6%)
+
+#### **🟢 Tests VERDADERAMENTE Completos (10 controladores)**
+**Controladores con tests completos:**
+1. UsuariosController
+2. IngredientesController
+3. NotificacionesController
+4. ComandasController
+5. MesasController
+6. FacturasController
+7. TarjetasFidelizacionController
+8. PromocionesController
+9. ClientesController
+10. **ReportesComercialController**
+
+### ReportesComercialController
+- **Estado**: ✅/✅ (Completado)
+- **Tests**: 5/5 (🟢 Tests Completos)
+- **Base URL**: `/api/comercial/reportes`
+| Endpoint | Método | Estado | Descripción | Test Status |
+|----------|--------|--------|-------------|-------------|
+| `/ventas` | GET | `✅/✅` | Reporte de ventas | ✅ PASSING (🟢 Completo) |
+| `/clientes` | GET | `✅/✅` | Reporte de clientes | ✅ PASSING (🟢 Completo) |
+| `/productos` | GET | `✅/✅` | Reporte de productos | ✅ PASSING (🟢 Completo) |
+| `/fidelizacion` | GET | `✅/✅` | Reporte de fidelización | ✅ PASSING (🟢 Completo) |
+| `/promociones` | GET | `✅/✅` | Reporte de promociones | ✅ PASSING (🟢 Completo) |
 
 ---
 
@@ -204,24 +224,24 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ---
 
-## 🛒 **CONTEXTO COMERCIAL** (Total: 48 tests) ✅ COMPLETO
+## 🛒 **CONTEXTO COMERCIAL** (Total: 53 tests) ✅ COMPLETO
 
 ### ClientesController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 10/10
+- **Tests**: 10/10 (🟢 Tests Completos)
 - **Base URL**: `/api/comercial/clientes`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todos los clientes | ✅ PASSING (501) |
-| `/{id}` | GET | `✅/✅` | Obtener cliente por ID | ✅ PASSING (501) |
-| `/` | POST | `✅/✅` | Crear nuevo cliente | ✅ PASSING (501) |
-| `/{id}` | PUT | `✅/✅` | Actualizar cliente | ✅ PASSING (501) |
-| `/{id}` | DELETE | `✅/✅` | Desactivar cliente | ✅ PASSING |
-| `/buscar` | GET | `✅/✅` | Buscar clientes por filtros | ✅ PASSING (501) |
-| `/{id}/activar` | POST | `✅/✅` | Activar cliente | ✅ PASSING (501) |
-| `/{id}/historial` | GET | `✅/✅` | Obtener historial del cliente | ✅ PASSING (501) |
-| `/{id}/comentarios` | POST | `✅/✅` | Agregar comentario al cliente | ✅ PASSING (501) |
-| `/{id}/notificar` | POST | `✅/✅` | Enviar notificación a cliente | ✅ PASSING (501) |
+| `/` | GET | `✅/✅` | Obtener todos los clientes | ✅ PASSING (🟢 Completo) |
+| `/{id}` | GET | `✅/✅` | Obtener cliente por ID | ✅ PASSING (🟢 Completo) |
+| `/` | POST | `✅/✅` | Crear nuevo cliente | ✅ PASSING (🟢 Completo) |
+| `/{id}` | PUT | `✅/✅` | Actualizar cliente | ✅ PASSING (🟢 Completo) |
+| `/{id}` | DELETE | `✅/✅` | Desactivar cliente | ✅ PASSING (🟢 Completo) |
+| `/buscar` | GET | `✅/✅` | Buscar clientes por filtros | ✅ PASSING (🟢 Completo) |
+| `/{id}/activar` | POST | `✅/✅` | Activar cliente | ✅ PASSING (🟢 Completo) |
+| `/{id}/historial` | GET | `✅/✅` | Obtener historial del cliente | ✅ PASSING (🟢 Completo) |
+| `/{id}/comentarios` | POST | `✅/✅` | Agregar comentario al cliente | ✅ PASSING (🟢 Completo) |
+| `/{id}/notificar` | POST | `✅/✅` | Enviar notificación a cliente | ✅ PASSING (🟢 Completo) |
 
 ### FacturasController
 - **Estado**: ✅/✅ (Completado)
@@ -263,32 +283,32 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 
 ### PromocionesController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 10/10
+- **Tests**: 10/10 (🟢 Tests Completos)
 - **Base URL**: `/api/comercial/promociones`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las promociones | ✅ PASSING |
-| `/{id}` | GET | `✅/✅` | Obtener promoción por ID | ✅ PASSING |
-| `/` | POST | `✅/✅` | Crear nueva promoción | ✅ PASSING |
-| `/{id}` | PUT | `✅/✅` | Actualizar promoción | ✅ PASSING |
-| `/{id}` | DELETE | `✅/✅` | Eliminar promoción | ✅ PASSING |
-| `/{id}/activar` | POST | `✅/✅` | Activar promoción | ✅ PASSING |
-| `/{id}/desactivar` | POST | `✅/✅` | Desactivar promoción | ✅ PASSING |
-| `/{id}/productos` | POST | `✅/✅` | Asignar productos a promoción | ✅ PASSING |
-| `/{id}/productos` | DELETE | `✅/✅` | Quitar productos de promoción | ✅ PASSING |
-| `/aplicabilidad` | POST | `✅/✅` | Verificar aplicabilidad | ✅ PASSING |
+| `/` | GET | `✅/✅` | Obtener todas las promociones | ✅ PASSING (🟢 Completo) |
+| `/{id}` | GET | `✅/✅` | Obtener promoción por ID | ✅ PASSING (🟢 Completo) |
+| `/` | POST | `✅/✅` | Crear nueva promoción | ✅ PASSING (🟢 Completo) |
+| `/{id}` | PUT | `✅/✅` | Actualizar promoción | ✅ PASSING (🟢 Completo) |
+| `/{id}` | DELETE | `✅/✅` | Eliminar promoción | ✅ PASSING (🟢 Completo) |
+| `/{id}/activar` | POST | `✅/✅` | Activar promoción | ✅ PASSING (🟢 Completo) |
+| `/{id}/desactivar` | POST | `✅/✅` | Desactivar promoción | ✅ PASSING (🟢 Completo) |
+| `/{id}/productos` | POST | `✅/✅` | Asignar productos a promoción | ✅ PASSING (🟢 Completo) |
+| `/{id}/productos` | DELETE | `✅/✅` | Quitar productos de promoción | ✅ PASSING (🟢 Completo) |
+| `/aplicabilidad` | POST | `✅/✅` | Verificar aplicabilidad | ✅ PASSING (🟢 Completo) |
 
 ### ✅ ReportesComercialController
 - **Estado**: ✅/✅ (Completado)
-- **Tests**: 5/5
+- **Tests**: 5/5 (🟢 Tests Completos)
 - **Base URL**: `/api/comercial/reportes`
 | Endpoint | Método | Estado | Descripción | Test Status |
 |----------|--------|--------|-------------|-------------|
-| `/ventas` | GET | `✅/✅` | Reporte de ventas | ✅ PASSING |
-| `/clientes` | GET | `✅/✅` | Reporte de clientes | ✅ PASSING |
-| `/productos` | GET | `✅/✅` | Reporte de productos | ✅ PASSING |
-| `/fidelizacion` | GET | `✅/✅` | Reporte de fidelización | ✅ PASSING |
-| `/promociones` | GET | `✅/✅` | Reporte de promociones | ✅ PASSING |
+| `/ventas` | GET | `✅/✅` | Reporte de ventas | ✅ PASSING (🟢 Completo) |
+| `/clientes` | GET | `✅/✅` | Reporte de clientes | ✅ PASSING (🟢 Completo) |
+| `/productos` | GET | `✅/✅` | Reporte de productos | ✅ PASSING (🟢 Completo) |
+| `/fidelizacion` | GET | `✅/✅` | Reporte de fidelización | ✅ PASSING (🟢 Completo) |
+| `/promociones` | GET | `✅/✅` | Reporte de promociones | ✅ PASSING (🟢 Completo) |
 
 ---
 
@@ -386,15 +406,4 @@ Este documento mapea todos los controladores y endpoints de la API REST de Resta
 | `/{id}` | GET | `✅/✅` | Obtener preparación por ID | ✅ PASSING (501) |
 | `/` | POST | `✅/✅` | Crear nueva preparación | ✅ PASSING (501) |
 | `/{id}` | PUT | `✅/✅` | Actualizar preparación | ✅ PASSING (501) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar preparación | ✅ PASSING (501) |
-| `/{id}/ingredientes` | GET | `✅/✅` | Obtener ingredientes de preparación | ✅ PASSING (501) |
-| `/{id}/ingredientes` | POST | `✅/✅` | Agregar ingrediente a preparación | ✅ PASSING (501) |
-| `/{id}/ingredientes/{ingredienteId}` | PUT | `✅/✅` | Actualizar ingrediente de preparación | ✅ PASSING (501) |
-| `/{id}/ingredientes/{ingredienteId}` | DELETE | `✅/✅` | Eliminar ingrediente de preparación | ✅ PASSING (501) |
-
----
-
-> **Actualización junio 2024:**
-> - **ComandasController** migrado a tests completos (🟢). Todos los endpoints validados con interacción real de BD y reglas de negocio. Se cierra la Fase 3 del plan de migración.
-> - **FacturasController** migrado a tests completos (🟢). Todos los endpoints validados con interacción real de BD y reglas de negocio. Se cierra la Fase 4 del plan de migración.
-> - Próximo objetivo: migrar TarjetasFidelizacionController y PromocionesController a tests completos.
+| `/{id}`
