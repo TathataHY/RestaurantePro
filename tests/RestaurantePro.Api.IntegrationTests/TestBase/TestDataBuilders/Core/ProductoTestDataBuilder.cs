@@ -1,4 +1,7 @@
 using Bogus;
+using RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
+using RestaurantePro.Application.Core.Productos.Commands.ActualizarProducto;
+using RestaurantePro.Domain.Core.Productos;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase.TestDataBuilders.Core;
 
@@ -12,14 +15,26 @@ public class ProductoTestDataBuilder
     private string? _nombre;
     private string? _descripcion;
     private decimal? _precio;
-    private ProductoCategoria _categoria = ProductoCategoria.PlatoPrincipal;
-    private bool _disponible = true;
-    private string? _imagenUrl;
-    private int? _tiempoPreparacion;
-    private bool _esVegetariano = false;
-    private bool _esVegano = false;
-    private bool _contieneGluten = false;
-    private string? _alergenos;
+    private Guid? _categoriaId;
+    private bool? _activo;
+
+    /// <summary>
+    /// Genera un nombre de producto único
+    /// </summary>
+    private string GenerarNombreUnico()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"Producto_{guid.Substring(0, 8)}";
+    }
+
+    /// <summary>
+    /// Genera una descripción única
+    /// </summary>
+    private string GenerarDescripcionUnica()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"Descripción del producto {guid.Substring(0, 4)}";
+    }
 
     /// <summary>
     /// Establece el nombre del producto
@@ -49,199 +64,94 @@ public class ProductoTestDataBuilder
     }
 
     /// <summary>
-    /// Establece la categoría del producto
+    /// Establece el ID de la categoría del producto
     /// </summary>
-    public ProductoTestDataBuilder ConCategoria(ProductoCategoria categoria)
+    public ProductoTestDataBuilder ConCategoriaId(Guid categoriaId)
     {
-        _categoria = categoria;
+        _categoriaId = categoriaId;
         return this;
     }
 
     /// <summary>
-    /// Establece si el producto está disponible
+    /// Establece si el producto está activo
     /// </summary>
-    public ProductoTestDataBuilder Disponible(bool disponible)
+    public ProductoTestDataBuilder Activo(bool activo)
     {
-        _disponible = disponible;
+        _activo = activo;
         return this;
     }
 
     /// <summary>
-    /// Establece la URL de la imagen del producto
+    /// Construye el comando para crear un producto
     /// </summary>
-    public ProductoTestDataBuilder ConImagenUrl(string imagenUrl)
+    public CrearProductoCommand BuildCrearProductoCommand()
     {
-        _imagenUrl = imagenUrl;
-        return this;
-    }
-
-    /// <summary>
-    /// Establece el tiempo de preparación del producto
-    /// </summary>
-    public ProductoTestDataBuilder ConTiempoPreparacion(int tiempoPreparacion)
-    {
-        _tiempoPreparacion = tiempoPreparacion;
-        return this;
-    }
-
-    /// <summary>
-    /// Establece si el producto es vegetariano
-    /// </summary>
-    public ProductoTestDataBuilder EsVegetariano(bool esVegetariano)
-    {
-        _esVegetariano = esVegetariano;
-        return this;
-    }
-
-    /// <summary>
-    /// Establece si el producto es vegano
-    /// </summary>
-    public ProductoTestDataBuilder EsVegano(bool esVegano)
-    {
-        _esVegano = esVegano;
-        return this;
-    }
-
-    /// <summary>
-    /// Establece si el producto contiene gluten
-    /// </summary>
-    public ProductoTestDataBuilder ContieneGluten(bool contieneGluten)
-    {
-        _contieneGluten = contieneGluten;
-        return this;
-    }
-
-    /// <summary>
-    /// Establece los alérgenos del producto
-    /// </summary>
-    public ProductoTestDataBuilder ConAlergenos(string alergenos)
-    {
-        _alergenos = alergenos;
-        return this;
-    }
-
-    /// <summary>
-    /// Construye el objeto de request para crear un producto
-    /// </summary>
-    public object BuildCrearProductoRequest()
-    {
-        return new
+        return new CrearProductoCommand
         {
-            Nombre = _nombre ?? _faker.Commerce.ProductName(),
-            Descripcion = _descripcion ?? _faker.Lorem.Sentence(5, 10),
-            Precio = _precio ?? _faker.Random.Decimal(5, 50),
-            Categoria = _categoria,
-            Disponible = _disponible,
-            ImagenUrl = _imagenUrl ?? _faker.Image.PicsumUrl(),
-            TiempoPreparacion = _tiempoPreparacion ?? _faker.Random.Int(5, 30),
-            EsVegetariano = _esVegetariano,
-            EsVegano = _esVegano,
-            ContieneGluten = _contieneGluten,
-            Alergenos = _alergenos ?? _faker.PickRandom("", "Lácteos", "Frutos secos", "Mariscos", "Huevos")
+            Nombre = _nombre ?? GenerarNombreUnico(),
+            Descripcion = _descripcion ?? GenerarDescripcionUnica(),
+            Precio = _precio ?? 10.50m,
+            CategoriaId = _categoriaId ?? Guid.NewGuid(),
+            Activo = _activo ?? true
         };
     }
 
     /// <summary>
-    /// Construye el objeto de request para actualizar un producto
+    /// Construye el comando para actualizar un producto
     /// </summary>
-    public object BuildActualizarProductoRequest()
+    public ActualizarProductoCommand BuildActualizarProductoCommand(Guid productoId)
     {
-        return new
+        return new ActualizarProductoCommand
         {
-            Nombre = _nombre ?? _faker.Commerce.ProductName(),
-            Descripcion = _descripcion ?? _faker.Lorem.Sentence(5, 10),
-            Precio = _precio ?? _faker.Random.Decimal(5, 50),
-            Categoria = _categoria,
-            Disponible = _disponible,
-            ImagenUrl = _imagenUrl ?? _faker.Image.PicsumUrl(),
-            TiempoPreparacion = _tiempoPreparacion ?? _faker.Random.Int(5, 30),
-            EsVegetariano = _esVegetariano,
-            EsVegano = _esVegano,
-            ContieneGluten = _contieneGluten,
-            Alergenos = _alergenos ?? _faker.PickRandom("", "Lácteos", "Frutos secos", "Mariscos", "Huevos")
+            Id = productoId,
+            Nombre = _nombre ?? GenerarNombreUnico(),
+            Descripcion = _descripcion ?? GenerarDescripcionUnica(),
+            Precio = _precio ?? 10.50m,
+            CategoriaId = _categoriaId ?? Guid.NewGuid(),
+            Activo = _activo ?? true
         };
     }
 
     /// <summary>
-    /// Construye el objeto de request para buscar productos
+    /// Construye un producto válido por defecto
     /// </summary>
-    public object BuildBuscarProductosRequest(string? termino = null, string? categoria = null, bool? disponible = null)
+    public CrearProductoCommand BuildProductoValido()
     {
-        return new
+        return new CrearProductoCommand
         {
-            Termino = termino ?? _faker.Commerce.ProductName(),
-            Categoria = categoria ?? _categoria.ToString(),
-            Disponible = disponible ?? _disponible,
-            PageNumber = 1,
-            PageSize = 20
+            Nombre = GenerarNombreUnico(),
+            Descripcion = GenerarDescripcionUnica(),
+            Precio = 15.99m,
+            CategoriaId = Guid.NewGuid(),
+            Activo = true
         };
     }
 
     /// <summary>
-    /// Construye el objeto de request para cambiar disponibilidad
+    /// Construye un producto inválido para testing
     /// </summary>
-    public object BuildCambiarDisponibilidadRequest(bool? disponible = null)
+    public CrearProductoCommand BuildProductoInvalido()
     {
-        return new
+        return new CrearProductoCommand
         {
-            Disponible = disponible ?? _disponible,
-            Motivo = _faker.Lorem.Sentence(3, 5)
+            Nombre = "", // Nombre vacío
+            Descripcion = "", // Descripción vacía
+            Precio = -10.00m, // Precio negativo
+            CategoriaId = Guid.Empty, // Categoría inválida
+            Activo = true
         };
     }
 
     /// <summary>
-    /// Construye el objeto de request para actualizar precio
-    /// </summary>
-    public object BuildActualizarPrecioRequest(decimal? precio = null)
-    {
-        return new
-        {
-            Precio = precio ?? _precio ?? _faker.Random.Decimal(5, 50),
-            Motivo = _faker.Lorem.Sentence(3, 5)
-        };
-    }
-
-    /// <summary>
-    /// Construye el objeto de request para obtener productos por categoría
-    /// </summary>
-    public object BuildObtenerPorCategoriaRequest(string? categoria = null)
-    {
-        return new
-        {
-            Categoria = categoria ?? _categoria.ToString(),
-            PageNumber = 1,
-            PageSize = 20
-        };
-    }
-
-    /// <summary>
-    /// Construye el objeto de request para obtener productos populares
-    /// </summary>
-    public object BuildObtenerPopularesRequest(int? cantidad = null)
-    {
-        return new
-        {
-            Cantidad = cantidad ?? _faker.Random.Int(5, 10),
-            Periodo = _faker.PickRandom("Dia", "Semana", "Mes")
-        };
-    }
-
-    /// <summary>
-    /// Resetea el builder a su estado inicial
+    /// Resetea el builder a sus valores por defecto
     /// </summary>
     public ProductoTestDataBuilder Reset()
     {
         _nombre = null;
         _descripcion = null;
         _precio = null;
-        _categoria = ProductoCategoria.PlatoPrincipal;
-        _disponible = true;
-        _imagenUrl = null;
-        _tiempoPreparacion = null;
-        _esVegetariano = false;
-        _esVegano = false;
-        _contieneGluten = false;
-        _alergenos = null;
+        _categoriaId = null;
+        _activo = null;
         return this;
     }
 
@@ -252,17 +162,4 @@ public class ProductoTestDataBuilder
     {
         return new ProductoTestDataBuilder();
     }
-}
-
-/// <summary>
-/// Categorías de producto para los tests
-/// </summary>
-public enum ProductoCategoria
-{
-    Entrada,
-    PlatoPrincipal,
-    Postre,
-    Bebida,
-    Acompañamiento,
-    Especialidad
 } 

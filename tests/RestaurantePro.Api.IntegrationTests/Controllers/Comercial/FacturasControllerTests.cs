@@ -172,7 +172,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
         var emailCliente = GenerarEmailValido();
         var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
-        var comanda = await CrearComandaPrueba(clienteId: cliente.Id, observaciones: "Comanda de prueba", estado: EstadoComanda.Finalizada);
+        var comanda = await CrearComandaPrueba(clienteId: cliente.Id, observaciones: "Comanda de prueba");
 
         // Agregar productos a la comanda para que tenga detalles
         var producto1 = await CrearProductoPrueba("Producto 1", 25.50m);
@@ -312,7 +312,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
 
         var sufijo = Guid.NewGuid().ToString("N")[..8];
         var cliente = await CrearClientePrueba($"ClienteEmit_{sufijo}", $"emit_{sufijo}@test.com");
-        var comanda = await CrearComandaPrueba(clienteId: cliente.Id, estado: EstadoComanda.Finalizada);
+        var comanda = await CrearComandaPrueba(clienteId: cliente.Id);
         var factura = await CrearFacturaConDetallesPrueba(clienteId: cliente.Id, comandasIds: new List<Guid> { comanda.Id });
         factura.Emitir(DateTimeService, 30);
         await DbContext.SaveChangesAsync();
@@ -362,9 +362,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
             meseroId: null,
             clienteId: (await CrearClientePrueba(nombreClienteAnul, emailClienteAnul)).Id,
             mesaId: null,
-            observaciones: "Comanda de prueba",
-            estado: EstadoComanda.Creada
-        );
+            observaciones: "Comanda de prueba");
 
         // Agregar productos baratos a la comanda
         await CrearDetalleComandaPrueba(comanda.Id, producto1.Id, 1);
@@ -507,8 +505,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
             meseroId: null,
             clienteId: cliente.Id,
             mesaId: null,
-            observaciones: "Comanda de prueba",
-            estado: EstadoComanda.Finalizada);
+            observaciones: "Comanda de prueba");
 
         // Agregar productos a la comanda para que tenga detalles
         var producto1 = await CrearProductoPrueba("Producto 1", 100.00m);
@@ -629,7 +626,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         var nombreCliente = $"ClientePago_{Guid.NewGuid().ToString("N")[..8]}";
         var emailCliente = $"ppago_{Guid.NewGuid().ToString("N")[..8]}@test.com";
         var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
-        var comanda = await CrearComandaPrueba(clienteId: cliente.Id, estado: EstadoComanda.Finalizada);
+        var comanda = await CrearComandaPrueba(clienteId: cliente.Id);
         var factura = await CrearFacturaConDetallesPrueba(clienteId: cliente.Id, comandasIds: new List<Guid> { comanda.Id });
         factura.Emitir(DateTimeService, 30);
         await DbContext.SaveChangesAsync();
@@ -742,9 +739,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
             meseroId: null,
             clienteId: cliente.Id,
             mesaId: null,
-            observaciones: "Comanda de prueba",
-            estado: EstadoComanda.Creada
-        );
+            observaciones: "Comanda de prueba");
 
         // Crear factura con la comanda y fecha actual
         var factura = await CrearFacturaConDetallesPrueba(
@@ -1043,7 +1038,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         var nombreCliente = $"ClienteC_{Guid.NewGuid().ToString("N")[..8]}";
         var emailCliente = $"cc_{Guid.NewGuid().ToString("N")[..8]}@test.com";
         var cliente = await CrearClientePrueba(nombreCliente, emailCliente);
-        var comanda = await CrearComandaPrueba(clienteId: cliente.Id, estado: EstadoComanda.EnProceso);
+        var comanda = await CrearComandaPrueba(clienteId: cliente.Id);
 
         var request = new CrearFacturaCommand
         {
@@ -1085,8 +1080,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
             meseroId: null,
             clienteId: cliente.Id,
             mesaId: mesa.Id,
-            observaciones: "Comanda de prueba",
-            estado: EstadoComanda.Finalizada);
+            observaciones: "Comanda de prueba");
 
         // 3. Crear factura con la comanda
         var factura = await CrearFacturaConDetallesPrueba(

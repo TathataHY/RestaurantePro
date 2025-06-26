@@ -1,3 +1,5 @@
+using RestaurantePro.Application.Comercial.Fidelizacion.Commands.CrearTarjetaFidelizacion;
+
 namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands;
 
 /// <summary>

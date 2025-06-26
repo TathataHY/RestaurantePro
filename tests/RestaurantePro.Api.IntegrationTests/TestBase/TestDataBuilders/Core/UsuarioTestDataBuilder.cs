@@ -28,6 +28,42 @@ public class UsuarioTestDataBuilder
     private Guid? _usuarioReseteadorId;
 
     /// <summary>
+    /// Genera un nombre de usuario único
+    /// </summary>
+    private string GenerarNombreUsuarioUnico()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"usuario_{guid.Substring(0, 8)}";
+    }
+
+    /// <summary>
+    /// Genera un email único
+    /// </summary>
+    private string GenerarEmailUnico()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"usuario_{guid.Substring(0, 8)}@test.com";
+    }
+
+    /// <summary>
+    /// Genera un teléfono único válido (formato chileno)
+    /// </summary>
+    private string GenerarTelefonoUnico()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"+56 9 {guid.Substring(0, 4)} {guid.Substring(4, 4)}";
+    }
+
+    /// <summary>
+    /// Genera un nombre completo único
+    /// </summary>
+    private string GenerarNombreCompletoUnico()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"{_faker.Name.FirstName()}_{guid.Substring(0, 4)} {_faker.Name.LastName()}_{guid.Substring(4, 4)}";
+    }
+
+    /// <summary>
     /// Establece el nombre de usuario
     /// </summary>
     public UsuarioTestDataBuilder ConNombreUsuario(string nombreUsuario)
@@ -147,14 +183,14 @@ public class UsuarioTestDataBuilder
 
         return new CrearUsuarioCommand
         {
-            NombreUsuario = _nombreUsuario ?? _faker.Internet.UserName(),
-            NombreCompleto = _nombreCompleto ?? _faker.Name.FullName(),
-            Email = _email ?? _faker.Internet.Email(),
+            NombreUsuario = _nombreUsuario ?? GenerarNombreUsuarioUnico(),
+            NombreCompleto = _nombreCompleto ?? GenerarNombreCompletoUnico(),
+            Email = _email ?? GenerarEmailUnico(),
             Password = _password ?? "Password123!",
             ConfirmarPassword = _confirmarPassword ?? "Password123!",
             Rol = _rol ?? "Empleado",
             NivelAcceso = _nivelAcceso ?? 5,
-            Telefono = _telefono ?? _faker.Phone.PhoneNumber("+569########"),
+            Telefono = _telefono ?? GenerarTelefonoUnico(),
             UsuarioCreadorId = _usuarioCreadorId.Value,
             
             // Campos adicionales requeridos por el validador

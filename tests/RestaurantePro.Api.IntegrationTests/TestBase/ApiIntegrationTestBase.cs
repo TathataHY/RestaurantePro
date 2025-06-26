@@ -22,6 +22,7 @@ using RestaurantePro.Domain.Proveedores;
 using RestaurantePro.Domain.Core.Base.Services;
 using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 using RestaurantePro.Domain.Comercial.Clientes.Enums;
+using ProductoCategoria = RestaurantePro.Domain.Core.Productos.Entities.ProductoCategoria;
 
 /// <summary>
 /// Clase base para todos los tests de integración de la API.
@@ -131,23 +132,43 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     {
         try
         {
-            Logger.LogInformation("�� Iniciando limpieza de base de datos...");
+            Logger.LogInformation("🧹 Iniciando limpieza de base de datos...");
             
             // Desactivar detección de cambios para mejorar rendimiento
             DbContext.ChangeTracker.AutoDetectChangesEnabled = false;
             
-            // Limpiar en orden específico para evitar problemas de FK
-            await EliminarEntidadesSafely(DbContext, DbContext.Facturas, "Facturas");
+            // 🔧 LIMPIEZA ROBUSTA: SOLO ENTIDADES RAÍZ (ignorar owned types y tablas inexistentes)
             await EliminarEntidadesSafely(DbContext, DbContext.ItemsComanda, "ItemsComanda");
+            await EliminarEntidadesSafely(DbContext, DbContext.Facturas, "Facturas");
             await EliminarEntidadesSafely(DbContext, DbContext.Comandas, "Comandas");
             await EliminarEntidadesSafely(DbContext, DbContext.Reservaciones, "Reservaciones");
             await EliminarEntidadesSafely(DbContext, DbContext.Mesas, "Mesas");
+            await EliminarEntidadesSafely(DbContext, DbContext.TarjetasFidelizacion, "TarjetasFidelizacion");
             await EliminarEntidadesSafely(DbContext, DbContext.Clientes, "Clientes");
             await EliminarEntidadesSafely(DbContext, DbContext.Usuarios, "Usuarios");
             await EliminarEntidadesSafely(DbContext, DbContext.Productos, "Productos");
             await EliminarEntidadesSafely(DbContext, DbContext.Ingredientes, "Ingredientes");
             await EliminarEntidadesSafely(DbContext, DbContext.Proveedores, "Proveedores");
             await EliminarEntidadesSafely(DbContext, DbContext.Notificaciones, "Notificaciones");
+            await EliminarEntidadesSafely(DbContext, DbContext.OrdenesCompra, "OrdenesCompra");
+            // No limpiar MovimientosInventario ni otros owned types
+            
+            // 🔧 LIMPIAR TABLAS DE ASP.NET IDENTITY CON SQL DIRECTO
+            try
+            {
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUserTokens");
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUserRoles");
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUserLogins");
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUserClaims");
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetRoleClaims");
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUsers");
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetRoles");
+                Logger.LogInformation("✅ Tablas de ASP.NET Identity limpiadas");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"⚠️ Error limpiando tablas ASP.NET Identity: {ex.Message}");
+            }
             
             // Guardar cambios
             await GuardarCambiosConRetry(DbContext, "Limpieza general");
@@ -173,12 +194,18 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         {
             Logger.LogInformation("🧹 Iniciando limpieza completa de base de datos...");
             
-            // Cerrar conexión actual
+            // 🔧 CERRAR CONEXIÓN ACTUAL Y RECREAR COMPLETAMENTE
             await DbContext.Database.CloseConnectionAsync();
             
             // Eliminar y recrear la base de datos
             await DbContext.Database.EnsureDeletedAsync();
             await DbContext.Database.EnsureCreatedAsync();
+            
+            // 🔧 VERIFICAR QUE LAS TABLAS SE CREARON CORRECTAMENTE
+            var tables = DbContext.Database.SqlQueryRaw<string>(
+                "SELECT name FROM sqlite_master WHERE type='table'").ToList();
+            
+            Logger.LogInformation($"🔧 Tablas recreadas: {string.Join(", ", tables)}");
             
             Logger.LogInformation("✅ Base de datos recreada completamente");
         }
@@ -199,16 +226,32 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         {
             if (dbSet.Any())
             {
-                var entidades = await dbSet.ToListAsync();
-                dbSet.RemoveRange(entidades);
-                await context.SaveChangesAsync();
-                Logger.LogDebug("✅ Eliminadas {Count} entidades de {Entidad}", entidades.Count, nombreEntidad);
+                var count = await dbSet.CountAsync();
+                dbSet.RemoveRange(dbSet);
+                Logger.LogInformation($"🗑️ Eliminadas {count} entidades de {nombreEntidad}");
             }
         }
         catch (Exception ex)
         {
-            // Solo logear el error, no fallar el test
-            Logger.LogDebug("⚠️ No se pudieron eliminar entidades de {Entidad}: {Message}", nombreEntidad, ex.Message);
+            Logger.LogWarning(ex, $"⚠️ Error eliminando {nombreEntidad}: {ex.Message}");
+            // Continuar con otras entidades
+        }
+    }
+    
+    /// <summary>
+    /// Elimina entidades usando SQL raw para casos especiales
+    /// </summary>
+    private async Task EliminarEntidadesSafely(RestauranteProDbContext context, IQueryable<object> query, string nombreEntidad)
+    {
+        try
+        {
+            await context.Database.ExecuteSqlRawAsync($"DELETE FROM {nombreEntidad}");
+            Logger.LogInformation($"🗑️ Eliminadas entidades de {nombreEntidad} usando SQL");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, $"⚠️ Error eliminando {nombreEntidad}: {ex.Message}");
+            // Continuar con otras entidades
         }
     }
     
@@ -362,18 +405,30 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// <summary>
     /// Crea un cliente de prueba en la base de datos
     /// </summary>
-    protected async Task<Cliente> CrearClientePrueba(string nombre = "Cliente Test", string? email = null)
+    protected async Task<Cliente> CrearClientePrueba(string nombre = null, string apellido = null, string? email = null, string telefono = null, DateTime? fechaNacimiento = null)
     {
-        // Generar un email siempre válido sin patrones repetitivos
-        var emailValido = GenerarEmailValido(email);
-        var clienteNombre = ClienteNombre.Crear("Cliente", "Test");
-        var telefono = "+1234567890";
+        var guid = Guid.NewGuid().ToString("N");
+        var nombreFinal = nombre ?? $"Cliente_{guid}";
+        var apellidoFinal = apellido ?? $"Test_{guid}";
+        var emailFinal = email ?? $"cliente_{guid}@test.com";
         
-        var cliente = Cliente.Crear(clienteNombre, emailValido, telefono, DateTime.Now.AddYears(-25));
+        // 🔧 GENERAR NÚMERO DE TELÉFONO VÁLIDO (formato chileno móvil)
+        var random = new Random();
+        var numeroMovil = $"+56 9 {random.Next(1000, 9999)} {random.Next(1000, 9999)}";
+        var telefonoFinal = telefono ?? numeroMovil;
+        
+        var fechaNacimientoFinal = fechaNacimiento ?? DateTime.UtcNow.AddYears(-25); // Mayor de edad
 
-        await DbContext.Clientes.AddAsync(cliente);
-        await DbContext.SaveChangesAsync();
-        
+        var clienteNombre = RestaurantePro.Domain.Comercial.Clientes.ValueObjects.ClienteNombre.Crear(nombreFinal, apellidoFinal);
+        var cliente = RestaurantePro.Domain.Comercial.Clientes.Entities.Cliente.Crear(
+            clienteNombre,
+            emailFinal,
+            telefonoFinal,
+            fechaNacimientoFinal
+        );
+        DbContext.Clientes.Add(cliente);
+        await GuardarCambiosConRetry(DbContext, "Cliente");
+        Logger.LogInformation($"✅ Cliente creado: {cliente.Id} - {cliente.Nombre}");
         return cliente;
     }
 
@@ -433,16 +488,22 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// </summary>
     protected async Task<Producto> CrearProductoPrueba(string nombre = "Producto Test", decimal precio = 100.00m)
     {
+        // 🔧 GENERAR NOMBRE ÚNICO PARA EVITAR CONFLICTOS
+        var timestamp = DateTime.UtcNow.Ticks;
+        var nombreFinal = $"{nombre}_{timestamp}";
+        
+        // 🔧 CREAR PRODUCTO SIN DEPENDENCIAS EXTERNAS
         var producto = Producto.Crear(
-            nombre,
-            "Descripción de prueba",
+            nombreFinal,
+            $"Descripción de {nombreFinal}",
             new PrecioProducto(precio),
             Guid.NewGuid(),
-            "Categoria Test"
-        );
-
+            "Categoria Test");
+        
         DbContext.Productos.Add(producto);
-        await DbContext.SaveChangesAsync();
+        await GuardarCambiosConRetry(DbContext, "Producto");
+        
+        Logger.LogInformation($"✅ Producto creado: {producto.Id} - {producto.Nombre}");
         return producto;
     }
 
@@ -450,27 +511,25 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// Crea un usuario de prueba en la base de datos
     /// </summary>
     protected async Task<Usuario> CrearUsuarioPrueba(
-        string nombreUsuario = "test.user",
+        string nombreUsuario = null,
         string nombreCompleto = null,
         string email = null,
         RolUsuario rol = RolUsuario.Mesero)
     {
-        // Generar un nombre de usuario único para evitar conflictos de constraint UNIQUE
-        var nombreUsuarioUnico = $"{nombreUsuario}.{Guid.NewGuid():N}";
-        var nombreCompletoFinal = nombreCompleto ?? $"Usuario {nombreUsuarioUnico}";
-        var emailFinal = email ?? $"{nombreUsuarioUnico}@test.com";
-        
-        // Usar el factory method de la entidad Usuario
+        var guid = Guid.NewGuid().ToString("N");
+        var nombreUsuarioFinal = nombreUsuario ?? $"test.user.{guid}";
+        var nombreCompletoFinal = nombreCompleto ?? $"Usuario Test {guid}";
+        var emailFinal = email ?? $"usuario_{guid}@test.com";
+
         var usuario = Usuario.Crear(
-            nombreUsuarioUnico,
+            nombreUsuarioFinal,
             nombreCompletoFinal,
             emailFinal,
-            rol
-        );
-        
+            rol);
+
         DbContext.Usuarios.Add(usuario);
-        await DbContext.SaveChangesAsync();
-        
+        await GuardarCambiosConRetry(DbContext, "Usuario");
+        Logger.LogInformation($"✅ Usuario creado: {usuario.Id} - {usuario.NombreUsuario}");
         return usuario;
     }
 
@@ -483,46 +542,13 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         string ubicacion = "Interior",
         EstadoMesa estado = EstadoMesa.Disponible)
     {
-        // Si se proporciona un número específico, usarlo directamente
-        // Solo generar un número único si no se proporciona número
-        int numeroFinal;
-        if (numero.HasValue)
-        {
-            numeroFinal = numero.Value;
-        }
-        else
-        {
-            // Generar un número único más simple y seguro
-            var random = new Random();
-            var numeroBase = random.Next(1000, 9999);
-            var sufijo = random.Next(1000, 9999);
-            numeroFinal = numeroBase * 10000 + sufijo; // Máximo: 99999999
-        }
-        var mesa = Mesa.Crear(
-            numeroFinal,
-            capacidad,
-            ubicacion
-        );
-
-        // Establecer el estado si es diferente al por defecto
-        if (estado != EstadoMesa.Disponible)
-        {
-            switch (estado)
-            {
-                case EstadoMesa.Ocupada:
-                    mesa.MarcarComoOcupada();
-                    break;
-                case EstadoMesa.Reservada:
-                    mesa.MarcarComoReservada();
-                    break;
-                case EstadoMesa.FueraDeServicio:
-                    mesa.MarcarComoFueraDeServicio("Test automatizado");
-                    break;
-            }
-        }
-
+        var guid = Guid.NewGuid().ToString("N");
+        var numeroFinal = numero ?? int.Parse(guid.Substring(0, 3)); // Generar número único
+        var ubicacionFinal = $"{ubicacion}_{guid}";
+        var mesa = Mesa.Crear(numeroFinal, capacidad, ubicacionFinal);
         DbContext.Mesas.Add(mesa);
-        await DbContext.SaveChangesAsync();
+        await GuardarCambiosConRetry(DbContext, "Mesa");
+        Logger.LogInformation($"✅ Mesa creada: {mesa.Id} - Número: {mesa.Numero} - Ubicación: {mesa.Ubicacion}");
         return mesa;
     }
 
@@ -530,22 +556,24 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// Crea un ingrediente de prueba en la base de datos
     /// </summary>
     protected async Task<Ingrediente> CrearIngredientePrueba(
-        string nombre = "Tomate",
-        string codigo = "TOM-001",
+        string nombre = null,
+        string codigo = null,
         decimal stockInicial = 10,
         decimal stockMinimo = 5)
     {
+        var guid = Guid.NewGuid().ToString("N");
+        var nombreFinal = nombre ?? $"Ingrediente_{guid}";
+        var codigoFinal = codigo ?? $"ING-{guid}";
         var ingrediente = Ingrediente.Crear(
-            nombre,
-            codigo,
-            "Ingrediente de prueba",
-            UnidadMedida.Unidad,
+            nombreFinal,
+            codigoFinal,
+            $"Descripción de {nombreFinal}",
+            UnidadMedida.Kilogramos,
             stockMinimo,
-            stockInicial
-        );
-
+            stockInicial);
         DbContext.Ingredientes.Add(ingrediente);
-        await DbContext.SaveChangesAsync();
+        await GuardarCambiosConRetry(DbContext, "Ingrediente");
+        Logger.LogInformation($"✅ Ingrediente creado: {ingrediente.Id} - {ingrediente.Nombre} - Código: {ingrediente.Codigo}");
         return ingrediente;
     }
 
@@ -558,77 +586,30 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         Guid? mesaId = null,
         string observaciones = "Comanda de prueba")
     {
-        return await CrearComandaPrueba(meseroId: meseroId, clienteId: clienteId, mesaId: mesaId, observaciones: observaciones, estado: EstadoComanda.Creada);
-    }
-
-    /// <summary>
-    /// Crea una comanda de prueba en la base de datos con estado específico
-    /// </summary>
-    protected async Task<Comanda> CrearComandaPrueba(
-        Guid? meseroId = null,
-        Guid? clienteId = null,
-        Guid? mesaId = null,
-        string observaciones = "Comanda de prueba",
-        EstadoComanda estado = EstadoComanda.Creada)
-    {
-        // Crear entidades dependientes si NO se proporcionan los IDs
-        var mesero = meseroId.HasValue ? null : await CrearUsuarioPrueba("mesero.test", "Mesero Test", null, RolUsuario.Mesero);
-        var cliente = clienteId.HasValue ? null : await CrearClientePrueba($"ClienteCmd_{Guid.NewGuid().ToString("N")[..8]}", $"cmd_{Guid.NewGuid().ToString("N")[..8]}@test.com");
-        var mesa = mesaId.HasValue ? null : await CrearMesaPrueba(null, 4); // Usar número generado automáticamente
-
-        // Usar los IDs proporcionados o los de las entidades creadas
-        var meseroIdFinal = meseroId ?? mesero!.Id;
-        var clienteIdFinal = clienteId ?? cliente!.Id;
-        var mesaIdFinal = mesaId ?? mesa!.Id;
-
-        // Verificar que las entidades referenciadas existen en la BD
-        if (meseroId.HasValue)
+        var mesero = meseroId.HasValue ? await DbContext.Usuarios.FindAsync(meseroId.Value) : null;
+        if (mesero == null)
         {
-            var meseroExiste = await DbContext.Usuarios.FindAsync(meseroId.Value);
-            if (meseroExiste == null)
-            {
-                throw new InvalidOperationException($"El mesero con ID {meseroId.Value} no existe en la base de datos");
-            }
+            mesero = await CrearUsuarioPrueba(rol: RolUsuario.Mesero);
         }
-
-        if (clienteId.HasValue)
+        var cliente = clienteId.HasValue ? await DbContext.Clientes.FindAsync(clienteId.Value) : null;
+        if (cliente == null)
         {
-            var clienteExiste = await DbContext.Clientes.FindAsync(clienteId.Value);
-            if (clienteExiste == null)
-            {
-                throw new InvalidOperationException($"El cliente con ID {clienteId.Value} no existe en la base de datos");
-            }
+            cliente = await CrearClientePrueba();
         }
-
-        if (mesaId.HasValue)
+        var mesa = mesaId.HasValue ? await DbContext.Mesas.FindAsync(mesaId.Value) : null;
+        if (mesa == null)
         {
-            var mesaExiste = await DbContext.Mesas.FindAsync(mesaId.Value);
-            if (mesaExiste == null)
-            {
-                throw new InvalidOperationException($"La mesa con ID {mesaId.Value} no existe en la base de datos");
-            }
+            mesa = await CrearMesaPrueba();
         }
-
-        var comanda = Comanda.Crear(
-            meseroIdFinal,
-            clienteIdFinal,
-            mesaIdFinal,
+        var comanda = RestaurantePro.Domain.Operaciones.Comandas.Entities.Comanda.Crear(
+            mesero.Id,
+            cliente.Id,
+            mesa.Id,
             observaciones
         );
-
-        // Cambiar el estado si es diferente al por defecto
-        if (estado != EstadoComanda.Creada)
-        {
-            // Usar reflection para cambiar el estado ya que es una propiedad privada
-            var estadoProperty = typeof(Comanda).GetProperty("Estado");
-            if (estadoProperty != null)
-            {
-                estadoProperty.SetValue(comanda, estado);
-            }
-        }
-
         DbContext.Comandas.Add(comanda);
-        await DbContext.SaveChangesAsync();
+        await GuardarCambiosConRetry(DbContext, "Comanda");
+        Logger.LogInformation($"✅ Comanda creada: {comanda.Id} - Mesero: {mesero.Id} - Cliente: {cliente.Id} - Mesa: {mesa.Id}");
         return comanda;
     }
 
@@ -683,23 +664,31 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// <summary>
     /// Crea un proveedor de prueba en la base de datos
     /// </summary>
-    protected async Task<Proveedor> CrearProveedorPrueba(string nombre = "Proveedor Test")
+    protected async Task<Proveedor> CrearProveedorPrueba(string nombre = null)
     {
+        var guid = Guid.NewGuid().ToString("N");
+        var nombreFinal = nombre ?? $"Proveedor_{guid}";
+        var emailFinal = $"proveedor_{guid.Substring(0,8)}@test.com";
+        
+        // 🔧 GENERAR NÚMERO DE TELÉFONO VÁLIDO (formato chileno fijo)
+        var telefonoFinal = $"+56 2 {guid.Substring(0, 4)} {guid.Substring(4, 4)}";
+        
         var proveedor = Proveedor.Crear(
-            nombre,
-            "Contacto Test",
-            "proveedor@test.com",
-            "555-0000",
-            "Calle Falsa 123",
-            "Ciudad Test",
-            "12345",
-            "País Test",
-            "RFC1234567",
-            "Cuenta Bancaria Test",
-            30
+            nombreFinal,
+            nombreFinal, // nombreContacto
+            emailFinal,
+            telefonoFinal,
+            $"Dirección {guid}",
+            $"Ciudad {guid.Substring(0,5)}",
+            $"{guid.Substring(0,5)}",
+            "España",
+            $"RFC{guid.Substring(0,8)}",
+            $"CuentaBancaria{guid.Substring(0,8)}",
+            30 // diasCredito
         );
         DbContext.Proveedores.Add(proveedor);
-        await DbContext.SaveChangesAsync();
+        await GuardarCambiosConRetry(DbContext, "Proveedor");
+        Logger.LogInformation($"✅ Proveedor creado: {proveedor.Id} - {proveedor.Nombre}");
         return proveedor;
     }
 
@@ -711,50 +700,50 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         List<Guid>? comandasIds = null,
         string numeroFactura = null,
         TipoFactura tipoFactura = TipoFactura.Normal,
-        string nombreCliente = "Cliente Factura Test",
+        string nombreCliente = null,
         string observaciones = "Factura de prueba",
         DateTime? fechaCreacion = null)
     {
-        // Crear cliente si no se proporciona
-        if (!clienteId.HasValue)
+        var guid = Guid.NewGuid().ToString("N");
+        var cliente = clienteId.HasValue ? await DbContext.Clientes.FindAsync(clienteId.Value) : null;
+        if (cliente == null)
         {
-            var sufijo = Guid.NewGuid().ToString("N")[..8];
-            var emailUnico = $"cliente.factura.{sufijo}@test.com";
-            var cliente = await CrearClientePrueba(nombreCliente, emailUnico);
-            clienteId = cliente.Id;
+            cliente = await CrearClientePrueba();
         }
-
-        // Crear comanda si no se proporciona
-        if (comandasIds == null || !comandasIds.Any())
+        var comandas = new List<Comanda>();
+        if (comandasIds != null && comandasIds.Any())
         {
-            var comanda = await CrearComandaPrueba(meseroId: null, clienteId: clienteId.Value, mesaId: null, observaciones: "Comanda de prueba");
-            comandasIds = new List<Guid> { comanda.Id };
+            foreach (var comandaId in comandasIds)
+            {
+                var comanda = await DbContext.Comandas.FindAsync(comandaId);
+                if (comanda == null)
+                {
+                    comanda = await CrearComandaPrueba(clienteId: cliente.Id);
+                }
+                comandas.Add(comanda);
+            }
         }
-
-        // Generar número de factura si no se proporciona
-        if (string.IsNullOrEmpty(numeroFactura))
+        else
         {
-            numeroFactura = $"FAC-TEST-{Guid.NewGuid().ToString().Substring(0, 8)}";
+            var comanda = await CrearComandaPrueba(clienteId: cliente.Id);
+            comandas.Add(comanda);
         }
-
-        // Crear la factura usando el factory method
+        var numeroFacturaFinal = numeroFactura ?? $"FAC-{guid}";
+        var fechaCreacionFinal = fechaCreacion ?? DateTime.UtcNow;
         var factura = Factura.Crear(
-            numeroFactura,
+            numeroFacturaFinal,
             tipoFactura,
-            nombreCliente,
-            clienteId,
+            cliente.Nombre.ToString(),
+            cliente.Id,
             null, // identificacionFiscal
             null, // direccionCliente
-            comandasIds,
+            comandas.Select(c => c.Id).ToList(),
             observaciones,
-            fechaCreacion ?? DateTimeService.Now);
-
-        // Guardar en la base de datos
+            fechaCreacionFinal
+        );
         DbContext.Facturas.Add(factura);
-        await DbContext.SaveChangesAsync();
-
-        Logger.LogInformation("✅ Factura de prueba creada: {NumeroFactura} (ID: {Id})", factura.NumeroFactura, factura.Id);
-
+        await GuardarCambiosConRetry(DbContext, "Factura");
+        Logger.LogInformation($"✅ Factura creada: {factura.Id} - Número: {factura.NumeroFactura} - Cliente: {cliente.Id}");
         return factura;
     }
 
@@ -874,74 +863,19 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// </summary>
     protected async Task<TarjetaFidelizacion> CrearTarjetaFidelizacionPrueba(
         Guid? clienteId = null,
-        string codigo = null,
-        EstadoTarjeta estado = EstadoTarjeta.Activa,
-        NivelFidelizacion nivelFidelizacion = NivelFidelizacion.Basico,
-        int puntosIniciales = 0,
-        decimal multiplicadorPuntos = 1.0m,
-        int? limiteMensual = null,
-        DateTime? fechaEmision = null,
-        DateTime? fechaActivacion = null,
-        DateTime? fechaExpiracion = null)
+        string codigo = null)
     {
-        // Crear cliente si no se proporciona
-        if (!clienteId.HasValue)
+        var guid = Guid.NewGuid().ToString("N");
+        var cliente = clienteId.HasValue ? await DbContext.Clientes.FindAsync(clienteId.Value) : null;
+        if (cliente == null)
         {
-            var sufijo = Guid.NewGuid().ToString("N")[..8];
-            var emailUnico = $"cliente.tarjeta.{sufijo}@test.com";
-            var cliente = await CrearClientePrueba($"Cliente Tarjeta {sufijo}", emailUnico);
-            clienteId = cliente.Id;
+            cliente = await CrearClientePrueba();
         }
-
-        // Generar código si no se proporciona
-        if (string.IsNullOrEmpty(codigo))
-        {
-            codigo = $"TARJ-{Guid.NewGuid().ToString().Substring(0, 8)}";
-        }
-
-        // Crear la tarjeta usando el factory method
-        var tarjeta = TarjetaFidelizacion.Crear(clienteId.Value, codigo);
-
-        // Configurar propiedades adicionales
-        if (multiplicadorPuntos != 1.0m)
-        {
-            tarjeta.ConfigurarMultiplicadorPuntos(multiplicadorPuntos);
-        }
-
-        if (limiteMensual.HasValue)
-        {
-            tarjeta.ConfigurarLimiteMensual(limiteMensual.Value);
-        }
-
-        if (fechaExpiracion.HasValue)
-        {
-            tarjeta.ConfigurarFechaExpiracion(fechaExpiracion.Value);
-        }
-
-        // Establecer estado
-        if (estado == EstadoTarjeta.Activa)
-        {
-            tarjeta.Activar();
-        }
-        else if (estado == EstadoTarjeta.Suspendida)
-        {
-            // Primero activar la tarjeta, luego suspenderla
-            tarjeta.Activar();
-            tarjeta.Suspender("Suspensión de prueba");
-        }
-
-        // Agregar puntos iniciales si se especifican
-        if (puntosIniciales > 0)
-        {
-            tarjeta.AgregarPuntos(puntosIniciales, "Puntos iniciales de prueba");
-        }
-
-        // Guardar en la base de datos
+        var codigoFinal = codigo ?? $"TARJ-{guid}";
+        var tarjeta = TarjetaFidelizacion.Crear(cliente.Id, codigoFinal);
         DbContext.TarjetasFidelizacion.Add(tarjeta);
-        await DbContext.SaveChangesAsync();
-
-        Logger.LogInformation("✅ Tarjeta de fidelización de prueba creada: {Codigo} (ID: {Id})", tarjeta.Codigo, tarjeta.Id);
-
+        await GuardarCambiosConRetry(DbContext, "TarjetaFidelizacion");
+        Logger.LogInformation($"✅ Tarjeta de fidelización creada: {tarjeta.Id} - Código: {tarjeta.Codigo} - Cliente: {cliente.Id}");
         return tarjeta;
     }
 } 

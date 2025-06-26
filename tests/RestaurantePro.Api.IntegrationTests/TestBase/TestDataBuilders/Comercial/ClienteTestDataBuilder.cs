@@ -20,6 +20,51 @@ public class ClienteTestDataBuilder
     private string? _observaciones;
 
     /// <summary>
+    /// Genera un nombre único
+    /// </summary>
+    private string GenerarNombreUnico()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"{_faker.Name.FirstName()}_{guid.Substring(0, 4)}";
+    }
+
+    /// <summary>
+    /// Genera un apellido único
+    /// </summary>
+    private string GenerarApellidoUnico()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"{_faker.Name.LastName()}_{guid.Substring(4, 4)}";
+    }
+
+    /// <summary>
+    /// Genera un email único
+    /// </summary>
+    private string GenerarEmailUnico()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"cliente_{guid.Substring(0, 8)}@test.com";
+    }
+
+    /// <summary>
+    /// Genera un teléfono único válido (formato chileno móvil)
+    /// </summary>
+    private string GenerarTelefonoUnico()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"+56 9 {guid.Substring(0, 4)} {guid.Substring(4, 4)}";
+    }
+
+    /// <summary>
+    /// Genera una dirección única
+    /// </summary>
+    private string GenerarDireccionUnica()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"{_faker.Address.StreetAddress()} #{guid.Substring(0, 4)}";
+    }
+
+    /// <summary>
     /// Establece el nombre del cliente
     /// </summary>
     public ClienteTestDataBuilder ConNombre(string nombre)
@@ -107,11 +152,11 @@ public class ClienteTestDataBuilder
     {
         return new
         {
-            Nombre = _nombre ?? _faker.Name.FirstName(),
-            Apellido = _apellido ?? _faker.Name.LastName(),
-            Email = _email ?? _faker.Internet.Email(),
-            Telefono = _telefono ?? _faker.Phone.PhoneNumber(),
-            Direccion = _direccion ?? _faker.Address.FullAddress(),
+            Nombre = _nombre ?? GenerarNombreUnico(),
+            Apellido = _apellido ?? GenerarApellidoUnico(),
+            Email = _email ?? GenerarEmailUnico(),
+            Telefono = _telefono ?? GenerarTelefonoUnico(),
+            Direccion = _direccion ?? GenerarDireccionUnica(),
             FechaNacimiento = _fechaNacimiento ?? _faker.Date.Past(50, DateTime.Now.AddYears(-18)),
             Tipo = _tipo,
             Notas = _observaciones ?? _faker.Lorem.Sentence(3, 5),
@@ -126,11 +171,11 @@ public class ClienteTestDataBuilder
     {
         return new
         {
-            Nombre = _nombre ?? _faker.Name.FirstName(),
-            Apellido = _apellido ?? _faker.Name.LastName(),
-            Email = _email ?? _faker.Internet.Email(),
-            Telefono = _telefono ?? _faker.Phone.PhoneNumber(),
-            Direccion = _direccion ?? _faker.Address.FullAddress(),
+            Nombre = _nombre ?? GenerarNombreUnico(),
+            Apellido = _apellido ?? GenerarApellidoUnico(),
+            Email = _email ?? GenerarEmailUnico(),
+            Telefono = _telefono ?? GenerarTelefonoUnico(),
+            Direccion = _direccion ?? GenerarDireccionUnica(),
             FechaNacimiento = _fechaNacimiento ?? _faker.Date.Past(50, DateTime.Now.AddYears(-18)),
             Tipo = _tipo,
             Notas = _observaciones ?? _faker.Lorem.Sentence(3, 5)

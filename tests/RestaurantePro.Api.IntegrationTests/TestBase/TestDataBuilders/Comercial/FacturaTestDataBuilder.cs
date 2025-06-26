@@ -9,15 +9,60 @@ public class FacturaTestDataBuilder
 {
     private List<Guid> _comandasIds = new() { Guid.NewGuid() };
     private string _tipoFactura = "Normal";
-    private string _nombreCliente = "Cliente Test";
+    private string? _nombreCliente;
     private Guid _clienteId = Guid.NewGuid();
-    private string _identificacionFiscal = "12345678-9";
-    private string _direccionCliente = "Dirección Test 123";
-    private string _emailCliente = "cliente@test.com";
-    private string _observaciones = "Factura de prueba";
+    private string? _identificacionFiscal;
+    private string? _direccionCliente;
+    private string? _emailCliente;
+    private string? _observaciones;
     private int _diasCredito = 30;
     private string _metodoPagoPreferido = "Efectivo";
     private string _moneda = "CLP";
+
+    /// <summary>
+    /// Genera un nombre de cliente único
+    /// </summary>
+    private string GenerarNombreClienteUnico()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"Cliente_{guid.Substring(0, 8)}";
+    }
+
+    /// <summary>
+    /// Genera un email de cliente único
+    /// </summary>
+    private string GenerarEmailClienteUnico()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"cliente_{guid.Substring(0, 8)}@test.com";
+    }
+
+    /// <summary>
+    /// Genera una identificación fiscal única
+    /// </summary>
+    private string GenerarIdentificacionFiscalUnica()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"{guid.Substring(0, 8)}-{guid.Substring(8, 1)}";
+    }
+
+    /// <summary>
+    /// Genera una dirección de cliente única
+    /// </summary>
+    private string GenerarDireccionClienteUnica()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"Dirección Test {guid.Substring(0, 4)}";
+    }
+
+    /// <summary>
+    /// Genera observaciones únicas
+    /// </summary>
+    private string GenerarObservacionesUnicas()
+    {
+        var guid = Guid.NewGuid().ToString("N");
+        return $"Factura de prueba {guid.Substring(0, 4)}";
+    }
 
     public FacturaTestDataBuilder ConComandasIds(params Guid[] comandasIds)
     {
@@ -94,12 +139,12 @@ public class FacturaTestDataBuilder
         {
             ComandasIds = _comandasIds,
             TipoFactura = _tipoFactura,
-            NombreCliente = _nombreCliente,
+            NombreCliente = _nombreCliente ?? GenerarNombreClienteUnico(),
             ClienteId = _clienteId,
-            IdentificacionFiscal = _identificacionFiscal,
-            DireccionCliente = _direccionCliente,
-            EmailCliente = _emailCliente,
-            Observaciones = _observaciones,
+            IdentificacionFiscal = _identificacionFiscal ?? GenerarIdentificacionFiscalUnica(),
+            DireccionCliente = _direccionCliente ?? GenerarDireccionClienteUnica(),
+            EmailCliente = _emailCliente ?? GenerarEmailClienteUnico(),
+            Observaciones = _observaciones ?? GenerarObservacionesUnicas(),
             DiasCredito = _diasCredito,
             MetodoPagoPreferido = _metodoPagoPreferido,
             Moneda = _moneda,

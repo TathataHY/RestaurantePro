@@ -42,6 +42,14 @@ using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
 using RestaurantePro.Domain.Comercial.Facturacion.Services;
 using RestaurantePro.Domain.Comercial.Services;
 using Microsoft.AspNetCore.Http;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Domain.Core.SharedKernel;
+using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+using RestaurantePro.Domain.Core.Base.Events;
+using RestaurantePro.Domain.Core.Base;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -51,55 +59,109 @@ namespace RestaurantePro.Api.IntegrationTests.TestBase;
 /// </summary>
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
+    // 🔧 CONFIGURACIÓN ROBUSTA DE SQLITE IN-MEMORY
     private static SqliteConnection? _connection;
-    // 🔧 BD compartida para todos los tests para evitar problemas de contexto
+    private static bool _databaseInitialized = false;
+    private static readonly object _lock = new object();
     private static readonly string _databaseName = "TestDatabase_Shared";
-    
+
     public string DatabaseName => _databaseName;
     
+    /// <summary>
+    /// Elimina un servicio del contenedor de dependencias
+    /// </summary>
+    private static void RemoveService<T>(IServiceCollection services)
+    {
+        var descriptors = services.Where(d => d.ServiceType == typeof(T)).ToList();
+        foreach (var descriptor in descriptors)
+        {
+            services.Remove(descriptor);
+        }
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // 🔧 CONFIGURAR MODO TESTING PARA EVITAR CONFLICTOS DE BD
+        Environment.SetEnvironmentVariable("TESTING_MODE", "true");
+        
+        builder.UseEnvironment("Testing");
+        
         builder.ConfigureAppConfiguration((context, config) =>
         {
-            // Limpiar configuraciones existentes
-            config.Sources.Clear();
-            
-            // Agregar configuración específica para tests con SQLite in-memory
-            config.AddInMemoryCollection(new Dictionary<string, string?>
+            // Configuración específica para testing
+            config.AddInMemoryCollection(new Dictionary<string, string>
             {
-                ["ConnectionStrings:DefaultConnection"] = "DataSource=:memory:",
-                ["UseInMemoryDatabase"] = "false", // Usar SQLite en lugar de EF InMemory
-                ["Logging:LogLevel:Default"] = "Error",      // Solo errores reales
-                ["Logging:LogLevel:Microsoft"] = "Error",
-                ["Logging:LogLevel:Microsoft.Hosting.Lifetime"] = "Error",
-                ["Logging:LogLevel:RestaurantePro.Application.Common.Behaviors"] = "None", // Deshabilitar behaviors
-                ["Logging:LogLevel:RestaurantePro.Application.Common.Exceptions.ValidationException"] = "None", // Deshabilitar validaciones
-                ["Logging:Console:FormatterName"] = "json",
-                ["Logging:Console:FormatterOptions:IncludeScopes"] = "true",
-                ["Logging:Console:FormatterOptions:TimestampFormat"] = "yyyy-MM-dd HH:mm:ss "
+                {"ConnectionStrings:DefaultConnection", "Data Source=TestDatabase;Mode=Memory;Cache=Shared"},
+                {"Logging:LogLevel:Default", "Information"},
+                {"Logging:LogLevel:Microsoft", "Warning"},
+                {"Logging:LogLevel:Microsoft.Hosting.Lifetime", "Information"},
+                {"TESTING_MODE", "true"}
             });
-            
-            // Configurar variable para modo testing
-            Environment.SetEnvironmentVariable("TESTING_MODE", "true");
-            
-            // Agregar variables de entorno para tests
-            config.AddEnvironmentVariables();
         });
 
+        // 🔧 CONFIGURACIÓN SIMPLIFICADA PARA TESTS
         builder.ConfigureServices(services =>
         {
-            // Eliminar el registro previo de DbContext
-            var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<RestauranteProDbContext>));
-            if (descriptor != null)
-                services.Remove(descriptor);
-
-            // 🔧 Crear conexión SQLite in-memory compartida para todos los tests
-            if (_connection == null)
+            // 🔧 INICIALIZACIÓN ROBUSTA DE LA BASE DE DATOS SQLITE
+            lock (_lock)
             {
-                _connection = new SqliteConnection("DataSource=:memory:");
-                _connection.Open();
+                if (_connection == null)
+                {
+                    _connection = new SqliteConnection($"Data Source={_databaseName};Mode=Memory;Cache=Shared");
+                    _connection.Open();
+                }
+
+                // 🔧 CREAR ESQUEMA UNA SOLA VEZ CON MIGRACIONES
+                if (!_databaseInitialized)
+                {
+                    using var context = new RestauranteProDbContext(
+                        new DbContextOptionsBuilder<RestauranteProDbContext>()
+                            .UseSqlite(_connection)
+                            .Options,
+                        new TestLogger<RestauranteProDbContext>(),
+                        new TestDomainEventDispatcher());
+                    
+                    // 🔧 GARANTIZAR QUE LA BASE DE DATOS Y TABLAS SE CREEN CORRECTAMENTE
+                    try
+                    {
+                        // Asegurar que la base de datos se crea con todas las tablas
+                        context.Database.EnsureCreated();
+                        
+                        // Verificar que las tablas principales existen
+                        var tables = context.Database.SqlQueryRaw<string>(
+                            "SELECT name FROM sqlite_master WHERE type='table'").ToList();
+                        
+                        Console.WriteLine($"🔧 Tablas creadas en la BD de test: {string.Join(", ", tables)}");
+                        
+                        // Verificar que las tablas críticas existen
+                        var criticalTables = new[] { "Usuarios", "Productos", "Clientes", "Mesas", "Comandas", "Facturas" };
+                        var missingTables = criticalTables.Where(table => !tables.Contains(table)).ToList();
+                        
+                        if (missingTables.Any())
+                        {
+                            Console.WriteLine($"⚠️ Tablas faltantes: {string.Join(", ", missingTables)}");
+                            // Recrear la base de datos si faltan tablas críticas
+                            context.Database.EnsureDeleted();
+                            context.Database.EnsureCreated();
+                            Console.WriteLine("✅ Base de datos recreada para incluir todas las tablas");
+                        }
+                        
+                        _databaseInitialized = true;
+                        Console.WriteLine("✅ Base de datos inicializada correctamente");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"❌ Error inicializando BD: {ex.Message}");
+                        // Fallback: recrear la base de datos
+                        context.Database.EnsureDeleted();
+                        context.Database.EnsureCreated();
+                        _databaseInitialized = true;
+                        Console.WriteLine("✅ Base de datos recreada después del error");
+                    }
+                }
             }
 
+            // 🔧 CONFIGURAR SQLITE EN MEMORIA CON CONEXIÓN ESTÁTICA
             services.AddDbContext<RestauranteProDbContext>(options =>
             {
                 options.UseSqlite(_connection);
@@ -107,172 +169,130 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 options.EnableDetailedErrors();
             });
 
-            // Registrar IApplicationDbContext
+            // 🔧 REGISTRAR IApplicationDbContext
             services.AddScoped<IApplicationDbContext>(provider => 
                 provider.GetRequiredService<RestauranteProDbContext>());
 
-            // 🔧 REGISTRAR DBCONTEXT GENÉRICO PARA REPOSITORIOS
+            // 🔧 REGISTRAR DbContext GENÉRICO PARA REPOSITORIOS
             services.AddScoped<DbContext>(provider => 
                 provider.GetRequiredService<RestauranteProDbContext>());
 
-            // 🔐 CONFIGURACIÓN DE AUTENTICACIÓN FAKE PARA TESTS
+            // 🔧 REGISTRAR REPOSITORIOS CON SQLITE
+            services.AddScoped<IProductoRepository, ProductoRepository>();
+            services.AddScoped<IClienteRepository, ClienteRepository>();
+            services.AddScoped<IComandaRepository, ComandaRepository>();
+            services.AddScoped<IMesaRepository, MesaRepository>();
+            services.AddScoped<IIngredienteRepository, IngredienteRepository>();
+            services.AddScoped<IProveedorRepository, ProveedorRepository>();
+            services.AddScoped<IReservacionRepository, ReservacionRepository>();
+            services.AddScoped<IPreparacionRepository, PreparacionRepository>();
+            services.AddScoped<IOrdenCompraRepository, OrdenCompraRepository>();
+            services.AddScoped<IFacturaRepository, FacturaRepository>();
+            services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
+            services.AddScoped<IMovimientoInventarioRepository, MovimientoInventarioRepository>();
+            services.AddScoped<INotificacionRepository, NotificacionRepository>();
+            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+
+            // 🔧 REGISTRAR SERVICIOS DE DOMINIO
+            services.AddScoped<IDomainEventDispatcher, TestDomainEventDispatcher>();
+
+            // 🔧 REGISTRAR SERVICIOS DE INFRAESTRUCTURA
+            services.AddScoped<IEmailService, TestEmailService>();
+            services.AddHttpContextAccessor();
+            services.AddScoped<ICurrentUserService, TestCurrentUserService>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            // 🔧 CONFIGURAR AUTENTICACIÓN PARA TESTS
             services.AddAuthentication("Test")
-                .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
-                    "Test", options => { });
-            
+                .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>("Test", options => { });
+
             services.AddAuthorization(options =>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
-                    .AddAuthenticationSchemes("Test")
                     .Build();
             });
 
-            // 🔧 REGISTRAR IHttpContextAccessor PARA TestCurrentUserService
-            services.AddHttpContextAccessor();
-
-            // 🔧 REGISTRAR SERVICIOS BÁSICOS QUE APPLICATION NECESITA
-            // ITimeProvider - necesario para PerformanceBehavior
-            services.AddSingleton<ITimeProvider, SystemTimeProvider>();
-            
-            // IDelayProvider - necesario para RetryBehavior
-            services.AddSingleton<IDelayProvider, DelayProvider>();
-            
-            // IDateTimeService - necesario para PreparacionRepository
-            services.AddScoped<IDateTimeService>(provider => 
-                new MockDateTimeService(DateTime.Now)); // Usar fecha actual para tests
-            
-            // 🔔 INotificationService - necesario para Commands como DesactivarCliente
-            services.AddScoped<INotificationService, NotificationService>();
-            
-            // 📧 IEmailService - Mock para evitar errores en tests
-            services.AddScoped<IEmailService, TestEmailService>();
-            
-            // 👤 ICurrentUserService - necesario para CrearUsuarioHandler
-            services.AddScoped<ICurrentUserService, TestCurrentUserService>();
-            
-            // 📦 REGISTRAR REPOSITORIOS NECESARIOS PARA LOS TESTS
-            services.AddScoped<IProductoRepository, ProductoRepository>();
-            
-            // 📦 REGISTRAR REPOSITORIOS CORE
-            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
-            
-            // 📦 REGISTRAR REPOSITORIOS COMERCIAL
-            services.AddScoped<IClienteRepository, ClienteRepository>();
-            
-            // 📦 REGISTRAR REPOSITORIOS DE FACTURACIÓN
-            services.AddScoped<IFacturaRepository, FacturaRepository>();
-            services.AddScoped<IComandaRepository, ComandaRepository>();
-            services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
-            services.AddScoped<IHistorialPuntosRepository, HistorialPuntosRepository>();
-            
-            // 📦 REGISTRAR REPOSITORIOS INVENTARIO
-            services.AddScoped<IOrdenCompraRepository>(provider => 
-                new OrdenCompraRepository(
-                    provider.GetRequiredService<RestauranteProDbContext>(),
-                    provider.GetRequiredService<ILogger<OrdenCompraRepository>>()));
-            
-            services.AddScoped<IIngredienteRepository>(provider => 
-                new IngredienteRepository(
-                    provider.GetRequiredService<RestauranteProDbContext>(),
-                    provider.GetRequiredService<ILogger<IngredienteRepository>>()));
-            
-            services.AddScoped<IMovimientoInventarioRepository>(provider => 
-                new MovimientoInventarioRepository(
-                    provider.GetRequiredService<RestauranteProDbContext>(),
-                    provider.GetRequiredService<ILogger<MovimientoInventarioRepository>>()));
-            
-            services.AddScoped<IProveedorRepository>(provider => 
-                new ProveedorRepository(
-                    provider.GetRequiredService<RestauranteProDbContext>(),
-                    provider.GetRequiredService<ILogger<ProveedorRepository>>()));
-
-            // 📦 REGISTRAR SERVICIOS DE DOMINIO NECESARIOS
-            services.AddScoped<INotificationManager, NotificationManager>();
-            services.AddScoped<IStockBajoPolicy, StockBajoPolicy>();
-            services.AddScoped<IInventarioServiceFacade, InventarioServiceFacade>();
-            services.AddScoped<IServicioNotificaciones, ServicioNotificaciones>();
-            
-            // 📦 REGISTRAR SERVICIOS DE USUARIOS
-            services.AddScoped<IUsuarioService, UsuarioService>();
-            
-            services.AddScoped<INotificacionRepository, NotificacionRepository>();
-            
-            // 📦 REGISTRAR REPOSITORIOS OPERACIONES
-            services.AddScoped<IPreparacionRepository>(provider => 
-                new PreparacionRepository(
-                    provider.GetRequiredService<RestauranteProDbContext>(),
-                    provider.GetRequiredService<IDateTimeService>(),
-                    provider.GetRequiredService<ILogger<PreparacionRepository>>()));
-            
-            services.AddScoped<IReservacionRepository>(provider => 
-                new ReservacionRepository(
-                    provider.GetRequiredService<RestauranteProDbContext>(),
-                    provider.GetRequiredService<IMesaRepository>(),
-                    provider.GetRequiredService<ILogger<ReservacionRepository>>()));
-            
-            services.AddScoped<IMesaRepository>(provider => 
-                new MesaRepository(
-                    provider.GetRequiredService<RestauranteProDbContext>(),
-                    provider.GetRequiredService<ILogger<MesaRepository>>(),
-                    provider.GetRequiredService<IDateTimeService>()));
-            
-            // 🏗️ REGISTRAR BUILDERS DE DOMAIN
-            services.AddScoped<ProductoBuilder>();
-            
-            // Otros servicios básicos que podrían ser necesarios
-            // services.AddSingleton<ICacheService, InMemoryCacheService>();
-            // services.AddScoped<ICurrentUserService, TestCurrentUserService>();
-
-            // Configurar logging mínimo para tests
-            services.AddLogging(builder =>
-            {
-                builder.AddConsole();
-                builder.SetMinimumLevel(LogLevel.Error);
-            });
-
-            // Crear el esquema de la base de datos en memoria
-            var sp = services.BuildServiceProvider();
-            using (var scope = sp.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
-                db.Database.EnsureCreated(); // O usa db.Database.Migrate() si usas migraciones
-            }
-
-            // Repositorios Base
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-            // Servicios de dominio y utilidades
-            services.AddScoped<IDateTimeService, DateTimeService>();
-
-            // Fakes para servicios de identidad y permisos
-            services.AddScoped<IIdentityService, FakeIdentityService>();
-            services.AddScoped<IJwtTokenService, FakeJwtTokenService>();
-            services.AddScoped<IUserPermissionService, FakeUserPermissionService>();
-
-            // 📦 REGISTRAR SERVICIOS DE FACTURACIÓN
-            services.AddScoped<IServicioFacturacion, ServicioFacturacion>();
-            services.AddScoped<IComercialServiceFacade, ComercialServiceFacade>();
+            // 🔧 REGISTRAR SERVICIO FAKE DE FECHA/HORA
+            services.AddSingleton<IDateTimeService, FakeDateTimeService>();
+            services.AddSingleton<ITimeProvider, FakeTimeProvider>();
+            services.AddSingleton<IDelayProvider, FakeDelayProvider>();
         });
-
-        builder.UseEnvironment("Testing");
     }
 
     protected override void Dispose(bool disposing)
     {
+        if (disposing)
+        {
+            // No cerrar la conexión aquí, solo limpiar datos si es necesario
+        }
         base.Dispose(disposing);
-        // 🔧 No cerrar la conexión estática aquí para evitar problemas entre tests
-        // La conexión se mantendrá abierta durante toda la ejecución de tests
     }
 
-    // 🔧 Método estático para limpiar la conexión al final de todos los tests
-    public static void CleanupConnection()
+    /// <summary>
+    /// Limpia todos los datos de la base de datos sin cerrar la conexión
+    /// </summary>
+    public static void CleanupDatabase()
     {
-        if (_connection != null)
+        if (_connection != null && _databaseInitialized)
         {
-            _connection.Close();
-            _connection.Dispose();
-            _connection = null;
+            using var context = new RestauranteProDbContext(
+                new DbContextOptionsBuilder<RestauranteProDbContext>()
+                    .UseSqlite(_connection)
+                    .Options,
+                new TestLogger<RestauranteProDbContext>(),
+                new TestDomainEventDispatcher());
+            
+            // 🔧 LIMPIEZA SEGURA: SOLO ELIMINAR DATOS, NO RECREAR ESQUEMA
+            try
+            {
+                // Desactivar detección de cambios para mejorar rendimiento
+                context.ChangeTracker.AutoDetectChangesEnabled = false;
+                
+                // Limpiar datos en orden específico para evitar problemas de FK
+                context.Facturas.RemoveRange(context.Facturas);
+                context.ItemsComanda.RemoveRange(context.ItemsComanda);
+                context.Comandas.RemoveRange(context.Comandas);
+                context.Reservaciones.RemoveRange(context.Reservaciones);
+                context.Mesas.RemoveRange(context.Mesas);
+                context.Clientes.RemoveRange(context.Clientes);
+                context.Usuarios.RemoveRange(context.Usuarios);
+                context.Productos.RemoveRange(context.Productos);
+                context.Ingredientes.RemoveRange(context.Ingredientes);
+                context.Proveedores.RemoveRange(context.Proveedores);
+                context.Notificaciones.RemoveRange(context.Notificaciones);
+                
+                // Guardar cambios
+                context.SaveChanges();
+                
+                // Reactivar detección de cambios
+                context.ChangeTracker.AutoDetectChangesEnabled = true;
+                
+                Console.WriteLine("✅ Datos de la base de datos limpiados correctamente");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error limpiando datos: {ex.Message}");
+                // Fallback: recrear solo si es absolutamente necesario
+                context.Database.EnsureCreated();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Cierra la conexión SQLite estática (llamar solo al final de todos los tests)
+    /// </summary>
+    public static void CloseConnection()
+    {
+        lock (_lock)
+        {
+            if (_connection != null)
+            {
+                _connection.Close();
+                _connection.Dispose();
+                _connection = null;
+                _databaseInitialized = false;
+            }
         }
     }
 }
@@ -550,4 +570,76 @@ public class FakeUserPermissionService : IUserPermissionService
     public Task<bool> PuedeSupervisarAsync(Guid supervisorId, Guid subordinadoId) => Task.FromResult(true);
     public Task<List<Guid>> ObtenerUsuariosMismoDepartamentoAsync(Guid usuarioId) => Task.FromResult(new List<Guid>());
     public Task<bool> EsAdministradorAsync(Guid usuarioId) => Task.FromResult(true);
+}
+
+/// <summary>
+/// Logger de test para DbContext
+/// </summary>
+public class TestLogger<T> : ILogger<T>
+{
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+    public bool IsEnabled(LogLevel logLevel) => true;
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) { }
+}
+
+/// <summary>
+/// Dispatcher de eventos de dominio para tests
+/// </summary>
+public class TestDomainEventDispatcher : IDomainEventDispatcher
+{
+    public Task Dispatch(DomainEvent evento, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task DispatchAll(IEnumerable<DomainEvent> eventos, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+}
+
+// Implementación fake para IDateTimeService
+public class FakeDateTimeService : IDateTimeService
+{
+    public DateTime Now => DateTime.UtcNow;
+    public DateTime Today => DateTime.UtcNow.Date;
+    public DateTimeOffset NowOffset => DateTimeOffset.UtcNow;
+    public DateTime UtcNow => DateTime.UtcNow;
+}
+
+// Implementación fake para ITimeProvider
+public class FakeTimeProvider : ITimeProvider
+{
+    public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
+    
+    public long GetTimestamp()
+    {
+        return DateTimeOffset.UtcNow.Ticks;
+    }
+    
+    public TimeSpan GetElapsedTime(long startingTimestamp)
+    {
+        var currentTicks = DateTimeOffset.UtcNow.Ticks;
+        var elapsedTicks = currentTicks - startingTimestamp;
+        return TimeSpan.FromTicks(elapsedTicks);
+    }
+}
+
+// Implementación fake para IDelayProvider
+public class FakeDelayProvider : IDelayProvider
+{
+    public Task DelayAsync(TimeSpan delay, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask; // No delay en tests
+    }
+    
+    public Task DelayAsync(int millisecondsDelay, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask; // No delay en tests
+    }
+    
+    public Task Delay(TimeSpan delay, CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask; // No delay en tests
+    }
 }

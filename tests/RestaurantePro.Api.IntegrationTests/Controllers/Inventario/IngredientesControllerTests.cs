@@ -281,9 +281,13 @@ public class IngredientesControllerTests : ApiIntegrationTestBase
 
     private async Task<IngredienteDto> CrearIngredientePrueba(string nombre, string codigo, decimal? stockInicial = null, decimal? stockMinimo = null)
     {
+        // Crear un usuario por defecto para los tests
+        var usuario = await CrearUsuarioPrueba();
+        
         var builder = new IngredienteTestDataBuilder()
             .ConNombre(nombre)
-            .ConCodigo(codigo);
+            .ConCodigo(codigo)
+            .ConUsuarioId(usuario.Id); // ¡Agregar el UsuarioId!
 
         if (stockInicial.HasValue)
         {
