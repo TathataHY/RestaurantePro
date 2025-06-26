@@ -1,3 +1,16 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using AutoMapper;
+using FluentValidation;
+using MediatR;
+using RestaurantePro.Application.Common.Behaviors;
+using RestaurantePro.Application.Config.Mappings;
+using RestaurantePro.Application.Config.Settings;
+using RestaurantePro.Application.Comercial.Promociones.Commands.ActivarPromocion;
+using RestaurantePro.Application.Comercial.Promociones.Commands.PausarPromocion;
+using System.Reflection;
+
 namespace RestaurantePro.Application.Config.DependencyInjection;
 
 /// <summary>
@@ -66,6 +79,10 @@ public static class ApplicationServiceCollection
     {
         // Registrar MediatR desde el assembly actual (versión 11.x compatible)
         services.AddMediatR(Assembly.GetExecutingAssembly());
+
+        // 🔧 REGISTRO MANUAL DE HANDLERS PROBLEMÁTICOS PARA DEBUGGING
+        services.AddTransient<ActivarPromocionHandler>();
+        services.AddTransient<PausarPromocionHandler>();
 
         // Registrar behaviors del pipeline (en orden de ejecución)
         // 1. Exception Handling - Para capturar y convertir excepciones

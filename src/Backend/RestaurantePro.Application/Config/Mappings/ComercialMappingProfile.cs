@@ -10,10 +10,10 @@ public class ComercialMappingProfile : Profile
     {
         ConfigurarMapeosClientes();
         ConfigurarMapeosFacturacion();
+        ConfigurarMapeosPromociones();
         // TODO: Agregar otros mapeos cuando estén implementados:
         // ConfigurarMapeosFidelizacion();
         // ConfigurarMapeosPagos();
-        // ConfigurarMapeosPromociones();
     }
 
     /// <summary>
@@ -142,5 +142,25 @@ public class ComercialMappingProfile : Profile
             .ForMember(dest => dest.Concepto, opt => opt.MapFrom(src => src.Concepto))
             .ForMember(dest => dest.FechaAplicacion, opt => opt.MapFrom(src => src.FechaAplicacion));
         */
+    }
+
+    /// <summary>
+    /// Configura los mapeos específicos para Promociones
+    /// </summary>
+    private void ConfigurarMapeosPromociones()
+    {
+        // Promocion Entity -> PromocionDto
+        CreateMap<RestaurantePro.Domain.Comercial.Promociones.Entities.Promocion, RestaurantePro.Application.Comercial.Promociones.DTOs.PromocionDto>()
+            .ForMember(dest => dest.ProductosAplicablesIds, opt => opt.MapFrom(src => src.ProductosAplicablesIds != null ? src.ProductosAplicablesIds.ToList() : new List<Guid>()))
+            .ForMember(dest => dest.CategoriasAplicablesIds, opt => opt.MapFrom(src => src.CategoriasAplicablesIds != null ? src.CategoriasAplicablesIds.ToList() : new List<Guid>()))
+            .ForMember(dest => dest.ClientesQueUsaronIds, opt => opt.MapFrom(src => src.ClientesQueUsaronIds != null ? src.ClientesQueUsaronIds.ToList() : new List<Guid>()))
+            .ForMember(dest => dest.EstaVigente, opt => opt.MapFrom(src => src.EstaVigente()))
+            .ForMember(dest => dest.DescuentoCalculado, opt => opt.Ignore()) // Se calcula en el handler si aplica
+            .ForMember(dest => dest.Condiciones, opt => opt.MapFrom(src => src.Condiciones ?? string.Empty))
+            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
+            .ForMember(dest => dest.FechaUltimaActualizacion, opt => opt.MapFrom(src => src.FechaActualizacion))
+            .ForMember(dest => dest.DiasValidos, opt => opt.Ignore()); // Si existe lógica específica, mapear aquí
+        // Si necesitas el mapeo inverso:
+        // CreateMap<PromocionDto, Promocion>()... (no recomendado para entidades de dominio)
     }
 } 

@@ -1,4 +1,18 @@
 using Microsoft.AspNetCore.Authorization;
+using RestaurantePro.Application.Comercial.Promociones.Commands.ActivarPromocion;
+using RestaurantePro.Application.Comercial.Promociones.Commands.AsignarProductos;
+using RestaurantePro.Application.Comercial.Promociones.Commands.CrearPromocion;
+using RestaurantePro.Application.Comercial.Promociones.Commands.EliminarPromocion;
+using RestaurantePro.Application.Comercial.Promociones.Commands.PausarPromocion;
+using RestaurantePro.Application.Comercial.Promociones.Commands.QuitarProductos;
+using RestaurantePro.Application.Comercial.Promociones.Commands.AplicarPromocion;
+using RestaurantePro.Application.Comercial.Promociones.Commands.ActualizarPromocion;
+using RestaurantePro.Application.Comercial.Promociones.Queries.ObtenerPromocionPorId;
+using RestaurantePro.Application.Comercial.Promociones.Queries.ObtenerPromociones;
+using RestaurantePro.Application.Comercial.Promociones.Queries.ObtenerPromocionesAplicables;
+using RestaurantePro.Application.Comercial.Promociones.DTOs;
+using RestaurantePro.Api.Common;
+using RestaurantePro.Domain.Comercial.Promociones.Enums;
 
 namespace RestaurantePro.Api.Controllers.Comercial;
 
@@ -12,26 +26,52 @@ namespace RestaurantePro.Api.Controllers.Comercial;
 [Authorize]
 public class PromocionesController : ControllerBase
 {
+    private readonly IMediator _mediator;
     private readonly ILogger<PromocionesController> _logger;
 
-    public PromocionesController(ILogger<PromocionesController> logger)
+    public PromocionesController(IMediator mediator, ILogger<PromocionesController> logger)
     {
+        _mediator = mediator;
         _logger = logger;
     }
 
     /// <summary>
     /// Obtiene todas las promociones con filtros opcionales
     /// </summary>
-    /// <param name="estado">Filtro opcional por estado (Creada, Activa, Pausada, etc.)</param>
-    /// <param name="tipo">Filtro opcional por tipo (Porcentaje, Monto Fijo, etc.)</param>
+    /// <param name="estado">Filtro por estado</param>
+    /// <param name="tipo">Filtro por tipo</param>
     /// <returns>Lista de promociones</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ApiResponse<object>>> ObtenerPromociones([FromQuery] string? estado, [FromQuery] string? tipo)
+    [ProducesResponseType(typeof(ApiResponse<List<PromocionDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<List<PromocionDto>>>> ObtenerPromociones([FromQuery] string? estado, [FromQuery] string? tipo)
     {
         _logger.LogInformation("📋 GET /api/comercial/promociones - Obteniendo promociones con filtros: estado={Estado}, tipo={Tipo}", estado, tipo);
-        var response = ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado aún" }, "Funcionalidad en desarrollo", StatusCodes.Status501NotImplemented);
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        
+        var query = new ObtenerPromocionesQuery();
+        
+        // Convertir string a enum si se proporciona
+        if (!string.IsNullOrEmpty(estado) && Enum.TryParse<EstadoPromocion>(estado, true, out var estadoEnum))
+        {
+            query.Estado = estadoEnum;
+        }
+        
+        if (!string.IsNullOrEmpty(tipo) && Enum.TryParse<TipoPromocion>(tipo, true, out var tipoEnum))
+        {
+            query.Tipo = tipoEnum;
+        }
+        
+        var result = await _mediator.Send(query);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<List<PromocionDto>>.ErrorResponse(
+                result.Errors, "Error al obtener promociones", StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        var response = ApiResponse<List<PromocionDto>>.SuccessResponse(
+            result.Value, "Promociones obtenidas exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -40,13 +80,25 @@ public class PromocionesController : ControllerBase
     /// <param name="id">ID de la promoción</param>
     /// <returns>Datos de la promoción</returns>
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PromocionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> ObtenerPromocion(Guid id)
+    public async Task<ActionResult<ApiResponse<PromocionDto>>> ObtenerPromocion(Guid id)
     {
         _logger.LogInformation("🔍 GET /api/comercial/promociones/{Id} - Obteniendo promoción por ID", id);
-        var response = ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado aún" }, "Funcionalidad en desarrollo", StatusCodes.Status501NotImplemented);
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        
+        var query = new ObtenerPromocionPorIdQuery { Id = id };
+        var result = await _mediator.Send(query);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Promoción no encontrada", StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<PromocionDto>.SuccessResponse(
+            result.Value, "Promoción obtenida exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -55,13 +107,28 @@ public class PromocionesController : ControllerBase
     /// <param name="command">Datos de la promoción a crear</param>
     /// <returns>Promoción creada</returns>
     [HttpPost]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<PromocionDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> CrearPromocion([FromBody] object command)
+    public async Task<ActionResult<ApiResponse<PromocionDto>>> CrearPromocion([FromBody] CrearPromocionCommand command)
     {
         _logger.LogInformation("➕ POST /api/comercial/promociones - Creando nueva promoción");
-        var response = ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado aún" }, "Funcionalidad en desarrollo", StatusCodes.Status501NotImplemented);
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        
+        var result = await _mediator.Send(command);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Error al crear promoción", StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        var response = ApiResponse<PromocionDto>.SuccessResponse(
+            result.Value, "Promoción creada exitosamente");
+            
+        return CreatedAtAction(
+            nameof(ObtenerPromocion),
+            new { id = result.Value.Id },
+            response);
     }
 
     /// <summary>
@@ -71,13 +138,32 @@ public class PromocionesController : ControllerBase
     /// <param name="command">Datos a actualizar</param>
     /// <returns>Promoción actualizada</returns>
     [HttpPut("{id:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PromocionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> ActualizarPromocion(Guid id, [FromBody] object command)
+    public async Task<ActionResult<ApiResponse<PromocionDto>>> ActualizarPromocion(Guid id, [FromBody] ActualizarPromocionCommand command)
     {
         _logger.LogInformation("✏️ PUT /api/comercial/promociones/{Id} - Actualizando promoción", id);
-        var response = ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado aún" }, "Funcionalidad en desarrollo", StatusCodes.Status501NotImplemented);
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+
+        // Asignar el ID de la URL al comando
+        command.Id = id;
+
+        var result = await _mediator.Send(command);
+        
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Errors.Any(e => e.Contains("no encontrada")) 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+                
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Error al actualizar promoción", statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<PromocionDto>.SuccessResponse(
+            result.Value, "Promoción actualizada exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -86,13 +172,29 @@ public class PromocionesController : ControllerBase
     /// <param name="id">ID de la promoción a cancelar</param>
     /// <returns>Confirmación de cancelación</returns>
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> EliminarPromocion(Guid id)
+    public async Task<ActionResult<ApiResponse<bool>>> EliminarPromocion(Guid id)
     {
         _logger.LogInformation("🗑️ DELETE /api/comercial/promociones/{Id} - Eliminando (cancelando) promoción", id);
-        var response = ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado aún" }, "Funcionalidad en desarrollo", StatusCodes.Status501NotImplemented);
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+
+        var command = new EliminarPromocionCommand 
+        { 
+            Id = id,
+            Motivo = "Eliminada vía API DELETE endpoint"
+        };
+        var result = await _mediator.Send(command);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Error al eliminar promoción", StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<bool>.SuccessResponse(
+            result.Value, "Promoción eliminada exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -101,13 +203,25 @@ public class PromocionesController : ControllerBase
     /// <param name="id">ID de la promoción a activar</param>
     /// <returns>Confirmación de activación</returns>
     [HttpPatch("{id:guid}/activar")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PromocionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> ActivarPromocion(Guid id)
+    public async Task<ActionResult<ApiResponse<PromocionDto>>> ActivarPromocion(Guid id)
     {
         _logger.LogInformation("✅ PATCH /api/comercial/promociones/{Id}/activar - Activando promoción", id);
-        var response = ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado aún" }, "Funcionalidad en desarrollo", StatusCodes.Status501NotImplemented);
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+
+        var command = new ActivarPromocionCommand { Id = id };
+        var result = await _mediator.Send(command);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Error al activar promoción", StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<PromocionDto>.SuccessResponse(
+            result.Value, "Promoción activada exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -116,28 +230,60 @@ public class PromocionesController : ControllerBase
     /// <param name="id">ID de la promoción a pausar</param>
     /// <returns>Confirmación de pausa</returns>
     [HttpPatch("{id:guid}/pausar")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PromocionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> PausarPromocion(Guid id)
+    public async Task<ActionResult<ApiResponse<PromocionDto>>> PausarPromocion(Guid id)
     {
         _logger.LogInformation("⏸️ PATCH /api/comercial/promociones/{Id}/pausar - Pausando promoción", id);
-        var response = ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado aún" }, "Funcionalidad en desarrollo", StatusCodes.Status501NotImplemented);
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+
+        var command = new PausarPromocionCommand { Id = id };
+        var result = await _mediator.Send(command);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Error al pausar promoción", StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<PromocionDto>.SuccessResponse(
+            result.Value, "Promoción pausada exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
-    /// Aplica una promoción a una comanda o factura
+    /// Aplica una promoción a un monto específico
     /// </summary>
-    /// <param name="command">Datos para la aplicación de la promoción</param>
-    /// <returns>Resultado de la aplicación</returns>
+    /// <param name="request">Datos para aplicar la promoción</param>
+    /// <returns>Resultado de la aplicación de la promoción</returns>
     [HttpPost("aplicar")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<AplicarPromocionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> AplicarPromocion([FromBody] object command)
+    public async Task<ActionResult<ApiResponse<AplicarPromocionDto>>> AplicarPromocion([FromBody] AplicarPromocionRequest request)
     {
-        _logger.LogInformation("🛒 POST /api/comercial/promociones/aplicar - Aplicando promoción");
-        var response = ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado aún" }, "Funcionalidad en desarrollo", StatusCodes.Status501NotImplemented);
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        _logger.LogInformation("🎁 POST /api/comercial/promociones/aplicar - Aplicando promoción");
+
+        var command = new AplicarPromocionCommand
+        {
+            PromocionId = request.PromocionId,
+            ClienteId = request.ClienteId,
+            ComandaId = request.ComandaId,
+            ProductosIds = request.ProductosIds,
+            TipoAplicacion = TipoAplicacionPromocion.ProductosEspecificos
+        };
+
+        var result = await _mediator.Send(command);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Error al aplicar promoción", StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        var response = ApiResponse<AplicarPromocionDto>.SuccessResponse(
+            result.Value, "Promoción aplicada exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -147,12 +293,29 @@ public class PromocionesController : ControllerBase
     /// <param name="monto">Monto de la comanda</param>
     /// <returns>Lista de promociones válidas</returns>
     [HttpGet("aplicables")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ApiResponse<object>>> ObtenerPromocionesAplicables([FromQuery] Guid clienteId, [FromQuery] decimal monto)
+    [ProducesResponseType(typeof(ApiResponse<List<PromocionDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<List<PromocionDto>>>> ObtenerPromocionesAplicables([FromQuery] Guid clienteId, [FromQuery] decimal monto)
     {
         _logger.LogInformation("💡 GET /api/comercial/promociones/aplicables - Obteniendo promociones aplicables para cliente {ClienteId} con monto {Monto}", clienteId, monto);
-        var response = ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado aún" }, "Funcionalidad en desarrollo", StatusCodes.Status501NotImplemented);
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        
+        var query = new ObtenerPromocionesAplicablesQuery
+        {
+            ClienteId = clienteId,
+            Monto = monto
+        };
+        
+        var result = await _mediator.Send(query);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<List<PromocionDto>>.ErrorResponse(
+                result.Errors, "Error al obtener promociones aplicables", StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        var response = ApiResponse<List<PromocionDto>>.SuccessResponse(
+            result.Value, "Promociones aplicables obtenidas exitosamente");
+        return Ok(response);
     }
 
     /// <summary>
@@ -162,12 +325,62 @@ public class PromocionesController : ControllerBase
     /// <param name="productosIds">Lista de IDs de productos a asignar</param>
     /// <returns>Confirmación</returns>
     [HttpPost("{id:guid}/productos")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PromocionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object>>> AsignarProductos(Guid id, [FromBody] List<Guid> productosIds)
+    public async Task<ActionResult<ApiResponse<PromocionDto>>> AsignarProductos(Guid id, [FromBody] List<Guid> productosIds)
     {
         _logger.LogInformation("📦 POST /api/comercial/promociones/{Id}/productos - Asignando productos a la promoción", id);
-        var response = ApiResponse<object>.ErrorResponse(new List<string> { "Endpoint no implementado aún" }, "Funcionalidad en desarrollo", StatusCodes.Status501NotImplemented);
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+
+        var command = new AsignarProductosCommand
+        {
+            PromocionId = id,
+            ProductosIds = productosIds
+        };
+        
+        var result = await _mediator.Send(command);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Error al asignar productos", StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<PromocionDto>.SuccessResponse(
+            result.Value, "Productos asignados exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Quita productos de una promoción
+    /// </summary>
+    /// <param name="id">ID de la promoción</param>
+    /// <param name="productosIds">Lista de IDs de productos a quitar</param>
+    /// <returns>Confirmación</returns>
+    [HttpDelete("{id:guid}/productos")]
+    [ProducesResponseType(typeof(ApiResponse<PromocionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<PromocionDto>>> QuitarProductos(Guid id, [FromBody] List<Guid> productosIds)
+    {
+        _logger.LogInformation("📦 DELETE /api/comercial/promociones/{Id}/productos - Quitando productos de la promoción", id);
+
+        var command = new QuitarProductosCommand
+        {
+            PromocionId = id,
+            ProductosIds = productosIds
+        };
+        
+        var result = await _mediator.Send(command);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors, "Error al quitar productos", StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<PromocionDto>.SuccessResponse(
+            result.Value, "Productos quitados exitosamente");
+        return Ok(response);
     }
 } 

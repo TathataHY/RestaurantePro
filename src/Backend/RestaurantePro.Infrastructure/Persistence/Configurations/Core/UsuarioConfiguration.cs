@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using RestaurantePro.Domain.Core.Usuarios.Entities;
 using RestaurantePro.Domain.Core.Usuarios.Enums;
 using System;
@@ -91,20 +92,34 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
                 .HasMaxLength(500);
 
             // Configurar colección de roles
-            builder.Property<List<RolUsuario>>("_roles")
+            var rolListComparer = new ValueComparer<List<RolUsuario>>(
+                (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
+                c => c != null ? c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())) : 0,
+                c => c != null ? c.ToList() : new List<RolUsuario>()
+            );
+            var stringListComparer = new ValueComparer<List<string>>(
+                (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
+                c => c != null ? c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())) : 0,
+                c => c != null ? c.ToList() : new List<string>()
+            );
+
+            var rolesProp = builder.Property<List<RolUsuario>>("_roles")
                 .HasColumnName("Roles")
                 .HasConversion(
                     v => string.Join(',', v),
                     v => v.Split(',', System.StringSplitOptions.RemoveEmptyEntries)
                          .Select(r => Enum.Parse<RolUsuario>(r))
-                         .ToList());
+                         .ToList()
+                );
+            rolesProp.Metadata.SetValueComparer(rolListComparer);
 
-            // Configurar colección de permisos
-            builder.Property<List<string>>("_permisos")
+            var permisosProp = builder.Property<List<string>>("_permisos")
                 .HasColumnName("Permisos")
                 .HasConversion(
                     v => string.Join(',', v),
-                    v => v.Split(',', System.StringSplitOptions.RemoveEmptyEntries).ToList());
+                    v => v.Split(',', System.StringSplitOptions.RemoveEmptyEntries).ToList()
+                );
+            permisosProp.Metadata.SetValueComparer(stringListComparer);
 
             // Relaciones
             builder.HasOne<Usuario>()

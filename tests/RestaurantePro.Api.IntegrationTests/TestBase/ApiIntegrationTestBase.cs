@@ -153,9 +153,11 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
             await EliminarEntidadesSafely(DbContext, DbContext.Notificaciones, "Notificaciones");
             await EliminarEntidadesSafely(DbContext, DbContext.OrdenesCompra, "OrdenesCompra");
             
-            // 🔧 LIMPIAR TABLAS DE ASP.NET IDENTITY CON SQL DIRECTO
+            // 🔧 LIMPIAR CUALQUIER OTRA TABLA QUE PUEDA EXISTIR
             try
             {
+                // Limpiar tablas del sistema usando SQL directo válido para SQLite
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM __EFMigrationsHistory");
                 await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUserTokens");
                 await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUserRoles");
                 await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUserLogins");
@@ -163,23 +165,10 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
                 await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetRoleClaims");
                 await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUsers");
                 await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetRoles");
-                Logger.LogInformation("✅ Tablas de ASP.NET Identity limpiadas");
             }
             catch (Exception ex)
             {
-                Logger.LogWarning($"⚠️ Error limpiando tablas ASP.NET Identity: {ex.Message}");
-            }
-            
-            // 🔧 LIMPIAR CUALQUIER OTRA TABLA QUE PUEDA EXISTIR
-            try
-            {
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM __EFMigrationsHistory");
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM sqlite_sequence");
-                Logger.LogInformation("✅ Tablas del sistema limpiadas");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning($"⚠️ Error limpiando tablas del sistema: {ex.Message}");
+                Logger.LogWarning("?? Error limpiando tablas del sistema: {Error}", ex.Message);
             }
             
             // Guardar cambios
@@ -911,5 +900,23 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         await GuardarCambiosConRetry(DbContext, "TarjetaFidelizacion");
         Logger.LogInformation($"✅ Tarjeta de fidelización creada: {tarjeta.Id} - Código: {tarjeta.Codigo} - Cliente: {cliente.Id}");
         return tarjeta;
+    }
+}
+
+/// <summary>
+/// Métodos de extensión para HttpClient en tests de integración
+/// </summary>
+public static class HttpClientExtensions
+{
+    /// <summary>
+    /// Método de extensión para enviar JSON en requests DELETE
+    /// </summary>
+    public static async Task<HttpResponseMessage> DeleteAsJsonAsync<T>(this HttpClient client, string requestUri, T value)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, requestUri)
+        {
+            Content = JsonContent.Create(value)
+        };
+        return await client.SendAsync(request);
     }
 } 

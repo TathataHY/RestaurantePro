@@ -51,6 +51,7 @@ using RestaurantePro.Domain.Core.Base;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -198,6 +199,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IMovimientoInventarioRepository, MovimientoInventarioRepository>();
             services.AddScoped<INotificacionRepository, NotificacionRepository>();
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+            services.AddScoped<IPromocionRepository, PromocionRepository>();
 
             // 🔧 REGISTRAR SERVICIOS DE DOMINIO
             services.AddScoped<IDomainEventDispatcher, TestDomainEventDispatcher>();

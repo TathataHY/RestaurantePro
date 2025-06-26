@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace RestaurantePro.Infrastructure.Persistence.Configurations.Comercial;
 
@@ -76,15 +77,23 @@ public class FacturaConfiguration : IEntityTypeConfiguration<Factura>
             .HasMaxLength(500);
             
         // Configurar ComandasIds como un valor convertible
-        builder.Property(p => p.ComandasIds)
+        var guidListComparer = new ValueComparer<IReadOnlyList<Guid>>(
+            (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
+            c => c != null ? c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())) : 0,
+            c => c != null ? c.ToList() : new List<Guid>()
+        );
+
+        var comandasProp = builder.Property(p => p.ComandasIds)
             .HasConversion(
                 v => v.Count > 0 ? string.Join(',', v) : "",
-                v => string.IsNullOrEmpty(v) 
-                    ? new List<Guid>() 
+                v => string.IsNullOrEmpty(v)
+                    ? new List<Guid>()
                     : v.Split(',', StringSplitOptions.RemoveEmptyEntries)
                         .Where(id => !string.IsNullOrWhiteSpace(id))
                         .Select(id => Guid.Parse(id.Trim()))
-                        .ToList());
+                        .ToList()
+            );
+        comandasProp.Metadata.SetValueComparer(guidListComparer);
         
         builder.Property(p => p.EstaEliminado)
             .IsRequired()
