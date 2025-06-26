@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Infrastructure.Services;
 using RestaurantePro.Infrastructure.ExternalServices.Email;
 using RestaurantePro.Domain.Core.Productos.Interfaces;
@@ -59,11 +60,11 @@ namespace RestaurantePro.Api.IntegrationTests.TestBase;
 /// </summary>
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
-    // 🔧 CONFIGURACIÓN ROBUSTA DE SQLITE IN-MEMORY
+    // 🔧 CONFIGURACIÓN ROBUSTA DE SQLITE IN-MEMORY CON MEJORAS PARA CONCURRENCIA
     private static SqliteConnection? _connection;
     private static bool _databaseInitialized = false;
     private static readonly object _lock = new object();
-    private static readonly string _databaseName = "TestDatabase_Shared";
+    private static readonly string _databaseName = $"TestDatabase_{Guid.NewGuid():N}"; // Nombre único por ejecución
 
     public string DatabaseName => _databaseName;
     
@@ -88,13 +89,14 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         
         builder.ConfigureAppConfiguration((context, config) =>
         {
-            // Configuración específica para testing
+            // Configuración específica para testing con mejoras de concurrencia
             config.AddInMemoryCollection(new Dictionary<string, string>
             {
-                {"ConnectionStrings:DefaultConnection", "Data Source=TestDatabase;Mode=Memory;Cache=Shared"},
-                {"Logging:LogLevel:Default", "Information"},
+                {"ConnectionStrings:DefaultConnection", $"Data Source={_databaseName};Mode=Memory;Cache=Shared"},
+                {"Logging:LogLevel:Default", "Warning"}, // Reducir logs para mejor rendimiento
                 {"Logging:LogLevel:Microsoft", "Warning"},
-                {"Logging:LogLevel:Microsoft.Hosting.Lifetime", "Information"},
+                {"Logging:LogLevel:Microsoft.Hosting.Lifetime", "Warning"},
+                {"Logging:LogLevel:Microsoft.EntityFrameworkCore", "Warning"},
                 {"TESTING_MODE", "true"}
             });
         });
@@ -102,13 +104,20 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         // 🔧 CONFIGURACIÓN SIMPLIFICADA PARA TESTS
         builder.ConfigureServices(services =>
         {
-            // 🔧 INICIALIZACIÓN ROBUSTA DE LA BASE DE DATOS SQLITE
+            // 🔧 INICIALIZACIÓN ROBUSTA DE LA BASE DE DATOS SQLITE CON MEJORAS
             lock (_lock)
             {
                 if (_connection == null)
                 {
-                    _connection = new SqliteConnection($"Data Source={_databaseName};Mode=Memory;Cache=Shared");
+                    // 🔧 CONFIGURACIÓN SQLITE SIMPLIFICADA Y COMPATIBLE
+                    var connectionString = $"Data Source={_databaseName};Mode=Memory;Cache=Shared";
+                    _connection = new SqliteConnection(connectionString);
                     _connection.Open();
+                    
+                    // 🔧 CONFIGURAR SQLITE PARA MEJOR RENDIMIENTO EN TESTS (solo parámetros compatibles)
+                    using var command = _connection.CreateCommand();
+                    command.CommandText = "PRAGMA foreign_keys=ON; PRAGMA synchronous=NORMAL; PRAGMA temp_store=MEMORY;";
+                    command.ExecuteNonQuery();
                 }
 
                 // 🔧 CREAR ESQUEMA UNA SOLA VEZ CON MIGRACIONES
@@ -117,6 +126,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     using var context = new RestauranteProDbContext(
                         new DbContextOptionsBuilder<RestauranteProDbContext>()
                             .UseSqlite(_connection)
+                            .EnableSensitiveDataLogging(false) // Deshabilitar en tests para mejor rendimiento
+                            .EnableDetailedErrors(false) // Deshabilitar en tests para mejor rendimiento
                             .Options,
                         new TestLogger<RestauranteProDbContext>(),
                         new TestDomainEventDispatcher());
@@ -131,42 +142,36 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                         var tables = context.Database.SqlQueryRaw<string>(
                             "SELECT name FROM sqlite_master WHERE type='table'").ToList();
                         
-                        Console.WriteLine($"🔧 Tablas creadas en la BD de test: {string.Join(", ", tables)}");
-                        
                         // Verificar que las tablas críticas existen
                         var criticalTables = new[] { "Usuarios", "Productos", "Clientes", "Mesas", "Comandas", "Facturas" };
                         var missingTables = criticalTables.Where(table => !tables.Contains(table)).ToList();
                         
                         if (missingTables.Any())
                         {
-                            Console.WriteLine($"⚠️ Tablas faltantes: {string.Join(", ", missingTables)}");
                             // Recrear la base de datos si faltan tablas críticas
                             context.Database.EnsureDeleted();
                             context.Database.EnsureCreated();
-                            Console.WriteLine("✅ Base de datos recreada para incluir todas las tablas");
                         }
                         
                         _databaseInitialized = true;
-                        Console.WriteLine("✅ Base de datos inicializada correctamente");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"❌ Error inicializando BD: {ex.Message}");
                         // Fallback: recrear la base de datos
                         context.Database.EnsureDeleted();
                         context.Database.EnsureCreated();
                         _databaseInitialized = true;
-                        Console.WriteLine("✅ Base de datos recreada después del error");
                     }
                 }
             }
 
-            // 🔧 CONFIGURAR SQLITE EN MEMORIA CON CONEXIÓN ESTÁTICA
+            // 🔧 CONFIGURAR SQLITE EN MEMORIA CON CONEXIÓN ESTÁTICA Y OPTIMIZACIONES
             services.AddDbContext<RestauranteProDbContext>(options =>
             {
                 options.UseSqlite(_connection);
-                options.EnableSensitiveDataLogging();
-                options.EnableDetailedErrors();
+                options.EnableSensitiveDataLogging(false); // Deshabilitar en tests
+                options.EnableDetailedErrors(false); // Deshabilitar en tests
+                options.ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.NavigationBaseIncludeIgnored));
             });
 
             // 🔧 REGISTRAR IApplicationDbContext
@@ -189,6 +194,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IOrdenCompraRepository, OrdenCompraRepository>();
             services.AddScoped<IFacturaRepository, FacturaRepository>();
             services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
+            services.AddScoped<IHistorialPuntosRepository, HistorialPuntosRepository>();
             services.AddScoped<IMovimientoInventarioRepository, MovimientoInventarioRepository>();
             services.AddScoped<INotificacionRepository, NotificacionRepository>();
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
@@ -201,6 +207,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddHttpContextAccessor();
             services.AddScoped<ICurrentUserService, TestCurrentUserService>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+            
+            // 🔧 REGISTRAR SERVICIOS DE NOTIFICACIÓN
+            services.AddScoped<INotificationService, TestNotificationService>();
 
             // 🔧 CONFIGURAR AUTENTICACIÓN PARA TESTS
             services.AddAuthentication("Test")
@@ -507,8 +516,19 @@ public class TestEmailService : IEmailService
 [CollectionDefinition("Sequential")]
 public class SequentialCollection : ICollectionFixture<TestWebApplicationFactory>
 {
-    // Esta clase no necesita implementación
-    // Solo define la colección para xUnit
+    // Esta colección ejecuta tests secuencialmente para evitar conflictos de BD
+}
+
+[CollectionDefinition("Parallel")]
+public class ParallelCollection : ICollectionFixture<TestWebApplicationFactory>
+{
+    // Esta colección permite ejecución paralela para tests independientes
+}
+
+[CollectionDefinition("Database")]
+public class DatabaseCollection : ICollectionFixture<TestWebApplicationFactory>
+{
+    // Esta colección agrupa tests que requieren acceso a BD
 }
 
 // Fake para IIdentityService
@@ -601,10 +621,11 @@ public class TestDomainEventDispatcher : IDomainEventDispatcher
 // Implementación fake para IDateTimeService
 public class FakeDateTimeService : IDateTimeService
 {
-    public DateTime Now => DateTime.UtcNow;
-    public DateTime Today => DateTime.UtcNow.Date;
-    public DateTimeOffset NowOffset => DateTimeOffset.UtcNow;
-    public DateTime UtcNow => DateTime.UtcNow;
+    private DateTime _now = DateTime.UtcNow;
+    public DateTime Now => _now;
+    public DateTime Today => _now.Date;
+    public DateTime UtcNow => _now.ToUniversalTime();
+    public void SetNow(DateTime now) => _now = now;
 }
 
 // Implementación fake para ITimeProvider
@@ -641,5 +662,52 @@ public class FakeDelayProvider : IDelayProvider
     public Task Delay(TimeSpan delay, CancellationToken cancellationToken = default)
     {
         return Task.CompletedTask; // No delay en tests
+    }
+}
+
+// 🔧 SERVICIO DE NOTIFICACIÓN PARA TESTS
+public class TestNotificationService : INotificationService
+{
+    private readonly ILogger<TestNotificationService> _logger;
+
+    public TestNotificationService(ILogger<TestNotificationService> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<bool> EnviarNotificacionAsync(Guid usuarioId, string titulo, string mensaje, string tipo = "Info")
+    {
+        _logger.LogInformation("📧 TestNotificationService: Enviando notificación a {UsuarioId}: {Titulo} - {Mensaje}", usuarioId, titulo, mensaje);
+        return await Task.FromResult(true);
+    }
+
+    public async Task<bool> EnviarNotificacionMasivaAsync(List<Guid> usuariosIds, string titulo, string mensaje, string tipo = "Info")
+    {
+        _logger.LogInformation("📧 TestNotificationService: Enviando notificación masiva a {Count} usuarios: {Titulo} - {Mensaje}", usuariosIds.Count, titulo, mensaje);
+        return await Task.FromResult(true);
+    }
+
+    public async Task<bool> EnviarNotificacionPushAsync(Guid usuarioId, string titulo, string mensaje)
+    {
+        _logger.LogInformation("📲 TestNotificationService: Enviando notificación push a {UsuarioId}: {Titulo} - {Mensaje}", usuarioId, titulo, mensaje);
+        return await Task.FromResult(true);
+    }
+
+    public async Task<bool> MarcarComoLeidaAsync(Guid notificacionId, Guid usuarioId)
+    {
+        _logger.LogInformation("✅ TestNotificationService: Marcando notificación {NotificacionId} como leída para usuario {UsuarioId}", notificacionId, usuarioId);
+        return await Task.FromResult(true);
+    }
+
+    public async Task<int> ObtenerNotificacionesNoLeidasAsync(Guid usuarioId)
+    {
+        _logger.LogInformation("📊 TestNotificationService: Obteniendo notificaciones no leídas para usuario {UsuarioId}", usuarioId);
+        return await Task.FromResult(0); // Siempre retorna 0 en tests
+    }
+
+    public async Task<bool> SendNotificationAsync(RestaurantePro.Application.Common.Models.Notification notification)
+    {
+        _logger.LogInformation("📧 TestNotificationService: Enviando notificación: {Title} - {Message}", notification.Title, notification.Message);
+        return await Task.FromResult(true);
     }
 }

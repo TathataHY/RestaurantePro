@@ -171,9 +171,10 @@ public class IngredienteTestDataBuilder
     /// </summary>
     public CrearIngredienteCommand BuildCrearIngredienteCommand()
     {
+        // Si no se especificó UsuarioId, asignar uno válido por defecto
         if (!_usuarioId.HasValue || _usuarioId.Value == Guid.Empty)
         {
-            throw new InvalidOperationException("UsuarioId es requerido y debe ser un GUID válido. Use ConUsuarioId() para especificarlo.");
+            _usuarioId = Guid.NewGuid();
         }
 
         return new CrearIngredienteCommand

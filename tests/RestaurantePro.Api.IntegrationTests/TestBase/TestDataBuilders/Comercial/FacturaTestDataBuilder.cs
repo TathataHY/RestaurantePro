@@ -18,6 +18,7 @@ public class FacturaTestDataBuilder
     private int _diasCredito = 30;
     private string _metodoPagoPreferido = "Efectivo";
     private string _moneda = "CLP";
+    private DateTime? _fechaEmision;
 
     /// <summary>
     /// Genera un nombre de cliente único
@@ -38,12 +39,48 @@ public class FacturaTestDataBuilder
     }
 
     /// <summary>
-    /// Genera una identificación fiscal única
+    /// Genera una identificación fiscal única (RUT chileno válido)
     /// </summary>
     private string GenerarIdentificacionFiscalUnica()
     {
-        var guid = Guid.NewGuid().ToString("N");
-        return $"{guid.Substring(0, 8)}-{guid.Substring(8, 1)}";
+        var random = new Random();
+        // Generar un número de RUT entre 1000000 y 99999999
+        var numeroRut = random.Next(1000000, 99999999);
+        
+        // Calcular el dígito verificador usando el algoritmo chileno
+        var digitoVerificador = CalcularDigitoVerificadorChileno(numeroRut);
+        
+        return $"{numeroRut}-{digitoVerificador}";
+    }
+    
+    /// <summary>
+    /// Calcula el dígito verificador para un RUT chileno
+    /// </summary>
+    private static char CalcularDigitoVerificadorChileno(int numero)
+    {
+        int suma = 0;
+        int multiplicador = 2;
+        
+        // Calcular la suma ponderada
+        int tempNumero = numero;
+        while (tempNumero > 0)
+        {
+            int digito = tempNumero % 10;
+            suma += digito * multiplicador;
+            multiplicador = multiplicador == 7 ? 2 : multiplicador + 1;
+            tempNumero /= 10;
+        }
+        
+        // Calcular el dígito verificador
+        int resto = suma % 11;
+        int resultado = 11 - resto;
+        
+        if (resultado == 11)
+            return '0';
+        else if (resultado == 10)
+            return 'K';
+        else
+            return (char)('0' + resultado);
     }
 
     /// <summary>
@@ -130,6 +167,12 @@ public class FacturaTestDataBuilder
         return this;
     }
 
+    public FacturaTestDataBuilder ConFechaEmision(DateTime fecha)
+    {
+        _fechaEmision = fecha;
+        return this;
+    }
+
     /// <summary>
     /// Construye un request para crear una factura
     /// </summary>
@@ -151,7 +194,8 @@ public class FacturaTestDataBuilder
             EmitirInmediatamente = true,
             EnviarPorEmail = false,
             DescuentosAdicionales = new List<DescuentoAdicionalDto>(),
-            TipoCambio = null
+            TipoCambio = null,
+            FechaEmision = _fechaEmision ?? DateTime.Today
         };
     }
 } 

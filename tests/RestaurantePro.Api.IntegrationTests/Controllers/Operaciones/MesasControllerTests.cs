@@ -933,15 +933,43 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
     {
         try
         {
-            // Limpiar mesas
-            var mesas = await DbContext.Mesas.ToListAsync();
-            DbContext.Mesas.RemoveRange(mesas);
+            Logger.LogInformation("🧹 Limpiando tabla Mesas...");
             
-            await DbContext.SaveChangesAsync();
+            // Usar el método de limpieza de la clase base
+            await LimpiarBaseDeDatos();
+            
+            // Verificar que realmente se limpió
+            var mesasRestantes = await DbContext.Mesas.CountAsync();
+            if (mesasRestantes > 0)
+            {
+                Logger.LogWarning("⚠️ Aún quedan {Count} mesas después de la limpieza", mesasRestantes);
+                
+                // Forzar limpieza manual si es necesario
+                var mesas = await DbContext.Mesas.ToListAsync();
+                DbContext.Mesas.RemoveRange(mesas);
+                await DbContext.SaveChangesAsync();
+                
+                Logger.LogInformation("✅ Limpieza manual completada");
+            }
+            else
+            {
+                Logger.LogInformation("✅ Tabla Mesas limpiada correctamente");
+            }
         }
         catch (Exception ex)
         {
             Logger.LogWarning("⚠️ Error al limpiar tabla mesas: {Message}", ex.Message);
+            
+            // Intentar limpieza alternativa
+            try
+            {
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM Mesas");
+                Logger.LogInformation("✅ Limpieza alternativa completada");
+            }
+            catch (Exception ex2)
+            {
+                Logger.LogError("❌ Error en limpieza alternativa: {Message}", ex2.Message);
+            }
         }
     }
 

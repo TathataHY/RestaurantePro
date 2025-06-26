@@ -180,11 +180,33 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         await CrearDetalleComandaPrueba(comanda.Id, producto1.Id, 2, "Detalle 1");
         await CrearDetalleComandaPrueba(comanda.Id, producto2.Id, 1, "Detalle 2");
 
+        // 🔧 RE-CALCULAR EL TOTAL DE LA COMANDA ANTES DE FINALIZAR (por consistencia de invariantes)
+        var recalcularTotalMethod = comanda.GetType().GetMethod("RecalcularTotal", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        recalcularTotalMethod?.Invoke(comanda, null);
+
+        // 🔧 FINALIZAR LA COMANDA ANTES DE FACTURAR (REQUISITO DE NEGOCIO)
+        comanda.ActualizarEstado(EstadoComanda.Finalizada);
+        await DbContext.SaveChangesAsync();
+        Console.WriteLine($"✅ Comanda finalizada con ID: {comanda.Id}");
+
+        // 🔧 Forzar la fecha del sistema en el servicio de fecha/hora de tests
+        var fakeDateTimeService = DateTimeService as FakeDateTimeService;
+        if (fakeDateTimeService == null)
+            throw new InvalidOperationException("El servicio de fecha/hora de tests no es FakeDateTimeService. No se puede mockear la fecha.");
+        var fechaFija = DateTime.Now.Date;
+        fakeDateTimeService.SetNow(fechaFija);
+        Console.WriteLine($"🕒 Fecha forzada en FakeDateTimeService: {fechaFija:yyyy-MM-dd}");
+
+        var fechaActual = DateTime.Now;
+        var fechaEmision = fechaActual.Date;
+        Console.WriteLine($"🕒 Fecha actual del sistema: {fechaActual:yyyy-MM-dd HH:mm:ss}");
+        Console.WriteLine($"🕒 Fecha de emisión enviada en el request: {fechaEmision:yyyy-MM-dd}");
         var facturaRequest = new FacturaTestDataBuilder()
             .ConClienteId(cliente.Id)
             .ConComandasIds(comanda.Id)
             .ConNombreCliente("Cliente Factura")
             .ConEmailCliente(cliente.Email)
+            .ConFechaEmision(fechaEmision)
             .BuildCrearFacturaRequest();
 
         // Act
@@ -725,7 +747,7 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         Console.WriteLine("🧪 Iniciando test: PatchAnularFactura_ConFacturaExistente_DebeAnularFactura");
 
-        var fechaActual = DateTimeService.Now;
+        var fechaActual = DateTime.Now;
 
         // Crear un usuario real con permisos de administrador
         var usuario = await CrearUsuarioPrueba("admin.test", "Admin Test", null, RolUsuario.Administrador);

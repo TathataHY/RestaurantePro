@@ -20,39 +20,51 @@ public class ClienteTestDataBuilder
     private string? _observaciones;
 
     /// <summary>
-    /// Genera un nombre único
+    /// Genera un nombre único válido (mínimo 2 caracteres)
     /// </summary>
     private string GenerarNombreUnico()
     {
         var guid = Guid.NewGuid().ToString("N");
-        return $"{_faker.Name.FirstName()}_{guid.Substring(0, 4)}";
+        var nombre = _faker.Name.FirstName();
+        // Asegurar que el nombre tenga al menos 2 caracteres
+        if (nombre.Length < 2)
+        {
+            nombre = "Juan"; // Nombre por defecto válido
+        }
+        return $"{nombre}_{guid.Substring(0, 4)}";
     }
 
     /// <summary>
-    /// Genera un apellido único
+    /// Genera un apellido único válido (mínimo 2 caracteres)
     /// </summary>
     private string GenerarApellidoUnico()
     {
         var guid = Guid.NewGuid().ToString("N");
-        return $"{_faker.Name.LastName()}_{guid.Substring(4, 4)}";
+        var apellido = _faker.Name.LastName();
+        // Asegurar que el apellido tenga al menos 2 caracteres
+        if (apellido.Length < 2)
+        {
+            apellido = "Pérez"; // Apellido por defecto válido
+        }
+        return $"{apellido}_{guid.Substring(4, 4)}";
     }
 
     /// <summary>
-    /// Genera un email único
+    /// Genera un email único válido
     /// </summary>
     private string GenerarEmailUnico()
     {
         var guid = Guid.NewGuid().ToString("N");
-        return $"cliente_{guid.Substring(0, 8)}@test.com";
+        return $"cliente.{guid.Substring(0, 8)}@test.com";
     }
 
     /// <summary>
-    /// Genera un teléfono único válido (formato chileno móvil)
+    /// Genera un teléfono único válido (formato internacional)
     /// </summary>
     private string GenerarTelefonoUnico()
     {
         var guid = Guid.NewGuid().ToString("N");
-        return $"+56 9 {guid.Substring(0, 4)} {guid.Substring(4, 4)}";
+        return $"+34 91 {guid.Substring(0, 3)} {guid.Substring(3, 3)} {guid.Substring(6, 2)}";
     }
 
     /// <summary>
@@ -62,6 +74,17 @@ public class ClienteTestDataBuilder
     {
         var guid = Guid.NewGuid().ToString("N");
         return $"{_faker.Address.StreetAddress()} #{guid.Substring(0, 4)}";
+    }
+
+    /// <summary>
+    /// Genera una fecha de nacimiento válida (cliente mayor de 18 años)
+    /// </summary>
+    private DateTime GenerarFechaNacimientoValida()
+    {
+        // Generar fecha entre 18 y 80 años atrás
+        var fechaMinima = DateTime.Now.AddYears(-80);
+        var fechaMaxima = DateTime.Now.AddYears(-18);
+        return _faker.Date.Between(fechaMinima, fechaMaxima);
     }
 
     /// <summary>
@@ -157,7 +180,7 @@ public class ClienteTestDataBuilder
             Email = _email ?? GenerarEmailUnico(),
             Telefono = _telefono ?? GenerarTelefonoUnico(),
             Direccion = _direccion ?? GenerarDireccionUnica(),
-            FechaNacimiento = _fechaNacimiento ?? _faker.Date.Past(50, DateTime.Now.AddYears(-18)),
+            FechaNacimiento = _fechaNacimiento ?? GenerarFechaNacimientoValida(),
             Tipo = _tipo,
             Notas = _observaciones ?? _faker.Lorem.Sentence(3, 5),
             CrearTarjetaFidelizacion = true
@@ -176,7 +199,7 @@ public class ClienteTestDataBuilder
             Email = _email ?? GenerarEmailUnico(),
             Telefono = _telefono ?? GenerarTelefonoUnico(),
             Direccion = _direccion ?? GenerarDireccionUnica(),
-            FechaNacimiento = _fechaNacimiento ?? _faker.Date.Past(50, DateTime.Now.AddYears(-18)),
+            FechaNacimiento = _fechaNacimiento ?? GenerarFechaNacimientoValida(),
             Tipo = _tipo,
             Notas = _observaciones ?? _faker.Lorem.Sentence(3, 5)
         };

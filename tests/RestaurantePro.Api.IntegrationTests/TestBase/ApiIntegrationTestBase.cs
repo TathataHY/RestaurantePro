@@ -137,13 +137,14 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
             // Desactivar detección de cambios para mejorar rendimiento
             DbContext.ChangeTracker.AutoDetectChangesEnabled = false;
             
-            // 🔧 LIMPIEZA ROBUSTA: SOLO ENTIDADES RAÍZ (ignorar owned types y tablas inexistentes)
+            // 🔧 LIMPIEZA COMPLETA Y ROBUSTA: ELIMINAR TODAS LAS ENTIDADES EN ORDEN CORRECTO
+            // Primero las entidades que dependen de otras
             await EliminarEntidadesSafely(DbContext, DbContext.ItemsComanda, "ItemsComanda");
             await EliminarEntidadesSafely(DbContext, DbContext.Facturas, "Facturas");
             await EliminarEntidadesSafely(DbContext, DbContext.Comandas, "Comandas");
             await EliminarEntidadesSafely(DbContext, DbContext.Reservaciones, "Reservaciones");
-            await EliminarEntidadesSafely(DbContext, DbContext.Mesas, "Mesas");
             await EliminarEntidadesSafely(DbContext, DbContext.TarjetasFidelizacion, "TarjetasFidelizacion");
+            await EliminarEntidadesSafely(DbContext, DbContext.Mesas, "Mesas");
             await EliminarEntidadesSafely(DbContext, DbContext.Clientes, "Clientes");
             await EliminarEntidadesSafely(DbContext, DbContext.Usuarios, "Usuarios");
             await EliminarEntidadesSafely(DbContext, DbContext.Productos, "Productos");
@@ -151,7 +152,6 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
             await EliminarEntidadesSafely(DbContext, DbContext.Proveedores, "Proveedores");
             await EliminarEntidadesSafely(DbContext, DbContext.Notificaciones, "Notificaciones");
             await EliminarEntidadesSafely(DbContext, DbContext.OrdenesCompra, "OrdenesCompra");
-            // No limpiar MovimientosInventario ni otros owned types
             
             // 🔧 LIMPIAR TABLAS DE ASP.NET IDENTITY CON SQL DIRECTO
             try
@@ -170,11 +170,26 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
                 Logger.LogWarning($"⚠️ Error limpiando tablas ASP.NET Identity: {ex.Message}");
             }
             
+            // 🔧 LIMPIAR CUALQUIER OTRA TABLA QUE PUEDA EXISTIR
+            try
+            {
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM __EFMigrationsHistory");
+                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM sqlite_sequence");
+                Logger.LogInformation("✅ Tablas del sistema limpiadas");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"⚠️ Error limpiando tablas del sistema: {ex.Message}");
+            }
+            
             // Guardar cambios
             await GuardarCambiosConRetry(DbContext, "Limpieza general");
             
             // Reactivar detección de cambios
             DbContext.ChangeTracker.AutoDetectChangesEnabled = true;
+            
+            // 🔧 LIMPIAR CACHE DE EMAILS GENERADOS
+            _emailsGeneradosEnEjecucion.Clear();
             
             Logger.LogInformation("✅ Base de datos limpiada correctamente");
         }
@@ -403,112 +418,86 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     }
 
     /// <summary>
-    /// Crea un cliente de prueba en la base de datos
+    /// Crea un cliente de prueba con datos únicos
     /// </summary>
     protected async Task<Cliente> CrearClientePrueba(string nombre = null, string apellido = null, string? email = null, string telefono = null, DateTime? fechaNacimiento = null)
     {
+        // 🔧 GENERAR DATOS ÚNICOS PARA EVITAR CONFLICTOS
         var guid = Guid.NewGuid().ToString("N");
-        var nombreFinal = nombre ?? $"Cliente_{guid}";
-        var apellidoFinal = apellido ?? $"Test_{guid}";
-        var emailFinal = email ?? $"cliente_{guid}@test.com";
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         
-        // 🔧 GENERAR NÚMERO DE TELÉFONO VÁLIDO (formato chileno móvil)
+        var nombreFinal = nombre ?? $"Cliente_{timestamp}_{guid.Substring(0, 6)}";
+        var apellidoFinal = apellido ?? $"Test_{guid.Substring(4, 4)}";
+        var emailFinal = email ?? GenerarEmailValido();
+        
+        // 🔧 GENERAR NÚMERO DE TELÉFONO MÓVIL CHILENO VÁLIDO (+569XXXXXXXX)
         var random = new Random();
-        var numeroMovil = $"+56 9 {random.Next(1000, 9999)} {random.Next(1000, 9999)}";
-        var telefonoFinal = telefono ?? numeroMovil;
+        var telefonoFinal = telefono ?? $"+569{random.Next(10000000, 99999999)}";
         
-        var fechaNacimientoFinal = fechaNacimiento ?? DateTime.UtcNow.AddYears(-25); // Mayor de edad
+        var fechaNacimientoFinal = fechaNacimiento ?? DateTime.Today.AddYears(-25);
 
-        var clienteNombre = RestaurantePro.Domain.Comercial.Clientes.ValueObjects.ClienteNombre.Crear(nombreFinal, apellidoFinal);
-        var cliente = RestaurantePro.Domain.Comercial.Clientes.Entities.Cliente.Crear(
-            clienteNombre,
-            emailFinal,
-            telefonoFinal,
-            fechaNacimientoFinal
-        );
+        // 🔧 CREAR CLIENTE USANDO LA FIRMA CORRECTA
+        var clienteNombre = ClienteNombre.Crear(nombreFinal, apellidoFinal);
+        var cliente = Cliente.Crear(clienteNombre, emailFinal, telefonoFinal, fechaNacimientoFinal);
+
         DbContext.Clientes.Add(cliente);
         await GuardarCambiosConRetry(DbContext, "Cliente");
-        Logger.LogInformation($"✅ Cliente creado: {cliente.Id} - {cliente.Nombre}");
+        
         return cliente;
     }
 
     /// <summary>
-    /// Genera un email válido sin patrones repetitivos, incluso si se pasa un email explícito
+    /// Genera un email válido y único para tests
     /// </summary>
     protected static string GenerarEmailValido(string? emailBase = null)
     {
-        var random = new Random();
-        var palabras = new[] { "usuario", "cliente", "test", "demo", "admin", "user", "guest", "visitor", "member", "customer" };
-        var sufijos = new[] { "2024", "2025", "test", "demo", "dev", "qa", "prod", "stage", "local", "temp" };
-        var dominios = new[] { "testmail.com", "example.com", "test.com", "demo.com", "local.com" };
+        var guid = Guid.NewGuid().ToString("N");
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         
-        string ObtenerSufijoDiferente(string palabra)
+        // 🔧 GENERAR EMAIL ÚNICO CON TIMESTAMP Y GUID
+        var emailUnico = emailBase ?? $"test_{timestamp}_{guid.Substring(0, 8)}@test.com";
+        
+        // 🔧 VERIFICAR QUE NO SE HA USADO EN ESTA EJECUCIÓN
+        if (_emailsGeneradosEnEjecucion.Contains(emailUnico))
         {
-            var sufijosValidos = sufijos.Where(s => !s.Equals(palabra, StringComparison.OrdinalIgnoreCase)).ToArray();
-            return sufijosValidos[random.Next(sufijosValidos.Length)];
+            // Si ya existe, agregar más aleatoriedad
+            var extraGuid = Guid.NewGuid().ToString("N");
+            emailUnico = $"test_{timestamp}_{guid.Substring(0, 4)}_{extraGuid.Substring(0, 4)}@test.com";
         }
         
-        string GenerarEmail()
-        {
-            var palabra = palabras[random.Next(palabras.Length)];
-            var sufijo = ObtenerSufijoDiferente(palabra);
-            var dominio = dominios[random.Next(dominios.Length)];
-            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() % 10000;
-            var guid = Guid.NewGuid().ToString("N")[..6];
-            
-            return $"{palabra}.{sufijo}.{timestamp}{guid}@{dominio}";
-        }
+        // 🔧 AGREGAR AL CACHE DE EMAILS GENERADOS
+        _emailsGeneradosEnEjecucion.Add(emailUnico);
         
-        // Usar Email.CreateForTesting() que está diseñado específicamente para tests
-        // y omite las validaciones estrictas de patrones repetitivos
-        for (int i = 0; i < 50; i++) // Máximo 50 intentos (por seguridad extrema)
-        {
-            var email = GenerarEmail();
-            
-            // Verificar que no esté duplicado en esta ejecución
-            if (_emailsGeneradosEnEjecucion.Contains(email))
-                continue;
-                
-            // Usar CreateForTesting() que es más permisivo para tests
-            if (Email.TryCreateForTesting(email, out _))
-            {
-                _emailsGeneradosEnEjecucion.Add(email);
-                return email;
-            }
-        }
-        
-        // Fallback: generar un email simple y único
-        var fallbackEmail = $"test.{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}.{Guid.NewGuid():N}@test.com";
-        _emailsGeneradosEnEjecucion.Add(fallbackEmail);
-        return fallbackEmail;
+        return emailUnico;
     }
 
     /// <summary>
-    /// Crea un producto de prueba en la base de datos
+    /// Crea un producto de prueba con datos únicos
     /// </summary>
     protected async Task<Producto> CrearProductoPrueba(string nombre = "Producto Test", decimal precio = 100.00m)
     {
-        // 🔧 GENERAR NOMBRE ÚNICO PARA EVITAR CONFLICTOS
-        var timestamp = DateTime.UtcNow.Ticks;
-        var nombreFinal = $"{nombre}_{timestamp}";
+        // 🔧 GENERAR DATOS ÚNICOS PARA EVITAR CONFLICTOS
+        var guid = Guid.NewGuid().ToString("N");
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         
-        // 🔧 CREAR PRODUCTO SIN DEPENDENCIAS EXTERNAS
+        var nombreFinal = nombre == "Producto Test" ? $"Producto_{timestamp}_{guid.Substring(0, 6)}" : nombre;
+        
         var producto = Producto.Crear(
             nombreFinal,
-            $"Descripción de {nombreFinal}",
+            $"Descripción del {nombreFinal}",
             new PrecioProducto(precio),
-            Guid.NewGuid(),
-            "Categoria Test");
-        
+            Guid.NewGuid(), // categoriaId
+            "Plato Principal" // categoriaNombre
+        );
+
         DbContext.Productos.Add(producto);
         await GuardarCambiosConRetry(DbContext, "Producto");
         
-        Logger.LogInformation($"✅ Producto creado: {producto.Id} - {producto.Nombre}");
         return producto;
     }
 
     /// <summary>
-    /// Crea un usuario de prueba en la base de datos
+    /// Crea un usuario de prueba con datos únicos
     /// </summary>
     protected async Task<Usuario> CrearUsuarioPrueba(
         string nombreUsuario = null,
@@ -516,25 +505,29 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         string email = null,
         RolUsuario rol = RolUsuario.Mesero)
     {
+        // 🔧 GENERAR DATOS ÚNICOS PARA EVITAR CONFLICTOS
         var guid = Guid.NewGuid().ToString("N");
-        var nombreUsuarioFinal = nombreUsuario ?? $"test.user.{guid}";
-        var nombreCompletoFinal = nombreCompleto ?? $"Usuario Test {guid}";
-        var emailFinal = email ?? $"usuario_{guid}@test.com";
-
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        
+        var nombreUsuarioFinal = nombreUsuario ?? $"user_{timestamp}_{guid.Substring(0, 6)}";
+        var nombreCompletoFinal = nombreCompleto ?? $"Usuario Test {guid.Substring(0, 4)}";
+        var emailFinal = email ?? GenerarEmailValido();
+        
         var usuario = Usuario.Crear(
             nombreUsuarioFinal,
             nombreCompletoFinal,
             emailFinal,
-            rol);
-
+            rol
+        );
+        
         DbContext.Usuarios.Add(usuario);
         await GuardarCambiosConRetry(DbContext, "Usuario");
-        Logger.LogInformation($"✅ Usuario creado: {usuario.Id} - {usuario.NombreUsuario}");
+        
         return usuario;
     }
 
     /// <summary>
-    /// Crea una mesa de prueba en la base de datos
+    /// Crea una mesa de prueba con datos únicos
     /// </summary>
     protected async Task<Mesa> CrearMesaPrueba(
         int? numero = null, 
@@ -542,18 +535,48 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         string ubicacion = "Interior",
         EstadoMesa estado = EstadoMesa.Disponible)
     {
+        // 🔧 GENERAR DATOS ÚNICOS PARA EVITAR CONFLICTOS
         var guid = Guid.NewGuid().ToString("N");
-        var numeroFinal = numero ?? int.Parse(guid.Substring(0, 3)); // Generar número único
-        var ubicacionFinal = $"{ubicacion}_{guid}";
-        var mesa = Mesa.Crear(numeroFinal, capacidad, ubicacionFinal);
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        
+        var numeroFinal = numero ?? int.Parse($"{timestamp % 10000}");
+        
+        // 🔧 SOLO AGREGAR SUFIJO ALEATORIO SI NO SE ESPECIFICA UNA UBICACIÓN ESPECÍFICA
+        var ubicacionFinal = string.IsNullOrWhiteSpace(ubicacion) 
+            ? $"Ubicacion_{guid.Substring(0, 8)}"
+            : ubicacion; // Usar la ubicación exacta que se pasa
+        
+        var mesa = Mesa.Crear(
+            numeroFinal,
+            capacidad,
+            ubicacionFinal
+        );
+
+        // Cambiar el estado si es distinto de Disponible
+        if (estado != EstadoMesa.Disponible)
+        {
+            switch (estado)
+            {
+                case EstadoMesa.Ocupada:
+                    mesa.MarcarComoOcupada();
+                    break;
+                case EstadoMesa.Reservada:
+                    mesa.MarcarComoReservada();
+                    break;
+                case EstadoMesa.FueraDeServicio:
+                    mesa.MarcarComoFueraDeServicio("Test");
+                    break;
+            }
+        }
+
         DbContext.Mesas.Add(mesa);
         await GuardarCambiosConRetry(DbContext, "Mesa");
-        Logger.LogInformation($"✅ Mesa creada: {mesa.Id} - Número: {mesa.Numero} - Ubicación: {mesa.Ubicacion}");
+        
         return mesa;
     }
 
     /// <summary>
-    /// Crea un ingrediente de prueba en la base de datos
+    /// Crea un ingrediente de prueba con datos únicos
     /// </summary>
     protected async Task<Ingrediente> CrearIngredientePrueba(
         string nombre = null,
@@ -561,19 +584,25 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         decimal stockInicial = 10,
         decimal stockMinimo = 5)
     {
+        // 🔧 GENERAR DATOS ÚNICOS PARA EVITAR CONFLICTOS
         var guid = Guid.NewGuid().ToString("N");
-        var nombreFinal = nombre ?? $"Ingrediente_{guid}";
-        var codigoFinal = codigo ?? $"ING-{guid}";
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        
+        var nombreFinal = nombre ?? $"Ingrediente_{timestamp}_{guid.Substring(0, 6)}";
+        var codigoFinal = codigo ?? $"ING_{timestamp}_{guid.Substring(0, 4)}";
+        
         var ingrediente = Ingrediente.Crear(
             nombreFinal,
             codigoFinal,
-            $"Descripción de {nombreFinal}",
-            UnidadMedida.Kilogramos,
+            $"Descripción del {nombreFinal}",
+            UnidadMedida.Kilogramo,
             stockMinimo,
-            stockInicial);
+            stockInicial
+        );
+
         DbContext.Ingredientes.Add(ingrediente);
         await GuardarCambiosConRetry(DbContext, "Ingrediente");
-        Logger.LogInformation($"✅ Ingrediente creado: {ingrediente.Id} - {ingrediente.Nombre} - Código: {ingrediente.Codigo}");
+        
         return ingrediente;
     }
 
@@ -662,33 +691,38 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     }
 
     /// <summary>
-    /// Crea un proveedor de prueba en la base de datos
+    /// Crea un proveedor de prueba con datos únicos
     /// </summary>
     protected async Task<Proveedor> CrearProveedorPrueba(string nombre = null)
     {
+        // 🔧 GENERAR DATOS ÚNICOS PARA EVITAR CONFLICTOS
         var guid = Guid.NewGuid().ToString("N");
-        var nombreFinal = nombre ?? $"Proveedor_{guid}";
-        var emailFinal = $"proveedor_{guid.Substring(0,8)}@test.com";
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         
-        // 🔧 GENERAR NÚMERO DE TELÉFONO VÁLIDO (formato chileno fijo)
-        var telefonoFinal = $"+56 2 {guid.Substring(0, 4)} {guid.Substring(4, 4)}";
+        var nombreFinal = nombre ?? $"Proveedor_{timestamp}_{guid.Substring(0, 6)}";
+        var emailFinal = GenerarEmailValido();
         
+        // 🔧 GENERAR NÚMERO DE TELÉFONO MÓVIL CHILENO VÁLIDO (+569XXXXXXXX)
+        var random = new Random();
+        var telefonoFinal = $"+569{random.Next(10000000, 99999999)}";
+
         var proveedor = Proveedor.Crear(
             nombreFinal,
             nombreFinal, // nombreContacto
             emailFinal,
             telefonoFinal,
-            $"Dirección {guid}",
-            $"Ciudad {guid.Substring(0,5)}",
-            $"{guid.Substring(0,5)}",
-            "España",
-            $"RFC{guid.Substring(0,8)}",
-            $"CuentaBancaria{guid.Substring(0,8)}",
+            $"Dirección {guid.Substring(0, 8)}",
+            $"Ciudad {guid.Substring(0, 5)}",
+            $"{guid.Substring(0, 5)}",
+            "Chile",
+            $"RFC{guid.Substring(0, 8)}",
+            $"CuentaBancaria{guid.Substring(0, 8)}",
             30 // diasCredito
         );
+
         DbContext.Proveedores.Add(proveedor);
         await GuardarCambiosConRetry(DbContext, "Proveedor");
-        Logger.LogInformation($"✅ Proveedor creado: {proveedor.Id} - {proveedor.Nombre}");
+        
         return proveedor;
     }
 

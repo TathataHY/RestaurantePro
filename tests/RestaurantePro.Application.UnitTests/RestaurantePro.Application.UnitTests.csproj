@@ -6,6 +6,10 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <XunitMaxParallelThreads>4</XunitMaxParallelThreads>
+    <XunitParallelizeTestCollections>true</XunitParallelizeTestCollections>
+    <XunitParallelizeAssembly>false</XunitParallelizeAssembly>
+    <XunitDisableParallelization>false</XunitDisableParallelization>
   </PropertyGroup>
 
   <ItemGroup>
