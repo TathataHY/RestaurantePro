@@ -218,9 +218,9 @@ public class PromocionesControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         var promocion = await _promocionBuilder
             .ConEstado(EstadoPromocion.Pausada)
-            .ConFechasVigencia(DateTime.Today.AddDays(-1), DateTime.Today.AddDays(30))
+            .ConFechasVigencia(DateTime.Today.AddDays(-1), DateTime.Today.AddDays(30)) // Fecha de inicio = ayer
             .ConCodigo($"ACTIVAR{Guid.NewGuid():N}".Substring(0, 20).ToUpperInvariant())
-            .CrearPromocionPausadaAsync();
+            .BuildAsync(); // Usar BuildAsync directamente para respetar las fechas
 
         // Act
         var response = await HttpClient.PatchAsync($"/api/comercial/promociones/{promocion.Id}/activar", null);
@@ -234,8 +234,8 @@ public class PromocionesControllerTests : ApiIntegrationTestBase, IDisposable
         responseContent.Data.Should().NotBeNull();
         responseContent.Data.Estado.Should().Be(EstadoPromocion.Activa);
 
-        // Verificar en la base de datos
-        var promocionBD = await DbContext.Promociones.FindAsync(promocion.Id);
+        // Verificar en la base de datos (nuevo contexto)
+        var promocionBD = await GetPromocionFromDatabase(promocion.Id);
         promocionBD.Should().NotBeNull();
         promocionBD!.Estado.Should().Be(EstadoPromocion.Activa);
     }
@@ -246,11 +246,16 @@ public class PromocionesControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         var promocion = await _promocionBuilder
             .ConEstado(EstadoPromocion.Activa)
-            .ConFechasVigencia(DateTime.Today.AddDays(-1), DateTime.Today.AddDays(30))
-            .CrearPromocionPorcentajeAsync();
+            .ConFechasVigencia(DateTime.Today, DateTime.Today.AddDays(30))
+            .ConCodigo($"PAUSAR{Guid.NewGuid():N}".Substring(0, 20).ToUpperInvariant())
+            .BuildAsync(); // Usar BuildAsync directamente para respetar el estado
+
+        // Verificar que la promoción esté activa antes de pausar
+        var promocionInicial = await GetPromocionFromDatabase(promocion.Id);
+        promocionInicial.Should().NotBeNull();
+        promocionInicial!.Estado.Should().Be(EstadoPromocion.Activa);
 
         // Act
-        var request = new PausarPromocionCommand { Id = promocion.Id };
         var response = await HttpClient.PatchAsync($"/api/comercial/promociones/{promocion.Id}/pausar", null);
 
         // Assert
@@ -262,9 +267,10 @@ public class PromocionesControllerTests : ApiIntegrationTestBase, IDisposable
         responseContent.Data.Should().NotBeNull();
         responseContent.Data!.Estado.Should().Be(EstadoPromocion.Pausada);
 
-        // Verificar que se guardó en la base de datos - recargar desde BD
-        await DbContext.Entry(promocion).ReloadAsync();
-        promocion.Estado.Should().Be(EstadoPromocion.Pausada);
+        // Verificar que se guardó en la base de datos (nuevo contexto)
+        var promocionBD = await GetPromocionFromDatabase(promocion.Id);
+        promocionBD.Should().NotBeNull();
+        promocionBD!.Estado.Should().Be(EstadoPromocion.Pausada);
     }
 
     [Fact]
@@ -287,8 +293,8 @@ public class PromocionesControllerTests : ApiIntegrationTestBase, IDisposable
         responseContent.Data.Should().NotBeNull();
         responseContent.Data!.ProductosAplicablesIds.Should().Contain(producto.Id);
 
-        // Verificar en la base de datos (nueva instancia)
-        var promocionBD = await DbContext.Promociones.FindAsync(promocion.Id);
+        // Verificar en la base de datos (nuevo contexto)
+        var promocionBD = await GetPromocionFromDatabase(promocion.Id);
         promocionBD.Should().NotBeNull();
         promocionBD!.ProductosAplicablesIds.Should().Contain(producto.Id);
     }
@@ -300,29 +306,25 @@ public class PromocionesControllerTests : ApiIntegrationTestBase, IDisposable
         var promocion = await _promocionBuilder.CrearPromocionPorcentajeAsync();
         var producto1 = await CrearProductoPrueba("Producto 1", 100.00m);
         var producto2 = await CrearProductoPrueba("Producto 2", 150.00m);
-        
-        // Asignar productos primero
-        promocion.AgregarProductoAplicable(producto1.Id);
-        promocion.AgregarProductoAplicable(producto2.Id);
-        await DbContext.SaveChangesAsync();
+        var productosIds = new List<Guid> { producto1.Id, producto2.Id };
 
-        var productosIds = new List<Guid> { producto1.Id };
+        // Asignar productos usando el endpoint
+        var asignarResponse = await HttpClient.PostAsJsonAsync($"/api/comercial/promociones/{promocion.Id}/productos", productosIds);
+        asignarResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Act
-        var response = await HttpClient.DeleteAsJsonAsync($"/api/comercial/promociones/{promocion.Id}/productos", productosIds);
+        // Quitar producto1 usando el endpoint
+        var quitarResponse = await HttpClient.DeleteAsJsonAsync($"/api/comercial/promociones/{promocion.Id}/productos", new List<Guid> { producto1.Id });
+        quitarResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var responseContent = await response.Content.ReadFromJsonAsync<ApiResponse<PromocionDto>>();
+        var responseContent = await quitarResponse.Content.ReadFromJsonAsync<ApiResponse<PromocionDto>>();
         responseContent.Should().NotBeNull();
         responseContent!.Success.Should().BeTrue();
         responseContent.Data.Should().NotBeNull();
         responseContent.Data!.ProductosAplicablesIds.Should().NotContain(producto1.Id);
         responseContent.Data.ProductosAplicablesIds.Should().Contain(producto2.Id);
 
-        // Verificar en la base de datos (nueva instancia)
-        var promocionBD = await DbContext.Promociones.FindAsync(promocion.Id);
+        // Verificar en la base de datos (nuevo contexto)
+        var promocionBD = await GetPromocionFromDatabase(promocion.Id);
         promocionBD.Should().NotBeNull();
         promocionBD!.ProductosAplicablesIds.Should().NotContain(producto1.Id);
         promocionBD.ProductosAplicablesIds.Should().Contain(producto2.Id);

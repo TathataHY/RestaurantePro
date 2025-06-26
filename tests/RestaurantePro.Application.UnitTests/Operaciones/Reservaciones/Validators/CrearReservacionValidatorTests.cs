@@ -497,7 +497,7 @@ public class CrearReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCount(7, "deberían detectarse 7 errores de validación con los datos proporcionados");
+        result.Errors.Should().HaveCount(8, "deberían detectarse 8 errores de validación con los datos proporcionados");
 
         var errorMessages = result.Errors.Select(e => e.ErrorMessage).ToList();
         errorMessages.Should().Contain("La fecha de reservación debe ser futura");
@@ -507,6 +507,7 @@ public class CrearReservacionValidatorTests
         errorMessages.Should().Contain("Las observaciones no pueden exceder 1000 caracteres");
         errorMessages.Should().Contain("El email debe tener un formato válido");
         errorMessages.Should().Contain("El canal de reservación es obligatorio");
+        errorMessages.Should().Contain("La hora de reservación debe estar entre las 12:00 PM y 10:00 PM");
     }
 
     [Fact]

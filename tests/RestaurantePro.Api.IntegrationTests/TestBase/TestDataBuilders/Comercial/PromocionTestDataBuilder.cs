@@ -46,7 +46,7 @@ public class PromocionTestDataBuilder
         _descripcion = $"Descripcion de promocion de prueba {guid.Substring(0, 8)}";
         _tipo = TipoPromocion.PorcentajeTotal;
         _valor = 15.0m;
-        _fechaInicio = DateTime.Today.AddDays(1); // Siempre futura
+        _fechaInicio = DateTime.Today;
         _fechaFin = DateTime.Today.AddDays(30);
         _estado = EstadoPromocion.Creada;
         _usoMaximo = 100;
@@ -214,7 +214,7 @@ public class PromocionTestDataBuilder
         _descripcion = $"Descripcion de la promocion de prueba {guid.Substring(0, 8)}";
         _tipo = TipoPromocion.PorcentajeTotal;
         _valor = 15.0m;
-        _fechaInicio = _dateTimeService.Now.AddDays(1);
+        _fechaInicio = _dateTimeService.Now;
         _fechaFin = _dateTimeService.Now.AddDays(30);
         _estado = EstadoPromocion.Creada;
         _usoMaximo = 100;
@@ -231,7 +231,7 @@ public class PromocionTestDataBuilder
     /// </summary>
     public async Task<Promocion> BuildAsync()
     {
-        // Generar datos por defecto si no se han establecido
+        // Generar datos por defecto solo si no se han establecido
         if (string.IsNullOrEmpty(_codigo))
         {
             ConDatosPorDefecto();

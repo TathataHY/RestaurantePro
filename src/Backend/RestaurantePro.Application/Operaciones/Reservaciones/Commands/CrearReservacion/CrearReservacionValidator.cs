@@ -87,11 +87,10 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
             .WithMessage("El email debe tener un formato válido")
             .When(x => !string.IsNullOrEmpty(x.Email));
 
-        // Canal opcional
+        // Canal es obligatorio
         RuleFor(x => x.Canal)
             .NotEmpty()
-            .WithMessage("El canal de reservación es obligatorio")
-            .When(x => x.Canal != null);
+            .WithMessage("El canal de reservación es obligatorio");
     }
 
     private static bool BeFutureDate(DateTime fechaHora)

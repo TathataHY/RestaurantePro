@@ -204,24 +204,35 @@ public class PromocionesController : ControllerBase
     /// <returns>Confirmación de activación</returns>
     [HttpPatch("{id:guid}/activar")]
     [ProducesResponseType(typeof(ApiResponse<PromocionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<PromocionDto>>> ActivarPromocion(Guid id)
     {
         _logger.LogInformation("✅ PATCH /api/comercial/promociones/{Id}/activar - Activando promoción", id);
 
-        var command = new ActivarPromocionCommand { Id = id };
-        var result = await _mediator.Send(command);
-        
-        if (!result.Succeeded)
+        try
         {
-            var errorResponse = ApiResponse<object>.ErrorResponse(
-                result.Errors, "Error al activar promoción", StatusCodes.Status404NotFound);
-            return NotFound(errorResponse);
-        }
+            var command = new ActivarPromocionCommand { Id = id };
+            _logger.LogInformation("🔍 Enviando comando ActivarPromocionCommand con ID: {Id}", id);
+            
+            var result = await _mediator.Send(command);
 
-        var response = ApiResponse<PromocionDto>.SuccessResponse(
-            result.Value, "Promoción activada exitosamente");
-        return Ok(response);
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("✅ Promoción activada exitosamente: {Id}", id);
+                return Ok(ApiResponse<PromocionDto>.SuccessResponse(result.Value, "Promoción activada exitosamente"));
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ Error al activar promoción: {Error}", result.Error);
+                return BadRequest(ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al activar promoción"));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error inesperado activando promoción: {Id}", id);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(new List<string> { "Error interno del servidor" }, "Error inesperado"));
+        }
     }
 
     /// <summary>
@@ -231,24 +242,35 @@ public class PromocionesController : ControllerBase
     /// <returns>Confirmación de pausa</returns>
     [HttpPatch("{id:guid}/pausar")]
     [ProducesResponseType(typeof(ApiResponse<PromocionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<PromocionDto>>> PausarPromocion(Guid id)
     {
         _logger.LogInformation("⏸️ PATCH /api/comercial/promociones/{Id}/pausar - Pausando promoción", id);
 
-        var command = new PausarPromocionCommand { Id = id };
-        var result = await _mediator.Send(command);
-        
-        if (!result.Succeeded)
+        try
         {
-            var errorResponse = ApiResponse<object>.ErrorResponse(
-                result.Errors, "Error al pausar promoción", StatusCodes.Status404NotFound);
-            return NotFound(errorResponse);
-        }
+            var command = new PausarPromocionCommand { Id = id };
+            _logger.LogInformation("🔍 Enviando comando PausarPromocionCommand con ID: {Id}", id);
+            
+            var result = await _mediator.Send(command);
 
-        var response = ApiResponse<PromocionDto>.SuccessResponse(
-            result.Value, "Promoción pausada exitosamente");
-        return Ok(response);
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("✅ Promoción pausada exitosamente: {Id}", id);
+                return Ok(ApiResponse<PromocionDto>.SuccessResponse(result.Value, "Promoción pausada exitosamente"));
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ Error al pausar promoción: {Error}", result.Error);
+                return BadRequest(ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al pausar promoción"));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error inesperado pausando promoción: {Id}", id);
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(new List<string> { "Error interno del servidor" }, "Error inesperado"));
+        }
     }
 
     /// <summary>
