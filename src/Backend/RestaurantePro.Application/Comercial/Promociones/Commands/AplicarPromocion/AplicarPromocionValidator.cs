@@ -22,33 +22,65 @@ public class AplicarPromocionValidator : AbstractValidator<AplicarPromocionComma
     {
         RuleFor(x => x)
             .Must(x => x.PromocionId != Guid.Empty || !string.IsNullOrEmpty(x.CodigoPromocion))
+            .WithErrorCode("APLICAR_PROMOCION_ID_REQUERIDO")
             .WithMessage("Debe proporcionar el ID o el código de la promoción");
+
+        RuleFor(x => x)
+            .Must(x => x.PromocionId != Guid.Empty || !string.IsNullOrEmpty(x.CodigoPromocion))
+            .WithErrorCode("APLICAR_PROMOCION_CODIGO_REQUERIDO")
+            .WithMessage("Debe proporcionar el ID o el código de la promoción");
+
         RuleFor(x => x)
             .Must(x => x.FacturaId.HasValue || x.ComandaId.HasValue)
+            .WithErrorCode("APLICAR_PROMOCION_DESTINO_REQUERIDO")
             .WithMessage("Debe especificar una factura o comanda para aplicar la promoción");
+
         RuleFor(x => x)
             .Must(x => !(x.FacturaId.HasValue && x.ComandaId.HasValue))
+            .WithErrorCode("APLICAR_PROMOCION_DESTINO_MULTIPLE")
             .WithMessage("No se puede aplicar la promoción a una factura y comanda simultáneamente");
+
         RuleFor(x => x.TipoAplicacion)
-            .IsInEnum().WithMessage("El tipo de aplicación de promoción no es válido");
+            .IsInEnum()
+            .WithErrorCode("APLICAR_PROMOCION_TIPO_INVALIDO")
+            .WithMessage("El tipo de aplicación de promoción no es válido");
+
         RuleFor(x => x.ProductosIds)
-            .NotEmpty().WithMessage("Debe especificar al menos un producto para este tipo de aplicación")
+            .NotEmpty()
+            .WithErrorCode("APLICAR_PROMOCION_PRODUCTOS_REQUERIDOS")
+            .WithMessage("Debe especificar al menos un producto para este tipo de aplicación")
             .When(x => x.TipoAplicacion == TipoAplicacionPromocion.ProductosEspecificos);
+
         RuleFor(x => x.ProductosIds)
             .Must(productos => productos == null || (productos.Count > 0 && productos.Count <= 50))
+            .WithErrorCode("APLICAR_PROMOCION_PRODUCTOS_LIMITE")
             .WithMessage("Puede especificar entre 1 y 50 productos")
             .When(x => x.ProductosIds != null);
+
         RuleFor(x => x.NotasAplicacion)
-            .MaximumLength(500).WithMessage("Las notas de aplicación no pueden exceder 500 caracteres")
+            .MaximumLength(500)
+            .WithErrorCode("APLICAR_PROMOCION_NOTAS_LONGITUD")
+            .WithMessage("Las notas de aplicación no pueden exceder 500 caracteres")
             .When(x => !string.IsNullOrEmpty(x.NotasAplicacion));
+
         RuleFor(x => x.FacturaId)
-            .MustAsync(FacturaExiste).WithMessage("La factura especificada no existe").When(x => x.FacturaId.HasValue);
+            .MustAsync(FacturaExiste)
+            .WithMessage("La factura especificada no existe")
+            .When(x => x.FacturaId.HasValue);
+
         RuleFor(x => x.ComandaId)
-            .MustAsync(ComandaExiste).WithMessage("La comanda especificada no existe").When(x => x.ComandaId.HasValue);
+            .MustAsync(ComandaExiste)
+            .WithMessage("La comanda especificada no existe")
+            .When(x => x.ComandaId.HasValue);
+
         RuleFor(x => x.ClienteId)
-            .MustAsync(ClienteExiste).WithMessage("El cliente especificado no existe").When(x => x.ClienteId.HasValue);
+            .MustAsync(ClienteExiste)
+            .WithMessage("El cliente especificado no existe")
+            .When(x => x.ClienteId.HasValue);
+
         RuleFor(x => x.ProductosIds)
-            .MustAsync(TodosLosProductosExisten).WithMessage("Uno o más productos especificados no existen")
+            .MustAsync(TodosLosProductosExisten)
+            .WithMessage("Uno o más productos especificados no existen")
             .When(x => x.ProductosIds != null && x.ProductosIds.Any());
     }
 
@@ -59,6 +91,7 @@ public class AplicarPromocionValidator : AbstractValidator<AplicarPromocionComma
         try { return await _context.Facturas.AnyAsync(f => f.Id == facturaId.Value, cancellationToken); }
         catch { return true; }
     }
+
     private async Task<bool> ComandaExiste(Guid? comandaId, CancellationToken cancellationToken)
     {
         if (!comandaId.HasValue) return true;
@@ -66,6 +99,7 @@ public class AplicarPromocionValidator : AbstractValidator<AplicarPromocionComma
         try { return await _context.Comandas.AnyAsync(c => c.Id == comandaId.Value, cancellationToken); }
         catch { return true; }
     }
+
     private async Task<bool> ClienteExiste(Guid? clienteId, CancellationToken cancellationToken)
     {
         if (!clienteId.HasValue) return true;
@@ -73,6 +107,7 @@ public class AplicarPromocionValidator : AbstractValidator<AplicarPromocionComma
         try { return await _context.Clientes.AnyAsync(c => c.Id == clienteId.Value, cancellationToken); }
         catch { return true; }
     }
+
     private async Task<bool> TodosLosProductosExisten(List<Guid>? productosIds, CancellationToken cancellationToken)
     {
         if (productosIds == null || !productosIds.Any()) return true;

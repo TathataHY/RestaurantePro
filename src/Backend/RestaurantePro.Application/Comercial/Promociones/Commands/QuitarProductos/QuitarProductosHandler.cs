@@ -78,6 +78,7 @@ public class QuitarProductosHandler : IRequestHandler<QuitarProductosCommand, Re
             if (_context is DbContext dbContext)
             {
                 dbContext.Entry(promocion).State = EntityState.Modified;
+                dbContext.Update(promocion);
             }
 
             // Guardar cambios
