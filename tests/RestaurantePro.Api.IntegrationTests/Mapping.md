@@ -53,8 +53,8 @@ GUÍA DE FLUJO PROFESIONAL PARA ENDPOINTS Y CQRS EN RESTAURANTEPRO
 ### 📊 **Estadísticas Generales**
 - **Controladores Implementados**: 21/21 (100%)
 - **Tests Pasando**: 201/201 (100%)
-- **Controladores con Tests Completos**: 12/21 (57.1%) ⬆️
-- **Controladores con Tests Básicos**: 9/21 (42.9%) ⬇️
+- **Controladores con Tests Completos**: 13/21 (61.9%) ⬆️
+- **Controladores con Tests Básicos**: 8/21 (38.1%) ⬇️
 
 ### 🏆 **Progreso por Contexto**
 
@@ -72,11 +72,11 @@ GUÍA DE FLUJO PROFESIONAL PARA ENDPOINTS Y CQRS EN RESTAURANTEPRO
 - **ReportesComercialController**: ✅ Tests completos
 - **TarjetasFidelizacionController**: ⚠️ Tests básicos
 
-#### 🔧 **Operaciones** (4/5 controladores con tests completos) ⬆️
+#### 🔧 **Operaciones** (5/5 controladores con tests completos) ✅
 - **ReservacionesController**: ✅ Tests completos ⬆️
 - **MesasController**: ✅ Tests completos
 - **ComandasController**: ✅ Tests completos
-- **PreparacionesController**: ⚠️ Tests básicos
+- **PreparacionesController**: ✅ Tests completos ⬆️
 - **PersonalizacionesController**: ✅ Tests completos
 
 #### 📦 **Inventario** (1/3 controladores con tests completos)
@@ -91,11 +91,19 @@ GUÍA DE FLUJO PROFESIONAL PARA ENDPOINTS Y CQRS EN RESTAURANTEPRO
 
 ## 🔄 **Migraciones Recientes**
 
+### ✅ **PreparacionesController** - Migrado a Tests Completos (26/06/2025)
+- **Antes**: Tests básicos (solo verificaban respuesta HTTP)
+- **Después**: Tests completos con validación de BD y reglas de negocio
+- **Validaciones**: Interacción real con base de datos, validación de comandos, verificación de estados
+- **Correcciones**: Estructura de requests, validaciones de estado, filtros de consulta
+- **Resultado**: 14/14 tests completos pasando con validación estricta de BD
+
 ### ✅ **ReservacionesController** - Migrado a Tests Completos (26/06/2025)
 - **Antes**: Tests básicos (solo verificaban respuesta HTTP)
 - **Después**: Tests completos con validación de BD y reglas de negocio
 - **Validaciones**: Interacción real con base de datos, validación de comandos, verificación de estados
-- **Resultado**: 7/9 tests fallando por errores esperados (AutoMapper, handlers no implementados, validaciones)
+- **Correcciones**: Bug de solapamiento de horarios en disponibilidad, método ActualizarAsync del repositorio
+- **Resultado**: 9/9 tests completos pasando con validación estricta de BD
 
 ### ✅ **ProductosController** - Migrado a Tests Completos (25/06/2025)
 - **Antes**: Tests básicos con datos simulados
@@ -111,7 +119,10 @@ GUÍA DE FLUJO PROFESIONAL PARA ENDPOINTS Y CQRS EN RESTAURANTEPRO
 ## 📈 **Próximos Pasos Recomendados**
 
 ### 🎯 **Controladores Críticos para Migrar** (Prioridad Alta)
-1. **PreparacionesController** (Operaciones) - Crítico para operación diaria
+1. **OrdenesCompraController** (Inventario) - Crítico para gestión de inventario
+2. **MovimientosInventarioController** (Inventario) - Crítico para control de stock
+3. **ContactosProveedorController** (Proveedores) - Importante para gestión de proveedores
+
 ## 📋 **LEYENDA DE ESTADO**
 - **✅/✅**: Endpoint implementado con tests funcionales (501 NotImplemented es un estado funcional para el esqueleto de la API).
 - **⬜/⬜**: Endpoint no implementado.
@@ -129,18 +140,18 @@ GUÍA DE FLUJO PROFESIONAL PARA ENDPOINTS Y CQRS EN RESTAURANTEPRO
 - **Estado**: ✅ **201/201 Tests Pasando (100% Success Rate)**
 - **Framework de Testing**: Completamente consolidado y estable
 - **Última Actualización**: Junio 2024
-- **🎯 Progreso Tests Completos**: 11/21 controladores (52.4%)
+- **🎯 Progreso Tests Completos**: 13/21 controladores (61.9%)
 
 ### **Resumen de Integración de Tests**
-- **🟢 Tests Completos**: 11 controladores (UsuariosController, IngredientesController, NotificacionesController, ComandasController, MesasController, FacturasController, TarjetasFidelizacionController, PromocionesController, ClientesController, ReportesComercialController, **ProductosController**)
-- **🟡 Tests Básicos**: 10 controladores (ya no incluye ProductosController)
+- **🟢 Tests Completos**: 13 controladores (UsuariosController, IngredientesController, NotificacionesController, ComandasController, MesasController, FacturasController, TarjetasFidelizacionController, PromocionesController, ClientesController, ReportesComercialController, ProductosController, **PreparacionesController**, **ReservacionesController**)
+- **🟡 Tests Básicos**: 8 controladores (ya no incluye PreparacionesController ni ReservacionesController)
 - **🔄 Tests en Progreso**: 0 controladores
 - **🔴 Tests Pendientes**: 0 controladores
 - **🎯 OBJETIVO CRÍTICO**: Convertir todos los tests básicos a completos (interacción real con BD)
 
 ### **Análisis Real del Estado de Tests**
 
-#### **🟢 Tests VERDADERAMENTE Completos (11 controladores)**
+#### **🟢 Tests VERDADERAMENTE Completos (13 controladores)**
 **Características confirmadas:**
 - ✅ Crean datos reales en BD usando métodos helper
 - ✅ Verifican interacción completa con base de datos
@@ -160,6 +171,8 @@ GUÍA DE FLUJO PROFESIONAL PARA ENDPOINTS Y CQRS EN RESTAURANTEPRO
 9. **ClientesController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: 10/10 endpoints implementados, todos los tests pasando, validación estricta de BD y reglas de negocio**)
 10. **ReportesComercialController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: 5/5 tests completos**)
 11. **ProductosController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: 11/11 tests completos**)
+12. **PreparacionesController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: 14/14 tests completos**)
+13. **ReservacionesController** - Tests completamente completos con interacción real de BD (**actualizado y validado a junio 2024: 9/9 tests completos**)
 
 ### **Plan de Implementación Completa (Endpoints + Tests)**
 | Fase | Controladores | Objetivo | Estado |
@@ -184,18 +197,18 @@ GUÍA DE FLUJO PROFESIONAL PARA ENDPOINTS Y CQRS EN RESTAURANTEPRO
 |----------|---------------|---------------|-------|----------|
 | **Core** | 4 | 4 | 31 | ✅ 100% (🟢 3/4 completos, 🟡 1/4 básicos) |
 | **Comercial** | 5 | 5 | 53 | ✅ 100% (🟢 5/5 completos, 🟡 0/5 básicos) |
-| **Operaciones** | 5 | 5 | 56 | ✅ 100% (🟢 3/5 completos, 🟡 2/5 básicos) |
+| **Operaciones** | 5 | 5 | 56 | ✅ 100% (🟢 5/5 completos, 🟡 0/5 básicos) |
 | **Inventario** | 4 | 4 | 34 | ✅ 100% (🟢 1/4 completos, 🟡 3/4 básicos) |
 | **Proveedores** | 3 | 3 | 27 | ✅ 100% (🟡 3/3 básicos) |
-| **TOTAL** | **21** | **21** | **201** | **✅ 100% (🟢 11/21 completos, 🟡 10/21 básicos)** |
+| **TOTAL** | **21** | **21** | **201** | **✅ 100% (🟢 13/21 completos, 🟡 8/21 básicos)** |
 
 ### **Resumen General Actualizado**
 - **Total Controladores Implementados**: 21/21 (100%)
 - **Total Tests de Integración**: 201
 - **Estado**: ✅ **201/201 Tests Pasando (100% Success Rate)**
-- **🎯 Progreso Tests Completos**: 11/21 controladores (52.4%)
+- **🎯 Progreso Tests Completos**: 13/21 controladores (61.9%)
 
-#### **🟢 Tests VERDADERAMENTE Completos (11 controladores)**
+#### **🟢 Tests VERDADERAMENTE Completos (13 controladores)**
 **Controladores con tests completos:**
 1. UsuariosController
 2. IngredientesController
@@ -208,6 +221,8 @@ GUÍA DE FLUJO PROFESIONAL PARA ENDPOINTS Y CQRS EN RESTAURANTEPRO
 9. ClientesController
 10. **ReportesComercialController**
 11. **ProductosController**
+12. **PreparacionesController**
+13. **ReservacionesController**
 
 ### ReportesComercialController
 - **Estado**: ✅/✅ (Completado)
@@ -241,7 +256,7 @@ GUÍA DE FLUJO PROFESIONAL PARA ENDPOINTS Y CQRS EN RESTAURANTEPRO
 | `/buscar` | GET | `✅/✅` | Buscar productos | ✅ PASSING (🟢 Completo) |
 | `/activos` | GET | `✅/✅` | Obtener productos activos | ✅ PASSING (🟢 Completo) |
 | `/inactivos` | GET | `✅/✅` | Obtener productos inactivos | ✅ PASSING (🟢 Completo) |
-| `/validar-nombre` | POST | `✅/✅` | Validar nombre de producto | ✅ PASSING (�� Completo) |
+| `/validar-nombre` | POST | `✅/✅` | Validar nombre de producto | ✅ PASSING (🟢 Completo) |
 
 ### UsuariosController
 - **Estado**: ✅/✅ (Completado)
@@ -394,85 +409,4 @@ GUÍA DE FLUJO PROFESIONAL PARA ENDPOINTS Y CQRS EN RESTAURANTEPRO
 | `/` | POST | `✅/✅` | Crear nueva comanda | ✅ PASSING (🟢 Completo) |
 | `/{id}` | PUT | `✅/✅` | Actualizar comanda | ✅ PASSING (🟢 Completo) |
 | `/{id}` | DELETE | `✅/✅` | Eliminar comanda | ✅ PASSING (🟢 Completo) |
-| `/{id}/estado` | PUT | `✅/✅` | Cambiar estado de comanda | ✅ PASSING (🟢 Completo) |
-| `/{id}/asignar-mesa` | POST | `✅/✅` | Asignar mesa a comanda | ✅ PASSING (🟢 Completo) |
-| `/{id}/productos` | POST | `✅/✅` | Agregar producto a comanda | ✅ PASSING (🟢 Completo) |
-| `/{id}/productos/{detalleId}` | PUT | `✅/✅` | Modificar producto de comanda | ✅ PASSING (🟢 Completo) |
-| `/{id}/productos/{detalleId}` | DELETE | `✅/✅` | Remover producto de comanda | ✅ PASSING (🟢 Completo) |
-| `/{id}/descuento` | POST | `✅/✅` | Aplicar descuento a comanda | ✅ PASSING (🟢 Completo) |
-| `/{id}/dividir` | POST | `✅/✅` | Dividir cuenta de comanda | ✅ PASSING (🟢 Completo) |
-| `/{id}/cerrar` | POST | `✅/✅` | Cerrar comanda y facturar | ✅ PASSING (🟢 Completo) |
-
-### ReportesController (Operaciones)
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 12/12
-- **Base URL**: `/api/operaciones/reportes`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/ventas-diarias` | GET | `✅/✅` | Generar reporte de ventas diarias | ✅ PASSING (501) |
-| `/ventas-rango` | GET | `✅/✅` | Generar reporte de ventas por rango | ✅ PASSING (501) |
-| `/productos-populares` | GET | `✅/✅` | Reporte de productos más vendidos | ✅ PASSING (501) |
-| `/ocupacion-mesas` | GET | `✅/✅` | Reporte de ocupación de mesas | ✅ PASSING (501) |
-| `/desempeno-empleados` | GET | `✅/✅` | Reporte de desempeño de empleados | ✅ PASSING (501) |
-| `/cancelaciones` | GET | `✅/✅` | Reporte de cancelaciones | ✅ PASSING (501) |
-| `/tiempos-preparacion` | GET | `✅/✅` | Reporte de tiempos de preparación | ✅ PASSING (501) |
-| `/inventario-critico` | GET | `✅/✅` | Reporte de inventario crítico | ✅ PASSING (501) |
-| `/auditoria` | GET | `✅/✅` | Reporte de auditoría de acciones | ✅ PASSING (501) |
-| `/descuentos-aplicados` | GET | `✅/✅` | Reporte de descuentos aplicados | ✅ PASSING (501) |
-| `/feedback-clientes` | GET | `✅/✅` | Reporte de feedback de clientes | ✅ PASSING (501) |
-| `/cierre-caja` | GET | `✅/✅` | Reporte de cierre de caja | ✅ PASSING (501) |
-
-### MesasController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 17/17 (🟢 Tests Completos)
-- **Base URL**: `/api/operaciones/mesas`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las mesas | ✅ PASSING (🟢 Completo) |
-| `/{id}` | GET | `✅/✅` | Obtener mesa por ID | ✅ PASSING (🟢 Completo) |
-| `/` | POST | `✅/✅` | Crear nueva mesa | ✅ PASSING (🟢 Completo) |
-| `/{id}` | PUT | `✅/✅` | Actualizar mesa | ✅ PASSING (🟢 Completo) |
-| `/{id}` | DELETE | `✅/✅` | Eliminar mesa | ✅ PASSING (🟢 Completo) |
-| `/{id}/estado` | PUT | `✅/✅` | Cambiar estado de la mesa | ✅ PASSING (🟢 Completo) |
-| `/plano` | GET | `✅/✅` | Obtener plano de mesas | ✅ PASSING (🟢 Completo) |
-| `/plano` | PUT | `✅/✅` | Actualizar plano de mesas | ✅ PASSING (🟢 Completo) |
-| `/{id}/asignar-cliente` | POST | `✅/✅` | Asignar cliente a mesa | ✅ PASSING (🟢 Completo) |
-| `/{id}/liberar` | POST | `✅/✅` | Liberar mesa | ✅ PASSING (🟢 Completo) |
-| `/combinar` | POST | `✅/✅` | Combinar mesas | ✅ PASSING (🟢 Completo) |
-| `/separar` | POST | `✅/✅` | Separar mesas | ✅ PASSING (🟢 Completo) |
-| `/reservar` | POST | `✅/✅` | Reservar mesa | ✅ PASSING (🟢 Completo) |
-| `/cancelar-reserva` | POST | `✅/✅` | Cancelar reserva de mesa | ✅ PASSING (🟢 Completo) |
-| `{id}/asignar` | POST | `✅/✅` | Asignar mesa | ✅ PASSING (🟢 Completo) |
-| `{id}/fuera-servicio` | POST | `✅/✅` | Marcar fuera de servicio | ✅ PASSING (🟢 Completo) |
-| `/disponibles` | GET | `✅/✅` | Obtener mesas disponibles | ✅ PASSING (🟢 Completo) |
-| `/estado-ocupacion` | GET | `✅/✅` | Estado de ocupación | ✅ PASSING (🟢 Completo) |
-| `/buscar-mejor` | GET | `✅/✅` | Buscar mejor mesa | ✅ PASSING (🟢 Completo) |
-
-> **Nota:** Todos los endpoints implementados y validados con tests completos a junio 2024.
-
-### ReservacionesController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 9/9
-- **Base URL**: `/api/operaciones/reservaciones`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las reservmesaciones | ✅ PASSING |
-| `/{id}` | GET | `✅/✅` | Obtener reservación por ID | ✅ PASSING |
-| `/` | POST | `✅/✅` | Crear nueva reservación | ✅ PASSING |
-| `/{id}` | PUT | `✅/✅` | Actualizar reservación | ✅ PASSING |
-| `/{id}` | DELETE | `✅/✅` | Cancelar reservación | ✅ PASSING |
-| `/{id}/confirmar` | POST | `✅/✅` | Confirmar reservación | ✅ PASSING |
-| `/{id}/reprogramar` | POST | `✅/✅` | Reprogramar reservación | ✅ PASSING |
-| `/disponibilidad` | GET | `✅/✅` | Verificar disponibilidad | ✅ PASSING |
-
-### PreparacionesController
-- **Estado**: ✅/✅ (Completado)
-- **Tests**: 9/9
-- **Base URL**: `/api/operaciones/preparaciones`
-| Endpoint | Método | Estado | Descripción | Test Status |
-|----------|--------|--------|-------------|-------------|
-| `/` | GET | `✅/✅` | Obtener todas las preparaciones | ✅ PASSING (501) |
-| `/{id}` | GET | `✅/✅` | Obtener preparación por ID | ✅ PASSING (501) |
-| `/` | POST | `✅/✅` | Crear nueva preparación | ✅ PASSING (501) |
-| `/{id}` | PUT | `✅/✅` | Actualizar preparación | ✅ PASSING (501) |
-| `/{id}`
+| `

@@ -197,5 +197,67 @@ namespace RestaurantePro.Domain.Operaciones.Preparaciones.Entities
         {
             Id = id;
         }
+
+        /// <summary>
+        /// Actualiza la cantidad de la preparación
+        /// </summary>
+        public void ActualizarCantidad(int nuevaCantidad)
+        {
+            if (nuevaCantidad <= 0)
+                throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(nuevaCantidad));
+
+            if (Estado == EstadoPreparacion.Vencida)
+                throw new InvalidOperationException("No se puede actualizar la cantidad de una preparación vencida");
+
+            if (Estado == EstadoPreparacion.Agotada)
+                throw new InvalidOperationException("No se puede actualizar la cantidad de una preparación agotada");
+
+            int cantidadAnterior = CantidadPreparada;
+            CantidadPreparada = nuevaCantidad;
+            CantidadDisponible = nuevaCantidad;
+
+            // Si la nueva cantidad disponible es 0, marcar como agotada
+            if (CantidadDisponible <= 0)
+            {
+                CantidadDisponible = 0;
+                Estado = EstadoPreparacion.Agotada;
+                AddDomainEvent(new PreparacionAgotada(Id, ProductoId));
+            }
+            // Si estaba agotada y ahora tiene disponibilidad, cambiar a disponible
+            else if (Estado == EstadoPreparacion.Agotada && CantidadDisponible > 0)
+            {
+                Estado = EstadoPreparacion.Disponible;
+            }
+
+            AddDomainEvent(new CantidadPreparacionActualizada(Id, ProductoId, cantidadAnterior, nuevaCantidad, CantidadDisponible));
+        }
+
+        /// <summary>
+        /// Actualiza las observaciones de la preparación
+        /// </summary>
+        public void ActualizarObservaciones(string nuevasObservaciones)
+        {
+            if (nuevasObservaciones == null)
+                throw new ArgumentNullException(nameof(nuevasObservaciones));
+
+            string observacionesAnteriores = Observaciones;
+            Observaciones = nuevasObservaciones.Trim();
+            
+            AddDomainEvent(new ObservacionesPreparacionActualizadas(Id, ProductoId, observacionesAnteriores, Observaciones));
+        }
+
+        /// <summary>
+        /// Actualiza el chef responsable de la preparación
+        /// </summary>
+        public void ActualizarChefId(Guid nuevoChefId)
+        {
+            if (nuevoChefId == Guid.Empty)
+                throw new ArgumentException("El ID del chef no puede estar vacío", nameof(nuevoChefId));
+
+            Guid chefAnterior = ChefId;
+            ChefId = nuevoChefId;
+            
+            AddDomainEvent(new ChefPreparacionActualizado(Id, ProductoId, chefAnterior, nuevoChefId));
+        }
     }
 }

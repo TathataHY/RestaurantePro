@@ -149,11 +149,14 @@ public class PreparacionesController : ControllerBase
     [HttpPost("{id:guid}/iniciar")]
     [ProducesResponseType(typeof(ApiResponse<PreparacionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<PreparacionDto>>> IniciarPreparacion(Guid id)
+    public async Task<ActionResult<ApiResponse<PreparacionDto>>> IniciarPreparacion(
+        Guid id, [FromBody] IniciarPreparacionCommand command)
     {
         _logger.LogInformation("🚀 POST /api/operaciones/preparaciones/{Id}/iniciar", id);
 
-        var command = new IniciarPreparacionCommand { Id = id };
+        // Asignar el ID de la URL al comando
+        command.Id = id;
+        
         var result = await _mediator.Send(command);
         
         if (!result.Succeeded)
@@ -199,11 +202,14 @@ public class PreparacionesController : ControllerBase
     [HttpPost("{id:guid}/cancelar")]
     [ProducesResponseType(typeof(ApiResponse<PreparacionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<PreparacionDto>>> CancelarPreparacion(Guid id)
+    public async Task<ActionResult<ApiResponse<PreparacionDto>>> CancelarPreparacion(
+        Guid id, [FromBody] CancelarPreparacionCommand command)
     {
         _logger.LogInformation("❌ POST /api/operaciones/preparaciones/{Id}/cancelar", id);
 
-        var command = new CancelarPreparacionCommand { Id = id };
+        // Asignar el ID de la URL al comando
+        command.Id = id;
+        
         var result = await _mediator.Send(command);
         
         if (!result.Succeeded)

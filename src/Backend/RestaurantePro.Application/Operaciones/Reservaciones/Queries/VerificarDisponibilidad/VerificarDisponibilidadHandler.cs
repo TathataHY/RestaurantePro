@@ -62,12 +62,36 @@ public class VerificarDisponibilidadHandler : IRequestHandler<VerificarDisponibi
             // Obtener reservaciones existentes para la fecha y hora
             var reservacionesExistentes = await _reservacionRepository.ObtenerPorFechaAsync(request.Fecha, cancellationToken);
             
-            // Filtrar reservaciones activas para la hora específica
+            _logger.LogInformation("🔍 Encontradas {Count} reservaciones para la fecha {Fecha}", 
+                reservacionesExistentes.Count(), request.Fecha.ToShortDateString());
+            
+            // Calcular el rango de la consulta
+            var inicioConsulta = request.Hora;
+            var duracionConsulta = request.DuracionEstimada ?? TimeSpan.FromHours(2);
+            var finConsulta = inicioConsulta.Add(duracionConsulta);
+
+            _logger.LogInformation("⏰ Rango de consulta: {Inicio} - {Fin} (duración: {Duracion})", 
+                inicioConsulta.ToString(@"hh\:mm"), 
+                finConsulta.ToString(@"hh\:mm"), 
+                duracionConsulta.ToString(@"hh\:mm"));
+
+            // Filtrar reservaciones activas que se solapan con la hora consultada
             var reservacionesActivas = reservacionesExistentes
-                .Where(r => r.Hora == request.Hora && 
-                           (r.Estado == EstadoReservacion.Pendiente || 
-                            r.Estado == EstadoReservacion.Confirmada))
+                .Where(r =>
+                    // inicioA < finB && finA > inicioB
+                    r.Hora < finConsulta && r.Hora.Add(r.DuracionEstimada) > inicioConsulta &&
+                    (r.Estado == EstadoReservacion.Pendiente || r.Estado == EstadoReservacion.Confirmada))
                 .ToList();
+
+            _logger.LogInformation("🎯 Encontradas {Count} reservaciones activas que se solapan", reservacionesActivas.Count);
+            foreach (var r in reservacionesActivas)
+            {
+                _logger.LogInformation("   - Mesa {MesaId}: {Hora} - {Fin} (Estado: {Estado})", 
+                    r.MesaId, 
+                    r.Hora.ToString(@"hh\:mm"), 
+                    r.Hora.Add(r.DuracionEstimada).ToString(@"hh\:mm"),
+                    r.Estado);
+            }
 
             // Excluir la reservación actual si se está modificando
             if (request.ReservacionId.HasValue)
@@ -80,11 +104,19 @@ public class VerificarDisponibilidadHandler : IRequestHandler<VerificarDisponibi
             // Obtener IDs de mesas ocupadas
             var mesasOcupadas = reservacionesActivas.Select(r => r.MesaId).ToHashSet();
 
+            _logger.LogInformation("🚫 Mesas ocupadas: {MesasOcupadas}", string.Join(", ", mesasOcupadas));
+
             // Filtrar mesas disponibles que tengan capacidad suficiente
             var mesasAdecuadas = mesasDisponibles
                 .Where(m => !mesasOcupadas.Contains(m.Id) && m.Capacidad >= request.NumeroPersonas)
                 .OrderBy(m => m.Capacidad) // Priorizar mesas más pequeñas
                 .ToList();
+
+            _logger.LogInformation("✅ Mesas adecuadas después de filtrar: {Count} mesas", mesasAdecuadas.Count);
+            foreach (var m in mesasAdecuadas)
+            {
+                _logger.LogInformation("   - Mesa {MesaId} (Capacidad: {Capacidad})", m.Id, m.Capacidad);
+            }
 
             // Verificar disponibilidad
             var disponible = mesasAdecuadas.Any();

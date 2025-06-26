@@ -177,10 +177,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             return entities;
         }
 
-        public override Task ActualizarAsync(PreparacionDiaria entity, CancellationToken cancellationToken = default)
+        public override async Task ActualizarAsync(PreparacionDiaria entity, CancellationToken cancellationToken = default)
         {
             _dbContext.Entry(entity).State = EntityState.Modified;
-            return _dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
         public override Task EliminarAsync(PreparacionDiaria entity, CancellationToken cancellationToken = default)

@@ -10,4 +10,8 @@ public class VerificarDisponibilidadQuery : IRequest<Result<DisponibilidadDto>>
     public int NumeroPersonas { get; set; }
     public Guid? ClienteId { get; set; }
     public Guid? ReservacionId { get; set; } // Para excluir la reservación actual en caso de modificación
+    /// <summary>
+    /// Duración estimada de la reservación a consultar (opcional, por defecto 2 horas)
+    /// </summary>
+    public TimeSpan? DuracionEstimada { get; set; }
 } 

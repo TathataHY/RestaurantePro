@@ -60,12 +60,32 @@ public class ActualizarReservacionHandler : IRequestHandler<ActualizarReservacio
                     return Result.Failure<ReservacionDto>($"No se pudo cambiar la mesa: {ex.Message}");
                 }
             }
+
+            // Actualizar observaciones si se proporcionaron
+            if (!string.IsNullOrWhiteSpace(request.Observaciones))
+            {
+                try
+                {
+                    reservacion.ActualizarObservaciones(request.Observaciones);
+                    _logger.LogInformation("Observaciones actualizadas para reservación {ReservacionId}", request.Id);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    _logger.LogWarning("No se pudieron actualizar las observaciones: {Error}", ex.Message);
+                    return Result.Failure<ReservacionDto>($"No se pudieron actualizar las observaciones: {ex.Message}");
+                }
+                catch (ArgumentException ex)
+                {
+                    _logger.LogWarning("Error en las observaciones proporcionadas: {Error}", ex.Message);
+                    return Result.Failure<ReservacionDto>($"Error en las observaciones: {ex.Message}");
+                }
+            }
             
             // Log de propiedades que no se pueden actualizar (para información del desarrollador)
-            if (request.FechaReservacion != default || request.HoraReservacion != default || request.NumeroPersonas > 0 || !string.IsNullOrWhiteSpace(request.Observaciones))
+            if (request.FechaReservacion != default || request.HoraReservacion != default || request.NumeroPersonas > 0)
             {
-                _logger.LogInformation("⚠️ Propiedades solicitadas para actualización pero no implementadas en el dominio: Fecha={Fecha}, Hora={Hora}, Personas={Personas}, Observaciones={Observaciones}", 
-                    request.FechaReservacion, request.HoraReservacion, request.NumeroPersonas, request.Observaciones);
+                _logger.LogInformation("⚠️ Propiedades solicitadas para actualización pero no implementadas en el dominio: Fecha={Fecha}, Hora={Hora}, Personas={Personas}", 
+                    request.FechaReservacion, request.HoraReservacion, request.NumeroPersonas);
             }
             
             // Guardar cambios

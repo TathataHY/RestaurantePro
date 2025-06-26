@@ -57,12 +57,41 @@ public class ActualizarPreparacionHandler : IRequestHandler<ActualizarPreparacio
             // Nota: Las propiedades de la entidad Preparacion son de solo lectura,
             // por lo que necesitamos usar métodos específicos para actualizarlas
             
+            // Actualizar cantidad si se proporciona
+            if (request.Cantidad.HasValue)
+            {
+                _logger.LogInformation("🔄 Actualizando cantidad de {CantidadAnterior} a {CantidadNueva}", 
+                    preparacion.CantidadPreparada, request.Cantidad.Value);
+                preparacion.ActualizarCantidad(request.Cantidad.Value);
+                _logger.LogInformation("✅ Cantidad actualizada. Nueva cantidad: {CantidadNueva}", 
+                    preparacion.CantidadPreparada);
+            }
+
+            // Actualizar observaciones si se proporciona
+            if (!string.IsNullOrWhiteSpace(request.Observaciones))
+            {
+                preparacion.ActualizarObservaciones(request.Observaciones);
+            }
+
+            // Actualizar chef si se proporciona
+            if (request.ChefId.HasValue)
+            {
+                preparacion.ActualizarChefId(request.ChefId.Value);
+            }
+
+            // Nota: Prioridad y TiempoEstimado no están implementados en la entidad actual
+            // Se pueden agregar en el futuro si es necesario
+            
             // Guardar cambios
             await _preparacionRepository.ActualizarAsync(preparacion, cancellationToken);
 
             _logger.LogInformation("✅ Preparación actualizada exitosamente: {PreparacionId}", request.Id);
+            _logger.LogInformation("📊 Valores finales - CantidadPreparada: {CantidadPreparada}, CantidadDisponible: {CantidadDisponible}", 
+                preparacion.CantidadPreparada, preparacion.CantidadDisponible);
 
             var preparacionDto = _mapper.Map<PreparacionDto>(preparacion);
+            _logger.LogInformation("🎯 DTO mapeado - Cantidad: {CantidadDto}", preparacionDto.Cantidad);
+            
             return Result.Success(preparacionDto);
         }
         catch (Exception ex)

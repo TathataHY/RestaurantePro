@@ -104,7 +104,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         public new async Task ActualizarAsync(Reservacion reservacion, CancellationToken cancellationToken = default)
         {
             _context.Entry(reservacion).State = EntityState.Modified;
-            await Task.CompletedTask;
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task EliminarAsync(Guid id, CancellationToken cancellationToken = default)

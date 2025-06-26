@@ -1,3 +1,6 @@
+using FluentValidation;
+using RestaurantePro.Application.Common.Enums;
+
 namespace RestaurantePro.Application.Operaciones.Preparaciones.Commands.ActualizarPreparacion;
 
 /// <summary>
@@ -16,7 +19,7 @@ public class ActualizarPreparacionValidator : AbstractValidator<ActualizarPrepar
             .When(x => !string.IsNullOrWhiteSpace(x.Observaciones));
 
         RuleFor(x => x.Prioridad)
-            .IsInEnum().WithMessage("La prioridad debe ser un valor válido")
+            .InclusiveBetween(1, 4).WithMessage("La prioridad debe ser un valor válido (1=Baja, 2=Media, 3=Alta, 4=Crítica)")
             .When(x => x.Prioridad.HasValue);
 
         RuleFor(x => x.TiempoEstimado)

@@ -254,6 +254,36 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
         }
 
         /// <summary>
+        /// Actualiza las observaciones de la reservación
+        /// </summary>
+        /// <param name="nuevasObservaciones">Nuevas observaciones</param>
+        /// <exception cref="InvalidOperationException">Si la reservación no está en un estado que permita cambios</exception>
+        public void ActualizarObservaciones(string nuevasObservaciones)
+        {
+            if (Estado != EstadoReservacion.Pendiente && Estado != EstadoReservacion.Confirmada)
+            {
+                throw new InvalidOperationException($"No se pueden actualizar las observaciones de una reservación con estado {Estado}");
+            }
+
+            if (string.IsNullOrWhiteSpace(nuevasObservaciones))
+            {
+                throw new ArgumentException("Las observaciones no pueden estar vacías", nameof(nuevasObservaciones));
+            }
+
+            if (nuevasObservaciones.Length > 500)
+            {
+                throw new ArgumentException("Las observaciones no pueden exceder 500 caracteres", nameof(nuevasObservaciones));
+            }
+
+            var observacionesAnteriores = Observaciones;
+            Observaciones = nuevasObservaciones;
+            FechaActualizacion = DateTime.Now;
+
+            ValidarInvariantes();
+            AddDomainEvent(new ObservacionesReservacionActualizadas(Id, observacionesAnteriores, nuevasObservaciones));
+        }
+
+        /// <summary>
         /// Valida las invariantes del agregado Reservacion
         /// </summary>
         private void ValidarInvariantes()

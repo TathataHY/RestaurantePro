@@ -59,7 +59,9 @@ public class ReprogramarReservacionHandler : IRequestHandler<ReprogramarReservac
             reservacion.Cancelar($"Reprogramada: {request.MotivoReprogramacion}");
             
             // Crear una nueva reservación con la nueva fecha/hora
-            var nuevaFechaHora = request.NuevaFechaReservacion.Add(request.NuevaHoraReservacion);
+            var nuevaFecha = request.NuevaFechaReservacion.Date;
+            var nuevaHora = request.NuevaHoraReservacion;
+            var nuevaFechaHora = nuevaFecha.Add(nuevaHora);
             var nuevaReservacion = Reservacion.Crear(
                 mesaId: reservacion.MesaId,
                 clienteId: reservacion.ClienteId,
@@ -73,14 +75,17 @@ public class ReprogramarReservacionHandler : IRequestHandler<ReprogramarReservac
                     : reservacion.Observaciones
             );
             
-            // Guardar la nueva reservación
-            await _reservacionRepository.AgregarAsync(nuevaReservacion, cancellationToken);
-            
-            // Guardar cambios de la reservación cancelada
+            // Guardar cambios de la reservación cancelada primero
             await _reservacionRepository.ActualizarAsync(reservacion, cancellationToken);
+            
+            // Luego guardar la nueva reservación
+            await _reservacionRepository.AgregarAsync(nuevaReservacion, cancellationToken);
+
+            // Guardar todos los cambios en la base de datos
+            await _reservacionRepository.GuardarCambiosAsync(cancellationToken);
 
             _logger.LogInformation("✅ Reservación reprogramada exitosamente: {ReservacionId} -> {NuevaReservacionId} - Nueva fecha: {Fecha}", 
-                request.Id, nuevaReservacion.Id, nuevaFechaHora);
+                request.Id, nuevaReservacion.Id, nuevaFecha);
 
             var reservacionDto = _mapper.Map<ReservacionDto>(nuevaReservacion);
             return Result.Success(reservacionDto);

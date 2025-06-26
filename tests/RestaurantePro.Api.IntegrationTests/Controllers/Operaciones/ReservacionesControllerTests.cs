@@ -19,6 +19,7 @@ using RestaurantePro.Application.Common.Models;
 using System.Text.Json;
 using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
 using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
+using System.Threading;
 
 namespace RestaurantePro.Api.IntegrationTests.Controllers.Operaciones;
 
@@ -29,6 +30,8 @@ namespace RestaurantePro.Api.IntegrationTests.Controllers.Operaciones;
 [Collection("Sequential")]
 public class ReservacionesControllerTests : ApiIntegrationTestBase
 {
+    private static int _contadorMesas = 0;
+
     public ReservacionesControllerTests(TestWebApplicationFactory factory) : base(factory)
     {
     }
@@ -93,7 +96,25 @@ public class ReservacionesControllerTests : ApiIntegrationTestBase
     public async Task GetReservacionPorId_ConReservacionInexistente_RetornaNotFound()
     {
         // Arrange
+        await using var context = CreateNewDbContext();
+        
+        // Crear datos reales para establecer contexto
+        var cliente = CrearClienteTest("notfound");
+        var mesa = CrearMesaTest("notfound");
+        var reservacion = CrearReservacionTest(cliente.Id, mesa.Id, "notfound");
+        
+        context.Clientes.Add(cliente);
+        context.Mesas.Add(mesa);
+        context.Reservaciones.Add(reservacion);
+        await context.SaveChangesAsync();
+
+        // Generar un ID que realmente no existe en la BD
         var idInexistente = Guid.NewGuid();
+        
+        // Verificar que el ID realmente no existe en la BD
+        context.ChangeTracker.Clear();
+        var reservacionEnBD = await context.Reservaciones.FindAsync(idInexistente);
+        reservacionEnBD.Should().BeNull();
 
         // Act
         var response = await HttpClient.GetAsync($"/api/operaciones/reservaciones/{idInexistente}");
@@ -103,6 +124,11 @@ public class ReservacionesControllerTests : ApiIntegrationTestBase
         var apiResponse = await DeserializarResponse<ApiResponse<object>>(response);
         apiResponse.Should().NotBeNull();
         apiResponse.Success.Should().BeFalse();
+        
+        // Verificar que la reservación real sigue existiendo en la BD
+        var reservacionReal = await context.Reservaciones.FindAsync(reservacion.Id);
+        reservacionReal.Should().NotBeNull();
+        reservacionReal!.Id.Should().Be(reservacion.Id);
     }
 
     [Fact]
@@ -295,7 +321,7 @@ public class ReservacionesControllerTests : ApiIntegrationTestBase
         apiResponse.Success.Should().BeTrue();
         apiResponse.Data.Should().NotBeNull();
         apiResponse.Data.Id.Should().NotBe(reservacion.Id); // Nueva reservación con ID diferente
-        apiResponse.Data.FechaHoraReservacion.Should().Be(nuevaFecha.Add(nuevaHora));
+        apiResponse.Data.FechaHoraReservacion.Should().Be(nuevaFecha.Date.Add(nuevaHora));
         apiResponse.Data.NumeroPersonas.Should().Be(8);
 
         // Verificar que la reservación original fue cancelada
@@ -319,23 +345,82 @@ public class ReservacionesControllerTests : ApiIntegrationTestBase
         // Arrange
         await using var context = CreateNewDbContext();
         
-        var mesa = CrearMesaTest("disponibilidad");
-        context.Mesas.Add(mesa);
+        // Crear datos reales para el test
+        var mesa1 = CrearMesaTest("disponibilidad-1");
+        var mesa2 = CrearMesaTest("disponibilidad-2");
+        var mesa3 = CrearMesaTest("disponibilidad-3");
+        var cliente = CrearClienteTest("disponibilidad");
+        
+        var fecha = DateTime.Now.AddDays(1).Date;
+        var hora = TimeSpan.FromHours(19);
+        
+        // Crear una reservación existente para la misma fecha/hora que se consultará
+        var reservacionExistente = Reservacion.Crear(
+            mesa1.Id,
+            cliente.Id,
+            fecha.Add(hora), // Usar la misma fecha y hora que se consultará
+            TimeSpan.FromHours(2), // Duración estimada
+            4,
+            "+1234567890",
+            "reservacion-disponibilidad@test.com",
+            "Observaciones disponibilidad-existente"
+        );
+        
+        context.Mesas.AddRange(mesa1, mesa2, mesa3);
+        context.Clientes.Add(cliente);
+        context.Reservaciones.Add(reservacionExistente);
         await context.SaveChangesAsync();
 
-        var fecha = DateTime.Now.AddDays(1);
-        var hora = TimeSpan.FromHours(19);
+        // --- LOGS TEMPORALES DE DEPURACIÓN ---
+        // var reservacionesEnBD = context.Reservaciones.ToList();
+        // Console.WriteLine("\n=== RESERVACIONES EN BD ===");
+        // foreach (var r in reservacionesEnBD)
+        // {
+        //     Console.WriteLine($"Id: {r.Id}, MesaId: {r.MesaId}, Fecha: {r.Fecha:yyyy-MM-dd}, Hora: {r.Hora}, Duración: {r.DuracionEstimada}, Estado: {r.Estado}");
+        // }
+        // Console.WriteLine("===========================\n");
+        
+        // LOG: Mesas disponibles devueltas por el endpoint
+        // Console.WriteLine("\n=== MESAS DISPONIBLES DEVUELTAS POR EL ENDPOINT ===");
+        // foreach (var m in apiResponse.Data!.MesasDisponibles)
+        // {
+        //     Console.WriteLine($"Id: {m.Id}, Numero: {m.Numero}, Capacidad: {m.Capacidad}, Ubicacion: {m.Ubicacion}");
+        // }
+        // Console.WriteLine("===============================================\n");
+        
+        var numeroPersonas = 4;
 
         // Act
-        var response = await HttpClient.GetAsync($"/api/operaciones/reservaciones/disponibilidad?fecha={fecha:yyyy-MM-dd}&hora={hora}&numeroPersonas=4");
+        var response = await HttpClient.GetAsync($"/api/operaciones/reservaciones/disponibilidad?fecha={fecha:yyyy-MM-dd}&hora={hora}&numeroPersonas={numeroPersonas}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var apiResponse = await DeserializarResponse<DisponibilidadDto>(response);
         apiResponse.Success.Should().BeTrue();
         apiResponse.Data.Should().NotBeNull();
+        
+        // Verificar que hay disponibilidad (debería haber al menos 2 mesas disponibles)
         apiResponse.Data!.Disponible.Should().BeTrue();
         apiResponse.Data.MesasDisponibles.Should().NotBeEmpty();
+        apiResponse.Data.MesasDisponibles.Should().HaveCount(c => c >= 2); // mesa2 y mesa3 deberían estar disponibles
+        
+        // Verificar que la mesa ocupada (mesa1) no esté en las disponibles
+        apiResponse.Data.MesasDisponibles.Should().NotContain(m => m.Id == mesa1.Id);
+        
+        // Verificar que las mesas disponibles realmente existen en la BD
+        context.ChangeTracker.Clear();
+        foreach (var mesaDisponible in apiResponse.Data.MesasDisponibles)
+        {
+            var mesaEnBD = await context.Mesas.FindAsync(mesaDisponible.Id);
+            mesaEnBD.Should().NotBeNull();
+            mesaEnBD!.Capacidad.Should().BeGreaterThanOrEqualTo(numeroPersonas);
+        }
+        
+        // Verificar que la reservación existente realmente está en la BD
+        var reservacionEnBD = await context.Reservaciones.FindAsync(reservacionExistente.Id);
+        reservacionEnBD.Should().NotBeNull();
+        reservacionEnBD!.Fecha.Should().Be(fecha.Date);
+        reservacionEnBD.Hora.Should().Be(hora);
     }
 
     #region Métodos Helper
@@ -357,8 +442,8 @@ public class ReservacionesControllerTests : ApiIntegrationTestBase
         var guid = Guid.NewGuid();
         var sufijoUnico = sufijo ?? guid.ToString().Substring(0, 8);
         
-        // Generar un número de mesa válido basado en el hash del GUID
-        var numeroMesa = Math.Abs(guid.GetHashCode()) % 100 + 1; // Número entre 1 y 100
+        // Generar un número de mesa único usando contador estático
+        var numeroMesa = Interlocked.Increment(ref _contadorMesas) + 1000; // Números únicos desde 1001
         
         return Mesa.Crear(
             numeroMesa,
