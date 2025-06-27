@@ -179,7 +179,7 @@ public class IngredientesController : ControllerBase
     /// Registra un nuevo movimiento de inventario (ajuste manual)
     /// </summary>
     [HttpPost("{id}/movimientos")]
-    [ProducesResponseType(typeof(ApiResponse<bool>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<Guid>), 201)]
     [ProducesResponseType(typeof(ApiResponse<object>), 400)]
     [ProducesResponseType(typeof(ApiResponse<object>), 404)]
     [ProducesResponseType(401)]
@@ -194,7 +194,8 @@ public class IngredientesController : ControllerBase
 
         if (result.Succeeded)
         {
-            return Ok(ApiResponse<bool>.SuccessResponse(result.Value, "Movimiento registrado exitosamente"));
+            var response = ApiResponse<Guid>.SuccessResponse(result.Value, "Movimiento registrado exitosamente");
+            return CreatedAtAction(nameof(ObtenerMovimientosDeIngrediente), new { id }, response);
         }
         
         var statusCode = result.Error?.Contains("no encontrado") == true ? 404 : 400;

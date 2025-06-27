@@ -205,6 +205,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
             // En un flujo real, primero se aprueba y luego se envía
             var fechaAprobacion = dateTimeService.Now;
             
+            Estado = EstadoOrdenCompra.Confirmada;
             // Emitir evento de aprobación
             AddDomainEvent(new OrdenCompraAprobada(Id, ProveedorId, fechaAprobacion, Total));
             

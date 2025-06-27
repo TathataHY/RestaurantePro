@@ -39,8 +39,8 @@ public class AprobarOrdenCompraHandler : IRequestHandler<AprobarOrdenCompraComma
 
         try
         {
-            // Buscar la orden de compra
-            var ordenCompra = await _ordenCompraRepository.ObtenerPorIdAsync(request.Id, cancellationToken);
+            // Buscar la orden de compra con items
+            var ordenCompra = await _ordenCompraRepository.ObtenerPorIdConItemsAsync(request.Id, cancellationToken);
             if (ordenCompra == null)
             {
                 _logger.LogWarning("⚠️ Orden de compra no encontrada: {OrdenCompraId}", request.Id);

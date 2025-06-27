@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
 using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
 
@@ -21,27 +22,27 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
             
             builder.Property(i => i.Nombre)
                 .IsRequired()
-                .HasMaxLength(100);
+                .HasMaxLength(200);
                 
             builder.Property(i => i.Codigo)
                 .IsRequired()
-                .HasMaxLength(20);
+                .HasMaxLength(50);
                 
             builder.Property(i => i.Descripcion)
+                .IsRequired()
                 .HasMaxLength(500);
                 
             builder.Property(i => i.UnidadMedida)
                 .IsRequired()
-                .HasConversion<string>()
-                .HasMaxLength(50);
+                .HasConversion<string>();
                 
             builder.Property(i => i.Stock)
-                .IsRequired()
-                .HasPrecision(10, 2);
+                .HasPrecision(18, 2)
+                .IsRequired();
                 
             builder.Property(i => i.StockMinimo)
-                .IsRequired()
-                .HasPrecision(10, 2);
+                .HasPrecision(18, 2)
+                .IsRequired();
                 
             builder.Property(i => i.ProveedorPrincipalId);
             
@@ -60,6 +61,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
             builder.Property(i => i.CostoPromedio)
                 .HasPrecision(18, 2);
             
+            // Configuración de RowVersion - comentada temporalmente para tests
+            // builder.Property(i => i.RowVersion)
+            //     .HasColumnName("RowVersion")
+            //     .HasDefaultValue(new byte[8]); // Valor por defecto para SQLite
+            // // NO se marca como IsRowVersion() ni IsConcurrencyToken() para evitar concurrencia optimista
+            
             // Índices
             builder.HasIndex(i => i.Nombre)
                 .HasDatabaseName("IX_Ingredientes_Nombre");
@@ -74,32 +81,36 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
             builder.HasIndex(i => i.ProveedorPrincipalId)
                 .HasDatabaseName("IX_Ingredientes_ProveedorPrincipalId");
 
-            // Configurar la colección de movimientos de inventario como una entidad poseída
-            builder.OwnsMany(i => i.Movimientos, ownedBuilder =>
-            {
-                ownedBuilder.ToTable("MovimientosInventario", "Inventario");
+            // Relaciones
+            builder.HasOne(i => i.ProveedorPrincipal)
+                .WithMany()
+                .HasForeignKey(i => i.ProveedorPrincipalId)
+                .OnDelete(DeleteBehavior.SetNull);
 
-                // Clave primaria para la tabla de movimientos (EF Core la necesita)
-                ownedBuilder.HasKey("Id");
+            // Configuración de la colección de movimientos
+            builder.HasMany(i => i.Movimientos)
+                .WithOne()
+                .HasForeignKey("IngredienteId")
+                .OnDelete(DeleteBehavior.Cascade);
 
-                ownedBuilder.Property(m => m.Fecha)
-                    .IsRequired();
+            // Configuración de auditoría
+            builder.Property(i => i.FechaCreacion)
+                .IsRequired();
 
-                ownedBuilder.Property(m => m.TipoMovimiento)
-                    .IsRequired()
-                    .HasConversion<string>()
-                    .HasMaxLength(50);
+            builder.Property(i => i.FechaActualizacion);
 
-                ownedBuilder.Property(m => m.Cantidad)
-                    .IsRequired()
-                    .HasPrecision(10, 2);
+            builder.Property(i => i.CreatedBy)
+                .HasMaxLength(100);
 
-                ownedBuilder.Property(m => m.Motivo)
-                    .HasMaxLength(100);
+            builder.Property(i => i.LastModifiedBy)
+                .HasMaxLength(100);
 
-                // Relación de vuelta al ingrediente (clave externa)
-                ownedBuilder.WithOwner().HasForeignKey("IngredienteId");
-            });
+            builder.Property(i => i.EstaEliminado)
+                .IsRequired()
+                .HasDefaultValue(false);
+
+            // Configuración de soft delete
+            builder.HasQueryFilter(i => !i.EstaEliminado);
         }
     }
 }

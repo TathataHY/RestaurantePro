@@ -61,6 +61,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
                 entity.SetSchema("Proveedores");
             }
 
+            modelBuilder.Ignore<RestaurantePro.Domain.Core.Base.Events.DomainEvent>();
+
             _logger.LogInformation("Modelo de datos del contexto Proveedores configurado correctamente");
         }
 

@@ -63,6 +63,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
                 entity.SetSchema("Comercial");
             }
 
+            modelBuilder.Ignore<RestaurantePro.Domain.Core.Base.Events.DomainEvent>();
+            modelBuilder.Ignore<RestaurantePro.Domain.Operaciones.Comandas.ValueObjects.PersonalizacionItem>();
+            modelBuilder.Ignore<RestaurantePro.Domain.Operaciones.Comandas.ValueObjects.TotalComanda>();
+
             _logger.LogInformation("Modelo de datos del contexto Comercial configurado correctamente");
         }
 

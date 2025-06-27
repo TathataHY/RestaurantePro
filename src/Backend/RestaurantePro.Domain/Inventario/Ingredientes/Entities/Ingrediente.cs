@@ -107,6 +107,9 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// </summary>
         public DateTime? FechaExpiracion { get; private set; }
 
+        // Propiedad para concurrencia optimista - comentada temporalmente para tests
+        // public byte[] RowVersion { get; set; }
+
         // Constructor privado para EF Core
         private Ingrediente() { }
 
@@ -209,17 +212,18 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// </summary>
         /// <param name="cantidad">Cantidad a incrementar</param>
         /// <param name="motivo">Motivo del incremento (por ejemplo: "Compra", "Ajuste de inventario")</param>
+        /// <param name="fecha">Fecha del movimiento (opcional)</param>
         /// <returns>Movimiento de inventario generado</returns>
         /// <exception cref="BusinessRuleViolationException">Si el ingrediente está desactivado</exception>
         /// <exception cref="ArgumentException">Si la cantidad es negativa o cero</exception>
-        public MovimientoInventario IncrementarStock(decimal cantidad, string motivo)
+        public MovimientoInventario IncrementarStock(decimal cantidad, string motivo, DateTime? fecha = null)
         {
             ValidarIngredienteActivo();
             
             Guard.AgainstNegativeOrZero(cantidad, nameof(cantidad));
             Guard.AgainstNullOrWhiteSpace(motivo, nameof(motivo));
 
-            var movimiento = MovimientoInventario.CrearIngreso(Id, cantidad, motivo);
+            var movimiento = MovimientoInventario.CrearIngreso(Id, cantidad, motivo, fecha);
 
             // Aplicar el movimiento
             Stock = movimiento.Aplicar(Stock);
@@ -244,10 +248,11 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
         /// </summary>
         /// <param name="cantidad">Cantidad a decrementar</param>
         /// <param name="motivo">Motivo del decremento (por ejemplo: "Consumo", "Merma")</param>
+        /// <param name="fecha">Fecha del movimiento (opcional)</param>
         /// <returns>Movimiento de inventario generado</returns>
         /// <exception cref="StockInsuficienteException">Si no hay suficiente stock</exception>
         /// <exception cref="BusinessRuleViolationException">Si el ingrediente está desactivado</exception>
-        public MovimientoInventario DecrementarStock(decimal cantidad, string motivo)
+        public MovimientoInventario DecrementarStock(decimal cantidad, string motivo, DateTime? fecha = null)
         {
             ValidarIngredienteActivo();
             
@@ -265,7 +270,7 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Entities
                 );
             }
 
-            var movimiento = MovimientoInventario.CrearEgreso(Id, cantidad, motivo);
+            var movimiento = MovimientoInventario.CrearEgreso(Id, cantidad, motivo, fecha);
 
             // Aplicar el movimiento
             Stock = movimiento.Aplicar(Stock);

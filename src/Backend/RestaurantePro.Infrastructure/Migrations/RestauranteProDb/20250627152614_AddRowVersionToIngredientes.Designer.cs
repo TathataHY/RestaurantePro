@@ -9,11 +9,11 @@ using RestaurantePro.Infrastructure.Persistence.Contexts;
 
 #nullable disable
 
-namespace RestaurantePro.Infrastructure.Migrations
+namespace RestaurantePro.Infrastructure.Migrations.RestauranteProDb
 {
     [DbContext(typeof(RestauranteProDbContext))]
-    [Migration("20250622170958_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250627152614_AddRowVersionToIngredientes")]
+    partial class AddRowVersionToIngredientes
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -233,6 +233,9 @@ namespace RestaurantePro.Infrastructure.Migrations
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EstaEliminada")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("EstaEliminado")
                         .ValueGeneratedOnAdd()
@@ -542,18 +545,21 @@ namespace RestaurantePro.Infrastructure.Migrations
 
                     b.Property<string>("Codigo")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Condiciones")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Descripcion")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int?>("DiasValidos")
                         .HasColumnType("int");
@@ -564,8 +570,9 @@ namespace RestaurantePro.Infrastructure.Migrations
                     b.Property<bool>("EstaEliminado")
                         .HasColumnType("bit");
 
-                    b.Property<int>("Estado")
-                        .HasColumnType("int");
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime?>("FechaActualizacion")
                         .HasColumnType("datetime2");
@@ -586,11 +593,13 @@ namespace RestaurantePro.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("MontoMinimo")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("Prioridad")
                         .HasColumnType("int");
@@ -598,18 +607,41 @@ namespace RestaurantePro.Infrastructure.Migrations
                     b.Property<int>("PuntosRequeridos")
                         .HasColumnType("int");
 
-                    b.Property<int>("Tipo")
-                        .HasColumnType("int");
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("ValorDescuento")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("VecesUsada")
                         .HasColumnType("int");
 
+                    b.Property<string>("_categoriasAplicablesIds")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("_clientesQueUsaronIds")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("_productosAplicablesIds")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Promociones");
+                    b.HasIndex("Codigo")
+                        .IsUnique();
+
+                    b.HasIndex("Estado");
+
+                    b.HasIndex("FechaFin");
+
+                    b.HasIndex("FechaInicio");
+
+                    b.ToTable("Promociones", "Comercial");
                 });
 
             modelBuilder.Entity("RestaurantePro.Domain.Core.Notificaciones.Entities.Notificacion", b =>
@@ -1065,8 +1097,8 @@ namespace RestaurantePro.Infrastructure.Migrations
 
                     b.Property<string>("Codigo")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<decimal>("CostoPromedio")
                         .HasPrecision(18, 2)
@@ -1111,13 +1143,21 @@ namespace RestaurantePro.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasDefaultValue(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 })
+                        .HasColumnName("RowVersion");
+
                     b.Property<decimal>("Stock")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("StockMinimo")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Temporada")
                         .IsRequired()
@@ -1126,8 +1166,7 @@ namespace RestaurantePro.Infrastructure.Migrations
 
                     b.Property<string>("UnidadMedida")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

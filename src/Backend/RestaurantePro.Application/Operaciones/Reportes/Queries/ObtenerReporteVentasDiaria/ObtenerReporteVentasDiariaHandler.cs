@@ -375,7 +375,7 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
     {
         try
         {
-            var tendencias = new List<TendenciaDiariaDto>();
+            var tendencias = new List<RestaurantePro.Application.Operaciones.Reportes.DTOs.TendenciaDiariaDto>();
             var fechaInicio = request.FechaReporte.AddDays(-6); // Última semana
             
             for (int i = 0; i < 7; i++)
@@ -385,11 +385,12 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
                 
                 var metricas = GenerarMetricasBasicas(comandasDia);
                 
-                tendencias.Add(new TendenciaDiariaDto
+                tendencias.Add(new RestaurantePro.Application.Operaciones.Reportes.DTOs.TendenciaDiariaDto
                 {
                     Fecha = fecha,
-                    TotalComandas = Math.Max(1, metricas.TotalComandas), // Asegurar al menos 1 comanda por día
-                    MontoTotal = Math.Max(100, metricas.MontoTotalVentas) // Asegurar un monto mínimo
+                    CantidadVentas = Math.Max(1, metricas.TotalComandas), // Asegurar al menos 1 comanda por día
+                    MontoTotal = Math.Max(100, metricas.MontoTotalVentas), // Asegurar un monto mínimo
+                    PromedioTicket = Math.Max(100, metricas.MontoTotalVentas) // Asegurar un monto mínimo
                 });
             }
             

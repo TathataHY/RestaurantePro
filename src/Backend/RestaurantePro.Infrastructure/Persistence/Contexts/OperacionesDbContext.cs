@@ -65,6 +65,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
                 entity.SetSchema("Operaciones");
             }
 
+            modelBuilder.Ignore<RestaurantePro.Domain.Core.Base.Events.DomainEvent>();
+            modelBuilder.Ignore<RestaurantePro.Domain.Comercial.Clientes.ValueObjects.ClienteNombre>();
+            modelBuilder.Ignore<RestaurantePro.Domain.Core.SharedKernel.ValueObjects.Email>();
+            modelBuilder.Ignore<RestaurantePro.Domain.Core.SharedKernel.ValueObjects.PhoneNumber>();
+
             _logger.LogInformation("Modelo de datos del contexto Operaciones configurado correctamente");
         }
 

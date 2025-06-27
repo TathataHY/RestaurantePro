@@ -99,4 +99,6 @@ public class TendenciaDiariaDto
     public DateTime Fecha { get; set; }
     public int TotalComandas { get; set; }
     public decimal MontoTotal { get; set; }
+    public int CantidadVentas { get; set; }
+    public decimal PromedioTicket { get; set; }
 } 

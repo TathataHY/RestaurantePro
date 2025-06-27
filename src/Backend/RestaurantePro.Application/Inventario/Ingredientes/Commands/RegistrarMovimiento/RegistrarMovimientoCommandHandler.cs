@@ -6,7 +6,7 @@ using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
 
 namespace RestaurantePro.Application.Inventario.Ingredientes.Commands.RegistrarMovimiento;
 
-public class RegistrarMovimientoCommandHandler : IRequestHandler<RegistrarMovimientoCommand, Result<bool>>
+public class RegistrarMovimientoCommandHandler : IRequestHandler<RegistrarMovimientoCommand, Result<Guid>>
 {
     private readonly IApplicationDbContext _context;
 
@@ -15,61 +15,50 @@ public class RegistrarMovimientoCommandHandler : IRequestHandler<RegistrarMovimi
         _context = context;
     }
 
-    public async Task<Result<bool>> Handle(RegistrarMovimientoCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Guid>> Handle(RegistrarMovimientoCommand request, CancellationToken cancellationToken)
     {
-        const int maxRetries = 3;
-        var retryCount = 0;
-
-        while (retryCount < maxRetries)
+        try
         {
-            try
-            {
-                // Cargar el ingrediente con la colección de movimientos para que EF Core pueda trackear los cambios
-                var ingrediente = await _context.Ingredientes
-                    .Include(i => i.Movimientos)
-                    .FirstOrDefaultAsync(i => i.Id == request.IngredienteId, cancellationToken);
+            var ingrediente = await _context.Ingredientes
+                .Include(i => i.Movimientos)
+                .FirstOrDefaultAsync(i => i.Id == request.IngredienteId, cancellationToken);
 
-                if (ingrediente == null)
-                {
-                    return Result.Failure<bool>("Ingrediente no encontrado");
-                }
-
-                // Usar los métodos de dominio según el tipo de movimiento
-                if (request.TipoMovimiento == TipoMovimientoInventario.Ingreso)
-                {
-                    ingrediente.IncrementarStock(request.Cantidad, request.Motivo);
-                }
-                else if (request.TipoMovimiento == TipoMovimientoInventario.Egreso)
-                {
-                    ingrediente.DecrementarStock(request.Cantidad, request.Motivo);
-                }
-                else
-                {
-                    return Result.Failure<bool>("Tipo de movimiento no válido");
-                }
-
-                // Guardar cambios con manejo de concurrencia
-                await _context.SaveChangesAsync(cancellationToken);
-                return Result.Success(true);
-            }
-            catch (DbUpdateConcurrencyException ex)
+            if (ingrediente == null)
             {
-                retryCount++;
-                
-                if (retryCount >= maxRetries)
-                {
-                    return Result.Failure<bool>($"Error de concurrencia al registrar movimiento después de {maxRetries} intentos: {ex.Message}");
-                }
-                
-                // Esperar un poco antes de reintentar
-                await Task.Delay(100 * retryCount, cancellationToken);
+                return Result.Failure<Guid>("Ingrediente no encontrado");
             }
-            catch (Exception ex)
+
+            // Aplicar el movimiento según el tipo
+            MovimientoInventario movimiento;
+            if (request.TipoMovimiento == TipoMovimientoInventario.Ingreso)
             {
-                return Result.Failure<bool>($"Error al registrar movimiento: {ex.Message}");
+                movimiento = ingrediente.IncrementarStock(request.Cantidad, request.Motivo, request.Fecha);
             }
+            else if (request.TipoMovimiento == TipoMovimientoInventario.Egreso)
+            {
+                movimiento = ingrediente.DecrementarStock(request.Cantidad, request.Motivo, request.Fecha);
+            }
+            else
+            {
+                return Result.Failure<Guid>("Tipo de movimiento no válido");
+            }
+
+            // Agregar explícitamente el movimiento al contexto para que EF Core lo rastree
+            _context.MovimientosInventario.Add(movimiento);
+
+            // Forzar la detección de cambios en EF Core
+            if (_context is DbContext dbContext)
+            {
+                dbContext.ChangeTracker.DetectChanges();
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return Result.Success(movimiento.Id);
         }
-
-        return Result.Failure<bool>("Error inesperado al registrar movimiento");
+        catch (Exception ex)
+        {
+            return Result.Failure<Guid>($"Error al registrar movimiento: {ex.Message}");
+        }
     }
 } 

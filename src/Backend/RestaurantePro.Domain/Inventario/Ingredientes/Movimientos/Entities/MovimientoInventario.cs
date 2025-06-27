@@ -54,7 +54,31 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities
         /// <exception cref="ArgumentException">Si los datos no son válidos</exception>
         public static MovimientoInventario CrearIngreso(Guid ingredienteId, decimal cantidad, string motivo, DateTime? fecha = null)
         {
-            return CrearMovimiento(ingredienteId, cantidad, motivo, TipoMovimientoInventario.Ingreso, fecha);
+            if (cantidad <= 0)
+                throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(cantidad));
+                
+            if (string.IsNullOrWhiteSpace(motivo))
+                throw new ArgumentException("El motivo no puede estar vacío", nameof(motivo));
+                
+            var movimiento = new MovimientoInventario
+            {
+                IngredienteId = ingredienteId,
+                Cantidad = cantidad,
+                Motivo = motivo,
+                TipoMovimiento = TipoMovimientoInventario.Ingreso,
+                Fecha = fecha ?? DateTime.Now,
+                EstaAplicado = false
+            };
+            
+            movimiento.AddDomainEvent(new MovimientoRegistrado(
+                movimiento.Id, 
+                ingredienteId, 
+                TipoMovimientoInventario.Ingreso, 
+                cantidad, 
+                motivo
+            ));
+            
+            return movimiento;
         }
         
         /// <summary>
@@ -68,7 +92,31 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities
         /// <exception cref="ArgumentException">Si los datos no son válidos</exception>
         public static MovimientoInventario CrearEgreso(Guid ingredienteId, decimal cantidad, string motivo, DateTime? fecha = null)
         {
-            return CrearMovimiento(ingredienteId, cantidad, motivo, TipoMovimientoInventario.Egreso, fecha);
+            if (cantidad <= 0)
+                throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(cantidad));
+                
+            if (string.IsNullOrWhiteSpace(motivo))
+                throw new ArgumentException("El motivo no puede estar vacío", nameof(motivo));
+                
+            var movimiento = new MovimientoInventario
+            {
+                IngredienteId = ingredienteId,
+                Cantidad = cantidad,
+                Motivo = motivo,
+                TipoMovimiento = TipoMovimientoInventario.Egreso,
+                Fecha = fecha ?? DateTime.Now,
+                EstaAplicado = false
+            };
+            
+            movimiento.AddDomainEvent(new MovimientoRegistrado(
+                movimiento.Id, 
+                ingredienteId, 
+                TipoMovimientoInventario.Egreso, 
+                cantidad, 
+                motivo
+            ));
+            
+            return movimiento;
         }
         
         private static MovimientoInventario CrearMovimiento(Guid ingredienteId, decimal cantidad, string motivo, 
@@ -157,6 +205,54 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities
             {
                 return stockActual - Cantidad;
             }
+        }
+
+        /// <summary>
+        /// Actualiza la cantidad del movimiento
+        /// </summary>
+        /// <param name="nuevaCantidad">Nueva cantidad del movimiento</param>
+        /// <exception cref="ArgumentException">Si la nueva cantidad no es válida</exception>
+        /// <exception cref="InvalidOperationException">Si el movimiento ya fue aplicado</exception>
+        public void ActualizarCantidad(decimal nuevaCantidad)
+        {
+            if (EstaAplicado)
+                throw new InvalidOperationException("No se puede modificar un movimiento que ya fue aplicado");
+                
+            if (nuevaCantidad <= 0)
+                throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(nuevaCantidad));
+                
+            Cantidad = nuevaCantidad;
+            MarkAsModified();
+        }
+
+        /// <summary>
+        /// Actualiza el motivo del movimiento
+        /// </summary>
+        /// <param name="nuevoMotivo">Nuevo motivo del movimiento</param>
+        /// <exception cref="ArgumentException">Si el nuevo motivo no es válido</exception>
+        /// <exception cref="InvalidOperationException">Si el movimiento ya fue aplicado</exception>
+        public void ActualizarMotivo(string nuevoMotivo)
+        {
+            if (EstaAplicado)
+                throw new InvalidOperationException("No se puede modificar un movimiento que ya fue aplicado");
+                
+            if (string.IsNullOrWhiteSpace(nuevoMotivo))
+                throw new ArgumentException("El motivo no puede estar vacío", nameof(nuevoMotivo));
+                
+            Motivo = nuevoMotivo;
+            MarkAsModified();
+        }
+
+        /// <summary>
+        /// Marca el movimiento como eliminado (soft delete)
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Si el movimiento ya fue aplicado</exception>
+        public void MarcarComoEliminado()
+        {
+            if (EstaAplicado)
+                throw new InvalidOperationException("No se puede eliminar un movimiento que ya fue aplicado");
+                
+            MarkAsDeleted();
         }
     }
 } 

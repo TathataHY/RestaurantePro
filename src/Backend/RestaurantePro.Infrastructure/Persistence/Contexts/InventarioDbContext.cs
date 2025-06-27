@@ -48,6 +48,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         {
             base.OnModelCreating(modelBuilder);
 
+            // Ignorar clases base que no deben ser mapeadas como entidades
+            modelBuilder.Ignore<RestaurantePro.Domain.Core.Base.Events.DomainEvent>();
+            modelBuilder.Ignore<RestaurantePro.Domain.Core.SharedKernel.ValueObjects.Email>();
+            modelBuilder.Ignore<RestaurantePro.Domain.Core.SharedKernel.ValueObjects.PhoneNumber>();
+            modelBuilder.Ignore<RestaurantePro.Domain.Proveedores.ValueObjects.ProveedorCategoria>();
+            
             // Aplicar configuraciones del contexto Inventario
             modelBuilder.ApplyConfigurationsFromAssembly(
                 Assembly.GetExecutingAssembly(),

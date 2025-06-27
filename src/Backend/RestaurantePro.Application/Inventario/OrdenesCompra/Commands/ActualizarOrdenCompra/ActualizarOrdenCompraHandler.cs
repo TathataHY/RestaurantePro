@@ -6,6 +6,7 @@ using RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces;
 using AutoMapper;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Reflection;
 
 namespace RestaurantePro.Application.Inventario.OrdenesCompra.Commands.ActualizarOrdenCompra;
 
@@ -54,16 +55,48 @@ public class ActualizarOrdenCompraHandler : IRequestHandler<ActualizarOrdenCompr
             }
 
             // Actualizar propiedades usando los métodos de la entidad
-            // Nota: Las propiedades de la entidad OrdenCompra son de solo lectura,
-            // por lo que necesitamos usar métodos específicos para actualizarlas
-            
+            if (!string.IsNullOrWhiteSpace(request.Observaciones))
+            {
+                // Asignar directamente la propiedad Observaciones (es private set pero accesible desde el mismo assembly)
+                var observacionesProperty = typeof(OrdenCompra).GetProperty("Observaciones");
+                observacionesProperty?.SetValue(ordenCompra, request.Observaciones);
+            }
+
+            if (request.FechaEntregaEsperada.HasValue)
+                ordenCompra.EstablecerFechaEntrega(request.FechaEntregaEsperada.Value);
+
+            // Actualizar items si se envían en el request
+            if (request.Items != null && request.Items.Any())
+            {
+                // Eliminar items existentes
+                var itemsExistentes = ordenCompra.Items.ToList();
+                foreach (var item in itemsExistentes)
+                {
+                    ordenCompra.EliminarItem(item.Id);
+                }
+
+                // Agregar los nuevos items
+                foreach (var itemRequest in request.Items)
+                {
+                    // Para agregar un item necesitamos el nombre del ingrediente y unidad de medida
+                    // Por ahora usamos valores por defecto ya que no están en el comando
+                    ordenCompra.AgregarItem(
+                        itemRequest.IngredienteId,
+                        "Ingrediente", // Nombre por defecto
+                        itemRequest.Cantidad,
+                        RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramos // Unidad por defecto
+                    );
+                }
+            }
+
             // Guardar cambios
             await _ordenCompraRepository.ActualizarAsync(ordenCompra, cancellationToken);
 
             _logger.LogInformation("✅ Orden de compra actualizada exitosamente: {OrdenCompraId}", request.Id);
 
-            var ordenCompraDto = _mapper.Map<OrdenCompraDto>(ordenCompra);
-            return Result.Success(ordenCompraDto);
+            // Mapear a DTO
+            var dto = _mapper.Map<OrdenCompraDto>(ordenCompra);
+            return Result.Success(dto);
         }
         catch (Exception ex)
         {

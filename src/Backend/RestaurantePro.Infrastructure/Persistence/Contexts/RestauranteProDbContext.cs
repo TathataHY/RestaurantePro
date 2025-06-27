@@ -56,7 +56,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         {
             base.OnModelCreating(modelBuilder);
             
-            modelBuilder.Ignore<DomainEvent>();
+            modelBuilder.Ignore<RestaurantePro.Domain.Core.Base.Events.DomainEvent>();
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
             modelBuilder.Entity<ApplicationUserRole>(userRole =>

@@ -52,6 +52,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
+using Microsoft.EntityFrameworkCore.Metadata;
+using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 

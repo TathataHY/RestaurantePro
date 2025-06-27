@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace RestaurantePro.Infrastructure.Migrations
+namespace RestaurantePro.Infrastructure.Migrations.RestauranteProDb
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialRestaurantePro : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -224,25 +224,29 @@ namespace RestaurantePro.Infrastructure.Migrations
 
             migrationBuilder.CreateTable(
                 name: "Promociones",
+                schema: "Comercial",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Codigo = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Tipo = table.Column<int>(type: "int", nullable: false),
-                    ValorDescuento = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    MontoMinimo = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Codigo = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Nombre = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Descripcion = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Tipo = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ValorDescuento = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    MontoMinimo = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     PuntosRequeridos = table.Column<int>(type: "int", nullable: false),
                     FechaInicio = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaFin = table.Column<DateTime>(type: "datetime2", nullable: false),
                     MaximoUsos = table.Column<int>(type: "int", nullable: true),
                     VecesUsada = table.Column<int>(type: "int", nullable: false),
-                    Estado = table.Column<int>(type: "int", nullable: false),
+                    Estado = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     EsAcumulable = table.Column<bool>(type: "bit", nullable: false),
                     DiasValidos = table.Column<int>(type: "int", nullable: true),
                     Prioridad = table.Column<int>(type: "int", nullable: false),
-                    Condiciones = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Condiciones = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    _categoriasAplicablesIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    _clientesQueUsaronIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    _productosAplicablesIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaActualizacion = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -303,6 +307,7 @@ namespace RestaurantePro.Infrastructure.Migrations
                     PuntosDisponibles = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
                     MultiplicadorPuntos = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false, defaultValue: 1.0m),
                     LimiteMensual = table.Column<int>(type: "int", nullable: true),
+                    EstaEliminada = table.Column<bool>(type: "bit", nullable: false),
                     Etiquetas = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaActualizacion = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -511,8 +516,8 @@ namespace RestaurantePro.Infrastructure.Migrations
                     TotalPagado = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     MotivoAnulacion = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
                     Observaciones = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    ComandasIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ComandasIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FechaActualizacion = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -666,11 +671,11 @@ namespace RestaurantePro.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Nombre = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Codigo = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Codigo = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Descripcion = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    UnidadMedida = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    StockMinimo = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
-                    Stock = table.Column<decimal>(type: "decimal(10,2)", precision: 10, scale: 2, nullable: false),
+                    UnidadMedida = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    StockMinimo = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    Stock = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     EstaActivo = table.Column<bool>(type: "bit", nullable: false),
                     ProveedorPrincipalId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Rotacion = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
@@ -678,6 +683,7 @@ namespace RestaurantePro.Infrastructure.Migrations
                     BloqueadoControlCalidad = table.Column<bool>(type: "bit", nullable: false),
                     CostoPromedio = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     FechaExpiracion = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaActualizacion = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -1313,6 +1319,31 @@ namespace RestaurantePro.Infrastructure.Migrations
                 column: "Nombre");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Promociones_Codigo",
+                schema: "Comercial",
+                table: "Promociones",
+                column: "Codigo",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Promociones_Estado",
+                schema: "Comercial",
+                table: "Promociones",
+                column: "Estado");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Promociones_FechaFin",
+                schema: "Comercial",
+                table: "Promociones",
+                column: "FechaFin");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Promociones_FechaInicio",
+                schema: "Comercial",
+                table: "Promociones",
+                column: "FechaInicio");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Proveedores_Nombre",
                 schema: "Proveedores",
                 table: "Proveedores",
@@ -1469,7 +1500,8 @@ namespace RestaurantePro.Infrastructure.Migrations
                 name: "ProductoCategorias");
 
             migrationBuilder.DropTable(
-                name: "Promociones");
+                name: "Promociones",
+                schema: "Comercial");
 
             migrationBuilder.DropTable(
                 name: "ProveedorCategorias",

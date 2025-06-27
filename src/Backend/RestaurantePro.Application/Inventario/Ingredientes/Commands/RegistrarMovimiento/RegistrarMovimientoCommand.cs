@@ -1,10 +1,10 @@
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Common.Models;
-using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
+using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
 
 namespace RestaurantePro.Application.Inventario.Ingredientes.Commands.RegistrarMovimiento;
 
-public record RegistrarMovimientoCommand : IRequest<Result<bool>>
+public record RegistrarMovimientoCommand : IRequest<Result<Guid>>
 {
     public Guid IngredienteId { get; init; }
     public decimal Cantidad { get; init; }
@@ -12,4 +12,5 @@ public record RegistrarMovimientoCommand : IRequest<Result<bool>>
     public string Motivo { get; init; } = string.Empty;
     public string? Observaciones { get; init; }
     public Guid? UsuarioId { get; init; }
+    public DateTime? Fecha { get; init; }
 } 

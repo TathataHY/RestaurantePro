@@ -192,6 +192,8 @@ global using RestaurantePro.Application.Operaciones.Preparaciones.Commands.Inici
 // Application - Commands (Inventario)
 global using RestaurantePro.Application.Inventario.Ingredientes.Commands.CrearIngrediente;
 global using RestaurantePro.Application.Inventario.Ingredientes.Commands.ActualizarStock;
+global using RestaurantePro.Application.Inventario.MovimientosInventario.Commands.ActualizarMovimiento;
+global using RestaurantePro.Application.Inventario.MovimientosInventario.Commands.EliminarMovimiento;
 global using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.ActualizarOrdenCompra;
 global using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.AprobarOrdenCompra;
 global using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.RechazarOrdenCompra;
@@ -204,6 +206,10 @@ global using RestaurantePro.Application.Proveedores.Proveedores.Commands.CrearPr
 global using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientePorId;
 global using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesPaginados;
 global using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesBajoStock;
+global using RestaurantePro.Application.Inventario.MovimientosInventario.Queries.ObtenerMovimientosInventario;
+global using RestaurantePro.Application.Inventario.MovimientosInventario.Queries.ObtenerMovimientoPorId;
+global using RestaurantePro.Application.Inventario.MovimientosInventario.Queries.ObtenerMovimientosPorTipo;
+global using RestaurantePro.Application.Inventario.MovimientosInventario.Queries.GenerarReporteMovimientos;
 global using RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnalisisInventario;
 global using RestaurantePro.Application.Comercial.Reportes.Queries.ObtenerAnalisisFidelizacion;
 global using RestaurantePro.Application.Operaciones.Reportes.Queries.ObtenerReporteVentasDiaria;

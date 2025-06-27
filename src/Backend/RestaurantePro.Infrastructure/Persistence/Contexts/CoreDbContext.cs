@@ -66,6 +66,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
                 entity.SetSchema("Core");
             }
 
+            modelBuilder.Ignore<RestaurantePro.Domain.Core.Base.Events.DomainEvent>();
+
             _logger.LogInformation("Modelo de datos del contexto Core configurado correctamente");
         }
 

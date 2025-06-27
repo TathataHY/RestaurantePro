@@ -33,7 +33,18 @@ public class CrearReservacionHandlerTests
         _currentUserMock = new Mock<ICurrentUserService>();
         _dateTimeServiceMock = new Mock<IDateTimeService>();
 
-        _handler = new CrearReservacionHandler();
+        // Crear mock de IApplicationDbContext
+        var contextMock = new Mock<IApplicationDbContext>();
+
+        _handler = new CrearReservacionHandler(
+            contextMock.Object,
+            _reservacionRepositoryMock.Object,
+            _clienteRepositoryMock.Object,
+            _mesaRepositoryMock.Object,
+            _mapperMock.Object,
+            _loggerMock.Object,
+            _currentUserMock.Object,
+            _dateTimeServiceMock.Object);
     }
 
     /// <summary>

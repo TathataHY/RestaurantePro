@@ -12,6 +12,7 @@ using RestaurantePro.Application.Inventario.OrdenesCompra.Queries.ObtenerOrdenCo
 using RestaurantePro.Application.Inventario.OrdenesCompra.Queries.ObtenerOrdenesCompraPendientes;
 using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Common.Models;
+using RestaurantePro.Application.Common.Interfaces;
 
 namespace RestaurantePro.Api.Controllers.Inventario;
 
@@ -25,11 +26,23 @@ public class OrdenesCompraController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ILogger<OrdenesCompraController> _logger;
+    private readonly ICurrentUserService _currentUserService;
 
-    public OrdenesCompraController(IMediator mediator, ILogger<OrdenesCompraController> logger)
+    public OrdenesCompraController(
+        IMediator mediator, 
+        ILogger<OrdenesCompraController> logger,
+        ICurrentUserService currentUserService)
     {
         _mediator = mediator;
         _logger = logger;
+        _currentUserService = currentUserService;
+    }
+
+    private Guid? GetCurrentUserId()
+    {
+        if (Guid.TryParse(_currentUserService.UserId, out var guid))
+            return guid;
+        return null;
     }
 
     /// <summary>
@@ -153,7 +166,11 @@ public class OrdenesCompraController : ControllerBase
     {
         _logger.LogInformation("✅ POST /api/inventario/ordenes-compra/{Id}/aprobar", id);
 
-        var command = new AprobarOrdenCompraCommand { Id = id };
+        var command = new AprobarOrdenCompraCommand 
+        { 
+            Id = id,
+            UsuarioId = GetCurrentUserId()
+        };
         var result = await _mediator.Send(command);
         
         if (!result.Succeeded)
@@ -180,6 +197,7 @@ public class OrdenesCompraController : ControllerBase
         _logger.LogInformation("❌ POST /api/inventario/ordenes-compra/{Id}/rechazar", id);
 
         command.Id = id;
+        command.UsuarioId = GetCurrentUserId();
         var result = await _mediator.Send(command);
         
         if (!result.Succeeded)
@@ -206,6 +224,7 @@ public class OrdenesCompraController : ControllerBase
         _logger.LogInformation("📦 POST /api/inventario/ordenes-compra/{Id}/recibir", id);
 
         command.Id = id;
+        command.UsuarioId = GetCurrentUserId();
         var result = await _mediator.Send(command);
         
         if (!result.Succeeded)
