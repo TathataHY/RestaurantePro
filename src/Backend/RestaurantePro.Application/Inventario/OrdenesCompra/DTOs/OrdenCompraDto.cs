@@ -25,6 +25,7 @@ public class OrdenCompraDto
     public DateTime? FechaRecepcion { get; set; }
     public string? NotasRecepcion { get; set; }
     public List<OrdenCompraItemDto> Items { get; set; } = new();
+    public byte[]? RowVersion { get; set; }
 }
 
 /// <summary>

@@ -78,6 +78,12 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         public decimal Total { get; private set; }
         
         /// <summary>
+        /// Token de concurrencia optimista para control de versiones
+        /// </summary>
+        [Timestamp]
+        public byte[]? RowVersion { get; set; }
+        
+        /// <summary>
         /// Items de la orden de compra.
         /// Colección interna del agregado.
         /// </summary>
@@ -216,11 +222,11 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         /// <summary>
         /// Envía la orden de compra al proveedor
         /// </summary>
-        /// <exception cref="InvalidOperationException">Si la orden no está en estado Pendiente o no tiene items</exception>
+        /// <exception cref="InvalidOperationException">Si la orden no está en estado Pendiente o Confirmada, o no tiene items</exception>
         public void Enviar()
         {
-            if (Estado != EstadoOrdenCompra.Pendiente)
-                throw new InvalidOperationException("No se puede enviar una orden que no está en estado pendiente");
+            if (Estado != EstadoOrdenCompra.Pendiente && Estado != EstadoOrdenCompra.Confirmada)
+                throw new InvalidOperationException("No se puede enviar una orden que no está en estado pendiente o confirmada");
                 
             if (!_items.Any())
                 throw new InvalidOperationException("No se puede enviar una orden sin items");

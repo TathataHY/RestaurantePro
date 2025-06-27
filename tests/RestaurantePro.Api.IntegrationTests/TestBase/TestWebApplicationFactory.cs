@@ -138,29 +138,23 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     // 🔧 GARANTIZAR QUE LA BASE DE DATOS Y TABLAS SE CREEN CORRECTAMENTE
                     try
                     {
-                        // Asegurar que la base de datos se crea con todas las tablas
-                        context.Database.EnsureCreated();
-                        
+                        // Aplicar migraciones para crear todas las tablas con sus configuraciones completas
+                        context.Database.Migrate();
                         // Verificar que las tablas principales existen
                         var tables = context.Database.SqlQueryRaw<string>(
                             "SELECT name FROM sqlite_master WHERE type='table'").ToList();
-                        
                         // Verificar que las tablas críticas existen
-                        var criticalTables = new[] { "Usuarios", "Productos", "Clientes", "Mesas", "Comandas", "Facturas" };
+                        var criticalTables = new[] { "Usuarios", "Productos", "Clientes", "Mesas", "Comandas", "Facturas", "OrdenesCompra" };
                         var missingTables = criticalTables.Where(table => !tables.Contains(table)).ToList();
-                        
                         if (missingTables.Any())
                         {
-                            // Recrear la base de datos si faltan tablas críticas
-                            context.Database.EnsureDeleted();
-                            context.Database.EnsureCreated();
+                            throw new Exception($"Faltan tablas críticas en la base de datos de test: {string.Join(", ", missingTables)}. Revisa las migraciones.");
                         }
-                        
                         _databaseInitialized = true;
                     }
                     catch (Exception ex)
                     {
-                        // Fallback: recrear la base de datos
+                        // Fallback: recrear la base de datos con migraciones
                         context.Database.EnsureDeleted();
                         context.Database.EnsureCreated();
                         _databaseInitialized = true;
@@ -174,7 +168,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 options.UseSqlite(_connection);
                 options.EnableSensitiveDataLogging(false); // Deshabilitar en tests
                 options.EnableDetailedErrors(false); // Deshabilitar en tests
-                options.ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.NavigationBaseIncludeIgnored));
+                options.ConfigureWarnings(warnings => warnings
+                    .Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.NavigationBaseIncludeIgnored)
+                    .Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)); // Suprimir warning de cambios pendientes
             });
 
             // 🔧 REGISTRAR IApplicationDbContext

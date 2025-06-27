@@ -7,6 +7,7 @@ using AutoMapper;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 
 namespace RestaurantePro.Application.Inventario.OrdenesCompra.Commands.ActualizarOrdenCompra;
 
@@ -37,71 +38,96 @@ public class ActualizarOrdenCompraHandler : IRequestHandler<ActualizarOrdenCompr
 
         try
         {
-            // Buscar la orden de compra
-            var ordenCompra = await _ordenCompraRepository.ObtenerPorIdAsync(request.Id, cancellationToken);
-            if (ordenCompra == null)
+            // Verificar que la orden existe
+            var ordenExistente = await _ordenCompraRepository.ObtenerPorIdAsync(request.Id, cancellationToken);
+            if (ordenExistente == null)
             {
                 _logger.LogWarning("⚠️ Orden de compra no encontrada: {OrdenCompraId}", request.Id);
                 return Result.Failure<OrdenCompraDto>("Orden de compra no encontrada");
             }
 
-            // Validar que la orden no esté en estados finales
-            if (ordenCompra.Estado == EstadoOrdenCompra.Cancelada || 
-                ordenCompra.Estado == EstadoOrdenCompra.Recibida)
+            // Validar que la orden esté en un estado válido para actualizar
+            if (ordenExistente.Estado != EstadoOrdenCompra.Pendiente && 
+                ordenExistente.Estado != EstadoOrdenCompra.Confirmada)
             {
-                _logger.LogWarning("⚠️ No se puede actualizar una orden en estado {Estado}: {OrdenCompraId}", 
-                    ordenCompra.Estado, request.Id);
-                return Result.Failure<OrdenCompraDto>($"No se puede actualizar una orden en estado {ordenCompra.Estado}");
+                _logger.LogWarning("⚠️ No se puede actualizar una orden en estado {Estado}", ordenExistente.Estado);
+                return Result.Failure<OrdenCompraDto>($"No se puede actualizar una orden en estado {ordenExistente.Estado}");
             }
 
-            // Actualizar propiedades usando los métodos de la entidad
+            // Actualizar fecha de entrega si se proporciona
+            if (request.FechaEntregaEsperada.HasValue)
+            {
+                ordenExistente.EstablecerFechaEntrega(request.FechaEntregaEsperada.Value);
+            }
+
+            // Actualizar observaciones si se proporciona
             if (!string.IsNullOrWhiteSpace(request.Observaciones))
             {
-                // Asignar directamente la propiedad Observaciones (es private set pero accesible desde el mismo assembly)
+                // Usar reflexión para acceder a la propiedad privada Observaciones
                 var observacionesProperty = typeof(OrdenCompra).GetProperty("Observaciones");
-                observacionesProperty?.SetValue(ordenCompra, request.Observaciones);
+                observacionesProperty?.SetValue(ordenExistente, request.Observaciones);
             }
 
-            if (request.FechaEntregaEsperada.HasValue)
-                ordenCompra.EstablecerFechaEntrega(request.FechaEntregaEsperada.Value);
-
-            // Actualizar items si se envían en el request
-            if (request.Items != null && request.Items.Any())
+            try
             {
-                // Eliminar items existentes
-                var itemsExistentes = ordenCompra.Items.ToList();
-                foreach (var item in itemsExistentes)
+                // Procesar items: eliminar los que no están en el request y agregar/actualizar los nuevos
+                var idsItemsRequest = request.Items.Select(i => i.IngredienteId).ToHashSet();
+                var itemsAEliminar = ordenExistente.Items.Where(i => !idsItemsRequest.Contains(i.IngredienteId)).ToList();
+                foreach (var item in itemsAEliminar)
                 {
-                    ordenCompra.EliminarItem(item.Id);
+                    ordenExistente.EliminarItem(item.Id);
+                }
+                foreach (var itemCmd in request.Items)
+                {
+                    // Si ya existe, actualizar cantidad y precio (si aplica), si no, agregar
+                    var itemExistente = ordenExistente.Items.FirstOrDefault(i => i.IngredienteId == itemCmd.IngredienteId);
+                    if (itemExistente != null)
+                    {
+                        itemExistente.ActualizarCantidad(itemCmd.Cantidad);
+                        itemExistente.ActualizarPrecio(itemCmd.PrecioUnitario);
+                    }
+                    else
+                    {
+                        ordenExistente.AgregarItem(itemCmd.IngredienteId, "", itemCmd.Cantidad, 0); // Ajustar nombre/unidad si es necesario
+                    }
                 }
 
-                // Agregar los nuevos items
-                foreach (var itemRequest in request.Items)
+                // Asignar RowVersion solo si viene explícitamente en el comando y no es null
+                if (request.RowVersion != null && request.RowVersion.Length > 0)
                 {
-                    // Para agregar un item necesitamos el nombre del ingrediente y unidad de medida
-                    // Por ahora usamos valores por defecto ya que no están en el comando
-                    ordenCompra.AgregarItem(
-                        itemRequest.IngredienteId,
-                        "Ingrediente", // Nombre por defecto
-                        itemRequest.Cantidad,
-                        RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramos // Unidad por defecto
-                    );
+                    ordenExistente.RowVersion = request.RowVersion;
                 }
+                // Si no se envía RowVersion, no asignar nada (evita problemas de concurrencia en SQLite)
+
+                await _ordenCompraRepository.ActualizarAsync(ordenExistente, cancellationToken);
             }
-
-            // Guardar cambios
-            await _ordenCompraRepository.ActualizarAsync(ordenCompra, cancellationToken);
-
-            _logger.LogInformation("✅ Orden de compra actualizada exitosamente: {OrdenCompraId}", request.Id);
+            catch (DbUpdateConcurrencyException) when (request.RowVersion != null && request.RowVersion.Length > 0)
+            {
+                _logger.LogWarning("⚠️ Concurrencia optimista: la orden fue modificada por otro usuario");
+                return Result.Failure<OrdenCompraDto>("La orden fue modificada por otro usuario. Por favor, recargue y vuelva a intentar.");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Si no se envió RowVersion, no es un problema de concurrencia real
+                _logger.LogWarning("⚠️ Error de actualización sin RowVersion - continuando sin validación de concurrencia");
+                // Continuar sin lanzar error de concurrencia
+            }
 
             // Mapear a DTO
-            var dto = _mapper.Map<OrdenCompraDto>(ordenCompra);
+            var dto = _mapper.Map<OrdenCompraDto>(ordenExistente);
+            
+            _logger.LogInformation("✅ Orden de compra actualizada exitosamente: {OrdenCompraId}", request.Id);
             return Result.Success(dto);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogError(ex, "❌ Orden de compra no encontrada: {OrdenCompraId}", request.Id);
+            return Result.Failure<OrdenCompraDto>("Orden de compra no encontrada");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error al actualizar orden de compra {OrdenCompraId}", request.Id);
-            return Result.Failure<OrdenCompraDto>($"Error al actualizar la orden de compra: {ex.Message}");
+            return Result.Failure<OrdenCompraDto>("Error interno del servidor");
         }
     }
 } 

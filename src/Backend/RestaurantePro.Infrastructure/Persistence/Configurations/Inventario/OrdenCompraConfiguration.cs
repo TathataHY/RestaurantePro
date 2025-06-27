@@ -54,6 +54,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
                 .HasMaxLength(500)
                 .IsRequired(false);
                 
+            // Configuración de RowVersion para concurrencia optimista
+            builder.Property(o => o.RowVersion)
+                .IsRowVersion()
+                .IsConcurrencyToken();
+                
             // Índices
             builder.HasIndex(o => o.FechaEmision)
                 .HasDatabaseName("IX_OrdenesCompra_FechaEmision");

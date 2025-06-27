@@ -107,6 +107,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Inventario
         /// </summary>
         public new async Task ActualizarAsync(OrdenCompra ordenCompra, CancellationToken cancellationToken = default)
         {
+            _dbContext.Attach(ordenCompra);
             _dbContext.Entry(ordenCompra).State = EntityState.Modified;
             await _dbContext.SaveChangesAsync(cancellationToken);
         }

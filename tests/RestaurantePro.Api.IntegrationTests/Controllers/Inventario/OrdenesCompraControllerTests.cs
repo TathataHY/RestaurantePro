@@ -136,6 +136,13 @@ public class OrdenesCompraControllerTests : ApiIntegrationTestBase, IDisposable
         ordenEnBD.ProveedorId.Should().Be(proveedor.Id);
         ordenEnBD.Observaciones.Should().Be("Orden específica");
         
+        // Verificar RowVersion solo si el proveedor no es SQLite
+        var providerName = DbContext.Database.ProviderName;
+        if (!providerName.Contains("Sqlite", StringComparison.OrdinalIgnoreCase))
+        {
+            ordenEnBD!.RowVersion.Should().NotBeNull();
+        }
+        
         Logger.LogInformation("✅ Test COMPLETO finalizado: GetOrdenCompraPorId_ConOrdenExistente_DebeRetornarOrden");
     }
 
@@ -242,6 +249,16 @@ public class OrdenesCompraControllerTests : ApiIntegrationTestBase, IDisposable
         var usuario = await CrearUsuarioPrueba("Usuario Test");
         var orden = await CrearOrdenCompraPrueba(proveedor.Id, "Orden original", usuario.Id, estado: "Pendiente");
 
+        var ordenEnBD = await DbContext.OrdenesCompra.Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == orden.Id);
+        ordenEnBD.Should().NotBeNull();
+        
+        // Verificar RowVersion solo si el proveedor no es SQLite
+        var providerName = DbContext.Database.ProviderName;
+        if (!providerName.Contains("Sqlite", StringComparison.OrdinalIgnoreCase))
+        {
+            ordenEnBD!.RowVersion.Should().NotBeNull();
+        }
+
         var nuevaFechaEntrega = DateTime.Now.AddDays(10); // Fecha futura válida
         var command = new ActualizarOrdenCompraCommand
         {
@@ -259,6 +276,12 @@ public class OrdenesCompraControllerTests : ApiIntegrationTestBase, IDisposable
             },
             UsuarioId = usuario.Id
         };
+        
+        // Solo incluir RowVersion si no es null (para evitar problemas de concurrencia en SQLite)
+        if (ordenEnBD.RowVersion != null)
+        {
+            command.RowVersion = ordenEnBD.RowVersion;
+        }
 
         // Act
         var response = await HttpClient.PutAsJsonAsync($"/api/inventario/ordenes-compra/{orden.Id}", command);
@@ -272,6 +295,7 @@ public class OrdenesCompraControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse.Data!.Observaciones.Should().Be("Orden actualizada con nueva fecha y observaciones");
         apiResponse.Data!.Items.Should().HaveCount(1);
         apiResponse.Data!.Items.First().Cantidad.Should().Be(20);
+        
         Logger.LogInformation("✅ Test COMPLETO finalizado: PutOrdenCompra_ConDatosValidos_DebeActualizarOrden");
     }
 
@@ -405,10 +429,14 @@ public class OrdenesCompraControllerTests : ApiIntegrationTestBase, IDisposable
         ConfigurarAutenticacionConUsuario(usuario.Id);
 
         // Assert intermedio: la orden existe y está enviada
-        var ordenEnBd = await DbContext.OrdenesCompra.FindAsync(orden.Id);
-        Logger.LogInformation($"🔍 Orden en BD: {(ordenEnBd != null ? $"ID={ordenEnBd.Id}, Estado={ordenEnBd.Estado}" : "NULL")}");
+        var ordenEnBd = await DbContext.OrdenesCompra
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == orden.Id);
+        Logger.LogInformation($"🔍 Orden en BD: {(ordenEnBd != null ? $"ID={ordenEnBd.Id}, Estado={ordenEnBd.Estado}, Items={ordenEnBd.Items.Count}" : "NULL")}");
         ordenEnBd.Should().NotBeNull();
         ordenEnBd!.Estado.Should().Be(EstadoOrdenCompra.Enviada);
+        ordenEnBd.Items.Should().NotBeNull();
+        ordenEnBd.Items.Count.Should().BeGreaterThan(0);
 
         var command = new RecibirOrdenCompraCommand
         {
@@ -630,16 +658,16 @@ public class OrdenesCompraControllerTests : ApiIntegrationTestBase, IDisposable
     {
         var ingrediente = await CrearIngredientePrueba("Ingrediente para orden");
         var usuario = usuarioId.HasValue ? await DbContext.Usuarios.FindAsync(usuarioId.Value) : await CrearUsuarioPrueba("Usuario Orden");
-
+        
         // Crear la orden inicial
         var orden = OrdenCompra.Crear(proveedorId, observaciones, DateTime.Now);
         var fechaEntregaValida = fechaEntrega ?? DateTime.Now.AddDays(7);
         orden.EstablecerFechaEntrega(fechaEntregaValida);
         orden.AgregarItem(ingrediente.Id, ingrediente.Nombre, 10, ingrediente.UnidadMedida);
-
+        
         DbContext.OrdenesCompra.Add(orden);
         await DbContext.SaveChangesAsync();
-
+        
         switch (estado.ToLower())
         {
             case "pendiente":
@@ -650,12 +678,16 @@ public class OrdenesCompraControllerTests : ApiIntegrationTestBase, IDisposable
                 await DbContext.SaveChangesAsync();
                 break;
             case "enviada":
-                // Solo se puede enviar desde pendiente
+                // Primero aprobar, luego enviar
+                orden.Aprobar(new Mock<IDateTimeService>().Object);
+                await DbContext.SaveChangesAsync();
                 orden.Enviar();
                 await DbContext.SaveChangesAsync();
                 break;
             case "recibida":
-                // Enviar directamente desde pendiente, luego recibir
+                // Aprobar -> Enviar -> Recibir
+                orden.Aprobar(new Mock<IDateTimeService>().Object);
+                await DbContext.SaveChangesAsync();
                 orden.Enviar();
                 await DbContext.SaveChangesAsync();
                 orden.Recibir(DateTime.Now, "Recibida en test");
@@ -664,7 +696,7 @@ public class OrdenesCompraControllerTests : ApiIntegrationTestBase, IDisposable
             default:
                 throw new ArgumentException($"Estado no soportado: {estado}");
         }
-
+        
         Logger.LogInformation($"✅ Orden creada con estado '{estado}'. Items: {orden.Items.Count}");
         return orden;
     }

@@ -22,11 +22,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
             
             builder.Property(i => i.Nombre)
                 .IsRequired()
-                .HasMaxLength(200);
+                .HasMaxLength(100);
                 
             builder.Property(i => i.Codigo)
                 .IsRequired()
-                .HasMaxLength(50);
+                .HasMaxLength(20);
                 
             builder.Property(i => i.Descripcion)
                 .IsRequired()
@@ -86,12 +86,6 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
                 .WithMany()
                 .HasForeignKey(i => i.ProveedorPrincipalId)
                 .OnDelete(DeleteBehavior.SetNull);
-
-            // Configuración de la colección de movimientos
-            builder.HasMany(i => i.Movimientos)
-                .WithOne()
-                .HasForeignKey("IngredienteId")
-                .OnDelete(DeleteBehavior.Cascade);
 
             // Configuración de auditoría
             builder.Property(i => i.FechaCreacion)

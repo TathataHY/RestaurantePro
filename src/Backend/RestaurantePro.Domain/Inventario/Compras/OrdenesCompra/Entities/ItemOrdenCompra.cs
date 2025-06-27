@@ -108,6 +108,34 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         }
 
         /// <summary>
+        /// Actualiza solo la cantidad del ítem
+        /// </summary>
+        /// <param name="nuevaCantidad">Nueva cantidad</param>
+        public void ActualizarCantidad(decimal nuevaCantidad)
+        {
+            if (nuevaCantidad <= 0)
+                throw new ArgumentException("La cantidad debe ser mayor que cero", nameof(nuevaCantidad));
+            Cantidad = nuevaCantidad;
+            Subtotal = Cantidad * PrecioUnitario;
+            MarkAsModified();
+            ValidarInvariantes();
+        }
+
+        /// <summary>
+        /// Actualiza solo el precio unitario del ítem
+        /// </summary>
+        /// <param name="nuevoPrecioUnitario">Nuevo precio unitario</param>
+        public void ActualizarPrecio(decimal nuevoPrecioUnitario)
+        {
+            if (nuevoPrecioUnitario < 0)
+                throw new ArgumentException("El precio unitario no puede ser negativo", nameof(nuevoPrecioUnitario));
+            PrecioUnitario = nuevoPrecioUnitario;
+            Subtotal = Cantidad * PrecioUnitario;
+            MarkAsModified();
+            ValidarInvariantes();
+        }
+
+        /// <summary>
         /// Aumenta la cantidad solicitada del item
         /// </summary>
         /// <param name="cantidad">Cantidad a aumentar</param>

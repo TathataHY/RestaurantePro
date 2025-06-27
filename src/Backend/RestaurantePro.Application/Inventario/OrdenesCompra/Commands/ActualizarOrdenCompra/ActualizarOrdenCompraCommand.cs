@@ -12,6 +12,7 @@ public class ActualizarOrdenCompraCommand : IRequest<Result<OrdenCompraDto>>
     public string? Observaciones { get; set; }
     public List<OrdenCompraItemCommand>? Items { get; set; }
     public Guid? UsuarioId { get; set; }
+    public byte[]? RowVersion { get; set; }
 }
 
 /// <summary>

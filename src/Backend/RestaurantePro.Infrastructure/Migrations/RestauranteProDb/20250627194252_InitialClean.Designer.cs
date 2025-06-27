@@ -12,8 +12,8 @@ using RestaurantePro.Infrastructure.Persistence.Contexts;
 namespace RestaurantePro.Infrastructure.Migrations.RestauranteProDb
 {
     [DbContext(typeof(RestauranteProDbContext))]
-    [Migration("20250627152614_AddRowVersionToIngredientes")]
-    partial class AddRowVersionToIngredientes
+    [Migration("20250627194252_InitialClean")]
+    partial class InitialClean
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1068,6 +1068,11 @@ namespace RestaurantePro.Infrastructure.Migrations.RestauranteProDb
                     b.Property<Guid>("ProveedorId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<decimal>("Total")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -1097,15 +1102,16 @@ namespace RestaurantePro.Infrastructure.Migrations.RestauranteProDb
 
                     b.Property<string>("Codigo")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<decimal>("CostoPromedio")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Descripcion")
                         .IsRequired()
@@ -1116,7 +1122,9 @@ namespace RestaurantePro.Infrastructure.Migrations.RestauranteProDb
                         .HasColumnType("bit");
 
                     b.Property<bool>("EstaEliminado")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime?>("FechaActualizacion")
                         .HasColumnType("datetime2");
@@ -1128,7 +1136,8 @@ namespace RestaurantePro.Infrastructure.Migrations.RestauranteProDb
                         .HasColumnType("datetime2");
 
                     b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -1142,14 +1151,6 @@ namespace RestaurantePro.Infrastructure.Migrations.RestauranteProDb
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion")
-                        .HasDefaultValue(new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 })
-                        .HasColumnName("RowVersion");
 
                     b.Property<decimal>("Stock")
                         .HasPrecision(18, 2)
@@ -1184,6 +1185,77 @@ namespace RestaurantePro.Infrastructure.Migrations.RestauranteProDb
                         .HasDatabaseName("IX_Ingredientes_Stock");
 
                     b.ToTable("Ingredientes", "Inventario");
+                });
+
+            modelBuilder.Entity("RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities.MovimientoInventario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Cantidad")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("CantidadFinal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("EstaAplicado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("EstaEliminado")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaActualizacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("IngredienteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("TipoMovimiento")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EstaAplicado")
+                        .HasDatabaseName("IX_MovimientosInventario_EstaAplicado");
+
+                    b.HasIndex("Fecha")
+                        .HasDatabaseName("IX_MovimientosInventario_Fecha");
+
+                    b.HasIndex("IngredienteId")
+                        .HasDatabaseName("IX_MovimientosInventario_IngredienteId");
+
+                    b.HasIndex("TipoMovimiento")
+                        .HasDatabaseName("IX_MovimientosInventario_TipoMovimiento");
+
+                    b.ToTable("MovimientosInventario", "Inventario");
                 });
 
             modelBuilder.Entity("RestaurantePro.Domain.Operaciones.Comandas.Entities.Comanda", b =>
@@ -2107,68 +2179,20 @@ namespace RestaurantePro.Infrastructure.Migrations.RestauranteProDb
                 {
                     b.HasOne("RestaurantePro.Domain.Proveedores.Entities.Proveedor", "ProveedorPrincipal")
                         .WithMany()
-                        .HasForeignKey("ProveedorPrincipalId");
-
-                    b.OwnsMany("RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities.MovimientoInventario", "Movimientos", b1 =>
-                        {
-                            b1.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<decimal>("Cantidad")
-                                .HasPrecision(10, 2)
-                                .HasColumnType("decimal(10,2)");
-
-                            b1.Property<decimal?>("CantidadFinal")
-                                .HasColumnType("decimal(18,2)");
-
-                            b1.Property<string>("CreatedBy")
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<bool>("EstaAplicado")
-                                .HasColumnType("bit");
-
-                            b1.Property<bool>("EstaEliminado")
-                                .HasColumnType("bit");
-
-                            b1.Property<DateTime>("Fecha")
-                                .HasColumnType("datetime2");
-
-                            b1.Property<DateTime?>("FechaActualizacion")
-                                .HasColumnType("datetime2");
-
-                            b1.Property<DateTime>("FechaCreacion")
-                                .HasColumnType("datetime2");
-
-                            b1.Property<Guid>("IngredienteId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<string>("LastModifiedBy")
-                                .HasColumnType("nvarchar(max)");
-
-                            b1.Property<string>("Motivo")
-                                .IsRequired()
-                                .HasMaxLength(100)
-                                .HasColumnType("nvarchar(100)");
-
-                            b1.Property<string>("TipoMovimiento")
-                                .IsRequired()
-                                .HasMaxLength(50)
-                                .HasColumnType("nvarchar(50)");
-
-                            b1.HasKey("Id");
-
-                            b1.HasIndex("IngredienteId");
-
-                            b1.ToTable("MovimientosInventario", "Inventario");
-
-                            b1.WithOwner()
-                                .HasForeignKey("IngredienteId");
-                        });
-
-                    b.Navigation("Movimientos");
+                        .HasForeignKey("ProveedorPrincipalId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("ProveedorPrincipal");
+                });
+
+            modelBuilder.Entity("RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities.MovimientoInventario", b =>
+                {
+                    b.HasOne("RestaurantePro.Domain.Inventario.Ingredientes.Entities.Ingrediente", null)
+                        .WithMany("Movimientos")
+                        .HasForeignKey("IngredienteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_MovimientosInventario_Ingrediente");
                 });
 
             modelBuilder.Entity("RestaurantePro.Domain.Operaciones.Comandas.Entities.Comanda", b =>
@@ -2493,6 +2517,11 @@ namespace RestaurantePro.Infrastructure.Migrations.RestauranteProDb
             modelBuilder.Entity("RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("RestaurantePro.Domain.Inventario.Ingredientes.Entities.Ingrediente", b =>
+                {
+                    b.Navigation("Movimientos");
                 });
 
             modelBuilder.Entity("RestaurantePro.Domain.Operaciones.Comandas.Entities.Comanda", b =>

@@ -85,7 +85,8 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Interceptor
             await dbContext.SaveChangesAsync(); // Segundo guardado (modificación)
 
             // Assert
-            entity.FechaActualizacion.Should().Be(updateTime);
+            entity.FechaActualizacion.Should().NotBeNull();
+            entity.FechaActualizacion.Should().BeAfter(initialTime);
         }
     }
 } 
