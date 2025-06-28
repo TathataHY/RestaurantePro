@@ -46,7 +46,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
             builder.HasIndex(r => r.ProductoId);
             
             // Query Filters para soft delete
-            builder.HasQueryFilter(r => !r.EstaEliminado);
+            builder.HasQueryFilter(r => !r.RecetaEliminada);
         }
     }
 } 

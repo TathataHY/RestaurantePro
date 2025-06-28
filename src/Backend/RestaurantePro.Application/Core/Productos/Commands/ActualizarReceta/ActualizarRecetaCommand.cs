@@ -1,6 +1,7 @@
 namespace RestaurantePro.Application.Core.Productos.Commands.ActualizarReceta;
+using MediatR;
 
-public class ActualizarRecetaCommand
+public class ActualizarRecetaCommand : IRequest<Result<RecetaDto>>
 {
     public Guid Id { get; set; }
     public string Preparacion { get; set; } = string.Empty;

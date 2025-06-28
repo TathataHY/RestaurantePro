@@ -1,8 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 using RestaurantePro.Application.Core.Productos.DTOs;
 using RestaurantePro.Application.Core.Productos.Commands.CrearReceta;
 using RestaurantePro.Application.Core.Productos.Commands.ActualizarReceta;
+using RestaurantePro.Application.Core.Productos.Commands.EliminarReceta;
+using RestaurantePro.Application.Core.Productos.Queries.ObtenerRecetas;
+using RestaurantePro.Application.Core.Productos.Queries.ObtenerRecetaPorId;
+using RestaurantePro.Application.Core.Productos.Queries.ObtenerRecetasPorProducto;
+using RestaurantePro.Application.Core.Productos.Queries.CalcularCostoReceta;
+using RestaurantePro.Application.Core.Productos.Queries.VerificarDisponibilidadReceta;
 
 namespace RestaurantePro.Api.Controllers.Core;
 
@@ -16,10 +23,12 @@ namespace RestaurantePro.Api.Controllers.Core;
 [Authorize]
 public class RecetasController : ControllerBase
 {
+    private readonly IMediator _mediator;
     private readonly ILogger<RecetasController> _logger;
 
-    public RecetasController(ILogger<RecetasController> logger)
+    public RecetasController(IMediator mediator, ILogger<RecetasController> logger)
     {
+        _mediator = mediator;
         _logger = logger;
     }
 
@@ -31,7 +40,7 @@ public class RecetasController : ControllerBase
     /// <returns>Lista de recetas</returns>
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<List<RecetaDto>>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<List<RecetaDto>>>> GetRecetas(
         [FromQuery] bool? soloActivas = null,
         [FromQuery] Guid? productoId = null)
@@ -39,12 +48,33 @@ public class RecetasController : ControllerBase
         _logger.LogInformation("🍕 GET /api/core/recetas?soloActivas={SoloActivas}&productoId={ProductoId}", 
             soloActivas, productoId);
 
-        var response = ApiResponse<List<RecetaDto>>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var query = new ObtenerRecetasQuery
+            {
+                SoloActivas = soloActivas,
+                ProductoId = productoId
+            };
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            var result = await _mediator.Send(query);
+
+            if (result.Succeeded)
+            {
+                return Ok(ApiResponse<List<RecetaDto>>.SuccessResponse(result.Value));
+            }
+
+            return BadRequest(ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Error al obtener recetas"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al obtener recetas");
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponse<object>.ErrorResponse(
+                    new List<string> { "Error interno del servidor" },
+                    "Error inesperado al obtener recetas"));
+        }
     }
 
     /// <summary>
@@ -55,17 +85,40 @@ public class RecetasController : ControllerBase
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ApiResponse<RecetaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<RecetaDto>>> GetReceta(Guid id)
     {
         _logger.LogInformation("🍕 GET /api/core/recetas/{Id}", id);
 
-        var response = ApiResponse<RecetaDto>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var query = new ObtenerRecetaPorIdQuery(id);
+            var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (result.Succeeded)
+            {
+                return Ok(ApiResponse<RecetaDto>.SuccessResponse(result.Value));
+            }
+
+            if (result.Error.Contains("no encontrada"))
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Receta no encontrada"));
+            }
+
+            return BadRequest(ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Error al obtener la receta"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al obtener receta {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponse<object>.ErrorResponse(
+                    new List<string> { "Error interno del servidor" },
+                    "Error inesperado al obtener la receta"));
+        }
     }
 
     /// <summary>
@@ -77,18 +130,33 @@ public class RecetasController : ControllerBase
     [Authorize(Roles = "Administrador,Chef")]
     [ProducesResponseType(typeof(ApiResponse<RecetaDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
     public async Task<ActionResult<ApiResponse<RecetaDto>>> CrearReceta(
         [FromBody] CrearRecetaCommand command)
     {
         _logger.LogInformation("➕ POST /api/core/recetas - ProductoId: {ProductoId}", command?.ProductoId);
 
-        var response = ApiResponse<RecetaDto>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var result = await _mediator.Send(command);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (result.Succeeded)
+            {
+                return CreatedAtAction(nameof(GetReceta), new { id = result.Value.Id },
+                    ApiResponse<RecetaDto>.SuccessResponse(result.Value));
+            }
+
+            return BadRequest(ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Error al crear la receta"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al crear receta {ProductoId}", command?.ProductoId);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponse<object>.ErrorResponse(
+                    new List<string> { "Error interno del servidor" },
+                    "Error inesperado al crear la receta"));
+        }
     }
 
     /// <summary>
@@ -102,18 +170,40 @@ public class RecetasController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<RecetaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
     public async Task<ActionResult<ApiResponse<RecetaDto>>> ActualizarReceta(
         Guid id, [FromBody] ActualizarRecetaCommand command)
     {
         _logger.LogInformation("✏️ PUT /api/core/recetas/{Id}", id);
 
-        var response = ApiResponse<RecetaDto>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            command.Id = id;
+            var result = await _mediator.Send(command);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (result.Succeeded)
+            {
+                return Ok(ApiResponse<RecetaDto>.SuccessResponse(result.Value));
+            }
+
+            if (result.Error.Contains("no encontrada"))
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Receta no encontrada"));
+            }
+
+            return BadRequest(ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Error al actualizar la receta"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al actualizar receta {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponse<object>.ErrorResponse(
+                    new List<string> { "Error interno del servidor" },
+                    "Error inesperado al actualizar la receta"));
+        }
     }
 
     /// <summary>
@@ -125,17 +215,40 @@ public class RecetasController : ControllerBase
     [Authorize(Roles = "Administrador")]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<bool>>> EliminarReceta(Guid id)
     {
         _logger.LogInformation("🗑️ DELETE /api/core/recetas/{Id}", id);
 
-        var response = ApiResponse<bool>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var command = new EliminarRecetaCommand(id);
+            var result = await _mediator.Send(command);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (result.Succeeded)
+            {
+                return Ok(ApiResponse<bool>.SuccessResponse(result.Value));
+            }
+
+            if (result.Error.Contains("no encontrada"))
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Receta no encontrada"));
+            }
+
+            return BadRequest(ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Error al eliminar la receta"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al eliminar receta {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponse<object>.ErrorResponse(
+                    new List<string> { "Error interno del servidor" },
+                    "Error inesperado al eliminar la receta"));
+        }
     }
 
     /// <summary>
@@ -146,17 +259,40 @@ public class RecetasController : ControllerBase
     [HttpGet("producto/{productoId:guid}")]
     [ProducesResponseType(typeof(ApiResponse<List<RecetaDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<List<RecetaDto>>>> GetRecetasPorProducto(Guid productoId)
     {
         _logger.LogInformation("🍕 GET /api/core/recetas/producto/{ProductoId}", productoId);
 
-        var response = ApiResponse<List<RecetaDto>>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var query = new ObtenerRecetasPorProductoQuery(productoId);
+            var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (result.Succeeded)
+            {
+                return Ok(ApiResponse<List<RecetaDto>>.SuccessResponse(result.Value));
+            }
+
+            if (result.Error.Contains("no encontrado"))
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Producto no encontrado"));
+            }
+
+            return BadRequest(ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Error al obtener las recetas del producto"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al obtener recetas del producto {ProductoId}", productoId);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponse<object>.ErrorResponse(
+                    new List<string> { "Error interno del servidor" },
+                    "Error inesperado al obtener las recetas del producto"));
+        }
     }
 
     /// <summary>
@@ -167,17 +303,40 @@ public class RecetasController : ControllerBase
     [HttpGet("{id:guid}/costo")]
     [ProducesResponseType(typeof(ApiResponse<decimal>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<decimal>>> CalcularCostoReceta(Guid id)
     {
         _logger.LogInformation("💰 GET /api/core/recetas/{Id}/costo", id);
 
-        var response = ApiResponse<decimal>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var query = new CalcularCostoRecetaQuery(id);
+            var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (result.Succeeded)
+            {
+                return Ok(ApiResponse<decimal>.SuccessResponse(result.Value));
+            }
+
+            if (result.Error.Contains("no encontrada"))
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Receta no encontrada"));
+            }
+
+            return BadRequest(ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Error al calcular el costo de la receta"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al calcular costo de receta {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponse<object>.ErrorResponse(
+                    new List<string> { "Error interno del servidor" },
+                    "Error inesperado al calcular el costo de la receta"));
+        }
     }
 
     /// <summary>
@@ -189,17 +348,40 @@ public class RecetasController : ControllerBase
     [HttpGet("{id:guid}/disponibilidad")]
     [ProducesResponseType(typeof(ApiResponse<DisponibilidadRecetaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<DisponibilidadRecetaDto>>> VerificarDisponibilidad(
         Guid id, [FromQuery] int cantidad = 1)
     {
         _logger.LogInformation("✅ GET /api/core/recetas/{Id}/disponibilidad?cantidad={Cantidad}", id, cantidad);
 
-        var response = ApiResponse<DisponibilidadRecetaDto>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Funcionalidad en desarrollo",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var query = new VerificarDisponibilidadRecetaQuery(id, cantidad);
+            var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (result.Succeeded)
+            {
+                return Ok(ApiResponse<DisponibilidadRecetaDto>.SuccessResponse(result.Value));
+            }
+
+            if (result.Error.Contains("no encontrada"))
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Receta no encontrada"));
+            }
+
+            return BadRequest(ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error },
+                "Error al verificar disponibilidad de la receta"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al verificar disponibilidad de receta {Id}", id);
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                ApiResponse<object>.ErrorResponse(
+                    new List<string> { "Error interno del servidor" },
+                    "Error inesperado al verificar disponibilidad de la receta"));
+        }
     }
 } 

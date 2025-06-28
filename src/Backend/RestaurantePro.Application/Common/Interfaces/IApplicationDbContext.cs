@@ -8,6 +8,7 @@ public interface IApplicationDbContext
 {
     // Core - Productos
     DbSet<Producto> Productos { get; }
+    DbSet<Receta> Recetas { get; }
     
     // Core - Usuarios  
     DbSet<Usuario> Usuarios { get; }

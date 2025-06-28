@@ -28,6 +28,11 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         public int TiempoPreparacionMinutos { get; private set; }
 
         /// <summary>
+        /// Indica si la receta está eliminada lógicamente
+        /// </summary>
+        public bool RecetaEliminada { get; private set; } = false;
+
+        /// <summary>
         /// Constructor protegido para EF Core
         /// </summary>
         protected Receta() { }

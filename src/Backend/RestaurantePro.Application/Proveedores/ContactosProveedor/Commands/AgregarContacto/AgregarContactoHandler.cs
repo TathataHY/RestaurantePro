@@ -35,7 +35,7 @@ public class AgregarContactoHandler : IRequestHandler<AgregarContactoCommand, Re
             if (proveedor == null)
             {
                 _logger.LogWarning("Proveedor no encontrado: {ProveedorId}", request.ProveedorId);
-                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>("El proveedor especificado no existe");
+                return Result.Failure<ContactoProveedorDto>("El proveedor especificado no existe");
             }
 
             // 2. Validar unicidad del email
@@ -44,14 +44,14 @@ public class AgregarContactoHandler : IRequestHandler<AgregarContactoCommand, Re
             {
                 _logger.LogWarning("Ya existe un contacto con email {Email} para el proveedor {ProveedorId}", 
                     request.Email, request.ProveedorId);
-                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>("Ya existe un contacto con este email para el proveedor");
+                return Result.Failure<ContactoProveedorDto>("Ya existe un contacto con este email para el proveedor");
             }
 
             // 3. Validaciones adicionales de negocio
             var validacionNegocio = ValidarReglasDeNegocio(proveedor, request);
             if (!validacionNegocio.Succeeded)
             {
-                return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>(validacionNegocio.Error ?? "Error en validación de reglas de negocio");
+                return Result.Failure<ContactoProveedorDto>(validacionNegocio.Error ?? "Error en validación de reglas de negocio");
             }
 
             // 4. Crear el nombre completo
@@ -77,12 +77,15 @@ public class AgregarContactoHandler : IRequestHandler<AgregarContactoCommand, Re
 
             // 7. Mapear y retornar
             var contactoDto = _mapper.Map<ContactoProveedorDto>(contacto);
-            return Result<ContactoProveedorDto>.Success(contactoDto);
+            return Result.Success<ContactoProveedorDto>(contactoDto);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error inesperado al crear contacto para proveedor {ProveedorId}", request.ProveedorId);
-            return RestaurantePro.Domain.Core.SharedKernel.Results.Result.Failure<ContactoProveedorDto>("Error interno del servidor al crear el contacto");
+            _logger.LogError(ex, "Error inesperado al crear contacto para proveedor {ProveedorId}: {Mensaje}", request.ProveedorId, ex.Message);
+            // Si hay variable de entorno ASPNETCORE_ENVIRONMENT=Development, mostrar el mensaje real
+            var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+            var errorMsg = env == "Development" ? $"{ex.GetType().Name}: {ex.Message}" : "Error interno del servidor al crear el contacto";
+            return Result.Failure<ContactoProveedorDto>(errorMsg);
         }
     }
 

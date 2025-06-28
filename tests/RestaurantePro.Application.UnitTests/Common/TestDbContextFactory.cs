@@ -32,6 +32,7 @@ public class TestDbContext : DbContext, IApplicationDbContext
 
     // Implementación de IApplicationDbContext
     public DbSet<Producto> Productos { get; set; }
+    public DbSet<Receta> Recetas { get; set; }
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Notificacion> Notificaciones { get; set; }
     public DbSet<Cliente> Clientes { get; set; }

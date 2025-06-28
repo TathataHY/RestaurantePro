@@ -56,20 +56,30 @@ public class CrearProveedorHandler : IRequestHandler<CrearProveedorCommand, Resu
             var proveedor = resultadoProveedor.Value;
 
             // 4. Guardar en repositorio
-            await _proveedorRepository.AgregarAsync(proveedor);
-            _logger.LogInformation("💾 Proveedor guardado en repositorio: {Id}", proveedor.Id);
+            await _proveedorRepository.AgregarAsync(proveedor, cancellationToken);
+            _logger.LogInformation("💾 Proveedor agregado al repositorio: {Id}", proveedor.Id);
 
-            // 5. Mapear a DTO
+            // 5. Persistir cambios en base de datos
+            await _proveedorRepository.GuardarCambiosAsync(cancellationToken);
+            _logger.LogInformation("✅ Proveedor persistido en BD: {Id}", proveedor.Id);
+
+            // 6. Mapear a DTO
             var proveedorDto = _mapper.Map<ProveedorDto>(proveedor);
             
             _logger.LogInformation("✅ Proveedor creado exitosamente: {Id} - {Nombre}", proveedor.Id, proveedor.Nombre);
             
             return Result.Success(proveedorDto);
         }
+        catch (FluentValidation.ValidationException ex)
+        {
+            _logger.LogError(ex, "Error de validación al crear proveedor: {Errores}", string.Join("; ", ex.Errors.Select(e => e.ErrorMessage)));
+            return Result.Failure<ProveedorDto>($"Validación fallida: {string.Join("; ", ex.Errors.Select(e => e.ErrorMessage))}");
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "💥 Error inesperado al crear proveedor: {Nombre}", request.Nombre);
-            return Result.Failure<ProveedorDto>($"Error interno al crear el proveedor: {ex.Message}");
+            _logger.LogError(ex, "💥 Error inesperado al crear proveedor");
+            var errorMsg = ex.Message + (ex.InnerException != null ? $" | Inner: {ex.InnerException.Message}" : "");
+            return Result.Failure<ProveedorDto>(errorMsg);
         }
     }
 
@@ -140,7 +150,7 @@ public class CrearProveedorHandler : IRequestHandler<CrearProveedorCommand, Resu
                 ciudad: request.Ciudad,
                 codigoPostal: request.CodigoPostal,
                 pais: request.Pais,
-                rfc: request.RUT,
+                rfc: request.RFC,
                 informacionBancaria: request.InformacionBancaria,
                 diasCredito: request.DiasCredito
             );

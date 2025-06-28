@@ -1,6 +1,7 @@
 namespace RestaurantePro.Application.Core.Productos.Commands.CrearReceta;
+using MediatR;
 
-public class CrearRecetaCommand
+public class CrearRecetaCommand : IRequest<Result<RecetaDto>>
 {
     public Guid ProductoId { get; set; }
     public string Preparacion { get; set; } = string.Empty;

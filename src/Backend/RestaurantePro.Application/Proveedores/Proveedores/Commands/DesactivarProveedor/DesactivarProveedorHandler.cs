@@ -52,8 +52,11 @@ public class DesactivarProveedorHandler : IRequestHandler<DesactivarProveedorCom
 
             // Guardar cambios
             await _repository.ActualizarAsync(proveedor, cancellationToken);
+            
+            // Persistir cambios en base de datos
+            await _repository.GuardarCambiosAsync(cancellationToken);
 
-            _logger.LogInformation("✅ Proveedor desactivado exitosamente: {ProveedorId}", request.Id);
+            _logger.LogInformation("✅ Proveedor desactivado exitosamente y persistido: {ProveedorId}", request.Id);
             return Result<bool>.Success(true);
         }
         catch (Exception ex)

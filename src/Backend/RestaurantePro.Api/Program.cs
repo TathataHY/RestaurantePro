@@ -58,7 +58,7 @@ namespace RestaurantePro.Api
             
             // 🔧 CONFIGURAR BASE DE DATOS Y SEED DATA
             // Ejecutar solo seed data SIN migraciones (las tablas ya existen)
-            if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+            if ((app.Environment.IsDevelopment() || app.Environment.IsStaging()) && !isTestingMode)
             {
                 await app.UseSeedDataAsync(shouldMigrate: false); // Solo datos, NO migraciones
             }

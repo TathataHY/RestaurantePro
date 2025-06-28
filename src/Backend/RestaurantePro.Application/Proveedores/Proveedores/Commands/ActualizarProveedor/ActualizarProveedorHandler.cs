@@ -61,8 +61,11 @@ public class ActualizarProveedorHandler : IRequestHandler<ActualizarProveedorCom
 
             // Guardar cambios
             await _repository.ActualizarAsync(proveedorExistente);
+            
+            // Persistir cambios en base de datos
+            await _repository.GuardarCambiosAsync();
 
-            _logger.LogInformation("Proveedor actualizado exitosamente: {ProveedorId}", request.Id);
+            _logger.LogInformation("✅ Proveedor actualizado exitosamente y persistido: {ProveedorId}", request.Id);
 
             var proveedorDto = _mapper.Map<ProveedorDto>(proveedorExistente);
             return Result<ProveedorDto>.Success(proveedorDto);
