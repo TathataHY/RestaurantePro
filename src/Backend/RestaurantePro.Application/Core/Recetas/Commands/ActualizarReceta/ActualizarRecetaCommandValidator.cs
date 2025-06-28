@@ -1,6 +1,7 @@
 using FluentValidation;
+using RestaurantePro.Application.Core.Recetas.DTOs;
 
-namespace RestaurantePro.Application.Core.Productos.Commands.ActualizarReceta;
+namespace RestaurantePro.Application.Core.Recetas.Commands.ActualizarReceta;
 
 /// <summary>
 /// Validador para el comando ActualizarRecetaCommand

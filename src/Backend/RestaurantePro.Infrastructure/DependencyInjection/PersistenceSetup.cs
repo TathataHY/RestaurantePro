@@ -66,7 +66,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             RegisterRepositories(services);
 
             // Registrar servicios adicionales necesarios
-            RegisterAdditionalServices(services);
+            RegisterAdditionalServices(services, isTestEnvironment);
 
             return services;
         }
@@ -152,7 +152,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<IContactoProveedorRepository, ContactoProveedorRepository>();
         }
 
-        private static void RegisterAdditionalServices(IServiceCollection services)
+        private static void RegisterAdditionalServices(IServiceCollection services, bool isTestEnvironment = false)
         {
             // Registrar IApplicationDbContext usando RestauranteProDbContext
             services.AddScoped<IApplicationDbContext>(provider => 
@@ -183,10 +183,10 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<Application.Operaciones.Mesas.Interfaces.IMesaService, Services.MesaService>();
             
             // Registrar sistema de SeedData
-            RegisterSeedDataServices(services);
+            RegisterSeedDataServices(services, isTestEnvironment);
         }
         
-        private static void RegisterSeedDataServices(IServiceCollection services)
+        private static void RegisterSeedDataServices(IServiceCollection services, bool isTestEnvironment = false)
         {
             // La configuración de SeedData se bindea desde appsettings.json en Program.cs
             // Estos son valores por defecto que pueden ser sobrescritos
@@ -194,7 +194,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             // Registrar SeedDataRunner
             services.AddScoped<SeedDataRunner>();
             
-            // SEEDERS CRÍTICOS
+            // SEEDERS CRÍTICOS (siempre se registran)
             services.AddScoped<ISeedData, RolesSeeder>();
             services.AddScoped<ISeedData, UnidadesMedidaSeeder>();
             services.AddScoped<ISeedData, PermisosSeeder>();
@@ -202,19 +202,25 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<ISeedData, EstadosSeeder>();
             services.AddScoped<ISeedData, UsuarioAdminSeeder>();
             
-            // SEEDERS DEMO  
-            services.AddScoped<ISeedData, ProductoCategoriasSeeder>();
-            services.AddScoped<ISeedData, ProductosSeeder>();
-            services.AddScoped<ISeedData, IngredientesSeeder>();
-            services.AddScoped<ISeedData, ProveedoresSeeder>();
-            services.AddScoped<ISeedData, ClientesSeeder>();
-            services.AddScoped<ISeedData, MesasSeeder>();
-            services.AddScoped<ISeedData, EscenariosDemoSeeder>();
+            // SEEDERS DEMO (solo si NO es entorno de test)
+            if (!isTestEnvironment)
+            {
+                services.AddScoped<ISeedData, ProductoCategoriasSeeder>();
+                services.AddScoped<ISeedData, ProductosSeeder>();
+                services.AddScoped<ISeedData, IngredientesSeeder>();
+                services.AddScoped<ISeedData, ProveedoresSeeder>();
+                services.AddScoped<ISeedData, ClientesSeeder>();
+                services.AddScoped<ISeedData, MesasSeeder>();
+                services.AddScoped<ISeedData, EscenariosDemoSeeder>();
+            }
             
-            // SEEDERS TESTING
-            services.AddScoped<ISeedData, DatosPruebasUnitarias>();
-            services.AddScoped<ISeedData, DatosPruebasIntegracion>();
-            services.AddScoped<ISeedData, DatosRendimiento>();
+            // SEEDERS TESTING (solo si es entorno de test)
+            if (isTestEnvironment)
+            {
+                services.AddScoped<ISeedData, DatosPruebasUnitarias>();
+                services.AddScoped<ISeedData, DatosPruebasIntegracion>();
+                services.AddScoped<ISeedData, DatosRendimiento>();
+            }
         }
     }
 } 

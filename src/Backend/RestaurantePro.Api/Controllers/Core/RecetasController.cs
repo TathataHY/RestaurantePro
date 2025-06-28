@@ -1,15 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
-using RestaurantePro.Application.Core.Productos.DTOs;
-using RestaurantePro.Application.Core.Productos.Commands.CrearReceta;
-using RestaurantePro.Application.Core.Productos.Commands.ActualizarReceta;
-using RestaurantePro.Application.Core.Productos.Commands.EliminarReceta;
-using RestaurantePro.Application.Core.Productos.Queries.ObtenerRecetas;
-using RestaurantePro.Application.Core.Productos.Queries.ObtenerRecetaPorId;
-using RestaurantePro.Application.Core.Productos.Queries.ObtenerRecetasPorProducto;
-using RestaurantePro.Application.Core.Productos.Queries.CalcularCostoReceta;
-using RestaurantePro.Application.Core.Productos.Queries.VerificarDisponibilidadReceta;
+using RestaurantePro.Application.Core.Recetas.DTOs;
+using RestaurantePro.Application.Core.Recetas.Commands.CrearReceta;
+using RestaurantePro.Application.Core.Recetas.Commands.ActualizarReceta;
+using RestaurantePro.Application.Core.Recetas.Commands.EliminarReceta;
+using RestaurantePro.Application.Core.Recetas.Queries.ObtenerRecetas;
+using RestaurantePro.Application.Core.Recetas.Queries.ObtenerRecetaPorId;
+using RestaurantePro.Application.Core.Recetas.Queries.ObtenerRecetasPorProducto;
+using RestaurantePro.Application.Core.Recetas.Queries.CalcularCostoReceta;
+using RestaurantePro.Application.Core.Recetas.Queries.VerificarDisponibilidadReceta;
+using RestaurantePro.Application.Common.DTOs;
 
 namespace RestaurantePro.Api.Controllers.Core;
 
@@ -33,34 +34,64 @@ public class RecetasController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene todas las recetas disponibles
+    /// Obtiene todas las recetas disponibles con paginación
     /// </summary>
+    /// <param name="pageNumber">Número de página (base 1)</param>
+    /// <param name="pageSize">Tamaño de página (máximo 100)</param>
     /// <param name="soloActivas">Filtrar solo recetas activas</param>
     /// <param name="productoId">Filtrar por producto específico</param>
-    /// <returns>Lista de recetas</returns>
+    /// <param name="filtroTexto">Filtro de texto libre</param>
+    /// <param name="ordenarPor">Campo de ordenamiento</param>
+    /// <param name="direccionOrden">Dirección del ordenamiento (Asc/Desc)</param>
+    /// <returns>Lista paginada de recetas</returns>
     [HttpGet]
-    [ProducesResponseType(typeof(ApiResponse<List<RecetaDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PaginatedList<RecetaDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<List<RecetaDto>>>> GetRecetas(
+    public async Task<ActionResult<ApiResponse<PaginatedList<RecetaDto>>>> GetRecetas(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20,
         [FromQuery] bool? soloActivas = null,
-        [FromQuery] Guid? productoId = null)
+        [FromQuery] Guid? productoId = null,
+        [FromQuery] string? filtroTexto = null,
+        [FromQuery] string ordenarPor = "FechaCreacion",
+        [FromQuery] string direccionOrden = "Desc")
     {
-        _logger.LogInformation("🍕 GET /api/core/recetas?soloActivas={SoloActivas}&productoId={ProductoId}", 
-            soloActivas, productoId);
+        _logger.LogInformation("🍕 GET /api/core/recetas?pageNumber={PageNumber}&pageSize={PageSize}&soloActivas={SoloActivas}&productoId={ProductoId}&filtroTexto={FiltroTexto}&ordenarPor={OrdenarPor}&direccionOrden={DireccionOrden}", 
+            pageNumber, pageSize, soloActivas, productoId, filtroTexto, ordenarPor, direccionOrden);
 
         try
         {
+            // Validar parámetros de paginación
+            if (pageNumber < 1)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    new List<string> { "El número de página debe ser mayor a 0" },
+                    "Parámetros de paginación inválidos"));
+            }
+
+            if (pageSize < 1 || pageSize > 100)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    new List<string> { "El tamaño de página debe estar entre 1 y 100" },
+                    "Parámetros de paginación inválidos"));
+            }
+
             var query = new ObtenerRecetasQuery
             {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
                 SoloActivas = soloActivas,
-                ProductoId = productoId
+                ProductoId = productoId,
+                FiltroTexto = filtroTexto,
+                OrdenarPor = ordenarPor,
+                DireccionOrden = direccionOrden
             };
 
             var result = await _mediator.Send(query);
 
             if (result.Succeeded)
             {
-                return Ok(ApiResponse<List<RecetaDto>>.SuccessResponse(result.Value));
+                return Ok(ApiResponse<PaginatedList<RecetaDto>>.SuccessResponse(result.Value));
             }
 
             return BadRequest(ApiResponse<object>.ErrorResponse(

@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Core.Productos.DTOs;
+using RestaurantePro.Application.Core.Recetas.DTOs;
 using RestaurantePro.Domain.Core.Productos.Services;
 
-namespace RestaurantePro.Application.Core.Productos.Queries.VerificarDisponibilidadReceta;
+namespace RestaurantePro.Application.Core.Recetas.Queries.VerificarDisponibilidadReceta;
 
 /// <summary>
 /// Handler para verificar disponibilidad de ingredientes para una receta
@@ -56,8 +56,10 @@ public class VerificarDisponibilidadRecetaQueryHandler : IRequestHandler<Verific
 
             if (!disponibilidadResult.Succeeded)
             {
-                _logger.LogWarning("⚠️ Error al verificar disponibilidad: {Error}", disponibilidadResult.Error);
-                return Result.Failure<DisponibilidadRecetaDto>(disponibilidadResult.Error);
+                _logger.LogWarning("⚠️ Error al verificar disponibilidad: {Error}", 
+                    disponibilidadResult.Error ?? "Error desconocido");
+                return Result.Failure<DisponibilidadRecetaDto>(
+                    disponibilidadResult.Error ?? "Error al verificar disponibilidad");
             }
 
             var estaDisponible = disponibilidadResult.Value;

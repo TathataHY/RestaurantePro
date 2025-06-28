@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace RestaurantePro.Application.Core.Productos.Commands.EliminarReceta;
+namespace RestaurantePro.Application.Core.Recetas.Commands.EliminarReceta;
 
 /// <summary>
 /// Validador para el comando EliminarRecetaCommand

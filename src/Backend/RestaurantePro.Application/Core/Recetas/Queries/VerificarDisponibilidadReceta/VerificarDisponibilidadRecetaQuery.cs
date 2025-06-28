@@ -1,6 +1,6 @@
-using RestaurantePro.Application.Core.Productos.DTOs;
+using RestaurantePro.Application.Core.Recetas.DTOs;
 
-namespace RestaurantePro.Application.Core.Productos.Queries.VerificarDisponibilidadReceta;
+namespace RestaurantePro.Application.Core.Recetas.Queries.VerificarDisponibilidadReceta;
 
 /// <summary>
 /// Query para verificar disponibilidad de ingredientes para una receta

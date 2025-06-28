@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.Productos.Services;
 
-namespace RestaurantePro.Application.Core.Productos.Queries.CalcularCostoReceta;
+namespace RestaurantePro.Application.Core.Recetas.Queries.CalcularCostoReceta;
 
 /// <summary>
 /// Handler para calcular el costo total de ingredientes de una receta

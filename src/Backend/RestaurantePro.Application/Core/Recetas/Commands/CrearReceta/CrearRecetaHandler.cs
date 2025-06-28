@@ -1,11 +1,11 @@
 using AutoMapper;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Core.Productos.DTOs;
+using RestaurantePro.Application.Core.Recetas.DTOs;
 using RestaurantePro.Domain.Core.Productos.Entities;
 using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
 using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
 
-namespace RestaurantePro.Application.Core.Productos.Commands.CrearReceta;
+namespace RestaurantePro.Application.Core.Recetas.Commands.CrearReceta;
 
 /// <summary>
 /// Handler para crear una nueva receta
@@ -41,7 +41,7 @@ public class CrearRecetaHandler : IRequestHandler<CrearRecetaCommand, Result<Rec
             if (producto == null)
             {
                 _logger.LogWarning("⚠️ Producto no encontrado: {ProductoId}", request.ProductoId);
-                return Result.Failure<RecetaDto>("Producto no encontrado");
+                return Result.Failure<RecetaDto>($"Producto no encontrado: {request.ProductoId}");
             }
 
             // 2. Verificar que no existe ya una receta para este producto

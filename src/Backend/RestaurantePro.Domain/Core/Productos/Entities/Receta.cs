@@ -196,5 +196,14 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
             if (TiempoPreparacionMinutos <= 0)
                 throw new InvalidOperationException("El tiempo de preparación debe ser mayor a cero");
         }
+
+        /// <summary>
+        /// Marca la receta como eliminada lógicamente
+        /// </summary>
+        public override void MarkAsDeleted()
+        {
+            RecetaEliminada = true;
+            base.MarkAsDeleted(); // Llama al método base para marcar EstaEliminado también
+        }
     }
 } 

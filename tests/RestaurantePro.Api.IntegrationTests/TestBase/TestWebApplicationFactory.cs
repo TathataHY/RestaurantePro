@@ -60,17 +60,26 @@ namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
 /// <summary>
 /// Factory personalizada para configurar la aplicación web en los tests de integración.
-/// Sobrescribe la configuración de producción para usar base de datos en memoria.
+/// Configura base de datos SQLite temporal única por test para evitar conflictos de concurrencia.
 /// </summary>
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
-    // 🔧 CONFIGURACIÓN ROBUSTA DE SQLITE IN-MEMORY CON MEJORAS PARA CONCURRENCIA
-    private static SqliteConnection? _connection;
-    private static bool _databaseInitialized = false;
-    private static readonly object _lock = new object();
-    private static readonly string _databaseName = $"TestDatabase_{Guid.NewGuid():N}"; // Nombre único por ejecución
+    // 🔧 CONFIGURACIÓN DE SQLITE TEMPORAL ÚNICA POR TEST
+    private readonly string _databasePath;
+    private readonly string _connectionString;
+    private bool _disposed = false;
 
-    public string DatabaseName => _databaseName;
+    public TestWebApplicationFactory()
+    {
+        // Crear archivo temporal único para cada instancia de test
+        _databasePath = Path.GetTempFileName();
+        _connectionString = $"Data Source={_databasePath};Cache=Private";
+        
+        Console.WriteLine($"🗄️ Creando BD temporal única: {_databasePath}");
+    }
+
+    public string DatabasePath => _databasePath;
+    public string ConnectionString => _connectionString;
     
     /// <summary>
     /// Elimina un servicio del contenedor de dependencias
@@ -93,19 +102,19 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         
         builder.ConfigureAppConfiguration((context, config) =>
         {
-            // Configuración específica para testing con mejoras de concurrencia
+            // Configuración específica para testing con base de datos temporal
             config.AddInMemoryCollection(new Dictionary<string, string>
             {
-                {"ConnectionStrings:DefaultConnection", $"Data Source={_databaseName};Mode=Memory;Cache=Shared"},
-                {"Logging:LogLevel:Default", "Critical"}, // Solo errores críticos
-                {"Logging:LogLevel:Microsoft", "Critical"},
-                {"Logging:LogLevel:Microsoft.Hosting.Lifetime", "Critical"},
-                {"Logging:LogLevel:Microsoft.EntityFrameworkCore", "Critical"},
-                {"Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command", "Critical"},
-                {"Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Connection", "Critical"},
-                {"Logging:LogLevel:Microsoft.EntityFrameworkCore.Update", "Critical"},
-                {"Logging:LogLevel:RestaurantePro.Application.Common.Behaviors", "Critical"},
-                {"Logging:LogLevel:RestaurantePro.Infrastructure.Persistence", "Critical"},
+                {"ConnectionStrings:DefaultConnection", _connectionString},
+                {"Logging:LogLevel:Default", "Information"}, // Habilitar logs para debugging
+                {"Logging:LogLevel:Microsoft", "Warning"},
+                {"Logging:LogLevel:Microsoft.Hosting.Lifetime", "Warning"},
+                {"Logging:LogLevel:Microsoft.EntityFrameworkCore", "Warning"},
+                {"Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command", "Warning"},
+                {"Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Connection", "Warning"},
+                {"Logging:LogLevel:Microsoft.EntityFrameworkCore.Update", "Warning"},
+                {"Logging:LogLevel:RestaurantePro.Application.Common.Behaviors", "Information"},
+                {"Logging:LogLevel:RestaurantePro.Infrastructure.Persistence", "Information"},
                 {"TESTING_MODE", "true"}
             });
         });
@@ -116,70 +125,19 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // Obtener la configuración del contexto
             var configuration = context.Configuration;
             
-            // 🔧 INICIALIZACIÓN ROBUSTA DE LA BASE DE DATOS SQLITE CON MEJORAS
-            lock (_lock)
-            {
-                if (_connection == null)
-                {
-                    // 🔧 CONFIGURACIÓN SQLITE SIMPLIFICADA Y COMPATIBLE
-                    var connectionString = $"Data Source={_databaseName};Mode=Memory;Cache=Shared";
-                    _connection = new SqliteConnection(connectionString);
-                    _connection.Open();
-                    
-                    // 🔧 CONFIGURAR SQLITE PARA MEJOR RENDIMIENTO EN TESTS (solo parámetros compatibles)
-                    using var command = _connection.CreateCommand();
-                    command.CommandText = "PRAGMA foreign_keys=ON; PRAGMA synchronous=NORMAL; PRAGMA temp_store=MEMORY;";
-                    command.ExecuteNonQuery();
-                }
-
-                // 🔧 CREAR ESQUEMA UNA SOLA VEZ CON MIGRACIONES
-                if (!_databaseInitialized)
-                {
-                    using var dbContext = new RestauranteProDbContext(
-                        new DbContextOptionsBuilder<RestauranteProDbContext>()
-                            .UseSqlite(_connection)
-                            .EnableSensitiveDataLogging(false) // Deshabilitar en tests para mejor rendimiento
-                            .EnableDetailedErrors(false) // Deshabilitar en tests para mejor rendimiento
-                            .Options,
-                        new TestLogger<RestauranteProDbContext>(),
-                        new TestDomainEventDispatcher());
-                    
-                    // 🔧 GARANTIZAR QUE LA BASE DE DATOS Y TABLAS SE CREEN CORRECTAMENTE
-                    try
-                    {
-                        // Aplicar migraciones para crear todas las tablas con sus configuraciones completas
-                        dbContext.Database.Migrate();
-                        // Verificar que las tablas principales existen
-                        var tables = dbContext.Database.SqlQueryRaw<string>(
-                            "SELECT name FROM sqlite_master WHERE type='table'").ToList();
-                        // Verificar que las tablas críticas existen
-                        var criticalTables = new[] { "Usuarios", "Productos", "Clientes", "Mesas", "Comandas", "Facturas", "OrdenesCompra" };
-                        var missingTables = criticalTables.Where(table => !tables.Contains(table)).ToList();
-                        if (missingTables.Any())
-                        {
-                            throw new Exception($"Faltan tablas críticas en la base de datos de test: {string.Join(", ", missingTables)}. Revisa las migraciones.");
-                        }
-                        _databaseInitialized = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        // Fallback: recrear la base de datos con migraciones
-                        dbContext.Database.EnsureDeleted();
-                        dbContext.Database.EnsureCreated();
-                        _databaseInitialized = true;
-                    }
-                }
-            }
-
-            // 🔧 CONFIGURAR SQLITE EN MEMORIA CON CONEXIÓN ESTÁTICA Y OPTIMIZACIONES
+            // 🔧 CONFIGURACIÓN DE BASE DE DATOS TEMPORAL ÚNICA POR TEST
+            Console.WriteLine($"🗄️ Configurando BD temporal: {_databasePath}");
+            
             services.AddDbContext<RestauranteProDbContext>(options =>
             {
-                options.UseSqlite(_connection);
-                options.EnableSensitiveDataLogging(false); // Deshabilitar en tests
-                options.EnableDetailedErrors(false); // Deshabilitar en tests
-                options.ConfigureWarnings(warnings => warnings
-                    .Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.NavigationBaseIncludeIgnored)
-                    .Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)); // Suprimir warning de cambios pendientes
+                options.UseSqlite(_connectionString, sqliteOptions =>
+                {
+                    sqliteOptions.MigrationsAssembly("RestaurantePro.Infrastructure");
+                });
+                
+                // Configurar para tests con mejor debugging
+                options.EnableSensitiveDataLogging();
+                options.EnableDetailedErrors();
             });
 
             // 🔧 REGISTRAR IApplicationDbContext
@@ -234,77 +192,67 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing)
+        if (disposing && !_disposed)
         {
-            // No cerrar la conexión aquí, solo limpiar datos si es necesario
+            _disposed = true;
+            
+            // Limpiar archivo temporal de la base de datos
+            try
+            {
+                if (File.Exists(_databasePath))
+                {
+                    File.Delete(_databasePath);
+                    Console.WriteLine($"🗑️ Archivo temporal eliminado: {_databasePath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ No se pudo eliminar archivo temporal {_databasePath}: {ex.Message}");
+            }
         }
+        
         base.Dispose(disposing);
     }
 
     /// <summary>
-    /// Limpia todos los datos de la base de datos sin cerrar la conexión
+    /// Limpia todos los datos de la base de datos para el test actual
     /// </summary>
-    public static void CleanupDatabase()
+    public void CleanupDatabase()
     {
-        if (_connection != null && _databaseInitialized)
+        try
         {
-            using var context = new RestauranteProDbContext(
-                new DbContextOptionsBuilder<RestauranteProDbContext>()
-                    .UseSqlite(_connection)
-                    .Options,
-                new TestLogger<RestauranteProDbContext>(),
-                new TestDomainEventDispatcher());
+            using var scope = Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
             
-            // 🔧 LIMPIEZA SEGURA: SOLO ELIMINAR DATOS, NO RECREAR ESQUEMA
-            try
+            // Limpiar todas las tablas en orden correcto (respetando foreign keys)
+            var tables = new[]
             {
-                // Desactivar detección de cambios para mejorar rendimiento
-                context.ChangeTracker.AutoDetectChangesEnabled = false;
-                
-                // Limpiar datos en orden específico para evitar problemas de FK
-                context.Facturas.RemoveRange(context.Facturas);
-                context.ItemsComanda.RemoveRange(context.ItemsComanda);
-                context.Comandas.RemoveRange(context.Comandas);
-                context.Reservaciones.RemoveRange(context.Reservaciones);
-                context.Mesas.RemoveRange(context.Mesas);
-                context.Clientes.RemoveRange(context.Clientes);
-                context.Usuarios.RemoveRange(context.Usuarios);
-                context.Productos.RemoveRange(context.Productos);
-                context.Ingredientes.RemoveRange(context.Ingredientes);
-                context.Proveedores.RemoveRange(context.Proveedores);
-                context.Notificaciones.RemoveRange(context.Notificaciones);
-                
-                // Guardar cambios
-                context.SaveChanges();
-                
-                // Reactivar detección de cambios
-                context.ChangeTracker.AutoDetectChangesEnabled = true;
-                
-                Console.WriteLine("✅ Datos de la base de datos limpiados correctamente");
-            }
-            catch (Exception ex)
+                "RecetasIngredientes", "Recetas", "Productos", "Ingredientes",
+                "MovimientosInventario", "OrdenesCompra", "ContactosProveedor", "Proveedores",
+                "Reservaciones", "Comandas", "Mesas", "Preparaciones",
+                "Facturas", "Promociones", "TarjetasFidelizacion", "Clientes",
+                "Notificaciones", "Usuarios"
+            };
+            
+            foreach (var table in tables)
             {
-                Console.WriteLine($"❌ Error limpiando datos: {ex.Message}");
-                // Fallback: recrear solo si es absolutamente necesario
-                context.Database.EnsureCreated();
+                try
+                {
+                    context.Database.ExecuteSqlRaw($"DELETE FROM {table}");
+                    Console.WriteLine($"🧹 Tabla {table} limpiada");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ No se pudo limpiar tabla {table}: {ex.Message}");
+                }
             }
+            
+            context.SaveChanges();
+            Console.WriteLine("✅ Base de datos limpiada correctamente");
         }
-    }
-
-    /// <summary>
-    /// Cierra la conexión SQLite estática (llamar solo al final de todos los tests)
-    /// </summary>
-    public static void CloseConnection()
-    {
-        lock (_lock)
+        catch (Exception ex)
         {
-            if (_connection != null)
-            {
-                _connection.Close();
-                _connection.Dispose();
-                _connection = null;
-                _databaseInitialized = false;
-            }
+            Console.WriteLine($"❌ Error limpiando base de datos: {ex.Message}");
         }
     }
 }

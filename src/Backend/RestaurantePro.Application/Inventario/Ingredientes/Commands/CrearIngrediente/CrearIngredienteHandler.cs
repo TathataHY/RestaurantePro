@@ -1,3 +1,11 @@
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Inventario.Ingredientes.DTOs;
+using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
+using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
+using RestaurantePro.Domain.Inventario.Services;
+using RestaurantePro.Domain.Core.SharedKernel.Exceptions;
+using RestaurantePro.Application.Common.DTOs;
+
 namespace RestaurantePro.Application.Inventario.Ingredientes.Commands.CrearIngrediente;
 
 /// <summary>
@@ -21,6 +29,15 @@ public class CrearIngredienteHandler : IRequestHandler<CrearIngredienteCommand, 
         _mapper = mapper;
         _logger = logger;
         _inventarioService = inventarioService;
+    }
+
+    private static string GetFullExceptionMessage(Exception ex)
+    {
+        if (ex == null) return string.Empty;
+        var msg = ex.Message;
+        if (ex.InnerException != null)
+            msg += " | INNER: " + GetFullExceptionMessage(ex.InnerException);
+        return msg;
     }
 
     public async Task<Result<IngredienteDto>> Handle(
@@ -51,13 +68,21 @@ public class CrearIngredienteHandler : IRequestHandler<CrearIngredienteCommand, 
                 return Result.Failure<IngredienteDto>($"Temporada no válida: {request.Temporada}");
             }
 
+            // Convertir string unidadMedida a enum UnidadMedida
+            if (!Enum.TryParse<UnidadMedida>(request.UnidadMedida, true, out var unidadMedidaEnum))
+            {
+                return Result.Failure<IngredienteDto>($"Unidad de medida no válida: {request.UnidadMedida}");
+            }
+
             // 3. Usar el servicio de dominio para crear el ingrediente
-            var resultadoCreacion = await _inventarioService.RegistrarIngredienteAsync(
+            var resultadoCreacion = await _inventarioService.RegistrarIngredienteAvanzadoAsync(
                 request.Nombre,
                 request.Descripcion,
-                request.UnidadMedida,
+                unidadMedidaEnum,
                 request.StockMinimo,
                 request.StockInicial,
+                request.Codigo,
+                null,
                 rotacion,
                 temporada,
                 request.CostoInicial,
@@ -89,8 +114,9 @@ public class CrearIngredienteHandler : IRequestHandler<CrearIngredienteCommand, 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error inesperado al crear ingrediente: {Nombre}", request.Nombre);
-            return Result.Failure<IngredienteDto>("Error interno del servidor al crear el ingrediente");
+            var fullMsg = GetFullExceptionMessage(ex);
+            _logger.LogError(ex, $"❌ Error al crear ingrediente: {fullMsg}");
+            return Result.Failure<IngredienteDto>($"Error al registrar el ingrediente: {fullMsg}");
         }
     }
 }

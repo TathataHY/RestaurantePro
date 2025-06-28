@@ -1,9 +1,9 @@
 using AutoMapper;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Core.Productos.DTOs;
+using RestaurantePro.Application.Core.Recetas.DTOs;
 using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
 
-namespace RestaurantePro.Application.Core.Productos.Commands.ActualizarReceta;
+namespace RestaurantePro.Application.Core.Recetas.Commands.ActualizarReceta;
 
 /// <summary>
 /// Handler para actualizar una receta existente

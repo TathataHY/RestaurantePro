@@ -1,4 +1,4 @@
-namespace RestaurantePro.Application.Core.Productos.DTOs;
+namespace RestaurantePro.Application.Core.Recetas.DTOs;
 
 /// <summary>
 /// DTO para representar una receta de producto

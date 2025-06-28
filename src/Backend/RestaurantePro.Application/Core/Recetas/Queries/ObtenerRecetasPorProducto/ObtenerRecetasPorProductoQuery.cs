@@ -1,6 +1,6 @@
-using RestaurantePro.Application.Core.Productos.DTOs;
+using RestaurantePro.Application.Core.Recetas.DTOs;
 
-namespace RestaurantePro.Application.Core.Productos.Queries.ObtenerRecetasPorProducto;
+namespace RestaurantePro.Application.Core.Recetas.Queries.ObtenerRecetasPorProducto;
 
 /// <summary>
 /// Query para obtener las recetas asociadas a un producto específico

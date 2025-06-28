@@ -1,6 +1,7 @@
 using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Application.Core.Recetas.DTOs;
 
-namespace RestaurantePro.Application.Core.Productos.Commands.EliminarReceta;
+namespace RestaurantePro.Application.Core.Recetas.Commands.EliminarReceta;
 
 /// <summary>
 /// Handler para eliminar una receta

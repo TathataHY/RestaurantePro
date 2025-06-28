@@ -36,8 +36,8 @@ public class IngredienteTestDataBuilder
     /// </summary>
     private string GenerarCodigoUnico()
     {
-        var guid = Guid.NewGuid().ToString("N");
-        return $"ING_{guid.Substring(0, 6)}";
+        var guid = Guid.NewGuid().ToString("N").ToUpperInvariant();
+        return $"ING{guid.Substring(0, 17)}";
     }
 
     /// <summary>

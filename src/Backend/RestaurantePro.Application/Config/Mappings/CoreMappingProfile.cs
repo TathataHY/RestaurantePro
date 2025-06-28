@@ -124,7 +124,27 @@ public class CoreMappingProfile : Profile
     /// </summary>
     private void ConfigureRecetaMappings()
     {
-        // TODO: Implementar cuando tengamos DTOs de Receta
-        // CreateMap<Receta, RecetaDto>()...
+        // Mapeo de entidad Receta a DTO
+        CreateMap<RestaurantePro.Domain.Core.Productos.Entities.Receta, RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.ProductoId, opt => opt.MapFrom(src => src.ProductoId))
+            .ForMember(dest => dest.Preparacion, opt => opt.MapFrom(src => src.Preparacion))
+            .ForMember(dest => dest.TiempoPreparacionMinutos, opt => opt.MapFrom(src => src.TiempoPreparacionMinutos))
+            .ForMember(dest => dest.Ingredientes, opt => opt.MapFrom(src => src.Ingredientes))
+            .ForMember(dest => dest.EstaActiva, opt => opt.MapFrom(src => !src.RecetaEliminada))
+            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore())
+            .ForMember(dest => dest.NombreProducto, opt => opt.Ignore())
+            .ForMember(dest => dest.CostoTotal, opt => opt.Ignore());
+
+        // Mapeo de ingrediente de receta
+        CreateMap<RestaurantePro.Domain.Core.Productos.ValueObjects.IngredienteReceta, RestaurantePro.Application.Core.Recetas.DTOs.IngredienteRecetaDto>()
+            .ForMember(dest => dest.IngredienteId, opt => opt.MapFrom(src => src.IngredienteId))
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre))
+            .ForMember(dest => dest.Cantidad, opt => opt.MapFrom(src => src.Cantidad))
+            .ForMember(dest => dest.UnidadMedida, opt => opt.MapFrom(src => src.UnidadMedida.ToString()))
+            .ForMember(dest => dest.EsOpcional, opt => opt.MapFrom(src => src.EsOpcional))
+            .ForMember(dest => dest.CostoUnitario, opt => opt.Ignore())
+            .ForMember(dest => dest.CostoTotal, opt => opt.Ignore());
     }
 } 

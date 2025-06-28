@@ -1,4 +1,4 @@
-namespace RestaurantePro.Application.Core.Productos.Queries.CalcularCostoReceta;
+namespace RestaurantePro.Application.Core.Recetas.Queries.CalcularCostoReceta;
 
 /// <summary>
 /// Query para calcular el costo total de ingredientes de una receta

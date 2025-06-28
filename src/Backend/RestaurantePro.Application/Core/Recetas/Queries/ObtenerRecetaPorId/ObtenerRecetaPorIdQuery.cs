@@ -1,6 +1,6 @@
-using RestaurantePro.Application.Core.Productos.DTOs;
+using RestaurantePro.Application.Core.Recetas.DTOs;
 
-namespace RestaurantePro.Application.Core.Productos.Queries.ObtenerRecetaPorId;
+namespace RestaurantePro.Application.Core.Recetas.Queries.ObtenerRecetaPorId;
 
 /// <summary>
 /// Query para obtener una receta específica por su ID

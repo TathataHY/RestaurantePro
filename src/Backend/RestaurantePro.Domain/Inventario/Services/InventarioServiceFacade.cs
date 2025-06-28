@@ -37,6 +37,15 @@ namespace RestaurantePro.Domain.Inventario.Services
             _stockBajoPolicy = stockBajoPolicy ?? throw new ArgumentNullException(nameof(stockBajoPolicy));
         }
         
+        private static string GetFullExceptionMessage(Exception ex)
+        {
+            if (ex == null) return string.Empty;
+            var msg = ex.Message;
+            if (ex.InnerException != null)
+                msg += " | INNER: " + GetFullExceptionMessage(ex.InnerException);
+            return msg;
+        }
+        
         #region Ingredientes
         
         /// <inheritdoc />
@@ -95,7 +104,7 @@ namespace RestaurantePro.Domain.Inventario.Services
             }
             catch (Exception ex)
             {
-                var message = $"Error al registrar el ingrediente: {ex.Message}";
+                var message = $"Error al registrar el ingrediente: {GetFullExceptionMessage(ex)}";
                 _notificationManager.AddError(message);
                 return Result.Failure<Ingrediente>(message);
             }

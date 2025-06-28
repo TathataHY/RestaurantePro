@@ -1,9 +1,9 @@
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Application.Common.Interfaces;
-using RestaurantePro.Application.Core.Productos.DTOs;
+using RestaurantePro.Application.Core.Recetas.DTOs;
 
-namespace RestaurantePro.Application.Core.Productos.Queries.ObtenerRecetasPorProducto;
+namespace RestaurantePro.Application.Core.Recetas.Queries.ObtenerRecetasPorProducto;
 
 /// <summary>
 /// Handler para obtener las recetas de un producto específico

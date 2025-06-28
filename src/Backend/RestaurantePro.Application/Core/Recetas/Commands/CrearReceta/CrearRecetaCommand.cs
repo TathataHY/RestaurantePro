@@ -1,5 +1,6 @@
-namespace RestaurantePro.Application.Core.Productos.Commands.CrearReceta;
+namespace RestaurantePro.Application.Core.Recetas.Commands.CrearReceta;
 using MediatR;
+using RestaurantePro.Application.Core.Recetas.DTOs;
 
 public class CrearRecetaCommand : IRequest<Result<RecetaDto>>
 {

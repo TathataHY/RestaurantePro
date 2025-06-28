@@ -412,7 +412,7 @@ public class MovimientosInventarioControllerTests : ApiIntegrationTestBase
     // Métodos auxiliares para crear datos de prueba usando la API de dominio correcta
     private async Task<Ingrediente> CrearIngredientePrueba(string nombre, decimal stockInicial)
     {
-        var codigoUnico = $"COD-{nombre.ToUpper()}-{Guid.NewGuid().ToString("N")[..8]}";
+        var codigoUnico = $"ING{Guid.NewGuid().ToString("N").ToUpperInvariant().Substring(0, 17)}";
         var ingrediente = Ingrediente.Crear(
             Guid.NewGuid(),
             nombre,

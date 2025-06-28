@@ -65,7 +65,6 @@ public class IngredientesControllerTests : ApiIntegrationTestBase
         // Arrange
         var request = new IngredienteTestDataBuilder()
             .ConNombre("Cebolla")
-            .ConCodigo("CEB-01")
             .BuildCrearIngredienteRequest();
 
         // Act

@@ -1,4 +1,4 @@
-namespace RestaurantePro.Application.Core.Productos.Commands.EliminarReceta;
+namespace RestaurantePro.Application.Core.Recetas.Commands.EliminarReceta;
 
 /// <summary>
 /// Command para eliminar una receta
