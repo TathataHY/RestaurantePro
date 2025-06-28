@@ -97,8 +97,8 @@ public class PromocionesControllerTests : ApiIntegrationTestBase, IDisposable
             Descripcion = "Promocion de prueba",
             Tipo = TipoPromocion.PorcentajeTotal,
             ValorDescuento = 15.0m,
-            FechaInicio = DateTime.Today.AddDays(1),
-            FechaFin = DateTime.Today.AddDays(30),
+            FechaInicio = DateTime.UtcNow.AddDays(1).AddHours(1), // Mañana a las 1 AM UTC
+            FechaFin = DateTime.UtcNow.AddDays(30).AddHours(1),   // 30 días después a las 1 AM UTC
             MaximoUsos = 100,
             EsAcumulable = false
         };
