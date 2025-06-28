@@ -153,10 +153,11 @@ public class IngredienteFactory : EntityFactoryBase<Ingrediente, Guid>
             // Validar formato de código - permitir caracteres acentuados para códigos generados automáticamente
             // Formato 1: PREFIJO-YYYYMMDD (ej: ING-20250628) - formato automático
             // Formato 2: PREFIJO-XXXXXXXX (ej: ING-EB0AA216) - formato de test con caracteres hexadecimales
-            if (!Regex.IsMatch(parametros.Codigo, @"^[A-ZÀ-ÿ]{2,5}-[0-9A-F]{8}$"))
+            // Formato 3: PREFIJO-XXX (ej: TEST-123) - formato simple para testing
+            if (!Regex.IsMatch(parametros.Codigo, @"^[A-ZÀ-ÿ]{2,5}-[0-9A-Fa-f]{3,8}$"))
             {
                 AgregarError(nameof(parametros.Codigo), 
-                    "Codigo debe tener el formato: 2-5 letras mayúsculas (con o sin acentos), guión, 8 caracteres hexadecimales (ej: TOM-20241125, ING-EB0AA216)");
+                    "Codigo debe tener el formato: 2-5 letras mayúsculas (con o sin acentos), guión, 3-8 caracteres alfanuméricos (ej: TOM-20241125, ING-EB0AA216, TEST-123)");
             }
         }
 

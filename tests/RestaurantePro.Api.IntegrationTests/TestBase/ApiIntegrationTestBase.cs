@@ -528,7 +528,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         var guid = Guid.NewGuid().ToString("N");
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         
-        var numeroFinal = numero ?? int.Parse($"{timestamp % 10000}");
+        var numeroFinal = numero ?? (int)(timestamp % 9999) + 1;
         
         // 🔧 SOLO AGREGAR SUFIJO ALEATORIO SI NO SE ESPECIFICA UNA UBICACIÓN ESPECÍFICA
         var ubicacionFinal = string.IsNullOrWhiteSpace(ubicacion) 

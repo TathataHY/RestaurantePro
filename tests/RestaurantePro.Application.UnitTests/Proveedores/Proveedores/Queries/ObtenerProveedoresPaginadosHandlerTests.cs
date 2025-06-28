@@ -105,12 +105,12 @@ public class ObtenerProveedoresPaginadosHandlerTests
         _proveedorRepositoryMock.Setup(x => x.ObtenerProveedoresPaginadosAsync(
             It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(),
             It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(proveedoresEntidades);
 
         _proveedorRepositoryMock.Setup(x => x.ContarProveedoresAsync(
             It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(), It.IsAny<bool>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(25);
 
         _mapperMock.Setup(x => x.Map<IEnumerable<ProveedorDto>>(It.IsAny<IEnumerable<Proveedor>>()))
@@ -154,7 +154,7 @@ public class ObtenerProveedoresPaginadosHandlerTests
             It.Is<bool>(i => i == false),
             It.IsAny<string>(),
             It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(proveedoresFiltrados);
 
         _proveedorRepositoryMock.Setup(x => x.ContarProveedoresAsync(
@@ -162,7 +162,7 @@ public class ObtenerProveedoresPaginadosHandlerTests
             It.IsAny<CategoriaProveedor?>(),
             It.Is<bool>(a => a == true),
             It.Is<bool>(i => i == false),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(5);
 
         _mapperMock.Setup(x => x.Map<IEnumerable<ProveedorDto>>(It.IsAny<IEnumerable<Proveedor>>()))
@@ -198,14 +198,14 @@ public class ObtenerProveedoresPaginadosHandlerTests
             It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(),
             It.Is<CategoriaProveedor?>(c => c == CategoriaProveedor.BebidasNoAlcoholicas),
             It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(proveedoresBebidas);
 
         _proveedorRepositoryMock.Setup(x => x.ContarProveedoresAsync(
             It.IsAny<string>(),
             It.Is<CategoriaProveedor?>(c => c == CategoriaProveedor.BebidasNoAlcoholicas),
             It.IsAny<bool>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(5);
 
         _mapperMock.Setup(x => x.Map<IEnumerable<ProveedorDto>>(It.IsAny<IEnumerable<Proveedor>>()))
@@ -239,12 +239,12 @@ public class ObtenerProveedoresPaginadosHandlerTests
         _proveedorRepositoryMock.Setup(x => x.ObtenerProveedoresPaginadosAsync(
             It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(),
             It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(proveedoresActivos);
 
         _proveedorRepositoryMock.Setup(x => x.ContarProveedoresAsync(
             It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(), It.IsAny<bool>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(proveedoresActivos.Count);
 
         _mapperMock.Setup(x => x.Map<IEnumerable<ProveedorDto>>(It.IsAny<IEnumerable<Proveedor>>()))
@@ -279,12 +279,12 @@ public class ObtenerProveedoresPaginadosHandlerTests
             It.IsAny<bool>(), It.IsAny<bool>(),
             It.Is<string>(o => o == "FechaCreacion"),
             It.Is<bool>(a => a == false),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(proveedoresOrdenados);
 
         _proveedorRepositoryMock.Setup(x => x.ContarProveedoresAsync(
             It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(), It.IsAny<bool>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(10);
 
         _mapperMock.Setup(x => x.Map<IEnumerable<ProveedorDto>>(It.IsAny<IEnumerable<Proveedor>>()))
@@ -313,12 +313,12 @@ public class ObtenerProveedoresPaginadosHandlerTests
         _proveedorRepositoryMock.Setup(x => x.ObtenerProveedoresPaginadosAsync(
             It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(),
             It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Proveedor>());
 
         _proveedorRepositoryMock.Setup(x => x.ContarProveedoresAsync(
             It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(), It.IsAny<bool>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(25);
 
         _mapperMock.Setup(x => x.Map<IEnumerable<ProveedorDto>>(It.IsAny<IEnumerable<Proveedor>>()))
@@ -450,7 +450,7 @@ public class ObtenerProveedoresPaginadosHandlerTests
         _proveedorRepositoryMock.Setup(x => x.ObtenerProveedoresPaginadosAsync(
             It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(),
             It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Error de base de datos"));
 
         // Act
@@ -477,12 +477,12 @@ public class ObtenerProveedoresPaginadosHandlerTests
         _proveedorRepositoryMock.Setup(x => x.ObtenerProveedoresPaginadosAsync(
             It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(),
             It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(proveedores);
 
         _proveedorRepositoryMock.Setup(x => x.ContarProveedoresAsync(
             It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(), It.IsAny<bool>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(10);
 
         _mapperMock.Setup(x => x.Map<IEnumerable<ProveedorDto>>(It.IsAny<IEnumerable<Proveedor>>()))
@@ -517,12 +517,12 @@ public class ObtenerProveedoresPaginadosHandlerTests
         _proveedorRepositoryMock.Setup(x => x.ObtenerProveedoresPaginadosAsync(
             It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(),
             It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(proveedores);
 
         _proveedorRepositoryMock.Setup(x => x.ContarProveedoresAsync(
             It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(), It.IsAny<bool>(), It.IsAny<bool>(),
-            It.IsAny<CancellationToken>()))
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(10);
 
         _mapperMock.Setup(x => x.Map<IEnumerable<ProveedorDto>>(It.IsAny<IEnumerable<Proveedor>>()))

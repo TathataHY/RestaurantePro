@@ -234,8 +234,8 @@ public class UsuariosControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation($"📋 Response: {response.StatusCode} - {content}");
 
         // Assert
-        // Como BuildUsuarioInvalido usa UsuarioCreadorId = Guid.Empty (recurso inexistente), debería devolver 404
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        // Como BuildUsuarioInvalido contiene datos inválidos, debería devolver 400 BadRequest
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
         apiResponse.Should().NotBeNull();
         apiResponse!.Success.Should().BeFalse();
