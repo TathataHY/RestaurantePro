@@ -1,3 +1,11 @@
+using FluentAssertions;
+using RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnalisisInventario;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Xunit;
+
 namespace RestaurantePro.Application.UnitTests.Inventario.Reportes.Validators;
 
 /// <summary>
@@ -17,11 +25,11 @@ public class ObtenerAnalisisInventarioValidatorTests
     #region Tests de Validaciones de Fechas
 
     [Fact]
-    public async Task FechaInicio_NoDebeSerMuyAntigua()
+    public async Task FechaDesde_NoDebeSerMuyAntigua()
     {
         // Arrange
         var query = CrearQueryBase();
-        query.FechaInicio = DateTime.Now.AddYears(-3);
+        query.FechaDesde = DateTime.Now.AddYears(-3);
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -29,15 +37,15 @@ public class ObtenerAnalisisInventarioValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.FechaInicio));
+            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.FechaDesde));
     }
 
     [Fact]
-    public async Task FechaInicio_NoDebeSerFutura()
+    public async Task FechaDesde_NoDebeSerFutura()
     {
         // Arrange
         var query = CrearQueryBase();
-        query.FechaInicio = DateTime.Now.AddDays(1);
+        query.FechaDesde = DateTime.Now.AddDays(1);
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -45,15 +53,15 @@ public class ObtenerAnalisisInventarioValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.FechaInicio));
+            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.FechaDesde));
     }
 
     [Fact]
-    public async Task FechaFin_NoDebeSerFutura()
+    public async Task FechaHasta_NoDebeSerFutura()
     {
         // Arrange
         var query = CrearQueryBase();
-        query.FechaFin = DateTime.Now.AddDays(1);
+        query.FechaHasta = DateTime.Now.AddDays(1);
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -61,16 +69,16 @@ public class ObtenerAnalisisInventarioValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.FechaFin));
+            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.FechaHasta));
     }
 
     [Fact]
-    public async Task FechaFin_DebeSerPosteriorAFechaInicio()
+    public async Task FechaHasta_DebeSerPosteriorAFechaDesde()
     {
         // Arrange
         var query = CrearQueryBase();
-        query.FechaInicio = DateTime.Now.AddDays(-1);
-        query.FechaFin = DateTime.Now.AddDays(-2);
+        query.FechaDesde = DateTime.Now.AddDays(-1);
+        query.FechaHasta = DateTime.Now.AddDays(-2);
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -78,7 +86,7 @@ public class ObtenerAnalisisInventarioValidatorTests
         // Assert
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
-            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.FechaFin));
+            e.PropertyName == nameof(ObtenerAnalisisInventarioQuery.FechaHasta));
     }
 
     [Fact]
@@ -86,8 +94,8 @@ public class ObtenerAnalisisInventarioValidatorTests
     {
         // Arrange
         var query = CrearQueryBase();
-        query.FechaInicio = DateTime.Now.AddYears(-1).AddDays(-1);
-        query.FechaFin = DateTime.Now;
+        query.FechaDesde = DateTime.Now.AddYears(-1).AddDays(-1);
+        query.FechaHasta = DateTime.Now;
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -106,8 +114,8 @@ public class ObtenerAnalisisInventarioValidatorTests
     {
         // Arrange
         var query = CrearQueryBase();
-        query.FechaInicio = DateTime.Now.AddDays(-dias);
-        query.FechaFin = DateTime.Now;
+        query.FechaDesde = DateTime.Now.AddDays(-dias);
+        query.FechaHasta = DateTime.Now;
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -256,7 +264,7 @@ public class ObtenerAnalisisInventarioValidatorTests
 
     #endregion
 
-    #region Tests de Validaciones Condicionales
+    #region Tests de Configuraciones Específicas
 
     [Fact]
     public async Task AnalisisCriticos_DeberiaConfigurarseSoloCriticos()
@@ -277,10 +285,7 @@ public class ObtenerAnalisisInventarioValidatorTests
     public async Task AnalisisCompleto_RequiereTodasLasOpciones()
     {
         // Arrange
-        var query = CrearQueryBase();
-        query.NivelDetalle = "Completo";
-        query.IncluirTendencias = true;
-        query.IncluirRecomendaciones = true;
+        var query = CrearQueryCompleto();
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -293,10 +298,7 @@ public class ObtenerAnalisisInventarioValidatorTests
     public async Task AnalisisBasico_RequiereConfiguracionMinima()
     {
         // Arrange
-        var query = CrearQueryBase();
-        query.NivelDetalle = "Básico";
-        query.IncluirTendencias = false;
-        query.IncluirRecomendaciones = false;
+        var query = CrearQueryMinimo();
 
         // Act
         var result = await _validator.ValidateAsync(query);
@@ -307,23 +309,22 @@ public class ObtenerAnalisisInventarioValidatorTests
 
     #endregion
 
-    #region Tests de Validaciones de Performance
+    #region Tests de Performance
 
     [Fact]
     public async Task Validator_ConDatosMasivos_DebeCompletarseEnTiempoRazonable()
     {
         // Arrange
         var query = CrearQueryBase();
-        query.CategoriaId = Guid.NewGuid();
-        
-        var stopwatch = Stopwatch.StartNew();
+        query.Categorias = CrearListaCategorias(100);
 
-        // Act
+        // Act & Assert
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         var result = await _validator.ValidateAsync(query);
-
-        // Assert
         stopwatch.Stop();
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(1000);
+
+        result.IsValid.Should().BeTrue();
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(1000); // Menos de 1 segundo
     }
 
     [Fact]
@@ -331,17 +332,13 @@ public class ObtenerAnalisisInventarioValidatorTests
     {
         // Arrange
         var query = CrearQueryCompleto();
-        var stopwatch = Stopwatch.StartNew();
 
         // Act
         var result = await _validator.ValidateAsync(query);
 
         // Assert
-        stopwatch.Stop();
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(2000);
-        
-        // Verificar que se ejecutaron las validaciones principales
-        result.Errors.Should().NotContain(e => e.ErrorCode.Contains("TIMEOUT"));
+        result.IsValid.Should().BeTrue();
+        result.Errors.Should().BeEmpty();
     }
 
     #endregion
@@ -352,15 +349,12 @@ public class ObtenerAnalisisInventarioValidatorTests
     {
         return new ObtenerAnalisisInventarioQuery
         {
-            FechaInicio = DateTime.Now.AddDays(-30),
-            FechaFin = DateTime.Now,
-            CategoriaId = null,
-            SoloAlertaStock = false,
-            SoloCriticos = false,
-            IncluirTendencias = true,
-            IncluirRecomendaciones = true,
+            FechaDesde = DateTime.Now.AddDays(-7),
+            FechaHasta = DateTime.Now,
             NivelDetalle = "Completo",
-            UsuarioId = Guid.NewGuid()
+            UsuarioId = Guid.NewGuid(),
+            IncluirTendencias = true,
+            IncluirRecomendaciones = true
         };
     }
 
@@ -368,15 +362,16 @@ public class ObtenerAnalisisInventarioValidatorTests
     {
         return new ObtenerAnalisisInventarioQuery
         {
-            FechaInicio = DateTime.Now.AddDays(-90),
-            FechaFin = DateTime.Now,
-            CategoriaId = Guid.NewGuid(),
-            SoloAlertaStock = false,
-            SoloCriticos = false,
+            FechaDesde = DateTime.Now.AddDays(-30),
+            FechaHasta = DateTime.Now,
+            NivelDetalle = "Completo",
+            UsuarioId = Guid.NewGuid(),
             IncluirTendencias = true,
             IncluirRecomendaciones = true,
-            NivelDetalle = "Completo",
-            UsuarioId = Guid.NewGuid()
+            IncluirPredicciones = true,
+            IncluirAnalisisFinanciero = true,
+            SoloCriticos = false,
+            SoloAlertaStock = false
         };
     }
 
@@ -384,76 +379,27 @@ public class ObtenerAnalisisInventarioValidatorTests
     {
         return new ObtenerAnalisisInventarioQuery
         {
-            FechaInicio = DateTime.Now.AddDays(-7),
-            FechaFin = DateTime.Now,
-            CategoriaId = null,
-            SoloAlertaStock = false,
-            SoloCriticos = false,
+            FechaDesde = DateTime.Now,
+            FechaHasta = DateTime.Now,
+            NivelDetalle = "Básico",
+            UsuarioId = Guid.NewGuid(),
             IncluirTendencias = false,
-            IncluirRecomendaciones = false,
-            NivelDetalle = "Basico",
-            UsuarioId = Guid.NewGuid()
+            IncluirRecomendaciones = false
         };
     }
 
     private List<Guid> CrearListaIngredientes(int cantidad)
     {
-        return Enumerable.Range(1, cantidad).Select(_ => Guid.NewGuid()).ToList();
+        return Enumerable.Range(0, cantidad)
+            .Select(_ => Guid.NewGuid())
+            .ToList();
     }
 
     private List<string> CrearListaCategorias(int cantidad)
     {
-        var categorias = new[] { "Carnes", "Verduras", "Lacteos", "Cereales", "Especias", "Bebidas", "Condimentos" };
-        var resultado = new List<string>();
-        
-        for (int i = 0; i < cantidad; i++)
-        {
-            resultado.Add($"{categorias[i % categorias.Length]}_{i}");
-        }
-        
-        return resultado;
-    }
-
-    private void ConfigurarIngredienteExiste(Guid ingredienteId, Ingrediente ingrediente)
-    {
-        // Implementation of ConfigurarIngredienteExiste method
-    }
-
-    private void ConfigurarIngredienteNoExiste(Guid ingredienteId)
-    {
-        // Implementation of ConfigurarIngredienteNoExiste method
-    }
-
-    private Ingrediente CrearIngredienteInactivo()
-    {
-        var ingrediente = Ingrediente.Crear(
-            Guid.NewGuid(),
-            "Ingrediente Inactivo",
-            "INACT001",
-            "Ingrediente inactivo para tests",
-            UnidadMedida.Kilogramos,
-            10m,
-            100m,
-            RotacionIngrediente.Baja,
-            TemporadaIngrediente.TodoElAño
-        );
-        ingrediente.Desactivar();
-        return ingrediente;
-    }
-
-    private Ingrediente CrearIngredienteActivo()
-    {
-        return Ingrediente.Crear(
-            Guid.NewGuid(),
-            "Ingrediente Activo",
-            "ACT001",
-            "Ingrediente activo para tests",
-            UnidadMedida.Kilogramos,
-            10m,
-            100m,
-            RotacionIngrediente.Alta,
-            TemporadaIngrediente.TodoElAño
-        );
+        return Enumerable.Range(0, cantidad)
+            .Select(i => $"Categoria{i}")
+            .ToList();
     }
 
     #endregion

@@ -58,7 +58,7 @@ public class DisponibilidadProductoDto
     /// <summary>
     /// Análisis de ingredientes necesarios
     /// </summary>
-    public List<AnalisisIngredienteDto> AnalisisIngredientes { get; set; } = new();
+    public List<AnalisisIngredienteDisponibilidadDto> AnalisisIngredientes { get; set; } = new();
     
     /// <summary>
     /// Productos alternativos disponibles
@@ -69,7 +69,7 @@ public class DisponibilidadProductoDto
 /// <summary>
 /// DTO para análisis de disponibilidad de ingredientes
 /// </summary>
-public class AnalisisIngredienteDto
+public class AnalisisIngredienteDisponibilidadDto
 {
     /// <summary>
     /// ID del ingrediente

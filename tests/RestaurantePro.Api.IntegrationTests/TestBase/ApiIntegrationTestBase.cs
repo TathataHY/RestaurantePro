@@ -571,7 +571,8 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         string nombre = null,
         string codigo = null,
         decimal stockInicial = 10,
-        decimal stockMinimo = 5)
+        decimal stockMinimo = 5,
+        decimal costoPromedio = 4.0m)
     {
         // 🔧 GENERAR DATOS ÚNICOS PARA EVITAR CONFLICTOS
         var guid = Guid.NewGuid().ToString("N");
@@ -588,6 +589,12 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
             stockMinimo,
             stockInicial
         );
+
+        // Establecer costo promedio si es mayor a 0
+        if (costoPromedio > 0)
+        {
+            ingrediente.ActualizarCostoPromedio(costoPromedio);
+        }
 
         DbContext.Ingredientes.Add(ingrediente);
         await GuardarCambiosConRetry(DbContext, "Ingrediente");

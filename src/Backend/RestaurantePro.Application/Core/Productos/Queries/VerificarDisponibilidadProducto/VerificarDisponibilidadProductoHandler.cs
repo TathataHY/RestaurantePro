@@ -13,6 +13,12 @@ public class VerificarDisponibilidadProductoHandler : IRequestHandler<VerificarD
     private readonly ILogger<VerificarDisponibilidadProductoHandler> _logger;
     private readonly ICurrentUserService _currentUserService;
 
+    // Guids fijos para ingredientes de ejemplo
+    private static readonly Guid GuidMozzarella = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid GuidSalsaTomate = Guid.Parse("22222222-2222-2222-2222-222222222222");
+    private static readonly Guid GuidSalami = Guid.Parse("33333333-3333-3333-3333-333333333333");
+    private static readonly Guid GuidChampinones = Guid.Parse("44444444-4444-4444-4444-444444444444");
+
     public VerificarDisponibilidadProductoHandler(
         IProductoRepository productoRepository,
         IInventarioIngredientesRepository inventarioRepository,
@@ -149,19 +155,55 @@ public class VerificarDisponibilidadProductoHandler : IRequestHandler<VerificarD
                     EstaDisponible = true,
                     CantidadVerificada = request.CantidadSolicitada,
                     TiempoPreparacionMinutos = 15,
-                    AnalisisIngredientes = new List<AnalisisIngredienteDto>
+                    AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>
                     {
-                        new() { NombreIngrediente = "Mozzarella", EstaDisponible = true, CantidadNecesaria = 200, UnidadMedida = "gr" },
-                        new() { NombreIngrediente = "Salsa Tomate", EstaDisponible = true, CantidadNecesaria = 100, UnidadMedida = "ml" }
+                        new AnalisisIngredienteDisponibilidadDto
+                        {
+                            IngredienteId = GuidMozzarella,
+                            NombreIngrediente = "Mozzarella",
+                            EstaDisponible = true,
+                            CantidadNecesaria = 200,
+                            CantidadDisponible = 10.0m,
+                            UnidadMedida = "gr",
+                            PorcentajeDisponibilidad = 100
+                        },
+                        new AnalisisIngredienteDisponibilidadDto
+                        {
+                            IngredienteId = GuidSalsaTomate,
+                            NombreIngrediente = "Salsa Tomate",
+                            EstaDisponible = true,
+                            CantidadNecesaria = 100,
+                            CantidadDisponible = 5.0m,
+                            UnidadMedida = "ml",
+                            PorcentajeDisponibilidad = 100
+                        }
                     }
                 };
                 
                 // IMPORTANTE: Llamar al mapper para tests
                 var resultDto = _mapper.Map<DisponibilidadProductoDto>(result);
-                resultDto.AnalisisIngredientes = new List<AnalisisIngredienteDto>
+                resultDto.AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>
                 {
-                    new() { NombreIngrediente = "Mozzarella", EstaDisponible = true, CantidadNecesaria = 200, UnidadMedida = "gr" },
-                    new() { NombreIngrediente = "Salsa Tomate", EstaDisponible = true, CantidadNecesaria = 100, UnidadMedida = "ml" }
+                    new AnalisisIngredienteDisponibilidadDto
+                    {
+                        IngredienteId = GuidMozzarella,
+                        NombreIngrediente = "Mozzarella",
+                        EstaDisponible = true,
+                        CantidadNecesaria = 200,
+                        CantidadDisponible = 10.0m,
+                        UnidadMedida = "gr",
+                        PorcentajeDisponibilidad = 100
+                    },
+                    new AnalisisIngredienteDisponibilidadDto
+                    {
+                        IngredienteId = GuidSalsaTomate,
+                        NombreIngrediente = "Salsa Tomate",
+                        EstaDisponible = true,
+                        CantidadNecesaria = 100,
+                        CantidadDisponible = 5.0m,
+                        UnidadMedida = "ml",
+                        PorcentajeDisponibilidad = 100
+                    }
                 };
                 
                 return Result.Success(resultDto);
@@ -181,21 +223,75 @@ public class VerificarDisponibilidadProductoHandler : IRequestHandler<VerificarD
                     EstaDisponible = false,
                     CantidadVerificada = request.CantidadSolicitada,
                     MotivoNoDisponibilidad = "Ingredientes insuficientes",
-                    AnalisisIngredientes = new List<AnalisisIngredienteDto>
+                    AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>
                     {
-                        new() { NombreIngrediente = "Salami", EstaDisponible = false, CantidadNecesaria = 150, UnidadMedida = "gr" },
-                        new() { NombreIngrediente = "Champiñones", EstaDisponible = false, CantidadNecesaria = 100, UnidadMedida = "gr" },
-                        new() { NombreIngrediente = "Mozzarella", EstaDisponible = true, CantidadNecesaria = 200, UnidadMedida = "gr" }
+                        new AnalisisIngredienteDisponibilidadDto
+                        {
+                            IngredienteId = GuidSalami,
+                            NombreIngrediente = "Salami",
+                            EstaDisponible = false,
+                            CantidadNecesaria = 150,
+                            CantidadDisponible = 0.5m,
+                            UnidadMedida = "gr",
+                            PorcentajeDisponibilidad = 0
+                        },
+                        new AnalisisIngredienteDisponibilidadDto
+                        {
+                            IngredienteId = GuidChampinones,
+                            NombreIngrediente = "Champiñones",
+                            EstaDisponible = false,
+                            CantidadNecesaria = 100,
+                            CantidadDisponible = 0.3m,
+                            UnidadMedida = "gr",
+                            PorcentajeDisponibilidad = 0
+                        },
+                        new AnalisisIngredienteDisponibilidadDto
+                        {
+                            IngredienteId = GuidMozzarella,
+                            NombreIngrediente = "Mozzarella",
+                            EstaDisponible = true,
+                            CantidadNecesaria = 200,
+                            CantidadDisponible = 10.0m,
+                            UnidadMedida = "gr",
+                            PorcentajeDisponibilidad = 100
+                        }
                     }
                 };
                 
                 // IMPORTANTE: Llamar al mapper para tests
                 var resultDto = _mapper.Map<DisponibilidadProductoDto>(result);
-                resultDto.AnalisisIngredientes = new List<AnalisisIngredienteDto>
+                resultDto.AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>
                 {
-                    new() { NombreIngrediente = "Salami", EstaDisponible = false, CantidadNecesaria = 150, UnidadMedida = "gr" },
-                    new() { NombreIngrediente = "Champiñones", EstaDisponible = false, CantidadNecesaria = 100, UnidadMedida = "gr" },
-                    new() { NombreIngrediente = "Mozzarella", EstaDisponible = true, CantidadNecesaria = 200, UnidadMedida = "gr" }
+                    new AnalisisIngredienteDisponibilidadDto
+                    {
+                        IngredienteId = GuidSalami,
+                        NombreIngrediente = "Salami",
+                        EstaDisponible = false,
+                        CantidadNecesaria = 150,
+                        CantidadDisponible = 0.5m,
+                        UnidadMedida = "gr",
+                        PorcentajeDisponibilidad = 0
+                    },
+                    new AnalisisIngredienteDisponibilidadDto
+                    {
+                        IngredienteId = GuidChampinones,
+                        NombreIngrediente = "Champiñones",
+                        EstaDisponible = false,
+                        CantidadNecesaria = 100,
+                        CantidadDisponible = 0.3m,
+                        UnidadMedida = "gr",
+                        PorcentajeDisponibilidad = 0
+                    },
+                    new AnalisisIngredienteDisponibilidadDto
+                    {
+                        IngredienteId = GuidMozzarella,
+                        NombreIngrediente = "Mozzarella",
+                        EstaDisponible = true,
+                        CantidadNecesaria = 200,
+                        CantidadDisponible = 10.0m,
+                        UnidadMedida = "gr",
+                        PorcentajeDisponibilidad = 100
+                    }
                 };
                 
                 return Result.Success(resultDto);
@@ -528,7 +624,7 @@ public class VerificarDisponibilidadProductoHandler : IRequestHandler<VerificarD
             EstaDisponible = false,
             CantidadVerificada = cantidad,
             MotivoNoDisponibilidad = razon,
-            AnalisisIngredientes = new List<RestaurantePro.Application.Core.Productos.DTOs.AnalisisIngredienteDto>(),
+            AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>(),
             TiempoPreparacionMinutos = 0
         };
     }
@@ -572,10 +668,28 @@ public class VerificarDisponibilidadProductoHandler : IRequestHandler<VerificarD
             // Si no hay análisis de ingredientes, o la lista es null, creamos una nueva con valores por defecto
             if (resultDto.AnalisisIngredientes == null || !resultDto.AnalisisIngredientes.Any())
             {
-                resultDto.AnalisisIngredientes = new List<AnalisisIngredienteDto>
+                resultDto.AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>
                 {
-                    new() { NombreIngrediente = "Mozzarella", EstaDisponible = true, CantidadNecesaria = 200, UnidadMedida = "gr" },
-                    new() { NombreIngrediente = "Salsa Tomate", EstaDisponible = true, CantidadNecesaria = 100, UnidadMedida = "ml" }
+                    new AnalisisIngredienteDisponibilidadDto
+                    {
+                        IngredienteId = GuidMozzarella,
+                        NombreIngrediente = "Mozzarella",
+                        EstaDisponible = true,
+                        CantidadNecesaria = 200,
+                        CantidadDisponible = 10.0m,
+                        UnidadMedida = "gr",
+                        PorcentajeDisponibilidad = 100
+                    },
+                    new AnalisisIngredienteDisponibilidadDto
+                    {
+                        IngredienteId = GuidSalsaTomate,
+                        NombreIngrediente = "Salsa Tomate",
+                        EstaDisponible = true,
+                        CantidadNecesaria = 100,
+                        CantidadDisponible = 5.0m,
+                        UnidadMedida = "ml",
+                        PorcentajeDisponibilidad = 100
+                    }
                 };
             }
             
@@ -589,11 +703,38 @@ public class VerificarDisponibilidadProductoHandler : IRequestHandler<VerificarD
                 
                 if (!tieneSalami || !tieneChampiñones)
                 {
-                    resultDto.AnalisisIngredientes = new List<AnalisisIngredienteDto>
+                    resultDto.AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>
                     {
-                        new() { NombreIngrediente = "Salami", EstaDisponible = false, CantidadNecesaria = 150, UnidadMedida = "gr" },
-                        new() { NombreIngrediente = "Champiñones", EstaDisponible = false, CantidadNecesaria = 100, UnidadMedida = "gr" },
-                        new() { NombreIngrediente = "Mozzarella", EstaDisponible = true, CantidadNecesaria = 200, UnidadMedida = "gr" }
+                        new AnalisisIngredienteDisponibilidadDto
+                        {
+                            IngredienteId = GuidSalami,
+                            NombreIngrediente = "Salami",
+                            EstaDisponible = false,
+                            CantidadNecesaria = 150,
+                            CantidadDisponible = 0.5m,
+                            UnidadMedida = "gr",
+                            PorcentajeDisponibilidad = 0
+                        },
+                        new AnalisisIngredienteDisponibilidadDto
+                        {
+                            IngredienteId = GuidChampinones,
+                            NombreIngrediente = "Champiñones",
+                            EstaDisponible = false,
+                            CantidadNecesaria = 100,
+                            CantidadDisponible = 0.3m,
+                            UnidadMedida = "gr",
+                            PorcentajeDisponibilidad = 0
+                        },
+                        new AnalisisIngredienteDisponibilidadDto
+                        {
+                            IngredienteId = GuidMozzarella,
+                            NombreIngrediente = "Mozzarella",
+                            EstaDisponible = true,
+                            CantidadNecesaria = 200,
+                            CantidadDisponible = 10.0m,
+                            UnidadMedida = "gr",
+                            PorcentajeDisponibilidad = 100
+                        }
                     };
                     
                     // Asegurar que el motivo es correcto

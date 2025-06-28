@@ -1,3 +1,8 @@
+using MediatR;
+using RestaurantePro.Application.Common.Behaviors;
+using RestaurantePro.Application.Inventario.Reportes.DTOs;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
+
 namespace RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnalisisInventario;
 
 /// <summary>
@@ -7,14 +12,29 @@ namespace RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnalisis
 public class ObtenerAnalisisInventarioQuery : IRequest<Result<AnalisisInventarioDto>>
 {
     /// <summary>
-    /// Fecha de inicio del período de análisis
+    /// Fecha desde para el análisis
     /// </summary>
-    public DateTime FechaInicio { get; set; }
-
+    public DateTime? FechaDesde { get; set; }
+    
     /// <summary>
-    /// Fecha de fin del período de análisis
+    /// Fecha hasta para el análisis
     /// </summary>
-    public DateTime FechaFin { get; set; }
+    public DateTime? FechaHasta { get; set; }
+    
+    /// <summary>
+    /// Categorías específicas a incluir en el análisis
+    /// </summary>
+    public List<string>? Categorias { get; set; }
+    
+    /// <summary>
+    /// Indica si incluir predicciones
+    /// </summary>
+    public bool IncluirPredicciones { get; set; } = true;
+    
+    /// <summary>
+    /// Indica si incluir análisis financiero
+    /// </summary>
+    public bool IncluirAnalisisFinanciero { get; set; } = true;
 
     /// <summary>
     /// ID de categoría específica (opcional)
@@ -34,7 +54,7 @@ public class ObtenerAnalisisInventarioQuery : IRequest<Result<AnalisisInventario
     /// <summary>
     /// Incluir análisis de tendencias
     /// </summary>
-    public bool IncluirTendencias { get; set; } = true;
+    public bool IncluirTendencias { get; set; }
 
     /// <summary>
     /// Incluir recomendaciones automáticas
@@ -63,8 +83,8 @@ public class ObtenerAnalisisInventarioQuery : IRequest<Result<AnalisisInventario
         
         return new ObtenerAnalisisInventarioQuery
         {
-            FechaInicio = fechaAnalisis,
-            FechaFin = fechaAnalisis,
+            FechaDesde = fechaAnalisis,
+            FechaHasta = fechaAnalisis,
             IncluirTendencias = true,
             IncluirRecomendaciones = incluirRecomendaciones,
             NivelDetalle = "Completo",
@@ -85,8 +105,8 @@ public class ObtenerAnalisisInventarioQuery : IRequest<Result<AnalisisInventario
 
         return new ObtenerAnalisisInventarioQuery
         {
-            FechaInicio = inicio,
-            FechaFin = fin,
+            FechaDesde = inicio,
+            FechaHasta = fin,
             IncluirTendencias = true,
             IncluirRecomendaciones = true,
             NivelDetalle = nivelDetalle,
@@ -104,8 +124,8 @@ public class ObtenerAnalisisInventarioQuery : IRequest<Result<AnalisisInventario
     {
         return new ObtenerAnalisisInventarioQuery
         {
-            FechaInicio = DateTime.Today.AddDays(-30),
-            FechaFin = DateTime.Today,
+            FechaDesde = DateTime.Today.AddDays(-30),
+            FechaHasta = DateTime.Today,
             CategoriaId = categoriaId,
             SoloCriticos = true,
             SoloAlertaStock = true,
@@ -455,4 +475,34 @@ public enum TipoAlertaInventario
     CostoElevado = 6,
     ConsumoAnormal = 7,
     DesviacionPrediccion = 8
+}
+
+public class AnalisisInventarioDto
+{
+    public DateTime FechaGeneracion { get; set; }
+    public DateTime? FechaInicio { get; set; }
+    public DateTime? FechaFin { get; set; }
+    public int TotalIngredientes { get; set; }
+    public decimal ValorTotalInventario { get; set; }
+    public decimal ValorPromedioPorIngrediente { get; set; }
+    public int IngredientesConMovimiento { get; set; }
+    public List<TendenciaInventarioDto>? Tendencias { get; set; }
+    public List<CategoriaAnalisisDto> AnalisisPorCategoria { get; set; } = new();
+}
+
+public class TendenciaInventarioDto
+{
+    public DateTime Fecha { get; set; }
+    public decimal ValorTotal { get; set; }
+    public int CantidadIngredientes { get; set; }
+}
+
+public class CategoriaAnalisisDto
+{
+    public string Categoria { get; set; } = string.Empty;
+    public int CantidadIngredientes { get; set; }
+    public decimal ValorTotal { get; set; }
+    public decimal PorcentajeDelTotal { get; set; }
+    public int StockBajo { get; set; }
+    public int StockCritico { get; set; }
 } 

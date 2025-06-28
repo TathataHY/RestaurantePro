@@ -171,7 +171,7 @@ public class VerificarDisponibilidadProductoHandlerTests
             EstaDisponible = true,
             CantidadVerificada = 2,
             TiempoPreparacionMinutos = 15,
-            AnalisisIngredientes = new List<AnalisisIngredienteDto>
+            AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>
             {
                 new() { NombreIngrediente = "Mozzarella", EstaDisponible = true, CantidadNecesaria = 200, UnidadMedida = "gr" },
                 new() { NombreIngrediente = "Salsa Tomate", EstaDisponible = true, CantidadNecesaria = 100, UnidadMedida = "ml" }
@@ -414,7 +414,7 @@ public class VerificarDisponibilidadProductoHandlerTests
             EstaDisponible = false,
             CantidadVerificada = 3,
             MotivoNoDisponibilidad = "Ingredientes insuficientes",
-            AnalisisIngredientes = new List<AnalisisIngredienteDto>
+            AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>
             {
                 new() { NombreIngrediente = "Salami", EstaDisponible = false, CantidadNecesaria = 150, UnidadMedida = "gr" },
                 new() { NombreIngrediente = "Champiñones", EstaDisponible = false, CantidadNecesaria = 100, UnidadMedida = "gr" },
@@ -644,7 +644,7 @@ public class VerificarDisponibilidadProductoHandlerTests
             CantidadDisponible = disponible ? cantidad : 0,
             MotivoNoDisponibilidad = disponible ? null : "Stock insuficiente",
             FechaVerificacion = DateTime.UtcNow,
-            AnalisisIngredientes = new List<AnalisisIngredienteDto>(),
+            AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>(),
             AlternativasDisponibles = new List<ProductoSummaryDto>()
         };
     }
@@ -657,7 +657,7 @@ public class VerificarDisponibilidadProductoHandlerTests
             EstaDisponible = disponible,
             CantidadVerificada = cantidad,
             TiempoPreparacionMinutos = 15,
-            AnalisisIngredientes = new List<AnalisisIngredienteDto>
+            AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>
             {
                 new() { NombreIngrediente = "Mozzarella", EstaDisponible = true, CantidadNecesaria = 200, UnidadMedida = "gr" },
                 new() { NombreIngrediente = "Salsa Tomate", EstaDisponible = true, CantidadNecesaria = 100, UnidadMedida = "ml" }
@@ -678,7 +678,7 @@ public class VerificarDisponibilidadProductoHandlerTests
                 new() { Id = Guid.NewGuid(), Nombre = "Pasta Bolognesa", Precio = 18.50m },
                 new() { Id = Guid.NewGuid(), Nombre = "Pasta Alfredo", Precio = 20.00m }
             },
-            AnalisisIngredientes = new List<AnalisisIngredienteDto>()
+            AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>()
         };
     }
 
@@ -692,7 +692,7 @@ public class VerificarDisponibilidadProductoHandlerTests
             CantidadVerificada = cantidad,
             TiempoPreparacionMinutos = 8,
             PrioridadPreparacion = 5,
-            AnalisisIngredientes = new List<AnalisisIngredienteDto>(),
+            AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>(),
             AlternativasDisponibles = new List<ProductoSummaryDto>()
         };
     }
@@ -705,7 +705,7 @@ public class VerificarDisponibilidadProductoHandlerTests
             EstaDisponible = disponible,
             CantidadVerificada = cantidad,
             MotivoNoDisponibilidad = "Ingredientes insuficientes",
-            AnalisisIngredientes = new List<AnalisisIngredienteDto>
+            AnalisisIngredientes = new List<AnalisisIngredienteDisponibilidadDto>
             {
                 new() { NombreIngrediente = "Salami", EstaDisponible = false, CantidadNecesaria = 150, UnidadMedida = "gr" },
                 new() { NombreIngrediente = "Champiñones", EstaDisponible = false, CantidadNecesaria = 100, UnidadMedida = "gr" },

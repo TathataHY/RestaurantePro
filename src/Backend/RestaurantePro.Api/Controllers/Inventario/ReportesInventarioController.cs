@@ -1,4 +1,17 @@
 using Microsoft.AspNetCore.Authorization;
+using MediatR;
+using RestaurantePro.Api.Common;
+using RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerReporteGeneral;
+using RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAlertasInventario;
+using RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnalisisInventario;
+using RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerRecomendacionesCompra;
+using RestaurantePro.Application.Inventario.Reportes.Commands.RealizarInventarioFisico;
+using RestaurantePro.Application.Inventario.Reportes.Queries.ExportarReporte;
+using RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerValorTotalInventario;
+using RestaurantePro.Application.Inventario.Reportes.Commands.ExportarInventario;
+using RestaurantePro.Application.Inventario.Reportes.DTOs;
+using AnalisisInventarioDto = RestaurantePro.Application.Inventario.Reportes.DTOs.AnalisisInventarioDto;
+using ReporteExportadoDto = RestaurantePro.Application.Inventario.Reportes.DTOs.ReporteExportadoDto;
 
 namespace RestaurantePro.Api.Controllers.Inventario;
 
@@ -12,165 +25,182 @@ namespace RestaurantePro.Api.Controllers.Inventario;
 public class ReportesInventarioController : ControllerBase
 {
     private readonly ILogger<ReportesInventarioController> _logger;
+    private readonly IMediator _mediator;
 
-    public ReportesInventarioController(ILogger<ReportesInventarioController> logger)
+    public ReportesInventarioController(
+        ILogger<ReportesInventarioController> logger,
+        IMediator mediator)
     {
         _logger = logger;
+        _mediator = mediator;
     }
 
     /// <summary>
-    /// Obtiene un reporte general del inventario con filtros opcionales
+    /// Obtiene el reporte general de inventario
     /// </summary>
-    /// <param name="categoria">Filtrar por categoría de ingrediente</param>
-    /// <param name="stockBajo">Filtrar solo ingredientes con stock bajo</param>
-    /// <param name="stockCritico">Filtrar solo ingredientes con stock crítico</param>
-    /// <returns>Reporte de inventario</returns>
     [HttpGet("general")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<ReporteGeneralInventarioDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> GetInventario(
+    public async Task<ActionResult<ApiResponse<ReporteGeneralInventarioDto>>> GetInventarioGeneral(
         [FromQuery] string? categoria = null,
-        [FromQuery] bool stockBajo = false,
-        [FromQuery] bool stockCritico = false)
+        [FromQuery] bool incluirDetalles = true)
     {
-        _logger.LogInformation("📦 GET /api/inventario/reportes/general - Categoria: {Categoria}, StockBajo: {StockBajo}, StockCritico: {StockCritico}", 
-            categoria, stockBajo, stockCritico);
+        _logger.LogInformation("📊 GET /api/inventario/reportes/general - Categoría: {Categoria}, IncluirDetalles: {IncluirDetalles}", 
+            categoria, incluirDetalles);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Este endpoint será implementado próximamente",
-            StatusCodes.Status501NotImplemented);
+        var query = new ObtenerReporteGeneralQuery
+        {
+            Categoria = categoria,
+            IncluirDetalles = incluirDetalles
+        };
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        var result = await _mediator.Send(query);
+        
+        if (result.Succeeded)
+        {
+            return Ok(ApiResponse<ReporteGeneralInventarioDto>.SuccessResponse(result.Value!, "Reporte general obtenido exitosamente"));
+        }
+
+        return BadRequest(ApiResponse<object>.ErrorResponse("Error al obtener reporte general", result.Error ?? "No se pudo generar el reporte"));
     }
 
     /// <summary>
-    /// Obtiene alertas de stock bajo y crítico
+    /// Obtiene alertas de inventario (stock bajo/crítico)
     /// </summary>
-    /// <param name="soloUrgentes">Filtrar solo alertas urgentes</param>
-    /// <returns>Lista de alertas de inventario</returns>
     [HttpGet("alertas")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<List<AlertaInventarioDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> GetAlertas([FromQuery] bool soloUrgentes = false)
+    public async Task<ActionResult<ApiResponse<List<AlertaInventarioDto>>>> GetAlertas(
+        [FromQuery] bool soloCriticas = false,
+        [FromQuery] string? categoria = null)
     {
-        _logger.LogInformation("🚨 GET /api/inventario/reportes/alertas - SoloUrgentes: {SoloUrgentes}", soloUrgentes);
-
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Este endpoint será implementado próximamente",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        _logger.LogInformation("🚨 GET /api/inventario/reportes/alertas - SoloCriticas: {SoloCriticas}, Categoria: {Categoria}", soloCriticas, categoria);
+        var query = new ObtenerAlertasInventarioQuery
+        {
+            SoloCriticas = soloCriticas,
+            Categoria = categoria
+        };
+        var result = await _mediator.Send(query);
+        if (result.Succeeded)
+            return Ok(ApiResponse<List<AlertaInventarioDto>>.SuccessResponse(result.Value!, "Alertas de inventario obtenidas exitosamente"));
+        return BadRequest(ApiResponse<object>.ErrorResponse(result.Error ?? "Error al obtener alertas", "No se pudieron obtener las alertas"));
     }
 
     /// <summary>
-    /// Obtiene análisis completo del inventario
+    /// Obtiene el análisis de inventario
     /// </summary>
-    /// <param name="fechaInicio">Fecha de inicio del análisis</param>
-    /// <param name="fechaFin">Fecha de fin del análisis</param>
-    /// <param name="incluirTendencias">Incluir análisis de tendencias</param>
-    /// <returns>Análisis completo del inventario</returns>
     [HttpGet("analisis")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<object>>> GetAnalisisInventario(
-        [FromQuery] DateTime? fechaInicio = null,
-        [FromQuery] DateTime? fechaFin = null,
-        [FromQuery] bool incluirTendencias = true)
+        [FromQuery] DateTime? fechaDesde = null,
+        [FromQuery] DateTime? fechaHasta = null,
+        [FromQuery] List<string>? categorias = null,
+        [FromQuery] Guid? usuarioId = null,
+        [FromQuery] string nivelDetalle = "Completo")
     {
-        _logger.LogInformation("📈 GET /api/inventario/reportes/analisis - Desde: {FechaInicio}, Hasta: {FechaFin}, Tendencias: {IncluirTendencias}", 
-            fechaInicio, fechaFin, incluirTendencias);
+        _logger.LogInformation("📈 GET /api/inventario/reportes/analisis - FechaDesde: {FechaDesde}, FechaHasta: {FechaHasta}", 
+            fechaDesde, fechaHasta);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Este endpoint será implementado próximamente",
-            StatusCodes.Status501NotImplemented);
+        var query = new ObtenerAnalisisInventarioQuery
+        {
+            FechaDesde = fechaDesde,
+            FechaHasta = fechaHasta,
+            Categorias = categorias,
+            UsuarioId = usuarioId ?? Guid.NewGuid(),
+            NivelDetalle = nivelDetalle
+        };
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        var result = await _mediator.Send(query);
+        
+        if (result.Succeeded)
+        {
+            return Ok(ApiResponse<object>.SuccessResponse(result.Value!, "Análisis de inventario obtenido exitosamente"));
+        }
+
+        return BadRequest(ApiResponse<object>.ErrorResponse("Error al obtener análisis de inventario", result.Error ?? "No se pudo generar el análisis"));
     }
 
     /// <summary>
     /// Obtiene recomendaciones de compra basadas en el inventario
     /// </summary>
-    /// <param name="diasProyeccion">Días de proyección para las recomendaciones</param>
-    /// <returns>Lista de recomendaciones de compra</returns>
     [HttpGet("recomendaciones-compra")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<List<RecomendacionCompraDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> GetRecomendacionesCompra([FromQuery] int diasProyeccion = 30)
+    public async Task<ActionResult<ApiResponse<List<RecomendacionCompraDto>>>> GetRecomendacionesCompra(
+        [FromQuery] int diasProyeccion = 30)
     {
         _logger.LogInformation("💡 GET /api/inventario/reportes/recomendaciones-compra - DiasProyeccion: {DiasProyeccion}", diasProyeccion);
-
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Este endpoint será implementado próximamente",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        var query = new ObtenerRecomendacionesCompraQuery
+        {
+            DiasProyeccion = diasProyeccion
+        };
+        var result = await _mediator.Send(query);
+        if (result.Succeeded)
+            return Ok(ApiResponse<List<RecomendacionCompraDto>>.SuccessResponse(result.Value!, "Recomendaciones de compra obtenidas exitosamente"));
+        return BadRequest(ApiResponse<object>.ErrorResponse(result.Error ?? "Error al obtener recomendaciones", "No se pudieron obtener las recomendaciones"));
     }
 
     /// <summary>
-    /// Realiza un inventario físico (conteo de stock)
+    /// Realiza un inventario físico
     /// </summary>
-    /// <param name="command">Datos del inventario físico</param>
-    /// <returns>Resultado del inventario físico con diferencias encontradas</returns>
     [HttpPost("inventario-fisico")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<ResultadoInventarioFisicoDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> RealizarInventarioFisico([FromBody] object command)
+    public async Task<ActionResult<ApiResponse<ResultadoInventarioFisicoDto>>> RealizarInventarioFisico([FromBody] RealizarInventarioFisicoCommand command)
     {
-        _logger.LogInformation("🔢 POST /api/inventario/reportes/inventario-fisico");
-
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Este endpoint será implementado próximamente",
-            StatusCodes.Status501NotImplemented);
-
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        _logger.LogInformation("📝 POST /api/inventario/reportes/inventario-fisico");
+        var result = await _mediator.Send(command);
+        if (result.Succeeded)
+            return Created(string.Empty, ApiResponse<ResultadoInventarioFisicoDto>.SuccessResponse(result.Value!, "Inventario físico realizado exitosamente"));
+        return BadRequest(ApiResponse<object>.ErrorResponse(result.Error ?? "Error al realizar inventario físico", "No se pudo realizar el inventario físico"));
     }
 
     /// <summary>
-    /// Exporta reporte de inventario en formato especificado
+    /// Exporta un reporte de inventario
     /// </summary>
-    /// <param name="formato">Formato del reporte (PDF, Excel, CSV)</param>
-    /// <param name="incluirMovimientos">Incluir historial de movimientos</param>
-    /// <returns>Archivo del reporte generado</returns>
     [HttpGet("exportar")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> ExportarReporte(
-        [FromQuery] string formato = "PDF",
-        [FromQuery] bool incluirMovimientos = false)
+    public async Task<ActionResult<ApiResponse<object>>> ExportarInventario(
+        [FromQuery] string formato = "PDF")
     {
-        _logger.LogInformation("📄 GET /api/inventario/reportes/exportar - Formato: {Formato}, IncluirMovimientos: {IncluirMovimientos}", 
-            formato, incluirMovimientos);
+        _logger.LogInformation("📤 GET /api/inventario/reportes/exportar - Formato: {Formato}", formato);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Este endpoint será implementado próximamente",
-            StatusCodes.Status501NotImplemented);
+        var query = new ExportarReporteQuery
+        {
+            Formato = formato
+        };
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        var result = await _mediator.Send(query);
+        
+        if (result.Succeeded)
+        {
+            return Ok(ApiResponse<object>.SuccessResponse(result.Value!, "Reporte exportado exitosamente"));
+        }
+
+        return BadRequest(ApiResponse<object>.ErrorResponse("Error al exportar reporte", result.Error ?? "No se pudo exportar el reporte"));
     }
 
     /// <summary>
     /// Obtiene el valor total del inventario
     /// </summary>
-    /// <param name="fecha">Fecha para calcular el valor (opcional, por defecto hoy)</param>
-    /// <returns>Valor total del inventario</returns>
     [HttpGet("valor-total")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status501NotImplemented)]
+    [ProducesResponseType(typeof(ApiResponse<ValorTotalInventarioDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> GetValorTotalInventario([FromQuery] DateTime? fecha = null)
+    public async Task<ActionResult<ApiResponse<ValorTotalInventarioDto>>> GetValorTotalInventario()
     {
-        _logger.LogInformation("💰 GET /api/inventario/reportes/valor-total - Fecha: {Fecha}", fecha);
+        _logger.LogInformation("💰 GET /api/inventario/reportes/valor-total");
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Este endpoint será implementado próximamente",
-            StatusCodes.Status501NotImplemented);
+        var query = new ObtenerValorTotalInventarioQuery();
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+        var result = await _mediator.Send(query);
+        
+        if (result.Succeeded)
+        {
+            return Ok(ApiResponse<ValorTotalInventarioDto>.SuccessResponse(result.Value!, "Valor total del inventario obtenido exitosamente"));
+        }
+
+        return BadRequest(ApiResponse<object>.ErrorResponse("Error al obtener valor total del inventario", result.Error ?? "No se pudo obtener el valor total"));
     }
 } 
