@@ -82,7 +82,7 @@ public class ObtenerProveedorPorIdHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Contain("No se encontró el proveedor");
+        result.Error.Should().Contain("no fue encontrado");
         result.Error.Should().Contain(query.ProveedorId.ToString());
 
         _mockRepository.Verify(r => r.ObtenerPorIdAsync(query.ProveedorId, true, true, CancellationToken.None), Times.Once);

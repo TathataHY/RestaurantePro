@@ -124,7 +124,7 @@ public class DesactivarProveedorValidatorTests
         result.IsValid.Should().BeFalse();
         result.Errors.Should().ContainSingle(e => 
             e.PropertyName == nameof(DesactivarProveedorCommand.Id) &&
-            e.ErrorMessage.Contains("El proveedor especificado no existe"));
+            e.ErrorMessage.Contains("El proveedor no fue encontrado"));
     }
 
     #endregion
