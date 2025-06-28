@@ -141,6 +141,8 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces
         /// <param name="incluirInactivos">Incluir proveedores inactivos</param>
         /// <param name="campoOrden">Campo para ordenar</param>
         /// <param name="ordenAscendente">Dirección del orden</param>
+        /// <param name="ciudad">Filtro por ciudad específica</param>
+        /// <param name="pais">Filtro por país específico</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de proveedores paginados</returns>
         Task<IEnumerable<Proveedor>> ObtenerProveedoresPaginadosAsync(
@@ -152,6 +154,8 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces
             bool incluirInactivos = false,
             string? campoOrden = null,
             bool ordenAscendente = true,
+            string? ciudad = null,
+            string? pais = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -161,6 +165,8 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces
         /// <param name="categoria">Categoría de proveedor</param>
         /// <param name="soloActivos">Incluir solo proveedores activos</param>
         /// <param name="incluirInactivos">Incluir proveedores inactivos</param>
+        /// <param name="ciudad">Filtro por ciudad específica</param>
+        /// <param name="pais">Filtro por país específico</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Total de proveedores que cumplen los criterios</returns>
         Task<int> ContarProveedoresAsync(
@@ -168,6 +174,8 @@ namespace RestaurantePro.Domain.Proveedores.Interfaces
             Enums.CategoriaProveedor? categoria = null,
             bool soloActivos = true,
             bool incluirInactivos = false,
+            string? ciudad = null,
+            string? pais = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>

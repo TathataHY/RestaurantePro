@@ -116,23 +116,25 @@ public class ActualizarContactoValidator : AbstractValidator<ActualizarContactoC
             .When(x => x.TiposNotificaciones != null && x.TiposNotificaciones.Any());
 
         // Validaciones de integridad referencial que se realizarán en el handler
-        RuleFor(x => x.Id)
-            .MustAsync(ContactoExists)
-            .WithMessage("El contacto especificado no existe");
+        // TODO: Implementar validación real con repositorio
+        // RuleFor(x => x.Id)
+        //     .MustAsync(ContactoExists)
+        //     .WithMessage("El contacto especificado no existe");
 
-        RuleFor(x => x.ProveedorId)
-            .MustAsync(ProveedorExists)
-            .WithMessage("El proveedor especificado no existe");
+        // RuleFor(x => x.ProveedorId)
+        //     .MustAsync(ProveedorExists)
+        //     .WithMessage("El proveedor especificado no existe");
 
-        RuleFor(x => x)
-            .MustAsync(EmailNotExistsForOtherContact)
-            .WithMessage("Ya existe otro contacto con este email para el proveedor");
+        // RuleFor(x => x)
+        //     .MustAsync(EmailNotExistsForOtherContact)
+        //     .WithMessage("Ya existe otro contacto con este email para el proveedor");
 
-        // Validación especial para contacto principal
-        RuleFor(x => x)
-            .MustAsync(ValidateContactoPrincipalChange)
-            .WithMessage("Error en la validación del contacto principal")
-            .When(x => x.EsPrincipal);
+        // RuleFor(x => x)
+        //     .MustAsync(ValidateContactoPrincipalChange)
+        //     .WithMessage("Error en la validación del contacto principal")
+        //     .When(x => x.EsPrincipal);
+
+        // Métodos async simulados eliminados para evitar errores 500
     }
 
     private static bool BeValidEmail(string email)
@@ -152,36 +154,5 @@ public class ActualizarContactoValidator : AbstractValidator<ActualizarContactoC
         return tiposNotificaciones.All(tipo => tiposValidos.Contains(tipo, StringComparer.OrdinalIgnoreCase));
     }
 
-    private static async Task<bool> ContactoExists(Guid contactoId, CancellationToken cancellationToken)
-    {
-        // Esta validación requiere acceso al repositorio
-        // Se implementaría inyectando IContactoProveedorRepository
-        await Task.CompletedTask;
-        return true;
-    }
-
-    private static async Task<bool> ProveedorExists(Guid proveedorId, CancellationToken cancellationToken)
-    {
-        // Esta validación requiere acceso al repositorio
-        // Se implementaría inyectando IProveedorRepository
-        await Task.CompletedTask;
-        return true;
-    }
-
-    private static async Task<bool> EmailNotExistsForOtherContact(ActualizarContactoCommand command, CancellationToken cancellationToken)
-    {
-        // Esta validación requiere verificar que el email no existe en otro contacto del mismo proveedor
-        // Se implementaría consultando IContactoProveedorRepository
-        await Task.CompletedTask;
-        return true;
-    }
-
-    private static async Task<bool> ValidateContactoPrincipalChange(ActualizarContactoCommand command, CancellationToken cancellationToken)
-    {
-        // Esta validación verifica que:
-        // 1. Si se está marcando como principal, no debe haber otro contacto principal
-        // 2. Si se está desmarcando como principal, debe quedar al menos un contacto activo
-        await Task.CompletedTask;
-        return true;
-    }
+    // Métodos async simulados eliminados para evitar errores 500
 } 

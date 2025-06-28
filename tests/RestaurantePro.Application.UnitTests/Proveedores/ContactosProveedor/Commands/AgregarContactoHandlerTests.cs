@@ -7,6 +7,7 @@ namespace RestaurantePro.Application.UnitTests.Proveedores.ContactosProveedor.Co
 public class AgregarContactoHandlerTests
 {
     private readonly Mock<IProveedorRepository> _mockRepository;
+    private readonly Mock<IContactoProveedorRepository> _mockContactoRepository;
     private readonly Mock<IMapper> _mockMapper;
     private readonly Mock<ILogger<AgregarContactoHandler>> _mockLogger;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
@@ -20,11 +21,13 @@ public class AgregarContactoHandlerTests
     public AgregarContactoHandlerTests()
     {
         _mockRepository = new Mock<IProveedorRepository>();
+        _mockContactoRepository = new Mock<IContactoProveedorRepository>();
         _mockMapper = new Mock<IMapper>();
         _mockLogger = new Mock<ILogger<AgregarContactoHandler>>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
         _handler = new AgregarContactoHandler(
             _mockRepository.Object, 
+            _mockContactoRepository.Object,
             _mockMapper.Object, 
             _mockLogger.Object,
             _mockCurrentUserService.Object);
@@ -55,11 +58,8 @@ public class AgregarContactoHandlerTests
         _mockRepository.Setup(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None))
                       .ReturnsAsync(_proveedorActivo);
 
-        _mockRepository.Setup(r => r.ActualizarAsync(_proveedorActivo, CancellationToken.None))
+        _mockContactoRepository.Setup(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None))
                       .Returns(Task.CompletedTask);
-
-        _mockRepository.Setup(r => r.GuardarCambiosAsync(CancellationToken.None))
-                      .ReturnsAsync(1);
 
         _mockMapper.Setup(m => m.Map<ContactoProveedorDto>(It.IsAny<ContactoProveedor>()))
                    .Returns(_contactoDto);
@@ -74,8 +74,7 @@ public class AgregarContactoHandlerTests
         result.Value.Should().Be(_contactoDto);
 
         _mockRepository.Verify(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None), Times.Once);
-        _mockRepository.Verify(r => r.ActualizarAsync(_proveedorActivo, CancellationToken.None), Times.Once);
-        _mockRepository.Verify(r => r.GuardarCambiosAsync(CancellationToken.None), Times.Once);
+        _mockContactoRepository.Verify(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None), Times.Once);
         _mockMapper.Verify(m => m.Map<ContactoProveedorDto>(It.IsAny<ContactoProveedor>()), Times.Once);
     }
 
@@ -97,7 +96,7 @@ public class AgregarContactoHandlerTests
         result.Error.Should().Contain("El proveedor especificado no existe");
 
         _mockRepository.Verify(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None), Times.Once);
-        _mockRepository.Verify(r => r.ActualizarAsync(It.IsAny<Domain.Proveedores.Entities.Proveedor>(), CancellationToken.None), Times.Never);
+        _mockContactoRepository.Verify(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None), Times.Never);
         _mockMapper.Verify(m => m.Map<ContactoProveedorDto>(It.IsAny<ContactoProveedor>()), Times.Never);
     }
 
@@ -129,7 +128,7 @@ public class AgregarContactoHandlerTests
         result.Error.Should().Contain("Ya existe un contacto con este email para el proveedor");
 
         _mockRepository.Verify(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None), Times.Once);
-        _mockRepository.Verify(r => r.ActualizarAsync(It.IsAny<Domain.Proveedores.Entities.Proveedor>(), CancellationToken.None), Times.Never);
+        _mockContactoRepository.Verify(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None), Times.Never);
     }
 
     [Fact]
@@ -151,7 +150,7 @@ public class AgregarContactoHandlerTests
         result.Error.Should().Contain("ha alcanzado el límite máximo de contactos (10)");
 
         _mockRepository.Verify(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None), Times.Once);
-        _mockRepository.Verify(r => r.ActualizarAsync(It.IsAny<Domain.Proveedores.Entities.Proveedor>(), CancellationToken.None), Times.Never);
+        _mockContactoRepository.Verify(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None), Times.Never);
     }
 
     [Fact]
@@ -180,7 +179,7 @@ public class AgregarContactoHandlerTests
         result.Error.Should().Contain("El nombre del contacto es obligatorio");
 
         _mockRepository.Verify(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None), Times.Once);
-        _mockRepository.Verify(r => r.ActualizarAsync(It.IsAny<Domain.Proveedores.Entities.Proveedor>(), CancellationToken.None), Times.Never);
+        _mockContactoRepository.Verify(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None), Times.Never);
     }
 
     [Fact]
@@ -209,7 +208,7 @@ public class AgregarContactoHandlerTests
         result.Error.Should().Contain("El email del contacto es obligatorio");
 
         _mockRepository.Verify(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None), Times.Once);
-        _mockRepository.Verify(r => r.ActualizarAsync(It.IsAny<Domain.Proveedores.Entities.Proveedor>(), CancellationToken.None), Times.Never);
+        _mockContactoRepository.Verify(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None), Times.Never);
     }
 
     [Fact]
@@ -315,7 +314,7 @@ public class AgregarContactoHandlerTests
         result.Error.Should().Contain("Error interno del servidor al crear el contacto");
 
         _mockRepository.Verify(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None), Times.Once);
-        _mockRepository.Verify(r => r.ActualizarAsync(It.IsAny<Domain.Proveedores.Entities.Proveedor>(), CancellationToken.None), Times.Never);
+        _mockContactoRepository.Verify(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None), Times.Never);
     }
 
     [Fact]
@@ -323,12 +322,12 @@ public class AgregarContactoHandlerTests
     {
         // Arrange
         var command = _commandValido;
-        var exception = new Exception("Error al actualizar en base de datos");
+        var exception = new Exception("Error al agregar contacto en base de datos");
         
         _mockRepository.Setup(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None))
                       .ReturnsAsync(_proveedorActivo);
 
-        _mockRepository.Setup(r => r.ActualizarAsync(_proveedorActivo, CancellationToken.None))
+        _mockContactoRepository.Setup(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None))
                       .ThrowsAsync(exception);
 
         // Act
@@ -340,7 +339,7 @@ public class AgregarContactoHandlerTests
         result.Error.Should().Contain("Error interno del servidor al crear el contacto");
 
         _mockRepository.Verify(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None), Times.Once);
-        _mockRepository.Verify(r => r.ActualizarAsync(_proveedorActivo, CancellationToken.None), Times.Once);
+        _mockContactoRepository.Verify(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None), Times.Once);
     }
 
     [Fact]
@@ -353,10 +352,7 @@ public class AgregarContactoHandlerTests
         _mockRepository.Setup(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None))
                       .ReturnsAsync(_proveedorActivo);
 
-        _mockRepository.Setup(r => r.ActualizarAsync(_proveedorActivo, CancellationToken.None))
-                      .Returns(Task.CompletedTask);
-
-        _mockRepository.Setup(r => r.GuardarCambiosAsync(CancellationToken.None))
+        _mockContactoRepository.Setup(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None))
                       .ThrowsAsync(exception);
 
         // Act
@@ -367,8 +363,8 @@ public class AgregarContactoHandlerTests
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Contain("Error interno del servidor al crear el contacto");
 
-        _mockRepository.Verify(r => r.ActualizarAsync(_proveedorActivo, CancellationToken.None), Times.Once);
-        _mockRepository.Verify(r => r.GuardarCambiosAsync(CancellationToken.None), Times.Once);
+        _mockRepository.Verify(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None), Times.Once);
+        _mockContactoRepository.Verify(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None), Times.Once);
     }
 
     [Fact]
@@ -380,11 +376,8 @@ public class AgregarContactoHandlerTests
         _mockRepository.Setup(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None))
                       .ReturnsAsync(_proveedorActivo);
 
-        _mockRepository.Setup(r => r.ActualizarAsync(_proveedorActivo, CancellationToken.None))
+        _mockContactoRepository.Setup(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None))
                       .Returns(Task.CompletedTask);
-
-        _mockRepository.Setup(r => r.GuardarCambiosAsync(CancellationToken.None))
-                      .ReturnsAsync(1);
 
         _mockMapper.Setup(m => m.Map<ContactoProveedorDto>(It.IsAny<ContactoProveedor>()))
                    .Returns(_contactoDto);
@@ -531,11 +524,8 @@ public class AgregarContactoHandlerTests
         _mockRepository.Setup(r => r.ObtenerPorIdAsync(command.ProveedorId, true, true, CancellationToken.None))
                       .ReturnsAsync(_proveedorActivo);
 
-        _mockRepository.Setup(r => r.ActualizarAsync(_proveedorActivo, CancellationToken.None))
+        _mockContactoRepository.Setup(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None))
                       .Returns(Task.CompletedTask);
-
-        _mockRepository.Setup(r => r.GuardarCambiosAsync(CancellationToken.None))
-                      .ReturnsAsync(1);
 
         _mockMapper.Setup(m => m.Map<ContactoProveedorDto>(It.IsAny<ContactoProveedor>()))
                    .Returns(_contactoDto);
@@ -548,8 +538,7 @@ public class AgregarContactoHandlerTests
         result.Succeeded.Should().BeTrue();
         result.Value.Should().Be(_contactoDto);
 
-        _mockRepository.Verify(r => r.ActualizarAsync(_proveedorActivo, CancellationToken.None), Times.Once);
-        _mockRepository.Verify(r => r.GuardarCambiosAsync(CancellationToken.None), Times.Once);
+        _mockContactoRepository.Verify(r => r.AgregarAsync(It.IsAny<ContactoProveedor>(), CancellationToken.None), Times.Once);
     }
 
     #region Helper Methods

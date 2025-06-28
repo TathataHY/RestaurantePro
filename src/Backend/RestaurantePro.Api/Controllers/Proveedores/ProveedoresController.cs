@@ -166,14 +166,17 @@ public class ProveedoresController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<ProveedorDto>>> CrearProveedor([FromBody] CrearProveedorCommand command)
     {
-        _logger.LogInformation("➕ POST /api/proveedores - Creando nuevo proveedor: {Nombre}", command.Nombre);
+        _logger.LogInformation("[TRACE] POST /api/proveedores - Payload recibido: {@Request}", command);
+        _logger.LogInformation("➕ POST /api/proveedores - Creando nuevo proveedor: {Nombre}", command?.Nombre ?? "NULL");
 
         try
         {
             // Asignar usuario actual
             command.UsuarioId = GetCurrentUserId();
 
+            _logger.LogInformation("[DEBUG] Enviando comando al mediator: {@Command}", command);
             var result = await _mediator.Send(command);
+            _logger.LogInformation("[DEBUG] Resultado del mediator: Success={Success}, Error={Error}", result.Succeeded, result.Error);
 
             if (result.Succeeded)
             {
@@ -184,20 +187,17 @@ public class ProveedoresController : ControllerBase
                     ApiResponse<ProveedorDto>.SuccessResponse(result.Value, "Proveedor creado exitosamente"));
             }
 
-            _logger.LogWarning("Error al crear proveedor {Nombre}: {Error}", command.Nombre, result.Error);
-            return BadRequest(ApiResponse<object>.ErrorResponse(
-                new List<string> { result.Error ?? "Error desconocido" },
-                "Error al crear proveedor"));
+            var error = result.Error ?? "Error desconocido";
+            _logger.LogWarning("[DEBUG] Resultado fallido: {Error}", error);
+            if (error.Contains("no fue encontrado") || error.Contains("no existe"))
+                return NotFound(ApiResponse<object>.ErrorResponse(new List<string> { error }, "Error al crear proveedor"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(new List<string> { error }, "Error al crear proveedor"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error inesperado al crear proveedor {Nombre}", command.Nombre);
-            // Incluir el mensaje real de la excepción en entorno de desarrollo
-            var errorMsg = $"{ex.Message}" + (ex.InnerException != null ? $" | Inner: {ex.InnerException.Message}" : "");
-            return StatusCode(StatusCodes.Status500InternalServerError,
-                ApiResponse<object>.ErrorResponse(
-                    new List<string> { errorMsg },
-                    "Error inesperado al crear proveedor"));
+            _logger.LogError(ex, "[ERROR] Excepción inesperada al crear proveedor. Tipo: {ExceptionType}, Mensaje: {Message}. Payload: {@Request}", 
+                ex.GetType().Name, ex.Message, command);
+            return StatusCode(StatusCodes.Status500InternalServerError, ApiResponse<object>.ErrorResponse(new List<string> { ex.Message }, "Error inesperado al crear proveedor"));
         }
     }
 
@@ -265,10 +265,14 @@ public class ProveedoresController : ControllerBase
 
         try
         {
+            var motivo = request?.RazonDesactivacion;
+            if (string.IsNullOrWhiteSpace(motivo) || motivo.Trim().Length < 5)
+                motivo = "Desactivación manual API";
+
             var command = new DesactivarProveedorCommand
             {
                 Id = id,
-                RazonDesactivacion = request?.RazonDesactivacion ?? "Desactivación manual"
+                RazonDesactivacion = motivo
             };
 
             var result = await _mediator.Send(command);
@@ -623,7 +627,7 @@ public class ProveedoresController : ControllerBase
             var command = new DesactivarProveedorCommand
             {
                 Id = id,
-                RazonDesactivacion = request.RazonDesactivacion ?? "Desactivación manual"
+                RazonDesactivacion = request.RazonDesactivacion ?? "Desactivación manual API"
             };
 
             var result = await _mediator.Send(command);

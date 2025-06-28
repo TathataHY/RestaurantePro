@@ -247,6 +247,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores
             bool incluirInactivos = false,
             string? campoOrden = null,
             bool ordenAscendente = true,
+            string? ciudad = null,
+            string? pais = null,
             CancellationToken cancellationToken = default)
         {
             var query = _dbSet.AsQueryable();
@@ -265,6 +267,18 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores
             if (categoria.HasValue)
             {
                 query = query.Where(p => p.Categorias.Any(c => c.Categoria == categoria));
+            }
+
+            // Filtro por ciudad
+            if (!string.IsNullOrWhiteSpace(ciudad))
+            {
+                query = query.Where(p => p.Ciudad == ciudad);
+            }
+
+            // Filtro por país
+            if (!string.IsNullOrWhiteSpace(pais))
+            {
+                query = query.Where(p => p.Pais == pais);
             }
 
             // Filtro por estado
@@ -320,6 +334,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores
             CategoriaProveedor? categoria = null,
             bool soloActivos = true,
             bool incluirInactivos = false,
+            string? ciudad = null,
+            string? pais = null,
             CancellationToken cancellationToken = default)
         {
             var query = _dbSet.AsQueryable();
@@ -338,6 +354,18 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Proveedores
             if (categoria.HasValue)
             {
                 query = query.Where(p => p.Categorias.Any(c => c.Categoria == categoria));
+            }
+
+            // Filtro por ciudad
+            if (!string.IsNullOrWhiteSpace(ciudad))
+            {
+                query = query.Where(p => p.Ciudad == ciudad);
+            }
+
+            // Filtro por país
+            if (!string.IsNullOrWhiteSpace(pais))
+            {
+                query = query.Where(p => p.Pais == pais);
             }
 
             // Filtro por estado

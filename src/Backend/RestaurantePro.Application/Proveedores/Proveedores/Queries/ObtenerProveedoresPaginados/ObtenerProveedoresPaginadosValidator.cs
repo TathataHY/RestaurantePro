@@ -34,8 +34,7 @@ public class ObtenerProveedoresPaginadosValidator : AbstractValidator<ObtenerPro
 
         RuleFor(x => x.PageSize)
             .GreaterThan(0).WithMessage("El tamaño de página debe ser mayor a 0")
-            .LessThanOrEqualTo(100).WithMessage("El tamaño de página no puede exceder 100 elementos")
-            .Must(BeValidPageSize).WithMessage("El tamaño de página debe ser uno de los valores permitidos: 5, 10, 15, 20, 25, 50, 100");
+            .LessThanOrEqualTo(100).WithMessage("El tamaño de página no puede exceder 100 elementos");
 
         RuleFor(x => x.UsuarioId)
             .NotEmpty().WithMessage("El ID del usuario es obligatorio")

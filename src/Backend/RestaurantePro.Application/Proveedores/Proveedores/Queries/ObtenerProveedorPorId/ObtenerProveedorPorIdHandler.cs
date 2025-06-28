@@ -47,7 +47,7 @@ public class ObtenerProveedorPorIdHandler : IRequestHandler<ObtenerProveedorPorI
             if (proveedor == null)
             {
                 _logger.LogWarning("🚫 Proveedor no encontrado: {ProveedorId}", request.ProveedorId);
-                return Result.Failure<ProveedorDto>($"No se encontró el proveedor con ID {request.ProveedorId}");
+                return Result.Failure<ProveedorDto>($"El proveedor con ID {request.ProveedorId} no fue encontrado");
             }
 
             // 4. Verificar si el proveedor está activo (opcional según reglas de negocio)

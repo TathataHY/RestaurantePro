@@ -35,6 +35,17 @@ namespace RestaurantePro.Api.Extensions
             services.Configure<ApiBehaviorOptions>(options =>
             {
                 options.SuppressModelStateInvalidFilter = true;
+                options.InvalidModelStateResponseFactory = context =>
+                {
+                    var errors = context.ModelState
+                        .Where(e => e.Value.Errors.Count > 0)
+                        .SelectMany(e => e.Value.Errors)
+                        .Select(e => e.ErrorMessage)
+                        .ToList();
+
+                    var response = ApiResponse<object>.ErrorResponse(errors, "Error de binding o validación", 400);
+                    return new BadRequestObjectResult(response);
+                };
             });
 
             // Configurar CORS

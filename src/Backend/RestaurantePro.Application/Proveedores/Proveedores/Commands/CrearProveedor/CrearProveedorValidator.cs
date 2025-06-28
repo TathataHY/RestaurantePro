@@ -35,8 +35,7 @@ public class CrearProveedorValidator : AbstractValidator<CrearProveedorCommand>
             .When(x => !string.IsNullOrWhiteSpace(x.NombreContacto));
 
         RuleFor(x => x.UsuarioId)
-            .NotEqual(Guid.Empty).WithMessage("El ID del usuario no puede ser un GUID vacío")
-            .When(x => x.UsuarioId != Guid.Empty);
+            .NotEqual(Guid.Empty).WithMessage("El ID del usuario no puede ser un GUID vacío");
     }
 
     /// <summary>

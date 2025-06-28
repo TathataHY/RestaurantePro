@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Common.Exceptions;
 
@@ -16,11 +17,13 @@ namespace RestaurantePro.Api.Filters
     public class ApiExceptionFilterAttribute : ExceptionFilterAttribute
     {
         private readonly ILogger<ApiExceptionFilterAttribute> _logger;
+        private readonly IHostEnvironment _environment;
         private readonly Dictionary<Type, Action<ExceptionContext>> _exceptionHandlers;
 
-        public ApiExceptionFilterAttribute(ILogger<ApiExceptionFilterAttribute> logger)
+        public ApiExceptionFilterAttribute(ILogger<ApiExceptionFilterAttribute> logger, IHostEnvironment environment)
         {
             _logger = logger;
+            _environment = environment;
             _exceptionHandlers = new Dictionary<Type, Action<ExceptionContext>>
             {
                 { typeof(RestaurantePro.Application.Common.Exceptions.ValidationException), HandleValidationException },
@@ -39,8 +42,15 @@ namespace RestaurantePro.Api.Filters
         private void HandleException(ExceptionContext context)
         {
             var type = context.Exception.GetType();
+            
+            _logger.LogInformation("🔍 FILTRO - Excepción capturada: {ExceptionType} - {Message}", 
+                type.Name, context.Exception.Message);
+            _logger.LogInformation("🔍 FILTRO - Entorno: {Environment}", _environment.EnvironmentName);
+            _logger.LogInformation("🔍 FILTRO - ¿Es desarrollo? {IsDevelopment}", _environment.IsDevelopment());
+            
             if (_exceptionHandlers.ContainsKey(type))
             {
+                _logger.LogInformation("🔍 FILTRO - Usando handler específico para {ExceptionType}", type.Name);
                 _exceptionHandlers[type].Invoke(context);
                 return;
             }
@@ -48,6 +58,7 @@ namespace RestaurantePro.Api.Filters
             // Siempre verificar el ModelState, incluso cuando no hay excepciones
             if (!context.ModelState.IsValid)
             {
+                _logger.LogInformation("🔍 FILTRO - ModelState inválido, usando HandleInvalidModelStateException");
                 HandleInvalidModelStateException(context);
                 return;
             }
@@ -55,8 +66,26 @@ namespace RestaurantePro.Api.Filters
             // Manejar excepciones no mapeadas
             _logger.LogError(context.Exception, "Excepción no manejada: {Message}", context.Exception.Message);
             
+            // En desarrollo, incluir detalles de la excepción
+            List<string> errorMessages;
+            if (_environment.IsDevelopment())
+            {
+                _logger.LogInformation("🔍 FILTRO - Entorno de desarrollo detectado, incluyendo detalles de excepción");
+                errorMessages = new List<string>
+                {
+                    $"Error: {context.Exception.Message}",
+                    $"Tipo: {context.Exception.GetType().Name}",
+                    $"Stack Trace: {context.Exception.StackTrace}"
+                };
+            }
+            else
+            {
+                _logger.LogInformation("🔍 FILTRO - Entorno de producción, usando mensaje genérico");
+                errorMessages = new List<string> { "Error interno del servidor" };
+            }
+
             var response = ApiResponse<object>.ErrorResponse(
-                new List<string> { "Error interno del servidor" },
+                errorMessages,
                 "Error interno del servidor",
                 StatusCodes.Status500InternalServerError);
 
@@ -65,6 +94,8 @@ namespace RestaurantePro.Api.Filters
                 StatusCode = StatusCodes.Status500InternalServerError
             };
             context.ExceptionHandled = true;
+            
+            _logger.LogInformation("🔍 FILTRO - Respuesta configurada con {ErrorCount} errores", errorMessages.Count);
         }
 
         private void HandleValidationException(ExceptionContext context)

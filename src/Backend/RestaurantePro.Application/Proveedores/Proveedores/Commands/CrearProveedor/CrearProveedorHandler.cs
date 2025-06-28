@@ -25,6 +25,23 @@ public class CrearProveedorHandler : IRequestHandler<CrearProveedorCommand, Resu
     /// </summary>
     public async Task<Result<ProveedorDto>> Handle(CrearProveedorCommand request, CancellationToken cancellationToken)
     {
+        // Validación explícita de request null o datos incompletos
+        if (request == null)
+        {
+            _logger.LogWarning("❌ Request de creación de proveedor es null");
+            return Result.Failure<ProveedorDto>("Faltan campos obligatorios o hay datos inválidos. Verifique nombre, email y teléfono.");
+        }
+
+        // Validación de campos obligatorios antes de cualquier procesamiento
+        if (string.IsNullOrWhiteSpace(request.Nombre) || 
+            string.IsNullOrWhiteSpace(request.Email) || 
+            string.IsNullOrWhiteSpace(request.Telefono))
+        {
+            _logger.LogWarning("❌ Datos obligatorios faltantes: Nombre={Nombre}, Email={Email}, Telefono={Telefono}", 
+                request.Nombre, request.Email, request.Telefono);
+            return Result.Failure<ProveedorDto>("Faltan campos obligatorios o hay datos inválidos. Verifique nombre, email y teléfono.");
+        }
+
         _logger.LogInformation("🚀 Iniciando creación de proveedor: {Nombre}", request.Nombre);
 
         try
@@ -74,6 +91,11 @@ public class CrearProveedorHandler : IRequestHandler<CrearProveedorCommand, Resu
         {
             _logger.LogError(ex, "Error de validación al crear proveedor: {Errores}", string.Join("; ", ex.Errors.Select(e => e.ErrorMessage)));
             return Result.Failure<ProveedorDto>($"Validación fallida: {string.Join("; ", ex.Errors.Select(e => e.ErrorMessage))}");
+        }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning("⚠️ Datos obligatorios faltantes o inválidos: {Error}", ex.Message);
+            return Result.Failure<ProveedorDto>("Faltan campos obligatorios o hay datos inválidos. Verifique nombre, email y teléfono.");
         }
         catch (Exception ex)
         {

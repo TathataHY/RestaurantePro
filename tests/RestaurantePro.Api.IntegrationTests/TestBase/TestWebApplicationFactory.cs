@@ -54,6 +54,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
 using Microsoft.EntityFrameworkCore.Metadata;
 using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
+using RestaurantePro.Infrastructure.DependencyInjection;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -88,7 +89,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         // 🔧 CONFIGURAR MODO TESTING PARA EVITAR CONFLICTOS DE BD
         Environment.SetEnvironmentVariable("TESTING_MODE", "true");
         
-        builder.UseEnvironment("Testing");
+        builder.UseEnvironment("Development");
         
         builder.ConfigureAppConfiguration((context, config) =>
         {
@@ -110,8 +111,11 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         });
 
         // 🔧 CONFIGURACIÓN SIMPLIFICADA PARA TESTS
-        builder.ConfigureServices(services =>
+        builder.ConfigureServices((context, services) =>
         {
+            // Obtener la configuración del contexto
+            var configuration = context.Configuration;
+            
             // 🔧 INICIALIZACIÓN ROBUSTA DE LA BASE DE DATOS SQLITE CON MEJORAS
             lock (_lock)
             {
@@ -131,7 +135,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 // 🔧 CREAR ESQUEMA UNA SOLA VEZ CON MIGRACIONES
                 if (!_databaseInitialized)
                 {
-                    using var context = new RestauranteProDbContext(
+                    using var dbContext = new RestauranteProDbContext(
                         new DbContextOptionsBuilder<RestauranteProDbContext>()
                             .UseSqlite(_connection)
                             .EnableSensitiveDataLogging(false) // Deshabilitar en tests para mejor rendimiento
@@ -144,9 +148,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     try
                     {
                         // Aplicar migraciones para crear todas las tablas con sus configuraciones completas
-                        context.Database.Migrate();
+                        dbContext.Database.Migrate();
                         // Verificar que las tablas principales existen
-                        var tables = context.Database.SqlQueryRaw<string>(
+                        var tables = dbContext.Database.SqlQueryRaw<string>(
                             "SELECT name FROM sqlite_master WHERE type='table'").ToList();
                         // Verificar que las tablas críticas existen
                         var criticalTables = new[] { "Usuarios", "Productos", "Clientes", "Mesas", "Comandas", "Facturas", "OrdenesCompra" };
@@ -160,8 +164,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     catch (Exception ex)
                     {
                         // Fallback: recrear la base de datos con migraciones
-                        context.Database.EnsureDeleted();
-                        context.Database.EnsureCreated();
+                        dbContext.Database.EnsureDeleted();
+                        dbContext.Database.EnsureCreated();
                         _databaseInitialized = true;
                     }
                 }
@@ -186,46 +190,22 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<DbContext>(provider => 
                 provider.GetRequiredService<RestauranteProDbContext>());
 
-            // 🔧 REGISTRAR REPOSITORIOS CON SQLITE
-            services.AddScoped<IProductoRepository, ProductoRepository>();
-            services.AddScoped<IProductoCategoriaRepository, ProductoCategoriaRepository>();
-            services.AddScoped<IClienteRepository, ClienteRepository>();
-            services.AddScoped<IComandaRepository, ComandaRepository>();
-            services.AddScoped<IMesaRepository, MesaRepository>();
-            services.AddScoped<IIngredienteRepository, IngredienteRepository>();
-            services.AddScoped<IProveedorRepository, ProveedorRepository>();
-            services.AddScoped<IReservacionRepository, ReservacionRepository>();
-            services.AddScoped<IPreparacionRepository, PreparacionRepository>();
-            services.AddScoped<IOrdenCompraRepository, OrdenCompraRepository>();
-            services.AddScoped<IFacturaRepository, FacturaRepository>();
-            services.AddScoped<ITarjetaFidelizacionRepository, TarjetaFidelizacionRepository>();
-            services.AddScoped<IHistorialPuntosRepository, HistorialPuntosRepository>();
-            services.AddScoped<IMovimientoInventarioRepository, MovimientoInventarioRepository>();
-            services.AddScoped<INotificacionRepository, NotificacionRepository>();
-            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
-            services.AddScoped<IPromocionRepository, PromocionRepository>();
-
-            // 🔧 REGISTRAR SERVICIOS DE DOMINIO
-            services.AddScoped<IDomainEventDispatcher, TestDomainEventDispatcher>();
-
-            // 🔧 REGISTRAR SERVICIOS DE INFRAESTRUCTURA
-            services.AddScoped<IEmailService, TestEmailService>();
-            services.AddScoped<ICommunicationService, CommunicationService>();
-            services.AddHttpContextAccessor();
-            services.AddScoped<ICurrentUserService, TestCurrentUserService>();
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
-            
-            // 🔧 REGISTRAR SERVICIOS DE NOTIFICACIÓN
-            services.AddScoped<INotificationService, TestNotificationService>();
+            // REGISTRO GLOBAL DE INFRAESTRUCTURA PARA TESTS
+            services.AddInfrastructureServices(configuration, isTestEnvironment: true);
 
             // 🔧 CONFIGURAR AUTENTICACIÓN PARA TESTS
-            services.AddAuthentication("Test")
-                .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>("Test", options => { });
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = "Test";
+                options.DefaultChallengeScheme = "Test";
+            })
+            .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>("Test", options => { });
 
             services.AddAuthorization(options =>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
+                    .AddAuthenticationSchemes("Test")
                     .Build();
             });
 
@@ -235,7 +215,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 builder.ClearProviders();
                 builder.AddConsole();
                 builder.SetMinimumLevel(LogLevel.Critical); // Solo errores críticos
-                
                 // Configurar filtros específicos para tests
                 builder.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Critical);
                 builder.AddFilter("Microsoft.EntityFrameworkCore.Database.Connection", LogLevel.Critical);

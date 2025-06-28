@@ -56,10 +56,8 @@ public class ObtenerProveedoresPaginadosHandler : IRequestHandler<ObtenerProveed
             }
 
             // Validar lógica de activos/inactivos
-            if (!request.SoloActivos)
-            {
-                return Result.Failure<PaginatedList<ProveedorDto>>("Debe incluir al menos proveedores activos o inactivos");
-            }
+            // Eliminar la restricción que bloquea la consulta si SoloActivos es false
+            // Permitir paginar tanto activos como inactivos según los parámetros recibidos
 
             _logger.LogDebug("🔧 Aplicando filtros de búsqueda");
 
@@ -81,6 +79,8 @@ public class ObtenerProveedoresPaginadosHandler : IRequestHandler<ObtenerProveed
                 false, // incluirInactivos
                 request.CampoOrden,
                 request.DireccionOrden.Equals("asc", StringComparison.OrdinalIgnoreCase),
+                request.Ciudad,
+                request.Pais,
                 cancellationToken);
 
             // Obtener total de elementos
@@ -89,6 +89,8 @@ public class ObtenerProveedoresPaginadosHandler : IRequestHandler<ObtenerProveed
                 categoria,
                 request.SoloActivos,
                 false, // incluirInactivos
+                request.Ciudad,
+                request.Pais,
                 cancellationToken);
 
             // Mapear a DTOs

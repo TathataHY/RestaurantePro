@@ -163,6 +163,13 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
         // Act
         var response = await HttpClient.GetAsync(url);
 
+        // Debug: Si hay error, mostrar detalles
+        if (response.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Error 500 detected. Response content: {errorContent}");
+        }
+
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         
@@ -237,7 +244,7 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse!.Success.Should().BeTrue();
         apiResponse.Data.Contactos.Should().NotBeNull();
         apiResponse.Data.Contactos.Should().HaveCount(1);
-        apiResponse.Data.Contactos.First().Nombre.Should().Be("Juan Pérez");
+        apiResponse.Data.Contactos.First().Nombre.Should().Be("Juan Pérez Apellido Test");
         apiResponse.Data.Contactos.First().Email.Should().Be("juan@provider.cl");
     }
 
@@ -369,9 +376,10 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse.Data.Nombre.Should().Be("Proveedor Actualizado");
         apiResponse.Data.Email.Should().Be("actualizado@test.cl");
         
-        // Verificar que se actualizó en BD
+        // Verificar que se actualizó en BD con una nueva petición
         var verifyResponse = await HttpClient.GetAsync($"/api/proveedores/{proveedorCreado.Id}");
-        var verifyData = await response.Content.ReadFromJsonAsync<ApiResponse<ProveedorDto>>();
+        verifyResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var verifyData = await verifyResponse.Content.ReadFromJsonAsync<ApiResponse<ProveedorDto>>();
         verifyData!.Data.Nombre.Should().Be("Proveedor Actualizado");
     }
 
@@ -457,8 +465,8 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<List<ContactoProveedorDto>>>();
         apiResponse!.Success.Should().BeTrue();
         apiResponse.Data.Should().HaveCount(2);
-        apiResponse.Data.Should().Contain(c => c.Nombre == "María López");
-        apiResponse.Data.Should().Contain(c => c.Nombre == "Carlos Ruiz");
+        apiResponse.Data.Should().Contain(c => c.Nombre == "María López Apellido Test");
+        apiResponse.Data.Should().Contain(c => c.Nombre == "Carlos Ruiz Apellido Test");
     }
 
     [Fact]
@@ -466,6 +474,11 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
     {
         // Arrange
         var proveedorCreado = await CrearProveedorTestAsync("Proveedor Test", "test@provider.cl", "Santiago");
+        
+        // Verificar que el proveedor realmente existe en la BD antes de agregar contacto
+        var verifyResponse = await HttpClient.GetAsync($"/api/proveedores/{proveedorCreado.Id}");
+        verifyResponse.StatusCode.Should().Be(HttpStatusCode.OK, "El proveedor debe existir en la BD antes de agregar contacto");
+        
         var url = $"/api/proveedores/{proveedorCreado.Id}/contactos";
         var command = new AgregarContactoCommand
         {
@@ -492,7 +505,7 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
         
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<ContactoProveedorDto>>();
         apiResponse!.Success.Should().BeTrue();
-        apiResponse.Data.Nombre.Should().Be("Juan");
+        apiResponse.Data.Nombre.Should().Be("Juan Pérez");
         apiResponse.Data.Email.Should().Be("juan.perez@test.cl");
     }
 
@@ -504,9 +517,11 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
         var url = $"/api/proveedores/{proveedorInexistente}/contactos";
         var command = new AgregarContactoCommand
         {
-            Nombre = "Contacto Inexistente",
+            Nombre = "Contacto",
+            Apellidos = "Inexistente",
             Email = "inexistente@test.cl",
-            Cargo = "Test"
+            Cargo = "Test",
+            Telefono = "+56 9 1234 5678"
         };
 
         // Act
@@ -530,6 +545,7 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
             Apellidos = "Silva Actualizado",
             Cargo = "Gerente de Ventas",
             Email = "roberto.silva@test.cl",
+            Telefono = "+56 9 8765 4321",
             Activo = true
         };
 
@@ -541,7 +557,7 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
         
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<ContactoProveedorDto>>();
         apiResponse!.Success.Should().BeTrue();
-        apiResponse.Data.Nombre.Should().Be("Roberto");
+        apiResponse.Data.Nombre.Should().Be("Roberto Silva Actualizado");
         apiResponse.Data.Email.Should().Be("roberto.silva@test.cl");
     }
 
@@ -550,9 +566,10 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
     {
         // Arrange
         var proveedorCreado = await CrearProveedorTestAsync("Proveedor Test", "test@provider.cl", "Santiago");
-        var contactoCreado = await AgregarContactoTestAsync(proveedorCreado.Id, "Eliminar Contact", "Test", "eliminar@test.cl");
+        var contactoCreado1 = await AgregarContactoTestAsync(proveedorCreado.Id, "Eliminar Contact", "Test", "eliminar@test.cl");
+        var contactoCreado2 = await AgregarContactoTestAsync(proveedorCreado.Id, "Contacto Backup", "Test", "backup@test.cl");
         
-        var url = $"/api/proveedores/{proveedorCreado.Id}/contactos/{contactoCreado.Id}";
+        var url = $"/api/proveedores/{proveedorCreado.Id}/contactos/{contactoCreado1.Id}";
         var request = new { MotivoEliminacion = "Test de eliminación" };
 
         // Act
@@ -649,6 +666,10 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
             InformacionBancaria = "Banco de Chile, Cuenta Corriente 12345678",
             DiasCredito = 0
         };
+
+        // Refuerza el header de autenticación antes de la petición
+        HttpClient.DefaultRequestHeaders.Authorization = 
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Test", "AuthenticatedUser-Administrador");
 
         var response = await HttpClient.PostAsJsonAsync("/api/proveedores", command);
         

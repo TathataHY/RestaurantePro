@@ -12,7 +12,7 @@ public class DesactivarProveedorValidator : AbstractValidator<DesactivarProveedo
             .NotEmpty()
             .WithMessage("ID del proveedor es obligatorio")
             .MustAsync(ProveedorDebeExistir)
-            .WithMessage("El proveedor especificado no existe")
+            .WithMessage("El proveedor especificado no fue encontrado")
             .MustAsync(ProveedorNoDebeEstarDesactivado)
             .WithMessage("El proveedor ya está desactivado")
             .MustAsync(ProveedorNoDebeTenerOrdenesActivas)

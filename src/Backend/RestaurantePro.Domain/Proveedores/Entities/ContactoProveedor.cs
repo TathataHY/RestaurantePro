@@ -57,7 +57,17 @@ namespace RestaurantePro.Domain.Proveedores.Entities
                 throw new ArgumentException("El cargo del contacto no puede estar vacío", nameof(cargo));
                 
             var emailVO = Email.Create(email);
-            var telefonoVO = telefono != null ? PhoneNumber.Create(telefono) : null;
+            PhoneNumber? telefonoVO = null;
+            
+            // Usar TryCreate para evitar excepciones con teléfonos inválidos
+            if (!string.IsNullOrWhiteSpace(telefono))
+            {
+                if (!PhoneNumber.TryCreate(telefono, out var phoneNumber))
+                {
+                    throw new ArgumentException($"El formato del teléfono '{telefono}' no es válido", nameof(telefono));
+                }
+                telefonoVO = phoneNumber;
+            }
                 
             var contacto = new ContactoProveedor
             {

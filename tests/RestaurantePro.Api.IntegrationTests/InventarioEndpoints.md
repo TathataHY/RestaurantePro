@@ -26,7 +26,7 @@ Este es el **mapa completo** de todos los endpoints que debe tener nuestra API R
 | **🛒 Comercial** | 5 | 5 (100%) | 0 (0%) | 5 | 0 |
 | **🔧 Operaciones** | 5 | 4 (80%) | 1 (20%) | 4 | 1 |
 | **📦 Inventario** | 4 | 3 (75%) | 1 (25%) | 3 | 1 |
-| **🤝 Proveedores** | 3 | 0 (0%) | 3 (100%) | 0 | 3 |
+| **🤝 Proveedores** | 3 | 1 (33%) | 2 (67%) | 1 | 2 |
 
 ---
 
@@ -132,47 +132,15 @@ Estos controladores tienen **CQRS completo** (Commands/Queries/Handlers) y **tes
 - **Endpoints**: 8/8 implementados
 - **Estado**: 🟢 **PRODUCCIÓN READY**
 
----
+### 🤝 **CONTEXTO PROVEEDORES** (1/3 completos)
 
-## ⚠️ **CONTROLADORES ESQUELETO (SIN IMPLEMENTAR)** (5/21)
-
-Estos controladores **NO tienen CQRS** y solo retornan `HTTP 501 Not Implemented`:
-
-### 🍽️ **CONTEXTO CORE** (1/4 esqueleto)
-
-#### ⚠️ **RecetasController** - `/api/core/recetas`
-- **CQRS**: ❌ **NO implementado** (no inyecta IMediator)
-- **Tests**: 🟡 **Básicos** (solo verifican HTTP 501)
-- **Endpoints**: 9/9 endpoints definidos pero sin lógica
-- **Estado**: 🔴 **ESQUELETO** - Solo responde HTTP 501
-- **Prioridad**: 🔥 **ALTA** (Core del negocio)
-
-### 🔧 **CONTEXTO OPERACIONES** (1/5 esqueleto)
-
-#### ⚠️ **ReportesController** - `/api/operaciones/reportes`
-- **CQRS**: ❌ **NO implementado** (no inyecta IMediator)
-- **Tests**: 🟡 **Básicos** (solo verifican HTTP 501)
-- **Endpoints**: 11/11 endpoints definidos pero sin lógica
-- **Estado**: 🔴 **ESQUELETO** - Solo responde HTTP 501
-- **Prioridad**: 🟡 **MEDIA** (Reportes operacionales)
-
-### 📦 **CONTEXTO INVENTARIO** (1/4 esqueleto)
-
-#### ⚠️ **ReportesInventarioController** - `/api/inventario/reportes`
-- **CQRS**: ❌ **NO implementado** (no inyecta IMediator)
-- **Tests**: 🟡 **Básicos** (solo verifican HTTP 501)
-- **Endpoints**: 7/7 endpoints definidos pero sin lógica
-- **Estado**: 🔴 **ESQUELETO** - Solo responde HTTP 501
-- **Prioridad**: 🟡 **MEDIA** (Reportes de inventario)
+#### ✅ **ProveedoresController** - `/api/proveedores`
+- **CQRS**: ✅ Completo (IMediator + Commands/Queries)
+- **Tests**: 🧪 Completos (22 tests reales de BD)
+- **Endpoints**: 13/13 implementados
+- **Estado**: 🟢 **PRODUCCIÓN READY**
 
 ### 🤝 **CONTEXTO PROVEEDORES** (2/3 esqueletos)
-
-#### ⚠️ **ProveedoresController** - `/api/proveedores`
-- **CQRS**: ✅ **IMPLEMENTADO** (IMediator + Commands/Queries)
-- **Tests**: 🧪 **COMPLETOS** (22 tests reales de BD - detectan errores funcionales)
-- **Endpoints**: 13/13 endpoints con lógica CQRS
-- **Estado**: 🟡 **ERRORES FUNCIONALES** - Compila pero falla tests reales
-- **Prioridad**: 🔥 **CRÍTICA** - Necesita debugging de errores 500/404
 
 #### ⚠️ **ContactosProveedorController** - `/api/proveedores/contactos`
 - **CQRS**: ❌ **NO implementado** (no inyecta IMediator)
@@ -193,8 +161,8 @@ Estos controladores **NO tienen CQRS** y solo retornan `HTTP 501 Not Implemented
 ## 🎯 **PLAN DE IMPLEMENTACIÓN RECOMENDADO**
 
 ### **🔥 Prioridad ALTA** (Implementar primero)
-1. **ProveedoresController** - Crítico para gestión de proveedores
-2. **RecetasController** - Core del negocio gastronómico
+1. **RecetasController** - Core del negocio gastronómico
+2. **ProveedoresController** - Crítico para gestión de proveedores
 
 ### **🟡 Prioridad MEDIA** (Implementar después)
 3. **ReportesController** (Operaciones) - Reportes operacionales
@@ -261,19 +229,19 @@ public async Task Get_DebeRetornarDatosReales()
 ## 📊 **Métricas de Calidad**
 
 ### **Cobertura de Endpoints**
-- **✅ Implementados**: 15/21 controladores (71.4%)
-- **⚠️ Pendientes**: 6/21 controladores (28.6%)
+- **✅ Implementados**: 16/21 controladores (76.2%)
+- **⚠️ Pendientes**: 5/21 controladores (23.8%)
 
 ### **Calidad de Tests**
-- **🧪 Tests Reales**: 15/21 controladores (71.4%)
-- **🟡 Tests Básicos**: 6/21 controladores (28.6%)
+- **🧪 Tests Reales**: 16/21 controladores (76.2%)
+- **🟡 Tests Básicos**: 5/21 controladores (23.8%)
 
 ### **Estado por Funcionalidad**
 - **🟢 Core Business Logic**: 75% implementado
 - **🟢 Gestión Comercial**: 100% implementado
 - **🟢 Operaciones**: 80% implementado  
 - **🟢 Inventario**: 75% implementado
-- **🔴 Proveedores**: 0% implementado
+- **🔴 Proveedores**: 33% implementado
 
 ---
 

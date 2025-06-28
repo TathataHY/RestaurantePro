@@ -72,7 +72,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     protected virtual void ConfigurarAutenticacionPorDefecto()
     {
         HttpClient.DefaultRequestHeaders.Authorization = 
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Test", "AuthenticatedUser");
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Test", "AuthenticatedUser-Administrador");
     }
 
     /// <summary>

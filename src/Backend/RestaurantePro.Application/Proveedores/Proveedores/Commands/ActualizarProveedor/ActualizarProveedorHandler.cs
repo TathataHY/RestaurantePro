@@ -46,15 +46,23 @@ public class ActualizarProveedorHandler : IRequestHandler<ActualizarProveedorCom
             }
             */
 
-            // Actualizar propiedades básicas del proveedor
-            // TODO: Implementar métodos de actualización específicos en el dominio
-            // Por ahora solo actualizamos campos básicos que estén disponibles
+            // Actualizar propiedades básicas del proveedor usando el método del dominio
             _logger.LogInformation("Actualizando proveedor {ProveedorId} con nuevos datos", request.Id);
             
-            // TODO: Usar métodos específicos del dominio cuando estén implementados:
-            // proveedorExistente.ActualizarNombre(request.Nombre);
-            // proveedorExistente.ActualizarEmail(request.Email);
-            // etc.
+            // Usar el método del dominio para actualizar toda la información
+            proveedorExistente.ActualizarInformacion(
+                nombre: request.Nombre,
+                nombreContacto: request.Nombre, // Usar el nombre como contacto principal
+                email: request.Email,
+                telefono: request.Telefono,
+                direccion: request.Direccion ?? string.Empty,
+                ciudad: string.Empty, // No disponible en el comando
+                codigoPostal: string.Empty, // No disponible en el comando
+                pais: string.Empty, // No disponible en el comando
+                rfc: string.Empty, // No disponible en el comando
+                informacionBancaria: string.Empty, // No disponible en el comando
+                diasCredito: 0 // No disponible en el comando
+            );
 
             // TODO: Establecer auditoría cuando exista el método
             // proveedorExistente.EstablecerModificadoPor(_currentUserService.UserId ?? "Sistema");

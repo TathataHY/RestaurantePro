@@ -35,11 +35,35 @@ namespace RestaurantePro.Application.Common.Behaviors
                         _logger.LogWarning("   - {PropertyName}: {ErrorMessage}", failure.PropertyName, failure.ErrorMessage);
                     }
                     
-                    throw new RestaurantePro.Application.Common.Exceptions.ValidationException(failures);
+                    var errorMessages = failures.Select(f => f.ErrorMessage).ToList();
+                    var errorMessage = string.Join("; ", errorMessages);
+                    
+                    var failureResult = CreateFailureResult<TResponse>(errorMessage);
+                    return failureResult;
                 }
             }
 
             return await next();
+        }
+
+        /// <summary>
+        /// Crea un Result.Failure del tipo correcto usando reflexión
+        /// </summary>
+        private static TResponse CreateFailureResult<TResponse>(string errorMessage)
+        {
+            if (typeof(TResponse).IsGenericType && typeof(TResponse).GetGenericTypeDefinition() == typeof(Result<>))
+            {
+                var genericType = typeof(TResponse).GetGenericArguments()[0];
+                var resultType = typeof(Result);
+                var failureMethod = resultType.GetMethods()
+                    .FirstOrDefault(m => m.Name == "Failure" && m.IsGenericMethod && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(string));
+                if (failureMethod != null)
+                {
+                    var genericFailure = failureMethod.MakeGenericMethod(genericType);
+                    return (TResponse)genericFailure.Invoke(null, new object[] { errorMessage })!;
+                }
+            }
+            throw new RestaurantePro.Application.Common.Exceptions.ValidationException(errorMessage, "Validation", errorMessage);
         }
     }
 } 

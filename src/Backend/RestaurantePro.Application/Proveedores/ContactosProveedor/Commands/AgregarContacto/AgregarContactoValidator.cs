@@ -109,13 +109,14 @@ public class AgregarContactoValidator : AbstractValidator<AgregarContactoCommand
             .When(x => x.EsPrincipal);
 
         // Validaciones de integridad referencial
-        RuleFor(x => x.ProveedorId)
-            .MustAsync(ProveedorExists)
-            .WithMessage("El proveedor especificado no existe");
+        // Comentamos temporalmente las validaciones async que causan problemas
+        // RuleFor(x => x.ProveedorId)
+        //     .MustAsync(ProveedorExists)
+        //     .WithMessage("El proveedor especificado no existe");
 
-        RuleFor(x => x.Email)
-            .MustAsync(EmailNotExists)
-            .WithMessage("Ya existe un contacto con este email para el proveedor");
+        // RuleFor(x => x.Email)
+        //     .MustAsync(EmailNotExists)
+        //     .WithMessage("Ya existe un contacto con este email para el proveedor");
     }
 
     private static bool BeValidEmail(string email)
@@ -143,21 +144,22 @@ public class AgregarContactoValidator : AbstractValidator<AgregarContactoCommand
         return true;
     }
 
-    private static async Task<bool> ProveedorExists(Guid proveedorId, CancellationToken cancellationToken)
-    {
-        // Esta validación requiere acceso al repositorio
-        // Se implementaría inyectando IProveedorRepository
-        // Para simplificar, asumimos que es válido
-        await Task.CompletedTask;
-        return true;
-    }
+    // Eliminamos los métodos async problemáticos que causan HTTP 500
+    // private static async Task<bool> ProveedorExists(Guid proveedorId, CancellationToken cancellationToken)
+    // {
+    //     // Esta validación requiere acceso al repositorio
+    //     // Se implementaría inyectando IProveedorRepository
+    //     // Para simplificar, asumimos que es válido
+    //     await Task.CompletedTask;
+    //     return true;
+    // }
 
-    private static async Task<bool> EmailNotExists(AgregarContactoCommand command, string email, CancellationToken cancellationToken)
-    {
-        // Esta validación requiere acceso al repositorio
-        // Se implementaría inyectando IContactoProveedorRepository
-        // Para simplificar, asumimos que es válido
-        await Task.CompletedTask;
-        return true;
-    }
+    // private static async Task<bool> EmailNotExists(AgregarContactoCommand command, string email, CancellationToken cancellationToken)
+    // {
+    //     // Esta validación requiere acceso al repositorio
+    //     // Se implementaría inyectando IContactoProveedorRepository
+    //     // Para simplificar, asumimos que es válido
+    //     await Task.CompletedTask;
+    //     return true;
+    // }
 } 

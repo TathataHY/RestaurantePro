@@ -1,3 +1,7 @@
+using RestaurantePro.Domain.Proveedores.Entities;
+using RestaurantePro.Domain.Proveedores.Interfaces;
+using RestaurantePro.Domain.Proveedores.Results;
+
 namespace RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.AgregarContacto;
 
 /// <summary>
@@ -7,17 +11,20 @@ namespace RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.Agr
 public class AgregarContactoHandler : IRequestHandler<AgregarContactoCommand, Result<ContactoProveedorDto>>
 {
     private readonly IProveedorRepository _proveedorRepository;
+    private readonly IContactoProveedorRepository _contactoRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<AgregarContactoHandler> _logger;
     private readonly ICurrentUserService _currentUser;
 
     public AgregarContactoHandler(
         IProveedorRepository proveedorRepository,
+        IContactoProveedorRepository contactoRepository,
         IMapper mapper,
         ILogger<AgregarContactoHandler> logger,
         ICurrentUserService currentUser)
     {
         _proveedorRepository = proveedorRepository;
+        _contactoRepository = contactoRepository;
         _mapper = mapper;
         _logger = logger;
         _currentUser = currentUser;
@@ -27,6 +34,10 @@ public class AgregarContactoHandler : IRequestHandler<AgregarContactoCommand, Re
     {
         _logger.LogInformation("Iniciando creación de contacto para proveedor {ProveedorId}: {Nombre} {Apellidos}", 
             request.ProveedorId, request.Nombre, request.Apellidos);
+
+        // Log detallado de los datos recibidos para debugging
+        _logger.LogDebug("Datos del contacto: ProveedorId={ProveedorId}, Nombre={Nombre}, Apellidos={Apellidos}, Email={Email}, Telefono={Telefono}", 
+            request.ProveedorId, request.Nombre, request.Apellidos, request.Email, request.Telefono);
 
         try
         {
@@ -68,9 +79,8 @@ public class AgregarContactoHandler : IRequestHandler<AgregarContactoCommand, Re
                 request.EsPrincipal,
                 request.Notas);
 
-            // 6. Guardar cambios
-            await _proveedorRepository.ActualizarAsync(proveedor);
-            await _proveedorRepository.GuardarCambiosAsync(cancellationToken);
+            // 6. Agregar directamente el contacto usando el repositorio
+            await _contactoRepository.AgregarAsync(contacto, cancellationToken);
 
             _logger.LogInformation("Contacto creado exitosamente: {ContactoId} para proveedor {ProveedorId}", 
                 contacto.Id, request.ProveedorId);
@@ -79,12 +89,24 @@ public class AgregarContactoHandler : IRequestHandler<AgregarContactoCommand, Re
             var contactoDto = _mapper.Map<ContactoProveedorDto>(contacto);
             return Result.Success<ContactoProveedorDto>(contactoDto);
         }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Error de validación de argumentos al crear contacto para proveedor {ProveedorId}: {Mensaje}", request.ProveedorId, ex.Message);
+            return Result.Failure<ContactoProveedorDto>($"Datos inválidos: {ex.Message}");
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Error de operación de dominio al crear contacto para proveedor {ProveedorId}: {Mensaje}", request.ProveedorId, ex.Message);
+            return Result.Failure<ContactoProveedorDto>($"Operación inválida: {ex.Message}");
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error inesperado al crear contacto para proveedor {ProveedorId}: {Mensaje}", request.ProveedorId, ex.Message);
-            // Si hay variable de entorno ASPNETCORE_ENVIRONMENT=Development, mostrar el mensaje real
             var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            var errorMsg = env == "Development" ? $"{ex.GetType().Name}: {ex.Message}" : "Error interno del servidor al crear el contacto";
+            var errorMsg = env == "Development"
+                ? $"{ex.GetType().Name}: {ex.Message}\nStackTrace: {ex.StackTrace}"
+                : "Error interno del servidor al crear el contacto";
+            _logger.LogError(ex, "[DEBUG] Error inesperado al crear contacto para proveedor {ProveedorId}. Tipo: {TipoExcepcion}, Mensaje: {Mensaje}, StackTrace: {StackTrace}", 
+                request.ProveedorId, ex.GetType().Name, ex.Message, ex.StackTrace);
             return Result.Failure<ContactoProveedorDto>(errorMsg);
         }
     }
