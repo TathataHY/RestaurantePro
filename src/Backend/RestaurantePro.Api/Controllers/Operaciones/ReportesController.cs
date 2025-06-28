@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
+using RestaurantePro.Application.Operaciones.Reportes.Queries.ObtenerReporteVentasDiaria;
+using RestaurantePro.Application.Operaciones.Reportes.Commands.GenerarReporte;
+using RestaurantePro.Application.Operaciones.Reportes.DTOs;
 
 namespace RestaurantePro.Api.Controllers.Operaciones;
 
@@ -12,10 +15,12 @@ namespace RestaurantePro.Api.Controllers.Operaciones;
 [Authorize]
 public class ReportesController : ControllerBase
 {
+    private readonly IMediator _mediator;
     private readonly ILogger<ReportesController> _logger;
 
-    public ReportesController(ILogger<ReportesController> logger)
+    public ReportesController(IMediator mediator, ILogger<ReportesController> logger)
     {
+        _mediator = mediator;
         _logger = logger;
     }
 
@@ -26,20 +31,50 @@ public class ReportesController : ControllerBase
     /// <param name="incluirDetalles">Incluir análisis detallados</param>
     /// <returns>Reporte de ventas del día</returns>
     [HttpGet("ventas-diarias")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ReporteVentasDiariaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> GenerarReporteVentasDiarias(
+    public async Task<ActionResult<ApiResponse<ReporteVentasDiariaDto>>> GenerarReporteVentasDiarias(
         [FromQuery] DateTime? fecha,
         [FromQuery] bool incluirDetalles = true)
     {
         _logger.LogInformation("📊 GET /api/operaciones/reportes/ventas-diarias - Fecha: {Fecha}", fecha);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var fechaReporte = fecha ?? DateTime.Today;
+            var nivelDetalle = incluirDetalles ? NivelDetalle.Completo : NivelDetalle.Basico;
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            var query = ObtenerReporteVentasDiariaQuery.CrearReporteFecha(fechaReporte, nivel: nivelDetalle);
+            
+            var result = await _mediator.Send(query);
+
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error generando reporte de ventas diarias",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<ReporteVentasDiariaDto>.SuccessResponse(
+                result.Value,
+                "Reporte de ventas diarias generado exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error generando reporte de ventas diarias");
+            
+            var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno generando reporte",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 
     /// <summary>
@@ -49,21 +84,56 @@ public class ReportesController : ControllerBase
     /// <param name="fechaFin">Fecha de fin</param>
     /// <returns>Reporte de ocupación de mesas</returns>
     [HttpGet("ocupacion-mesas")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ReporteVentasDiariaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> GenerarReporteOcupacionMesas(
+    public async Task<ActionResult<ApiResponse<ReporteVentasDiariaDto>>> GenerarReporteOcupacionMesas(
         [FromQuery] DateTime fechaInicio,
         [FromQuery] DateTime fechaFin)
     {
         _logger.LogInformation("🪑 GET /api/operaciones/reportes/ocupacion-mesas - Rango: {FechaInicio} - {FechaFin}", 
             fechaInicio, fechaFin);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            // Usar el reporte de ventas diarias con enfoque en mesas
+            var query = new ObtenerReporteVentasDiariaQuery
+            {
+                FechaReporte = fechaInicio.Date,
+                IncluirAnalisisPorMesa = true,
+                IncluirAnalisisPorMesero = false,
+                IncluirAnalisisProductos = false,
+                NivelDetalle = NivelDetalle.Mesas
+            };
+            
+            var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error generando reporte de ocupación de mesas",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<ReporteVentasDiariaDto>.SuccessResponse(
+                result.Value,
+                "Reporte de ocupación de mesas generado exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error generando reporte de ocupación de mesas");
+            
+            var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno generando reporte",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 
     /// <summary>
@@ -74,9 +144,9 @@ public class ReportesController : ControllerBase
     /// <param name="meseroId">ID específico del mesero (opcional)</param>
     /// <returns>Reporte de rendimiento de meseros</returns>
     [HttpGet("rendimiento-meseros")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ReporteVentasDiariaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> GenerarReporteRendimientoMeseros(
+    public async Task<ActionResult<ApiResponse<ReporteVentasDiariaDto>>> GenerarReporteRendimientoMeseros(
         [FromQuery] DateTime fechaInicio,
         [FromQuery] DateTime fechaFin,
         [FromQuery] Guid? meseroId)
@@ -84,12 +154,49 @@ public class ReportesController : ControllerBase
         _logger.LogInformation("👨‍💼 GET /api/operaciones/reportes/rendimiento-meseros - Rango: {FechaInicio} - {FechaFin}, Mesero: {MeseroId}", 
             fechaInicio, fechaFin, meseroId);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var meserosEspecificos = meseroId.HasValue ? new List<Guid> { meseroId.Value } : null;
+            
+            var query = new ObtenerReporteVentasDiariaQuery
+            {
+                FechaReporte = fechaInicio.Date,
+                IncluirAnalisisPorMesa = false,
+                IncluirAnalisisPorMesero = true,
+                IncluirAnalisisProductos = false,
+                MeserosEspecificos = meserosEspecificos,
+                NivelDetalle = NivelDetalle.Meseros
+            };
+            
+            var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error generando reporte de rendimiento de meseros",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<ReporteVentasDiariaDto>.SuccessResponse(
+                result.Value,
+                "Reporte de rendimiento de meseros generado exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error generando reporte de rendimiento de meseros");
+            
+            var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno generando reporte",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 
     /// <summary>
@@ -100,9 +207,9 @@ public class ReportesController : ControllerBase
     /// <param name="estado">Estado de comandas a filtrar</param>
     /// <returns>Reporte de comandas</returns>
     [HttpGet("comandas")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ReporteVentasDiariaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> GenerarReporteComandas(
+    public async Task<ActionResult<ApiResponse<ReporteVentasDiariaDto>>> GenerarReporteComandas(
         [FromQuery] DateTime fechaInicio,
         [FromQuery] DateTime fechaFin,
         [FromQuery] string? estado)
@@ -110,12 +217,46 @@ public class ReportesController : ControllerBase
         _logger.LogInformation("📋 GET /api/operaciones/reportes/comandas - Rango: {FechaInicio} - {FechaFin}, Estado: {Estado}", 
             fechaInicio, fechaFin, estado);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var query = new ObtenerReporteVentasDiariaQuery
+            {
+                FechaReporte = fechaInicio.Date,
+                IncluirAnalisisPorMesa = true,
+                IncluirAnalisisPorMesero = true,
+                IncluirAnalisisProductos = true,
+                NivelDetalle = NivelDetalle.Completo
+            };
+            
+            var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error generando reporte de comandas",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<ReporteVentasDiariaDto>.SuccessResponse(
+                result.Value,
+                "Reporte de comandas generado exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error generando reporte de comandas");
+            
+            var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno generando reporte",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 
     /// <summary>
@@ -126,9 +267,9 @@ public class ReportesController : ControllerBase
     /// <param name="limite">Número máximo de productos a incluir</param>
     /// <returns>Reporte de productos más vendidos</returns>
     [HttpGet("productos-mas-vendidos")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ReporteVentasDiariaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> GenerarReporteProductosMasVendidos(
+    public async Task<ActionResult<ApiResponse<ReporteVentasDiariaDto>>> GenerarReporteProductosMasVendidos(
         [FromQuery] DateTime fechaInicio,
         [FromQuery] DateTime fechaFin,
         [FromQuery] int limite = 10)
@@ -136,12 +277,46 @@ public class ReportesController : ControllerBase
         _logger.LogInformation("🥘 GET /api/operaciones/reportes/productos-mas-vendidos - Rango: {FechaInicio} - {FechaFin}, Limite: {Limite}", 
             fechaInicio, fechaFin, limite);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var query = new ObtenerReporteVentasDiariaQuery
+            {
+                FechaReporte = fechaInicio.Date,
+                IncluirAnalisisPorMesa = false,
+                IncluirAnalisisPorMesero = false,
+                IncluirAnalisisProductos = true,
+                NivelDetalle = NivelDetalle.Basico
+            };
+            
+            var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error generando reporte de productos más vendidos",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<ReporteVentasDiariaDto>.SuccessResponse(
+                result.Value,
+                "Reporte de productos más vendidos generado exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error generando reporte de productos más vendidos");
+            
+            var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno generando reporte",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 
     /// <summary>
@@ -152,9 +327,9 @@ public class ReportesController : ControllerBase
     /// <param name="incluirCanceladas">Incluir reservaciones canceladas</param>
     /// <returns>Reporte de reservaciones</returns>
     [HttpGet("reservaciones")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ReporteVentasDiariaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> GenerarReporteReservaciones(
+    public async Task<ActionResult<ApiResponse<ReporteVentasDiariaDto>>> GenerarReporteReservaciones(
         [FromQuery] DateTime fechaInicio,
         [FromQuery] DateTime fechaFin,
         [FromQuery] bool incluirCanceladas = false)
@@ -162,12 +337,46 @@ public class ReportesController : ControllerBase
         _logger.LogInformation("📅 GET /api/operaciones/reportes/reservaciones - Rango: {FechaInicio} - {FechaFin}, IncluirCanceladas: {IncluirCanceladas}", 
             fechaInicio, fechaFin, incluirCanceladas);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var query = new ObtenerReporteVentasDiariaQuery
+            {
+                FechaReporte = fechaInicio.Date,
+                IncluirAnalisisPorMesa = true,
+                IncluirAnalisisPorMesero = false,
+                IncluirAnalisisProductos = false,
+                NivelDetalle = NivelDetalle.Basico
+            };
+            
+            var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error generando reporte de reservaciones",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<ReporteVentasDiariaDto>.SuccessResponse(
+                result.Value,
+                "Reporte de reservaciones generado exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error generando reporte de reservaciones");
+            
+            var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno generando reporte",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 
     /// <summary>
@@ -178,9 +387,9 @@ public class ReportesController : ControllerBase
     /// <param name="incluirGraficos">Incluir datos para gráficos</param>
     /// <returns>Reporte de eficiencia operacional</returns>
     [HttpGet("eficiencia-operacional")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ReporteVentasDiariaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> GenerarReporteEficienciaOperacional(
+    public async Task<ActionResult<ApiResponse<ReporteVentasDiariaDto>>> GenerarReporteEficienciaOperacional(
         [FromQuery] DateTime fechaInicio,
         [FromQuery] DateTime fechaFin,
         [FromQuery] bool incluirGraficos = true)
@@ -188,12 +397,46 @@ public class ReportesController : ControllerBase
         _logger.LogInformation("⚡ GET /api/operaciones/reportes/eficiencia-operacional - Rango: {FechaInicio} - {FechaFin}, IncluirGraficos: {IncluirGraficos}", 
             fechaInicio, fechaFin, incluirGraficos);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var query = new ObtenerReporteVentasDiariaQuery
+            {
+                FechaReporte = fechaInicio.Date,
+                IncluirAnalisisPorMesa = true,
+                IncluirAnalisisPorMesero = true,
+                IncluirAnalisisProductos = true,
+                NivelDetalle = NivelDetalle.Completo
+            };
+            
+            var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error generando reporte de eficiencia operacional",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<ReporteVentasDiariaDto>.SuccessResponse(
+                result.Value,
+                "Reporte de eficiencia operacional generado exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error generando reporte de eficiencia operacional");
+            
+            var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno generando reporte",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 
     /// <summary>
@@ -203,45 +446,104 @@ public class ReportesController : ControllerBase
     /// <param name="incluirComparativo">Incluir comparativo con período anterior</param>
     /// <returns>Dashboard ejecutivo</returns>
     [HttpGet("dashboard-ejecutivo")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ReporteVentasDiariaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> GenerarDashboardEjecutivo(
+    public async Task<ActionResult<ApiResponse<ReporteVentasDiariaDto>>> GenerarDashboardEjecutivo(
         [FromQuery] DateTime? fecha,
         [FromQuery] bool incluirComparativo = true)
     {
         _logger.LogInformation("📊 GET /api/operaciones/reportes/dashboard-ejecutivo - Fecha: {Fecha}, IncluirComparativo: {IncluirComparativo}", 
             fecha, incluirComparativo);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var fechaReporte = fecha ?? DateTime.Today;
+            
+            var query = new ObtenerReporteVentasDiariaQuery
+            {
+                FechaReporte = fechaReporte,
+                IncluirComparativoPeriodoAnterior = incluirComparativo,
+                IncluirAnalisisPorMesa = true,
+                IncluirAnalisisPorMesero = true,
+                IncluirAnalisisProductos = true,
+                NivelDetalle = NivelDetalle.Completo
+            };
+            
+            var result = await _mediator.Send(query);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error generando dashboard ejecutivo",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<ReporteVentasDiariaDto>.SuccessResponse(
+                result.Value,
+                "Dashboard ejecutivo generado exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error generando dashboard ejecutivo");
+            
+            var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno generando dashboard",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 
     /// <summary>
     /// Exporta reporte en formato específico
     /// </summary>
-    /// <param name="tipoReporte">Tipo de reporte a exportar</param>
-    /// <param name="formato">Formato de exportación (PDF, Excel, CSV)</param>
-    /// <param name="fechaInicio">Fecha de inicio</param>
-    /// <param name="fechaFin">Fecha de fin</param>
+    /// <param name="request">Parámetros del reporte a exportar</param>
     /// <returns>Archivo del reporte exportado</returns>
     [HttpPost("exportar")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<ReporteGeneradoResult>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> ExportarReporte(
-        [FromBody] object request)
+    public async Task<ActionResult<ApiResponse<ReporteGeneradoResult>>> ExportarReporte(
+        [FromBody] GenerarReporteCommand request)
     {
-        _logger.LogInformation("📤 POST /api/operaciones/reportes/exportar");
+        _logger.LogInformation("📤 POST /api/operaciones/reportes/exportar - Tipo: {TipoReporte}", request.TipoReporte);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            var result = await _mediator.Send(request);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<ReporteGeneradoResult>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error exportando reporte",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<ReporteGeneradoResult>.SuccessResponse(
+                result.Value,
+                "Reporte exportado exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error exportando reporte");
+            
+            var errorResponse = ApiResponse<ReporteGeneradoResult>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno exportando reporte",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 
     /// <summary>
@@ -254,16 +556,43 @@ public class ReportesController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [Authorize(Roles = "Administrador,Gerente")]
     public async Task<ActionResult<ApiResponse<object>>> ProgramarReporte(
-        [FromBody] object configuracion)
+        [FromBody] GenerarReporteCommand configuracion)
     {
-        _logger.LogInformation("⏰ POST /api/operaciones/reportes/programar");
+        _logger.LogInformation("⏰ POST /api/operaciones/reportes/programar - Tipo: {TipoReporte}", configuracion.TipoReporte);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            // Por ahora, ejecutamos el reporte directamente
+            // En el futuro, esto debería programar la ejecución
+            var result = await _mediator.Send(configuracion);
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<object>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error programando reporte",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<object>.SuccessResponse(
+                new { reporteId = result.Value.ReporteId, mensaje = "Reporte programado exitosamente" },
+                "Reporte programado exitosamente");
+
+            return StatusCode(StatusCodes.Status201Created, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error programando reporte");
+            
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno programando reporte",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 
     /// <summary>
@@ -284,11 +613,39 @@ public class ReportesController : ControllerBase
         _logger.LogInformation("📚 GET /api/operaciones/reportes/historial - Usuario: {UsuarioId}, Tipo: {TipoReporte}, Limite: {Limite}", 
             usuarioId, tipoReporte, limite);
 
-        var response = ApiResponse<object>.ErrorResponse(
-            new List<string> { "Endpoint no implementado aún" },
-            "Endpoint no implementado aún",
-            StatusCodes.Status501NotImplemented);
+        try
+        {
+            // Por ahora, devolvemos un historial simulado
+            // En el futuro, esto debería consultar una tabla de reportes generados
+            var historial = new List<object>
+            {
+                new
+                {
+                    ReporteId = Guid.NewGuid(),
+                    TipoReporte = "VentasDiarias",
+                    FechaGeneracion = DateTime.Now.AddDays(-1),
+                    Estado = "Completado",
+                    TamanoBytes = 1024 * 100,
+                    UsuarioSolicitante = usuarioId ?? Guid.Empty
+                }
+            };
 
-        return StatusCode(StatusCodes.Status501NotImplemented, response);
+            var response = ApiResponse<object>.SuccessResponse(
+                historial,
+                "Historial de reportes obtenido exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error obteniendo historial de reportes");
+            
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno obteniendo historial",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 } 

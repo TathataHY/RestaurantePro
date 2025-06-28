@@ -602,7 +602,8 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         Guid? meseroId = null,
         Guid? clienteId = null,
         Guid? mesaId = null,
-        string observaciones = "Comanda de prueba")
+        string observaciones = "Comanda de prueba",
+        DateTime? fechaCreacion = null)
     {
         var mesero = meseroId.HasValue ? await DbContext.Usuarios.FindAsync(meseroId.Value) : null;
         if (mesero == null)
@@ -619,8 +620,11 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         {
             mesa = await CrearMesaPrueba();
         }
+        
+        var fechaFinal = fechaCreacion ?? DateTime.Now;
         var comanda = RestaurantePro.Domain.Operaciones.Comandas.Entities.Comanda.Crear(
             mesero.Id,
+            fechaFinal,
             cliente.Id,
             mesa.Id,
             observaciones
