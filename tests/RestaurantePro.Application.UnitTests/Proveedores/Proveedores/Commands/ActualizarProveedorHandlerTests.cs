@@ -271,18 +271,25 @@ public class ActualizarProveedorHandlerTests
         // Arrange
         var commands = new[]
         {
-            new ActualizarProveedorCommand { Id = Guid.NewGuid(), Nombre = "Proveedor 1", Email = "email1@test.com", Telefono = "111", Categoria = CategoriaProveedor.AlimentosBasicos },
-            new ActualizarProveedorCommand { Id = Guid.NewGuid(), Nombre = "Proveedor 2", Email = "email2@test.com", Telefono = "222", Categoria = CategoriaProveedor.Carnes },
-            new ActualizarProveedorCommand { Id = Guid.NewGuid(), Nombre = "Proveedor 3", Email = "email3@test.com", Telefono = "333", Categoria = CategoriaProveedor.Servicios }
+            new ActualizarProveedorCommand { Id = Guid.NewGuid(), Nombre = "Proveedor 1", Email = "email1@test.com", Telefono = "555-111-1111", Categoria = CategoriaProveedor.AlimentosBasicos },
+            new ActualizarProveedorCommand { Id = Guid.NewGuid(), Nombre = "Proveedor 2", Email = "email2@test.com", Telefono = "555-222-2222", Categoria = CategoriaProveedor.Carnes },
+            new ActualizarProveedorCommand { Id = Guid.NewGuid(), Nombre = "Proveedor 3", Email = "email3@test.com", Telefono = "555-333-3333", Categoria = CategoriaProveedor.Servicios }
         };
 
         foreach (var command in commands)
         {
-            _mockRepository.Setup(r => r.ObtenerPorIdAsync(command.Id, true, true, CancellationToken.None))
-                          .ReturnsAsync(_proveedorEjemplo);
+            // Create a unique provider instance for each command
+            var proveedorParaComando = CrearProveedorEjemplo();
+            proveedorParaComando.GetType().GetProperty("Id")?.SetValue(proveedorParaComando, command.Id);
 
-            _mockRepository.Setup(r => r.ActualizarAsync(_proveedorEjemplo, CancellationToken.None))
+            _mockRepository.Setup(r => r.ObtenerPorIdAsync(command.Id, true, true, CancellationToken.None))
+                          .ReturnsAsync(proveedorParaComando);
+
+            _mockRepository.Setup(r => r.ActualizarAsync(proveedorParaComando, CancellationToken.None))
                           .Returns(Task.CompletedTask);
+
+            _mockRepository.Setup(r => r.GuardarCambiosAsync(CancellationToken.None))
+                          .ReturnsAsync(1);
 
             _mockMapper.Setup(m => m.Map<ProveedorDto>(It.IsAny<Domain.Proveedores.Entities.Proveedor>()))
                        .Returns(_proveedorDtoEjemplo);

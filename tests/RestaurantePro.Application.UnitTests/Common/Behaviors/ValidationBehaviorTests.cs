@@ -80,7 +80,7 @@ public class ValidationBehaviorTests
     }
 
     [Fact]
-    public async Task Handle_ValidationFails_DeberiaLanzarValidationException()
+    public async Task Handle_ValidationFails_DeberiaRetornarResultFailure()
     {
         // Arrange
         var command = new CrearProductoCommand { Nombre = "" };
@@ -102,14 +102,14 @@ public class ValidationBehaviorTests
             return Task.FromResult(Result.Success(new ProductoDto()));
         };
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<ValidationException>(() =>
-            _behavior.Handle(command, nextDelegate, CancellationToken.None));
+        // Act
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
-        exception.Errors.Should().ContainKey("Nombre");
-        exception.Errors.Should().ContainKey("Precio");
-        exception.Errors["Nombre"].Should().Contain("El nombre es requerido");
-        exception.Errors["Precio"].Should().Contain("El precio debe ser mayor a 0");
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeFalse();
+        result.Error.Should().Contain("El nombre es requerido");
+        result.Error.Should().Contain("El precio debe ser mayor a 0");
         
         // Next no debería ejecutarse
         nextCalled.Should().BeFalse();
@@ -185,15 +185,17 @@ public class ValidationBehaviorTests
         
         RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(Result.Success(new ProductoDto()));
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<ValidationException>(() =>
-            behaviorMultiple.Handle(command, nextDelegate, CancellationToken.None));
+        // Act
+        var result = await behaviorMultiple.Handle(command, nextDelegate, CancellationToken.None);
 
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeFalse();
+        
         // Debe contener errores de ambos validadores
-        exception.Errors.Should().ContainKey("Nombre");
-        exception.Errors.Should().ContainKey("Precio");
-        exception.Errors.Should().ContainKey("CategoriaId");
-        exception.Errors.Should().HaveCount(3);
+        result.Error.Should().Contain("El nombre es requerido");
+        result.Error.Should().Contain("El precio debe ser mayor a 0");
+        result.Error.Should().Contain("La categoría es requerida");
     }
 
     [Fact]
@@ -261,14 +263,17 @@ public class ValidationBehaviorTests
         
         RequestHandlerDelegate<Result<ProductoDto>> nextDelegate = () => Task.FromResult(Result.Success(new ProductoDto()));
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<ValidationException>(() =>
-            _behavior.Handle(command, nextDelegate, CancellationToken.None));
+        // Act
+        var result = await _behavior.Handle(command, nextDelegate, CancellationToken.None);
 
-        // Debe filtrar errores con propiedades nulas/vacías y mantener solo el válido
-        exception.Errors.Should().ContainKey("Nombre");
-        exception.Errors.Should().HaveCount(1);
-        exception.Errors["Nombre"].Should().Contain("El nombre es requerido");
+        // Assert
+        result.Should().NotBeNull();
+        result.Succeeded.Should().BeFalse();
+        
+        // El ValidationBehavior incluye todos los errores no nulos en el mensaje
+        result.Error.Should().Contain("El nombre es requerido");
+        result.Error.Should().Contain("Error sin propiedad");
+        result.Error.Should().Contain("Error con propiedad vacía");
     }
 
     [Fact]

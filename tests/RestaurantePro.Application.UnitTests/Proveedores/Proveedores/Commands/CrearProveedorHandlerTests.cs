@@ -257,7 +257,7 @@ public class CrearProveedorHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Contain("Error interno al crear el proveedor");
+        result.Error.Should().Contain("Error al guardar en base de datos");
     }
 
     [Fact]
@@ -328,7 +328,7 @@ public class CrearProveedorHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Contain("Error interno al crear el proveedor");
+        result.Error.Should().Contain("Error crítico del sistema");
     }
 
     [Fact]

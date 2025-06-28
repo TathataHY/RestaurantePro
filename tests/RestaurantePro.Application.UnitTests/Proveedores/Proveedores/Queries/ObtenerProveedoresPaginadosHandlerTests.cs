@@ -412,24 +412,43 @@ public class ObtenerProveedoresPaginadosHandlerTests
     }
 
     [Fact]
-    public async Task Handle_SinProveedoresActivosNiInactivos_DeberiaRetornarError()
+    public async Task Handle_SinProveedoresActivosNiInactivos_DeberiaRetornarResultadoVacio()
     {
         // Arrange
         var query = new ObtenerProveedoresPaginadosQuery
         {
             PageNumber = 1,
             PageSize = 10,
-            SoloActivos = false,  // Esta configuración causa el error según la lógica del handler
+            SoloActivos = false,  // Ahora permite consultar proveedores inactivos
             CampoOrden = "Nombre",
             DireccionOrden = "asc"
         };
+
+        // Simular que no hay proveedores inactivos
+        var proveedoresInactivos = new List<Proveedor>();
+        var proveedoresDto = new List<ProveedorDto>();
+
+        _proveedorRepositoryMock.Setup(x => x.ObtenerProveedoresPaginadosAsync(
+            It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(),
+            It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<bool>(),
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(proveedoresInactivos);
+
+        _proveedorRepositoryMock.Setup(x => x.ContarProveedoresAsync(
+            It.IsAny<string>(), It.IsAny<CategoriaProveedor?>(), It.IsAny<bool>(), It.IsAny<bool>(),
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
+        _mapperMock.Setup(x => x.Map<IEnumerable<ProveedorDto>>(It.IsAny<IEnumerable<Proveedor>>()))
+            .Returns(proveedoresDto);
 
         // Act
         var result = await _handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.False(result.Succeeded);
-        Assert.Contains("Debe incluir al menos proveedores activos o inactivos", result.Error);
+        Assert.True(result.Succeeded);
+        Assert.Empty(result.Value.Items);
+        Assert.Equal(0, result.Value.TotalCount);
     }
 
     #endregion

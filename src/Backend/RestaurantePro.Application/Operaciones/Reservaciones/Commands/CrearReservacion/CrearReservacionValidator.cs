@@ -19,7 +19,7 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
             .WithMessage("No se pueden hacer reservaciones con más de 90 días de anticipación")
             .When(x => BeFutureDate(x.FechaHoraReservacion));
 
-        // Validar horario comercial (solo para tests de horarios)
+        // Validar horario comercial para todas las fechas que no son hoy (incluyendo fechas pasadas)
         RuleFor(x => x.FechaHoraReservacion)
             .Must(BeWithinBusinessHours)
             .WithMessage("La hora de reservación debe estar entre las 12:00 PM y 10:00 PM")
@@ -37,45 +37,32 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
             .WithMessage("Las reservaciones deben hacerse con al menos 1 hora de anticipación")
             .When(x => BeFutureDate(x.FechaHoraReservacion) && IsToday(x.FechaHoraReservacion));
 
-        // Número de personas debe ser positivo
+        // Número de personas válido
         RuleFor(x => x.NumeroPersonas)
             .GreaterThan(0)
             .WithMessage("El número de personas debe ser mayor a 0");
 
-        // Número de personas no puede exceder 20 (solo si es positivo)
         RuleFor(x => x.NumeroPersonas)
             .LessThanOrEqualTo(20)
-            .WithMessage("El número máximo de personas por reservación es 20")
-            .When(x => x.NumeroPersonas > 0);
+            .WithMessage("El número máximo de personas por reservación es 20");
 
-        // Nombre es obligatorio
+        // Nombre del cliente obligatorio
         RuleFor(x => x.NombreCliente)
             .NotEmpty()
-            .WithMessage("El nombre del cliente es obligatorio");
-
-        // Validar longitud del nombre (solo si no está vacío)
-        RuleFor(x => x.NombreCliente)
+            .WithMessage("El nombre del cliente es obligatorio")
             .MinimumLength(2)
             .WithMessage("El nombre del cliente debe tener al menos 2 caracteres")
-            .When(x => !string.IsNullOrEmpty(x.NombreCliente));
+            .MaximumLength(100)
+            .WithMessage("El nombre del cliente no puede exceder 100 caracteres");
 
-        RuleFor(x => x.NombreCliente)
-            .MaximumLength(200)
-            .WithMessage("El nombre del cliente no puede exceder 200 caracteres")
-            .When(x => !string.IsNullOrEmpty(x.NombreCliente));
-
-        // Teléfono es obligatorio
+        // Teléfono obligatorio con formato válido
         RuleFor(x => x.TelefonoContacto)
             .NotEmpty()
-            .WithMessage("El teléfono de contacto es obligatorio");
-
-        // Validar formato del teléfono (solo si no está vacío)
-        RuleFor(x => x.TelefonoContacto)
+            .WithMessage("El teléfono de contacto es obligatorio")
             .Must(BeValidPhoneNumber)
-            .WithMessage("El teléfono debe tener un formato válido")
-            .When(x => !string.IsNullOrEmpty(x.TelefonoContacto));
+            .WithMessage("El teléfono debe tener un formato válido");
 
-        // Observaciones opcionales con límite
+        // Observaciones opcionales con longitud máxima
         RuleFor(x => x.Observaciones)
             .MaximumLength(1000)
             .WithMessage("Las observaciones no pueden exceder 1000 caracteres")
@@ -131,20 +118,17 @@ public class CrearReservacionValidator : AbstractValidator<CrearReservacionComma
 
     private static bool BeValidPhoneNumber(string telefono)
     {
-        if (string.IsNullOrEmpty(telefono)) return false;
-        
-        // Remover espacios, guiones, paréntesis y signos +
-        var cleanedPhone = new string(telefono.Where(c => char.IsDigit(c)).ToArray());
-        
+        if (string.IsNullOrWhiteSpace(telefono))
+            return false;
+
+        // Remover espacios, guiones y paréntesis para validación
+        var numeroLimpio = telefono.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "").Replace("+", "");
+
         // Debe tener entre 7 y 15 dígitos
-        if (cleanedPhone.Length < 7 || cleanedPhone.Length > 15) return false;
-        
-        // No debe empezar con 0
-        if (cleanedPhone.StartsWith("0")) return false;
-        
-        // No debe ser solo letras (para casos como "abcdefghij")
-        if (telefono.All(c => char.IsLetter(c))) return false;
-        
-        return true;
+        if (numeroLimpio.Length < 7 || numeroLimpio.Length > 15)
+            return false;
+
+        // Debe contener solo dígitos
+        return numeroLimpio.All(char.IsDigit);
     }
 }

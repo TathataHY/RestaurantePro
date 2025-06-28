@@ -46,10 +46,10 @@ public class CrearIngredienteHandlerTests
         _mockIngredienteRepository.Setup(r => r.ObtenerPorNombreAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Ingrediente>());
 
-        _mockInventarioService.Setup(s => s.RegistrarIngredienteAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-            It.IsAny<decimal>(), It.IsAny<RotacionIngrediente>(), It.IsAny<TemporadaIngrediente>(), 
-            It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
+        _mockInventarioService.Setup(s => s.RegistrarIngredienteAvanzadoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UnidadMedida>(), It.IsAny<decimal>(), 
+            It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<RotacionIngrediente>(), 
+            It.IsAny<TemporadaIngrediente>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(ingredienteCreado));
 
         _mockMapper.Setup(m => m.Map<IngredienteDto>(It.IsAny<Ingrediente>()))
@@ -64,9 +64,9 @@ public class CrearIngredienteHandlerTests
         result.Value.Should().NotBeNull();
         result.Value.Nombre.Should().Be("Tomate");
 
-        _mockInventarioService.Verify(s => s.RegistrarIngredienteAsync(
-            "Tomate", "Tomates frescos", "Kilogramo", 5m, 10m, 
-            RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño, 1500m,
+        _mockInventarioService.Verify(s => s.RegistrarIngredienteAvanzadoAsync(
+            "Tomate", "Tomates frescos", UnidadMedida.Kilogramo, 5m, 10m, 
+            "TOM-001", It.IsAny<Guid?>(), RotacionIngrediente.Media, TemporadaIngrediente.TodoElAño, 1500m,
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -96,10 +96,10 @@ public class CrearIngredienteHandlerTests
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Contain("Ya existe un ingrediente registrado con el nombre Tomate");
 
-        _mockInventarioService.Verify(s => s.RegistrarIngredienteAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-            It.IsAny<decimal>(), It.IsAny<RotacionIngrediente>(), It.IsAny<TemporadaIngrediente>(), 
-            It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockInventarioService.Verify(s => s.RegistrarIngredienteAvanzadoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UnidadMedida>(), It.IsAny<decimal>(), 
+            It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<RotacionIngrediente>(), 
+            It.IsAny<TemporadaIngrediente>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -127,10 +127,10 @@ public class CrearIngredienteHandlerTests
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Contain("Rotación no válida: Invalida");
 
-        _mockInventarioService.Verify(s => s.RegistrarIngredienteAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-            It.IsAny<decimal>(), It.IsAny<RotacionIngrediente>(), It.IsAny<TemporadaIngrediente>(), 
-            It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockInventarioService.Verify(s => s.RegistrarIngredienteAvanzadoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UnidadMedida>(), It.IsAny<decimal>(), 
+            It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<RotacionIngrediente>(), 
+            It.IsAny<TemporadaIngrediente>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -158,10 +158,10 @@ public class CrearIngredienteHandlerTests
         result.Succeeded.Should().BeFalse();
         result.Error.Should().Contain("Temporada no válida: Invalida");
 
-        _mockInventarioService.Verify(s => s.RegistrarIngredienteAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-            It.IsAny<decimal>(), It.IsAny<RotacionIngrediente>(), It.IsAny<TemporadaIngrediente>(), 
-            It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockInventarioService.Verify(s => s.RegistrarIngredienteAvanzadoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UnidadMedida>(), It.IsAny<decimal>(), 
+            It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<RotacionIngrediente>(), 
+            It.IsAny<TemporadaIngrediente>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -181,10 +181,10 @@ public class CrearIngredienteHandlerTests
         _mockIngredienteRepository.Setup(r => r.ObtenerPorNombreAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Ingrediente>());
 
-        _mockInventarioService.Setup(s => s.RegistrarIngredienteAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-            It.IsAny<decimal>(), It.IsAny<RotacionIngrediente>(), It.IsAny<TemporadaIngrediente>(), 
-            It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
+        _mockInventarioService.Setup(s => s.RegistrarIngredienteAvanzadoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UnidadMedida>(), It.IsAny<decimal>(), 
+            It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<RotacionIngrediente>(), 
+            It.IsAny<TemporadaIngrediente>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure<Ingrediente>("Error al registrar ingrediente"));
 
         // Act
@@ -220,12 +220,12 @@ public class CrearIngredienteHandlerTests
         // Assert
         result.Should().NotBeNull();
         result.Succeeded.Should().BeFalse();
-        result.Error.Should().Be("Error interno del servidor al crear el ingrediente");
+        result.Error.Should().Contain("Error al registrar el ingrediente");
 
-        _mockInventarioService.Verify(s => s.RegistrarIngredienteAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-            It.IsAny<decimal>(), It.IsAny<RotacionIngrediente>(), It.IsAny<TemporadaIngrediente>(), 
-            It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockInventarioService.Verify(s => s.RegistrarIngredienteAvanzadoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UnidadMedida>(), It.IsAny<decimal>(), 
+            It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<RotacionIngrediente>(), 
+            It.IsAny<TemporadaIngrediente>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -248,10 +248,10 @@ public class CrearIngredienteHandlerTests
         _mockIngredienteRepository.Setup(r => r.ObtenerPorNombreAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Ingrediente>());
 
-        _mockInventarioService.Setup(s => s.RegistrarIngredienteAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-            It.IsAny<decimal>(), It.IsAny<RotacionIngrediente>(), It.IsAny<TemporadaIngrediente>(), 
-            It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
+        _mockInventarioService.Setup(s => s.RegistrarIngredienteAvanzadoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UnidadMedida>(), It.IsAny<decimal>(), 
+            It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<RotacionIngrediente>(), 
+            It.IsAny<TemporadaIngrediente>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(ingredienteCreado));
 
         _mockMapper.Setup(m => m.Map<IngredienteDto>(It.IsAny<Ingrediente>()))
@@ -265,9 +265,9 @@ public class CrearIngredienteHandlerTests
         result.Succeeded.Should().BeTrue();
 
         // Verificar que se usan valores por defecto
-        _mockInventarioService.Verify(s => s.RegistrarIngredienteAsync(
-            "Perejil", "", "Gramo", 20m, 100m, 
-            RotacionIngrediente.Media, // Valor por defecto
+        _mockInventarioService.Verify(s => s.RegistrarIngredienteAvanzadoAsync(
+            "Perejil", "", UnidadMedida.Gramo, 20m, 100m, 
+            "PER-001", null, RotacionIngrediente.Media, // Valor por defecto
             TemporadaIngrediente.TodoElAño, // Valor por defecto
             0m, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -296,10 +296,10 @@ public class CrearIngredienteHandlerTests
         _mockIngredienteRepository.Setup(r => r.ObtenerPorNombreAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Ingrediente>());
 
-        _mockInventarioService.Setup(s => s.RegistrarIngredienteAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-            It.IsAny<decimal>(), It.IsAny<RotacionIngrediente>(), It.IsAny<TemporadaIngrediente>(), 
-            It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
+        _mockInventarioService.Setup(s => s.RegistrarIngredienteAvanzadoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UnidadMedida>(), It.IsAny<decimal>(), 
+            It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<RotacionIngrediente>(), 
+            It.IsAny<TemporadaIngrediente>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(ingredienteCreado));
 
         _mockMapper.Setup(m => m.Map<IngredienteDto>(It.IsAny<Ingrediente>()))
@@ -313,9 +313,9 @@ public class CrearIngredienteHandlerTests
         result.Succeeded.Should().BeTrue();
         result.Value.Nombre.Should().Be("Aceite de Oliva");
 
-        _mockInventarioService.Verify(s => s.RegistrarIngredienteAsync(
-            "Aceite de Oliva", "Aceite de oliva extra virgen", "Litro", 10m, 25m, 
-            RotacionIngrediente.Baja, TemporadaIngrediente.TodoElAño, 8500m,
+        _mockInventarioService.Verify(s => s.RegistrarIngredienteAvanzadoAsync(
+            "Aceite de Oliva", "Aceite de oliva extra virgen", UnidadMedida.Litro, 10m, 25m, 
+            "ACE-001", It.IsAny<Guid?>(), RotacionIngrediente.Baja, TemporadaIngrediente.TodoElAño, 8500m,
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -340,10 +340,10 @@ public class CrearIngredienteHandlerTests
         _mockIngredienteRepository.Setup(r => r.ObtenerPorNombreAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Ingrediente>());
 
-        _mockInventarioService.Setup(s => s.RegistrarIngredienteAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-            It.IsAny<decimal>(), It.IsAny<RotacionIngrediente>(), It.IsAny<TemporadaIngrediente>(), 
-            It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
+        _mockInventarioService.Setup(s => s.RegistrarIngredienteAvanzadoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UnidadMedida>(), It.IsAny<decimal>(), 
+            It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<RotacionIngrediente>(), 
+            It.IsAny<TemporadaIngrediente>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(ingredienteCreado));
 
         _mockMapper.Setup(m => m.Map<IngredienteDto>(It.IsAny<Ingrediente>()))
@@ -356,9 +356,9 @@ public class CrearIngredienteHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
 
-        _mockInventarioService.Verify(s => s.RegistrarIngredienteAsync(
-            "Pan", "", "Unidad", 15m, 50m, 
-            RotacionIngrediente.Alta, TemporadaIngrediente.TodoElAño, 0m,
+        _mockInventarioService.Verify(s => s.RegistrarIngredienteAvanzadoAsync(
+            "Pan", "", UnidadMedida.Unidad, 15m, 50m, 
+            "PAN-001", null, RotacionIngrediente.Alta, TemporadaIngrediente.TodoElAño, 0m,
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -383,10 +383,10 @@ public class CrearIngredienteHandlerTests
         _mockIngredienteRepository.Setup(r => r.ObtenerPorNombreAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Ingrediente>());
 
-        _mockInventarioService.Setup(s => s.RegistrarIngredienteAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<decimal>(), 
-            It.IsAny<decimal>(), It.IsAny<RotacionIngrediente>(), It.IsAny<TemporadaIngrediente>(), 
-            It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
+        _mockInventarioService.Setup(s => s.RegistrarIngredienteAvanzadoAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<UnidadMedida>(), It.IsAny<decimal>(), 
+            It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<RotacionIngrediente>(), 
+            It.IsAny<TemporadaIngrediente>(), It.IsAny<decimal>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(ingredienteCreado));
 
         _mockMapper.Setup(m => m.Map<IngredienteDto>(It.IsAny<Ingrediente>()))
@@ -399,9 +399,9 @@ public class CrearIngredienteHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
 
-        _mockInventarioService.Verify(s => s.RegistrarIngredienteAsync(
-            "Frutillas", "", "Kilogramo", 3m, 8m, 
-            RotacionIngrediente.Alta, TemporadaIngrediente.Verano,
+        _mockInventarioService.Verify(s => s.RegistrarIngredienteAvanzadoAsync(
+            "Frutillas", "", UnidadMedida.Kilogramo, 3m, 8m, 
+            "FRU-001", null, RotacionIngrediente.Alta, TemporadaIngrediente.Verano,
             0m, It.IsAny<CancellationToken>()), Times.Once);
     }
 

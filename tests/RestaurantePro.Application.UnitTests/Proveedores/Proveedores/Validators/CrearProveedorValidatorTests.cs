@@ -474,7 +474,8 @@ public class CrearProveedorValidatorTests
             RUT = "12345678-9",
             Email = "ventas@distribuidorabajio.cl",
             Telefono = "+52-462-123-4567",
-            Direccion = "Camino La Dehesa Km 15.5, Parque Industrial, Santiago, Chile"
+            Direccion = "Camino La Dehesa Km 15.5, Parque Industrial, Santiago, Chile",
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act

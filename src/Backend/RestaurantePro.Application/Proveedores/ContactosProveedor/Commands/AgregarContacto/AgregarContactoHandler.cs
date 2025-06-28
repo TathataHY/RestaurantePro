@@ -82,10 +82,13 @@ public class AgregarContactoHandler : IRequestHandler<AgregarContactoCommand, Re
             // 6. Agregar directamente el contacto usando el repositorio
             await _contactoRepository.AgregarAsync(contacto, cancellationToken);
 
+            // 7. Actualizar el proveedor para reflejar los cambios en la relación
+            await _proveedorRepository.ActualizarAsync(proveedor, cancellationToken);
+
             _logger.LogInformation("Contacto creado exitosamente: {ContactoId} para proveedor {ProveedorId}", 
                 contacto.Id, request.ProveedorId);
 
-            // 7. Mapear y retornar
+            // 8. Mapear y retornar
             var contactoDto = _mapper.Map<ContactoProveedorDto>(contacto);
             return Result.Success<ContactoProveedorDto>(contactoDto);
         }

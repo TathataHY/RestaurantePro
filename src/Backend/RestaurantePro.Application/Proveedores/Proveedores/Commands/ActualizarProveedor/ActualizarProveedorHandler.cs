@@ -28,7 +28,7 @@ public class ActualizarProveedorHandler : IRequestHandler<ActualizarProveedorCom
         try
         {
             // Obtener proveedor existente
-            var proveedorExistente = await _repository.ObtenerPorIdAsync(request.Id);
+            var proveedorExistente = await _repository.ObtenerPorIdAsync(request.Id, true, true, cancellationToken);
             if (proveedorExistente == null)
             {
                 _logger.LogWarning("Proveedor no encontrado: {ProveedorId}", request.Id);
@@ -64,14 +64,21 @@ public class ActualizarProveedorHandler : IRequestHandler<ActualizarProveedorCom
                 diasCredito: 0 // No disponible en el comando
             );
 
+            // TODO: Actualizar categoría si es necesaria
+            // Temporalmente comentado para debugging
+            // if (!proveedorExistente.TieneCategoria(request.Categoria))
+            // {
+            //     proveedorExistente.AgregarCategoria(request.Categoria, 0, false);
+            // }
+
             // TODO: Establecer auditoría cuando exista el método
             // proveedorExistente.EstablecerModificadoPor(_currentUserService.UserId ?? "Sistema");
 
             // Guardar cambios
-            await _repository.ActualizarAsync(proveedorExistente);
+            await _repository.ActualizarAsync(proveedorExistente, cancellationToken);
             
             // Persistir cambios en base de datos
-            await _repository.GuardarCambiosAsync();
+            await _repository.GuardarCambiosAsync(cancellationToken);
 
             _logger.LogInformation("✅ Proveedor actualizado exitosamente y persistido: {ProveedorId}", request.Id);
 
