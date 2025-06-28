@@ -105,15 +105,43 @@ public class RetryBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TR
                 // Si no es un error recuperable o ya agotamos los intentos
                 if (attempt >= maxAttempts)
                 {
-                    _logger.LogError(ex,
-                        "💥 Falló {RequestName} después de {MaxAttempts} intentos. Error final: {ErrorMessage}",
-                        requestName, maxAttempts, ex.Message);
+                    // No generar logs de error para ValidationException en tests (comportamiento esperado)
+                    var isValidationException = ex is RestaurantePro.Application.Common.Exceptions.ValidationException;
+                    var isTestingMode = Environment.GetEnvironmentVariable("TESTING_MODE") == "true";
+                    
+                    if (isValidationException && isTestingMode)
+                    {
+                        // En tests, las ValidationException son esperadas, solo log como warning
+                        _logger.LogWarning("⚠️ Validación fallida en {RequestName} después de {MaxAttempts} intentos", 
+                            requestName, maxAttempts);
+                    }
+                    else
+                    {
+                        // En producción, log como error
+                        _logger.LogError(ex,
+                            "💥 Falló {RequestName} después de {MaxAttempts} intentos. Error final: {ErrorMessage}",
+                            requestName, maxAttempts, ex.Message);
+                    }
                 }
                 else
                 {
-                    _logger.LogError(ex,
-                        "❌ Error no recuperable en {RequestName} - Intento {Attempt}. Error: {ErrorMessage}",
-                        requestName, attempt, ex.Message);
+                    // No generar logs de error para ValidationException en tests (comportamiento esperado)
+                    var isValidationException = ex is RestaurantePro.Application.Common.Exceptions.ValidationException;
+                    var isTestingMode = Environment.GetEnvironmentVariable("TESTING_MODE") == "true";
+                    
+                    if (isValidationException && isTestingMode)
+                    {
+                        // En tests, las ValidationException son esperadas, solo log como warning
+                        _logger.LogWarning("⚠️ Validación fallida en {RequestName} - Intento {Attempt}", 
+                            requestName, attempt);
+                    }
+                    else
+                    {
+                        // En producción, log como error
+                        _logger.LogError(ex,
+                            "❌ Error no recuperable en {RequestName} - Intento {Attempt}. Error: {ErrorMessage}",
+                            requestName, attempt, ex.Message);
+                    }
                 }
                 
                 throw;

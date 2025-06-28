@@ -89,9 +89,24 @@ public class PerformanceBehavior<TRequest, TResponse> : IPipelineBehavior<TReque
             // Registrar métricas de error
             _metricsService?.RecordExecutionTime(requestName, elapsed, success);
             
-            _logger.LogError(ex, "❌ Error en {RequestName} después de {ElapsedMs}ms", 
-                requestName, 
-                elapsed.TotalMilliseconds);
+            // No generar logs de error para ValidationException en tests (comportamiento esperado)
+            var isValidationException = ex is RestaurantePro.Application.Common.Exceptions.ValidationException;
+            var isTestingMode = Environment.GetEnvironmentVariable("TESTING_MODE") == "true";
+            
+            if (isValidationException && isTestingMode)
+            {
+                // En tests, las ValidationException son esperadas, solo log como warning
+                _logger.LogWarning("⚠️ Validación fallida en {RequestName} después de {ElapsedMs}ms", 
+                    requestName, 
+                    elapsed.TotalMilliseconds);
+            }
+            else
+            {
+                // En producción, log como error
+                _logger.LogError(ex, "❌ Error en {RequestName} después de {ElapsedMs}ms", 
+                    requestName, 
+                    elapsed.TotalMilliseconds);
+            }
             
             RecordAdditionalMetrics(requestName, elapsed, success);
             

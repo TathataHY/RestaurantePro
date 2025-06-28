@@ -87,6 +87,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
                 .HasForeignKey(i => i.ProveedorPrincipalId)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            builder.HasMany(i => i.Movimientos)
+                .WithOne()
+                .HasForeignKey("IngredienteId")
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Configuración de auditoría
             builder.Property(i => i.FechaCreacion)
                 .IsRequired();

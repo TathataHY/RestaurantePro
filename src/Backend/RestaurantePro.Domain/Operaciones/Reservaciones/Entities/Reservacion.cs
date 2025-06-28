@@ -1,3 +1,10 @@
+using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Domain.Core.Base.Events;
+using RestaurantePro.Domain.Core.Base.Interfaces;
+using RestaurantePro.Domain.Core.Base.Services;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Enums;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Events;
+
 namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
 {
     /// <summary>
@@ -104,10 +111,12 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
         /// <summary>
         /// Método de fábrica para crear una nueva reservación
         /// </summary>
-        public static Reservacion Crear(Guid mesaId, Guid clienteId, DateTime fecha, TimeSpan duracionEstimada, int cantidadPersonas, string telefono, string email, string? observaciones = null)
+        public static Reservacion Crear(Guid mesaId, Guid clienteId, DateTime fecha, TimeSpan duracionEstimada, int cantidadPersonas, string telefono, string email, string? observaciones = null, IDateTimeService? dateTimeService = null)
         {
+            var now = dateTimeService?.Now ?? DateTime.Now;
+            
             // Validar que la fecha sea futura
-            if (fecha.Date < DateTime.Now.Date)
+            if (fecha.Date < now.Date)
             {
                 throw new ArgumentException("La fecha de reservación debe ser futura", nameof(fecha));
             }
@@ -138,7 +147,7 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
                 Email = email,
                 Observaciones = observaciones ?? string.Empty,
                 Estado = EstadoReservacion.Pendiente,
-                FechaCreacion = DateTime.Now
+                FechaCreacion = now
             };
 
             // Registrar el evento de dominio

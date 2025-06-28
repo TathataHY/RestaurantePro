@@ -49,9 +49,22 @@ public class ExceptionHandlingBehavior<TRequest, TResponse> : IPipelineBehavior<
             // Mapear la excepción a una excepción de aplicación apropiada
             var mappedException = MapDomainExceptionToApplicationException(ex, requestName, requestId);
             
-            // Loggear el error con el RequestId
-            _logger.LogError(ex, "Error no controlado en {RequestName} (ID: {RequestId}): {Message}", 
-                requestName, requestId, ex.Message);
+            // No generar logs de error para ValidationException en tests (comportamiento esperado)
+            var isValidationException = ex is RestaurantePro.Application.Common.Exceptions.ValidationException || mappedException is RestaurantePro.Application.Common.Exceptions.ValidationException;
+            var isTestingMode = Environment.GetEnvironmentVariable("TESTING_MODE") == "true";
+            
+            if (isValidationException && isTestingMode)
+            {
+                // En tests, las ValidationException son esperadas, solo log como warning
+                _logger.LogWarning("⚠️ Validación fallida en {RequestName} (ID: {RequestId}): {Message}", 
+                    requestName, requestId, ex.Message);
+            }
+            else
+            {
+                // En producción, log como error
+                _logger.LogError(ex, "Error no controlado en {RequestName} (ID: {RequestId}): {Message}", 
+                    requestName, requestId, ex.Message);
+            }
             
             // Lanzar la excepción mapeada
             throw mappedException;

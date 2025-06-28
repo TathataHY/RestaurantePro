@@ -96,10 +96,15 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             config.AddInMemoryCollection(new Dictionary<string, string>
             {
                 {"ConnectionStrings:DefaultConnection", $"Data Source={_databaseName};Mode=Memory;Cache=Shared"},
-                {"Logging:LogLevel:Default", "Warning"}, // Reducir logs para mejor rendimiento
-                {"Logging:LogLevel:Microsoft", "Warning"},
-                {"Logging:LogLevel:Microsoft.Hosting.Lifetime", "Warning"},
-                {"Logging:LogLevel:Microsoft.EntityFrameworkCore", "Warning"},
+                {"Logging:LogLevel:Default", "Critical"}, // Solo errores críticos
+                {"Logging:LogLevel:Microsoft", "Critical"},
+                {"Logging:LogLevel:Microsoft.Hosting.Lifetime", "Critical"},
+                {"Logging:LogLevel:Microsoft.EntityFrameworkCore", "Critical"},
+                {"Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command", "Critical"},
+                {"Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Connection", "Critical"},
+                {"Logging:LogLevel:Microsoft.EntityFrameworkCore.Update", "Critical"},
+                {"Logging:LogLevel:RestaurantePro.Application.Common.Behaviors", "Critical"},
+                {"Logging:LogLevel:RestaurantePro.Infrastructure.Persistence", "Critical"},
                 {"TESTING_MODE", "true"}
             });
         });
@@ -222,6 +227,23 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
                     .Build();
+            });
+
+            // 🔧 CONFIGURAR LOGGING PARA TESTS (SUPRIMIR WARNINGS ESPERADOS)
+            services.AddLogging(builder =>
+            {
+                builder.ClearProviders();
+                builder.AddConsole();
+                builder.SetMinimumLevel(LogLevel.Critical); // Solo errores críticos
+                
+                // Configurar filtros específicos para tests
+                builder.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Critical);
+                builder.AddFilter("Microsoft.EntityFrameworkCore.Database.Connection", LogLevel.Critical);
+                builder.AddFilter("Microsoft.EntityFrameworkCore.Update", LogLevel.Critical);
+                builder.AddFilter("Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware", LogLevel.Critical);
+                builder.AddFilter("RestaurantePro.Application.Common.Behaviors", LogLevel.Critical);
+                builder.AddFilter("RestaurantePro.Infrastructure.Persistence", LogLevel.Critical);
+                builder.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Critical);
             });
 
             // 🔧 REGISTRAR SERVICIO FAKE DE FECHA/HORA

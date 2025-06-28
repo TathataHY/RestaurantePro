@@ -180,7 +180,8 @@ public class CrearReservacionHandler : IRequestHandler<CrearReservacionCommand, 
             cantidadPersonas: request.NumeroPersonas,
             telefono: request.Telefono,
             email: request.Email ?? string.Empty,
-            observaciones: request.SolicitudesEspeciales
+            observaciones: request.SolicitudesEspeciales,
+            dateTimeService: _dateTimeService
         );
 
         return reservacion;
