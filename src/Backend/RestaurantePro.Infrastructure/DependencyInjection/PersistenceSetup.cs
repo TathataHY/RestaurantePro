@@ -150,6 +150,10 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             // Repositorios del dominio Proveedores
             services.AddScoped<IProveedorRepository, ProveedorRepository>();
             services.AddScoped<IContactoProveedorRepository, ContactoProveedorRepository>();
+
+            // Registrar IProveedoresDbContext usando ProveedoresDbContext
+            services.AddScoped<IProveedoresDbContext>(provider => 
+                provider.GetRequiredService<ProveedoresDbContext>());
         }
 
         private static void RegisterAdditionalServices(IServiceCollection services, bool isTestEnvironment = false)

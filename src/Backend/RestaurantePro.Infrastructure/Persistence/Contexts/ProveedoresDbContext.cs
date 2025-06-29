@@ -9,7 +9,7 @@ using System.Reflection;
 
 namespace RestaurantePro.Infrastructure.Persistence.Contexts
 {
-    public class ProveedoresDbContext : DbContext
+    public class ProveedoresDbContext : DbContext, IProveedoresDbContext
     {
         private readonly ICurrentUserService _currentUserService;
         private readonly IDateTimeService _dateTimeService;
@@ -22,6 +22,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         // DbSets para entidades del contexto Proveedores
         public DbSet<Proveedor> Proveedores { get; set; }
         public DbSet<ContactoProveedor> ContactosProveedores { get; set; }
+        public DbSet<EvaluacionProveedor> EvaluacionesProveedores { get; set; }
 
         public ProveedoresDbContext(
             DbContextOptions<ProveedoresDbContext> options,

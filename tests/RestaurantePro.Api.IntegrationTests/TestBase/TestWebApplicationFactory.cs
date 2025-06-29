@@ -140,9 +140,26 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 options.EnableDetailedErrors();
             });
 
+            // 🔧 REGISTRAR CONTEXTOS ESPECÍFICOS PARA TESTS
+            services.AddDbContext<ProveedoresDbContext>(options =>
+            {
+                options.UseSqlite(_connectionString, sqliteOptions =>
+                {
+                    sqliteOptions.MigrationsAssembly("RestaurantePro.Infrastructure");
+                });
+                
+                // Configurar para tests con mejor debugging
+                options.EnableSensitiveDataLogging();
+                options.EnableDetailedErrors();
+            });
+
             // 🔧 REGISTRAR IApplicationDbContext
             services.AddScoped<IApplicationDbContext>(provider => 
                 provider.GetRequiredService<RestauranteProDbContext>());
+
+            // 🔧 REGISTRAR IProveedoresDbContext
+            services.AddScoped<IProveedoresDbContext>(provider => 
+                provider.GetRequiredService<ProveedoresDbContext>());
 
             // 🔧 REGISTRAR DbContext GENÉRICO PARA REPOSITORIOS
             services.AddScoped<DbContext>(provider => 
@@ -150,6 +167,21 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
             // REGISTRO GLOBAL DE INFRAESTRUCTURA PARA TESTS
             services.AddInfrastructureServices(configuration, isTestEnvironment: true);
+
+            // 🔧 EJECUTAR MIGRACIONES PARA CREAR TABLAS EN BD TEMPORAL
+            using (var scope = services.BuildServiceProvider().CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
+                try
+                {
+                    dbContext.Database.EnsureCreated();
+                    Console.WriteLine("✅ Migraciones ejecutadas - Tablas creadas en BD temporal");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Error ejecutando migraciones: {ex.Message}");
+                }
+            }
 
             // 🔧 CONFIGURAR AUTENTICACIÓN PARA TESTS
             services.AddAuthentication(options =>
