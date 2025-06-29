@@ -12,6 +12,7 @@ using RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerPrepar
 using RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerColaPreparaciones;
 using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Common.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RestaurantePro.Api.Controllers.Operaciones;
 
@@ -21,6 +22,7 @@ namespace RestaurantePro.Api.Controllers.Operaciones;
 [ApiController]
 [Route("api/operaciones/preparaciones")]
 [Produces("application/json")]
+[Authorize]
 public class PreparacionesController : ControllerBase
 {
     private readonly IMediator _mediator;

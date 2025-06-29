@@ -6,12 +6,14 @@ using RestaurantePro.Application.Comercial.Reportes.Queries.ObtenerReporteProduc
 using RestaurantePro.Application.Comercial.Reportes.Queries.ObtenerReporteFidelizacion;
 using RestaurantePro.Application.Comercial.Reportes.Queries.ObtenerReportePromociones;
 using RestaurantePro.Application.Comercial.Reportes.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RestaurantePro.Api.Controllers.Comercial;
 
 [ApiController]
 [Route("api/comercial/reportes")]
 [Produces("application/json")]
+[Authorize]
 public class ReportesComercialController : ControllerBase
 {
     private readonly IMediator _mediator;

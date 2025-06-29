@@ -13,6 +13,7 @@ using RestaurantePro.Application.Inventario.OrdenesCompra.Queries.ObtenerOrdenes
 using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Application.Common.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RestaurantePro.Api.Controllers.Inventario;
 
@@ -22,6 +23,7 @@ namespace RestaurantePro.Api.Controllers.Inventario;
 [ApiController]
 [Route("api/inventario/ordenes-compra")]
 [Produces("application/json")]
+[Authorize]
 public class OrdenesCompraController : ControllerBase
 {
     private readonly IMediator _mediator;

@@ -17,6 +17,7 @@ namespace RestaurantePro.Api.Controllers.Comercial;
 [ApiController]
 [Route("api/comercial/clientes")]
 [Produces("application/json")]
+[Authorize]
 public class ClientesController : ControllerBase
 {
     private readonly IMediator _mediator;
@@ -32,7 +33,7 @@ public class ClientesController : ControllerBase
     /// Obtiene todos los clientes con paginación
     /// </summary>
     [HttpGet]
-    // [Authorize(Roles = "Administrador,Gerente,Empleado")] // TEMPORAL: Deshabilitado para testing
+    [Authorize(Roles = "Administrador,Gerente,Empleado")]
     [ProducesResponseType(typeof(ApiResponse<PaginatedList<ClienteSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<PaginatedList<ClienteSummaryDto>>>> GetClientes(
@@ -83,7 +84,7 @@ public class ClientesController : ControllerBase
     /// Obtiene un cliente específico por ID
     /// </summary>
     [HttpGet("{id:guid}")]
-    // [Authorize(Roles = "Administrador,Gerente,Empleado")] // TEMPORAL: Deshabilitado para testing
+    [Authorize(Roles = "Administrador,Gerente,Empleado")]
     [ProducesResponseType(typeof(ApiResponse<ClienteDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<ClienteDto>>> GetCliente(Guid id)
@@ -109,7 +110,7 @@ public class ClientesController : ControllerBase
     /// Crea un nuevo cliente
     /// </summary>
     [HttpPost]
-    // [Authorize(Roles = "Administrador,Gerente,Empleado")] // TEMPORAL: Deshabilitado para testing
+    [Authorize(Roles = "Administrador,Gerente,Empleado")]
     [ProducesResponseType(typeof(ApiResponse<ClienteDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<ClienteDto>>> CrearCliente([FromBody] CrearClienteCommand command)
@@ -138,7 +139,7 @@ public class ClientesController : ControllerBase
     /// Actualiza un cliente existente
     /// </summary>
     [HttpPut("{id:guid}")]
-    // [Authorize(Roles = "Administrador,Gerente,Empleado")] // TEMPORAL: Deshabilitado para testing
+    [Authorize(Roles = "Administrador,Gerente,Empleado")]
     [ProducesResponseType(typeof(ApiResponse<ClienteDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -172,7 +173,7 @@ public class ClientesController : ControllerBase
     /// Desactiva un cliente (eliminación lógica)
     /// </summary>
     [HttpDelete("{id:guid}")]
-    // [Authorize(Roles = "Administrador,Gerente")] // TEMPORAL: Deshabilitado para testing
+    [Authorize(Roles = "Administrador,Gerente")]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<bool>>> EliminarCliente(Guid id)

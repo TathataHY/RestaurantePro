@@ -34,7 +34,7 @@ public class UsuariosController : ControllerBase
     /// Obtiene todos los usuarios con paginación
     /// </summary>
     [HttpGet]
-    // [Authorize(Roles = "Administrador,Gerente")] // TEMPORAL: Deshabilitado para testing
+    [Authorize(Roles = "Administrador,Gerente")]
     [ProducesResponseType(typeof(ApiResponse<List<UsuarioDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<List<UsuarioDto>>>> GetUsuarios(

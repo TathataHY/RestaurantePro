@@ -25,7 +25,7 @@ namespace RestaurantePro.Api.Controllers.Inventario;
 [ApiController]
 [Route("api/inventario/ingredientes")]
 [Produces("application/json")]
-// [Authorize] // Temporalmente comentado para facilitar las pruebas
+[Authorize]
 public class IngredientesController : ControllerBase
 {
     private readonly IMediator _mediator;

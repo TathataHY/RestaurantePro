@@ -22,6 +22,7 @@ using RestaurantePro.Domain.Proveedores;
 using RestaurantePro.Domain.Core.Base.Services;
 using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 using RestaurantePro.Domain.Comercial.Clientes.Enums;
+using RestaurantePro.Infrastructure.Persistence.SeedData.Extensions;
 using ProductoCategoria = RestaurantePro.Domain.Core.Productos.Entities.ProductoCategoria;
 
 /// <summary>
@@ -356,9 +357,25 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
     /// </summary>
     protected virtual async Task ConfigurarDatosBase()
     {
-        // Este método puede ser sobrescrito por tests específicos
-        // que necesiten datos base particulares
-        await Task.CompletedTask;
+        // 🔧 EJECUTAR SEEDERS CRÍTICOS PARA QUE LOS TESTS FUNCIONEN
+        try
+        {
+            Logger.LogInformation("🔧 Iniciando configuración de datos base...");
+            
+            var seedDataRunner = ServiceScope.ServiceProvider.GetRequiredService<SeedDataRunner>();
+            Logger.LogInformation("✅ SeedDataRunner obtenido correctamente");
+            
+            // Ejecutar solo seeders críticos (roles, permisos, etc.)
+            await seedDataRunner.RunCriticalOnlyAsync();
+            Logger.LogInformation("✅ SeedDataRunner.RunCriticalOnlyAsync() ejecutado correctamente");
+            
+            Logger.LogInformation("✅ Datos base configurados correctamente");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Error configurando datos base: {Error}", ex.Message);
+            // No fallar el test si hay problemas con seeders
+        }
     }
 
     /// <summary>

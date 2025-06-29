@@ -17,6 +17,7 @@ namespace RestaurantePro.Api.Controllers.Inventario;
 [ApiController]
 [Route("api/inventario/movimientos")]
 [Produces("application/json")]
+[Authorize]
 public class MovimientosInventarioController : ControllerBase
 {
     private readonly ILogger<MovimientosInventarioController> _logger;

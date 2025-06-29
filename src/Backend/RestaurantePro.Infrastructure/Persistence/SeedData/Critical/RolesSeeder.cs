@@ -124,13 +124,12 @@ public class RolesSeeder : ISeedData
 
     public async Task<bool> ExistsAsync(RestauranteProDbContext context, CancellationToken cancellationToken = default)
     {
-        // Verificar si al menos los roles críticos existen
-        var rolesEsenciales = new[] { "ADMINISTRADOR", "GERENTE", "CAJERO", "MESERO" };
+        // Verificar si TODOS los roles críticos existen
+        var allCriticalRoles = RolesCriticos.Values.Select(r => r.NormalizedName).ToArray();
         var existingRoles = await context.Set<ApplicationRole>()
-            .Where(r => rolesEsenciales.Contains(r.NormalizedName))
+            .Where(r => allCriticalRoles.Contains(r.NormalizedName))
             .CountAsync(cancellationToken);
-            
-        return existingRoles >= rolesEsenciales.Length;
+        return existingRoles >= allCriticalRoles.Length;
     }
 
     public async Task SeedAsync(RestauranteProDbContext context, ILogger logger, CancellationToken cancellationToken = default)

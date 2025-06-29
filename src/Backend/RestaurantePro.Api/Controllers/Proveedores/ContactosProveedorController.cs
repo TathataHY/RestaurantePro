@@ -7,12 +7,14 @@ using RestaurantePro.Application.Proveedores.ContactosProveedor.Queries.ObtenerC
 using RestaurantePro.Application.Proveedores.ContactosProveedor.Queries.ObtenerContactosPorProveedor;
 using RestaurantePro.Application.Proveedores.ContactosProveedor.Queries.ObtenerTodosContactos;
 using RestaurantePro.Application.Proveedores.Proveedores.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RestaurantePro.Api.Controllers.Proveedores;
 
 [ApiController]
 [Route("api/proveedores/contactos")]
 [Produces("application/json")]
+[Authorize]
 public class ContactosProveedorController : ControllerBase
 {
     private readonly IMediator _mediator;

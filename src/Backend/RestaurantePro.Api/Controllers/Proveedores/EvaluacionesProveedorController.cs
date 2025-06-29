@@ -15,6 +15,7 @@ namespace RestaurantePro.Api.Controllers.Proveedores;
 [ApiController]
 [Route("api/proveedores/evaluaciones")]
 [Produces("application/json")]
+[Authorize]
 public class EvaluacionesProveedorController : ControllerBase
 {
     private readonly IMediator _mediator;

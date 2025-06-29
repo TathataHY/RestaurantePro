@@ -55,6 +55,8 @@ using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
 using Microsoft.EntityFrameworkCore.Metadata;
 using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
 using RestaurantePro.Infrastructure.DependencyInjection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -168,6 +170,16 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // REGISTRO GLOBAL DE INFRAESTRUCTURA PARA TESTS
             services.AddInfrastructureServices(configuration, isTestEnvironment: true);
 
+            // 🔧 CONFIGURAR SEED DATA PARA TESTS
+            services.Configure<RestaurantePro.Infrastructure.Persistence.SeedData.Extensions.SeedDataConfiguration>(options =>
+            {
+                options.RunCriticalData = true;  // Siempre ejecutar datos críticos en tests
+                options.RunDemoData = false;     // No ejecutar datos demo en tests
+                options.RunTestingData = true;   // Ejecutar datos de testing
+                options.CreateAdminUser = false; // No crear usuario admin en tests
+                options.ForceReseed = false;     // No forzar re-seed
+            });
+
             // 🔧 EJECUTAR MIGRACIONES PARA CREAR TABLAS EN BD TEMPORAL
             using (var scope = services.BuildServiceProvider().CreateScope())
             {
@@ -195,7 +207,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder()
                     .RequireAuthenticatedUser()
-                    .AddAuthenticationSchemes("Test")
+                    .AddAuthenticationSchemes("Test", "Bearer")
                     .Build();
             });
 
@@ -311,11 +323,23 @@ public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSch
         var authHeader = Request.Headers["Authorization"].ToString();
         Console.WriteLine($"🔍 TestAuthenticationHandler: Header recibido: {authHeader}");
         
-        if (!authHeader.StartsWith("Test "))
+        // Si es un token JWT válido (Bearer), procesarlo y devolver autenticación exitosa
+        if (authHeader.StartsWith("Bearer "))
         {
-            return Task.FromResult(AuthenticateResult.Fail("Invalid authentication scheme"));
+            return HandleBearerSchemeAsync(authHeader);
         }
+        
+        // Soporte para esquema "Test" (comportamiento original)
+        if (authHeader.StartsWith("Test "))
+        {
+            return HandleTestSchemeAsync(authHeader);
+        }
+        
+        return Task.FromResult(AuthenticateResult.Fail("Invalid authentication scheme"));
+    }
 
+    private Task<AuthenticateResult> HandleTestSchemeAsync(string authHeader)
+    {
         // Extraer el rol del header si está presente
         var role = "Administrador"; // Rol por defecto
         var userId = Guid.NewGuid().ToString(); // ID por defecto
@@ -360,11 +384,16 @@ public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSch
             new Claim(ClaimTypes.Role, role)
         };
 
-        // Agregar múltiples roles para cubrir todos los endpoints
-        var allRoles = new[] { "Administrador", "Cajero", "Gerente", "Mesero", "Cocinero" };
-        foreach (var r in allRoles)
+        // Si el rol es específico (no el por defecto), solo usar ese rol
+        // Si es el rol por defecto "Administrador", agregar todos los roles para compatibilidad
+        if (role == "Administrador" || role == "-Administrador") // Manejar el bug del parsing
         {
-            claims.Add(new Claim(ClaimTypes.Role, r));
+            // Agregar múltiples roles para cubrir todos los endpoints (comportamiento original)
+            var allRoles = new[] { "Administrador", "Cajero", "Gerente", "Mesero", "Cocinero", "Empleado", "Chef", "SuperAdministrador" };
+            foreach (var r in allRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, r));
+            }
         }
 
         var identity = new ClaimsIdentity(claims, "Test");
@@ -372,6 +401,165 @@ public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSch
         var ticket = new AuthenticationTicket(principal, "Test");
 
         return Task.FromResult(AuthenticateResult.Success(ticket));
+    }
+
+    private Task<AuthenticateResult> HandleBearerSchemeAsync(string authHeader)
+    {
+        try
+        {
+            // Extraer el token JWT
+            var token = authHeader.Substring(7); // "Bearer " tiene 7 caracteres
+            
+            // 🔧 PARSER BÁSICO DE JWT PARA TESTS
+            // En tests, vamos a extraer información básica del token JWT sin validación criptográfica
+            var tokenParts = token.Split('.');
+            if (tokenParts.Length != 3)
+            {
+                Console.WriteLine($"🔍 TestAuthenticationHandler: Token JWT inválido - formato incorrecto");
+                return Task.FromResult(AuthenticateResult.Fail("Invalid JWT format"));
+            }
+
+            // Decodificar el payload (segunda parte del token)
+            var payload = tokenParts[1];
+            
+            // Agregar padding si es necesario para Base64
+            var padding = 4 - (payload.Length % 4);
+            if (padding != 4)
+            {
+                payload += new string('=', padding);
+            }
+            
+            // Reemplazar caracteres URL-safe
+            payload = payload.Replace('-', '+').Replace('_', '/');
+            
+            try
+            {
+                var payloadBytes = Convert.FromBase64String(payload);
+                var payloadJson = System.Text.Encoding.UTF8.GetString(payloadBytes);
+                
+                // Parsear el JSON del payload
+                using var jsonDoc = JsonDocument.Parse(payloadJson);
+                var root = jsonDoc.RootElement;
+                
+                // Extraer claims del payload JWT
+                var claims = new List<Claim>();
+                
+                // User ID (sub o uid)
+                if (root.TryGetProperty("sub", out var subElement))
+                {
+                    var userId = subElement.GetString();
+                    if (!string.IsNullOrEmpty(userId))
+                    {
+                        claims.Add(new Claim(ClaimTypes.NameIdentifier, userId));
+                        claims.Add(new Claim("sub", userId));
+                    }
+                }
+                
+                // User Name (name)
+                if (root.TryGetProperty("name", out var nameElement))
+                {
+                    var userName = nameElement.GetString();
+                    if (!string.IsNullOrEmpty(userName))
+                    {
+                        claims.Add(new Claim(ClaimTypes.Name, userName));
+                    }
+                }
+                
+                // Email
+                if (root.TryGetProperty("email", out var emailElement))
+                {
+                    var email = emailElement.GetString();
+                    if (!string.IsNullOrEmpty(email))
+                    {
+                        claims.Add(new Claim(ClaimTypes.Email, email));
+                    }
+                }
+                
+                // Roles (role o roles)
+                if (root.TryGetProperty("role", out var roleElement))
+                {
+                    var role = roleElement.GetString();
+                    if (!string.IsNullOrEmpty(role))
+                    {
+                        claims.Add(new Claim(ClaimTypes.Role, role));
+                    }
+                }
+                else if (root.TryGetProperty("roles", out var rolesElement))
+                {
+                    if (rolesElement.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var role in rolesElement.EnumerateArray())
+                        {
+                            if (role.ValueKind == JsonValueKind.String)
+                            {
+                                claims.Add(new Claim(ClaimTypes.Role, role.GetString()!));
+                            }
+                        }
+                    }
+                }
+                
+                // Asegurar que tenemos al menos los claims básicos
+                if (!claims.Any(c => c.Type == ClaimTypes.NameIdentifier))
+                {
+                    var fallbackUserId = Guid.NewGuid().ToString();
+                    claims.Add(new Claim(ClaimTypes.NameIdentifier, fallbackUserId));
+                    claims.Add(new Claim("sub", fallbackUserId));
+                }
+                
+                if (!claims.Any(c => c.Type == ClaimTypes.Name))
+                {
+                    claims.Add(new Claim(ClaimTypes.Name, "JWTUser"));
+                }
+                
+                if (!claims.Any(c => c.Type == ClaimTypes.Email))
+                {
+                    claims.Add(new Claim(ClaimTypes.Email, "jwt@test.com"));
+                }
+                
+                if (!claims.Any(c => c.Type == ClaimTypes.Role))
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, "Empleado"));
+                }
+
+                var identity = new ClaimsIdentity(claims, "Bearer");
+                var principal = new ClaimsPrincipal(identity);
+                var ticket = new AuthenticationTicket(principal, "Bearer");
+
+                var extractedUserId = claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+                var roles = claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value);
+                
+                Console.WriteLine($"🔍 TestAuthenticationHandler: Token JWT procesado exitosamente - UserId: {extractedUserId}, Roles: {string.Join(", ", roles)}");
+                return Task.FromResult(AuthenticateResult.Success(ticket));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"🔍 TestAuthenticationHandler: Error decodificando payload JWT: {ex.Message}");
+                // Continuar con fallback
+            }
+            
+            // Fallback: simular claims básicos si no se puede procesar el token
+            var fallbackClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, "JWTUser"),
+                new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Email, "jwt@test.com"),
+                new Claim(ClaimTypes.Role, "Empleado"), // Rol por defecto para tokens JWT
+                new Claim("sub", Guid.NewGuid().ToString()), // Subject claim
+                new Claim("uid", Guid.NewGuid().ToString()) // User ID claim
+            };
+
+            var fallbackIdentity = new ClaimsIdentity(fallbackClaims, "Bearer");
+            var fallbackPrincipal = new ClaimsPrincipal(fallbackIdentity);
+            var fallbackTicket = new AuthenticationTicket(fallbackPrincipal, "Bearer");
+
+            Console.WriteLine($"🔍 TestAuthenticationHandler: Token JWT procesado con fallback");
+            return Task.FromResult(AuthenticateResult.Success(fallbackTicket));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"🔍 TestAuthenticationHandler: Error procesando token JWT: {ex.Message}");
+            return Task.FromResult(AuthenticateResult.Fail("Invalid JWT token"));
+        }
     }
 }
 

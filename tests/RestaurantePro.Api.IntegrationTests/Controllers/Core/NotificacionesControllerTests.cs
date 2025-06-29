@@ -24,6 +24,20 @@ public class NotificacionesControllerTests : ApiIntegrationTestBase, IDisposable
         // Usar el mismo usuarioId fijo que el controlador para que los tests funcionen
         var usuarioId = new Guid("11111111-1111-1111-1111-111111111111");
         
+        // 🔧 MEJORA: Verificar si el usuario ya existe antes de crearlo
+        var usuarioExistente = await DbContext.Usuarios
+            .FirstOrDefaultAsync(u => u.Id == usuarioId);
+        
+        if (usuarioExistente != null)
+        {
+            // Si el usuario ya existe, retornar su ID sin crear uno nuevo
+            Console.WriteLine($"👤 Usuario ya existe en BD: {usuarioId}");
+            return usuarioId;
+        }
+        
+        // Si no existe, crear el usuario
+        Console.WriteLine($"👤 Creando nuevo usuario con ID: {usuarioId}");
+        
         // Usar el método de creación correcto de la entidad Usuario
         var usuario = Usuario.Crear(
             "test.user",
@@ -37,9 +51,11 @@ public class NotificacionesControllerTests : ApiIntegrationTestBase, IDisposable
         var idProperty = typeof(Usuario).GetProperty("Id");
         idProperty?.SetValue(usuario, usuarioId);
 
-        DbContext.Usuarios.Add(usuario);
+        // 🔧 MEJORA: Usar AddAsync para evitar conflictos de tracking
+        var entry = DbContext.Usuarios.Add(usuario);
         await DbContext.SaveChangesAsync();
-
+        
+        Console.WriteLine($"✅ Usuario creado exitosamente: {usuarioId}");
         return usuarioId;
     }
 

@@ -12,6 +12,7 @@ using RestaurantePro.Application.Operaciones.Reservaciones.Queries.ObtenerReserv
 using RestaurantePro.Application.Operaciones.Reservaciones.Queries.VerificarDisponibilidad;
 using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Common.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RestaurantePro.Api.Controllers.Operaciones;
 
@@ -21,6 +22,7 @@ namespace RestaurantePro.Api.Controllers.Operaciones;
 [ApiController]
 [Route("api/operaciones/reservaciones")]
 [Produces("application/json")]
+[Authorize]
 public class ReservacionesController : ControllerBase
 {
     private readonly IMediator _mediator;

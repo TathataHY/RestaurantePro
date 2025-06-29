@@ -16,11 +16,11 @@ namespace RestaurantePro.Api.IntegrationTests.Controllers.Proveedores
             HttpClient = factory.CreateClient();
             // Configurar autenticación de test
             HttpClient.DefaultRequestHeaders.Add("Authorization", "Test AuthenticatedUser-Administrador");
-        }
+    }
 
-        [Fact]
-        public async Task CrearContacto_DeberiaCrearContacto_CuandoDatosSonValidos()
-        {
+    [Fact]
+    public async Task CrearContacto_DeberiaCrearContacto_CuandoDatosSonValidos()
+    {
             // Arrange: Crear proveedor usando la API
             var proveedorRequest = new
             {
@@ -77,9 +77,9 @@ namespace RestaurantePro.Api.IntegrationTests.Controllers.Proveedores
             contactoObtenido.GetProperty("Email").GetString().Should().Be("juan.perez@test.com");
             contactoObtenido.GetProperty("Telefono").GetString().Should().Be("555-5678");
             contactoObtenido.GetProperty("ProveedorId").GetString().Should().Be(proveedorId);
-        }
+    }
 
-        [Fact]
+    [Fact]
         public async Task ActualizarContacto_DeberiaActualizarContacto_CuandoDatosSonValidos()
         {
             // Arrange: Crear proveedor usando la API
@@ -152,11 +152,11 @@ namespace RestaurantePro.Api.IntegrationTests.Controllers.Proveedores
             // Nota: EsPrincipal no se actualiza porque la entidad de dominio no soporta actualizar este campo
             // contactoActualizado.GetProperty("EsPrincipal").GetBoolean().Should().Be(true);
             contactoActualizado.GetProperty("ProveedorId").GetString().Should().Be(proveedorId);
-        }
+    }
 
-        [Fact]
-        public async Task EliminarContacto_DeberiaEliminarContacto_CuandoExiste()
-        {
+    [Fact]
+    public async Task EliminarContacto_DeberiaEliminarContacto_CuandoExiste()
+    {
             // Arrange: Crear proveedor usando la API
             var proveedorRequest = new
             {
