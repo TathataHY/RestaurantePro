@@ -44,20 +44,34 @@ public class ObtenerAnalisisInventarioHandlerTests
         var fechaDesde = DateTime.Today.AddDays(-30);
         var fechaHasta = DateTime.Today;
         var usuarioId = Guid.NewGuid();
-        var nivelDetalle = "Completo";
 
         var query = new ObtenerAnalisisInventarioQuery
         {
             FechaDesde = fechaDesde,
             FechaHasta = fechaHasta,
             UsuarioId = usuarioId,
-            NivelDetalle = nivelDetalle,
-            Categorias = new List<string> { "Granos", "Verduras" },
-            IncluirTendencias = true,
-            IncluirRecomendaciones = true
+            NivelDetalle = "Completo"
         };
 
-        // Configurar mocks
+        // Crear ingredientes de prueba
+        var ingrediente1 = Ingrediente.Crear("Arroz", "ARZ-01", "Arroz blanco", UnidadMedida.Kilogramo, 10, 50);
+        ingrediente1.ActualizarCostoPromedio(2.5m);
+        var ingrediente2 = Ingrediente.Crear("Frijol", "FRJ-01", "Frijol negro", UnidadMedida.Kilogramo, 5, 20);
+        ingrediente2.ActualizarCostoPromedio(1.8m);
+
+        // Crear movimientos de prueba
+        var movimiento1 = MovimientoInventario.CrearIngreso(ingrediente1.Id, 10, "Compra inicial");
+        var movimiento2 = MovimientoInventario.CrearEgreso(ingrediente1.Id, 5, "Uso en cocina");
+
+        var ingredientes = new List<Ingrediente> { ingrediente1, ingrediente2 };
+        var movimientos = new List<MovimientoInventario> { movimiento1, movimiento2 };
+
+        // Configurar mocks para que funcionen correctamente
+        var ingredientesQueryable = ingredientes.AsQueryable();
+        var movimientosQueryable = movimientos.AsQueryable();
+
+        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(ingredientesQueryable).Object);
+        _contextMock.Setup(x => x.MovimientosInventario).Returns(MockDbSetHelper.CreateMockDbSet(movimientosQueryable).Object);
         _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
 
         // Act
@@ -67,6 +81,7 @@ public class ObtenerAnalisisInventarioHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
+        result.Value.TotalIngredientes.Should().Be(2);
     }
 
     [Fact]
@@ -87,8 +102,11 @@ public class ObtenerAnalisisInventarioHandlerTests
 
         // Crear ingredientes de prueba
         var ingrediente1 = Ingrediente.Crear("Arroz", "ARZ-01", "Arroz blanco", UnidadMedida.Kilogramo, 10, 50);
+        ingrediente1.ActualizarCostoPromedio(2.5m);
         var ingrediente2 = Ingrediente.Crear("Frijol", "FRJ-01", "Frijol negro", UnidadMedida.Kilogramo, 5, 20);
+        ingrediente2.ActualizarCostoPromedio(1.8m);
         var ingrediente3 = Ingrediente.Crear("Aceite", "ACE-01", "Aceite de oliva", UnidadMedida.Litro, 2, 8);
+        ingrediente3.ActualizarCostoPromedio(5.0m);
 
         // Crear movimientos de prueba
         var movimiento1 = MovimientoInventario.CrearIngreso(ingrediente1.Id, 10, "Compra inicial");
@@ -99,8 +117,8 @@ public class ObtenerAnalisisInventarioHandlerTests
         var movimientos = new List<MovimientoInventario> { movimiento1, movimiento2, movimiento3 };
 
         // Configurar mocks
-        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(ingredientes.AsQueryable()));
-        _contextMock.Setup(x => x.MovimientosInventario).Returns(MockDbSetHelper.CreateMockDbSet(movimientos.AsQueryable()));
+        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(ingredientes.AsQueryable()).Object);
+        _contextMock.Setup(x => x.MovimientosInventario).Returns(MockDbSetHelper.CreateMockDbSet(movimientos.AsQueryable()).Object);
         _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
 
         // Act
@@ -111,6 +129,7 @@ public class ObtenerAnalisisInventarioHandlerTests
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.FechaGeneracion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(1));
+        result.Value.TotalIngredientes.Should().Be(3);
     }
 
     [Fact]
@@ -126,7 +145,11 @@ public class ObtenerAnalisisInventarioHandlerTests
         };
 
         // Configurar mocks con datos vacíos
-        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(new List<Ingrediente>().AsQueryable()));
+        var ingredientesVacios = new List<Ingrediente>().AsQueryable();
+        var movimientosVacios = new List<MovimientoInventario>().AsQueryable();
+        
+        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(ingredientesVacios).Object);
+        _contextMock.Setup(x => x.MovimientosInventario).Returns(MockDbSetHelper.CreateMockDbSet(movimientosVacios).Object);
         _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
 
         // Act
@@ -137,6 +160,7 @@ public class ObtenerAnalisisInventarioHandlerTests
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
         result.Value.FechaGeneracion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(1));
+        result.Value.TotalIngredientes.Should().Be(0);
     }
 
     [Fact]
@@ -159,8 +183,8 @@ public class ObtenerAnalisisInventarioHandlerTests
         var ingredientes = new List<Ingrediente> { ingrediente1, ingrediente2 };
 
         // Configurar mocks
-        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(ingredientes.AsQueryable()));
-        _contextMock.Setup(x => x.MovimientosInventario).Returns(MockDbSetHelper.CreateMockDbSet(new List<MovimientoInventario>().AsQueryable()));
+        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(ingredientes.AsQueryable()).Object);
+        _contextMock.Setup(x => x.MovimientosInventario).Returns(MockDbSetHelper.CreateMockDbSet(new List<MovimientoInventario>().AsQueryable()).Object);
         _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
 
         // Act
@@ -194,8 +218,8 @@ public class ObtenerAnalisisInventarioHandlerTests
         var movimientos = new List<MovimientoInventario> { movimiento1, movimiento2 };
 
         // Configurar mocks
-        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(ingredientes.AsQueryable()));
-        _contextMock.Setup(x => x.MovimientosInventario).Returns(MockDbSetHelper.CreateMockDbSet(movimientos.AsQueryable()));
+        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(ingredientes.AsQueryable()).Object);
+        _contextMock.Setup(x => x.MovimientosInventario).Returns(MockDbSetHelper.CreateMockDbSet(movimientos.AsQueryable()).Object);
         _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
 
         // Act
@@ -227,8 +251,8 @@ public class ObtenerAnalisisInventarioHandlerTests
         var ingredientes = new List<Ingrediente> { ingrediente1, ingrediente2 };
 
         // Configurar mocks
-        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(ingredientes.AsQueryable()));
-        _contextMock.Setup(x => x.MovimientosInventario).Returns(MockDbSetHelper.CreateMockDbSet(new List<MovimientoInventario>().AsQueryable()));
+        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(ingredientes.AsQueryable()).Object);
+        _contextMock.Setup(x => x.MovimientosInventario).Returns(MockDbSetHelper.CreateMockDbSet(new List<MovimientoInventario>().AsQueryable()).Object);
         _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
 
         // Act
@@ -262,8 +286,8 @@ public class ObtenerAnalisisInventarioHandlerTests
         var ingredientes = new List<Ingrediente> { ingrediente1, ingrediente2 };
 
         // Configurar mocks
-        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(ingredientes.AsQueryable()));
-        _contextMock.Setup(x => x.MovimientosInventario).Returns(MockDbSetHelper.CreateMockDbSet(new List<MovimientoInventario>().AsQueryable()));
+        _contextMock.Setup(x => x.Ingredientes).Returns(MockDbSetHelper.CreateMockDbSet(ingredientes.AsQueryable()).Object);
+        _contextMock.Setup(x => x.MovimientosInventario).Returns(MockDbSetHelper.CreateMockDbSet(new List<MovimientoInventario>().AsQueryable()).Object);
         _dateTimeServiceMock.Setup(x => x.Now).Returns(DateTime.Now);
 
         // Act
