@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Design;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 using RestaurantePro.Domain.Core.Base.Events;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.IO;
 
 namespace RestaurantePro.Infrastructure.Persistence.Contexts;
