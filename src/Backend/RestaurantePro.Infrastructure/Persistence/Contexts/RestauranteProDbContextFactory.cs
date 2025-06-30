@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 using RestaurantePro.Domain.Core.Base.Events;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace RestaurantePro.Infrastructure.Persistence.Contexts;
 
@@ -11,8 +13,15 @@ public class RestauranteProDbContextFactory : IDesignTimeDbContextFactory<Restau
     {
         var optionsBuilder = new DbContextOptionsBuilder<RestauranteProDbContext>();
         
-        // Configurar connection string
-        var connectionString = "Server=TATHATA\\SQLEXPRESS;Database=RestauranteProDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True";
+        // Leer configuración desde appsettings.json
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false)
+            .AddJsonFile("appsettings.Development.json", optional: true)
+            .AddEnvironmentVariables()
+            .Build();
+
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
         
         optionsBuilder.UseSqlServer(connectionString, 
             b => b.MigrationsAssembly(typeof(RestauranteProDbContext).Assembly.FullName)
