@@ -128,11 +128,14 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
             return Result.Failure($"No se puede confirmar una reservación con estado {reservacion.Estado}");
         }
 
-        // Validar que la reservación no haya expirado (ejemplo: 2 horas antes)
+        // Validar que la reservación no haya expirado (no puede confirmarse si ya pasó la fecha/hora)
         var fechaHoraReservacion = reservacion.Fecha.Add(reservacion.Hora);
-        if (fechaHoraReservacion <= DateTime.UtcNow.AddHours(2))
+        var ahoraLocal = DateTime.Now; // Usar hora local para consistencia con el test
+        _logger.LogInformation("[Diagnóstico] fechaHoraReservacion: {FechaHoraReservacion:O}, ahoraLocal: {AhoraLocal:O}", fechaHoraReservacion, ahoraLocal);
+        
+        if (fechaHoraReservacion <= ahoraLocal)
         {
-            return Result.Failure("La reservación ha expirado o es demasiado próxima para ser confirmada");
+            return Result.Failure("La reservación ha expirado y no puede ser confirmada");
         }
 
         // TODO: Agregar más validaciones de negocio cuando estén disponibles

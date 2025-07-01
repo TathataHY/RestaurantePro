@@ -102,6 +102,13 @@ namespace RestaurantePro.Domain.Inventario.Ingredientes.Interfaces
 
         Task<List<Ingrediente>> ObtenerIngredientesBajosDeStockAsync(CancellationToken cancellationToken);
         Task<List<Ingrediente>> BuscarAsync(Expression<Func<Ingrediente, bool>> predicate, CancellationToken cancellationToken);
+        
+        /// <summary>
+        /// Recarga una entidad desde la base de datos para asegurar datos actualizados
+        /// </summary>
+        /// <param name="entity">Entidad a recargar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        Task RecargarEntidadAsync(Ingrediente entity, CancellationToken cancellationToken = default);
     }
 }
 

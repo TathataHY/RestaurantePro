@@ -79,6 +79,8 @@ public class CrearOrdenCompraHandler : IRequestHandler<CrearOrdenCompraCommand, 
                 if (itemCommand.PrecioUnitario > 0)
                 {
                     itemOrden.Actualizar(itemCommand.Cantidad, itemCommand.PrecioUnitario);
+                    // Recalcular el total de la orden después de actualizar el precio
+                    ordenCompra.RecalcularTotal();
                 }
 
                 // Agregar observaciones del item si existen

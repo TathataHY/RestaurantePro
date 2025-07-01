@@ -84,6 +84,14 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces
         Task<OrdenCompra> ObtenerPorIdConItemsAsync(Guid id, CancellationToken cancellationToken = default);
         
         /// <summary>
+        /// Obtiene una orden de compra por ID sin rastreo para forzar lectura desde BD
+        /// </summary>
+        /// <param name="id">Identificador de la orden</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>La orden de compra sin rastreo o null si no existe</returns>
+        Task<OrdenCompra?> ObtenerPorIdSinRastreoAsync(Guid id, CancellationToken cancellationToken = default);
+        
+        /// <summary>
         /// Agrega una nueva orden de compra (Alias de AgregarAsync)
         /// </summary>
         /// <param name="ordenCompra">Orden de compra a agregar</param>

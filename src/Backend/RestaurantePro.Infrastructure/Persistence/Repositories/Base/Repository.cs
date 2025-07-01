@@ -189,4 +189,12 @@ public class Repository<T> : IRepository<T> where T : class
     {
         return await _dbSet.FirstOrDefaultAsync(specification.ToExpression(), cancellationToken);
     }
+
+    /// <summary>
+    /// Recarga una entidad desde la base de datos para asegurar datos actualizados
+    /// </summary>
+    public virtual async Task RecargarEntidadAsync(T entity, CancellationToken cancellationToken = default)
+    {
+        await _dbContext.Entry(entity).ReloadAsync(cancellationToken);
+    }
 } 

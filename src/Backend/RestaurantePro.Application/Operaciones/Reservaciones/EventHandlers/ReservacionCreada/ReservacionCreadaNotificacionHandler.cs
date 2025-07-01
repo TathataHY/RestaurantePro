@@ -36,6 +36,7 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
     /// </summary>
     public async Task Handle(Domain.Operaciones.Reservaciones.Events.Reservacion.ReservacionCreada evento, CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation($"[NotificacionHandler] INICIO Handle: ReservacionId={evento.ReservacionId}, MesaId={evento.MesaId}");
         _logger.LogInformation("📅 Iniciando envío de confirmación para Reservación {ReservacionId} - Cliente {ClienteId}", 
             evento.ReservacionId, evento.ClienteId);
 
@@ -97,6 +98,10 @@ public class ReservacionCreadaNotificacionHandler : Domain.Core.Base.Events.Hand
         {
             _logger.LogError(ex, "💥 Error al enviar confirmación para Reservación {ReservacionId}", evento.ReservacionId);
             throw;
+        }
+        finally
+        {
+            _logger.LogInformation($"[NotificacionHandler] FIN Handle: ReservacionId={evento.ReservacionId}, MesaId={evento.MesaId}");
         }
     }
 

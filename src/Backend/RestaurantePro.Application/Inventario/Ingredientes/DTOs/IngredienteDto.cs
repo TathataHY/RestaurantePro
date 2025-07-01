@@ -22,6 +22,7 @@ public class IngredienteDto : BaseDto
     /// <summary>
     /// Categoría del ingrediente
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public RotacionIngrediente Rotacion { get; set; }
 
     /// <summary>
@@ -32,6 +33,7 @@ public class IngredienteDto : BaseDto
     /// <summary>
     /// Unidad de medida del ingrediente
     /// </summary>
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public UnidadMedida UnidadMedida { get; set; }
 
     /// <summary>

@@ -14,6 +14,7 @@ public class OrdenCompraDto
     public DateTime FechaCreacion { get; set; }
     public DateTime FechaEntregaEsperada { get; set; }
     public DateTime? FechaEntregaReal { get; set; }
+    [System.Text.Json.Serialization.JsonConverter(typeof(System.Text.Json.Serialization.JsonStringEnumConverter))]
     public EstadoOrdenCompra Estado { get; set; }
     public decimal Total { get; set; }
     public string? Observaciones { get; set; }

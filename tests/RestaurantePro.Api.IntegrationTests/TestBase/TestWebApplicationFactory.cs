@@ -140,6 +140,15 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 // Configurar para tests con mejor debugging
                 options.EnableSensitiveDataLogging();
                 options.EnableDetailedErrors();
+                
+                // 🔧 AGREGAR INTERCEPTORES PARA QUE FUNCIONEN LOS EVENTOS DE DOMINIO
+                var auditableEntityInterceptor = services.BuildServiceProvider().GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.AuditableEntityInterceptor>();
+                var domainEventInterceptor = services.BuildServiceProvider().GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.DomainEventInterceptor>();
+                var softDeleteInterceptor = services.BuildServiceProvider().GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.SoftDeleteInterceptor>();
+                
+                options.AddInterceptors(auditableEntityInterceptor);
+                options.AddInterceptors(domainEventInterceptor);
+                options.AddInterceptors(softDeleteInterceptor);
             });
 
             // 🔧 REGISTRAR CONTEXTOS ESPECÍFICOS PARA TESTS

@@ -58,8 +58,15 @@ public class AprobarOrdenCompraHandler : IRequestHandler<AprobarOrdenCompraComma
             // Aprobar la orden usando el método de la entidad
             ordenCompra.Aprobar(_dateTimeService);
 
+            // Forzar la detección de cambios en EF Core
+            _logger.LogInformation("🔍 Estado después de aprobar: {Estado}", ordenCompra.Estado);
+
             // Guardar cambios
             await _ordenCompraRepository.ActualizarAsync(ordenCompra, cancellationToken);
+            
+            // Verificar que los cambios se guardaron correctamente
+            var ordenVerificada = await _ordenCompraRepository.ObtenerPorIdAsync(request.Id, cancellationToken);
+            _logger.LogInformation("🔍 Estado en BD después de guardar: {Estado}", ordenVerificada.Estado);
 
             _logger.LogInformation("✅ Orden de compra aprobada exitosamente: {OrdenCompraId}", request.Id);
 

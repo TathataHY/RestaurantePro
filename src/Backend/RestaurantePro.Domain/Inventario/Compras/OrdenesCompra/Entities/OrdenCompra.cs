@@ -70,7 +70,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         /// <summary>
         /// Estado actual de la orden
         /// </summary>
-        public EstadoOrdenCompra Estado { get; private set; }
+        public EstadoOrdenCompra Estado { get; set; }
         
         /// <summary>
         /// Monto total de la orden
@@ -222,8 +222,9 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         /// <summary>
         /// Envía la orden de compra al proveedor
         /// </summary>
+        /// <param name="fechaEnvio">Fecha de envío (opcional, usa DateTime.Now si no se proporciona)</param>
         /// <exception cref="InvalidOperationException">Si la orden no está en estado Pendiente o Confirmada, o no tiene items</exception>
-        public void Enviar()
+        public void Enviar(DateTime? fechaEnvio = null)
         {
             if (Estado != EstadoOrdenCompra.Pendiente && Estado != EstadoOrdenCompra.Confirmada)
                 throw new InvalidOperationException("No se puede enviar una orden que no está en estado pendiente o confirmada");
@@ -232,7 +233,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
                 throw new InvalidOperationException("No se puede enviar una orden sin items");
                 
             Estado = EstadoOrdenCompra.Enviada;
-            FechaEnvio = DateTime.Now;
+            FechaEnvio = fechaEnvio ?? DateTime.Now;
             MarkAsModified();
             
             // Validar invariantes antes de emitir eventos
@@ -290,7 +291,7 @@ namespace RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Entities
         /// <summary>
         /// Recalcula el total de la orden
         /// </summary>
-        private void RecalcularTotal()
+        public void RecalcularTotal()
         {
             Total = _items.Sum(i => i.Subtotal);
             MarkAsModified();

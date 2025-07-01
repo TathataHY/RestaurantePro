@@ -35,8 +35,10 @@ public class ObtenerOrdenCompraPorIdHandler : IRequestHandler<ObtenerOrdenCompra
 
         try
         {
-            // Buscar la orden de compra por ID
-            var ordenCompra = await _ordenCompraRepository.ObtenerPorIdAsync(request.Id, cancellationToken);
+            // Buscar la orden de compra por ID - FORZAR LECTURA DESDE BD SIN CACHE
+            _logger.LogInformation("🔍 Usando método sin rastreo para evitar cache de EF Core");
+            
+            var ordenCompra = await _ordenCompraRepository.ObtenerPorIdSinRastreoAsync(request.Id, cancellationToken);
             
             if (ordenCompra == null)
             {
@@ -44,8 +46,18 @@ public class ObtenerOrdenCompraPorIdHandler : IRequestHandler<ObtenerOrdenCompra
                 return Result.Failure<OrdenCompraDto>($"Orden de compra no encontrada: {request.Id}");
             }
 
+            _logger.LogInformation("✅ Orden obtenida desde BD - Estado actual: {Estado}", ordenCompra.Estado);
+
+            // DIAGNÓSTICO: Verificar el estado antes del mapping
+            _logger.LogInformation("🔍 [DIAGNÓSTICO] Estado de la entidad antes del mapping: {Estado} (Valor: {Valor})", 
+                ordenCompra.Estado, (int)ordenCompra.Estado);
+
             // Mapear a DTO
             var ordenCompraDto = _mapper.Map<OrdenCompraDto>(ordenCompra);
+
+            // DIAGNÓSTICO: Verificar el estado después del mapping
+            _logger.LogInformation("🔍 [DIAGNÓSTICO] Estado del DTO después del mapping: {Estado} (Valor: {Valor})", 
+                ordenCompraDto.Estado, (int)ordenCompraDto.Estado);
 
             _logger.LogInformation("✅ Orden de compra obtenida exitosamente: {OrdenCompraId}", request.Id);
 

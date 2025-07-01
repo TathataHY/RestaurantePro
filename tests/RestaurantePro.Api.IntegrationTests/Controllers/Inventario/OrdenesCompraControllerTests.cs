@@ -570,6 +570,87 @@ public class OrdenesCompraControllerTests : ApiIntegrationTestBase, IDisposable
         Logger.LogInformation("✅ Test COMPLETO finalizado: GetOrdenesCompraPorProveedor_ConOrdenesDelProveedor_DebeRetornarOrdenes");
     }
 
+    [Fact]
+    public async Task ObtenerOrdenCompraPorId_ConEstadoModificado_DebeRetornarEstadoCorrecto()
+    {
+        // Arrange
+        var admin = await CrearUsuarioPrueba("admin.test", "Admin Test", "admin@test.com", RolUsuario.Administrador);
+        var proveedor = await CrearProveedorPrueba("Proveedor Test");
+        var ingrediente = await CrearIngredientePrueba("Ingrediente Test");
+        
+        // Crear una orden de compra con datos válidos
+        var crearOrdenRequest = new
+        {
+            ProveedorId = proveedor.Id,
+            FechaEntregaEsperada = DateTime.Today.AddDays(7), // Fecha futura válida
+            Observaciones = "Test de persistencia de estado",
+            Items = new[]
+            {
+                new
+                {
+                    IngredienteId = ingrediente.Id,
+                    Cantidad = 10,
+                    PrecioUnitario = 5.50m,
+                    Observaciones = "Item de prueba"
+                }
+            }
+        };
+        
+        var crearResponse = await HttpClient.PostAsJsonAsync("/api/inventario/ordenes-compra", crearOrdenRequest);
+        
+        // 🔍 DIAGNÓSTICO: Capturar el error específico
+        if (!crearResponse.IsSuccessStatusCode)
+        {
+            var errorContent = await crearResponse.Content.ReadAsStringAsync();
+            Logger.LogError("🔧 [TEST] Error al crear orden: Status={Status}, Content={Content}", 
+                crearResponse.StatusCode, errorContent);
+            
+            // Intentar deserializar como ApiResponse para obtener más detalles
+            try
+            {
+                var errorResponse = await crearResponse.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                Logger.LogError("🔧 [TEST] Error detallado: {Error}", errorResponse?.Message);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("🔧 [TEST] Error al deserializar respuesta: {Error}", ex.Message);
+            }
+        }
+        
+        crearResponse.EnsureSuccessStatusCode();
+        
+        var ordenCreada = await crearResponse.Content.ReadFromJsonAsync<ApiResponse<OrdenCompraDto>>();
+        var ordenId = ordenCreada!.Data!.Id;
+        
+        Logger.LogInformation("🔧 [TEST] Orden creada con ID: {OrdenId}, Estado inicial: {Estado}", 
+            ordenId, ordenCreada.Data.Estado);
+        
+        // Act - Aprobar la orden (esto cambia el estado)
+        var aprobarResponse = await HttpClient.PostAsync($"/api/inventario/ordenes-compra/{ordenId}/aprobar", null);
+        aprobarResponse.EnsureSuccessStatusCode();
+        
+        var ordenAprobada = await aprobarResponse.Content.ReadFromJsonAsync<ApiResponse<OrdenCompraDto>>();
+        Logger.LogInformation("🔧 [TEST] Orden aprobada - Estado en respuesta: {Estado}", 
+            ordenAprobada!.Data!.Estado);
+        
+        // Act - Obtener la orden por ID (endpoint problemático)
+        var obtenerResponse = await HttpClient.GetAsync($"/api/inventario/ordenes-compra/{ordenId}");
+        obtenerResponse.EnsureSuccessStatusCode();
+        
+        var ordenObtenida = await obtenerResponse.Content.ReadFromJsonAsync<ApiResponse<OrdenCompraDto>>();
+        
+        // Assert
+        ordenObtenida.Should().NotBeNull();
+        ordenObtenida!.Success.Should().BeTrue();
+        ordenObtenida.Data.Should().NotBeNull();
+        
+        Logger.LogInformation("🔧 [TEST] Orden obtenida por ID - Estado final: {Estado} (Valor: {Valor})", 
+            ordenObtenida.Data!.Estado, (int)ordenObtenida.Data.Estado);
+        
+        // ⚠️ ESTA ES LA VALIDACIÓN QUE FALLA EN EL FLUJO COMPLETO
+        ordenObtenida.Data!.Estado.Should().Be(EstadoOrdenCompra.Confirmada);
+    }
+
     #region Métodos Helper
 
     private async Task LimpiarTablaOrdenesCompra()

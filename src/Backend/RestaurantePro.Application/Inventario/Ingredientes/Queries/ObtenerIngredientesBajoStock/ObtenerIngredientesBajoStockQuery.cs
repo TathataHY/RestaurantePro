@@ -7,9 +7,9 @@ namespace RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngr
 public class ObtenerIngredientesBajoStockQuery : IRequest<Result<List<IngredienteSummaryDto>>>
 {
     /// <summary>
-    /// Porcentaje del stock mínimo considerado crítico (por defecto 25%)
+    /// Porcentaje del stock mínimo considerado crítico (por defecto 0 = no filtrar)
     /// </summary>
-    public decimal PorcentajeCritico { get; set; } = 25;
+    public decimal PorcentajeCritico { get; set; } = 0;
 
     /// <summary>
     /// Incluir solo ingredientes activos

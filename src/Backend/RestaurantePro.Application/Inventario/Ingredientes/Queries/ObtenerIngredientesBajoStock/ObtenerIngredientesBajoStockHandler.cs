@@ -111,6 +111,12 @@ public class ObtenerIngredientesBajoStockHandler : IRequestHandler<ObtenerIngred
         IEnumerable<Domain.Inventario.Ingredientes.Entities.Ingrediente> ingredientes,
         ObtenerIngredientesBajoStockQuery request)
     {
+        // Si el porcentaje crítico es 0, no aplicar filtro adicional (retornar todos los que ya están bajo stock)
+        if (request.PorcentajeCritico <= 0)
+        {
+            return ingredientes;
+        }
+
         return ingredientes.Where(ingrediente =>
         {
             // Si no tiene stock mínimo definido, no se considera bajo stock

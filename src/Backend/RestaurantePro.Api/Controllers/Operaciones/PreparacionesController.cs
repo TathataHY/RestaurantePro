@@ -13,6 +13,7 @@ using RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerColaPr
 using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Common.Models;
 using Microsoft.AspNetCore.Authorization;
+using RestaurantePro.Application.Operaciones.Preparaciones.Commands.MarcarComoDisponible;
 
 namespace RestaurantePro.Api.Controllers.Operaciones;
 
@@ -247,6 +248,27 @@ public class PreparacionesController : ControllerBase
 
         var response = ApiResponse<List<PreparacionDto>>.SuccessResponse(
             result.Value, "Cola de preparaciones obtenida exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Marca una preparación como disponible
+    /// </summary>
+    [HttpPost("{id:guid}/disponible")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> MarcarComoDisponible(Guid id, [FromBody] MarcarComoDisponibleCommand command)
+    {
+        _logger.LogInformation("🟢 POST /api/operaciones/preparaciones/{Id}/disponible", id);
+        command.PreparacionId = id;
+        var result = await _mediator.Send(command);
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { result.Error ?? "Error desconocido" }, "Error al marcar como disponible", StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+        var response = ApiResponse<object>.SuccessResponse(null, "Preparación marcada como disponible exitosamente");
         return Ok(response);
     }
 } 

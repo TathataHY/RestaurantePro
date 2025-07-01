@@ -393,6 +393,13 @@ public static class ApplicationServiceCollection
         services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Reservaciones.Events.Reservacion.ReservacionCreada>, 
             Operaciones.Reservaciones.EventHandlers.ReservacionCreada.ReservacionCreadaNotificacionHandler>();
         
+        services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Reservaciones.Events.Reservacion.ReservacionCreada>, 
+            Operaciones.Reservaciones.EventHandlers.ReservacionCreada.ReservacionCreadaMesaHandler>();
+        
+        // ReservacionCancelada Event Handlers
+        services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Reservaciones.Events.Reservacion.ReservacionCancelada>, 
+            Operaciones.Reservaciones.EventHandlers.ReservacionCancelada.ReservacionCanceladaMesaHandler>();
+        
         // ========================================================================================
         // 💰 COMERCIAL - FACTURACIÓN EVENT HANDLERS
         // ========================================================================================

@@ -50,10 +50,21 @@ namespace RestaurantePro.Domain.Core.Base.Events.Dispatcher
                 var handlersFound = false;
                 bool hasExceptionOccurred = false;
                 
+                // Log detallado para debugging
+                Console.WriteLine($"[Dispatcher] 🔍 Buscando handlers para evento: {eventType.Name}");
+                Console.WriteLine($"[Dispatcher] 🔍 Tipo de handler buscado: {handlerType.Name}");
+                Console.WriteLine($"[Dispatcher] 🔍 Tipo de colección: {handlerWrapperType.Name}");
+                
                 // Si hay manejadores, despacharlos
                 if (handlers != null && handlers.Any())
                 {
                     handlersFound = true;
+                    Console.WriteLine($"[Dispatcher] ✅ Encontrados {handlers.Count()} handlers para {eventType.Name}");
+                    
+                    foreach (var handler in handlers)
+                    {
+                        Console.WriteLine($"[Dispatcher] 🔧 Handler encontrado: {handler.GetType().Name}");
+                    }
                     
                     // Si solo hay un handler y lanza excepción, la propagaremos
                     bool hasOnlySingleHandler = handlers.Count() == 1;
@@ -99,6 +110,10 @@ namespace RestaurantePro.Domain.Core.Base.Events.Dispatcher
                             }
                         }
                     }
+                }
+                else
+                {
+                    Console.WriteLine($"[Dispatcher] ❌ No se encontraron handlers para {eventType.Name}");
                 }
                 
                 // Si no hay manejadores o después de procesarlos, notificar a los suscriptores

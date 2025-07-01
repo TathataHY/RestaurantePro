@@ -33,8 +33,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
                 
             builder.Property(o => o.Estado)
                 .IsRequired()
-                .HasConversion<string>()
-                .HasMaxLength(50);
+                .HasConversion<int>();
                 
             builder.Property(o => o.ProveedorId)
                 .IsRequired();

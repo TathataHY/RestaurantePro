@@ -80,9 +80,13 @@ public class CrearReservacionHandler : IRequestHandler<CrearReservacionCommand, 
 
             // 5. Guardar en base de datos
             await _reservacionRepository.AgregarAsync(reservacion, cancellationToken);
+            
+            // 6. Guardar cambios para disparar eventos de dominio
+            _logger.LogInformation("🔥 Guardando cambios para disparar eventos de dominio...");
             await _context.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("✅ Cambios guardados, eventos de dominio disparados");
 
-            // 6. Mapear a DTO
+            // 7. Mapear a DTO
             var reservacionDto = _mapper.Map<ReservacionDto>(reservacion);
 
             _logger.LogInformation("✅ Reservación creada exitosamente - ID: {ReservacionId}", reservacion.Id);

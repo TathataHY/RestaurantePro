@@ -37,14 +37,26 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
 
         private async Task PublicarEventosDominio(DbContext? context, CancellationToken cancellationToken = default)
         {
-            if (context == null) return;
+            Console.WriteLine("[DomainEventInterceptor] 🔍 INICIO PublicarEventosDominio");
+            
+            if (context == null)
+            {
+                Console.WriteLine("[DomainEventInterceptor] ❌ Context es null");
+                return;
+            }
 
             var entidadesConEventos = context.ChangeTracker.Entries<EntityBase>()
                 .Where(e => e.Entity.DomainEvents.Any())
                 .Select(e => e.Entity)
                 .ToList();
 
-            if (!entidadesConEventos.Any()) return;
+            Console.WriteLine($"[DomainEventInterceptor] 🔍 Encontradas {entidadesConEventos.Count} entidades con eventos");
+
+            if (!entidadesConEventos.Any())
+            {
+                Console.WriteLine("[DomainEventInterceptor] ⚠️ No hay entidades con eventos");
+                return;
+            }
 
             _logger.LogInformation("Encontradas {Count} entidades con eventos de dominio para publicar", entidadesConEventos.Count);
 
@@ -53,14 +65,20 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
                 var eventos = entidad.DomainEvents.ToList();
                 entidad.ClearDomainEvents();
                 
+                Console.WriteLine($"[DomainEventInterceptor] 🔧 Entidad: {entidad.GetType().Name}, ID: {entidad.Id}, Eventos: {eventos.Count}");
+                
                 foreach (var evento in eventos)
                 {
+                    Console.WriteLine($"[DomainEventInterceptor] 🚀 Publicando evento: {evento.GetType().Name}");
+                    
                     _logger.LogInformation("Publicando evento de dominio {EventType} para la entidad {EntityType} con ID {EntityId}",
                         evento.GetType().Name, entidad.GetType().Name, entidad.Id);
                     
                     await _domainEventDispatcher.Dispatch(evento, cancellationToken);
                 }
             }
+            
+            Console.WriteLine("[DomainEventInterceptor] ✅ FIN PublicarEventosDominio");
         }
     }
 } 

@@ -5,6 +5,8 @@ using RestaurantePro.Application.Inventario.Ingredientes.Commands.ActualizarIngr
 using RestaurantePro.Application.Inventario.Ingredientes.Commands.EliminarIngrediente;
 using RestaurantePro.Application.Inventario.Ingredientes.Commands.RegistrarMovimiento;
 using RestaurantePro.Application.Inventario.Ingredientes.Commands.AsociarProveedor;
+using RestaurantePro.Application.Inventario.Ingredientes.Commands.ConsumirStock;
+using RestaurantePro.Application.Inventario.Ingredientes.Commands.RegistrarLote;
 using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientePorId;
 using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerIngredientesPaginados;
 using RestaurantePro.Application.Inventario.Ingredientes.Queries.ObtenerMovimientosIngrediente;
@@ -219,6 +221,59 @@ public class IngredientesController : ControllerBase
         }
 
         return BadRequest(ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al obtener ingredientes con bajo stock"));
+    }
+
+    /// <summary>
+    /// Consume stock de un ingrediente (egreso)
+    /// </summary>
+    [HttpPost("{id}/consumir")]
+    [ProducesResponseType(typeof(ApiResponse<IngredienteDto>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 400)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> ConsumirStock(Guid id, [FromBody] ConsumirStockCommand command)
+    {
+        _logger.LogInformation("➡️ Consumiendo stock del ingrediente: {Id}", id);
+        
+        // Asignar el ID del ingrediente al comando
+        command.IngredienteId = id;
+        
+        var result = await _mediator.Send(command);
+
+        if (result.Succeeded)
+        {
+            return Ok(ApiResponse<IngredienteDto>.SuccessResponse(result.Value, "Stock consumido exitosamente"));
+        }
+        
+        var statusCode = result.Error?.Contains("no encontrado") == true ? 404 : 400;
+        return StatusCode(statusCode, ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al consumir stock", statusCode));
+    }
+
+    /// <summary>
+    /// Registra un lote con fecha de vencimiento para un ingrediente
+    /// </summary>
+    [HttpPost("{id}/lotes")]
+    [ProducesResponseType(typeof(ApiResponse<IngredienteDto>), 201)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 400)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> RegistrarLote(Guid id, [FromBody] RegistrarLoteCommand command)
+    {
+        _logger.LogInformation("➡️ Registrando lote para el ingrediente: {Id}", id);
+        
+        // Asignar el ID del ingrediente al comando
+        command.IngredienteId = id;
+        
+        var result = await _mediator.Send(command);
+
+        if (result.Succeeded)
+        {
+            var response = ApiResponse<IngredienteDto>.SuccessResponse(result.Value, "Lote registrado exitosamente");
+            return CreatedAtAction(nameof(ObtenerIngredientePorId), new { id }, response);
+        }
+        
+        var statusCode = result.Error?.Contains("no encontrado") == true ? 404 : 400;
+        return StatusCode(statusCode, ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al registrar lote", statusCode));
     }
     
     /// <summary>

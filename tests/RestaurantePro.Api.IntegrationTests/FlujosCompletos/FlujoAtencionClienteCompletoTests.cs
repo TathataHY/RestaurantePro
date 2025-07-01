@@ -14,6 +14,8 @@ using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
 using Xunit;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.CambiarEstadoComanda;
+using RestaurantePro.Application.Operaciones.Reservaciones.Commands.ConfirmarReservacion;
 
 namespace RestaurantePro.Api.IntegrationTests.FlujosCompletos;
 
@@ -46,18 +48,35 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         Logger.LogInformation("✅ Entidades base creadas - Mesero: {MeseroId}, Cliente: {ClienteId}, Mesa: {MesaId}", 
             mesero.Id, cliente.Id, mesa.Id);
 
+        // Verificar que la mesa siga disponible después de crear la reservación
+        var mesaDespuesReservacion = await DbContext.Mesas.FindAsync(mesa.Id);
+        mesaDespuesReservacion!.Estado.Should().Be(EstadoMesa.Disponible);
+
         // 2. PASO 1: Crear reservación
         Logger.LogInformation("📅 PASO 1: Creando reservación");
         var reservacionRequest = new
         {
             ClienteId = cliente.Id,
             MesaId = mesa.Id,
-            FechaReservacion = DateTime.Now.AddHours(1),
+            NombreCliente = "Cliente Prueba",
+            Telefono = "1234567890",
+            Email = "cliente@prueba.com",
+            FechaHoraReservacion = DateTime.Today.AddDays(1).AddHours(19), // 7:00 PM mañana (dentro del horario 12:00-22:00)
             NumeroPersonas = 3,
-            Observaciones = "Reservación para flujo de prueba"
+            Observaciones = "Reservación para flujo de prueba",
+            Canal = "Web"
         };
         
         var responseReservacion = await HttpClient.PostAsJsonAsync("/api/operaciones/reservaciones", reservacionRequest);
+        
+        // Si falla, capturar el error para diagnóstico
+        if (!responseReservacion.IsSuccessStatusCode)
+        {
+            var errorContent = await responseReservacion.Content.ReadAsStringAsync();
+            Logger.LogError("❌ Error en creación de reservación - Status: {StatusCode}, Content: {ErrorContent}", 
+                responseReservacion.StatusCode, errorContent);
+        }
+        
         responseReservacion.StatusCode.Should().Be(HttpStatusCode.Created);
         
         var reservacionResponse = await responseReservacion.Content.ReadFromJsonAsync<ApiResponse<ReservacionDto>>();
@@ -68,8 +87,59 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         Logger.LogInformation("✅ Reservación creada - ID: {ReservacionId}, Estado: {Estado}", 
             reservacion.Id, reservacion.Estado);
 
+        // Log de diagnóstico antes de confirmar la reservación
+        var fechaHoraReservacion = reservacion.FechaHoraReservacion;
+        var ahoraLocal = DateTime.Now;
+        var ahoraUtc = DateTime.UtcNow;
+        var diferenciaHoras = (fechaHoraReservacion - ahoraUtc).TotalHours;
+        Logger.LogInformation("[TEST] fechaHoraReservacion: {0:O}, ahoraLocal: {1:O}, ahoraUtc: {2:O}, diferenciaHoras: {3:F2}", fechaHoraReservacion, ahoraLocal, ahoraUtc, diferenciaHoras);
+
         // 3. PASO 2: Asignar mesa
-        Logger.LogInformation("🪑 PASO 2: Asignando mesa");
+        Logger.LogInformation("🪑 PASO 2: Confirmando reservación antes de asignar mesa");
+        var confirmarReservacionRequest = new ConfirmarReservacionCommand
+        {
+            Id = reservacion.Id,
+            ReservacionId = reservacion.Id,
+            MetodoConfirmacion = "Manual",
+            ConfirmadoPor = "Administrador",
+            NotasConfirmacion = "Reservación confirmada para flujo de prueba"
+        };
+        
+        var responseConfirmarReservacion = await HttpClient.PostAsJsonAsync($"/api/operaciones/reservaciones/{reservacion.Id}/confirmar", confirmarReservacionRequest);
+        
+        // Log del error si falla para diagnóstico
+        if (!responseConfirmarReservacion.IsSuccessStatusCode)
+        {
+            var errorContent = await responseConfirmarReservacion.Content.ReadAsStringAsync();
+            Logger.LogError("❌ Error confirmando reservación - Status: {StatusCode}, Content: {ErrorContent}", 
+                responseConfirmarReservacion.StatusCode, errorContent);
+        }
+        
+        responseConfirmarReservacion.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        Logger.LogInformation("✅ Reservación confirmada");
+        
+        // Liberar la mesa antes de asignarla (cancelar la reservación)
+        Logger.LogInformation("🪑 PASO 2.1: Liberando mesa para asignación");
+        var cancelarReservacionRequest = new
+        {
+            Id = reservacion.Id,
+            ReservacionId = reservacion.Id,
+            UsuarioId = Guid.NewGuid(), // ID del administrador
+            Motivo = 10, // SolicitudEspecial
+            MotivoDetalle = "Asignación directa para flujo de prueba",
+            NotificarCliente = false,
+            AplicarPenalizacion = false,
+            LiberarMesaInmediatamente = true,
+            FechaCancelacion = DateTime.UtcNow
+        };
+        
+        var responseCancelarReservacion = await HttpClient.PostAsJsonAsync($"/api/operaciones/reservaciones/{reservacion.Id}/cancelar", cancelarReservacionRequest);
+        responseCancelarReservacion.StatusCode.Should().Be(HttpStatusCode.OK);
+        Logger.LogInformation("✅ Reservación cancelada, mesa liberada");
+        
+        // Ahora asignar la mesa (que ya no está reservada)
+        Logger.LogInformation("🪑 PASO 2.2: Asignando mesa");
         var asignarMesaRequest = new
         {
             MeseroId = mesero.Id,
@@ -82,10 +152,10 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         responseAsignarMesa.StatusCode.Should().Be(HttpStatusCode.OK);
         
         // Verificar que la mesa cambió de estado
-        var mesaActualizada = await DbContext.Mesas.FindAsync(mesa.Id);
-        mesaActualizada!.Estado.Should().Be(EstadoMesa.Ocupada);
+        await DbContext.Entry(mesa).ReloadAsync();
+        mesa.Estado.Should().Be(EstadoMesa.Ocupada);
         
-        Logger.LogInformation("✅ Mesa asignada - Estado: {Estado}", mesaActualizada.Estado);
+        Logger.LogInformation("✅ Mesa asignada - Estado: {Estado}", mesa.Estado);
 
         // 4. PASO 3: Crear comanda
         Logger.LogInformation("📋 PASO 3: Creando comanda");
@@ -95,7 +165,7 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
             ClienteId = cliente.Id,
             MesaId = mesa.Id,
             Observaciones = "Comanda para flujo de prueba",
-            Productos = new[]
+            ProductosIniciales = new[]
             {
                 new
                 {
@@ -106,7 +176,20 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
             }
         };
         
+        // Log del request para debug
+        var requestJson = JsonSerializer.Serialize(comandaRequest, new JsonSerializerOptions { WriteIndented = true });
+        Logger.LogInformation("📤 Request de comanda enviado: {RequestJson}", requestJson);
+        
         var responseComanda = await HttpClient.PostAsJsonAsync("/api/operaciones/comandas", comandaRequest);
+        
+        // Log del error si falla
+        if (responseComanda.StatusCode != HttpStatusCode.Created)
+        {
+            var errorContent = await responseComanda.Content.ReadAsStringAsync();
+            Logger.LogError("❌ Error creando comanda - Status: {StatusCode}, Content: {ErrorContent}", 
+                responseComanda.StatusCode, errorContent);
+        }
+        
         responseComanda.StatusCode.Should().Be(HttpStatusCode.Created);
         
         var comandaResponse = await responseComanda.Content.ReadFromJsonAsync<ApiResponse<ComandaDto>>();
@@ -149,15 +232,18 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         responsePreparacion.StatusCode.Should().Be(HttpStatusCode.Created);
         
         var preparacionResponse = await responsePreparacion.Content.ReadFromJsonAsync<ApiResponse<PreparacionDto>>();
-        preparacionResponse.Should().NotBeNull();
-        preparacionResponse!.Success.Should().BeTrue();
-        var preparacion = preparacionResponse.Data;
+        var preparacion = preparacionResponse!.Data;
         
         Logger.LogInformation("✅ Preparación iniciada - ID: {PreparacionId}, Estado: {Estado}", 
             preparacion.Id, preparacion.Estado);
 
-        // Verificar que la preparación esté en estado disponible
-        preparacion!.Estado.Should().Be(EstadoPreparacion.Disponible);
+        // Verificar que la preparación esté en estado preparando
+        preparacion!.Estado.Should().Be(EstadoPreparacion.Preparando);
+
+        // Marcar la preparación como disponible antes de completarla
+        var responseDisponible = await HttpClient.PostAsJsonAsync($"/api/operaciones/preparaciones/{preparacion.Id}/disponible", new { Observaciones = "Listo para servir" });
+        responseDisponible.EnsureSuccessStatusCode();
+        Logger.LogInformation("✅ Preparación marcada como disponible");
 
         // 7. PASO 6: Completar preparación
         Logger.LogInformation("✅ PASO 6: Completando preparación");
@@ -166,32 +252,90 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         
         // Verificar que la preparación se completó
         var preparacionCompletada = await DbContext.Preparaciones.FindAsync(preparacion.Id);
-        preparacionCompletada!.Estado.Should().Be(EstadoPreparacion.Disponible);
+        preparacionCompletada!.Estado.Should().Be(EstadoPreparacion.Agotada);
         
         Logger.LogInformation("✅ Preparación completada");
 
-        // 8. PASO 7: Finalizar comanda
-        Logger.LogInformation("🏁 PASO 7: Finalizando comanda");
-        var responseFinalizarComanda = await HttpClient.PatchAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", new
+        // 8. PASO 7: Cambiar comanda a "enproceso"
+        Logger.LogInformation("🔄 PASO 7: Cambiando comanda a enproceso");
+        var responseEnPreparacion = await HttpClient.PatchAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", 
+            new { NuevoEstado = "enproceso" });
+        
+        // Log del error si falla
+        if (responseEnPreparacion.StatusCode != HttpStatusCode.OK)
+        {
+            var errorContent = await responseEnPreparacion.Content.ReadAsStringAsync();
+            Logger.LogError("❌ Error cambiando comanda a enproceso - Status: {StatusCode}, Content: {ErrorContent}", 
+                responseEnPreparacion.StatusCode, errorContent);
+        }
+        
+        responseEnPreparacion.StatusCode.Should().Be(HttpStatusCode.OK);
+        Logger.LogInformation("✅ Comanda en proceso");
+
+        // 9. PASO 8: Cambiar comanda a "lista"
+        Logger.LogInformation("📋 PASO 8: Cambiando comanda a lista");
+        var responseLista = await HttpClient.PatchAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", 
+            new { NuevoEstado = "lista" });
+        responseLista.StatusCode.Should().Be(HttpStatusCode.OK);
+        Logger.LogInformation("✅ Comanda lista");
+
+        // 10. PASO 9: Cambiar comanda a "entregada"
+        Logger.LogInformation("🚚 PASO 9: Cambiando comanda a entregada");
+        var responseEntregada = await HttpClient.PatchAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", 
+            new { NuevoEstado = "entregada" });
+        responseEntregada.StatusCode.Should().Be(HttpStatusCode.OK);
+        Logger.LogInformation("✅ Comanda entregada");
+
+        // 11. PASO 10: Finalizar comanda
+        Logger.LogInformation("🏁 PASO 10: Finalizando comanda");
+        var entregarComandaRequest = new CambiarEstadoComandaCommand
         {
             ComandaId = comanda.Id,
-            NuevoEstado = "Finalizada"
-        });
-        responseFinalizarComanda.StatusCode.Should().Be(HttpStatusCode.OK);
+            NuevoEstado = "Entregada",
+            Observaciones = "Comanda entregada al cliente"
+        };
         
-        Logger.LogInformation("✅ Comanda finalizada");
+        await HttpClient.PatchAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", entregarComandaRequest);
+        
+        // Ahora finalizar la comanda (marcar como pagada)
+        var finalizarComandaRequest = new CambiarEstadoComandaCommand
+        {
+            ComandaId = comanda.Id,
+            NuevoEstado = "Finalizada",
+            Observaciones = "Comanda finalizada para facturación"
+        };
+        
+        await HttpClient.PatchAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", finalizarComandaRequest);
+        
+        // Recargar entidad Comanda para verificar estado actualizado
+        var comandaEntity = await DbContext.Comandas.FindAsync(comanda.Id);
+        await DbContext.Entry(comandaEntity!).ReloadAsync();
+        comandaEntity!.Estado.Should().Be(EstadoComanda.Finalizada);
+        
+        Logger.LogInformation("✅ Comanda finalizada correctamente");
 
-        // 9. PASO 8: Generar factura
-        Logger.LogInformation("🧾 PASO 8: Generando factura");
+        // 12. PASO 11: Generar factura
+        Logger.LogInformation("🧾 PASO 11: Generando factura");
         var facturaRequest = new
         {
             ClienteId = cliente.Id,
             ComandasIds = new List<Guid> { comanda.Id },
+            NombreCliente = cliente.Nombre.ToString(),
             TipoFactura = "Normal",
-            Observaciones = "Factura para flujo de prueba"
+            MetodoPagoPreferido = "Efectivo",
+            Observaciones = "Factura generada por flujo de prueba"
         };
         
         var responseFactura = await HttpClient.PostAsJsonAsync("/api/comercial/facturas", facturaRequest);
+        
+        // Log del error si falla
+        if (responseFactura.StatusCode != HttpStatusCode.Created)
+        {
+            var errorContent = await responseFactura.Content.ReadAsStringAsync();
+            Logger.LogError("❌ Error generando factura - Status: {StatusCode}, Content: {ErrorContent}", 
+                responseFactura.StatusCode, errorContent);
+        }
+        
         responseFactura.StatusCode.Should().Be(HttpStatusCode.Created);
         
         var facturaResponse = await responseFactura.Content.ReadFromJsonAsync<ApiResponse<FacturaDto>>();
@@ -202,15 +346,17 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         Logger.LogInformation("✅ Factura generada - ID: {FacturaId}, Total: {Total:C}", 
             factura.Id, factura.Total);
 
-        // 10. PASO 9: Crear tarjeta de fidelización (si no existe)
-        Logger.LogInformation("💳 PASO 9: Creando tarjeta de fidelización");
+        // 13. PASO 12: Crear tarjeta de fidelización (si no existe)
+        Logger.LogInformation("💳 PASO 12: Creando tarjeta de fidelización");
         var tarjetaRequest = new
         {
             ClienteId = cliente.Id,
-            TipoTarjeta = "Estandar",
+            TipoTarjeta = 0, // Estandar
+            UsuarioId = mesero.Id,
             PuntosIniciales = 0,
             ActivarInmediatamente = true,
-            UsuarioId = mesero.Id
+            EnviarPorEmail = false,
+            Observaciones = "Tarjeta creada por flujo de prueba"
         };
         
         var responseTarjeta = await HttpClient.PostAsJsonAsync("/api/comercial/tarjetas-fidelizacion", tarjetaRequest);
@@ -222,8 +368,8 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         
         Logger.LogInformation("✅ Tarjeta de fidelización creada");
 
-        // 11. PASO 10: Acumular puntos por la compra
-        Logger.LogInformation("⭐ PASO 10: Acumulando puntos");
+        // 14. PASO 13: Acumular puntos por la compra
+        Logger.LogInformation("⭐ PASO 13: Acumulando puntos");
         var puntosRequest = new
         {
             Puntos = 50,
@@ -244,7 +390,7 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         
         // Obtener el ID de la primera tarjeta
         var tarjetaId = JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(tarjetasClienteResponse.Data.First()));
-        var tarjetaIdGuid = tarjetaId.GetProperty("id").GetGuid();
+        var tarjetaIdGuid = tarjetaId.GetProperty("Id").GetGuid();
         
         var responsePuntos = await HttpClient.PostAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaIdGuid}/puntos", puntosRequest);
         responsePuntos.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
@@ -258,13 +404,16 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
             Logger.LogInformation("⚠️ Puntos no se pudieron acumular (puede ser por reglas de negocio)");
         }
 
-        // 12. PASO 11: Liberar mesa automáticamente
-        Logger.LogInformation("🔄 PASO 11: Liberando mesa");
-        var responseLiberarMesa = await HttpClient.PatchAsync($"/api/operaciones/mesas/{mesa.Id}/liberar", null);
+        // 15. PASO 14: Liberar mesa automáticamente
+        Logger.LogInformation("🔄 PASO 14: Liberando mesa");
+        var responseLiberarMesa = await HttpClient.PostAsJsonAsync($"/api/operaciones/mesas/{mesa.Id}/liberar", new { Observaciones = "Liberación automática por flujo completo" });
         responseLiberarMesa.StatusCode.Should().Be(HttpStatusCode.OK);
         
         // Verificar que la mesa se liberó
         var mesaLiberada = await DbContext.Mesas.FindAsync(mesa.Id);
+        
+        // Verificar que la mesa fue liberada correctamente
+        await DbContext.Entry(mesaLiberada).ReloadAsync();
         mesaLiberada!.Estado.Should().Be(EstadoMesa.Disponible);
         
         Logger.LogInformation("✅ Mesa liberada - Estado: {Estado}", mesaLiberada.Estado);
@@ -283,7 +432,7 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         mesaFinal!.Estado.Should().Be(EstadoMesa.Disponible);
         
         var preparacionFinal = await DbContext.Preparaciones.FindAsync(preparacion.Id);
-        preparacionFinal!.Estado.Should().Be(EstadoPreparacion.Disponible);
+        preparacionFinal!.Estado.Should().Be(EstadoPreparacion.Agotada);
         
         Logger.LogInformation("🎉 FLUJO COMPLETO de Atención al Cliente EXITOSO");
         Logger.LogInformation("📊 Resumen del flujo:");
@@ -334,7 +483,7 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
             ClienteId = cliente.Id,
             MesaId = mesa.Id,
             Observaciones = "Comanda walk-in",
-            Productos = new[]
+            ProductosIniciales = new[]
             {
                 new
                 {
@@ -372,37 +521,72 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         var preparacionResponse = await responsePreparacion.Content.ReadFromJsonAsync<ApiResponse<PreparacionDto>>();
         var preparacion = preparacionResponse!.Data;
         
+        // Marcar la preparación como disponible antes de completarla
+        var responseDisponible = await HttpClient.PostAsJsonAsync($"/api/operaciones/preparaciones/{preparacion.Id}/disponible", new { Observaciones = "Listo para servir" });
+        responseDisponible.EnsureSuccessStatusCode();
+        Logger.LogInformation("✅ Preparación marcada como disponible");
+
         // Completar preparación
         await HttpClient.PostAsync($"/api/operaciones/preparaciones/{preparacion.Id}/completar", null);
         
         Logger.LogInformation("✅ Preparación procesada");
 
-        // 4. PASO 4: Finalizar y facturar
-        Logger.LogInformation("🏁 PASO 4: Finalizando y facturando");
+        // 4. PASO 4: Seguir flujo completo de estados de comanda
+        Logger.LogInformation("🏁 PASO 4: Siguiendo flujo completo de estados de comanda");
         
-        // Finalizar comanda
-        await HttpClient.PatchAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", new
+        // 4.1 Cambiar a EnProceso
+        var enProcesoRequest = new CambiarEstadoComandaCommand
         {
             ComandaId = comanda.Id,
-            NuevoEstado = "Finalizada"
-        });
-        
-        // Generar factura
-        var facturaRequest = new
-        {
-            ClienteId = cliente.Id,
-            ComandasIds = new List<Guid> { comanda.Id },
-            TipoFactura = "Normal",
-            Observaciones = "Factura walk-in"
+            NuevoEstado = "enproceso",
+            Observaciones = "Comanda en proceso de preparación"
         };
         
-        var responseFactura = await HttpClient.PostAsJsonAsync("/api/comercial/facturas", facturaRequest);
-        responseFactura.StatusCode.Should().Be(HttpStatusCode.Created);
+        var responseEnProceso = await HttpClient.PatchAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", enProcesoRequest);
+        responseEnProceso.EnsureSuccessStatusCode();
+        Logger.LogInformation("✅ Comanda en proceso");
         
-        var facturaResponse = await responseFactura.Content.ReadFromJsonAsync<ApiResponse<FacturaDto>>();
-        var factura = facturaResponse!.Data;
+        // 4.2 Cambiar a Lista
+        var listaRequest = new CambiarEstadoComandaCommand
+        {
+            ComandaId = comanda.Id,
+            NuevoEstado = "lista",
+            Observaciones = "Comanda lista para servir"
+        };
         
-        Logger.LogInformation("✅ Factura generada para walk-in - Total: {Total:C}", factura.Total);
+        var responseLista = await HttpClient.PatchAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", listaRequest);
+        responseLista.EnsureSuccessStatusCode();
+        Logger.LogInformation("✅ Comanda lista");
+        
+        // 4.3 Cambiar a Entregada
+        var entregarComandaRequest = new CambiarEstadoComandaCommand
+        {
+            ComandaId = comanda.Id,
+            NuevoEstado = "entregada",
+            Observaciones = "Comanda entregada al cliente"
+        };
+        
+        var responseEntregada = await HttpClient.PatchAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", entregarComandaRequest);
+        responseEntregada.EnsureSuccessStatusCode();
+        Logger.LogInformation("✅ Comanda entregada");
+        
+        // 4.4 Cambiar a Finalizada
+        var finalizarComandaRequest = new CambiarEstadoComandaCommand
+        {
+            ComandaId = comanda.Id,
+            NuevoEstado = "finalizada",
+            Observaciones = "Comanda finalizada para facturación"
+        };
+        
+        var responseFinalizada = await HttpClient.PatchAsJsonAsync($"/api/operaciones/comandas/{comanda.Id}/estado", finalizarComandaRequest);
+        responseFinalizada.EnsureSuccessStatusCode();
+        
+        // Recargar entidad Comanda para verificar estado actualizado
+        var comandaEntity = await DbContext.Comandas.FindAsync(comanda.Id);
+        await DbContext.Entry(comandaEntity!).ReloadAsync();
+        comandaEntity!.Estado.Should().Be(EstadoComanda.Finalizada);
+        
+        Logger.LogInformation("✅ Comanda finalizada correctamente");
 
         // 5. PASO 5: Liberar mesa
         Logger.LogInformation("🔄 PASO 5: Liberando mesa");

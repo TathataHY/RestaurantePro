@@ -32,7 +32,7 @@ public class ObtenerIngredientePorIdHandler : IRequestHandler<ObtenerIngrediente
 
         try
         {
-            // 1. Buscar el ingrediente en el repositorio
+            // 1. Buscar el ingrediente en el repositorio con recarga forzada
             var ingrediente = await _repository.ObtenerPorIdAsync(request.Id, request.IncluirMovimientos, cancellationToken);
             if (ingrediente == null)
             {
@@ -40,11 +40,15 @@ public class ObtenerIngredientePorIdHandler : IRequestHandler<ObtenerIngrediente
                 return Result.Failure<IngredienteDto>($"No se encontró el ingrediente con ID {request.Id}");
             }
 
+            // 2. Forzar recarga desde la base de datos para asegurar datos actualizados
+            _logger.LogInformation("🔄 Forzando recarga de ingrediente desde BD: {Id}", request.Id);
+            await _repository.RecargarEntidadAsync(ingrediente, cancellationToken);
+
             // 2. Mapear a DTO
             var ingredienteDto = _mapper.Map<IngredienteDto>(ingrediente);
 
             // 3. Enriquecer DTO con información calculada
-            EnriquecerIngredienteDto(ingredienteDto);
+            EnriquecerIngredienteDto(ingredienteDto, ingrediente);
 
             // 4. Cargar movimientos recientes si se solicita
             if (request.IncluirMovimientos)
@@ -77,10 +81,17 @@ public class ObtenerIngredientePorIdHandler : IRequestHandler<ObtenerIngrediente
     /// <summary>
     /// Enriquece el DTO del ingrediente con información calculada
     /// </summary>
-    private void EnriquecerIngredienteDto(IngredienteDto dto)
+    private void EnriquecerIngredienteDto(IngredienteDto dto, Ingrediente ingrediente)
     {
-        // Las propiedades ya están disponibles como calculadas en IngredienteDto
-        // No necesitamos calcular manualmente porque el DTO ya tiene:
+        // Asignar propiedades que están marcadas como Ignore() en el mapeo
+        dto.StockActual = ingrediente.Stock;
+        dto.StockMaximo = ingrediente.StockMinimo * 3; // Stock máximo = 3x stock mínimo
+        dto.CostoUnitario = ingrediente.CostoPromedio; // Usar costo promedio como costo unitario
+        dto.Activo = !ingrediente.EstaEliminado; // Activo = no eliminado
+        dto.RequiereRefrigeracion = false; // Por defecto no requiere refrigeración
+        dto.DiasVencimiento = 0; // Por defecto 0 días de vencimiento
+        
+        // Las propiedades calculadas ya están disponibles en IngredienteDto:
         // - EstadoStock (propiedad calculada)
         // - ColorEstado (propiedad calculada) 
         // - PorcentajeStock (propiedad calculada)
@@ -88,8 +99,8 @@ public class ObtenerIngredientePorIdHandler : IRequestHandler<ObtenerIngrediente
         // - MensajeAlerta (propiedad calculada)
         // - DiasStockDisponible (propiedad calculada)
         
-        _logger.LogDebug("Ingrediente enriquecido: {Nombre} - {Estado} - {Alerta}", 
-            dto.Nombre, dto.EstadoStock, dto.MensajeAlerta);
+        _logger.LogDebug("Ingrediente enriquecido: {Nombre} - Stock: {StockActual} - {Estado} - {Alerta}", 
+            dto.Nombre, dto.StockActual, dto.EstadoStock, dto.MensajeAlerta);
     }
 
     /// <summary>

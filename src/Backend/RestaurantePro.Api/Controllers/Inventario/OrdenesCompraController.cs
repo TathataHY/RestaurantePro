@@ -5,6 +5,7 @@ using RestaurantePro.Application.Inventario.OrdenesCompra.DTOs;
 using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.CrearOrdenCompra;
 using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.ActualizarOrdenCompra;
 using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.AprobarOrdenCompra;
+using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.EnviarOrdenCompra;
 using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.RechazarOrdenCompra;
 using RestaurantePro.Application.Inventario.OrdenesCompra.Commands.RecibirOrdenCompra;
 using RestaurantePro.Application.Inventario.OrdenesCompra.Queries.ObtenerOrdenesCompraPaginadas;
@@ -184,6 +185,35 @@ public class OrdenesCompraController : ControllerBase
 
         var response = ApiResponse<OrdenCompraDto>.SuccessResponse(
             result.Value, "Orden de compra aprobada exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Envía una orden de compra al proveedor
+    /// </summary>
+    [HttpPost("{id:guid}/enviar")]
+    [ProducesResponseType(typeof(ApiResponse<OrdenCompraDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<OrdenCompraDto>>> EnviarOrdenCompra(Guid id)
+    {
+        _logger.LogInformation("📤 POST /api/inventario/ordenes-compra/{Id}/enviar", id);
+
+        var command = new EnviarOrdenCompraCommand 
+        { 
+            Id = id,
+            UsuarioId = GetCurrentUserId()
+        };
+        var result = await _mediator.Send(command);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors ?? new List<string> { result.Error ?? "Error desconocido" }, "Error al enviar orden de compra", StatusCodes.Status404NotFound);
+            return NotFound(errorResponse);
+        }
+
+        var response = ApiResponse<OrdenCompraDto>.SuccessResponse(
+            result.Value, "Orden de compra enviada exitosamente");
         return Ok(response);
     }
 

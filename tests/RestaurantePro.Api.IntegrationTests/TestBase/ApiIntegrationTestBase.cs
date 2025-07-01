@@ -389,7 +389,8 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         
         var options = new JsonSerializerOptions
         {
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
         };
         
         return JsonSerializer.Deserialize<ApiResponse<T>>(jsonContent, options)!;
