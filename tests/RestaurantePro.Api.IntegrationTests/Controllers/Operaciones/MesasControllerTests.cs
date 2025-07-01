@@ -751,9 +751,11 @@ public class MesasControllerTests : ApiIntegrationTestBase, IDisposable
             apiResponse!.Success.Should().BeTrue();
             apiResponse.Data.Should().BeTrue();
             
-            // Verificar que la mesa fue realmente eliminada de la BD
-            var mesaEnBD = await DbContext.Mesas.FirstOrDefaultAsync(m => m.Id == mesa.Id);
-            mesaEnBD.Should().BeNull("La mesa debería haber sido eliminada de la base de datos");
+            // Verificar que la mesa fue realmente eliminada de la BD usando un contexto fresco
+            using var freshContext = CreateNewDbContext();
+            var mesaEnBD = await freshContext.Mesas.FirstOrDefaultAsync(m => m.Id == mesa.Id);
+            mesaEnBD.Should().NotBeNull("La mesa debe existir en la base de datos");
+            mesaEnBD!.EstaEliminado.Should().BeTrue("La mesa debe estar marcada como eliminada (soft delete)");
         }
         else if (response.StatusCode == HttpStatusCode.NotImplemented)
         {

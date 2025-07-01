@@ -5,6 +5,8 @@ using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using RestaurantePro.Application.Common.Interfaces;
 
 namespace RestaurantePro.Application.Operaciones.Comandas.Commands.RemoverProducto;
 
@@ -13,15 +15,18 @@ public class RemoverProductoCommandHandler : IRequestHandler<RemoverProductoComm
     private readonly IComandaRepository _comandaRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<RemoverProductoCommandHandler> _logger;
+    private readonly IApplicationDbContext _context;
 
     public RemoverProductoCommandHandler(
         IComandaRepository comandaRepository,
         IMapper mapper,
-        ILogger<RemoverProductoCommandHandler> logger)
+        ILogger<RemoverProductoCommandHandler> logger,
+        IApplicationDbContext context)
     {
         _comandaRepository = comandaRepository;
         _mapper = mapper;
         _logger = logger;
+        _context = context;
     }
 
     public async Task<Result<ComandaDto>> Handle(RemoverProductoCommand request, CancellationToken cancellationToken)
@@ -69,12 +74,33 @@ public class RemoverProductoCommandHandler : IRequestHandler<RemoverProductoComm
             {
                 // Remover todo el item
                 comanda.RemoverProducto(request.ItemId);
+                
+                // Eliminar explícitamente el item de la base de datos usando el contexto directo
+                var itemToDelete = await _context.ItemsComanda.FindAsync(new object[] { request.ItemId }, cancellationToken);
+                if (itemToDelete != null)
+                {
+                    _context.ItemsComanda.Remove(itemToDelete);
+                    await _context.SaveChangesAsync(cancellationToken);
+                    _logger.LogInformation("🗑️ Item {ItemId} removido completamente de comanda y eliminado de BD", request.ItemId);
+                }
             }
             else
             {
                 // Remover cantidad parcial - primero remover el item completo y luego agregar la cantidad restante
                 comanda.RemoverProducto(request.ItemId);
+                
+                // Eliminar explícitamente el item de la base de datos usando el contexto directo
+                var itemToDelete = await _context.ItemsComanda.FindAsync(new object[] { request.ItemId }, cancellationToken);
+                if (itemToDelete != null)
+                {
+                    _context.ItemsComanda.Remove(itemToDelete);
+                    await _context.SaveChangesAsync(cancellationToken);
+                }
+                
+                // Agregar el item con la cantidad restante
                 comanda.AgregarProducto(item.ProductoId, item.Cantidad - request.Cantidad, item.PrecioUnitario, item.Observaciones);
+                _logger.LogInformation("🗑️ Item {ItemId} removido parcialmente ({CantidadRemovida} de {CantidadTotal}) y eliminado de BD", 
+                    request.ItemId, request.Cantidad, item.Cantidad);
             }
         }
         catch (Exception ex)

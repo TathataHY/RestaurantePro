@@ -146,5 +146,13 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Interfaces
         Task<IEnumerable<Comanda>> ObtenerComandasPorEstadoAsync(EstadoComanda estado, CancellationToken cancellationToken = default);
 
         Task<IEnumerable<Comanda>> ObtenerComandasPorMesaAsync(Guid mesaId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Elimina un item de comanda de la base de datos
+        /// </summary>
+        /// <param name="itemId">ID del item a eliminar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Task que representa la operación asíncrona</returns>
+        Task EliminarItemAsync(Guid itemId, CancellationToken cancellationToken = default);
     }
 }

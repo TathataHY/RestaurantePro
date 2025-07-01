@@ -87,7 +87,7 @@ public class ObtenerIngredientePorIdHandler : IRequestHandler<ObtenerIngrediente
         dto.StockActual = ingrediente.Stock;
         dto.StockMaximo = ingrediente.StockMinimo * 3; // Stock máximo = 3x stock mínimo
         dto.CostoUnitario = ingrediente.CostoPromedio; // Usar costo promedio como costo unitario
-        dto.Activo = !ingrediente.EstaEliminado; // Activo = no eliminado
+        dto.Activo = ingrediente.EstaActivo; // Activo = estado real de actividad
         dto.RequiereRefrigeracion = false; // Por defecto no requiere refrigeración
         dto.DiasVencimiento = 0; // Por defecto 0 días de vencimiento
         

@@ -524,11 +524,33 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             CancellationToken cancellationToken = default)
         {
             return await _dbSet
-                .Where(c => c.Estado == EstadoComanda.Finalizada && 
-                            c.MesaId == mesaId &&
-                            c.FechaCreacion >= fechaInicio && 
-                            c.FechaCreacion <= fechaFin)
+                .Include(c => c.Items)
+                .Where(c => c.MesaId == mesaId && 
+                           c.Estado == EstadoComanda.Finalizada &&
+                           c.FechaCreacion >= fechaInicio && 
+                           c.FechaCreacion <= fechaFin)
                 .ToListAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Elimina un item de comanda de la base de datos
+        /// </summary>
+        /// <param name="itemId">ID del item a eliminar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Task que representa la operación asíncrona</returns>
+        public async Task EliminarItemAsync(Guid itemId, CancellationToken cancellationToken = default)
+        {
+            var item = await _dbContext.Set<ItemComanda>().FindAsync(new object[] { itemId }, cancellationToken);
+            if (item != null)
+            {
+                _dbContext.Set<ItemComanda>().Remove(item);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                _logger.LogInformation("🗑️ Item de comanda {ItemId} eliminado de la base de datos", itemId);
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ No se encontró el item de comanda {ItemId} para eliminar", itemId);
+            }
         }
     }
 } 

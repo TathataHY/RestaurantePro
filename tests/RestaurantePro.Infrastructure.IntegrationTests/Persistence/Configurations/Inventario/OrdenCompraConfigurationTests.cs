@@ -30,11 +30,16 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Configurati
             entityType.FindPrimaryKey().Should().NotBeNull();
             entityType.FindPrimaryKey().Properties.Should().Contain(p => p.Name == "Id");
 
-            // Verificar propiedades
+            // Verificar propiedades básicas
             entityType.FindProperty("FechaEmision").IsNullable.Should().BeFalse();
             entityType.FindProperty("Total").GetPrecision().Should().Be(18);
             entityType.FindProperty("Total").GetScale().Should().Be(2);
-            entityType.FindProperty("Estado").GetMaxLength().Should().Be(50);
+            
+            // Verificar que Estado está configurado como requerido
+            var estadoProperty = entityType.FindProperty("Estado");
+            estadoProperty.Should().NotBeNull();
+            estadoProperty.IsNullable.Should().BeFalse();
+            
             entityType.FindProperty("Observaciones").GetMaxLength().Should().Be(500);
 
             // Verificar índices

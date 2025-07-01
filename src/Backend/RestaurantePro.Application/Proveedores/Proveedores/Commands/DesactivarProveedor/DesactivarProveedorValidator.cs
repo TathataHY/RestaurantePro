@@ -3,10 +3,12 @@ namespace RestaurantePro.Application.Proveedores.Proveedores.Commands.Desactivar
 public class DesactivarProveedorValidator : AbstractValidator<DesactivarProveedorCommand>
 {
     private readonly IApplicationDbContext _context;
+    private readonly IDateTimeService _dateTimeService;
 
-    public DesactivarProveedorValidator(IApplicationDbContext context)
+    public DesactivarProveedorValidator(IApplicationDbContext context, IDateTimeService dateTimeService)
     {
         _context = context;
+        _dateTimeService = dateTimeService;
 
         RuleFor(x => x.Id)
             .NotEmpty()
@@ -66,7 +68,7 @@ public class DesactivarProveedorValidator : AbstractValidator<DesactivarProveedo
         
         if (proveedor == null) return true; // Este error se maneja en otra validación
         
-        var tiempoTranscurrido = DateTime.Now - proveedor.FechaCreacion;
+        var tiempoTranscurrido = _dateTimeService.Now - proveedor.FechaRegistro;
         return tiempoTranscurrido.TotalHours >= 24;
     }
 } 

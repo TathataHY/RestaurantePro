@@ -32,7 +32,8 @@ public class ConfirmarReservacionHandlerTests
             _mockMapper.Object,
             _mockLogger.Object,
             _mockCurrentUserService.Object,
-            _mockNotificacionService.Object);
+            _mockNotificacionService.Object,
+            _mockDateTimeService.Object);
     }
 
     [Fact]
@@ -170,6 +171,10 @@ public class ConfirmarReservacionHandlerTests
         
         var mockDbSet = MockDbSetHelper.CreateMockDbSet(reservaciones.AsQueryable());
         _mockContext.Setup(c => c.Reservaciones).Returns(mockDbSet.Object);
+
+        // Configurar el mock del DateTimeService para que retorne una fecha futura
+        // Esto hará que la reservación (que está en el pasado) aparezca como vencida
+        _mockDateTimeService.Setup(d => d.Now).Returns(DateTime.UtcNow.AddHours(1));
 
         // Act
         var resultado = await _handler.Handle(command, CancellationToken.None);

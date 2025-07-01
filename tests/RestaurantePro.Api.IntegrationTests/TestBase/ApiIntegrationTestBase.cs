@@ -158,18 +158,35 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
             try
             {
                 // Limpiar tablas del sistema usando SQL directo válido para SQLite
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM __EFMigrationsHistory");
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUserTokens");
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUserRoles");
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUserLogins");
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUserClaims");
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetRoleClaims");
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetUsers");
-                await DbContext.Database.ExecuteSqlRawAsync("DELETE FROM AspNetRoles");
+                // Solo limpiar tablas que realmente existen
+                var tablasSistema = new[]
+                {
+                    "AspNetUserTokens",
+                    "AspNetUserRoles", 
+                    "AspNetUserLogins",
+                    "AspNetUserClaims",
+                    "AspNetRoleClaims",
+                    "AspNetUsers",
+                    "AspNetRoles"
+                };
+
+                foreach (var tabla in tablasSistema)
+                {
+                    try
+                    {
+                        await DbContext.Database.ExecuteSqlRawAsync($"DELETE FROM {tabla}");
+                        Logger.LogDebug("✅ Limpiada tabla del sistema: {Tabla}", tabla);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Solo logear, no fallar si la tabla no existe
+                        Logger.LogDebug("⚠️ No se pudo limpiar tabla del sistema {Tabla}: {Message}", tabla, ex.Message);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                Logger.LogWarning("?? Error limpiando tablas del sistema: {Error}", ex.Message);
+                Logger.LogWarning("⚠️ Error limpiando tablas del sistema: {Error}", ex.Message);
             }
             
             // Guardar cambios

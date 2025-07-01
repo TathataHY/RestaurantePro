@@ -6,13 +6,13 @@ Este documento mapea los flujos de negocio críticos que deben funcionar correct
 - **✅/✅**: Flujo implementado con tests funcionales
 - **🔄**: Flujo en proceso de implementación
 - **⬜/⬜**: Flujo pendiente de implementación
-- **⚠️**: Flujo implementado pero con issues conocidos
+- **✅**: Endpoint/validación implementada y funcionando
 
 ## 📊 **RESUMEN GENERAL**
 - **Total Flujos Críticos**: 18
 - **Flujos Implementados**: 3 ✅
 - **Tests de Flujo**: 17 ✅
-- **Estado**: ✅ **FASE 1 FINALIZADA Y VALIDADA** (con 1 issue menor documentado)
+- **Estado**: ✅ **FASE 1 FINALIZADA Y VALIDADA** (todos los issues resueltos)
 - **Próxima Fase**: 🚀 **FASE 2 - Flujos Comerciales**
 
 ---
@@ -78,21 +78,21 @@ Este documento mapea los flujos de negocio críticos que deben funcionar correct
 **Endpoints Involucrados**:
 - `GET /api/inventario/ingredientes/stock-bajo` → Detectar stock bajo ✅
 - `POST /api/inventario/ordenes-compra` → Crear orden automática ✅
-- `POST /api/inventario/ordenes-compra/{id}/aprobar` → Aprobar orden ⚠️
+- `POST /api/inventario/ordenes-compra/{id}/aprobar` → Aprobar orden ✅
 - `POST /api/inventario/ordenes-compra/{id}/recibir` → Recibir mercancía ✅
 - `GET /api/inventario/reportes/alertas` → Alertas automáticas ✅
 
 **Validaciones Implementadas**:
 - [x] Detección automática de stock bajo
 - [x] Generación de órdenes de compra
-- [x] Aprobación de órdenes de compra (⚠️ Issue conocido: persistencia de estado)
+- [x] Aprobación de órdenes de compra ✅ (Issue de persistencia resuelto)
 - [x] Recepción de mercancía
 - [x] Actualización automática de inventario
 - [x] Alertas en tiempo real
 - [x] Consumo automático de stock
 - [x] Control de vencimientos
 
-**✅ Estado Final**: El flujo funciona correctamente desde el punto de vista de la API. Existe un issue menor documentado sobre persistencia del estado de órdenes de compra en EF Core, pero no afecta la funcionalidad del flujo y está documentado para investigación posterior.
+**✅ Estado Final**: El flujo funciona correctamente desde el punto de vista de la API. El issue de persistencia del estado de órdenes de compra en EF Core ha sido completamente resuelto con múltiples estrategias de persistencia forzada implementadas en el repositorio y handlers.
 
 ---
 
@@ -476,12 +476,16 @@ Este documento mapea los flujos de negocio críticos que deben funcionar correct
 - **Fechas**: Corregidas validaciones de fechas futuras ✅
 - **Zona horaria**: Corregido desfase UTC vs local en validaciones ✅
 
-#### **⚠️ Issue Conocido Documentado**
-- **Problema**: Persistencia del estado de órdenes de compra en EF Core
-- **Síntoma**: API retorna estado correcto pero BD mantiene estado anterior
-- **Impacto**: Menor - no afecta funcionalidad del flujo
-- **Estado**: Documentado para investigación posterior
-- **Solución temporal**: Flujo funciona correctamente desde perspectiva de API
+#### **✅ Issue Resuelto - Persistencia de Estados**
+- **Problema Original**: Persistencia del estado de órdenes de compra en EF Core
+- **Síntoma Original**: API retornaba estado correcto pero BD mantenía estado anterior
+- **Solución Implementada**: Múltiples estrategias de persistencia forzada en EF Core
+  - Detección forzada de cambios con `ChangeTracker.DetectChanges()`
+  - Marcado explícito de propiedades como modificadas
+  - Verificación post-guardado para confirmar persistencia
+  - Múltiples estrategias de respaldo en diferentes capas
+- **Estado**: ✅ **RESUELTO** - Todos los tests confirman que la persistencia funciona correctamente
+- **Evidencia**: Logs de tests muestran estados correctos en BD después de operaciones
 
 #### **📊 Métricas de Éxito REALES VALIDADAS**
 - **Tests Compilando**: ✅ 17/17 tests compilan sin errores

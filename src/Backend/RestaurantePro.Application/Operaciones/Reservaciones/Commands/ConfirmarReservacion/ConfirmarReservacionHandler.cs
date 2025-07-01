@@ -14,6 +14,7 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
     private readonly ILogger<ConfirmarReservacionHandler> _logger;
     private readonly ICurrentUserService _currentUserService;
     private readonly ICommunicationService _notificacionService;
+    private readonly IDateTimeService _dateTimeService;
     // TODO: Agregar cuando IUnitOfWork esté disponible
     // private readonly IUnitOfWork _unitOfWork;
 
@@ -22,7 +23,8 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
         IMapper mapper,
         ILogger<ConfirmarReservacionHandler> logger,
         ICurrentUserService currentUserService,
-        ICommunicationService notificacionService)
+        ICommunicationService notificacionService,
+        IDateTimeService dateTimeService)
         // TODO: Agregar cuando IUnitOfWork esté disponible
         // IUnitOfWork unitOfWork)
     {
@@ -31,6 +33,7 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
         _logger = logger;
         _currentUserService = currentUserService;
         _notificacionService = notificacionService;
+        _dateTimeService = dateTimeService;
         // TODO: Asignar cuando esté disponible
         // _unitOfWork = unitOfWork;
     }
@@ -130,10 +133,10 @@ public class ConfirmarReservacionHandler : IRequestHandler<ConfirmarReservacionC
 
         // Validar que la reservación no haya expirado (no puede confirmarse si ya pasó la fecha/hora)
         var fechaHoraReservacion = reservacion.Fecha.Add(reservacion.Hora);
-        var ahoraLocal = DateTime.Now; // Usar hora local para consistencia con el test
-        _logger.LogInformation("[Diagnóstico] fechaHoraReservacion: {FechaHoraReservacion:O}, ahoraLocal: {AhoraLocal:O}", fechaHoraReservacion, ahoraLocal);
+        var ahora = _dateTimeService.Now; // Usar servicio inyectado para testing
+        _logger.LogInformation("[Diagnóstico] fechaHoraReservacion: {FechaHoraReservacion:O}, ahora: {Ahora:O}", fechaHoraReservacion, ahora);
         
-        if (fechaHoraReservacion <= ahoraLocal)
+        if (fechaHoraReservacion <= ahora)
         {
             return Result.Failure("La reservación ha expirado y no puede ser confirmada");
         }

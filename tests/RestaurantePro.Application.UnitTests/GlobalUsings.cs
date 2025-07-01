@@ -54,6 +54,7 @@ global using FluentValidation.TestHelper;
 // Domain - Referencias para testing
 global using RestaurantePro.Domain.Core.Base;
 global using RestaurantePro.Domain.Core.Base.Events;
+global using RestaurantePro.Domain.Core.Base.Services;
 global using RestaurantePro.Domain.Core.SharedKernel.Results;
 global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using RestaurantePro.Domain.Core.SharedKernel.Validation;

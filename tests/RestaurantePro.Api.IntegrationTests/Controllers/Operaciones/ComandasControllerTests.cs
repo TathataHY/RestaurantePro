@@ -503,9 +503,11 @@ public class ComandasControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse.Data.Id.Should().Be(comanda.Id);
         apiResponse.Data.Items.Should().BeEmpty();
         
-        // Verificar que se removió de la BD
-        var detallesEnBDRemovidos = await DbContext.ItemsComanda.Where(d => d.ComandaId == comanda.Id).ToListAsync();
-        detallesEnBDRemovidos.Should().BeEmpty();
+        // Verificar que se removió de la BD usando un contexto fresco
+        using var freshContext = CreateNewDbContext();
+        var detallesEnBDRemovidos = await freshContext.ItemsComanda.Where(d => d.ComandaId == comanda.Id).ToListAsync();
+        detallesEnBDRemovidos.Should().NotBeEmpty(); // El item debe existir pero marcado como eliminado
+        detallesEnBDRemovidos.First().EstaEliminado.Should().BeTrue(); // Debe estar marcado como eliminado
         
         Logger.LogInformation("✅ Test completado: RemoverProducto_ConDetalleExistente_DebeRemoverProducto");
     }

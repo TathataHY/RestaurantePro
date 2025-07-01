@@ -294,7 +294,8 @@ public class RetrySettings
         "ActualizarUsuario", // Agregado para mayor cobertura
         "AnularFactura",     // Agregado para operaciones críticas
         "TransferirMesa",    // Agregado para operaciones de mesa
-        "UnificarComandas"   // Agregado para operaciones complejas
+        "UnificarComandas",  // Agregado para operaciones complejas
+        "AgregarPuntos"      // Agregado para operaciones de fidelización
     };
 
     /// <summary>

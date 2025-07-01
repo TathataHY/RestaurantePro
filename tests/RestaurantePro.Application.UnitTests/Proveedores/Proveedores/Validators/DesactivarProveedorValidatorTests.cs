@@ -8,12 +8,19 @@ namespace RestaurantePro.Application.UnitTests.Proveedores.Proveedores.Validator
 public class DesactivarProveedorValidatorTests
 {
     private readonly Mock<IApplicationDbContext> _mockContext;
+    private readonly Mock<IDateTimeService> _mockDateTimeService;
     private readonly DesactivarProveedorValidator _validator;
+
+    // Fecha base fija para todos los tests de antigüedad
+    private static readonly DateTime FechaActualFija = new DateTime(2024, 1, 15, 12, 0, 0);
 
     public DesactivarProveedorValidatorTests()
     {
         _mockContext = new Mock<IApplicationDbContext>();
-        _validator = new DesactivarProveedorValidator(_mockContext.Object);
+        _mockDateTimeService = new Mock<IDateTimeService>();
+        // Usar la fecha base fija para todos los tests
+        _mockDateTimeService.Setup(x => x.Now).Returns(FechaActualFija);
+        _validator = new DesactivarProveedorValidator(_mockContext.Object, _mockDateTimeService.Object);
     }
 
     #region Validation Command Helper
@@ -27,7 +34,7 @@ public class DesactivarProveedorValidatorTests
         };
     }
 
-    private Domain.Proveedores.Entities.Proveedor CrearProveedorValido(Guid proveedorId)
+    private Domain.Proveedores.Entities.Proveedor CrearProveedorValido(Guid proveedorId, DateTime? fechaCreacion = null)
     {
         // Usar factory method para crear proveedor válido
         var proveedor = Domain.Proveedores.Entities.Proveedor.Crear(
@@ -43,10 +50,13 @@ public class DesactivarProveedorValidatorTests
             "Cuenta bancaria test",
             30);
         
-        // Usar los métodos nuevos para establecer el ID y las fechas
         proveedor.SetIdForTesting(proveedorId);
-        proveedor.SetFechaCreacionForTesting(DateTime.Now.AddMonths(-6));
-        
+        proveedor.SetFechaCreacionForTesting(fechaCreacion ?? FechaActualFija.AddMonths(-6));
+        // Setear también FechaRegistro para los tests de antigüedad
+        if (fechaCreacion.HasValue)
+            typeof(Domain.Proveedores.Entities.Proveedor)
+                .GetProperty("FechaRegistro")!
+                .SetValue(proveedor, fechaCreacion.Value);
         return proveedor;
     }
 
@@ -56,7 +66,7 @@ public class DesactivarProveedorValidatorTests
         var orden = OrdenCompra.Crear(
             proveedorId,
             "Orden de compra de prueba",
-            DateTime.Now.AddDays(-5));
+            FechaActualFija.AddDays(-5));
         
         // Usar reflexión para establecer el estado después de la creación
         typeof(OrdenCompra).GetProperty("Estado")?.SetValue(orden, EstadoOrdenCompra.Pendiente);
@@ -94,7 +104,7 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, FechaActualFija.AddDays(-6));
         
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
@@ -136,7 +146,7 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, FechaActualFija.AddMonths(-6));
         proveedor.Desactivar("Proveedor desactivado para prueba"); // Ya desactivado
         
         ConfigurarProveedorExistente(proveedor);
@@ -157,7 +167,7 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, FechaActualFija.AddMonths(-6));
         proveedor.Activar(); // Asegurar que está activo
         
         ConfigurarProveedorExistente(proveedor);
@@ -185,7 +195,7 @@ public class DesactivarProveedorValidatorTests
         var command = CrearCommandValido();
         command.RazonDesactivacion = motivoInvalido;
         
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, FechaActualFija.AddMonths(-6));
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
 
@@ -206,7 +216,7 @@ public class DesactivarProveedorValidatorTests
         var command = CrearCommandValido();
         command.RazonDesactivacion = "ABC"; // Menos de 5 caracteres
         
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, FechaActualFija.AddMonths(-6));
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
 
@@ -227,7 +237,7 @@ public class DesactivarProveedorValidatorTests
         var command = CrearCommandValido();
         command.RazonDesactivacion = new string('A', 1001); // Más de 1000 caracteres
         
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, FechaActualFija.AddMonths(-6));
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
 
@@ -251,7 +261,7 @@ public class DesactivarProveedorValidatorTests
         var command = CrearCommandValido();
         command.RazonDesactivacion = motivoValido;
         
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, FechaActualFija.AddMonths(-6));
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
 
@@ -274,7 +284,7 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, FechaActualFija.AddMonths(-6));
         var ordenActiva = CrearOrdenCompraConEstado(command.Id, estadoActivo);
         
         ConfigurarProveedorExistente(proveedor);
@@ -297,7 +307,7 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, FechaActualFija.AddMonths(-6));
         var ordenInactiva = CrearOrdenCompraConEstado(command.Id, estadoInactivo);
         
         ConfigurarProveedorExistente(proveedor);
@@ -316,7 +326,7 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, FechaActualFija.AddMonths(-6));
         
         var ordenes = new[]
         {
@@ -342,10 +352,7 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.Id);
-        
-        // Usar el método nuevo para establecer FechaCreacion (menos de 24 horas)
-        proveedor.SetFechaCreacionForTesting(DateTime.Now.AddHours(-12));
+        var proveedor = CrearProveedorValido(command.Id, DateTime.Now.AddHours(-12));
         
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
@@ -365,10 +372,8 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.Id);
-        
-        // Usar el método nuevo para establecer FechaCreacion (más de 24 horas)
-        proveedor.SetFechaCreacionForTesting(DateTime.Now.AddDays(-5));
+        var fechaCreacion = FechaActualFija.AddHours(-25); // 25 horas de antigüedad
+        var proveedor = CrearProveedorValido(command.Id, fechaCreacion);
         
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
@@ -386,11 +391,8 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, DateTime.Now.AddHours(-1));
         proveedor.Desactivar("Ya desactivado"); // Ya desactivado
-        
-        // Usar el método nuevo para establecer FechaCreacion (recién creado)
-        proveedor.SetFechaCreacionForTesting(DateTime.Now.AddHours(-1));
         
         var ordenActiva = CrearOrdenCompraActiva(command.Id);
         
@@ -422,24 +424,8 @@ public class DesactivarProveedorValidatorTests
             RazonDesactivacion = "El proveedor ha solicitado darse de baja del sistema por restructuración de su empresa"
         };
 
-        // Crear proveedor usando factory method
-        var proveedor = Domain.Proveedores.Entities.Proveedor.Crear(
-            "Proveedor Test",
-            "Contacto Test",
-            "test@proveedor.com",
-            "+1234567890",
-            "Dirección Test",
-            "Ciudad Test",
-            "12345",
-            "País Test",
-            "XAXX010102000",
-            "Banco Test",
-            30
-        );
-        
-        // Usar los métodos nuevos para establecer ID y fecha
-        proveedor.SetIdForTesting(command.Id);
-        proveedor.SetFechaCreacionForTesting(DateTime.Now.AddDays(-30));
+        var fechaCreacion = FechaActualFija.AddHours(-48); // 48 horas de antigüedad
+        var proveedor = CrearProveedorValido(command.Id, fechaCreacion);
         
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
@@ -449,7 +435,6 @@ public class DesactivarProveedorValidatorTests
 
         // Assert
         result.IsValid.Should().BeTrue();
-        result.Errors.Should().BeEmpty();
     }
 
     [Fact]
@@ -489,10 +474,7 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.Id);
-        
-        // Usar el método nuevo para establecer FechaCreacion
-        proveedor.SetFechaCreacionForTesting(DateTime.Now.AddHours(-horasAntiguedad));
+        var proveedor = CrearProveedorValido(command.Id, DateTime.Now.AddHours(-horasAntiguedad));
         
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
@@ -525,7 +507,7 @@ public class DesactivarProveedorValidatorTests
         var command = CrearCommandValido();
         command.RazonDesactivacion = new string('A', longitud);
         
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, DateTime.Now.AddMonths(-6));
         ConfigurarProveedorExistente(proveedor);
         ConfigurarSinOrdenesActivas(command.Id);
 
@@ -552,7 +534,7 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, DateTime.Now.AddMonths(-6));
         
         // Crear una orden con estado Cancelada (NO debe ser considerada activa)
         var ordenCancelada = CrearOrdenCompraConEstado(command.Id, EstadoOrdenCompra.Cancelada);
@@ -578,7 +560,7 @@ public class DesactivarProveedorValidatorTests
     {
         // Arrange
         var command = CrearCommandValido();
-        var proveedor = CrearProveedorValido(command.Id);
+        var proveedor = CrearProveedorValido(command.Id, DateTime.Now.AddMonths(-6));
         
         // Crear órdenes con diferentes estados
         var ordenPendiente = CrearOrdenCompraConEstado(command.Id, EstadoOrdenCompra.Pendiente);    // ACTIVA

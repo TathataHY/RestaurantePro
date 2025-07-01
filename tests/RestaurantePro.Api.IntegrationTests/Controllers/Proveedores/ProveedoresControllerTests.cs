@@ -411,6 +411,13 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
     {
         // Arrange
         var proveedorCreado = await CrearProveedorTestAsync("Proveedor A Eliminar", "eliminar@test.cl", "Santiago");
+        
+        // Simular que han pasado 25 horas (más de 24) desde la creación
+        if (DateTimeService is FakeDateTimeService fakeService)
+        {
+            fakeService.SetNow(fakeService.Now.AddHours(25));
+        }
+        
         var url = $"/api/proveedores/{proveedorCreado.Id}";
         var request = new { RazonDesactivacion = "Test de eliminación" };
 
@@ -613,6 +620,13 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
     {
         // Arrange
         var proveedorCreado = await CrearProveedorTestAsync("Proveedor A Desactivar", "desactivar@test.cl", "Santiago");
+        
+        // Simular que han pasado 25 horas (más de 24) desde la creación
+        if (DateTimeService is FakeDateTimeService fakeService)
+        {
+            fakeService.SetNow(fakeService.Now.AddHours(25));
+        }
+        
         var url = $"/api/proveedores/{proveedorCreado.Id}/desactivar";
         var request = new { RazonDesactivacion = "Cambio de proveedor" };
 
