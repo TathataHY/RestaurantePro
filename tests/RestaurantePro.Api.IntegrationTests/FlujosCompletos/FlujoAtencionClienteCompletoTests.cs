@@ -69,14 +69,11 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         
         var responseReservacion = await HttpClient.PostAsJsonAsync("/api/operaciones/reservaciones", reservacionRequest);
         
-        // Si falla, capturar el error para diagnóstico
-        if (!responseReservacion.IsSuccessStatusCode)
+        if (responseReservacion.StatusCode == HttpStatusCode.BadRequest)
         {
-            var errorContent = await responseReservacion.Content.ReadAsStringAsync();
-            Logger.LogError("❌ Error en creación de reservación - Status: {StatusCode}, Content: {ErrorContent}", 
-                responseReservacion.StatusCode, errorContent);
+            var error = await responseReservacion.Content.ReadAsStringAsync();
+            Assert.True(false, $"❌ Error al crear reservación: {error}");
         }
-        
         responseReservacion.StatusCode.Should().Be(HttpStatusCode.Created);
         
         var reservacionResponse = await responseReservacion.Content.ReadFromJsonAsync<ApiResponse<ReservacionDto>>();

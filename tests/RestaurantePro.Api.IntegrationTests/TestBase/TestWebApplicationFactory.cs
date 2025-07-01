@@ -801,6 +801,7 @@ public class TestDomainEventDispatcher : IDomainEventDispatcher
 // Implementación fake para IDateTimeService
 public class FakeDateTimeService : IDateTimeService
 {
+    // Usar la fecha real del sistema para evitar problemas de validación de 90 días
     private DateTime _now = DateTime.UtcNow;
     public DateTime Now => _now;
     public DateTime Today => _now.Date;

@@ -184,7 +184,7 @@ public class FacturaBuilder
     public FacturaBuilder ConFechaEmision(DateTime fechaEmision)
     {
         // La fecha de emisión no puede ser futura
-        if (fechaEmision.Date > DateTime.Now.Date)
+        if (fechaEmision.Date > DateTime.UtcNow.Date)
         {
             _notificationManager.AddError("La fecha de emisión no puede ser futura", "FechaEmision");
             _logger.LogWarning("Intento de asignar fecha de emisión futura: {Fecha}", fechaEmision);
@@ -192,7 +192,7 @@ public class FacturaBuilder
         }
 
         // La fecha de emisión no puede ser muy antigua (más de 1 año)
-        if (fechaEmision.Date < DateTime.Now.Date.AddYears(-1))
+        if (fechaEmision.Date < DateTime.UtcNow.Date.AddYears(-1))
         {
             _notificationManager.AddError("La fecha de emisión no puede ser mayor a 1 año", "FechaEmision");
             _logger.LogWarning("Intento de asignar fecha de emisión muy antigua: {Fecha}", fechaEmision);

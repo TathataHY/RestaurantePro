@@ -43,7 +43,8 @@ public class FlujoReservacionesInteligenteTests : ApiIntegrationTestBase
 
         // 2. PASO 1: Verificar disponibilidad en tiempo real
         Logger.LogInformation("🔍 PASO 1: Verificando disponibilidad en tiempo real");
-        var fechaReservacion = DateTime.Now.AddDays(1).AddHours(2); // Siempre 1 día y 2 horas en el futuro
+        // Usar una hora específica dentro del horario permitido (12:00 PM - 10:00 PM)
+        var fechaReservacion = DateTime.Today.AddDays(1).AddHours(15); // 3:00 PM del día siguiente
         var responseDisponibilidad = await HttpClient.GetAsync($"/api/operaciones/reservaciones/disponibilidad?fecha={fechaReservacion:yyyy-MM-dd}&hora={fechaReservacion:HH:mm}&personas=4");
         responseDisponibilidad.StatusCode.Should().Be(HttpStatusCode.OK);
         
@@ -72,7 +73,7 @@ public class FlujoReservacionesInteligenteTests : ApiIntegrationTestBase
         if (responseReservacion1.StatusCode == HttpStatusCode.BadRequest)
         {
             var error = await responseReservacion1.Content.ReadAsStringAsync();
-            Logger.LogError($"❌ Error al crear reservación 1: {error}");
+            Assert.True(false, $"❌ Error al crear reservación 1: {error}");
         }
         responseReservacion1.StatusCode.Should().Be(HttpStatusCode.Created);
         
@@ -134,7 +135,7 @@ public class FlujoReservacionesInteligenteTests : ApiIntegrationTestBase
         if (responseReservacion2.StatusCode == HttpStatusCode.BadRequest)
         {
             var error = await responseReservacion2.Content.ReadAsStringAsync();
-            Logger.LogError($"❌ Error al crear reservación 2: {error}");
+            Assert.True(false, $"❌ Error al crear reservación 2: {error}");
         }
         responseReservacion2.StatusCode.Should().Be(HttpStatusCode.Created);
         
@@ -178,7 +179,7 @@ public class FlujoReservacionesInteligenteTests : ApiIntegrationTestBase
         if (responseNotificacion.StatusCode == HttpStatusCode.BadRequest)
         {
             var error = await responseNotificacion.Content.ReadAsStringAsync();
-            Logger.LogError($"❌ Error al enviar notificación: {error}");
+            Assert.True(false, $"❌ Error al enviar notificación: {error}");
         }
         responseNotificacion.StatusCode.Should().Be(HttpStatusCode.Created);
         
@@ -275,7 +276,7 @@ public class FlujoReservacionesInteligenteTests : ApiIntegrationTestBase
         {
             ClienteId = cliente.Id,
             MesaId = mesaPequena.Id,
-            FechaHoraReservacion = DateTime.Now.AddDays(1).AddHours(3), // 1 día y 3 horas en el futuro
+            FechaHoraReservacion = DateTime.Today.AddDays(1).AddHours(15), // 3:00 PM del día siguiente
             NumeroPersonas = 6, // Más personas que la capacidad de la mesa
             Observaciones = "Reservación que excede capacidad",
             NombreCliente = cliente.Nombre.ToString(),
@@ -295,7 +296,7 @@ public class FlujoReservacionesInteligenteTests : ApiIntegrationTestBase
         {
             ClienteId = cliente.Id,
             MesaId = mesaGrande.Id, // Mesa apropiada para 3 personas
-            FechaHoraReservacion = DateTime.Now.AddDays(1).AddHours(3), // 1 día y 3 horas en el futuro
+            FechaHoraReservacion = DateTime.Today.AddDays(1).AddHours(15), // 3:00 PM del día siguiente
             NumeroPersonas = 3,
             Observaciones = "Reservación válida",
             NombreCliente = cliente.Nombre.ToString(),
@@ -308,7 +309,7 @@ public class FlujoReservacionesInteligenteTests : ApiIntegrationTestBase
         if (responseReservacionValida.StatusCode == HttpStatusCode.BadRequest)
         {
             var error = await responseReservacionValida.Content.ReadAsStringAsync();
-            Logger.LogError($"❌ Error al crear reservación válida: {error}");
+            Assert.True(false, $"❌ Error al crear reservación válida: {error}");
         }
         responseReservacionValida.StatusCode.Should().Be(HttpStatusCode.Created);
         
@@ -378,6 +379,11 @@ public class FlujoReservacionesInteligenteTests : ApiIntegrationTestBase
         };
         
         var responseHorarioValido = await HttpClient.PostAsJsonAsync("/api/operaciones/reservaciones", reservacionHorarioValidoRequest);
+        if (responseHorarioValido.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var error = await responseHorarioValido.Content.ReadAsStringAsync();
+            Assert.True(false, $"❌ Error al crear reservación en horario válido: {error}");
+        }
         responseHorarioValido.StatusCode.Should().Be(HttpStatusCode.Created);
         
         var reservacionHorarioValidoResponse = await responseHorarioValido.Content.ReadFromJsonAsync<ApiResponse<ReservacionDto>>();
@@ -413,7 +419,7 @@ public class FlujoReservacionesInteligenteTests : ApiIntegrationTestBase
         {
             ClienteId = cliente.Id,
             MesaId = mesa.Id,
-            FechaHoraReservacion = DateTime.Now.AddDays(1).AddHours(3), // 1 día y 3 horas en el futuro
+            FechaHoraReservacion = DateTime.Today.AddDays(1).AddHours(15), // 3:00 PM del día siguiente
             NumeroPersonas = 4,
             Observaciones = "Reservación para notificaciones",
             NombreCliente = cliente.Nombre.ToString(),
@@ -426,7 +432,7 @@ public class FlujoReservacionesInteligenteTests : ApiIntegrationTestBase
         if (responseReservacion.StatusCode == HttpStatusCode.BadRequest)
         {
             var error = await responseReservacion.Content.ReadAsStringAsync();
-            Logger.LogError($"❌ Error al crear reservación (notificaciones): {error}");
+            Assert.True(false, $"❌ Error al crear reservación (notificaciones): {error}");
         }
         responseReservacion.StatusCode.Should().Be(HttpStatusCode.Created);
         
@@ -451,7 +457,7 @@ public class FlujoReservacionesInteligenteTests : ApiIntegrationTestBase
         if (responseNotificacionConfirmacion.StatusCode == HttpStatusCode.BadRequest)
         {
             var error = await responseNotificacionConfirmacion.Content.ReadAsStringAsync();
-            Logger.LogError($"❌ Error al enviar notificación: {error}");
+            Assert.True(false, $"❌ Error al enviar notificación: {error}");
         }
         responseNotificacionConfirmacion.StatusCode.Should().Be(HttpStatusCode.Created);
         
