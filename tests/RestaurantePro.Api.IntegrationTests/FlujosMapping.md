@@ -3,17 +3,20 @@
 Este documento mapea los flujos de negocio críticos que deben funcionar correctamente para que la API esté completamente operativa. Cada flujo valida la integración entre múltiples endpoints y contextos, basado en el análisis real del dominio y aplicación.
 
 ## 📋 **LEYENDA DE ESTADO**
-- **✅/✅**: Flujo implementado con tests funcionales
+- **✅/✅**: El componente está implementado en el código fuente (src) Y tiene pruebas unitarias implementadas
+- **✅/⬜**: El componente está implementado en el código fuente (src) pero NO tiene pruebas unitarias
+- **⬜/⬜**: El componente NO está implementado aún (ni código ni pruebas)
+- **🟡/🟡**: El componente está en desarrollo y en pruebas
 - **🔄**: Flujo en proceso de implementación
-- **⬜/⬜**: Flujo pendiente de implementación
 - **✅**: Endpoint/validación implementada y funcionando
 
 ## 📊 **RESUMEN GENERAL**
 - **Total Flujos Críticos**: 18
 - **Flujos Implementados**: 3 ✅
+- **Flujos en Desarrollo**: 1 🟡
 - **Tests de Flujo**: 17 ✅
-- **Estado**: ✅ **FASE 1 FINALIZADA Y VALIDADA** (todos los issues resueltos)
-- **Próxima Fase**: 🚀 **FASE 2 - Flujos Comerciales**
+- **Estado**: 🟡 **FASE 2 EN PROGRESO** - Implementando Flujo de Fidelización Inteligente
+- **Próxima Fase**: 🚀 **FASE 2 - Flujos Comerciales** (En desarrollo)
 
 ---
 
@@ -98,8 +101,9 @@ Este documento mapea los flujos de negocio críticos que deben funcionar correct
 
 ## 🛒 **FLUJOS COMERCIALES AVANZADOS**
 
-### **4. Flujo de Fidelización Inteligente** ⬜/⬜
+### **4. Flujo de Fidelización Inteligente** 🟡/🟡
 **Descripción**: Programa de puntos con análisis de comportamiento y IA
+**Estado**: 🟡 **EN DESARROLLO** - Implementando tests de integración completos
 **Endpoints Involucrados**:
 - `POST /api/comercial/tarjetas-fidelizacion` → Crear tarjeta
 - `POST /api/comercial/tarjetas-fidelizacion/{id}/puntos` → Acumular puntos
@@ -508,6 +512,37 @@ Este documento mapea los flujos de negocio críticos que deben funcionar correct
 ---
 
 **Última actualización**: Diciembre 2024  
-**Versión del documento**: 3.0 - Fase 1 Finalizada  
+**Versión del documento**: 3.1 - Fase 2 En Progreso  
 **Responsable**: Equipo de Desarrollo RestaurantePro  
-**Estado**: ✅ Fase 1 OFICIALMENTE FINALIZADA 
+**Estado**: 🟡 Fase 2 EN DESARROLLO
+
+---
+
+## 🎯 **TRABAJO ACTUAL - DICIEMBRE 2024**
+
+### **🟡 Flujo de Fidelización Inteligente - EN DESARROLLO**
+**Fecha de inicio**: Diciembre 2024  
+**Responsable**: Equipo de Desarrollo  
+**Objetivo**: Implementar tests de integración completos para el sistema de fidelización  
+**Estado**: 🟡 **EN PROGRESO**
+
+#### **📋 Plan de Trabajo Actual**
+1. **Crear archivo**: `FlujoFidelizacionInteligenteTests.cs` ✅
+2. **Implementar test 1**: `FlujoCompletoFidelizacionInteligente_DebeFuncionarCorrectamente()` 🟡
+3. **Implementar test 2**: `FlujoFidelizacionConCanje_DebeFuncionarCorrectamente()` ⬜
+4. **Implementar test 3**: `FlujoFidelizacionConHistorial_DebeFuncionarCorrectamente()` ⬜
+5. **Implementar test 4**: `FlujoFidelizacionConReportes_DebeFuncionarCorrectamente()` ⬜
+
+#### **🎯 Endpoints a Validar**
+- `POST /api/comercial/tarjetas-fidelizacion` → Crear tarjeta ✅
+- `POST /api/comercial/tarjetas-fidelizacion/{id}/puntos` → Acumular puntos ✅
+- `POST /api/comercial/tarjetas-fidelizacion/{id}/canjear` → Canjear puntos 🟡
+- `GET /api/comercial/tarjetas-fidelizacion/{id}/historial` → Historial ⬜
+- `GET /api/comercial/reportes/fidelizacion` → Análisis de fidelización ⬜
+
+#### **✅ Validaciones a Implementar**
+- [x] Acumulación automática de puntos por compras
+- [ ] Validación de reglas de canje
+- [ ] Análisis de comportamiento del cliente
+- [ ] Recomendaciones personalizadas
+- [ ] Reportes de fidelización 
