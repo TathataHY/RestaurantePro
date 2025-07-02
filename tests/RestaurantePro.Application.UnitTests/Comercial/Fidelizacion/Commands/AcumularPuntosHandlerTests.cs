@@ -57,10 +57,10 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
             // Configura mocks
             _currentUserMock.Setup(x => x.UserId).Returns(Guid.NewGuid().ToString());
             
-            _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
                 
-            _tarjetaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+            _tarjetaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(tarjetaId, default, false))
                 .ReturnsAsync(tarjeta);
                 
             // Configura el cálculo de puntos con el constructor correcto
@@ -69,13 +69,13 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
             _calculadoraPuntosMock.Setup(x => x.CalcularPuntosPorCompraAsync(
                     It.IsAny<Guid>(), 
                     It.IsAny<decimal>(), 
-                    It.IsAny<CancellationToken>()))
+                    default))
                 .ReturnsAsync(Result.Success(calculoResultado));
                 
-            _transaccionRepositoryMock.Setup(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), It.IsAny<CancellationToken>()))
+            _transaccionRepositoryMock.Setup(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), default))
                 .Returns(Task.CompletedTask);
                 
-            _tarjetaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
+            _tarjetaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), default))
                 .Returns(Task.CompletedTask);
                 
             var command = new AcumularPuntosCommand
@@ -112,8 +112,8 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
             result.Value.FacturaId.Should().Be(facturaId);
             
             // Verificar que se llamaron los métodos esperados
-            _tarjetaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()), Times.Once);
-            _transaccionRepositoryMock.Verify(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), It.IsAny<CancellationToken>()), Times.Once);
+            _tarjetaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), default), Times.Once);
+            _transaccionRepositoryMock.Verify(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), default), Times.Once);
         }
 
         [Fact]
@@ -129,7 +129,7 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
                 Canal = "Web"
             };
 
-            _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(default(Cliente));
 
             // Act

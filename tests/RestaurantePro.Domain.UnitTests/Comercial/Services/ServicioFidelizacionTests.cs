@@ -67,7 +67,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
 
             // Configurar que el cliente no existe
             Cliente? clienteNull = null;
-            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(clienteNull);
 
             // Act
@@ -92,7 +92,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
 
-            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
 
             // Act
@@ -137,15 +137,15 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Configurar los mocks
             _clienteRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
                 
             _tarjetaRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(tarjetaId, default, false))
                 .ReturnsAsync(tarjeta);
                 
             _tarjetaRepositoryMock
-                .Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), default))
                 .Returns(Task.CompletedTask);
 
             // Act
@@ -186,7 +186,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
                 
-            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
 
             // Act
@@ -218,10 +218,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             cliente.AsociarTarjetaFidelizacion(tarjetaId);
             
             // Configurar mocks
-            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
                 
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, default))
                 .ReturnsAsync((TarjetaFidelizacion?)null);
 
             // Act
@@ -252,10 +252,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Asociar tarjeta al cliente
             cliente.AsociarTarjetaFidelizacion(tarjetaId);
             
-            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
             
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, default))
                 .ReturnsAsync(tarjeta);
 
             // Act
@@ -286,10 +286,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Asociar tarjeta al cliente
             cliente.AsociarTarjetaFidelizacion(tarjetaId);
             
-            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
             
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, default))
                 .ReturnsAsync(tarjeta);
 
             // Act
@@ -320,10 +320,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             // Asociar tarjeta al cliente
             cliente.AsociarTarjetaFidelizacion(tarjetaId);
             
-            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
             
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, default))
                 .ReturnsAsync(tarjeta);
 
             // Act
@@ -365,11 +365,11 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Configurar los mocks
             _clienteRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
 
             _tarjetaRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(tarjetaId, default, false))
                 .ReturnsAsync(tarjeta);
                 
             // Act
@@ -414,15 +414,15 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Configurar los mocks
             _clienteRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
                 
             _tarjetaRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(tarjetaId, default, false))
                 .ReturnsAsync(tarjeta);
                 
             _tarjetaRepositoryMock
-                .Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
+                .Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), default))
                 .Returns(Task.CompletedTask);
 
             // Act
@@ -462,10 +462,10 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             cliente.AsociarTarjetaFidelizacion(tarjeta.Id);
             
             // Configurar mocks
-            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
             
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId!.Value, It.IsAny<CancellationToken>()))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId!.Value, default, false))
                 .ReturnsAsync(tarjeta);
             
             // Act
@@ -484,7 +484,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var montoTotal = 1000m;
             
             // Configurar que el cliente no existe
-            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync((Cliente?)null);
                 
             // Act
@@ -529,11 +529,11 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Configurar los mocks
             _clienteRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
             
             _tarjetaRepositoryMock
-                .Setup(r => r.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+                .Setup(r => r.ObtenerPorIdAsync(tarjetaId, default, false))
                 .ReturnsAsync(tarjeta);
 
             // Act
@@ -556,16 +556,16 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
             SetPrivateId(cliente, clienteId);
             
-            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
                 
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, It.IsAny<CancellationToken>()))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, default))
                 .ReturnsAsync((TarjetaFidelizacion?)null);
                 
-            _tarjetaRepositoryMock.Setup(r => r.AgregarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
+            _tarjetaRepositoryMock.Setup(r => r.AgregarAsync(It.IsAny<TarjetaFidelizacion>(), default))
                 .Returns(Task.CompletedTask);
                 
-            _clienteRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()))
+            _clienteRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), default))
                 .Returns(Task.CompletedTask);
                 
             // Act
@@ -577,8 +577,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             resultado.Value.ClienteId.Should().Be(clienteId);
             resultado.Value.Estado.Should().Be(EstadoTarjeta.Emitida);
             
-            _tarjetaRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()), Times.Once);
-            _clienteRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Cliente>(), It.IsAny<CancellationToken>()), Times.Once);
+            _tarjetaRepositoryMock.Verify(r => r.AgregarAsync(It.IsAny<TarjetaFidelizacion>(), default), Times.Once);
+            _clienteRepositoryMock.Verify(r => r.ActualizarAsync(It.IsAny<Cliente>(), default), Times.Once);
         }
 
         // Método auxiliar para asignar ID privados a las entidades

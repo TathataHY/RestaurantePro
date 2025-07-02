@@ -33,7 +33,7 @@ public class CalculadoraPuntosServiceTests
         var tarjeta = await CrearTarjetaPrueba(tarjetaId, clienteId, NivelFidelizacion.Plata, activa: true);
 
         _tarjetaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, default, false))
             .ReturnsAsync(tarjeta);
 
         // Act
@@ -59,7 +59,7 @@ public class CalculadoraPuntosServiceTests
         var tarjeta = await CrearTarjetaPrueba(tarjetaId, clienteId, NivelFidelizacion.Oro, activa: true);
 
         _tarjetaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, default, false))
             .ReturnsAsync(tarjeta);
 
         // Act
@@ -93,7 +93,7 @@ public class CalculadoraPuntosServiceTests
         var tarjetaId = Guid.NewGuid();
 
         _tarjetaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, default, false))
             .ReturnsAsync((TarjetaFidelizacion?)null);
 
         // Act
@@ -114,7 +114,7 @@ public class CalculadoraPuntosServiceTests
         var tarjeta = await CrearTarjetaPrueba(tarjetaId, clienteId, NivelFidelizacion.Basico, activa: false);
 
         _tarjetaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, default, false))
             .ReturnsAsync(tarjeta);
 
         // Act
@@ -140,7 +140,7 @@ public class CalculadoraPuntosServiceTests
         var tarjeta = await CrearTarjetaPrueba(tarjetaId, clienteId, NivelFidelizacion.Plata, activa: true, puntosDisponibles: 100);
 
         _tarjetaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, default, false))
             .ReturnsAsync(tarjeta);
 
         // Act
@@ -162,7 +162,7 @@ public class CalculadoraPuntosServiceTests
         var tarjeta = await CrearTarjetaPrueba(tarjetaId, clienteId, NivelFidelizacion.Plata, activa: true, puntosDisponibles: 100);
 
         _tarjetaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, default, false))
             .ReturnsAsync(tarjeta);
 
         // Act
@@ -194,7 +194,7 @@ public class CalculadoraPuntosServiceTests
         var tarjeta = await CrearTarjetaPrueba(tarjetaId, clienteId, nivel, activa: true);
 
         _tarjetaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, default, false))
             .ReturnsAsync(tarjeta);
 
         // Act
@@ -224,7 +224,7 @@ public class CalculadoraPuntosServiceTests
         var tarjeta = await CrearTarjetaPrueba(tarjetaId, clienteId, nivel, activa: true);
 
         _tarjetaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, default, false))
             .ReturnsAsync(tarjeta);
 
         // Act
@@ -255,7 +255,7 @@ public class CalculadoraPuntosServiceTests
         var tarjeta = await CrearTarjetaPrueba(tarjetaId, clienteId, nivel, activa: true);
 
         _tarjetaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, default, false))
             .ReturnsAsync(tarjeta);
 
         // Act
@@ -276,7 +276,7 @@ public class CalculadoraPuntosServiceTests
         // Arrange
         var tarjetaId = Guid.NewGuid();
         _tarjetaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ObtenerPorIdAsync(tarjetaId, default, false))
             .ThrowsAsync(new InvalidOperationException("Error de conexión"));
 
         // Act

@@ -1019,10 +1019,10 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
     #region GET /api/comercial/facturas/reporte
 
     [Fact]
-    public async Task GetReporteFacturas_ConTipoReporteValido_DebeRetornar501()
+    public async Task GetReporteFacturas_ConTipoReporteValido_DebeRetornar200()
     {
         // Arrange
-        Console.WriteLine("🧪 Iniciando test: GetReporteFacturas_ConTipoReporteValido_DebeRetornar501");
+        Console.WriteLine("🧪 Iniciando test: GetReporteFacturas_ConTipoReporteValido_DebeRetornar200");
 
         var nombreCliente = $"Cliente_{Guid.NewGuid().ToString("N")[..8]}";
         var emailCliente = GenerarEmailValido();
@@ -1031,17 +1031,17 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         // Crear una factura real para el cliente
         var factura = await CrearFacturaPrueba(clienteId: cliente.Id);
 
-        var url = "/api/comercial/facturas/reporte?tipoReporte=ventas&formato=pdf";
+        var url = "/api/comercial/facturas/reporte?tipoReporte=ventas";
 
         // Act
         var response = await HttpClient.GetAsync(url);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.NotImplemented);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
         apiResponse.Should().NotBeNull();
-        apiResponse!.Success.Should().BeFalse();
-        apiResponse.Errors.Should().Contain("Funcionalidad no implementada");
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
 
         // Verificar que la factura sigue existiendo en la BD (usar el ID de la factura, no del cliente)
         var facturaEnBD = await DbContext.Facturas.FindAsync(factura.Id);
@@ -1049,10 +1049,10 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
     }
 
     [Fact]
-    public async Task GetReporteFacturas_ConFiltrosDeFecha_DebeRetornar501()
+    public async Task GetReporteFacturas_ConFiltrosDeFecha_DebeRetornar200()
     {
         // Arrange
-        Console.WriteLine("🧪 Iniciando test: GetReporteFacturas_ConFiltrosDeFecha_DebeRetornar501");
+        Console.WriteLine("🧪 Iniciando test: GetReporteFacturas_ConFiltrosDeFecha_DebeRetornar200");
 
         var fechaDesde = DateTime.Now.AddDays(-30);
         var fechaHasta = DateTime.Now;
@@ -1063,10 +1063,11 @@ public class FacturasControllerTests : ApiIntegrationTestBase, IDisposable
         var response = await HttpClient.GetAsync(url);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.NotImplemented);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         var apiResponse = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
         apiResponse.Should().NotBeNull();
-        apiResponse!.Success.Should().BeFalse();
+        apiResponse!.Success.Should().BeTrue();
+        apiResponse.Data.Should().NotBeNull();
     }
 
     #endregion

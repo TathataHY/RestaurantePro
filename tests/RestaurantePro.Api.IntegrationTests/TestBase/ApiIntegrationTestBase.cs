@@ -860,6 +860,19 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         var detalles = await DbContext.Set<DetalleFactura>().Where(d => d.FacturaId == factura.Id).ToListAsync();
         if (detalles == null || !detalles.Any())
         {
+            // Buscar la(s) comanda(s) asociada(s) para obtener el descuento
+            var comandas = await DbContext.Comandas.Where(c => comandasIds.Contains(c.Id)).ToListAsync();
+            decimal porcentajeDescuento = 0.0m;
+            if (comandas.Count == 1)
+            {
+                porcentajeDescuento = comandas[0].DescuentoFidelizacion ?? 0.0m;
+            }
+            // Si hay más de una comanda, podrías promediar o tomar el mayor, aquí tomamos el mayor
+            else if (comandas.Count > 1)
+            {
+                porcentajeDescuento = comandas.Max(c => c.DescuentoFidelizacion ?? 0.0m);
+            }
+
             var producto1 = await CrearProductoPrueba("Producto Factura 1", 100.00m);
             var producto2 = await CrearProductoPrueba("Producto Factura 2", 150.00m);
             
@@ -870,7 +883,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
                 2,
                 producto1.Precio!.Valor,
                 16.0m, // 16% IVA
-                0.0m); // Sin descuento
+                porcentajeDescuento); // Aplica descuento de la comanda
 
             var detalle2 = DetalleFactura.Crear(
                 factura.Id,
@@ -879,7 +892,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
                 1,
                 producto2.Precio!.Valor,
                 16.0m, // 16% IVA
-                0.0m); // Sin descuento
+                porcentajeDescuento); // Aplica descuento de la comanda
 
             DbContext.Set<DetalleFactura>().AddRange(detalle1, detalle2);
             await DbContext.SaveChangesAsync();
