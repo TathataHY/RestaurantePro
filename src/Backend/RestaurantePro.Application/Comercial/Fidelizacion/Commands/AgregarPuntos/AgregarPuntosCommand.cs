@@ -1,3 +1,7 @@
+using RestaurantePro.Application.Common.Models;
+using RestaurantePro.Application.Comercial.Fidelizacion.DTOs;
+using MediatR;
+
 namespace RestaurantePro.Application.Comercial.Fidelizacion.Commands.AgregarPuntos;
 
 /// <summary>
@@ -5,12 +9,13 @@ namespace RestaurantePro.Application.Comercial.Fidelizacion.Commands.AgregarPunt
 /// </summary>
 public class AgregarPuntosCommand : IRequest<Result<AgregarPuntosResponse>>
 {
-    public Guid TarjetaFidelizacionId { get; set; }
+    public Guid TarjetaId { get; set; }
     public int Puntos { get; set; }
     public string Descripcion { get; set; } = string.Empty;
     public decimal? MontoTransaccion { get; set; }
     public string? Referencia { get; set; }
     public Guid UsuarioId { get; set; }
+    public decimal? MontoCompra { get; set; }
     /// <summary>
     /// Versión de la entidad para control de concurrencia - comentada para tests con SQLite
     /// </summary>

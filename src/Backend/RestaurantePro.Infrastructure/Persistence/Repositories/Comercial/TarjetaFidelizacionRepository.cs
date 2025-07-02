@@ -36,13 +36,15 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         /// <summary>
         /// Obtiene una tarjeta de fidelización por su ID
         /// </summary>
-        public new async Task<TarjetaFidelizacion> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public async Task<TarjetaFidelizacion?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default, bool asNoTracking = false)
         {
-            var tarjeta = await _dbSet
-                .Include(t => t.HistorialPuntos)
-                .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
-            
-            return tarjeta ?? throw new KeyNotFoundException($"No se encontró la tarjeta de fidelización con ID {id}");
+            var query = _dbContext.TarjetasFidelizacion
+                .Where(t => t.Id == id && !t.EstaEliminado);
+
+            if (asNoTracking)
+                query = query.AsNoTracking();
+
+            return await query.FirstOrDefaultAsync(cancellationToken);
         }
 
         /// <summary>
@@ -237,27 +239,63 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         {
             try
             {
-                _logger.LogInformation("Iniciando actualización simplificada de tarjeta de fidelización {TarjetaId}", entity.Id);
+                _logger.LogInformation("Iniciando actualización segura de tarjeta de fidelización {TarjetaId}", entity.Id);
 
-                // Patrón simplificado: actualizar directamente sin tracking complejo
-                _dbSet.Update(entity);
+                // Obtener la entidad existente (trackeada)
+                var existingEntity = await _dbSet
+                    .Include(t => t.HistorialPuntos)
+                    .FirstOrDefaultAsync(t => t.Id == entity.Id, cancellationToken);
+
+                if (existingEntity == null)
+                {
+                    throw new InvalidOperationException($"No se encontró la tarjeta de fidelización con Id {entity.Id}");
+                }
+
+                // Actualizar propiedades usando métodos públicos
+                existingEntity.ActualizarPuntos(entity.PuntosAcumulados, entity.PuntosDisponibles);
+                existingEntity.ActualizarNivelInterno(entity.NivelFidelizacion);
+                existingEntity.ActualizarEstado(entity.Estado);
+
+                // Guardar cambios
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation("Tarjeta de fidelización {TarjetaId} actualizada exitosamente", entity.Id);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al actualizar tarjeta de fidelización {TarjetaId}", entity.Id);
+                _logger.LogError(ex, "Error al actualizar la tarjeta de fidelización {TarjetaId}", entity.Id);
                 throw;
             }
         }
 
         /// <summary>
-        /// Marca una tarjeta como modificada sin guardar cambios
+        /// Marca una tarjeta como modificada con estrategias de persistencia forzada para SQLite
         /// </summary>
         public new void Update(TarjetaFidelizacion entity)
         {
-            _dbSet.Update(entity);
+            _logger.LogInformation("Aplicando estrategias de persistencia forzada para tarjeta {TarjetaId}", entity.Id);
+            
+            try
+            {
+                // Estrategia 1: Detección forzada de cambios
+                _dbContext.ChangeTracker.DetectChanges();
+                
+                // Estrategia 2: Marcado explícito como modificado
+                _dbSet.Update(entity);
+                
+                // Estrategia 3: Marcado específico de propiedades críticas
+                _dbContext.Entry(entity).Property(e => e.PuntosDisponibles).IsModified = true;
+                _dbContext.Entry(entity).Property(e => e.PuntosAcumulados).IsModified = true;
+                _dbContext.Entry(entity).Property(e => e.Estado).IsModified = true;
+                _dbContext.Entry(entity).Property(e => e.NivelFidelizacion).IsModified = true;
+                
+                _logger.LogInformation("Estrategias de persistencia aplicadas correctamente para tarjeta {TarjetaId}", entity.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al aplicar estrategias de persistencia para tarjeta {TarjetaId}", entity.Id);
+                throw;
+            }
         }
 
         /// <summary>

@@ -60,6 +60,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
             modelBuilder.Ignore<RestaurantePro.Domain.Core.Base.Events.DomainEvent>();
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
+            // CONFIGURACIÓN ESPECIAL PARA TESTS CON SQLITE: Control de concurrencia optimista DESACTIVADO
+            // Eliminar cualquier configuración de concurrencia residual para TarjetaFidelizacion
+            var tarjetaEntity = modelBuilder.Entity<Domain.Comercial.Clientes.Entities.TarjetaFidelizacion>();
+            tarjetaEntity.Metadata.RemoveAnnotation("Relational:ConcurrencyToken");
+            tarjetaEntity.Metadata.RemoveAnnotation("SqlServer:ValueGenerationStrategy");
+            tarjetaEntity.Metadata.SetAnnotation("SqlServer:IsConcurrencyToken", false);
+
             modelBuilder.Entity<ApplicationUserRole>(userRole =>
             {
                 userRole.HasKey(ur => new { ur.UserId, ur.RoleId });

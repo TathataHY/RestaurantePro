@@ -250,7 +250,7 @@ public class TarjetasFidelizacionController : ControllerBase
     {
         _logger.LogInformation("➕ POST /api/comercial/tarjetas-fidelizacion/{Id}/puntos", id);
 
-        command.TarjetaFidelizacionId = id;
+        command.TarjetaId = id;
         var result = await _mediator.Send(command);
 
         if (!result.Succeeded)
@@ -283,7 +283,7 @@ public class TarjetasFidelizacionController : ControllerBase
     {
         _logger.LogInformation("🎁 POST /api/comercial/tarjetas-fidelizacion/{Id}/canjear", id);
 
-        command.TarjetaFidelizacionId = id;
+        command.TarjetaId = id;
         var result = await _mediator.Send(command);
 
         if (!result.Succeeded)

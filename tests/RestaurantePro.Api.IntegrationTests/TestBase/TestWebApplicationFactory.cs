@@ -38,6 +38,7 @@ using RestaurantePro.Domain.Core.SharedKernel.Results;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
 using RestaurantePro.Domain.Comercial.Facturacion.Services;
@@ -51,12 +52,14 @@ using RestaurantePro.Domain.Core.Base;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
 using Microsoft.EntityFrameworkCore.Metadata;
 using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
 using RestaurantePro.Infrastructure.DependencyInjection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -130,39 +133,39 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // 🔧 CONFIGURACIÓN DE BASE DE DATOS TEMPORAL ÚNICA POR TEST
             Console.WriteLine($"🗄️ Configurando BD temporal: {_databasePath}");
             
-            services.AddDbContext<RestauranteProDbContext>(options =>
+            // 🔧 CONFIGURAR DBCONTEXT COMO SCOPED PARA TESTS (MEJOR PRÁCTICA)
+            services.AddDbContext<RestauranteProDbContext>((provider, options) =>
             {
                 options.UseSqlite(_connectionString, sqliteOptions =>
                 {
                     sqliteOptions.MigrationsAssembly("RestaurantePro.Infrastructure");
                 });
-                
-                // Configurar para tests con mejor debugging
                 options.EnableSensitiveDataLogging();
                 options.EnableDetailedErrors();
-                
-                // 🔧 AGREGAR INTERCEPTORES PARA QUE FUNCIONEN LOS EVENTOS DE DOMINIO
-                var auditableEntityInterceptor = services.BuildServiceProvider().GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.AuditableEntityInterceptor>();
-                var domainEventInterceptor = services.BuildServiceProvider().GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.DomainEventInterceptor>();
-                var softDeleteInterceptor = services.BuildServiceProvider().GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.SoftDeleteInterceptor>();
-                
-                options.AddInterceptors(auditableEntityInterceptor);
-                options.AddInterceptors(domainEventInterceptor);
-                options.AddInterceptors(softDeleteInterceptor);
+                options.ConfigureWarnings(warnings => warnings
+                    .Ignore(RelationalEventId.PendingModelChangesWarning)
+                    .Ignore(RelationalEventId.MultipleCollectionIncludeWarning)
+                    .Ignore(CoreEventId.RowLimitingOperationWithoutOrderByWarning));
             });
 
-            // 🔧 REGISTRAR CONTEXTOS ESPECÍFICOS PARA TESTS
-            services.AddDbContext<ProveedoresDbContext>(options =>
+            // 🔧 CONFIGURAR PROVEEDORESDBCONTEXT COMO SCOPED PARA TESTS
+            services.AddDbContext<ProveedoresDbContext>((provider, options) =>
             {
                 options.UseSqlite(_connectionString, sqliteOptions =>
                 {
                     sqliteOptions.MigrationsAssembly("RestaurantePro.Infrastructure");
                 });
-                
-                // Configurar para tests con mejor debugging
                 options.EnableSensitiveDataLogging();
                 options.EnableDetailedErrors();
             });
+
+            // 🔧 REGISTRAR IDOMAINEVENTDISPATCHER COMO SCOPED PARA TESTS
+            services.AddScoped<IDomainEventDispatcher, TestDomainEventDispatcher>();
+            
+            // 🔧 AGREGAR INTERCEPTORES PARA EVENTOS DE DOMINIO
+            services.AddScoped<RestaurantePro.Infrastructure.Persistence.Interceptors.AuditableEntityInterceptor>();
+            services.AddScoped<RestaurantePro.Infrastructure.Persistence.Interceptors.DomainEventInterceptor>();
+            services.AddScoped<RestaurantePro.Infrastructure.Persistence.Interceptors.SoftDeleteInterceptor>();
 
             // 🔧 REGISTRAR IApplicationDbContext
             services.AddScoped<IApplicationDbContext>(provider => 
@@ -195,12 +198,18 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 var dbContext = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
                 try
                 {
+                    // Forzar eliminación completa de BD para asegurar esquema limpio
+                    dbContext.Database.EnsureDeleted();
+                    Console.WriteLine("🗑️ Base de datos eliminada completamente");
+                    
+                    // Usar EnsureCreated para tests con SQLite (evita problemas de sintaxis de migraciones)
                     dbContext.Database.EnsureCreated();
-                    Console.WriteLine("✅ Migraciones ejecutadas - Tablas creadas en BD temporal");
+                    Console.WriteLine("✅ Tablas creadas en BD temporal usando EnsureCreated");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"⚠️ Error ejecutando migraciones: {ex.Message}");
+                    throw;
                 }
             }
 

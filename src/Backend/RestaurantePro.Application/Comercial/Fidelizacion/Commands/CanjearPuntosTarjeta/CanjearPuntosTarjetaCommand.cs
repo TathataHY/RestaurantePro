@@ -5,7 +5,7 @@ namespace RestaurantePro.Application.Comercial.Fidelizacion.Commands.CanjearPunt
 /// </summary>
 public class CanjearPuntosTarjetaCommand : IRequest<Result<CanjearPuntosTarjetaResponse>>
 {
-    public Guid TarjetaFidelizacionId { get; set; }
+    public Guid TarjetaId { get; set; }
     public int PuntosACanjear { get; set; }
     public string Descripcion { get; set; } = string.Empty;
     public string? Referencia { get; set; }
@@ -21,7 +21,7 @@ public class CanjearPuntosTarjetaCommand : IRequest<Result<CanjearPuntosTarjetaR
 /// </summary>
 public class CanjearPuntosTarjetaResponse
 {
-    public Guid TarjetaFidelizacionId { get; set; }
+    public Guid TarjetaId { get; set; }
     public int PuntosCanjeados { get; set; }
     public int PuntosActuales { get; set; }
     public string Mensaje { get; set; } = string.Empty;

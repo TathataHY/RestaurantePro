@@ -9,9 +9,9 @@ public class AgregarPuntosValidator : AbstractValidator<AgregarPuntosCommand>
 {
     public AgregarPuntosValidator()
     {
-        RuleFor(x => x.TarjetaFidelizacionId)
+        RuleFor(x => x.TarjetaId)
             .NotEmpty()
-            .WithMessage("El ID de la tarjeta de fidelización es requerido");
+            .WithMessage("El ID de la tarjeta es requerido");
 
         RuleFor(x => x.Puntos)
             .GreaterThan(0)
