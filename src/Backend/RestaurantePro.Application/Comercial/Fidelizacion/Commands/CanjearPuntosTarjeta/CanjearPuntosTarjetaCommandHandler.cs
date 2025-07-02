@@ -1,6 +1,9 @@
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Domain.Comercial.Clientes.Entities;
 using RestaurantePro.Domain.Comercial.Clientes.Enums;
+using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
+using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace RestaurantePro.Application.Comercial.Fidelizacion.Commands.CanjearPuntosTarjeta;
 
@@ -11,13 +14,16 @@ public class CanjearPuntosTarjetaCommandHandler : IRequestHandler<CanjearPuntosT
 {
     private readonly ITarjetaFidelizacionRepository _tarjetaRepository;
     private readonly ILogger<CanjearPuntosTarjetaCommandHandler> _logger;
+    private readonly IUnitOfWork _unitOfWork;
 
     public CanjearPuntosTarjetaCommandHandler(
         ITarjetaFidelizacionRepository tarjetaRepository,
-        ILogger<CanjearPuntosTarjetaCommandHandler> logger)
+        ILogger<CanjearPuntosTarjetaCommandHandler> logger,
+        IUnitOfWork unitOfWork)
     {
         _tarjetaRepository = tarjetaRepository;
         _logger = logger;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<CanjearPuntosTarjetaResponse>> Handle(
@@ -26,47 +32,53 @@ public class CanjearPuntosTarjetaCommandHandler : IRequestHandler<CanjearPuntosT
     {
         try
         {
-            // Obtener la tarjeta
-            var tarjeta = await _tarjetaRepository.ObtenerPorIdSinExcepcionAsync(request.TarjetaFidelizacionId, cancellationToken);
+            // Obtener la entidad fresca desde la base de datos
+            var tarjetaFresca = await _tarjetaRepository.ObtenerPorIdAsync(request.TarjetaFidelizacionId, cancellationToken);
             
-            if (tarjeta == null)
+            if (tarjetaFresca == null)
             {
-                return Result.Failure<CanjearPuntosTarjetaResponse>(new List<string> { "Tarjeta de fidelización no encontrada" });
+                _logger.LogWarning("Tarjeta de fidelización no encontrada: {TarjetaId}", request.TarjetaFidelizacionId);
+                return Result.Failure<CanjearPuntosTarjetaResponse>("Tarjeta de fidelización no encontrada");
             }
 
             // Validar que la tarjeta esté activa
-            if (tarjeta.Estado != EstadoTarjeta.Activa)
+            if (tarjetaFresca.Estado != EstadoTarjeta.Activa)
             {
-                return Result.Failure<CanjearPuntosTarjetaResponse>(new List<string> { "La tarjeta debe estar activa para canjear puntos" });
+                _logger.LogWarning("Tarjeta de fidelización no está activa: {TarjetaId}, Estado: {Estado}", 
+                    request.TarjetaFidelizacionId, tarjetaFresca.Estado);
+                return Result.Failure<CanjearPuntosTarjetaResponse>("La tarjeta debe estar activa para canjear puntos");
             }
 
             // Validar puntos positivos
             if (request.PuntosACanjear <= 0)
             {
-                return Result.Failure<CanjearPuntosTarjetaResponse>(new List<string> { "Los puntos a canjear deben ser mayores a cero" });
+                _logger.LogWarning("Puntos a canjear deben ser positivos: {Puntos}", request.PuntosACanjear);
+                return Result.Failure<CanjearPuntosTarjetaResponse>("Los puntos a canjear deben ser mayores a cero");
             }
 
             // Validar que tenga suficientes puntos
-            if (tarjeta.PuntosDisponibles < request.PuntosACanjear)
+            if (tarjetaFresca.PuntosDisponibles < request.PuntosACanjear)
             {
-                return Result.Failure<CanjearPuntosTarjetaResponse>(new List<string> { "No tiene suficientes puntos para realizar el canje" });
+                _logger.LogWarning("Puntos insuficientes en tarjeta {TarjetaId}: Disponibles {Disponibles}, Solicitados {Solicitados}", 
+                    request.TarjetaFidelizacionId, tarjetaFresca.PuntosDisponibles, request.PuntosACanjear);
+                return Result.Failure<CanjearPuntosTarjetaResponse>("No tiene suficientes puntos para realizar el canje");
             }
 
             // Canjear puntos de la tarjeta
-            var puntosAnteriores = tarjeta.PuntosDisponibles;
-            tarjeta.ExpirarPuntos(request.PuntosACanjear, request.Descripcion);
+            var puntosAnteriores = tarjetaFresca.PuntosDisponibles;
+            tarjetaFresca.ExpirarPuntos(request.PuntosACanjear, request.Descripcion);
 
-            // Guardar cambios
-            await _tarjetaRepository.ActualizarAsync(tarjeta);
+            // Guardar cambios usando el repositorio
+            await _tarjetaRepository.ActualizarAsync(tarjetaFresca, cancellationToken);
 
-            _logger.LogInformation("Puntos canjeados de tarjeta {TarjetaId}: {PuntosCanjeados} puntos", 
+            _logger.LogInformation("Puntos canjeados exitosamente de la tarjeta {TarjetaId}: {PuntosCanjeados} puntos", 
                 request.TarjetaFidelizacionId, request.PuntosACanjear);
 
             var response = new CanjearPuntosTarjetaResponse
             {
-                TarjetaFidelizacionId = tarjeta.Id,
+                TarjetaFidelizacionId = tarjetaFresca.Id,
                 PuntosCanjeados = request.PuntosACanjear,
-                PuntosActuales = tarjeta.PuntosDisponibles,
+                PuntosActuales = tarjetaFresca.PuntosDisponibles,
                 Mensaje = $"Se canjearon {request.PuntosACanjear} puntos exitosamente"
             };
 
@@ -75,7 +87,7 @@ public class CanjearPuntosTarjetaCommandHandler : IRequestHandler<CanjearPuntosT
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al canjear puntos de la tarjeta {TarjetaId}", request.TarjetaFidelizacionId);
-            return Result.Failure<CanjearPuntosTarjetaResponse>(new List<string> { "Error interno al procesar la solicitud" });
+            return Result.Failure<CanjearPuntosTarjetaResponse>("Error interno del servidor");
         }
     }
 } 

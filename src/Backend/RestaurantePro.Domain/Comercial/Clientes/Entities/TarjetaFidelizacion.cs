@@ -96,11 +96,6 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// </summary>
         public IReadOnlyCollection<HistorialPuntos> HistorialPuntos => _historialPuntos.AsReadOnly();
 
-        /// <summary>
-        /// Indica si la tarjeta está eliminada (soft delete)
-        /// </summary>
-        public bool EstaEliminada { get; private set; } = false;
-
         // Constructor privado para EF Core
         private TarjetaFidelizacion() { }
 
@@ -469,11 +464,40 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// </summary>
         public void Eliminar()
         {
-            if (!EstaEliminada)
+            if (!EstaEliminado)
             {
-                EstaEliminada = true;
-                MarkAsModified();
+                EstaEliminado = true;
+                MarkAsDeleted();
             }
+        }
+
+        /// <summary>
+        /// Actualiza los puntos de la tarjeta (método interno para repositorio)
+        /// </summary>
+        internal void ActualizarPuntos(int puntosAcumulados, int puntosDisponibles)
+        {
+            PuntosAcumulados = puntosAcumulados;
+            PuntosDisponibles = puntosDisponibles;
+            MarkAsModified();
+            ValidarInvariantes();
+        }
+
+        /// <summary>
+        /// Actualiza el nivel de fidelización (método interno para repositorio)
+        /// </summary>
+        internal void ActualizarNivel(NivelFidelizacion nivel)
+        {
+            NivelFidelizacion = nivel;
+            MarkAsModified();
+        }
+
+        /// <summary>
+        /// Actualiza el estado de la tarjeta (método interno para repositorio)
+        /// </summary>
+        internal void ActualizarEstado(EstadoTarjeta estado)
+        {
+            Estado = estado;
+            MarkAsModified();
         }
     }
 }

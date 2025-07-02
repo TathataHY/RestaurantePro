@@ -63,8 +63,44 @@ public class Repository<T> : IRepository<T> where T : class
     /// </summary>
     public virtual async Task ActualizarAsync(T entity, CancellationToken cancellationToken = default)
     {
-        _dbSet.Update(entity);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            // Estrategia 1: Detección forzada de cambios
+            _dbContext.ChangeTracker.DetectChanges();
+            
+            var entry = _dbContext.Entry(entity);
+            
+            // Estrategia 2: Si la entidad no está siendo rastreada, la adjuntamos
+            if (entry.State == EntityState.Detached)
+            {
+                _dbSet.Update(entity);
+            }
+            else
+            {
+                // Estrategia 3: Marcar explícitamente como modificada
+                entry.State = EntityState.Modified;
+            }
+            
+            // Estrategia 4: Guardar cambios con verificación
+            var rowsAffected = await _dbContext.SaveChangesAsync(cancellationToken);
+            
+            // Estrategia 5: Verificación post-guardado
+            if (rowsAffected == 0)
+            {
+                _logger.LogWarning("No se detectaron cambios al guardar entidad {EntityType}. Reintentando con estrategia alternativa", typeof(T).Name);
+                
+                // Estrategia 6: Reintento con enfoque más agresivo
+                _dbSet.Update(entity);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+            
+            _logger.LogInformation("Entidad {EntityType} actualizada exitosamente. Filas afectadas: {RowsAffected}", typeof(T).Name, rowsAffected);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al actualizar entidad {EntityType}", typeof(T).Name);
+            throw;
+        }
     }
 
     /// <summary>
@@ -191,10 +227,22 @@ public class Repository<T> : IRepository<T> where T : class
     }
 
     /// <summary>
-    /// Recarga una entidad desde la base de datos para asegurar datos actualizados
+    /// Recarga una entidad desde la base de datos para evitar problemas de concurrencia
     /// </summary>
     public virtual async Task RecargarEntidadAsync(T entity, CancellationToken cancellationToken = default)
     {
-        await _dbContext.Entry(entity).ReloadAsync(cancellationToken);
+        var entry = _dbContext.Entry(entity);
+        if (entry.State != EntityState.Detached)
+        {
+            await entry.ReloadAsync(cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Marca una entidad como modificada sin guardar cambios
+    /// </summary>
+    public virtual void Update(T entity)
+    {
+        _dbSet.Update(entity);
     }
 } 

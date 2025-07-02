@@ -1,3 +1,7 @@
+using System.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+
 namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
 {
     /// <summary>
@@ -10,6 +14,14 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
         /// </summary>
         /// <param name="cancellationToken">Token de cancelación</param>
         Task IniciarTransaccionAsync(CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Inicia una nueva transacción con nivel de aislamiento específico
+        /// </summary>
+        /// <param name="isolationLevel">Nivel de aislamiento de la transacción</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Transacción iniciada</returns>
+        Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Confirma la transacción actual
@@ -57,6 +69,12 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
         /// Indica si hay una transacción activa
         /// </summary>
         bool TieneTransaccionActiva { get; }
+
+        /// <summary>
+        /// Obtiene el contexto de base de datos subyacente
+        /// </summary>
+        /// <returns>DbContext subyacente</returns>
+        DbContext GetDbContext();
 
         // ============================================
         // ALIAS EN INGLÉS PARA COMPATIBILIDAD

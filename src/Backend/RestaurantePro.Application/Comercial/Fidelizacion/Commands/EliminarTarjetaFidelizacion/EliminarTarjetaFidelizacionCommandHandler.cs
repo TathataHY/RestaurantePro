@@ -29,20 +29,20 @@ public class EliminarTarjetaFidelizacionCommandHandler : IRequestHandler<Elimina
             }
 
             // Debug: Verificar estado inicial
-            Console.WriteLine($"DEBUG HANDLER: Estado inicial de tarjeta: {tarjeta.Estado}, EstaEliminada: {tarjeta.EstaEliminada}");
+            Console.WriteLine($"DEBUG HANDLER: Estado inicial de tarjeta: {tarjeta.Estado}, EstaEliminado: {tarjeta.EstaEliminado}");
 
             // Marcar la tarjeta como eliminada (soft delete)
             tarjeta.Eliminar();
             
             // Debug: Verificar estado después de eliminar
-            Console.WriteLine($"DEBUG HANDLER: Estado después de eliminar: {tarjeta.Estado}, EstaEliminada: {tarjeta.EstaEliminada}");
+            Console.WriteLine($"DEBUG HANDLER: Estado después de eliminar: {tarjeta.Estado}, EstaEliminado: {tarjeta.EstaEliminado}");
             
             // Actualizar la tarjeta en el repositorio
             await _tarjetaRepository.ActualizarAsync(tarjeta, cancellationToken);
             await _unitOfWork.GuardarCambiosAsync(cancellationToken);
 
             // Debug: Verificar estado después de guardar
-            Console.WriteLine($"DEBUG HANDLER: Estado después de guardar: {tarjeta.Estado}, EstaEliminada: {tarjeta.EstaEliminada}");
+            Console.WriteLine($"DEBUG HANDLER: Estado después de guardar: {tarjeta.Estado}, EstaEliminado: {tarjeta.EstaEliminado}");
 
             return Result.Success(true);
         }

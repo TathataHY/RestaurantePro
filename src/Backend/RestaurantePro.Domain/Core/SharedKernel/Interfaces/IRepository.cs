@@ -128,5 +128,12 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Número de entidades modificadas</returns>
         Task<int> GuardarCambiosAsync(CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Recarga una entidad desde la base de datos para evitar problemas de concurrencia
+        /// </summary>
+        /// <param name="entity">Entidad a recargar</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        Task RecargarEntidadAsync(T entity, CancellationToken cancellationToken = default);
     }
 } 

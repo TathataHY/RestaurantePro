@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 
@@ -11,9 +12,11 @@ using RestaurantePro.Infrastructure.Persistence.Contexts;
 namespace RestaurantePro.Infrastructure.Migrations
 {
     [DbContext(typeof(RestauranteProDbContext))]
-    partial class RestauranteProDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250701212627_AddRowVersionToTarjetaFidelizacionNullable")]
+    partial class AddRowVersionToTarjetaFidelizacionNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -231,6 +234,9 @@ namespace RestaurantePro.Infrastructure.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("EstaEliminada")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("EstaEliminado")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -285,6 +291,12 @@ namespace RestaurantePro.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasDefaultValue(0);
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("RowVersion");
 
                     b.HasKey("Id");
 

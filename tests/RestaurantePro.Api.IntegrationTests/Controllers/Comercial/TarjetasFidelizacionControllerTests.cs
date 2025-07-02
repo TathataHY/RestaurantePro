@@ -222,7 +222,7 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
         var tarjeta = await CrearTarjetaFidelizacionEnBD(cliente.Id);
 
         // Debug: Verificar estado inicial
-        Console.WriteLine($"DEBUG: Estado inicial de tarjeta: {tarjeta.Estado}, EstaEliminada: {tarjeta.EstaEliminada}");
+        Console.WriteLine($"DEBUG: Estado inicial de tarjeta: {tarjeta.Estado}, EstaEliminado: {tarjeta.EstaEliminado}");
 
         // Act
         var response = await HttpClient.DeleteAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}");
@@ -240,9 +240,9 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
         tarjetaEliminada.Should().NotBeNull();
         
         // Debug: Verificar estado después de eliminar
-        Console.WriteLine($"DEBUG: Estado después de eliminar: {tarjetaEliminada!.Estado}, EstaEliminada: {tarjetaEliminada.EstaEliminada}");
+        Console.WriteLine($"DEBUG: Estado después de eliminar: {tarjetaEliminada!.Estado}, EstaEliminado: {tarjetaEliminada.EstaEliminado}");
         
-        tarjetaEliminada!.EstaEliminada.Should().BeTrue();
+        tarjetaEliminada!.EstaEliminado.Should().BeTrue();
     }
 
     #endregion
@@ -371,6 +371,12 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
         // Arrange
         var cliente = await CrearClienteEnBD();
         var tarjeta = await CrearTarjetaFidelizacionEnBD(cliente.Id);
+        
+        // Activar la tarjeta antes de agregar puntos
+        tarjeta.Activar();
+        await DbContext.SaveChangesAsync();
+        DbContext.Entry(tarjeta).State = EntityState.Detached; // Desatachar para evitar conflictos de tracking
+        
         var command = new AgregarPuntosCommand
         {
             TarjetaFidelizacionId = tarjeta.Id,
@@ -385,29 +391,69 @@ public class TarjetasFidelizacionControllerTests : ApiIntegrationTestBase
         var response = await HttpClient.PostAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}/puntos", command);
 
         // Assert
-        // El endpoint puede retornar 200 (éxito) o 400 (error de validación)
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
-        
-        if (response.StatusCode == HttpStatusCode.OK)
-        {
-            var result = await response.Content.ReadFromJsonAsync<ApiResponse<AgregarPuntosResponse>>();
-            result.Should().NotBeNull();
-            result!.Success.Should().BeTrue();
-            result.Data.Should().NotBeNull();
-            result.Data!.TarjetaFidelizacionId.Should().Be(tarjeta.Id);
-            result.Data.PuntosAgregados.Should().Be(100);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiResponse<AgregarPuntosResponse>>();
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.TarjetaFidelizacionId.Should().Be(tarjeta.Id);
+        result.Data.PuntosAgregados.Should().Be(100);
 
-            // Verificar en BD
-            await DbContext.Entry(tarjeta).ReloadAsync();
-            tarjeta.PuntosDisponibles.Should().Be(100);
-        }
-        else
+        // Verificar en BD (recargar la entidad desde la BD)
+        var tarjetaActualizada = await DbContext.TarjetasFidelizacion.FindAsync(tarjeta.Id);
+        tarjetaActualizada.PuntosDisponibles.Should().Be(100);
+    }
+
+    [Fact]
+    public async Task CanjearPuntos_ConTarjetaValida_DeberiaCanjearPuntosCorrectamente()
+    {
+        // Arrange
+        var cliente = await CrearClienteEnBD();
+        var tarjeta = await CrearTarjetaFidelizacionEnBD(cliente.Id);
+        
+        // Activar la tarjeta antes de agregar puntos
+        tarjeta.Activar();
+        await DbContext.SaveChangesAsync();
+        DbContext.Entry(tarjeta).State = EntityState.Detached; // Desatachar para evitar conflictos de tracking
+        
+        // Agregar puntos iniciales usando el endpoint (como en el test que funciona)
+        var commandAgregar = new AgregarPuntosCommand
         {
-            // Si retorna 400, verificar que sea por una razón válida
-            var errorResult = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
-            errorResult.Should().NotBeNull();
-            errorResult!.Success.Should().BeFalse();
-        }
+            TarjetaFidelizacionId = tarjeta.Id,
+            Puntos = 200,
+            Descripcion = "Puntos iniciales",
+            MontoTransaccion = 100.00m,
+            Referencia = "INICIAL-001",
+            UsuarioId = Guid.NewGuid()
+        };
+        
+        var responseAgregar = await HttpClient.PostAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}/puntos", commandAgregar);
+        responseAgregar.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var command = new CanjearPuntosTarjetaCommand
+        {
+            TarjetaFidelizacionId = tarjeta.Id,
+            PuntosACanjear = 50,
+            Descripcion = "Canje por descuento",
+            Referencia = "CANJE-001",
+            UsuarioId = Guid.NewGuid()
+        };
+
+        // Act
+        var response = await HttpClient.PostAsJsonAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}/canjear", command);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var result = await response.Content.ReadFromJsonAsync<ApiResponse<CanjearPuntosTarjetaResponse>>();
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.TarjetaFidelizacionId.Should().Be(tarjeta.Id);
+        result.Data.PuntosCanjeados.Should().Be(50);
+
+        // Verificar en BD (recargar la entidad desde la BD)
+        var tarjetaActualizada = await DbContext.TarjetasFidelizacion.FindAsync(tarjeta.Id);
+        tarjetaActualizada.PuntosDisponibles.Should().Be(150); // 200 - 50
     }
 
     #endregion

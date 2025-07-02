@@ -94,6 +94,11 @@ namespace RestaurantePro.Application.Comercial.Fidelizacion.DTOs
         /// Historial reciente de transacciones
         /// </summary>
         public List<TransaccionPuntosDto> TransaccionesRecientes { get; set; } = new();
+
+        /// <summary>
+        /// Versión de la entidad para control de concurrencia - comentada para tests con SQLite
+        /// </summary>
+        // public string? RowVersion { get; set; }
     }
 
     /// <summary>

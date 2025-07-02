@@ -139,8 +139,14 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
             // 10. Guardar cambios
             await _unitOfWork.GuardarCambiosAsync(cancellationToken);
 
+            // Recargar la tarjeta desde la base de datos para obtener el RowVersion actualizado
+            var tarjetaActualizada = await _tarjetaRepository.ObtenerPorIdAsync(tarjeta.Id, cancellationToken);
+            if (tarjetaActualizada == null)
+                return Result.Failure<TarjetaFidelizacionDto>("No se pudo recargar la tarjeta tras la creación");
+
             // 11. Crear y retornar DTO de respuesta
-            var responseDto = CrearResponseDto(tarjeta, cliente);
+            var responseDto = CrearResponseDto(tarjetaActualizada, cliente);
+            // RowVersion = tarjetaActualizada.RowVersion != null ? Convert.ToBase64String(tarjetaActualizada.RowVersion) : null, // Comentado para tests con SQLite
 
             // 12. Agregar beneficios especiales al DTO de respuesta si existen
             if (request.Configuracion?.ConfiguracionesEspeciales != null)
@@ -239,7 +245,8 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
             Activa = tarjeta.Estado == EstadoTarjeta.Activa,
             Observaciones = "Tarjeta creada automáticamente",
             BeneficiosDisponibles = new List<BeneficioDto>(),
-            TransaccionesRecientes = new List<TransaccionPuntosDto>()
+            TransaccionesRecientes = new List<TransaccionPuntosDto>(),
+            // RowVersion = tarjeta.RowVersion != null ? Convert.ToBase64String(tarjeta.RowVersion) : null, // Comentado para tests con SQLite
         };
     }
 

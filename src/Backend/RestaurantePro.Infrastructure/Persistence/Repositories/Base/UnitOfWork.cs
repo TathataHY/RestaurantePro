@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -26,6 +27,8 @@ public class UnitOfWork : IUnitOfWork
     }
 
     public bool TieneTransaccionActiva => _currentTransaction != null;
+
+    public DbContext GetDbContext() => _dbContext;
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -60,6 +63,20 @@ public class UnitOfWork : IUnitOfWork
 
         _currentTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         _logger.LogInformation("Transacción iniciada: {TransactionId}", _currentTransaction.TransactionId);
+    }
+
+    public async Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel, CancellationToken cancellationToken = default)
+    {
+        if (_currentTransaction != null)
+        {
+            throw new InvalidOperationException("Ya existe una transacción activa");
+        }
+
+        _currentTransaction = await _dbContext.Database.BeginTransactionAsync(isolationLevel, cancellationToken);
+        _logger.LogInformation("Transacción iniciada con IsolationLevel {IsolationLevel}: {TransactionId}", 
+            isolationLevel, _currentTransaction.TransactionId);
+        
+        return _currentTransaction;
     }
 
     public Task IniciarTransaccionAsync(CancellationToken cancellationToken = default) => 

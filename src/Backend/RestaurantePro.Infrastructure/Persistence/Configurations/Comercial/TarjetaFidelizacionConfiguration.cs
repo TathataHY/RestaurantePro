@@ -90,5 +90,8 @@ public class TarjetaFidelizacionConfiguration : IEntityTypeConfiguration<Tarjeta
         
         builder.HasIndex(p => new { p.Estado, p.NivelFidelizacion })
             .HasDatabaseName("IX_TarjetasFidelizacion_EstadoNivel");
+            
+        // Configurar query filter para soft delete usando la propiedad heredada de EntityBase
+        builder.HasQueryFilter(t => !t.EstaEliminado);
     }
 } 

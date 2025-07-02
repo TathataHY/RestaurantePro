@@ -109,6 +109,12 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         new Task ActualizarAsync(TarjetaFidelizacion tarjeta, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Marca una tarjeta como modificada sin guardar cambios
+        /// </summary>
+        /// <param name="tarjeta">Tarjeta a marcar como modificada</param>
+        void Update(TarjetaFidelizacion tarjeta);
+
+        /// <summary>
         /// Genera un código único para una nueva tarjeta
         /// </summary>
         /// <param name="prefijo">Prefijo opcional para el código</param>
@@ -153,6 +159,16 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Estadísticas de la tarjeta</returns>
         Task<EstadisticasTarjeta> ObtenerEstadisticasAsync(
+            Guid tarjetaFidelizacionId,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene los puntos acumulados en el mes actual para una tarjeta
+        /// </summary>
+        /// <param name="tarjetaFidelizacionId">ID de la tarjeta</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Total de puntos acumulados en el mes actual</returns>
+        Task<int> ObtenerPuntosAcumuladosMesActualAsync(
             Guid tarjetaFidelizacionId,
             CancellationToken cancellationToken = default);
     }
