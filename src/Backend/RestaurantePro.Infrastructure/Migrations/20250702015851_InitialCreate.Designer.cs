@@ -12,7 +12,7 @@ using RestaurantePro.Infrastructure.Persistence.Contexts;
 namespace RestaurantePro.Infrastructure.Migrations
 {
     [DbContext(typeof(RestauranteProDbContext))]
-    [Migration("20250701202359_InitialCreate")]
+    [Migration("20250702015851_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -233,9 +233,6 @@ namespace RestaurantePro.Infrastructure.Migrations
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("EstaEliminada")
-                        .HasColumnType("bit");
 
                     b.Property<bool>("EstaEliminado")
                         .ValueGeneratedOnAdd()

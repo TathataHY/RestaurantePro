@@ -96,6 +96,8 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         /// </summary>
         public IReadOnlyCollection<HistorialPuntos> HistorialPuntos => _historialPuntos.AsReadOnly();
 
+
+
         // Constructor privado para EF Core
         private TarjetaFidelizacion() { }
 
@@ -472,29 +474,28 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
         }
 
         /// <summary>
-        /// Actualiza los puntos de la tarjeta (método interno para repositorio)
+        /// Actualiza los puntos de la tarjeta (método para repositorio)
         /// </summary>
-        internal void ActualizarPuntos(int puntosAcumulados, int puntosDisponibles)
+        public void ActualizarPuntos(int puntosAcumulados, int puntosDisponibles)
         {
             PuntosAcumulados = puntosAcumulados;
             PuntosDisponibles = puntosDisponibles;
             MarkAsModified();
-            ValidarInvariantes();
         }
 
         /// <summary>
-        /// Actualiza el nivel de fidelización (método interno para repositorio)
+        /// Actualiza el nivel de fidelización (método para repositorio)
         /// </summary>
-        internal void ActualizarNivel(NivelFidelizacion nivel)
+        public void ActualizarNivelInterno(NivelFidelizacion nivel)
         {
             NivelFidelizacion = nivel;
             MarkAsModified();
         }
 
         /// <summary>
-        /// Actualiza el estado de la tarjeta (método interno para repositorio)
+        /// Actualiza el estado de la tarjeta (método para repositorio)
         /// </summary>
-        internal void ActualizarEstado(EstadoTarjeta estado)
+        public void ActualizarEstado(EstadoTarjeta estado)
         {
             Estado = estado;
             MarkAsModified();

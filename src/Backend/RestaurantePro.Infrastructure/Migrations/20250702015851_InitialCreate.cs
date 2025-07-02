@@ -309,7 +309,6 @@ namespace RestaurantePro.Infrastructure.Migrations
                     PuntosDisponibles = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
                     MultiplicadorPuntos = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: false, defaultValue: 1.0m),
                     LimiteMensual = table.Column<int>(type: "int", nullable: true),
-                    EstaEliminada = table.Column<bool>(type: "bit", nullable: false),
                     Etiquetas = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
                     FechaActualizacion = table.Column<DateTime>(type: "datetime2", nullable: true),

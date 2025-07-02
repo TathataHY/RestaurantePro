@@ -237,47 +237,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         {
             try
             {
-                _logger.LogInformation("Iniciando actualización de tarjeta de fidelización {TarjetaId} con estrategia SQLite", entity.Id);
+                _logger.LogInformation("Iniciando actualización simplificada de tarjeta de fidelización {TarjetaId}", entity.Id);
 
-                // Obtener la entidad existente con su historial
-                var existingEntity = await _dbSet
-                    .Include(t => t.HistorialPuntos)
-                    .FirstOrDefaultAsync(t => t.Id == entity.Id, cancellationToken);
+                // Patrón simplificado: actualizar directamente sin tracking complejo
+                _dbSet.Update(entity);
+                await _dbContext.SaveChangesAsync(cancellationToken);
 
-                if (existingEntity == null)
-                {
-                    throw new KeyNotFoundException($"No se encontró la tarjeta de fidelización con ID {entity.Id}");
-                }
-
-                // Desatachar la entidad existente
-                _dbContext.Entry(existingEntity).State = EntityState.Detached;
-
-                // Actualizar propiedades de la tarjeta
-                existingEntity.ActualizarPuntos(entity.PuntosAcumulados, entity.PuntosDisponibles);
-                existingEntity.ActualizarNivel(entity.NivelFidelizacion);
-                existingEntity.ActualizarEstado(entity.Estado);
-
-                // Agregar nuevos registros de historial si existen
-                var nuevosHistoriales = entity.HistorialPuntos
-                    .Where(h => !existingEntity.HistorialPuntos.Any(eh => eh.Id == h.Id))
-                    .ToList();
-
-                foreach (var historial in nuevosHistoriales)
-                {
-                    existingEntity.HistorialPuntos.Add(historial);
-                }
-
-                // Marcar como modificada y guardar
-                _dbSet.Update(existingEntity);
-                var affectedRows = await _dbContext.SaveChangesAsync(cancellationToken);
-                
-                _logger.LogInformation("Actualización completada para tarjeta {TarjetaId}. Filas afectadas: {AffectedRows}", 
-                    entity.Id, affectedRows);
-
-                if (affectedRows == 0)
-                {
-                    _logger.LogWarning("No se afectaron filas al actualizar tarjeta {TarjetaId}. Verificando existencia...", entity.Id);
-                }
+                _logger.LogInformation("Tarjeta de fidelización {TarjetaId} actualizada exitosamente", entity.Id);
             }
             catch (Exception ex)
             {

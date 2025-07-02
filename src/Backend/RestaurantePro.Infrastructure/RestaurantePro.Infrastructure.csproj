@@ -4,6 +4,8 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <EFCoreToolsVersion>9.0.6</EFCoreToolsVersion>
+    <EFCoreDesignTimeServices>RestaurantePro.Infrastructure.Persistence.DesignTimeServices</EFCoreDesignTimeServices>
   </PropertyGroup>
 
   <ItemGroup>

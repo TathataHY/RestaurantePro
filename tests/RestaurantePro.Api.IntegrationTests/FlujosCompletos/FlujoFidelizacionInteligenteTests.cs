@@ -385,21 +385,21 @@ public class FlujoFidelizacionInteligenteTests : ApiIntegrationTestBase
     private async Task LimpiarDatosDePrueba()
     {
         try
-        {
-            // Limpiar tarjetas de fidelización
-            var tarjetas = DbContext.TarjetasFidelizacion.ToList();
+    {
+        // Limpiar tarjetas de fidelización
+        var tarjetas = DbContext.TarjetasFidelizacion.ToList();
             if (tarjetas.Any())
             {
-                DbContext.TarjetasFidelizacion.RemoveRange(tarjetas);
+        DbContext.TarjetasFidelizacion.RemoveRange(tarjetas);
                 await DbContext.SaveChangesAsync();
             }
 
-            // Limpiar clientes
-            var clientes = DbContext.Clientes.ToList();
+        // Limpiar clientes
+        var clientes = DbContext.Clientes.ToList();
             if (clientes.Any())
             {
-                DbContext.Clientes.RemoveRange(clientes);
-                await DbContext.SaveChangesAsync();
+        DbContext.Clientes.RemoveRange(clientes);
+        await DbContext.SaveChangesAsync();
             }
         }
         catch (Exception ex)

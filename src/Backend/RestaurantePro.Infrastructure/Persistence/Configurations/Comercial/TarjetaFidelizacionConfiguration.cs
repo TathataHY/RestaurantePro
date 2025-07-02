@@ -93,5 +93,12 @@ public class TarjetaFidelizacionConfiguration : IEntityTypeConfiguration<Tarjeta
             
         // Configurar query filter para soft delete usando la propiedad heredada de EntityBase
         builder.HasQueryFilter(t => !t.EstaEliminado);
+        
+        // Deshabilitar concurrencia optimista explícitamente para evitar problemas con SQLite
+        builder.Property(p => p.Id).IsConcurrencyToken(false);
+        builder.Property(p => p.PuntosAcumulados).IsConcurrencyToken(false);
+        builder.Property(p => p.PuntosDisponibles).IsConcurrencyToken(false);
+        builder.Property(p => p.Estado).IsConcurrencyToken(false);
+        builder.Property(p => p.NivelFidelizacion).IsConcurrencyToken(false);
     }
 } 
