@@ -280,20 +280,24 @@ Este documento mapea los flujos de negocio críticos que deben funcionar correct
 
 ## 🔄 **FLUJOS DE INTEGRACIÓN ENTRE CONTEXTOS**
 
-### **13. Flujo de Eventos de Dominio Automáticos** ⬜/⬜
+### **13. Flujo de Eventos de Dominio Automáticos** 🔄/🔄 **EN DESARROLLO**
 **Descripción**: Procesamiento automático de eventos entre contextos
+**Archivo**: `FlujoEventosDominioAutomaticosTests.cs` (EN DESARROLLO)
+**Tests Implementados**: 0 tests de integración (en progreso)
 **Endpoints Involucrados**:
 - `POST /api/operaciones/comandas` → Crear comanda (dispara eventos)
 - `POST /api/inventario/ingredientes/{id}/stock` → Actualizar inventario
 - `POST /api/comercial/tarjetas-fidelizacion/{id}/puntos` → Acumular puntos
 - `POST /api/core/notificaciones` → Notificaciones automáticas
 
-**Validaciones**:
+**Validaciones a Implementar**:
 - [ ] Eventos se disparan correctamente
 - [ ] Procesamiento asíncrono
 - [ ] Consistencia entre contextos
 - [ ] Rollback automático en errores
 - [ ] Auditoría de eventos
+
+**🔄 Estado**: En desarrollo. Se está trabajando en la Fase 4 para validar la integración automática de eventos entre contextos.
 
 ### **14. Flujo de Transacciones Distribuidas** ⬜/⬜
 **Descripción**: Operaciones que afectan múltiples contextos con consistencia
