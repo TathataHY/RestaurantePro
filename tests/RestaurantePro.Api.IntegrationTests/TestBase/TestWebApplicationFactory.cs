@@ -340,6 +340,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     // 🚀 MAPEAR SIGNALR HUBS PARA TESTS
                     endpoints.MapHub<ComandaHub>("/hubs/comandas");
                     endpoints.MapHub<NotificationHub>("/hubs/notifications");
+                    endpoints.MapHub<InventarioHub>("/hubs/inventario");
                 });
             });
         });

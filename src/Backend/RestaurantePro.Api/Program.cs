@@ -116,8 +116,7 @@ namespace RestaurantePro.Api
             // 🚀 MAPEAR SIGNALR HUBS
             app.MapHub<ComandaHub>("/hubs/comandas");
             app.MapHub<NotificationHub>("/hubs/notifications");
-            // TODO: Descomentar cuando se implemente InventarioHub
-            // app.MapHub<InventarioHub>("/hubs/inventario");
+            app.MapHub<InventarioHub>("/hubs/inventario");
             
             await app.RunAsync();
         }
