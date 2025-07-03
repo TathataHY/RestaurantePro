@@ -11,11 +11,13 @@ public class InventarioHub : Hub
 {
     private readonly ILogger<InventarioHub> _logger;
     private readonly ISignalRService _signalRService;
+    private readonly IHubConnectionManager _connectionManager;
 
-    public InventarioHub(ILogger<InventarioHub> logger, ISignalRService signalRService)
+    public InventarioHub(ILogger<InventarioHub> logger, ISignalRService signalRService, IHubConnectionManager connectionManager)
     {
         _logger = logger;
         _signalRService = signalRService;
+        _connectionManager = connectionManager;
     }
 
     public override async Task OnConnectedAsync()
@@ -24,6 +26,9 @@ public class InventarioHub : Hub
         var userRole = GetUserRoleFromClaims();
         
         _logger.LogInformation("Usuario {UserId} con rol {UserRole} conectado al InventarioHub", userId, userRole);
+        
+        // Registrar conexión en el gestor de conexiones
+        await _connectionManager.AgregarConexionAsync(userId, Context.ConnectionId, userRole);
         
         // Unir al usuario a su grupo de rol
         if (!string.IsNullOrEmpty(userRole))
@@ -41,6 +46,9 @@ public class InventarioHub : Hub
         var userRole = GetUserRoleFromClaims();
         
         _logger.LogInformation("Usuario {UserId} con rol {UserRole} desconectado del InventarioHub", userId, userRole);
+        
+        // Remover conexión del gestor de conexiones
+        await _connectionManager.RemoverConexionAsync(Context.ConnectionId);
         
         await base.OnDisconnectedAsync(exception);
     }
@@ -245,6 +253,12 @@ public class InventarioHub : Hub
     /// </summary>
     public async Task Ping()
     {
+        var userId = GetUserIdFromClaims();
+        _logger.LogInformation("🏓 Ping recibido del usuario {UserId} en InventarioHub", userId);
+        
+        // Actualizar timestamp de la conexión para mantenerla activa
+        await _connectionManager.ActualizarTimestampConexionAsync(Context.ConnectionId);
+        
         await Clients.Caller.SendAsync("Pong", DateTime.UtcNow);
     }
 

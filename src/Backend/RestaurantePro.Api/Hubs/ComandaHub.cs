@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Operaciones.Comandas.DTOs;
 using System.Security.Claims;
 
@@ -14,15 +15,17 @@ namespace RestaurantePro.Api.Hubs;
 public class ComandaHub : Hub
 {
     private readonly ILogger<ComandaHub> _logger;
+    private readonly IHubConnectionManager _connectionManager;
     
     // Grupos predefinidos para diferentes roles
     private const string GRUPO_COCINA = "Cocina";
     private const string GRUPO_MESEROS = "Meseros";
     private const string GRUPO_ADMINISTRADORES = "Administradores";
 
-    public ComandaHub(ILogger<ComandaHub> logger)
+    public ComandaHub(ILogger<ComandaHub> logger, IHubConnectionManager connectionManager)
     {
         _logger = logger;
+        _connectionManager = connectionManager;
     }
 
     /// <summary>
@@ -35,6 +38,12 @@ public class ComandaHub : Hub
         
         _logger.LogInformation("🔌 Cliente conectado al ComandaHub - Usuario: {UserId}, Rol: {UserRole}, ConnectionId: {ConnectionId}", 
             userId, userRole, Context.ConnectionId);
+
+        // Registrar conexión en el gestor de conexiones
+        if (Guid.TryParse(userId, out var userIdGuid))
+        {
+            await _connectionManager.AgregarConexionAsync(userIdGuid, Context.ConnectionId, userRole);
+        }
 
         // Agregar usuario al grupo correspondiente según su rol
         await AddUserToRoleGroup(userRole);
@@ -52,6 +61,9 @@ public class ComandaHub : Hub
         
         _logger.LogInformation("🔌 Cliente desconectado del ComandaHub - Usuario: {UserId}, Rol: {UserRole}, ConnectionId: {ConnectionId}", 
             userId, userRole, Context.ConnectionId);
+
+        // Remover conexión del gestor de conexiones
+        await _connectionManager.RemoverConexionAsync(Context.ConnectionId);
 
         await base.OnDisconnectedAsync(exception);
     }
@@ -305,7 +317,34 @@ public class ComandaHub : Hub
     /// </summary>
     public async Task Ping()
     {
+        _logger.LogInformation("🏓 Ping recibido - ConnectionId: {ConnectionId}", Context.ConnectionId);
+        
+        // Actualizar timestamp de la conexión para mantenerla activa
+        await _connectionManager.ActualizarTimestampConexionAsync(Context.ConnectionId);
+        
         await Clients.Caller.SendAsync("Pong", DateTime.UtcNow);
+    }
+
+    /// <summary>
+    /// Obtiene estadísticas de conexiones del hub
+    /// </summary>
+    public async Task ObtenerEstadisticasConexiones()
+    {
+        var userId = GetUserIdFromContext();
+        var userRole = GetUserRoleFromContext();
+        
+        // Solo administradores pueden ver estadísticas
+        if (userRole != "Administrador")
+        {
+            _logger.LogWarning("🚫 Usuario {UserId} intentó obtener estadísticas sin autorización", userId);
+            return;
+        }
+
+        var estadisticas = await _connectionManager.ObtenerEstadisticasConexionesAsync();
+        
+        _logger.LogInformation("📊 Estadísticas solicitadas por usuario {UserId}", userId);
+        
+        await Clients.Caller.SendAsync("EstadisticasConexiones", estadisticas);
     }
 
     #endregion

@@ -85,6 +85,19 @@ public interface IHubConnectionManager
     /// <param name="usuarioId">ID del usuario</param>
     /// <returns>Lista de nombres de grupos</returns>
     Task<List<string>> ObtenerGruposDeUsuarioAsync(Guid usuarioId);
+
+    /// <summary>
+    /// Actualiza el timestamp de una conexión específica
+    /// </summary>
+    /// <param name="connectionId">ID de la conexión</param>
+    Task ActualizarTimestampConexionAsync(string connectionId);
+
+    /// <summary>
+    /// Obtiene el timestamp de una conexión específica
+    /// </summary>
+    /// <param name="connectionId">ID de la conexión</param>
+    /// <returns>Timestamp de la conexión o null si no se encuentra</returns>
+    Task<DateTime?> ObtenerTimestampConexionAsync(string connectionId);
 }
 
 /// <summary>

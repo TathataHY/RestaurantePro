@@ -11,11 +11,13 @@ public class NotificationHub : Hub
 {
     private readonly ILogger<NotificationHub> _logger;
     private readonly ISignalRService _signalRService;
+    private readonly IHubConnectionManager _connectionManager;
 
-    public NotificationHub(ILogger<NotificationHub> logger, ISignalRService signalRService)
+    public NotificationHub(ILogger<NotificationHub> logger, ISignalRService signalRService, IHubConnectionManager connectionManager)
     {
         _logger = logger;
         _signalRService = signalRService;
+        _connectionManager = connectionManager;
     }
 
     public override async Task OnConnectedAsync()
@@ -24,6 +26,9 @@ public class NotificationHub : Hub
         var userRole = GetUserRoleFromClaims();
         
         _logger.LogInformation("Usuario {UserId} con rol {UserRole} conectado al NotificationHub", userId, userRole);
+        
+        // Registrar conexión en el gestor de conexiones
+        await _connectionManager.AgregarConexionAsync(userId, Context.ConnectionId, userRole);
         
         // Unir al usuario a su grupo de rol
         if (!string.IsNullOrEmpty(userRole))
@@ -41,6 +46,9 @@ public class NotificationHub : Hub
         var userRole = GetUserRoleFromClaims();
         
         _logger.LogInformation("Usuario {UserId} con rol {UserRole} desconectado del NotificationHub", userId, userRole);
+        
+        // Remover conexión del gestor de conexiones
+        await _connectionManager.RemoverConexionAsync(Context.ConnectionId);
         
         await base.OnDisconnectedAsync(exception);
     }
@@ -278,6 +286,10 @@ public class NotificationHub : Hub
     {
         var userId = GetUserIdFromClaims();
         _logger.LogDebug("Ping recibido del usuario {UserId}", userId);
+        
+        // Actualizar timestamp de la conexión para mantenerla activa
+        await _connectionManager.ActualizarTimestampConexionAsync(Context.ConnectionId);
+        
         await Clients.Caller.SendAsync("Pong", DateTime.UtcNow);
     }
 
