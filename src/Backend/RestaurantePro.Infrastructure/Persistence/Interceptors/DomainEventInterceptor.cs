@@ -3,7 +3,9 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Domain.Core.Base;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
+using RestaurantePro.Domain.Core.Base.Events;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +16,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
     {
         private readonly IDomainEventDispatcher _domainEventDispatcher;
         private readonly ILogger<DomainEventInterceptor> _logger;
+        private readonly List<DomainEvent> _pendingEvents = new();
 
         public DomainEventInterceptor(
             IDomainEventDispatcher domainEventDispatcher,
@@ -25,19 +28,33 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
 
         public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
         {
-            PublicarEventosDominio(eventData.Context).GetAwaiter().GetResult();
+            // Recolectar eventos antes de guardar, pero no publicarlos aún
+            RecolectarEventosDominio(eventData.Context);
             return base.SavingChanges(eventData, result);
         }
 
         public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
         {
-            await PublicarEventosDominio(eventData.Context, cancellationToken);
+            // Recolectar eventos antes de guardar, pero no publicarlos aún
+            RecolectarEventosDominio(eventData.Context);
             return await base.SavingChangesAsync(eventData, result, cancellationToken);
         }
 
-        private async Task PublicarEventosDominio(DbContext? context, CancellationToken cancellationToken = default)
+        public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
         {
-            Console.WriteLine("[DomainEventInterceptor] 🔍 INICIO PublicarEventosDominio");
+            PublicarEventosDominioPendientes().GetAwaiter().GetResult();
+            return base.SavedChanges(eventData, result);
+        }
+
+        public override async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
+        {
+            await PublicarEventosDominioPendientes(cancellationToken);
+            return await base.SavedChangesAsync(eventData, result, cancellationToken);
+        }
+
+        private void RecolectarEventosDominio(DbContext? context)
+        {
+            Console.WriteLine("[DomainEventInterceptor] 🔍 INICIO RecolectarEventosDominio");
             
             if (context == null)
             {
@@ -58,7 +75,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
                 return;
             }
 
-            _logger.LogInformation("Encontradas {Count} entidades con eventos de dominio para publicar", entidadesConEventos.Count);
+            _logger.LogInformation("Recolectando {Count} entidades con eventos de dominio", entidadesConEventos.Count);
 
             foreach (var entidad in entidadesConEventos)
             {
@@ -67,18 +84,39 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
                 
                 Console.WriteLine($"[DomainEventInterceptor] 🔧 Entidad: {entidad.GetType().Name}, ID: {entidad.Id}, Eventos: {eventos.Count}");
                 
-                foreach (var evento in eventos)
-                {
-                    Console.WriteLine($"[DomainEventInterceptor] 🚀 Publicando evento: {evento.GetType().Name}");
-                    
-                    _logger.LogInformation("Publicando evento de dominio {EventType} para la entidad {EntityType} con ID {EntityId}",
-                        evento.GetType().Name, entidad.GetType().Name, entidad.Id);
-                    
-                    await _domainEventDispatcher.Dispatch(evento, cancellationToken);
-                }
+                // Agregar eventos a la lista pendiente
+                _pendingEvents.AddRange(eventos);
             }
             
-            Console.WriteLine("[DomainEventInterceptor] ✅ FIN PublicarEventosDominio");
+            Console.WriteLine("[DomainEventInterceptor] ✅ FIN RecolectarEventosDominio");
+        }
+
+        private async Task PublicarEventosDominioPendientes(CancellationToken cancellationToken = default)
+        {
+            Console.WriteLine("[DomainEventInterceptor] 🚀 INICIO PublicarEventosDominioPendientes");
+            
+            if (!_pendingEvents.Any())
+            {
+                Console.WriteLine("[DomainEventInterceptor] ⚠️ No hay eventos pendientes para publicar");
+                return;
+            }
+
+            _logger.LogInformation("Publicando {Count} eventos de dominio pendientes", _pendingEvents.Count);
+
+            var eventosParaPublicar = _pendingEvents.ToList();
+            _pendingEvents.Clear();
+
+            foreach (var evento in eventosParaPublicar)
+            {
+                Console.WriteLine($"[DomainEventInterceptor] 🚀 Publicando evento: {evento.GetType().Name}");
+                
+                _logger.LogInformation("Publicando evento de dominio {EventType}",
+                    evento.GetType().Name);
+                
+                await _domainEventDispatcher.Dispatch(evento, cancellationToken);
+            }
+            
+            Console.WriteLine("[DomainEventInterceptor] ✅ FIN PublicarEventosDominioPendientes");
         }
     }
 } 

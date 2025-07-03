@@ -33,11 +33,10 @@ public class ObtenerComandaPorIdQueryHandler : IRequestHandler<ObtenerComandaPor
                 request.ComandaId, request.IncluirItems);
 
             // Construir query base
-            var query = _context.Comandas
+            IQueryable<Domain.Operaciones.Comandas.Entities.Comanda> query = _context.Comandas
                 .Include(c => c.Mesa)
                 .Include(c => c.Mesero)
-                .Include(c => c.Cliente)
-                .AsNoTracking();
+                .Include(c => c.Cliente);
 
             // Incluir items si se solicita
             if (request.IncluirItems)

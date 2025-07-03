@@ -241,29 +241,82 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
             {
                 _logger.LogInformation("Iniciando actualización segura de tarjeta de fidelización {TarjetaId}", entity.Id);
 
-                // Obtener la entidad existente (trackeada)
-                var existingEntity = await _dbSet
-                    .Include(t => t.HistorialPuntos)
-                    .FirstOrDefaultAsync(t => t.Id == entity.Id, cancellationToken);
+                // Estrategia 1: Detección forzada de cambios
+                _dbContext.ChangeTracker.DetectChanges();
 
-                if (existingEntity == null)
+                // Estrategia 2: Obtener la entidad existente (trackeada) o adjuntar si no está
+                var entry = _dbContext.Entry(entity);
+                if (entry.State == EntityState.Detached)
                 {
-                    throw new InvalidOperationException($"No se encontró la tarjeta de fidelización con Id {entity.Id}");
+                    _logger.LogInformation("Tarjeta {TarjetaId} no está trackeada, adjuntando...", entity.Id);
+                    _dbSet.Attach(entity);
+                    entry = _dbContext.Entry(entity);
                 }
 
-                // Actualizar propiedades usando métodos públicos
-                existingEntity.ActualizarPuntos(entity.PuntosAcumulados, entity.PuntosDisponibles);
-                existingEntity.ActualizarNivelInterno(entity.NivelFidelizacion);
-                existingEntity.ActualizarEstado(entity.Estado);
+                // Estrategia 3: Marcar explícitamente como modificada
+                entry.State = EntityState.Modified;
 
-                // Guardar cambios
-                await _dbContext.SaveChangesAsync(cancellationToken);
+                // Estrategia 4: Marcar propiedades específicas como modificadas
+                entry.Property(e => e.PuntosDisponibles).IsModified = true;
+                entry.Property(e => e.PuntosAcumulados).IsModified = true;
+                entry.Property(e => e.Estado).IsModified = true;
+                entry.Property(e => e.NivelFidelizacion).IsModified = true;
+                entry.Property(e => e.FechaActualizacion).IsModified = true;
 
-                _logger.LogInformation("Tarjeta de fidelización {TarjetaId} actualizada exitosamente", entity.Id);
+                // Estrategia 5: Guardar cambios con manejo de concurrencia
+                try
+                {
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                    _logger.LogInformation("Tarjeta de fidelización {TarjetaId} actualizada exitosamente", entity.Id);
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    _logger.LogWarning("Concurrencia detectada en tarjeta {TarjetaId}, aplicando estrategia de recuperación", entity.Id);
+                    
+                    // Estrategia 6: Recuperación de concurrencia
+                    await ManejarConcurrenciaTarjeta(entity, cancellationToken);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al actualizar la tarjeta de fidelización {TarjetaId}", entity.Id);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Maneja la concurrencia en tarjetas de fidelización
+        /// </summary>
+        private async Task ManejarConcurrenciaTarjeta(TarjetaFidelizacion entity, CancellationToken cancellationToken)
+        {
+            try
+            {
+                // Estrategia 1: Detach y reattach
+                _dbContext.Entry(entity).State = EntityState.Detached;
+                
+                // Estrategia 2: Recargar desde BD
+                var entidadRecargada = await _dbSet
+                    .Include(t => t.HistorialPuntos)
+                    .FirstOrDefaultAsync(t => t.Id == entity.Id, cancellationToken);
+
+                if (entidadRecargada == null)
+                {
+                    throw new InvalidOperationException($"No se encontró la tarjeta de fidelización con Id {entity.Id} después de concurrencia");
+                }
+
+                // Estrategia 3: Aplicar cambios sobre la entidad recargada
+                entidadRecargada.ActualizarPuntos(entity.PuntosAcumulados, entity.PuntosDisponibles);
+                entidadRecargada.ActualizarNivelInterno(entity.NivelFidelizacion);
+                entidadRecargada.ActualizarEstado(entity.Estado);
+
+                // Estrategia 4: Guardar cambios
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                
+                _logger.LogInformation("Tarjeta de fidelización {TarjetaId} actualizada exitosamente después de concurrencia", entity.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en manejo de concurrencia para tarjeta {TarjetaId}", entity.Id);
                 throw;
             }
         }

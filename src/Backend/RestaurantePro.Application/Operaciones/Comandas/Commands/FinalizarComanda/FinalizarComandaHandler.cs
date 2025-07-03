@@ -1,5 +1,13 @@
-namespace RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
+using RestaurantePro.Domain.Operaciones.Comandas.Entities;
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
+using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
+using RestaurantePro.Application.Operaciones.Comandas.DTOs;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Results;
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
+
+namespace RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
 
 /// <summary>
 /// 🍽️ Handler para finalizar comandas
@@ -9,15 +17,18 @@ public class FinalizarComandaHandler : IRequestHandler<FinalizarComandaCommand, 
     private readonly IComandaRepository _comandaRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<FinalizarComandaHandler> _logger;
+    private readonly IUnitOfWork _unitOfWork;
 
     public FinalizarComandaHandler(
         IComandaRepository comandaRepository,
         IMapper mapper,
-        ILogger<FinalizarComandaHandler> logger)
+        ILogger<FinalizarComandaHandler> logger,
+        IUnitOfWork unitOfWork)
     {
         _comandaRepository = comandaRepository;
         _mapper = mapper;
         _logger = logger;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Result<ComandaDto>> Handle(
@@ -60,40 +71,35 @@ public class FinalizarComandaHandler : IRequestHandler<FinalizarComandaCommand, 
             // 4. Finalizar la comanda usando el método correcto
             try
             {
-                // Si estamos en un entorno de prueba, usar reflexión para establecer el estado directamente
-                // y evitar validaciones de transición de estado que podrían fallar
-                bool esEntornoPrueba = request.UsuarioId.ToString().Contains("test") || 
-                    (request.ObservacionesFinalizacion != null && request.ObservacionesFinalizacion.Contains("test")) ||
-                    Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Test";
+                // Usar el método de dominio normal para cambiar el estado
+                comanda.ActualizarEstado(EstadoComanda.Finalizada);
+                _logger.LogInformation("Estado actualizado a Finalizada usando método de dominio");
                 
-                if (esEntornoPrueba)
-                {
-                    // Usar reflexión para establecer el estado directamente
-                    var estadoField = typeof(Comanda).GetField("<Estado>k__BackingField", 
-                        BindingFlags.NonPublic | BindingFlags.Instance);
-                    
-                    if (estadoField != null)
-                    {
-                        estadoField.SetValue(comanda, EstadoComanda.Finalizada);
-                        _logger.LogInformation("🧪 Estado actualizado a Finalizada mediante reflexión (entorno de pruebas)");
-                    }
-                    else
-                    {
-                        // Si no se puede usar reflexión, intentar el método normal
-                        comanda.ActualizarEstado(EstadoComanda.Finalizada);
-                    }
-                }
-                else
-                {
-                    // En entorno normal, usar el método de dominio
-                    comanda.ActualizarEstado(EstadoComanda.Finalizada);
-                }
+                // Forzar la detección de cambios en EF Core
+                var context = _unitOfWork.GetDbContext();
+                context.ChangeTracker.DetectChanges();
+                context.Entry(comanda).State = EntityState.Modified;
+                
+                // Guardar cambios una sola vez
+                await _unitOfWork.SaveChangesAsync();
+                _logger.LogInformation("Cambios guardados exitosamente");
+                
+                // Forzar recarga de la entidad para asegurar que los cambios se persistan
+                // Esto es necesario porque el query handler usa AsNoTracking()
+                context.Entry(comanda).Reload();
+                _logger.LogInformation("Entidad recargada desde BD para confirmar persistencia");
             }
             catch (InvalidOperationException ex)
             {
                 _logger.LogError("❌ Error al finalizar comanda {ComandaId}: {Error}", 
                     request.ComandaId, ex.Message);
                 return Result.Failure<ComandaDto>($"No se puede cambiar el estado");
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                _logger.LogError("❌ Error de concurrencia al finalizar comanda {ComandaId}: {Error}", 
+                    request.ComandaId, ex.Message);
+                return Result.Failure<ComandaDto>($"Error de concurrencia al finalizar comanda");
             }
 
             // 5. Agregar observaciones si las hay - usando la propiedad directamente
@@ -105,10 +111,7 @@ public class FinalizarComandaHandler : IRequestHandler<FinalizarComandaCommand, 
                 _logger.LogInformation("📝 Observaciones de finalización: {Observaciones}", request.ObservacionesFinalizacion);
             }
 
-            // 6. Guardar cambios
-            await _comandaRepository.ActualizarAsync(comanda, cancellationToken);
-
-            // 7. Mapear a DTO
+            // 6. Mapear a DTO (ya no necesitamos guardar de nuevo)
             var comandaDto = _mapper.Map<ComandaDto>(comanda);
 
             _logger.LogInformation("✅ Comanda {ComandaId} finalizada exitosamente. Items: {TotalItems}, Total: {Total:C}", 

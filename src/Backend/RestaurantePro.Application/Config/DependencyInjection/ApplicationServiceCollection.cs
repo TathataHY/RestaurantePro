@@ -385,6 +385,9 @@ public static class ApplicationServiceCollection
         services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada>, 
             Operaciones.Comandas.EventHandlers.ComandaFinalizada.ComandaFinalizadaMesaHandler>();
         
+        services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada>, 
+            Operaciones.Comandas.EventHandlers.ComandaFinalizada.ComandaFinalizadaFacturaHandler>();
+        
         // ========================================================================================
         // 📅 OPERACIONES - RESERVACIONES EVENT HANDLERS
         // ========================================================================================

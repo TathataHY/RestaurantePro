@@ -63,6 +63,7 @@ public class AgregarPuntosCommandHandler : IRequestHandler<AgregarPuntosCommand,
 
             // 3. Guardar cambios usando actualización directa
             await _tarjetaRepository.ActualizarAsync(tarjeta, cancellationToken);
+            await _unitOfWork.GuardarCambiosAsync(cancellationToken);
 
             // 4. Crear y retornar respuesta AgregarPuntosResponse
             var response = new AgregarPuntosResponse

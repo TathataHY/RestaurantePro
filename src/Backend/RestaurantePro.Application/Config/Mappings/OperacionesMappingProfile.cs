@@ -136,6 +136,7 @@ public class OperacionesMappingProfile : Profile
     {
         // Mesa → MesaDto
         CreateMap<Mesa, MesaDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado.ToString()))
             .ForMember(dest => dest.Zona, opt => opt.MapFrom(src => src.Ubicacion))
             .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => "Estándar")) // Valor por defecto

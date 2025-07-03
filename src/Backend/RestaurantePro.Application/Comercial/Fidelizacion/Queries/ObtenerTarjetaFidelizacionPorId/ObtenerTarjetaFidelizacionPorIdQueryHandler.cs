@@ -1,5 +1,6 @@
 using RestaurantePro.Domain.Comercial.Clientes.Interfaces;
 using RestaurantePro.Application.Comercial.Fidelizacion.DTOs;
+using Microsoft.Extensions.Logging;
 
 namespace RestaurantePro.Application.Comercial.Fidelizacion.Queries.ObtenerTarjetaFidelizacionPorId;
 
@@ -10,13 +11,16 @@ public class ObtenerTarjetaFidelizacionPorIdQueryHandler : IRequestHandler<Obten
 {
     private readonly ITarjetaFidelizacionRepository _tarjetaRepository;
     private readonly IClienteRepository _clienteRepository;
+    private readonly ILogger<ObtenerTarjetaFidelizacionPorIdQueryHandler> _logger;
 
     public ObtenerTarjetaFidelizacionPorIdQueryHandler(
         ITarjetaFidelizacionRepository tarjetaRepository,
-        IClienteRepository clienteRepository)
+        IClienteRepository clienteRepository,
+        ILogger<ObtenerTarjetaFidelizacionPorIdQueryHandler> logger)
     {
         _tarjetaRepository = tarjetaRepository;
         _clienteRepository = clienteRepository;
+        _logger = logger;
     }
 
     public async Task<Result<TarjetaFidelizacionDto>> Handle(
@@ -25,13 +29,14 @@ public class ObtenerTarjetaFidelizacionPorIdQueryHandler : IRequestHandler<Obten
     {
         try
         {
-            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(request.Id, cancellationToken);
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(request.Id, cancellationToken, asNoTracking: true);
             
             if (tarjeta == null)
             {
                 return Result.Failure<TarjetaFidelizacionDto>(new List<string> { "Tarjeta de fidelización no encontrada" });
             }
 
+            // Obtener información del cliente
             var cliente = await _clienteRepository.ObtenerPorIdAsync(tarjeta.ClienteId, cancellationToken);
             
             var tarjetaDto = new TarjetaFidelizacionDto
