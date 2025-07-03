@@ -178,7 +178,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
 
             // Registrar servicios stub para Application layer
             services.AddScoped<ICommunicationService, Services.CommunicationService>();
-            services.AddScoped<INotificationService, Services.NotificationService>();
+            services.AddScoped<Application.Common.Interfaces.INotificationService, Services.NotificationService>();
             services.AddScoped<IAuditService, Services.AuditService>();
             
             // Registrar servicios de Application layer que implementan en Infrastructure
