@@ -104,6 +104,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Inventario
             builder.Property(i => i.LastModifiedBy)
                 .HasMaxLength(100);
 
+            builder.Property(i => i.EstaActivo)
+                .IsRequired()
+                .HasDefaultValue(true);
+
             builder.Property(i => i.EstaEliminado)
                 .IsRequired()
                 .HasDefaultValue(false);

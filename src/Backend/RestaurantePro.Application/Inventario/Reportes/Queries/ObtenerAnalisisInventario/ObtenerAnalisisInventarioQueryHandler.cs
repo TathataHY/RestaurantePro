@@ -6,7 +6,7 @@ using RestaurantePro.Application.Inventario.Reportes.DTOs;
 
 namespace RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnalisisInventario;
 
-public class ObtenerAnalisisInventarioQueryHandler : IRequestHandler<ObtenerAnalisisInventarioQuery, Result<AnalisisInventarioDto>>
+public class ObtenerAnalisisInventarioQueryHandler : IRequestHandler<ObtenerAnalisisInventarioQuery, Result<RestaurantePro.Application.Inventario.Reportes.DTOs.AnalisisInventarioDto>>
 {
     private readonly IApplicationDbContext _context;
     private readonly IDateTimeService _dateTimeService;
@@ -19,7 +19,7 @@ public class ObtenerAnalisisInventarioQueryHandler : IRequestHandler<ObtenerAnal
         _dateTimeService = dateTimeService;
     }
 
-    public async Task<Result<AnalisisInventarioDto>> Handle(
+    public async Task<Result<RestaurantePro.Application.Inventario.Reportes.DTOs.AnalisisInventarioDto>> Handle(
         ObtenerAnalisisInventarioQuery request,
         CancellationToken cancellationToken)
     {
@@ -39,36 +39,33 @@ public class ObtenerAnalisisInventarioQueryHandler : IRequestHandler<ObtenerAnal
                 .ToListAsync(cancellationToken);
 
             // Construir análisis
-            var analisis = new AnalisisInventarioDto
+            var analisis = new RestaurantePro.Application.Inventario.Reportes.DTOs.AnalisisInventarioDto
             {
-                FechaGeneracion = _dateTimeService.Now,
-                FechaInicio = fechaInicio,
-                FechaFin = fechaFin,
-                TotalIngredientes = ingredientes.Count,
-                ValorTotalInventario = ingredientes.Sum(i => i.Stock * i.CostoPromedio),
-                ValorPromedioPorIngrediente = ingredientes.Count > 0 ? 
-                    ingredientes.Sum(i => i.Stock * i.CostoPromedio) / ingredientes.Count : 0,
-                IngredientesConMovimiento = movimientos.Select(m => m.IngredienteId).Distinct().Count(),
-                AnalisisPorCategoria = ingredientes
-                    .GroupBy(i => "Sin categoría") // TODO: Usar categoría real cuando esté disponible
-                    .Select(g => new CategoriaAnalisisDto
-                    {
-                        Categoria = g.Key,
-                        CantidadIngredientes = g.Count(),
-                        ValorTotal = g.Sum(i => i.Stock * i.CostoPromedio),
-                        PorcentajeDelTotal = ingredientes.Sum(i => i.Stock * i.CostoPromedio) > 0 ? 
-                            (g.Sum(i => i.Stock * i.CostoPromedio) / ingredientes.Sum(i => i.Stock * i.CostoPromedio)) * 100 : 0,
-                        StockBajo = g.Count(i => i.Stock <= i.StockMinimo && i.Stock > i.StockMinimo * 0.5m),
-                        StockCritico = g.Count(i => i.Stock <= i.StockMinimo * 0.5m)
-                    })
-                    .ToList()
+                InfoAnalisis = new RestaurantePro.Application.Inventario.Reportes.DTOs.InfoAnalisisDto
+                {
+                    FechaInicio = fechaInicio,
+                    FechaFin = fechaFin,
+                    FechaGeneracion = _dateTimeService.Now,
+                    NivelDetalle = request.NivelDetalle,
+                    UsuarioSolicitante = "Sistema"
+                },
+                ResumenExecutivo = new RestaurantePro.Application.Inventario.Reportes.DTOs.ResumenInventarioDto
+                {
+                    TotalIngredientes = ingredientes.Count,
+                    ValorTotalInventario = ingredientes.Sum(i => i.Stock * i.CostoPromedio),
+                    ValorPromedioIngrediente = ingredientes.Count > 0 ? 
+                        ingredientes.Sum(i => i.Stock * i.CostoPromedio) / ingredientes.Count : 0,
+                    TotalMovimientos = movimientos.Count,
+                    EstadoGeneralInventario = ingredientes.Count > 0 ? "Óptimo" : "Sin datos",
+                    AlertasActivas = ingredientes.Count(i => i.Stock <= i.StockMinimo)
+                }
             };
 
             return Result.Success(analisis);
         }
         catch (Exception ex)
         {
-            return Result.Failure<AnalisisInventarioDto>($"Error al generar análisis de inventario: {ex.Message}");
+            return Result.Failure<RestaurantePro.Application.Inventario.Reportes.DTOs.AnalisisInventarioDto>($"Error al generar análisis de inventario: {ex.Message}");
         }
     }
 

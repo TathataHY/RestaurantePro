@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RestaurantePro.Domain.Operaciones.Comandas.Entities;
 using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
+using RestaurantePro.Domain.Core.Productos.Entities;
 
 namespace RestaurantePro.Infrastructure.Persistence.Configurations.Operaciones;
 
@@ -64,6 +65,17 @@ public class ItemComandaConfiguration : IEntityTypeConfiguration<ItemComanda>
         builder.Property(p => p.MotivoCancelacion)
             .HasMaxLength(200);
         
+        // Configurar relaciones
+        builder.HasOne<Comanda>()
+            .WithMany()
+            .HasForeignKey("ComandaId")
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        builder.HasOne<Producto>()
+            .WithMany()
+            .HasForeignKey("ProductoId")
+            .OnDelete(DeleteBehavior.Cascade);
+            
         // Configurar índices
         builder.HasIndex(p => new { p.ComandaId, p.ProductoId })
             .HasDatabaseName("IX_ItemsComanda_ComandaId_ProductoId");

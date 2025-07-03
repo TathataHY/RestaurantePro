@@ -320,6 +320,189 @@ public class ReportesController : ControllerBase
     }
 
     /// <summary>
+    /// Genera reporte de productos populares (alias para productos-mas-vendidos)
+    /// </summary>
+    /// <param name="fechaInicio">Fecha de inicio</param>
+    /// <param name="fechaFin">Fecha de fin</param>
+    /// <param name="limite">Número máximo de productos a retornar</param>
+    /// <returns>Reporte de productos populares</returns>
+    [HttpGet("productos-populares")]
+    [ProducesResponseType(typeof(ApiResponse<ReporteVentasDiariaDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<ReporteVentasDiariaDto>>> GenerarReporteProductosPopulares(
+        [FromQuery] DateTime fechaInicio,
+        [FromQuery] DateTime fechaFin,
+        [FromQuery] int limite = 10)
+    {
+        _logger.LogInformation("🍽️ GET /api/operaciones/reportes/productos-populares - Rango: {FechaInicio} - {FechaFin}, Límite: {Limite}", 
+            fechaInicio, fechaFin, limite);
+
+        try
+        {
+            var query = new ObtenerReporteVentasDiariaQuery
+            {
+                FechaReporte = fechaInicio.Date,
+                IncluirAnalisisPorMesa = false,
+                IncluirAnalisisPorMesero = false,
+                IncluirAnalisisProductos = true,
+                NivelDetalle = NivelDetalle.Basico
+            };
+            
+            var result = await _mediator.Send(query);
+
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error generando reporte de productos populares",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<ReporteVentasDiariaDto>.SuccessResponse(
+                result.Value,
+                "Reporte de productos populares generado exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error generando reporte de productos populares");
+            
+            var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno generando reporte",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
+
+    /// <summary>
+    /// Genera reporte de desempeño de empleados
+    /// </summary>
+    /// <param name="fechaInicio">Fecha de inicio</param>
+    /// <param name="fechaFin">Fecha de fin</param>
+    /// <param name="empleadoId">ID específico del empleado (opcional)</param>
+    /// <returns>Reporte de desempeño de empleados</returns>
+    [HttpGet("desempeno-empleados")]
+    [ProducesResponseType(typeof(ApiResponse<ReporteVentasDiariaDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<ReporteVentasDiariaDto>>> GenerarReporteDesempenoEmpleados(
+        [FromQuery] DateTime fechaInicio,
+        [FromQuery] DateTime fechaFin,
+        [FromQuery] Guid? empleadoId)
+    {
+        _logger.LogInformation("👨‍💼 GET /api/operaciones/reportes/desempeno-empleados - Rango: {FechaInicio} - {FechaFin}, Empleado: {EmpleadoId}", 
+            fechaInicio, fechaFin, empleadoId);
+
+        try
+        {
+            var empleadosEspecificos = empleadoId.HasValue ? new List<Guid> { empleadoId.Value } : null;
+            
+            var query = new ObtenerReporteVentasDiariaQuery
+            {
+                FechaReporte = fechaInicio.Date,
+                IncluirAnalisisPorMesa = false,
+                IncluirAnalisisPorMesero = true,
+                IncluirAnalisisProductos = false,
+                MeserosEspecificos = empleadosEspecificos,
+                NivelDetalle = NivelDetalle.Meseros
+            };
+            
+            var result = await _mediator.Send(query);
+
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error generando reporte de desempeño de empleados",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<ReporteVentasDiariaDto>.SuccessResponse(
+                result.Value,
+                "Reporte de desempeño de empleados generado exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error generando reporte de desempeño de empleados");
+            
+            var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno generando reporte",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
+
+    /// <summary>
+    /// Genera reporte de tiempos de preparación
+    /// </summary>
+    /// <param name="fechaInicio">Fecha de inicio</param>
+    /// <param name="fechaFin">Fecha de fin</param>
+    /// <param name="productoId">ID específico del producto (opcional)</param>
+    /// <returns>Reporte de tiempos de preparación</returns>
+    [HttpGet("tiempos-preparacion")]
+    [ProducesResponseType(typeof(ApiResponse<ReporteVentasDiariaDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<ReporteVentasDiariaDto>>> GenerarReporteTiemposPreparacion(
+        [FromQuery] DateTime fechaInicio,
+        [FromQuery] DateTime fechaFin,
+        [FromQuery] Guid? productoId)
+    {
+        _logger.LogInformation("⏱️ GET /api/operaciones/reportes/tiempos-preparacion - Rango: {FechaInicio} - {FechaFin}, Producto: {ProductoId}", 
+            fechaInicio, fechaFin, productoId);
+
+        try
+        {
+            var query = new ObtenerReporteVentasDiariaQuery
+            {
+                FechaReporte = fechaInicio.Date,
+                IncluirAnalisisPorMesa = false,
+                IncluirAnalisisPorMesero = false,
+                IncluirAnalisisProductos = true,
+                NivelDetalle = NivelDetalle.Basico
+            };
+            
+            var result = await _mediator.Send(query);
+
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                    new List<string> { result.Error },
+                    "Error generando reporte de tiempos de preparación",
+                    StatusCodes.Status400BadRequest);
+
+                return BadRequest(errorResponse);
+            }
+
+            var response = ApiResponse<ReporteVentasDiariaDto>.SuccessResponse(
+                result.Value,
+                "Reporte de tiempos de preparación generado exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error generando reporte de tiempos de preparación");
+            
+            var errorResponse = ApiResponse<ReporteVentasDiariaDto>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno generando reporte",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
+
+    /// <summary>
     /// Genera reporte de reservaciones
     /// </summary>
     /// <param name="fechaInicio">Fecha de inicio</param>

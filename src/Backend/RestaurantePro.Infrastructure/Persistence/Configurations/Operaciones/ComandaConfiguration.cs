@@ -84,12 +84,12 @@ public class ComandaConfiguration : IEntityTypeConfiguration<Comanda>
         builder.HasOne(c => c.Mesa)
             .WithMany()
             .HasForeignKey(c => c.MesaId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(c => c.Mesero)
             .WithMany()
             .HasForeignKey(c => c.MeseroId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasOne(c => c.Cliente)
             .WithMany()

@@ -41,12 +41,23 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Operaciones
             builder.Property(p => p.FechaVencimiento)
                 .IsRequired();
                 
-            builder.Property(p => p.ProductoId)
-                .IsRequired();
+                    builder.Property(p => p.ProductoId)
+            .IsRequired();
                 
-            // Índices
-            builder.HasIndex(p => p.FechaPreparacion)
-                .HasDatabaseName("IX_PreparacionesDiarias_Fecha");
+        // Configurar relaciones
+        builder.HasOne<Comanda>()
+            .WithMany()
+            .HasForeignKey("ComandaId")
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        builder.HasOne<Producto>()
+            .WithMany()
+            .HasForeignKey("ProductoId")
+            .OnDelete(DeleteBehavior.Restrict);
+                
+        // Índices
+        builder.HasIndex(p => p.FechaPreparacion)
+            .HasDatabaseName("IX_PreparacionesDiarias_Fecha");
                 
             builder.HasIndex(p => p.Estado)
                 .HasDatabaseName("IX_PreparacionesDiarias_Estado");

@@ -9,7 +9,7 @@ namespace RestaurantePro.Application.Inventario.Reportes.Queries.ObtenerAnalisis
 /// 🎯 Query avanzada para análisis completo de inventario con alertas y predicciones
 /// Integra datos de múltiples contextos para análisis inteligente
 /// </summary>
-public class ObtenerAnalisisInventarioQuery : IRequest<Result<AnalisisInventarioDto>>
+public class ObtenerAnalisisInventarioQuery : IRequest<Result<RestaurantePro.Application.Inventario.Reportes.DTOs.AnalisisInventarioDto>>
 {
     /// <summary>
     /// Fecha desde para el análisis
