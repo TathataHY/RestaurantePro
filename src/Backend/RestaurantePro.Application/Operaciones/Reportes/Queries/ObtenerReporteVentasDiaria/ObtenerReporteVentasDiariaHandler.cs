@@ -160,7 +160,7 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
         
         if (request.MeserosEspecificos != null && request.MeserosEspecificos.Any())
         {
-            query = query.Where(c => request.MeserosEspecificos.Contains(c.MeseroId));
+            query = query.Where(c => c.MeseroId.HasValue && request.MeserosEspecificos.Contains(c.MeseroId.Value));
         }
         
         return await query.ToListAsync(cancellationToken);
@@ -242,10 +242,11 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
     private List<AnalisisMeseroDto> GenerarAnalisisPorMesero(List<Comanda> comandas)
     {
         return comandas
+            .Where(c => c.MeseroId.HasValue) // Solo incluir comandas con mesero asignado
             .GroupBy(c => new { c.MeseroId, MeseroNombre = c.Mesero?.NombreUsuario ?? "Desconocido" })
             .Select(g => new AnalisisMeseroDto
             {
-                MeseroId = g.Key.MeseroId,
+                MeseroId = g.Key.MeseroId.Value, // Usar .Value ya que filtramos por HasValue
                 NombreMesero = g.Key.MeseroNombre,
                 TotalComandas = g.Count(),
                 MontoTotal = g.Sum(c => c.Total.Total),

@@ -40,8 +40,9 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
 
         /// <summary>
         /// ID del usuario (mesero) que creó la comanda
+        /// Puede ser null si el mesero fue eliminado del sistema
         /// </summary>
-        public Guid MeseroId { get; private set; }
+        public Guid? MeseroId { get; private set; }
 
         /// <summary>
         /// ID del cliente asociado a la comanda.
@@ -170,12 +171,12 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// <param name="observaciones">Observaciones iniciales (opcional)</param>
         /// <param name="numeroComanda">Número único de la comanda</param>
         /// <returns>Una nueva instancia de Comanda en estado Creada</returns>
-        public static Comanda Crear(Guid meseroId, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null, string? numeroComanda = null)
+        public static Comanda Crear(Guid? meseroId, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null, string? numeroComanda = null)
         {
             return Crear(meseroId, DateTime.Now, clienteId, mesaId, observaciones, numeroComanda);
         }
 
-        public static Comanda Crear(Guid meseroId, DateTime fechaCreacion, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null, string? numeroComanda = null)
+        public static Comanda Crear(Guid? meseroId, DateTime fechaCreacion, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null, string? numeroComanda = null)
         {
             if (fechaCreacion > DateTime.Now.AddMinutes(1))
             {
@@ -195,7 +196,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 NumeroComanda = numeroComanda ?? $"COM-{fechaCreacion:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}"
             };
 
-            comanda.AddDomainEvent(new ComandaCreada(comanda.Id, comanda.MesaId, meseroId));
+            comanda.AddDomainEvent(new ComandaCreada(comanda.Id, comanda.MesaId, meseroId ?? Guid.Empty));
 
             return comanda;
         }

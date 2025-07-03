@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Api.Filters;
 using RestaurantePro.Api.Middleware;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Api.Services;
 
 namespace RestaurantePro.Api.Extensions
 {
@@ -71,6 +73,9 @@ namespace RestaurantePro.Api.Extensions
             //         Description = "API para la gestión de restaurante"
             //     });
             // });
+
+            // 🚀 Registrar servicios de SignalR
+            services.AddScoped<ISignalRHub, SignalRHubService>();
 
             return services;
         }

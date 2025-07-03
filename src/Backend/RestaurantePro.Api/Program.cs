@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using RestaurantePro.Api.Extensions;
 using RestaurantePro.Api.Configuration;
 using RestaurantePro.Api.Middleware;
+using RestaurantePro.Api.Hubs;
 using RestaurantePro.Application;
 using RestaurantePro.Infrastructure;
 using RestaurantePro.Infrastructure.Persistence;
@@ -15,6 +16,7 @@ using RestaurantePro.Application.Config.DependencyInjection;
 using RestaurantePro.Infrastructure.DependencyInjection;
 using RestaurantePro.Domain.Core;
 using Hangfire.Dashboard;
+using Microsoft.AspNetCore.SignalR;
 
 namespace RestaurantePro.Api
 {
@@ -30,6 +32,24 @@ namespace RestaurantePro.Api
             
             // Configurar Swagger usando la clase de configuración
             builder.Services.ConfigureSwagger();
+            
+            // 🚀 CONFIGURAR SIGNALR PRIMERO (antes de otros servicios)
+            builder.Services.AddSignalR(options =>
+            {
+                // Configuración para desarrollo
+                if (builder.Environment.IsDevelopment())
+                {
+                    options.EnableDetailedErrors = true;
+                }
+                
+                // Configuración de keep-alive
+                options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+                options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+                
+                // Configuración de límites
+                options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
+                options.MaximumParallelInvocationsPerClient = 1;
+            });
             
             // Configuración específica para la API
             builder.Services.AddApiServices();
@@ -92,6 +112,12 @@ namespace RestaurantePro.Api
             // app.UseHangfireJobs();
             
             app.MapControllers();
+            
+            // 🚀 MAPEAR SIGNALR HUBS
+            app.MapHub<ComandaHub>("/hubs/comandas");
+            // TODO: Descomentar cuando se implementen los otros Hubs
+            // app.MapHub<InventarioHub>("/hubs/inventario");
+            // app.MapHub<NotificationHub>("/hubs/notifications");
             
             await app.RunAsync();
         }

@@ -45,14 +45,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Operaciones
             .IsRequired();
                 
         // Configurar relaciones
-        builder.HasOne<Comanda>()
-            .WithMany()
-            .HasForeignKey("ComandaId")
-            .OnDelete(DeleteBehavior.Cascade);
+        // NOTA: PreparacionDiaria no tiene relación directa con Comanda
+        // La relación se maneja a través de Producto
             
         builder.HasOne<Producto>()
             .WithMany()
-            .HasForeignKey("ProductoId")
+            .HasForeignKey(p => p.ProductoId)
             .OnDelete(DeleteBehavior.Restrict);
                 
         // Índices

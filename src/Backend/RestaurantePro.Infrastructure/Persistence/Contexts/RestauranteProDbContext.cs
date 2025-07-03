@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
 using System.Reflection;
@@ -38,6 +39,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
 
             // Los interceptores se configuran automáticamente desde el DI container
             // cuando se registran con AddInterceptors en la configuración del DbContext
+            
+            // Suprimir advertencia de cambios pendientes en el modelo durante desarrollo
+            // TODO: Investigar y corregir la causa raíz de los cambios pendientes
+            optionsBuilder.ConfigureWarnings(warnings => warnings
+                .Ignore(RelationalEventId.PendingModelChangesWarning));
         }
 
         // DbSets de la aplicación

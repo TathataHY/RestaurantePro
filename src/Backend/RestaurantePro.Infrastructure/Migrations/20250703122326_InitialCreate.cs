@@ -154,31 +154,6 @@ namespace RestaurantePro.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PreparacionesDiarias",
-                schema: "Operaciones",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ProductoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ChefId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CantidadPreparada = table.Column<int>(type: "int", nullable: false),
-                    CantidadDisponible = table.Column<int>(type: "int", nullable: false),
-                    FechaVencimiento = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Observaciones = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    FechaPreparacion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Estado = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FechaActualizacion = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    EstaEliminado = table.Column<bool>(type: "bit", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PreparacionesDiarias", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ProductoCategorias",
                 schema: "Core",
                 columns: table => new
@@ -610,6 +585,38 @@ namespace RestaurantePro.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "PreparacionesDiarias",
+                schema: "Operaciones",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ProductoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ChefId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CantidadPreparada = table.Column<int>(type: "int", nullable: false),
+                    CantidadDisponible = table.Column<int>(type: "int", nullable: false),
+                    FechaVencimiento = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Observaciones = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    FechaPreparacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Estado = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaActualizacion = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    LastModifiedBy = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    EstaEliminado = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PreparacionesDiarias", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PreparacionesDiarias_Productos_ProductoId",
+                        column: x => x.ProductoId,
+                        principalSchema: "Core",
+                        principalTable: "Productos",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Recetas",
                 schema: "Core",
                 columns: table => new
@@ -712,7 +719,7 @@ namespace RestaurantePro.Infrastructure.Migrations
                     UnidadMedida = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     StockMinimo = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     Stock = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    EstaActivo = table.Column<bool>(type: "bit", nullable: false),
+                    EstaActivo = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
                     ProveedorPrincipalId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Rotacion = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Temporada = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
@@ -827,7 +834,7 @@ namespace RestaurantePro.Infrastructure.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     MesaId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    MeseroId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    MeseroId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ClienteId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     FacturaId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     NumeroComanda = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
@@ -867,14 +874,14 @@ namespace RestaurantePro.Infrastructure.Migrations
                         principalSchema: "Operaciones",
                         principalTable: "Mesas",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Comandas_Usuarios_MeseroId",
                         column: x => x.MeseroId,
                         principalSchema: "Core",
                         principalTable: "Usuarios",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -1033,6 +1040,13 @@ namespace RestaurantePro.Infrastructure.Migrations
                         column: x => x.ComandaId,
                         principalSchema: "Operaciones",
                         principalTable: "Comandas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ItemsComanda_Productos_ProductoId",
+                        column: x => x.ProductoId,
+                        principalSchema: "Core",
+                        principalTable: "Productos",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -1276,6 +1290,12 @@ namespace RestaurantePro.Infrastructure.Migrations
                 column: "Estado");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ItemsComanda_ProductoId",
+                schema: "Operaciones",
+                table: "ItemsComanda",
+                column: "ProductoId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ItemsOrdenCompra_IngredienteId",
                 schema: "Inventario",
                 table: "ItemsOrdenCompra",
@@ -1389,6 +1409,12 @@ namespace RestaurantePro.Infrastructure.Migrations
                 schema: "Operaciones",
                 table: "PreparacionesDiarias",
                 column: "FechaPreparacion");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PreparacionesDiarias_ProductoId",
+                schema: "Operaciones",
+                table: "PreparacionesDiarias",
+                column: "ProductoId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Productos_Categoria_Activo",
@@ -1618,16 +1644,16 @@ namespace RestaurantePro.Infrastructure.Migrations
                 schema: "Operaciones");
 
             migrationBuilder.DropTable(
-                name: "Productos",
-                schema: "Core");
-
-            migrationBuilder.DropTable(
                 name: "Proveedores",
                 schema: "Proveedores");
 
             migrationBuilder.DropTable(
                 name: "Comandas",
                 schema: "Operaciones");
+
+            migrationBuilder.DropTable(
+                name: "Productos",
+                schema: "Core");
 
             migrationBuilder.DropTable(
                 name: "Facturas",

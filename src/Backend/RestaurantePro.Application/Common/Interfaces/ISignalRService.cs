@@ -1,87 +1,47 @@
+using RestaurantePro.Application.Common.Notifications;
+
 namespace RestaurantePro.Application.Common.Interfaces;
 
 /// <summary>
 /// Interfaz para el servicio de notificaciones en tiempo real con SignalR
+/// Sigue Clean Architecture - solo define contratos sin dependencias externas
 /// </summary>
 public interface ISignalRService
 {
     /// <summary>
-    /// Envía una notificación en tiempo real a un usuario específico
+    /// Notifica a la cocina sobre una nueva comanda
     /// </summary>
-    /// <param name="usuarioId">ID del usuario destinatario</param>
-    /// <param name="titulo">Título de la notificación</param>
-    /// <param name="mensaje">Mensaje de la notificación</param>
-    /// <param name="tipo">Tipo de notificación (info, success, warning, error)</param>
-    /// <returns>True si se envió correctamente</returns>
-    Task<bool> EnviarNotificacionAUsuarioAsync(Guid usuarioId, string titulo, string mensaje, string tipo = "info");
-    
+    /// <param name="comanda">Datos de la comanda</param>
+    Task NotificarNuevaComandaAsync(NuevaComandaNotificationDto comanda);
+
     /// <summary>
-    /// Envía una notificación en tiempo real a múltiples usuarios
-    /// </summary>
-    /// <param name="usuariosIds">Lista de IDs de usuarios destinatarios</param>
-    /// <param name="titulo">Título de la notificación</param>
-    /// <param name="mensaje">Mensaje de la notificación</param>
-    /// <param name="tipo">Tipo de notificación</param>
-    /// <returns>True si se envió correctamente</returns>
-    Task<bool> EnviarNotificacionAUsuariosAsync(List<Guid> usuariosIds, string titulo, string mensaje, string tipo = "info");
-    
-    /// <summary>
-    /// Envía una notificación a todos los usuarios de un rol específico
-    /// </summary>
-    /// <param name="rol">Rol de los usuarios (Administrador, Gerente, Mesero, etc.)</param>
-    /// <param name="titulo">Título de la notificación</param>
-    /// <param name="mensaje">Mensaje de la notificación</param>
-    /// <param name="tipo">Tipo de notificación</param>
-    /// <returns>True si se envió correctamente</returns>
-    Task<bool> EnviarNotificacionARolAsync(string rol, string titulo, string mensaje, string tipo = "info");
-    
-    /// <summary>
-    /// Envía una notificación a todos los usuarios conectados
-    /// </summary>
-    /// <param name="titulo">Título de la notificación</param>
-    /// <param name="mensaje">Mensaje de la notificación</param>
-    /// <param name="tipo">Tipo de notificación</param>
-    /// <returns>True si se envió correctamente</returns>
-    Task<bool> EnviarNotificacionGlobalAsync(string titulo, string mensaje, string tipo = "info");
-    
-    /// <summary>
-    /// Envía actualización de estado de mesa en tiempo real
-    /// </summary>
-    /// <param name="mesaId">ID de la mesa</param>
-    /// <param name="estado">Nuevo estado de la mesa</param>
-    /// <param name="detalles">Detalles adicionales</param>
-    /// <returns>True si se envió correctamente</returns>
-    Task<bool> ActualizarEstadoMesaAsync(Guid mesaId, string estado, object? detalles = null);
-    
-    /// <summary>
-    /// Envía actualización de comanda en tiempo real
+    /// Notifica actualización de estado de comanda
     /// </summary>
     /// <param name="comandaId">ID de la comanda</param>
-    /// <param name="estado">Nuevo estado de la comanda</param>
-    /// <param name="detalles">Detalles adicionales</param>
-    /// <returns>True si se envió correctamente</returns>
-    Task<bool> ActualizarEstadoComandaAsync(Guid comandaId, string estado, object? detalles = null);
-    
+    /// <param name="nuevoEstado">Nuevo estado</param>
+    /// <param name="comentario">Comentario opcional</param>
+    Task NotificarActualizacionComandaAsync(Guid comandaId, string nuevoEstado, string? comentario = null);
+
     /// <summary>
-    /// Envía alerta de inventario bajo en tiempo real
+    /// Notifica a todos los clientes sobre un evento del sistema
     /// </summary>
-    /// <param name="ingredienteId">ID del ingrediente</param>
-    /// <param name="nombreIngrediente">Nombre del ingrediente</param>
-    /// <param name="stockActual">Stock actual</param>
-    /// <param name="stockMinimo">Stock mínimo</param>
-    /// <returns>True si se envió correctamente</returns>
-    Task<bool> EnviarAlertaInventarioAsync(Guid ingredienteId, string nombreIngrediente, decimal stockActual, decimal stockMinimo);
-    
+    /// <param name="tipoEvento">Tipo de evento</param>
+    /// <param name="datos">Datos del evento</param>
+    Task NotificarEventoSistemaAsync(string tipoEvento, object datos);
+
     /// <summary>
-    /// Obtiene los usuarios conectados actualmente
+    /// Notifica a un usuario específico
     /// </summary>
-    /// <returns>Lista de IDs de usuarios conectados</returns>
-    Task<List<Guid>> ObtenerUsuariosConectadosAsync();
-    
+    /// <param name="userId">ID del usuario</param>
+    /// <param name="tipoNotificacion">Tipo de notificación</param>
+    /// <param name="datos">Datos de la notificación</param>
+    Task NotificarUsuarioAsync(string userId, string tipoNotificacion, object datos);
+
     /// <summary>
-    /// Verifica si un usuario específico está conectado
+    /// Notifica a un grupo específico
     /// </summary>
-    /// <param name="usuarioId">ID del usuario</param>
-    /// <returns>True si está conectado</returns>
-    Task<bool> UsuarioEstaConectadoAsync(Guid usuarioId);
+    /// <param name="nombreGrupo">Nombre del grupo</param>
+    /// <param name="tipoNotificacion">Tipo de notificación</param>
+    /// <param name="datos">Datos de la notificación</param>
+    Task NotificarGrupoAsync(string nombreGrupo, string tipoNotificacion, object datos);
 } 

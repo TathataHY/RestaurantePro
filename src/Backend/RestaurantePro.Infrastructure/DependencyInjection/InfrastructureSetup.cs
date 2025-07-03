@@ -38,6 +38,9 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             // Registrar servicios de logging
             services.AddLoggingServices(configuration);
             
+            // 🚀 Registrar servicios de SignalR
+            services.AddScoped<ISignalRService, SignalRService>();
+            
             return services;
         }
     }

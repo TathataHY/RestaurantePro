@@ -1114,7 +1114,9 @@ namespace RestaurantePro.Infrastructure.Migrations
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<bool>("EstaActivo")
-                        .HasColumnType("bit");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
 
                     b.Property<bool>("EstaEliminado")
                         .ValueGeneratedOnAdd()
@@ -1292,7 +1294,7 @@ namespace RestaurantePro.Infrastructure.Migrations
                     b.Property<Guid>("MesaId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("MeseroId")
+                    b.Property<Guid?>("MeseroId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("NumeroComanda")
@@ -1397,6 +1399,8 @@ namespace RestaurantePro.Infrastructure.Migrations
                     b.HasIndex("Estado")
                         .HasDatabaseName("IX_ItemsComanda_Estado");
 
+                    b.HasIndex("ProductoId");
+
                     b.HasIndex("ComandaId", "ProductoId")
                         .HasDatabaseName("IX_ItemsComanda_ComandaId_ProductoId");
 
@@ -1462,6 +1466,8 @@ namespace RestaurantePro.Infrastructure.Migrations
 
                     b.HasIndex("FechaPreparacion")
                         .HasDatabaseName("IX_PreparacionesDiarias_Fecha");
+
+                    b.HasIndex("ProductoId");
 
                     b.ToTable("PreparacionesDiarias", "Operaciones");
                 });
@@ -2275,14 +2281,13 @@ namespace RestaurantePro.Infrastructure.Migrations
                     b.HasOne("RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa", "Mesa")
                         .WithMany()
                         .HasForeignKey("MesaId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("RestaurantePro.Domain.Core.Usuarios.Entities.Usuario", "Mesero")
                         .WithMany()
                         .HasForeignKey("MeseroId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.OwnsOne("RestaurantePro.Domain.Operaciones.Comandas.ValueObjects.TotalComanda", "Total", b1 =>
                         {
@@ -2336,6 +2341,12 @@ namespace RestaurantePro.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("RestaurantePro.Domain.Core.Productos.Entities.Producto", null)
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.OwnsMany("RestaurantePro.Domain.Operaciones.Comandas.ValueObjects.PersonalizacionItem", "Personalizaciones", b1 =>
                         {
                             b1.Property<int>("Id")
@@ -2385,6 +2396,15 @@ namespace RestaurantePro.Infrastructure.Migrations
                         });
 
                     b.Navigation("Personalizaciones");
+                });
+
+            modelBuilder.Entity("RestaurantePro.Domain.Operaciones.Preparaciones.Entities.PreparacionDiaria", b =>
+                {
+                    b.HasOne("RestaurantePro.Domain.Core.Productos.Entities.Producto", null)
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("RestaurantePro.Domain.Operaciones.Reservaciones.Entities.Reservacion", b =>

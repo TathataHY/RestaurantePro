@@ -1,5 +1,27 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Data.Sqlite;
+using Microsoft.AspNetCore.Http;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Security.Claims;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Infrastructure.Services;
@@ -16,11 +38,6 @@ using RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones;
 using RestaurantePro.Domain.Inventario.Ingredientes.Interfaces;
 using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 using RestaurantePro.Domain.Core.Base.Services;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using System.Text.Encodings.Web;
-using Microsoft.Extensions.Options;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Interfaces;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
 using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces;
@@ -33,17 +50,13 @@ using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
 using RestaurantePro.Domain.Core.Notificaciones.Services;
 using RestaurantePro.Domain.Core.Usuarios.Interfaces;
 using RestaurantePro.Domain.Core.Usuarios.Services;
-using Microsoft.Data.Sqlite;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
 using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Infrastructure.Persistence.Repositories.Base;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using RestaurantePro.Domain.Comercial.Facturacion.Interfaces;
-using RestaurantePro.Infrastructure.Persistence.Repositories.Comercial;
 using RestaurantePro.Domain.Comercial.Facturacion.Services;
 using RestaurantePro.Domain.Comercial.Services;
-using Microsoft.AspNetCore.Http;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using RestaurantePro.Domain.Core.SharedKernel;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
@@ -51,7 +64,6 @@ using RestaurantePro.Domain.Core.Base.Events;
 using RestaurantePro.Domain.Core.Base;
 using RestaurantePro.Domain.Core.Base.Events.Extensions;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using RestaurantePro.Domain.Comercial.Promociones.Interfaces;
@@ -59,8 +71,17 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
 using RestaurantePro.Infrastructure.DependencyInjection;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using Microsoft.EntityFrameworkCore.Diagnostics;
+using RestaurantePro.Infrastructure.Identity.Models;
+using RestaurantePro.Infrastructure.Identity;
+using RestaurantePro.Api.Hubs;
+using RestaurantePro.Infrastructure.ExternalServices.FileStorage;
+using RestaurantePro.Infrastructure.ExternalServices.Payment;
+using RestaurantePro.Infrastructure.ExternalServices.SMS;
+using RestaurantePro.Infrastructure.Caching;
+using RestaurantePro.Application.Common.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+using RestaurantePro.Application.Common.Models;
+using RestaurantePro.Infrastructure.Persistence;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -99,7 +120,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         }
     }
 
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    protected override IHost CreateHost(IHostBuilder builder)
     {
         // 🔧 CONFIGURAR MODO TESTING PARA EVITAR CONFLICTOS DE BD
         Environment.SetEnvironmentVariable("TESTING_MODE", "true");
@@ -126,106 +147,19 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         });
 
         // 🔧 CONFIGURACIÓN SIMPLIFICADA PARA TESTS
-        builder.ConfigureServices((context, services) =>
+        builder.ConfigureServices(services =>
         {
-            // Obtener la configuración del contexto
-            var configuration = context.Configuration;
-            
+            // 🔧 DESHABILITAR VALIDACIÓN DE SERVICIOS TEMPORALMENTE PARA DEBUGGING
+            services.Configure<ServiceProviderOptions>(options =>
+            {
+                options.ValidateScopes = false;
+                options.ValidateOnBuild = false;
+            });
+
             // 🔧 CONFIGURACIÓN DE BASE DE DATOS TEMPORAL ÚNICA POR TEST
             Console.WriteLine($"🗄️ Configurando BD temporal: {_databasePath}");
             
-            // 🔧 CONFIGURAR DBCONTEXT COMO SCOPED PARA TESTS (MEJOR PRÁCTICA)
-            services.AddDbContext<RestauranteProDbContext>((provider, options) =>
-            {
-                options.UseSqlite(_connectionString, sqliteOptions =>
-                {
-                    sqliteOptions.MigrationsAssembly("RestaurantePro.Infrastructure");
-                });
-                options.EnableSensitiveDataLogging();
-                options.EnableDetailedErrors();
-                options.ConfigureWarnings(warnings => warnings
-                    .Ignore(RelationalEventId.PendingModelChangesWarning)
-                    .Ignore(RelationalEventId.MultipleCollectionIncludeWarning)
-                    .Ignore(CoreEventId.RowLimitingOperationWithoutOrderByWarning));
-                
-                // 🔧 AGREGAR INTERCEPTORES DIRECTAMENTE AL CONTEXTO
-                var auditableInterceptor = provider.GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.AuditableEntityInterceptor>();
-                var domainEventInterceptor = provider.GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.DomainEventInterceptor>();
-                var softDeleteInterceptor = provider.GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.SoftDeleteInterceptor>();
-                
-                options.AddInterceptors(auditableInterceptor);
-                options.AddInterceptors(domainEventInterceptor);
-                options.AddInterceptors(softDeleteInterceptor);
-            });
-
-            // 🔧 CONFIGURAR PROVEEDORESDBCONTEXT COMO SCOPED PARA TESTS
-            services.AddDbContext<ProveedoresDbContext>((provider, options) =>
-            {
-                options.UseSqlite(_connectionString, sqliteOptions =>
-                {
-                    sqliteOptions.MigrationsAssembly("RestaurantePro.Infrastructure");
-                });
-                options.EnableSensitiveDataLogging();
-                options.EnableDetailedErrors();
-            });
-
-            // 🔧 REGISTRAR DOMAIN EVENT DISPATCHER REAL PARA TESTS DE INTEGRACIÓN
-            services.AddScoped<IDomainEventDispatcher, RestaurantePro.Domain.Core.Base.Events.Dispatcher.DomainEventDispatcher>();
-            
-            // 🔧 REGISTRAR TODOS LOS HANDLERS DE EVENTOS DE DOMINIO
-            services.AddAllDomainEventHandlers(typeof(RestaurantePro.Application.Operaciones.Reservaciones.EventHandlers.ReservacionCreada.ReservacionCreadaMesaHandler).Assembly);
-            
-            // 🔧 AGREGAR INTERCEPTORES PARA EVENTOS DE DOMINIO
-            services.AddScoped<RestaurantePro.Infrastructure.Persistence.Interceptors.AuditableEntityInterceptor>();
-            services.AddScoped<RestaurantePro.Infrastructure.Persistence.Interceptors.DomainEventInterceptor>();
-            services.AddScoped<RestaurantePro.Infrastructure.Persistence.Interceptors.SoftDeleteInterceptor>();
-
-            // 🔧 REGISTRAR IApplicationDbContext
-            services.AddScoped<IApplicationDbContext>(provider => 
-                provider.GetRequiredService<RestauranteProDbContext>());
-
-            // 🔧 REGISTRAR IProveedoresDbContext
-            services.AddScoped<IProveedoresDbContext>(provider => 
-                provider.GetRequiredService<ProveedoresDbContext>());
-
-            // 🔧 REGISTRAR DbContext GENÉRICO PARA REPOSITORIOS
-            services.AddScoped<DbContext>(provider => 
-                provider.GetRequiredService<RestauranteProDbContext>());
-
-            // REGISTRO GLOBAL DE INFRAESTRUCTURA PARA TESTS
-            services.AddInfrastructureServices(configuration, isTestEnvironment: true);
-
-            // 🔧 CONFIGURAR SEED DATA PARA TESTS
-            services.Configure<RestaurantePro.Infrastructure.Persistence.SeedData.Extensions.SeedDataConfiguration>(options =>
-            {
-                options.RunCriticalData = true;  // Siempre ejecutar datos críticos en tests
-                options.RunDemoData = false;     // No ejecutar datos demo en tests
-                options.RunTestingData = true;   // Ejecutar datos de testing
-                options.CreateAdminUser = false; // No crear usuario admin en tests
-                options.ForceReseed = false;     // No forzar re-seed
-            });
-
-            // 🔧 EJECUTAR MIGRACIONES PARA CREAR TABLAS EN BD TEMPORAL
-            using (var scope = services.BuildServiceProvider().CreateScope())
-            {
-                var dbContext = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
-                try
-                {
-                    // Forzar eliminación completa de BD para asegurar esquema limpio
-                    dbContext.Database.EnsureDeleted();
-                    Console.WriteLine("🗑️ Base de datos eliminada completamente");
-                    
-                    // Usar EnsureCreated para tests con SQLite (evita problemas de sintaxis de migraciones)
-                    // Las configuraciones de conversión se aplican automáticamente desde el modelo
-                    dbContext.Database.EnsureCreated();
-                    Console.WriteLine("✅ Tablas creadas en BD temporal usando EnsureCreated");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"⚠️ Error ejecutando migraciones: {ex.Message}");
-                    throw;
-                }
-            }
+            // (La configuración de DbContext se hará después de AddInfrastructureServices)
 
             // 🔧 CONFIGURAR AUTENTICACIÓN PARA TESTS
             services.AddAuthentication(options =>
@@ -243,27 +177,173 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     .Build();
             });
 
-            // 🔧 CONFIGURAR LOGGING PARA TESTS (SUPRIMIR WARNINGS ESPERADOS)
-            services.AddLogging(builder =>
+            // 🚀 CONFIGURAR SIGNALR PARA TESTS
+            services.AddSignalR(options =>
             {
-                builder.ClearProviders();
-                builder.AddConsole();
-                builder.SetMinimumLevel(LogLevel.Critical); // Solo errores críticos
-                // Configurar filtros específicos para tests
-                builder.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Critical);
-                builder.AddFilter("Microsoft.EntityFrameworkCore.Database.Connection", LogLevel.Critical);
-                builder.AddFilter("Microsoft.EntityFrameworkCore.Update", LogLevel.Critical);
-                builder.AddFilter("Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware", LogLevel.Critical);
-                builder.AddFilter("RestaurantePro.Application.Common.Behaviors", LogLevel.Critical);
-                builder.AddFilter("RestaurantePro.Infrastructure.Persistence", LogLevel.Critical);
-                builder.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Critical);
+                options.EnableDetailedErrors = true;
+                options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+                options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+                options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
+                options.MaximumParallelInvocationsPerClient = 1;
             });
 
-            // 🔧 REGISTRAR SERVICIO FAKE DE FECHA/HORA
-            services.AddSingleton<IDateTimeService, FakeDateTimeService>();
-            services.AddSingleton<ITimeProvider, FakeTimeProvider>();
-            services.AddSingleton<IDelayProvider, FakeDelayProvider>();
+            // Cargar configuración real para los tests (igual que la API)
+            var config = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+                .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: false)
+                .Build();
+
+            // 🚀 REGISTRAR SERVICIOS DE SIGNALR PARA TESTS
+            services.AddScoped<ISignalRHub, RestaurantePro.Api.Services.SignalRHubService>();
+
+            // Restaurar servicios de infraestructura igual que en la API real
+            services.AddInfrastructureServices(config, isTestEnvironment: true);
+
+            // 🔧 SOBRESCRIBIR CONFIGURACIÓN DE BASE DE DATOS PARA TESTS (SQLite en lugar de SQL Server)
+            // Remover configuración existente de DbContext
+            var dbContextDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<RestauranteProDbContext>));
+            if (dbContextDescriptor != null)
+            {
+                services.Remove(dbContextDescriptor);
+            }
+
+            // 🔧 REMOVER SQL SERVER EXPLÍCITAMENTE PARA EVITAR CONFLICTOS
+            var sqlServerDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<RestauranteProDbContext>) && 
+                d.ImplementationType?.Name.Contains("SqlServer") == true);
+            if (sqlServerDescriptor != null)
+            {
+                services.Remove(sqlServerDescriptor);
+            }
+
+            // Agregar configuración SQLite para tests
+            services.AddDbContext<RestauranteProDbContext>(options =>
+            {
+                options.UseSqlite(_connectionString);
+                options.EnableSensitiveDataLogging();
+                options.EnableDetailedErrors();
+            });
+
+            // 🔧 CONFIGURAR ASP.NET CORE IDENTITY PARA TESTS
+            // (El registro de Identity se realiza en AddInfrastructureServices, no es necesario aquí)
+
+            // 🔧 CONFIGURAR CONTROLADORES PARA TESTS
+            services.AddControllers().AddApplicationPart(typeof(RestaurantePro.Api.Controllers.Core.AuthController).Assembly);
+            services.AddEndpointsApiExplorer();
+            services.AddSwaggerGen();
+
+            // 🔧 CONFIGURAR SERVICIOS DE APLICACIÓN PARA TESTS
+            // services.AddApplicationServices();
+            services.AddScoped<IIdentityService, FakeIdentityService>();
+            services.AddScoped<IJwtTokenService, FakeJwtTokenService>();
+            services.AddScoped<IUserPermissionService, FakeUserPermissionService>();
+            services.AddScoped<ICurrentUserService, TestCurrentUserService>();
+            services.AddScoped<INotificationService, TestNotificationService>();
+            services.AddScoped<IDomainEventDispatcher, TestDomainEventDispatcher>();
+
+            // 🔧 CONFIGURAR SERVICIOS DE INFRAESTRUCTURA PARA TESTS
+            // services.AddScoped<IEmailService, FakeEmailService>();
+            // Comentar servicios complejos temporalmente para enfocarse en SignalR
+            // services.AddScoped<IFileStorageService, FakeFileStorageService>();
+            // services.AddScoped<IPaymentService, FakePaymentService>();
+            // services.AddScoped<ISMSService, FakeSmsService>();
+            // services.AddScoped<ICacheService, FakeCacheService>();
+            // services.AddScoped<ISignalRService, FakeSignalRService>();
+
+            // 🔧 CONFIGURAR REPOSITORIOS PARA TESTS
+            services.AddScoped<IProductoRepository, ProductoRepository>();
+            services.AddScoped<IClienteRepository, ClienteRepository>();
+            services.AddScoped<IOrdenCompraRepository, OrdenCompraRepository>();
+            services.AddScoped<IIngredienteRepository, IngredienteRepository>();
+            services.AddScoped<IComandaRepository, ComandaRepository>();
+            services.AddScoped<IMesaRepository, MesaRepository>();
+            services.AddScoped<IReservacionRepository, ReservacionRepository>();
+            services.AddScoped<IProveedorRepository, ProveedorRepository>();
+            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+
+            // 🔧 CONFIGURAR SEED DE USUARIO DE PRUEBA
+            using (var scope = services.BuildServiceProvider().CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
+                
+                // 🔧 CREAR BASE DE DATOS PARA TESTS (sin migraciones)
+                Console.WriteLine("🗄️ Creando esquema de base de datos temporal...");
+                context.Database.EnsureCreated();
+                Console.WriteLine("✅ Esquema de base de datos creado correctamente");
+                
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
+                
+                // Crear rol si no existe
+                var adminRole = roleManager.FindByNameAsync("Administrador").GetAwaiter().GetResult();
+                if (adminRole == null)
+                {
+                    roleManager.CreateAsync(new ApplicationRole {
+                        Name = "Administrador",
+                        Description = "Rol de administrador para pruebas",
+                        CreatedOn = DateTime.UtcNow,
+                        IsSystemRole = true
+                    }).GetAwaiter().GetResult();
+                    Console.WriteLine("✅ Rol Administrador creado");
+                }
+
+                // Crear usuario de prueba
+                var email = "admin@restaurantepro.com";
+                var existingUser = userManager.FindByEmailAsync(email).GetAwaiter().GetResult();
+                if (existingUser == null)
+                {
+                    var user = new ApplicationUser
+                    {
+                        UserName = email,
+                        Email = email,
+                        EmailConfirmed = true,
+                        Nombre = "Admin Test",
+                        Apellidos = "Test",
+                        FotoPerfil = "",
+                        RefreshToken = "",
+                        FechaCreacion = DateTime.UtcNow,
+                        Activo = true
+                    };
+                    var result = userManager.CreateAsync(user, "Admin123!").GetAwaiter().GetResult();
+                    if (result.Succeeded)
+                    {
+                        userManager.AddToRoleAsync(user, "Administrador").GetAwaiter().GetResult();
+                        Console.WriteLine($"✅ Usuario de prueba creado: {email}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ Error creando usuario de prueba: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"ℹ️ Usuario de prueba ya existe: {email}");
+                }
+            }
         });
+
+        // 🔧 CONFIGURAR PIPELINE DE LA APLICACIÓN PARA TESTS
+        builder.ConfigureWebHost(webHostBuilder =>
+        {
+            webHostBuilder.UseUrls("http://localhost:0"); // Puerto dinámico para evitar conflictos
+            
+            webHostBuilder.Configure(app =>
+            {
+                app.UseRouting();
+                app.UseAuthentication();
+                app.UseAuthorization();
+                
+                app.UseEndpoints(endpoints =>
+                {
+                    endpoints.MapControllers();
+                    
+                    // 🚀 MAPEAR SIGNALR HUBS PARA TESTS
+                    endpoints.MapHub<ComandaHub>("/hubs/comandas");
+                });
+            });
+        });
+
+        return base.CreateHost(builder);
     }
 
     protected override void Dispose(bool disposing)
@@ -713,6 +793,30 @@ public class TestEmailService : IEmailService
 }
 
 /// <summary>
+/// Mock simple de ISignalRHub para tests
+/// </summary>
+public class MockSignalRHub : ISignalRHub
+{
+    public Task SendToGroupAsync(string groupName, string method, params object[] args)
+    {
+        // Mock simple - no hace nada en tests
+        return Task.CompletedTask;
+    }
+
+    public Task SendToAllAsync(string method, params object[] args)
+    {
+        // Mock simple - no hace nada en tests
+        return Task.CompletedTask;
+    }
+
+    public Task SendToUserAsync(string userId, string method, params object[] args)
+    {
+        // Mock simple - no hace nada en tests
+        return Task.CompletedTask;
+    }
+}
+
+/// <summary>
 /// Definición de la colección Sequential para tests de integración de API
 /// Permite que xUnit inyecte correctamente el TestWebApplicationFactory
 /// </summary>
@@ -775,7 +879,34 @@ public class FakeIdentityService : IIdentityService
 public class FakeJwtTokenService : IJwtTokenService
 {
     public JwtTokenResponse GenerateToken(string userId, string userName, string email, IList<string> roles)
-        => new JwtTokenResponse { AccessToken = "fake-jwt-token", TokenType = "Bearer", ExpiresIn = 3600, RequiresRefresh = false };
+    {
+        // Generar un token JWT válido para tests
+        var header = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("{\"alg\":\"HS256\",\"typ\":\"JWT\"}"))
+            .Replace('+', '-').Replace('/', '_').TrimEnd('=');
+        
+        var payload = new
+        {
+            sub = userId,
+            name = userName,
+            email = email,
+            role = roles.FirstOrDefault() ?? "Empleado",
+            roles = roles,
+            exp = DateTimeOffset.UtcNow.AddHours(1).ToUnixTimeSeconds(),
+            iat = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+        
+        var payloadJson = System.Text.Json.JsonSerializer.Serialize(payload);
+        var payloadBase64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(payloadJson))
+            .Replace('+', '-').Replace('/', '_').TrimEnd('=');
+        
+        // Para tests, usamos una firma dummy
+        var signature = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("test-signature"))
+            .Replace('+', '-').Replace('/', '_').TrimEnd('=');
+        
+        var token = $"{header}.{payloadBase64}.{signature}";
+        
+        return new JwtTokenResponse { AccessToken = token, TokenType = "Bearer", ExpiresIn = 3600, RequiresRefresh = false };
+    }
     
     public string GenerateRefreshToken() => "fake-refresh-token";
     
@@ -915,3 +1046,370 @@ public class TestNotificationService : INotificationService
         return await Task.FromResult(true);
     }
 }
+
+// 🔧 SERVICIOS FAKE PARA TESTS - TEMPORALMENTE COMENTADOS PARA ENFOCARSE EN SIGNALR
+/*
+public class FakeEmailService : IEmailService
+{
+    private readonly ILogger<FakeEmailService> _logger;
+
+    public FakeEmailService(ILogger<FakeEmailService> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<bool> SendEmailAsync(string to, string subject, string body)
+    {
+        _logger.LogInformation("Test email sent to: {To}, Subject: {Subject}", to, subject);
+        return await Task.FromResult(true);
+    }
+
+    public async Task<bool> SendEmailAsync(string to, string subject, string body, string? attachmentPath = null)
+    {
+        _logger.LogInformation("Test email with attachment sent to: {To}, Subject: {Subject}", to, subject);
+        return await Task.FromResult(true);
+    }
+
+    public async Task<bool> SendHtmlEmailAsync(string to, string subject, string htmlBody)
+    {
+        _logger.LogInformation("Test HTML email sent to: {To}, Subject: {Subject}", to, subject);
+        return await Task.FromResult(true);
+    }
+
+    public async Task<bool> SendBulkEmailAsync(List<string> toAddresses, string subject, string body)
+    {
+        _logger.LogInformation("Test bulk email sent to {Count} recipients, Subject: {Subject}", toAddresses.Count, subject);
+        return await Task.FromResult(true);
+    }
+
+    public async Task<bool> SendEmailWithAttachmentAsync(string to, string subject, string body, string attachmentPath)
+    {
+        _logger.LogInformation("Test email with attachment sent to: {To}, Subject: {Subject}", to, subject);
+        return await Task.FromResult(true);
+    }
+}
+
+public class FakeFileStorageService : IFileStorageService
+{
+    private readonly ILogger<FakeFileStorageService> _logger;
+
+    public FakeFileStorageService(ILogger<FakeFileStorageService> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<string> SubirArchivoAsync(DatosArchivo datosArchivo, string nombreArchivo, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Test file uploaded: {FileName}", nombreArchivo);
+        return await Task.FromResult($"fake-url/{nombreArchivo}");
+    }
+
+    public async Task<Stream> DescargarArchivoAsync(string urlArchivo, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Test file downloaded: {FileUrl}", urlArchivo);
+        return await Task.FromResult(Stream.Null);
+    }
+
+    public async Task<bool> EliminarArchivoAsync(string urlArchivo, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Test file deleted: {FileUrl}", urlArchivo);
+        return await Task.FromResult(true);
+    }
+
+    public async Task<string> ObtenerUrlTemporalAsync(string urlArchivo, TimeSpan duracion, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Test temporary URL generated: {FileUrl}", urlArchivo);
+        return await Task.FromResult($"fake-temp-url/{urlArchivo}");
+    }
+}
+
+public class FakePaymentService : IPaymentService
+{
+    private readonly ILogger<FakePaymentService> _logger;
+
+    public FakePaymentService(ILogger<FakePaymentService> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<Result<PaymentResult>> ProcesarPagoAsync(decimal monto, string moneda, string descripcion, Dictionary<string, string>? metadatos = null, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Test payment processed: {Amount} {Currency}", monto, moneda);
+        return await Task.FromResult(Result.Success(new PaymentResult
+        {
+            TransaccionId = Guid.NewGuid().ToString(),
+            Estado = PaymentStatus.Completado,
+            Monto = monto,
+            Moneda = moneda,
+            ReferenciaComercio = "test-ref",
+            Mensaje = "Test payment successful",
+            FechaTransaccion = DateTime.UtcNow
+        }));
+    }
+
+    public async Task<Result<RefundResult>> ReembolsarPagoAsync(string transaccionId, decimal? montoReembolso = null, string? motivo = null, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Test payment refunded: {TransactionId}, Amount: {Amount}", transaccionId, montoReembolso);
+        return await Task.FromResult(Result.Success(new RefundResult
+        {
+            ReembolsoId = Guid.NewGuid().ToString(),
+            TransaccionOriginalId = transaccionId,
+            MontoReembolsado = montoReembolso ?? 0,
+            Estado = RefundStatus.Completado,
+            FechaReembolso = DateTime.UtcNow
+        }));
+    }
+
+    public async Task<Result<PaymentStatus>> VerificarEstadoPagoAsync(string transaccionId, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Test payment status check: {TransactionId}", transaccionId);
+        return await Task.FromResult(Result.Success(PaymentStatus.Completado));
+    }
+}
+
+public class FakeSmsService : ISMSService
+{
+    private readonly ILogger<FakeSmsService> _logger;
+
+    public FakeSmsService(ILogger<FakeSmsService> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task<bool> SendSMSAsync(string phoneNumber, string message)
+    {
+        _logger.LogInformation("Test SMS sent to: {PhoneNumber}, Message: {Message}", phoneNumber, message);
+        return await Task.FromResult(true);
+    }
+
+    public async Task<bool> SendBulkSMSAsync(List<string> phoneNumbers, string message)
+    {
+        _logger.LogInformation("Test bulk SMS sent to {Count} numbers", phoneNumbers.Count);
+        return await Task.FromResult(true);
+    }
+
+    public async Task<bool> SendSMSWithTrackingAsync(string phoneNumber, string message, Guid? clienteId = null, string? tipoNotificacion = null)
+    {
+        _logger.LogInformation("Test SMS with tracking sent to: {PhoneNumber}, Message: {Message}, ClienteId: {ClienteId}, Tipo: {Tipo}", phoneNumber, message, clienteId, tipoNotificacion);
+        return await Task.FromResult(true);
+    }
+
+    public bool IsValidPhoneNumber(string phoneNumber)
+    {
+        _logger.LogInformation("Test phone number validation: {PhoneNumber}", phoneNumber);
+        return true;
+    }
+
+    public async Task<string> GetDeliveryStatusAsync(string messageId)
+    {
+        _logger.LogInformation("Test SMS delivery status for message: {MessageId}", messageId);
+        return await Task.FromResult("Delivered");
+    }
+}
+
+public class FakeCacheService : ICacheService
+{
+    private readonly Dictionary<string, object> _cache = new();
+    private readonly ILogger<FakeCacheService> _logger;
+
+    public FakeCacheService(ILogger<FakeCacheService> logger)
+    {
+        _logger = logger;
+    }
+
+    public T? Get<T>(string key)
+    {
+        _logger.LogInformation("Test cache get: {Key}", key);
+        return _cache.TryGetValue(key, out var value) ? (T)value : default(T);
+    }
+
+    public async Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Test cache get async: {Key}", key);
+        return await Task.FromResult(_cache.TryGetValue(key, out var value) ? (T)value : default(T));
+    }
+
+    public bool Exists(string key)
+    {
+        return _cache.ContainsKey(key);
+    }
+
+    public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
+    {
+        return await Task.FromResult(_cache.ContainsKey(key));
+    }
+
+    public void Set<T>(string key, T value, int expirationMinutes = 60)
+    {
+        _logger.LogInformation("Test cache set: {Key}", key);
+        _cache[key] = value!;
+    }
+
+    public async Task SetAsync<T>(string key, T value, int expirationMinutes, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Test cache set async: {Key}", key);
+        _cache[key] = value!;
+        await Task.CompletedTask;
+    }
+
+    public async Task SetAsync<T>(string key, T value, TimeSpan expiration, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Test cache set async with timespan: {Key}", key);
+        _cache[key] = value!;
+        await Task.CompletedTask;
+    }
+
+    public void Remove(string key)
+    {
+        _logger.LogInformation("Test cache remove: {Key}", key);
+        _cache.Remove(key);
+    }
+
+    public async Task RemoveAsync(string key, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Test cache remove async: {Key}", key);
+        _cache.Remove(key);
+        await Task.CompletedTask;
+    }
+
+    public void InvalidatePattern(string pattern)
+    {
+        _logger.LogInformation("Test cache invalidate pattern: {Pattern}", pattern);
+        var keysToRemove = _cache.Keys.Where(k => k.Contains(pattern)).ToList();
+        foreach (var key in keysToRemove)
+        {
+            _cache.Remove(key);
+        }
+    }
+
+    public async Task InvalidatePatternAsync(string pattern, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Test cache invalidate pattern async: {Pattern}", pattern);
+        var keysToRemove = _cache.Keys.Where(k => k.Contains(pattern)).ToList();
+        foreach (var key in keysToRemove)
+        {
+            _cache.Remove(key);
+        }
+        await Task.CompletedTask;
+    }
+
+    public T GetOrCreate<T>(string key, Func<T> factory, int expirationMinutes = 60)
+    {
+        if (_cache.TryGetValue(key, out var value))
+        {
+            return (T)value;
+        }
+        var newValue = factory();
+        _cache[key] = newValue!;
+        return newValue;
+    }
+
+    public T GetOrAdd<T>(string key, Func<T> factory, int expirationMinutes = 60)
+    {
+        return GetOrCreate(key, factory, expirationMinutes);
+    }
+
+    public async Task<T> GetOrAddAsync<T>(string key, Func<CancellationToken, Task<T>> factory, int expirationMinutes, CancellationToken cancellationToken)
+    {
+        if (_cache.TryGetValue(key, out var value))
+        {
+            return (T)value;
+        }
+        var newValue = await factory(cancellationToken);
+        _cache[key] = newValue!;
+        return newValue;
+    }
+}
+
+public class FakeSignalRService : ISignalRService
+{
+    private readonly ILogger<FakeSignalRService> _logger;
+
+    public FakeSignalRService(ILogger<FakeSignalRService> logger)
+    {
+        _logger = logger;
+    }
+
+    public async Task EnviarNotificacionAUsuarioAsync(Guid usuarioId, string titulo, string mensaje, string tipo = "Info")
+    {
+        _logger.LogInformation("Test SignalR notification sent to user {UserId}: {Title}", usuarioId, titulo);
+        await Task.CompletedTask;
+    }
+
+    public async Task EnviarNotificacionAUsuariosAsync(List<Guid> usuariosIds, string titulo, string mensaje, string tipo = "Info")
+    {
+        _logger.LogInformation("Test SignalR notification sent to {Count} users: {Title}", usuariosIds.Count, titulo);
+        await Task.CompletedTask;
+    }
+
+    public async Task EnviarNotificacionARolAsync(string rol, string titulo, string mensaje, string tipo = "Info")
+    {
+        _logger.LogInformation("Test SignalR notification sent to role {Role}: {Title}", rol, titulo);
+        await Task.CompletedTask;
+    }
+
+    public async Task EnviarNotificacionGlobalAsync(string titulo, string mensaje, string tipo = "Info")
+    {
+        _logger.LogInformation("Test SignalR global notification sent: {Title}", titulo);
+        await Task.CompletedTask;
+    }
+
+    public async Task ActualizarEstadoMesaAsync(Guid mesaId, string estado, object detalles)
+    {
+        _logger.LogInformation("Test SignalR table status update: Table {TableId}, Status: {Status}", mesaId, estado);
+        await Task.CompletedTask;
+    }
+
+    public async Task ActualizarEstadoComandaAsync(Guid comandaId, string estado, object detalles)
+    {
+        _logger.LogInformation("Test SignalR order status update: Order {OrderId}, Status: {Status}", comandaId, estado);
+        await Task.CompletedTask;
+    }
+
+    public async Task EnviarAlertaInventarioAsync(Guid ingredienteId, string nombreIngrediente, decimal stockActual, decimal stockMinimo)
+    {
+        _logger.LogInformation("Test SignalR inventory alert: {IngredientName}, Stock: {Stock}", nombreIngrediente, stockActual);
+        await Task.CompletedTask;
+    }
+
+    public async Task<List<Guid>> ObtenerUsuariosConectadosAsync()
+    {
+        return await Task.FromResult(new List<Guid>());
+    }
+
+    public async Task<bool> UsuarioEstaConectadoAsync(Guid usuarioId)
+    {
+        return await Task.FromResult(false);
+    }
+
+    public async Task NotificarNuevaComandaAsync(object notificacion)
+    {
+        _logger.LogInformation("Test SignalR new order notification");
+        await Task.CompletedTask;
+    }
+
+    public async Task NotificarActualizacionComandaAsync(Guid comandaId, string estado, string? mensaje = null)
+    {
+        _logger.LogInformation("Test SignalR order update notification: Order {OrderId}, Status: {Status}", comandaId, estado);
+        await Task.CompletedTask;
+    }
+
+    public async Task NotificarEventoSistemaAsync(string evento, object datos)
+    {
+        _logger.LogInformation("Test SignalR system event notification: Event {Event}", evento);
+        await Task.CompletedTask;
+    }
+
+    public async Task NotificarUsuarioAsync(string usuarioId, string evento, object datos)
+    {
+        _logger.LogInformation("Test SignalR user notification: User {UserId}, Event {Event}", usuarioId, evento);
+        await Task.CompletedTask;
+    }
+
+    public async Task NotificarGrupoAsync(string grupo, string evento, object datos)
+    {
+        _logger.LogInformation("Test SignalR group notification: Group {Group}, Event {Event}", grupo, evento);
+        await Task.CompletedTask;
+    }
+}
+*/

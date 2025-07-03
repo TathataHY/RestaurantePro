@@ -34,8 +34,7 @@ public class ComandaConfiguration : IEntityTypeConfiguration<Comanda>
             
         builder.Property(p => p.ClienteId);
             
-        builder.Property(p => p.MeseroId)
-            .IsRequired();
+        builder.Property(p => p.MeseroId);
             
         builder.Property(p => p.Observaciones)
             .HasMaxLength(500);
@@ -78,7 +77,7 @@ public class ComandaConfiguration : IEntityTypeConfiguration<Comanda>
         // Configurar relaciones
         builder.HasMany(p => p.Items)
             .WithOne()
-            .HasForeignKey("ComandaId")
+            .HasForeignKey(i => i.ComandaId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(c => c.Mesa)

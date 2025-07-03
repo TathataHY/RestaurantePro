@@ -66,14 +66,12 @@ public class ItemComandaConfiguration : IEntityTypeConfiguration<ItemComanda>
             .HasMaxLength(200);
         
         // Configurar relaciones
-        builder.HasOne<Comanda>()
-            .WithMany()
-            .HasForeignKey("ComandaId")
-            .OnDelete(DeleteBehavior.Cascade);
+        // NOTA: La relación con Comanda se maneja desde ComandaConfiguration
+        // para evitar conflictos de configuración bidireccional
             
         builder.HasOne<Producto>()
             .WithMany()
-            .HasForeignKey("ProductoId")
+            .HasForeignKey(p => p.ProductoId)
             .OnDelete(DeleteBehavior.Cascade);
             
         // Configurar índices
