@@ -831,4 +831,162 @@ public class ReportesController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
         }
     }
+
+    /// <summary>
+    /// Obtiene datos de auditoría de acciones del sistema
+    /// </summary>
+    /// <param name="fechaInicio">Fecha de inicio del período</param>
+    /// <param name="fechaFin">Fecha de fin del período</param>
+    /// <param name="usuarioId">ID del usuario (opcional)</param>
+    /// <param name="tipoAccion">Tipo de acción (opcional)</param>
+    /// <returns>Datos de auditoría</returns>
+    [HttpGet("auditoria")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<object>>> ObtenerAuditoriaAcciones(
+        [FromQuery] DateTime? fechaInicio,
+        [FromQuery] DateTime? fechaFin,
+        [FromQuery] Guid? usuarioId,
+        [FromQuery] string? tipoAccion)
+    {
+        _logger.LogInformation("🔍 GET /api/operaciones/reportes/auditoria - Rango: {FechaInicio} - {FechaFin}, Usuario: {UsuarioId}, Acción: {TipoAccion}", 
+            fechaInicio, fechaFin, usuarioId, tipoAccion);
+
+        try
+        {
+            // TODO: Implementar cuando tengamos entidad EventosAuditoria
+            var auditoria = new
+            {
+                Eventos = new List<object>
+                {
+                    new
+                    {
+                        Id = Guid.NewGuid(),
+                        Fecha = DateTime.Now.AddHours(-1),
+                        UsuarioId = Guid.NewGuid(),
+                        UsuarioNombre = "Usuario Sistema",
+                        TipoAccion = "Crear",
+                        Entidad = "Comanda",
+                        EntidadId = Guid.NewGuid(),
+                        Detalles = "Comanda creada exitosamente",
+                        IpAddress = "192.168.1.100"
+                    },
+                    new
+                    {
+                        Id = Guid.NewGuid(),
+                        Fecha = DateTime.Now.AddHours(-2),
+                        UsuarioId = Guid.NewGuid(),
+                        UsuarioNombre = "Usuario Sistema",
+                        TipoAccion = "Actualizar",
+                        Entidad = "Reservacion",
+                        EntidadId = Guid.NewGuid(),
+                        Detalles = "Reservación confirmada",
+                        IpAddress = "192.168.1.101"
+                    }
+                },
+                Total = 2,
+                FechaConsulta = DateTime.Now,
+                Filtros = new
+                {
+                    FechaInicio = fechaInicio,
+                    FechaFin = fechaFin,
+                    UsuarioId = usuarioId,
+                    TipoAccion = tipoAccion
+                }
+            };
+
+            var response = ApiResponse<object>.SuccessResponse(
+                auditoria,
+                "Datos de auditoría obtenidos exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error obteniendo datos de auditoría");
+            
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno obteniendo auditoría",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
+
+    /// <summary>
+    /// Obtiene reporte de inventario crítico
+    /// </summary>
+    /// <param name="umbralCritico">Umbral para considerar stock crítico</param>
+    /// <param name="incluirVencimientos">Incluir ingredientes próximos a vencer</param>
+    /// <returns>Reporte de inventario crítico</returns>
+    [HttpGet("inventario-critico")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<object>>> ObtenerInventarioCritico(
+        [FromQuery] int umbralCritico = 10,
+        [FromQuery] bool incluirVencimientos = true)
+    {
+        _logger.LogInformation("⚠️ GET /api/operaciones/reportes/inventario-critico - Umbral: {UmbralCritico}, Vencimientos: {IncluirVencimientos}", 
+            umbralCritico, incluirVencimientos);
+
+        try
+        {
+            // TODO: Implementar cuando tengamos entidad Ingredientes con stock
+            var inventarioCritico = new
+            {
+                IngredientesCriticos = new List<object>
+                {
+                    new
+                    {
+                        Id = Guid.NewGuid(),
+                        Nombre = "Tomate",
+                        StockActual = 5,
+                        StockMinimo = 10,
+                        Unidad = "kg",
+                        Proveedor = "Proveedor A",
+                        FechaVencimiento = DateTime.Now.AddDays(3),
+                        Estado = "Crítico"
+                    },
+                    new
+                    {
+                        Id = Guid.NewGuid(),
+                        Nombre = "Lechuga",
+                        StockActual = 2,
+                        StockMinimo = 8,
+                        Unidad = "unidades",
+                        Proveedor = "Proveedor B",
+                        FechaVencimiento = DateTime.Now.AddDays(1),
+                        Estado = "Crítico"
+                    }
+                },
+                Resumen = new
+                {
+                    TotalIngredientesCriticos = 2,
+                    TotalIngredientesVencimiento = 1,
+                    ValorTotalInventario = 150.50m,
+                    AlertasGeneradas = 2
+                },
+                FechaConsulta = DateTime.Now,
+                UmbralCritico = umbralCritico
+            };
+
+            var response = ApiResponse<object>.SuccessResponse(
+                inventarioCritico,
+                "Reporte de inventario crítico obtenido exitosamente");
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error obteniendo reporte de inventario crítico");
+            
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error interno obteniendo inventario crítico",
+                StatusCodes.Status500InternalServerError);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
 } 
