@@ -378,6 +378,9 @@ public static class ApplicationServiceCollection
         services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Comandas.Events.Comanda.ComandaCreada>, 
             Operaciones.Comandas.EventHandlers.ComandaCreada.ComandaCreadaInventarioHandler>();
         
+        services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Comandas.Events.Comanda.ComandaCreada>, 
+            Operaciones.Comandas.EventHandlers.ComandaCreada.ComandaCreadaSignalRHandler>();
+        
         // ComandaFinalizada Event Handlers
         services.AddScoped<Domain.Core.Base.Events.Handlers.IDomainEventHandler<Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada>, 
             Operaciones.Comandas.EventHandlers.ComandaFinalizada.ComandaFinalizadaFidelizacionHandler>();
