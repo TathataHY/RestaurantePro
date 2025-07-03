@@ -40,6 +40,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             
             // 🚀 Registrar servicios de SignalR
             services.AddScoped<ISignalRService, SignalRService>();
+            services.AddSingleton<IHubConnectionManager, HubConnectionManager>();
             
             return services;
         }
