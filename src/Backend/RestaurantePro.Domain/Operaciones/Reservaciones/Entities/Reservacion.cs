@@ -151,13 +151,18 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
             };
 
             // Registrar el evento de dominio
-            reservacion.AddDomainEvent(new ReservacionCreada(
+            var evento = new ReservacionCreada(
                 reservacion.Id,
                 clienteId,
                 mesaId,
                 fecha.Date,
                 fecha.TimeOfDay,
-                cantidadPersonas));
+                cantidadPersonas);
+            
+            reservacion.AddDomainEvent(evento);
+            
+            // Log para debugging (temporal)
+            System.Diagnostics.Debug.WriteLine($"[Reservacion] Evento ReservacionCreada disparado: ReservacionId={evento.ReservacionId}, MesaId={evento.MesaId}");
 
             reservacion.ValidarInvariantes();
             return reservacion;

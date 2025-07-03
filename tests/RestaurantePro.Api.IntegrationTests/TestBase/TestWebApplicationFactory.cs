@@ -49,6 +49,7 @@ using RestaurantePro.Domain.Core.SharedKernel;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 using RestaurantePro.Domain.Core.Base.Events;
 using RestaurantePro.Domain.Core.Base;
+using RestaurantePro.Domain.Core.Base.Events.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -146,6 +147,15 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     .Ignore(RelationalEventId.PendingModelChangesWarning)
                     .Ignore(RelationalEventId.MultipleCollectionIncludeWarning)
                     .Ignore(CoreEventId.RowLimitingOperationWithoutOrderByWarning));
+                
+                // 🔧 AGREGAR INTERCEPTORES DIRECTAMENTE AL CONTEXTO
+                var auditableInterceptor = provider.GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.AuditableEntityInterceptor>();
+                var domainEventInterceptor = provider.GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.DomainEventInterceptor>();
+                var softDeleteInterceptor = provider.GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.SoftDeleteInterceptor>();
+                
+                options.AddInterceptors(auditableInterceptor);
+                options.AddInterceptors(domainEventInterceptor);
+                options.AddInterceptors(softDeleteInterceptor);
             });
 
             // 🔧 CONFIGURAR PROVEEDORESDBCONTEXT COMO SCOPED PARA TESTS
@@ -159,8 +169,11 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 options.EnableDetailedErrors();
             });
 
-            // 🔧 REGISTRAR IDOMAINEVENTDISPATCHER COMO SCOPED PARA TESTS
-            services.AddScoped<IDomainEventDispatcher, TestDomainEventDispatcher>();
+            // 🔧 REGISTRAR DOMAIN EVENT DISPATCHER REAL PARA TESTS DE INTEGRACIÓN
+            services.AddScoped<IDomainEventDispatcher, RestaurantePro.Domain.Core.Base.Events.Dispatcher.DomainEventDispatcher>();
+            
+            // 🔧 REGISTRAR TODOS LOS HANDLERS DE EVENTOS DE DOMINIO
+            services.AddAllDomainEventHandlers(typeof(RestaurantePro.Application.Operaciones.Reservaciones.EventHandlers.ReservacionCreada.ReservacionCreadaMesaHandler).Assembly);
             
             // 🔧 AGREGAR INTERCEPTORES PARA EVENTOS DE DOMINIO
             services.AddScoped<RestaurantePro.Infrastructure.Persistence.Interceptors.AuditableEntityInterceptor>();

@@ -76,7 +76,7 @@ public class CrearReservacionHandler : IRequestHandler<CrearReservacionCommand, 
             }
 
             // 4. Crear la reservación
-            var reservacion = CrearReservacion(request);
+            var reservacion = await CrearReservacion(request, cancellationToken);
 
             // 5. Guardar en base de datos
             await _reservacionRepository.AgregarAsync(reservacion, cancellationToken);
@@ -170,14 +170,38 @@ public class CrearReservacionHandler : IRequestHandler<CrearReservacionCommand, 
         return Result.Success();
     }
 
-    private Reservacion CrearReservacion(CrearReservacionCommand request)
+    private async Task<Reservacion> CrearReservacion(CrearReservacionCommand request, CancellationToken cancellationToken)
     {
-        // Si no se especificó una mesa específica, usar la primera disponible
-        var mesaId = request.MesaEspecificaId ?? Guid.Empty; // TODO: Obtener primera mesa disponible
+        // Obtener mesa disponible si no se especificó una
+        var mesaId = request.MesaEspecificaId;
+        _logger.LogInformation("[CrearReservacion] MesaEspecificaId recibido: {MesaEspecificaId}", mesaId);
+        
+        if (!mesaId.HasValue)
+        {
+            _logger.LogInformation("[CrearReservacion] No se especificó mesa, buscando mesa disponible...");
+            var mesasDisponibles = await _reservacionRepository.ObtenerMesasDisponiblesAsync(
+                request.FechaHoraReservacion.Date,
+                request.FechaHoraReservacion.TimeOfDay,
+                request.NumeroPersonas,
+                90, // Duración por defecto en minutos
+                cancellationToken);
+
+            if (!mesasDisponibles.Any())
+            {
+                throw new InvalidOperationException("No hay mesas disponibles para la fecha y hora solicitadas");
+            }
+
+            mesaId = mesasDisponibles.First();
+            _logger.LogInformation("[CrearReservacion] Mesa automática asignada: {MesaId}", mesaId);
+        }
+        else
+        {
+            _logger.LogInformation("[CrearReservacion] Mesa específica asignada: {MesaId}", mesaId);
+        }
 
         // Crear la reservación usando el método de fábrica del dominio
         var reservacion = Reservacion.Crear(
-            mesaId: mesaId,
+            mesaId: mesaId.Value,
             clienteId: request.ClienteId,
             fecha: request.FechaHoraReservacion,
             duracionEstimada: TimeSpan.FromHours(2), // Duración por defecto

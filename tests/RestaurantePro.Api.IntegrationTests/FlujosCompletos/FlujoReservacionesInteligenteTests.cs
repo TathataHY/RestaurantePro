@@ -77,8 +77,14 @@ public class FlujoReservacionesInteligenteTests : ApiIntegrationTestBase
         }
         responseReservacion1.StatusCode.Should().Be(HttpStatusCode.Created);
         
-        // Recargar entidad Mesa para verificar estado correcto
-        await DbContext.Entry(mesa1).ReloadAsync();
+        // Recargar entidad Mesa para verificar estado correcto (polling hasta 1s)
+        var intentos = 0;
+        while (mesa1.Estado != EstadoMesa.Reservada && intentos < 10)
+        {
+            await Task.Delay(100);
+            await DbContext.Entry(mesa1).ReloadAsync();
+            intentos++;
+        }
         mesa1.Estado.Should().Be(EstadoMesa.Reservada);
         
         var reservacion1Response = await responseReservacion1.Content.ReadFromJsonAsync<ApiResponse<ReservacionDto>>();

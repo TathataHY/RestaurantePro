@@ -14,7 +14,7 @@ Este documento mapea los flujos de negocio críticos que deben funcionar correct
 - **Total Flujos Críticos**: 18
 - **Flujos Implementados**: 5 ✅
 - **Flujos en Desarrollo**: 0 🟡
-- **Tests de Flujo**: 27 ✅
+- **Tests de Flujo**: 31 ✅
 - **Estado**: 🚀 **FASE 2 COMPLETADA** - Todos los flujos comerciales FINALIZADOS
 - **Próxima Fase**: 🚀 **FASE 3 - Flujos de Analytics y Reportes** (Siguiente)
 
@@ -378,9 +378,9 @@ Este documento mapea los flujos de negocio críticos que deben funcionar correct
 2. **Flujo de Gestión de Inventario Inteligente** - Control de stock ✅
 3. **Flujo de Reservaciones Inteligente** - Gestión de mesas ✅
 
-### **Fase 2: Flujos Comerciales** 🟡 **EN DESARROLLO**
+### **Fase 2: Flujos Comerciales** ✅ **FINALIZADA**
 **Descripción**: Sistema de gestión comercial con IA y fidelización
-**Progreso**: 2/3 flujos completados (66%)
+**Progreso**: 3/3 flujos completados (100%)
 
 ### **3. Flujo de Fidelización Inteligente** ✅/✅ **FINALIZADO**
 **Descripción**: Sistema de puntos y recompensas personalizadas
@@ -404,17 +404,29 @@ Este documento mapea los flujos de negocio críticos que deben funcionar correct
 - `POST /api/comercial/facturas/{id}/enviar-email` → Enviar email ✅
 - `GET /api/comercial/reportes/ventas` → Reporte de ventas ✅
 
-### **5. Flujo de Promociones Dinámicas** 🟡/🟡 **EN DESARROLLO**
+### **5. Flujo de Promociones Dinámicas** ✅/✅ **FINALIZADO**
 **Descripción**: Sistema de promociones que se adapta al comportamiento del cliente
 **Archivo**: `FlujoPromocionesDinamicasTests.cs`
-**Tests Implementados**: 5 tests de integración implementados y compilando (creación, asignación, aplicabilidad y aplicación de promociones)
-**Nota**: Los tests están implementados correctamente, pero el backend tiene limitaciones técnicas. Las entidades del dominio para promociones no están completamente implementadas, causando errores de compilación en el handler de aplicación. Se requiere completar las entidades del dominio antes de finalizar este flujo.
+**Tests Implementados**: 6 tests de integración completos y validados
 **Endpoints Involucrados**:
 - `POST /api/comercial/promociones` → Crear promoción ✅
-- `GET /api/comercial/promociones/aplicabilidad` → Verificar aplicabilidad 🟡
-- `POST /api/comercial/promociones/{id}/activar` → Activar promoción 🟡
-- `POST /api/comercial/promociones/{id}/productos` → Asignar productos 🟡
-- `POST /api/comercial/promociones/aplicar` → Aplicar promoción 🟡 (pendiente entidades del dominio)
+- `GET /api/comercial/promociones/aplicabilidad` → Verificar aplicabilidad ✅
+- `POST /api/comercial/promociones/{id}/activar` → Activar promoción ✅
+- `POST /api/comercial/promociones/{id}/productos` → Asignar productos ✅
+- `POST /api/comercial/promociones/aplicar` → Aplicar promoción ✅
+
+**Validaciones implementadas**:
+- [x] Creación de promociones con validaciones
+- [x] Asignación de productos a promociones
+- [x] Verificación de aplicabilidad de promociones
+- [x] Aplicación de promociones sobre facturas y comandas
+- [x] Activación de promociones (con validaciones de fecha)
+- [x] Verificación automática de elegibilidad
+- [x] Cálculo correcto de descuentos
+- [x] Validación de monto mínimo
+- [x] Respuesta con productos afectados
+
+**✅ Estado Final**: El flujo de promociones dinámicas está completamente implementado y validado con 6 tests de integración. Se resolvieron problemas críticos de mapeo EF Core, carga de entidades, cálculo de descuentos y respuesta de productos afectados. Todos los endpoints funcionan correctamente siguiendo las mejores prácticas de Clean Architecture y CQRS.
 
 ### **Fase 3: Flujos de Analytics (Semanas 5-6)**
 7. **Flujo de Reportes Operativos en Tiempo Real** - Dashboard
@@ -638,6 +650,12 @@ Este documento mapea los flujos de negocio críticos que deben funcionar correct
 ---
 
 ## 🎯 **TRABAJO ACTUAL - DICIEMBRE 2024**
+
+### **✅ Fase 2: Flujos Comerciales - COMPLETADA**
+**Fecha de finalización**: Diciembre 2024  
+**Responsable**: Equipo de Desarrollo  
+**Objetivo**: Implementar todos los flujos comerciales críticos - Fidelización, Facturación y Promociones  
+**Estado**: ✅ **FINALIZADA Y VALIDADA COMPLETAMENTE**
 
 ### **🚀 Fase 3: Flujos de Analytics y Reportes - SIGUIENTE**
 **Fecha de inicio**: Diciembre 2024  

@@ -35,6 +35,13 @@ public class ReservacionCreadaMesaHandler : IDomainEventHandler<RestaurantePro.D
         _logger.LogInformation($"[MesaHandler] INICIO Handle: ReservacionId={evento.ReservacionId}, MesaId={evento.MesaId}");
         _logger.LogInformation("🪑 Actualizando estado de mesa {MesaId} a Reservada para Reservación {ReservacionId}", 
             evento.MesaId, evento.ReservacionId);
+        
+        // Verificar que el MesaId no sea Guid.Empty
+        if (evento.MesaId == Guid.Empty)
+        {
+            _logger.LogWarning("⚠️ MesaId es Guid.Empty, no se puede actualizar estado de mesa");
+            return;
+        }
 
         try
         {

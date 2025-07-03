@@ -32,6 +32,14 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
             _dispatcher = dispatcher;
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            base.OnConfiguring(optionsBuilder);
+
+            // Los interceptores se configuran automáticamente desde el DI container
+            // cuando se registran con AddInterceptors en la configuración del DbContext
+        }
+
         // DbSets de la aplicación
         public DbSet<Domain.Core.Productos.Entities.Producto> Productos { get; set; }
         public DbSet<Domain.Core.Productos.Entities.ProductoCategoria> ProductoCategorias { get; set; }
