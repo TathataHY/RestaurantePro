@@ -433,7 +433,7 @@ public class FlujoFidelizacionInteligenteTests : ApiIntegrationTestBase
         var guid = Guid.NewGuid();
         var sufijoUnico = sufijo ?? guid.ToString().Substring(0, 8);
         var nombre = ClienteNombre.Crear($"Juan{sufijoUnico}", $"Pérez{sufijoUnico}");
-        var email = Email.Create($"juan.perez{sufijoUnico}@test.com");
+        var email = Email.Create($"test{sufijoUnico}@example.com");
         var telefono = PhoneNumber.Create("+1234567890");
         var fechaNacimiento = DateTime.Now.AddYears(-25);
         
