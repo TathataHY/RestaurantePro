@@ -37,6 +37,11 @@ public class AplicarPromocionCommand : IRequest<Result<AplicarPromocionDto>>
     public Guid? ClienteId { get; set; }
 
     /// <summary>
+    /// Monto original de la compra para calcular el descuento
+    /// </summary>
+    public decimal MontoOriginal { get; set; }
+
+    /// <summary>
     /// Tipo de aplicación de la promoción
     /// </summary>
     public TipoAplicacionPromocion TipoAplicacion { get; set; }

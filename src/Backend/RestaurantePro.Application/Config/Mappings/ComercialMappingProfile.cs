@@ -151,6 +151,8 @@ public class ComercialMappingProfile : Profile
     {
         // Promocion Entity -> PromocionDto
         CreateMap<RestaurantePro.Domain.Comercial.Promociones.Entities.Promocion, RestaurantePro.Application.Comercial.Promociones.DTOs.PromocionDto>()
+            .ForMember(dest => dest.FechaInicio, opt => opt.MapFrom(src => src.FechaInicio))
+            .ForMember(dest => dest.FechaFin, opt => opt.MapFrom(src => src.FechaFin))
             .ForMember(dest => dest.ProductosAplicablesIds, opt => opt.MapFrom(src => src.ProductosAplicablesIds != null ? src.ProductosAplicablesIds.ToList() : new List<Guid>()))
             .ForMember(dest => dest.CategoriasAplicablesIds, opt => opt.MapFrom(src => src.CategoriasAplicablesIds != null ? src.CategoriasAplicablesIds.ToList() : new List<Guid>()))
             .ForMember(dest => dest.ClientesQueUsaronIds, opt => opt.MapFrom(src => src.ClientesQueUsaronIds != null ? src.ClientesQueUsaronIds.ToList() : new List<Guid>()))

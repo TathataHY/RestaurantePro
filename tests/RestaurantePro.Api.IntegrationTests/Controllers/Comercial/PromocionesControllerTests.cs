@@ -380,6 +380,61 @@ public class PromocionesControllerTests : ApiIntegrationTestBase, IDisposable
         responseContent.Data.Id.Should().Be(promocion.Id);
     }
 
+    [Fact]
+    public async Task AplicarPromocionSobreFactura_ConMontoMinimo_DeberiaAplicarCorrectamente()
+    {
+        // Arrange
+        var cliente = await CrearClientePrueba();
+        var producto1 = await CrearProductoPrueba("Producto Test 1", 100.00m);
+        var producto2 = await CrearProductoPrueba("Producto Test 2", 150.00m);
+        var factura = await CrearFacturaConDetallesPrueba(clienteId: cliente.Id);
+        var comandaId = factura.ComandasIds.First();
+        // Agregar productos a la comanda para asegurar monto mínimo
+        await CrearDetalleComandaPrueba(comandaId, producto1.Id, 3, "Producto 1 agregado para monto mínimo"); // 3 x $100 = $300
+        await CrearDetalleComandaPrueba(comandaId, producto2.Id, 2, "Producto 2 agregado para monto mínimo"); // 2 x $150 = $300
+        await DbContext.SaveChangesAsync();
+        await DbContext.Entry(factura).ReloadAsync();
+        var comanda = await DbContext.Comandas.FindAsync(comandaId);
+        await DbContext.Entry(comanda!).ReloadAsync();
+        // Crear promoción válida
+        var crearPromocionRequest = new CrearPromocionCommand
+        {
+            Codigo = $"PROMO{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}",
+            Nombre = $"Promoción Test {Guid.NewGuid().ToString("N")[..8]}",
+            Descripcion = "Promoción de prueba para test de integración",
+            Tipo = TipoPromocion.PorcentajeTotal,
+            ValorDescuento = 10.0m, // 10% de descuento
+            MontoMinimo = 10.0m, // Monto mínimo bajo para asegurar aplicabilidad
+            FechaInicio = DateTime.UtcNow.AddMinutes(1), // Fecha futura muy cercana
+            FechaFin = DateTime.UtcNow.AddDays(30),
+            MaximoUsos = 10,
+            EsAcumulable = false
+        };
+        var crearResponse = await HttpClient.PostAsJsonAsync("/api/comercial/promociones", crearPromocionRequest);
+        crearResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var crearResult = await crearResponse.Content.ReadFromJsonAsync<ApiResponse<PromocionDto>>();
+        crearResult.Should().NotBeNull();
+        var promocionId = crearResult!.Data!.Id;
+        // Esperar a que la promoción esté vigente
+        await Task.Delay(2000);
+        // Act
+        var aplicarRequest = new AplicarPromocionCommand
+        {
+            PromocionId = promocionId,
+            FacturaId = factura.Id,
+            ClienteId = cliente.Id,
+            ProductosIds = new List<Guid> { producto1.Id, producto2.Id },
+            TipoAplicacion = TipoAplicacionPromocion.ProductosEspecificos
+        };
+        var response = await HttpClient.PostAsJsonAsync("/api/comercial/promociones/aplicar", aplicarRequest);
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var aplicarResult = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+        aplicarResult.Should().NotBeNull();
+        aplicarResult!.Success.Should().BeTrue();
+        aplicarResult.Data.Should().NotBeNull();
+    }
+
     // Métodos helper
     private async Task CreatePromocionInDatabase(Promocion promocion)
     {

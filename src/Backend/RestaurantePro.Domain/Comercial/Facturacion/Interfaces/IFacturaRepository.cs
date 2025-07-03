@@ -84,5 +84,13 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Lista de facturas pendientes que vencen antes de la fecha especificada</returns>
         Task<IEnumerable<Factura>> ObtenerFacturasPendientesConVencimientoAsync(DateTime fechaVencimiento, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Recarga los detalles de una factura desde la base de datos
+        /// </summary>
+        /// <param name="facturaId">Identificador de la factura</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Task completado cuando se recargan los detalles</returns>
+        Task RecargarDetallesAsync(Guid facturaId, CancellationToken cancellationToken = default);
     }
 } 

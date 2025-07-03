@@ -167,5 +167,25 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
                 .Where(f => (f.Estado == EstadoFactura.Emitida || f.Estado == EstadoFactura.PagadaParcialmente) && f.FechaVencimiento <= fechaVencimiento && !f.EstaEliminado)
                 .ToListAsync(cancellationToken);
         }
+
+        /// <summary>
+        /// Recarga los detalles de una factura desde la base de datos
+        /// </summary>
+        public async Task RecargarDetallesAsync(Guid facturaId, CancellationToken cancellationToken = default)
+        {
+            var factura = await _dbSet
+                .Include(f => f.Detalles)
+                .FirstOrDefaultAsync(f => f.Id == facturaId, cancellationToken);
+
+            if (factura != null)
+            {
+                // Forzar la recarga de la entidad y sus detalles
+                _dbContext.Entry(factura).Reload();
+                foreach (var detalle in factura.Detalles)
+                {
+                    _dbContext.Entry(detalle).Reload();
+                }
+            }
+        }
     }
 } 

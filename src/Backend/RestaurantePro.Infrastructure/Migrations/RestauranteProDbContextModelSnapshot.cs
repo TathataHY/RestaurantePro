@@ -300,7 +300,7 @@ namespace RestaurantePro.Infrastructure.Migrations
 
                     b.ToTable("TarjetasFidelizacion", "Comercial");
 
-                    b.HasAnnotation("SqlServer:ValueGenerationStrategy", null);
+                    b.HasAnnotation("SqlServer:IsConcurrencyToken", false);
                 });
 
             modelBuilder.Entity("RestaurantePro.Domain.Comercial.Facturacion.Entities.DetalleFactura", b =>
@@ -576,11 +576,13 @@ namespace RestaurantePro.Infrastructure.Migrations
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("FechaFin")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("FechaFin")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("FechaInicio")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("FechaInicio")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
@@ -632,10 +634,6 @@ namespace RestaurantePro.Infrastructure.Migrations
                         .IsUnique();
 
                     b.HasIndex("Estado");
-
-                    b.HasIndex("FechaFin");
-
-                    b.HasIndex("FechaInicio");
 
                     b.ToTable("Promociones", "Comercial");
                 });
@@ -1066,6 +1064,7 @@ namespace RestaurantePro.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 

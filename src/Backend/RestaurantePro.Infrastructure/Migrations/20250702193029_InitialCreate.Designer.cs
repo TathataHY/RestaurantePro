@@ -12,8 +12,8 @@ using RestaurantePro.Infrastructure.Persistence.Contexts;
 namespace RestaurantePro.Infrastructure.Migrations
 {
     [DbContext(typeof(RestauranteProDbContext))]
-    [Migration("20250702032816_RemoveConcurrencyTokenFromOrdenCompra")]
-    partial class RemoveConcurrencyTokenFromOrdenCompra
+    [Migration("20250702193029_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -303,7 +303,7 @@ namespace RestaurantePro.Infrastructure.Migrations
 
                     b.ToTable("TarjetasFidelizacion", "Comercial");
 
-                    b.HasAnnotation("SqlServer:ValueGenerationStrategy", null);
+                    b.HasAnnotation("SqlServer:IsConcurrencyToken", false);
                 });
 
             modelBuilder.Entity("RestaurantePro.Domain.Comercial.Facturacion.Entities.DetalleFactura", b =>
@@ -579,11 +579,13 @@ namespace RestaurantePro.Infrastructure.Migrations
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("FechaFin")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("FechaFin")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("FechaInicio")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("FechaInicio")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("nvarchar(max)");
@@ -635,10 +637,6 @@ namespace RestaurantePro.Infrastructure.Migrations
                         .IsUnique();
 
                     b.HasIndex("Estado");
-
-                    b.HasIndex("FechaFin");
-
-                    b.HasIndex("FechaInicio");
 
                     b.ToTable("Promociones", "Comercial");
                 });

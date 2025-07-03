@@ -289,8 +289,10 @@ public class PromocionesController : ControllerBase
         {
             PromocionId = request.PromocionId,
             ClienteId = request.ClienteId,
+            FacturaId = request.FacturaId,
             ComandaId = request.ComandaId,
             ProductosIds = request.ProductosIds,
+            MontoOriginal = request.MontoOriginal,
             TipoAplicacion = TipoAplicacionPromocion.ProductosEspecificos
         };
 

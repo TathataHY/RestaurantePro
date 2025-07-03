@@ -21,6 +21,11 @@ public class AplicarPromocionRequest
     public Guid? ComandaId { get; set; }
 
     /// <summary>
+    /// ID de la factura (opcional)
+    /// </summary>
+    public Guid? FacturaId { get; set; }
+
+    /// <summary>
     /// Monto original de la compra
     /// </summary>
     public decimal MontoOriginal { get; set; }

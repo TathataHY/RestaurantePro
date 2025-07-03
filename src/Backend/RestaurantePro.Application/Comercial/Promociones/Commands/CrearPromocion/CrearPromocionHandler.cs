@@ -33,6 +33,8 @@ public class CrearPromocionHandler : IRequestHandler<CrearPromocionCommand, Resu
         {
             _logger.LogInformation("🎁 Creando nueva promoción: {Codigo} - {Nombre}", request.Codigo, request.Nombre);
 
+            Console.WriteLine($"[HANDLER-DEBUG] FechaInicio recibida en comando: {request.FechaInicio:o}");
+
             // Validar que el código sea único
             var codigoExiste = await _context.Promociones
                 .AnyAsync(p => p.Codigo == request.Codigo, cancellationToken);
@@ -79,6 +81,8 @@ public class CrearPromocionHandler : IRequestHandler<CrearPromocionCommand, Resu
                     promocion.AgregarCategoriaAplicable(categoriaId);
                 }
             }
+
+            Console.WriteLine($"[HANDLER-DEBUG] FechaInicio en entidad antes de guardar: {promocion.FechaInicio:o}");
 
             // Guardar en la base de datos
             _context.Promociones.Add(promocion);

@@ -9,6 +9,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Comercial
         public void Configure(EntityTypeBuilder<DetalleFactura> builder)
         {
             builder.ToTable("DetalleFactura", "Comercial");
+            // Relación explícita con Factura
+            builder.HasOne<Factura>()
+                .WithMany(f => f.Detalles)
+                .HasForeignKey("FacturaId")
+                .OnDelete(DeleteBehavior.Cascade);
             // Puedes agregar más configuraciones aquí si es necesario
         }
     }

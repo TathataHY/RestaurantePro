@@ -237,8 +237,8 @@ namespace RestaurantePro.Infrastructure.Migrations
                     ValorDescuento = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     MontoMinimo = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
                     PuntosRequeridos = table.Column<int>(type: "int", nullable: false),
-                    FechaInicio = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    FechaFin = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaInicio = table.Column<string>(type: "TEXT", nullable: false),
+                    FechaFin = table.Column<string>(type: "TEXT", nullable: false),
                     MaximoUsos = table.Column<int>(type: "int", nullable: true),
                     VecesUsada = table.Column<int>(type: "int", nullable: false),
                     Estado = table.Column<string>(type: "nvarchar(450)", nullable: false),
@@ -1414,18 +1414,6 @@ namespace RestaurantePro.Infrastructure.Migrations
                 schema: "Comercial",
                 table: "Promociones",
                 column: "Estado");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Promociones_FechaFin",
-                schema: "Comercial",
-                table: "Promociones",
-                column: "FechaFin");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Promociones_FechaInicio",
-                schema: "Comercial",
-                table: "Promociones",
-                column: "FechaInicio");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Proveedores_Nombre",

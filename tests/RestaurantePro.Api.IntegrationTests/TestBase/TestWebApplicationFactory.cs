@@ -203,6 +203,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     Console.WriteLine("🗑️ Base de datos eliminada completamente");
                     
                     // Usar EnsureCreated para tests con SQLite (evita problemas de sintaxis de migraciones)
+                    // Las configuraciones de conversión se aplican automáticamente desde el modelo
                     dbContext.Database.EnsureCreated();
                     Console.WriteLine("✅ Tablas creadas en BD temporal usando EnsureCreated");
                 }

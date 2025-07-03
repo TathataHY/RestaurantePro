@@ -1,4 +1,5 @@
 namespace RestaurantePro.Application.Comercial.Promociones.Commands.AplicarPromocion;
+using RestaurantePro.Domain.Comercial.Promociones.Enums;
 
 /// <summary>
 /// Handler para aplicar promociones a facturas o comandas
@@ -42,17 +43,47 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
 
     public async Task<Result<AplicarPromocionDto>> Handle(AplicarPromocionCommand request, CancellationToken cancellationToken)
     {
+        _logger.LogInformation("[DEBUG] Iniciando aplicación de promoción. PromocionId: {PromocionId}, FacturaId: {FacturaId}, ClienteId: {ClienteId}", 
+            request.PromocionId, request.FacturaId, request.ClienteId);
+
         try 
         {
             _logger.LogInformation("🎁 Iniciando aplicación de promoción {PromocionId} - Tipo: {TipoAplicacion}", 
                 request.PromocionId, request.TipoAplicacion);
             
-            // Implementación de funcionalidad de promociones
-            throw new NotImplementedException("La funcionalidad de promociones está en desarrollo. Las entidades del dominio aún no están disponibles.");
-        }
-        catch (NotImplementedException ex)
-        {
-            return Result.Failure<AplicarPromocionDto>(ex.Message);
+            // Obtener la promoción
+            var promocionResult = await ObtenerPromocion(request, cancellationToken);
+            if (promocionResult.IsFailure())
+                return Result.Failure<AplicarPromocionDto>(promocionResult.Error);
+
+            var promocion = promocionResult.Value;
+
+            // Obtener la entidad destino (factura o comanda)
+            var entidadResult = await ObtenerEntidadDestino(request, cancellationToken);
+            if (entidadResult.IsFailure())
+                return Result.Failure<AplicarPromocionDto>(entidadResult.Error);
+
+            var (factura, comanda) = entidadResult.Value;
+
+            // Validar elegibilidad básica
+            var validacionResult = await ValidarElegibilidadBasica(promocion, factura, comanda, request, cancellationToken);
+            if (validacionResult.IsFailure())
+                return Result.Failure<AplicarPromocionDto>(validacionResult.Error);
+
+            // Calcular descuento simplificado
+            var calculoResult = await CalcularDescuentoSimplificado(promocion, factura, comanda, request, cancellationToken);
+            if (calculoResult.IsFailure())
+                return Result.Failure<AplicarPromocionDto>(calculoResult.Error);
+
+            var calculo = calculoResult.Value;
+
+            // Crear respuesta exitosa
+            var respuesta = CrearRespuestaSimplificada(promocion, factura, comanda, calculo, request);
+
+            _logger.LogInformation("✅ Promoción {PromocionId} aplicada exitosamente. Descuento: {Descuento:C}", 
+                promocion.Id, calculo.MontoDescuento);
+
+            return Result.Success(respuesta);
         }
         catch (Exception ex)
         {
@@ -71,7 +102,6 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         }
     }
 
-    /* TODO: Restaurar estos métodos cuando las entidades estén disponibles
     #region Métodos privados
 
     private async Task<Result<Promocion>> ObtenerPromocion(AplicarPromocionCommand request, CancellationToken cancellationToken)
@@ -81,15 +111,11 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         if (request.PromocionId != Guid.Empty)
         {
             promocion = await _context.Promociones
-                .Include(p => p.Condiciones)
-                .Include(p => p.ProductosElegibles)
                 .FirstOrDefaultAsync(p => p.Id == request.PromocionId, cancellationToken);
         }
         else if (!string.IsNullOrEmpty(request.CodigoPromocion))
         {
             promocion = await _context.Promociones
-                .Include(p => p.Condiciones)
-                .Include(p => p.ProductosElegibles)
                 .FirstOrDefaultAsync(p => p.Codigo == request.CodigoPromocion, cancellationToken);
         }
 
@@ -109,9 +135,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         if (request.FacturaId.HasValue)
         {
             factura = await _context.Facturas
-                .Include(f => f.Items)
-                    .ThenInclude(i => i.Producto)
-                .Include(f => f.Descuentos)
+                .Include(f => f.Detalles)
                 .FirstOrDefaultAsync(f => f.Id == request.FacturaId.Value, cancellationToken);
 
             if (factura == null)
@@ -123,9 +147,6 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         if (request.ComandaId.HasValue)
         {
             comanda = await _context.Comandas
-                .Include(c => c.Items)
-                    .ThenInclude(i => i.Producto)
-                .Include(c => c.Descuentos)
                 .FirstOrDefaultAsync(c => c.Id == request.ComandaId.Value, cancellationToken);
 
             if (comanda == null)
@@ -137,7 +158,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         return Result.Success((factura, comanda));
     }
 
-    private async Task<Result> ValidarElegibilidad(Promocion promocion, Factura? factura, Comanda? comanda, AplicarPromocionCommand request, CancellationToken cancellationToken)
+    private async Task<Result> ValidarElegibilidadBasica(Promocion promocion, Factura? factura, Comanda? comanda, AplicarPromocionCommand request, CancellationToken cancellationToken)
     {
         // Validar vigencia
         var ahora = DateTime.UtcNow;
@@ -146,73 +167,101 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
             return Result.Failure("La promoción no está vigente.");
         }
 
-        // Validar estado activo
-        if (!promocion.Activa)
+        // Validar monto mínimo básico
+        decimal montoTotal = 0;
+        if (factura != null)
         {
-            return Result.Failure("La promoción no está activa.");
-        }
-
-        // Validar límite de uso global
-        if (promocion.LimiteUso.HasValue)
-        {
-            var usosActuales = await _context.AplicacionesPromocion
-                .CountAsync(ap => ap.PromocionId == promocion.Id, cancellationToken);
-
-            if (usosActuales >= promocion.LimiteUso.Value)
+            factura.RecalcularTotales(); // Asegurar que el total esté actualizado
+            montoTotal = factura.Total;
+            
+            // Logging detallado para diagnóstico
+            _logger.LogInformation("[DEBUG] Factura {FacturaId} - Total: {Total}, Subtotal: {Subtotal}, Detalles: {DetallesCount}", 
+                factura.Id, factura.Total, factura.Subtotal, factura.Detalles.Count);
+            
+            if (factura.Detalles.Any())
             {
-                return Result.Failure("La promoción ha alcanzado su límite de uso.");
+                var detallesInfo = string.Join(", ", factura.Detalles.Select(d => $"ProductoId:{d.ProductoId}, Cantidad:{d.Cantidad}, Precio:{d.PrecioUnitario}"));
+                _logger.LogInformation("[DEBUG] Detalles de factura: {DetallesInfo}", detallesInfo);
+            }
+            else
+            {
+                _logger.LogWarning("[DEBUG] La factura {FacturaId} no tiene detalles cargados", factura.Id);
+            }
+        }
+        else if (comanda != null)
+        {
+            montoTotal = comanda.Total.Total; // Usar la propiedad Total del value object
+            
+            // Logging detallado para comanda
+            _logger.LogInformation("[DEBUG] Comanda {ComandaId} - Total: {Total}, Items: {ItemsCount}", 
+                comanda.Id, comanda.Total.Total, comanda.Items.Count);
+            
+            if (comanda.Items.Any())
+            {
+                var itemsInfo = string.Join(", ", comanda.Items.Select(i => $"ProductoId:{i.ProductoId}, Cantidad:{i.Cantidad}, Precio:{i.PrecioUnitario}"));
+                _logger.LogInformation("[DEBUG] Items de comanda: {ItemsInfo}", itemsInfo);
+            }
+            else
+            {
+                _logger.LogWarning("[DEBUG] La comanda {ComandaId} no tiene items cargados", comanda.Id);
             }
         }
 
-        // Validar límite por cliente si aplica
-        if (request.ClienteId.HasValue && promocion.LimitePorCliente.HasValue)
+        _logger.LogInformation("[DEBUG] Monto total calculado en ValidarElegibilidadBasica: {MontoTotal}", montoTotal);
+
+        if (promocion.MontoMinimo > 0 && montoTotal < promocion.MontoMinimo)
         {
-            var usosCliente = await _context.AplicacionesPromocion
-                .CountAsync(ap => ap.PromocionId == promocion.Id && ap.ClienteId == request.ClienteId.Value, cancellationToken);
-
-            if (usosCliente >= promocion.LimitePorCliente.Value)
-            {
-                return Result.Failure("El cliente ha alcanzado el límite de uso de esta promoción.");
-            }
-        }
-
-        // Validar monto mínimo
-        decimal montoTotal = factura?.Total ?? comanda?.Total ?? 0;
-        if (promocion.MontoMinimo.HasValue && montoTotal < promocion.MontoMinimo.Value)
-        {
-            return Result.Failure($"El monto mínimo requerido es {promocion.MontoMinimo.Value:C}.");
-        }
-
-        // Validar productos elegibles si es aplicación por productos específicos
-        if (request.TipoAplicacion == TipoAplicacionPromocion.ProductosEspecificos && request.ProductosIds?.Any() == true)
-        {
-            var productosElegibles = promocion.ProductosElegibles.Select(pe => pe.ProductoId).ToList();
-            var productosNoElegibles = request.ProductosIds.Except(productosElegibles).ToList();
-
-            if (productosNoElegibles.Any())
-            {
-                return Result.Failure($"Los siguientes productos no son elegibles para esta promoción: {string.Join(", ", productosNoElegibles)}");
-            }
+            return Result.Failure($"El monto mínimo requerido es {promocion.MontoMinimo:C}.");
         }
 
         return Result.Success();
     }
 
-    private async Task<Result<CalculoDescuentoDto>> CalcularDescuento(Promocion promocion, Factura? factura, Comanda? comanda, AplicarPromocionCommand request, CancellationToken cancellationToken)
+    private async Task<Result<CalculoDescuentoDto>> CalcularDescuentoSimplificado(Promocion promocion, Factura? factura, Comanda? comanda, AplicarPromocionCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            var calculo = await _calculadoraPromociones.CalcularDescuentoAsync(new CalcularDescuentoRequest
+            // Usar el MontoOriginal del request si está disponible, sino usar el total real de la entidad
+            var montoTotal = request.MontoOriginal > 0 ? request.MontoOriginal : 0m;
+            
+            if (montoTotal == 0) // Si no se proporcionó MontoOriginal, usar el total real
             {
-                Promocion = promocion,
-                Factura = factura,
-                Comanda = comanda,
-                TipoAplicacion = request.TipoAplicacion,
-                ProductosIds = request.ProductosIds,
-                ClienteId = request.ClienteId
-            }, cancellationToken);
+                if (factura != null)
+                {
+                    montoTotal = factura.Total;
+                }
+                else if (comanda != null)
+                {
+                    montoTotal = comanda.Total.Total; // Usar la propiedad Total del value object
+                }
+            }
 
-            return Result.Success(calculo);
+            _logger.LogInformation("[DEBUG] Monto total calculado en CalcularDescuentoSimplificado: {MontoTotal} (MontoOriginal: {MontoOriginal})", montoTotal, request.MontoOriginal);
+
+            var montoDescuento = 0m;
+            var porcentajeDescuento = 0m;
+
+            switch (promocion.Tipo)
+            {
+                case TipoPromocion.PorcentajeTotal:
+                    porcentajeDescuento = promocion.ValorDescuento;
+                    montoDescuento = montoTotal * (porcentajeDescuento / 100);
+                    break;
+                case TipoPromocion.MontoFijoTotal:
+                    montoDescuento = promocion.ValorDescuento;
+                    porcentajeDescuento = montoTotal > 0 ? (montoDescuento / montoTotal) * 100 : 0;
+                    break;
+                default:
+                    return Result.Failure<CalculoDescuentoDto>("Tipo de promoción no soportado.");
+            }
+
+            return Result.Success(new CalculoDescuentoDto
+            {
+                MontoDescuento = montoDescuento,
+                PorcentajeDescuento = porcentajeDescuento,
+                ProductosAfectados = request.ProductosIds ?? new List<Guid>(),
+                DetalleCalculo = $"Descuento aplicado: {montoDescuento:C} ({porcentajeDescuento:F1}%)"
+            });
         }
         catch (Exception ex)
         {
@@ -221,152 +270,23 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         }
     }
 
-    private async Task<Result> AplicarDescuento(Promocion promocion, Factura? factura, Comanda? comanda, CalculoDescuentoDto calculo, AplicarPromocionCommand request, CancellationToken cancellationToken)
-    {
-        try
-        {
-            if (factura != null)
-            {
-                // Aplicar descuento a factura
-                var descuentoFactura = new DescuentoFactura
-                {
-                    Id = Guid.NewGuid(),
-                    FacturaId = factura.Id,
-                    PromocionId = promocion.Id,
-                    TipoDescuento = promocion.TipoDescuento,
-                    Monto = calculo.MontoDescuento,
-                    Porcentaje = calculo.PorcentajeDescuento,
-                    Motivo = $"Promoción: {promocion.Nombre}",
-                    FechaAplicacion = DateTime.UtcNow,
-                    AplicadoPor = _currentUserService.UserId
-                };
-
-                _context.DescuentosFactura.Add(descuentoFactura);
-                
-                // Actualizar total de factura
-                factura.Descuento += calculo.MontoDescuento;
-                factura.Total -= calculo.MontoDescuento;
-                factura.FechaUltimaActualizacion = DateTime.UtcNow;
-                _context.Facturas.Update(factura);
-            }
-
-            if (comanda != null)
-            {
-                // Aplicar descuento a comanda
-                var descuentoComanda = new DescuentoComanda
-                {
-                    Id = Guid.NewGuid(),
-                    ComandaId = comanda.Id,
-                    PromocionId = promocion.Id,
-                    TipoDescuento = promocion.TipoDescuento,
-                    Monto = calculo.MontoDescuento,
-                    Porcentaje = calculo.PorcentajeDescuento,
-                    Motivo = $"Promoción: {promocion.Nombre}",
-                    FechaAplicacion = DateTime.UtcNow,
-                    AplicadoPor = _currentUserService.UserId
-                };
-
-                _context.DescuentosComanda.Add(descuentoComanda);
-                
-                // Actualizar total de comanda
-                comanda.Total -= calculo.MontoDescuento;
-                comanda.FechaUltimaActualizacion = DateTime.UtcNow;
-                _context.Comandas.Update(comanda);
-            }
-
-            return Result.Success();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error al aplicar descuento para promoción {PromocionId}", promocion.Id);
-            return Result.Failure($"Error al aplicar el descuento: {ex.Message}");
-        }
-    }
-
-    private async Task RegistrarAplicacionPromocion(Promocion promocion, Factura? factura, Comanda? comanda, CalculoDescuentoDto calculo, AplicarPromocionCommand request, CancellationToken cancellationToken)
-    {
-        var aplicacion = new AplicacionPromocion
-        {
-            Id = Guid.NewGuid(),
-            PromocionId = promocion.Id,
-            FacturaId = factura?.Id,
-            ComandaId = comanda?.Id,
-            ClienteId = request.ClienteId,
-            MontoDescuento = calculo.MontoDescuento,
-            PorcentajeDescuento = calculo.PorcentajeDescuento,
-            FechaAplicacion = DateTime.UtcNow,
-            UsuarioId = _currentUserService.UserId,
-            TipoAplicacion = request.TipoAplicacion.ToString(),
-            ProductosAfectados = request.ProductosIds != null ? JsonSerializer.Serialize(request.ProductosIds) : null,
-            NotasAplicacion = request.NotasAplicacion
-        };
-
-        _context.AplicacionesPromocion.Add(aplicacion);
-    }
-
-    private async Task ActualizarLimitesUso(Promocion promocion, CancellationToken cancellationToken)
-    {
-        // Incrementar contador de usos
-        promocion.UsosActuales = (promocion.UsosActuales ?? 0) + 1;
-        promocion.FechaUltimoUso = DateTime.UtcNow;
-
-        // Verificar si debe desactivarse por límite alcanzado
-        if (promocion.LimiteUso.HasValue && promocion.UsosActuales >= promocion.LimiteUso.Value)
-        {
-            promocion.Activa = false;
-            promocion.MotivoDesactivacion = "Límite de uso alcanzado";
-        }
-
-        _context.Promociones.Update(promocion);
-    }
-
-    private async Task RegistrarAuditoria(Promocion promocion, Factura? factura, Comanda? comanda, CalculoDescuentoDto calculo, AplicarPromocionCommand request, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var auditoria = new RegistroAuditoria
-            {
-                EntidadTipo = factura != null ? nameof(Factura) : nameof(Comanda),
-                EntidadId = (factura?.Id ?? comanda?.Id).ToString(),
-                Accion = "Aplicación Promoción",
-                ValoresAnteriores = JsonSerializer.Serialize(new { TotalAnterior = factura?.Total ?? comanda?.Total }),
-                ValoresNuevos = JsonSerializer.Serialize(new { PromocionId = promocion.Id, MontoDescuento = calculo.MontoDescuento }),
-                Motivo = $"Aplicación de promoción: {promocion.Nombre}",
-                UsuarioId = _currentUserService.UserId,
-                Fecha = DateTime.UtcNow,
-                DatosAdicionales = request.DatosAdicionales != null ? JsonSerializer.Serialize(request.DatosAdicionales) : null
-            };
-
-            _context.RegistrosAuditoria.Add(auditoria);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error al registrar auditoría para aplicación de promoción {PromocionId}", promocion.Id);
-        }
-    }
-
-    private AplicarPromocionDto CrearRespuesta(Promocion promocion, Factura? factura, Comanda? comanda, CalculoDescuentoDto calculo, AplicarPromocionCommand request)
+    private AplicarPromocionDto CrearRespuestaSimplificada(Promocion promocion, Factura? factura, Comanda? comanda, CalculoDescuentoDto calculo, AplicarPromocionCommand request)
     {
         return new AplicarPromocionDto
         {
             PromocionId = promocion.Id,
-            CodigoPromocion = promocion.Codigo,
             NombrePromocion = promocion.Nombre,
-            TipoAplicacion = request.TipoAplicacion,
-            FacturaId = factura?.Id,
-            ComandaId = comanda?.Id,
             MontoDescuento = calculo.MontoDescuento,
             PorcentajeDescuento = calculo.PorcentajeDescuento,
-            FechaAplicacion = DateTime.UtcNow,
-            AutorizadoPor = request.AutorizadoPor,
             AplicacionExitosa = true,
-            ProductosAfectados = request.ProductosIds ?? new List<Guid>(),
-            MensajeResultado = $"Promoción '{promocion.Nombre}' aplicada exitosamente. Descuento: {calculo.MontoDescuento:C}"
+            FechaAplicacion = DateTime.UtcNow,
+            FacturaId = factura?.Id,
+            ComandaId = comanda?.Id,
+            ProductosAfectados = calculo.ProductosAfectados
         };
     }
 
     #endregion
-    */
 }
 
 /// <summary>

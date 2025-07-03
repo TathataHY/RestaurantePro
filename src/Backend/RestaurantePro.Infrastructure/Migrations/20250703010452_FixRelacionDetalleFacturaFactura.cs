@@ -5,7 +5,7 @@
 namespace RestaurantePro.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class RemoveConcurrencyTokenFromOrdenCompra : Migration
+    public partial class FixRelacionDetalleFacturaFactura : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

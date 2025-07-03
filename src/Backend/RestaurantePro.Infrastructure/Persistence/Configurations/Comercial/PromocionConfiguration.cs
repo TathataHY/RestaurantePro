@@ -44,10 +44,20 @@ public class PromocionConfiguration : IEntityTypeConfiguration<Promocion>
             .IsRequired();
 
         builder.Property(p => p.FechaInicio)
-            .IsRequired();
+            .IsRequired()
+            .HasColumnType("TEXT")
+            .HasConversion(
+                v => v.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ"),
+                v => DateTime.ParseExact(v, "yyyy-MM-ddTHH:mm:ss.fffffffZ", null)
+            );
 
         builder.Property(p => p.FechaFin)
-            .IsRequired();
+            .IsRequired()
+            .HasColumnType("TEXT")
+            .HasConversion(
+                v => v.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ"),
+                v => DateTime.ParseExact(v, "yyyy-MM-ddTHH:mm:ss.fffffffZ", null)
+            );
 
         builder.Property(p => p.MaximoUsos);
 
@@ -103,8 +113,8 @@ public class PromocionConfiguration : IEntityTypeConfiguration<Promocion>
 
         builder.HasIndex(p => p.Estado);
 
-        builder.HasIndex(p => p.FechaInicio);
-
-        builder.HasIndex(p => p.FechaFin);
+        // Comentado: Los índices sobre FechaInicio y FechaFin no son compatibles con SQL Server cuando usan tipo TEXT
+        // builder.HasIndex(p => p.FechaInicio);
+        // builder.HasIndex(p => p.FechaFin);
     }
 } 
