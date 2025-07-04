@@ -11,7 +11,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="id">ID del cliente</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Cliente encontrado o null si no existe</returns>
-        new Task<Cliente?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<Cliente?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken);
         
         /// <summary>
         /// Obtiene un cliente por su email

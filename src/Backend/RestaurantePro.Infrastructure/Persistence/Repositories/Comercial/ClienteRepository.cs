@@ -22,7 +22,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         {
         }
 
-        public override async Task<Cliente?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public override async Task<Cliente?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken)
         {
             return await _dbSet.Where(c => !c.EstaEliminado).FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
         }

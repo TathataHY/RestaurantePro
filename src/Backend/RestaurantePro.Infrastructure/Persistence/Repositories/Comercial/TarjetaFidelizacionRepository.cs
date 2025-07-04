@@ -36,7 +36,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         /// <summary>
         /// Obtiene una tarjeta de fidelización por su ID
         /// </summary>
-        public async Task<TarjetaFidelizacion?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default, bool asNoTracking = false)
+        public async Task<TarjetaFidelizacion?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken, bool asNoTracking)
         {
             var query = _dbContext.TarjetasFidelizacion
                 .Where(t => t.Id == id && !t.EstaEliminado);
@@ -60,7 +60,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         /// <summary>
         /// Obtiene una tarjeta de fidelización por su código
         /// </summary>
-        public async Task<TarjetaFidelizacion> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken = default)
+        public async Task<TarjetaFidelizacion> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken)
         {
             var tarjeta = await _dbSet
                 .Include(t => t.HistorialPuntos)

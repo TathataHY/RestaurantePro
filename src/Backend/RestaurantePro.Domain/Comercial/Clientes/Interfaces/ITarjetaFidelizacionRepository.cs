@@ -19,7 +19,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <param name="asNoTracking">Indica si se debe obtener la entidad sin rastrear</param>
         /// <returns>Tarjeta encontrada o null si no existe</returns>
-        new Task<TarjetaFidelizacion?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default, bool asNoTracking = false);
+        Task<TarjetaFidelizacion?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken, bool asNoTracking);
 
         /// <summary>
         /// Obtiene una tarjeta de fidelización por su ID (retorna null si no existe)
@@ -35,7 +35,7 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Interfaces
         /// <param name="codigo">Código de la tarjeta</param>
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Tarjeta encontrada o null si no existe</returns>
-        Task<TarjetaFidelizacion> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken = default);
+        Task<TarjetaFidelizacion?> ObtenerPorCodigoAsync(string codigo, CancellationToken cancellationToken);
 
         /// <summary>
         /// Obtiene una tarjeta de fidelización por su número
