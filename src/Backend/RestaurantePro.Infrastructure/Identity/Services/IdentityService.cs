@@ -236,7 +236,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             return result.ToResult();
         }
 
-        public async Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        public async Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword, string? confirmNewPassword = null)
         {
             if (!Guid.TryParse(userId, out var userGuid))
             {
@@ -245,6 +245,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
 
             var user = await _userManager.FindByIdAsync(userGuid.ToString());
             if (user == null) return Result.Failure("Usuario no encontrado");
+
+            // Validar confirmación si se provee
+            if (confirmNewPassword != null && newPassword != confirmNewPassword)
+            {
+                return Result.Failure("La confirmación de la nueva contraseña no coincide");
+            }
 
             var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
             return result.ToResult();

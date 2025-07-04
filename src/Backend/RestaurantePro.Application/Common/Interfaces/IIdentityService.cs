@@ -74,8 +74,9 @@ public interface IIdentityService
     /// <param name="userId">ID del usuario</param>
     /// <param name="currentPassword">Contraseña actual</param>
     /// <param name="newPassword">Nueva contraseña</param>
+    /// <param name="confirmNewPassword">Confirmación de la nueva contraseña (opcional)</param>
     /// <returns>Resultado de la operación</returns>
-    Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
+    Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword, string? confirmNewPassword = null);
 
     /// <summary>
     /// Autentica un usuario y obtiene una respuesta de autenticación

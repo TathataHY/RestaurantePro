@@ -39,11 +39,17 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
             _logger.LogInformation("Iniciando creación de tarjeta de fidelización para Cliente {ClienteId}, Tipo: {TipoTarjeta}",
                 request.ClienteId, request.TipoTarjeta);
 
-            // Validar UsuarioId
+            // 🔧 OBTENER USUARIO ID DEL CONTEXTO ACTUAL SI NO SE PROPORCIONA
             if (request.UsuarioId == Guid.Empty)
             {
-                _logger.LogWarning("Intento de crear tarjeta con UsuarioId vacío");
-                return Result.Failure<TarjetaFidelizacionDto>("El UsuarioId no puede estar vacío");
+                var currentUserId = _currentUser.UserId;
+                if (string.IsNullOrEmpty(currentUserId) || !Guid.TryParse(currentUserId, out var userId))
+                {
+                    _logger.LogWarning("No se pudo obtener el UsuarioId del contexto actual");
+                    return Result.Failure<TarjetaFidelizacionDto>("No se pudo determinar el usuario que crea la tarjeta");
+                }
+                request.UsuarioId = userId;
+                _logger.LogInformation("UsuarioId obtenido del contexto actual: {UsuarioId}", request.UsuarioId);
             }
 
             // Validar TipoTarjeta

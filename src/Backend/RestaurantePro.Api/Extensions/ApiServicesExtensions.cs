@@ -61,19 +61,6 @@ namespace RestaurantePro.Api.Extensions
                 });
             });
 
-            // TODO: Agregar paquetes de Swagger - Comentado temporalmente
-            // Agregar Swagger
-            // services.AddEndpointsApiExplorer();
-            // services.AddSwaggerGen(c =>
-            // {
-            //     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-            //     {
-            //         Title = "RestaurantePro API",
-            //         Version = "v1",
-            //         Description = "API para la gestión de restaurante"
-            //     });
-            // });
-
             // 🚀 Registrar servicios de SignalR
             services.AddScoped<ISignalRHub, SignalRHubService>();
 

@@ -54,7 +54,13 @@ public abstract class AuthorizationTestBase : IClassFixture<TestWebApplicationFa
         // Agregar header de autenticación con un usuario que NO tiene el rol requerido
         // Usamos "Test User_12345678-1234-1234-1234-123456789012_UsuarioSinRol" 
         // donde "UsuarioSinRol" es un rol que no coincide con el requerido
-        request.Headers.Add("Authorization", "Test User_12345678-1234-1234-1234-123456789012_UsuarioSinRol");
+        var authHeader = "Test User_12345678-1234-1234-1234-123456789012_UsuarioSinRol";
+        request.Headers.Add("Authorization", authHeader);
+        
+        // 🔍 LOG: Confirmar que el header se está enviando
+        Console.WriteLine($"🔍 AuthorizationTestBase: Enviando request a {endpoint}");
+        Console.WriteLine($"🔍 AuthorizationTestBase: Método: {method}");
+        Console.WriteLine($"🔍 AuthorizationTestBase: Header Authorization: {authHeader}");
 
         // Act
         var response = await HttpClient.SendAsync(request);

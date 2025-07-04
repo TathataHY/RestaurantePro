@@ -177,7 +177,7 @@ public class AuthController : ControllerBase
 
         try
         {
-            var result = await _identityService.ChangePasswordAsync(userId, request.CurrentPassword, request.NewPassword);
+            var result = await _identityService.ChangePasswordAsync(userId, request.CurrentPassword, request.NewPassword, request.ConfirmNewPassword);
 
             if (!result.Succeeded)
             {

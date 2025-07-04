@@ -215,7 +215,8 @@ public class AuthControllerTests : AuthorizationTestBase, IAsyncLifetime
         var changePasswordRequest = new ChangePasswordRequest
         {
             CurrentPassword = registerRequest.Password,
-            NewPassword = "NuevaPassword123!"
+            NewPassword = "NuevaPassword123!",
+            ConfirmNewPassword = "NuevaPassword123!"
         };
         var request = new HttpRequestMessage(HttpMethod.Post, "/api/auth/change-password");
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);

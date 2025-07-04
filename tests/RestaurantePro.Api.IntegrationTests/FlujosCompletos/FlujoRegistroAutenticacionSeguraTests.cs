@@ -72,7 +72,8 @@ namespace RestaurantePro.Api.IntegrationTests.FlujosCompletos
             var changePasswordData = new
             {
                 CurrentPassword = userData.Password,
-                NewPassword = "NewSecurePass456*"
+                NewPassword = "NewSecurePass456*",
+                ConfirmNewPassword = "NewSecurePass456*"
             };
             var changePasswordResponse = await HttpClient.PostAsJsonAsync("/api/auth/change-password", changePasswordData);
 
