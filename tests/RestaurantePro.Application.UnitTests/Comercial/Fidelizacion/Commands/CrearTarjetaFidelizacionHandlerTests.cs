@@ -17,8 +17,10 @@ public class CrearTarjetaFidelizacionHandlerTests
     private readonly Mock<IDateTimeService> _dateTimeServiceMock;
     private readonly CrearTarjetaFidelizacionHandler _handler;
 
-    // Variable compartida para simular almacenamiento en memoria
-    private TarjetaFidelizacion? _tarjetaGuardada;
+    // Almacenamiento en memoria para simular el repositorio
+    private readonly Dictionary<Guid, TarjetaFidelizacion> _tarjetasEnMemoria = new();
+
+    private void ResetTarjetasEnMemoria() => _tarjetasEnMemoria.Clear();
 
     public CrearTarjetaFidelizacionHandlerTests()
     {
@@ -39,25 +41,19 @@ public class CrearTarjetaFidelizacionHandlerTests
             _dateTimeServiceMock.Object,
             _unitOfWorkMock.Object);
 
-        // Setup común para simular almacenamiento en memoria
+        // Setup para simular almacenamiento en memoria
         _tarjetaRepositoryMock
             .Setup(x => x.AgregarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
             .Callback<TarjetaFidelizacion, CancellationToken>((t, token) =>
             {
-                _tarjetaGuardada = t;
+                _tarjetasEnMemoria[t.Id] = t;
             })
             .Returns(Task.CompletedTask);
 
         _tarjetaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>(), false))
-            .ReturnsAsync((Guid id, CancellationToken token, bool includeDeleted) =>
-                _tarjetaGuardada?.Id == id ? _tarjetaGuardada : null);
-    }
-
-    private void ResetTarjetaGuardada()
-    {
-        // Limpiar la variable compartida antes de cada test
-        _tarjetaGuardada = null;
+            .Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid id, CancellationToken token) =>
+                _tarjetasEnMemoria.TryGetValue(id, out var tarjeta) ? tarjeta : null);
     }
 
     #region Tests de Factory Methods del Command
@@ -162,11 +158,10 @@ public class CrearTarjetaFidelizacionHandlerTests
     public async Task Handle_CreacionNuevoClienteExitosa_DeberiaRetornarTarjetaCreada()
     {
         // Arrange
-        ResetTarjetaGuardada();
+        ResetTarjetasEnMemoria();
         
         var clienteId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
-        var tarjetaId = Guid.NewGuid();
         
         var command = new CrearTarjetaFidelizacionCommand
         {
@@ -174,26 +169,22 @@ public class CrearTarjetaFidelizacionHandlerTests
             TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
             PuntosIniciales = 100,
             ActivarInmediatamente = true,
-            EnviarPorEmail = true,
+            EnviarPorEmail = false,
             UsuarioId = usuarioId
         };
 
         var cliente = CreateClienteMock(clienteId);
-        var tarjeta = CreateTarjetaFidelizacionMock(tarjetaId, clienteId);
-        var tarjetaDto = CreateTarjetaFidelizacionDto(tarjetaId, clienteId);
 
-        // Setup mocks para métodos con CancellationToken
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
             .ReturnsAsync(cliente);
         _tarjetaRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync(It.IsAny<string>(), CancellationToken.None))
             .ReturnsAsync((TarjetaFidelizacion)null!);
         _tarjetaRepositoryMock.Setup(x => x.ExisteNumeroTarjetaAsync(It.IsAny<string>(), CancellationToken.None))
             .ReturnsAsync(false);
-
         _unitOfWorkMock.Setup(x => x.SaveChangesAsync(CancellationToken.None))
             .ReturnsAsync(1);
         _mapperMock.Setup(x => x.Map<TarjetaFidelizacionDto>(It.IsAny<TarjetaFidelizacion>()))
-            .Returns(tarjetaDto);
+            .Returns((TarjetaFidelizacion t) => CreateTarjetaFidelizacionDto(t.Id, t.ClienteId));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -209,11 +200,10 @@ public class CrearTarjetaFidelizacionHandlerTests
     public async Task Handle_AsignacionClienteExistente_DeberiaAsociarCorrectamente()
     {
         // Arrange
-        ResetTarjetaGuardada();
+        ResetTarjetasEnMemoria();
         
         var clienteId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
-        var tarjetaId = Guid.NewGuid();
         
         var command = new CrearTarjetaFidelizacionCommand
         {
@@ -227,21 +217,17 @@ public class CrearTarjetaFidelizacionHandlerTests
         };
 
         var cliente = CreateClienteMock(clienteId);
-        var tarjeta = CreateTarjetaFidelizacionMock(tarjetaId, clienteId);
-        var tarjetaDto = CreateTarjetaFidelizacionDto(tarjetaId, clienteId);
 
-        // Setup mocks para métodos con CancellationToken
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
             .ReturnsAsync(cliente);
         _tarjetaRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync(It.IsAny<string>(), CancellationToken.None))
             .ReturnsAsync((TarjetaFidelizacion)null!);
         _tarjetaRepositoryMock.Setup(x => x.ExisteNumeroTarjetaAsync(It.IsAny<string>(), CancellationToken.None))
             .ReturnsAsync(false);
-
         _unitOfWorkMock.Setup(x => x.SaveChangesAsync(CancellationToken.None))
             .ReturnsAsync(1);
         _mapperMock.Setup(x => x.Map<TarjetaFidelizacionDto>(It.IsAny<TarjetaFidelizacion>()))
-            .Returns(tarjetaDto);
+            .Returns((TarjetaFidelizacion t) => CreateTarjetaFidelizacionDto(t.Id, t.ClienteId));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -249,18 +235,18 @@ public class CrearTarjetaFidelizacionHandlerTests
         // Assert
         Assert.True(result.Succeeded, $"Handler failed: {result.Error}");
         Assert.NotNull(result.Value);
-        Assert.Equal(TipoTarjetaFidelizacion.Premium, command.TipoTarjeta);
+        Assert.NotEqual(Guid.Empty, result.Value.Id);
+        Assert.Equal(clienteId, result.Value.ClienteId);
     }
 
     [Fact]
     public async Task Handle_TarjetaPromocionEspecial_DeberiaAplicarBeneficios()
     {
         // Arrange
-        ResetTarjetaGuardada();
+        ResetTarjetasEnMemoria();
         
         var clienteId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
-        var tarjetaId = Guid.NewGuid();
         
         var command = new CrearTarjetaFidelizacionCommand
         {
@@ -283,21 +269,17 @@ public class CrearTarjetaFidelizacionHandlerTests
         };
 
         var cliente = CreateClienteMock(clienteId);
-        var tarjeta = CreateTarjetaFidelizacionMock(tarjetaId, clienteId);
-        var tarjetaDto = CreateTarjetaFidelizacionDto(tarjetaId, clienteId);
 
-        // Setup mocks para métodos con CancellationToken
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
             .ReturnsAsync(cliente);
         _tarjetaRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync(It.IsAny<string>(), CancellationToken.None))
             .ReturnsAsync((TarjetaFidelizacion)null!);
         _tarjetaRepositoryMock.Setup(x => x.ExisteNumeroTarjetaAsync(It.IsAny<string>(), CancellationToken.None))
             .ReturnsAsync(false);
-
         _unitOfWorkMock.Setup(x => x.SaveChangesAsync(CancellationToken.None))
             .ReturnsAsync(1);
         _mapperMock.Setup(x => x.Map<TarjetaFidelizacionDto>(It.IsAny<TarjetaFidelizacion>()))
-            .Returns(tarjetaDto);
+            .Returns((TarjetaFidelizacion t) => CreateTarjetaFidelizacionDto(t.Id, t.ClienteId));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -306,18 +288,17 @@ public class CrearTarjetaFidelizacionHandlerTests
         Assert.True(result.Succeeded, $"Handler failed: {result.Error}");
         Assert.Equal(TipoTarjetaFidelizacion.Vip, command.TipoTarjeta);
         Assert.NotNull(result.Value);
-        Assert.NotEqual(Guid.Empty, result.Value.Id); // Verificar que el ID no sea vacío
+        Assert.NotEqual(Guid.Empty, result.Value.Id);
     }
 
     [Fact]
     public async Task Handle_TarjetaConNotificacionesMulticanal_DeberiaEnviarNotificaciones()
     {
         // Arrange
-        ResetTarjetaGuardada();
+        ResetTarjetasEnMemoria();
         
         var clienteId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
-        var tarjetaId = Guid.NewGuid();
         
         var command = new CrearTarjetaFidelizacionCommand
         {
@@ -331,38 +312,35 @@ public class CrearTarjetaFidelizacionHandlerTests
         };
 
         var cliente = CreateClienteMock(clienteId);
-        var tarjeta = CreateTarjetaFidelizacionMock(tarjetaId, clienteId);
-        var tarjetaDto = CreateTarjetaFidelizacionDto(tarjetaId, clienteId);
 
-        // Setup mocks para métodos con CancellationToken
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
             .ReturnsAsync(cliente);
         _tarjetaRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync(It.IsAny<string>(), CancellationToken.None))
             .ReturnsAsync((TarjetaFidelizacion)null!);
         _tarjetaRepositoryMock.Setup(x => x.ExisteNumeroTarjetaAsync(It.IsAny<string>(), CancellationToken.None))
             .ReturnsAsync(false);
-
         _unitOfWorkMock.Setup(x => x.SaveChangesAsync(CancellationToken.None))
             .ReturnsAsync(1);
         _mapperMock.Setup(x => x.Map<TarjetaFidelizacionDto>(It.IsAny<TarjetaFidelizacion>()))
-            .Returns(tarjetaDto);
+            .Returns((TarjetaFidelizacion t) => CreateTarjetaFidelizacionDto(t.Id, t.ClienteId));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         Assert.True(result.Succeeded, $"Handler failed: {result.Error}");
+        Assert.NotNull(result.Value);
+        Assert.NotEqual(Guid.Empty, result.Value.Id);
     }
 
     [Fact]
     public async Task Handle_TarjetaBasica_DeberiaAplicarConfiguracionMinima()
     {
         // Arrange
-        ResetTarjetaGuardada();
+        ResetTarjetasEnMemoria();
         
         var clienteId = Guid.NewGuid();
         var usuarioId = Guid.NewGuid();
-        var tarjetaId = Guid.NewGuid();
         
         var command = new CrearTarjetaFidelizacionCommand
         {
@@ -375,21 +353,17 @@ public class CrearTarjetaFidelizacionHandlerTests
         };
 
         var cliente = CreateClienteMock(clienteId);
-        var tarjeta = CreateTarjetaFidelizacionMock(tarjetaId, clienteId);
-        var tarjetaDto = CreateTarjetaFidelizacionDto(tarjetaId, clienteId);
 
-        // Setup mocks para métodos con CancellationToken
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
             .ReturnsAsync(cliente);
         _tarjetaRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync(It.IsAny<string>(), CancellationToken.None))
             .ReturnsAsync((TarjetaFidelizacion)null!);
         _tarjetaRepositoryMock.Setup(x => x.ExisteNumeroTarjetaAsync(It.IsAny<string>(), CancellationToken.None))
             .ReturnsAsync(false);
-
         _unitOfWorkMock.Setup(x => x.SaveChangesAsync(CancellationToken.None))
             .ReturnsAsync(1);
         _mapperMock.Setup(x => x.Map<TarjetaFidelizacionDto>(It.IsAny<TarjetaFidelizacion>()))
-            .Returns(tarjetaDto);
+            .Returns((TarjetaFidelizacion t) => CreateTarjetaFidelizacionDto(t.Id, t.ClienteId));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -428,58 +402,79 @@ public class CrearTarjetaFidelizacionHandlerTests
     public async Task Handle_TipoTarjetaVacio_DeberiaRetornarError()
     {
         // Arrange
+        ResetTarjetasEnMemoria();
+        
         var clienteId = Guid.NewGuid();
+        var usuarioId = Guid.NewGuid();
+        
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
-            TipoTarjeta = TipoTarjetaFidelizacion.Estandar, // Tipo válido, no vacío
-            UsuarioId = Guid.NewGuid()
+            TipoTarjeta = (TipoTarjetaFidelizacion)999, // Tipo inválido
+            PuntosIniciales = 100,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = false,
+            UsuarioId = usuarioId
         };
 
         var cliente = CreateClienteMock(clienteId);
-        
-        // Setup mocks para que el handler pueda procesar
+
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
             .ReturnsAsync(cliente);
+        _tarjetaRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync(It.IsAny<string>(), CancellationToken.None))
+            .ReturnsAsync((TarjetaFidelizacion)null!);
         _tarjetaRepositoryMock.Setup(x => x.ExisteNumeroTarjetaAsync(It.IsAny<string>(), CancellationToken.None))
             .ReturnsAsync(false);
         _unitOfWorkMock.Setup(x => x.SaveChangesAsync(CancellationToken.None))
             .ReturnsAsync(1);
+        _mapperMock.Setup(x => x.Map<TarjetaFidelizacionDto>(It.IsAny<TarjetaFidelizacion>()))
+            .Returns((TarjetaFidelizacion t) => CreateTarjetaFidelizacionDto(t.Id, t.ClienteId));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert - El handler debería procesar normalmente, ya que TipoTarjetaFidelizacion es enum
-        Assert.True(result.Succeeded, $"Handler failed: {result.Error}");
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.NotNull(result.Error);
     }
 
     [Fact]
     public async Task Handle_UsuarioIdVacio_DeberiaRetornarError()
     {
         // Arrange
+        ResetTarjetasEnMemoria();
+        
         var clienteId = Guid.NewGuid();
+        
         var command = new CrearTarjetaFidelizacionCommand
         {
             ClienteId = clienteId,
             TipoTarjeta = TipoTarjetaFidelizacion.Estandar,
-            UsuarioId = Guid.Empty // ID vacío
+            PuntosIniciales = 100,
+            ActivarInmediatamente = true,
+            EnviarPorEmail = false,
+            UsuarioId = Guid.Empty // UsuarioId vacío
         };
 
         var cliente = CreateClienteMock(clienteId);
-        
-        // Setup mocks para que el handler pueda procesar
+
         _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, CancellationToken.None))
             .ReturnsAsync(cliente);
+        _tarjetaRepositoryMock.Setup(x => x.ObtenerPorCodigoAsync(It.IsAny<string>(), CancellationToken.None))
+            .ReturnsAsync((TarjetaFidelizacion)null!);
         _tarjetaRepositoryMock.Setup(x => x.ExisteNumeroTarjetaAsync(It.IsAny<string>(), CancellationToken.None))
             .ReturnsAsync(false);
         _unitOfWorkMock.Setup(x => x.SaveChangesAsync(CancellationToken.None))
             .ReturnsAsync(1);
+        _mapperMock.Setup(x => x.Map<TarjetaFidelizacionDto>(It.IsAny<TarjetaFidelizacion>()))
+            .Returns((TarjetaFidelizacion t) => CreateTarjetaFidelizacionDto(t.Id, t.ClienteId));
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert - El handler actual no valida UsuarioId, debería procesar normalmente
-        Assert.True(result.Succeeded, $"Handler failed: {result.Error}");
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.NotNull(result.Error);
     }
 
     [Fact]

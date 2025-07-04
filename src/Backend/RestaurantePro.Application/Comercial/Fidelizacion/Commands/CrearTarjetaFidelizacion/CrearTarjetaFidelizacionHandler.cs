@@ -39,6 +39,20 @@ public class CrearTarjetaFidelizacionHandler : IRequestHandler<CrearTarjetaFidel
             _logger.LogInformation("Iniciando creación de tarjeta de fidelización para Cliente {ClienteId}, Tipo: {TipoTarjeta}",
                 request.ClienteId, request.TipoTarjeta);
 
+            // Validar UsuarioId
+            if (request.UsuarioId == Guid.Empty)
+            {
+                _logger.LogWarning("Intento de crear tarjeta con UsuarioId vacío");
+                return Result.Failure<TarjetaFidelizacionDto>("El UsuarioId no puede estar vacío");
+            }
+
+            // Validar TipoTarjeta
+            if (!Enum.IsDefined(typeof(TipoTarjetaFidelizacion), request.TipoTarjeta))
+            {
+                _logger.LogWarning("Intento de crear tarjeta con tipo inválido: {TipoTarjeta}", request.TipoTarjeta);
+                return Result.Failure<TarjetaFidelizacionDto>("El tipo de tarjeta especificado no es válido");
+            }
+
             // Validar puntos iniciales
             if (request.PuntosIniciales < 0)
             {
