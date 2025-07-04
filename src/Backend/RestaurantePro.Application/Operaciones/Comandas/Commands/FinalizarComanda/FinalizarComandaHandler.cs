@@ -49,6 +49,8 @@ public class FinalizarComandaHandler : IRequestHandler<FinalizarComandaCommand, 
             }
 
             // Validar estado
+            _logger.LogInformation("🔍 Estado actual de comanda {ComandaId}: {Estado}", request.ComandaId, comanda.Estado);
+            
             if (comanda.Estado == EstadoComanda.Finalizada)
             {
                 _logger.LogWarning("⚠️ Comanda {ComandaId} ya está finalizada", request.ComandaId);
@@ -75,19 +77,9 @@ public class FinalizarComandaHandler : IRequestHandler<FinalizarComandaCommand, 
                 comanda.ActualizarEstado(EstadoComanda.Finalizada);
                 _logger.LogInformation("Estado actualizado a Finalizada usando método de dominio");
                 
-                // Forzar la detección de cambios en EF Core
-                var context = _unitOfWork.GetDbContext();
-                context.ChangeTracker.DetectChanges();
-                context.Entry(comanda).State = EntityState.Modified;
-                
-                // Guardar cambios una sola vez
+                // Guardar cambios
                 await _unitOfWork.SaveChangesAsync();
                 _logger.LogInformation("Cambios guardados exitosamente");
-                
-                // Forzar recarga de la entidad para asegurar que los cambios se persistan
-                // Esto es necesario porque el query handler usa AsNoTracking()
-                context.Entry(comanda).Reload();
-                _logger.LogInformation("Entidad recargada desde BD para confirmar persistencia");
             }
             catch (InvalidOperationException ex)
             {

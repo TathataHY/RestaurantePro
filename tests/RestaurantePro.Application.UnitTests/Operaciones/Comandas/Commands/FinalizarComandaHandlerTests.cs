@@ -9,6 +9,7 @@ public class FinalizarComandaHandlerTests
     private readonly Mock<IComandaRepository> _comandaRepositoryMock;
     private readonly Mock<IMapper> _mapperMock;
     private readonly Mock<ILogger<FinalizarComandaHandler>> _loggerMock;
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock;
     private readonly FinalizarComandaHandler _handler;
 
     public FinalizarComandaHandlerTests()
@@ -16,11 +17,13 @@ public class FinalizarComandaHandlerTests
         _comandaRepositoryMock = new Mock<IComandaRepository>();
         _mapperMock = new Mock<IMapper>();
         _loggerMock = new Mock<ILogger<FinalizarComandaHandler>>();
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
         
         _handler = new FinalizarComandaHandler(
             _comandaRepositoryMock.Object,
             _mapperMock.Object,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            _unitOfWorkMock.Object);
     }
 
     #region Tests de Escenarios Exitosos
@@ -46,8 +49,8 @@ public class FinalizarComandaHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
-        _comandaRepositoryMock.Setup(x => x.ActualizarAsync(comanda, CancellationToken.None))
-            .Returns(Task.CompletedTask);
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
 
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda))
             .Returns(comandaDto);
@@ -66,7 +69,7 @@ public class FinalizarComandaHandlerTests
 
         // Verify repository calls
         _comandaRepositoryMock.Verify(x => x.ObtenerPorIdAsync(comandaId, CancellationToken.None), Times.Once);
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(comanda, CancellationToken.None), Times.Once);
+        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -91,6 +94,9 @@ public class FinalizarComandaHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda))
             .Returns(comandaDto);
 
@@ -105,7 +111,7 @@ public class FinalizarComandaHandlerTests
         Assert.True(command.NotificarMesero);
         
         // Verify que el repositorio fue llamado para actualizar
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -130,6 +136,9 @@ public class FinalizarComandaHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda))
             .Returns(comandaDto);
 
@@ -145,7 +154,7 @@ public class FinalizarComandaHandlerTests
         Assert.Contains("Finalizada sin validación test", command.ObservacionesFinalizacion);
         
         // Verify que el repositorio fue llamado para actualizar
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -170,6 +179,9 @@ public class FinalizarComandaHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda))
             .Returns(comandaDto);
 
@@ -184,7 +196,7 @@ public class FinalizarComandaHandlerTests
         Assert.False(command.NotificarMesero); // Sin notificación
         
         // Verify que el repositorio fue llamado para actualizar
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -210,6 +222,9 @@ public class FinalizarComandaHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
         _mapperMock.Setup(x => x.Map<ComandaDto>(comanda))
             .Returns(comandaDto);
 
@@ -223,7 +238,7 @@ public class FinalizarComandaHandlerTests
         VerifyLogContains(LogLevel.Information, observaciones);
         
         // Verify que el repositorio fue llamado para actualizar
-        _comandaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -542,34 +557,18 @@ public class FinalizarComandaHandlerTests
         
         var comanda = Comanda.Crear(meseroId, clienteId, mesaId, observaciones);
         
-        // Agregar items a la comanda
+        // PRIMERO: Setear el ID usando reflexión
+        SetPrivateProperty(comanda, "Id", id);
+        
+        // SEGUNDO: Agregar items a la comanda
         comanda.AgregarProducto(Guid.NewGuid(), 1, 25.00m, "Item 1");
         comanda.AgregarProducto(Guid.NewGuid(), 2, 30.25m, "Item 2");
         
-        // Cambiar el estado si es necesario usando técnicas de reflexión más seguras
+        // TERCERO: Cambiar el estado usando el método de dominio si es diferente a Creada
         if (estado != EstadoComanda.Creada)
         {
-            SetPrivateProperty(comanda, "Id", id);
-            
-            // Configurar el estado usando reflexión para evitar las validaciones de transición
-            var estadoField = typeof(Comanda).GetField("<Estado>k__BackingField", 
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            
-            if (estadoField != null)
-            {
-                estadoField.SetValue(comanda, estado);
-            }
-            else
-            {
-                // Intenta obtener la propiedad y usar SetValue
-                var estadoProperty = typeof(Comanda).GetProperty("Estado", 
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                    
-                if (estadoProperty != null)
-                {
-                    estadoProperty.SetValue(comanda, estado, null);
-                }
-            }
+            // Usar el método de dominio para cambiar el estado
+            comanda.ActualizarEstado(estado);
         }
         
         return comanda;

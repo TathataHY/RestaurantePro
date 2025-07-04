@@ -81,7 +81,7 @@ public class ObtenerAnalisisInventarioHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.TotalIngredientes.Should().Be(2);
+        result.Value.ResumenExecutivo.TotalIngredientes.Should().Be(2);
     }
 
     [Fact]
@@ -128,8 +128,8 @@ public class ObtenerAnalisisInventarioHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.FechaGeneracion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(1));
-        result.Value.TotalIngredientes.Should().Be(3);
+        result.Value.InfoAnalisis.FechaGeneracion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(1));
+        result.Value.ResumenExecutivo.TotalIngredientes.Should().Be(3);
     }
 
     [Fact]
@@ -159,8 +159,8 @@ public class ObtenerAnalisisInventarioHandlerTests
         result.Should().NotBeNull();
         result.Succeeded.Should().BeTrue();
         result.Value.Should().NotBeNull();
-        result.Value.FechaGeneracion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(1));
-        result.Value.TotalIngredientes.Should().Be(0);
+        result.Value.InfoAnalisis.FechaGeneracion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(1));
+        result.Value.ResumenExecutivo.TotalIngredientes.Should().Be(0);
     }
 
     [Fact]

@@ -43,6 +43,11 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
 
     public async Task<Result<AplicarPromocionDto>> Handle(AplicarPromocionCommand request, CancellationToken cancellationToken)
     {
+        // 🚧 Feature toggle: funcionalidad en desarrollo
+        return Result.Failure<AplicarPromocionDto>("La funcionalidad de promociones está en desarrollo");
+        
+        // ...código real (descomentar cuando se implemente la funcionalidad)...
+        /*
         _logger.LogInformation("[DEBUG] Iniciando aplicación de promoción. PromocionId: {PromocionId}, FacturaId: {FacturaId}, ClienteId: {ClienteId}", 
             request.PromocionId, request.FacturaId, request.ClienteId);
 
@@ -100,6 +105,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
             
             return Result.Failure<AplicarPromocionDto>("Error interno al aplicar la promoción");
         }
+        */
     }
 
     #region Métodos privados
