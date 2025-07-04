@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
 using System.Collections.Concurrent;
+using System.Collections;
 
 namespace RestaurantePro.Infrastructure.Services;
 
@@ -10,19 +11,19 @@ namespace RestaurantePro.Infrastructure.Services;
 public class HubConnectionManager : IHubConnectionManager
 {
     private readonly ILogger<HubConnectionManager> _logger;
-    private readonly ConcurrentDictionary<Guid, HashSet<string>> _usuarioConexiones;
+    private readonly ConcurrentDictionary<Guid, ConcurrentHashSet<string>> _usuarioConexiones;
     private readonly ConcurrentDictionary<string, Guid> _conexionUsuario;
-    private readonly ConcurrentDictionary<string, HashSet<Guid>> _gruposUsuarios;
-    private readonly ConcurrentDictionary<Guid, HashSet<string>> _usuarioGrupos;
+    private readonly ConcurrentDictionary<string, ConcurrentHashSet<Guid>> _gruposUsuarios;
+    private readonly ConcurrentDictionary<Guid, ConcurrentHashSet<string>> _usuarioGrupos;
     private readonly ConcurrentDictionary<string, DateTime> _conexionesTimestamp;
 
     public HubConnectionManager(ILogger<HubConnectionManager> logger)
     {
         _logger = logger;
-        _usuarioConexiones = new ConcurrentDictionary<Guid, HashSet<string>>();
+        _usuarioConexiones = new ConcurrentDictionary<Guid, ConcurrentHashSet<string>>();
         _conexionUsuario = new ConcurrentDictionary<string, Guid>();
-        _gruposUsuarios = new ConcurrentDictionary<string, HashSet<Guid>>();
-        _usuarioGrupos = new ConcurrentDictionary<Guid, HashSet<string>>();
+        _gruposUsuarios = new ConcurrentDictionary<string, ConcurrentHashSet<Guid>>();
+        _usuarioGrupos = new ConcurrentDictionary<Guid, ConcurrentHashSet<string>>();
         _conexionesTimestamp = new ConcurrentDictionary<string, DateTime>();
 
         _logger.LogInformation("HubConnectionManager inicializado");
@@ -36,7 +37,7 @@ public class HubConnectionManager : IHubConnectionManager
         // Agregar conexión al usuario
         _usuarioConexiones.AddOrUpdate(
             usuarioId,
-            new HashSet<string> { connectionId },
+            new ConcurrentHashSet<string> { connectionId },
             (key, existing) =>
             {
                 existing.Add(connectionId);
@@ -144,7 +145,7 @@ public class HubConnectionManager : IHubConnectionManager
         // Agregar usuario al grupo
         _gruposUsuarios.AddOrUpdate(
             grupo,
-            new HashSet<Guid> { usuarioId },
+            new ConcurrentHashSet<Guid> { usuarioId },
             (key, existing) =>
             {
                 existing.Add(usuarioId);
@@ -154,7 +155,7 @@ public class HubConnectionManager : IHubConnectionManager
         // Agregar grupo al usuario
         _usuarioGrupos.AddOrUpdate(
             usuarioId,
-            new HashSet<string> { grupo },
+            new ConcurrentHashSet<string> { grupo },
             (key, existing) =>
             {
                 existing.Add(grupo);
@@ -257,13 +258,13 @@ public class HubConnectionManager : IHubConnectionManager
     /// <summary>
     /// Obtiene el ID del usuario asociado a una conexión
     /// </summary>
-    public async Task<Guid?> ObtenerUsuarioPorConexionAsync(string connectionId)
+    public async Task<Guid> ObtenerUsuarioPorConexionAsync(string connectionId)
     {
         if (_conexionUsuario.TryGetValue(connectionId, out var usuarioId))
         {
             return usuarioId;
         }
-        return null;
+        return Guid.Empty;
     }
 
     /// <summary>
@@ -289,12 +290,52 @@ public class HubConnectionManager : IHubConnectionManager
     /// <summary>
     /// Obtiene el timestamp de una conexión
     /// </summary>
-    public async Task<DateTime?> ObtenerTimestampConexionAsync(string connectionId)
+    public async Task<DateTime> ObtenerTimestampConexionAsync(string connectionId)
     {
         if (_conexionesTimestamp.TryGetValue(connectionId, out var timestamp))
         {
             return timestamp;
         }
-        return null;
+        return DateTime.MinValue;
+    }
+}
+
+/// <summary>
+/// Implementación thread-safe de HashSet usando ConcurrentDictionary
+/// </summary>
+public class ConcurrentHashSet<T> : IEnumerable<T>
+{
+    private readonly ConcurrentDictionary<T, byte> _dictionary = new();
+
+    public bool Add(T item)
+    {
+        return _dictionary.TryAdd(item, 0);
+    }
+
+    public bool Remove(T item)
+    {
+        return _dictionary.TryRemove(item, out _);
+    }
+
+    public bool Contains(T item)
+    {
+        return _dictionary.ContainsKey(item);
+    }
+
+    public int Count => _dictionary.Count;
+
+    public IEnumerator<T> GetEnumerator()
+    {
+        return _dictionary.Keys.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+
+    public List<T> ToList()
+    {
+        return _dictionary.Keys.ToList();
     }
 } 

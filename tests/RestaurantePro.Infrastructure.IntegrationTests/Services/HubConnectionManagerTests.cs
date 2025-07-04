@@ -261,25 +261,19 @@ public class HubConnectionManagerTests
         // Assert
         Assert.Equal(4, estadisticas.TotalConexionesActivas);
         Assert.Equal(3, estadisticas.TotalUsuariosConectados);
-        Assert.Equal(3, estadisticas.GruposActivos.Count);
+        Assert.Equal(3, estadisticas.TotalGruposActivos);
     }
 
     [Fact]
     public async Task DeberiaManejarConcurrencia_DeberiaSerThreadSafe()
     {
         // Arrange
-        var tasks = new List<Task>();
         var usuarioId = Guid.NewGuid();
 
         // Act - Agregar múltiples conexiones simultáneamente
-        for (int i = 0; i < 10; i++)
-        {
-            var task = Task.Run(async () =>
-            {
-                await _connectionManager.AgregarConexionAsync(usuarioId, $"conn{i}", "Meseros");
-            });
-            tasks.Add(task);
-        }
+        var tasks = Enumerable.Range(0, 10)
+            .Select(i => _connectionManager.AgregarConexionAsync(usuarioId, $"conn{i}", "Meseros"))
+            .ToArray();
 
         await Task.WhenAll(tasks);
 

@@ -15,15 +15,17 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Services
     /// </summary>
     public class SignalRServiceTests
     {
+        private readonly Mock<ISignalRHub> _signalRHubMock;
         private readonly Mock<ILogger<SignalRService>> _loggerMock;
         private readonly Mock<IHubConnectionManager> _connectionManagerMock;
         private readonly SignalRService _signalRService;
 
         public SignalRServiceTests()
         {
+            _signalRHubMock = new Mock<ISignalRHub>();
             _loggerMock = new Mock<ILogger<SignalRService>>();
             _connectionManagerMock = new Mock<IHubConnectionManager>();
-            _signalRService = new SignalRService(_loggerMock.Object, _connectionManagerMock.Object);
+            _signalRService = new SignalRService(_signalRHubMock.Object, _loggerMock.Object, _connectionManagerMock.Object);
         }
 
         [Fact]
@@ -127,7 +129,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Services
 
             _connectionManagerMock
                 .Setup(x => x.ObtenerEstadisticasConexionesAsync())
-                .ReturnsAsync(new Application.Common.Models.ConexionesEstadisticas
+                .ReturnsAsync(new Application.Common.Interfaces.ConexionesEstadisticas
                 {
                     TotalConexionesActivas = 10,
                     TotalUsuariosConectados = 8
@@ -150,7 +152,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Services
 
             _connectionManagerMock
                 .Setup(x => x.ObtenerEstadisticasConexionesAsync())
-                .ReturnsAsync(new Application.Common.Models.ConexionesEstadisticas
+                .ReturnsAsync(new Application.Common.Interfaces.ConexionesEstadisticas
                 {
                     TotalConexionesActivas = 5,
                     TotalUsuariosConectados = 3
@@ -173,7 +175,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Services
 
             _connectionManagerMock
                 .Setup(x => x.ObtenerEstadisticasConexionesAsync())
-                .ReturnsAsync(new Application.Common.Models.ConexionesEstadisticas
+                .ReturnsAsync(new Application.Common.Interfaces.ConexionesEstadisticas
                 {
                     TotalConexionesActivas = 7,
                     TotalUsuariosConectados = 4
@@ -214,7 +216,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Services
 
             _connectionManagerMock
                 .Setup(x => x.ObtenerEstadisticasConexionesAsync())
-                .ReturnsAsync(new Application.Common.Models.ConexionesEstadisticas
+                .ReturnsAsync(new Application.Common.Interfaces.ConexionesEstadisticas
                 {
                     TotalConexionesActivas = 3,
                     TotalUsuariosConectados = 3

@@ -67,7 +67,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             await _repository.AgregarAsync(tarjeta3);
             await _unitOfWork.SaveChangesAsync();
 
-            var tarjetaPlatino = await _repository.ObtenerPorCodigoAsync("TF-PLATINO-03");
+            var tarjetaPlatino = await _repository.ObtenerPorCodigoAsync("TF-PLATINO-03", CancellationToken.None);
             tarjetaPlatino.Should().NotBeNull();
             tarjetaPlatino!.NivelFidelizacion.Should().Be(NivelFidelizacion.Platino, "los 5001 puntos deberían haberla promovido a Platino");
         }
@@ -75,7 +75,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         [Fact]
         public async Task ObtenerPorCodigoAsync_DebeRetornarTarjeta_CuandoExiste()
         {
-            var tarjeta = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1);
+            var tarjeta = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1, CancellationToken.None);
             tarjeta.Should().NotBeNull();
             tarjeta!.Codigo.Should().Be(_codigoTarjeta1);
             tarjeta.PuntosAcumulados.Should().Be(100);
@@ -117,7 +117,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         [Fact]
         public async Task ObtenerPorIdAsync_DebeIncluirHistorial()
         {
-            var tarjetaExistente = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1);
+            var tarjetaExistente = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1, CancellationToken.None);
             var tarjeta = await _repository.ObtenerPorIdAsync(tarjetaExistente!.Id);
             tarjeta.Should().NotBeNull();
             tarjeta!.HistorialPuntos.Should().NotBeEmpty();
@@ -169,7 +169,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             await _repository.AgregarAsync(nuevaTarjeta);
             await _unitOfWork.SaveChangesAsync();
 
-            var tarjetaGuardada = await _repository.ObtenerPorCodigoAsync(codigo);
+            var tarjetaGuardada = await _repository.ObtenerPorCodigoAsync(codigo, CancellationToken.None);
             tarjetaGuardada.Should().NotBeNull();
             tarjetaGuardada!.ClienteId.Should().Be(clienteId);
         }
@@ -177,13 +177,13 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         [Fact]
         public async Task ActualizarAsync_DebeModificarTarjeta()
         {
-            var tarjeta = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1);
+            var tarjeta = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1, CancellationToken.None);
             tarjeta.Should().NotBeNull();
             tarjeta!.ConfigurarMultiplicadorPuntos(2.0m);
 
             await _unitOfWork.SaveChangesAsync();
 
-            var tarjetaActualizada = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1);
+            var tarjetaActualizada = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1, CancellationToken.None);
             
             tarjetaActualizada.Should().NotBeNull();
             tarjetaActualizada!.MultiplicadorPuntos.Should().Be(2.0m);
@@ -192,7 +192,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         [Fact]
         public async Task EliminarAsync_DebeMarcarTarjetaComoEliminada()
         {
-            var tarjeta = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1);
+            var tarjeta = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1, CancellationToken.None);
             tarjeta.Should().NotBeNull();
 
             await _repository.EliminarAsync(tarjeta!.Id);
@@ -208,7 +208,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
         public async Task ObtenerConPuntosProximosAExpirarAsync_DebeRetornarCorrectamente()
         {
             // Arrange
-            var tarjetaActiva = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1);
+            var tarjetaActiva = await _repository.ObtenerPorCodigoAsync(_codigoTarjeta1, CancellationToken.None);
             tarjetaActiva.ConfigurarFechaExpiracion(DateTime.UtcNow.AddDays(5));
             await _unitOfWork.SaveChangesAsync();
             
@@ -254,7 +254,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Repositorie
             await _repository.AgregarAsync(tarjeta);
             await _unitOfWork.SaveChangesAsync();
             
-            var tarjetaRecuperada = await _repository.ObtenerPorCodigoAsync(tarjeta.Codigo);
+            var tarjetaRecuperada = await _repository.ObtenerPorCodigoAsync(tarjeta.Codigo, CancellationToken.None);
 
             tarjetaRecuperada.Should().NotBeNull();
         }

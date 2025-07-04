@@ -76,8 +76,8 @@ public interface IHubConnectionManager
     /// Obtiene el ID del usuario asociado a una conexión
     /// </summary>
     /// <param name="connectionId">ID de la conexión</param>
-    /// <returns>ID del usuario o null si no se encuentra</returns>
-    Task<Guid?> ObtenerUsuarioPorConexionAsync(string connectionId);
+    /// <returns>ID del usuario o Guid.Empty si no se encuentra</returns>
+    Task<Guid> ObtenerUsuarioPorConexionAsync(string connectionId);
 
     /// <summary>
     /// Obtiene todos los grupos a los que pertenece un usuario
@@ -96,8 +96,8 @@ public interface IHubConnectionManager
     /// Obtiene el timestamp de una conexión específica
     /// </summary>
     /// <param name="connectionId">ID de la conexión</param>
-    /// <returns>Timestamp de la conexión o null si no se encuentra</returns>
-    Task<DateTime?> ObtenerTimestampConexionAsync(string connectionId);
+    /// <returns>Timestamp de la conexión o DateTime.MinValue si no se encuentra</returns>
+    Task<DateTime> ObtenerTimestampConexionAsync(string connectionId);
 }
 
 /// <summary>
