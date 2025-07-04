@@ -44,14 +44,20 @@ namespace RestaurantePro.Domain.Comercial.Services
                 return _notificationManager.ToResult<TarjetaFidelizacion>(null!);
             
             // Verificar que el cliente existe
-            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId, default);
             if (cliente == null)
                 return Result.Failure<TarjetaFidelizacion>("No existe un cliente con el ID especificado");
 
             // Verificar si ya tiene una tarjeta activa
-            var tarjetaExistente = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(clienteId);
-            if (tarjetaExistente != null)
+            try
+            {
+                var tarjetaExistente = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(clienteId);
                 return Result.Failure<TarjetaFidelizacion>($"El cliente ya tiene una tarjeta activa con código {tarjetaExistente.Codigo}");
+            }
+            catch (KeyNotFoundException)
+            {
+                // No tiene tarjeta activa, continuar con la creación
+            }
 
             // Generar código único para la tarjeta
             string codigo = GenerarCodigoTarjeta(clienteId);
@@ -88,23 +94,26 @@ namespace RestaurantePro.Domain.Comercial.Services
                 return _notificationManager.ToResult<decimal>(0);
                 
             // Obtener el cliente primero
-            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId, default);
             if (cliente == null)
-                return Result.Success(0m); // Sin cliente, no hay descuento
+                return Result.Failure<decimal>($"No existe un cliente con el ID {clienteId}");
 
             // Verificar si el cliente está activo
             if (!cliente.EstaActivo)
-                return Result.Success(0m); // Cliente inactivo, no hay descuento
+                return Result.Failure<decimal>("No se puede calcular descuento para un cliente inactivo");
 
             // Verificar si el cliente tiene una tarjeta asociada
             if (!cliente.TarjetaFidelizacionPrincipalId.HasValue)
-                return Result.Success(0m); // Sin tarjeta, no hay descuento
+                return Result.Success(0m);
                 
             // Obtener tarjeta activa del cliente
-            var tarjeta = await _tarjetaRepository.ObtenerTarjetaActivaPorClienteIdAsync(clienteId);
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value, default, false);
             
             // Si no existe o no está activa, no hay descuento
-            if (tarjeta == null || tarjeta.Estado != EstadoTarjeta.Activa)
+            if (tarjeta == null)
+                return Result.Success(0m);
+                
+            if (tarjeta.Estado != EstadoTarjeta.Activa)
                 return Result.Success(0m);
             
             // Calcular descuento según el nivel
@@ -135,7 +144,7 @@ namespace RestaurantePro.Domain.Comercial.Services
                 return _notificationManager.ToResult<int>(0);
                 
             // Verificamos primero si el cliente existe
-            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId, default);
             if (cliente == null)
                 return Result.Failure<int>("No se encontró el cliente especificado");
             
@@ -148,7 +157,7 @@ namespace RestaurantePro.Domain.Comercial.Services
                 return Result.Failure<int>("El cliente no tiene una tarjeta de fidelización asociada");
                 
             // Obtener tarjeta por ID
-            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value);
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value, default, false);
             
             // Si no existe o no está activa, no puede acumular puntos
             if (tarjeta == null)
@@ -198,7 +207,7 @@ namespace RestaurantePro.Domain.Comercial.Services
                 return _notificationManager.ToResult<int>(0);
                 
             // Verificamos primero si el cliente existe
-            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId, default);
             if (cliente == null)
                 return Result.Failure<int>($"No existe un cliente con el ID {clienteId}");
             
@@ -211,7 +220,7 @@ namespace RestaurantePro.Domain.Comercial.Services
                 return Result.Failure<int>("El cliente no tiene una tarjeta de fidelización asociada");
                 
             // Obtener tarjeta por ID
-            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value);
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value, default, false);
             
             // Si no existe o no está activa, no puede canjear puntos
             if (tarjeta == null)
@@ -334,7 +343,7 @@ namespace RestaurantePro.Domain.Comercial.Services
                 return _notificationManager.ToResult<int>(0);
                 
             // Obtener el cliente
-            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId);
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId, default);
             if (cliente == null)
                 return Result.Failure<int>("No se encontró el cliente especificado");
                 
@@ -343,7 +352,7 @@ namespace RestaurantePro.Domain.Comercial.Services
                 return Result.Failure<int>("El cliente no tiene tarjeta de fidelización");
                 
             // Obtener tarjeta por ID
-            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value);
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId.Value, default, false);
             
             // Si no existe, error
             if (tarjeta == null)

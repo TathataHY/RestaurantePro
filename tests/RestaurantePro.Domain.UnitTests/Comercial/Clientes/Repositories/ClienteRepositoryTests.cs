@@ -47,7 +47,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Clientes.Repositories
                 .ReturnsAsync(clienteEsperado);
 
             // Act
-            var resultado = await _mockRepository.Object.ObtenerPorIdAsync(clienteId);
+            var resultado = await _mockRepository.Object.ObtenerPorIdAsync(clienteId, CancellationToken.None);
 
             // Assert
             resultado.Should().NotBeNull();

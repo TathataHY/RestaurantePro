@@ -22,7 +22,7 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
     /// <summary>
     /// Calcula los puntos a acumular por una compra
     /// </summary>
-    public async Task<Result<CalculoResultadoPuntos>> CalcularPuntosPorCompraAsync(
+            public async Task<Result<CalculoResultadoPuntos>> CalcularPuntosPorCompraAsync(
         Guid tarjetaId, 
         decimal montoCompra, 
         CancellationToken cancellationToken = default)
@@ -32,7 +32,7 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
             if (montoCompra <= 0)
                 return Result.Failure<CalculoResultadoPuntos>("El monto de compra debe ser mayor que cero");
 
-            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken);
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken, false);
             if (tarjeta == null)
                 return Result.Failure<CalculoResultadoPuntos>("Tarjeta de fidelización no encontrada");
 
@@ -67,7 +67,7 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
     /// <summary>
     /// Calcula los puntos por una promoción específica
     /// </summary>
-    public async Task<Result<CalculoResultadoPuntos>> CalcularPuntosPorPromocionAsync(
+            public async Task<Result<CalculoResultadoPuntos>> CalcularPuntosPorPromocionAsync(
         Guid tarjetaId, 
         Guid promocionId, 
         Dictionary<string, object>? parametros = null, 
@@ -75,7 +75,7 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
     {
         try
         {
-            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken);
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken, false);
             if (tarjeta == null)
                 return Result.Failure<CalculoResultadoPuntos>("Tarjeta de fidelización no encontrada");
 
@@ -99,7 +99,7 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
     /// <summary>
     /// Calcula el valor en dinero de una cantidad de puntos
     /// </summary>
-    public async Task<Result<decimal>> CalcularValorPuntosAsync(
+            public async Task<Result<decimal>> CalcularValorPuntosAsync(
         Guid tarjetaId, 
         int puntos, 
         CancellationToken cancellationToken = default)
@@ -109,7 +109,7 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
             if (puntos <= 0)
                 return Result.Failure<decimal>("La cantidad de puntos debe ser mayor a cero");
 
-            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken);
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken, false);
             if (tarjeta == null)
                 return Result.Failure<decimal>("Tarjeta de fidelización no encontrada");
 
@@ -129,13 +129,13 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
     /// <summary>
     /// Obtiene la tasa de conversión actual para una tarjeta
     /// </summary>
-    public async Task<Result<decimal>> ObtenerTasaConversionAsync(
+            public async Task<Result<decimal>> ObtenerTasaConversionAsync(
         Guid tarjetaId, 
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken);
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken, false);
             if (tarjeta == null)
                 return Result.Failure<decimal>("Tarjeta de fidelización no encontrada");
 
@@ -152,7 +152,7 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
     /// <summary>
     /// Valida si se pueden canjear una cantidad específica de puntos
     /// </summary>
-    public async Task<Result<bool>> ValidarCanjePuntosAsync(
+            public async Task<Result<bool>> ValidarCanjePuntosAsync(
         Guid tarjetaId, 
         int puntos, 
         CancellationToken cancellationToken = default)
@@ -162,7 +162,7 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
             if (puntos <= 0)
                 return Result.Failure<bool>("La cantidad de puntos debe ser mayor a cero");
 
-            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken);
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken, false);
             if (tarjeta == null)
                 return Result.Failure<bool>("Tarjeta de fidelización no encontrada");
 
@@ -186,14 +186,14 @@ public class CalculadoraPuntosService : ICalculadoraPuntosService
     /// <summary>
     /// Calcula los puntos de bonificación por nivel de cliente
     /// </summary>
-    public async Task<Result<int>> CalcularBonificacionPorNivelAsync(
+            public async Task<Result<int>> CalcularBonificacionPorNivelAsync(
         Guid tarjetaId, 
         int puntosBase, 
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken);
+            var tarjeta = await _tarjetaRepository.ObtenerPorIdAsync(tarjetaId, cancellationToken, false);
             if (tarjeta == null)
                 return Result.Failure<int>("Tarjeta de fidelización no encontrada");
 

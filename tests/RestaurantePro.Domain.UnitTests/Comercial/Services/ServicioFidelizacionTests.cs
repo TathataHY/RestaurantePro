@@ -221,8 +221,8 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
                 
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, default))
-                .ReturnsAsync((TarjetaFidelizacion?)null);
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerPorIdAsync(tarjetaId, default, false))
+                .ReturnsAsync(tarjeta);
 
             // Act
             var resultado = await _servicio.CalcularDescuentoAsync(clienteId, totalComanda);
@@ -255,7 +255,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
             
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, default))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerPorIdAsync(tarjetaId, default, false))
                 .ReturnsAsync(tarjeta);
 
             // Act
@@ -289,7 +289,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
             
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, default))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerPorIdAsync(tarjetaId, default, false))
                 .ReturnsAsync(tarjeta);
 
             // Act
@@ -323,7 +323,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
             
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, default))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerPorIdAsync(tarjetaId, default, false))
                 .ReturnsAsync(tarjeta);
 
             // Act
@@ -441,14 +441,6 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             var comandaId = Guid.NewGuid();
             var montoTotal = 1000m;
             
-            // Mock del servicio con NotificationManager mock para verificar que se usa
-            var servicioConMock = new ServicioFidelizacion(
-                _tarjetaRepositoryMock.Object,
-                _clienteRepositoryMock.Object,
-                _historialPuntosRepositoryMock.Object,
-                _dateTimeServiceMock.Object,
-                _notificationManagerMock.Object);
-                
             // Crear cliente con tarjeta
             var clienteNombre = ClienteNombre.Crear("Test", "Cliente");
             var cliente = Cliente.Crear(clienteNombre, "test@example.com", "123456789", DateTime.Now.AddYears(-30));
@@ -456,20 +448,27 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
             
             // Crear tarjeta
             var tarjeta = CrearTarjetaActiva(clienteId, NivelFidelizacion.Oro, 50);
-            SetPrivateId(tarjeta, Guid.NewGuid());
+            var tarjetaId = Guid.NewGuid();
+            SetPrivateId(tarjeta, tarjetaId);
             
             // Asociar tarjeta al cliente
-            cliente.AsociarTarjetaFidelizacion(tarjeta.Id);
+            cliente.AsociarTarjetaFidelizacion(tarjetaId);
             
             // Configurar mocks
             _clienteRepositoryMock.Setup(r => r.ObtenerPorIdAsync(clienteId, default))
                 .ReturnsAsync(cliente);
             
-            _tarjetaRepositoryMock.Setup(r => r.ObtenerPorIdAsync(cliente.TarjetaFidelizacionPrincipalId!.Value, default, false))
+            _tarjetaRepositoryMock.Setup(r => r.ObtenerPorIdAsync(tarjetaId, default, false))
                 .ReturnsAsync(tarjeta);
+                
+            _tarjetaRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), default))
+                .Returns(Task.CompletedTask);
+                
+            _clienteRepositoryMock.Setup(r => r.ActualizarAsync(It.IsAny<Cliente>(), default))
+                .Returns(Task.CompletedTask);
             
             // Act
-            var result = await servicioConMock.AcumularPuntosAsync(clienteId, comandaId, montoTotal);
+            var result = await _servicio.AcumularPuntosAsync(clienteId, comandaId, montoTotal);
             
             // Assert
             result.Succeeded.Should().BeTrue();
@@ -560,7 +559,7 @@ namespace RestaurantePro.Domain.UnitTests.Comercial.Services
                 .ReturnsAsync(cliente);
                 
             _tarjetaRepositoryMock.Setup(r => r.ObtenerTarjetaActivaPorClienteIdAsync(clienteId, default))
-                .ReturnsAsync((TarjetaFidelizacion?)null);
+                .ThrowsAsync(new KeyNotFoundException("No se encontró una tarjeta de fidelización activa"));
                 
             _tarjetaRepositoryMock.Setup(r => r.AgregarAsync(It.IsAny<TarjetaFidelizacion>(), default))
                 .Returns(Task.CompletedTask);
