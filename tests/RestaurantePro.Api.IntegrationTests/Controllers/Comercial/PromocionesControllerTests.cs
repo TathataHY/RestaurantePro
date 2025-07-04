@@ -16,6 +16,7 @@ using RestaurantePro.Domain.Comercial.Promociones;
 using RestaurantePro.Domain.Comercial.Promociones.Entities;
 using RestaurantePro.Domain.Comercial.Promociones.Enums;
 using RestaurantePro.Domain.Core.Productos;
+using RestaurantePro.Domain.Core.Base.Services;
 using Xunit;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -396,7 +397,7 @@ public class PromocionesControllerTests : ApiIntegrationTestBase, IDisposable
         await DbContext.Entry(factura).ReloadAsync();
         var comanda = await DbContext.Comandas.FindAsync(comandaId);
         await DbContext.Entry(comanda!).ReloadAsync();
-        // Crear promoción válida
+        // Crear promoción válida (vigente desde ahora)
         var crearPromocionRequest = new CrearPromocionCommand
         {
             Codigo = $"PROMO{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}",
@@ -405,7 +406,7 @@ public class PromocionesControllerTests : ApiIntegrationTestBase, IDisposable
             Tipo = TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10.0m, // 10% de descuento
             MontoMinimo = 10.0m, // Monto mínimo bajo para asegurar aplicabilidad
-            FechaInicio = DateTime.UtcNow.AddMinutes(1), // Fecha futura muy cercana
+            FechaInicio = DateTime.UtcNow.AddMinutes(1), // Fecha futura para cumplir validaciones
             FechaFin = DateTime.UtcNow.AddDays(30),
             MaximoUsos = 10,
             EsAcumulable = false
@@ -415,16 +416,22 @@ public class PromocionesControllerTests : ApiIntegrationTestBase, IDisposable
         var crearResult = await crearResponse.Content.ReadFromJsonAsync<ApiResponse<PromocionDto>>();
         crearResult.Should().NotBeNull();
         var promocionId = crearResult!.Data!.Id;
-        // Esperar a que la promoción esté vigente
-        await Task.Delay(2000);
-        // Act
+        
+        // Avanzar el tiempo para que la promoción esté vigente
+        var fakeDateTimeService = Factory.Services.GetRequiredService<IDateTimeService>() as FakeDateTimeService;
+        fakeDateTimeService?.AdvanceMinutes(2); // Avanzar 2 minutos para que pase la fecha de inicio
+        
+        // Esperar a que la promoción esté vigente (pase la fecha de inicio)
+        await Task.Delay(2000); // Esperar 2 segundos para que pase la fecha de inicio
+        
+        // Act - Aplicar promoción sobre factura
         var aplicarRequest = new AplicarPromocionCommand
         {
             PromocionId = promocionId,
             FacturaId = factura.Id,
             ClienteId = cliente.Id,
             ProductosIds = new List<Guid> { producto1.Id, producto2.Id },
-            TipoAplicacion = TipoAplicacionPromocion.ProductosEspecificos
+            TipoAplicacion = TipoAplicacionPromocion.FacturaCompleta // Cambiar a factura completa
         };
         var response = await HttpClient.PostAsJsonAsync("/api/comercial/promociones/aplicar", aplicarRequest);
         // Assert

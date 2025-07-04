@@ -74,6 +74,7 @@ using System.Text.Json;
 using RestaurantePro.Infrastructure.Identity.Models;
 using RestaurantePro.Infrastructure.Identity;
 using RestaurantePro.Api.Hubs;
+using RestaurantePro.Infrastructure.Persistence.Interceptors;
 using RestaurantePro.Infrastructure.ExternalServices.FileStorage;
 using RestaurantePro.Infrastructure.ExternalServices.Payment;
 using RestaurantePro.Infrastructure.ExternalServices.SMS;
@@ -253,6 +254,16 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 options.UseSqlite(_connectionString);
                 options.EnableSensitiveDataLogging();
                 options.EnableDetailedErrors();
+                
+                // Configurar interceptores para que los eventos de dominio se procesen
+                var serviceProvider = services.BuildServiceProvider();
+                var domainEventInterceptor = serviceProvider.GetRequiredService<DomainEventInterceptor>();
+                var auditableEntityInterceptor = serviceProvider.GetRequiredService<AuditableEntityInterceptor>();
+                var softDeleteInterceptor = serviceProvider.GetRequiredService<SoftDeleteInterceptor>();
+                
+                options.AddInterceptors(domainEventInterceptor);
+                options.AddInterceptors(auditableEntityInterceptor);
+                options.AddInterceptors(softDeleteInterceptor);
             });
 
             // 🔧 CONFIGURAR ASP.NET CORE IDENTITY PARA TESTS
@@ -270,7 +281,11 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddScoped<IUserPermissionService, FakeUserPermissionService>();
             services.AddScoped<ICurrentUserService, TestCurrentUserService>();
             services.AddScoped<INotificationService, TestNotificationService>();
-            services.AddScoped<IDomainEventDispatcher, TestDomainEventDispatcher>();
+            // Usar el DomainEventDispatcher real para que los eventos se procesen correctamente
+            services.AddScoped<IDomainEventDispatcher, RestaurantePro.Domain.Core.Base.Events.Dispatcher.DomainEventDispatcher>();
+            
+            // 🔧 REGISTRAR FAKE DATETIME SERVICE PARA TESTS
+            services.AddSingleton<IDateTimeService, FakeDateTimeService>();
 
             // 🔧 CONFIGURAR SERVICIOS DE INFRAESTRUCTURA PARA TESTS
             // services.AddScoped<IEmailService, FakeEmailService>();
@@ -1235,6 +1250,12 @@ public class FakeDateTimeService : IDateTimeService
     public DateTime Today => _now.Date;
     public DateTime UtcNow => _now.ToUniversalTime();
     public void SetNow(DateTime now) => _now = now;
+    
+    // Método para avanzar el tiempo en los tests
+    public void AdvanceTime(TimeSpan timeSpan) => _now = _now.Add(timeSpan);
+    
+    // Método para avanzar el tiempo en minutos
+    public void AdvanceMinutes(int minutes) => _now = _now.AddMinutes(minutes);
 }
 
 // Implementación fake para ITimeProvider

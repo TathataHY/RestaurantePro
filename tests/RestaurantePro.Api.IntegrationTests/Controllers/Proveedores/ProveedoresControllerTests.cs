@@ -4,7 +4,11 @@ using RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.Agregar
 using RestaurantePro.Application.Proveedores.ContactosProveedor.Commands.ActualizarContacto;
 using RestaurantePro.Application.Proveedores.Proveedores.DTOs;
 using RestaurantePro.Api.Common;
+using RestaurantePro.Application.Common.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
+using RestaurantePro.Api.IntegrationTests.TestBase;
+using RestaurantePro.Domain.Core.Base.Services;
 
 namespace RestaurantePro.Api.IntegrationTests.Controllers.Proveedores;
 
@@ -621,10 +625,11 @@ public class ProveedoresControllerTests : ApiIntegrationTestBase, IDisposable
         // Arrange
         var proveedorCreado = await CrearProveedorTestAsync("Proveedor A Desactivar", "desactivar@test.cl", "Santiago");
         
-        // Simular que han pasado 25 horas (más de 24) desde la creación
-        if (DateTimeService is FakeDateTimeService fakeService)
+        // 🔧 SIMULAR QUE HAN PASADO 25 HORAS (MÁS DE 24) DESDE LA CREACIÓN
+        var fakeDateTimeService = _factory.Services.GetRequiredService<IDateTimeService>() as FakeDateTimeService;
+        if (fakeDateTimeService != null)
         {
-            fakeService.SetNow(fakeService.Now.AddHours(25));
+            fakeDateTimeService.SetNow(fakeDateTimeService.Now.AddHours(25));
         }
         
         var url = $"/api/proveedores/{proveedorCreado.Id}/desactivar";

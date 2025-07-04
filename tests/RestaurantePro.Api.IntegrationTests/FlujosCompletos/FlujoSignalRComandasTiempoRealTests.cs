@@ -215,7 +215,10 @@ public class FlujoSignalRComandasTiempoRealTests : ApiIntegrationTestBase
         );
         await dbContext.SaveChangesAsync();
 
-        // Act - Marcar comanda como lista para servir
+        // Act - Marcar comanda como lista para servir (siguiendo el flujo correcto)
+        comanda.ActualizarEstado(EstadoComanda.EnProceso);
+        await dbContext.SaveChangesAsync();
+        
         comanda.ActualizarEstado(EstadoComanda.Lista);
         await dbContext.SaveChangesAsync();
 

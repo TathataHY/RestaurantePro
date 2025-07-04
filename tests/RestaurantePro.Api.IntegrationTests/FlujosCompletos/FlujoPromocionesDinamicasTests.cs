@@ -8,6 +8,7 @@ using RestaurantePro.Application.Comercial.Promociones.Queries.ObtenerPromocione
 using RestaurantePro.Application.Comercial.Promociones.Commands.CrearPromocion;
 using RestaurantePro.Domain.Comercial.Promociones.Enums;
 using RestaurantePro.Api.Common;
+using RestaurantePro.Domain.Core.Base.Services;
 using Xunit;
 
 namespace RestaurantePro.Api.IntegrationTests.FlujosCompletos
@@ -249,7 +250,7 @@ namespace RestaurantePro.Api.IntegrationTests.FlujosCompletos
             await CrearDetalleComandaPrueba(comandaId, producto2.Id, 2, "Producto 2 agregado para monto mínimo"); // 2 x $150 = $300
             // Total: $600, supera ampliamente el mínimo de $50
 
-            // Crear promoción de prueba con fecha de inicio en el futuro para cumplir con validaciones
+            // Crear promoción de prueba vigente desde ahora
             var crearPromocionRequest = new CrearPromocionCommand
             {
                 Codigo = $"PROMO{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}", // Máximo 20 chars, formato correcto
@@ -258,7 +259,7 @@ namespace RestaurantePro.Api.IntegrationTests.FlujosCompletos
                 Tipo = TipoPromocion.PorcentajeTotal,
                 ValorDescuento = 10.0m, // 10% de descuento
                 MontoMinimo = 10.0m, // Monto mínimo más bajo para facilitar el test
-                FechaInicio = DateTime.UtcNow.AddMinutes(1), // Fecha futura muy cercana
+                FechaInicio = DateTime.UtcNow.AddMinutes(1), // Fecha futura para cumplir validaciones
                 FechaFin = DateTime.UtcNow.AddDays(30),
                 MaximoUsos = 100,
                 EsAcumulable = false
@@ -280,8 +281,9 @@ namespace RestaurantePro.Api.IntegrationTests.FlujosCompletos
             var promocion = crearPromocionResult.Data;
             promocion.Should().NotBeNull();
 
-            // Esperar un momento para que la promoción esté vigente
-            await Task.Delay(2000); // 2 segundos de espera
+            // Avanzar el tiempo para que la promoción esté vigente
+            var fakeDateTimeService = Factory.Services.GetRequiredService<IDateTimeService>() as FakeDateTimeService;
+            fakeDateTimeService?.AdvanceMinutes(2); // Avanzar 2 minutos para que pase la fecha de inicio
 
             // Verificar que la promoción es aplicable usando el endpoint /aplicables
             var aplicablesResponse = await HttpClient.GetAsync($"/api/comercial/promociones/aplicables?clienteId={cliente.Id}&monto=406.0m");

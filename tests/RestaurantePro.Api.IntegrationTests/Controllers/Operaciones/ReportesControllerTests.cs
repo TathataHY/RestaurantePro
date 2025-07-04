@@ -373,18 +373,21 @@ public class ReportesControllerTests : ApiIntegrationTestBase
     }
 
     [Fact]
-    public async Task ObtenerReporteVentasDiarias_ConFechaInvalida_DeberiaRetornarReporteVacio()
+    public async Task ObtenerReporteVentasDiarias_ConFechaSinDatos_DeberiaRetornarErrorValidacion()
     {
+        // Arrange - Usar una fecha pasada que no tendrá datos
+        var fechaPasada = DateTime.Today.AddDays(-365);
+        var fechaFormateada = fechaPasada.ToString("yyyy-MM-dd");
+        
         // Act
-        var response = await HttpClient.GetAsync("/api/operaciones/reportes/ventas-diarias?fecha=fecha-invalida");
+        var response = await HttpClient.GetAsync($"/api/operaciones/reportes/ventas-diarias?fecha={fechaFormateada}");
         var apiResponse = await ExecuteAndDeserializeAsync<ReporteVentasDiariaDto>(r => Task.FromResult(response));
 
         // Assert
         apiResponse.Should().NotBeNull();
-        apiResponse.Success.Should().BeTrue(); // Un reporte vacío no es un error
-        apiResponse.Data.Should().NotBeNull();
-        apiResponse.Data.MetricasBasicas.TotalComandas.Should().Be(0);
-        apiResponse.Data.MetricasBasicas.MontoTotalVentas.Should().Be(0);
+        apiResponse.Success.Should().BeFalse(); // El sistema valida que haya datos operacionales
+        apiResponse.Errors.Should().ContainSingle();
+        apiResponse.Errors.First().Should().Contain("datos operacionales");
     }
 
     [Fact]

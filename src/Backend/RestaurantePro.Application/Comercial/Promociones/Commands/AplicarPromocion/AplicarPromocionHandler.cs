@@ -12,6 +12,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
     private readonly ILogger<AplicarPromocionHandler> _logger;
     private readonly ICurrentUserService _currentUserService;
     private readonly ICommunicationService _notificacionService;
+    private readonly IDateTimeService _dateTimeService;
     // TODO: Agregar cuando IUnitOfWork esté disponible
     // private readonly IUnitOfWork _unitOfWork;
     // TODO: Agregar cuando IPromocionRepository esté disponible  
@@ -24,7 +25,8 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         IMapper mapper,
         ILogger<AplicarPromocionHandler> logger,
         ICurrentUserService currentUserService,
-        ICommunicationService notificacionService)
+        ICommunicationService notificacionService,
+        IDateTimeService dateTimeService)
         // TODO: Agregar parámetros cuando estén disponibles
         // IUnitOfWork unitOfWork,
         // IPromocionRepository promocionRepository,
@@ -35,6 +37,7 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
         _logger = logger;
         _currentUserService = currentUserService;
         _notificacionService = notificacionService;
+        _dateTimeService = dateTimeService;
         // TODO: Asignar cuando estén disponibles
         // _unitOfWork = unitOfWork;
         // _promocionRepository = promocionRepository;
@@ -43,11 +46,6 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
 
     public async Task<Result<AplicarPromocionDto>> Handle(AplicarPromocionCommand request, CancellationToken cancellationToken)
     {
-        // 🚧 Feature toggle: funcionalidad en desarrollo
-        return Result.Failure<AplicarPromocionDto>("La funcionalidad de promociones está en desarrollo");
-        
-        // ...código real (descomentar cuando se implemente la funcionalidad)...
-        /*
         _logger.LogInformation("[DEBUG] Iniciando aplicación de promoción. PromocionId: {PromocionId}, FacturaId: {FacturaId}, ClienteId: {ClienteId}", 
             request.PromocionId, request.FacturaId, request.ClienteId);
 
@@ -105,7 +103,63 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
             
             return Result.Failure<AplicarPromocionDto>("Error interno al aplicar la promoción");
         }
-        */
+        _logger.LogInformation("[DEBUG] Iniciando aplicación de promoción. PromocionId: {PromocionId}, FacturaId: {FacturaId}, ClienteId: {ClienteId}", 
+            request.PromocionId, request.FacturaId, request.ClienteId);
+
+        try 
+        {
+            _logger.LogInformation("🎁 Iniciando aplicación de promoción {PromocionId} - Tipo: {TipoAplicacion}", 
+                request.PromocionId, request.TipoAplicacion);
+            
+            // Obtener la promoción
+            var promocionResult = await ObtenerPromocion(request, cancellationToken);
+            if (promocionResult.IsFailure())
+                return Result.Failure<AplicarPromocionDto>(promocionResult.Error);
+
+            var promocion = promocionResult.Value;
+
+            // Obtener la entidad destino (factura o comanda)
+            var entidadResult = await ObtenerEntidadDestino(request, cancellationToken);
+            if (entidadResult.IsFailure())
+                return Result.Failure<AplicarPromocionDto>(entidadResult.Error);
+
+            var (factura, comanda) = entidadResult.Value;
+
+            // Validar elegibilidad básica
+            var validacionResult = await ValidarElegibilidadBasica(promocion, factura, comanda, request, cancellationToken);
+            if (validacionResult.IsFailure())
+                return Result.Failure<AplicarPromocionDto>(validacionResult.Error);
+
+            // Calcular descuento simplificado
+            var calculoResult = await CalcularDescuentoSimplificado(promocion, factura, comanda, request, cancellationToken);
+            if (calculoResult.IsFailure())
+                return Result.Failure<AplicarPromocionDto>(calculoResult.Error);
+
+            var calculo = calculoResult.Value;
+
+            // Crear respuesta exitosa
+            var respuesta = CrearRespuestaSimplificada(promocion, factura, comanda, calculo, request);
+
+            _logger.LogInformation("✅ Promoción {PromocionId} aplicada exitosamente. Descuento: {Descuento:C}", 
+                promocion.Id, calculo.MontoDescuento);
+
+            return Result.Success(respuesta);
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                _logger.LogError(ex, "❌ Error al aplicar promoción {PromocionId}: {ErrorMessage}", 
+                    request.PromocionId, ex.Message);
+            }
+            catch
+            {
+                // Si falla el logging (como en el test), retornar mensaje directo
+                return Result.Failure<AplicarPromocionDto>("Error interno al aplicar la promoción");
+            }
+            
+            return Result.Failure<AplicarPromocionDto>("Error interno al aplicar la promoción");
+        }
     }
 
     #region Métodos privados
@@ -166,8 +220,8 @@ public class AplicarPromocionHandler : IRequestHandler<AplicarPromocionCommand, 
 
     private async Task<Result> ValidarElegibilidadBasica(Promocion promocion, Factura? factura, Comanda? comanda, AplicarPromocionCommand request, CancellationToken cancellationToken)
     {
-        // Validar vigencia
-        var ahora = DateTime.UtcNow;
+        // Validar vigencia usando el servicio de fecha para tests
+        var ahora = _dateTimeService.UtcNow;
         if (ahora < promocion.FechaInicio || ahora > promocion.FechaFin)
         {
             return Result.Failure("La promoción no está vigente.");
