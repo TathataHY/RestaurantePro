@@ -407,8 +407,8 @@ public class FinalizarComandaHandlerTests
         _comandaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(comandaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(comanda);
 
-        // Simular error en actualización
-        _comandaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<Comanda>(), It.IsAny<CancellationToken>()))
+        // Simular error en SaveChangesAsync del UnitOfWork
+        _unitOfWorkMock.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("No se puede cambiar el estado de EnProceso a Finalizada"));
 
         // Act
