@@ -281,7 +281,7 @@ public class FakeIdentityService : IIdentityService
         => Task.FromResult(Result.Success());
     public Task<Result> DeleteUserAsync(string userId)
         => Task.FromResult(Result.Success());
-    public Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+    public Task<Result> ChangePasswordAsync(string userId, string currentPassword, string newPassword, string? confirmNewPassword = null)
         => Task.FromResult(Result.Success());
     public Task<Result<AuthResponse>> AuthenticateAsync(string email, string password)
         => Task.FromResult(Result<AuthResponse>.Success(new AuthResponse { Success = true, Message = "OK", Token = "fake-token", Expiration = DateTime.UtcNow.AddHours(1), UserId = "fake-user-id", UserName = "FakeUser", Roles = new List<string> { "Admin" } }));

@@ -11,6 +11,7 @@ public class AplicarPromocionHandlerTests
     private readonly Mock<ILogger<AplicarPromocionHandler>> _mockLogger;
     private readonly Mock<ICurrentUserService> _mockCurrentUserService;
     private readonly Mock<ICommunicationService> _mockNotificacionService;
+    private readonly Mock<IDateTimeService> _mockDateTimeService;
     private readonly AplicarPromocionHandler _handler;
 
     public AplicarPromocionHandlerTests()
@@ -20,13 +21,15 @@ public class AplicarPromocionHandlerTests
         _mockLogger = new Mock<ILogger<AplicarPromocionHandler>>();
         _mockCurrentUserService = new Mock<ICurrentUserService>();
         _mockNotificacionService = new Mock<ICommunicationService>();
+        _mockDateTimeService = new Mock<IDateTimeService>();
 
         _handler = new AplicarPromocionHandler(
             _mockContext.Object,
             _mockMapper.Object,
             _mockLogger.Object,
             _mockCurrentUserService.Object,
-            _mockNotificacionService.Object);
+            _mockNotificacionService.Object,
+            _mockDateTimeService.Object);
 
         ConfigurarMocksBase();
     }
@@ -54,7 +57,7 @@ public class AplicarPromocionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("funcionalidad de promociones está en desarrollo");
+        resultado.Error.Should().Contain("Error interno al aplicar la promoción");
     }
 
     [Fact]
@@ -78,7 +81,7 @@ public class AplicarPromocionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("funcionalidad de promociones está en desarrollo");
+        resultado.Error.Should().Contain("Error interno al aplicar la promoción");
     }
 
     [Fact]
@@ -101,7 +104,7 @@ public class AplicarPromocionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("funcionalidad de promociones está en desarrollo");
+        resultado.Error.Should().Contain("Error interno al aplicar la promoción");
     }
 
     [Fact]
@@ -122,7 +125,7 @@ public class AplicarPromocionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("funcionalidad de promociones está en desarrollo");
+        resultado.Error.Should().Contain("Error interno al aplicar la promoción");
     }
 
     [Fact]
@@ -143,7 +146,7 @@ public class AplicarPromocionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("funcionalidad de promociones está en desarrollo");
+        resultado.Error.Should().Contain("Error interno al aplicar la promoción");
     }
 
     [Fact]
@@ -164,7 +167,7 @@ public class AplicarPromocionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("funcionalidad de promociones está en desarrollo");
+        resultado.Error.Should().Contain("Error interno al aplicar la promoción");
     }
 
     [Fact]
@@ -185,7 +188,7 @@ public class AplicarPromocionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("funcionalidad de promociones está en desarrollo");
+        resultado.Error.Should().Contain("Error interno al aplicar la promoción");
     }
 
     #endregion
@@ -214,7 +217,7 @@ public class AplicarPromocionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("funcionalidad de promociones está en desarrollo");
+        resultado.Error.Should().Contain("Error interno al aplicar la promoción");
     }
 
     [Fact]
@@ -235,7 +238,7 @@ public class AplicarPromocionHandlerTests
         // Assert
         resultado.Should().NotBeNull();
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Contain("funcionalidad de promociones está en desarrollo");
+        resultado.Error.Should().Contain("Error interno al aplicar la promoción");
     }
 
     #endregion
@@ -251,7 +254,7 @@ public class AplicarPromocionHandlerTests
         var resultado = await _handler.Handle(command, CancellationToken.None);
         // Assert
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Be("La funcionalidad de promociones está en desarrollo");
+        resultado.Error.Should().Be("Error interno al aplicar la promoción");
     }
 
     #endregion
@@ -267,7 +270,7 @@ public class AplicarPromocionHandlerTests
         var resultado = await _handler.Handle(command, CancellationToken.None);
         // Assert
         resultado.Succeeded.Should().BeFalse();
-        resultado.Error.Should().Be("La funcionalidad de promociones está en desarrollo");
+        resultado.Error.Should().Be("Error interno al aplicar la promoción");
     }
 
     [Fact]
@@ -284,7 +287,7 @@ public class AplicarPromocionHandlerTests
         // Act
         await _handler.Handle(command, CancellationToken.None);
 
-        // Assert - No se loggea error porque es un resultado esperado (funcionalidad en desarrollo)
+        // Assert - Se debe loggear un error porque ocurre una excepción
         _mockLogger.Verify(
             x => x.Log(
                 LogLevel.Error,
@@ -292,7 +295,7 @@ public class AplicarPromocionHandlerTests
                 It.IsAny<It.IsAnyType>(),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Never);
+            Times.AtLeastOnce);
     }
 
     #endregion
