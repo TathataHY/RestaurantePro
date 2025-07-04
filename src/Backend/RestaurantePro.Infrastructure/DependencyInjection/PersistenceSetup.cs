@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -58,6 +59,11 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             {
                 RegisterDbContexts(services, configuration);
             }
+            else
+            {
+                // En entorno de tests, registrar contextos usando la misma conexión SQLite
+                RegisterTestDbContexts(services, configuration);
+            }
 
             // Registrar UnitOfWork
             services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -110,6 +116,48 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
                 options.UseSqlServer(
                     defaultConnectionString,
                     sqlOptions => sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryProveedores", "Proveedores")));
+        }
+
+        private static void RegisterTestDbContexts(IServiceCollection services, IConfiguration configuration)
+        {
+            var connectionString = configuration.GetConnectionString("DefaultConnection");
+
+            // Eliminar registros previos de los contextos secundarios
+            RemoveDbContext<CoreDbContext>(services);
+            RemoveDbContext<ComercialDbContext>(services);
+            RemoveDbContext<OperacionesDbContext>(services);
+            RemoveDbContext<InventarioDbContext>(services);
+            RemoveDbContext<ProveedoresDbContext>(services);
+
+            // Core
+            services.AddDbContext<CoreDbContext>(options =>
+                options.UseSqlite(connectionString));
+
+            // Comercial
+            services.AddDbContext<ComercialDbContext>(options =>
+                options.UseSqlite(connectionString));
+
+            // Operaciones
+            services.AddDbContext<OperacionesDbContext>(options =>
+                options.UseSqlite(connectionString));
+
+            // Inventario
+            services.AddDbContext<InventarioDbContext>(options =>
+                options.UseSqlite(connectionString));
+
+            // Proveedores
+            services.AddDbContext<ProveedoresDbContext>(options =>
+                options.UseSqlite(connectionString));
+        }
+
+        // Método auxiliar para eliminar registros previos de un DbContext
+        private static void RemoveDbContext<TContext>(IServiceCollection services) where TContext : DbContext
+        {
+            var descriptors = services.Where(d => d.ServiceType == typeof(DbContextOptions<TContext>)).ToList();
+            foreach (var descriptor in descriptors)
+            {
+                services.Remove(descriptor);
+            }
         }
 
         private static void RegisterRepositories(IServiceCollection services)

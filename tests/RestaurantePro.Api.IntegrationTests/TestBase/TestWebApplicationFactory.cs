@@ -147,7 +147,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
         });
 
         // 🔧 CONFIGURACIÓN SIMPLIFICADA PARA TESTS
-        builder.ConfigureServices(services =>
+        builder.ConfigureServices((context, services) =>
         {
             // 🔧 DESHABILITAR VALIDACIÓN DE SERVICIOS TEMPORALMENTE PARA DEBUGGING
             services.Configure<ServiceProviderOptions>(options =>
@@ -159,7 +159,27 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // 🔧 CONFIGURACIÓN DE BASE DE DATOS TEMPORAL ÚNICA POR TEST
             Console.WriteLine($"🗄️ Configurando BD temporal: {_databasePath}");
             
-            // (La configuración de DbContext se hará después de AddInfrastructureServices)
+            // 🔧 CONFIGURAR CADENA DE CONEXIÓN SQLITE ANTES DE REGISTRAR SERVICIOS
+            // Esto asegura que todos los contextos (incluidos los secundarios) usen SQLite
+            var configBuilder = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+                .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: false)
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    {"ConnectionStrings:DefaultConnection", _connectionString},
+                    {"ConnectionStrings:CoreConnection", _connectionString},
+                    {"ConnectionStrings:ComercialConnection", _connectionString},
+                    {"ConnectionStrings:OperacionesConnection", _connectionString},
+                    {"ConnectionStrings:InventarioConnection", _connectionString},
+                    {"ConnectionStrings:ProveedoresConnection", _connectionString},
+                    {"Jwt:SecretKey", "test-secret-key-for-integration-tests-only"},
+                    {"Jwt:Issuer", "test-issuer"},
+                    {"Jwt:Audience", "test-audience"},
+                    {"Jwt:ExpirationMinutes", "60"}
+                });
+
+            var config = configBuilder.Build();
 
             // 🔧 CONFIGURAR AUTENTICACIÓN PARA TESTS
             services.AddAuthentication(options =>
@@ -186,13 +206,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                 options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
                 options.MaximumParallelInvocationsPerClient = 1;
             });
-
-            // Cargar configuración real para los tests (igual que la API)
-            var config = new ConfigurationBuilder()
-                .SetBasePath(AppContext.BaseDirectory)
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                .AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: false)
-                .Build();
 
             // 🚀 REGISTRAR SERVICIOS DE SIGNALR PARA TESTS
             services.AddScoped<ISignalRHub, RestaurantePro.Api.Services.SignalRHubService>();
@@ -264,11 +277,11 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // 🔧 CONFIGURAR SEED DE USUARIO DE PRUEBA
             using (var scope = services.BuildServiceProvider().CreateScope())
             {
-                var context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
+                var dbContext = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
                 
                 // 🔧 CREAR BASE DE DATOS PARA TESTS (sin migraciones)
                 Console.WriteLine("🗄️ Creando esquema de base de datos temporal...");
-                context.Database.EnsureCreated();
+                dbContext.Database.EnsureCreated();
                 Console.WriteLine("✅ Esquema de base de datos creado correctamente");
                 
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
