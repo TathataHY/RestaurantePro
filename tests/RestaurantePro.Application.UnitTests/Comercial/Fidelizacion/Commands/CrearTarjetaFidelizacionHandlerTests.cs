@@ -41,21 +41,17 @@ public class CrearTarjetaFidelizacionHandlerTests
 
         // Setup común para simular almacenamiento en memoria
         _tarjetaRepositoryMock
-            .Setup(x => x.AgregarAsync(It.IsAny<TarjetaFidelizacion>(), CancellationToken.None))
-            .Callback<TarjetaFidelizacion, CancellationToken>((t, _) => 
+            .Setup(x => x.AgregarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
+            .Callback<TarjetaFidelizacion, CancellationToken>((t, token) =>
             {
                 _tarjetaGuardada = t;
-                Console.WriteLine($"Tarjeta guardada con ID: {t.Id}");
             })
             .Returns(Task.CompletedTask);
 
         _tarjetaRepositoryMock
-            .Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), CancellationToken.None))
-            .ReturnsAsync((Guid id, CancellationToken _) => 
-            {
-                Console.WriteLine($"ObtenerPorIdAsync llamado con ID: {id}, tarjetaGuardada: {_tarjetaGuardada?.Id}");
-                return _tarjetaGuardada; // Devolver la tarjeta guardada sin importar el ID
-            });
+            .Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>(), false))
+            .ReturnsAsync((Guid id, CancellationToken token, bool includeDeleted) =>
+                _tarjetaGuardada?.Id == id ? _tarjetaGuardada : null);
     }
 
     private void ResetTarjetaGuardada()
@@ -203,10 +199,6 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.True(result.Succeeded, $"Handler failed: {result.Error}");
         Assert.NotNull(result.Value);
         Assert.NotEqual(Guid.Empty, result.Value.Id);
@@ -255,10 +247,6 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.True(result.Succeeded, $"Handler failed: {result.Error}");
         Assert.NotNull(result.Value);
         Assert.Equal(TipoTarjetaFidelizacion.Premium, command.TipoTarjeta);
@@ -315,10 +303,6 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.True(result.Succeeded, $"Handler failed: {result.Error}");
         Assert.Equal(TipoTarjetaFidelizacion.Vip, command.TipoTarjeta);
         Assert.NotNull(result.Value);
@@ -367,10 +351,6 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.True(result.Succeeded, $"Handler failed: {result.Error}");
     }
 
@@ -415,11 +395,10 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.True(result.Succeeded, $"Handler failed: {result.Error}");
+        Assert.NotNull(result.Value);
+        Assert.NotEqual(Guid.Empty, result.Value.Id);
+        Assert.Equal(clienteId, result.Value.ClienteId);
     }
 
     #endregion
@@ -441,10 +420,6 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.False(result.Succeeded);
         Assert.Contains("cliente", result.Error.ToLower());
     }
@@ -475,10 +450,6 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert - El handler debería procesar normalmente, ya que TipoTarjetaFidelizacion es enum
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.True(result.Succeeded, $"Handler failed: {result.Error}");
     }
 
@@ -508,10 +479,6 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert - El handler actual no valida UsuarioId, debería procesar normalmente
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.True(result.Succeeded, $"Handler failed: {result.Error}");
     }
 
@@ -541,10 +508,6 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.False(result.Succeeded);
         Assert.Contains("tarjeta", result.Error.ToLower());
     }
@@ -569,10 +532,6 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.False(result.Succeeded);
         Assert.Contains("puntos", result.Error.ToLower());
     }
@@ -603,10 +562,6 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.False(result.Succeeded);
     }
 
@@ -633,10 +588,6 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.False(result.Succeeded);
         Assert.Contains("error", result.Error.ToLower());
     }
@@ -660,10 +611,6 @@ public class CrearTarjetaFidelizacionHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
-        if (!result.Succeeded)
-        {
-            Console.WriteLine($"Handler failed with error: {result.Error}");
-        }
         Assert.False(result.Succeeded);
         Assert.Contains("error", result.Error.ToLower());
     }

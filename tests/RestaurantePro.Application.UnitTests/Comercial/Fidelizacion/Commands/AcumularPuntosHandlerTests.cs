@@ -60,10 +60,6 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
             // Setup correcto solo para la firma con token
             _clienteRepositoryMock
                 .Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-                .Callback<Guid, CancellationToken>((id, token) =>
-                {
-                    Console.WriteLine($"ObtenerPorIdAsync llamado con ID: {id}, esperado: {clienteId}");
-                })
                 .ReturnsAsync((Guid id, CancellationToken token) =>
                     id == clienteId ? cliente : null);
                 
