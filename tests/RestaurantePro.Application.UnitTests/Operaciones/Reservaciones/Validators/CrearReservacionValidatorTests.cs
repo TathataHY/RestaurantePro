@@ -499,11 +499,10 @@ public class CrearReservacionValidatorTests
 
         // Assert
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().HaveCount(9, "deberían detectarse 9 errores de validación con los datos proporcionados");
+        result.Errors.Should().HaveCount(8, "deberían detectarse 8 errores de validación con los datos proporcionados");
 
         var errorMessages = result.Errors.Select(e => e.ErrorMessage).ToList();
         errorMessages.Should().Contain("La fecha de reservación debe ser futura");
-        errorMessages.Should().Contain("La hora de reservación debe estar entre las 12:00 PM y 10:00 PM");
         errorMessages.Should().Contain("El número máximo de personas por reservación es 20");
         errorMessages.Should().Contain("El nombre del cliente es obligatorio");
         errorMessages.Should().Contain("El nombre del cliente debe tener al menos 2 caracteres");

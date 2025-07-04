@@ -46,7 +46,7 @@ public class AcumularPuntosHandler : IRequestHandler<AcumularPuntosCommand, Resu
                 request.ClienteId, request.TarjetaFidelizacionId, request.MontoCompra);
 
             // 1. Verificar que el cliente existe
-            var cliente = await _clienteRepository.ObtenerPorIdAsync(request.ClienteId);
+            var cliente = await _clienteRepository.ObtenerPorIdAsync(request.ClienteId, cancellationToken);
             if (cliente == null)
             {
                 _logger.LogWarning("Cliente {ClienteId} no existe", request.ClienteId);

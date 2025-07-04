@@ -57,10 +57,20 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
             // Configura mocks
             _currentUserMock.Setup(x => x.UserId).Returns(Guid.NewGuid().ToString());
             
-            _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, default))
-                .ReturnsAsync(cliente);
+            // Setup correcto solo para la firma con token
+            _clienteRepositoryMock
+                .Setup(x => x.ObtenerPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+                .Callback<Guid, CancellationToken>((id, token) =>
+                {
+                    Console.WriteLine($"ObtenerPorIdAsync llamado con ID: {id}, esperado: {clienteId}");
+                })
+                .ReturnsAsync((Guid id, CancellationToken token) =>
+                    id == clienteId ? cliente : null);
                 
-            _tarjetaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(tarjetaId, default, false))
+            _tarjetaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>(), false))
+                .ReturnsAsync(tarjeta);
+                
+            _tarjetaRepositoryMock.Setup(x => x.ObtenerPorIdAsync(tarjetaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(tarjeta);
                 
             // Configura el cálculo de puntos con el constructor correcto
@@ -69,13 +79,13 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
             _calculadoraPuntosMock.Setup(x => x.CalcularPuntosPorCompraAsync(
                     It.IsAny<Guid>(), 
                     It.IsAny<decimal>(), 
-                    default))
+                    It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Result.Success(calculoResultado));
                 
-            _transaccionRepositoryMock.Setup(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), default))
+            _transaccionRepositoryMock.Setup(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
-            _tarjetaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), default))
+            _tarjetaRepositoryMock.Setup(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
                 
             var command = new AcumularPuntosCommand
@@ -112,15 +122,15 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
             result.Value.FacturaId.Should().Be(facturaId);
             
             // Verificar que se llamaron los métodos esperados
-            _tarjetaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), default), Times.Once);
-            _transaccionRepositoryMock.Verify(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), default), Times.Once);
+            _tarjetaRepositoryMock.Verify(x => x.ActualizarAsync(It.IsAny<TarjetaFidelizacion>(), It.IsAny<CancellationToken>()), Times.Once);
+            _transaccionRepositoryMock.Verify(x => x.AgregarAsync(It.IsAny<RestaurantePro.Domain.Comercial.Clientes.Entities.TransaccionPuntos>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
         public async Task Handle_ClienteInexistente_DeberiaRetornarError()
         {
             // Arrange
-            var clienteId = Guid.NewGuid();
+            var clienteId = Guid.NewGuid(); // Este Guid no coincide con el del cliente mockeado
             var command = new AcumularPuntosCommand
             {
                 ClienteId = clienteId,
@@ -129,8 +139,7 @@ namespace RestaurantePro.Application.UnitTests.Comercial.Fidelizacion.Commands
                 Canal = "Web"
             };
 
-            _clienteRepositoryMock.Setup(x => x.ObtenerPorIdAsync(clienteId, default))
-                .ReturnsAsync(default(Cliente));
+            // No configurar setup específico, el global ya devuelve null si el Guid no coincide
 
             // Act
             var result = await _handler.Handle(command, CancellationToken.None);
