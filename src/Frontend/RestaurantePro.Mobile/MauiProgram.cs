@@ -8,10 +8,13 @@ using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Services.Mesas;
 using RestaurantePro.Mobile.Core.Services.Comandas;
+using RestaurantePro.Mobile.Core.Services.Productos;
 using RestaurantePro.Mobile.Features.Authentication.ViewModels;
 using RestaurantePro.Mobile.Features.Authentication.Pages;
 using RestaurantePro.Mobile.Features.Operations.Comandas.ViewModels;
 using RestaurantePro.Mobile.Features.Operations.Comandas.Pages;
+using RestaurantePro.Mobile.Features.Operations.Productos.ViewModels;
+using RestaurantePro.Mobile.Features.Operations.Productos.Pages;
 using RestaurantePro.Mobile.UI.Pages;
 
 namespace RestaurantePro.Mobile;
@@ -53,6 +56,7 @@ public static class MauiProgram
 		// ✅ Servicios Operativos
 		builder.Services.AddScoped<RestaurantePro.Mobile.Core.Services.Mesas.IMesasService, RestaurantePro.Mobile.Core.Services.Mesas.MesasService>();
 		builder.Services.AddScoped<RestaurantePro.Mobile.Core.Services.Comandas.IComandasService, RestaurantePro.Mobile.Core.Services.Comandas.ComandasService>();
+		builder.Services.AddScoped<IProductosService, ProductosService>();
 
 #if DEBUG
 		builder.Logging.AddDebug();
@@ -72,6 +76,7 @@ public static class MauiProgram
 		// Servicios de dominio V1
 		services.AddSingleton<IMesasService, MesasService>();
 		services.AddSingleton<IComandasService, ComandasService>();
+		services.AddSingleton<IProductosService, ProductosService>();
 	}
 
 	private static void RegisterViewsAndViewModelsV1(IServiceCollection services)
@@ -90,11 +95,13 @@ public static class MauiProgram
 		services.AddTransient<LoginViewModel>();
 		services.AddTransient<RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels.MesasViewModel>();
 		services.AddTransient<ComandasViewModel>();
+		services.AddTransient<ProductosViewModel>();
 
 		// ✅ Páginas
 		services.AddTransient<LoginPage>();
 		services.AddTransient<DashboardPage>();
 		services.AddTransient<RestaurantePro.Mobile.Features.Operations.Mesas.Pages.MesasPage>();
 		services.AddTransient<ComandasPage>();
+		services.AddTransient<ProductosPage>();
 	}
 }

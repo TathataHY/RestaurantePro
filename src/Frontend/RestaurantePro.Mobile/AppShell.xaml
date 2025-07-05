@@ -7,6 +7,7 @@
     xmlns:ui="clr-namespace:RestaurantePro.Mobile.UI.Pages"
     xmlns:mesas="clr-namespace:RestaurantePro.Mobile.Features.Operations.Mesas.Pages"
     xmlns:comandas="clr-namespace:RestaurantePro.Mobile.Features.Operations.Comandas.Pages"
+    xmlns:productos="clr-namespace:RestaurantePro.Mobile.Features.Operations.Productos.Pages"
     Title="RestaurantePro">
 
     <!-- Shell Resources -->
@@ -48,12 +49,12 @@
             ContentTemplate="{DataTemplate comandas:ComandasPage}"
             Route="comandas" />
 
-        <!-- Más Tab - Para futuras funcionalidades -->
+        <!-- Productos Tab -->
         <ShellContent
-            Title="Más"
-            Icon="more.png"
-            ContentTemplate="{DataTemplate ui:DashboardPage}"
-            Route="more" />
+            Title="Productos"
+            Icon="menu.png"
+            ContentTemplate="{DataTemplate productos:ProductosPage}"
+            Route="productos" />
     </TabBar>
 
 </Shell>
