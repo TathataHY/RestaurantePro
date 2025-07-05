@@ -22,29 +22,29 @@ public class DialogService : IDialogService
         return false;
     }
 
+    public async Task<bool> ShowConfirmationAsync(string title, string message, string accept = "Confirmar", string cancel = "Cancelar")
+    {
+        if (Application.Current?.MainPage != null)
+        {
+            return await Application.Current.MainPage.DisplayAlert(title, message, accept, cancel);
+        }
+        return false;
+    }
+
     public async Task ShowErrorAsync(string message)
     {
-        await ShowAlertAsync("Error", message, "OK");
+        if (Application.Current?.MainPage != null)
+        {
+            await Application.Current.MainPage.DisplayAlert("Error", message, "OK");
+        }
     }
 
     public async Task ShowSuccessAsync(string message)
     {
-        await ShowAlertAsync("Éxito", message, "OK");
-    }
-
-    // Métodos adicionales implementados
-    public async Task<string?> ShowPromptAsync(string title, string message, string placeholder = "", string accept = "OK", string cancel = "Cancelar")
-    {
         if (Application.Current?.MainPage != null)
         {
-            return await Application.Current.MainPage.DisplayPromptAsync(title, message, accept, cancel, placeholder);
+            await Application.Current.MainPage.DisplayAlert("Éxito", message, "OK");
         }
-        return null;
-    }
-
-    public async Task<bool> ShowConfirmationAsync(string title, string message, string accept = "Confirmar", string cancel = "Cancelar")
-    {
-        return await ShowConfirmAsync(title, message, accept, cancel);
     }
 
     public async Task<string?> ShowActionSheetAsync(string title, string cancel, string destruction, params string[] buttons)
@@ -53,6 +53,15 @@ public class DialogService : IDialogService
         {
             return await Application.Current.MainPage.DisplayActionSheet(title, cancel, destruction, buttons);
         }
-        return cancel;
+        return null;
+    }
+
+    public async Task<string?> ShowPromptAsync(string title, string message, string placeholder = "", string accept = "OK", string cancel = "Cancelar")
+    {
+        if (Application.Current?.MainPage != null)
+        {
+            return await Application.Current.MainPage.DisplayPromptAsync(title, message, accept, cancel, placeholder);
+        }
+        return null;
     }
 } 

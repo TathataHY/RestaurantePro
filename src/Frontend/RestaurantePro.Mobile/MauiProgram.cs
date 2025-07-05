@@ -7,8 +7,11 @@ using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Services.Mesas;
+using RestaurantePro.Mobile.Core.Services.Comandas;
 using RestaurantePro.Mobile.Features.Authentication.ViewModels;
 using RestaurantePro.Mobile.Features.Authentication.Pages;
+using RestaurantePro.Mobile.Features.Operations.Comandas.ViewModels;
+using RestaurantePro.Mobile.Features.Operations.Comandas.Pages;
 using RestaurantePro.Mobile.UI.Pages;
 
 namespace RestaurantePro.Mobile;
@@ -47,6 +50,10 @@ public static class MauiProgram
 		// Registrar páginas y ViewModels - V1
 		RegisterViewsAndViewModelsV1(builder.Services);
 
+		// ✅ Servicios Operativos
+		builder.Services.AddScoped<RestaurantePro.Mobile.Core.Services.Mesas.IMesasService, RestaurantePro.Mobile.Core.Services.Mesas.MesasService>();
+		builder.Services.AddScoped<RestaurantePro.Mobile.Core.Services.Comandas.IComandasService, RestaurantePro.Mobile.Core.Services.Comandas.ComandasService>();
+
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif
@@ -64,6 +71,7 @@ public static class MauiProgram
 		
 		// Servicios de dominio V1
 		services.AddSingleton<IMesasService, MesasService>();
+		services.AddSingleton<IComandasService, ComandasService>();
 	}
 
 	private static void RegisterViewsAndViewModelsV1(IServiceCollection services)
@@ -81,10 +89,12 @@ public static class MauiProgram
 		// ✅ ViewModels
 		services.AddTransient<LoginViewModel>();
 		services.AddTransient<RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels.MesasViewModel>();
+		services.AddTransient<ComandasViewModel>();
 
 		// ✅ Páginas
 		services.AddTransient<LoginPage>();
 		services.AddTransient<DashboardPage>();
 		services.AddTransient<RestaurantePro.Mobile.Features.Operations.Mesas.Pages.MesasPage>();
+		services.AddTransient<ComandasPage>();
 	}
 }

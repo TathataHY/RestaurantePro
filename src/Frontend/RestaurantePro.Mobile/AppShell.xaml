@@ -6,6 +6,7 @@
     xmlns:local="clr-namespace:RestaurantePro.Mobile.Features.Authentication.Pages"
     xmlns:ui="clr-namespace:RestaurantePro.Mobile.UI.Pages"
     xmlns:mesas="clr-namespace:RestaurantePro.Mobile.Features.Operations.Mesas.Pages"
+    xmlns:comandas="clr-namespace:RestaurantePro.Mobile.Features.Operations.Comandas.Pages"
     Title="RestaurantePro">
 
     <!-- Shell Resources -->
@@ -40,11 +41,11 @@
             ContentTemplate="{DataTemplate mesas:MesasPage}"
             Route="mesas" />
 
-        <!-- Comandas Tab - Para futuro -->
+        <!-- Comandas Tab -->
         <ShellContent
             Title="Comandas"
             Icon="order.png"
-            ContentTemplate="{DataTemplate ui:DashboardPage}"
+            ContentTemplate="{DataTemplate comandas:ComandasPage}"
             Route="comandas" />
 
         <!-- Más Tab - Para futuras funcionalidades -->

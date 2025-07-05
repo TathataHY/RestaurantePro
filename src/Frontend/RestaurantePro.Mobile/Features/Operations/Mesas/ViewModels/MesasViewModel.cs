@@ -206,14 +206,14 @@ public partial class MesasViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Liberar una mesa
+    /// Liberar una mesa ocupada
     /// </summary>
     [RelayCommand]
     private async Task LiberarMesaAsync(MesaDto mesa)
     {
         if (mesa == null) return;
 
-        var confirmed = await _dialogService.ShowConfirmationAsync(
+        var confirmed = await _dialogService.ShowConfirmAsync(
             "Liberar Mesa",
             $"¿Está seguro que desea liberar la mesa {mesa.Numero}?");
 
@@ -321,7 +321,7 @@ public partial class MesasViewModel : BaseViewModel
             if (response.Success && response.Data != null)
             {
                 var mejorMesa = response.Data;
-                var confirmed = await _dialogService.ShowConfirmationAsync(
+                var confirmed = await _dialogService.ShowConfirmAsync(
                     "Mesa Encontrada",
                     $"Se encontró la mesa {mejorMesa.Numero} " +
                     $"(Capacidad: {mejorMesa.Capacidad}, Zona: {mejorMesa.Zona}). " +
