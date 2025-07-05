@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- XUnit Testing Framework -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    
+    <!-- Mocking Framework -->
+    <PackageReference Include="Moq" Version="4.20.69" />
+    
+    <!-- Fluent Assertions -->
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
+    
+    <!-- Coverage Collection -->
+    <PackageReference Include="coverlet.collector" Version="6.0.2" />
+    
+    <!-- AutoFixture para generar datos de prueba -->
+    <PackageReference Include="AutoFixture" Version="4.18.0" />
+    <PackageReference Include="AutoFixture.Xunit2" Version="4.18.0" />
+    
+    <!-- Microsoft Extensions para DI en pruebas -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+    
+    <!-- System.Text.Json para serialización en pruebas -->
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Frontend\RestaurantePro.Mobile.Core\RestaurantePro.Mobile.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -3,13 +3,31 @@
     x:Class="RestaurantePro.Mobile.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:RestaurantePro.Mobile"
-    Shell.FlyoutBehavior="Flyout"
-    Title="RestaurantePro.Mobile">
+    xmlns:local="clr-namespace:RestaurantePro.Mobile.Features.Authentication.Pages"
+    xmlns:ui="clr-namespace:RestaurantePro.Mobile.UI.Pages"
+    Title="RestaurantePro">
 
+    <!-- Shell Resources -->
+    <Shell.Resources>
+        <ResourceDictionary>
+            <Style x:Key="BaseStyle" TargetType="Element">
+                <Setter Property="Shell.BackgroundColor" Value="#007ACC" />
+                <Setter Property="Shell.ForegroundColor" Value="White" />
+            </Style>
+        </ResourceDictionary>
+    </Shell.Resources>
+
+    <!-- Login Page - Página inicial por defecto -->
     <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Title="Login"
+        ContentTemplate="{DataTemplate local:LoginPage}"
+        Route="login" />
+
+    <!-- Dashboard Page - Página principal después del login -->
+    <ShellContent
+        Title="Dashboard"
+        ContentTemplate="{DataTemplate ui:DashboardPage}"
+        Route="dashboard"
+        Shell.FlyoutBehavior="Disabled" />
 
 </Shell>

@@ -6,8 +6,9 @@ using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
-using RestaurantePro.Mobile.Features.Comercial.Clientes.ViewModels;
-using RestaurantePro.Mobile.Features.Comercial.Clientes.Views;
+using RestaurantePro.Mobile.Features.Authentication.ViewModels;
+using RestaurantePro.Mobile.Features.Authentication.Pages;
+using RestaurantePro.Mobile.UI.Pages;
 
 namespace RestaurantePro.Mobile;
 
@@ -24,17 +25,26 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
-		// Registrar configuración
-		builder.Services.AddSingleton<IAppSettings, AppSettings>();
+		// Configurar HttpClient con URL base del backend
+		builder.Services.AddHttpClient<IApiService, ApiService>(client =>
+		{
+			// URL del backend RestaurantePro
+			client.BaseAddress = new Uri("https://localhost:7071/"); // Ajustar según tu backend
+			client.Timeout = TimeSpan.FromSeconds(30);
+		});
 
-		// Registrar servicios core
-		RegisterCoreServices(builder.Services);
+		// Configurar HttpClient para AuthService
+		builder.Services.AddHttpClient<AuthService>(client =>
+		{
+			client.BaseAddress = new Uri("https://localhost:7071/"); // Ajustar según tu backend
+			client.Timeout = TimeSpan.FromSeconds(30);
+		});
 
-		// Registrar servicios de API por módulo
-		RegisterApiClients(builder.Services);
+		// Registrar servicios fundamentales - V1
+		RegisterCoreServicesV1(builder.Services);
 
-		// Registrar vistas y viewmodels por módulo
-		RegisterViewsAndViewModels(builder.Services);
+		// Registrar páginas y ViewModels - V1
+		RegisterViewsAndViewModelsV1(builder.Services);
 
 #if DEBUG
 		builder.Logging.AddDebug();
@@ -43,39 +53,25 @@ public static class MauiProgram
 		return builder.Build();
 	}
 
-	private static void RegisterCoreServices(IServiceCollection services)
+	private static void RegisterCoreServicesV1(IServiceCollection services)
 	{
-		// Servicios base
+		// Servicios fundamentales V1
 		services.AddSingleton<INavigationService, NavigationService>();
 		services.AddSingleton<IDialogService, DialogService>();
-		services.AddSingleton<ITokenService, TokenService>();
-		
-		// Cliente API base
-		services.AddSingleton<ApiClient>();
+		services.AddSingleton<IAuthService, AuthService>();
+		services.AddSingleton<IApiService, ApiService>();
 	}
 
-	private static void RegisterApiClients(IServiceCollection services)
+	private static void RegisterViewsAndViewModelsV1(IServiceCollection services)
 	{
-		// Módulo Comercial
-		services.AddSingleton<IClientesApiClient, ClientesApiClient>();
-		
-		// Módulo Operaciones
-		services.AddSingleton<IComandasApiClient, ComandasApiClient>();
-	}
-
-	private static void RegisterViewsAndViewModels(IServiceCollection services)
-	{
-		// Registrar páginas principales
+		// Páginas básicas V1
 		services.AddTransient<MainPage>();
 		
-		// Módulo Comercial - Clientes
-		services.AddTransient<ClientesListViewModel>();
-		services.AddTransient<ClientesListPage>();
-		services.AddTransient<ClienteDetailViewModel>();
-		services.AddTransient<ClienteDetailPage>();
-		services.AddTransient<ClienteAddViewModel>();
-		services.AddTransient<ClienteAddPage>();
+		// Authentication Feature - V1 Fundamental
+		services.AddTransient<LoginViewModel>();
+		services.AddTransient<LoginPage>();
 		
-		// Otros módulos se agregarán aquí a medida que se desarrollen
+		// Dashboard - V1 Fundamental
+		services.AddTransient<DashboardPage>();
 	}
 }
