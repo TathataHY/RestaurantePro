@@ -1,320 +1,222 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<ContentPage x:Class="RestaurantePro.Mobile.Features.Operations.Productos.Pages.ProductosPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Features.Operations.Productos.ViewModels"
-             xmlns:core="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              xmlns:converters="clr-namespace:RestaurantePro.Mobile.Converters"
-             x:Class="RestaurantePro.Mobile.Features.Operations.Productos.Pages.ProductosPage"
-             x:DataType="viewmodels:ProductosViewModel"
-             Title="{Binding Title}"
-             Shell.NavBarIsVisible="True">
+             xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Productos.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             x:DataType="vm:ProductosViewModel"
+             Title="Productos">
 
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
-            <converters:EstadoColorConverter x:Key="EstadoColorConverter" />
-            <converters:EstadoIconConverter x:Key="EstadoIconConverter" />
-        </ResourceDictionary>
-    </ContentPage.Resources>
-
-    <ContentPage.BindingContext>
-        <viewmodels:ProductosViewModel />
-    </ContentPage.BindingContext>
+    <!-- ViewModel se configura en code-behind con DI -->
 
     <Grid>
-        <ScrollView>
-            <StackLayout Padding="16" Spacing="16">
-                
-                <!-- HEADER CON ESTADÍSTICAS -->
-                <Frame BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#2C3E50}"
-                       BorderColor="Transparent"
-                       CornerRadius="12"
-                       Padding="20">
-                    <Grid RowDefinitions="Auto,10,Auto" ColumnDefinitions="*,*,*">
-                        
-                        <!-- Título -->
-                        <Label Grid.Row="0" Grid.ColumnSpan="3"
-                               Text="📦 Gestión de Productos"
-                               FontSize="20"
-                               FontAttributes="Bold"
-                               HorizontalOptions="Center"
-                               TextColor="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"/>
-                        
-                        <!-- Estadísticas -->
-                        <StackLayout Grid.Row="2" Grid.Column="0" HorizontalOptions="Center">
-                            <Label Text="{Binding TotalProductos}"
-                                   FontSize="24"
-                                   FontAttributes="Bold"
-                                   HorizontalOptions="Center"
-                                   TextColor="{AppThemeBinding Light=#3498DB, Dark=#5DADE2}"/>
-                            <Label Text="Total"
-                                   FontSize="12"
-                                   HorizontalOptions="Center"
-                                   TextColor="{AppThemeBinding Light=#7F8C8D, Dark=#BDC3C7}"/>
-                        </StackLayout>
-                        
-                        <StackLayout Grid.Row="2" Grid.Column="1" HorizontalOptions="Center">
-                            <Label Text="{Binding ProductosDisponibles}"
-                                   FontSize="24"
-                                   FontAttributes="Bold"
-                                   HorizontalOptions="Center"
-                                   TextColor="{AppThemeBinding Light=#27AE60, Dark=#58D68D}"/>
-                            <Label Text="Disponibles"
-                                   FontSize="12"
-                                   HorizontalOptions="Center"
-                                   TextColor="{AppThemeBinding Light=#7F8C8D, Dark=#BDC3C7}"/>
-                        </StackLayout>
-                        
-                        <StackLayout Grid.Row="2" Grid.Column="2" HorizontalOptions="Center">
-                            <Label Text="{Binding ProductosAgotados}"
-                                   FontSize="24"
-                                   FontAttributes="Bold"
-                                   HorizontalOptions="Center"
-                                   TextColor="{AppThemeBinding Light=#E74C3C, Dark=#EC7063}"/>
-                            <Label Text="Agotados"
-                                   FontSize="12"
-                                   HorizontalOptions="Center"
-                                   TextColor="{AppThemeBinding Light=#7F8C8D, Dark=#BDC3C7}"/>
-                        </StackLayout>
-                    </Grid>
-                </Frame>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-                <!-- BARRA DE BÚSQUEDA Y FILTROS -->
-                <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#34495E}"
-                       BorderColor="Transparent"
-                       CornerRadius="12"
-                       Padding="16">
-                    <StackLayout Spacing="12">
-                        
-                        <!-- Barra de búsqueda -->
-                        <Grid ColumnDefinitions="*,Auto,Auto">
-                            <SearchBar Grid.Column="0"
-                                      Text="{Binding TextoBusqueda}"
-                                      Placeholder="Buscar productos..."
-                                      SearchCommand="{Binding BuscarProductosCommand}"
-                                      BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#2C3E50}"
-                                      TextColor="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"/>
-                            
-                            <Button Grid.Column="1"
-                                    Text="🔍"
-                                    Command="{Binding ToggleMostrarFiltrosCommand}"
-                                    BackgroundColor="{AppThemeBinding Light=#3498DB, Dark=#5DADE2}"
-                                    TextColor="White"
-                                    CornerRadius="8"
-                                    WidthRequest="50"
-                                    HeightRequest="50"/>
-                            
-                            <Button Grid.Column="2"
-                                    Text="🎛️"
-                                    Command="{Binding ToggleMostrarFiltrosCommand}"
-                                    BackgroundColor="{AppThemeBinding Light=#9B59B6, Dark=#BB8FCE}"
-                                    TextColor="White"
-                                    CornerRadius="8"
-                                    WidthRequest="45"
-                                    HeightRequest="45"
-                                    Margin="8,0,0,0"/>
-                        </Grid>
+        <!-- Barra de Búsqueda y Filtros -->
+        <Frame Grid.Row="0" 
+               BackgroundColor="#F8F9FA" 
+               Padding="16" 
+               Margin="0,0,0,8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                        <!-- Panel de filtros -->
-                        <StackLayout IsVisible="{Binding MostrarFiltros}" Spacing="12">
-                            
-                            <!-- Filtros rápidos -->
-                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
-                                <Button Grid.Column="0"
-                                        Text="🔄 Todos"
-                                        Command="{Binding LimpiarBusquedaCommand}"
-                                        BackgroundColor="{AppThemeBinding Light=#95A5A6, Dark=#AAB7B8}"
-                                        TextColor="White"
-                                        CornerRadius="20"
-                                        FontSize="12"/>
-                                
-                                <Button Grid.Column="1"
-                                        Text="⭐ Populares"
-                                        Command="{Binding LoadProductosPopularesCommand}"
-                                        BackgroundColor="{AppThemeBinding Light=#F39C12, Dark=#F5B041}"
-                                        TextColor="White"
-                                        CornerRadius="20"
-                                        FontSize="12"/>
-                                
-                                <Button Grid.Column="2"
-                                        Text="{Binding MostrarSoloDisponibles, StringFormat='{0:✅ Disponibles;❌ Todos}'}"
-                                        Command="{Binding ToggleSoloDisponiblesCommand}"
-                                        BackgroundColor="{AppThemeBinding Light=#27AE60, Dark=#58D68D}"
-                                        TextColor="White"
-                                        CornerRadius="20"
-                                        FontSize="12"/>
-                            </Grid>
-                            
-                            <!-- Filtro por categorías -->
-                            <Label Text="Categorías:"
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"/>
-                            
-                            <CollectionView ItemsSource="{Binding Categorias}"
-                                           HeightRequest="50"
-                                           IsVisible="{Binding TieneCategorias}">
-                                <CollectionView.ItemsLayout>
-                                    <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8"/>
-                                </CollectionView.ItemsLayout>
-                                <CollectionView.ItemTemplate>
-                                    <DataTemplate x:DataType="core:CategoriaProductoDto">
-                                        <Button Text="{Binding Nombre}"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ProductosViewModel}}, Path=FiltrarPorCategoriaCommand}"
-                                                CommandParameter="{Binding .}"
-                                                BackgroundColor="{Binding ColorUI}"
-                                                TextColor="White"
-                                                CornerRadius="15"
-                                                FontSize="12"
-                                                Padding="12,8"/>
-                                    </DataTemplate>
-                                </CollectionView.ItemTemplate>
-                            </CollectionView>
-                        </StackLayout>
+                <!-- Búsqueda -->
+                <SearchBar Grid.Row="0"
+                           x:Name="SearchBar"
+                           Placeholder="Buscar productos..."
+                           Text="{Binding TextoBusqueda}"
+                           SearchCommand="{Binding BuscarProductosCommand}"
+                           Margin="0,0,0,8" />
+
+                <!-- Filtros -->
+                <ScrollView Grid.Row="1" Orientation="Horizontal">
+                    <StackLayout Orientation="Horizontal" Spacing="8">
+                        <Button Text="🔄 Refrescar" 
+                                Command="{Binding RefreshProductosCommand}"
+                                BackgroundColor="#007bff" 
+                                TextColor="White" 
+                                CornerRadius="20" 
+                                Padding="16,8" 
+                                FontSize="14" 
+                                Margin="4" />
+
+                        <Button Text="🔥 Populares" 
+                                Command="{Binding LoadProductosPopularesCommand}"
+                                BackgroundColor="#ff6347" 
+                                TextColor="White" 
+                                CornerRadius="20" 
+                                Padding="16,8" 
+                                FontSize="14" 
+                                Margin="4" />
+
+                        <Button Text="✅ Disponibles" 
+                                Command="{Binding LoadProductosDisponiblesCommand}"
+                                BackgroundColor="#28a745" 
+                                TextColor="White" 
+                                CornerRadius="20" 
+                                Padding="16,8" 
+                                FontSize="14" 
+                                Margin="4" />
+
+                        <Button Text="🗂️ Categorías" 
+                                Command="{Binding LoadCategoriasCommand}"
+                                BackgroundColor="#6c757d" 
+                                TextColor="White" 
+                                CornerRadius="20" 
+                                Padding="16,8" 
+                                FontSize="14" 
+                                Margin="4" />
+
+                        <Button Text="📊 Estadísticas" 
+                                Command="{Binding LoadEstadisticasCommand}"
+                                BackgroundColor="#17a2b8" 
+                                TextColor="White" 
+                                CornerRadius="20" 
+                                Padding="16,8" 
+                                FontSize="14" 
+                                Margin="4" />
                     </StackLayout>
-                </Frame>
-
-                <!-- LISTA DE PRODUCTOS -->
-                <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#34495E}"
-                       BorderColor="Transparent"
-                       CornerRadius="12"
-                       Padding="8"
-                       IsVisible="{Binding TieneProductos}">
-                    
-                    <CollectionView ItemsSource="{Binding Productos}"
-                                   SelectionMode="None">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="core:ProductoDto">
-                                <Frame BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#2C3E50}"
-                                       BorderColor="{Binding ColorDisponibilidad}"
-                                       CornerRadius="12"
-                                       Padding="16"
-                                       Margin="8"
-                                       HasShadow="True">
-                                    
-                                    <Grid RowDefinitions="Auto,8,Auto,8,Auto,12,Auto" 
-                                          ColumnDefinitions="*,Auto">
-                                        
-                                        <!-- Header del producto -->
-                                        <StackLayout Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                                            <Label Text="{Binding IconoDisponibilidad}"
-                                                   FontSize="16"
-                                                   VerticalOptions="Center"/>
-                                            <Label Text="{Binding Nombre}"
-                                                   FontSize="18"
-                                                   FontAttributes="Bold"
-                                                   TextColor="{AppThemeBinding Light=#2C3E50, Dark=#ECF0F1}"
-                                                   VerticalOptions="Center"/>
-                                        </StackLayout>
-                                        
-                                        <Label Grid.Row="0" Grid.Column="1"
-                                               Text="{Binding PrecioFormateado}"
-                                               FontSize="18"
-                                               FontAttributes="Bold"
-                                               TextColor="{AppThemeBinding Light=#27AE60, Dark=#58D68D}"
-                                               HorizontalOptions="End"
-                                               VerticalOptions="Center"/>
-                                        
-                                        <!-- Descripción -->
-                                        <Label Grid.Row="2" Grid.ColumnSpan="2"
-                                               Text="{Binding Descripcion}"
-                                               FontSize="14"
-                                               TextColor="{AppThemeBinding Light=#7F8C8D, Dark=#BDC3C7}"
-                                               LineBreakMode="WordWrap"
-                                               IsVisible="{Binding Descripcion, Converter={StaticResource IsNotNullConverter}}"/>
-                                        
-                                        <!-- Información adicional -->
-                                        <Grid Grid.Row="4" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*">
-                                            <Label Grid.Column="0"
-                                                   Text="{Binding CategoriaNombre}"
-                                                   FontSize="12"
-                                                   TextColor="{AppThemeBinding Light=#3498DB, Dark=#5DADE2}"
-                                                   FontAttributes="Italic"/>
-                                            
-                                            <Label Grid.Column="1"
-                                                   Text="{Binding EstadoDisponibilidad}"
-                                                   FontSize="12"
-                                                   TextColor="{Binding ColorDisponibilidad}"
-                                                   FontAttributes="Bold"
-                                                   HorizontalOptions="Center"/>
-                                            
-                                            <Label Grid.Column="2"
-                                                   Text="{Binding TiempoPreparacionFormateado}"
-                                                   FontSize="12"
-                                                   TextColor="{AppThemeBinding Light=#E67E22, Dark=#F39C12}"
-                                                   HorizontalOptions="End"/>
-                                        </Grid>
-                                        
-                                        <!-- Botones de acción -->
-                                        <Grid Grid.Row="6" Grid.ColumnSpan="2" ColumnDefinitions="*,*" ColumnSpacing="8">
-                                            <Button Grid.Column="0"
-                                                    Text="👁️ Ver Detalle"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ProductosViewModel}}, Path=VerDetalleProductoCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    BackgroundColor="{AppThemeBinding Light=#3498DB, Dark=#5DADE2}"
-                                                    TextColor="White"
-                                                    CornerRadius="8"
-                                                    FontSize="12"/>
-                                            
-                                            <Button Grid.Column="1"
-                                                    Text="➕ Agregar"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ProductosViewModel}}, Path=AgregarAComandaCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    BackgroundColor="{Binding PuedeAgregarAComanda, StringFormat='{0:#27AE60;#95A5A6}'}"
-                                                    TextColor="White"
-                                                    CornerRadius="8"
-                                                    FontSize="12"
-                                                    IsEnabled="{Binding PuedeAgregarAComanda}"/>
-                                        </Grid>
-                                    </Grid>
-                                </Frame>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </Frame>
-
-                <!-- EMPTY STATE -->
-                <Frame BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#2C3E50}"
-                       BorderColor="Transparent"
-                       CornerRadius="12"
-                       Padding="40"
-                       IsVisible="{Binding TieneProductos, Converter={StaticResource IsNotNullConverter}}"
-                       VerticalOptions="CenterAndExpand">
-                    <StackLayout HorizontalOptions="Center" Spacing="16">
-                        <Label Text="📦"
-                               FontSize="48"
-                               HorizontalOptions="Center"/>
-                        <Label Text="{Binding MensajeSinProductos}"
-                               FontSize="16"
-                               TextColor="{AppThemeBinding Light=#7F8C8D, Dark=#BDC3C7}"
-                               HorizontalOptions="Center"
-                               HorizontalTextAlignment="Center"/>
-                        <Button Text="🔄 Recargar Productos"
-                                Command="{Binding LoadProductosCommand}"
-                                BackgroundColor="{AppThemeBinding Light=#3498DB, Dark=#5DADE2}"
-                                TextColor="White"
-                                CornerRadius="20"
-                                Padding="20,10"/>
-                    </StackLayout>
-                </Frame>
-                
-            </StackLayout>
-        </ScrollView>
-
-        <!-- LOADING INDICATOR -->
-        <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#34495E}"
-               IsVisible="{Binding IsBusy}"
-               Opacity="0.9"
-               VerticalOptions="FillAndExpand"
-               HorizontalOptions="FillAndExpand">
-            <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="20">
-                <ActivityIndicator IsRunning="{Binding IsBusy}"
-                                  Color="{AppThemeBinding Light=#3498DB, Dark=#5DADE2}"
-                                  Scale="1.5"/>
-                <Label Text="Cargando productos..."
-                       FontSize="16"
-                       TextColor="{AppThemeBinding Light=#7F8C8D, Dark=#BDC3C7}"
-                       HorizontalOptions="Center"/>
-            </StackLayout>
+                </ScrollView>
+            </Grid>
         </Frame>
+
+        <!-- Estadísticas de Productos -->
+        <Frame Grid.Row="1" 
+               BackgroundColor="#E8F5E8" 
+               Padding="12" 
+               Margin="8,0"
+               IsVisible="{Binding MostrarEstadisticas}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackLayout Grid.Column="0" HorizontalOptions="Center">
+                    <Label Text="{Binding TotalProductos, StringFormat='{0}'}" 
+                           FontSize="18" FontAttributes="Bold" TextColor="#333" HorizontalOptions="Center" />
+                    <Label Text="Total Productos" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+
+                <StackLayout Grid.Column="1" HorizontalOptions="Center">
+                    <Label Text="{Binding ProductosDisponibles, StringFormat='{0}'}" 
+                           FontSize="18" FontAttributes="Bold" TextColor="#28a745" HorizontalOptions="Center" />
+                    <Label Text="Disponibles" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+
+                <StackLayout Grid.Column="2" HorizontalOptions="Center">
+                    <Label Text="{Binding CategoriaSeleccionada.Nombre, StringFormat='{0}'}" 
+                           FontSize="18" FontAttributes="Bold" TextColor="#17a2b8" HorizontalOptions="Center" />
+                    <Label Text="Categoría Actual" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+            </Grid>
+        </Frame>
+
+        <!-- Lista de Productos -->
+        <RefreshView Grid.Row="2"
+                     IsRefreshing="{Binding IsRefreshing}"
+                     Command="{Binding RefreshProductosCommand}">
+            <CollectionView ItemsSource="{Binding Productos}"
+                            SelectionMode="Single"
+                            SelectedItem="{Binding SelectedProducto}">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" 
+                                     Span="{OnIdiom Phone=1, Tablet=2, Desktop=3}" />
+                </CollectionView.ItemsLayout>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame BackgroundColor="White" 
+                               Padding="16" 
+                               Margin="8,4" 
+                               CornerRadius="12" 
+                               HasShadow="True">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Nombre del Producto -->
+                                <Label Grid.Row="0" Grid.Column="0" 
+                                       Text="{Binding Nombre}" 
+                                       FontSize="16" FontAttributes="Bold" 
+                                       TextColor="#333" />
+
+                                <!-- Precio -->
+                                <Label Grid.Row="0" Grid.Column="1" 
+                                       Text="{Binding Precio, StringFormat='{0:C}'}" 
+                                       FontSize="16" FontAttributes="Bold" 
+                                       TextColor="#28a745" />
+
+                                <!-- Descripción -->
+                                <Label Grid.Row="1" Grid.ColumnSpan="2" 
+                                       Text="{Binding Descripcion}" 
+                                       FontSize="14" TextColor="#666" 
+                                       MaxLines="2" 
+                                       LineBreakMode="TailTruncation" />
+
+                                <!-- Categoría y Disponibilidad -->
+                                <Label Grid.Row="2" Grid.Column="0" 
+                                       Text="{Binding Categoria}" 
+                                       FontSize="12" TextColor="#666" />
+
+                                <Label Grid.Row="2" Grid.Column="1" 
+                                       Text="{Binding EstadoDisponibilidad}" 
+                                       FontSize="12" FontAttributes="Bold" 
+                                       TextColor="{Binding ColorDisponibilidad}" />
+
+                                <!-- Botones de Acción -->
+                                <StackLayout Grid.Row="3" Grid.ColumnSpan="2" 
+                                             Orientation="Horizontal" 
+                                             HorizontalOptions="Center" 
+                                             Spacing="8" 
+                                             Margin="0,8,0,0">
+                                    <Button Text="👁️ Ver Detalle" 
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="#007bff" 
+                                            TextColor="White" 
+                                            CornerRadius="6" 
+                                            Padding="12,6" 
+                                            FontSize="12" />
+
+                                    <Button Text="➕ Agregar" 
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="#28a745" 
+                                            TextColor="White" 
+                                            CornerRadius="6" 
+                                            Padding="12,6" 
+                                            FontSize="12" 
+                                            IsVisible="{Binding PuedeAgregarAComanda}" />
+                                </StackLayout>
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.EmptyView>
+                    <StackLayout Padding="16" HorizontalOptions="Center">
+                        <Label Text="No se encontraron productos" 
+                               FontSize="16" TextColor="#666" 
+                               HorizontalOptions="Center" />
+                    </StackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
     </Grid>
 </ContentPage> 

@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="RestaurantePro.Mobile.Features.Operations.Comandas.Pages.ComandaDetallePage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:RestaurantePro.Mobile.Converters"
+             xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
+             x:DataType="vm:ComandaDetalleViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <!-- Convertidores -->
+            <converters:EstadoColorConverter x:Key="EstadoColorConverter" />
+            <converters:EstadoIconConverter x:Key="EstadoIconConverter" />
+            <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
+
+            <!-- Estilos -->
+            <Style x:Key="HeaderCardStyle" TargetType="Frame">
+                <Setter Property="BackgroundColor" Value="#F8F9FA" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="HasShadow" Value="True" />
+                <Setter Property="Padding" Value="16" />
+                <Setter Property="Margin" Value="8" />
+            </Style>
+
+            <Style x:Key="ItemCardStyle" TargetType="Frame">
+                <Setter Property="BackgroundColor" Value="White" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="HasShadow" Value="True" />
+                <Setter Property="Padding" Value="12" />
+                <Setter Property="Margin" Value="4,2" />
+            </Style>
+
+            <Style x:Key="ActionButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#28a745" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Margin" Value="2" />
+            </Style>
+
+            <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#6c757d" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Margin" Value="2" />
+            </Style>
+
+            <Style x:Key="DangerButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#dc3545" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Margin" Value="2" />
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Encabezado de la Comanda -->
+        <Frame Grid.Row="0" Style="{StaticResource HeaderCardStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Número y Mesa -->
+                <StackLayout Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
+                    <Label Text="{Binding Comanda.Numero, StringFormat='Comanda #{0}'}" 
+                           FontSize="20" FontAttributes="Bold" TextColor="#333" />
+                    <Label Text="{Binding Comanda.MesaNumero, StringFormat='Mesa {0}'}" 
+                           FontSize="16" TextColor="#666" Margin="8,0,0,0" />
+                </StackLayout>
+
+                <!-- Estado -->
+                <Frame Grid.Row="0" Grid.Column="1" 
+                       BackgroundColor="{Binding Comanda.Estado, Converter={StaticResource EstadoColorConverter}}"
+                       Padding="8,4" CornerRadius="12">
+                    <StackLayout Orientation="Horizontal">
+                        <Label Text="{Binding Comanda.Estado, Converter={StaticResource EstadoIconConverter}}" 
+                               FontSize="14" TextColor="White" />
+                        <Label Text="{Binding Comanda.EstadoDescripcion}" 
+                               FontSize="14" FontAttributes="Bold" TextColor="White" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Cliente y Fecha -->
+                <StackLayout Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,8,0,0">
+                    <Label Text="👤" FontSize="16" />
+                    <Label Text="{Binding Comanda.Cliente}" FontSize="14" TextColor="#666" />
+                    <Label Text="🕐" FontSize="16" Margin="16,0,0,0" />
+                    <Label Text="{Binding Comanda.FechaHora, StringFormat='{0:dd/MM/yyyy HH:mm}'}" 
+                           FontSize="14" TextColor="#666" />
+                </StackLayout>
+
+                <!-- Observaciones -->
+                <StackLayout Grid.Row="2" Grid.ColumnSpan="2" 
+                             IsVisible="{Binding Observaciones, Converter={StaticResource IsNotNullConverter}}"
+                             Margin="0,8,0,0">
+                    <Label Text="📝 Observaciones:" FontSize="14" FontAttributes="Bold" TextColor="#333" />
+                    <Label Text="{Binding Observaciones}" FontSize="14" TextColor="#666" />
+                </StackLayout>
+            </Grid>
+        </Frame>
+
+        <!-- Resumen de Totales -->
+        <Frame Grid.Row="1" BackgroundColor="#E8F5E8" Padding="12" Margin="8,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackLayout Grid.Column="0" HorizontalOptions="Center">
+                    <Label Text="{Binding TotalItems, StringFormat='{0}'}" 
+                           FontSize="18" FontAttributes="Bold" TextColor="#333" HorizontalOptions="Center" />
+                    <Label Text="Items Total" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+
+                <StackLayout Grid.Column="1" HorizontalOptions="Center">
+                    <Label Text="{Binding TotalActual, StringFormat='{0:C}'}" 
+                           FontSize="18" FontAttributes="Bold" TextColor="#28a745" HorizontalOptions="Center" />
+                    <Label Text="Total Actual" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+
+                <StackLayout Grid.Column="2" HorizontalOptions="Center">
+                    <Label Text="{Binding Comanda.TiempoTranscurrido, StringFormat='{0} min'}" 
+                           FontSize="18" FontAttributes="Bold" TextColor="#17a2b8" HorizontalOptions="Center" />
+                    <Label Text="Tiempo" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+            </Grid>
+        </Frame>
+
+        <!-- Lista de Items -->
+        <RefreshView Grid.Row="2"
+                     IsRefreshing="{Binding IsBusy}"
+                     Command="{Binding RefreshCommand}">
+            <CollectionView ItemsSource="{Binding Items}"
+                            SelectionMode="Single"
+                            SelectedItem="{Binding SelectedItem}">
+                <CollectionView.Header>
+                    <StackLayout Padding="16,8">
+                        <Label Text="Items de la Comanda" 
+                               FontSize="16" FontAttributes="Bold" 
+                               TextColor="#333" />
+                    </StackLayout>
+                </CollectionView.Header>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="dtos:ComandaProductoDto">
+                        <Frame Style="{StaticResource ItemCardStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Nombre del Producto -->
+                                <Label Grid.Row="0" Grid.Column="0" 
+                                       Text="{Binding Nombre}" 
+                                       FontSize="16" FontAttributes="Bold" 
+                                       TextColor="#333" />
+
+                                <!-- Precio Unitario -->
+                                <Label Grid.Row="0" Grid.Column="1" 
+                                       Text="{Binding PrecioUnitario, StringFormat='{0:C}'}" 
+                                       FontSize="14" TextColor="#666" />
+
+                                <!-- Cantidad y Subtotal -->
+                                <StackLayout Grid.Row="1" Grid.Column="0" Orientation="Horizontal">
+                                    <Label Text="Cantidad:" FontSize="14" TextColor="#666" />
+                                    <Label Text="{Binding Cantidad}" 
+                                           FontSize="14" FontAttributes="Bold" TextColor="#333" />
+                                </StackLayout>
+
+                                <Label Grid.Row="1" Grid.Column="1" 
+                                       Text="{Binding PrecioTotal, StringFormat='Total: {0:C}'}" 
+                                       FontSize="14" FontAttributes="Bold" TextColor="#28a745" />
+
+                                <!-- Observaciones del Item -->
+                                <Label Grid.Row="2" Grid.ColumnSpan="2" 
+                                       Text="{Binding Observaciones}" 
+                                       FontSize="12" TextColor="#666" 
+                                       IsVisible="{Binding Observaciones, Converter={StaticResource IsNotNullConverter}}" />
+
+                                <!-- Botones de Acción (Solo si es editable) -->
+                                <StackLayout Grid.Row="3" Grid.ColumnSpan="2" 
+                                             Orientation="Horizontal" 
+                                             HorizontalOptions="End" 
+                                             Spacing="8" 
+                                             Margin="0,8,0,0"
+                                             IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandaDetalleViewModel}}, Path=IsEditable}">
+                                    
+                                    <Button Text="✏️ Cantidad" 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandaDetalleViewModel}}, Path=ActualizarCantidadCommand}"
+                                            CommandParameter="{Binding .}"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+
+                                    <Button Text="🗑️ Eliminar" 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandaDetalleViewModel}}, Path=EliminarItemCommand}"
+                                            CommandParameter="{Binding .}"
+                                            Style="{StaticResource DangerButtonStyle}" />
+                                </StackLayout>
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.EmptyView>
+                    <StackLayout Padding="16" HorizontalOptions="Center">
+                        <Label Text="📝" FontSize="48" HorizontalOptions="Center" TextColor="#ccc" />
+                        <Label Text="No hay productos en esta comanda" 
+                               FontSize="16" TextColor="#666" 
+                               HorizontalOptions="Center" />
+                        <Button Text="➕ Agregar Primer Producto" 
+                                Command="{Binding AgregarProductoCommand}" 
+                                Style="{StaticResource ActionButtonStyle}"
+                                HorizontalOptions="Center"
+                                Margin="0,16,0,0"
+                                IsVisible="{Binding IsEditable}" />
+                    </StackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Botones de Acción Principal -->
+        <ScrollView Grid.Row="3" Orientation="Horizontal">
+            <StackLayout Orientation="Horizontal" 
+                         HorizontalOptions="Center" 
+                         Padding="16"
+                         Spacing="8">
+
+                <!-- Agregar Producto -->
+                <Button Text="➕ Agregar Producto" 
+                        Command="{Binding AgregarProductoCommand}" 
+                        Style="{StaticResource ActionButtonStyle}"
+                        IsVisible="{Binding IsEditable}" />
+
+                <!-- Actualizar Observaciones -->
+                <Button Text="📝 Observaciones" 
+                        Command="{Binding ActualizarObservacionesCommand}" 
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        IsVisible="{Binding IsEditable}" />
+
+                <!-- Cambiar Estado -->
+                <Button Text="🔄 Cambiar Estado" 
+                        Command="{Binding CambiarEstadoCommand}" 
+                        Style="{StaticResource SecondaryButtonStyle}" />
+
+                <!-- Finalizar -->
+                <Button Text="✅ Finalizar" 
+                        Command="{Binding FinalizarComandaCommand}" 
+                        Style="{StaticResource ActionButtonStyle}"
+                        IsVisible="{Binding CanFinalize}" />
+
+                <!-- Cancelar -->
+                <Button Text="❌ Cancelar" 
+                        Command="{Binding CancelarComandaCommand}" 
+                        Style="{StaticResource DangerButtonStyle}"
+                        IsVisible="{Binding CanCancel}" />
+
+                <!-- Refrescar -->
+                <Button Text="🔄 Refrescar" 
+                        Command="{Binding RefreshCommand}" 
+                        BackgroundColor="#17a2b8" 
+                        TextColor="White" 
+                        CornerRadius="6" 
+                        Padding="12,6" 
+                        FontSize="12" 
+                        Margin="2" />
+            </StackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage> 

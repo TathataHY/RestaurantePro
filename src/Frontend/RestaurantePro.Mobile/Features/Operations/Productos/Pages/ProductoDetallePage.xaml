@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="RestaurantePro.Mobile.Features.Operations.Productos.Pages.ProductoDetallePage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:RestaurantePro.Mobile.Converters"
+             xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Productos.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
+             x:DataType="vm:ProductoDetalleViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <!-- Convertidores -->
+            <converters:EstadoColorConverter x:Key="EstadoColorConverter" />
+            <converters:EstadoIconConverter x:Key="EstadoIconConverter" />
+            <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
+
+            <!-- Estilos -->
+            <Style x:Key="HeaderCardStyle" TargetType="Frame">
+                <Setter Property="BackgroundColor" Value="#F8F9FA" />
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="HasShadow" Value="True" />
+                <Setter Property="Padding" Value="16" />
+                <Setter Property="Margin" Value="8" />
+            </Style>
+
+            <Style x:Key="InfoCardStyle" TargetType="Frame">
+                <Setter Property="BackgroundColor" Value="White" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="HasShadow" Value="True" />
+                <Setter Property="Padding" Value="12" />
+                <Setter Property="Margin" Value="4,2" />
+            </Style>
+
+            <Style x:Key="ActionButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#28a745" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Margin" Value="2" />
+            </Style>
+
+            <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#6c757d" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Margin" Value="2" />
+            </Style>
+
+            <Style x:Key="DangerButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#dc3545" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Margin" Value="2" />
+            </Style>
+
+            <Style x:Key="WarningButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#ffc107" />
+                <Setter Property="TextColor" Value="#212529" />
+                <Setter Property="CornerRadius" Value="6" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Margin" Value="2" />
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Encabezado del Producto -->
+        <Frame Grid.Row="0" Style="{StaticResource HeaderCardStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Nombre del Producto -->
+                <Label Grid.Row="0" Grid.Column="0" 
+                       Text="{Binding Producto.Nombre}" 
+                       FontSize="24" FontAttributes="Bold" 
+                       TextColor="#333" />
+
+                <!-- Precio -->
+                <Label Grid.Row="0" Grid.Column="1" 
+                       Text="{Binding Producto.Precio, StringFormat='{0:C}'}" 
+                       FontSize="20" FontAttributes="Bold" 
+                       TextColor="#28a745" />
+
+                <!-- Categoría -->
+                <StackLayout Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Margin="0,8,0,0">
+                    <Label Text="📂" FontSize="16" />
+                    <Label Text="{Binding Producto.Categoria}" 
+                           FontSize="16" TextColor="#666" />
+                </StackLayout>
+
+                <!-- Estado de Disponibilidad -->
+                <Frame Grid.Row="1" Grid.Column="1" 
+                       BackgroundColor="{Binding Producto.PuedeAgregarAComanda, Converter={StaticResource EstadoColorConverter}}"
+                       Padding="8,4" CornerRadius="12" Margin="8,8,0,0">
+                    <StackLayout Orientation="Horizontal">
+                        <Label Text="{Binding Producto.PuedeAgregarAComanda, Converter={StaticResource EstadoIconConverter}}" 
+                               FontSize="14" TextColor="White" />
+                        <Label Text="{Binding Producto.PuedeAgregarAComanda, StringFormat='{0:Disponible;No Disponible}'}" 
+                               FontSize="14" FontAttributes="Bold" TextColor="White" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Descripción -->
+                <Label Grid.Row="2" Grid.ColumnSpan="2" 
+                       Text="{Binding Producto.Descripcion}" 
+                       FontSize="14" TextColor="#666" 
+                       Margin="0,8,0,0"
+                       IsVisible="{Binding Producto.Descripcion, Converter={StaticResource IsNotNullConverter}}" />
+            </Grid>
+        </Frame>
+
+        <!-- Información Detallada -->
+        <Frame Grid.Row="1" BackgroundColor="#E8F5E8" Padding="12" Margin="8,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackLayout Grid.Column="0" HorizontalOptions="Center">
+                    <Label Text="{Binding Producto.Calorias, StringFormat='{0} cal'}" 
+                           FontSize="16" FontAttributes="Bold" TextColor="#333" HorizontalOptions="Center" />
+                    <Label Text="Calorías" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+
+                <StackLayout Grid.Column="1" HorizontalOptions="Center">
+                    <Label Text="{Binding Producto.TiempoPreparacion, StringFormat='{0} min'}" 
+                           FontSize="16" FontAttributes="Bold" TextColor="#17a2b8" HorizontalOptions="Center" />
+                    <Label Text="Tiempo Prep." FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+
+                <StackLayout Grid.Column="2" HorizontalOptions="Center">
+                    <Label Text="{Binding Producto.Rating, StringFormat='{0:F1}/5'}" 
+                           FontSize="16" FontAttributes="Bold" TextColor="#ffc107" HorizontalOptions="Center" />
+                    <Label Text="Rating" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+            </Grid>
+        </Frame>
+
+        <!-- Contenido Principal -->
+        <ScrollView Grid.Row="2">
+            <StackLayout Padding="16" Spacing="12">
+
+                <!-- Información Nutricional -->
+                <Frame Style="{StaticResource InfoCardStyle}">
+                    <StackLayout>
+                        <Label Text="🍎 Información Nutricional" 
+                               FontSize="16" FontAttributes="Bold" 
+                               TextColor="#333" Margin="0,0,0,8" />
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackLayout Grid.Column="0">
+                                <Label Text="{Binding Producto.Proteinas, StringFormat='Proteínas: {0}g'}" 
+                                       FontSize="14" TextColor="#666" />
+                                <Label Text="{Binding Producto.Carbohidratos, StringFormat='Carbohidratos: {0}g'}" 
+                                       FontSize="14" TextColor="#666" />
+                            </StackLayout>
+                            
+                            <StackLayout Grid.Column="1">
+                                <Label Text="{Binding Producto.Grasas, StringFormat='Grasas: {0}g'}" 
+                                       FontSize="14" TextColor="#666" />
+                                <Label Text="{Binding Producto.Fibra, StringFormat='Fibra: {0}g'}" 
+                                       FontSize="14" TextColor="#666" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Alergenos -->
+                <Frame Style="{StaticResource InfoCardStyle}" 
+                       IsVisible="{Binding Producto.Alergenos, Converter={StaticResource IsNotNullConverter}}">
+                    <StackLayout>
+                        <Label Text="⚠️ Alérgenos" 
+                               FontSize="16" FontAttributes="Bold" 
+                               TextColor="#dc3545" Margin="0,0,0,8" />
+                        <Label Text="{Binding Producto.Alergenos}" 
+                               FontSize="14" TextColor="#666" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Ingredientes -->
+                <Frame Style="{StaticResource InfoCardStyle}" 
+                       IsVisible="{Binding Producto.Ingredientes, Converter={StaticResource IsNotNullConverter}}">
+                    <StackLayout>
+                        <Label Text="🥘 Ingredientes" 
+                               FontSize="16" FontAttributes="Bold" 
+                               TextColor="#333" Margin="0,0,0,8" />
+                        <Label Text="{Binding Producto.Ingredientes}" 
+                               FontSize="14" TextColor="#666" />
+                    </StackLayout>
+                </Frame>
+
+                <!-- Agregar a Comanda (Solo si está disponible) -->
+                <Frame Style="{StaticResource InfoCardStyle}" 
+                       IsVisible="{Binding CanAddToComanda}">
+                    <StackLayout>
+                        <Label Text="🛒 Agregar a Comanda" 
+                               FontSize="16" FontAttributes="Bold" 
+                               TextColor="#333" Margin="0,0,0,12" />
+                        
+                        <!-- Cantidad -->
+                        <StackLayout Orientation="Horizontal" Margin="0,0,0,8">
+                            <Label Text="Cantidad:" 
+                                   FontSize="14" TextColor="#666" 
+                                   VerticalOptions="Center" />
+                            <Entry Text="{Binding CantidadParaComanda}" 
+                                   WidthRequest="80" 
+                                   HorizontalOptions="Start" 
+                                   Margin="8,0,0,0" />
+                        </StackLayout>
+                        
+                        <!-- Observaciones -->
+                        <StackLayout Orientation="Horizontal" Margin="0,0,0,12">
+                            <Label Text="Observaciones:" 
+                                   FontSize="14" TextColor="#666" 
+                                   VerticalOptions="Center" />
+                            <Entry Text="{Binding ObservacionesComanda}" 
+                                   Placeholder="Ej: Sin sal, bien cocido..." 
+                                   HorizontalOptions="FillAndExpand" 
+                                   Margin="8,0,0,0" />
+                        </StackLayout>
+                        
+                        <!-- Botones de acción -->
+                        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="8">
+                            <Button Text="🛒 Agregar" 
+                                    Command="{Binding AgregarAComandaCommand}" 
+                                    Style="{StaticResource ActionButtonStyle}" />
+                            <Button Text="📋 Seleccionar Comanda" 
+                                    Command="{Binding SeleccionarComandaCommand}" 
+                                    Style="{StaticResource SecondaryButtonStyle}" />
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+
+                <!-- Estadísticas del Producto -->
+                <Frame Style="{StaticResource InfoCardStyle}">
+                    <StackLayout>
+                        <Label Text="📊 Estadísticas" 
+                               FontSize="16" FontAttributes="Bold" 
+                               TextColor="#333" Margin="0,0,0,8" />
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackLayout Grid.Column="0">
+                                <Label Text="{Binding Producto.VecesOrdenado, StringFormat='Ordenado: {0} veces'}" 
+                                       FontSize="14" TextColor="#666" />
+                                <Label Text="{Binding Producto.Popularidad, StringFormat='Popularidad: {0}%'}" 
+                                       FontSize="14" TextColor="#666" />
+                            </StackLayout>
+                            
+                            <StackLayout Grid.Column="1">
+                                <Label Text="{Binding Producto.StockDisponible, StringFormat='Stock: {0} unidades'}" 
+                                       FontSize="14" TextColor="#666" />
+                                <Label Text="{Binding Producto.UltimaVenta, StringFormat='Última venta: {0:dd/MM}'}" 
+                                       FontSize="14" TextColor="#666" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </Frame>
+            </StackLayout>
+        </ScrollView>
+
+        <!-- Botones de Acción Principal -->
+        <ScrollView Grid.Row="3" Orientation="Horizontal">
+            <StackLayout Orientation="Horizontal" 
+                         HorizontalOptions="Center" 
+                         Padding="16"
+                         Spacing="8">
+
+                <!-- Editar Producto -->
+                <Button Text="✏️ Editar" 
+                        Command="{Binding StartEditCommand}" 
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        IsVisible="{Binding CanEdit}" />
+
+                <!-- Guardar Cambios -->
+                <Button Text="💾 Guardar" 
+                        Command="{Binding SaveChangesCommand}" 
+                        Style="{StaticResource ActionButtonStyle}"
+                        IsVisible="{Binding IsEditing}" />
+
+                <!-- Cancelar Edición -->
+                <Button Text="❌ Cancelar" 
+                        Command="{Binding CancelEditCommand}" 
+                        Style="{StaticResource DangerButtonStyle}"
+                        IsVisible="{Binding IsEditing}" />
+
+                <!-- Cambiar Disponibilidad -->
+                <Button Text="{Binding Producto.PuedeAgregarAComanda, StringFormat='{0:🔴 Deshabilitar;🟢 Habilitar}'}" 
+                        Command="{Binding ToggleDisponibilidadCommand}" 
+                        Style="{StaticResource WarningButtonStyle}"
+                        IsVisible="{Binding CanEdit}" />
+
+                <!-- Ver Historial -->
+                <Button Text="📈 Historial" 
+                        Command="{Binding VerHistorialCommand}" 
+                        Style="{StaticResource SecondaryButtonStyle}" />
+
+                <!-- Eliminar Producto -->
+                <Button Text="🗑️ Eliminar" 
+                        Command="{Binding EliminarProductoCommand}" 
+                        Style="{StaticResource DangerButtonStyle}"
+                        IsVisible="{Binding CanDelete}" />
+
+                <!-- Refrescar -->
+                <Button Text="🔄 Refrescar" 
+                        Command="{Binding RefreshCommand}" 
+                        BackgroundColor="#17a2b8" 
+                        TextColor="White" 
+                        CornerRadius="6" 
+                        Padding="12,6" 
+                        FontSize="12" 
+                        Margin="2" />
+            </StackLayout>
+        </ScrollView>
+    </Grid>
+</ContentPage> 
