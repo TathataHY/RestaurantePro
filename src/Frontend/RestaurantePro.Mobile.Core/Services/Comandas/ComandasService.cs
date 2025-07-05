@@ -5,7 +5,7 @@ using System.Text.Json;
 namespace RestaurantePro.Mobile.Core.Services.Comandas;
 
 /// <summary>
-/// Implementación del servicio para gestión de comandas
+/// Servicio para gestión de comandas - Operaciones críticas
 /// </summary>
 public class ComandasService : IComandasService
 {
@@ -28,7 +28,7 @@ public class ComandasService : IComandasService
         }
         catch (Exception ex)
         {
-            return ApiResponse<List<ComandaDto>>.ErrorResponse($"Error al obtener comandas activas: {ex.Message}");
+            return ApiResponse<List<ComandaDto>>.ErrorResponse("Error al obtener comandas activas", "Error al obtener comandas activas");
         }
     }
 
@@ -71,7 +71,7 @@ public class ComandasService : IComandasService
         {
             if (request.MesaId == Guid.Empty)
             {
-                return ApiResponse<ComandaDto>.ErrorResponse("La mesa es requerida para crear una comanda");
+                return ApiResponse<ComandaDto>.ErrorResponse("La mesa es requerida", "La mesa es requerida");
             }
 
             return await _apiService.PostAsync<ComandaDto>(BaseEndpoint, request);
@@ -91,12 +91,12 @@ public class ComandasService : IComandasService
         {
             if (comandaId == Guid.Empty)
             {
-                return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda es requerido");
+                return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda es requerido", "ID de comanda es requerido");
             }
 
             if (productos == null || productos.Count == 0)
             {
-                return ApiResponse<ComandaDto>.ErrorResponse("Se requiere al menos un producto");
+                return ApiResponse<ComandaDto>.ErrorResponse("Se requiere al menos un producto", "Se requiere al menos un producto");
             }
 
             return await _apiService.PostAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/productos", productos);
@@ -116,12 +116,12 @@ public class ComandasService : IComandasService
         {
             if (comandaId == Guid.Empty || productoId == Guid.Empty)
             {
-                return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda y producto son requeridos");
+                return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda y producto son requeridos", "ID de comanda y producto son requeridos");
             }
 
             if (nuevaCantidad <= 0)
             {
-                return ApiResponse<ComandaDto>.ErrorResponse("La cantidad debe ser mayor a 0");
+                return ApiResponse<ComandaDto>.ErrorResponse("La cantidad debe ser mayor a 0", "La cantidad debe ser mayor a 0");
             }
 
             var request = new { ProductoId = productoId, Cantidad = nuevaCantidad };
@@ -142,7 +142,7 @@ public class ComandasService : IComandasService
         {
             if (comandaId == Guid.Empty || productoId == Guid.Empty)
             {
-                return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda y producto son requeridos");
+                return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda y producto son requeridos", "ID de comanda y producto son requeridos");
             }
 
             // Usar DeleteAsync sin tipo genérico ya que es void
@@ -164,12 +164,12 @@ public class ComandasService : IComandasService
         {
             if (comandaId == Guid.Empty)
             {
-                return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda es requerido");
+                return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda es requerido", "ID de comanda es requerido");
             }
 
             if (string.IsNullOrWhiteSpace(nuevoEstado))
             {
-                return ApiResponse<ComandaDto>.ErrorResponse("El nuevo estado es requerido");
+                return ApiResponse<ComandaDto>.ErrorResponse("El nuevo estado es requerido", "El nuevo estado es requerido");
             }
 
             var request = new { Estado = nuevoEstado, Observaciones = observaciones };
@@ -190,12 +190,12 @@ public class ComandasService : IComandasService
         {
             if (comandaId == Guid.Empty)
             {
-                return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda es requerido");
+                return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda es requerido", "ID de comanda es requerido");
             }
 
             if (string.IsNullOrWhiteSpace(metodoPago))
             {
-                return ApiResponse<ComandaDto>.ErrorResponse("El método de pago es requerido");
+                return ApiResponse<ComandaDto>.ErrorResponse("El método de pago es requerido", "El método de pago es requerido");
             }
 
             var request = new { MetodoPago = metodoPago, Observaciones = observaciones };
@@ -216,12 +216,12 @@ public class ComandasService : IComandasService
         {
             if (comandaId == Guid.Empty)
             {
-                return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda es requerido");
+                return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda es requerido", "ID de comanda es requerido");
             }
 
             if (string.IsNullOrWhiteSpace(motivo))
             {
-                return ApiResponse<ComandaDto>.ErrorResponse("El motivo de cancelación es requerido");
+                return ApiResponse<ComandaDto>.ErrorResponse("El motivo de cancelación es requerido", "El motivo de cancelación es requerido");
             }
 
             var request = new { Motivo = motivo };

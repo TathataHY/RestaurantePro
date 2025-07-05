@@ -127,15 +127,15 @@
                 </Grid.ColumnDefinitions>
 
                 <StackLayout Grid.Column="0" HorizontalOptions="Center">
-                    <Label Text="{Binding Estadisticas.TotalComandas, StringFormat='{0}'}" 
+                    <Label Text="{Binding Estadisticas.TotalComandasActivas, StringFormat='{0}'}" 
                            FontSize="18" FontAttributes="Bold" TextColor="#333" HorizontalOptions="Center" />
-                    <Label Text="Total" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                    <Label Text="Total Activas" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
                 </StackLayout>
 
                 <StackLayout Grid.Column="1" HorizontalOptions="Center">
-                    <Label Text="{Binding Estadisticas.ComandasActivas, StringFormat='{0}'}" 
+                    <Label Text="{Binding Estadisticas.ComandasCompletadasHoy, StringFormat='{0}'}" 
                            FontSize="18" FontAttributes="Bold" TextColor="#28a745" HorizontalOptions="Center" />
-                    <Label Text="Activas" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                    <Label Text="Completadas Hoy" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
                 </StackLayout>
 
                 <StackLayout Grid.Column="2" HorizontalOptions="Center">
@@ -145,7 +145,7 @@
                 </StackLayout>
 
                 <StackLayout Grid.Column="3" HorizontalOptions="Center">
-                    <Label Text="{Binding Estadisticas.PromedioTiempo, StringFormat='{0:F1} min'}" 
+                    <Label Text="{Binding Estadisticas.TiempoPromedioPreparacion, StringFormat='{0:F1} min'}" 
                            FontSize="18" FontAttributes="Bold" TextColor="#17a2b8" HorizontalOptions="Center" />
                     <Label Text="Tiempo Prom." FontSize="12" TextColor="#666" HorizontalOptions="Center" />
                 </StackLayout>
