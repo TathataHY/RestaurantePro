@@ -31,4 +31,28 @@ public class DialogService : IDialogService
     {
         await ShowAlertAsync("Éxito", message, "OK");
     }
+
+    // Métodos adicionales implementados
+    public async Task<string?> ShowPromptAsync(string title, string message, string placeholder = "", string accept = "OK", string cancel = "Cancelar")
+    {
+        if (Application.Current?.MainPage != null)
+        {
+            return await Application.Current.MainPage.DisplayPromptAsync(title, message, accept, cancel, placeholder);
+        }
+        return null;
+    }
+
+    public async Task<bool> ShowConfirmationAsync(string title, string message, string accept = "Confirmar", string cancel = "Cancelar")
+    {
+        return await ShowConfirmAsync(title, message, accept, cancel);
+    }
+
+    public async Task<string?> ShowActionSheetAsync(string title, string cancel, string destruction, params string[] buttons)
+    {
+        if (Application.Current?.MainPage != null)
+        {
+            return await Application.Current.MainPage.DisplayActionSheet(title, cancel, destruction, buttons);
+        }
+        return cancel;
+    }
 } 

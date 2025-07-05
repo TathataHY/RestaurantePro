@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:local="clr-namespace:RestaurantePro.Mobile.Features.Authentication.Pages"
     xmlns:ui="clr-namespace:RestaurantePro.Mobile.UI.Pages"
+    xmlns:mesas="clr-namespace:RestaurantePro.Mobile.Features.Operations.Mesas.Pages"
     Title="RestaurantePro">
 
     <!-- Shell Resources -->
@@ -23,11 +24,35 @@
         ContentTemplate="{DataTemplate local:LoginPage}"
         Route="login" />
 
-    <!-- Dashboard Page - Página principal después del login -->
-    <ShellContent
-        Title="Dashboard"
-        ContentTemplate="{DataTemplate ui:DashboardPage}"
-        Route="dashboard"
-        Shell.FlyoutBehavior="Disabled" />
+    <!-- Main App - Con navegación por tabs -->
+    <TabBar Route="main">
+        <!-- Dashboard Tab -->
+        <ShellContent
+            Title="Dashboard"
+            Icon="home.png"
+            ContentTemplate="{DataTemplate ui:DashboardPage}"
+            Route="dashboard" />
+
+        <!-- Mesas Tab -->
+        <ShellContent
+            Title="Mesas"
+            Icon="table.png"
+            ContentTemplate="{DataTemplate mesas:MesasPage}"
+            Route="mesas" />
+
+        <!-- Comandas Tab - Para futuro -->
+        <ShellContent
+            Title="Comandas"
+            Icon="order.png"
+            ContentTemplate="{DataTemplate ui:DashboardPage}"
+            Route="comandas" />
+
+        <!-- Más Tab - Para futuras funcionalidades -->
+        <ShellContent
+            Title="Más"
+            Icon="more.png"
+            ContentTemplate="{DataTemplate ui:DashboardPage}"
+            Route="more" />
+    </TabBar>
 
 </Shell>

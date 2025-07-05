@@ -77,5 +77,14 @@ public static class MauiProgram
 		
 		// Dashboard - V1 Fundamental
 		services.AddTransient<DashboardPage>();
+
+		// ✅ ViewModels
+		services.AddTransient<LoginViewModel>();
+		services.AddTransient<RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels.MesasViewModel>();
+
+		// ✅ Páginas
+		services.AddTransient<LoginPage>();
+		services.AddTransient<DashboardPage>();
+		services.AddTransient<RestaurantePro.Mobile.Features.Operations.Mesas.Pages.MesasPage>();
 	}
 }

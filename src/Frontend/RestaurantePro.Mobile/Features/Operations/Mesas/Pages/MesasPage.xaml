@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewModels="clr-namespace:RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels"
+             x:Class="RestaurantePro.Mobile.Features.Operations.Mesas.Pages.MesasPage"
+             x:DataType="viewModels:MesasViewModel"
+             Title="{Binding Title}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <!-- Estilos para Estados de Mesa -->
+            <Style x:Key="EstadoLabelStyle" TargetType="Label">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="HorizontalOptions" Value="Center" />
+                <Setter Property="VerticalOptions" Value="Center" />
+                <Setter Property="Padding" Value="8,4" />
+            </Style>
+
+            <Style x:Key="MesaCardStyle" TargetType="Frame">
+                <Setter Property="BackgroundColor" Value="White" />
+                <Setter Property="BorderColor" Value="#E0E0E0" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Padding" Value="16" />
+                <Setter Property="Margin" Value="8" />
+                <Setter Property="HasShadow" Value="True" />
+            </Style>
+
+            <Style x:Key="FilterButtonStyle" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="#007bff" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="CornerRadius" Value="20" />
+                <Setter Property="Padding" Value="16,8" />
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="Margin" Value="4" />
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Barra de Búsqueda y Filtros -->
+        <Frame Grid.Row="0" 
+               BackgroundColor="#F8F9FA" 
+               Padding="16" 
+               Margin="0,0,0,8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Búsqueda -->
+                <SearchBar Grid.Row="0"
+                           x:Name="SearchBar"
+                           Placeholder="Buscar mesa por número o ubicación..."
+                           Text="{Binding SearchText}"
+                           SearchCommand="{Binding ApplyFiltersCommand}"
+                           Margin="0,0,0,8" />
+
+                <!-- Filtros -->
+                <ScrollView Grid.Row="1" Orientation="Horizontal">
+                    <StackLayout Orientation="Horizontal" Spacing="8">
+                        <Button Text="🔄 Refrescar" 
+                                Command="{Binding RefreshMesasCommand}"
+                                Style="{StaticResource FilterButtonStyle}" />
+
+                        <Button Text="📊 Estadísticas" 
+                                Command="{Binding LoadEstadisticasCommand}"
+                                Style="{StaticResource FilterButtonStyle}" />
+
+                        <Button Text="🔍 Buscar Mejor Mesa" 
+                                Command="{Binding BuscarMejorMesaCommand}"
+                                Style="{StaticResource FilterButtonStyle}" />
+
+                        <Button Text="🗂️ Filtros" 
+                                Clicked="OnFiltrosClicked"
+                                Style="{StaticResource FilterButtonStyle}" />
+                    </StackLayout>
+                </ScrollView>
+            </Grid>
+        </Frame>
+
+        <!-- Estadísticas de Ocupación -->
+        <Frame Grid.Row="1" 
+               BackgroundColor="#E8F5E8" 
+               Padding="12" 
+               Margin="8,0"
+               IsVisible="{Binding EstadoMesas, Converter={StaticResource IsNotNullConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackLayout Grid.Column="0" HorizontalOptions="Center">
+                    <Label Text="{Binding EstadoMesas.Estadisticas.TotalMesas, StringFormat='{0}'}" 
+                           FontSize="18" FontAttributes="Bold" TextColor="#333" HorizontalOptions="Center" />
+                    <Label Text="Total" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+
+                <StackLayout Grid.Column="1" HorizontalOptions="Center">
+                    <Label Text="{Binding EstadoMesas.Estadisticas.MesasDisponibles, StringFormat='{0}'}" 
+                           FontSize="18" FontAttributes="Bold" TextColor="#28a745" HorizontalOptions="Center" />
+                    <Label Text="Disponibles" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+
+                <StackLayout Grid.Column="2" HorizontalOptions="Center">
+                    <Label Text="{Binding EstadoMesas.Estadisticas.MesasOcupadas, StringFormat='{0}'}" 
+                           FontSize="18" FontAttributes="Bold" TextColor="#dc3545" HorizontalOptions="Center" />
+                    <Label Text="Ocupadas" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+
+                <StackLayout Grid.Column="3" HorizontalOptions="Center">
+                    <Label Text="{Binding EstadoMesas.Estadisticas.PorcentajeOcupacion, StringFormat='{0:F1}%'}" 
+                           FontSize="18" FontAttributes="Bold" TextColor="#ffc107" HorizontalOptions="Center" />
+                    <Label Text="Ocupación" FontSize="12" TextColor="#666" HorizontalOptions="Center" />
+                </StackLayout>
+            </Grid>
+        </Frame>
+
+        <!-- Lista de Mesas -->
+        <RefreshView Grid.Row="2"
+                     IsRefreshing="{Binding IsRefreshing}"
+                     Command="{Binding RefreshMesasCommand}">
+            <CollectionView ItemsSource="{Binding Mesas}"
+                            SelectionMode="Single"
+                            SelectedItem="{Binding SelectedMesa}">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" 
+                                     Span="{OnIdiom Phone=1, Tablet=2, Desktop=3}" />
+                </CollectionView.ItemsLayout>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame Style="{StaticResource MesaCardStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Encabezado de Mesa -->
+                                <StackLayout Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
+                                    <Label Text="{Binding Numero, StringFormat='Mesa {0}'}" 
+                                           FontSize="18" FontAttributes="Bold" TextColor="#333" />
+                                    <Label Text="{Binding Estado, Converter={StaticResource EstadoIconConverter}}" 
+                                           FontSize="16" />
+                                </StackLayout>
+
+                                <!-- Estado -->
+                                <Frame Grid.Row="0" Grid.Column="1" 
+                                       BackgroundColor="{Binding Estado, Converter={StaticResource EstadoColorConverter}}"
+                                       Padding="8,4" 
+                                       CornerRadius="12">
+                                    <Label Text="{Binding Estado}" 
+                                           Style="{StaticResource EstadoLabelStyle}" />
+                                </Frame>
+
+                                <!-- Información de Mesa -->
+                                <StackLayout Grid.Row="1" Grid.ColumnSpan="2" Spacing="4" Margin="0,8,0,0">
+                                    <Label Text="{Binding Capacidad, StringFormat='Capacidad: {0} personas'}" 
+                                           FontSize="14" TextColor="#666" />
+                                    <Label Text="{Binding Ubicacion, StringFormat='Ubicación: {0}'}" 
+                                           FontSize="14" TextColor="#666" />
+                                    <Label Text="{Binding ClienteNombre, StringFormat='Cliente: {0}'}" 
+                                           FontSize="14" TextColor="#666" 
+                                           IsVisible="{Binding ClienteNombre, Converter={StaticResource IsNotNullConverter}}" />
+                                </StackLayout>
+
+                                <!-- Información Adicional -->
+                                <StackLayout Grid.Row="2" Grid.ColumnSpan="2" Spacing="2" Margin="0,8,0,0"
+                                             IsVisible="{Binding UltimaActividad, Converter={StaticResource IsNotNullConverter}}">
+                                    <Label Text="{Binding UltimaActividad, StringFormat='Última actividad: {0:HH:mm}'}" 
+                                           FontSize="12" TextColor="#999" />
+                                    <Label Text="{Binding ObservacionesUltimaActividad}" 
+                                           FontSize="12" TextColor="#999" 
+                                           IsVisible="{Binding ObservacionesUltimaActividad, Converter={StaticResource IsNotNullConverter}}" />
+                                </StackLayout>
+
+                                <!-- Botones de Acción -->
+                                <StackLayout Grid.Row="3" Grid.ColumnSpan="2" 
+                                             Orientation="Horizontal" 
+                                             Spacing="8" 
+                                             Margin="0,12,0,0">
+                                    <Button Text="👥 Asignar" 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MesasViewModel}}, Path=AsignarMesaCommand}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="#28a745" 
+                                            TextColor="White" 
+                                            FontSize="12" 
+                                            CornerRadius="4" 
+                                            Padding="12,6" />
+
+                                    <Button Text="🚪 Liberar" 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MesasViewModel}}, Path=LiberarMesaCommand}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="#dc3545" 
+                                            TextColor="White" 
+                                            FontSize="12" 
+                                            CornerRadius="4" 
+                                            Padding="12,6" />
+
+                                    <Button Text="⚙️ Estado" 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MesasViewModel}}, Path=CambiarEstadoMesaCommand}"
+                                            CommandParameter="{Binding .}"
+                                            BackgroundColor="#6c757d" 
+                                            TextColor="White" 
+                                            FontSize="12" 
+                                            CornerRadius="4" 
+                                            Padding="12,6" />
+                                </StackLayout>
+                            </Grid>
+
+                            <!-- Gesture Recognizer para Navegación -->
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MesasViewModel}}, Path=NavigateToMesaDetailCommand}"
+                                                      CommandParameter="{Binding .}" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <!-- Estado Vacío -->
+                <CollectionView.EmptyView>
+                    <StackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="40">
+                        <Label Text="🏠" FontSize="64" HorizontalOptions="Center" TextColor="#CCC" />
+                        <Label Text="No hay mesas disponibles" 
+                               FontSize="18" FontAttributes="Bold" 
+                               HorizontalOptions="Center" TextColor="#666" />
+                        <Label Text="Revisa los filtros o refresca la lista" 
+                               FontSize="14" 
+                               HorizontalOptions="Center" TextColor="#999" />
+                        <Button Text="🔄 Refrescar" 
+                                Command="{Binding RefreshMesasCommand}"
+                                BackgroundColor="#007bff" 
+                                TextColor="White" 
+                                Margin="0,16,0,0" />
+                    </StackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Indicador de Carga -->
+        <ActivityIndicator Grid.Row="0" Grid.RowSpan="4"
+                           IsVisible="{Binding IsBusy}"
+                           IsRunning="{Binding IsBusy}"
+                           Color="#007bff"
+                           Scale="1.5" />
+    </Grid>
+</ContentPage> 
