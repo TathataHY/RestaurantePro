@@ -43,7 +43,7 @@ public class MobileIntegrationTestBase : IClassFixture<WebApplicationFactory<Pro
         var json = JsonSerializer.Serialize(loginRequest);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync("/api/core/auth/login", content);
+        var response = await _httpClient.PostAsync("/api/auth/login", content);
         
         if (response.IsSuccessStatusCode)
         {
