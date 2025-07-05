@@ -387,8 +387,15 @@ public partial class MesasViewModel : BaseViewModel
     {
         if (mesa == null) return;
 
-        SelectedMesa = mesa;
-        await _navigationService.NavigateToAsync($"mesa-detail?id={mesa.Id}");
+        try
+        {
+            SelectedMesa = mesa;
+            await _navigationService.NavigateToAsync($"mesa-detalle?mesaId={mesa.Id}");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al navegar: {ex.Message}");
+        }
     }
 
     /// <summary>

@@ -15,6 +15,8 @@ using RestaurantePro.Mobile.Features.Operations.Comandas.ViewModels;
 using RestaurantePro.Mobile.Features.Operations.Comandas.Pages;
 using RestaurantePro.Mobile.Features.Operations.Productos.ViewModels;
 using RestaurantePro.Mobile.Features.Operations.Productos.Pages;
+using RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels;
+using RestaurantePro.Mobile.Features.Operations.Mesas.Pages;
 using RestaurantePro.Mobile.UI.Pages;
 
 namespace RestaurantePro.Mobile;
@@ -94,6 +96,7 @@ public static class MauiProgram
 		// ✅ ViewModels
 		services.AddTransient<LoginViewModel>();
 		services.AddTransient<RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels.MesasViewModel>();
+		services.AddTransient<MesaDetalleViewModel>();
 		services.AddTransient<ComandasViewModel>();
 		services.AddTransient<ProductosViewModel>();
 
@@ -101,6 +104,7 @@ public static class MauiProgram
 		services.AddTransient<LoginPage>();
 		services.AddTransient<DashboardPage>();
 		services.AddTransient<RestaurantePro.Mobile.Features.Operations.Mesas.Pages.MesasPage>();
+		services.AddTransient<MesaDetallePage>();
 		services.AddTransient<ComandasPage>();
 		services.AddTransient<ProductosPage>();
 	}
