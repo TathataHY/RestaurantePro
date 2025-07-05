@@ -654,7 +654,7 @@ RestaurantePro.Mobile/
 
 ## 🎯 **ALCANCE MÓVIL V1** - Operaciones Críticas
 
-### **📋 Funcionalidades Operativas (7 funcionalidades principales)**
+### **📋 Funcionalidades Operativas (10 funcionalidades principales)**
 
 1. **🔐 Autenticación y Autorización**
    - Login seguro con JWT
@@ -665,32 +665,69 @@ RestaurantePro.Mobile/
    - Visualización de mesas disponibles/ocupadas
    - Asignación de mesas a meseros
    - Cambio de estado de mesas
+   - **🆕 Página de detalle de mesa** (MesaDetallePage)
 
 3. **📝 Gestión de Comandas**
    - Creación de nuevas comandas
    - Selección de productos del menú
    - Gestión de estados (pendiente, preparando, lista)
+   - **🆕 Página de detalle de comanda** (ComandaDetallePage) - **PENDIENTE**
 
-4. **🍳 Preparaciones por Demanda**
+4. **🍽️ Gestión de Productos/Menú**
+   - Visualización de productos disponibles
+   - Filtrado por categorías
+   - Información de precios y disponibilidad
+   - **🆕 Página de detalle de producto** (ProductoDetallePage) - **PENDIENTE**
+
+5. **🔧 Infraestructura de Testing**
+   - Tests unitarios para todos los ViewModels
+   - Cobertura completa de servicios
+   - Framework de pruebas robusto
+
+6. **🏗️ Arquitectura Correcta**
+   - ViewModels en Mobile.Core para facilitar testing
+   - Eliminación de duplicaciones
+   - Separación clara de responsabilidades
+
+7. **📊 Consulta de Menú**
+   - Visualización de productos disponibles
+   - Filtrado por categorías
+   - Información de precios y disponibilidad
+
+8. **🍳 Preparaciones por Demanda**
    - Cola de preparaciones de cocina
    - Marcar preparaciones como iniciadas/completadas
    - Notificaciones de preparaciones listas
 
-5. **🆕 🍽️ Preparaciones Diarias**
+9. **🆕 🍽️ Preparaciones Diarias**
    - **Planificación matutina:** Crear preparaciones del día
    - **Gestión de cantidades:** Definir cantidades por producto
    - **Disponibilidad tiempo real:** Ver stock preparado disponible
    - **Consumo automático:** Descuento automático al servir
 
-6. **📊 Consulta de Menú**
-   - Visualización de productos disponibles
-   - Filtrado por categorías
-   - Información de precios y disponibilidad
+10. **🔔 Notificaciones**
+    - Notificaciones push para estados críticos
+    - Alertas de preparaciones listas
+    - Comunicación tiempo real con SignalR
 
-7. **🔔 Notificaciones**
-   - Notificaciones push para estados críticos
-   - Alertas de preparaciones listas
-   - Comunicación tiempo real con SignalR 
+### **🚨 IDENTIFICACIÓN DE BRECHAS V1**
+
+#### **A. Páginas de Detalle Faltantes**
+- ✅ **MesaDetallePage** - Implementada
+- ❌ **ComandaDetallePage** - **FALTA IMPLEMENTAR**
+- ❌ **ProductoDetallePage** - **FALTA IMPLEMENTAR**
+
+#### **B. ViewModels sin Tests**
+- ✅ **LoginViewModel** - 24 tests completos
+- ❌ **MesasViewModel** - **SIN TESTS**
+- ❌ **ComandasViewModel** - **SIN TESTS**
+- ❌ **ProductosViewModel** - **SIN TESTS**
+- ❌ **MesaDetalleViewModel** - **SIN TESTS**
+
+#### **C. Problemas de Arquitectura**
+- ⚠️ **ViewModels en ubicación incorrecta** (Mobile en lugar de Mobile.Core)
+- ⚠️ **LoginViewModel duplicado** (existe en ambos proyectos)
+- ⚠️ **Navegación incompleta** (faltan 2 páginas de detalle)
 
 ## 📁 **ESTRUCTURA FINAL DE CARPETAS**
 
@@ -699,77 +736,82 @@ RestaurantePro.Mobile/
 ├── 📱 Features/                    # Funcionalidades operativas críticas
 │   ├── 🔐 Authentication/         # Sistema de autenticación
 │   │   ├── Pages/                 # LoginPage.xaml
-│   │   ├── ViewModels/            # LoginViewModel.cs
+│   │   ├── ViewModels/            # ⚠️ MOVER A MOBILE.CORE
 │   │   └── Services/              # AuthService.cs
 │   │
 │   ├── 🏠 Operations/             # Operaciones diarias críticas
 │   │   ├── Tables/                # Gestión de mesas
-│   │   │   ├── Pages/             # TablesPage.xaml, TableDetailPage.xaml
-│   │   │   ├── ViewModels/        # TablesViewModel.cs
+│   │   │   ├── Pages/             # TablesPage.xaml, TableDetailPage.xaml ✅
+│   │   │   ├── ViewModels/        # ⚠️ MOVER A MOBILE.CORE
 │   │   │   └── Services/          # TablesService.cs
 │   │   │
 │   │   ├── Orders/                # Gestión de comandas
-│   │   │   ├── Pages/             # OrdersPage.xaml, NewOrderPage.xaml
-│   │   │   ├── ViewModels/        # OrdersViewModel.cs
+│   │   │   ├── Pages/             # OrdersPage.xaml, ❌ NewOrderPage.xaml
+│   │   │   ├── ViewModels/        # ⚠️ MOVER A MOBILE.CORE
 │   │   │   └── Services/          # OrdersService.cs
 │   │   │
+│   │   ├── Products/              # Gestión de productos
+│   │   │   ├── Pages/             # ProductsPage.xaml, ❌ ProductDetailPage.xaml
+│   │   │   ├── ViewModels/        # ⚠️ MOVER A MOBILE.CORE
+│   │   │   └── Services/          # ProductsService.cs
+│   │   │
 │   │   ├── Preparations/          # Preparaciones por demanda
-│   │   │   ├── Pages/             # PreparationsPage.xaml
-│   │   │   ├── ViewModels/        # PreparationsViewModel.cs
-│   │   │   └── Services/          # PreparationsService.cs
+│   │   │   ├── Pages/             # ❌ PreparationsPage.xaml
+│   │   │   ├── ViewModels/        # ❌ PreparationsViewModel.cs
+│   │   │   └── Services/          # ❌ PreparationsService.cs
 │   │   │
 │   │   ├── DailyPreparations/     # 🆕 Preparaciones diarias
-│   │   │   ├── Pages/             # DailyPreparationsPage.xaml
-│   │   │   ├── ViewModels/        # DailyPreparationsViewModel.cs
-│   │   │   └── Services/          # DailyPreparationsService.cs
+│   │   │   ├── Pages/             # ❌ DailyPreparationsPage.xaml
+│   │   │   ├── ViewModels/        # ❌ DailyPreparationsViewModel.cs
+│   │   │   └── Services/          # ❌ DailyPreparationsService.cs
 │   │   │
 │   │   └── Reservations/          # Gestión de reservas
-│   │       ├── Pages/             # ReservationsPage.xaml
-│   │       ├── ViewModels/        # ReservationsViewModel.cs
-│   │       └── Services/          # ReservationsService.cs
+│   │       ├── Pages/             # ❌ ReservationsPage.xaml
+│   │       ├── ViewModels/        # ❌ ReservationsViewModel.cs
+│   │       └── Services/          # ❌ ReservationsService.cs
 │   │
 │   ├── 💰 Commercial/             # Operaciones comerciales
 │   │   └── Billing/               # Facturación y cobros
-│   │       ├── Pages/             # BillingPage.xaml
-│   │       ├── ViewModels/        # BillingViewModel.cs
-│   │       └── Services/          # BillingService.cs
+│   │       ├── Pages/             # ❌ BillingPage.xaml
+│   │       ├── ViewModels/        # ❌ BillingViewModel.cs
+│   │       └── Services/          # ❌ BillingService.cs
 │   │
 │   ├── 📊 Catalog/                # Consulta de información
 │   │   ├── Products/              # Productos del menú
-│   │   │   ├── Pages/             # ProductsPage.xaml
-│   │   │   ├── ViewModels/        # ProductsViewModel.cs
-│   │   │   └── Services/          # ProductsService.cs
+│   │   │   ├── Pages/             # ProductsPage.xaml ✅
+│   │   │   ├── ViewModels/        # ProductsViewModel.cs ✅
+│   │   │   └── Services/          # ProductsService.cs ✅
 │   │   │
 │   │   └── Categories/            # Categorías de productos
-│   │       ├── Pages/             # CategoriesPage.xaml
-│   │       ├── ViewModels/        # CategoriesViewModel.cs
-│   │       └── Services/          # CategoriesService.cs
+│   │       ├── Pages/             # ❌ CategoriesPage.xaml
+│   │       ├── ViewModels/        # ❌ CategoriesViewModel.cs
+│   │       └── Services/          # ❌ CategoriesService.cs
 │   │
 │   └── 🔔 Notifications/          # Sistema de notificaciones
-│       ├── Pages/                 # NotificationsPage.xaml
-│       ├── ViewModels/            # NotificationsViewModel.cs
-│       └── Services/              # NotificationsService.cs
+│       ├── Pages/                 # ❌ NotificationsPage.xaml
+│       ├── ViewModels/            # ❌ NotificationsViewModel.cs
+│       └── Services/              # ❌ NotificationsService.cs
 │
 ├── 🧩 Shared/                     # Componentes compartidos
 │   ├── Components/                # Componentes reutilizables
-│   ├── Converters/               # Convertidores XAML
+│   ├── Converters/               # Convertidores XAML ✅
 │   ├── Controls/                 # Controles personalizados
 │   ├── Styles/                   # Estilos y temas
 │   └── Resources/                # Recursos compartidos
 │
 ├── 🏗️ Core/                      # Infraestructura y servicios base
-│   ├── Services/                 # Servicios principales
-│   │   ├── Api/                  # Cliente API
-│   │   ├── Authentication/       # Autenticación
-│   │   ├── Navigation/           # Navegación
-│   │   ├── Dialog/               # Diálogos
-│   │   ├── Cache/                # Cache local
+│   ├── Services/                 # Servicios principales ✅
+│   │   ├── Api/                  # Cliente API ✅
+│   │   ├── Authentication/       # Autenticación ✅
+│   │   ├── Navigation/           # Navegación ✅
+│   │   ├── Dialog/               # Diálogos ✅
+│   │   ├── Cache/                # Cache local mínimo
 │   │   ├── Offline/              # Sincronización offline
 │   │   └── Notifications/        # Notificaciones push
 │   │
-│   ├── Models/                   # Modelos de datos
-│   │   ├── DTOs/                 # Objetos de transferencia
-│   │   ├── ViewModels/           # ViewModels base
+│   ├── Models/                   # Modelos de datos ✅
+│   │   ├── DTOs/                 # Objetos de transferencia ✅
+│   │   ├── ViewModels/           # ViewModels base ✅
 │   │   └── Entities/             # Entidades locales
 │   │
 │   ├── Extensions/               # Métodos de extensión
@@ -804,6 +846,11 @@ RestaurantePro.Mobile/
 - `Features/` contiene todas las funcionalidades operativas
 - Cada feature tiene su propia carpeta con Pages, ViewModels, Services
 
+**⚠️ Problemas identificados:**
+- ViewModels en Mobile en lugar de Mobile.Core
+- Páginas de detalle faltantes
+- Tests unitarios incompletos
+
 **✅ Separación clara de responsabilidades:**
 - `Core/` - Infraestructura y servicios base
 - `Shared/` - Componentes reutilizables
@@ -817,9 +864,39 @@ RestaurantePro.Mobile/
 
 ### **🎯 Decisión Final**
 
-**Recomiendo usar la estructura híbrida** porque:
-1. **Combina lo mejor de ambas propuestas**
-2. **Es específica para mobile y operaciones**
-3. **Mantiene la claridad del README original**
-4. **Añade la organización operativa necesaria**
-5. **Es fácil de entender para cualquier desarrollador** 
+**Recomiendo completar el V1 con las correcciones identificadas** porque:
+1. **Corrige problemas de arquitectura críticos**
+2. **Establece base sólida para testing**
+3. **Implementa navegación completa**
+4. **Mantiene enfoque en operaciones críticas**
+5. **Prepara terreno sólido para V2**
+
+---
+
+## 🚀 **PLAN DE ACCIÓN PARA COMPLETAR V1**
+
+### **📅 FASE 1: CORRECCIÓN DE ARQUITECTURA (1-2 días)**
+1. **Mover ViewModels a Mobile.Core**
+2. **Eliminar LoginViewModel duplicado**
+3. **Actualizar referencias y DI**
+
+### **📅 FASE 2: IMPLEMENTAR PÁGINAS DE DETALLE (2-3 días)**
+1. **ComandaDetallePage + ComandaDetalleViewModel**
+2. **ProductoDetallePage + ProductoDetalleViewModel**
+3. **Configurar navegación**
+
+### **📅 FASE 3: COMPLETAR TESTS (3-4 días)**
+1. **Tests para todos los ViewModels**
+2. **~70 tests adicionales**
+3. **Validar cobertura completa**
+
+### **📅 FASE 4: VALIDACIÓN FINAL (1 día)**
+1. **Probar navegación completa**
+2. **Validar todos los flujos**
+3. **Optimizar UX**
+
+### **🏆 RESULTADO ESPERADO**
+- **V1 robusto con ~140 tests**
+- **Navegación completa implementada**
+- **Arquitectura correcta establecida**
+- **Base sólida para V2** 

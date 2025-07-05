@@ -9,18 +9,20 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 - **🟡/🟡**: El componente está en desarrollo y en pruebas
 - **🔄**: Componente en proceso de implementación
 - **✅**: Funcionalidad implementada y funcionando
+- **⚠️**: Problema identificado que requiere corrección
 
-## 📊 **RESUMEN GENERAL V1 - ACTUALIZADO DICIEMBRE 2024**
-- **Total Funcionalidades V1**: 8 componentes críticos
-- **✅ Implementadas**: **8/8 (100%)** 🎉
-- **✅ Con Pruebas**: **8/8 (100%)** 🎯
-- **🎯 Estado General**: **V1 COMPLETADO** 🚀🏆
+## 📊 **RESUMEN GENERAL V1 - ANÁLISIS COMPLETO DICIEMBRE 2024**
+- **Total Funcionalidades V1**: 10 componentes críticos identificados
+- **✅ Implementadas**: **6/10 (60%)** 
+- **✅ Con Pruebas**: **1/6 (17%)** ⚠️
+- **🎯 Estado General**: **V1 EN PROGRESO - REQUIERE COMPLETAR** 🔄
 
-### **🔥 ACTUALIZACIÓN MAYOR:**
-- **✅ Tests Unitarios**: **83/83 pasando (100% éxito)**
-- **✅ Servicios Críticos**: **5/5 completados** (Auth, Mesas, Comandas, Productos, API)
-- **✅ UI Completa**: **4 pantallas principales** operativas
-- **✅ Navegación**: **Completa con páginas de detalle**
+### **🔥 ACTUALIZACIÓN CRÍTICA:**
+- **✅ Tests Unitarios**: **45/45 pasando** (solo servicios)
+- **⚠️ ViewModels sin tests**: **4/5 ViewModels** sin pruebas unitarias
+- **⚠️ Ubicación incorrecta**: ViewModels en Mobile en lugar de Mobile.Core
+- **⚠️ Páginas de detalle faltantes**: 2 de 3 páginas de detalle no implementadas
+- **⚠️ Duplicación**: LoginViewModel duplicado en ambos proyectos
 
 ---
 
@@ -43,19 +45,19 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 | Interfaces y abstracción | ✅ | ✅ | ✅ Servicios abstraídos |
 | Mock Services para pruebas | ✅ | ✅ | ✅ MockDialogService, MockNavigationService |
 
-### **C. Organización de Tests** ✅ **NUEVA ESTRUCTURA**
+### **C. Organización de Tests** ✅ **ESTRUCTURA CORREGIDA**
 | Estructura | Estado | Descripción |
 |------------|---------|-------------|
 | **tests/Backend/** | ✅ | 4 proyectos de tests del backend |
 | **tests/Frontend/** | ✅ | Tests móviles organizados |
-| **tests/Frontend/RestaurantePro.Mobile.UnitTests/** | ✅ | 45 tests unitarios |
+| **tests/Frontend/RestaurantePro.Mobile.UnitTests/** | ✅ | 45 tests unitarios (servicios) |
 | **tests/Frontend/RestaurantePro.Mobile.IntegrationTests/** | ✅ | 9 tests de integración |
 
 ---
 
 ## 🔧 **2. SERVICIOS FUNDAMENTALES**
 
-### **A. Servicios Core**
+### **A. Servicios Core** ✅ **COMPLETOS**
 | Servicio | Implementación | Pruebas Unitarias | Estado |
 |----------|---------------|-------------------|---------|
 | **IApiService** | ✅ | ✅ | ✅ **6 pruebas pasando** |
@@ -78,7 +80,7 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 | Almacenamiento seguro | ✅ | ✅ |
 | Persistencia de usuarios | ✅ | ✅ |
 
-### **C. Detalles MesasService (COMPLETO)** ✅ **NUEVO**
+### **C. Detalles MesasService (COMPLETO)**
 | Funcionalidad | Estado | Pruebas |
 |---------------|---------|---------|
 | ObtenerMesasAsync con filtros | ✅ | ✅ |
@@ -90,7 +92,7 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 | CambiarEstadoMesaAsync | ✅ | ✅ |
 | BuscarMejorMesaAsync | ✅ | ✅ |
 
-### **D. Detalles ComandasService (COMPLETO)** ✅ **NUEVO**
+### **D. Detalles ComandasService (COMPLETO)**
 | Funcionalidad | Estado | Pruebas |
 |---------------|---------|---------|
 | ObtenerComandasActivasAsync | ✅ | ✅ |
@@ -104,7 +106,7 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 | BuscarComandasAsync | ✅ | ✅ |
 | ObtenerEstadisticasAsync | ✅ | ✅ |
 
-### **E. Detalles ProductosService (COMPLETO)** ✅ **NUEVO**
+### **E. Detalles ProductosService (COMPLETO)**
 | Funcionalidad | Estado | Pruebas |
 |---------------|---------|---------|
 | ObtenerProductosPaginadosAsync | ✅ | ✅ |
@@ -120,7 +122,7 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 
 ## 📱 **3. MODELOS Y DTOs**
 
-### **A. Modelos Base**
+### **A. Modelos Base** ✅ **COMPLETOS**
 | Modelo | Implementación | Pruebas | Estado |
 |--------|---------------|---------|---------|
 | **ApiResponse<T>** | ✅ | ✅ | ✅ Compatible con backend |
@@ -146,7 +148,7 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 
 ## 🎯 **4. FUNCIONALIDADES OPERATIVAS**
 
-### **A. Autenticación (FUNCIONAL)**
+### **A. Autenticación (COMPLETO)**
 | Componente | Implementación | Pruebas | Estado |
 |------------|---------------|---------|---------|
 | **LoginViewModel** | ✅ | ✅ | ✅ **24 pruebas pasando** |
@@ -163,152 +165,178 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 | DashboardPage | ✅ | N/A | ✅ Botones operativos |
 | Navegación a funcionalidades | ✅ | N/A | ✅ Enlaces básicos |
 
-### **C. Gestión de Mesas (FUNCIONAL)** ✅ **NUEVO**
+### **C. Gestión de Mesas (COMPLETO)**
 | Funcionalidad | Implementación | Pruebas | Estado |
 |---------------|---------------|---------|---------|
-| Consultar mesas | ✅ | ✅ | ✅ Con filtros opcionales |
-| Ver estado de mesas | ✅ | ✅ | ✅ Ocupación en tiempo real |
-| Asignar mesa | ✅ | ✅ | ✅ A cliente específico |
-| Liberar mesa | ✅ | ✅ | ✅ Con motivo y observaciones |
-| Cambiar estado mesa | ✅ | ✅ | ✅ Estados personalizados |
-| Buscar mejor mesa | ✅ | ✅ | ✅ Por capacidad y ubicación |
+| **MesasViewModel** | ✅ | ⬜ | ⚠️ **SIN TESTS** |
+| **MesasPage** | ✅ | N/A | ✅ UI moderna con grid |
+| **MesaDetalleViewModel** | ✅ | ⬜ | ⚠️ **SIN TESTS** |
+| **MesaDetallePage** | ✅ | N/A | ✅ **Navegación con parámetros** |
+| Asignar/liberar mesas | ✅ | ⬜ | ⚠️ ViewModel sin tests |
+| Estadísticas de ocupación | ✅ | ⬜ | ⚠️ ViewModel sin tests |
+| Filtros y búsqueda | ✅ | ⬜ | ⚠️ ViewModel sin tests |
 
-### **D. Gestión de Comandas (FUNCIONAL)** ✅ **COMPLETADO**
+### **D. Gestión de Comandas (INCOMPLETO)**
 | Funcionalidad | Implementación | Pruebas | Estado |
 |---------------|---------------|---------|---------|
-| ComandasService completo | ✅ | ✅ | ✅ 10 operaciones implementadas |
-| ComandasViewModel con 8 comandos | ✅ | ⬜ | ✅ Lógica operativa completa |
-| ComandasPage UI moderna | ✅ | N/A | ✅ Cards, filtros, estadísticas |
-| Estados de comandas | ✅ | ✅ | ✅ Pendiente→Preparación→Lista |
-| Navegación integrada | ✅ | N/A | ✅ Desde AppShell |
+| **ComandasViewModel** | ✅ | ⬜ | ⚠️ **SIN TESTS** |
+| **ComandasPage** | ✅ | N/A | ✅ UI moderna con cards |
+| **ComandaDetalleViewModel** | ⬜ | ⬜ | ❌ **FALTA IMPLEMENTAR** |
+| **ComandaDetallePage** | ⬜ | ⬜ | ❌ **FALTA IMPLEMENTAR** |
+| Crear/modificar comandas | ✅ | ⬜ | ⚠️ ViewModel sin tests |
+| Cambiar estados | ✅ | ⬜ | ⚠️ ViewModel sin tests |
+| Navegación a detalle | ⬜ | ⬜ | ❌ **FALTA PÁGINA DE DETALLE** |
 
-### **E. Gestión de Productos/Menú (FUNCIONAL)** ✅ **COMPLETADO**
+### **E. Gestión de Productos (INCOMPLETO)**
 | Funcionalidad | Implementación | Pruebas | Estado |
 |---------------|---------------|---------|---------|
-| ProductosService completo | ✅ | ✅ | ✅ 8 operaciones implementadas |
-| ProductosViewModel con 10 comandos | ✅ | ⬜ | ✅ Búsqueda avanzada |
-| ProductosPage UI moderna | ✅ | N/A | ✅ Filtros, categorías, búsqueda |
-| Gestión de disponibilidad | ✅ | ✅ | ✅ Estado en tiempo real |
-| Navegación a comandas | ✅ | N/A | ✅ Agregar productos a comanda |
-
-### **F. Gestión de Mesas + Detalle (FUNCIONAL)** ✅ **COMPLETADO**
-| Funcionalidad | Implementación | Pruebas | Estado |
-|---------------|---------------|---------|---------|
-| MesasService completo | ✅ | ✅ | ✅ 8 operaciones implementadas |
-| MesasViewModel operativo | ✅ | ⬜ | ✅ Gestión completa |
-| MesasPage UI moderna | ✅ | N/A | ✅ Grid de mesas |
-| **MesaDetallePage** | ✅ | N/A | ✅ **NUEVO: Página de detalle** |
-| **MesaDetalleViewModel** | ✅ | ⬜ | ✅ **NUEVO: Navegación con parámetros** |
-| **Navegación programática** | ✅ | N/A | ✅ **NUEVO: Rutas registradas** |
-
-### **G. Operaciones Pendientes V2** 
-| Funcionalidad | Implementación | Pruebas | Estado |
-|---------------|---------------|---------|---------|
-| Preparaciones por Demanda | ⬜ | ⬜ | 🔄 **V2 - Avanzado** |
-| Preparaciones Diarias | ⬜ | ⬜ | 🔄 **V2 - Avanzado** |
-| Facturación Básica | ⬜ | ⬜ | 🔄 **V2 - Avanzado** |
-| Notificaciones Push | ⬜ | ⬜ | 🔄 **V2 - Avanzado** |
-| SignalR tiempo real | ⬜ | ⬜ | 🔄 **V2 - Avanzado** |
+| **ProductosViewModel** | ✅ | ⬜ | ⚠️ **SIN TESTS** |
+| **ProductosPage** | ✅ | N/A | ✅ UI moderna con filtros |
+| **ProductoDetalleViewModel** | ⬜ | ⬜ | ❌ **FALTA IMPLEMENTAR** |
+| **ProductoDetallePage** | ⬜ | ⬜ | ❌ **FALTA IMPLEMENTAR** |
+| Búsqueda y filtros | ✅ | ⬜ | ⚠️ ViewModel sin tests |
+| Categorías y disponibilidad | ✅ | ⬜ | ⚠️ ViewModel sin tests |
+| Navegación a detalle | ⬜ | ⬜ | ❌ **FALTA PÁGINA DE DETALLE** |
 
 ---
 
-## 🧪 **5. ESTRATEGIA DE PRUEBAS**
+## 🚨 **5. PROBLEMAS CRÍTICOS IDENTIFICADOS**
 
-### **A. Pruebas Unitarias** ✅ **COMPLETAS**
+### **A. Ubicación Incorrecta de ViewModels** ⚠️
+| ViewModel | Ubicación Actual | Ubicación Correcta | Problema |
+|-----------|------------------|-------------------|----------|
+| **MesasViewModel** | Mobile/Features/ | Mobile.Core/Features/ | ❌ No testeable |
+| **ComandasViewModel** | Mobile/Features/ | Mobile.Core/Features/ | ❌ No testeable |
+| **ProductosViewModel** | Mobile/Features/ | Mobile.Core/Features/ | ❌ No testeable |
+| **MesaDetalleViewModel** | Mobile/Features/ | Mobile.Core/Features/ | ❌ No testeable |
+| **LoginViewModel** | AMBOS PROYECTOS | Mobile.Core/Features/ | ❌ Duplicado |
+
+### **B. Tests Unitarios Faltantes** ⚠️
+| ViewModel | Tests Implementados | Tests Requeridos | Estado |
+|-----------|-------------------|------------------|---------|
+| **LoginViewModel** | ✅ 24 tests | ✅ Completo | ✅ |
+| **MesasViewModel** | ❌ 0 tests | ~15 tests | ❌ **CRÍTICO** |
+| **ComandasViewModel** | ❌ 0 tests | ~20 tests | ❌ **CRÍTICO** |
+| **ProductosViewModel** | ❌ 0 tests | ~18 tests | ❌ **CRÍTICO** |
+| **MesaDetalleViewModel** | ❌ 0 tests | ~12 tests | ❌ **CRÍTICO** |
+
+### **C. Páginas de Detalle Faltantes** ⚠️
+| Página Principal | Página de Detalle | Estado | Navegación |
+|------------------|------------------|---------|------------|
+| **MesasPage** | **MesaDetallePage** | ✅ | ✅ Implementada |
+| **ComandasPage** | **ComandaDetallePage** | ❌ | ❌ **FALTA IMPLEMENTAR** |
+| **ProductosPage** | **ProductoDetallePage** | ❌ | ❌ **FALTA IMPLEMENTAR** |
+
+---
+
+## 🧪 **6. ESTRATEGIA DE PRUEBAS**
+
+### **A. Pruebas Unitarias** ✅ **PARCIALES**
 | Proyecto | Estado | Cobertura |
 |----------|---------|-----------|
 | **RestaurantePro.Mobile.UnitTests** | ✅ | **45 pruebas pasando** |
 | Framework XUnit + Moq + FluentAssertions | ✅ | Configurado |
 | AutoFixture para datos de prueba | ✅ | Funcional |
-| Tests de AuthService | ✅ | 10 tests completos |
-| Tests de LoginViewModel | ✅ | 24 tests completos |
-| Tests de MesasService | ✅ | 12 tests completos |
-| Tests de ApiService | ✅ | 6 tests completos |
-| Tests de modelos | ✅ | 5 tests completos |
+| Tests de Servicios | ✅ | **7/7 servicios** completos |
+| Tests de ViewModels | ⚠️ | **1/5 ViewModels** testados |
 
-### **B. Pruebas de Integración** ✅ **IMPLEMENTADAS**
+### **B. Pruebas de Integración** ✅ **COMPLETAS**
 | Proyecto | Estado | Cobertura |
 |----------|---------|-----------|
 | **RestaurantePro.Mobile.IntegrationTests** | ✅ | **9 pruebas pasando** |
 | Integración con backend real | ✅ | API endpoints funcionando |
 | Base de datos de desarrollo | ✅ | SQL Server conectando |
 | Flujos de autenticación | ✅ | Login/logout completos |
-| Manejo de errores HTTP | ✅ | Códigos de estado validados |
-| Configuración automática | ✅ | Seed data ejecutándose |
-
-### **C. Pruebas UI** ⬜ **V2**
-| Tipo | Estado | Framework |
-|------|---------|-----------|
-| Appium para UI testing | ⬜ | V2 - Conceptos Avanzados |
-| Tests de navegación | ⬜ | V2 |
-| Tests de flujos completos | ⬜ | V2 |
 
 ---
 
-## 🎯 **ANÁLISIS DE PROGRESO**
+## 🎯 **7. PLAN DE COMPLETAR V1**
 
-### **🟢 FORTALEZAS ACTUALES:**
-1. **✅ Arquitectura sólida consolidada** - Biblioteca compartida funcional
-2. **✅ Patrón MVVM maduro** - BaseViewModel con manejo completo de estados  
-3. **✅ Servicios operativos funcionando** - AuthService y MesasService 100% probados
-4. **✅ Framework de pruebas robusto** - 45 tests unitarios + 9 de integración
-5. **✅ Integración .NET 9 consolidada** - Sin problemas de compatibilidad
-6. **✅ Buenas prácticas establecidas** - Siguiendo estándares del backend
-7. **✅ Conectividad backend confirmada** - API real respondiendo correctamente
-8. **✅ Organización de tests mejorada** - Estructura Backend/Frontend clara
+### **🔥 FASE 1: CORRECCIÓN DE ARQUITECTURA**
+1. **Mover ViewModels a Mobile.Core** (Para facilitar testing)
+   - MesasViewModel → Mobile.Core/Features/Operations/Mesas/
+   - ComandasViewModel → Mobile.Core/Features/Operations/Comandas/
+   - ProductosViewModel → Mobile.Core/Features/Operations/Productos/
+   - MesaDetalleViewModel → Mobile.Core/Features/Operations/Mesas/
 
-### **🟡 ÁREAS EN DESARROLLO:**
-1. **UI ViewModels pendientes** - Crear ViewModels para mesas, comandas
-2. **Páginas UI faltantes** - MesasPage, ComandasPage, etc.
-3. **Servicios operativos adicionales** - Comandas, Preparaciones, etc.
-4. **Navegación entre páginas** - Flujos completos de usuario
+2. **Eliminar duplicaciones**
+   - Eliminar LoginViewModel de Mobile (mantener solo en Mobile.Core)
+   - Actualizar referencias
 
-### **🔴 RIESGOS MITIGADOS:**
-1. **✅ Dependencia de backend resuelta** - API funcionando y probada
-2. **✅ Referencias entre proyectos corregidas** - Mobile.Core integrado
-3. **✅ Framework de pruebas maduro** - Cobertura alta establecida
+### **🔥 FASE 2: IMPLEMENTAR PÁGINAS DE DETALLE**
+3. **ComandaDetallePage + ComandaDetalleViewModel**
+   - Navegación desde ComandasPage
+   - Detalles de comanda con items
+   - Acciones: modificar, cambiar estado, finalizar
+
+4. **ProductoDetallePage + ProductoDetalleViewModel**
+   - Navegación desde ProductosPage
+   - Detalles de producto con información completa
+   - Acciones: agregar a comanda, ver disponibilidad
+
+### **🔥 FASE 3: IMPLEMENTAR TESTS UNITARIOS**
+5. **Tests para ViewModels operativos**
+   - MesasViewModelTests (~15 tests)
+   - ComandasViewModelTests (~20 tests)
+   - ProductosViewModelTests (~18 tests)
+   - MesaDetalleViewModelTests (~12 tests)
+   - ComandaDetalleViewModelTests (~15 tests)
+   - ProductoDetalleViewModelTests (~12 tests)
+
+### **🔥 FASE 4: VALIDACIÓN Y OPTIMIZACIÓN**
+6. **Validar navegación completa**
+   - Flujos principales → detalle → regreso
+   - Parámetros de navegación
+   - Estados de carga y error
+
+7. **Optimizar UX y performance**
+   - Loading indicators
+   - Manejo de errores
+   - Cache local básico
 
 ---
 
-## 📋 **SIGUIENTES PASOS PRIORIZADOS**
-
-### **🔥 PRÓXIMA ITERACIÓN:**
-1. **Implementar ComandasService** - Gestión de órdenes
-2. **Crear MesasViewModel y MesasPage** - UI para gestión de mesas
-3. **Implementar navegación completa** - Entre todas las funcionalidades
-4. **Agregar manejo de estados complejos** - Loading, errores, offline
-
-### **📅 CORTO PLAZO (V1 completo):**
-1. Implementar todos los servicios operativos restantes
-2. Crear ViewModels y Pages para todas las funcionalidades
-3. Establecer flujos de navegación completos
-4. Optimizar performance y UX
-
-### **🚀 MEDIANO PLAZO (V2):**
-1. Sincronización offline/online
-2. Notificaciones push en tiempo real
-3. Pruebas UI automatizadas
-4. Funcionalidades avanzadas (reportes, analytics)
-
----
-
-## 🎯 **MÉTRICAS ACTUALES - DICIEMBRE 2024**
+## 📊 **MÉTRICAS OBJETIVO V1 COMPLETO**
 
 ```
-📊 ESTADO V1 - CONCEPTOS BÁSICOS ✅ COMPLETADO
+📊 ESTADO V1 - OBJETIVO COMPLETO
 ═══════════════════════════════════════════════
-✅ Componentes Core:        5/5   (100%) ✅
-✅ Servicios Básicos:       7/7   (100%) ✅
-✅ Modelos Fundamentales:   15/15 (100%) ✅
-✅ Funcionalidades Operativas: 8/8  (100%) ✅
-✅ Pruebas Unitarias:       7/7   (100%) ✅
-✅ Pruebas Integración:     1/1   (100%) ✅
-✅ UI Páginas Principales:  4/4   (100%) ✅
-✅ Navegación Completa:     1/1   (100%) ✅
+🎯 Componentes Core:        5/5   (100%) ✅
+🎯 Servicios Básicos:       7/7   (100%) ✅
+🎯 Modelos Fundamentales:   15/15 (100%) ✅
+🎯 Funcionalidades Operativas: 10/10 (100%) 📍
+🎯 ViewModels con Tests:    6/6   (100%) 📍
+🎯 Páginas de Detalle:      3/3   (100%) 📍
+🎯 Navegación Completa:     3/3   (100%) 📍
+🎯 Arquitectura Correcta:   1/1   (100%) 📍
 
-🎯 PROGRESO GENERAL:       100% COMPLETADO ✅
-🔥 MOMENTUM:              ⚡ EXCELENTE ✅
-📈 CALIDAD:               ⭐⭐⭐ ALTA ✅
-📊 TESTS:                 83/83 PASANDO (100%) ✅
+🎯 PROGRESO OBJETIVO:       100% V1 COMPLETO
+🔥 TESTS OBJETIVO:          ~140 tests pasando
+📈 COBERTURA OBJETIVO:      Servicios + ViewModels
+🏆 RESULTADO:              V1 SÓLIDO PARA V2
+```
 
-🏆 V1 COMPLETADO - LISTOS PARA V2 🚀
+---
+
+## 🚀 **SIGUIENTES PASOS PRIORIZADOS**
+
+### **📅 INMEDIATO (Esta semana):**
+1. **Mover ViewModels a Mobile.Core** 
+2. **Crear ComandaDetallePage + ViewModel**
+3. **Crear ProductoDetallePage + ViewModel**
+4. **Implementar tests para MesasViewModel**
+
+### **📅 CORTO PLAZO (2 semanas):**
+1. **Completar todos los tests de ViewModels**
+2. **Validar navegación completa**
+3. **Optimizar UX y performance**
+4. **Actualizar documentación**
+
+### **🎯 CRITERIO DE ÉXITO V1:**
+- ✅ Todas las funcionalidades operativas completas
+- ✅ Navegación principal → detalle funcionando
+- ✅ Tests unitarios para todos los ViewModels
+- ✅ Arquitectura correcta (ViewModels en Mobile.Core)
+- ✅ ~140 tests pasando (servicios + ViewModels)
+
+**🏆 RESULTADO ESPERADO: V1 ROBUSTO Y BIEN TESTADO PARA AVANZAR A V2**
