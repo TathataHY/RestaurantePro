@@ -42,7 +42,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Frontend\RestaurantePro.Mobile.Core\RestaurantePro.Mobile.Core.csproj" />
+    <ProjectReference Include="..\..\..\src\Frontend\RestaurantePro.Mobile.Core\RestaurantePro.Mobile.Core.csproj" />
   </ItemGroup>
 
 </Project>

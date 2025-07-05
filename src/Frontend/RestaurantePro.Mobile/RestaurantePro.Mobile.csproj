@@ -83,4 +83,9 @@
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<!-- Referencias a proyectos -->
+		<ProjectReference Include="..\RestaurantePro.Mobile.Core\RestaurantePro.Mobile.Core.csproj" />
+	</ItemGroup>
+
 </Project>

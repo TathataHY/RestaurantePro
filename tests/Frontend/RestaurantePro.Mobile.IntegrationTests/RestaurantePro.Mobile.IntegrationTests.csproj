@@ -43,10 +43,10 @@
 
   <ItemGroup>
     <!-- Referencia a la biblioteca compartida móvil -->
-    <ProjectReference Include="..\..\src\Frontend\RestaurantePro.Mobile.Core\RestaurantePro.Mobile.Core.csproj" />
+    <ProjectReference Include="..\..\..\src\Frontend\RestaurantePro.Mobile.Core\RestaurantePro.Mobile.Core.csproj" />
     
     <!-- Referencia al API para pruebas de integración -->
-    <ProjectReference Include="..\..\src\Backend\RestaurantePro.Api\RestaurantePro.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Backend\RestaurantePro.Api\RestaurantePro.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

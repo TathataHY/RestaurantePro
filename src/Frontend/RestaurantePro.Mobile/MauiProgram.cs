@@ -6,6 +6,7 @@ using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
+using RestaurantePro.Mobile.Core.Services.Mesas;
 using RestaurantePro.Mobile.Features.Authentication.ViewModels;
 using RestaurantePro.Mobile.Features.Authentication.Pages;
 using RestaurantePro.Mobile.UI.Pages;
@@ -60,6 +61,9 @@ public static class MauiProgram
 		services.AddSingleton<IDialogService, DialogService>();
 		services.AddSingleton<IAuthService, AuthService>();
 		services.AddSingleton<IApiService, ApiService>();
+		
+		// Servicios de dominio V1
+		services.AddSingleton<IMesasService, MesasService>();
 	}
 
 	private static void RegisterViewsAndViewModelsV1(IServiceCollection services)
