@@ -1,292 +1,224 @@
-# Capa Mobile - RestaurantePro
+# RestaurantePro.Mobile - Aplicación Móvil Operativa
 
-Esta capa implementa la aplicación móvil multiplataforma utilizando .NET MAUI, organizada en módulos que reflejan las áreas funcionales del negocio.
+Aplicación móvil multiplataforma desarrollada con .NET MAUI, enfocada **exclusivamente en operaciones diarias críticas** del restaurante.
 
-## Estructura de Módulos Principales
+## 🎯 **Alcance Operativo**
+
+La aplicación móvil maneja **solo 7 funcionalidades operativas críticas**:
+- 🔐 Autenticación y autorización
+- 🏠 Gestión de mesas
+- 📝 Gestión de comandas
+- 🍳 Preparaciones por demanda
+- 🍽️ Preparaciones diarias
+- 📊 Consulta de menú
+- 🔔 Notificaciones
+
+## 📁 **Estructura Final de Carpetas**
 
 ```
-Mobile/
-├── Features/                 # Funcionalidades organizadas por módulos
-│   ├── Comercial/            # Módulo Comercial
-│   │   ├── Clientes/         # Gestión de clientes
-│   │   │   ├── Views/        # Páginas XAML
-│   │   │   ├── ViewModels/   # ViewModels
-│   │   │   └── Models/       # Modelos específicos
+RestaurantePro.Mobile/
+├── 📱 Features/                    # Funcionalidades operativas críticas
+│   ├── 🔐 Authentication/         # Sistema de autenticación
+│   │   ├── Pages/                 # LoginPage.xaml
+│   │   ├── ViewModels/            # LoginViewModel.cs
+│   │   └── Services/              # AuthService.cs
+│   │
+│   ├── 🏠 Operations/             # Operaciones diarias críticas
+│   │   ├── Tables/                # Gestión de mesas
+│   │   │   ├── Pages/             # TablesPage.xaml, TableDetailPage.xaml
+│   │   │   ├── ViewModels/        # TablesViewModel.cs
+│   │   │   └── Services/          # TablesService.cs
 │   │   │
-│   │   └── Promociones/      # Gestión de promociones
-│   │
-│   ├── Operaciones/          # Módulo Operaciones
-│   │   ├── Comandas/         # Gestión de comandas
-│   │   │   ├── Views/        # Páginas XAML
-│   │   │   ├── ViewModels/   # ViewModels
-│   │   │   └── Components/   # Componentes reutilizables
+│   │   ├── Orders/                # Gestión de comandas
+│   │   │   ├── Pages/             # OrdersPage.xaml, NewOrderPage.xaml
+│   │   │   ├── ViewModels/        # OrdersViewModel.cs
+│   │   │   └── Services/          # OrdersService.cs
 │   │   │
-│   │   ├── Mesas/            # Gestión de mesas
-│   │   └── Reservaciones/    # Sistema de reservaciones
+│   │   ├── Preparations/          # Preparaciones por demanda
+│   │   │   ├── Pages/             # PreparationsPage.xaml
+│   │   │   ├── ViewModels/        # PreparationsViewModel.cs
+│   │   │   └── Services/          # PreparationsService.cs
+│   │   │
+│   │   ├── DailyPreparations/     # 🆕 Preparaciones diarias
+│   │   │   ├── Pages/             # DailyPreparationsPage.xaml
+│   │   │   ├── ViewModels/        # DailyPreparationsViewModel.cs
+│   │   │   └── Services/          # DailyPreparationsService.cs
+│   │   │
+│   │   └── Reservations/          # Gestión de reservas
+│   │       ├── Pages/             # ReservationsPage.xaml
+│   │       ├── ViewModels/        # ReservationsViewModel.cs
+│   │       └── Services/          # ReservationsService.cs
 │   │
-│   ├── Inventario/           # Módulo Inventario
-│   │   ├── Productos/        # Inventario de productos
-│   │   └── Movimientos/      # Movimientos de inventario
+│   ├── 💰 Commercial/             # Operaciones comerciales
+│   │   └── Billing/               # Facturación y cobros
+│   │       ├── Pages/             # BillingPage.xaml
+│   │       ├── ViewModels/        # BillingViewModel.cs
+│   │       └── Services/          # BillingService.cs
 │   │
-│   ├── Catalogo/             # Módulo Catálogo
-│   │   ├── Productos/        # Productos y platillos
-│   │   └── Categorias/       # Categorías de productos
+│   ├── 📊 Catalog/                # Consulta de información
+│   │   ├── Products/              # Productos del menú
+│   │   │   ├── Pages/             # ProductsPage.xaml
+│   │   │   ├── ViewModels/        # ProductsViewModel.cs
+│   │   │   └── Services/          # ProductsService.cs
+│   │   │
+│   │   └── Categories/            # Categorías de productos
+│   │       ├── Pages/             # CategoriesPage.xaml
+│   │       ├── ViewModels/        # CategoriesViewModel.cs
+│   │       └── Services/          # CategoriesService.cs
 │   │
-│   ├── Finanzas/             # Módulo Finanzas
-│   │   ├── Pagos/            # Procesamiento de pagos
-│   │   └── Reportes/         # Reportes financieros
+│   └── 🔔 Notifications/          # Sistema de notificaciones
+│       ├── Pages/                 # NotificationsPage.xaml
+│       ├── ViewModels/            # NotificationsViewModel.cs
+│       └── Services/              # NotificationsService.cs
+│
+├── 🧩 Shared/                     # Componentes compartidos
+│   ├── Components/                # Componentes reutilizables
+│   │   ├── TableCard.xaml         # Tarjeta de mesa
+│   │   ├── OrderCard.xaml         # Tarjeta de comanda
+│   │   └── ProductCard.xaml       # Tarjeta de producto
 │   │
-│   └── Account/              # Gestión de cuenta y autenticación
-│       ├── Login/            # Inicio de sesión
-│       ├── Profile/          # Perfil de usuario
-│       └── Settings/         # Configuración de usuario
-│
-├── Core/                     # Componentes centrales
-│   ├── Services/             # Servicios comunes
-│   │   ├── Api/              # Servicios de comunicación con API
-│   │   ├── Navigation/       # Servicio de navegación
-│   │   ├── Dialog/           # Servicio de diálogos
-│   │   └── Authentication/   # Servicio de autenticación
+│   ├── Converters/               # Convertidores XAML
+│   │   ├── BoolToColorConverter.cs
+│   │   └── StatusToIconConverter.cs
 │   │
-│   ├── Helpers/              # Clases auxiliares
-│   ├── Extensions/           # Extensiones útiles
-│   ├── Converters/           # Convertidores de valores
-│   ├── Behaviors/            # Comportamientos
-│   └── Constants/            # Constantes de la aplicación
+│   ├── Controls/                 # Controles personalizados
+│   │   ├── LoadingButton.xaml
+│   │   └── StatusBadge.xaml
+│   │
+│   ├── Styles/                   # Estilos y temas
+│   │   ├── GlobalStyles.xaml
+│   │   └── ColorScheme.xaml
+│   │
+│   └── Resources/                # Recursos compartidos
+│       ├── Fonts/                # Fuentes personalizadas
+│       ├── Images/               # Imágenes comunes
+│       └── Icons/                # Iconos del sistema
 │
-├── Shared/                   # Elementos compartidos
-│   ├── Controls/             # Controles personalizados
-│   ├── Templates/            # Plantillas de datos
-│   ├── Themes/               # Temas y estilos
-│   ├── Fonts/                # Fuentes personalizadas
-│   └── Icons/                # Iconos personalizados
+├── 🏗️ Core/                      # Infraestructura y servicios base
+│   ├── Services/                 # Servicios principales
+│   │   ├── Api/                  # Cliente API
+│   │   │   ├── ApiClient.cs      # Cliente HTTP base
+│   │   │   └── ApiEndpoints.cs   # Endpoints del backend
+│   │   │
+│   │   ├── Authentication/       # Autenticación
+│   │   │   ├── IAuthService.cs
+│   │   │   └── AuthService.cs
+│   │   │
+│   │   ├── Navigation/           # Navegación
+│   │   │   ├── INavigationService.cs
+│   │   │   └── NavigationService.cs
+│   │   │
+│   │   ├── Dialog/               # Diálogos
+│   │   │   ├── IDialogService.cs
+│   │   │   └── DialogService.cs
+│   │   │
+│   │   ├── Cache/                # Cache local
+│   │   │   ├── ICacheService.cs
+│   │   │   └── CacheService.cs
+│   │   │
+│   │   ├── Offline/              # Sincronización offline
+│   │   │   ├── IOfflineService.cs
+│   │   │   └── OfflineService.cs
+│   │   │
+│   │   └── Notifications/        # Notificaciones push
+│   │       ├── INotificationService.cs
+│   │       └── NotificationService.cs
+│   │
+│   ├── Models/                   # Modelos de datos
+│   │   ├── DTOs/                 # Objetos de transferencia
+│   │   │   ├── MesaDto.cs
+│   │   │   ├── ComandaDto.cs
+│   │   │   └── ProductoDto.cs
+│   │   │
+│   │   ├── ViewModels/           # ViewModels base
+│   │   │   ├── BaseViewModel.cs
+│   │   │   └── BasePageViewModel.cs
+│   │   │
+│   │   └── Entities/             # Entidades locales
+│   │       ├── LocalMesa.cs
+│   │       └── LocalComanda.cs
+│   │
+│   ├── Extensions/               # Métodos de extensión
+│   │   ├── StringExtensions.cs
+│   │   └── DateTimeExtensions.cs
+│   │
+│   ├── Helpers/                  # Clases de ayuda
+│   │   ├── ApiHelper.cs
+│   │   └── ValidationHelper.cs
+│   │
+│   └── Constants/                # Constantes globales
+│       ├── ApiConstants.cs
+│       └── AppConstants.cs
 │
-├── Resources/                # Recursos de la aplicación
-│   ├── Images/               # Imágenes
-│   ├── Styles/               # Estilos globales
-│   ├── Fonts/                # Fuentes
-│   └── Raw/                  # Archivos sin procesar
+├── 🎨 UI/                        # Componentes de interfaz
+│   ├── Pages/                    # Páginas principales
+│   │   ├── MainPage.xaml         # Página principal
+│   │   └── DashboardPage.xaml    # Dashboard operativo
+│   │
+│   ├── Views/                    # Vistas reutilizables
+│   │   ├── HeaderView.xaml       # Encabezado común
+│   │   └── FooterView.xaml       # Pie de página
+│   │
+│   ├── Popups/                   # Popups y modales
+│   │   ├── ConfirmationPopup.xaml
+│   │   └── LoadingPopup.xaml
+│   │
+│   └── Templates/                # Plantillas de datos
+│       ├── TableTemplate.xaml
+│       └── OrderTemplate.xaml
 │
-├── Config/                   # Configuración de la aplicación
-│   ├── AppSettings.cs        # Configuración general
-│   ├── ThemeConfig.cs        # Configuración de temas
-│   └── ApiEndpoints.cs       # Configuración de endpoints
+├── 📱 Platforms/                 # Código específico por plataforma
+│   ├── Android/                  # Configuración Android
+│   │   ├── MainActivity.cs
+│   │   └── AndroidManifest.xml
+│   │
+│   ├── iOS/                      # Configuración iOS
+│   │   ├── AppDelegate.cs
+│   │   └── Info.plist
+│   │
+│   └── Windows/                  # Configuración Windows
+│       ├── App.xaml
+│       └── Package.appxmanifest
 │
-└── Platforms/                # Código específico de plataforma
-    ├── Android/              # Configuración y código para Android
-    ├── iOS/                  # Configuración y código para iOS
-    ├── Windows/              # Configuración y código para Windows
-    └── MacCatalyst/          # Configuración y código para Mac
+├── 🔧 Config/                    # Configuración de la aplicación
+│   ├── AppSettings.cs            # Configuración general
+│   ├── ApiConfig.cs              # Configuración de API
+│   └── ThemeConfig.cs            # Configuración de temas
+│
+├── App.xaml                      # Aplicación principal
+├── App.xaml.cs                   # Lógica de aplicación
+├── AppShell.xaml                 # Shell de navegación
+├── AppShell.xaml.cs              # Lógica del shell
+├── MauiProgram.cs                # Configuración MAUI
+└── RestaurantePro.Mobile.csproj  # Archivo de proyecto
 ```
 
-## Arquitectura MVVM
+## 🏗️ **Arquitectura MVVM**
 
-Cada módulo funcional sigue el patrón MVVM (Model-View-ViewModel):
+Cada funcionalidad sigue el patrón MVVM:
 
-- **Views**: Páginas XAML que definen la interfaz de usuario.
-- **ViewModels**: Clases que manejan la lógica de presentación y el estado.
-- **Models**: Clases que representan los datos específicos del dominio.
+- **Pages/**: Páginas XAML con interfaz de usuario
+- **ViewModels/**: Lógica de presentación y binding
+- **Services/**: Lógica de negocio y comunicación con API
 
-## Comunicación con API
+## 🔗 **Integración con Backend**
 
-La aplicación móvil se comunica con la API RESTful a través de servicios dedicados:
+Consume **11 controladores** del backend de 21 total:
+- `AuthController`, `MesasController`, `ComandasController`
+- `PreparacionesController`, `PreparacionesDiariasController`
+- `ReservacionesController`, `FacturacionController`
+- `ProductosController`, `CategoriasController`
+- `AnalyticsController`, `NotificacionesController`
 
-```csharp
-// ApiClient.cs
-public class ApiClient
-{
-    private readonly HttpClient _httpClient;
-    private readonly string _baseUrl;
-    private readonly ITokenService _tokenService;
+## 🎯 **Características Principales**
 
-    public ApiClient(ITokenService tokenService, IAppSettings appSettings)
-    {
-        _tokenService = tokenService;
-        _baseUrl = appSettings.ApiBaseUrl;
-        _httpClient = new HttpClient();
-    }
+- **Multiplataforma**: Android, iOS, Windows
+- **Tiempo real**: SignalR para notificaciones
+- **Offline**: Sincronización automática
+- **Moderna**: .NET MAUI 8.0 + MVVM
+- **Probada**: XUnit + Moq para testing
+- **Escalable**: Clean Architecture
 
-    public async Task<T> GetAsync<T>(string endpoint)
-    {
-        await SetAuthorizationHeader();
-        var response = await _httpClient.GetAsync($"{_baseUrl}/{endpoint}");
-        response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-    }
+---
 
-    public async Task<T> PostAsync<T>(string endpoint, object data)
-    {
-        await SetAuthorizationHeader();
-        var jsonContent = JsonSerializer.Serialize(data);
-        var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-        var response = await _httpClient.PostAsync($"{_baseUrl}/{endpoint}", stringContent);
-        response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-    }
-
-    private async Task SetAuthorizationHeader()
-    {
-        var token = await _tokenService.GetTokenAsync();
-        if (!string.IsNullOrEmpty(token))
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        }
-    }
-}
-```
-
-## Inyección de Dependencias
-
-La aplicación utiliza la inyección de dependencias nativa de MAUI:
-
-```csharp
-// MauiProgram.cs
-public static class MauiProgram
-{
-    public static MauiApp CreateMauiApp()
-    {
-        var builder = MauiApp.CreateBuilder();
-        builder
-            .UseMauiApp<App>()
-            .ConfigureFonts(fonts =>
-            {
-                fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-                fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-            });
-
-        // Registrar servicios
-        builder.Services.AddSingleton<IAppSettings, AppSettings>();
-        builder.Services.AddSingleton<INavigationService, NavigationService>();
-        builder.Services.AddSingleton<IDialogService, DialogService>();
-        builder.Services.AddSingleton<ITokenService, TokenService>();
-        builder.Services.AddSingleton<IConnectivityService, ConnectivityService>();
-        
-        // Registrar clientes API por módulo
-        builder.Services.AddSingleton<IClientesApiClient, ClientesApiClient>();
-        builder.Services.AddSingleton<IComandasApiClient, ComandasApiClient>();
-        
-        // Registrar ViewModels y Pages
-        RegisterViewsAndViewModels(builder.Services);
-        
-        return builder.Build();
-    }
-    
-    private static void RegisterViewsAndViewModels(IServiceCollection services)
-    {
-        // Comercial - Clientes
-        services.AddTransient<ClientesListViewModel>();
-        services.AddTransient<ClientesListPage>();
-        services.AddTransient<ClienteDetailViewModel>();
-        services.AddTransient<ClienteDetailPage>();
-        
-        // Operaciones - Comandas
-        services.AddTransient<ComandasListViewModel>();
-        services.AddTransient<ComandasListPage>();
-        services.AddTransient<ComandaDetailViewModel>();
-        services.AddTransient<ComandaDetailPage>();
-        services.AddTransient<NuevaComandaViewModel>();
-        services.AddTransient<NuevaComandaPage>();
-        
-        // Account
-        services.AddTransient<LoginViewModel>();
-        services.AddTransient<LoginPage>();
-        services.AddTransient<ProfileViewModel>();
-        services.AddTransient<ProfilePage>();
-    }
-}
-```
-
-## Ejemplo de ViewModel
-
-```csharp
-// ClientesListViewModel.cs
-public class ClientesListViewModel : BaseViewModel
-{
-    private readonly IClientesApiClient _clientesApiClient;
-    private readonly INavigationService _navigationService;
-    private readonly IDialogService _dialogService;
-    
-    private ObservableCollection<ClienteDto> _clientes;
-    public ObservableCollection<ClienteDto> Clientes
-    {
-        get => _clientes;
-        set => SetProperty(ref _clientes, value);
-    }
-    
-    private bool _isRefreshing;
-    public bool IsRefreshing
-    {
-        get => _isRefreshing;
-        set => SetProperty(ref _isRefreshing, value);
-    }
-    
-    public Command LoadClientsCommand { get; }
-    public Command<int> ViewClientDetailCommand { get; }
-    public Command AddClientCommand { get; }
-    
-    public ClientesListViewModel(
-        IClientesApiClient clientesApiClient,
-        INavigationService navigationService,
-        IDialogService dialogService)
-    {
-        _clientesApiClient = clientesApiClient;
-        _navigationService = navigationService;
-        _dialogService = dialogService;
-        
-        Title = "Clientes";
-        Clientes = new ObservableCollection<ClienteDto>();
-        
-        LoadClientsCommand = new Command(async () => await LoadClientsAsync());
-        ViewClientDetailCommand = new Command<int>(async (id) => await ViewClientDetailAsync(id));
-        AddClientCommand = new Command(async () => await AddClientAsync());
-    }
-    
-    async Task LoadClientsAsync()
-    {
-        if (IsBusy) return;
-        
-        try
-        {
-            IsBusy = true;
-            IsRefreshing = true;
-            
-            var clientes = await _clientesApiClient.GetAllClientes();
-            
-            Clientes.Clear();
-            foreach (var cliente in clientes)
-            {
-                Clientes.Add(cliente);
-            }
-        }
-        catch (Exception ex)
-        {
-            await _dialogService.ShowAlertAsync("Error", $"No se pudieron cargar los clientes: {ex.Message}", "Aceptar");
-        }
-        finally
-        {
-            IsBusy = false;
-            IsRefreshing = false;
-        }
-    }
-    
-    async Task ViewClientDetailAsync(int id)
-    {
-        await _navigationService.NavigateToAsync<ClienteDetailViewModel>(new Dictionary<string, object>
-        {
-            { "Id", id }
-        });
-    }
-    
-    async Task AddClientAsync()
-    {
-        await _navigationService.NavigateToAsync<ClienteAddViewModel>();
-    }
-    
-    public override Task InitializeAsync(IDictionary<string, object> parameters)
-    {
-        return LoadClientsAsync();
-    }
-}
-``` 
+*Esta estructura está optimizada para operaciones diarias críticas del restaurante, evitando funcionalidades administrativas que corresponden a otras aplicaciones.* 

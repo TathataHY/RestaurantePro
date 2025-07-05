@@ -48,6 +48,24 @@ RestaurantePro/
 │   │       ├── Reservaciones/ # Sistema de reservaciones
 │   │       └── Usuarios/      # Gestión de usuarios
 │   ├── RestaurantePro.Mobile/ # App móvil (.NET MAUI)
+│   │   ├── Features/          # Funcionalidades principales
+│   │   │   ├── Authentication/ # Sistema de autenticación
+│   │   │   ├── Operations/    # Operaciones diarias críticas
+│   │   │   │   ├── Tables/    # Gestión de mesas
+│   │   │   │   ├── Orders/    # Gestión de comandas
+│   │   │   │   ├── Preparations/ # Preparaciones por demanda
+│   │   │   │   ├── DailyPreparations/ # 🆕 Preparaciones diarias
+│   │   │   │   └── Reservations/ # Gestión de reservas
+│   │   │   ├── Commercial/    # Operaciones comerciales
+│   │   │   │   └── Billing/   # Facturación y cobros
+│   │   │   ├── Catalog/       # Consulta de información
+│   │   │   │   ├── Products/  # Productos del menú
+│   │   │   │   └── Categories/ # Categorías de productos
+│   │   │   └── Notifications/ # Sistema de notificaciones
+│   │   ├── Core/              # Infraestructura y servicios base
+│   │   ├── Shared/            # Componentes compartidos
+│   │   ├── UI/                # Componentes de interfaz
+│   │   └── Platforms/         # Código específico por plataforma
 │   ├── RestaurantePro.Web/    # Portal web (Blazor)
 │   ├── RestaurantePro.Domain/ # Entidades y lógica de dominio
 │   │   ├── Entities/         # Entidades de dominio
