@@ -1,11 +1,11 @@
-using RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels;
+using RestaurantePro.Mobile.Core.Features.Operations.Mesas.ViewModels;
 
 namespace RestaurantePro.Mobile.Features.Operations.Mesas.Pages;
 
 /// <summary>
 /// Página de detalle para una mesa específica
 /// </summary>
-public partial class MesaDetallePage : ContentPage
+public partial class MesaDetallePage : ContentPage, IQueryAttributable
 {
     private readonly MesaDetalleViewModel _viewModel;
 
@@ -14,6 +14,18 @@ public partial class MesaDetallePage : ContentPage
         InitializeComponent();
         _viewModel = viewModel;
         BindingContext = _viewModel;
+    }
+
+    /// <summary>
+    /// Implementación de IQueryAttributable para recibir parámetros de navegación
+    /// </summary>
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (query.TryGetValue("mesaId", out var mesaIdObj) && 
+            Guid.TryParse(mesaIdObj?.ToString(), out var mesaIdParsed))
+        {
+            _viewModel.MesaId = mesaIdParsed;
+        }
     }
 
     /// <summary>

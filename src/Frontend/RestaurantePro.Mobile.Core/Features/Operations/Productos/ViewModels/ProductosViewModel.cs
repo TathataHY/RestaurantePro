@@ -5,10 +5,9 @@ using RestaurantePro.Mobile.Core.Models.ViewModels;
 using RestaurantePro.Mobile.Core.Services.Productos;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
-using RestaurantePro.Mobile.Features.Authentication.ViewModels;
 using System.Collections.ObjectModel;
 
-namespace RestaurantePro.Mobile.Features.Operations.Productos.ViewModels;
+namespace RestaurantePro.Mobile.Core.Features.Operations.Productos.ViewModels;
 
 /// <summary>
 /// ViewModel para gestión de productos del menú
@@ -215,7 +214,7 @@ public partial class ProductosViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Ver detalles de un producto
+    /// Ver detalle de un producto
     /// </summary>
     [RelayCommand]
     private async Task VerDetalleProductoAsync(ProductoDto? producto)
@@ -224,40 +223,20 @@ public partial class ProductosViewModel : BaseViewModel
 
         try
         {
-            SelectedProducto = producto;
-
-            // Verificar disponibilidad del producto
-            var disponibilidad = await _productosService.VerificarDisponibilidadProductoAsync(producto.Id);
-
-            if (disponibilidad.Success && disponibilidad.Data != null)
+            // Navegar a la página de detalle del producto
+            await _navigationService.NavigateToAsync("producto-detalle", new Dictionary<string, object>
             {
-                var mensaje = $"Producto: {producto.Nombre}\n" +
-                             $"Precio: {producto.PrecioFormateado}\n" +
-                             $"Categoría: {producto.CategoriaNombre}\n" +
-                             $"Estado: {disponibilidad.Data.EstadoDisponibilidad}\n" +
-                             $"Disponible: {disponibilidad.Data.CantidadDisponible} unidades\n" +
-                             $"Tiempo de preparación: {disponibilidad.Data.TiempoPreparacionFormateado}";
-
-                if (!string.IsNullOrWhiteSpace(producto.Descripcion))
-                {
-                    mensaje = $"Descripción: {producto.Descripcion}\n\n{mensaje}";
-                }
-
-                await _dialogService.ShowAlertAsync("Detalle del Producto", mensaje);
-            }
-            else
-            {
-                await _dialogService.ShowErrorAsync("No se pudo obtener información del producto");
-            }
+                ["productoId"] = producto.Id.ToString()
+            });
         }
-        catch (Exception _)
+        catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Error al obtener detalles del producto");
+            await _dialogService.ShowErrorAsync($"Error al navegar al detalle: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Agregar producto a comanda (navegar a comandas)
+    /// Agregar producto a una comanda
     /// </summary>
     [RelayCommand]
     private async Task AgregarAComandaAsync(ProductoDto? producto)
@@ -269,33 +248,25 @@ public partial class ProductosViewModel : BaseViewModel
             if (!producto.PuedeAgregarAComanda)
             {
                 await _dialogService.ShowAlertAsync("Producto no disponible", 
-                    $"El producto '{producto.Nombre}' no está disponible para agregar a comandas.");
+                    "Este producto no está disponible en este momento");
                 return;
             }
 
-            var confirmacion = await _dialogService.ShowConfirmAsync(
-                "Agregar a Comanda",
-                $"¿Desea agregar '{producto.Nombre}' a una comanda?\n\nEsto lo llevará a la pantalla de comandas.");
-
-            if (confirmacion)
+            // Navegar a comandas con el producto seleccionado
+            await _navigationService.NavigateToAsync("comandas", new Dictionary<string, object>
             {
-                // Navegar a comandas pasando el producto como parámetro
-                var parameters = new Dictionary<string, object>
-                {
-                    ["ProductoSeleccionado"] = producto
-                };
-
-                await _navigationService.NavigateToAsync("comandas", parameters);
-            }
+                ["productoId"] = producto.Id.ToString(),
+                ["accion"] = "agregar"
+            });
         }
-        catch (Exception _)
+        catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Error al agregar producto a comanda");
+            await _dialogService.ShowErrorAsync($"Error al agregar producto: {ex.Message}");
         }
     }
 
     /// <summary>
-    /// Filtrar por categoría específica
+    /// Filtrar productos por categoría
     /// </summary>
     [RelayCommand]
     private async Task FiltrarPorCategoriaAsync(CategoriaProductoDto? categoria)
@@ -309,13 +280,13 @@ public partial class ProductosViewModel : BaseViewModel
     /// Mostrar/ocultar panel de filtros
     /// </summary>
     [RelayCommand]
-    private void ToggleMostrarFiltros()
+    private void MostrarFiltrosCommand()
     {
         MostrarFiltros = !MostrarFiltros;
     }
 
     /// <summary>
-    /// Alternar filtro de solo disponibles
+    /// Toggle para mostrar solo productos disponibles
     /// </summary>
     [RelayCommand]
     private async Task ToggleSoloDisponiblesAsync()
@@ -325,14 +296,16 @@ public partial class ProductosViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Obtener productos populares
+    /// Cargar productos populares
     /// </summary>
     [RelayCommand]
     private async Task LoadProductosPopularesAsync()
     {
         try
         {
-            var result = await _productosService.ObtenerProductosPopularesAsync(10);
+            IsBusy = true;
+
+            var result = await _productosService.ObtenerProductosPopularesAsync(limite: 10);
 
             if (result.Success && result.Data != null)
             {
@@ -344,17 +317,22 @@ public partial class ProductosViewModel : BaseViewModel
 
                 ActualizarEstadisticas();
                 
-                await _dialogService.ShowAlertAsync("Productos Populares", 
-                    $"Mostrando {result.Data.Count} productos más populares");
+                // Marcar que estamos mostrando populares
+                SelectedCategoria = null;
+                TextoBusqueda = string.Empty;
             }
             else
             {
                 await _dialogService.ShowErrorAsync("Error al cargar productos populares");
             }
         }
-        catch (Exception _)
+        catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Error al cargar productos populares");
+            await _dialogService.ShowErrorAsync($"Error inesperado: {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 
@@ -369,11 +347,12 @@ public partial class ProductosViewModel : BaseViewModel
     {
         TotalProductos = Productos.Count;
         ProductosDisponibles = Productos.Count(p => p.PuedeAgregarAComanda);
-        ProductosAgotados = Productos.Count(p => !p.PuedeAgregarAComanda);
+        ProductosAgotados = TotalProductos - ProductosDisponibles;
 
+        // Notificar cambios en propiedades calculadas
         OnPropertyChanged(nameof(TieneProductos));
-        OnPropertyChanged(nameof(MensajeSinProductos));
         OnPropertyChanged(nameof(PorcentajeDisponibilidad));
+        OnPropertyChanged(nameof(MensajeSinProductos));
     }
 
     /// <summary>
@@ -382,7 +361,8 @@ public partial class ProductosViewModel : BaseViewModel
     private void SetError(string title, string message)
     {
         HasError = true;
-        ErrorMessage = $"{title}: {message}";
+        ErrorMessage = message;
+        Title = title;
     }
 
     // ========================================
@@ -390,15 +370,16 @@ public partial class ProductosViewModel : BaseViewModel
     // ========================================
 
     /// <summary>
-    /// Inicializar ViewModel
+    /// Inicializar el ViewModel
     /// </summary>
     public async Task InitializeAsync()
     {
+        await LoadCategoriasAsync();
         await LoadProductosAsync();
     }
 
     /// <summary>
-    /// Limpiar datos al salir
+    /// Limpiar recursos del ViewModel
     /// </summary>
     public void Cleanup()
     {
@@ -407,7 +388,5 @@ public partial class ProductosViewModel : BaseViewModel
         SelectedProducto = null;
         SelectedCategoria = null;
         TextoBusqueda = string.Empty;
-        HasError = false;
-        ErrorMessage = string.Empty;
     }
 } 

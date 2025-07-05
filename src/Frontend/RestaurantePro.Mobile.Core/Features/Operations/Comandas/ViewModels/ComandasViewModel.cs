@@ -7,7 +7,7 @@ using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Models.ViewModels;
 
-namespace RestaurantePro.Mobile.Features.Operations.Comandas.ViewModels;
+namespace RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 
 /// <summary>
 /// ViewModel para gestión de comandas - Funcionalidad operativa principal
@@ -203,6 +203,10 @@ public partial class ComandasViewModel : BaseViewModel
             return;
         }
 
+        var observaciones = await _dialogService.ShowPromptAsync(
+            "Observaciones",
+            "Ingrese observaciones para la comanda (opcional):");
+
         IsBusy = true;
 
         try
@@ -210,7 +214,7 @@ public partial class ComandasViewModel : BaseViewModel
             var request = new CrearComandaRequest
             {
                 MesaId = mesaGuid,
-                Observaciones = "Comanda creada desde móvil"
+                Observaciones = observaciones
             };
 
             var response = await _comandasService.CrearComandaAsync(request);
@@ -236,7 +240,29 @@ public partial class ComandasViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Cambiar el estado de una comanda
+    /// Ver detalles de una comanda
+    /// </summary>
+    [RelayCommand]
+    private async Task VerDetalleAsync(ComandaDto comanda)
+    {
+        if (comanda == null) return;
+
+        await NavigateToComandaDetailAsync(comanda);
+    }
+
+    /// <summary>
+    /// Editar una comanda existente
+    /// </summary>
+    [RelayCommand]
+    private async Task EditarAsync(ComandaDto comanda)
+    {
+        if (comanda == null) return;
+
+        await NavigateToAgregarProductosAsync(comanda);
+    }
+
+    /// <summary>
+    /// Cambiar estado de una comanda
     /// </summary>
     [RelayCommand]
     private async Task CambiarEstadoComandaAsync(ComandaDto comanda)
@@ -247,7 +273,8 @@ public partial class ComandasViewModel : BaseViewModel
         
         if (!estadosPermitidos.Any())
         {
-            await _dialogService.ShowAlertAsync("Información", "No hay cambios de estado disponibles para esta comanda");
+            await _dialogService.ShowAlertAsync("Información", 
+                "No hay cambios de estado disponibles para esta comanda");
             return;
         }
 
@@ -257,7 +284,7 @@ public partial class ComandasViewModel : BaseViewModel
             "Cancelar",
             estadosPermitidos.ToArray());
 
-        if (string.IsNullOrWhiteSpace(nuevoEstado))
+        if (string.IsNullOrWhiteSpace(nuevoEstado) || nuevoEstado == "Cancelar")
             return;
 
         IsBusy = true;
@@ -268,7 +295,7 @@ public partial class ComandasViewModel : BaseViewModel
 
             if (response.Success)
             {
-                await _dialogService.ShowAlertAsync("Éxito", $"Estado cambiado a: {nuevoEstado}");
+                await _dialogService.ShowAlertAsync("Éxito", $"Estado cambiado a {nuevoEstado}");
                 await LoadComandasAsync();
             }
             else
@@ -294,13 +321,12 @@ public partial class ComandasViewModel : BaseViewModel
     {
         if (comanda == null) return;
 
-        var confirmar = await _dialogService.ShowConfirmAsync(
+        var confirmacion = await _dialogService.ShowConfirmAsync(
             "Confirmar",
-            $"¿Está seguro de finalizar la comanda {comanda.Numero}?");
+            $"¿Está seguro que desea finalizar la comanda #{comanda.Numero}?");
 
-        if (!confirmar) return;
+        if (!confirmacion) return;
 
-        // Preguntar método de pago
         var metodoPago = await _dialogService.ShowActionSheetAsync(
             "Método de Pago",
             "Seleccione el método de pago:",
@@ -314,11 +340,15 @@ public partial class ComandasViewModel : BaseViewModel
 
         try
         {
-            var response = await _comandasService.FinalizarComandaAsync(comanda.Id, metodoPago);
+            var response = await _comandasService.FinalizarComandaAsync(
+                comanda.Id, 
+                metodoPago, 
+                $"Finalizada - Total: {comanda.Total:C}");
 
             if (response.Success)
             {
-                await _dialogService.ShowAlertAsync("Éxito", "Comanda finalizada correctamente");
+                await _dialogService.ShowAlertAsync("Éxito", 
+                    $"Comanda #{comanda.Numero} finalizada correctamente");
                 await LoadComandasAsync();
             }
             else
@@ -344,9 +374,15 @@ public partial class ComandasViewModel : BaseViewModel
     {
         if (comanda == null) return;
 
+        var confirmacion = await _dialogService.ShowConfirmAsync(
+            "Confirmar Cancelación",
+            $"¿Está seguro que desea cancelar la comanda #{comanda.Numero}?");
+
+        if (!confirmacion) return;
+
         var motivo = await _dialogService.ShowPromptAsync(
-            "Cancelar Comanda",
-            $"Ingrese el motivo de cancelación para la comanda {comanda.Numero}:");
+            "Motivo de Cancelación",
+            "Ingrese el motivo de la cancelación:");
 
         if (string.IsNullOrWhiteSpace(motivo))
             return;
@@ -359,7 +395,8 @@ public partial class ComandasViewModel : BaseViewModel
 
             if (response.Success)
             {
-                await _dialogService.ShowAlertAsync("Éxito", "Comanda cancelada correctamente");
+                await _dialogService.ShowAlertAsync("Éxito", 
+                    $"Comanda #{comanda.Numero} cancelada correctamente");
                 await LoadComandasAsync();
             }
             else
@@ -377,12 +414,22 @@ public partial class ComandasViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Mostrar/ocultar filtros
+    /// </summary>
+    [RelayCommand]
+    private void MostrarFiltrosCommand()
+    {
+        // Esta funcionalidad se maneja desde la UI
+        // Aquí solo notificamos el cambio si es necesario
+    }
+
     #endregion
 
     #region Comandos de Filtros
 
     /// <summary>
-    /// Aplicar filtros a la lista de comandas
+    /// Aplicar filtros de búsqueda
     /// </summary>
     [RelayCommand]
     private async Task ApplyFiltersAsync()
@@ -400,13 +447,12 @@ public partial class ComandasViewModel : BaseViewModel
         FiltroFecha = null;
         FiltroMesaId = null;
         SearchText = string.Empty;
-        SoloActivas = true;
         
         await LoadComandasAsync();
     }
 
     /// <summary>
-    /// Alternar entre comandas activas y todas
+    /// Toggle entre solo activas y todas
     /// </summary>
     [RelayCommand]
     private async Task ToggleActivasAsync()
@@ -420,40 +466,46 @@ public partial class ComandasViewModel : BaseViewModel
     #region Comandos de Navegación
 
     /// <summary>
-    /// Navegar al detalle de una comanda
+    /// Navegar a la página de detalle de comanda
     /// </summary>
     [RelayCommand]
     private async Task NavigateToComandaDetailAsync(ComandaDto comanda)
     {
         if (comanda == null) return;
 
-        await _navigationService.NavigateToAsync($"comandadetail?id={comanda.Id}");
+        await _navigationService.NavigateToAsync("comanda-detalle", new Dictionary<string, object>
+        {
+            ["comandaId"] = comanda.Id.ToString()
+        });
     }
 
     /// <summary>
-    /// Navegar a agregar productos a una comanda
+    /// Navegar a agregar productos a la comanda
     /// </summary>
     [RelayCommand]
     private async Task NavigateToAgregarProductosAsync(ComandaDto comanda)
     {
         if (comanda == null) return;
 
-        await _navigationService.NavigateToAsync($"agregarproductos?comandaId={comanda.Id}");
+        await _navigationService.NavigateToAsync("productos", new Dictionary<string, object>
+        {
+            ["comandaId"] = comanda.Id.ToString()
+        });
     }
 
     #endregion
 
-    #region Métodos Auxiliares
+    #region Métodos de Utilidad
 
     /// <summary>
-    /// Obtener los estados permitidos para una comanda según su estado actual
+    /// Obtener estados permitidos según el estado actual
     /// </summary>
     private List<string> ObtenerEstadosPermitidos(string estadoActual)
     {
-        return estadoActual.ToLowerInvariant() switch
+        return estadoActual?.ToLower() switch
         {
             "pendiente" => new List<string> { "En Preparación", "Cancelada" },
-            "en_preparacion" => new List<string> { "Lista", "Cancelada" },
+            "en preparación" => new List<string> { "Lista", "Cancelada" },
             "lista" => new List<string> { "Entregada" },
             "entregada" => new List<string> { "Finalizada" },
             _ => new List<string>()
@@ -461,36 +513,36 @@ public partial class ComandasViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Obtener el color del estado para la UI
+    /// Obtener color basado en el estado de la comanda
     /// </summary>
     public string GetEstadoColor(string estado)
     {
-        return estado.ToLowerInvariant() switch
+        return estado?.ToLower() switch
         {
-            "pendiente" => "#FFC107",      // Amarillo
-            "en_preparacion" => "#FF9800", // Naranja
-            "lista" => "#4CAF50",          // Verde
-            "entregada" => "#2196F3",      // Azul
-            "cancelada" => "#F44336",      // Rojo
-            "finalizada" => "#9E9E9E",     // Gris
-            _ => "#607D8B"                 // Gris azulado por defecto
+            "pendiente" => "Orange",
+            "en preparación" => "Blue", 
+            "lista" => "Green",
+            "entregada" => "Purple",
+            "finalizada" => "Gray",
+            "cancelada" => "Red",
+            _ => "Black"
         };
     }
 
     /// <summary>
-    /// Obtener el icono del estado para la UI
+    /// Obtener icono basado en el estado de la comanda
     /// </summary>
     public string GetEstadoIcon(string estado)
     {
-        return estado.ToLowerInvariant() switch
+        return estado?.ToLower() switch
         {
-            "pendiente" => "clock",
-            "en_preparacion" => "chef_hat",
-            "lista" => "check_circle",
-            "entregada" => "delivery",
-            "cancelada" => "cancel",
-            "finalizada" => "done_all",
-            _ => "help"
+            "pendiente" => "⏳",
+            "en preparación" => "👨‍🍳",
+            "lista" => "✅",
+            "entregada" => "🍽️",
+            "finalizada" => "✔️",
+            "cancelada" => "❌",
+            _ => "?"
         };
     }
 

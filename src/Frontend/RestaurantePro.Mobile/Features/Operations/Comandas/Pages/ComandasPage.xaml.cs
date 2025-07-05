@@ -1,4 +1,4 @@
-using RestaurantePro.Mobile.Features.Operations.Comandas.ViewModels;
+using RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 
 namespace RestaurantePro.Mobile.Features.Operations.Comandas.Pages;
 
@@ -7,10 +7,12 @@ namespace RestaurantePro.Mobile.Features.Operations.Comandas.Pages;
 /// </summary>
 public partial class ComandasPage : ContentPage
 {
+    private readonly ComandasViewModel _viewModel;
+
     /// <summary>
     /// ViewModel asociado a esta página
     /// </summary>
-    public ComandasViewModel ViewModel => (ComandasViewModel)BindingContext;
+    public ComandasViewModel ViewModel => _viewModel;
 
     /// <summary>
     /// Constructor de la página
@@ -18,7 +20,8 @@ public partial class ComandasPage : ContentPage
     public ComandasPage(ComandasViewModel viewModel)
     {
         InitializeComponent();
-        BindingContext = viewModel;
+        _viewModel = viewModel;
+        BindingContext = _viewModel;
     }
 
     /// <summary>
@@ -140,10 +143,10 @@ public partial class ComandasPage : ContentPage
     {
         base.OnAppearing();
         
-        // Cargar datos si es necesario
-        if (ViewModel.Comandas.Count == 0)
+        // Cargar datos al aparecer la página
+        if (_viewModel.LoadComandasCommand.CanExecute(null))
         {
-            await ViewModel.LoadComandasCommand.ExecuteAsync(null);
+            await _viewModel.LoadComandasCommand.ExecuteAsync(null);
         }
     }
 

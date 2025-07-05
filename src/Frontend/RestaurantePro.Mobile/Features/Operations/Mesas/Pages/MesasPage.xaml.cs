@@ -1,4 +1,4 @@
-using RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels;
+using RestaurantePro.Mobile.Core.Features.Operations.Mesas.ViewModels;
 
 namespace RestaurantePro.Mobile.Features.Operations.Mesas.Pages;
 
@@ -10,7 +10,7 @@ public partial class MesasPage : ContentPage
     /// <summary>
     /// ViewModel asociado a esta página
     /// </summary>
-    public MesasViewModel ViewModel => (MesasViewModel)BindingContext;
+    private readonly MesasViewModel _viewModel;
 
     /// <summary>
     /// Constructor de la página
@@ -18,7 +18,8 @@ public partial class MesasPage : ContentPage
     public MesasPage(MesasViewModel viewModel)
     {
         InitializeComponent();
-        BindingContext = viewModel;
+        _viewModel = viewModel;
+        BindingContext = _viewModel;
     }
 
     /// <summary>
@@ -47,7 +48,7 @@ public partial class MesasPage : ContentPage
                 await MostrarFiltroCapacidad();
                 break;
             case "Limpiar Filtros":
-                await ViewModel.ClearFiltersCommand.ExecuteAsync(null);
+                await _viewModel.ClearFiltersCommand.ExecuteAsync(null);
                 break;
         }
     }
@@ -67,8 +68,8 @@ public partial class MesasPage : ContentPage
 
         if (selectedEstado != null && selectedEstado != "Cancelar")
         {
-            ViewModel.FiltroEstado = selectedEstado == "Todos" ? string.Empty : selectedEstado;
-            await ViewModel.ApplyFiltersCommand.ExecuteAsync(null);
+            _viewModel.FiltroEstado = selectedEstado == "Todos" ? string.Empty : selectedEstado;
+            await _viewModel.ApplyFiltersCommand.ExecuteAsync(null);
         }
     }
 
@@ -87,8 +88,8 @@ public partial class MesasPage : ContentPage
 
         if (selectedUbicacion != null && selectedUbicacion != "Cancelar")
         {
-            ViewModel.FiltroUbicacion = selectedUbicacion == "Todas" ? string.Empty : selectedUbicacion;
-            await ViewModel.ApplyFiltersCommand.ExecuteAsync(null);
+            _viewModel.FiltroUbicacion = selectedUbicacion == "Todas" ? string.Empty : selectedUbicacion;
+            await _viewModel.ApplyFiltersCommand.ExecuteAsync(null);
         }
     }
 
@@ -107,7 +108,7 @@ public partial class MesasPage : ContentPage
 
         if (selectedCapacidad != null && selectedCapacidad != "Cancelar")
         {
-            ViewModel.FiltroCapacidadMinima = selectedCapacidad switch
+            _viewModel.FiltroCapacidadMinima = selectedCapacidad switch
             {
                 "2 personas" => 2,
                 "4 personas" => 4,
@@ -115,7 +116,7 @@ public partial class MesasPage : ContentPage
                 "8+ personas" => 8,
                 _ => null
             };
-            await ViewModel.ApplyFiltersCommand.ExecuteAsync(null);
+            await _viewModel.ApplyFiltersCommand.ExecuteAsync(null);
         }
     }
 
@@ -126,10 +127,15 @@ public partial class MesasPage : ContentPage
     {
         base.OnAppearing();
         
-        // Cargar datos si es necesario
-        if (ViewModel.Mesas.Count == 0)
+        // Cargar datos al aparecer
+        if (_viewModel.LoadMesasCommand.CanExecute(null))
         {
-            await ViewModel.LoadMesasCommand.ExecuteAsync(null);
+            await _viewModel.LoadMesasCommand.ExecuteAsync(null);
+        }
+        
+        if (_viewModel.LoadEstadisticasCommand.CanExecute(null))
+        {
+            await _viewModel.LoadEstadisticasCommand.ExecuteAsync(null);
         }
     }
 

@@ -1,4 +1,4 @@
-using RestaurantePro.Mobile.Features.Operations.Productos.ViewModels;
+using RestaurantePro.Mobile.Core.Features.Operations.Productos.ViewModels;
 
 namespace RestaurantePro.Mobile.Features.Operations.Productos.Pages;
 

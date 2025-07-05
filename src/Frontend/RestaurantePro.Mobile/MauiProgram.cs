@@ -9,13 +9,13 @@ using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Services.Mesas;
 using RestaurantePro.Mobile.Core.Services.Comandas;
 using RestaurantePro.Mobile.Core.Services.Productos;
-using RestaurantePro.Mobile.Features.Authentication.ViewModels;
+using RestaurantePro.Mobile.Core.Features.Authentication.ViewModels;
 using RestaurantePro.Mobile.Features.Authentication.Pages;
-using RestaurantePro.Mobile.Features.Operations.Comandas.ViewModels;
+using RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 using RestaurantePro.Mobile.Features.Operations.Comandas.Pages;
-using RestaurantePro.Mobile.Features.Operations.Productos.ViewModels;
+using RestaurantePro.Mobile.Core.Features.Operations.Productos.ViewModels;
 using RestaurantePro.Mobile.Features.Operations.Productos.Pages;
-using RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels;
+using RestaurantePro.Mobile.Core.Features.Operations.Mesas.ViewModels;
 using RestaurantePro.Mobile.Features.Operations.Mesas.Pages;
 using RestaurantePro.Mobile.UI.Pages;
 
@@ -93,9 +93,8 @@ public static class MauiProgram
 		// Dashboard - V1 Fundamental
 		services.AddTransient<DashboardPage>();
 
-		// ✅ ViewModels
-		services.AddTransient<LoginViewModel>();
-		services.AddTransient<RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels.MesasViewModel>();
+		// ✅ ViewModels (ahora desde Mobile.Core)
+		services.AddTransient<MesasViewModel>();
 		services.AddTransient<MesaDetalleViewModel>();
 		services.AddTransient<ComandasViewModel>();
 		services.AddTransient<ProductosViewModel>();
@@ -103,7 +102,7 @@ public static class MauiProgram
 		// ✅ Páginas
 		services.AddTransient<LoginPage>();
 		services.AddTransient<DashboardPage>();
-		services.AddTransient<RestaurantePro.Mobile.Features.Operations.Mesas.Pages.MesasPage>();
+		services.AddTransient<MesasPage>();
 		services.AddTransient<MesaDetallePage>();
 		services.AddTransient<ComandasPage>();
 		services.AddTransient<ProductosPage>();

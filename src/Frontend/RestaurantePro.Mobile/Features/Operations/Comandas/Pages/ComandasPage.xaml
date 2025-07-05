@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewModels="clr-namespace:RestaurantePro.Mobile.Features.Operations.Comandas.ViewModels"
+             xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;assembly=RestaurantePro.Mobile.Core"
              xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              xmlns:converters="clr-namespace:RestaurantePro.Mobile.Converters"
              x:Class="RestaurantePro.Mobile.Features.Operations.Comandas.Pages.ComandasPage"
-             x:DataType="viewModels:ComandasViewModel"
+             x:DataType="vm:ComandasViewModel"
              x:Name="comandasPage"
              Title="{Binding Title}">
 
@@ -57,6 +57,8 @@
             </Style>
         </ResourceDictionary>
     </ContentPage.Resources>
+
+    <!-- ViewModel se configura en code-behind con DI -->
 
     <Grid>
         <Grid.RowDefinitions>
@@ -231,30 +233,30 @@
                                              Margin="0,12,0,0">
                                     
                                     <Button Text="👁️ Ver" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ComandasViewModel}}, Path=NavigateToComandaDetailCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandasViewModel}}, Path=NavigateToComandaDetailCommand}"
                                             CommandParameter="{Binding .}"
                                             Style="{StaticResource ActionButtonStyle}" />
 
                                     <Button Text="🔄 Estado" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ComandasViewModel}}, Path=CambiarEstadoComandaCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandasViewModel}}, Path=CambiarEstadoComandaCommand}"
                                             CommandParameter="{Binding .}"
                                             Style="{StaticResource SecondaryButtonStyle}"
                                             IsVisible="{Binding EstaActiva}" />
 
                                     <Button Text="➕ Productos" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ComandasViewModel}}, Path=NavigateToAgregarProductosCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandasViewModel}}, Path=NavigateToAgregarProductosCommand}"
                                             CommandParameter="{Binding .}"
                                             Style="{StaticResource SecondaryButtonStyle}"
                                             IsVisible="{Binding PuedeSerEditada}" />
 
                                     <Button Text="✅ Finalizar" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ComandasViewModel}}, Path=FinalizarComandaCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandasViewModel}}, Path=FinalizarComandaCommand}"
                                             CommandParameter="{Binding .}"
                                             Style="{StaticResource ActionButtonStyle}"
                                             IsVisible="{Binding EstaActiva}" />
 
                                     <Button Text="❌ Cancelar" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:ComandasViewModel}}, Path=CancelarComandaCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandasViewModel}}, Path=CancelarComandaCommand}"
                                             CommandParameter="{Binding .}"
                                             BackgroundColor="#dc3545"
                                             TextColor="White"

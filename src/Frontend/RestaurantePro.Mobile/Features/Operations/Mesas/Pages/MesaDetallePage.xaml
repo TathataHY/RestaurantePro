@@ -1,201 +1,167 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<ContentPage x:Class="RestaurantePro.Mobile.Features.Operations.Mesas.Pages.MesaDetallePage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels"
-             xmlns:core="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              xmlns:converters="clr-namespace:RestaurantePro.Mobile.Converters"
-             x:Class="RestaurantePro.Mobile.Features.Operations.Mesas.Pages.MesaDetallePage"
-             x:DataType="viewmodels:MesaDetalleViewModel"
-             Title="{Binding Mesa.Numero, StringFormat='Mesa {0}'}"
-             Shell.NavBarIsVisible="True">
+             xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Mesas.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             x:DataType="vm:MesaDetalleViewModel"
+             Title="Detalle de Mesa">
 
-    <ContentPage.Resources>
-        <ResourceDictionary>
-            <converters:EstadoColorConverter x:Key="EstadoColorConverter" />
-            <converters:EstadoIconConverter x:Key="EstadoIconConverter" />
-            <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
-        </ResourceDictionary>
-    </ContentPage.Resources>
+    <!-- ViewModel se configura en code-behind con DI -->
 
-    <ScrollView>
-        <StackLayout Padding="16" Spacing="20">
-            
-            <!-- Información Principal de la Mesa -->
-            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D30}" 
-                   HasShadow="True" 
-                   CornerRadius="12" 
-                   Padding="20">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-                    
-                    <!-- Título y Estado -->
-                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                        <StackLayout Grid.Column="0">
-                            <Label Text="{Binding Mesa.Numero, StringFormat='Mesa {0}'}" 
-                                   FontSize="28" 
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light=#2C3E50, Dark=White}" />
-                            <Label Text="{Binding Mesa.Estado}" 
-                                   FontSize="16"
-                                   FontAttributes="Bold"
-                                   TextColor="{Binding Mesa.Estado, Converter={StaticResource EstadoColorConverter}}" />
-                        </StackLayout>
-                        
-                        <Label Grid.Column="1"
-                               Text="{Binding Mesa.Estado, Converter={StaticResource EstadoIconConverter}}" 
-                               FontSize="40"
-                               TextColor="{Binding Mesa.Estado, Converter={StaticResource EstadoColorConverter}}"
-                               VerticalOptions="Center" />
-                    </Grid>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-                    <!-- Información Básica -->
-                    <Grid Grid.Row="1" Margin="0,16,0,0" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto">
-                        <StackLayout Grid.Row="0" Grid.Column="0">
-                            <Label Text="Capacidad" FontSize="12" TextColor="Gray" />
-                            <Label Text="{Binding Mesa.Capacidad, StringFormat='{0} personas'}" 
-                                   FontSize="16" FontAttributes="Bold" />
-                        </StackLayout>
-                        
-                        <StackLayout Grid.Row="0" Grid.Column="1">
-                            <Label Text="Ubicación" FontSize="12" TextColor="Gray" />
-                            <Label Text="{Binding Mesa.Zona}" 
-                                   FontSize="16" FontAttributes="Bold" />
-                        </StackLayout>
+        <!-- Información de la Mesa -->
+        <Frame Grid.Row="0" 
+               BackgroundColor="#F8F9FA" 
+               Padding="16" 
+               Margin="8">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-                        <StackLayout Grid.Row="1" Grid.Column="0" Margin="0,12,0,0">
-                            <Label Text="Cliente" FontSize="12" TextColor="Gray" />
-                            <Label Text="{Binding Mesa.NombreCliente}" 
-                                   FontSize="16" FontAttributes="Bold"
-                                   IsVisible="{Binding Mesa.NombreCliente, Converter={StaticResource IsNotNullConverter}}" />
-                            <Label Text="Sin cliente asignado" 
-                                   FontSize="16" FontAttributes="Italic" TextColor="Gray"
-                                   IsVisible="{Binding Mesa.NombreCliente, Converter={StaticResource IsNotNullConverter}, ConverterParameter=Invert}" />
-                        </StackLayout>
+                <Label Grid.Row="0" Grid.Column="0" 
+                       Text="{Binding Mesa.Numero, StringFormat='Mesa {0}'}" 
+                       FontSize="24" FontAttributes="Bold" 
+                       TextColor="#333" />
 
-                        <StackLayout Grid.Row="1" Grid.Column="1" Margin="0,12,0,0">
-                            <Label Text="Última Actividad" FontSize="12" TextColor="Gray" />
-                            <Label Text="{Binding Mesa.UltimaActualizacion, StringFormat='{0:HH:mm}'}" 
-                                   FontSize="16" FontAttributes="Bold"
-                                   IsVisible="{Binding Mesa.UltimaActualizacion, Converter={StaticResource IsNotNullConverter}}" />
-                            <Label Text="Sin actividad" 
-                                   FontSize="16" FontAttributes="Italic" TextColor="Gray"
-                                   IsVisible="{Binding Mesa.UltimaActualizacion, Converter={StaticResource IsNotNullConverter}, ConverterParameter=Invert}" />
-                        </StackLayout>
-                    </Grid>
-                </Grid>
-            </Frame>
+                <Label Grid.Row="0" Grid.Column="1" 
+                       Text="{Binding Mesa.EstadoDescripcion}" 
+                       FontSize="16" FontAttributes="Bold" 
+                       TextColor="{Binding Mesa.ColorEstado}" 
+                       HorizontalOptions="End" />
 
-            <!-- Acciones Rápidas -->
-            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D30}" 
-                   HasShadow="True" 
-                   CornerRadius="12" 
-                   Padding="20">
-                <StackLayout Spacing="16">
-                    <Label Text="Acciones Disponibles" 
-                           FontSize="18" 
-                           FontAttributes="Bold"
-                           TextColor="{AppThemeBinding Light=#2C3E50, Dark=White}" />
+                <Label Grid.Row="1" Grid.Column="0" 
+                       Text="{Binding Mesa.Capacidad, StringFormat='Capacidad: {0} personas'}" 
+                       FontSize="14" TextColor="#666" />
 
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
-                        
-                        <!-- Asignar Mesa -->
-                        <Button Grid.Row="0" Grid.Column="0"
-                                Text="👥 Asignar"
-                                Command="{Binding AsignarMesaCommand}"
-                                BackgroundColor="{AppThemeBinding Light=#27AE60, Dark=#52C882}"
-                                TextColor="White"
-                                CornerRadius="8"
-                                HeightRequest="50"
-                                IsVisible="{Binding PuedeAsignar}" />
+                <Label Grid.Row="1" Grid.Column="1" 
+                       Text="{Binding Mesa.Ubicacion}" 
+                       FontSize="14" TextColor="#666" 
+                       HorizontalOptions="End" />
 
-                        <!-- Liberar Mesa -->
-                        <Button Grid.Row="0" Grid.Column="1"
-                                Text="🚪 Liberar"
-                                Command="{Binding LiberarMesaCommand}"
-                                BackgroundColor="{AppThemeBinding Light=#E74C3C, Dark=#EC7063}"
-                                TextColor="White"
-                                CornerRadius="8"
-                                HeightRequest="50"
-                                IsVisible="{Binding PuedeLiberar}" />
+                <Label Grid.Row="2" Grid.ColumnSpan="2" 
+                       Text="{Binding Mesa.Observaciones}" 
+                       FontSize="14" TextColor="#666" 
+                       IsVisible="{Binding Mesa.Observaciones, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+            </Grid>
+        </Frame>
 
-                        <!-- Ver Comandas -->
-                        <Button Grid.Row="1" Grid.Column="0"
-                                Text="📋 Comandas"
-                                Command="{Binding VerComandasCommand}"
-                                BackgroundColor="{AppThemeBinding Light=#3498DB, Dark=#5DADE2}"
-                                TextColor="White"
-                                CornerRadius="8"
-                                HeightRequest="50" />
+        <!-- Comandas Activas -->
+        <RefreshView Grid.Row="1"
+                     IsRefreshing="{Binding IsRefreshing}"
+                     Command="{Binding RefreshCommand}">
+            <CollectionView ItemsSource="{Binding ComandasActivas}"
+                            SelectionMode="Single"
+                            SelectedItem="{Binding SelectedComanda}">
+                <CollectionView.Header>
+                    <StackLayout Padding="16,8">
+                        <Label Text="Comandas Activas" 
+                               FontSize="18" FontAttributes="Bold" 
+                               TextColor="#333" />
+                    </StackLayout>
+                </CollectionView.Header>
 
-                        <!-- Cambiar Estado -->
-                        <Button Grid.Row="1" Grid.Column="1"
-                                Text="⚙️ Estado"
-                                Command="{Binding CambiarEstadoCommand}"
-                                BackgroundColor="{AppThemeBinding Light=#9B59B6, Dark=#BB8FCE}"
-                                TextColor="White"
-                                CornerRadius="8"
-                                HeightRequest="50" />
-                    </Grid>
-                </StackLayout>
-            </Frame>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Frame BackgroundColor="White" 
+                               Padding="16" 
+                               Margin="8,4" 
+                               CornerRadius="8" 
+                               HasShadow="True">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
 
-            <!-- Comandas Activas (si las hay) -->
-            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D30}" 
-                   HasShadow="True" 
-                   CornerRadius="12" 
-                   Padding="20"
-                   IsVisible="{Binding TieneComandasActivas}">
-                <StackLayout Spacing="12">
-                    <Label Text="Comandas Activas" 
-                           FontSize="18" 
-                           FontAttributes="Bold"
-                           TextColor="{AppThemeBinding Light=#2C3E50, Dark=White}" />
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
 
-                    <CollectionView ItemsSource="{Binding ComandasActivas}"
-                                    HeightRequest="200">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="core:ComandaDto">
-                                <Grid Padding="12" 
-                                      BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#3A3A3C}"
-                                      Margin="0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    
-                                    <StackLayout Grid.Column="0">
-                                        <Label Text="{Binding NumeroComanda, StringFormat='Comanda #{0}'}" 
-                                               FontAttributes="Bold" />
-                                        <Label Text="{Binding Estado}" 
-                                               FontSize="12" 
-                                               TextColor="{Binding Estado, Converter={StaticResource EstadoColorConverter}}" />
-                                    </StackLayout>
-                                    
-                                    <Label Grid.Column="1"
-                                           Text="{Binding Total, StringFormat='{0:C}'}" 
-                                           FontAttributes="Bold"
-                                           VerticalOptions="Center" />
-                                </Grid>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </StackLayout>
-            </Frame>
+                                <Label Grid.Row="0" Grid.Column="0" 
+                                       Text="{Binding Numero, StringFormat='Comanda {0}'}" 
+                                       FontSize="16" FontAttributes="Bold" 
+                                       TextColor="#333" />
 
-            <!-- Loading y Error States -->
-            <ActivityIndicator IsVisible="{Binding IsBusy}" 
-                               IsRunning="{Binding IsBusy}"
-                               Color="{AppThemeBinding Light=#007ACC, Dark=#4FC3F7}"
-                               HeightRequest="50" />
+                                <Label Grid.Row="0" Grid.Column="1" 
+                                       Text="{Binding EstadoDescripcion}" 
+                                       FontSize="14" FontAttributes="Bold" 
+                                       TextColor="{Binding ColorEstado}" />
 
-            <Frame BackgroundColor="{AppThemeBinding Light=#FFE6E6, Dark=#4A1F1F}"
-                   BorderColor="{AppThemeBinding Light=#FF4444, Dark=#CC3333}"
-                   IsVisible="{Binding HasError}"
-                   Padding="16"
-                   CornerRadius="8">
-                <Label Text="{Binding ErrorMessage}"
-                       TextColor="{AppThemeBinding Light=#CC0000, Dark=#FF6666}"
-                       HorizontalTextAlignment="Center" />
-            </Frame>
+                                <Label Grid.Row="1" Grid.ColumnSpan="2" 
+                                       Text="{Binding Cliente}" 
+                                       FontSize="14" TextColor="#666" />
+
+                                <Label Grid.Row="2" Grid.Column="0" 
+                                       Text="{Binding Total, StringFormat='Total: {0:C}'}" 
+                                       FontSize="14" FontAttributes="Bold" 
+                                       TextColor="#28a745" />
+
+                                <Label Grid.Row="2" Grid.Column="1" 
+                                       Text="{Binding FechaHora, StringFormat='{0:HH:mm}'}" 
+                                       FontSize="12" TextColor="#666" />
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <CollectionView.EmptyView>
+                    <StackLayout Padding="16" HorizontalOptions="Center">
+                        <Label Text="No hay comandas activas para esta mesa" 
+                               FontSize="16" TextColor="#666" 
+                               HorizontalOptions="Center" />
+                    </StackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Botones de Acción -->
+        <StackLayout Grid.Row="2" 
+                     Orientation="Horizontal" 
+                     HorizontalOptions="Center" 
+                     Padding="16">
+            <Button Text="🏠 Liberar Mesa" 
+                    Command="{Binding LiberarMesaCommand}" 
+                    BackgroundColor="#dc3545" 
+                    TextColor="White" 
+                    CornerRadius="6" 
+                    Padding="16,8" 
+                    FontSize="14" 
+                    Margin="4" />
+
+            <Button Text="👥 Asignar Mesa" 
+                    Command="{Binding AsignarMesaCommand}" 
+                    BackgroundColor="#28a745" 
+                    TextColor="White" 
+                    CornerRadius="6" 
+                    Padding="16,8" 
+                    FontSize="14" 
+                    Margin="4" />
+
+            <Button Text="📝 Nueva Comanda" 
+                    Command="{Binding CrearComandaCommand}" 
+                    BackgroundColor="#007bff" 
+                    TextColor="White" 
+                    CornerRadius="6" 
+                    Padding="16,8" 
+                    FontSize="14" 
+                    Margin="4" />
         </StackLayout>
-    </ScrollView>
+    </Grid>
 </ContentPage> 

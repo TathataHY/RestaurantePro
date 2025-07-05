@@ -8,12 +8,12 @@ using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using System.Collections.ObjectModel;
 
-namespace RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels;
+namespace RestaurantePro.Mobile.Core.Features.Operations.Mesas.ViewModels;
 
 /// <summary>
 /// ViewModel para la página de detalle de mesa
 /// </summary>
-public partial class MesaDetalleViewModel : BaseViewModel, IQueryAttributable
+public partial class MesaDetalleViewModel : BaseViewModel
 {
     private readonly IMesasService _mesasService;
     private readonly IComandasService _comandasService;
@@ -46,18 +46,6 @@ public partial class MesaDetalleViewModel : BaseViewModel, IQueryAttributable
         Title = "Detalle de Mesa";
         Mesa = new MesaDto();
         ComandasActivas = new ObservableCollection<ComandaDto>();
-    }
-
-    /// <summary>
-    /// Implementación de IQueryAttributable para recibir parámetros de navegación
-    /// </summary>
-    public void ApplyQueryAttributes(IDictionary<string, object> query)
-    {
-        if (query.TryGetValue("mesaId", out var mesaIdObj) && 
-            Guid.TryParse(mesaIdObj?.ToString(), out var mesaIdParsed))
-        {
-            MesaId = mesaIdParsed;
-        }
     }
 
     /// <summary>
@@ -220,15 +208,24 @@ public partial class MesaDetalleViewModel : BaseViewModel, IQueryAttributable
     {
         try
         {
-            var confirmacion = await _dialogService.ShowConfirmAsync(
-                "Liberar Mesa", 
-                $"¿Está seguro de liberar la Mesa {Mesa.Numero}?");
+            var confirmar = await _dialogService.ShowConfirmAsync(
+                "Confirmar",
+                "¿Está seguro que desea liberar esta mesa?");
 
-            if (!confirmacion)
+            if (!confirmar) return;
+
+            var motivo = await _dialogService.ShowPromptAsync(
+                "Motivo de Liberación",
+                "Ingrese el motivo para liberar la mesa:",
+                "Confirmar",
+                "Cancelar",
+                "Finalización del servicio");
+
+            if (string.IsNullOrWhiteSpace(motivo))
                 return;
 
             IsBusy = true;
-            var result = await _mesasService.LiberarMesaAsync(MesaId, "Mesa liberada desde móvil");
+            var result = await _mesasService.LiberarMesaAsync(MesaId, motivo);
 
             if (result.Success)
             {
@@ -259,25 +256,21 @@ public partial class MesaDetalleViewModel : BaseViewModel, IQueryAttributable
     {
         try
         {
-            var opciones = new[] { "disponible", "ocupada", "reservada", "mantenimiento" };
-            var estadoSeleccionado = await _dialogService.ShowActionSheetAsync(
-                "Cambiar Estado", 
+            var nuevoEstado = await _dialogService.ShowActionSheetAsync(
+                "Cambiar Estado",
                 "Seleccione el nuevo estado:",
                 "Cancelar",
-                opciones);
+                "Disponible", "Ocupada", "Reservada", "Mantenimiento");
 
-            if (string.IsNullOrEmpty(estadoSeleccionado) || estadoSeleccionado == "Cancelar")
+            if (string.IsNullOrWhiteSpace(nuevoEstado) || nuevoEstado == "Cancelar")
                 return;
 
             IsBusy = true;
-            var result = await _mesasService.CambiarEstadoMesaAsync(
-                MesaId, 
-                estadoSeleccionado, 
-                motivo: $"Estado cambiado a {estadoSeleccionado}");
+            var result = await _mesasService.CambiarEstadoMesaAsync(MesaId, nuevoEstado);
 
             if (result.Success)
             {
-                await _dialogService.ShowAlertAsync("Éxito", "Estado actualizado correctamente");
+                await _dialogService.ShowAlertAsync("Éxito", $"Estado cambiado a {nuevoEstado}");
                 await LoadMesaAsync();
             }
             else
@@ -301,24 +294,18 @@ public partial class MesaDetalleViewModel : BaseViewModel, IQueryAttributable
     [RelayCommand]
     private async Task VerComandasAsync()
     {
-        try
+        await _navigationService.NavigateToAsync("comandas", new Dictionary<string, object>
         {
-            await _navigationService.NavigateToAsync($"comandas?mesaId={MesaId}");
-        }
-        catch (Exception ex)
-        {
-            await _dialogService.ShowAlertAsync("Error", $"Error al navegar: {ex.Message}");
-        }
+            ["mesaId"] = MesaId.ToString()
+        });
     }
 
     /// <summary>
-    /// Limpiar datos al salir
+    /// Limpiar recursos
     /// </summary>
     public void Cleanup()
     {
-        ComandasActivas.Clear();
+        ComandasActivas?.Clear();
         Mesa = new MesaDto();
-        HasError = false;
-        ErrorMessage = string.Empty;
     }
 } 

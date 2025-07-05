@@ -7,7 +7,7 @@ using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Models.ViewModels;
 
-namespace RestaurantePro.Mobile.Features.Operations.Mesas.ViewModels;
+namespace RestaurantePro.Mobile.Core.Features.Operations.Mesas.ViewModels;
 
 /// <summary>
 /// ViewModel para gestión de mesas - Funcionalidad operativa principal
@@ -206,22 +206,25 @@ public partial class MesasViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Liberar una mesa ocupada
+    /// Liberar una mesa
     /// </summary>
     [RelayCommand]
     private async Task LiberarMesaAsync(MesaDto mesa)
     {
         if (mesa == null) return;
 
-        var confirmed = await _dialogService.ShowConfirmAsync(
-            "Liberar Mesa",
+        var confirmacion = await _dialogService.ShowConfirmAsync(
+            "Confirmar",
             $"¿Está seguro que desea liberar la mesa {mesa.Numero}?");
 
-        if (!confirmed) return;
+        if (!confirmacion) return;
 
         var motivo = await _dialogService.ShowPromptAsync(
             "Motivo de Liberación",
-            "Ingrese el motivo de la liberación (opcional):");
+            "Ingrese el motivo para liberar la mesa:");
+
+        if (string.IsNullOrWhiteSpace(motivo))
+            return;
 
         IsBusy = true;
 
@@ -257,14 +260,13 @@ public partial class MesasViewModel : BaseViewModel
     {
         if (mesa == null) return;
 
-        var estados = new[] { "Disponible", "Ocupada", "Reservada", "Mantenimiento", "Fuera de servicio" };
         var nuevoEstado = await _dialogService.ShowActionSheetAsync(
-            "Seleccionar Estado",
+            "Cambiar Estado",
+            "Seleccione el nuevo estado:",
             "Cancelar",
-            null,
-            estados);
+            "Disponible", "Ocupada", "Reservada", "Mantenimiento");
 
-        if (nuevoEstado == "Cancelar" || string.IsNullOrWhiteSpace(nuevoEstado))
+        if (string.IsNullOrWhiteSpace(nuevoEstado) || nuevoEstado == "Cancelar")
             return;
 
         IsBusy = true;
@@ -294,7 +296,7 @@ public partial class MesasViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Buscar la mejor mesa para una capacidad específica
+    /// Buscar la mejor mesa disponible
     /// </summary>
     [RelayCommand]
     private async Task BuscarMejorMesaAsync()
@@ -320,27 +322,26 @@ public partial class MesasViewModel : BaseViewModel
 
             if (response.Success && response.Data != null)
             {
-                var mejorMesa = response.Data;
-                var confirmed = await _dialogService.ShowConfirmAsync(
+                var mesa = response.Data;
+                var mensaje = $"Mesa sugerida: {mesa.Numero}\nCapacidad: {mesa.Capacidad}\nUbicación: {mesa.Zona}";
+                
+                var asignar = await _dialogService.ShowConfirmAsync(
                     "Mesa Encontrada",
-                    $"Se encontró la mesa {mejorMesa.Numero} " +
-                    $"(Capacidad: {mejorMesa.Capacidad}, Zona: {mejorMesa.Zona}). " +
-                    $"¿Desea seleccionarla?");
+                    mensaje + "\n\n¿Desea asignar esta mesa?");
 
-                if (confirmed)
+                if (asignar)
                 {
-                    SelectedMesa = mejorMesa;
-                    // Scroll to the selected mesa in the UI
+                    await AsignarMesaAsync(mesa);
                 }
             }
             else
             {
-                await _dialogService.ShowAlertAsync("Sin resultados", "No se encontraron mesas disponibles con esa capacidad");
+                await _dialogService.ShowAlertAsync("Información", "No se encontró una mesa disponible con esa capacidad");
             }
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowAlertAsync("Error", $"Error en la búsqueda: {ex.Message}");
+            await _dialogService.ShowAlertAsync("Error", $"Error al buscar mesa: {ex.Message}");
         }
         finally
         {
@@ -350,10 +351,10 @@ public partial class MesasViewModel : BaseViewModel
 
     #endregion
 
-    #region Comandos de Filtrado
+    #region Comandos de Filtros
 
     /// <summary>
-    /// Aplicar filtros y recargar mesas
+    /// Aplicar filtros de búsqueda
     /// </summary>
     [RelayCommand]
     private async Task ApplyFiltersAsync()
@@ -377,36 +378,34 @@ public partial class MesasViewModel : BaseViewModel
 
     #endregion
 
-    #region Navegación
+    #region Comandos de Navegación
 
     /// <summary>
-    /// Navegar a detalles de mesa
+    /// Navegar a la página de detalle de mesa
     /// </summary>
     [RelayCommand]
     private async Task NavigateToMesaDetailAsync(MesaDto mesa)
     {
         if (mesa == null) return;
 
-        try
+        await _navigationService.NavigateToAsync("mesa-detalle", new Dictionary<string, object>
         {
-            SelectedMesa = mesa;
-            await _navigationService.NavigateToAsync($"mesa-detalle?mesaId={mesa.Id}");
-        }
-        catch (Exception ex)
-        {
-            await _dialogService.ShowAlertAsync("Error", $"Error al navegar: {ex.Message}");
-        }
+            ["mesaId"] = mesa.Id.ToString()
+        });
     }
 
     /// <summary>
-    /// Navegar a nueva comanda para la mesa
+    /// Navegar a crear nueva comanda para la mesa
     /// </summary>
     [RelayCommand]
     private async Task NavigateToNewComandaAsync(MesaDto mesa)
     {
         if (mesa == null) return;
 
-        await _navigationService.NavigateToAsync($"comanda-create?mesaId={mesa.Id}");
+        await _navigationService.NavigateToAsync("comandas", new Dictionary<string, object>
+        {
+            ["mesaId"] = mesa.Id.ToString()
+        });
     }
 
     #endregion
@@ -414,34 +413,32 @@ public partial class MesasViewModel : BaseViewModel
     #region Métodos de Utilidad
 
     /// <summary>
-    /// Obtener color de estado para UI
+    /// Obtener color basado en el estado de la mesa
     /// </summary>
     public string GetEstadoColor(string estado)
     {
         return estado?.ToLower() switch
         {
-            "disponible" => "#28a745",      // Verde
-            "ocupada" => "#dc3545",         // Rojo
-            "reservada" => "#ffc107",       // Amarillo
-            "mantenimiento" => "#6c757d",   // Gris
-            "fuera de servicio" => "#343a40", // Gris oscuro
-            _ => "#007bff"                  // Azul por defecto
+            "disponible" => "Green",
+            "ocupada" => "Red",
+            "reservada" => "Orange",
+            "mantenimiento" => "Gray",
+            _ => "Black"
         };
     }
 
     /// <summary>
-    /// Obtener icono de estado para UI
+    /// Obtener icono basado en el estado de la mesa
     /// </summary>
     public string GetEstadoIcon(string estado)
     {
         return estado?.ToLower() switch
         {
             "disponible" => "✓",
-            "ocupada" => "👥",
-            "reservada" => "📅",
+            "ocupada" => "●",
+            "reservada" => "⏰",
             "mantenimiento" => "🔧",
-            "fuera de servicio" => "⚠️",
-            _ => "❓"
+            _ => "?"
         };
     }
 

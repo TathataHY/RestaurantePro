@@ -17,6 +17,10 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
+    <ContentPage.BindingContext>
+        <viewmodels:ProductosViewModel />
+    </ContentPage.BindingContext>
+
     <Grid>
         <ScrollView>
             <StackLayout Padding="16" Spacing="16">
