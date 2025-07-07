@@ -58,4 +58,40 @@ public class MockNavigationService : NavigationServiceBase
     }
 }
 
+/// <summary>
+/// Implementación real del servicio de navegación para producción
+/// </summary>
+public class NavigationService : NavigationServiceBase
+{
+    public override async Task NavigateToAsync(string route)
+    {
+        // TODO: Implementar navegación real con MAUI
+        await Task.CompletedTask;
+    }
+
+    public override async Task NavigateToAsync(string route, IDictionary<string, object> parameters)
+    {
+        // TODO: Implementar navegación real con MAUI
+        await Task.CompletedTask;
+    }
+
+    public override async Task GoBackAsync()
+    {
+        // TODO: Implementar navegación real con MAUI
+        await Task.CompletedTask;
+    }
+
+    public override async Task GoBackAsync(IDictionary<string, object> parameters)
+    {
+        // TODO: Implementar navegación real con MAUI
+        await Task.CompletedTask;
+    }
+
+    public override async Task GoToRootAsync()
+    {
+        // TODO: Implementar navegación real con MAUI
+        await Task.CompletedTask;
+    }
+}
+
  

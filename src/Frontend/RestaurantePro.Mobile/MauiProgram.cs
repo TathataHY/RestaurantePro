@@ -2,13 +2,6 @@
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using RestaurantePro.Mobile.Config;
-using RestaurantePro.Mobile.Core.Services.Api;
-using RestaurantePro.Mobile.Core.Services.Authentication;
-using RestaurantePro.Mobile.Core.Services.Dialog;
-using RestaurantePro.Mobile.Core.Services.Navigation;
-using RestaurantePro.Mobile.Core.Services.Mesas;
-using RestaurantePro.Mobile.Core.Services.Comandas;
-using RestaurantePro.Mobile.Core.Services.Productos;
 using RestaurantePro.Mobile.Core.Features.Authentication.ViewModels;
 using RestaurantePro.Mobile.Features.Authentication.Pages;
 using RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
@@ -35,7 +28,7 @@ public static class MauiProgram
 			});
 
 		// Configurar HttpClient con URL base del backend
-		builder.Services.AddHttpClient<IApiService, ApiService>(client =>
+		builder.Services.AddHttpClient<RestaurantePro.Mobile.Core.Services.Api.IApiService, RestaurantePro.Mobile.Core.Services.Api.ApiService>(client =>
 		{
 			// URL del backend RestaurantePro
 			client.BaseAddress = new Uri("https://localhost:7071/"); // Ajustar según tu backend
@@ -43,7 +36,7 @@ public static class MauiProgram
 		});
 
 		// Configurar HttpClient para AuthService
-		builder.Services.AddHttpClient<AuthService>(client =>
+		builder.Services.AddHttpClient<RestaurantePro.Mobile.Core.Services.Authentication.AuthService>(client =>
 		{
 			client.BaseAddress = new Uri("https://localhost:7071/"); // Ajustar según tu backend
 			client.Timeout = TimeSpan.FromSeconds(30);
@@ -55,11 +48,6 @@ public static class MauiProgram
 		// Registrar páginas y ViewModels - V1
 		RegisterViewsAndViewModelsV1(builder.Services);
 
-		// ✅ Servicios Operativos
-		builder.Services.AddScoped<RestaurantePro.Mobile.Core.Services.Mesas.IMesasService, RestaurantePro.Mobile.Core.Services.Mesas.MesasService>();
-		builder.Services.AddScoped<RestaurantePro.Mobile.Core.Services.Comandas.IComandasService, RestaurantePro.Mobile.Core.Services.Comandas.ComandasService>();
-		builder.Services.AddScoped<IProductosService, ProductosService>();
-
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif
@@ -69,16 +57,16 @@ public static class MauiProgram
 
 	private static void RegisterCoreServicesV1(IServiceCollection services)
 	{
-		// Servicios fundamentales V1
-		services.AddSingleton<INavigationService, NavigationService>();
-		services.AddSingleton<IDialogService, DialogService>();
-		services.AddSingleton<IAuthService, AuthService>();
-		services.AddSingleton<IApiService, ApiService>();
+		// Servicios fundamentales V1 - Solo desde Core
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Navigation.INavigationService, RestaurantePro.Mobile.Core.Services.Navigation.NavigationService>();
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Dialog.IDialogService, RestaurantePro.Mobile.Core.Services.Dialog.DialogService>();
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService, RestaurantePro.Mobile.Core.Services.Authentication.AuthService>();
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Api.IApiService, RestaurantePro.Mobile.Core.Services.Api.ApiService>();
 		
-		// Servicios de dominio V1
-		services.AddSingleton<IMesasService, MesasService>();
-		services.AddSingleton<IComandasService, ComandasService>();
-		services.AddSingleton<IProductosService, ProductosService>();
+		// Servicios de dominio V1 - Solo desde Core
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Mesas.IMesasService, RestaurantePro.Mobile.Core.Services.Mesas.MesasService>();
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Comandas.IComandasService, RestaurantePro.Mobile.Core.Services.Comandas.ComandasService>();
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Productos.IProductosService, RestaurantePro.Mobile.Core.Services.Productos.ProductosService>();
 	}
 
 	private static void RegisterViewsAndViewModelsV1(IServiceCollection services)
@@ -93,7 +81,7 @@ public static class MauiProgram
 		// Dashboard - V1 Fundamental
 		services.AddTransient<DashboardPage>();
 
-		// ✅ ViewModels (ahora desde Mobile.Core)
+		// ViewModels desde Mobile.Core
 		services.AddTransient<MesasViewModel>();
 		services.AddTransient<MesaDetalleViewModel>();
 		services.AddTransient<ComandasViewModel>();
@@ -101,9 +89,7 @@ public static class MauiProgram
 		services.AddTransient<ProductosViewModel>();
 		services.AddTransient<ProductoDetalleViewModel>();
 
-		// ✅ Páginas
-		services.AddTransient<LoginPage>();
-		services.AddTransient<DashboardPage>();
+		// Páginas
 		services.AddTransient<MesasPage>();
 		services.AddTransient<MesaDetallePage>();
 		services.AddTransient<ComandasPage>();

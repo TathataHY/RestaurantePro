@@ -57,4 +57,46 @@ public class MockDialogService : IDialogService
     }
 }
 
+/// <summary>
+/// Implementación real del servicio de diálogos para producción
+/// </summary>
+public class DialogService : IDialogService
+{
+    public async Task ShowAlertAsync(string title, string message, string cancel = "OK")
+    {
+        // TODO: Implementar alerta real con MAUI
+        await Task.CompletedTask;
+    }
+
+    public async Task<bool> ShowConfirmAsync(string title, string message, string accept = "Sí", string cancel = "No")
+    {
+        // TODO: Implementar confirmación real con MAUI
+        return true;
+    }
+
+    public async Task ShowErrorAsync(string message)
+    {
+        // TODO: Implementar error real con MAUI
+        await Task.CompletedTask;
+    }
+
+    public async Task ShowSuccessAsync(string message)
+    {
+        // TODO: Implementar éxito real con MAUI
+        await Task.CompletedTask;
+    }
+
+    public async Task<string?> ShowActionSheetAsync(string title, string message, string cancel, params string[] buttons)
+    {
+        // TODO: Implementar action sheet real con MAUI
+        return cancel;
+    }
+
+    public async Task<string?> ShowPromptAsync(string title, string message, string accept = "OK", string cancel = "Cancelar", string placeholder = "", int maxLength = -1, string? initialValue = null)
+    {
+        // TODO: Implementar prompt real con MAUI
+        return null;
+    }
+}
+
  
