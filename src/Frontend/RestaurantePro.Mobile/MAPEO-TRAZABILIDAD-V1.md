@@ -14,8 +14,8 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 ## 📊 **RESUMEN GENERAL V1 - ANÁLISIS COMPLETO DICIEMBRE 2024**
 - **Total Funcionalidades V1**: 10 componentes críticos identificados
 - **✅ Implementadas**: **10/10 (100%)** 🎉
-- **✅ Con Pruebas**: **1/6 (17%)** ⚠️
-- **🎯 Estado General**: **V1 FUNCIONAL - FASE 3 PENDIENTE** 🔄
+- **✅ Con Pruebas**: **3/7 (43%)** ⚠️
+- **🎯 Estado General**: **V1 FUNCIONAL - FASE 3 EN PROGRESO** 🔄
 
 ### **🔥 ACTUALIZACIÓN CRÍTICA - DICIEMBRE 2024:**
 - **✅ Tests Unitarios**: **45/45 pasando** (solo servicios)
@@ -214,13 +214,13 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 ### **B. Tests Unitarios Faltantes** ⚠️ **FASE 3 PENDIENTE**
 | ViewModel | Tests Implementados | Tests Requeridos | Estado |
 |-----------|-------------------|------------------|---------|
-| **LoginViewModel** | ✅ 24 tests | ✅ Completo | ✅ |
-| **MesasViewModel** | ✅ 32 tests | ✅ Completo | ✅ **COMPLETO** |
-| **ComandasViewModel** | ❌ 0 tests | ~20 tests | ❌ **FASE 3** |
-| **ProductosViewModel** | ❌ 0 tests | ~18 tests | ❌ **FASE 3** |
-| **MesaDetalleViewModel** | ❌ 0 tests | ~12 tests | ❌ **FASE 3** |
-| **ComandaDetalleViewModel** | ❌ 0 tests | ~15 tests | ❌ **FASE 3** |
-| **ProductoDetalleViewModel** | ❌ 0 tests | ~12 tests | ❌ **FASE 3** |
+| **LoginViewModel** | ✅ 24 tests | ✅ Completo | ✅ COMPLETO |
+| **MesasViewModel** | ✅ 32 tests | ✅ Completo | ✅ COMPLETO |
+| **ComandasViewModel** | ✅ 40 tests | ✅ Completo | ✅ COMPLETO |
+| **ProductosViewModel** | ❌ 0 tests | ~18 tests | ❌ FASE 3 |
+| **MesaDetalleViewModel** | ❌ 0 tests | ~12 tests | ❌ FASE 3 |
+| **ComandaDetalleViewModel** | ❌ 0 tests | ~15 tests | ❌ FASE 3 |
+| **ProductoDetalleViewModel** | ❌ 0 tests | ~12 tests | ❌ FASE 3 |
 
 ### **C. Páginas de Detalle Faltantes** ✅ **FASE 2 COMPLETADA**
 | Página Principal | Página de Detalle | Estado | Navegación |
