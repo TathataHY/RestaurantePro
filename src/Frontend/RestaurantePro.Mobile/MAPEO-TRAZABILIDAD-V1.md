@@ -170,7 +170,7 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 |---------------|---------------|---------|---------|
 | **MesasViewModel** | ✅ | ✅ | ✅ **COMPLETO** |
 | **MesasPage** | ✅ | N/A | ✅ UI moderna con grid |
-| **MesaDetalleViewModel** | ✅ | ⬜ | ⚠️ **SIN TESTS** |
+| **MesaDetalleViewModel** | ✅ | ✅ | ✅ **22 PRUEBAS PASANDO** |
 | **MesaDetallePage** | ✅ | N/A | ✅ **Navegación con parámetros** |
 | Asignar/liberar mesas | ✅ | ⬜ | ⚠️ ViewModel sin tests |
 | Estadísticas de ocupación | ✅ | ⬜ | ⚠️ ViewModel sin tests |
@@ -218,7 +218,7 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 | **MesasViewModel** | ✅ 32 tests | ✅ Completo | ✅ COMPLETO |
 | **ComandasViewModel** | ✅ 40 tests | ✅ Completo | ✅ COMPLETO |
 | **ProductosViewModel** | ✅ 25 tests | ✅ Completo | ✅ COMPLETO |
-| **MesaDetalleViewModel** | ❌ 0 tests | ~12 tests | ❌ FASE 3 |
+| **MesaDetalleViewModel** | ✅ 22 tests | ✅ Completo | ✅ COMPLETO |
 | **ComandaDetalleViewModel** | ❌ 0 tests | ~15 tests | ❌ FASE 3 |
 | **ProductoDetalleViewModel** | ❌ 0 tests | ~12 tests | ❌ FASE 3 |
 
@@ -240,7 +240,7 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 | Framework XUnit + Moq + FluentAssertions | ✅ | Configurado |
 | AutoFixture para datos de prueba | ✅ | Funcional |
 | Tests de Servicios | ✅ | **7/7 servicios** completos |
-| Tests de ViewModels | ⚠️ | **1/7 ViewModels** testados |
+| Tests de ViewModels | ⚠️ | **2/7 ViewModels** testados |
 
 ### **B. Pruebas de Integración** ✅ **COMPLETAS**
 | Proyecto | Estado | Cobertura |
@@ -307,13 +307,13 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 🎯 Servicios Básicos:       7/7   (100%) ✅
 🎯 Modelos Fundamentales:   15/15 (100%) ✅
 🎯 Funcionalidades Operativas: 10/10 (100%) ✅
-🎯 ViewModels con Tests:    1/7   (14%) ⚠️
+🎯 ViewModels con Tests:    2/7   (29%) ⚠️
 🎯 Páginas de Detalle:      3/3   (100%) ✅
 🎯 Navegación Completa:     3/3   (100%) ✅
 🎯 Arquitectura Correcta:   1/1   (100%) ✅
 
 🎯 PROGRESO ACTUAL:         85% V1 FUNCIONAL
-🔥 TESTS ACTUALES:          45 tests pasando
+🔥 TESTS ACTUALES:          67 tests pasando
 📈 COBERTURA ACTUAL:        Solo servicios
 🏆 RESULTADO:              V1 FUNCIONAL - FASE 3 PENDIENTE
 ```
