@@ -48,6 +48,17 @@ public partial class MesasViewModel : BaseViewModel
 
     #region Constructor
 
+    /// <summary>
+    /// Constructor sin parámetros requerido por XAML
+    /// </summary>
+    public MesasViewModel()
+    {
+        Title = "Gestión de Mesas";
+    }
+
+    /// <summary>
+    /// Constructor principal con dependencias
+    /// </summary>
     public MesasViewModel(
         IMesasService mesasService,
         IDialogService dialogService,

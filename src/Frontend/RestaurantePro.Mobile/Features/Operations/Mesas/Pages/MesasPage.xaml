@@ -7,9 +7,7 @@
              x:DataType="vm:MesasViewModel"
              Title="{Binding Title}">
 
-    <ContentPage.BindingContext>
-        <vm:MesasViewModel />
-    </ContentPage.BindingContext>
+    <!-- El BindingContext se establecerá desde el code-behind -->
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -204,7 +202,7 @@
                                              Spacing="8" 
                                              Margin="0,12,0,0">
                                     <Button Text="👥 Asignar" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MesasViewModel}}, Path=AsignarMesaCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MesasViewModel}}, Path=AsignarMesaCommand}"
                                             CommandParameter="{Binding .}"
                                             BackgroundColor="#28a745" 
                                             TextColor="White" 
@@ -213,7 +211,7 @@
                                             Padding="12,6" />
 
                                     <Button Text="🚪 Liberar" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MesasViewModel}}, Path=LiberarMesaCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MesasViewModel}}, Path=LiberarMesaCommand}"
                                             CommandParameter="{Binding .}"
                                             BackgroundColor="#dc3545" 
                                             TextColor="White" 
@@ -222,7 +220,7 @@
                                             Padding="12,6" />
 
                                     <Button Text="⚙️ Estado" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MesasViewModel}}, Path=CambiarEstadoMesaCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MesasViewModel}}, Path=CambiarEstadoMesaCommand}"
                                             CommandParameter="{Binding .}"
                                             BackgroundColor="#6c757d" 
                                             TextColor="White" 
@@ -234,7 +232,7 @@
 
                             <!-- Gesture Recognizer para Navegación -->
                             <Frame.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type viewModels:MesasViewModel}}, Path=NavigateToMesaDetailCommand}"
+                                <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MesasViewModel}}, Path=NavigateToMesaDetailCommand}"
                                                       CommandParameter="{Binding .}" />
                             </Frame.GestureRecognizers>
                         </Frame>
