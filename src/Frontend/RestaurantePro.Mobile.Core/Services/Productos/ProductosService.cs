@@ -1,5 +1,6 @@
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 
 namespace RestaurantePro.Mobile.Core.Services.Productos;
 
@@ -9,11 +10,13 @@ namespace RestaurantePro.Mobile.Core.Services.Productos;
 public class ProductosService : IProductosService
 {
     private readonly IApiService _apiService;
+    private readonly IAuthService _authService;
     private const string BaseEndpoint = "api/productos";
 
-    public ProductosService(IApiService apiService)
+    public ProductosService(IApiService apiService, IAuthService authService)
     {
         _apiService = apiService;
+        _authService = authService;
     }
 
     /// <summary>
@@ -34,7 +37,8 @@ public class ProductosService : IProductosService
                 queryParams += $"&filtro={Uri.EscapeDataString(filtro)}";
             }
 
-            return await _apiService.GetAsync<List<ProductoDto>>($"{BaseEndpoint}/paginados{queryParams}");
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<List<ProductoDto>>($"{BaseEndpoint}/paginados{queryParams}", token);
         }
         catch (Exception)
         {
@@ -54,7 +58,8 @@ public class ProductosService : IProductosService
                 return ApiResponse<ProductoDto>.ErrorResponse("El ID del producto es requerido", "El ID del producto es requerido");
             }
 
-            return await _apiService.GetAsync<ProductoDto>($"{BaseEndpoint}/{productoId}");
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<ProductoDto>($"{BaseEndpoint}/{productoId}", token);
         }
         catch (Exception)
         {
@@ -76,7 +81,8 @@ public class ProductosService : IProductosService
                 return ApiResponse<List<ProductoDto>>.ErrorResponse("El ID de la categoría es requerido", "El ID de la categoría es requerido");
             }
 
-            return await _apiService.GetAsync<List<ProductoDto>>($"{BaseEndpoint}/categoria/{categoriaId}?soloActivos={soloActivos}");
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<List<ProductoDto>>($"{BaseEndpoint}/categoria/{categoriaId}?soloActivos={soloActivos}", token);
         }
         catch (Exception)
         {
@@ -96,7 +102,8 @@ public class ProductosService : IProductosService
                 return ApiResponse<DisponibilidadProductoDto>.ErrorResponse("El ID del producto es requerido", "El ID del producto es requerido");
             }
 
-            return await _apiService.GetAsync<DisponibilidadProductoDto>($"{BaseEndpoint}/{productoId}/disponibilidad");
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<DisponibilidadProductoDto>($"{BaseEndpoint}/{productoId}/disponibilidad", token);
         }
         catch (Exception)
         {
@@ -119,7 +126,8 @@ public class ProductosService : IProductosService
             }
 
             var encodedText = Uri.EscapeDataString(textoBusqueda);
-            return await _apiService.GetAsync<List<ProductoDto>>($"{BaseEndpoint}/buscar?texto={encodedText}&soloActivos={soloActivos}");
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<List<ProductoDto>>($"{BaseEndpoint}/buscar?texto={encodedText}&soloActivos={soloActivos}", token);
         }
         catch (Exception)
         {
@@ -139,7 +147,8 @@ public class ProductosService : IProductosService
                 return ApiResponse<List<ProductoDto>>.ErrorResponse("El límite debe ser mayor a 0", "El límite debe ser mayor a 0");
             }
 
-            return await _apiService.GetAsync<List<ProductoDto>>($"{BaseEndpoint}/populares?limite={limite}");
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<List<ProductoDto>>($"{BaseEndpoint}/populares?limite={limite}", token);
         }
         catch (Exception)
         {
@@ -161,7 +170,8 @@ public class ProductosService : IProductosService
                 endpoint += $"?categoriaId={categoriaId.Value}";
             }
 
-            return await _apiService.GetAsync<List<ProductoDto>>(endpoint);
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<List<ProductoDto>>(endpoint, token);
         }
         catch (Exception)
         {
@@ -176,7 +186,8 @@ public class ProductosService : IProductosService
     {
         try
         {
-            return await _apiService.GetAsync<List<CategoriaProductoDto>>("api/categorias");
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<List<CategoriaProductoDto>>("api/categorias", token);
         }
         catch (Exception)
         {

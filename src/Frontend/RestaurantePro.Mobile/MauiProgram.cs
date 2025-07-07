@@ -11,6 +11,8 @@ using RestaurantePro.Mobile.Features.Operations.Productos.Pages;
 using RestaurantePro.Mobile.Core.Features.Operations.Mesas.ViewModels;
 using RestaurantePro.Mobile.Features.Operations.Mesas.Pages;
 using RestaurantePro.Mobile.UI.Pages;
+using System;
+using System.Net.Http.Headers;
 
 namespace RestaurantePro.Mobile;
 
@@ -27,19 +29,27 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
-		// Configurar HttpClient con URL base del backend
+		// Configurar HttpClient con URL base del backend y autenticación básica
 		builder.Services.AddHttpClient<RestaurantePro.Mobile.Core.Services.Api.IApiService, RestaurantePro.Mobile.Core.Services.Api.ApiService>(client =>
 		{
-			// URL del backend RestaurantePro
-			client.BaseAddress = new Uri("https://localhost:7071/"); // Ajustar según tu backend
-			client.Timeout = TimeSpan.FromSeconds(30);
+			// URL del backend RestaurantePro (cambiar a tu URL de hosting)
+			client.BaseAddress = new Uri(ApiConfig.BaseUrl);
+			client.Timeout = ApiConfig.RequestTimeout;
+			
+			// Configurar autenticación básica para el hosting
+			var credentials = ApiConfig.HostingCredentials.GetEncodedCredentials();
+			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
 		});
 
 		// Configurar HttpClient para AuthService
 		builder.Services.AddHttpClient<RestaurantePro.Mobile.Core.Services.Authentication.AuthService>(client =>
 		{
-			client.BaseAddress = new Uri("https://localhost:7071/"); // Ajustar según tu backend
-			client.Timeout = TimeSpan.FromSeconds(30);
+			client.BaseAddress = new Uri(ApiConfig.BaseUrl);
+			client.Timeout = ApiConfig.RequestTimeout;
+			
+			// Configurar autenticación básica para el hosting
+			var credentials = ApiConfig.HostingCredentials.GetEncodedCredentials();
+			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
 		});
 
 		// Registrar servicios fundamentales - V1
@@ -64,9 +74,18 @@ public static class MauiProgram
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Api.IApiService, RestaurantePro.Mobile.Core.Services.Api.ApiService>();
 		
 		// Servicios de dominio V1 - Solo desde Core
-		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Mesas.IMesasService, RestaurantePro.Mobile.Core.Services.Mesas.MesasService>();
-		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Comandas.IComandasService, RestaurantePro.Mobile.Core.Services.Comandas.ComandasService>();
-		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Productos.IProductosService, RestaurantePro.Mobile.Core.Services.Productos.ProductosService>();
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Mesas.IMesasService>(sp =>
+			new RestaurantePro.Mobile.Core.Services.Mesas.MesasService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Comandas.IComandasService>(sp =>
+			new RestaurantePro.Mobile.Core.Services.Comandas.ComandasService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Productos.IProductosService>(sp =>
+			new RestaurantePro.Mobile.Core.Services.Productos.ProductosService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
 	}
 
 	private static void RegisterViewsAndViewModelsV1(IServiceCollection services)

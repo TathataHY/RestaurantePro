@@ -1,5 +1,6 @@
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 using System.Text.Json;
 
 namespace RestaurantePro.Mobile.Core.Services.Comandas;
@@ -10,11 +11,13 @@ namespace RestaurantePro.Mobile.Core.Services.Comandas;
 public class ComandasService : IComandasService
 {
     private readonly IApiService _apiService;
+    private readonly IAuthService _authService;
     private const string BaseEndpoint = "api/comandas";
 
-    public ComandasService(IApiService apiService)
+    public ComandasService(IApiService apiService, IAuthService authService)
     {
         _apiService = apiService;
+        _authService = authService;
     }
 
     /// <summary>
@@ -24,7 +27,8 @@ public class ComandasService : IComandasService
     {
         try
         {
-            return await _apiService.GetAsync<List<ComandaDto>>($"{BaseEndpoint}/activas");
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<List<ComandaDto>>($"{BaseEndpoint}/activas", token);
         }
         catch (Exception ex)
         {
@@ -39,7 +43,8 @@ public class ComandasService : IComandasService
     {
         try
         {
-            return await _apiService.GetAsync<List<ComandaDto>>($"{BaseEndpoint}/mesa/{mesaId}");
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<List<ComandaDto>>($"{BaseEndpoint}/mesa/{mesaId}", token);
         }
         catch (Exception ex)
         {
@@ -54,7 +59,8 @@ public class ComandasService : IComandasService
     {
         try
         {
-            return await _apiService.GetAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}");
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}", token);
         }
         catch (Exception ex)
         {
@@ -73,8 +79,8 @@ public class ComandasService : IComandasService
             {
                 return ApiResponse<ComandaDto>.ErrorResponse("La mesa es requerida", "La mesa es requerida");
             }
-
-            return await _apiService.PostAsync<ComandaDto>(BaseEndpoint, request);
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.PostAsync<ComandaDto>(BaseEndpoint, request, token);
         }
         catch (Exception ex)
         {
@@ -98,8 +104,8 @@ public class ComandasService : IComandasService
             {
                 return ApiResponse<ComandaDto>.ErrorResponse("Se requiere al menos un producto", "Se requiere al menos un producto");
             }
-
-            return await _apiService.PostAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/productos", productos);
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.PostAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/productos", productos, token);
         }
         catch (Exception ex)
         {
@@ -125,7 +131,8 @@ public class ComandasService : IComandasService
             }
 
             var request = new { ProductoId = productoId, Cantidad = nuevaCantidad };
-            return await _apiService.PutAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/productos/{productoId}/cantidad", request);
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.PutAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/productos/{productoId}/cantidad", request, token);
         }
         catch (Exception ex)
         {
@@ -144,9 +151,8 @@ public class ComandasService : IComandasService
             {
                 return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda y producto son requeridos", "ID de comanda y producto son requeridos");
             }
-
-            // Usar DeleteAsync sin tipo genérico ya que es void
-            await _apiService.DeleteAsync($"{BaseEndpoint}/{comandaId}/productos/{productoId}");
+            var token = await _authService.GetTokenAsync();
+            await _apiService.DeleteAsync($"{BaseEndpoint}/{comandaId}/productos/{productoId}", token);
             return ApiResponse<ComandaDto>.SuccessResponse(null!, "Producto removido exitosamente");
         }
         catch (Exception ex)
@@ -173,7 +179,8 @@ public class ComandasService : IComandasService
             }
 
             var request = new { Estado = nuevoEstado, Observaciones = observaciones };
-            return await _apiService.PutAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/estado", request);
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.PutAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/estado", request, token);
         }
         catch (Exception ex)
         {
@@ -199,7 +206,8 @@ public class ComandasService : IComandasService
             }
 
             var request = new { MetodoPago = metodoPago, Observaciones = observaciones };
-            return await _apiService.PostAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/finalizar", request);
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.PostAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/finalizar", request, token);
         }
         catch (Exception ex)
         {
@@ -225,7 +233,8 @@ public class ComandasService : IComandasService
             }
 
             var request = new { Motivo = motivo };
-            return await _apiService.PostAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/cancelar", request);
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.PostAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/cancelar", request, token);
         }
         catch (Exception ex)
         {
@@ -240,7 +249,8 @@ public class ComandasService : IComandasService
     {
         try
         {
-            return await _apiService.GetAsync<EstadisticasComandasDto>($"{BaseEndpoint}/estadisticas");
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<EstadisticasComandasDto>($"{BaseEndpoint}/estadisticas", token);
         }
         catch (Exception ex)
         {
@@ -278,8 +288,8 @@ public class ComandasService : IComandasService
                 queryParams.Add($"clienteNombre={Uri.EscapeDataString(clienteNombre)}");
 
             var queryString = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
-            
-            return await _apiService.GetAsync<List<ComandaDto>>($"{BaseEndpoint}/buscar{queryString}");
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<List<ComandaDto>>($"{BaseEndpoint}/buscar{queryString}", token);
         }
         catch (Exception ex)
         {

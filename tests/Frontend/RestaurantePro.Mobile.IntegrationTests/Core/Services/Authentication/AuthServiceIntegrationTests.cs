@@ -199,7 +199,7 @@ public class ApiService : IApiService
         _logger = logger;
     }
 
-    public async Task<ApiResponse<T>> GetAsync<T>(string endpoint)
+    public async Task<ApiResponse<T>> GetAsync<T>(string endpoint, string? token = null)
     {
         try
         {
@@ -228,7 +228,7 @@ public class ApiService : IApiService
         }
     }
 
-    public async Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data)
+    public async Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data, string? token = null)
     {
         try
         {
@@ -274,7 +274,7 @@ public class ApiService : IApiService
         }
     }
 
-    public async Task<ApiResponse<T>> PutAsync<T>(string endpoint, object data)
+    public async Task<ApiResponse<T>> PutAsync<T>(string endpoint, object data, string? token = null)
     {
         try
         {
@@ -306,7 +306,7 @@ public class ApiService : IApiService
         }
     }
 
-    public async Task<ApiResponse<bool>> DeleteAsync(string endpoint)
+    public async Task<ApiResponse<bool>> DeleteAsync(string endpoint, string? token = null)
     {
         try
         {

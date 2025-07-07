@@ -1,5 +1,6 @@
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 using System.Text.Json;
 
 namespace RestaurantePro.Mobile.Core.Services.Mesas;
@@ -10,11 +11,13 @@ namespace RestaurantePro.Mobile.Core.Services.Mesas;
 public class MesasService : IMesasService
 {
     private readonly IApiService _apiService;
+    private readonly IAuthService _authService;
     private const string BasePath = "api/operaciones/mesas";
 
-    public MesasService(IApiService apiService)
+    public MesasService(IApiService apiService, IAuthService authService)
     {
         _apiService = apiService;
+        _authService = authService;
     }
 
     /// <summary>
@@ -38,8 +41,8 @@ public class MesasService : IMesasService
 
         var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
         var endpoint = $"{BasePath}{query}";
-
-        return await _apiService.GetAsync<List<MesaDto>>(endpoint);
+        var token = await _authService.GetTokenAsync();
+        return await _apiService.GetAsync<List<MesaDto>>(endpoint, token);
     }
 
     /// <summary>
@@ -48,7 +51,8 @@ public class MesasService : IMesasService
     public async Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id)
     {
         var endpoint = $"{BasePath}/{id}";
-        return await _apiService.GetAsync<MesaDto>(endpoint);
+        var token = await _authService.GetTokenAsync();
+        return await _apiService.GetAsync<MesaDto>(endpoint, token);
     }
 
     /// <summary>
@@ -68,8 +72,8 @@ public class MesasService : IMesasService
 
         var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
         var endpoint = $"{BasePath}/disponibles{query}";
-
-        return await _apiService.GetAsync<List<MesaDto>>(endpoint);
+        var token = await _authService.GetTokenAsync();
+        return await _apiService.GetAsync<List<MesaDto>>(endpoint, token);
     }
 
     /// <summary>
@@ -78,7 +82,8 @@ public class MesasService : IMesasService
     public async Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync()
     {
         var endpoint = $"{BasePath}/estado-ocupacion";
-        return await _apiService.GetAsync<EstadoMesasDto>(endpoint);
+        var token = await _authService.GetTokenAsync();
+        return await _apiService.GetAsync<EstadoMesasDto>(endpoint, token);
     }
 
     /// <summary>
@@ -99,7 +104,8 @@ public class MesasService : IMesasService
         };
 
         var endpoint = $"{BasePath}/{mesaId}/asignar";
-        return await _apiService.PostAsync<object>(endpoint, request);
+        var token = await _authService.GetTokenAsync();
+        return await _apiService.PostAsync<object>(endpoint, request, token);
     }
 
     /// <summary>
@@ -118,7 +124,8 @@ public class MesasService : IMesasService
         };
 
         var endpoint = $"{BasePath}/{mesaId}/liberar";
-        return await _apiService.PostAsync<MesaDto>(endpoint, request);
+        var token = await _authService.GetTokenAsync();
+        return await _apiService.PostAsync<MesaDto>(endpoint, request, token);
     }
 
     /// <summary>
@@ -137,7 +144,8 @@ public class MesasService : IMesasService
         };
 
         var endpoint = $"{BasePath}/{mesaId}/estado";
-        return await _apiService.PutAsync<MesaDto>(endpoint, request);
+        var token = await _authService.GetTokenAsync();
+        return await _apiService.PutAsync<MesaDto>(endpoint, request, token);
     }
 
     /// <summary>
@@ -157,7 +165,7 @@ public class MesasService : IMesasService
 
         var query = "?" + string.Join("&", queryParams);
         var endpoint = $"{BasePath}/buscar-mejor{query}";
-
-        return await _apiService.GetAsync<MesaDto>(endpoint);
+        var token = await _authService.GetTokenAsync();
+        return await _apiService.GetAsync<MesaDto>(endpoint, token);
     }
 } 
