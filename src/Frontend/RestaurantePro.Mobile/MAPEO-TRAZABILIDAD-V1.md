@@ -168,7 +168,7 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 ### **C. Gestión de Mesas (COMPLETO)**
 | Funcionalidad | Implementación | Pruebas | Estado |
 |---------------|---------------|---------|---------|
-| **MesasViewModel** | ✅ | ⬜ | ⚠️ **SIN TESTS** |
+| **MesasViewModel** | ✅ | ✅ | ✅ **COMPLETO** |
 | **MesasPage** | ✅ | N/A | ✅ UI moderna con grid |
 | **MesaDetalleViewModel** | ✅ | ⬜ | ⚠️ **SIN TESTS** |
 | **MesaDetallePage** | ✅ | N/A | ✅ **Navegación con parámetros** |
@@ -215,7 +215,7 @@ Este documento mapea los componentes y funcionalidades implementadas en la aplic
 | ViewModel | Tests Implementados | Tests Requeridos | Estado |
 |-----------|-------------------|------------------|---------|
 | **LoginViewModel** | ✅ 24 tests | ✅ Completo | ✅ |
-| **MesasViewModel** | ❌ 0 tests | ~15 tests | ❌ **FASE 3** |
+| **MesasViewModel** | ✅ 32 tests | ✅ Completo | ✅ **COMPLETO** |
 | **ComandasViewModel** | ❌ 0 tests | ~20 tests | ❌ **FASE 3** |
 | **ProductosViewModel** | ❌ 0 tests | ~18 tests | ❌ **FASE 3** |
 | **MesaDetalleViewModel** | ❌ 0 tests | ~12 tests | ❌ **FASE 3** |

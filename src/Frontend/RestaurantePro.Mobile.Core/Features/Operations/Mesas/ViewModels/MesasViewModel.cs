@@ -95,13 +95,13 @@ public partial class MesasViewModel : BaseViewModel
             }
             else
             {
-                ErrorMessage = response.Message ?? "Error al cargar las mesas";
+                await ShowErrorAsync(response.Message ?? "Error al cargar las mesas");
                 await _dialogService.ShowAlertAsync("Error", ErrorMessage);
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Error inesperado: {ex.Message}";
+            await ShowErrorAsync($"Error inesperado: {ex.Message}");
             await _dialogService.ShowAlertAsync("Error", ErrorMessage);
         }
         finally
