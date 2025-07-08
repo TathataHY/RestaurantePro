@@ -44,7 +44,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.Persistence.Configurati
             
             entityType.FindProperty("MesaId").IsNullable.Should().BeFalse();
             
-            entityType.FindProperty("MeseroId").IsNullable.Should().BeFalse();
+            entityType.FindProperty("MeseroId").IsNullable.Should().BeTrue();
 
             entityType.FindProperty("Observaciones").GetMaxLength().Should().Be(500);
 

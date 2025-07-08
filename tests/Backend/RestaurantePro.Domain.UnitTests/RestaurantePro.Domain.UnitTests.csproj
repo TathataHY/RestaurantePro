@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Backend\RestaurantePro.Domain\RestaurantePro.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Backend\RestaurantePro.Domain\RestaurantePro.Domain.csproj" />
   </ItemGroup>
 
 </Project> 

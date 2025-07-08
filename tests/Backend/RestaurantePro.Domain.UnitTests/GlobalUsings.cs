@@ -218,5 +218,9 @@ global using RestaurantePro.Domain.Operaciones.EventHandlers;
 global using static RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda;
 global using static RestaurantePro.Domain.Operaciones.Comandas.Enums.CanalOrden;
 
-// Alias para Result para evitar errores de tipado
-global using r = RestaurantePro.Domain.Core.SharedKernel.Results.Result;
+// Enums específicos para evitar errores de compilación
+global using static RestaurantePro.Domain.Comercial.Clientes.Enums.NivelFidelizacion;
+global using static RestaurantePro.Domain.Inventario.Ingredientes.Enums.RotacionIngrediente;
+global using static RestaurantePro.Domain.Inventario.Ingredientes.Enums.TemporadaIngrediente;
+global using static RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion;
+global using static RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums.EstadoMesa;

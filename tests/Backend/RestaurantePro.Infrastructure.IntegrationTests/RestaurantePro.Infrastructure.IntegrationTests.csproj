@@ -28,9 +28,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Backend\RestaurantePro.Infrastructure\RestaurantePro.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\src\Backend\RestaurantePro.Domain\RestaurantePro.Domain.csproj" />
-    <ProjectReference Include="..\..\src\Backend\RestaurantePro.Application\RestaurantePro.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Backend\RestaurantePro.Application\RestaurantePro.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Backend\RestaurantePro.Domain\RestaurantePro.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Backend\RestaurantePro.Infrastructure\RestaurantePro.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
