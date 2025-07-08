@@ -71,7 +71,7 @@ public static class MauiProgram
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Navigation.INavigationService, RestaurantePro.Mobile.Core.Services.Navigation.NavigationService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Dialog.IDialogService, RestaurantePro.Mobile.Core.Services.Dialog.DialogService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService, RestaurantePro.Mobile.Core.Services.Authentication.AuthService>();
-		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Api.IApiService, RestaurantePro.Mobile.Core.Services.Api.ApiService>();
+		// services.AddSingleton<RestaurantePro.Mobile.Core.Services.Api.IApiService, RestaurantePro.Mobile.Core.Services.Api.ApiService>();
 		
 		// Servicios de dominio V1 - Solo desde Core
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Mesas.IMesasService>(sp =>

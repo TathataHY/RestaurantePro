@@ -156,6 +156,23 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase;
 
         // 🔧 SEED DATA
         services.AddScoped<RestaurantePro.Infrastructure.Persistence.SeedData.Extensions.SeedDataRunner>();
+        
+        // 🔧 SEEDERS CRÍTICOS PARA TESTS
+        services.AddScoped<RestaurantePro.Infrastructure.Persistence.SeedData.Critical.RolesSeeder>();
+        services.AddScoped<RestaurantePro.Infrastructure.Persistence.SeedData.Critical.UnidadesMedidaSeeder>();
+        services.AddScoped<RestaurantePro.Infrastructure.Persistence.SeedData.Critical.PermisosSeeder>();
+        services.AddScoped<RestaurantePro.Infrastructure.Persistence.SeedData.Critical.ConfiguracionSeeder>();
+        services.AddScoped<RestaurantePro.Infrastructure.Persistence.SeedData.Critical.EstadosSeeder>();
+        services.AddScoped<RestaurantePro.Infrastructure.Persistence.SeedData.Critical.UsuarioAdminSeeder>();
+        services.AddScoped<RestaurantePro.Infrastructure.Persistence.SeedData.Critical.IdentityUsersSeeder>();
+        
+        // 🔧 CONFIGURACIÓN DE SEED DATA
+        services.Configure<RestaurantePro.Infrastructure.Persistence.SeedData.Extensions.SeedDataConfiguration>(options =>
+        {
+            options.RunCriticalData = true;
+            options.RunDemoData = true;
+            options.RunTestingData = true;
+        });
     }
 
     /// <summary>

@@ -197,6 +197,9 @@ public class RolesSeeder : ISeedData
             }
         }
 
+        // Guardar cambios en la base de datos
+        await context.SaveChangesAsync(cancellationToken);
+
         logger.LogInformation("📊 Roles procesados: {Creados} creados, {Actualizados} actualizados", 
             rolesCreados, rolesActualizados);
     }
