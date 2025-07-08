@@ -61,8 +61,8 @@ public partial class LoginViewModel : BaseViewModel
 
             if (result.Success)
             {
-                // Navegar al dashboard principal
-                await _navigationService.NavigateToAsync("//dashboard");
+                // Navegar al dashboard principal (corregido)
+                await _navigationService.NavigateToAsync("//main/dashboard");
             }
             else
             {
@@ -98,7 +98,7 @@ public partial class LoginViewModel : BaseViewModel
         var isAuthenticated = await _authService.IsAuthenticatedAsync();
         if (isAuthenticated)
         {
-            await _navigationService.NavigateToAsync("//dashboard");
+            await _navigationService.NavigateToAsync("//main/dashboard");
         }
     }
 } 

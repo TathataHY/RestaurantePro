@@ -13,6 +13,7 @@ using RestaurantePro.Mobile.Features.Operations.Mesas.Pages;
 using RestaurantePro.Mobile.UI.Pages;
 using System;
 using System.Net.Http.Headers;
+using RestaurantePro.Mobile.Core.Services.Navigation;
 
 namespace RestaurantePro.Mobile;
 
@@ -68,7 +69,7 @@ public static class MauiProgram
 	private static void RegisterCoreServicesV1(IServiceCollection services)
 	{
 		// Servicios fundamentales V1 - Solo desde Core
-		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Navigation.INavigationService, RestaurantePro.Mobile.Core.Services.Navigation.NavigationService>();
+		services.AddSingleton<INavigationService, MauiNavigationService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Dialog.IDialogService, RestaurantePro.Mobile.Core.Services.Dialog.DialogService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService, RestaurantePro.Mobile.Core.Services.Authentication.AuthService>();
 		// services.AddSingleton<RestaurantePro.Mobile.Core.Services.Api.IApiService, RestaurantePro.Mobile.Core.Services.Api.ApiService>();
