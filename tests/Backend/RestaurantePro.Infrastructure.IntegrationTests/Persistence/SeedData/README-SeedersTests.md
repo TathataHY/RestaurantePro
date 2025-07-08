@@ -148,6 +148,10 @@ tests/Backend/RestaurantePro.Infrastructure.IntegrationTests/
 - [x] Flujos de operaciones completas ✅ (COMPLETADO)
 - [x] Validación de reglas de negocio ✅ (COMPLETADO)
 
+### Fase 5: Tests de Rendimiento ✅ (COMPLETADO)
+- [x] Tests de rendimiento de endpoints críticos ✅ (COMPLETADO)
+- [x] Validación de performance bajo concurrencia ✅ (COMPLETADO)
+
 ## 🎯 Criterios de Éxito
 
 ### Para Seeders
@@ -230,9 +234,10 @@ public class [NombreSeeder]Tests : IntegrationTestBase
 - **Fase 2: Tests de Integración** - Validación E2E de todos los seeders
 - **Fase 3: Tests de API** - Autenticación, autorización y endpoints críticos validados
 - **Fase 4: Tests de Flujos de Negocio** - Validación de procesos completos ✅ (COMPLETADO)
+- **Fase 5: Tests de Rendimiento** - Validación de performance con datos reales ✅ (COMPLETADO)
 
 ### 🎯 PRÓXIMOS PASOS
-- **Fase 5: Tests de Rendimiento** - Validación de performance con datos reales
+- **Fase 6: Tests de Rendimiento** - Validación de performance con datos reales
 
 ## 📈 Resumen de Tests AuthController (Fase 3)
 - **Total de tests:** 13/13 ✅ PASANDO
@@ -292,3 +297,20 @@ public class [NombreSeeder]Tests : IntegrationTestBase
 
 **Última actualización:** 8 de Julio 2025
 **Responsable:** Equipo de Desarrollo RestaurantePro 
+
+## 🚦 Resumen de Tests de Rendimiento (Fase 5)
+- **Total de tests:** 4/4 ✅ PASANDO
+- **Endpoints críticos validados:**
+  1. Login (POST /api/auth/login) < 500ms
+  2. Consulta de usuarios (GET /api/core/usuarios) < 250ms
+  3. Consulta de perfil (GET /api/auth/profile) < 200ms
+  4. Requests concurrentes (5x GET /api/core/usuarios) < 500ms cada uno, < 2s en total
+- **Tiempo de ejecución real:** Todos los tests completan en milisegundos
+- **Performance bajo carga:** Sin degradación significativa
+
+### Métricas de Éxito:
+- **Todos los endpoints críticos responden en menos de 500ms**
+- **Concurrencia validada: 5 requests simultáneos < 2s**
+- **Cobertura de rendimiento: 100% de los flujos críticos**
+
+--- 
