@@ -935,8 +935,8 @@ public class FakeIdentityService : IIdentityService
 
     public FakeIdentityService()
     {
-        // Usuario admin por defecto para tests
-        _users["admin@restaurantepro.com"] = ("Admin123!", "11111111-1111-1111-1111-111111111111", "admin", new List<string> { "Administrador" });
+        // Usuario admin por defecto para tests (contraseña debe coincidir con IdentityUsersSeeder)
+        _users["admin@restaurantepro.com"] = ("AdminRestaurante123!", "11111111-1111-1111-1111-111111111111", "admin", new List<string> { "Administrador" });
     }
 
     // 🔧 MÉTODO PRIVADO PARA GENERAR JWT REAL

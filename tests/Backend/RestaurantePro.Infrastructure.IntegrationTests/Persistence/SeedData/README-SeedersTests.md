@@ -139,8 +139,8 @@ tests/Backend/RestaurantePro.Infrastructure.IntegrationTests/
 - [x] Validar que todos los seeders críticos se ejecutan correctamente
 
 ### Fase 3: Tests de API con Datos Sembrados
-- [ ] Tests de autenticación con usuarios sembrados
-- [ ] Tests de autorización con roles/permisos sembrados
+- [x] Tests de autenticación con usuarios sembrados ✅ (COMPLETADO)
+- [x] Tests de autorización con roles/permisos sembrados ✅ (COMPLETADO)
 - [ ] Tests de endpoints críticos
 
 ## 🎯 Criterios de Éxito
@@ -154,8 +154,8 @@ tests/Backend/RestaurantePro.Infrastructure.IntegrationTests/
 ### Para API
 - ✅ La API puede autenticarse con usuarios sembrados
 - ✅ La autorización funciona con roles/permisos sembrados
-- ✅ Los endpoints críticos responden correctamente
-- ✅ Los datos devueltos son consistentes
+- [ ] Los endpoints críticos responden correctamente
+- [ ] Los datos devueltos son consistentes
 
 ### Para Frontend
 - ✅ El frontend tiene acceso a todos los datos críticos necesarios
