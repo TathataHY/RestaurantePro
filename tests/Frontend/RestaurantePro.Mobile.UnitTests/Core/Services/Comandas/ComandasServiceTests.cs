@@ -10,12 +10,14 @@ namespace RestaurantePro.Mobile.UnitTests.Core.Services.Comandas;
 public class ComandasServiceTests
 {
     private readonly Mock<IApiService> _apiServiceMock;
+    private readonly Mock<IAuthService> _mockAuthService;
     private readonly ComandasService _comandasService;
 
     public ComandasServiceTests()
     {
         _apiServiceMock = new Mock<IApiService>();
-        _comandasService = new ComandasService(_apiServiceMock.Object);
+        _mockAuthService = new Mock<IAuthService>();
+        _comandasService = new ComandasService(_apiServiceMock.Object, _mockAuthService.Object);
     }
 
     #region ObtenerComandasActivasAsync Tests
@@ -31,7 +33,7 @@ public class ComandasServiceTests
         };
         var expectedResponse = ApiResponse<List<ComandaDto>>.SuccessResponse(expectedComandas);
 
-        _apiServiceMock.Setup(x => x.GetAsync<List<ComandaDto>>("api/comandas/activas"))
+        _apiServiceMock.Setup(x => x.GetAsync<List<ComandaDto>>("api/comandas/activas", It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -47,7 +49,7 @@ public class ComandasServiceTests
     public async Task ObtenerComandasActivasAsync_ShouldReturnError_WhenApiCallFails()
     {
         // Arrange
-        _apiServiceMock.Setup(x => x.GetAsync<List<ComandaDto>>("api/comandas/activas"))
+        _apiServiceMock.Setup(x => x.GetAsync<List<ComandaDto>>("api/comandas/activas", It.IsAny<string?>()))
             .ThrowsAsync(new Exception("API error"));
 
         // Act
@@ -74,7 +76,7 @@ public class ComandasServiceTests
         };
         var expectedResponse = ApiResponse<List<ComandaDto>>.SuccessResponse(expectedComandas);
 
-        _apiServiceMock.Setup(x => x.GetAsync<List<ComandaDto>>($"api/comandas/mesa/{mesaId}"))
+        _apiServiceMock.Setup(x => x.GetAsync<List<ComandaDto>>($"api/comandas/mesa/{mesaId}", It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -111,7 +113,7 @@ public class ComandasServiceTests
 
         var expectedResponse = ApiResponse<ComandaDto>.SuccessResponse(expectedComanda);
 
-        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>("api/comandas", request))
+        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>("api/comandas", request, It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -159,7 +161,7 @@ public class ComandasServiceTests
         var expectedComanda = new ComandaDto { Id = comandaId };
         var expectedResponse = ApiResponse<ComandaDto>.SuccessResponse(expectedComanda);
 
-        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>($"api/comandas/{comandaId}/productos", productos))
+        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>($"api/comandas/{comandaId}/productos", productos, It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -220,7 +222,7 @@ public class ComandasServiceTests
         var expectedComanda = new ComandaDto { Id = comandaId };
         var expectedResponse = ApiResponse<ComandaDto>.SuccessResponse(expectedComanda);
 
-        _apiServiceMock.Setup(x => x.PutAsync<ComandaDto>($"api/comandas/{comandaId}/productos/{productoId}/cantidad", It.IsAny<object>()))
+        _apiServiceMock.Setup(x => x.PutAsync<ComandaDto>($"api/comandas/{comandaId}/productos/{productoId}/cantidad", It.IsAny<object>(), It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -264,7 +266,7 @@ public class ComandasServiceTests
         var expectedComanda = new ComandaDto { Id = comandaId, Estado = nuevoEstado };
         var expectedResponse = ApiResponse<ComandaDto>.SuccessResponse(expectedComanda);
 
-        _apiServiceMock.Setup(x => x.PutAsync<ComandaDto>($"api/comandas/{comandaId}/estado", It.IsAny<object>()))
+        _apiServiceMock.Setup(x => x.PutAsync<ComandaDto>($"api/comandas/{comandaId}/estado", It.IsAny<object>(), It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -306,7 +308,7 @@ public class ComandasServiceTests
         var expectedComanda = new ComandaDto { Id = comandaId, Estado = "finalizada" };
         var expectedResponse = ApiResponse<ComandaDto>.SuccessResponse(expectedComanda);
 
-        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>($"api/comandas/{comandaId}/finalizar", It.IsAny<object>()))
+        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>($"api/comandas/{comandaId}/finalizar", It.IsAny<object>(), It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -347,7 +349,7 @@ public class ComandasServiceTests
         var expectedComanda = new ComandaDto { Id = comandaId, Estado = "cancelada" };
         var expectedResponse = ApiResponse<ComandaDto>.SuccessResponse(expectedComanda);
 
-        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>($"api/comandas/{comandaId}/cancelar", It.IsAny<object>()))
+        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>($"api/comandas/{comandaId}/cancelar", It.IsAny<object>(), It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -390,7 +392,7 @@ public class ComandasServiceTests
         };
         var expectedResponse = ApiResponse<List<ComandaDto>>.SuccessResponse(expectedComandas);
 
-        _apiServiceMock.Setup(x => x.GetAsync<List<ComandaDto>>(It.IsAny<string>()))
+        _apiServiceMock.Setup(x => x.GetAsync<List<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -409,7 +411,7 @@ public class ComandasServiceTests
         var expectedComandas = new List<ComandaDto>();
         var expectedResponse = ApiResponse<List<ComandaDto>>.SuccessResponse(expectedComandas);
 
-        _apiServiceMock.Setup(x => x.GetAsync<List<ComandaDto>>("api/comandas/buscar"))
+        _apiServiceMock.Setup(x => x.GetAsync<List<ComandaDto>>("api/comandas/buscar", It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -438,7 +440,7 @@ public class ComandasServiceTests
         };
         var expectedResponse = ApiResponse<EstadisticasComandasDto>.SuccessResponse(expectedEstadisticas);
 
-        _apiServiceMock.Setup(x => x.GetAsync<EstadisticasComandasDto>("api/comandas/estadisticas"))
+        _apiServiceMock.Setup(x => x.GetAsync<EstadisticasComandasDto>("api/comandas/estadisticas", It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act

@@ -10,13 +10,15 @@ namespace RestaurantePro.Mobile.UnitTests.Services.Productos;
 public class ProductosServiceTests
 {
     private readonly Mock<IApiService> _mockApiService;
+    private readonly Mock<IAuthService> _mockAuthService;
     private readonly ProductosService _productosService;
     private readonly IFixture _fixture;
 
     public ProductosServiceTests()
     {
         _mockApiService = new Mock<IApiService>();
-        _productosService = new ProductosService(_mockApiService.Object);
+        _mockAuthService = new Mock<IAuthService>();
+        _productosService = new ProductosService(_mockApiService.Object, _mockAuthService.Object);
         _fixture = new Fixture();
     }
 
@@ -30,7 +32,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>(It.IsAny<string>()))
+            .Setup(x => x.GetAsync<List<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -51,7 +53,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>(It.Is<string>(s => s.Contains("filtro=hamburguesa"))))
+            .Setup(x => x.GetAsync<List<ProductoDto>>(It.Is<string>(s => s.Contains("filtro=hamburguesa")), It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -60,7 +62,7 @@ public class ProductosServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
-        _mockApiService.Verify(x => x.GetAsync<List<ProductoDto>>(It.Is<string>(s => s.Contains("filtro=hamburguesa"))), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<ProductoDto>>(It.Is<string>(s => s.Contains("filtro=hamburguesa")), It.IsAny<string?>()), Times.Once);
     }
 
     [Fact]
@@ -68,7 +70,7 @@ public class ProductosServiceTests
     {
         // Arrange
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>(It.IsAny<string>()))
+            .Setup(x => x.GetAsync<List<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>()))
             .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -95,7 +97,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<ProductoDto>.SuccessResponse(producto);
         
         _mockApiService
-            .Setup(x => x.GetAsync<ProductoDto>($"api/productos/{productoId}"))
+            .Setup(x => x.GetAsync<ProductoDto>($"api/productos/{productoId}", It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -133,7 +135,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>($"api/productos/categoria/{categoriaId}?soloActivos=True"))
+            .Setup(x => x.GetAsync<List<ProductoDto>>($"api/productos/categoria/{categoriaId}?soloActivos=True", It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -172,7 +174,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<DisponibilidadProductoDto>.SuccessResponse(disponibilidad);
         
         _mockApiService
-            .Setup(x => x.GetAsync<DisponibilidadProductoDto>($"api/productos/{productoId}/disponibilidad"))
+            .Setup(x => x.GetAsync<DisponibilidadProductoDto>($"api/productos/{productoId}/disponibilidad", It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -210,7 +212,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>(It.Is<string>(s => s.Contains("texto=hamburguesa"))))
+            .Setup(x => x.GetAsync<List<ProductoDto>>(It.Is<string>(s => s.Contains("texto=hamburguesa")), It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -259,7 +261,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>($"api/productos/populares?limite={limite}"))
+            .Setup(x => x.GetAsync<List<ProductoDto>>($"api/productos/populares?limite={limite}", It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -307,7 +309,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>("api/productos/disponibles-comandas"))
+            .Setup(x => x.GetAsync<List<ProductoDto>>("api/productos/disponibles-comandas", It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -328,7 +330,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>($"api/productos/disponibles-comandas?categoriaId={categoriaId}"))
+            .Setup(x => x.GetAsync<List<ProductoDto>>($"api/productos/disponibles-comandas?categoriaId={categoriaId}", It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -352,7 +354,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<CategoriaProductoDto>>("api/categorias"))
+            .Setup(x => x.GetAsync<List<CategoriaProductoDto>>("api/categorias", It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -369,7 +371,7 @@ public class ProductosServiceTests
     {
         // Arrange
         _mockApiService
-            .Setup(x => x.GetAsync<List<CategoriaProductoDto>>("api/categorias"))
+            .Setup(x => x.GetAsync<List<CategoriaProductoDto>>("api/categorias", It.IsAny<string?>()))
             .ThrowsAsync(new Exception("Error de red"));
 
         // Act
