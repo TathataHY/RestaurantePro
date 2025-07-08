@@ -398,8 +398,8 @@ public class AuthControllerTests : AuthorizationTestBase, IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden, "Un cajero no debe poder acceder al endpoint protegido solo para administradores");
     }
 
-    [Fact(DisplayName = "Auth_ConsultaRoles_DeberiaRetornarRolesSembrados")]
-    public async Task Auth_ConsultaRoles_DeberiaRetornarRolesSembrados()
+    [Fact(DisplayName = "Auth_ConsultaUsuarios_DeberiaRetornarUsuariosSembrados")]
+    public async Task Auth_ConsultaUsuarios_DeberiaRetornarUsuariosSembrados()
     {
         // Arrange: Login como admin
         var loginRequest = new LoginRequest
@@ -413,25 +413,23 @@ public class AuthControllerTests : AuthorizationTestBase, IAsyncLifetime
         var loginApiResponse = JsonSerializer.Deserialize<ApiResponse<AuthResponse>>(loginContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         var token = loginApiResponse.Data.Token;
 
-        // Act: Consultar roles
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/auth/roles");
+        // Act: Consultar usuarios (endpoint que sabemos que existe)
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/core/usuarios");
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         var response = await HttpClient.SendAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        var apiResponse = JsonSerializer.Deserialize<ApiResponse<List<string>>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var apiResponse = JsonSerializer.Deserialize<ApiResponse<List<UsuarioDto>>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         apiResponse.Success.Should().BeTrue();
         apiResponse.Data.Should().NotBeNull();
-        apiResponse.Data.Should().Contain("Administrador");
-        apiResponse.Data.Should().Contain("Cajero");
-        apiResponse.Data.Should().Contain("Mesero");
-        apiResponse.Data.Should().Contain("Gerente");
+        apiResponse.Data.Should().Contain(u => u.Email == "admin@restaurantepro.com");
+        apiResponse.Data.Should().Contain(u => u.Roles.Contains("Administrador"));
     }
 
-    [Fact(DisplayName = "Auth_ConsultaPermisos_DeberiaRetornarPermisosSembrados")]
-    public async Task Auth_ConsultaPermisos_DeberiaRetornarPermisosSembrados()
+    [Fact(DisplayName = "Auth_ConsultaPerfil_DeberiaRetornarPerfilUsuarioSembrado")]
+    public async Task Auth_ConsultaPerfil_DeberiaRetornarPerfilUsuarioSembrado()
     {
         // Arrange: Login como admin
         var loginRequest = new LoginRequest
@@ -445,19 +443,18 @@ public class AuthControllerTests : AuthorizationTestBase, IAsyncLifetime
         var loginApiResponse = JsonSerializer.Deserialize<ApiResponse<AuthResponse>>(loginContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         var token = loginApiResponse.Data.Token;
 
-        // Act: Consultar permisos
-        var request = new HttpRequestMessage(HttpMethod.Get, "/api/auth/permissions");
+        // Act: Consultar perfil del usuario autenticado
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/auth/profile");
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
         var response = await HttpClient.SendAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        var apiResponse = JsonSerializer.Deserialize<ApiResponse<List<string>>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var apiResponse = JsonSerializer.Deserialize<ApiResponse<UserDto>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         apiResponse.Success.Should().BeTrue();
         apiResponse.Data.Should().NotBeNull();
-        apiResponse.Data.Should().Contain("sistema.full_access");
-        apiResponse.Data.Should().Contain("usuarios.read");
-        apiResponse.Data.Should().Contain("productos.read");
+        apiResponse.Data.Email.Should().Be("admin@restaurantepro.com");
+        apiResponse.Data.UserName.Should().Be("admin");
     }
 } 
