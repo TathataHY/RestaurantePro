@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
-using Microsoft.Maui.Storage;
+using RestaurantePro.Mobile.Core.Services.Platform;
 
 namespace RestaurantePro.Mobile.Core.Services.Authentication;
 
@@ -12,6 +12,7 @@ public class AuthService : IAuthService
 {
     private readonly IApiService _apiService;
     private readonly ILogger<AuthService> _logger;
+    private readonly ISecureStorageService _secureStorage;
     
     private const string TokenKey = "auth_token";
     private const string UserKey = "auth_user";
@@ -19,10 +20,11 @@ public class AuthService : IAuthService
     private AuthUser? _currentUser;
     private string? _currentToken;
 
-    public AuthService(IApiService apiService, ILogger<AuthService> logger)
+    public AuthService(IApiService apiService, ILogger<AuthService> logger, ISecureStorageService secureStorage)
     {
         _apiService = apiService;
         _logger = logger;
+        _secureStorage = secureStorage;
     }
 
     /// <summary>
@@ -110,7 +112,7 @@ public class AuthService : IAuthService
             }
 
             // Intentar obtener de las preferencias
-            var token = await SecureStorage.GetAsync(TokenKey);
+            var token = await _secureStorage.GetAsync(TokenKey);
             
             if (!string.IsNullOrEmpty(token))
             {
@@ -140,7 +142,7 @@ public class AuthService : IAuthService
             }
 
             // Intentar obtener de las preferencias
-            var userJson = await SecureStorage.GetAsync(UserKey);
+            var userJson = await _secureStorage.GetAsync(UserKey);
             
             if (!string.IsNullOrEmpty(userJson))
             {
@@ -171,8 +173,8 @@ public class AuthService : IAuthService
             _currentUser = null;
 
             // Limpiar datos guardados
-            SecureStorage.Remove(TokenKey);
-            SecureStorage.Remove(UserKey);
+            await _secureStorage.RemoveAsync(TokenKey);
+            await _secureStorage.RemoveAsync(UserKey);
 
             _logger.LogInformation("Sesión cerrada exitosamente");
         }
@@ -189,7 +191,7 @@ public class AuthService : IAuthService
     {
         try
         {
-            await SecureStorage.SetAsync(TokenKey, token);
+            await _secureStorage.SetAsync(TokenKey, token);
         }
         catch (Exception ex)
         {
@@ -205,7 +207,7 @@ public class AuthService : IAuthService
         try
         {
             var userJson = System.Text.Json.JsonSerializer.Serialize(user);
-            await SecureStorage.SetAsync(UserKey, userJson);
+            await _secureStorage.SetAsync(UserKey, userJson);
         }
         catch (Exception ex)
         {

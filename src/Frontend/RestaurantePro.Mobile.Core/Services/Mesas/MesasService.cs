@@ -1,6 +1,7 @@
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Authentication;
+using RestaurantePro.Mobile.Core.Models.Common;
 using System.Text.Json;
 
 namespace RestaurantePro.Mobile.Core.Services.Mesas;
@@ -73,7 +74,17 @@ public class MesasService : IMesasService
         var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
         var endpoint = $"{BasePath}/disponibles{query}";
         var token = await _authService.GetTokenAsync();
-        return await _apiService.GetAsync<List<MesaDto>>(endpoint, token);
+        
+        // El endpoint retorna PaginatedList<MesaDto>, necesitamos extraer los Items
+        var response = await _apiService.GetAsync<PaginatedList<MesaDto>>(endpoint, token);
+        
+        if (response.Success && response.Data != null)
+        {
+            // Convertir PaginatedList a List
+            return ApiResponse<List<MesaDto>>.SuccessResponse(response.Data.Items, response.Message);
+        }
+        
+        return ApiResponse<List<MesaDto>>.ErrorResponse(response.Message ?? "Error al obtener mesas disponibles");
     }
 
     /// <summary>

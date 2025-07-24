@@ -1,4 +1,5 @@
 using RestaurantePro.Mobile.Core.Models.DTOs;
+using RestaurantePro.Mobile.Core.Models.Common;
 using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Authentication;
 
@@ -11,7 +12,7 @@ public class ProductosService : IProductosService
 {
     private readonly IApiService _apiService;
     private readonly IAuthService _authService;
-    private const string BaseEndpoint = "api/productos";
+    private const string BaseEndpoint = "api/core/productos";
 
     public ProductosService(IApiService apiService, IAuthService authService)
     {
@@ -38,7 +39,15 @@ public class ProductosService : IProductosService
             }
 
             var token = await _authService.GetTokenAsync();
-            return await _apiService.GetAsync<List<ProductoDto>>($"{BaseEndpoint}/paginados{queryParams}", token);
+            var response = await _apiService.GetAsync<PaginatedList<ProductoDto>>($"{BaseEndpoint}{queryParams}", token);
+            
+            // Convertir PaginatedList a List para mantener compatibilidad
+            if (response.Success && response.Data != null)
+            {
+                return ApiResponse<List<ProductoDto>>.SuccessResponse(response.Data.Items, response.Message);
+            }
+            
+            return ApiResponse<List<ProductoDto>>.ErrorResponse(response.Errors, response.Message, response.StatusCode);
         }
         catch (Exception)
         {

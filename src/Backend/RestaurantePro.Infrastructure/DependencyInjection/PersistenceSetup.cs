@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Sqlite;
+using Microsoft.EntityFrameworkCore.InMemory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -121,6 +122,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
         private static void RegisterTestDbContexts(IServiceCollection services, IConfiguration configuration)
         {
             var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var useInMemory = configuration.GetValue<bool>("UseInMemoryDatabase", false);
 
             // Eliminar registros previos de los contextos secundarios
             RemoveDbContext<CoreDbContext>(services);
@@ -129,25 +131,44 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             RemoveDbContext<InventarioDbContext>(services);
             RemoveDbContext<ProveedoresDbContext>(services);
 
-            // Core
-            services.AddDbContext<CoreDbContext>(options =>
-                options.UseSqlite(connectionString));
+            if (useInMemory)
+            {
+                // Usar InMemory para tests de integración - TODOS comparten la misma base de datos
+                var inMemoryDbName = "TestRestauranteProDb";
+                
+                services.AddDbContext<CoreDbContext>(options =>
+                    options.UseInMemoryDatabase(inMemoryDbName));
 
-            // Comercial
-            services.AddDbContext<ComercialDbContext>(options =>
-                options.UseSqlite(connectionString));
+                services.AddDbContext<ComercialDbContext>(options =>
+                    options.UseInMemoryDatabase(inMemoryDbName));
 
-            // Operaciones
-            services.AddDbContext<OperacionesDbContext>(options =>
-                options.UseSqlite(connectionString));
+                services.AddDbContext<OperacionesDbContext>(options =>
+                    options.UseInMemoryDatabase(inMemoryDbName));
 
-            // Inventario
-            services.AddDbContext<InventarioDbContext>(options =>
-                options.UseSqlite(connectionString));
+                services.AddDbContext<InventarioDbContext>(options =>
+                    options.UseInMemoryDatabase(inMemoryDbName));
 
-            // Proveedores
-            services.AddDbContext<ProveedoresDbContext>(options =>
-                options.UseSqlite(connectionString));
+                services.AddDbContext<ProveedoresDbContext>(options =>
+                    options.UseInMemoryDatabase(inMemoryDbName));
+            }
+            else
+            {
+                // Usar SQLite para tests unitarios
+                services.AddDbContext<CoreDbContext>(options =>
+                    options.UseSqlite(connectionString));
+
+                services.AddDbContext<ComercialDbContext>(options =>
+                    options.UseSqlite(connectionString));
+
+                services.AddDbContext<OperacionesDbContext>(options =>
+                    options.UseSqlite(connectionString));
+
+                services.AddDbContext<InventarioDbContext>(options =>
+                    options.UseSqlite(connectionString));
+
+                services.AddDbContext<ProveedoresDbContext>(options =>
+                    options.UseSqlite(connectionString));
+            }
         }
 
         // Método auxiliar para eliminar registros previos de un DbContext

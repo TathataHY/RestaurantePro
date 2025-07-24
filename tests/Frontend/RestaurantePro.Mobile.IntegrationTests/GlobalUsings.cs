@@ -14,6 +14,7 @@ global using AutoFixture.Xunit2;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.Logging;
+global using Microsoft.Extensions.Logging.Abstractions;
 global using Microsoft.AspNetCore.Mvc.Testing;
 
 // Namespaces de la biblioteca compartida móvil
@@ -27,3 +28,6 @@ global using RestaurantePro.Mobile.Core.Features.Authentication.ViewModels;
 
 // Namespaces del backend (para pruebas de integración)
 global using RestaurantePro.Api; 
+
+// Namespaces de tests de integración
+global using RestaurantePro.Mobile.IntegrationTests.TestBase; 
